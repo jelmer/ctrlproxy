@@ -12,7 +12,7 @@
 
 	<description>
 		<para>This module provides support for connecting to remote 
-		servers using IPv4, IPv6 and unix pipes, as well 
+		servers using IPv4, IPv6 and unix pipes, as well
 		as listening for client connections using these connection 
 		types.</para>
 
@@ -38,6 +38,13 @@
 		<element name="sslcertfile">
 			<description>Name of file to load certificate from. Only required when acting as a server</description>
 		</element>
+
+		<element name="tos">
+			<attribute name="value">
+				<description>TOS value for outgoing packages. Has to be 'Minimize-Delay', 'Maximize-Throughput', 'Maximize-Reliability', 'Minimize-Cost' or 'Normal-Service' (default)</description>
+			</attribute>
+		</element>
+
 	</configuration>
 
 	<transports>

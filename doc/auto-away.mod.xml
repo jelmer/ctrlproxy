@@ -20,7 +20,7 @@
 			<attribute name="time">
 				<description>Number of seconds you have to be idle before setting AWAY.</description>
 			</attribute>
-			<attribute name="only_noclient">
+			<attribute name="only_noclient" type="bool">
 				<description>If set, auto-away will only set AWAY when there are no clients connected to ctrlproxy.</description>
 			</attribute>
 		</element>

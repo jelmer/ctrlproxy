@@ -9,10 +9,10 @@
 	</modulemeta>
 
 	<description>
-		<para>This module makes sure at most 1 message is sent to the server 
+		<para>This module makes sure at most 1 message is sent to the server
 			in a certain period of time.</para>
 
-		<para>A child element of a server element named "queue_speed" contains 
+		<para>A child element of a server element named "queue_speed" contains
 			the number of milliseconds the client has to wait before
 		sending a new message.</para>
 

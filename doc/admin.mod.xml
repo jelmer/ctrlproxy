@@ -6,6 +6,7 @@
 		<author>Jelmer Vernooij</author>
 		<email>jelmer@vernstok.nl</email>
 		<homepage>http://ctrlproxy.vernstok.nl/</homepage>
+		<type>admin</type>
 	</modulemeta>
 
 	<description>
@@ -106,7 +107,7 @@ CONNECT OFTC
 	</section>
 
 	<configuration>
-		<element name="without_privmsg">
+		<element name="without_privmsg" type="bool">
 			<description>If this element is present, you can not execute admin commands by sending them to the nick 'ctrlproxy'. This can be useful for IRC clients that don't allow unknown IRC commands to be executed.</description>
 		</element>
 	</configuration>

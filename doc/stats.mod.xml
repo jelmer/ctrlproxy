@@ -25,7 +25,7 @@
 		<element name="tdbfile">
 			<description>Location of TDB file to store statistics in. <filename>$HOME/.ctrlproxy-stats.tdb</filename> is used when none is specified.</description>
 		</element>
-		<element name="pattern">
+		<element name="pattern" multiple="1">
 			<description>Pattern to search for and keep track of.</description>
 			<attribute name="type">
 				<description>'Variable' to add up to whenever this pattern is used</description>
@@ -35,28 +35,18 @@
 
 	<example>
 		<![CDATA[
-		<ctrlproxy>
-			<plugin autoload="1" file="stats">
-				<tdbfile>/home/jelmer/.ctrlproxy-stats.tdb</tdbfile>
-				<pattern type="happy">[:;]([-]*)[\)D]</pattern>
-				<pattern type="unhappy">[:;]([-]*)[\/\(]</pattern>
-				<pattern type="foul">(shit|damn|fuck)</pattern>
-				<pattern type="question">\?([^ ]*)$</pattern>
-				<pattern type="exclamation">!([^ ]*)$</pattern>
-				<pattern type="lines">(.*)</pattern>
-				<pattern type="word">([^ ]+)</pattern>
-				<pattern type="caps">^([^a-z]+)$</pattern>
-				<pattern type="action">.ACTION .</pattern>
-				<pattern type="violent">.ACTION .*(mept|slaat|kickt|kicks|duwt|slaps)</pattern>
-			</plugin>
-			<plugin autoload="1" file="socket"/>
-	</plugins>
-	<networks>
-		<network autoconnect="1">
-			<servers><ipv4 host="irc.freenode.net"/></servers>
-			<channel name="#flood" autojoin="1"/>
-		</network>
-	</networks>
-	</ctrlproxy>
+	<plugin autoload="1" file="stats">
+		<tdbfile>/home/jelmer/.ctrlproxy-stats.tdb</tdbfile>
+		<pattern type="happy">[:;]([-]*)[\)D]</pattern>
+		<pattern type="unhappy">[:;]([-]*)[\/\(]</pattern>
+		<pattern type="foul">(shit|damn|fuck)</pattern>
+		<pattern type="question">\?([^ ]*)$</pattern>
+		<pattern type="exclamation">!([^ ]*)$</pattern>
+		<pattern type="lines">(.*)</pattern>
+		<pattern type="word">([^ ]+)</pattern>
+		<pattern type="caps">^([^a-z]+)$</pattern>
+		<pattern type="action">.ACTION .</pattern>
+		<pattern type="violent">.ACTION .*(mept|slaat|kickt|kicks|duwt|slaps)</pattern>
+	</plugin>
 	]]></example>
 </ctrlproxy:module>

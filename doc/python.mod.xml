@@ -13,6 +13,15 @@
 		<para>This module provides python scripting support inside ctrlproxy.</para>
 	</description>
 
+	<configuration>
+		<element name="redirect-stdout" type="bool">
+				<description>Redirects the standard output in python to the log of ctrlproxy</description>
+		</element>
+		<element name="redirect-stderr" type="bool">
+			<description>Redirects the error output in python to the log of ctrlproxy</description>
+		</element>
+	</configuration>
+
 	<section>
 		<title>Function callbacks</title>
 		
