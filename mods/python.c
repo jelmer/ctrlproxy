@@ -30,13 +30,19 @@
 #include "ctrlproxy.h"
 #include <string.h>
 #include "irc.h"
-#include "python_libxml_wrap.h"
+#include "libxml_wrap.h"
 
 xmlNodePtr xmlConf;
 
-static GList *rcv_hooks = NULL;
-static GList *lose_client_hooks = NULL;
-static GList *new_client_hooks = NULL;
+// should go to ctrlproxy.h
+static int TO_CLIENT = 3;
+
+static GList *py_rcv_hooks = NULL;
+static GList *py_lose_client_hooks = NULL;
+static GList *py_new_client_hooks = NULL;
+static GList *py_modt_hooks = NULL;
+static GList *py_server_connected_hooks  = NULL;
+static GList *py_server_disconnected_hooks = NULL;
 
 static GList *loaded_scripts = NULL;
 static GList *script_attributes = NULL;
@@ -84,7 +90,7 @@ PyInstance_New(xml_node,Py_BuildValue("(O)",libxml_xmlNodePtrWrap((xmlNodePtr) n
 	PyObject *r = NULL; \
 	while(g) { \
 		struct callback_object *c = (struct callback_object *)g->data; \
-		PyCtrlproxyObject *lo = CREATE(l); \
+		PyObject *lo = CREATE(l); \
 		PyObject *arglist = Py_BuildValue("(O)", lo); \
 		PyEval_RestoreThread(c->thread); \
     	r = PyObject_CallObject((PyObject *)c->callback, arglist); \
@@ -92,15 +98,21 @@ PyInstance_New(xml_node,Py_BuildValue("(O)",libxml_xmlNodePtrWrap((xmlNodePtr) n
 		g = g->next; \
 	}
 
-
+/*
 #define PYCTRLPROXY_CREATEWRAPPER(NAME,TYPE) \
-static PyCtrlproxyObject *NAME(void *c) { \
-	PyCtrlproxyObject *rv = (PyCtrlproxyObject *)PyObject_New(PyCtrlproxyObject,&TYPE); \
-	rv->ptr = PyCObject_FromVoidPtr(c, NULL); \
-	return rv; \
+static PyObject *NAME(void *c) { \
+	Py_INCREF(Py_None); \
+	return Py_None; \
 }
-
-
+*/
+#define PYCTRLPROXY_CREATEWRAPPER(NAME,TYPE) \
+static PyObject *NAME(void *c) { \
+	PyCtrlproxyObject *rv = (PyCtrlproxyObject *)PyObject_New(PyCtrlproxyObject,&TYPE); \
+	printf("CREATE OBJ %p\n",c); \
+	rv->ptr = c; \
+	return (PyObject *)rv; \
+}
+// 	rv->ptr = PyCObject_FromVoidPtr(c, &de_alloc); \
 
 struct script_thread {
 	char *script;
@@ -127,13 +139,13 @@ typedef struct {
 
 typedef struct {
 	PyObject_HEAD
-	PyObject *ptr;
+	//PyObject *ptr;
+	void *ptr;
 } PyCtrlproxyObject;
-
 
 static void PyCtrlproxyObject_dealloc(PyCtrlproxyObject *self)
 {
-	PyObject_Del(self->ptr);
+	printf("DEALLOC ptr %p\n",self->ptr);
     self->ob_type->tp_free((PyObject *)self);
 };
 
@@ -176,11 +188,11 @@ static PyObject * PyCtrlproxyLog_log(PyCtrlproxyLog *self, PyObject *args, PyObj
 	for(i = 0;smsg[i] != NULL;i++) {
 		if(smsg[i] != NULL && strcasecmp(smsg[i],"")) {
 			g_log(G_LOG_DOMAIN, (int)log_level, "%s", smsg[i]);
+			//printf("%s\n", smsg[i]);
 		}
 	}
-	rv = PyInt_FromLong(0);
-	Py_INCREF(rv);
-	return rv;
+	Py_INCREF(Py_None);
+	return Py_None;
 };
 
 static PyObject * PyCtrlproxyLog_write(PyCtrlproxyLog *self, PyObject *args, PyObject *kwds)
@@ -265,6 +277,40 @@ static int PyCtrlproxyNetwork_set(PyCtrlproxyObject *self, PyObject *var, void *
 	return -1;
 }
 
+
+static PyObject * PyCtrlproxyNetwork_send(PyCtrlproxyObject *self, PyObject *args, PyObject *kwds) {
+	static char *kwlist[] = {"msg","direction",NULL};
+	char *msg;
+	int dir = TO_SERVER;
+	int i = 0;
+
+	struct network *n = (struct network *)self->ptr;
+
+	if (! PyArg_ParseTupleAndKeywords(args, kwds, "s|d:send", kwlist,
+                                      &msg,&dir))
+		return NULL;
+
+	if (dir == TO_CLIENT) {
+		for(i = 0;n->incoming[i] != NULL;i++) {
+			transport_write(n->incoming[i], msg);
+		}
+	} else if(dir == TO_SERVER) {
+		transport_write(n->outgoing, msg);
+	} else {
+		PyErr_SetString(PyExc_ValueError, "direction unknown");
+		return NULL;
+	}
+
+	Py_INCREF(Py_None);
+	return Py_None;
+}
+
+static PyMethodDef PyCtrlproxyNetwork_methods[] = {
+    {"send", (PyCFunction)PyCtrlproxyNetwork_send,METH_VARARGS | METH_KEYWORDS, "Write message into the network"},
+	{NULL}                      /* Sentinel */
+};
+
+
 static PyGetSetDef PyCtrlproxyNetwork_GetSetDef[] = {
     {"xmlConf",(getter)PyCtrlproxyNetwork_get,(setter)PyCtrlproxyNetwork_set,
 	"XML Node of the network","xmlConf"},
@@ -296,6 +342,8 @@ static PyGetSetDef PyCtrlproxyNetwork_GetSetDef[] = {
 };
 
 
+
+
 static PyTypeObject PyCtrlproxyNetworkType = {
     PyObject_HEAD_INIT(NULL)
     0,                          /* ob_size */
@@ -325,7 +373,7 @@ static PyTypeObject PyCtrlproxyNetworkType = {
     0,                          /* tp_weaklistoffset */
     0,                          /* tp_iter */
     0,                          /* tp_iternext */
-    0,     /* tp_methods */
+    PyCtrlproxyNetwork_methods,     /* tp_methods */
     0,     /* tp_members */
     PyCtrlproxyNetwork_GetSetDef,                          /* tp_getset */
     0,                          /* tp_base */
@@ -348,15 +396,20 @@ static PyObject * PyCtrlproxyClient_get(PyCtrlproxyObject *self, void *closure) 
 	PyObject *rv = NULL;
 	int i = 0;
 
+	printf("Client access at %p\n",self->ptr);
+
 	if(self->ptr == NULL) {
 		PyErr_SetString(PyExc_TypeError, "Line Object is not initialized");
 		return Py_None;
 	}
-	l = (struct client *)PyCObject_AsVoidPtr(self->ptr);
+	l = (struct client *)self->ptr;
 	if(l == NULL) {
 		PyErr_SetString(PyExc_TypeError, "Object seems to be deleted");
 		return Py_None;
 	}
+	printf("Client NET: %p\n",&l->network);
+	printf("Client NETXML: %p\n",&l->network->xmlConf);
+
 	if(!strcmp(closure,"network")) {
 		rv = (PyObject *)createNetworkObject(&l->network);
 	} else if(!strcmp(closure,"transport_context")) {
@@ -365,9 +418,92 @@ static PyObject * PyCtrlproxyClient_get(PyCtrlproxyObject *self, void *closure) 
 		rv = PyInt_FromLong((long)l->connect_time);
 	} else if(!strcmp(closure,"did_nick_change")) {
 		rv = PyString_FromString(&l->did_nick_change);
+	} else if(!strcmp(closure,"nick")) {
+		rv = PyString_FromString(xmlGetProp(l->network->xmlConf, "nick"));
 	}
 	return rv;
 }
+
+static PyObject * PyCtrlproxyClient_send(PyCtrlproxyObject *self, PyObject *args, PyObject *kwds) {
+	static char *kwlist[] = {"msg",NULL};
+	char *msg, *nick,*tot;
+	PyObject *rv = NULL;
+	struct client *c = NULL;
+
+	printf("Client send at %p\n",self->ptr);
+
+	if(self->ptr == NULL) {
+		PyErr_SetString(PyExc_TypeError, "Line Object is not initialized");
+		return NULL;
+	}
+	c = (struct client *)self->ptr;
+	if(c == NULL) {
+		PyErr_SetString(PyExc_TypeError, "Object seems to be deleted");
+		return NULL;
+	}
+	//l = (struct client *)PyCObject_AsVoidPtr(self->ptr);
+
+	if (! PyArg_ParseTupleAndKeywords(args, kwds, "s:send", kwlist,
+                                      &msg))
+		return NULL;
+
+	printf("Net: %p\n", c->network);
+
+	if(c->incoming == NULL) {
+		PyErr_SetString(PyExc_TypeError, "Not writeable");
+		return NULL;
+	}
+	printf("li: %p\n",&c->incoming);
+	transport_write(c->incoming, msg);
+
+	Py_INCREF(Py_None);
+	return Py_None;
+}
+
+static PyObject * PyCtrlproxyClient_sendNotice(PyCtrlproxyObject *self, PyObject *args, PyObject *kwds) {
+	static char *kwlist[] = {"msg",NULL};
+	char *msg, *nick, *tot, *server_name;
+	PyObject *rv = NULL;
+	struct client *l = NULL;
+
+	if(self->ptr == NULL) {
+		PyErr_SetString(PyExc_TypeError, "Line Object is not initialized");
+		return NULL;
+	}
+	l = (struct client *)self->ptr;
+	if(l == NULL) {
+		PyErr_SetString(PyExc_TypeError, "Object seems to be deleted");
+		return NULL;
+	}
+
+	if (! PyArg_ParseTupleAndKeywords(args, kwds, "s:sendNotice", kwlist,
+                                      &msg))
+		return NULL;
+
+	if(l->network == NULL) {
+		PyErr_SetString(PyExc_TypeError, "No Network available");
+		return NULL;
+	}
+	printf("XM: %p\n",l->network->xmlConf);
+	//xmlDebugDumpNode(stdout,l->network->xmlConf,0);
+	nick = xmlGetProp(l->network->xmlConf, "nick");
+	server_name = xmlGetProp(l->network->xmlConf, "name");
+
+	asprintf(&tot, ":ctrlproxy!ctrlproxy@%s NOTICE %s :%s\r\n", server_name, nick, msg);
+	rv = PyCtrlproxyClient_send(self, Py_BuildValue("(s)",tot),NULL);
+
+	xmlFree(nick);
+	xmlFree(server_name);
+	return rv;
+}
+
+static PyMethodDef PyCtrlproxyClient_methods[] = {
+    {"send", (PyCFunction)PyCtrlproxyClient_send,METH_VARARGS | METH_KEYWORDS, "Sends a raw string to the client"},
+    {"send_notice", (PyCFunction)PyCtrlproxyClient_sendNotice,METH_VARARGS | METH_KEYWORDS, ""},
+	{NULL}                      /* Sentinel */
+};
+
+
 static int PyCtrlproxyClient_set(PyCtrlproxyObject *self, PyObject *var, void *closure) {
 	PyErr_SetString(PyExc_TypeError, "Client object is readonly"); \
 	return -1;
@@ -380,6 +516,8 @@ static PyGetSetDef PyCtrlproxyClient_GetSetDef[] = {
 	"Time when the client connected","connect_time"},
     {"did_nick_change",(getter)PyCtrlproxyClient_get,(setter)PyCtrlproxyClient_set,
 	"did_nick_change","did_nick_change"},
+    {"nick",(getter)PyCtrlproxyClient_get,(setter)PyCtrlproxyClient_set,
+	"Nickname","nick"},
 	{NULL}
 };
 
@@ -412,7 +550,7 @@ static PyTypeObject PyCtrlproxyClientType = {
     0,                          /* tp_weaklistoffset */
     0,                          /* tp_iter */
     0,                          /* tp_iternext */
-    0,     /* tp_methods */
+    PyCtrlproxyClient_methods,     /* tp_methods */
     0,     /* tp_members */
     PyCtrlproxyClient_GetSetDef,                          /* tp_getset */
     0,                          /* tp_base */
@@ -437,12 +575,12 @@ static PyObject * PyCtrlproxyLine_get(PyCtrlproxyObject *self, void *closure) {
 
 	if(self->ptr == NULL) {
 		PyErr_SetString(PyExc_TypeError, "Line Object is not initialized");
-		return Py_None;
+		return NULL;
 	}
-	l = (struct line *)PyCObject_AsVoidPtr(self->ptr);
+	l = (struct line *)self->ptr;
 	if(l == NULL) {
 		PyErr_SetString(PyExc_TypeError, "Object seems to be deleted");
-		return Py_None;
+		return NULL;
 	}
 	if(!strcmp(closure,"direction")) {
 		rv = PyInt_FromLong((long)l->direction);
@@ -451,24 +589,56 @@ static PyObject * PyCtrlproxyLine_get(PyCtrlproxyObject *self, void *closure) {
 	} else if(!strcmp(closure,"network")) {
 		rv = (PyObject *)createNetworkObject(&l->network);
 	} else if(!strcmp(closure,"client")) {
-		rv = (PyObject *)createClientObject(&l->client);
+		/*if(FROM_SERVER == l->direction) {
+			PyErr_SetString(PyExc_TypeError, "Line comes from Server and has no Client");
+			return NULL;
+		} else {
+		*/
+			rv = (PyObject *)createClientObject(&l->client);
+		//}
 	} else if(!strcmp(closure,"origin")) {
 		rv = PyString_FromString(l->origin);
 	} else if(!strcmp(closure,"args")) {
-		rv = PyList_New(l->argc);
+		rv = PyList_New(0);
 		for(i = 0; i < l->argc; i++) {
-			PyList_Append(rv,PyString_FromString(l->args[i]));
-			i++;
+			if(l->args[i] == NULL) {
+				Py_INCREF(Py_None);
+				PyList_Append(rv,Py_None);
+			} else
+				PyList_Append(rv,PyString_FromFormat("%s",l->args[i]));
 		}
 	}
-	if(rv != NULL)
-		Py_INCREF(rv);
+	//Py_XINCREF(rv);
 	return rv;
 }
 
 static int PyCtrlproxyLine_set(PyCtrlproxyObject *self, PyObject *var, void *closure) {
-	PyErr_SetString(PyExc_TypeError, "Client object is readonly");
-	return -1;
+	struct line *l = NULL;
+	PyObject *rv = NULL;
+	int i = 0;
+
+	if(self->ptr == NULL) {
+		PyErr_SetString(PyExc_TypeError, "Line Object is not initialized");
+		return -1;
+	}
+	l = (struct line *)self->ptr;
+	if(l == NULL) {
+		PyErr_SetString(PyExc_TypeError, "Object seems to be deleted");
+		return -1;
+	}
+
+	if(!strcmp(closure,"options")) {
+		if(!PyInt_Check(var)) {
+			PyErr_SetString(PyExc_ValueError, "Var is no int");
+			return -1;
+		}
+		l->options = (int)PyInt_AsLong(var);
+	} else {
+		PyErr_SetString(PyExc_TypeError, "Option is readonly");
+	}
+	Py_INCREF(Py_None);
+
+	return 0;
 }
 
 static PyGetSetDef PyCtrlproxyLine_GetSetDef[] = {
@@ -574,17 +744,34 @@ static void in_admin_command(char **args, struct line *l)
 	admin_out(l, "LOAD [filename]");
 	admin_out(l, "UNLOAD #id");
 	admin_out(l, "LIST");
+	admin_out(l, "OPENSHELL");
 	admin_out(l, "");
 }
 
 
 // recv hooks
 
-PYCTRLPROXY_PYADDCALLBACK(py_add_rcv_data_hook,rcv_hooks)
+PYCTRLPROXY_PYADDCALLBACK(py_add_rcv_data_hook,py_rcv_hooks)
 
 
 static gboolean in_rcv_data(struct line *l) {
-	PYCTRLPROXY_PYCALLPYCALLBACKS(rcv_hooks,createLineObject)
+	// python shell support
+	int cmdoffset = 0;
+
+	printf("ORGCLIENT %p\n",&l->client);
+	printf("ORGNET %p\n",&l->network);
+	printf("ORGCLIENTNET %p\n",&l->client->network);
+	printf("ORGXML %p\n",&l->network->xmlConf);
+	//xmlDebugDumpNode(stdout,l->network->xmlConf,0);
+
+	PYCTRLPROXY_PYCALLPYCALLBACKS(py_rcv_hooks,createLineObject)
+
+/*	if(l->direction == TO_SERVER && !strcasecmp(l->args[0], "PRIVMSG") &&
+	   	strcasecmp("!PYSHELL",l->args[1]) == 0) {
+		l->options |= LINE_DONT_SEND | LINE_IS_PRIVATE;
+		printf("PYSHELLSUPPORT\n");
+	}
+*/
 }
 
 static PyObject * py_del_rcv_data_hook(PyObject *self, PyObject *args, PyObject *keywds) {
@@ -593,29 +780,87 @@ static PyObject * py_del_rcv_data_hook(PyObject *self, PyObject *args, PyObject 
 
     if (!PyArg_ParseTuple(args, "s", &command))
         return NULL;
-    return Py_BuildValue("i", 0);
+	Py_INCREF(Py_None);
+    return Py_None;
 }
 
 
 // new client hooks
 
-PYCTRLPROXY_PYADDCALLBACK(py_add_new_client_hook,new_client_hooks)
+PYCTRLPROXY_PYADDCALLBACK(py_add_new_client_hook,py_new_client_hooks)
 
 static gboolean in_new_client_hook(struct client *l) {
-	PYCTRLPROXY_PYCALLPYCALLBACKS(new_client_hooks,createClientObject)
+	PYCTRLPROXY_PYCALLPYCALLBACKS(py_new_client_hooks,createClientObject)
+	return 1;
 }
+
 
 
 
 // lose client hooks
 
-PYCTRLPROXY_PYADDCALLBACK(py_add_lose_client_hook,lose_client_hooks)
+PYCTRLPROXY_PYADDCALLBACK(py_add_lose_client_hook,py_lose_client_hooks)
 
 static void in_lose_client_hook(struct client *l)
 {
-	PYCTRLPROXY_PYCALLPYCALLBACKS(lose_client_hooks,createClientObject)
+	PYCTRLPROXY_PYCALLPYCALLBACKS(py_lose_client_hooks,createClientObject)
 }
 
+
+// motd hooks
+
+PYCTRLPROXY_PYADDCALLBACK(py_modt_hook,py_modt_hooks)
+
+char ** in_motd_hook(struct network *n)
+{
+	char **rv = NULL;
+	GList *g = py_modt_hooks;
+	PyObject *r = NULL;
+	int i = 0;
+	int nrlines = 0;
+
+	while(g) {
+		struct callback_object *c = (struct callback_object *)g->data;
+		PyObject *lo = createNetworkObject(n);
+		PyObject *arglist = Py_BuildValue("(O)", lo);
+		PyEval_RestoreThread(c->thread);
+    	r = PyObject_CallObject((PyObject *)c->callback, arglist);
+		if(!PyList_Check(r)) {
+			PyErr_SetString(PyExc_ValueError, "Return Value wrong");
+			PyErr_Print();
+		} else {
+			for(i = 0; i < PyList_Size(r); i++) {
+				rv[nrlines] = PyString_AsString(PyObject_Str(PyList_GetItem(r,i)));
+				nrlines++;
+				rv[nrlines] = NULL;
+			}
+			rv[nrlines] = "\r\n";
+			nrlines++;
+			rv[nrlines] = NULL;
+		}
+
+		g = g->next;
+	}
+
+	return rv;
+}
+
+
+// server connect hook
+
+PYCTRLPROXY_PYADDCALLBACK(py_add_server_connected_hook,py_server_connected_hooks)
+
+static void in_server_connected_hook(struct network *l) {
+	PYCTRLPROXY_PYCALLPYCALLBACKS(py_server_connected_hooks,createNetworkObject)
+}
+
+// server connect hook
+
+PYCTRLPROXY_PYADDCALLBACK(py_add_server_disconnected_hook,py_server_disconnected_hooks)
+
+static void in_server_disconnected_hook(struct network *l) {
+	PYCTRLPROXY_PYCALLPYCALLBACKS(py_server_disconnected_hooks,createNetworkObject)
+}
 
 
 static PyObject * PyCtrlproxy_listnetworks(PyObject *self, PyObject *args, PyObject *kwds){
@@ -626,7 +871,7 @@ static PyObject * PyCtrlproxy_listnetworks(PyObject *self, PyObject *args, PyObj
 		PyList_Append(rv,PyString_FromString(xmlGetProp(s->xmlConf, "name")));
 		l = g_list_next(l);
 	}
-	Py_INCREF(rv);
+	//Py_INCREF(rv);
 	return rv;
 }
 
@@ -645,11 +890,12 @@ static PyObject * PyCtrlproxy_getnetwork(PyObject *self, PyObject *args, PyObjec
 	while(l) {
 		struct network *n = (struct network *)l->data;
 		if(!strcasecmp(xmlGetProp(n->xmlConf, "name"), net)) {
-			rv = createNetworkObject(&n);
+			//rv = (PyObject *)createNetworkObject(&n);
 			break;
 		}
 		l = g_list_next(l);
 	}
+
 	return rv;
 }
 
@@ -673,10 +919,9 @@ static void in_py_admin_command(char **args, struct line *l)
 				i++;
 			}
 			PyEval_RestoreThread(c->thread);
-			//line = createLineObject(&l);
-			line = Py_None;
-			Py_INCREF(arglist);
-			Py_INCREF(line);
+			line = (PyObject *)createLineObject(&l);
+			//line = Py_None;
+			//Py_INCREF(Py_None);
 			PyObject_CallObject((PyObject *)c->callback, Py_BuildValue("(O,O)",arglist,line));
 			PyErr_Print();
 			break;
@@ -710,7 +955,7 @@ static PyObject * py_add_admin_command(PyObject *self, PyObject *args, PyObject 
 	c->thread = PyThreadState_Get();
 	c->callback = temp;
 	c->name = name;
-	Py_XINCREF(c->callback);         /* Add a reference to new callback */
+	Py_INCREF(c->callback);         /* Add a reference to new callback */
 
 	admin_commands = g_list_append(admin_commands, c);
 	register_admin_command(name, in_py_admin_command);
@@ -739,6 +984,9 @@ static PyObject * py_del_admin_command(PyObject *self, PyObject *args, PyObject 
 		}
 		g = g_list_next(g);
 	}
+	free(name);
+	Py_INCREF(Py_None);
+	return Py_None;
 }
 
 
@@ -747,12 +995,11 @@ static PyObject * py_del_admin_command(PyObject *self, PyObject *args, PyObject 
 static PyObject * PyCtrlproxy_loadmodule(PyObject *self, PyObject *args, PyObject *kwds){
 	static char *kwlist[] = {"module",NULL};
 	char *module = NULL;
-	PyObject *rv = NULL;
 	xmlNodePtr cur;
 
     if (! PyArg_ParseTupleAndKeywords(args, kwds, "s:load_module", kwlist,
                                       &module))
-		return rv;
+		return NULL;
 
 	cur = xmlNewNode(NULL, "plugin");
 	xmlSetProp(cur, "file", module);
@@ -760,9 +1007,8 @@ static PyObject * PyCtrlproxy_loadmodule(PyObject *self, PyObject *args, PyObjec
 
 	load_plugin(cur);
 
-	rv = Py_None;
-	Py_INCREF(rv);
-	return rv;
+	Py_INCREF(Py_None);
+	return Py_None;
 }
 
 
@@ -770,7 +1016,6 @@ static PyObject * PyCtrlproxy_unloadmodule(PyObject *self, PyObject *args, PyObj
 	static char *kwlist[] = {"module",NULL};
 	GList *g = plugins;
 	char *module = NULL;
-	PyObject *rv = NULL;
 
     if (! PyArg_ParseTupleAndKeywords(args, kwds, "s:unload_module", kwlist,
                                       &module))
@@ -781,13 +1026,14 @@ static PyObject * PyCtrlproxy_unloadmodule(PyObject *self, PyObject *args, PyObj
 		if(!strcmp(p->name, module)) {
 			if(unload_plugin(p))
 				plugins = g_list_remove(plugins, p);
-			rv = Py_None;
-        	Py_INCREF(rv);
-			return rv;
+        	Py_INCREF(Py_None);
+			return Py_None;
 		}
 		g = g->next;
 	}
-	return rv;
+	PyErr_Format(PyExc_TypeError, "module %s not loaded",module);
+	free(module);
+	return NULL;
 }
 
 static PyObject * PyCtrlproxy_listmodules(PyObject *self, PyObject *args, PyObject *kwds){
@@ -802,7 +1048,6 @@ static PyObject * PyCtrlproxy_listmodules(PyObject *self, PyObject *args, PyObje
 	while(g) {
 		struct plugin *p = (struct plugin *)g->data;
 		PyObject *pl = Py_BuildValue("s",p->name);
-		Py_INCREF(pl);
 		PyList_Append(rv, pl);
 		g = g->next;
 	}
@@ -850,13 +1095,8 @@ static PyObject * PyCtrlproxy_getconfig(PyObject *self, PyObject *args, PyObject
 	else
 		rv = PyInstance_New(PyObject_GetAttrString(xml_module,"xmlDoc"),Py_BuildValue("(O)",libxml_xmlDocPtrWrap((xmlDocPtr) configuration)),NULL);
 
-	Py_XINCREF(rv);
+	//Py_XINCREF(rv);
 	return rv;
-}
-char ** in_modt_hook(struct network *n)
-{
-	//return TRUE;
-	//return "";
 }
 
 
@@ -963,6 +1203,7 @@ gboolean in_load(char *c,PyObject *attrs) {
 	PyModule_AddIntConstant(m, "UNKNOWN", UNKNOWN);
 	PyModule_AddIntConstant(m, "TO_SERVER", TO_SERVER);
 	PyModule_AddIntConstant(m, "FROM_SERVER", FROM_SERVER);
+	PyModule_AddIntConstant(m, "TO_CLIENT", TO_CLIENT);
 
 	Py_INCREF(&PyCtrlproxyLogType);
 	Py_INCREF(&PyCtrlproxyLineType);
@@ -984,13 +1225,15 @@ gboolean in_load(char *c,PyObject *attrs) {
 
 	// set default stdout and stderr
 	stdout = PyObject_New(PyCtrlproxyLog, &PyCtrlproxyLogType);
+	Py_INCREF(stdout);
 	if(stdout != NULL) {
 		PyObject_CallMethod((PyObject *)stdout, "__init__", "i", G_LOG_LEVEL_INFO);
 		PyObject_SetAttrString(sys, "stdout", (PyObject *)stdout);
 	}
 
 	stderr = PyObject_New(PyCtrlproxyLog, &PyCtrlproxyLogType);
-	if(stdout != NULL) {
+	Py_INCREF(stderr);
+	if(stderr != NULL) {
 		PyObject_CallMethod((PyObject *)stderr, "__init__", "i", G_LOG_LEVEL_WARNING);
 		PyObject_SetAttrString(sys, "sterr", (PyObject *)stderr);
 	}
@@ -1021,6 +1264,31 @@ gboolean in_unload(int i,struct line *l) {
 		}
 		g = g->next;
 	}
+}
+
+static void init_finish() {
+	g_log(G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "Loading Python scripts");
+	xmlNodePtr cur = xmlConf->xmlChildrenNode;
+	while(cur) {
+		xmlNodePtr curargs;
+		PyObject *args = NULL;
+		char *file = NULL;
+		if(!xmlIsBlankNode(cur) && !strcmp(cur->name, "load")) {
+				// build arguments list
+				args = PyDict_New();
+				curargs = cur->xmlChildrenNode;
+				while(curargs) {
+					if(!xmlIsBlankNode(cur) && !strcmp(curargs->name, "argument") && xmlHasProp(curargs, "name"))
+						PyDict_SetItemString(args,xmlGetProp(curargs, "name"),PyString_FromString(xmlNodeGetContent(curargs)));
+					if(!xmlIsBlankNode(cur) && !strcmp(curargs->name, "file"))
+						file = xmlNodeGetContent(curargs);
+					curargs = curargs->next;
+				}
+				in_load(file, args);
+		}
+		cur = cur->next;
+	}
+	list_scripts(NULL);
 }
 
 gboolean init_plugin(struct plugin *p) {
@@ -1062,28 +1330,11 @@ gboolean init_plugin(struct plugin *p) {
 	add_filter("python", in_rcv_data);
 	add_new_client_hook("python_new_client", in_new_client_hook);
 	add_lose_client_hook("python_lose_client", in_lose_client_hook);
+	add_motd_hook("python_motd", in_motd_hook);
+	add_server_connected_hook("python_server_connected", in_server_connected_hook);
+	add_server_disconnected_hook("python_server_disconnected", in_server_disconnected_hook);
+	add_initialized_hook(&init_finish);
 
-	cur = xmlConf->xmlChildrenNode;
-	while(cur) {
-		xmlNodePtr curargs;
-		PyObject *args = NULL;
-		char *file = NULL;
-		if(!xmlIsBlankNode(cur) && !strcmp(cur->name, "load")) {
-				// build arguments list
-				args = PyDict_New();
-				curargs = cur->xmlChildrenNode;
-				while(curargs) {
-					if(!xmlIsBlankNode(cur) && !strcmp(curargs->name, "argument") && xmlHasProp(curargs, "name"))
-						PyDict_SetItemString(args,xmlGetProp(curargs, "name"),PyString_FromString(xmlNodeGetContent(curargs)));
-					if(!xmlIsBlankNode(cur) && !strcmp(curargs->name, "file"))
-						file = xmlNodeGetContent(curargs);
-					curargs = curargs->next;
-				}
-				in_load(file, args);
-		}
-		cur = cur->next;
-	}
-	list_scripts(NULL);
 	return TRUE;
 }
 
