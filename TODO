@@ -12,6 +12,7 @@
 - keep track of whether colon should be used
 - add gnutls support
 - new log system
+- generate data for configuration editor from XSL files
 
 Optional:
 - Net::IRC-like interface

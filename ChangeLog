@@ -2,6 +2,7 @@ Ctrlproxy 2.7:
  * Add repl_lastdisconnect.so
  * Add server_connect, server_disconnect and initialized hooks
  * Add python plugin (Daniel Poelzleithner <ctrlproxy@poelzi.org>)
+ * Add gnutls support
 
 Ctrlproxy 2.6:
  * Configuration utility (Kyoshiro)

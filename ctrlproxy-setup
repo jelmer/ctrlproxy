@@ -1,4 +1,6 @@
 #!/usr/bin/env perl
+# ctrlproxy configuration editor
+# (C) 2003 By Kyoshiro @ #ctrlproxy
 
 use strict;
 use IO::File;
@@ -31,7 +33,7 @@ my %defs = (
         },
         'antiflood' => {
             autoload    => 1,
-            desc        => "prevents you from getting kicked from the server for 'Excess flooding' with a message queue"
+            desc        => "prevents you from getting kicked from the server for 'Excess flooding' by queueing messages"
         },
         'auto-away' => {
             autoload    => 1,
@@ -202,7 +204,7 @@ gexes",
             default => "1",
         },
         ignore_first_nick   => {
-            desc    => "says if ctrlproxy shoulf change nick when a new client sends NICK for the first time",
+            desc    => "says if ctrlproxy should change nick when a new client sends NICK for the first time",
             type    => "bool",
             default => "1",
         },
@@ -280,7 +282,7 @@ sub goback {
 
 sub newScreen {
     print $clear_string;
-    print "\033[7;40m CtrlProxy setup                                                  \n$title\n\033[0;0m\n";
+    print "\033[7;40m CtrlProxy setup - $title\n\033[0;0m\n";
 }
 
 sub Pause {
@@ -440,7 +442,7 @@ EOI
 }
 
 sub EraseConf {
-	$title = "Configuration wiping";
+	$title = "Wipe Configuration";
 	newScreen();
 	my $key = getOption("Completely erase configuration",0,1,"bool",undef,undef,0);
 	if ($key) {
@@ -456,7 +458,7 @@ sub LoadDefaultConf {
 	my $key;
 
 	if (!$auto) {
-		$title = "Configuration load";
+		$title = "Load Configuration";
 		newScreen();
 		$key = getOption("Load default modules configuration",0,1,"bool",undef,undef,0);
 	}
@@ -483,7 +485,7 @@ sub LoadDefaultConf {
 		}
 		printsleep "Default modules configuration has been loaded." unless $auto;
 	} else {
-		printsleep "Configuration keeped.";
+		printsleep "Configuration kept.";
 	}
 }
 
@@ -550,7 +552,7 @@ sub ConfigureNetwork {
 
     while (1)
     {
-		$title = "Networks - configure $network network";
+		$title = "Networks - $network";
         newScreen();
         print <<EOI;
 This menu will help you to configure $network network.
@@ -565,7 +567,7 @@ This menu will help you to configure $network network.
 EOI
         my $char = getchar();
         if ($char eq '1') {
-			$title = "Networks - $network\'s global options";
+			$title = "Networks - $network - global options";
 			newScreen();
 			$conf{'networks'}->{$network}->{'parameters'} = {}
 				if (!defined $conf{'networks'}->{$network}->{'parameters'});
@@ -686,7 +688,7 @@ sub ConfigureNetworkServers {
 
     while (1)
     {
-		$title = "Networks - configure $network\'s servers";
+		$title = "Networks - $network - servers";
         newScreen();
         print <<EOI;
 This menu will help you to configure $network\'s server list.
@@ -698,7 +700,7 @@ This menu will help you to configure $network\'s server list.
 EOI
         my $char = getchar();
         if ($char eq '1') {
-			$title = "Networks - configure $network\'s servers";
+			$title = "Networks - $network - servers";
             newScreen();
 			my $ret = PrintIPList($conf{'networks'}->{$network}->{'servers'},"server",\&PrintServer);
             if ($ret) {
@@ -722,7 +724,7 @@ sub ConfigureNetworkListen {
 
     while (1)
     {
-		$title = "Networks - configure $network\'s listeners";
+		$title = "Networks - $network - listeners";
         newScreen();
         print <<EOI;
 This menu will help you to configure $network\'s listeners.
@@ -734,7 +736,7 @@ This menu will help you to configure $network\'s listeners.
 EOI
         my $char = getchar();
         if ($char eq '1') {
-			$title = "Networks - configure $network\'s listeners";
+			$title = "Networks - $network - listeners";
             newScreen();
 			my $ret =
 				PrintIPList($conf{'networks'}->{$network}->{'listeners'},"listener",\&PrintListen);
@@ -794,8 +796,8 @@ EOI
 sub GenerateSSL {
 	$title = "SSL - generate a certificate";
     newScreen();
-	my $HOSTNAME = getOption("Short hostname to	use","localhost",1,"text",'^\S+$',undef,0);
-	my $FQDN = getOption("FQDN to use","localhost.localdomain",1,"text",'^\S+$',undef,0);
+    my $HOSTNAME = getOption("Short hostname touse","localhost",1,"text",'^\S+$',undef,0);
+    my $FQDN = getOption("FQDN to use","localhost.localdomain",1,"text",'^\S+$',undef,0);
     my $file = "$spool/ctrlproxy.pem";
     if (-e $file)
     {
@@ -893,7 +895,7 @@ sub AddServer {
     my ($network) = @_;
     my ($port,$ssl,$host,$proto);
 
-	$title = "Networks - add a server to $network";
+	$title = "Networks - $network - add a server";
 	newScreen();
 
 	$proto = getOption("IP protocol (IPv)",4,1,"text",'^[46]$',undef,1,0);
@@ -921,7 +923,7 @@ sub AddListener {
     my ($network) = @_;
     my ($port,$ssl,$host,$proto);
 
-	$title = "Networks - add a listener to $network";
+	$title = "Networks - $network - add a listener";
 	newScreen();
 
 	$proto = getOption("IP protocol (IPv)",4,1,"text",'^[46]$',undef,1,0);
@@ -951,7 +953,7 @@ sub DelServer {
     my $net = $conf{'networks'}->{$network};
     my $line;
     
-	$title = "Networks - delete a server from $network";
+	$title = "Networks - $network - delete a server";
 	newScreen();
 	my $ret = PrintIPList($net->{'servers'},"server",\&PrintServer);
 	if ($ret) {
@@ -971,7 +973,7 @@ sub DelListener {
     my $net = $conf{'networks'}->{$network};
     my $line;
     
-	$title = "Networks - delete a listener from $network";
+	$title = "Networks - $network - delete a listener";
 	newScreen();
 	my $ret = PrintIPList($net->{'listeners'},"listener",\&PrintListen);
 	if ($ret) {
@@ -1032,7 +1034,7 @@ sub DumpModule {
     $module = SelectModule() unless $module;
     return -1 unless $module;
 
-	$title = "Modules - $module\'s configuration";
+	$title = "Modules - $module";
     newScreen();
     print "Module $module :\n";
     print Dumper($conf{'modules'}->{$module});
@@ -1047,7 +1049,7 @@ sub PrintNetwork {
     return -1 unless $net;
 
     my $nethash = $conf{'networks'}->{$net}->{'parameters'};
-	$title = "Networks - $net\'s information";
+	$title = "Networks - $net - information";
 	newScreen();
     print "$net network :\n";
 
@@ -1104,7 +1106,7 @@ sub ConfigureModule {
     $module = SelectModule() unless $module;
     return -1 unless $module;
     
-	$title = "Modules - select and configure $module";
+	$title = "Modules - $module";
     newScreen();
     print "This module ".$defs{'modules'}->{$module}->{'desc'}."\n\n";
     
@@ -1136,7 +1138,7 @@ sub ConfigureModule {
         HandleOptionsTree($conf{'modules'}->{$module}->{'options'},
 				$defs{'modules'}->{$module}->{'options'});
     } else {
-        print "This module hasn't any options.\n";
+        print "This module does not have any options.\n";
     }
 	Pause();
 	return 0;
@@ -1234,7 +1236,7 @@ sub WriteConfig {
 	$title = "Write configuration file";
 	newScreen();
 
-	$file = getOption("Configuration file","$spool/ctrlproxyrc",1,"text",undef,undef,0);
+	$file = getOption("Configuration file","$ENV{'HOME'}/.ctrlproxyrc",1,"text",undef,undef,0);
 
 	if (-e $file) {
 		my $time = strftime('%s',localtime);
