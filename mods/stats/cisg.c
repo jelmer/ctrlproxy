@@ -60,7 +60,7 @@ void print_html_footer(FILE *out) {
 	fprintf(out, "</html>\n");
 }
 
-void print_html_chan(FILE *out, struct channel *channelstruct)
+void print_html_chan(FILE *out, struct channel *channelstruct, char *imgformat)
 {
 	time_t curtime;
 	struct nick *n;
@@ -76,7 +76,7 @@ void print_html_chan(FILE *out, struct channel *channelstruct)
  	fprintf(out, "<div class=\"iinfo\">\n");
  	fprintf(out, "<h1>%s</h1>\n", channelstruct->name);
 	fprintf(out, "  <p class=\"idate\">Statistics generated on <b>%s</b></p>\n", ctime(&curtime));
-	fprintf(out, "  <p class=\"ivisitors\">A total of <b>%ld</b> different nicks/users were represented on <b>%s</b>.</p>\n", g_list_length(nicks), channelstruct->name);
+	fprintf(out, "  <p class=\"ivisitors\">A total of <b>%d</b> different nicks/users were represented on <b>%s</b>.</p>\n", g_list_length(nicks), channelstruct->name);
 	fprintf(out, "  <p class=\"imessage\"></p>\n");
 	fprintf(out, " </div>\n");
 	fprintf(out, "<!-- ============================================= -->\n");
@@ -140,10 +140,10 @@ void print_html_chan(FILE *out, struct channel *channelstruct)
 	fprintf(out, "\n");
 	fprintf(out, "  <table  class=\"ihourbars\" align=\"center\">\n");
 	fprintf(out, "   <tr>\n");
-	fprintf(out, "    <td class=\"asmall\"><img src=\"./blue-h.png\" width=\"40\" height=\"15\" alt=\"0-5\" /> = 0-5</td>\n");
-	fprintf(out, "    <td class=\"asmall\"><img src=\"./green-h.png\" width=\"40\" height=\"15\" alt=\"6-11\" /> = 6-11</td>\n");
-	fprintf(out, "    <td class=\"asmall\"><img src=\"./yellow-h.png\" width=\"40\" height=\"15\" alt=\"12-17\" /> = 12-17</td>\n");
-	fprintf(out, "    <td class=\"asmall\"><img src=\"./red-h.png\" width=\"40\" height=\"15\" alt=\"18-23\" /> = 18-23</td>\n");
+	fprintf(out, "    <td class=\"asmall\"><img src=\"%s/blue-h.png\" width=\"40\" height=\"15\" alt=\"0-5\" /> = 0-5</td>\n", imgformat);
+	fprintf(out, "    <td class=\"asmall\"><img src=\"%s/green-h.png\" width=\"40\" height=\"15\" alt=\"6-11\" /> = 6-11</td>\n", imgformat);
+	fprintf(out, "    <td class=\"asmall\"><img src=\"%s/yellow-h.png\" width=\"40\" height=\"15\" alt=\"12-17\" /> = 12-17</td>\n", imgformat);
+	fprintf(out, "    <td class=\"asmall\"><img src=\"%s/red-h.png\" width=\"40\" height=\"15\" alt=\"18-23\" /> = 18-23</td>\n", imgformat);
 	fprintf(out, "   </tr>\n");
 	fprintf(out, "  </table>\n");
 	fprintf(out, " </div>\n");
@@ -156,7 +156,7 @@ void print_html_chan(FILE *out, struct channel *channelstruct)
 	fprintf(out, "    <th width=\"2%%\" class=\"nhappiness\">?</th>\n");
 	fprintf(out, "    <th width=\"10%%\" class=\"nhandle\">Nickname</th>\n");
 	fprintf(out, "    <th width=\"6%%\" class=\"npublics\">Lines</th>\n");
-	fprintf(out, "    <th width=\"15%\" class=\"nactivity\">Activity</th>\n");
+	fprintf(out, "    <th width=\"15%%\" class=\"nactivity\">Activity</th>\n");
 	fprintf(out, "    <th width=\"5%%\" class=\"nwords\">Words</th>\n");
 	fprintf(out, "    <th width=\"2%%\" class=\"nwpp\">W/P</th>\n");
 	fprintf(out, "    <th width=\"2%%\" class=\"ncpw\">C/W</th>\n");
@@ -169,10 +169,10 @@ void print_html_chan(FILE *out, struct channel *channelstruct)
 		
 		fprintf(out, "   <tr>\n");
 		fprintf(out, "    <td class=\"nrank\">%d</td>\n", i);
-		fprintf(out, "    <td class=\"nhappiness\"><img src=\"./happy1.gif\" alt=\"1\" /></td>\n");
+		fprintf(out, "    <td class=\"nhappiness\"><img src=\"%s/happy1.gif\" alt=\"1\" /></td>\n", imgformat);
 		fprintf(out, "    <td class=\"nhandle\">%s</td>\n", n->name);
 		fprintf(out, "    <td class=\"npublics\">%ld</td>\n", nick_get_property(n, "lines"));
-		fprintf(out, "    <td class=\"nactivity\"><img src=\"./blue-h.png\" width=\"15\" height=\"15\" alt=\"\" /><img src=\"./yellow-h.png\" width=\"18\" height=\"15\" alt=\"\" /><img src=\"./red-h.png\" width=\"31\" height=\"15\" alt=\"\" /></td>\n");
+		fprintf(out, "    <td class=\"nactivity\"><img src=\"%s/blue-h.png\" width=\"15\" height=\"15\" alt=\"\" /><img src=\"%s/yellow-h.png\" width=\"18\" height=\"15\" alt=\"\" /><img src=\"%s/red-h.png\" width=\"31\" height=\"15\" alt=\"\" /></td>\n", imgformat, imgformat, imgformat);
 		fprintf(out, "    <td class=\"nwords\">%ld</td>\n", nick_get_property(n, "word"));
 		fprintf(out, "    <td class=\"nwpp\">%f</td>\n", PERCENTAGE(n, "happy"));
 		fprintf(out, "    <td class=\"ncpw\">%f</td>\n", PERCENTAGE(n, "unhappy"));
@@ -200,7 +200,7 @@ void print_html_chan(FILE *out, struct channel *channelstruct)
 	for(i = 0; nicks; i++) nicks = nicks->next;
 	g_list_free(nicks);
 
-	fprintf(out, " <h3>There were also <b>%ld</b> other nicks</h3>\n", i);
+	fprintf(out, " <h3>There were also <b>%d</b> other nicks</h3>\n", i);
 	fprintf(out, " </div>\n");
 	fprintf(out, "<!-- ============================================= -->\n");
 	fprintf(out, "<div class=\"ibignumbers\">\n");
@@ -301,7 +301,7 @@ char *urlencode(char *a)
 	return ret;
 }
 
-void print_html_networklist(FILE *out, char *linkformat)
+void print_html_networklist(FILE *out, char *linkformat, char *imgformat)
 {
 	GList *l = get_networks();
 	print_html_header(out, "Networks");
@@ -316,7 +316,7 @@ void print_html_networklist(FILE *out, char *linkformat)
 	print_html_footer(out);
 }
 
-void print_html_channellist(FILE *out, struct network *n, char *linkformat) 
+void print_html_channellist(FILE *out, struct network *n, char *linkformat, char *imgformat) 
 {
 	GList *l = get_channels(n);
 	char *title;
@@ -355,7 +355,7 @@ int main(int argc, const char **argv)
 	char *network = NULL, *channel = NULL;
 	struct network *networkstruct;
 	struct channel *channelstruct;
-	char *linkformat = NULL;
+	char *linkformat = NULL, *imgformat = ".";
 	int html = 0, all = 0, tofile = 0;
 	FILE *out = stdout;
 	int arg;
@@ -365,6 +365,7 @@ int main(int argc, const char **argv)
 		{"tofile", 'f', POPT_ARG_NONE, &tofile, 0, "Write output to arg.html"},
 		{"html", 'h', POPT_ARG_NONE, &html, 0, "HTML output" },
 		{"linkprepend", 'l', POPT_ARG_STRING, &linkformat, 0, "String to put before each link in HTML files" },
+		{"imgprepend", 'i', POPT_ARG_STRING, &imgformat, 0, "String to put before each image in HTML files" },
 		POPT_TABLEEND
 	};
 	poptContext pc;
@@ -390,12 +391,12 @@ int main(int argc, const char **argv)
 	stats_parse_file(statsfile);
 
 	if(!poptPeekArg(pc)) { 
-		if(html) print_html_networklist(out, linkformat);
+		if(html) print_html_networklist(out, linkformat, imgformat);
 		else print_plain_networklist(out);
 		return 0;
 	}
 
-	while(fullchan = poptGetArg(pc)) {
+	while((fullchan = poptGetArg(pc))) {
 		if(tofile) {
 			char *fname;
 			fclose(out);
@@ -412,7 +413,7 @@ int main(int argc, const char **argv)
 				fprintf(stderr, "No such network '%s'\n", network);
 				continue;
 			}
-			if(html) print_html_channellist(out, networkstruct, linkformat);
+			if(html) print_html_channellist(out, networkstruct, linkformat, imgformat);
 			else print_plain_channellist(out, networkstruct);
 			continue;
 		}
@@ -429,7 +430,7 @@ int main(int argc, const char **argv)
 			fprintf(stderr, "No such channel '%s' on network '%s'\n", channel, network);
 			continue;
 		}			
-		if(html) print_html_chan(out, channelstruct);
+		if(html) print_html_chan(out, channelstruct, imgformat);
 		else print_plain_chan(out, channelstruct);
 	}
 
