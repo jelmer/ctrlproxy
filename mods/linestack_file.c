@@ -63,6 +63,8 @@ static gboolean file_clear(struct linestack_context *c)
 	g_io_channel_shutdown(d->channel, TRUE, NULL);
 	unlink(d->filename);
 	d->channel = g_io_channel_new_file(d->filename, "w+", &error);
+	g_io_channel_set_encoding(d->channel, NULL, &error);
+
 	return TRUE;
 }
 
@@ -83,7 +85,9 @@ static GSList *file_get_linked_list(struct linestack_context *c)
 	GError *error = NULL;
 	GSList *ret = NULL;
 	char *raw;
-
+	
+	/* Flush channel before reading otherwise data corruption may occur */
+	g_io_channel_flush(d->channel, &error);
 	/* Go back to begin of file */
 	g_io_channel_seek(d->channel, 0, G_SEEK_SET);
 	
@@ -113,8 +117,11 @@ static void file_send_file(struct linestack_context *b, struct transport_context
 {
 	struct file_information *d = (struct file_information *)b->data;
 	char *raw;
+	
 	GError *error = NULL;
 	
+	/* Flush channel before reading otherwise data corruption may occur */
+	g_io_channel_flush(d->channel, &error);
 	/* Go back to begin of file */
 	g_io_channel_seek(d->channel, 0, G_SEEK_SET);
 	
