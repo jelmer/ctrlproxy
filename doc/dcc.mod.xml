@@ -1,0 +1,14 @@
+<ctrlproxy:module name="dcc"
+	xmlns:ctrlproxy="http://ctrlproxy.vernstok.nl/common">
+	<modulemeta>
+		<description>Standard DCC module</description>
+		<version>0.1</version>
+		<author>Jelmer Vernooij</author>
+		<homepage>http://jelmer.vernstok.nl/ctrlproxy/</homepage>
+	</modulemeta>
+
+	<description>
+		<!--FiXME-->
+	</description>
+
+</ctrlproxy:module>

@@ -1,0 +1,24 @@
+<ctrlproxy:module name="admin"
+	xmlns:ctrlproxy="http://ctrlproxy.vernstok.nl/common">
+	<modulemeta>
+		<description>Debugging</description>
+		<version>0.1</version>
+		<author>Jelmer Vernooij</author>
+		<email>jelmer@vernstok.nl</email>
+		<homepage>http://ctrlproxy.vernstok.nl/</homepage>
+	</modulemeta>
+
+	<description>
+		<!--FIXME-->
+	</description>
+	<section>
+		<title>Commands</title>
+
+		<para>The following commands are supported:</para>
+
+		<variablelist>
+			<!--FIXME-->
+		</variablelist>
+	</section>
+
+</ctrlproxy:module>
