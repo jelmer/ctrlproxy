@@ -275,7 +275,6 @@ int main(int argc, const char *argv[])
 	signal(SIGUSR1, signal_save);
 #endif
 
-	initialized_hook_execute();
 
 	main_loop = g_main_loop_new(NULL, FALSE);
 
@@ -382,6 +381,7 @@ int main(int argc, const char *argv[])
 
 
 	g_timeout_add(1000 * 300, ping_loop, NULL);
+	initialized_hook_execute();
 	g_main_loop_run(main_loop);
 	clean_exit();
 
