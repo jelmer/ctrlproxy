@@ -4,6 +4,7 @@
 		<description>NickServ</description>
 		<version>0.1</version>
 		<author>Jelmer Vernooij</author>
+		<email>jelmer@vernstok.nl</email>
 		<homepage>http://ctrlproxy.vernstok.nl/</homepage>
 	</modulemeta>
 

@@ -4,7 +4,8 @@
 		<description>Logging ctrlproxy messages via IRC</description>
 		<version>0.1</version>
 		<author>Jelmer Vernooij</author>
-		<homepage>http://jelmer.vernstok.nl/ctrlproxy/</homepage>
+		<email>jelmer@vernstok.nl</email>
+		<homepage>http://ctrlproxy.vernstok.nl/</homepage>
 	</modulemeta>
 
 	<description>
