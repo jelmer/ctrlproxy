@@ -74,6 +74,7 @@ struct allow_rule {
 };
 
 static GList *allow_rules = NULL;
+static GList *pending_clients = NULL;
 
 struct socks_method;
 struct socks_client
@@ -102,8 +103,10 @@ static gboolean socks_reply(GIOChannel *ioc, guint8 err, guint8 atyp, guint8 dat
 
 	status = g_io_channel_write_chars(ioc, header, 6 + data_len, &read, NULL);
 
+	g_free(header);
+
 	g_io_channel_flush(ioc, NULL);
-	
+
 	return (err == REP_OK);
 }
 
@@ -224,15 +227,16 @@ static struct network *socks_map_network_fqdn(const char *hostname, guint16 port
 	}
 
 	if ((n = find_network(hostname))) {
+		g_free(portname);
 		return n;
 	}
 
 	/* Create a new server */
 	{
-		n = new_network();
 		struct addrinfo hints;
 		struct tcp_server *s = g_new0(struct tcp_server, 1);
 		int error;
+		n = new_network();
 
 		n->name = g_strdup(hostname);
 		n->name_guessed = TRUE;
@@ -248,6 +252,10 @@ static struct network *socks_map_network_fqdn(const char *hostname, guint16 port
 		error = getaddrinfo(s->host, s->port, &hints, &s->addrinfo);
 		if (error) {
 			g_warning("Unable to lookup %s:%s %s", s->host, s->port, gai_strerror(error));
+			g_free(s->host);
+			g_free(portname);
+			g_free(s);
+			close_network(n);
 			return NULL;
 		}
 
@@ -274,6 +282,12 @@ static gboolean handle_client_data (GIOChannel *ioc, GIOCondition o, gpointer da
 	struct socks_client *cl = data;
 	GIOStatus status;
 	int i;
+
+	if (o == G_IO_HUP) {
+		pending_clients = g_list_remove(pending_clients, cl);
+		g_free(cl);
+		return FALSE;
+	}
 
 	if (cl->state == STATE_NEW) {
 		guint8 header[2];
@@ -418,6 +432,9 @@ static gboolean handle_client_data (GIOChannel *ioc, GIOCondition o, gpointer da
 						
 						new_client(result, ioc);
 
+						pending_clients = g_list_remove(pending_clients, cl);
+						g_free(cl);
+
 						return FALSE;
 					} else {
 						char *data = g_strdup("xlocalhost");
@@ -426,6 +443,9 @@ static gboolean handle_client_data (GIOChannel *ioc, GIOCondition o, gpointer da
 						socks_reply(ioc, REP_OK, ATYP_FQDN, data[0]+1, data, 1025);
 
 						new_client(result, ioc);
+
+						pending_clients = g_list_remove(pending_clients, cl);
+						g_free(cl);
 
 						return FALSE;
 					}
@@ -458,8 +478,10 @@ static gboolean handle_new_client (GIOChannel *ioc, GIOCondition o, gpointer dat
 	cl->connection = g_io_channel_unix_new(ns);
 	cl->state = STATE_NEW;
 	g_io_channel_set_encoding(cl->connection, NULL, NULL);
-	cl->watch_id = g_io_add_watch(cl->connection, G_IO_IN, handle_client_data, cl);
+	cl->watch_id = g_io_add_watch(cl->connection, G_IO_IN | G_IO_HUP, handle_client_data, cl);
 	g_io_channel_unref(cl->connection);
+
+	pending_clients = g_list_append(pending_clients, cl);
 	
 	return TRUE;
 }
@@ -467,6 +489,17 @@ static gboolean handle_new_client (GIOChannel *ioc, GIOCondition o, gpointer dat
 /* Configure port number to listen on */
 gboolean fini_plugin(struct plugin *p)
 {
+	GList *gl;
+	for (gl = pending_clients; gl; gl = gl->next) {
+		struct socks_client *sc = gl->data;
+
+		g_source_remove(sc->watch_id);
+
+		g_free(sc);
+	}
+
+	g_list_free(pending_clients);
+
 	/* Close port */
 	g_source_remove(server_channel_in);
 	return TRUE;

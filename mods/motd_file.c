@@ -48,12 +48,16 @@ char ** motd_file_handler(struct network *n, void *userdata)
 		lines[nrlines] = NULL;
 	}
 
+	fclose(fd);
+
 	return lines;
 }
 
 gboolean fini_plugin(struct plugin *p) {
 	
 	del_motd_hook("motd_file");
+	g_free(motd_file);
+	motd_file = NULL;
 	return TRUE;
 }
 

@@ -30,6 +30,9 @@ gboolean unload_plugin(struct plugin *p)
 {
 	plugin_fini_function f;
 
+	if (!p->loaded) 
+		return FALSE;
+
 	/* Run exit function if present */
 	if(g_module_symbol(p->module, "fini_plugin", (gpointer)&f)) {
 		if(!f(p)) {
@@ -41,11 +44,12 @@ gboolean unload_plugin(struct plugin *p)
 		return FALSE;
 	}
 
+#ifndef VALGRIND
 	g_module_close(p->module);
+#endif
 
 	p->loaded = FALSE;
 
-	plugins = g_list_remove(plugins, p);
 	g_free(p->name);
 	g_free(p->path);
 	g_free(p);
@@ -110,6 +114,7 @@ gboolean load_plugin(struct plugin *p)
 
 	if(!g_module_symbol(m, "init_plugin", (gpointer)&f)) {
 		g_warning(_("Can't find symbol 'init_plugin' in module %s: %s"), path_name, g_module_error());
+		g_free(path_name);
 		return FALSE;
 	}
 	g_free(path_name);
@@ -123,9 +128,6 @@ gboolean load_plugin(struct plugin *p)
 	push_plugin(p);
 	if(!f(p)) {
 		g_warning(_("Running initialization function for plugin '%s' failed."), p->path);
-		g_free(p->name);
-		g_free(p->path);
-		g_free(p);
 		return FALSE;
 	}
 
@@ -137,6 +139,26 @@ gboolean load_plugin(struct plugin *p)
 
 	p->loaded = TRUE;
 	return TRUE;
+}
+
+void free_plugin(struct plugin *p)
+{
+	g_free(p->path);
+	g_free(p->name);
+	g_free(p);
+
+	plugins = g_list_remove(plugins, p);
+}
+
+void fini_plugins() {
+	while (plugins) 
+	{
+		struct plugin *p = plugins->data;
+
+		unload_plugin(p);
+
+		free_plugin(p);
+	}
 }
 
 gboolean init_plugins() {

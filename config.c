@@ -84,13 +84,16 @@ xmlNodePtr plugin_save_config(struct plugin *p)
 
 void init_config()
 {
-    LIBXML_TEST_VERSION
-	
 	dtd = xmlParseDTD(NULL, DTD_FILE);
 
 	if (!dtd) {
 		g_error("Can't load DTD file from %s", DTD_FILE);
 	}
+}
+
+void fini_config()
+{
+	xmlFreeDtd(dtd);
 }
 
 static void config_load_plugin(xmlNodePtr root)

@@ -71,7 +71,7 @@ static gboolean file_clear(struct linestack_context *c)
 {
 	struct file_information *d = (struct file_information *)c->data;
 	GError *error = NULL;
-	g_io_channel_shutdown(d->channel, TRUE, NULL);
+	g_io_channel_unref(d->channel);
 #ifndef _WIN32
 	unlink(d->filename);
 #else 
@@ -86,7 +86,7 @@ static gboolean file_clear(struct linestack_context *c)
 static gboolean file_close(struct linestack_context *c)
 {
 	struct file_information *d = (struct file_information *)c->data;
-	g_io_channel_shutdown(d->channel, TRUE, NULL);
+	g_io_channel_unref(d->channel);
 	unlink(d->filename);
 	g_free(d->filename);
 	g_free(d);

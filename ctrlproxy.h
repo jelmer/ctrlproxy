@@ -88,7 +88,7 @@ struct network_nick {
 };
 
 struct channel {
-	const char *name;
+	char *name;
 	char *key;
 	char *topic;
 	gboolean autojoin;
@@ -107,7 +107,6 @@ struct client {
 	char *description;
 	GIOChannel *incoming;
 	gint incoming_id;
-	gint hangup_id;
 	time_t connect_time;
 	char* nick;
 	char *fullname;
@@ -157,7 +156,6 @@ struct network {
 			size_t namelen;
 			GIOChannel *outgoing;
 			gint outgoing_id;
-			gint hangup_id;
 		} tcp;
 		
 		struct {
@@ -198,7 +196,7 @@ struct plugin {
 
 /* state.c */
 G_MODULE_EXPORT struct channel *find_channel(struct network *st, const char *name);
-G_MODULE_EXPORT struct channel_nick *find_nick(struct channel *c, char *name);
+G_MODULE_EXPORT struct channel_nick *find_nick(struct channel *c, const char *name);
 G_MODULE_EXPORT struct linestack_context *linestack_new_by_network(struct network *);
 G_MODULE_EXPORT GSList *gen_replication_network(struct network *s);
 G_MODULE_EXPORT GSList *gen_replication_channel(struct channel *c, const char *hostmask, const char *nick);

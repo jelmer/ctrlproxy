@@ -226,6 +226,7 @@ void del_new_client_hook(char *name)
 		if(!strcmp(d->name, name)) {
 			g_message(_("New client hook '%s' removed"), d->name);
 			g_free(d->name);
+			g_free(d);
 			new_client_hooks = g_list_remove(new_client_hooks, d);
 			return;
 		}
@@ -324,6 +325,7 @@ void del_motd_hook(char *name)
 		if(!strcmp(d->name, name)) {
 			g_message(_("MOTD hook '%s' removed"), d->name);
 			g_free(d->name);
+			g_free(d);
 			motd_hooks = g_list_remove(motd_hooks, d);
 			return;
 		}
@@ -403,6 +405,7 @@ void del_server_connected_hook(char *name)
 		if(!strcmp(d->name, name)) {
 			g_message(_("Lose client hook '%s' removed"), d->name);
 			g_free(d->name);
+			g_free(d);
 			server_connected_hooks = g_list_remove(server_connected_hooks, d);
 			return;
 		}
@@ -452,6 +455,7 @@ void del_server_disconnected_hook(char *name)
 		if(!strcmp(d->name, name)) {
 			g_message(_("Lose client hook '%s' removed"), d->name);
 			g_free(d->name);
+			g_free(d);
 			server_disconnected_hooks = g_list_remove(server_disconnected_hooks, d);
 			return;
 		}

@@ -67,8 +67,9 @@ void admin_out(struct line *l, const char *fmt, ...)
 
 	hostmask = g_strdup_printf(":ctrlproxy!ctrlproxy@%s", l->network->name);
 	irc_send_args(l->client->incoming, hostmask, "NOTICE", l->network->nick, msg, NULL);
-
 	g_free(hostmask);
+
+	g_free(msg);
 }
 
 static struct network *find_network_struct(char *name)

@@ -64,20 +64,6 @@
 			<!--			<script>scripts/web/server.py</script> -->
 		</plugin>
 		
-
-		<!-- Generate a TDB file with statistics about how much 
-		certain patterns where used in a channel -->
-		<plugin file="libstats" autoload="0">
-			<pattern type="happy">[:;]([-]*)[\)D]</pattern>
-			<pattern type="unhappy">[:;]([-]*)[\/\(]</pattern>
-			<pattern type="question">\?([^ ]*)$</pattern>
-			<pattern type="exclamation">!([^ ]*)$</pattern>
-			<pattern type="lines">(.*)</pattern>
-			<pattern type="word">([^ ]+)</pattern>
-			<pattern type="caps">^([^a-z]+)$</pattern>
-			<pattern type="action">.ACTION .</pattern>
-		</plugin>
-
 		<plugin autoload="1" file="linestack_file"/>
 		<plugin autoload="0" file="linestack_memory"/>
 

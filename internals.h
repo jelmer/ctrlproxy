@@ -54,13 +54,15 @@ gboolean init_networks();
 
 /* state.c */
 void state_handle_data(struct network *s, struct line *l);
-void state_reconnect(struct network *s);
+void free_channels(struct network *s);
 
 /* config.c */
 void init_config(void);
+void fini_config(void);
 
 /* plugins.c */
 gboolean init_plugins(void);
+void fini_plugins(void);
 
 /* hooks.c */
 void server_disconnected_hook_execute(struct network *);

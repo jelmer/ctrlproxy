@@ -81,6 +81,7 @@ static gboolean log_data(struct line *l, void *userdata) {
 gboolean fini_plugin(struct plugin *p) {
 	struct auto_away_data *d = (struct auto_away_data *)p->data;
 
+	g_free(message);
 	del_filter(log_data);
 	g_source_remove(d->timeout_id);
 

@@ -17,10 +17,11 @@
 	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 */
 
-#include "internals.h"
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
+#define __USE_POSIX
+#include "internals.h"
 
 #define BACKTRACE_STACK_SIZE 64
 
@@ -32,12 +33,13 @@
 #include <unistd.h>
 #endif
 
+#include <netdb.h>
+
 #define add_log_domain(domain) g_log_set_handler (domain, G_LOG_LEVEL_MASK | G_LOG_FLAG_FATAL | G_LOG_FLAG_RECURSION, log_handler, NULL);
 
 /* globals */
 GMainLoop *main_loop;
 char my_hostname[MAXHOSTNAMELEN+2];
-char *configuration_file;
 FILE *debugfd = NULL;
 FILE *f_logfile = NULL;
 
@@ -95,6 +97,7 @@ void log_handler(const gchar *log_domain, GLogLevelFlags flags, const gchar *mes
 
 static void clean_exit()
 {
+	extern gint ping_loop_id;
 	GList *gl;
 	while((gl = get_network_list())) {
 		struct network *n = (struct network *)gl->data;
@@ -102,7 +105,13 @@ static void clean_exit()
 	}
 
 	if(debugfd)fclose(debugfd);
+	fini_config();
+	fini_plugins();
+
+	g_source_remove(ping_loop_id);
 	g_main_loop_quit(main_loop);
+
+	g_main_loop_unref(main_loop);
 }
 
 void signal_quit(int sig)
@@ -118,7 +127,7 @@ void signal_quit(int sig)
 
 	g_message(_("Closing connections..."));
 
-	g_main_loop_quit(main_loop);
+	exit(0);
 }
 
 void signal_save(int sig)
@@ -131,6 +140,7 @@ int main(int argc, const char *argv[])
 	int isdaemon = 0;
 	int seperate_processes = 0;
 	char *logfile = NULL, *rcfile = NULL;
+	char *configuration_file;
 #ifdef HAVE_POPT_H
 	int c;
 	poptContext pc;
@@ -249,7 +259,13 @@ int main(int argc, const char *argv[])
 		} else {
 			load_configuration(SHAREDIR"/ctrlproxyrc.default");
 		}
+
+		g_free(configuration_file);
 	}
+
+#ifdef HAVE_POPT_H
+	poptFreeContext(pc);
+#endif
 
 	atexit(clean_exit);
 
@@ -257,5 +273,3 @@ int main(int argc, const char *argv[])
 
 	return 0;
 }
-
-

@@ -111,8 +111,19 @@ static void free_names(struct channel *c)
 static void free_channel(struct channel *c)
 {
 	free_names(c);
-	if(c->topic)g_free(c->topic);
-	c->topic = NULL;
+	g_free(c->name);
+	g_free(c->topic);
+	g_free(c->key);
+	c->network->channels = g_list_remove(c->network->channels, c);
+	g_free(c);
+}
+
+void free_channels(struct network *s)
+{
+	while(s->channels)
+	{
+		free_channel((struct channel *)s->channels->data);
+	}
 }
 
 struct channel *find_channel(struct network *st, const char *name)
@@ -138,10 +149,10 @@ struct channel *find_add_channel(struct network *st, char *name) {
 	return c;
 }
 
-struct channel_nick *find_nick(struct channel *c, char *name) {
+struct channel_nick *find_nick(struct channel *c, const char *name) {
 	GList *l = c->nicks;
 	struct channel_nick *n;
-	char *realname = name;
+	const char *realname = name;
 	if(is_prefix(realname[0], c->network))realname++;
 
 	while(l) {
@@ -260,11 +271,9 @@ static void handle_part(struct network *s, struct line *l)
 
 		/* The user is joining a channel */
 		if(!irccmp(s, line_get_nick(l), s->nick) && c) {
-			s->channels = g_list_remove(s->channels, c);
 			g_message(_("Leaving %s"), p);
 			c->joined = FALSE;
 			free_channel(c);
-			g_free(c);
 			c = NULL;
 			p = m + 1;
 			continue;
@@ -576,23 +585,6 @@ static void handle_nick(struct network *s, struct line *l)
 	}
 
 	if(!irccmp(s, line_get_nick(l), s->nick)) network_change_nick(s, l->args[1]);
-}
-
-void state_reconnect(struct network *s)
-{
-	GList *l = s->channels;
-
-	/* Remove list of channels */
-	while(l) {
-		struct channel *ch = (struct channel *)l->data;
-		free_channel(ch);
-		g_free(ch);
-		l = g_list_next(l);
-	}
-
-	g_list_free(s->channels);
-
-	s->channels = NULL;
 }
 
 static struct irc_command {

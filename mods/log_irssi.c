@@ -42,7 +42,7 @@
 static char *logfile = NULL;
 static GHashTable *files = NULL;
 
-static FILE *find_add_channel_file(struct network *s, char *name) {
+static FILE *find_add_channel_file(struct network *s, const char *name) {
 	char *n = NULL;
 	FILE *f;
 	char *hash_name;
@@ -102,14 +102,14 @@ static FILE *find_channel_file(struct network *s, const char *name) {
 
 static gboolean log_data(struct line *l, void *userdata)
 {
-	char *nick = NULL;
-	char *dest = NULL;
+	const char *nick = NULL;
+	const char *dest = NULL;
 	char *user = NULL;
 	time_t ti = time(NULL);
 	struct tm *t = localtime(&ti);
 	FILE *f = NULL;
 	if(!l->args || !l->args[0] || l->options & LINE_NO_LOGGING)return TRUE;
-	if(l->origin)nick = g_strdup(l->origin);
+	if(l->origin)nick = l->origin;
 	if(nick)user = strchr(nick, '!');
 	if(user){ *user = '\0';user++; }
 	if(!nick && l->network->nick)nick = l->network->nick;
@@ -207,6 +207,7 @@ static gboolean log_data(struct line *l, void *userdata)
 
 gboolean fini_plugin(struct plugin *p)
 {
+	g_hash_table_destroy(files);
 	g_free(logfile); logfile = NULL;
 	del_filter_ex("log", log_data);
 	return TRUE;
@@ -237,7 +238,7 @@ gboolean load_config(struct plugin *p, xmlNodePtr node)
 
 gboolean init_plugin(struct plugin *p)
 {
-	files = g_hash_table_new(g_str_hash, g_str_equal);
+	files = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, fclose);
 	add_filter_ex("log_irssi", log_data, NULL, "log", 1000);
 	return TRUE;
 }

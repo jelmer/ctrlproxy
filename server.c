@@ -35,8 +35,7 @@
 #include "internals.h"
 #include "irc.h"
 
-#define SERVER_SEND_LINE(s,l) {if(!network_send_line(s, l))reconnect(NULL, G_IO_HUP, s);}
-#define CLIENT_SEND_LINE(c,l) {if(!irc_send_line((c)->incoming, l))disconnect_client(c);}
+#define CLIENT_SEND_LINE(c,l) {}
 
 static GIOChannel * (*sslize_function) (GIOChannel *);
 
@@ -55,6 +54,10 @@ gboolean handle_server_receive (GIOChannel *c, GIOCondition cond, void *_server)
 	struct network *server = (struct network *)_server;
 	struct line *l;
 
+	if (cond & G_IO_HUP) {
+		return reconnect(c, cond, _server);
+	}
+
 	l = irc_recv_line(c);
 	if(!l)return TRUE;
 
@@ -64,6 +67,8 @@ gboolean handle_server_receive (GIOChannel *c, GIOCondition cond, void *_server)
 		return TRUE;
 	}
 
+	printf("FROM SERVER: %s\n", l->args[0]);
+
 	l->direction = FROM_SERVER;
 	l->network = server;
 
@@ -72,7 +77,6 @@ gboolean handle_server_receive (GIOChannel *c, GIOCondition cond, void *_server)
 
 	/* We need to handle pings.. we can't depend on a client
 	 * to do that for us*/
-	l->direction = FROM_SERVER;
 	if(!g_strcasecmp(l->args[0], "PING")){
 		network_send_args(server, "PONG", l->args[1], NULL);
 	} else if(!g_strcasecmp(l->args[0], "PONG")){
@@ -93,7 +97,7 @@ gboolean handle_server_receive (GIOChannel *c, GIOCondition cond, void *_server)
 
 			newl = irc_parse_line(data);
 
-			SERVER_SEND_LINE(server, newl);
+			network_send_line(server, newl);
 
 			free_line(newl);
 		}
@@ -206,11 +210,16 @@ gboolean network_send_args(struct network *s, ...)
 {
 	va_list ap;
 	struct line *l;
+	gboolean ret;
 	va_start(ap, s);
 	l = virc_parse_line(NULL, ap);
 	va_end(ap);
 
-	return network_send_line(s, l);
+	ret = network_send_line(s, l);
+
+	free_line(l);
+
+	return ret;
 }
 
 
@@ -220,6 +229,7 @@ gboolean connect_current_tcp_server(struct network *s)
 	int sock;
 	int size;
 	struct tcp_server *cs = s->connection.tcp.current_server;
+	GIOChannel *ioc = NULL;
 
 	if(!cs) {
 		s->autoconnect = FALSE;
@@ -233,7 +243,6 @@ gboolean connect_current_tcp_server(struct network *s)
 
 	/* Connect */
 
-	sock = -1;
 	for (res = cs->addrinfo; res; res = res->ai_next) {
 		sock = socket(res->ai_family, res->ai_socktype,
 					  res->ai_protocol);
@@ -241,26 +250,30 @@ gboolean connect_current_tcp_server(struct network *s)
 			continue;
 		}
 
-		if (connect(sock, res->ai_addr, res->ai_addrlen) < 0) {
-			close(sock); sock = -1;
+		ioc = g_io_channel_unix_new(sock);
+
+		g_io_channel_set_flags(ioc, G_IO_FLAG_NONBLOCK, NULL);
+
+		if (connect(sock, res->ai_addr, res->ai_addrlen) < 0 && errno != EINPROGRESS) {
+			g_io_channel_unref(ioc);
+			ioc = NULL;
 			continue;
 		}
 
 		break; 
 	}
 
-	if (sock < 0) {
+	if (!ioc) {
 		g_warning("Unable to connect: %s", strerror(errno));
 		return FALSE;
 	}
 
 	size = sizeof(struct sockaddr_in6);
+	g_free(s->connection.tcp.local_name);
 	s->connection.tcp.local_name = g_malloc(size);
 	s->connection.tcp.namelen = getsockname(sock, s->connection.tcp.local_name, &size);
 
-	s->connection.tcp.outgoing = g_io_channel_unix_new(sock);
-
-	g_io_channel_set_flags(s->connection.tcp.outgoing, G_IO_FLAG_NONBLOCK, NULL);
+	s->connection.tcp.outgoing = ioc;
 
 	if (cs->ssl) {
 		if (!sslize_function) {
@@ -272,8 +285,7 @@ gboolean connect_current_tcp_server(struct network *s)
 
 	server_send_login(s);
 	
-	s->connection.tcp.outgoing_id = g_io_add_watch(s->connection.tcp.outgoing, G_IO_IN, handle_server_receive, s);
-	s->connection.tcp.hangup_id = g_io_add_watch(s->connection.tcp.outgoing, G_IO_HUP, reconnect, s);
+	s->connection.tcp.outgoing_id = g_io_add_watch(s->connection.tcp.outgoing, G_IO_IN | G_IO_HUP, handle_server_receive, s);
 
 	g_io_channel_unref(s->connection.tcp.outgoing);
 
@@ -313,7 +325,7 @@ static gboolean reconnect(GIOChannel *c, GIOCondition cond, void *_server)
 	g_warning(_("Connection to network %s lost, trying to reconnect in %ds..."), server->name, server->reconnect_interval);
 
 	server->authenticated = FALSE;
-	state_reconnect(server);
+	free_channels(server);
 	server->reconnect_id = g_timeout_add(1000 * server->reconnect_interval, (GSourceFunc) connect_next_tcp_server, server);
 
 	return FALSE;
@@ -345,8 +357,6 @@ gboolean close_server(struct network *n) {
 		case NETWORK_TCP: 
 			g_source_remove(n->connection.tcp.outgoing_id); 
 			n->connection.tcp.outgoing_id = 0; 
-			g_source_remove(n->connection.tcp.hangup_id); 
-			n->connection.tcp.hangup_id = 0; 
 			break;
 		case NETWORK_PROGRAM: 
 			g_source_remove(n->connection.program.outgoing_id); 
@@ -391,7 +401,6 @@ void disconnect_client(struct client *c) {
 	if(!c->incoming)return;
 
 	g_source_remove(c->incoming_id);
-	g_source_remove(c->hangup_id);
 	c->incoming = NULL;
 
 	c->network->clients = g_list_remove(c->network->clients, c);
@@ -399,9 +408,10 @@ void disconnect_client(struct client *c) {
 
 	g_message(_("Removed client to %s"), c->network->name);
 
-	if (c->nick) g_free(c->nick);
+	g_free(c->username);
+	g_free(c->fullname);
+	g_free(c->nick);
 	g_free(c);
-
 }
 
 void clients_send(struct network *server, struct line *l, struct client *exception) 
@@ -409,16 +419,9 @@ void clients_send(struct network *server, struct line *l, struct client *excepti
 	GList *g = server->clients;
 	while(g) {
 		struct client *c = (struct client *)g->data;
-		if(c != exception)CLIENT_SEND_LINE(c, l);
+		if(c != exception) irc_send_line(c->incoming, l);
 		g = g_list_next(g);
 	}
-}
-
-static gboolean handle_client_disconnect(GIOChannel *c, GIOCondition cond, void *data)
-{
-	struct client *client = (struct client *)data;
-	disconnect_client(client);
-	return FALSE;
 }
 
 void send_motd(struct network *n, GIOChannel *c)
@@ -446,6 +449,11 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition cond, void *_c
 	struct client *client = (struct client *)_client;
 	struct line *l;
 
+	if (cond & G_IO_HUP) {
+		disconnect_client(client);
+		return FALSE;
+	}
+
 	l = irc_recv_line(c);
 	if(!l) return TRUE;
 
@@ -460,6 +468,8 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition cond, void *_c
 	l->network = client->network;
 
 	state_handle_data(client->network, l);
+
+	printf("FROM CLIENT: %s\n", l->args[0]);
 
 	filters_execute(l);
 
@@ -492,7 +502,9 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition cond, void *_c
 		irc_sendf(c, ":%s PONG :%s\r\n", client->network->name, l->args[1]);
 	} else if(network_is_connected(client->network)) {
 		char *old_origin;
-		if(!(l->options & LINE_DONT_SEND)) {SERVER_SEND_LINE(client->network, l) }
+		if(!(l->options & LINE_DONT_SEND)) {
+			network_send_line(client->network, l);
+		}
 
 		/* Also write this message to all other clients currently connected */
 		if(!(l->options & LINE_IS_PRIVATE) && l->args[0] &&
@@ -544,8 +556,7 @@ struct client *new_client(struct network *n, GIOChannel *c)
 				network_send_args(client->network, "NICK", client->nick, NULL);
 	}
 
-	client->incoming_id = g_io_add_watch(client->incoming, G_IO_IN, handle_client_receive, client);
-	client->hangup_id = g_io_add_watch(client->incoming, G_IO_HUP, handle_client_disconnect, client);
+	client->incoming_id = g_io_add_watch(client->incoming, G_IO_IN | G_IO_HUP, handle_client_receive, client);
 
 	n->clients = g_list_append(n->clients, client);
 
@@ -680,6 +691,38 @@ int close_network(struct network *s)
 
 	if(s->reconnect_id) g_source_remove(s->reconnect_id);
 
+	g_free(s->fullname);
+	g_free(s->username);
+	g_free(s->nick);
+	g_free(s->password);
+	g_free(s->name);
+
+	free_channels(s);
+
+	if (s->type == NETWORK_TCP) {
+		g_free(s->connection.tcp.local_name);
+		for (l = g_list_first(s->connection.tcp.servers); l; l = l->next) {
+			struct tcp_server *ts = l->data;
+			freeaddrinfo(ts->addrinfo);
+			g_free(ts->host);
+			g_free(ts->port);
+			g_free(ts->password);
+			g_free(ts->name);
+			g_free(ts);
+		}
+		g_list_free(s->connection.tcp.servers);
+	} else if (s->type == NETWORK_PROGRAM) {
+		xmlFree(s->connection.program.location);
+	} else if (s->type == NETWORK_VIRTUAL) {
+		xmlFree(s->connection.virtual.type);
+	}
+
+	for (l = s->autosend_lines; l; l = l->next) {
+		g_free(l->data);
+	}
+	g_list_free(s->autosend_lines);
+	
+
 	g_free(s);
 
 	return 0;
@@ -745,6 +788,8 @@ void unregister_virtual_network(struct virtual_network_ops *ops)
 	g_hash_table_remove(virtual_network_ops, ops->name);
 }
 
+gint ping_loop_id;
+
 gboolean init_networks() {
 	GList *gl;
 	if(!networks) {
@@ -773,7 +818,7 @@ gboolean init_networks() {
 
 	if (!virtual_network_ops) {
 		virtual_network_ops = g_hash_table_new(g_str_hash, g_str_equal);
-		g_timeout_add(1000 * 300, ping_loop, NULL);
+		ping_loop_id = g_timeout_add(1000 * 300, ping_loop, NULL);
 	}
 
 	return TRUE;
