@@ -19,6 +19,7 @@
 
 #include "internals.h"
 #include <errno.h>
+#include <ctype.h>
 
 xmlNodePtr xmlFindChildByElementName(xmlNodePtr parent, const xmlChar *name)
 {
@@ -79,4 +80,32 @@ char *ctrlproxy_path(char *part)
 	asprintf(&p1, "%s/%s", p, part);
 	free(p);
 	return p1;
+}
+
+int strrfc1459cmp(const char *a, const char *b)
+{
+	int i;
+	for(i = 0; a[i] && b[i]; i++) {
+		if(a[i] - b[i] == 0) continue; 
+		switch(a[i]) {
+				case 'a'...'b':
+					if(tolower(a[i]) - tolower(b[i]))	
+						return tolower(a[i]) - tolower(b[i]);
+					break;
+				case '{':
+					if(b[i] != '[') return a[i] - b[i];
+					break;
+				case '}':
+					if(b[i] != ']') return a[i] - b[i];
+					break;
+				case '^':
+					if(b[i] != '~') return a[i] - b[i];
+					break;
+				case '|':
+					if(b[i] != '\\') return a[i] - b[i];
+				default:
+					return a[i] - b[i];
+		}
+	}
+	return 0;
 }

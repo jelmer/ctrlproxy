@@ -1,4 +1,5 @@
 Ctrlproxy 2.7:
+ * Support 'true' RFC1459 string comparison
  * Respect CASEMAPPING sent by server
  * Use NETWORK sent by server
  * Add autosave module (Daniel Poelzleithner <ctrlproxy@poelzi.org>)

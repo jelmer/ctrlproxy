@@ -768,8 +768,7 @@ int irccmp(struct network *n, const char *a, const char *b)
 		return strcasecmp(a,b);
 
 	case CASEMAP_RFC1459:
-		/* FIXME */
-		return strcasecmp(a,b);
+		return strrfc1459cmp(a,b);
 		break;
 	}
 	return 0;
