@@ -1,7 +1,7 @@
-Jelmer Vernooij <jelmer@nl.linux.org>
+Jelmer Vernooij <jelmer@nl.linux.org> (Main developer)
+Daniel Poelzleithner <ctrlproxy@poelzi.org> (several major patches, autosave/python module)
 
 Thanks to the following people for patches and useful bugreports:
-Daniel Poelzleithner <ctrlproxy@poelzi.org> (several major patches, bug reports, python module)
 mibukyoshiro@altern.org (bug reports, setup script)
 Aron Griffis <agriffis@gentoo.org> (gentoo package, bug reports)
 Barnaba Marcello <vjt@users.sf.net>, original author of network-openssl.c
