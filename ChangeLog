@@ -1,4 +1,6 @@
 Ctrlproxy 2.7:
+ * Add report_time
+ * Add linestack_file
  * Add repl_lastdisconnect.so
  * Add server_connect, server_disconnect and initialized hooks
  * Add python plugin (Daniel Poelzleithner <ctrlproxy@poelzi.org>)
@@ -21,7 +23,6 @@ Ctrlproxy 2.6:
  * Fix for better RFC compliance
  * Fixed bug when crashing on exit
  * Fixed daemon mode
- * Add report_time module
  * Start FAQ
  * Several bugs in log_custom fixed (thanks, igla)
  * Fix build without libssl
@@ -29,7 +30,6 @@ Ctrlproxy 2.6:
  * Add attribute only_noclient
  * Split repl_memory into linestack_memory and repl_simple
  * Add linestack support
- * Add linestack_file
  * Add linestack_memory
  * Add repl_command
  * Add repl_highlight
