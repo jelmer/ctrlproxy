@@ -121,15 +121,7 @@ static void socket_to_iochannel(int sock, struct transport_context *c, enum ssl_
 	struct socket_data *s = malloc(sizeof(struct socket_data));
 	GError *error = NULL;
 	ioc = g_io_channel_unix_new(sock);
-#if defined(HAVE_GNUTLS_GNUTLS_H)
-	if(ssl_mode != SSL_MODE_NONE) {
-		GIOChannel *newioc;
-		newioc = g_io_gnutls_get_iochannel(ioc, ssl_mode == SSL_MODE_SERVER);
-
-		if(!newioc) g_warning(_("Can't convert socket to SSL"));
-		else ioc = newioc;
-	}
-#elif defined(HAVE_OPENSSL_SSL_H)
+#if defined(HAVE_OPENSSL_SSL_H)
 	if(ssl_mode != SSL_MODE_NONE) {
 		GIOChannel *newioc;
 		newioc = irssi_ssl_get_iochannel(ioc, ssl_mode == SSL_MODE_SERVER);
@@ -137,6 +129,15 @@ static void socket_to_iochannel(int sock, struct transport_context *c, enum ssl_
 		if(!newioc) g_warning(_("Can't convert socket to SSL"));
 		else ioc = newioc;
 	}
+#elif defined(HAVE_GNUTLS_GNUTLS_H)
+	if(ssl_mode != SSL_MODE_NONE) {
+		GIOChannel *newioc;
+		newioc = g_io_gnutls_get_iochannel(ioc, ssl_mode == SSL_MODE_SERVER);
+
+		if(!newioc) g_warning(_("Can't convert socket to SSL"));
+		else ioc = newioc;
+	}
+
 #endif
 	
 	g_io_channel_set_encoding(ioc, NULL, &error);
@@ -679,7 +680,9 @@ gboolean init_plugin(struct plugin *p) {
 		if(access(keyf, R_OK) != 0) { free(keyf); keyf = NULL; }
 	}
 
-#if defined(HAVE_GNUTLS_GNUTLS_H)
+#if defined(HAVE_OPENSSL_SSL_H)
+	irssi_ssl_set_files(certf, keyf);
+#elif defined(HAVE_GNUTLS_GNUTLS_H)
 	g_io_gnutls_init();
 
 	if(!caf) {
@@ -688,8 +691,6 @@ gboolean init_plugin(struct plugin *p) {
 	}
 		
 	g_io_gnutls_set_files(certf, keyf, caf);
-#elif defined(HAVE_OPENSSL_SSL_H)
-	irssi_ssl_set_files(certf, keyf);
 #endif
 
 	if(certf) free(certf); 
