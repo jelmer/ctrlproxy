@@ -26,4 +26,6 @@ repl_simple.xml
 repl_none.xml
 repl_highlight.xml
 repl_command.xml
+repl_lastdisconnect.xml
+python.xml
 linestack_memory.xml
