@@ -9,7 +9,7 @@ INCLUDEFILES = $(wildcard *.h)
 
 .PHONY: all install clean distclean
 
-all: $(MODS_SHARED_FILES) static.o
+all: $(MODS_SHARED_FILES) 
 	for I in $(MODS_SHARED_SUBDIRS); do $(MAKE) -C $$I $@; done
 
 install: all
@@ -21,7 +21,7 @@ install: all
 $(MODS_STATIC_SUBDIRS_FILES):
 	$(MAKE) -C $(@D) $(@F)
 
-static.o: $(MODS_STATIC_FILES)
+static.o: $(MODS_STATIC_FILES) 
 	$(LD) -r -o $@ $^
 
 %.o: %.c

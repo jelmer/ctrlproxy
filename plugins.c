@@ -94,9 +94,9 @@ gboolean load_plugin(struct plugin *p)
 
 	if(!m) {
 		g_warning(_("Unable to open module %s(%s), ignoring"), path_name, g_module_error());
+		g_free(path_name);
 		return FALSE;
 	}
-	g_free(path_name);
 
 	if(!g_module_symbol(m, "name_plugin", (gpointer)&selfname)) {
 		selfname = p->path;
@@ -104,6 +104,7 @@ gboolean load_plugin(struct plugin *p)
 
 	if(plugin_loaded(selfname)) {
 		g_warning(_("Plugin already loaded"));
+		g_free(path_name);
 		return FALSE;
 	}
 
@@ -111,6 +112,7 @@ gboolean load_plugin(struct plugin *p)
 		g_warning(_("Can't find symbol 'init_plugin' in module %s"), path_name);
 		return FALSE;
 	}
+	g_free(path_name);
 
 	p->name = g_strdup(selfname);
 	p->module = m;

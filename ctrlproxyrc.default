@@ -10,7 +10,6 @@
 		<!-- Support for interfacing to ctrlproxy 
 		using /MSG ctrlproxy or /CTRLPROXY -->
 		<plugin autoload="1" file="libadmin"/>
-		<plugin autoload="1" file="libsocket"/>
 		<!-- Don't replicate any backlogs, just send channel info -->
 		<plugin autoload="0" file="librepl_none"/>
 		<!-- Backlog any data since last time user said something -->
@@ -77,10 +76,11 @@
 		<plugin autoload="1" file="linestack_file"/>
 		<plugin autoload="0" file="linestack_memory"/>
 	</plugins>
+
 	<networks>
 		<network autoconnect="1" client_pass="secret" name="Freenode" fullname="CtrlProxy user">
 			<servers>
-				<ipv4 host="irc.freenode.net"/>
+				<server host="irc.freenode.net"/>
 			</servers>
 			<channel name="#ctrlproxy-test" autojoin="1"/>
 			<autosend>PRIVMSG #ctrlproxy-test :Hi There, I'm using ctrlproxy!</autosend>

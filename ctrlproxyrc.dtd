@@ -25,7 +25,7 @@
 
 <!ELEMENT server EMPTY>
 <!ATTLIST server port CDATA #IMPLIED>
-<!ATTLIST server host CDATA #IMPLIED>
+<!ATTLIST server host CDATA #REQUIRED>
 <!ATTLIST server ssl CDATA #IMPLIED>
 <!ELEMENT program (#PCDATA)>
 <!ELEMENT virtual ANY>
