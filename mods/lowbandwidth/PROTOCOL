@@ -1,0 +1,3 @@
+Server:
+00iixxstring\n -> Assign string to number x for type i
+cchh...\n -> Command c, hostmask h
