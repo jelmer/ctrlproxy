@@ -1,5 +1,6 @@
 - finish configuration utility (worked on by Kyoshiro, see list in ctrlproxy-setup)
 - automated testsuite
+ - test_filter utility
 - dcc module
 - add member 'nick' to struct line
 - add more help data
@@ -9,6 +10,7 @@
 - add timer that uses current_plugin
 - support running from inetd
 - repl_limited (repl_simple with limited number of lines)
+- change behaviour of login_connect
 - dircproxy-config-to-ctrlproxyrc script
 - add NICK to repl_*
 - free NICK stuff in repl

@@ -243,6 +243,7 @@ gboolean add_filter_ex(char *name, filter_function, char *classname, int priorit
 void del_filter(filter_function);
 gboolean del_filter_ex(char *classname, filter_function);
 gboolean filters_execute(struct line *l);
+gboolean filters_execute_class(char *name, struct line *l);
 void add_filter_class(char *name, int priority);
 
 typedef gboolean (*new_client_hook) (struct client *);

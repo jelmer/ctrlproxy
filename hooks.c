@@ -132,6 +132,7 @@ gboolean del_filter_ex(char *class, filter_function f)
 	return FALSE;
 }
 
+
 static gboolean filter_class_execute(struct filter_class *c, struct line *l) 
 {
 	GList *gl = c->filters;
@@ -152,6 +153,14 @@ static gboolean filter_class_execute(struct filter_class *c, struct line *l)
 	current_plugin = old_plugin;
 	
 	return TRUE;
+}
+
+gboolean filters_execute_class(char *name, struct line *l)
+{
+	struct filter_class *c = find_filter_class(name);
+	if(!c) return FALSE;
+
+	return filter_class_execute(c, l);
 }
 
 gboolean filters_execute(struct line *l) 
