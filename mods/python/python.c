@@ -25,7 +25,13 @@
 
 //#define _GNU_SOURCE
 //#include <string.h>
-#include "Python.h"
+#ifdef DEBUG
+#undef _DEBUG
+#include <python.h>
+#define DEBUG
+#else
+#include <python.h>
+#endif
 #include "structmember.h"
 #include "ctrlproxy.h"
 #include <string.h>
@@ -2391,7 +2397,11 @@ gboolean in_load(char *c,PyObject *args, struct line *l) {
 	// extend module path and add tools object
 	PyList_Append(PyObject_GetAttrString(sys,"path"),PyString_FromString(pylibdir));
 	// add the script basedir to path
+#ifdef HAVE_CANONICALIZE_FILE_NAME
 	PyList_Append(PyObject_GetAttrString(sys,"path"),PyString_FromString(canonicalize_file_name(g_path_get_dirname(c))));
+#else 
+	/* FIXME */
+#endif
 
 	PyImport_ImportModule("ctrlproxy_tools");
 	PyModule_AddObject(m, "tools", PyImport_AddModule("ctrlproxy_tools"));
