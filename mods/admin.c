@@ -422,6 +422,8 @@ static struct admin_command builtin_commands[] = {
 static gboolean handle_data(struct line *l) {
 	char *tmp, **args = NULL, *p;
 	int cmdoffset = 0;
+	GError *error = NULL;
+	int argc = 0;
 	int i;
 	GList *gl;
 	if(l->direction != TO_SERVER) return TRUE;
@@ -451,10 +453,10 @@ static gboolean handle_data(struct line *l) {
 		}
 	}
 
-	args[0] = tmp;
-	p = tmp;
-
-	args = g_strsplit(p, " ",0);
+	if(!g_shell_parse_argv(tmp, &argc, &args, &error)) {
+		admin_out(l, "Parse error of argument %s", error->message);
+		return FALSE;
+	}
 
 	/* Ok, arguments are processed now. Execute the corresponding command */
 	gl = commands;
@@ -462,7 +464,7 @@ static gboolean handle_data(struct line *l) {
 		struct admin_command *cmd = (struct admin_command *)gl->data;
 		if(!strcasecmp(cmd->name, args[0])) {
 			cmd->handler(args, l);
-			free(args);
+			g_strfreev(args);
 			free(tmp);
 			return TRUE;
 		}
@@ -471,9 +473,9 @@ static gboolean handle_data(struct line *l) {
 
 	admin_out(l, "Can't find command '%s'. Type 'help' for a list of available commands. ", args[0]);
 
-	free(args);
+	g_strfreev(args);
 	free(tmp);
-	
+
 	return TRUE;
 }
 
