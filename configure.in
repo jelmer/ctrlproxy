@@ -18,7 +18,7 @@ AC_PROG_INSTALL
 MODS=""
 
 BINS="ctrlproxy$ac_cv_exeext"
-MODS="$MODS liblog_irssi.so libctcp.so liblinestack_memory.so libauto-away.so libstrip.so libadmin.so libnoticelog.so libnickserv.so liblog_custom.so libantiflood.so librepl_simple.so librepl_command.so librepl_highlight.so librepl_limited.so liblinestack_file.so libreport_time.so librepl_memory.so librepl_none.so libmotd_file.so librepl_lastdisconnect.so libautosave.so libdebug.so"
+MODS="$MODS liblog_irssi.so libctcp.so liblinestack_memory.so libauto-away.so libstrip.so libadmin.so libnoticelog.so libnickserv.so liblog_custom.so libantiflood.so librepl_simple.so librepl_command.so librepl_highlight.so librepl_limited.so liblinestack_file.so libreport_time.so librepl_memory.so librepl_none.so libmotd_file.so librepl_lastdisconnect.so libautosave.so libdebug.so libsocks.so"
 MODS_SUBDIRS=""
 
 # Checks for libraries.
@@ -26,9 +26,11 @@ AC_CHECK_LIB([popt], [poptGetArg], , AC_MSG_WARN([Popt is strongly advised]))
 
 PKG_CHECK_MODULES(PKG, libxml-2.0 glib-2.0 gmodule-2.0, , AC_MSG_ERROR([libxml and glib are required]))
 
+AM_PATH_PYTHON([2.3])
 sinclude(doc/config.m4)
-sinclude(mods/python/config.m4)
 sinclude(mods/socket/config.m4)
+#sinclude(mods/python2/config.m4)
+sinclude(mods/python2/config.m4)
 
 # Checks for header files.
 AC_HEADER_DIRENT

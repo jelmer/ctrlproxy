@@ -1,0 +1,16 @@
+SWIG = @SWIG@
+CC = @CC@
+LD = @LD@
+
+all: ctrlproxy.so
+
+ctrlproxy.so: ctrlproxy_wrap.o
+
+%.o: %.c
+	$(CC) -c $<
+
+%.so: 
+	$(LD) -shared $^ -o $@
+
+%_wrap.c: %.i
+	$(SWIG) -python $<
