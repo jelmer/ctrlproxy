@@ -32,18 +32,21 @@ static gboolean loop_save_config(gpointer user_data)
 gboolean init_plugin(struct plugin *p)
 {
 	int time = 0;
-	xmlNodePtr cur = p->xmlConf->xmlChildrenNode;
+	xmlNodePtr cur = p->xmlConf->children;
+	char *buf;
 	while(cur) {
-		if(!xmlIsBlankNode(cur) && !strcmp(cur->name, "interval")) {
-			time = atoi(xmlNodeGetContent(cur));
-			break;
+		if(!strcmp(cur->name, "interval")) {
+			buf = xmlGetProp(cur, "time");
+			if(buf)
+				time = atoi(buf);
+			xmlFree(buf);
 		}
 		cur = cur->next;
 	}
 	if(time > 0)
 		autosave_id = g_timeout_add(1000 * 60 * time, loop_save_config, NULL);
 	else
-		g_log(G_LOG_DOMAIN, G_LOG_LEVEL_ERROR, "Interval %i is too low", time);
+		g_log(G_LOG_DOMAIN, G_LOG_LEVEL_ERROR, "Interval of %i minutes is too short", time);
 
 	return TRUE;
 }
