@@ -763,13 +763,13 @@ const char *get_network_feature(struct network *n, char *name)
 int irccmp(struct network *n, const char *a, const char *b)
 {
 	switch(n->casemapping) {
-	case CASEMAP_UNKNOWN:
-	case CASEMAP_ASCII:
-		return strcasecmp(a,b);
-
 	case CASEMAP_RFC1459:
 		return strrfc1459cmp(a,b);
 		break;
+	default:
+	case CASEMAP_UNKNOWN:
+	case CASEMAP_ASCII:
+		return strcasecmp(a,b);
 	}
 	return 0;
 }
