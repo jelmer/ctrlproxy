@@ -154,8 +154,8 @@ int requires_colon(struct line *l)
 	else if(l->has_endcolon == WITHOUT_COLON) return 0;
 
 	c = atoi(l->args[0]);
-	if(!strcasecmp(l->args[0], "MODE"))return 0;
-	if(!strcasecmp(l->args[0], "NICK"))return 0;
+	if(!g_ascii_strcasecmp(l->args[0], "MODE"))return 0;
+	if(!g_ascii_strcasecmp(l->args[0], "NICK"))return 0;
 
 	switch(c) {
 	case RPL_CHANNELMODEIS:

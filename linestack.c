@@ -84,7 +84,7 @@ GSList *linestack_get_linked_list(struct linestack_context *b)
 void linestack_send_limited(struct linestack_context *b, struct transport_context *t, size_t last)
 {
 	GSList *lines, *gl;
-	int i;
+	unsigned int i;
 	if(!b) return;
 	if(b->functions->send_limited) b->functions->send_limited(b, t, last);
 

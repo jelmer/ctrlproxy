@@ -1,0 +1,1 @@
+Required: glib, glib-dev, zlib, gettext, libintl, iconv from ethereal.com. libxml from ???

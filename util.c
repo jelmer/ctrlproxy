@@ -20,6 +20,10 @@
 #include "internals.h"
 #include <errno.h>
 #include <ctype.h>
+#ifdef _WIN32
+#include <direct.h>
+#define mkdir(s,t) _mkdir(s)
+#endif
 
 xmlNodePtr xmlFindChildByElementName(xmlNodePtr parent, const xmlChar *name)
 {
@@ -88,10 +92,6 @@ int strrfc1459cmp(const char *a, const char *b)
 	for(i = 0; a[i] && b[i]; i++) {
 		if(a[i] - b[i] == 0) continue; 
 		switch(a[i]) {
-				case 'a'...'b':
-					if(tolower(a[i]) - tolower(b[i]))	
-						return tolower(a[i]) - tolower(b[i]);
-					break;
 				case '{':
 					if(b[i] != '[') return a[i] - b[i];
 					break;
@@ -104,6 +104,8 @@ int strrfc1459cmp(const char *a, const char *b)
 				case '|':
 					if(b[i] != '\\') return a[i] - b[i];
 				default:
+					if(a[i] >= 'a' && a[i] <= 'z' && tolower(a[i]) - tolower(b[i]))	
+						return tolower(a[i]) - tolower(b[i]);
 					return a[i] - b[i];
 		}
 	}

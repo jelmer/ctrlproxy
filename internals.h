@@ -21,19 +21,23 @@
 #define __INTERNALS_H__
 
 #define _GNU_SOURCE
-#include <popt.h>
+#ifdef HAVE_POPT_H
+#  include <popt.h>
+#endif
 #include "ctrlproxy.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <sys/types.h>
 #include <string.h>
 #include <stdarg.h>
 #include <signal.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <dirent.h>
 #include <libintl.h>
+#ifdef _WIN32
+int asprintf(char **dest, const char *fmt, ...);
+int vasprintf(char **dest, const char *fmt, va_list ap);
+#endif
 
 #define _(s) gettext(s)
 

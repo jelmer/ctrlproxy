@@ -61,10 +61,10 @@ void handle_server_receive (struct transport_context *c, char *raw, void *_serve
 	 * to do that for us*/
 	l->direction = FROM_SERVER;
 	if(l->args[0]) {
-		if(!strcasecmp(l->args[0], "PING")){
+		if(!g_ascii_strcasecmp(l->args[0], "PING")){
 			if(server->outgoing)irc_send_args(server->outgoing, "PONG", l->args[1], NULL);
-		} else if(!strcasecmp(l->args[0], "PONG")){
-		} else if(!strcasecmp(l->args[0], "433") && !server->authenticated){
+		} else if(!g_ascii_strcasecmp(l->args[0], "PONG")){
+		} else if(!g_ascii_strcasecmp(l->args[0], "433") && !server->authenticated){
 			if(server->outgoing) {
 				char *new_nick;
 				char *nick = xmlGetProp(server->xmlConf, "nick");
@@ -362,7 +362,7 @@ void handle_client_receive(struct transport_context *c, char *raw, void *_client
 		g_log(G_LOG_DOMAIN, G_LOG_LEVEL_WARNING, _("No password set for %s, allowing client _without_ authentication!"), server_name);
 	}
 
-	if(!strcasecmp(l->args[0], "USER")){
+	if(!g_ascii_strcasecmp(l->args[0], "USER")){
 		if(!client->authenticated){
 			irc_sendf(c, ":%s 451 %s :You are not registered\r\n", 
 					  server_name,
@@ -390,7 +390,7 @@ void handle_client_receive(struct transport_context *c, char *raw, void *_client
 			  server_name);
 		if(!new_client_hook_execute(client))
 			disconnect_client(client);
-	} else if(!strcasecmp(l->args[0], "PASS")) {
+	} else if(!g_ascii_strcasecmp(l->args[0], "PASS")) {
 		if (!clientpass)
 			client->authenticated = 1;
 		else if(!strcmp(l->args[1], clientpass)) {
@@ -404,19 +404,19 @@ void handle_client_receive(struct transport_context *c, char *raw, void *_client
 			xmlFree(nick); xmlFree(server_name);
 			return;
 		}
-	} else if(!strcasecmp(l->args[0], "NICK") && l->args[1] && !client->did_nick_change && xmlHasProp(client->network->xmlConf, "ignore_first_nick")) {
+	} else if(!g_ascii_strcasecmp(l->args[0], "NICK") && l->args[1] && !client->did_nick_change && xmlHasProp(client->network->xmlConf, "ignore_first_nick")) {
 		/* Ignore the first nick change attempt */
 		client->did_nick_change = 1;
 		irc_sendf(c, ":%s NICK %s", l->args[1], nick);
-	} else if(!strcasecmp(l->args[0], "NICK") && l->args[1] && !strcasecmp(l->args[1], nick)) {
+	} else if(!g_ascii_strcasecmp(l->args[0], "NICK") && l->args[1] && !g_ascii_strcasecmp(l->args[1], nick)) {
 		/* Ignore attempts to change nick to the current nick */
-	} else if(!strcasecmp(l->args[0], "QUIT")) {
+	} else if(!g_ascii_strcasecmp(l->args[0], "QUIT")) {
 		disconnect_client(client);
 		free_line(l);
 		if(clientpass)xmlFree(clientpass);
 		xmlFree(nick);
 		return;
-	} else if(!strcasecmp(l->args[0], "PING")) {
+	} else if(!g_ascii_strcasecmp(l->args[0], "PING")) {
 		irc_sendf(c, ":%s PONG :%s\r\n", server_name, l->args[1]);
 	} else if(client->authenticated) {
 		state_handle_data(client->network, l);

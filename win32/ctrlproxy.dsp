@@ -64,9 +64,10 @@ LINK32=link.exe
 # PROP Use_Debug_Libraries 1
 # PROP Output_Dir "Debug"
 # PROP Intermediate_Dir "Debug"
+# PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /Gm /GX /Zi /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /YX /FD /c
-# ADD CPP /nologo /W3 /Gm /GX /Zi /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /YX /FD /c
+# ADD CPP /nologo /W3 /Gm /GX /Zi /Od /I "c:\dev\include" /I "c:\dev\include\glib-2.0" /I "c:\dev\lib\glib-2.0\include" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D PACKAGE_NAME=\"ctrlproxy\" /D PACKAGE_VERSION="1.0" /D LOCALEDIR=\"FIXME\" /D SHAREDIR=\"FIXME\" /D MODULESDIR=\"FIXME\" /YX /FD /c
 # ADD BASE MTL /nologo /D "_DEBUG" /mktyplib203 /o NUL /win32
 # ADD MTL /nologo /D "_DEBUG" /mktyplib203 /o NUL /win32
 # ADD BASE RSC /l 0x409 /d "_DEBUG"
@@ -76,7 +77,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /debug /machine:I386 /pdbtype:sept
-# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /debug /machine:I386 /pdbtype:sept
+# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib asprintf.lib libxml2.lib iconv.lib intl.lib gobject-2.0.lib gmodule-2.0.lib glib-2.0.lib ws2_32.lib /nologo /subsystem:windows /debug /machine:I386 /pdbtype:sept /libpath:"c:\dev\lib"
 
 !ENDIF 
 
@@ -114,7 +115,7 @@ SOURCE=..\main.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\printstats.c
+SOURCE=..\plugins.c
 # End Source File
 # Begin Source File
 
@@ -122,11 +123,15 @@ SOURCE=..\server.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\state.c
+SOURCE=.\snprintf.c
 # End Source File
 # Begin Source File
 
-SOURCE="..\test-parser.c"
+SOURCE=.\snprintf.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\state.c
 # End Source File
 # Begin Source File
 
@@ -135,6 +140,10 @@ SOURCE=..\transport.c
 # Begin Source File
 
 SOURCE=..\util.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\winmain.c
 # End Source File
 # End Target
 # End Project

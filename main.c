@@ -25,12 +25,14 @@
 #include <libxml/xmlmemory.h>
 #include <libxml/parser.h>
 
-#include <unistd.h>
-
 #define BACKTRACE_STACK_SIZE 64
 
 #ifdef HAVE_EXECINFO_H
 #include <execinfo.h>
+#endif
+
+#ifdef _WIN32
+#include <winsock.h>
 #endif
 
 #define add_log_domain(domain) g_log_set_handler (domain, G_LOG_LEVEL_MASK | G_LOG_FLAG_FATAL | G_LOG_FLAG_RECURSION, log_handler, NULL);
@@ -238,6 +240,7 @@ int main(int argc, const char *argv[])
 
 	g_message(_("Logfile opened"));
 
+#ifdef daemon
 	if(isdaemon) {
 
 #ifdef SIGTTOU
@@ -251,10 +254,14 @@ int main(int argc, const char *argv[])
 #ifdef SIGTSTP
 		signal(SIGTSTP, SIG_IGN);
 #endif
+#ifdef SIGHUP
 		signal(SIGHUP, SIG_IGN);
+#endif
 		daemon(1, 0);
 		isdaemon = 1;
-	} else if(!f_logfile)f_logfile = stdout;
+	} else 
+#endif
+		if(!f_logfile)f_logfile = stdout;
 
 	if(rcfile) {
 		configuration_file = strdup(rcfile);
@@ -267,7 +274,7 @@ int main(int argc, const char *argv[])
 		asprintf(&configuration_file, "%s/.ctrlproxyrc", homedir);
 #endif
 		/* Copy configuration file from default location if none existed yet */
-		if(access(configuration_file, F_OK) != 0) {
+		if(!g_file_test(configuration_file, G_FILE_TEST_EXISTS)) {
 			readConfig(SHAREDIR"/ctrlproxyrc.default");
 		} else {
 			readConfig(configuration_file);
@@ -312,12 +319,15 @@ int main(int argc, const char *argv[])
 
 		autoconnect = xmlGetProp(cur, "autoconnect");
 		if(autoconnect && !strcmp(autoconnect, "1")) {
+#ifdef fork
 			if(seperate_processes) { 
 				if(fork() == 0) {  
 					connect_network(cur); 
 					break; 
 				}
-			} else {
+			} else 
+#endif
+			{
 				connect_network(cur);
 			}
 		}
