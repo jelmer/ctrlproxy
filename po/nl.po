@@ -7,60 +7,60 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ctrlproxy 2.7-CVS\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2004-01-28 13:36+0100\n"
+"POT-Creation-Date: 2004-01-28 16:24+0100\n"
 "PO-Revision-Date: 2003-01-28 13:22+CET\n"
 "Last-Translator: Jelmer Vernooij <jelmer@vernstok.nl>\n"
 "Language-Team: Dutch <nl@li.org>\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Type: text/plain; charset=iso-8859-1\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: hooks.c:88
+#: hooks.c:86
 #, c-format
 msgid "Filter '%s' added"
 msgstr "Filter '%s' toegevoegd"
 
-#: hooks.c:95
+#: hooks.c:93
 #, c-format
 msgid "Unable to find filter class '%s'"
 msgstr "Kan geen filter klasse '%s' vinden"
 
-#: hooks.c:123
+#: hooks.c:121
 #, c-format
 msgid "Filter '%s' removed"
 msgstr "Filter '%s' verwijderd"
 
-#: hooks.c:213
+#: hooks.c:211
 #, c-format
 msgid "Adding new client hook '%s'"
 msgstr "Toevoegen nieuwe client haak '%s'"
 
-#: hooks.c:225
+#: hooks.c:223
 #, c-format
 msgid "New client hook '%s' removed"
 msgstr "Nieuwe client haak '%s' verwijderd"
 
-#: hooks.c:242
+#: hooks.c:240
 #, c-format
 msgid "New client hook '%s' refused new client"
 msgstr "Nieuwe client haak '%s' weigerde nieuwe client"
 
-#: hooks.c:258 hooks.c:387 hooks.c:434
+#: hooks.c:256 hooks.c:385 hooks.c:432
 #, c-format
 msgid "Adding lose client hook '%s'"
 msgstr "Toevoegen afsluiten client haak '%s'"
 
-#: hooks.c:273 hooks.c:401 hooks.c:449
+#: hooks.c:271 hooks.c:399 hooks.c:447
 #, c-format
 msgid "Lose client hook '%s' removed"
 msgstr "Afsluiten client haak '%s' verwijderd"
 
-#: hooks.c:306
+#: hooks.c:304
 #, c-format
 msgid "Adding MOTD hook '%s'"
-msgstr "Toevoegen bericht van de dag haak"
+msgstr "Toevoegen bericht van de dag haak '%s'"
 
-#: hooks.c:322
+#: hooks.c:320
 #, c-format
 msgid "MOTD hook '%s' removed"
 msgstr "Bericht van de dag haak '%s' verwijderd"
@@ -100,7 +100,7 @@ msgstr "Ctlrproxy basis is gecrasht, afsluiten..."
 #: main.c:107
 #, c-format
 msgid "Received signal %d, quitting..."
-msgstr "Signaal %s ontvangen, afsluiten..."
+msgstr "Signaal %d ontvangen, afsluiten..."
 
 #: main.c:115
 msgid "Closing connections..."
@@ -341,30 +341,30 @@ msgid ""
 "so no unload will be attempted"
 msgstr ""
 
-#: plugins.c:79
+#: plugins.c:80
 msgid "No filename specified for plugin"
 msgstr ""
 
-#: plugins.c:94
+#: plugins.c:95
 #, c-format
 msgid "Unable to open module %s(%s), ignoring"
 msgstr ""
 
-#: plugins.c:103
+#: plugins.c:104
 msgid "Plugin already loaded"
 msgstr ""
 
-#: plugins.c:108
+#: plugins.c:109
 #, c-format
 msgid "Loading module '%s'"
 msgstr ""
 
-#: plugins.c:111
+#: plugins.c:112
 #, c-format
 msgid "Can't find symbol 'init_plugin' in module %s"
 msgstr ""
 
-#: plugins.c:123
+#: plugins.c:125
 #, c-format
 msgid "Running initialization function for plugin '%s' failed."
 msgstr ""
