@@ -1,4 +1,6 @@
 Ctrlproxy 2.7:
+ * Use PREFIX sent by server
+ * Add get_prefix_by_mode()
  * Use CHANTYPES sent by server
  * Add way to get network features
  * Keep track of channels nick is on in network_nick structure

@@ -144,6 +144,8 @@ struct linestack_context *linestack_new_by_network(struct network *);
 GSList *gen_replication_network(struct network *s);
 GSList *gen_replication_channel(struct channel *c, char *hostmask, char *nick);
 int is_channelname(char *name, struct network *s);
+int is_prefix(char p, struct network *n);
+char get_prefix_by_mode(char p, struct network *n);
 const char *get_network_feature(struct network *n, char *name);
 
 /* server.c */

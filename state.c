@@ -31,8 +31,42 @@ static GList *started_join_list = NULL;
 int is_channelname(char *name, struct network *n)
 {
 	const char *chantypes = get_network_feature(n, "CHANTYPES");
-	if(strchr(chantypes, name[0])) return 1;
+	if(!chantypes && (name[0] == '#' || name[0] == '&'))return 1;
+	if(chantypes && strchr(chantypes, name[0])) return 1;
 	return 0;
+}
+
+int is_prefix(char p, struct network *n)
+{
+	const char *prefix = get_network_feature(n, "PREFIX");
+	const char *pref_end;
+	if(!prefix) {
+		if(p == '@' || p == '+') return 1;
+		return 0;
+	}
+	pref_end = strchr(prefix, ')');
+	if(!pref_end)pref_end = prefix;
+	else pref_end++;
+	if(strchr(pref_end, p)) return 1;
+	return 0;
+}
+
+char get_prefix_by_mode(char p, struct network *n)
+{
+	const char *prefix = get_network_feature(n, "PREFIX");
+	int i;
+	char *pref_end;
+	if(!prefix) return ' ';
+	
+	pref_end = strchr(prefix, ')');
+	if(!pref_end) return ' ';
+	pref_end++;
+	prefix++;
+
+	for(i = 0; pref_end[i]; i++) {
+		if(pref_end[i] == p) return prefix[i];
+	}
+	return ' ';
 }
 
 char *mode2string(char modes[255])
@@ -116,7 +150,7 @@ struct channel_nick *find_nick(struct channel *c, char *name) {
 	GList *l = c->nicks;
 	struct channel_nick *n;
 	char *realname = name;
-	if(realname[0] == '@' || realname[0] == '+')realname++;
+	if(is_prefix(realname[0], c->network))realname++;
 
 	while(l) {
 		n = (struct channel_nick *)l->data;
@@ -162,7 +196,7 @@ struct channel_nick *find_add_nick(struct channel *c, char *name) {
 
 	n = malloc(sizeof(struct channel_nick));
 	memset(n, 0, sizeof(struct channel_nick));
-	if(realname[0] == '@' || realname[0] == '+') {
+	if(is_prefix(realname[0], c->network)) {
 		n->mode = realname[0];
 		realname++;
 	}
@@ -457,6 +491,7 @@ static void handle_mode(struct network *s, struct line *l)
 	} else if(is_channelname(l->args[1], l->network)) {
 		struct channel *c = find_channel(s, l->args[1]);
 		struct channel_nick *n;
+		char p;
 		int arg = 2;
 		for(i = 0; l->args[2][i]; i++) {
 			switch(l->args[2][i]) {
@@ -466,22 +501,6 @@ static void handle_mode(struct network *s, struct line *l)
 							 for now */
 						  arg++;
 						  break;
-				case 'o':
-					n = find_nick(c, l->args[++arg]);
-					if(!n) {
-						g_error("Can't set mode %c%c on nick %s on channel %s, because nick does not exist!", t == ADD?'+':'-', l->args[2][i], l->args[arg], l->args[1]);
-						break;
-					}
-					n->mode = (t == ADD?'@':' ');
-					break;
-				case 'v':
-					n = find_nick(c, l->args[++arg]);
-					if(!n) {
-						g_error("Can't set mode %c%c on nick %s on channel %s, because nick does not exist!", t == ADD?'+':'-', l->args[2][i], l->args[arg], l->args[1]);
-						break;
-					}
-					n->mode = (t == ADD?'+':' ');
-					break;
 				case 'l':
 					if(!l->args[++arg]) {
 						g_error("Mode l requires argument, but no argument found");
@@ -501,7 +520,17 @@ static void handle_mode(struct network *s, struct line *l)
 					c->modes['k'] = t;
 					break;
 				default:
-					  c->modes[(unsigned char)l->args[2][i]] = t;
+					  p = get_prefix_by_mode(l->args[2][i], l->network);
+					  if(p == ' ') {
+						  c->modes[(unsigned char)l->args[2][i]] = t;
+					  } else {
+							n = find_nick(c, l->args[++arg]);
+							if(!n) {
+								g_error("Can't set mode %c%c on nick %s on channel %s, because nick does not exist!", t == ADD?'+':'-', l->args[2][i], l->args[arg], l->args[1]);
+								break;
+							}
+							n->mode = (t == ADD?p:' ');
+					  }
 					  break;
 			}
 		}
