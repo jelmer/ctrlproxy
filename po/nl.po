@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ctrlproxy 2.7-CVS\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2004-01-29 01:16+0100\n"
+"POT-Creation-Date: 2004-02-23 15:37+0100\n"
 "PO-Revision-Date: 2003-01-28 13:22+CET\n"
 "Last-Translator: Jelmer Vernooij <jelmer@vernstok.nl>\n"
 "Language-Team: Dutch <nl@li.org>\n"
@@ -25,154 +25,154 @@ msgstr "Filter '%s' toegevoegd"
 msgid "Unable to find filter class '%s'"
 msgstr "Kan geen filter klasse '%s' vinden"
 
-#: hooks.c:121
+#: hooks.c:122
 #, c-format
 msgid "Filter '%s' removed"
 msgstr "Filter '%s' verwijderd"
 
-#: hooks.c:211
+#: hooks.c:212
 #, c-format
 msgid "Adding new client hook '%s'"
 msgstr "Toevoegen nieuwe client haak '%s'"
 
-#: hooks.c:223
+#: hooks.c:224
 #, c-format
 msgid "New client hook '%s' removed"
 msgstr "Nieuwe client haak '%s' verwijderd"
 
-#: hooks.c:240
+#: hooks.c:241
 #, c-format
 msgid "New client hook '%s' refused new client"
 msgstr "Nieuwe client haak '%s' weigerde nieuwe client"
 
-#: hooks.c:256 hooks.c:385 hooks.c:432
+#: hooks.c:257 hooks.c:386 hooks.c:433
 #, c-format
 msgid "Adding lose client hook '%s'"
 msgstr "Toevoegen afsluiten client haak '%s'"
 
-#: hooks.c:271 hooks.c:399 hooks.c:447
+#: hooks.c:272 hooks.c:400 hooks.c:448
 #, c-format
 msgid "Lose client hook '%s' removed"
 msgstr "Afsluiten client haak '%s' verwijderd"
 
-#: hooks.c:304
+#: hooks.c:305
 #, c-format
 msgid "Adding MOTD hook '%s'"
 msgstr "Toevoegen bericht van de dag haak '%s'"
 
-#: hooks.c:320
+#: hooks.c:321
 #, c-format
 msgid "MOTD hook '%s' removed"
 msgstr "Bericht van de dag haak '%s' verwijderd"
 
-#: linestack.c:141
+#: linestack.c:147
 #, c-format
 msgid "Added linestack backend '%s'"
 msgstr "Linestack backend '%s' toegevoegd"
 
-#: linestack.c:147
+#: linestack.c:153
 #, c-format
 msgid "Removed linestack backend '%s'"
 msgstr "Linestack backend '%s' verwijderd"
 
-#: main.c:54
+#: main.c:56
 msgid "Received SIGSEGV!"
 msgstr "SIGSEGV ontvangen"
 
-#: main.c:61
+#: main.c:63
 #, c-format
 msgid "BACKTRACE: %d stack frames:"
 msgstr "BACKTRACE: %d frames op de stack:"
 
-#: main.c:76
+#: main.c:78
 msgid "Can't unload crashing plugin, exiting..."
 msgstr "Kan gecrashte plugin niet ontladen, afsluiten..."
 
-#: main.c:79
+#: main.c:81
 #, c-format
 msgid "Plugin '%s' unloaded, because it crashed..."
 msgstr "Plugin '%s' verwijderd omdat het crashte..."
 
-#: main.c:82
+#: main.c:84
 msgid "Ctrlproxy core has segfaulted, exiting..."
 msgstr "Ctlrproxy basis is gecrasht, afsluiten..."
 
-#: main.c:107
+#: main.c:109
 #, c-format
 msgid "Received signal %d, quitting..."
 msgstr "Signaal %d ontvangen, afsluiten..."
 
-#: main.c:115
+#: main.c:117
 msgid "Closing connections..."
 msgstr "Sluiten verbindingen..."
 
-#: main.c:134
+#: main.c:136
 #, c-format
 msgid "Can't open configuration file '%s'"
 msgstr "Kan het configuratie bestand '%s' niet openen"
 
-#: main.c:170
+#: main.c:172
 msgid "Write irc traffic to specified file"
 msgstr "Schrijven irc verkeer naar opgegeven bestand"
 
-#: main.c:171
+#: main.c:173
 msgid "Run in the background (as a daemon)"
 msgstr "Draai in de achtergrond (als daemon)"
 
-#: main.c:172
+#: main.c:174
 msgid "Log messages to specified file"
 msgstr "Log berichten naar opgegeven bestand"
 
-#: main.c:172 main.c:173
+#: main.c:174 main.c:175
 msgid "FILE"
 msgstr "BESTAND"
 
-#: main.c:173
+#: main.c:175
 msgid "Use configuration file from specified location"
 msgstr "Gebruik configuratie bestand van opgegeven locatie"
 
-#: main.c:174
+#: main.c:176
 msgid "Use one process per network"
 msgstr "Gebruik één proces per netwerk"
 
-#: main.c:175
+#: main.c:177
 msgid "Show version information"
 msgstr "Toon versie informatie"
 
-#: main.c:216
+#: main.c:218
 #, c-format
 msgid "(c) 2002-2004 Jelmer Vernooij et al. <jelmer@nl.linux.org>\n"
 msgstr "(c) 2002-2004 Jelmer Vernooij en anderen. <jelmer@nl.linux.org>\n"
 
-#: main.c:223
+#: main.c:225
 msgid "Can't figure out hostname of local host!"
 msgstr "Kan de naam van de lokale computer niet bepalen!"
 
-#: main.c:229
+#: main.c:231
 #, c-format
 msgid "Can't open logfile %s!"
 msgstr "Kan logbestand %s niet openen!"
 
-#: main.c:239
+#: main.c:241
 msgid "Logfile opened"
 msgstr "Logbestand geopent"
 
-#: main.c:272
+#: main.c:285
 msgid "DSO's not supported on this platform. Not loading any modules"
 msgstr ""
 "Plugins worden niet ondersteund op dit platform. Er zal niet getracht worden "
 "modules te laden"
 
-#: main.c:274
+#: main.c:287
 msgid "No modules set to be loaded"
 msgstr "Er zijn geen modules opgegeven om geladen te worden"
 
-#: main.c:286
+#: main.c:299
 #, c-format
 msgid "Can't load plugin %s, aborting..."
 msgstr "Kan plugin %s niet laden, afbreken..."
 
-#: main.c:297
+#: main.c:310
 msgid "No networks listed"
 msgstr "Geen netwerken opgegeven"
 
@@ -181,138 +181,143 @@ msgstr "Geen netwerken opgegeven"
 msgid "[From server] %s\n"
 msgstr "[Van server] %s\n"
 
-#: server.c:149
+#: server.c:147
+#, fuzzy, c-format
+msgid "Successfully connected to %s"
+msgstr "Met succes verbonden met %s:%d"
+
+#: server.c:175
 #, c-format
 msgid "No servers listed for network %s, not connecting\n"
 msgstr ""
 "Geen servers opgegeven voor netwerk %s, er zal niet verbonden worden met dit "
 "netwerk\n"
 
-#: server.c:154
+#: server.c:180
 #, c-format
 msgid "Connecting with %s for server %s"
 msgstr "Er wordt verbinding gemaakt met %s voor de server %s"
 
-#: server.c:166
+#: server.c:192
 #, c-format
 msgid "Couldn't connect with network %s via transport %s"
 msgstr "Kan niet verbinden met netwerk %s via transport %s"
 
-#: server.c:207
-#, c-format
-msgid "Connection to server %s lost, trying to reconnect..."
+#: server.c:221
+#, fuzzy, c-format
+msgid "Connection to server %s lost, trying to reconnect in %ds..."
 msgstr "Verbinding met server %s verbroken. Opnieuw verbinden..."
 
-#: server.c:263
+#: server.c:278
 #, c-format
 msgid "Removed client to %s"
 msgstr "Client van %s verwijderd."
 
-#: server.c:322
+#: server.c:338
 #, c-format
 msgid "[From client] %s\n"
 msgstr "[Van client] %s\n"
 
-#: server.c:348
+#: server.c:364
 #, c-format
 msgid "No password set for %s, allowing client _without_ authentication!"
 msgstr ""
 "Geen wachtwoord opgegeven voor %s, client wordt toegelaten zonder "
 "authenticate!"
 
-#: server.c:375
+#: server.c:391
 #, c-format
 msgid "Client @%s successfully authenticated"
 msgstr "Client @%s wordt toegelaten"
 
-#: server.c:385
+#: server.c:407
 #, c-format
 msgid "User tried to log in to %s with incorrect password!\n"
 msgstr "Gebruiker probeerde in te loggen op %s met ongeldig wachtwoord!\n"
 
-#: server.c:462
+#: server.c:489
 #, c-format
 msgid "Can't initialise transport %s"
 msgstr "Kan transport %s niet initialiseren"
 
-#: server.c:521
+#: server.c:548
 #, c-format
 msgid "No servers listed for network %s!\n"
 msgstr "Geen servers opgegeven voor netwerk %s!\n"
 
-#: server.c:539
+#: server.c:566
 #, c-format
 msgid "Closing connection to %s"
 msgstr "Verbinding met %s wordt gesloten"
 
-#: state.c:243
+#: state.c:242
 #, c-format
 msgid "Joining channel %s"
 msgstr "Kanaal %s wordt binnengegaan"
 
-#: state.c:284
+#: state.c:283
 #, c-format
 msgid "Leaving %s"
 msgstr "Kanaal %s wordt verlaten"
 
-#: state.c:301
+#: state.c:300
 #, c-format
 msgid "Can't remove nick %s from channel %s: nick not on channel\n"
 msgstr ""
 "Kan de naam %s niet verwijderen van kanaal %s: naam is niet aanwezig op "
 "kanaal\n"
 
-#: state.c:306
+#: state.c:305
 #, c-format
 msgid "Can't part or let other nick part %s(unknown channel)\n"
 msgstr ""
 "Kan kanaal %s niet verlaten of andere naam het kanaal laten verlaten"
 "(onbekend kanaal)\n"
 
-#: state.c:333
+#: state.c:332
 msgid "KICK command has unequal number of channels and nicks\n"
 msgstr "KICK commando heeft een ongelijk aantal kanalen en gebruikers\n"
 
-#: state.c:342
+#: state.c:341
 #, c-format
 msgid "Can't kick nick %s from %s\n"
 msgstr "Kan nick %s niet verwijderen uit %s\n"
 
-#: state.c:349
+#: state.c:348
 #, c-format
 msgid "Can't kick nick %s from channel %s: nick not on channel\n"
 msgstr ""
 "Kan nick %s niet verwijderen uit kanaal %s: nick niet aanwezig op kanaal\n"
 
-#: state.c:375
+#: state.c:374
 #, c-format
 msgid "Can't set topic for unknown channel '%s'!"
 msgstr "Kan onderwerp niet instellen voor onbekend kanaal '%s'!"
 
-#: state.c:387
+#: state.c:386
 #, c-format
 msgid "Can't unset topic for unknown channel '%s'!"
 msgstr "Kan onderwerp niet verwijderen voor onbekend kanaal '%s'!"
 
-#: state.c:399
+#: state.c:398
 #, c-format
 msgid "Can't add names to %s: channel not found\n"
 msgstr "Kan geen namen toevoegen aan %s: kanaal niet gevonden\n"
 
-#: state.c:420
+#: state.c:419
 #, c-format
 msgid "Can't end /NAMES command for %s: channel not found\n"
 msgstr "Kan /NAMES commando niet afsluiten voor %s: kanaal niet gevonden\n"
 
-#: state.c:517
+#: state.c:516
 msgid "Mode l requires argument, but no argument found"
 msgstr "Mode l vereist een argument, maar er is geen argument aangetroffen"
 
-#: state.c:525
+#: state.c:524
 msgid "Mode k requires argument, but no argument found"
 msgstr "Mode k vereist een argument, maar er is geen argument aangetroffen"
 
-#: state.c:540
+#: state.c:539
 #, c-format
 msgid ""
 "Can't set mode %c%c on nick %s on channel %s, because nick does not exist!"
@@ -320,24 +325,24 @@ msgstr ""
 "Kan mode %c%c niet zetten op nick %s op kanaal %s, omdat de nick niet "
 "bestaat!"
 
-#: state.c:572
+#: state.c:575
 msgid "CASEMAPPING variable sent by server invalid"
 msgstr "CASEMAPPING variabele zoals verstuurd door server is ongeldig"
 
-#: state.c:580
+#: state.c:583
 #, c-format
 msgid "Unknown casemapping '%s'"
 msgstr "Onbekende casemapping '%s'"
 
-#: state.c:585
+#: state.c:588
 msgid "NETWORK variable sent by server invalid"
 msgstr "NETWORK variabele zoals verstuurd door server is ongeldig"
 
-#: state.c:786
+#: state.c:787
 msgid "Casemap invalid!"
 msgstr "Casemap ongeldig!"
 
-#: util.c:75
+#: util.c:79
 #, c-format
 msgid "Couldn't create '%s'!\n"
 msgstr "Kon '%s' niet aanmaken!\n"
@@ -461,96 +466,96 @@ msgstr ""
 "Geef een commando op. Gebruik het 'help' commando om een lijst te krijgen "
 "van beschikbare commando's"
 
-#: mods/admin.c:555
+#: mods/admin.c:554
 #, c-format
 msgid "Can't find command '%s'. Type 'help' for a list of available commands. "
 msgstr ""
 "Kan geen commando '%s' vinden. Type 'help' voor een lijst van beschikbare "
 "commando's"
 
-#: mods/admin.c:574 mods/admin.c:584 mods/admin.c:585
+#: mods/admin.c:573 mods/admin.c:583 mods/admin.c:584
 msgid "<name>"
 msgstr "<naam>"
 
-#: mods/admin.c:574
+#: mods/admin.c:573
 msgid "Add new network with specified name"
 msgstr "Voeg nieuw netwerk toe met opgegeven naam"
 
-#: mods/admin.c:575 mods/admin.c:576
+#: mods/admin.c:574 mods/admin.c:575
 msgid "<network> <type> [property1=value1] ..."
 msgstr "<netwerk> <type> [eigenschap1=waarde1] ..."
 
-#: mods/admin.c:575
+#: mods/admin.c:574
 msgid "Add server with specified properties to the specified network"
 msgstr "Voeg server met opgegeven eigenschappen toe aan opgegeven netwerk"
 
-#: mods/admin.c:576
+#: mods/admin.c:575
 msgid "Add listener with specified properties to the specified network"
 msgstr "Voeg luisteraar toe met opgegeven eigenschappen voor opgegeven netwerk"
 
-#: mods/admin.c:577 mods/admin.c:578 mods/admin.c:581
+#: mods/admin.c:576 mods/admin.c:577 mods/admin.c:580
 msgid "<network>"
 msgstr "<netwerk>"
 
-#: mods/admin.c:577
+#: mods/admin.c:576
 msgid "Connect to specified network. Forces reconnect when waiting."
 msgstr ""
 "Maak verbinding met het opgegeven wachtwoord. Dwingt tot opnieuw verbinden "
 "tijdens wachten."
 
-#: mods/admin.c:578
+#: mods/admin.c:577
 msgid "Remove specified network"
 msgstr "Verwijder opgegeven netwerk"
 
-#: mods/admin.c:579
+#: mods/admin.c:578
 msgid "[network]"
 msgstr "[netwerk]"
 
-#: mods/admin.c:579
+#: mods/admin.c:578
 msgid "Disconnect and use to the next server in the list"
 msgstr "Verbreek verbinding en ga naar volgende server in de lijst"
 
-#: mods/admin.c:580
+#: mods/admin.c:579
 msgid "Exit ctrlproxy"
 msgstr "Sluit ctrlproxy af"
 
-#: mods/admin.c:581
+#: mods/admin.c:580
 msgid "Disconnect specified network"
 msgstr "Verbreek verbinding met opgegeven netwerk"
 
-#: mods/admin.c:582
+#: mods/admin.c:581
 msgid "List current networks and their status"
 msgstr "Toon lijst van netwerken en hun status"
 
-#: mods/admin.c:583
+#: mods/admin.c:582
 msgid "Load specified module"
 msgstr "Laad opgegeven module"
 
-#: mods/admin.c:584
+#: mods/admin.c:583
 msgid "Unload specified module"
 msgstr "Ontlaad opgegeven module"
 
-#: mods/admin.c:585
+#: mods/admin.c:584
 msgid "Reload specified module"
 msgstr "Herlaad opgegeven module"
 
-#: mods/admin.c:586
+#: mods/admin.c:585
 msgid "List currently loaded modules"
 msgstr "Toon lijst van momenteel geladen modules"
 
-#: mods/admin.c:587
+#: mods/admin.c:586
 msgid "Send current XML configuration to client"
 msgstr "Stuur huidige XML configuratie naar client"
 
-#: mods/admin.c:588
+#: mods/admin.c:587
 msgid "Save current XML configuration to specified file"
 msgstr "Sla huidige XML configuratie op in opgegeven bestand"
 
-#: mods/admin.c:589
+#: mods/admin.c:588
 msgid "Detach current client"
 msgstr "Ontkoppel huidige client"
 
-#: mods/admin.c:590
+#: mods/admin.c:589
 msgid "This help command"
 msgstr "Dit help commando"
 
@@ -563,17 +568,17 @@ msgstr "Automatisch Weg"
 msgid "Received unknown CTCP request '%s'!"
 msgstr "Onbekend CTCP verzoek '%s' ontvangen!"
 
-#: mods/log_custom.c:252 mods/log_irssi.c:66
+#: mods/log_custom.c:300 mods/log_irssi.c:66
 #, c-format
 msgid "Couldn't create directory %s for logging!"
 msgstr "Kan directory %s niet aanmaken voor loggen!"
 
-#: mods/log_custom.c:264 mods/log_irssi.c:81
+#: mods/log_custom.c:312 mods/log_irssi.c:81
 #, c-format
 msgid "Couldn't open file %s for logging!"
 msgstr "Kan het bestand %s niet openen voor loggen!"
 
-#: mods/log_custom.c:481
+#: mods/log_custom.c:529
 msgid "No <logfilename> tag for log_custom module"
 msgstr "Geen <logfilename> tag voor de log_custom module"
 
@@ -587,129 +592,134 @@ msgstr "Kan het bestand '%s' niet openen\n"
 msgid "Can't open MOTD file '%s' for reading\n"
 msgstr "Kan bericht-van-de-dag bestand '%s' niet openen\n"
 
-#: mods/nickserv.c:100
+#: mods/nickserv.c:102
 #, c-format
 msgid "Ghosting current user using '%s' on %s"
 msgstr "Huidige gebruiker van '%s' op '%s' wordt verwijderd"
 
-#: mods/repl_command.c:85
+#: mods/repl_command.c:83
 msgid "No backlogs saved yet"
 msgstr "Nog geen geschiedenis opgeslagen"
 
-#: mods/repl_command.c:91
+#: mods/repl_command.c:89
 #, c-format
 msgid "Sending backlog for network '%s'"
 msgstr "Sturen geschiedenis voor netwerk '%s'"
 
-#: mods/repl_command.c:101
+#: mods/repl_command.c:99
 #, c-format
 msgid "Sending backlog for channel %s@%s"
 msgstr "Sturen van geschiedenis voor kanaal %s@%s"
 
-#: mods/repl_command.c:111
+#: mods/repl_command.c:109
 #, c-format
 msgid "No backlog for %s"
 msgstr "Geen geschiedenis voor %s"
 
-#: mods/repl_command.c:119 mods/debug.c:82
+#: mods/repl_command.c:117 mods/debug.c:82
 msgid "admin module required for repl_command module. Please load it first"
 msgstr ""
 "de admin module is vereist voor de repl_command module. Laad deze aub eerst."
 
-#: mods/repl_command.c:123
+#: mods/repl_command.c:121
 msgid "[channel]"
 msgstr "[kanaal]"
 
-#: mods/repl_command.c:123
+#: mods/repl_command.c:121
 msgid "Send backlogs for this network or a channel, if specified"
 msgstr "Stuur geschiedenis voor dit netwerk of kanaal, als opgegeven"
 
-#: mods/socket/socket.c:87
+#: mods/socket/gnutls.c:216
+#, fuzzy, c-format
+msgid "Error setting x509 trust file: %s (file = %s)"
+msgstr "Fout tijdens versturen bestand '%s': %s"
+
+#: mods/socket/gnutls.c:222
+#, c-format
+msgid "Error setting x509 key+cert files: %s (key = %s, cert = %s)"
+msgstr ""
+
+#: mods/socket/socket.c:91
 #, c-format
 msgid "Failed to exec %s : %s"
 msgstr "Fout tijdens uitvoeren %s: %s"
 
-#: mods/socket/socket.c:108
+#: mods/socket/socket.c:123 mods/socket/socket.c:131
 msgid "Can't convert socket to SSL"
 msgstr "Kan socket niet omzetten naar SSL"
 
-#: mods/socket/socket.c:143
+#: mods/socket/socket.c:168
 #, c-format
 msgid "Unknown element %s"
 msgstr "Onbekend element %s"
 
-#: mods/socket/socket.c:176
+#: mods/socket/socket.c:201
 msgid "Can't accept connection!"
 msgstr "Kan verbinding niet accepteren!"
 
-#: mods/socket/socket.c:179
+#: mods/socket/socket.c:204
 #, c-format
 msgid "New client %d"
 msgstr "Nieuwe client '%d'"
 
-#: mods/socket/socket.c:214
+#: mods/socket/socket.c:239
 msgid "Channel is not readeable!"
 msgstr "Kanaal is niet leesbaar!"
 
-#: mods/socket/socket.c:222
+#: mods/socket/socket.c:247
 msgid "Unknown error"
 msgstr "Onbekende fout"
 
-#: mods/socket/socket.c:282
+#: mods/socket/socket.c:307
 #, c-format
 msgid "Connecting to %s:%d"
 msgstr "Verbinden met %s:%d"
 
-#: mods/socket/socket.c:288
+#: mods/socket/socket.c:313
 #, c-format
 msgid "(While connecting to server %s with %s): socket: %s"
 msgstr "(Tijdens verbinden met server %s met %s): socket: %s"
 
-#: mods/socket/socket.c:326
+#: mods/socket/socket.c:353
 #, c-format
 msgid "Unknown host %s."
 msgstr "Onbekende host %s."
 
-#: mods/socket/socket.c:345
+#: mods/socket/socket.c:372
 #, c-format
 msgid "(While connecting to server %s): connect: %s"
 msgstr "(Tijdens verbinden met server %s): connect: %s"
 
-#: mods/socket/socket.c:356
-#, c-format
-msgid "Successfully connected to %s:%d"
-msgstr "Met succes verbonden met %s:%d"
-
-#: mods/socket/socket.c:386
+#: mods/socket/socket.c:413
 #, c-format
 msgid "Trying to send line '%s' to socket that is not connected!"
 msgstr "Kan regel '%s' niet versturen naar een socket dat niet is verbonden!"
 
-#: mods/socket/socket.c:391
+#: mods/socket/socket.c:418
 msgid "Channel is not writeable!"
 msgstr "Kanaal is niet schrijfbaar!"
 
-#: mods/socket/socket.c:397
+#: mods/socket/socket.c:424
 #, c-format
 msgid "Can't send: %s"
 msgstr "Kan niet zenden: %s"
 
-#: mods/socket/socket.c:488
+#: mods/socket/socket.c:515
 #, c-format
 msgid "Error trying to listen on port %d: %s"
 msgstr "Fout tijdens proberen te luisteren op poort %d: %s"
 
-#: mods/socket/socket.c:492
+#: mods/socket/socket.c:519
 #, c-format
 msgid "Listening on port %d(socket %d)"
 msgstr "Luisteren op poort %d(socket %d)"
 
-#: mods/socket/socket.c:549
+#: mods/socket/socket.c:576
 #, c-format
 msgid "Error trying to listen on %s: %s"
 msgstr "Fout tijdens proberen te luisteren op %s: %s"
 
-#: mods/socket/socket.c:554
+#: mods/socket/socket.c:581
 #, c-format
 msgid "Listening on socket at %s(%d)"
 msgstr "Luisteren op socket op %s(%d)"
@@ -719,120 +729,120 @@ msgstr "Luisteren op socket op %s(%d)"
 msgid "No file specified\n"
 msgstr "Geen bestand opgegeven\n"
 
-#: mods/stats/stats.c:145
+#: mods/stats/stats.c:147
 #, c-format
 msgid "PCRE compilation failed at offset %d: %s\n"
 msgstr "PCRE compilatie mislukte op positie %d: %s\n"
 
-#: mods/stats/stats.c:282
+#: mods/stats/stats.c:284
 #, c-format
 msgid "Unable to open TDB database %s\n"
 msgstr "Kan de TDB database '%s' niet openen\n"
 
-#: mods/dcc.c:59 mods/dcc.c:60
+#: mods/dcc.c:94 mods/dcc.c:95
 #, c-format
 msgid "Can't open directory '%s'"
 msgstr "Kan de directory '%s' niet openen"
 
-#: mods/dcc.c:76 mods/dcc.c:209
+#: mods/dcc.c:111 mods/dcc.c:244
 msgid "Invalid filename"
 msgstr "Ongeldige bestandsnaam"
 
-#: mods/dcc.c:85
+#: mods/dcc.c:120
 #, c-format
 msgid "Error occured while deleting %s: %s"
 msgstr "Fout opgetreden tijdens verwijderen %s: %s"
 
-#: mods/dcc.c:87
+#: mods/dcc.c:122
 #, c-format
 msgid "%s successfully deleted"
 msgstr "%s succesvol verwijderd"
 
-#: mods/dcc.c:112
+#: mods/dcc.c:147
 #, c-format
 msgid "Error accepting incoming DCC connection: %s"
 msgstr "Fout tijdens accepteren binnenkomende DCC verbinding: %s"
 
-#: mods/dcc.c:119
+#: mods/dcc.c:154
 #, c-format
 msgid "Couldn't read from '%s': %s"
 msgstr "Fout tijdens lezen van '%s': %s"
 
-#: mods/dcc.c:126
+#: mods/dcc.c:161
 #, c-format
 msgid "Error sending file '%s': %s"
 msgstr "Fout tijdens versturen bestand '%s': %s"
 
-#: mods/dcc.c:140
+#: mods/dcc.c:175
 msgid "Error listening for DCC connections"
 msgstr "Fout tijdens wachten op DCC verbindingen"
 
-#: mods/dcc.c:152
+#: mods/dcc.c:187
 msgid "DCC SEND timed out, removing...\n"
 msgstr "DCC SEND is verlopen, wordt verwijderd...\n"
 
-#: mods/dcc.c:166
+#: mods/dcc.c:201
 #, c-format
 msgid "Error creating socket: %s"
 msgstr "Fout tijdens aanmaken socket: %s"
 
-#: mods/dcc.c:175
+#: mods/dcc.c:210
 #, c-format
 msgid "Unable to bind: %s"
 msgstr "Kan niet binden: %s"
 
-#: mods/dcc.c:180
+#: mods/dcc.c:215
 #, c-format
 msgid "Unable to listen: %s"
 msgstr "Kon niet luisteren: %s"
 
-#: mods/dcc.c:186
+#: mods/dcc.c:221
 #, c-format
 msgid "Unable to get socket name: %s"
 msgstr "Kon naam van socket niet opvragen: %s"
 
-#: mods/dcc.c:218
+#: mods/dcc.c:253
 msgid "Unable to listen"
 msgstr "Kon niet luisteren"
 
-#: mods/dcc.c:223
+#: mods/dcc.c:258
 #, c-format
 msgid "Unable to stat '%s': %s"
 msgstr "Kon geen gegevens opvragen van '%s': %s"
 
-#: mods/dcc.c:243
+#: mods/dcc.c:278
 #, c-format
 msgid "Unknown subcommand '%s'"
 msgstr "Onbekend subcommando '%s'"
 
-#: mods/dcc.c:255
+#: mods/dcc.c:290
 msgid "DCC Connection closed"
 msgstr "DCC Verbinding gesloten"
 
-#: mods/dcc.c:261
+#: mods/dcc.c:296
 msgid "Error occured while receiving data over DCC"
 msgstr "Er is een fout opgetreden tijdens het ontvangen van data over DCC"
 
-#: mods/dcc.c:284
+#: mods/dcc.c:319
 #, c-format
 msgid "Unable to create socket: %s"
 msgstr "Kan geen socket aanmaken: %s"
 
-#: mods/dcc.c:292
+#: mods/dcc.c:329
 #, c-format
 msgid "Unable to connect to host: %s"
 msgstr "Kan geen verbinding maken met host: %s"
 
-#: mods/dcc.c:304
-#, c-format
-msgid "Can't open file for %s: %s"
+#: mods/dcc.c:340
+#, fuzzy, c-format
+msgid "Can't open file for %s: %s: %s"
 msgstr "Kan bestand voor %s niet openen: %s"
 
-#: mods/dcc.c:322
+#: mods/dcc.c:360
 msgid "Invalidly formatted CTCP request received"
 msgstr "Ongeldig geformatteerd CTCP verzoek ontvangen"
 
-#: mods/dcc.c:360
+#: mods/dcc.c:404
 msgid "admin module required for dcc module. Please load it first"
 msgstr "admin module vereist voor dcc module. Laad deze eerst"
 
