@@ -213,7 +213,7 @@ int main(int argc, const char *argv[])
 			break;
 		case 'v':
 			printf("ctrlproxy %s\n", PACKAGE_VERSION);
-			printf(_("(c) 2002-2003 Jelmer Vernooij et al. <jelmer@nl.linux.org>\n"));
+			printf(_("(c) 2002-2004 Jelmer Vernooij et al. <jelmer@nl.linux.org>\n"));
 			return 0;
 		}
 	}

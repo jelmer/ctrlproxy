@@ -129,11 +129,11 @@ msgstr "BESTAND"
 
 #: main.c:173
 msgid "Use configuration file from specified location"
-msgstr ""
+msgstr "Gebruik configuratie bestand van opgegeven locatie"
 
 #: main.c:174
 msgid "Use one process per network"
-msgstr ""
+msgstr "Gebruik één proces per netwerk"
 
 #: main.c:175
 msgid "Show version information"
@@ -142,7 +142,7 @@ msgstr ""
 #: main.c:213
 #, c-format
 msgid "(c) 2002-2003 Jelmer Vernooij et al. <jelmer@nl.linux.org>\n"
-msgstr ""
+msgstr "(c) 2002-2004 Jelmer Vernooij en anderen. <jelmer@nl.linux.org>\n"
 
 #: main.c:220
 msgid "Can't figure out hostname of local host!"
