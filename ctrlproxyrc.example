@@ -12,15 +12,11 @@
 		<!-- Support for interfacing to ctrlproxy 
 		using /MSG ctrlproxy or /CTRLPROXY -->
 		<plugin autoload="1" file="libadmin"/>
-		<plugin autoload="1" file="libsocket">
-			<!-- Generate SSL file with mksslcert.sh -->
-			<sslcertfile>./ctrlproxy.pem</sslcertfile>
-			<sslkeyfile>./ctrlproxy.pem</sslkeyfile>
-		</plugin>
+		<plugin autoload="1" file="libsocket"/>
 		<!-- Don't replicate any backlogs, just send channel info -->
-		<plugin autoload="1" file="librepl_none"/>
+		<plugin autoload="0" file="librepl_none"/>
 		<!-- Backlog any data since last time user said something -->
-		<plugin autoload="0" file="librepl_simple"/>
+		<plugin autoload="1" file="librepl_simple"/>
 		<!-- Backlog lines matching certain patterns -->
 		<plugin autoload="0" file="librepl_highlight">
 			<!-- Replicate all lines containing 'ctrlproxy' or 'foobar' -->
@@ -29,6 +25,7 @@
 		</plugin>
 		<!-- Backlog lines when command /CTRLPROXY BACKLOG is given -->
 		<plugin autoload="0" file="librepl_command"/>
+		<plugin autoload="1" file="report_time"/>
 
 		<!-- Irssi-style logging -->
 		<plugin autoload="1" file="liblog_irssi">
@@ -87,7 +84,7 @@
 	<networks>
 		<network autoconnect="1" client_pass="secret" name="BEE" replication="memory">
 			<listen>
-				<ipv4 port="8004"/>
+				<ipv4 port="8003"/>
 			</listen>
 			<servers>
 				<pipe>

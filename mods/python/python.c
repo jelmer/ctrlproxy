@@ -1718,7 +1718,7 @@ static PyObject * py_add_admin_command(PyObject *self, PyObject *args, PyObject 
 	PyObject *temp = NULL;
 	struct admin_callback_object *c;
 
-	if(!plugin_loaded("admin") && !plugin_loaded("libadmin")) {
+	if(!plugin_loaded("admin")) {
 		PyErr_SetString(PyExc_TypeError, "Admin Module is required");
 		return NULL;
 	}
@@ -2057,7 +2057,7 @@ gboolean in_load(char *c,PyObject *args, struct line *l) {
 	PyThreadState_Swap(NULL);
 	PyEval_ReleaseLock();
 
-	if(l != NULL && (!plugin_loaded("libnoticelog") || !plugin_loaded("noticelog")))
+	if(l != NULL && !plugin_loaded("noticelog"))
 		admin_out(l,"Load of script #%i complete",sid);
 	g_log(G_LOG_DOMAIN, G_LOG_LEVEL_INFO,"Load of script #%i complete",sid);
 
@@ -2115,7 +2115,7 @@ gboolean in_unload(int i,struct line *l) {
 			loaded_scripts = g_list_remove(loaded_scripts,p);
 			PyEval_ReleaseLock();
 			g_log(G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "Unload script %i complete", i);
-			if(l != NULL && (!plugin_loaded("libnoticelog") || !plugin_loaded("noticelog")))
+			if(l != NULL && !plugin_loaded("noticelog"))
 				admin_out(l, "Unload script #%i complete",i);
 			return TRUE;
 		}
@@ -2307,7 +2307,7 @@ gboolean init_plugin(struct plugin *p) {
 	python_xmlConf = p->xmlConf;
 
 
-	if(!plugin_loaded("admin") && !plugin_loaded("libadmin")) {
+	if(!plugin_loaded("admin")) {
 		g_warning("admin module required for dynamic load/unload of python scripts");
 	} else {
 		register_admin_command("PYTHON", in_admin_command, "[COMMAND]", "Type \n/ctrlproxy python help\nfor more details");

@@ -11,9 +11,6 @@
  - fix issue with non-blocking connect
 - dcc module
 
-report_time:
- - test
- 
 linestack_file:
  - test
  
