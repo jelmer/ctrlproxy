@@ -39,6 +39,8 @@ typedef struct
 	GIOChannel *giochan;
 	gnutls_session session;
 	gboolean isserver;
+	gnutls_x509_crt cert;
+	char secure;
 } GIOTLSChannel;
 	
 static void irssi_gnutls_free(GIOChannel *handle)
@@ -85,7 +87,7 @@ static GIOStatus gnutls_get_peer_certificate(gnutls_session session, const char*
 	if (status & GNUTLS_CERT_INVALID) 
 		printf("The certificate is not trusted.\n");
 
-	if (status & GNUTLS_CERT_ISSUER_NOT_FOUND)
+	if (status & GNUTLS_CERT_SIGNER_NOT_FOUND)
 		printf("The certificate hasn't got a known issuer.\n");
 
 	if (status & GNUTLS_CERT_REVOKED)
@@ -119,7 +121,7 @@ static GIOStatus gnutls_get_peer_certificate(gnutls_session session, const char*
 
 		/* Beware here we do not check for errors.
 		 *     */
-		if ( gnutls_x509_crt_get_expiration( cert) < time(0)) {
+		if ( gnutls_x509_crt_get_expiration_time( cert) < time(0)) {
 			printf("The certificate has expired\n");
 			return G_IO_STATUS_ERROR;
 		}
@@ -152,12 +154,12 @@ static GIOStatus irssi_gnutls_cert_step(GIOTLSChannel *chan)
 	switch(err = gnutls_handshake(chan->session))
 	{
 		case 0:
-			return gnutls_verify_peer_certificate(chan->session);
+			return gnutls_certificate_verify_peers(chan->session);
 		case GNUTLS_E_AGAIN:
 		case GNUTLS_E_INTERRUPTED:
 			return G_IO_STATUS_AGAIN;
 		default:
-			return irssi_gnutls_errno(errno);
+			return irssi_gnutls_errno(err);
 	}
 	/*UNREACH*/
 	return G_IO_STATUS_ERROR;
@@ -194,23 +196,19 @@ static GIOStatus irssi_gnutls_write(GIOChannel *handle, const gchar *buf, gsize 
 	GIOTLSChannel *chan = (GIOTLSChannel *)handle;
 	gint err;
 
-	if(chan->cert == NULL && !chan->isserver)
+	if(chan->secure) 
 	{
-		gint cert_err = irssi_gnutls_cert_step(chan);
-		if(cert_err != G_IO_STATUS_NORMAL)
-			return cert_err;
-	}
-
-	err = gnutls_record_send(chan->session, (const char *)buf, len);
-	if(err < 0)
-	{
-		*ret = 0;
-		return irssi_gnutls_errno(errno);
-	}
-	else
-	{
-		*ret = err;
-		return G_IO_STATUS_NORMAL;
+		err = gnutls_record_send(chan->session, (const char *)buf, len);
+		if(err < 0)
+		{
+			*ret = 0;
+			return irssi_gnutls_errno(errno);
+		} else {
+			*ret = err;
+			return G_IO_STATUS_NORMAL;
+		}
+	} else {
+		return /* FIXME */1; 
 	}
 	/*UNREACH*/
 	return G_IO_STATUS_ERROR;
@@ -268,6 +266,7 @@ static GIOFuncs irssi_gnutls_channel_funcs = {
 static gboolean irssi_gnutls_fini()
 {
 	gnutls_global_deinit();
+	return TRUE;
 }
 
 static gboolean irssi_gnutls_init()
@@ -275,9 +274,9 @@ static gboolean irssi_gnutls_init()
 
 	/* X509 stuff */
 	gnutls_certificate_allocate_credentials(&xcred);
+	gnutls_certificate_set_verify_flags(xcred, GNUTLS_VERIFY_ALLOW_X509_V1_CA_CRT);
 
 	return TRUE;
-
 }
 
 gboolean irssi_gnutls_set_files(char *certf)
@@ -293,7 +292,7 @@ GIOChannel *irssi_gnutls_get_iochannel(GIOChannel *handle, gboolean server)
 	GIOTLSChannel *chan;
 	GIOChannel *gchan;
 	int err, fd;
-	const X509 *cert = NULL;
+	gnutls_x509_crt cert;
 
 	g_return_val_if_fail(handle != NULL, NULL);
 	
@@ -304,18 +303,18 @@ GIOChannel *irssi_gnutls_get_iochannel(GIOChannel *handle, gboolean server)
 
 	gnutls_init(&chan->session, server?GNUTLS_SERVER:GNUTLS_CLIENT);
 	gnutls_set_default_priority( chan->session);  
-    gnutls_credentials_set(session, GNUTLS_CRD_CERTIFICATE, x509_cred);
+    gnutls_credentials_set(chan->session, GNUTLS_CRD_CERTIFICATE, xcred);
 
-	gnutls_transport_set_ptr( chan->session, (gnutls_transport_ptr)sd);
+	gnutls_transport_set_ptr( chan->session, (gnutls_transport_ptr)fd);
 
 	if(err <= 0)
 	{
-		char buf[121];
-		ERR_error_string(ERR_get_error(), buf);
+		const char *buf;
+		buf = gnutls_strerror(err);
 		g_warning("TLS Error: %s", buf);
 		return NULL;
 	}
-	else if(!(cert = _get_peer_certificate(chan->session)))
+	else if(!(cert = gnutls_get_peer_certificate(chan->session)))
 	{
 		if(!server)
 		{
@@ -324,7 +323,7 @@ GIOChannel *irssi_gnutls_get_iochannel(GIOChannel *handle, gboolean server)
 		}
 	}
 	else
-		X509_free(cert);
+		gnutls_x509_free(cert);
 
 	chan->fd = fd;
 	chan->giochan = handle;

@@ -16,8 +16,7 @@ AC_PATH_PROG(gnutls_config, libgnutls-config, no)
 
 if test "$gnutls_config" != "no"; then
 	CFLAGS="$CFLAGS `$gnutls_config --cflags`"
-	#FIXME: gnutls support doesn't compile yet
-	#SOCKET_OBJS="$SOCKET_OBJS gnutls.o"
+	SOCKET_OBJS="$SOCKET_OBJS gnutls.o"
 	SSL_LIB="$SSL_LIB `$gnutls_config --libs`"
 	AC_CHECK_HEADERS([gnutls/openssl.h])
 fi
