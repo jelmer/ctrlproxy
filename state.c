@@ -750,6 +750,7 @@ struct linestack_context *linestack_new_by_network(struct network *n)
 const char *get_network_feature(struct network *n, char *name)
 {
 	int i;
+	if(!n->features)return NULL;
 	for(i = 0; n->features[i]; i++) {
 		if(strncmp(n->features[i], name, strlen(name) < strlen(n->features[i])?strlen(name):strlen(n->features[i]))) {
 			char *eq = strchr(n->features[i], '=');
