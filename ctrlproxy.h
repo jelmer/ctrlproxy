@@ -155,6 +155,8 @@ int irccmp(struct network *n, const char *a, const char *b);
 
 /* server.c */
 struct network *connect_network(xmlNodePtr);
+gboolean connect_current_server (struct network *);
+gboolean connect_next_server (struct network *);
 int close_network(struct network *s);
 gboolean close_server(struct network *n);
 extern GList *networks;

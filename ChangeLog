@@ -2,6 +2,8 @@
  	Jelmer Vernooij <jelmer@vernstok.nl>
 
 Ctrlproxy 2.7:
+ * Make CONNECT command force a reconnect if one is waiting to happen
+ * Restructure API for server management inside networks
  * Add DELNETWORK command
  * Introduce functions to use filter classes
  * Support different NICK sent by client in replication

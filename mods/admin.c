@@ -248,6 +248,7 @@ static void add_server (char **args, struct line *l)
 static void com_connect_network (char **args, struct line *l)
 {
 	xmlNodePtr n;
+	struct network *s;
 	if(!args[1]) {
 		 admin_out(l, "No network specified");
 		 return;
@@ -259,14 +260,18 @@ static void com_connect_network (char **args, struct line *l)
 		return;
 	}
 
-	if(find_network_struct(args[1])) {
+	s = find_network_struct(args[1]);
+
+	if(s && s->reconnect_id == 0) {
 		admin_out(l, "Already connected to %s", args[1]);
-		return;
+	} else if(s) {
+		admin_out(l, "Forcing reconnect to %s", args[1]);
+		close_server(s);
+		connect_current_server(s);
+	} else {
+		g_message("Connecting to %s", args[1]);
+		connect_network(n);
 	}
-
-	g_message("Connecting to %s", args[1]);
-
-	connect_network(n);
 }
 
 static void disconnect_network (char **args, struct line *l)
@@ -300,7 +305,7 @@ static void com_next_server (char **args, struct line *l) {
 		admin_out(l, "%s: Reconnecting", name);
 		close_server(n);
 		g_log(G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "Cycle server in %s", name);
-		login_server(n);
+		connect_next_server(n);
 	}
 	if(!args[1])
 		xmlFree(name);

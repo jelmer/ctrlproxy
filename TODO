@@ -7,12 +7,12 @@
 - internationalization (i18n)
 - use new filter system
 - add timer that uses current_plugin
-- support running from inetd
 - repl_limited (repl_simple with limited number of lines)
 - change behaviour of login_connect
 - dircproxy-config-to-ctrlproxyrc script
 - add NICK to repl_* in repl_command, repl_highlight, repl_lastdisconnect
 - replace transports by IOChannels?
+ - support running from inetd
 - fix issue with non-blocking connect
 
 report_time:
@@ -25,9 +25,6 @@ linestack_file:
 repl_command:
  - test
  
-admin:
-- CONNECT command could try to connect immediately to a network if it is currently waiting for reconnect delay to end for example....
-
 socket:
 - add gnutls support
 

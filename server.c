@@ -133,11 +133,16 @@ xmlNodePtr network_get_next_server(struct network *n)
 	return cur;
 }
 
-gboolean login_server(struct network *s) {
+gboolean connect_next_server(struct network *s) 
+{
+	s->current_server = network_get_next_server(s);
+	return connect_current_server(s);
+}
+
+gboolean connect_current_server(struct network *s) {
 	char *server_name = xmlGetProp(s->xmlConf, "name"),
 	     *fullname, *nick, *username, *password;
 
-	s->current_server = network_get_next_server(s);
 
 	if(!s->current_server){
 		xmlSetProp(s->xmlConf, "autoconnect", "0");
@@ -204,7 +209,7 @@ void reconnect(struct transport_context *c, void *_server)
 
 	server->authenticated = 0;
 	state_reconnect(server);
-	server->reconnect_id = g_timeout_add(RECONNECT_INTERVAL, (GSourceFunc) login_server, server);
+	server->reconnect_id = g_timeout_add(RECONNECT_INTERVAL, (GSourceFunc) connect_next_server, server);
 }
 
 gboolean close_server(struct network *n) {
@@ -518,8 +523,8 @@ struct network *connect_network(xmlNodePtr conf) {
 	}
 
 	/* Add server by default. If connecting succeeds, it is
-	 * removed automagically by login_server */
-	login_server(s);
+	 * removed automagically by connect_current_server */
+	connect_next_server(s);
 	networks = g_list_append(networks, s);
 
 	return s;
