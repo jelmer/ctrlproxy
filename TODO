@@ -2,3 +2,28 @@
  - repl changes
  - see FIXME's
 - fix bug in linestack_file
+- check web script
+- fix memory leaks in python module
+- check modules:
+  * admin
+  * antiflood
+  * auto-away
+  * autosave
+  * ctcp
+  * debug
+  * linestack_file
+  * linestack_memory
+  * log_custom
+  * log_irssi
+  * motd_file
+  * nickserv
+  * noticelog
+  * repl_command
+  * repl_highlight
+  * repl_lastdisconnect
+  * repl_limited
+  * repl_memory
+  * repl_none
+  * repl_simple
+  * report_time
+  * strip
