@@ -35,7 +35,9 @@ install-dirs:
 
 install-bin:
 	$(INSTALL) ctrlproxy$(EXEEXT) $(DESTDIR)$(bindir)
-	$(INSTALL) ctrlproxy-setup $(DESTDIR)$(bindir)
+
+install-contrib:
+	$(MAKE) -C contrib install
 
 install-doc:
 	$(INSTALL) -m 644 ctrlproxy.h $(DESTDIR)$(destincludedir)

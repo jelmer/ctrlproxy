@@ -184,7 +184,8 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition cond, void *_c
 	}
 
 	if (cond & G_IO_IN) {
-		l = irc_recv_line(c);
+		GError *error= NULL;
+		l = irc_recv_line(c, &error);
 		if(!l) return TRUE;
 
 		/* Silently drop empty messages */
@@ -247,7 +248,8 @@ static gboolean handle_pending_client_receive(GIOChannel *c, GIOCondition cond, 
 	}
 
 	if (cond & G_IO_IN) {
-		l = irc_recv_line(c);
+		GError *error = NULL;
+		l = irc_recv_line(c, &error);
 		if(!l) return TRUE;
 
 		/* Silently drop empty messages */
@@ -311,6 +313,7 @@ struct client *new_client(struct network *n, GIOChannel *c)
 {
 	struct client *client = g_new0(struct client, 1);
 
+	g_io_channel_set_encoding(c, NULL, NULL);
 	g_io_channel_set_flags(c, G_IO_FLAG_NONBLOCK, NULL);
 	client->connect_time = time(NULL);
 	client->incoming = c;

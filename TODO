@@ -15,4 +15,8 @@ typedef void (*server_connected_hook) (struct network *);
 typedef void (*server_disconnected_hook) (struct network *);
 
 - rewrite web script
-- cascading filters
+- test and fix SSL support
+
+next release:
+ - <allow/> rules in socks and listener based on ip addresses/ranges
+ - cascading filters, remove client, network and options from line struct

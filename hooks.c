@@ -101,7 +101,6 @@ void del_##n##_filter(const char *name)\
 }\
 gboolean run_##n##_filter(struct line *l)\
 {\
-/*	g_message(("running filter class '"#n"'")); */\
 	return filter_class_execute(list, l);\
 }
 

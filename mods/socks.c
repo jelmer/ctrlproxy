@@ -448,7 +448,6 @@ const char name_plugin[] = "socks";
 gboolean save_config(struct plugin *p, xmlNodePtr node)
 {
 	GList *gl;
-	char *tmp;
 	
 	for (gl = allow_rules; gl ; gl = gl->next) {
 		struct allow_rule *r = gl->data;
@@ -460,6 +459,8 @@ gboolean save_config(struct plugin *p, xmlNodePtr node)
 	}
 
 	/* FIXME: Set port */
+
+	return TRUE;
 }
 
 gboolean load_config(struct plugin *p, xmlNodePtr conf)

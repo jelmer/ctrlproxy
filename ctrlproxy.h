@@ -248,7 +248,7 @@ G_MODULE_EXPORT gboolean irc_sendf(GIOChannel *, char *fmt, ...);
 G_MODULE_EXPORT int irc_send_line(GIOChannel *, struct line *l);
 G_MODULE_EXPORT struct line *irc_parse_linef( char *origin, ... );
 G_MODULE_EXPORT struct line *irc_parse_line_args( char *origin, ... );
-G_MODULE_EXPORT struct line *irc_recv_line(GIOChannel *c);
+G_MODULE_EXPORT struct line *irc_recv_line(GIOChannel *c, GError **err);
 
 /* main.c */
 G_MODULE_EXPORT const char *ctrlproxy_version(void);

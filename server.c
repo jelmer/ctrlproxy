@@ -73,8 +73,6 @@ static gboolean process_from_server(struct line *l)
 
 	state_handle_data(l->network,l);
 
-	g_message("FROM SERVER: %s", l->args[0]);
-
 	/* We need to handle pings.. we can't depend on a client
 	 * to do that for us*/
 	if(!g_strcasecmp(l->args[0], "PING")){
@@ -151,12 +149,9 @@ static gboolean process_from_server(struct line *l)
 
 	if(!(l->options & LINE_DONT_SEND)) {
 		if( run_server_filter(l)) {
-			g_message("filter allowed sending %s to clients", l->args[0]);
 			clients_send(l->network, l, NULL);
-		} else {
-			g_message("filter didn't allow sending %s to clients", l->args[0]);
-		}
-	}
+		} 
+	} 
 
 	return TRUE;
 }
@@ -178,8 +173,9 @@ gboolean handle_server_receive (GIOChannel *c, GIOCondition cond, void *_server)
 	}
 
 	if (cond & G_IO_IN) {
-		l = irc_recv_line(c);
-		if(!l)return TRUE;
+		GError *err = NULL;
+		l = irc_recv_line(c, &err);
+		if(!l) return TRUE;
 
 		/* Silently drop empty messages, as allowed by RFC */
 		if(l->argc == 0) {
@@ -316,6 +312,7 @@ gboolean connect_current_tcp_server(struct network *s)
 		ioc = g_io_channel_unix_new(sock);
 
 		g_io_channel_set_flags(ioc, G_IO_FLAG_NONBLOCK, NULL);
+		g_io_channel_set_encoding(ioc, NULL, NULL);
 
 		if (connect(sock, res->ai_addr, res->ai_addrlen) < 0 && errno != EINPROGRESS) {
 			g_io_channel_unref(ioc);
@@ -383,12 +380,16 @@ static gboolean reconnect(GIOChannel *c, GIOCondition cond, void *_server)
 	default: break;
 	}
 
-	g_warning(("Connection to network %s lost, trying to reconnect in %ds..."), server->name, server->reconnect_interval);
-
 	server->authenticated = FALSE;
 	server->login_sent = FALSE;
 	free_channels(server);
-	server->reconnect_id = g_timeout_add(1000 * server->reconnect_interval, (GSourceFunc) connect_next_tcp_server, server);
+
+	if (server->type == NETWORK_TCP) {
+		g_warning(("Connection to network %s lost, trying to reconnect in %ds..."), server->name, server->reconnect_interval);
+		server->reconnect_id = g_timeout_add(1000 * server->reconnect_interval, (GSourceFunc) connect_next_tcp_server, server);
+	} else {
+		connect_network(server);	
+	}
 
 	return FALSE;
 }
@@ -455,11 +456,14 @@ gboolean close_server(struct network *n) {
 
 void clients_send(struct network *server, struct line *l, struct client *exception) 
 {
-	GList *g = server->clients;
-	while(g) {
+	GList *g;
+	for (g = server->clients; g; g = g->next) {
 		struct client *c = (struct client *)g->data;
-		if(c != exception && run_client_filter(l)) client_send_line(c, l);
-		g = g_list_next(g);
+		if(c != exception) {
+			if(run_client_filter(l)) { 
+				client_send_line(c, l);
+			}
+		}
 	}
 }
 
@@ -763,7 +767,7 @@ struct network *find_network_by_hostname(const char *hostname, guint16 port, gbo
 		while (sv) {
 			struct tcp_server *server = sv->data;
 
-			if (!strcasecmp(server->host, hostname) && !strcasecmp(server->port, portname)) {
+			if (!g_strcasecmp(server->host, hostname) && !g_strcasecmp(server->port, portname)) {
 				g_free(portname);
 				return n;
 			}

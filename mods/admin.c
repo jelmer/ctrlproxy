@@ -305,6 +305,8 @@ static void handle_die(char **args, struct line *l, void *userdata)
 void register_admin_command(const struct admin_command *cmd)
 {
 	commands = g_list_append(commands, cmd);
+	if (strlen(cmd->name) > longest_command) longest_command = strlen(cmd->name);
+	g_message("Registering command %s", cmd->name);
 }
 
 void unregister_admin_command(const struct admin_command *cmd)

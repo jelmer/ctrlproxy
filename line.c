@@ -295,19 +295,17 @@ struct line *linedup(struct line *l) {
 }
 
 
-struct line *irc_recv_line(GIOChannel *c)
+struct line *irc_recv_line(GIOChannel *c, GError **error)
 {
 	gchar *raw;
 	GIOStatus status;
-	struct line *l;
-	
-	status = g_io_channel_read_line(c, &raw, NULL, NULL, NULL);
+	struct line *l = NULL;
 
-	if (status != G_IO_STATUS_NORMAL) {
-		return NULL;
+	status = g_io_channel_read_line(c, &raw, NULL, NULL, error);
+
+	if (status == G_IO_STATUS_NORMAL) {
+		l = irc_parse_line(raw);
 	}
-
-	l = irc_parse_line(raw);
 
 	g_free(raw);
 

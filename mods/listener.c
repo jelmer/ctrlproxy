@@ -36,8 +36,9 @@
 static gboolean handle_client_receive(GIOChannel *c, GIOCondition condition, gpointer data) {
 	struct line *l;
 	struct listener *listener = data;
+	GError *error = NULL;
 
-	l = irc_recv_line(c);
+	l = irc_recv_line(c, &error);
 
 	if (!l) return TRUE;
 
