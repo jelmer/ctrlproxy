@@ -125,13 +125,13 @@ static gboolean log_data(struct line *l)
 
 	g_assert(l->args[0]);
 
-	if(l->direction == FROM_SERVER && !g_ascii_strcasecmp(l->args[0], "JOIN")) {
+	if(l->direction == FROM_SERVER && !g_strcasecmp(l->args[0], "JOIN")) {
 		f = find_add_channel_file(l->network, l->args[1]);
 		if(f)fprintf(f, "%02d:%02d -!- %s [%s] has joined %s\n", t->tm_hour, t->tm_min, nick, user, l->args[1]);
-	} else if(l->direction == FROM_SERVER && !g_ascii_strcasecmp(l->args[0], "PART")) {
+	} else if(l->direction == FROM_SERVER && !g_strcasecmp(l->args[0], "PART")) {
 		f = find_add_channel_file(l->network, l->args[1]);
 		if(f)fprintf(f, "%02d:%02d -!- %s [%s] has left %s [%s]\n", t->tm_hour, t->tm_min, nick, user, l->args[1], l->args[2]?l->args[2]:"");
-	} else if(!g_ascii_strcasecmp(l->args[0], "PRIVMSG")) {
+	} else if(!g_strcasecmp(l->args[0], "PRIVMSG")) {
 		char *nnick = xmlGetProp(l->network->xmlConf, "nick");
 		dest = l->args[1];
 		if(!irccmp(l->network, dest, nnick))dest = nick;
@@ -148,10 +148,10 @@ static gboolean log_data(struct line *l)
 			f = find_add_channel_file(l->network, dest);
 			if(f)fprintf(f, "%02d:%02d < %s> %s\n", t->tm_hour, t->tm_min, nick, l->args[2]);
 		}
-	} else if(!g_ascii_strcasecmp(l->args[0], "MODE") && l->args[1] && is_channelname(l->args[1], l->network) && l->direction == FROM_SERVER) {
+	} else if(!g_strcasecmp(l->args[0], "MODE") && l->args[1] && is_channelname(l->args[1], l->network) && l->direction == FROM_SERVER) {
 		f = find_add_channel_file(l->network, l->args[1]);
 		if(f)fprintf(f, "%02d:%02d -!- mode/%s [%s %s] by %s\n", t->tm_hour, t->tm_min, l->args[1], l->args[2], l->args[3], nick);
-	} else if(!g_ascii_strcasecmp(l->args[0], "QUIT")) {
+	} else if(!g_strcasecmp(l->args[0], "QUIT")) {
 		/* Loop thru the channels this user is on */
 		GList *gl = l->network->channels;
 		while(gl) {
@@ -164,7 +164,7 @@ static gboolean log_data(struct line *l)
 			}
 			gl = gl->next;
 		}
-	} else if(!g_ascii_strcasecmp(l->args[0], "KICK") && l->args[1] && l->args[2] && l->direction == FROM_SERVER) {
+	} else if(!g_strcasecmp(l->args[0], "KICK") && l->args[1] && l->args[2] && l->direction == FROM_SERVER) {
 		if(!strchr(l->args[1], ',')) {
 			f = find_add_channel_file(l->network, l->args[1]);
 			if(f)fprintf(f, "%02d:%02d -!- %s has been kicked by %s [%s]\n", t->tm_hour, t->tm_min, l->args[2], nick, l->args[3]?l->args[3]:"");
@@ -194,13 +194,13 @@ static gboolean log_data(struct line *l)
 			g_free(channels);
 			g_free(nicks);
 		}
-	} else if(!g_ascii_strcasecmp(l->args[0], "TOPIC") && l->direction == FROM_SERVER && l->args[1]) {
+	} else if(!g_strcasecmp(l->args[0], "TOPIC") && l->direction == FROM_SERVER && l->args[1]) {
 		f = find_add_channel_file(l->network, l->args[1]);
 		if(f) {
 			if(l->args[2])fprintf(f, "%02d:%02d -!- %s has changed the topic to %s\n", t->tm_hour, t->tm_min, nick, l->args[2]);
 			else fprintf(f, "%02d:%02d -!- %s has removed the topic\n", t->tm_hour, t->tm_min, nick);
 		}
-	} else if(!g_ascii_strcasecmp(l->args[0], "NICK") && l->direction == FROM_SERVER && l->args[1]) {
+	} else if(!g_strcasecmp(l->args[0], "NICK") && l->direction == FROM_SERVER && l->args[1]) {
 		/* Loop thru the channels this user is on */
 		GList *gl = l->network->channels;
 		while(gl) {

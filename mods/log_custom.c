@@ -453,11 +453,11 @@ static gboolean log_custom_data(struct line *l)
 	 * - log to channel only (KICK, PART, JOIN, TOPIC) (channel_only)
 	 */
 
-	if(l->direction == FROM_SERVER && !g_ascii_strcasecmp(l->args[0], "JOIN")) {
+	if(l->direction == FROM_SERVER && !g_strcasecmp(l->args[0], "JOIN")) {
 		file_write_target("join", l); 
-	} else if(l->direction == FROM_SERVER && !g_ascii_strcasecmp(l->args[0], "PART")) {
+	} else if(l->direction == FROM_SERVER && !g_strcasecmp(l->args[0], "PART")) {
 		file_write_channel_only("part", l);
-	} else if(!g_ascii_strcasecmp(l->args[0], "PRIVMSG")) {
+	} else if(!g_strcasecmp(l->args[0], "PRIVMSG")) {
 		if(l->args[2][0] == '') { 
 			l->args[2][strlen(l->args[2])-1] = '\0';
 			if(!g_ascii_strncasecmp(l->args[2], "ACTION ", 8)) { 
@@ -470,13 +470,13 @@ static gboolean log_custom_data(struct line *l)
 		} else {
 			file_write_target("msg", l);
 		}
-	} else if(!g_ascii_strcasecmp(l->args[0], "NOTICE")) {
+	} else if(!g_strcasecmp(l->args[0], "NOTICE")) {
 		file_write_target("notice", l);
-	} else if(!g_ascii_strcasecmp(l->args[0], "MODE") && l->args[1] && is_channelname(l->args[1], l->network) && l->direction == FROM_SERVER) {
+	} else if(!g_strcasecmp(l->args[0], "MODE") && l->args[1] && is_channelname(l->args[1], l->network) && l->direction == FROM_SERVER) {
 		file_write_target("mode", l);
-	} else if(!g_ascii_strcasecmp(l->args[0], "QUIT")) {
+	} else if(!g_strcasecmp(l->args[0], "QUIT")) {
 		file_write_channel_query("quit", l);
-	} else if(!g_ascii_strcasecmp(l->args[0], "KICK") && l->args[1] && l->args[2] && l->direction == FROM_SERVER) {
+	} else if(!g_strcasecmp(l->args[0], "KICK") && l->args[1] && l->args[2] && l->direction == FROM_SERVER) {
 		if(!strchr(l->args[1], ',')) {
 			file_write_channel_only("kick", l);
 		} else { 
@@ -504,10 +504,10 @@ static gboolean log_custom_data(struct line *l)
 			g_free(channels);
 			g_free(nicks);
 		}
-	} else if(!g_ascii_strcasecmp(l->args[0], "TOPIC") && l->direction == FROM_SERVER && l->args[1]) {
+	} else if(!g_strcasecmp(l->args[0], "TOPIC") && l->direction == FROM_SERVER && l->args[1]) {
 		if(l->args[2]) file_write_channel_only("topic", l);
 		else file_write_channel_only("notopic", l);
-	} else if(!g_ascii_strcasecmp(l->args[0], "NICK") && l->direction == FROM_SERVER && l->args[1]) {
+	} else if(!g_strcasecmp(l->args[0], "NICK") && l->direction == FROM_SERVER && l->args[1]) {
 		file_write_channel_query("nickchange", l);
 	}
 

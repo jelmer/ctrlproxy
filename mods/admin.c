@@ -423,7 +423,7 @@ static void help (char **args, struct line *l)
 	while(gl) {
 		struct admin_command *cmd = (struct admin_command *)gl->data;
 		if(args[1]) {
-			if(!g_ascii_strcasecmp(args[1], cmd->name)) {
+			if(!g_strcasecmp(args[1], cmd->name)) {
 				if(cmd->help_details != NULL) {
 					details = g_strsplit(cmd->help_details, "\n", 0);
 					for(i = 0; details[i] != NULL; i++) {
@@ -499,7 +499,7 @@ void unregister_admin_command(char *name)
 	GList *gl = commands;
 	while(gl) {
 		struct admin_command *cmd = (struct admin_command *)gl->data;
-		if(!g_ascii_strcasecmp(cmd->name, name)) {
+		if(!g_strcasecmp(cmd->name, name)) {
 			g_free(cmd->name);
 			commands = g_list_remove(commands, cmd);
 			g_free(cmd);
@@ -516,10 +516,10 @@ static gboolean handle_data(struct line *l) {
 	GList *gl;
 	if(l->direction != TO_SERVER) return TRUE;
 
-	if(g_ascii_strcasecmp(l->args[0], "CTRLPROXY") == 0)cmdoffset = 1;
+	if(g_strcasecmp(l->args[0], "CTRLPROXY") == 0)cmdoffset = 1;
 
-	if(!without_privmsg && g_ascii_strcasecmp(l->args[0], "PRIVMSG") == 0 &&
-	   g_ascii_strcasecmp(l->args[1], "CTRLPROXY") == 0) cmdoffset = 2;
+	if(!without_privmsg && g_strcasecmp(l->args[0], "PRIVMSG") == 0 &&
+	   g_strcasecmp(l->args[1], "CTRLPROXY") == 0) cmdoffset = 2;
 
 	if(cmdoffset == 0) return TRUE;
 
@@ -546,7 +546,7 @@ static gboolean handle_data(struct line *l) {
 	gl = commands;
 	while(gl) {
 		struct admin_command *cmd = (struct admin_command *)gl->data;
-		if(!g_ascii_strcasecmp(cmd->name, args[0])) {
+		if(!g_strcasecmp(cmd->name, args[0])) {
 			push_plugin(cmd->plugin);
 			cmd->handler(args, l);
 			pop_plugin();

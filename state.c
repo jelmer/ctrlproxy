@@ -348,7 +348,7 @@ static void handle_kick(struct network *s, struct line *l) {
 			continue;
 		}
 
-		if(!g_ascii_strcasecmp(n->global->name, own_nick))
+		if(!g_strcasecmp(n->global->name, own_nick))
 			xmlSetProp(c->xmlConf, "autojoin", "0");
 
 		c->nicks = g_list_remove(c->nicks, n);
@@ -572,9 +572,9 @@ static void handle_005(struct network *s, struct line *l)
 			if(strlen(s->features[j]) < strlen("CASEMAPPING=")) {
 				g_warning(_("CASEMAPPING variable sent by server invalid"));
 			} else {
-				if(!g_ascii_strcasecmp(s->features[j]+strlen("CASEMAPPING="), "rfc1459")) {
+				if(!g_strcasecmp(s->features[j]+strlen("CASEMAPPING="), "rfc1459")) {
 					s->casemapping = CASEMAP_RFC1459;
-				} else if(!g_ascii_strcasecmp(s->features[j]+strlen("CASEMAPPING="), "ascii")) {
+				} else if(!g_strcasecmp(s->features[j]+strlen("CASEMAPPING="), "ascii")) {
 					s->casemapping = CASEMAP_ASCII;
 				} else {
 					s->casemapping = CASEMAP_UNKNOWN;
@@ -665,7 +665,7 @@ void state_handle_data(struct network *s, struct line *l)
 	if(!s || !l->args || !l->args[0])return;
 
 	for(i = 0; irc_commands[i].command; i++) {
-		if(!g_ascii_strcasecmp(irc_commands[i].command, l->args[0])) {
+		if(!g_strcasecmp(irc_commands[i].command, l->args[0])) {
 			for(j = 0; j <= irc_commands[i].min_args; j++) {
 				if(!l->args[j])return;
 			}
@@ -778,7 +778,7 @@ int irccmp(struct network *n, const char *a, const char *b)
 	default:
 	case CASEMAP_UNKNOWN:
 	case CASEMAP_ASCII:
-		return g_ascii_strcasecmp(a,b);
+		return g_strcasecmp(a,b);
 	case CASEMAP_RFC1459:
 		return strrfc1459cmp(a,b);
 	}

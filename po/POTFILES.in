@@ -29,15 +29,10 @@ mods/report_time.c
 mods/socket/gnutls.c
 mods/socket/openssl.c
 mods/socket/socket.c
-mods/stats/cisg.c
-mods/stats/printstats.c
-mods/stats/stats.c
-mods/stats/statsutil.c
 mods/strip.c
 mods/repl_memory.c
 mods/dcc.c
 mods/repl_limited.c
-mods/perl.c
 mods/debug.c
 mods/autosave.c
 testsuite/test-filter.c

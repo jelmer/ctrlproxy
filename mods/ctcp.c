@@ -48,7 +48,7 @@ static gboolean mhandle_data(struct line *l)
 
 	if(l->direction == TO_SERVER) return TRUE;
 
-	if(g_ascii_strcasecmp(l->args[0], "PRIVMSG") || l->args[2][0] != '\001')return TRUE;
+	if(g_strcasecmp(l->args[0], "PRIVMSG") || l->args[2][0] != '\001')return TRUE;
 
 	data = g_strdup(l->args[2]+1);
 	t = strchr(data, '\001');
@@ -65,7 +65,7 @@ static gboolean mhandle_data(struct line *l)
 	t = strchr(data, ' ');
 	if(t){ *t = '\0';t++; }
 
-	if(!g_ascii_strcasecmp(data, "VERSION")) {
+	if(!g_strcasecmp(data, "VERSION")) {
 #ifndef _WIN32
 		struct utsname u;
 		uname(&u);
@@ -75,27 +75,27 @@ static gboolean mhandle_data(struct line *l)
 #endif
 		irc_sendf(l->network->outgoing, "NOTICE %s :%s", dest, msg);
 		g_free(msg);
-	} else if(!g_ascii_strcasecmp(data, "TIME")) {
+	} else if(!g_strcasecmp(data, "TIME")) {
 		ti = time(NULL);
 		asprintf(&msg, "\001TIME %s\001", ctime(&ti));
 		t = strchr(msg, '\n');
 		if(t)*t = '\0';
 		irc_sendf(l->network->outgoing, "NOTICE %s :%s", dest, msg);
 		g_free(msg);
-	} else if(!g_ascii_strcasecmp(data, "FINGER")) {
+	} else if(!g_strcasecmp(data, "FINGER")) {
 		char *fullname = xmlGetProp(l->network->xmlConf, "fullname");
 		asprintf(&msg, "\001FINGER %s\001", fullname);
 		xmlFree(fullname);
 		irc_sendf(l->network->outgoing, "NOTICE %s :%s", dest, msg);
 		g_free(msg);
-	} else if(!g_ascii_strcasecmp(data, "SOURCE")) {
+	} else if(!g_strcasecmp(data, "SOURCE")) {
 		irc_sendf(l->network->outgoing, "NOTICE %s :\001SOURCE http://nl.linux.org/~jelmer/ctrlproxy/\001", dest);
-	} else if(!g_ascii_strcasecmp(data, "CLIENTINFO")) {
+	} else if(!g_strcasecmp(data, "CLIENTINFO")) {
 		irc_sendf(l->network->outgoing, "NOTICE %s :\001ACTION CLIENTINFO VERSION TIME FINGER SOURCE CLIENTINFO PING\001", dest);
-	} else if(!g_ascii_strcasecmp(data, "PING")) {
+	} else if(!g_strcasecmp(data, "PING")) {
 		irc_sendf(l->network->outgoing, "NOTICE %s :%s", dest, l->args[2]?l->args[2]:"");
-	} else if(!g_ascii_strcasecmp(data, "ACTION")) {
-	} else if(!g_ascii_strcasecmp(data, "DCC")) {
+	} else if(!g_strcasecmp(data, "ACTION")) {
+	} else if(!g_strcasecmp(data, "DCC")) {
 	} else g_warning(_("Received unknown CTCP request '%s'!"), data);
 
 	g_free(data);

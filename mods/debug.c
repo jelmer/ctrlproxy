@@ -30,7 +30,7 @@ static struct network *find_network(const char *name)
 	while(gl) { 
 		struct network *n = (struct network *)gl->data;
 		char *nname = xmlGetProp(n->xmlConf, "name");
-		if(!g_ascii_strcasecmp(nname, name)) {
+		if(!g_strcasecmp(nname, name)) {
 			xmlFree(nname);
 			return n;
 		}

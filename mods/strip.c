@@ -197,7 +197,7 @@ static struct query *find_query(char *name)
 {
 	int i;
 	for(i = 0; queries[i].name; i++) {
-		if(!g_ascii_strcasecmp(queries[i].name, name)) return &queries[i];
+		if(!g_strcasecmp(queries[i].name, name)) return &queries[i];
 	}
 
 	return NULL;

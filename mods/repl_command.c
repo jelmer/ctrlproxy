@@ -32,7 +32,7 @@ static gboolean log_data(struct line *l) {
 
 	if(l->argc < 1)return TRUE;
 
-	if(g_ascii_strcasecmp(l->args[0], "PRIVMSG") && g_ascii_strcasecmp(l->args[0], "NOTICE"))return TRUE;
+	if(g_strcasecmp(l->args[0], "PRIVMSG") && g_strcasecmp(l->args[0], "NOTICE"))return TRUE;
 
 	/* Lookup this channel */
 	networkname = xmlGetProp(l->network->xmlConf, "name");

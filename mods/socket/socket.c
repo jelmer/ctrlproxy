@@ -23,6 +23,9 @@
 #include "config.h"
 #endif
 #include "ctrlproxy.h"
+#if defined(HAVE_OPENSSL_SSL_H)
+#include "openssl.h"
+#endif
 #ifdef _WIN32
 #include <winsock.h>
 #else
