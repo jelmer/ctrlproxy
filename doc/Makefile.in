@@ -4,6 +4,7 @@ MOD_MANPAGES_INTER = $(patsubst %.mod.xml,%.xml,$(MOD_SOURCES))
 MOD_MANPAGES_HTML = $(patsubst %.mod.xml,%.7ctrlproxy.html,$(MOD_SOURCES))
 MODS = $(patsubst %.mod.xml,%.xml,$(MOD_SOURCES))
 DOCS = ctrlproxy.1 ctrlproxyrc.5 ctrlproxy.pdf ctrlproxy.html $(MOD_MANPAGES)
+DOCBOOK2RTF = @DOCBOOK2RTF@
 XSLTPROC = @XSLTPROC@ --xinclude
 PDFLATEX = @PDFLATEX@
 XMLTO = @XMLTO@
@@ -29,11 +30,15 @@ all: @DOCBUILDE@$(DOCS)
 manpages: ctrlproxy.1 ctrlproxyrc.5 $(MOD_MANPAGES)
 htmlmanpages: $(MOD_MANPAGES_HTML)
 
+
 %.7ctrlproxy.xml: %.mod.xml module-man.xsl
 	$(XSLTPROC) -o $@ module-man.xsl $<
 
 %.xml: %.mod.xml module.xsl
 	$(XSLTPROC) -o $@ module.xsl $<
+
+%.rtf: %.xml $(MODS)
+	$(DOCBOOK2RTF) $<
 
 %.fo: %.xml $(MODS)
 	$(XMLTO) fo $<
