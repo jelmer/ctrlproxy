@@ -27,6 +27,7 @@
 #include <string.h>
 #include <sys/utsname.h>
 #include <dirent.h>
+#include <errno.h>
 
 #undef G_LOG_DOMAIN
 #define G_LOG_DOMAIN "ctcp"
@@ -36,6 +37,7 @@ static void dcc_list(struct line *l)
 	char *p = ctrlproxy_path("dcc");
 	DIR *d = opendir(p);	
 	struct dirent *e;
+	free(p);
 
 	if(!d) {
 		g_warning("Can't open directory '%s'", p);
@@ -46,16 +48,44 @@ static void dcc_list(struct line *l)
 	while((e = readdir(d))) {
 		admin_out(l, "%s", e->d_name);
 	}
+
+	closedir(d);
+}
+
+static void dcc_del(struct line *l, const char *f)
+{
+	char *p;
+	char *r;
+	if(strchr(f, '/')) {
+		admin_out(l, "Invalid filename");
+		return;
+	}
+
+	asprintf(&r, "dcc/%s", f);
+	p = ctrlproxy_path(r);
+	free(r);
+
+	if(unlink(p) != 0) {
+		admin_out(l, "Error occured while deleting %s: %s", p, strerror(errno));
+	} else {
+		admin_out(l, "%s successfully deleted", p);
+	}
+	free(p);
+}
+
+static void dcc_send(struct line *l, const char *f)
+{
+	/* FIXME */
 }
 
 static void dcc_command(char **args, struct line *l)
 {
 	if(!strcasecmp(args[1], "GET")) {
-		/* FIXME */
+		dcc_send(l, args[1]);
 	} else if(!strcasecmp(args[1], "LIST")) {
 		dcc_list(l);
 	} else if(!strcasecmp(args[1], "DEL")) {
-		/* FIXME */
+		dcc_del(l, args[1]);
 	} else {
 		admin_out(l, "Unknown subcommand '%s'", args[1]);
 	}
