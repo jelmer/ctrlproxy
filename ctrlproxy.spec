@@ -54,6 +54,8 @@ mkdir $RPM_BUILD_ROOT
 /usr/lib/ctrlproxy/*
 %dir /usr/include
 /usr/include/*
+%dir /usr/share/ctrlproxy
+/usr/share/ctrlproxy/*
 
 %changelog
 * Tue Nov 18 2003 Sean Reifschneider <jafo-rpms@tummy.com>
