@@ -81,6 +81,33 @@ GSList *linestack_get_linked_list(struct linestack_context *b)
 	return b->functions->get_linked_list(b);
 }
 
+void linestack_send_limited(struct linestack_context *b, struct transport_context *t, size_t last)
+{
+	GSList *lines, *gl;
+	int i;
+	if(!b) return;
+	if(b->functions->send_limited) b->functions->send_limited(b, t, last);
+
+	/* Fallback for if the backend doesn't implement this function */
+
+	lines = linestack_get_linked_list(b);
+	gl = g_slist_last(lines);
+	i = g_slist_position(gl, lines);
+	gl = g_slist_nth(lines, (last > i)?0:(i-last));
+
+	while(gl) {
+		struct line *l = (struct line *)gl->data;
+		char *raw = irc_line_string_nl(l);
+		transport_write(t, raw);
+		free(raw);
+		free_line(l);
+		gl = gl->next;
+	}
+	g_slist_free(lines);
+
+	
+}
+
 void linestack_send(struct linestack_context *b, struct transport_context *t)
 {
 	GSList *lines, *gl;

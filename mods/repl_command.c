@@ -26,7 +26,6 @@ static GHashTable *command_backlog = NULL;
 
 static gboolean log_data(struct line *l) {
 	struct linestack_context *co;
-	char *nick;
 	char *desc, *networkname;
 
 	if(l->argc < 1)return TRUE;
@@ -40,14 +39,8 @@ static gboolean log_data(struct line *l) {
 	co = g_hash_table_lookup(command_backlog, desc);
 	
 	if(!co) {
-		struct channel *ch = find_channel(l->network, l->args[1]);
 		co = linestack_new_by_network(l->network);
-		g_hash_table_insert(command_backlog, strdup(desc), co);
-		if(ch) {
-			nick = xmlGetProp(l->network->xmlConf, "nick");
-			linestack_add_line_list( co, gen_replication_channel(ch, networkname, nick));
-			xmlFree(nick);
-		}
+		g_hash_table_insert(command_backlog, desc, co);
 	} 
 	linestack_add_line(co, l);
 

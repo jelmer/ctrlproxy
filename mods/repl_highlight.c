@@ -30,7 +30,6 @@ static gboolean log_data(struct line *l) {
 
 	if(!co) {
 		co = linestack_new_by_network(l->network);
-		linestack_add_line_list( co, gen_replication_network(l->network));
 		g_hash_table_insert(highlight_backlog, l->network, co);
 	}
 
@@ -39,7 +38,7 @@ static gboolean log_data(struct line *l) {
 	if(l->direction == TO_SERVER &&  
 	   (!strcasecmp(l->args[0], "PRIVMSG") || !strcasecmp(l->args[0], "NOTICE"))) {
 		linestack_clear(co);
-		g_hash_table_remove(highlight_backlog, l->network);
+		linestack_add_line_list( co, gen_replication_network(l->network));
 		return TRUE;
 	}
 
@@ -68,10 +67,6 @@ static gboolean log_data(struct line *l) {
 static gboolean highlight_replicate(struct client *c)
 {
 	struct linestack_context *replication_data = (struct linestack_context *)g_hash_table_lookup(highlight_backlog, c->network);
-	if(!replication_data) {
-		replication_data = linestack_new_by_network(c->network); 
-		linestack_add_line_list(replication_data, gen_replication_network(c->network));
-	}
 	linestack_send(replication_data, c->incoming);
 	return TRUE;
 }

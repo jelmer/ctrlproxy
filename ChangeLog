@@ -2,6 +2,8 @@
  	Jelmer Vernooij <jelmer@vernstok.nl>
 
 Ctrlproxy 2.7:
+ * Extend linestack interface
+ * Add repl_limited module
  * Add test-filter utility
  * Fix bug in unloading modules
  * Fix dependency system for modules

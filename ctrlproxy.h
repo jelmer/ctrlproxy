@@ -215,6 +215,7 @@ struct linestack_ops {
 	gboolean (*add_line) (struct linestack_context *, struct line *);
 	GSList *(*get_linked_list) (struct linestack_context *);
 	void (*send) (struct linestack_context *, struct transport_context *);
+	void (*send_limited) (struct linestack_context *, struct transport_context *, size_t);
 	gboolean (*destroy) (struct linestack_context *);
 };
 

@@ -16,7 +16,7 @@ AC_ARG_ENABLE(dcc-module,
 [ MODS="$MODS libdcc.so" ])
 
 BINS="ctrlproxy"
-MODS="$MODS liblog_irssi.so libctcp.so liblinestack_memory.so libauto-away.so libstrip.so libadmin.so libnoticelog.so libnickserv.so liblog_custom.so libantiflood.so librepl_simple.so librepl_command.so librepl_highlight.so liblinestack_file.so libreport_time.so librepl_memory.so librepl_none.so libmotd_file.so librepl_lastdisconnect.so libautosave.so libdebug.so"
+MODS="$MODS liblog_irssi.so libctcp.so liblinestack_memory.so libauto-away.so libstrip.so libadmin.so libnoticelog.so libnickserv.so liblog_custom.so libantiflood.so librepl_simple.so librepl_command.so librepl_highlight.so librepl_limited.so liblinestack_file.so libreport_time.so librepl_memory.so librepl_none.so libmotd_file.so librepl_lastdisconnect.so libautosave.so libdebug.so"
 MODS_SUBDIRS=""
 
 # Checks for libraries.

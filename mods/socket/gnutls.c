@@ -45,7 +45,6 @@ typedef struct
 	
 static void irssi_gnutls_free(GIOChannel *handle)
 {
-
 	GIOTLSChannel *chan = (GIOTLSChannel *)handle;
 	g_io_channel_unref(chan->giochan);
 	gnutls_deinit(chan->session);

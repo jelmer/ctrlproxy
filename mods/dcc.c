@@ -24,17 +24,28 @@
 #include "admin.h"
 #include <stdlib.h>
 #include <stdio.h>
+#include <sys/stat.h>
 #include <string.h>
 #include <sys/utsname.h>
 #include <dirent.h>
 #include <errno.h>
+#include <netinet/in.h>
+#include <unistd.h>
 
 #undef G_LOG_DOMAIN
-#define G_LOG_DOMAIN "ctcp"
+#define G_LOG_DOMAIN "dcc"
+#define DCCBUFFERSIZE 1024
 
-static unsigned long ip_to_numeric(/* FIXME */) 
+static unsigned long ip_to_numeric(struct in_addr a) 
 {
-//  s = str((p[0] << 24) | (p[1] << 16) | (p[2] << 8) | p[3])
+	return a.s_addr;
+}
+
+static struct in_addr numeric_to_ip(unsigned long r)
+{
+	struct in_addr a;
+	a.s_addr = r;
+	return a;
 }
 
 static void dcc_list(struct line *l)
@@ -78,12 +89,122 @@ static void dcc_del(struct line *l, const char *f)
 	free(p);
 }
 
+static gboolean handle_dcc_send(GIOChannel *source, GIOCondition c, gpointer data)
+{
+	char *file = (char *)data;
+	
+	if(c & G_IO_IN) {
+		int fd = g_io_channel_unix_get_fd(source);
+		struct sockaddr_in clientname;
+		size_t clisize;
+		int new;
+		size_t read = 0;
+		FILE *f;
+		char buf[DCCBUFFERSIZE];
+		GError *error = NULL;
+		clisize = sizeof(clientname);
+
+		new = accept(fd, &clientname, &clisize);
+
+		g_io_channel_shutdown(source, FALSE, &error);
+
+		if(new < 0) {
+			g_warning("Error accepting incoming DCC connection: %s", strerror(errno));
+			free(file);
+			return FALSE;
+		}
+
+		f = fopen(file, "r");
+		if(!f) {
+			g_warning("Couldn't read from '%s': %s", file, strerror(errno));
+			free(file); 
+			return FALSE;
+		}
+
+		while((read = fread(buf, 1, sizeof(buf), f))) {
+			if(send(new, buf, read, 0) < 0) {
+				g_warning("Error sending file '%s': %s", file, strerror(errno));
+				free(file);
+				fclose(f);
+				return FALSE;
+			}
+		}
+
+		free(file);
+		close(new);
+		fclose(f);
+		return FALSE;
+	}
+
+	if(c & G_IO_HUP || c & G_IO_ERR) {
+		g_warning("Error listening for DCC connections");
+		free(file);
+		return FALSE;
+	}
+	
+	return TRUE;
+}
+
+static gboolean close_dcc_listen(gpointer data)
+{
+	GError *error = NULL;
+	GIOChannel *ioc = (GIOChannel *)data;
+	g_message("DCC SEND timed out, removing...\n");
+	g_io_channel_shutdown(ioc, FALSE, &error);
+	return FALSE;
+}
+
+static int dcc_start_listen(struct in_addr *addr, int *port, const char *file)
+{
+	struct sockaddr_in name;
+	int sock;
+	size_t namesize;
+	GIOChannel *ioc;
+
+	sock = socket(PF_INET, SOCK_STREAM, 0);
+	if(sock < 0) {
+		g_warning("Error creating socket: %s", strerror(errno));
+		return -1;
+	}
+
+	name.sin_family = AF_INET;
+	name.sin_port = htons(0);
+	name.sin_addr.s_addr = htonl(INADDR_ANY);
+
+	if(bind(sock, (struct sockaddr *)&name, sizeof(name)) < 0) {
+		g_warning("Unable to bind: %s", strerror(errno));
+		return -1;
+	}
+
+	if(listen(sock, 1) < 0) {
+		g_warning("Unable to listen: %s", strerror(errno));
+		return -1;
+	}
+
+	namesize = sizeof(name);
+	if(getsockname(sock, &name, &namesize) < 0) {
+		g_warning("Unable to get socket name: %s", strerror(errno));
+		return -1;
+	}
+	*addr = name.sin_addr;
+	*port = name.sin_port;
+
+	ioc = g_io_channel_unix_new(sock);
+	g_io_add_watch(ioc, G_IO_IN | G_IO_ERR | G_IO_HUP, handle_dcc_send, strdup(file));
+
+	g_timeout_add(300 * 1000, close_dcc_listen, ioc);
+	return 0;
+}
+
 static void dcc_send(struct line *l, const char *f)
 {
-	char *p;
 	char *r;
 	char *s;
+	char *p;
+	struct in_addr addr;
 	int port;
+	struct stat lstat;
+	
 	if(strchr(f, '/')) {
 		admin_out(l, "Invalid filename");
 		return;
@@ -93,9 +214,18 @@ static void dcc_send(struct line *l, const char *f)
 	p = ctrlproxy_path(r);
 	free(r);
 
-	dcc_start_listen(&addr, &port);
+	if(dcc_start_listen(&addr, &port, p) < 0) {
+		g_warning("Unable to listen");
+		return;
+	}
+
+	if(stat(p, &lstat) < 0) {
+		g_warning("Unable to stat '%s': %s", p, strerror(errno));
+		free(p);
+		return;
+	}
 	
-	asprintf(&s, "\001DCC SEND %s %lu %d %lu", p, ip_to_numeric(addr), port,  );
+	asprintf(&s, "\001DCC SEND %s %lu %d %lu", p, ip_to_numeric(addr), port, lstat.st_size );
 	free(p);
 	irc_send_args(l->client->incoming, "PRIVMSG", s, NULL);
 	free(s);
@@ -114,11 +244,75 @@ static void dcc_command(char **args, struct line *l)
 	}
 }
 
+static gboolean handle_dcc_receive(GIOChannel *i, GIOCondition c, gpointer data)
+{
+	FILE *f = (FILE *)data;
+	gsize read = 0;
+	GError *error = NULL;
+	char buf[DCCBUFFERSIZE];
+
+	if(c & G_IO_HUP) {
+		g_warning("DCC Connection closed");
+		fclose(f);
+		return FALSE;
+	}
+
+	if(c & G_IO_ERR) {
+		g_warning("Error occured while receiving data over DCC");
+		fclose(f);
+		return FALSE;
+	}
+	
+	GIOStatus status = g_io_channel_read_chars(i, buf, sizeof(buf), &read, &error);
+
+	if(status == G_IO_STATUS_NORMAL) {
+		fwrite(buf, 1, read, f);
+	}
+	return TRUE;
+}
+
+static void dcc_start_receive(struct in_addr a, int port, char *fname, size_t size)
+{
+	GIOChannel *io;
+	int sock;
+	struct sockaddr_in addr;
+	char *newpath, *base;
+	FILE *fd;
+	
+	sock = socket(PF_INET, SOCK_STREAM, 0);
+	if(sock < 0) {
+		g_warning("Unable to create socket: %s", strerror(errno));
+		return;
+	}
+
+	addr.sin_addr = a;
+	addr.sin_port = port;
+
+	if(connect(sock, &addr, sizeof(addr)) < 0) {
+		g_warning("Unable to connect to host; %s", strerror(errno));
+		return;
+	}
+	
+	io = g_io_channel_unix_new(sock);
+	if(strrchr(fname, '/'))fname = strrchr(fname, '/');
+	asprintf(&base, "dcc/%s", fname);
+	newpath = ctrlproxy_path(base);
+	free(base);
+	fd = fopen(newpath, "w+");
+	free(newpath);
+	if(!fd) {
+		g_warning("Can't open file for %s: %s", fname, strerror(errno));
+		return;
+	}
+	g_io_add_watch(io, G_IO_IN | G_IO_ERR | G_IO_HUP, handle_dcc_receive, fd);
+}
+
 static gboolean mhandle_data(struct line *l)
 {
 	char *p, *pe, **cargs;
 	size_t size = 0;
 	int port = 0;
+	struct in_addr addr;
 	if(l->direction == TO_SERVER || l->args[2][0] != '\001') return TRUE;
 
 	p = strdup(l->args[2]+1);
@@ -143,7 +337,7 @@ static gboolean mhandle_data(struct line *l)
 		port = atol(cargs[4]);
 		if(cargs[5])size = atol(cargs[5]);
 
-		/* FIXME: Connect and start receiving */
+		dcc_start_receive(addr, port, cargs[2], size);
 	}
 
 	g_strfreev(cargs);

@@ -29,14 +29,12 @@ static gboolean log_data(struct line *l) {
 
 	if(!co) {
 		co = linestack_new_by_network(l->network);
-		linestack_add_line_list( co, gen_replication_network(l->network));
 		g_hash_table_insert( lastdisconnect_backlog, l->network, co);
 	}
 
 	if(l->argc < 1)return TRUE;
 
 	if(l->direction == TO_SERVER)return TRUE;
-
 
 	if(!strcasecmp(l->args[0], "PRIVMSG") ||
 	   !strcasecmp(l->args[0], "NOTICE") ||
@@ -76,7 +74,7 @@ static void lastdisconnect_clear(struct client *c)
 {
 	struct linestack_context *co = (struct linestack_context *)g_hash_table_lookup(lastdisconnect_backlog, c->network);
 	linestack_clear(co);
-	g_hash_table_remove(lastdisconnect_backlog, c->network);
+	linestack_add_line_list( co, gen_replication_network(c->network));
 }
 
 static gboolean lastdisconnect_replicate(struct client *c)
