@@ -9,3 +9,5 @@ Wilmer van der Gaast <lintux@debian.org> (debian package)
 Sean Reifschneider <jafo@tummy.com> (.spec file, bug reports, doc update)
 'igla' at #ctrlproxy (bug reports)
 patch for DETACH command in the admin module by Stephane Lacoin <stephane@zoo-matic.homeip.net>
+Alexander Wild <wild@te-elektronik.com> (patches)
+Modestas Vainius <geromanas@mailas.com> (patches)
