@@ -6,7 +6,7 @@ INSTALL = @INSTALL@
 CFLAGS = @PY_CFLAGS@ -fPIC -I.. @CFLAGS@ @PKG_CFLAGS@  -DSHAREDIR=\"@datadir@\"
 LIBS = @PY_LIBS@
 
-.PHONY all clean distclean install
+.PHONY: all clean distclean install
 
 all: libpython.so
 
