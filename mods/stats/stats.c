@@ -249,7 +249,7 @@ gboolean init_plugin(struct plugin *p)
 		cur = cur->next;
 	}
 
-	if(!statsdb) asprintf(&statsdb, "%s/.ctrlproxy-stats.tdb", getenv("HOME"));	
+	if(!statsdb) statsdb = ctrlproxy_path("stats");	
 
 	tdb_context = tdb_open(statsdb, 0, 0, O_RDWR | O_CREAT, 00700);
 
