@@ -10,6 +10,8 @@
 - add timer that uses current_plugin
 - fix MiRC bug
 - fix bug with no JOIN's sent
+- support running from inetd
+- module for changing nick when detaching
 
 report_time:
  - test

@@ -32,6 +32,11 @@
 #undef G_LOG_DOMAIN
 #define G_LOG_DOMAIN "ctcp"
 
+static unsigned long ip_to_numeric(/* FIXME */) 
+{
+//  s = str((p[0] << 24) | (p[1] << 16) | (p[2] << 8) | p[3])
+}
+
 static void dcc_list(struct line *l)
 {
 	char *p = ctrlproxy_path("dcc");
@@ -78,6 +83,7 @@ static void dcc_send(struct line *l, const char *f)
 	char *p;
 	char *r;
 	char *s;
+	int port;
 	if(strchr(f, '/')) {
 		admin_out(l, "Invalid filename");
 		return;
@@ -86,13 +92,13 @@ static void dcc_send(struct line *l, const char *f)
 	asprintf(&r, "dcc/%s", f);
 	p = ctrlproxy_path(r);
 	free(r);
+
+	dcc_start_listen(&addr, &port);
 	
-	asprintf(&s, "\001DCC SEND %s address port size", p);
+	asprintf(&s, "\001DCC SEND %s %lu %d %lu", p, ip_to_numeric(addr), port,  );
 	free(p);
 	irc_send_args(l->client->incoming, "PRIVMSG", s, NULL);
 	free(s);
-
-	/* FIXME: Listen */
 }
 
 static void dcc_command(char **args, struct line *l)
@@ -111,6 +117,8 @@ static void dcc_command(char **args, struct line *l)
 static gboolean mhandle_data(struct line *l)
 {
 	char *p, *pe, **cargs;
+	size_t size = 0;
+	int port = 0;
 	if(l->direction == TO_SERVER || l->args[2][0] != '\001') return TRUE;
 
 	p = strdup(l->args[2]+1);
@@ -130,6 +138,12 @@ static gboolean mhandle_data(struct line *l)
 	if(cargs[0] && cargs[1] && 
 	   !strcasecmp(cargs[0], "DCC") && !strcasecmp(cargs[1], "SEND")) {
 		/* FIXME: Rules for what data to accept */
+
+		addr = numeric_to_ip(atol(cargs[3]));
+		port = atol(cargs[4]);
+		if(cargs[5])size = atol(cargs[5]);
+
+		/* FIXME: Connect and start receiving */
 	}
 
 	g_strfreev(cargs);
@@ -140,6 +154,7 @@ static gboolean mhandle_data(struct line *l)
 gboolean fini_plugin(struct plugin *p)
 {
 	del_filter(mhandle_data);
+	unregister_admin_command("DCC");
 	return TRUE;
 }
 
