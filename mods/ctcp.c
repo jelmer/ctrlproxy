@@ -35,7 +35,7 @@ static gboolean mhandle_data(struct line *l)
 	time_t ti;
 
 	/* Don't answer our own CTCP requests */
-	if(l->direction == TO_SERVER && l->args[2][0] != '\001') {
+	if(l->direction == TO_SERVER && l->argc > 2 && l->args[2][0] != '\001') {
 		l->options|=LINE_IS_PRIVATE;
 		return TRUE;
 	}

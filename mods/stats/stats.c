@@ -173,6 +173,15 @@ static void increase_item(const char *server, const char *channel, const char *n
 	free(key);
 }
 
+int has_lowercase(char *a) 
+{
+	int i;
+	for(i = 0; a[i]; i++)
+		if(a[i] >= 'a' && a[i] <= 'z') 
+			return 1;
+	return 0;
+}
+
 static gboolean log_data(struct line *l)
 {
 	char *nick = NULL;
@@ -194,7 +203,17 @@ static gboolean log_data(struct line *l)
 	if(!strcasecmp(l->args[0], "JOIN"))DO_INCREASE("joins");
 	if(!strcasecmp(l->args[0], "PART") || !strcasecmp(l->args[0], "QUIT"))DO_INCREASE("parts");
 	if(!strcasecmp(l->args[0], "PRIVMSG")) {
+		time_t tmp = time(NULL);
+		struct tm *t = localtime(&tmp);
+		char buf[10];
+		/* Time */
+		snprintf(buf, 10, "hour-%d", t->tm_hour);
+		DO_INCREASE(buf);
 		DO_INCREASE("lines");
+
+		if(!has_lowercase(l->args[2])) 
+			DO_INCREASE("caps");
+		
 		g = patterns;
 		while(g) {
 			struct pattern *p = (struct pattern *)g->data;

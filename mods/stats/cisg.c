@@ -173,7 +173,7 @@ void print_html_chan(struct channel *channelstruct)
 		printf("    <td class=\"nhandle\">%s</td>\n", n->name);
 		printf("    <td class=\"npublics\">%ld</td>\n", nick_get_property(n, "lines"));
 		printf("    <td class=\"nactivity\"><img src=\"./blue-h.png\" width=\"15\" height=\"15\" alt=\"\" /><img src=\"./yellow-h.png\" width=\"18\" height=\"15\" alt=\"\" /><img src=\"./red-h.png\" width=\"31\" height=\"15\" alt=\"\" /></td>\n");
-		printf("    <td class=\"nwords\">%ld</td>\n", nick_get_property(n, "words"));
+		printf("    <td class=\"nwords\">%ld</td>\n", nick_get_property(n, "word"));
 		printf("    <td class=\"nwpp\">%f</td>\n", PERCENTAGE(n, "happy"));
 		printf("    <td class=\"ncpw\">%f</td>\n", PERCENTAGE(n, "unhappy"));
 		printf("    <td class=\"ncomment\">FIXME</td>\n");
@@ -229,7 +229,7 @@ void print_html_chan(struct channel *channelstruct)
 	n = get_highest_nick_for_property(channelstruct, "joins");
 	if(n) {
 		printf(" <p class=\"isection\">\n");
-		printf("  <b>%s</b> didn't know whether to stay. He/she joined the channel <b>%ld</b> times!\n", n->name, PERCENTAGE(n, "joins"));
+		printf("  <b>%s</b> didn't know whether to stay. He/she joined the channel <b>%ld</b> times!\n", n->name, nick_get_property(n, "joins"));
 		printf(" </p>\n");
 	}
 
@@ -315,6 +315,7 @@ int main(int argc, const char **argv)
 	struct network *networkstruct;
 	struct channel *channelstruct;
 	int html = 0, all = 0;
+	FILE *out = stdout;
 	int arg;
 	struct poptOption options[] = {
 		POPT_AUTOHELP

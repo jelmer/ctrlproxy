@@ -173,8 +173,8 @@ static gint sort_property(gconstpointer a, gconstpointer b)
 	STAT_VALUE v1 = nick_get_property(n1, sortpropertyname);
 	STAT_VALUE v2 = nick_get_property(n2, sortpropertyname);
 
-	if(v1 > v2) return 1;
-	if(v1 < v2) return -1;
+	if(v1 > v2) return -1;
+	if(v1 < v2) return 1;
 	return 0;
 }
 
