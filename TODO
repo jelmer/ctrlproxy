@@ -9,7 +9,6 @@
 2.8:
  - repl_limited (repl_highlight with limited number of lines)
  - rewrite stats stuff to use MySQL
- - internationalization (i18n)
  - <network><listen/></network> -> <listen/>
  - Net::IRC-like interface
  - replace transports by IOChannels?
