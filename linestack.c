@@ -84,6 +84,7 @@ GSList *linestack_get_linked_list(struct linestack_context *b)
 void linestack_send(struct linestack_context *b, struct transport_context *t)
 {
 	GSList *lines, *gl;
+	if(!b) return;
 	if(b->functions->send) b->functions->send(b, t);
 
 	/* Fallback for if the backend doesn't implement this function */
