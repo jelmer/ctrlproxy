@@ -347,7 +347,7 @@ static gboolean mhandle_data(struct line *l)
 	size_t size = 0;
 	int port = 0;
 	struct in_addr addr;
-	if(l->direction == TO_SERVER || l->args[2][0] != '\001') return TRUE;
+	if(l->direction == TO_SERVER || l->argc < 3 || l->args[2][0] != '\001') return TRUE;
 
 	p = strdup(l->args[2]+1);
 

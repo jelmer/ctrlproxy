@@ -408,6 +408,7 @@ void handle_client_receive(struct transport_context *c, char *raw, void *_client
 		disconnect_client(client);
 		free_line(l);
 		if(clientpass)xmlFree(clientpass);
+		xmlFree(nick);
 		return;
 	} else if(!strcasecmp(l->args[0], "PING")) {
 		irc_sendf(c, ":%s PONG :%s\r\n", server_name, l->args[1]);
@@ -417,7 +418,10 @@ void handle_client_receive(struct transport_context *c, char *raw, void *_client
 		filters_execute(l);
 
 		client = l->client;
-		if (!client) return;
+		if (!client) {
+			xmlFree(nick);
+			return;
+		}
 
 		if(client->network->outgoing) {
 			const char *old_origin;
