@@ -1,7 +1,8 @@
-%module ctrlproxy
+%module(directors="1") ctrlproxy
 %{
 #include "ctrlproxy.h"
 %}
+%feature("autodoc", 1);
 %nodefault;
 
 /* These are not useful to non-C programmers */
@@ -15,8 +16,8 @@
 %rename(Network) network;
 %rename(Channel) channel;
 %rename(LineStack) linestack_context;
-%include "../../ctrlproxy.h";
 
+%include "../../ctrlproxy.h";
 
 %extend line {
 	line(struct line *l) {

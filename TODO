@@ -2,7 +2,7 @@
  - repl changes
  - see FIXME's
 - finish python module 
- - hooks
+ - hooks (directors? typemaps?)
 - rewrite web script
 - support the - and + in front of lines as used by Freenode
 - put save support back in

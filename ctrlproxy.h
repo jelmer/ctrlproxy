@@ -304,38 +304,27 @@ G_MODULE_EXPORT void add_filter(char *name, filter_function);
 G_MODULE_EXPORT gboolean add_filter_ex(char *name, filter_function, char *classname, int priority);
 G_MODULE_EXPORT void del_filter(filter_function);
 G_MODULE_EXPORT gboolean del_filter_ex(char *classname, filter_function);
-G_MODULE_EXPORT gboolean filters_execute(struct line *l);
-G_MODULE_EXPORT gboolean filters_execute_class(char *name, struct line *l);
 G_MODULE_EXPORT void add_filter_class(char *name, int priority);
 
 typedef gboolean (*new_client_hook) (struct client *);
 G_MODULE_EXPORT void add_new_client_hook(char *name, new_client_hook h);
 G_MODULE_EXPORT void del_new_client_hook(char *name);
-G_MODULE_EXPORT gboolean new_client_hook_execute(struct client *c);
 
 typedef void (*lose_client_hook) (struct client *);
 G_MODULE_EXPORT void add_lose_client_hook(char *name, lose_client_hook h);
 G_MODULE_EXPORT void del_lose_client_hook(char *name);
-G_MODULE_EXPORT void lose_client_hook_execute(struct client *c);
 
 typedef char ** (*motd_hook) (struct network *n);
 G_MODULE_EXPORT void add_motd_hook(char *name, motd_hook);
 G_MODULE_EXPORT void del_motd_hook(char *name);
-G_MODULE_EXPORT char **get_motd_lines(struct network *n);
 
 typedef void (*server_connected_hook) (struct network *);
 G_MODULE_EXPORT void add_server_connected_hook(char *name, server_connected_hook h);
 G_MODULE_EXPORT void del_server_connected_hook(char *name);
-G_MODULE_EXPORT void server_connected_hook_execute(struct network *);
 
 typedef void (*server_disconnected_hook) (struct network *);
 G_MODULE_EXPORT void add_server_disconnected_hook(char *name, server_disconnected_hook h);
 G_MODULE_EXPORT void del_server_disconnected_hook(char *name);
-G_MODULE_EXPORT void server_disconnected_hook_execute(struct network *);
-
-typedef void (*initialized_hook) (void);
-G_MODULE_EXPORT void add_initialized_hook(initialized_hook);
-G_MODULE_EXPORT void initialized_hook_execute(void);
 
 #ifdef _WIN32
 G_MODULE_EXPORT int asprintf(char **dest, const char *fmt, ...);

@@ -62,4 +62,14 @@ void init_config(void);
 /* plugins.c */
 gboolean init_plugins(void);
 
+/* hooks.c */
+void server_disconnected_hook_execute(struct network *);
+void server_connected_hook_execute(struct network *);
+char **get_motd_lines(struct network *n);
+gboolean new_client_hook_execute(struct client *c);
+void lose_client_hook_execute(struct client *c);
+gboolean filters_execute(struct line *l);
+gboolean filters_execute_class(char *name, struct line *l);
+
+
 #endif /* __INTERNALS_H__ */

@@ -251,8 +251,6 @@ int main(int argc, const char *argv[])
 		}
 	}
 
-	initialized_hook_execute();
-
 	atexit(clean_exit);
 
 	g_main_loop_run(main_loop);

@@ -109,7 +109,7 @@ gboolean load_plugin(struct plugin *p)
 	}
 
 	if(!g_module_symbol(m, "init_plugin", (gpointer)&f)) {
-		g_warning(_("Can't find symbol 'init_plugin' in module %s"), path_name);
+		g_warning(_("Can't find symbol 'init_plugin' in module %s: %s"), path_name, g_module_error());
 		return FALSE;
 	}
 	g_free(path_name);

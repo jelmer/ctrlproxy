@@ -1,5 +1,5 @@
-%module ctrlproxy.admin
+%module(package="ctrlproxy") admin
 %{
-#include "admin.h"
+#include "../admin.h"
 %}
 %include "../admin.h";
