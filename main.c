@@ -67,7 +67,7 @@ void signal_crash(int sig)
 		for (i = 0; i < backtrace_size; i++)
 			g_critical(" #%u %s", i, backtrace_strings[i]);
 
-		free(backtrace_strings);
+		g_free(backtrace_strings);
 	}
 
 #endif
@@ -228,7 +228,7 @@ int main(int argc, const char *argv[])
 		if(!f_logfile)f_logfile = stdout;
 
 	if(rcfile) {
-		configuration_file = strdup(rcfile);
+		configuration_file = g_strdup(rcfile);
 		readConfig(configuration_file);
 	} else { 
 		const char *homedir = g_get_home_dir();

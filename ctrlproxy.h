@@ -29,8 +29,6 @@
 #include <libxml/xmlmemory.h>
 #include <libxml/parser.h>
 
-#define STRICT_MEMORY_ALLOCS
-
 #ifdef STRICT_MEMORY_ALLOCS
 #define calloc(a,b) __ERROR_USE_G_NEW0__
 #define malloc(a) __ERROR_USE_G_MALLOC_OR_G_NEW__
