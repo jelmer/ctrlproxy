@@ -8,8 +8,6 @@
 - internationalization (i18n)
 - use new filter system
 - add timer that uses current_plugin
-- fix MiRC bug
-- fix bug with no JOIN's sent
 - support running from inetd
 - module for changing nick when detaching
 - repl_limited (repl_simple with limited number of lines)

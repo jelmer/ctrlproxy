@@ -32,7 +32,7 @@
 
 		<!-- Irssi-style logging -->
 		<plugin autoload="1" file="liblog_irssi">
-			<logfile>/home/jelmer/tmp/ctrlproxy</logfile>
+			<!-- <logfile>/home/jelmer/tmp/ctrlproxy</logfile> -->
 		</plugin>
 
 		<!-- Send CTCP replies (like time, version, etc) -->
