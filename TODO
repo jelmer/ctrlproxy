@@ -1,8 +1,8 @@
 2.7 
  - finish configuration utility (worked on by Kyoshiro, see list in ctrlproxy-setup)
  - update documentation
- - dcc module
- - socket: finish gnutls support
+ - finish dcc module
+ - finish gnutls support
  - apply poelzi's async patch
 
 2.8:
@@ -14,4 +14,5 @@
  - replace transports by IOChannels?
   - support running from inetd
   - fix issue with non-blocking connect
+  - make openssl and gnutls support seperate modules
  - more tests in the testsuite
