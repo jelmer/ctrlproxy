@@ -26,6 +26,7 @@
 <!ENTITY report-time SYSTEM "report-time.xml">
 <!ENTITY motd-file SYSTEM "motd-file.xml">
 <!ENTITY faq SYSTEM "faq.xml">
+<!ENTITY python SYSTEM "python.xml">
 ]>
 
 <book id="ctrlproxy">
@@ -60,6 +61,7 @@
 	<title>Configuration</title>
 	&syntax;
 	&faq;
+	&python;
 </part>
 
 <part id="modules">

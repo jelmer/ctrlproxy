@@ -1,0 +1,311 @@
+<chapter id="python">
+	<title>Python</title>
+
+	<sect1>
+		<title>A short introduction in scripting</title>
+
+
+	<sect2>
+		<title>Function callbacks</title>
+		
+		<itemizedlist>
+			<listitem><para>Detecting client changes (You connect/disconnect to ctrlproxy,..)</para></listitem>
+			<listitem><para>Server connection (ctrlproxy connects/disconnects to a server)</para></listitem>
+			<listitem><para>Motd (not functional currently :( ) the scripts sends some motd to the client</para></listitem>
+			<listitem><para>Admin commands (the script provides admin commands)</para></listitem>
+		</itemizedlist>
+
+		<para>This means, the registered function is called when a change occures.</para>
+
+		<para>Example:</para>
+
+		<programlisting> 
+def myNewClient:
+	print "Year, a new client"
+
+ctrlproxy.add_new_client_hook(myNewClient)
+	</programlisting>
+
+	<para>
+Everytime a client connects to ctrlproxy, this function is called :)
+	</para>
+
+
+<para>
+	For working on the IRC data, you have two interfaces:
+</para>
+
+<para>
+The Low Level Interface is, to register a rcv function with
+add_rcv_hook(myFunction)
+</para>
+
+<para>
+
+The High Level, and much faster Interface is to overwrite the
+ctrlproxy.Event Object.
+</para>
+
+<programlisting>
+class myEvent(ctrlproxy.Event):
+	def onChannelJoin(self, line, data):
+		print "Jear, i got a join :)\n"
+		print data
+	def onElse(self, line, data):
+		print "something else\n"
+		print data
+	def onRcv(self, line, data):
+		print "R: %s" %data
+	#	print "got something"
+	def onWho(self, line, data):
+		print "who"
+		print data
+	def onWhois(self, line, data):
+		print "whois ?"
+		print data
+
+n = myEvent()
+ctrlproxy.add_event_object(n);
+</programlisting>
+
+<para>
+Every method of the Object gets called when the specific Event occures.
+For example:
+</para>
+
+<para>
+You type "/whois poelzi_" in your irc client.
+The example myEvent will print following message:
+</para>
+
+<screen>
+** INFO: whois ?
+** INFO: [['311', 'poelzi', 'poelzi_', 'poelzi',
+'cruor.intra.poelzi.org', '*', 'poelzi'], ['319', 'poelzi', 'poelzi_',
+'@#bla @#test '], ['312', 'poelzi', 'poelzi_', 'irc.localnet',
+'http://www.debian.org/'], ['317', 'poelzi', 'poelzi_', '10393',
+'1072210235', 'seconds idle, signon time'],['318', 'poelzi', 'poelzi_',
+'End of /WHOIS list.']]
+</screen>
+
+<para>
+Yes, it looks weird, but it isn't:
+One whois replay is more then one line, the Event object collect them
+for you and call the function with a List Object that contains every
+line (these are the outer brackets)
+Because every line is preparsed, its a List to.
+</para>
+
+<screen>
+['311', 'poelzi', 'poelzi_', 'poelzi', 'cruor.intra.poelzi.org', '*',
+'poelzi'], ['319', 'poelzi', 'poelzi_', '@#bla @#test ']
+
+['312', 'poelzi', 'poelzi_', 'irc.localnet', 'http://www.debian.org/']
+
+['317', 'poelzi', 'poelzi_', '10393', '1072210235', 'seconds idle,
+signon time']]
+
+['318', 'poelzi', 'poelzi_', 'End of /WHOIS list.']
+</screen>
+
+<para>
+Every message except the onRcv which is always only one line, is a List
+in a List, even, when there is only one line in the result.
+</para>
+</sect2>
+
+<sect2><title>Where the data comes from....</title>
+
+<para>
+The Python interface is a realtime interface to the data structures in
+ctrlproxy. This means, when you access some data in ctrlproxy, thats the
+current state. On the other hand, you can not save these object. You can
+make a copy of the data in normal python objects when you replicate
+them, but not the ctrlproxy object itself.
+this means, you can access the objects ctrlproxy passes as long you stay
+in the current function, when the function return, the object could be
+invalid (mostly will).
+</para>
+
+<para>
+But this shouldn't bother you, because you can request everything.
+</para>
+
+<para>
+ctrlproxy.list_networks() returns a list of network names.
+</para>
+
+<para>
+ctrlproxy.get_network("name") returns the network object. This is the
+head of everything and you can walk down the tree.
+</para>
+
+<programlisting>
+n = ctrlproxy.get_network("test")
+
+print "XMLconf:",n.xmlConf
+print "Mymodes:",n.mymodes
+print "Servers:",n.servers
+print "Hostmask:",n.hostmask
+print "Channels:",n.channels
+print "Authenticated:",n.authenticated
+print "Clients:",n.clients
+print "Current_server:",n.current_server
+print "Listen:",n.listen
+print "Supported_modes:",n.supported_modes
+print "Features:", n.features
+</programlisting>
+
+<para>
+You see that you can access the network really easy.
+</para>
+
+<programlisting>
+n.disconnect()
+</programlisting>
+
+<para>
+	and your network is offline :)
+</para>
+
+<programlisting>
+	n.clients[0].send_notice("i like ctrlproxy really much")
+</programlisting>
+
+<para>
+the first client connected to network test becomes this notice.
+</para>
+
+<programlisting>
+	n.clients[0].send_notice("good bye !!")
+	n.clients[0].disconnect()
+</programlisting>
+
+<para>
+but now he is gone.
+</para>
+
+<para>
+you can send directly into the network.
+</para>
+
+<progrmalisting>
+n.send("whois test test",ctrlproxy.TO_SERVER)
+</programliksting>
+
+<para>
+or something to all clients connected to this network
+</para>
+
+<programlisting>
+	n.send("PRIVMSG test hahahahah my message",ctrlproxy.TO_CLIENTS)
+</programlisting>
+
+<para>
+the xml here, too:
+</para>
+
+<para>
+The xml nodes from ctrlproxy become xml Objects in python.
+These Objects have direct read/write access to the xmlNodes in
+ctrlproxy. This means, you can reconfigure ctrlproxy throu them.
+Look at the libxml2-python documentation.
+</para>
+
+<para>
+Readonly:
+</para>
+
+<para>
+Only the Line object has write access, all other changes are done
+through function.
+This mean you can't write:
+</para>
+
+<programlisting>
+"del network.client[0]"
+</programlisting>
+
+<para>
+	to kill a client for example.
+</para>
+
+<para>
+the only exception is the line object.
+you can do:
+</para>
+
+<programlisting>
+line.options = line.option | ctrlproxy.LINE_DONT_SEND
+</programlisting>
+
+<para>
+the line will not be send to the target.
+</para>
+
+</sect2>
+
+<sect2>
+	<title>Threads</title>
+
+<para>
+In general, you can use threads.
+There is a know bug i wasn't able to solve yet. When a thread dies, the
+process is still in process list as defunct with 0 memory usage.
+</para>
+
+<para>
+In general you should avoid threads as much as possible, or look that
+the theads to not die :)
+</para>
+
+<para>
+A example for thread usage:
+</para>
+
+<para>
+You write a dcc plugin that save files which are sent to you on the
+server. To recive the data, create one thread for all incomming data,
+that never dies, and append to him the jobs he has to do.
+</para>
+
+<para>
+As soon as i know how to recieve the exit code of the thread, this is
+solved :)
+</para>
+
+</sect2>
+
+<sect2><title>Something general</title>
+
+<para>
+The stdout and stderr streams from python are wrapped to the general
+logging functions of ctrlproxy. These created the "** INFO: " at the
+message. When you load the noticelog plugin, these messages are pipped
+to the client. So, you should not print every line you get via a rcv
+method, or you will create a endless loop :)
+</para>
+
+</sect1>
+
+<sect1><title>Requirements</title>
+
+<itemizedlist>
+	<listitem><para>python2.3 (maybe 2.2 works too)</para></listitem>
+	<listitem><para>python2.3-dev (python headers)</para></listitem>
+	<listitem><para>libxml2-python</para></listitem>
+</itemizedlist>
+
+</sect1>
+
+<sect1><title>TODO</title>
+
+<itemizedlist>
+	<listitem><para>del_...._hook</para></listitem>
+	<listitem><para>Documentation</para></listitem>
+	<listitem><para>implement some more functions to ctrlproxy</para></listitem>
+</itemizedlist>
+
+</sect1>
+
+</chapter>
