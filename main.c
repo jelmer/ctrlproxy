@@ -89,7 +89,7 @@ void clean_exit()
 	while(gl) {
 		struct network *n = (struct network *)gl->data;
 		gl = gl->next;
-		if(n) close_server(n);
+		if(n) close_network(n);
 	}
 	if(debugfd)fclose(debugfd);
 }
@@ -373,7 +373,7 @@ int main(int argc, const char *argv[])
 		g_assert(!strcmp(cur->name, "network"));
 
 		autoconnect = xmlGetProp(cur, "autoconnect");
-		if(autoconnect && !strcmp(autoconnect, "1"))connect_to_server(cur);
+		if(autoconnect && !strcmp(autoconnect, "1"))connect_network(cur);
 		xmlFree(autoconnect);
 
 		cur = cur->next;

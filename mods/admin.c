@@ -215,7 +215,7 @@ static void add_server (char **args, struct line *l)
 	}
 }
 
-static void connect_network (char **args, struct line *l)
+static void com_connect_network (char **args, struct line *l)
 { 
 	xmlNodePtr n;
 	if(!args[1]) {
@@ -236,7 +236,7 @@ static void connect_network (char **args, struct line *l)
 
 	g_message("Connecting to %s", args[1]);
 	
-	connect_to_server(n);
+	connect_network(n);
 }
 
 static void disconnect_network (char **args, struct line *l)
@@ -251,7 +251,7 @@ static void disconnect_network (char **args, struct line *l)
 		}
 	}
 	
-	close_server(n);
+	close_network(n);
 }
 
 static void list_modules (char **args, struct line *l)
@@ -404,7 +404,7 @@ static struct admin_command builtin_commands[] = {
 	{ "ADDNETWORK", add_network },
 	{ "ADDSERVER", add_server },
 	{ "ADDLISTEN", add_listen },
-	{ "CONNECT", connect_network },
+	{ "CONNECT", com_connect_network },
 	{ "DIE", handle_die },
 	{ "DISCONNECT", disconnect_network },
 	{ "LISTNETWORKS", list_networks },

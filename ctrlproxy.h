@@ -115,6 +115,7 @@ struct network {
 	char **features;
 	struct transport_context *outgoing;
 	struct transport_context **incoming;
+	guint reconnect_id;
 };
 
 struct plugin {
@@ -136,8 +137,8 @@ GSList *gen_replication_channel(struct channel *c, char *hostmask, char *nick);
 int is_channelname(char *name, struct network *s);
 
 /* server.c */
-struct network *connect_to_server(xmlNodePtr);
-int close_server(struct network *s);
+struct network *connect_network(xmlNodePtr);
+int close_network(struct network *s);
 extern GList *networks;
 void clients_send(struct network *, struct line *, struct transport_context *exception);
 void network_add_listen(struct network *, xmlNodePtr);

@@ -1589,7 +1589,7 @@ static PyObject * PyCtrlproxy_connect_network(PyObject *self, PyObject *args, Py
 		nname = xmlGetProp(cur, "name");
 		if(nname && !strcmp(nname, net)) {
 			xmlFree(nname);
-			return createNetworkObject(connect_to_server(cur));
+			return createNetworkObject(connect_network(cur));
 		}
 	}
 

@@ -58,7 +58,7 @@ void handle_server_receive (struct transport_context *c, char *raw, void *_serve
 	state_handle_data(server,l);
 
 	/* We need to handle pings.. we can't depend on a client
-	 *          * to do that for us*/
+	 * to do that for us*/
 	l->direction = FROM_SERVER;
 	if(l->args[0]) {
 		if(!strcasecmp(l->args[0], "PING")){
@@ -116,17 +116,34 @@ void handle_server_receive (struct transport_context *c, char *raw, void *_serve
 	free_line(l); l = NULL;
 }
 
+xmlNodePtr network_get_next_server(struct network *n)
+{
+	xmlNodePtr cur = n->current_server;
+	/* Get next available server */
+	if(cur) cur = cur->next;
 
+	while(cur && (xmlIsBlankNode(cur) || !strcmp(cur->name, "comment"))) cur = cur->next;
+	
+	if(cur) return cur;
+
+	cur = n->servers;
+
+	while(cur && (xmlIsBlankNode(cur) || !strcmp(cur->name, "comment"))) cur = cur->next;
+	
+	return cur;
+}
 
 gboolean login_server(struct network *s) {
 	char *server_name = xmlGetProp(s->xmlConf, "name"),
 	     *fullname, *nick, *username, *password;
 	
+	s->current_server = network_get_next_server(s);
+
 	if(!s->current_server){ 
 		xmlSetProp(s->xmlConf, "autoconnect", "0");
-		g_warning("No servers listed for network %s, aborting reconnect.\n", server_name);
+		g_warning("No servers listed for network %s, not connecting\n", server_name);
 		xmlFree(server_name);
-		return FALSE;
+		return TRUE;
 	}
 
 	g_message("Connecting with %s for server %s", s->current_server->name, server_name);
@@ -141,16 +158,9 @@ gboolean login_server(struct network *s) {
 
 	if(!s->outgoing) {
 		g_warning("Couldn't connect with network %s via transport %s", server_name, s->current_server->name);
-		s->current_server = s->current_server->next;
-		/* Handle comments */
-		while(!strcmp(s->current_server->name, "comment")) {
-			s->current_server = s->current_server->next;
-			if(!s->current_server)s->current_server = s->servers->xmlChildrenNode;
-		}
 		xmlFree(server_name);
 		return TRUE;
 	}
-
 
 	nick = xmlGetProp(s->xmlConf, "nick");
 	username = xmlGetProp(s->xmlConf, "username");
@@ -193,7 +203,7 @@ void reconnect(struct transport_context *c, void *_server)
 
 	server->authenticated = 0;
 	state_reconnect(server);
-	g_timeout_add(RECONNECT_INTERVAL, (GSourceFunc) login_server, server);
+	server->reconnect_id = g_timeout_add(RECONNECT_INTERVAL, (GSourceFunc) login_server, server);
 }
 
 void disconnect_client(struct client *c) {
@@ -417,7 +427,7 @@ void network_add_listen(struct network *n, xmlNodePtr listen)
 
 }
 
-struct network *connect_to_server(xmlNodePtr conf) {
+struct network *connect_network(xmlNodePtr conf) {
 	struct network *s = malloc(sizeof(struct network));
 	char *nick, *user_name;
 	int i = 0;
@@ -441,12 +451,9 @@ struct network *connect_to_server(xmlNodePtr conf) {
 
 	/* Find <listen> tag */
 	s->listen = NULL;
-	s->incoming = malloc(sizeof(struct transport_context *)); s->incoming[0] = NULL;
-	cur = s->xmlConf->xmlChildrenNode;
-	while(cur) {
-		if(!strcmp(cur->name, "listen"))s->listen = cur;
-		cur = cur->next;	
-	}
+	s->incoming = malloc(sizeof(struct transport_context *));
+	s->incoming[0] = NULL;
+	cur = xmlFindChildByElementName(s->xmlConf, "listen");
 
 	if(s->listen)cur = s->listen->xmlChildrenNode;
 	else cur = NULL;
@@ -456,34 +463,23 @@ struct network *connect_to_server(xmlNodePtr conf) {
 			continue;
 		}
 
-		network_add_listen(s, cur);
+		network_add_listen(s, cur); i++;
 		
 		cur = cur->next;
 	}
-
-	if(i) s->incoming[i] = NULL;
 
 	s->servers = NULL;
 	s->current_server = NULL;
 	
 	/* Find <servers> tag */
-	cur = s->xmlConf->xmlChildrenNode;
-	while(cur) {
-		if(!strcmp(cur->name, "servers"))s->servers = cur;
-		cur = cur->next;	
-	}
+	s->servers = xmlFindChildByElementName(s->xmlConf, "servers");
+	s->servers = s->servers->xmlChildrenNode;
 
 	if(!s->servers) {
 		char *server_name = xmlGetProp(s->xmlConf, "name");
 		g_warning("No servers listed for network %s!\n", server_name);
 		xmlFree(server_name);
-	} else {
-		s->current_server = s->servers->xmlChildrenNode;	
-		while((xmlIsBlankNode(s->current_server) || !strcmp(s->current_server->name, "comment")) && 
-			  s->current_server) {
-			s->current_server = s->current_server->next;
-		}
-	}
+	} 
 	
 	/* Add server by default. If connecting succeeds, it is 
 	 * removed automagically by login_server */
@@ -493,11 +489,12 @@ struct network *connect_to_server(xmlNodePtr conf) {
 	return s;
 }
 
-int close_server(struct network *s)
+int close_network(struct network *s)
 {
 	GList *l = s->clients;
 	int i;
 	char *server_name = xmlGetProp(s->xmlConf, "name");
+	g_assert(s);
 	g_message("Closing connection to %s", server_name);
 	if(s->outgoing)irc_sendf(s->outgoing, "QUIT\r\n");
 	free(s->hostmask);
@@ -512,8 +509,7 @@ int close_server(struct network *s)
 
 	/* Remove all listening lines */
 	if(s->incoming) {
-		for(i = 0; s->incoming[i]; i++)
-			transport_free(s->incoming[i]);
+		for(i = 0; s->incoming[i] != NULL; i++) transport_free(s->incoming[i]);
 		free(s->incoming);
 	}
 
@@ -533,6 +529,8 @@ int close_server(struct network *s)
 	}
 
 	networks = g_list_remove(networks, s);
+
+	if(s->reconnect_id) g_source_remove(s->reconnect_id);
 
 	free(s);
 	
