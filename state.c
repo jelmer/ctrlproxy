@@ -316,8 +316,12 @@ static void handle_kick(struct network *s, struct line *l) {
 	char *channels = strdup(l->args[1]);
 	char *curnick, *curchan, *nextchan, *nextnick;
 	char cont = 1;
+	char *own_nick;
 
 	curchan = channels; curnick = nicks;
+
+	own_nick = xmlGetProp(s->xmlConf, "nick");
+
 	while(cont) {
 		nextnick = strchr(curnick, ',');
 		if(nextnick){ *nextnick = '\0'; nextnick++; }
@@ -333,6 +337,7 @@ static void handle_kick(struct network *s, struct line *l) {
 		else cont = 0;
 
 		c = find_channel(s, curchan);
+
 		if(!c){
 			g_log(G_LOG_DOMAIN, G_LOG_LEVEL_WARNING, "Can't kick nick %s from %s\n", curnick, curchan);
 			curchan = nextchan; curnick = nextnick;
@@ -345,11 +350,16 @@ static void handle_kick(struct network *s, struct line *l) {
 			curchan = nextchan; curnick = nextnick;
 			continue;
 		}
-		
+
+		if(!strcasecmp(n->global->name, own_nick))
+			xmlSetProp(c->xmlConf, "autojoin", "0");
+
 		c->nicks = g_list_remove(c->nicks, n);
 		free_nick(n);
 		curchan = nextchan; curnick = nextnick;
+
 	}
+	xmlFree(own_nick);
 }
 
 static void handle_topic(struct network *s, struct line *l) {

@@ -2,6 +2,7 @@
  	Jelmer Vernooij <jelmer@vernstok.nl>
 
 Ctrlproxy 2.7:
+ * Unset autojoin on KICK (Daniel Poelzleithner <ctrlproxy@poelzi.org>)
  * Add ability to change NICK when away
  * Make repl_* work when NICK sent by client differs from current NICK
  * Build with -Wall
