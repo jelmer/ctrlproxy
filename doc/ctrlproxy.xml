@@ -10,6 +10,7 @@
 <!ENTITY repl-simple SYSTEM "repl_simple.xml">
 <!ENTITY repl-highlight SYSTEM "repl_highlight.xml">
 <!ENTITY repl-command SYSTEM "repl_command.xml">
+<!ENTITY repl-lastdisconnect SYSTEM "repl_lastdisconnect.xml">
 <!ENTITY socket SYSTEM "socket.xml">
 <!ENTITY stats SYSTEM "stats.xml">
 <!ENTITY strip SYSTEM "strip.xml">
@@ -71,6 +72,7 @@
 &repl-simple;
 &repl-highlight;
 &repl-command;
+&repl-lastdisconnect;
 &socket;
 &noticelog;
 &stats;
