@@ -1,17 +1,17 @@
 Next release:
+- default linestack is used or explicitly specified linestack (specified 
+   at network level). Default linestack == ? How to specify argument 
+   to linestack?
+- document: 
+  * linestack_{file,memory}
+  * repl_{simple,highlight,command}
+  * report_time
+
+Later releases:
 - use namespaces and XML schemas instead of DTD
-- add system for default linestack and selecting linestacks
+- improve PHP script for stats
 
 Optional:
-- improve PHP script for stats
 - more admin commands: DELNETWORK, NEXTSERVER, DELLISTEN, DELSERVER
 - automatically unload crashing modules?
-- print time at regular intervals in replication
-- add file based linestack (DONE, need docs)
-- get a few replication modules: 
- - simple (DONE, need docs)
- - with BACKLOG admin command
-  - save hash table per network
-   - hash table contains entry with linestack_context for each channel/query
- - with only highlights (DONE, need docs)
-- only auto away when no client is connected (DONE, need docs!)
+- linestack_mysql

@@ -30,11 +30,10 @@ void replicate_data(struct network *s, struct transport_context *io) {
 
 static gboolean log_data(struct line *l) {
 	struct linestack_context *co = (struct linestack_context *)l->network->replication_data;
-	char *repl_backend = xmlGetProp(l->network->xmlConf, "linestack");
 	xmlNodePtr cur;
 	struct channel *c;
 
-	if(!co) co = linestack_new(repl_backend, NULL);
+	if(!co) co = linestack_new_by_network(l->network);
 
 	if(l->argc < 1)return TRUE;
 

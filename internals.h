@@ -52,7 +52,4 @@ gboolean ping_loop(gpointer user_data);
 void state_handle_data(struct network *s, struct line *l);
 void state_reconnect(struct network *s);
 
-/* filter.c */
-gboolean filters_execute(struct line *l);
-
 #endif /* __INTERNALS_H__ */

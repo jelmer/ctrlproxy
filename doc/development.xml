@@ -75,6 +75,10 @@ gboolean fini_plugin(struct plugin *p)
 		<varlistentry><term>LINE_STOP_PROCESSING</term>
 			<listitem><para>Immediately stop processing the line (passing it to other message handlers). Implemented as of version 2.5.</para></listitem>
 		</varlistentry>
+
+		<varlistentry><term>LINE_NO_LOGGING</term>
+			<listitem><para>Modules that do logging should ignore this line. This may be used for PRIVMSG's that are not interesting for logs, such as timestamps that are being printed. </para></listitem>
+		</varlistentry>
 	</variablelist>
 
 	<para>There is one other option that can be specified, but is only 

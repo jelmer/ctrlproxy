@@ -76,6 +76,7 @@ struct line {
 #define LINE_IS_PRIVATE      1 
 #define LINE_DONT_SEND       2 
 #define LINE_STOP_PROCESSING 4
+#define LINE_NO_LOGGING      8
 
 struct nick {
 	char *name;
@@ -132,6 +133,7 @@ extern void (*replicate_function) (struct network *, struct transport_context *)
 /* state.c */
 struct channel *find_channel(struct network *st, char *name);
 struct nick *find_nick(struct channel *c, char *name);
+struct linestack_context *linestack_new_by_network(struct network *);
 GSList *gen_replication(struct network *s);
 
 /* server.c */
@@ -213,10 +215,11 @@ extern xmlDocPtr configuration;
 
 int verify_client(struct network *s, struct client *c);
 
-/* hooks.c */
+/* filter.c */
 /* Returns TRUE if filter should be continued, FALSE if it should be stopped. */
 typedef gboolean (*filter_function) (struct line *);
 void add_filter(char *name, filter_function);
 void del_filter(filter_function);
+gboolean filters_execute(struct line *l);
 
 #endif /* __CTRLPROXY_H__ */

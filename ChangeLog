@@ -1,4 +1,6 @@
 Ctrlproxy 2.6:
+ * Add report_time module
+ * Start FAQ
  * Several bugs in log_custom fixed (thanks, igla)
  * Fix build without libssl
  * Add attribute only_noclient

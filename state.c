@@ -546,3 +546,8 @@ GSList *gen_replication(struct network *s)
 	
 	return ret;
 }
+
+struct linestack_context *linestack_new_by_network(struct network *n)
+{
+	/* FIXME */
+}

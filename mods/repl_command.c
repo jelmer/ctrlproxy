@@ -23,7 +23,6 @@
 
 static gboolean log_data(struct line *l) {
 	GHashTable *h = (GHashTable *)l->network->replication_data;
-	char *repl_backend;
 	struct linestack_context *co;
 	struct channel *c;
 
@@ -34,17 +33,13 @@ static gboolean log_data(struct line *l) {
 
 	/* Add hash table if hasn't been added yet */
 	if(!h) {
-		h = g_hash_table_new(g_str_hash);
+		h = g_hash_table_new(g_str_hash, g_str_equal);
 		l->network->replication_data = h;
 	}
 
 	/* Lookup this channel */
 	co = g_hash_table_lookup(h, l->args[1]);
-	if(!co) {
-		repl_backend = xmlGetProp(l->network->xmlConf, "linestack");
-		co = linestack_new(repl_backend, NULL);
-		xmlFree(repl_backend);
-	}
+	if(!co) co = linestack_new_by_network(l->network);
 
 	linestack_add_line_list( co, gen_replication(l->network));
 
@@ -57,17 +52,39 @@ gboolean fini_plugin(struct plugin *p) {
 	return TRUE;
 }
 
+static void replicate_channel(gpointer key, gpointer val, gpointer user)
+{
+	struct linestack_context *co = (struct linestack_context *)val;
+	struct client *c = (struct client *)user;
+
+	linestack_send(co, c->incoming);
+	linestack_clear(co);
+}
+
 static void repl_command(char **args, struct line *l)
 {
+	GHashTable *h = (GHashTable *)l->network->replication_data;
+	struct linestack_context *co;
+
+	if(!h) return;
+	
 	if(!args[1]) {
 		/* Backlog everything for this network */
-
+		g_hash_table_foreach(h, replicate_channel, l->client);
+		return;
 	} 
-	/* FIXME Args: [channel|nick [nroflines]] */
-	//linestack_clear(co);
+
+	/* Backlog for specific nick/channel */
+	co = g_hash_table_lookup(h, args[1]);
+
+	if(co)  {
+		linestack_send(co, l->client->incoming);
+		linestack_clear(co);
+	}
 }
 
 gboolean init_plugin(struct plugin *p) {
+	char *ival;
 	if(!plugin_loaded("admin")) {
 		g_warning("admin module required for repl_command module. Please load it first");
 		return FALSE;

@@ -10,7 +10,7 @@ AC_PROG_CC
 AC_PROG_INSTALL
 
 BINS="ctrlproxy"
-MODS="liblog_irssi.so libctcp.so liblinestack_memory.so libauto-away.so libstrip.so libadmin.so libsocket.so libnoticelog.so libnickserv.so liblog_custom.so libantiflood.so librepl_simple.so librepl_command.so librepl_highlight.so liblinestack_file.so"
+MODS="liblog_irssi.so libctcp.so liblinestack_memory.so libauto-away.so libstrip.so libadmin.so libsocket.so libnoticelog.so libnickserv.so liblog_custom.so libantiflood.so librepl_simple.so librepl_command.so librepl_highlight.so liblinestack_file.so libreport_time.so"
 SOCKET_OBJS="socket.o"
 
 # Checks for libraries.
