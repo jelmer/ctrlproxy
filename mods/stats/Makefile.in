@@ -9,7 +9,7 @@ moddir = @libdir@/ctrlproxy
 
 .PHONY: all install clean distclean
 
-all: libstats.so printstats libstatsutil.so
+all: libstats.so printstats libstatsutil.so cisg
 
 install: all
 	$(INSTALL) libstats.so $(DESTDIR)$(moddir)
@@ -26,6 +26,9 @@ libstats.so: stats.o
 
 printstats: printstats.o
 	$(CC) -o $@ -ltdb $<
+
+cisg: cisg.o libstatsutil.o
+	$(CC) -o $@ $< libstatsutil.o -ltdb
 
 clean:
 	rm -f $(MODS) *.o

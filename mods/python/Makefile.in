@@ -1,12 +1,17 @@
 CC = @CC@
 prefix = @prefix@
 exec_prefix = @exec_prefix@
+moddir = @libdir@/ctrlproxy
+INSTALL = @INSTALL@
 CFLAGS = @PY_CFLAGS@ -fPIC -I.. @CFLAGS@ @PKG_CFLAGS@  -DSHAREDIR=\"@datadir@\"
 LIBS = @PY_LIBS@
 
-.PHONY all clean distclean
+.PHONY all clean distclean install
 
 all: libpython.so
+
+install:
+	$(INSTALL) libpython.so $(DESTDIR)$(moddir)
 
 %.o: %.c
 	$(CC) $(CFLAGS) -fPIC -c $<

@@ -90,6 +90,7 @@ void print_html_chan(TDB_CONTEXT *tdb, char *network, char *channel)
 	printf("  <h2>Most active times</h2>\n");
 	printf("  <table class=\"ihourly\" align=\"center\">\n");
 	printf("   <tr>\n");
+	/*
     <th valign="bottom">11.3%<br /><img src="./blue-v.png" width="15" height="100" alt="11.3%" /></th>\n
     <th valign="bottom">8.9%<br /><img src="./blue-v.png" width="15" height="78" alt="8.9%" /></th>\n
     <th valign="bottom">2.7%<br /><img src="./blue-v.png" width="15" height="24" alt="2.7%" /></th>\n
@@ -113,7 +114,7 @@ void print_html_chan(TDB_CONTEXT *tdb, char *network, char *channel)
     <th valign="bottom">9.3%<br /><img src="./red-v.png" width="15" height="82" alt="9.3%" /></th>\n
     <th valign="bottom">8.6%<br /><img src="./red-v.png" width="15" height="75" alt="8.6%" /></th>\n
     <th valign="bottom">9.0%<br /><img src="./red-v.png" width="15" height="79" alt="9.0%" /></th>\n
-    <th valign="bottom">9.0%<br /><img src="./red-v.png" width="15" height="79" alt="9.0%" /></th>\n
+    <th valign="bottom">9.0%<br /><img src="./red-v.png" width="15" height="79" alt="9.0%" /></th>\n*/
 	printf("   </tr>\n");
 	printf("   <tr>\n");
 	printf("    <td class=\"hirank\">0</td>\n");
@@ -170,26 +171,15 @@ void print_html_chan(TDB_CONTEXT *tdb, char *network, char *channel)
 
 	/* FIXME: Do this 15 times */
 	printf("   <tr>\n");
-	printf("    <td class=\"nrank">1</td>\n");
-	printf("    <td class=\"nhappiness\"><img src="./happy1.gif" alt="1" /></td>\n");
+	printf("    <td class=\"nrank\">1</td>\n");
+	printf("    <td class=\"nhappiness\"><img src=\"./happy1.gif\" alt=\"1\" /></td>\n");
 	printf("    <td class=\"nhandle\">wilmer</td>\n");
 	printf("    <td class=\"npublics\">26879</td>\n");
-	printf("    <td class=\"nactivity\"><img src=\"./blue-h.png\" width="15" height="15" alt="" /><img src="./yellow-h.png" width="18" height="15" alt="" /><img src="./red-h.png" width="31" height="15" alt="" /></td>\n");
-	printf("    <td class=\"nwords">120158</td>\n");
-	printf("    <td class=\"nwpp">4.47</td>\n");
-	printf("    <td class=\"ncpw">6.83</td>\n");
-	printf("    <td class=\"ncomment">yep, dat las ik. cool :-)</td>\n");
-	printf("   </tr>\n");
-	printf("   <tr>\n");
-	printf("    <td class=\"nrank">2</td>\n");
-	printf("    <td class=\"nhappiness"><img src="./happy3.gif" alt="3" /></td>\n
-	printf("    <td class=\"nhandle">Pink</td>\n");
-	printf("    <td class=\"npublics">12857</td>\n");
-	printf("    <td class=\"nactivity"><img src="./blue-h.png" width="11" height="15" alt="" /><img src="./green-h.png" width="3" height="15" alt="" /><img src="./yellow-h.png" width="19" height="15" alt="" /><img src="./red-h.png" width="32" height="15" alt="" /></td>\n");
-	printf("    <td class=\"nwords">123876</td>\n");
-	printf("    <td class=\"nwpp">9.63</td>\n");
-	printf("    <td class=\"ncpw">7.17</td>\n");
-	printf("    <td class=\"ncomment">[Maurits] < ctrlsoft> zieje, het niveau daalt idd als ik wegga ;-P< Maurits> mwah < Maurits> het niveau zit op de spreekwoordelijke 0 kelvin < Maurits> :) </td>\n");
+	printf("    <td class=\"nactivity\"><img src=\"./blue-h.png\" width="15" height="15" alt="" /><img src=\"./yellow-h.png\" width=\"18\" height=\"15\" alt=\"\" /><img src=\"./red-h.png\" width=\"31\" height=\"15\" alt=\"\" /></td>\n");
+	printf("    <td class=\"nwords\">120158</td>\n");
+	printf("    <td class=\"nwpp\">4.47</td>\n");
+	printf("    <td class=\"ncpw\">6.83</td>\n");
+	printf("    <td class=\"ncomment\">yep, dat las ik. cool :-)</td>\n");
 	printf("   </tr>\n");
 	/* FIXME */
 

@@ -52,7 +52,7 @@ static struct network *find_add_network(char *name)
 {
 	struct network *n = g_hash_table_lookup(networks, name);
 	if(!n) { 
-		n = calloc(sizeof(struct network *));
+		n = calloc(1, sizeof(struct network *));
 		n->channels = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, free_channel);
 		g_hash_table_insert(networks, g_strdup(name), n);
 	}
@@ -63,7 +63,7 @@ static struct channel *find_add_channel(struct network *n, char *name)
 {
 	struct channel *c = g_hash_table_lookup(n->channels, name);
 	if(!c) { 
-		c = calloc(sizeof(struct channel *));
+		c = calloc(1, sizeof(struct channel *));
 		c->network = n;
 		c->nicks = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, free_nick);
 		c->properties = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_free);
@@ -76,7 +76,7 @@ static struct nick *find_add_nick(struct channel *c, char *name)
 {
 	struct nick *n = g_hash_table_lookup(c->nicks, name);
 	if(!n) { 
-		n = calloc(sizeof(struct nick *));
+		n = calloc(1, sizeof(struct nick *));
 		n->channel = c;
 		n->properties = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_free);
 		g_hash_table_insert(c->nicks, g_strdup(name), n);
@@ -110,7 +110,7 @@ static int traverse_keys(TDB_CONTEXT *tdb_context, TDB_DATA key, TDB_DATA value,
 	if(!keys[2]) return 0;
 	if(keys[3]) { 
 		nick = find_add_nick(channel, keys[2]);
-		nick_set_property(nick, keys[3], value);
+		nick_set_property(nick, keys[3], value.dptr);
 	} else {
 		channel_set_property(channel, keys[2], value.dptr);
 	}

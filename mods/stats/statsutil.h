@@ -46,4 +46,9 @@ void stats_parse_file(char *f);
 void stats_init();
 void stats_fini();
 
+int nick_get_property(struct nick *nick, char *name);
+int channel_get_property(struct channel *channel, char *name);
+
+GList *get_nicks_sorted_by_property(struct channel *c, char *property);
+
 #endif /* __CTRLPROXY_STATSUTIL_H__ */

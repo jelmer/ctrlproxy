@@ -2,10 +2,15 @@ CC = @CC@
 prefix = @prefix@
 exec_prefix = @exec_prefix@
 CFLAGS = -fPIC -I.. -I../.. @CFLAGS@ @PKG_CFLAGS@ -DSHAREDIR=\"@datadir@\"
+moddir = @libdir@/ctrlproxy
+INSTALL = @INSTALL@
 
 .PHONY: all clean distclean
 
 all: libsocket.so
+
+install:
+	$(INSTALL) libsocket.so $(DESTDIR)$(moddir)
 
 %.o: %.c
 	$(CC) $(CFLAGS) -fPIC -c $<

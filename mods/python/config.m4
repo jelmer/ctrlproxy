@@ -23,7 +23,7 @@ else
 		if test -f $PY_INC/Python.h; then
 			PY_LIBS="-L$PY_LIB/config -lpython$PY_VER -lpthread -lutil"
 			PY_CFLAGS="-I$PY_INC"
-			MODS="$MODS libpython.so"
+			MODS_SUBDIRS="$MODS_SUBDIRS python"
 			AC_MSG_RESULT(ok)
 		else
 			AC_MSG_RESULT([can't find Python.h])
