@@ -31,6 +31,8 @@
 #include <errno.h>
 #include <netinet/in.h>
 #include <unistd.h>
+#include <libintl.h>
+#define _(s) gettext(s)
 
 #undef G_LOG_DOMAIN
 #define G_LOG_DOMAIN "dcc"

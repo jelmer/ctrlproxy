@@ -46,8 +46,6 @@ static gboolean log_data(struct line *l) {
 	} 
 	linestack_add_line(co, l);
 
-	g_hash_table_replace(command_backlog, desc, co);
-
 	xmlFree(networkname);
 
 	return TRUE;
