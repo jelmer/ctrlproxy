@@ -26,16 +26,34 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/utsname.h>
+#include <dirent.h>
 
 #undef G_LOG_DOMAIN
 #define G_LOG_DOMAIN "ctcp"
+
+static void dcc_list(struct line *l)
+{
+	char *p = ctrlproxy_path("dcc");
+	DIR *d = opendir(p);	
+	struct dirent *e;
+
+	if(!d) {
+		g_warning("Can't open directory '%s'", p);
+		admin_out(l, "Can't open directory '%s'", p);
+		return;
+	}
+
+	while((e = readdir(d))) {
+		admin_out(l, "%s", e->d_name);
+	}
+}
 
 static void dcc_command(char **args, struct line *l)
 {
 	if(!strcasecmp(args[1], "GET")) {
 		/* FIXME */
 	} else if(!strcasecmp(args[1], "LIST")) {
-		/* FIXME */
+		dcc_list(l);
 	} else if(!strcasecmp(args[1], "DEL")) {
 		/* FIXME */
 	} else {
@@ -66,6 +84,3 @@ gboolean init_plugin(struct plugin *p)
 	add_filter("dcc", mhandle_data);
 	return TRUE;
 }
-
-
-
