@@ -1,7 +1,7 @@
 SOCKET_OBJS="socket.o"
 SSL_LIB=""
 
-AC_CHECK_HEADERS([arpa/inet.h netdb.h netinet/in.h sys/socket.h])
+AC_CHECK_HEADERS([arpa/inet.h netdb.h netinet/in.h sys/socket.h fcntl.h sys/ioctl.h])
 AC_CHECK_FUNCS([dup2 socket])
 
 AC_CHECK_LIB(crypto, DES_set_key)
@@ -24,3 +24,4 @@ fi
 
 AC_SUBST(SOCKET_OBJS)
 AC_SUBST(SSL_LIB)
+AC_CONFIG_FILES([mods/socket/Makefile])

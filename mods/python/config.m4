@@ -35,3 +35,4 @@ fi
 
 AC_SUBST(PY_CFLAGS)
 AC_SUBST(PY_LIBS)
+AC_CONFIG_FILES([mods/python/Makefile])
