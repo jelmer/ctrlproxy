@@ -158,13 +158,15 @@ gboolean fini_plugin(struct plugin *p)
 	return TRUE;
 }
 
+char *name_plugin = "dcc";
+
 gboolean init_plugin(struct plugin *p) 
 {
-	if(!plugin_loaded("admin") && !plugin_loaded("libadmin")) {
+	if(!plugin_loaded("admin")) {
 		g_warning("admin module required for dcc module. Please load it first");
 		return FALSE;
 	}
 	register_admin_command("DCC", dcc_command, NULL, NULL);
-	add_filter("dcc", mhandle_data);
+	add_filter_ex("dcc", mhandle_data, "client", 1000);
 	return TRUE;
 }

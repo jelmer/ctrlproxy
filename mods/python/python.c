@@ -2364,6 +2364,8 @@ gboolean init_plugin(struct plugin *p) {
 	return TRUE;
 }
 
+char *name_plugin = "python";
+
 gboolean fini_plugin(struct plugin *p) {
 	del_filter(in_rcv_data);
 	del_new_client_hook("python_new_client");

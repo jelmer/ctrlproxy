@@ -221,6 +221,8 @@ gboolean fini_plugin(struct plugin *p)
 	return TRUE;
 }
 
+char *name_plugin = "log_irssi";
+
 gboolean init_plugin(struct plugin *p)
 {
 	xmlNodePtr cur = p->xmlConf->xmlChildrenNode;
@@ -237,6 +239,6 @@ gboolean init_plugin(struct plugin *p)
 	mkdir(logfile, 0600);
 
 	files = g_hash_table_new(g_str_hash, g_str_equal);
-	add_filter("log_irssi", log_data);
+	add_filter_ex("log_irssi", log_data, "log", 1000);
 	return TRUE;
 }

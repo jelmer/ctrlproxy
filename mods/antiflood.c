@@ -116,8 +116,10 @@ gboolean fini_plugin(struct plugin *p) {
 	return TRUE;
 }
 
+char *name_plugin = "antiflood";
+
 gboolean init_plugin(struct plugin *p) {
-	add_filter("antiflood", log_data);
+	add_filter_ex("antiflood", log_data, "client", 1);
 	antiflood_servers = g_hash_table_new(NULL, NULL);
 	
 	return TRUE;

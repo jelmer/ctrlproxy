@@ -123,6 +123,8 @@ gboolean fini_plugin(struct plugin *p) {
 	return TRUE;
 }
 
+char *name_plugin = "nickserv";
+
 gboolean init_plugin(struct plugin *p) {
 	add_server_connected_hook("nickserv", conned_data);
 	add_filter("nickserv", log_data);

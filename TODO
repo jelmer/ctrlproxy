@@ -2,19 +2,17 @@
 - update documentation
 - automated testsuite
  - test_filter utility
-- dcc module
 - add member 'nick' to struct line
 - add more help data
 - internationalization (i18n)
-- use new filter system
 - add timer that uses current_plugin
 - repl_limited (repl_simple with limited number of lines)
-- change behaviour of login_connect
 - dircproxy-config-to-ctrlproxyrc script
- add NICK to repl_* in repl_command, repl_highlight, repl_lastdisconnect
+- add NICK to repl_* in repl_command, repl_highlight, repl_lastdisconnect
 - replace transports by IOChannels?
  - support running from inetd
 - fix issue with non-blocking connect
+- dcc module
 
 report_time:
  - test

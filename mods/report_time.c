@@ -64,6 +64,8 @@ gboolean fini_plugin(struct plugin *p) {
 	return TRUE;
 }
 
+char *name_plugin = "report_time";
+
 gboolean init_plugin(struct plugin *p) {
 	guint *timeout_id = malloc(sizeof(guint));
 	char *format = NULL;

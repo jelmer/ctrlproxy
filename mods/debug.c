@@ -73,6 +73,8 @@ gboolean fini_plugin(struct plugin *p) {
 	return TRUE;
 }
 
+char *name_plugin = "debug";
+
 gboolean init_plugin(struct plugin *p) {
 	if(!plugin_loaded("admin") && !plugin_loaded("libadmin")) {
 		g_warning("admin module required for repl_command module. Please load it first");

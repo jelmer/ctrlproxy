@@ -83,9 +83,11 @@ gboolean fini_plugin(struct plugin *p) {
 	return TRUE;
 }
 
+char *name_plugin = "repl_highlight";
+
 gboolean init_plugin(struct plugin *p) {
 	xmlConf = p->xmlConf;
-	add_filter("repl_highlight", log_data);
+	add_filter_ex("repl_highlight", log_data, "replicate", 1000);
 	add_new_client_hook("repl_highlight", highlight_replicate);
 	highlight_backlog = g_hash_table_new(NULL, NULL);
 	return TRUE;

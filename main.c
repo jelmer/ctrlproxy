@@ -138,6 +138,11 @@ gboolean unload_plugin(struct plugin *p)
 
 	/* Remove autoload from this plugins' element */
 	xmlSetProp(p->xmlConf, "autoload", "0");
+
+	plugins = g_list_remove(plugins, p);
+	free(p->name);
+	free(p->path);
+	free(p);
 	return TRUE;
 }
 
@@ -158,6 +163,7 @@ gboolean load_plugin(xmlNodePtr cur)
 	char *mod_name;
 	struct plugin *p;
 	char *modulesdir;
+	char *selfname;
 	gchar *path_name;
 	plugin_init_function f = NULL;
 
@@ -167,43 +173,49 @@ gboolean load_plugin(xmlNodePtr cur)
 		return FALSE;
 	}
 
-	if(plugin_loaded(mod_name)) {
-		g_warning("Plugin already loaded");
-		return FALSE;
-	}
-
 	/* Determine correct modules directory */
 	if(getenv("MODULESDIR"))modulesdir = getenv("MODULESDIR");
 	else modulesdir = MODULESDIR;
 
 	if(mod_name[0] == '/')path_name = g_strdup(mod_name);
 	else path_name = g_module_build_path(modulesdir, mod_name);
-
-
+	
 	m = g_module_open(path_name, G_MODULE_BIND_LAZY);
-	if(!m) {
-		g_warning("Unable to open module %s(%s), ignoring", path_name, g_module_error());
-		xmlFree(mod_name);
-		g_free(path_name);
-		return FALSE;
-	} else {
-		if(!g_module_symbol(m, "init_plugin", (gpointer)&f)) {
-			g_warning("Can't find symbol 'init_plugin' in module %s", path_name);
-			g_free(path_name);
-			return FALSE;
-		}
-	}
-
 	g_free(path_name);
 
+	if(!m) {
+		g_warning("Unable to open module %s(%s), ignoring", path_name, g_module_error());
+		return FALSE;
+	}
+
+	if(!g_module_symbol(m, "name_plugin", (gpointer)&selfname)) {
+		selfname = mod_name;
+	}
+
+	if(plugin_loaded(selfname)) {
+		g_warning("Plugin already loaded");
+		xmlFree(mod_name);
+		return FALSE;
+	}
+	
+	if(!g_module_symbol(m, "init_plugin", (gpointer)&f)) {
+		g_warning("Can't find symbol 'init_plugin' in module %s", path_name);
+		xmlFree(mod_name);
+		return FALSE;
+	}
+	
+
 	p = malloc(sizeof(struct plugin));
-	p->name = strdup(mod_name);
+	p->name = strdup(selfname);
+	p->path = strdup(mod_name);
 	p->module = m;
 	p->xmlConf = cur;
 
 	if(!f(p)) {
 		g_warning("Running initialization function for plugin '%s' failed.", mod_name);
 		free(p->name);
+		free(p->path);
+		xmlFree(mod_name);
 		free(p);
 		return FALSE;
 	}
@@ -329,6 +341,8 @@ int main(int argc, const char *argv[])
 	add_log_domain("ctrlproxy");
 	add_filter_class(NULL, -1);
 	add_filter_class("client", 100);
+	add_filter_class("replicate", 50);
+	add_filter_class("log", 50);
 
 	g_log(G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "Logfile opened");
 

@@ -310,6 +310,7 @@ static int connect_ip(struct transport_context *c)
 	if(bind_addr)
 		bind_host = gethostbyname2(bind_addr, family);
 
+	ret = 0;
 	if(ipv6) {
 		name6.sin6_family = AF_INET6;
 		if(bind_host) {
@@ -619,6 +620,8 @@ gboolean fini_plugin(struct plugin *p) {
 			unregister_transport("ipv6") &&
 			unregister_transport("pipe"));
 }
+
+char *name_plugin = "socket";
 
 gboolean init_plugin(struct plugin *p) {
 	xmlNodePtr cur;

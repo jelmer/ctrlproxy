@@ -99,8 +99,10 @@ gboolean fini_plugin(struct plugin *p)
 	return TRUE;
 }
 
+char *name_plugin = "ctcp";
+
 gboolean init_plugin(struct plugin *p) 
 {
-	add_filter("ctcp", mhandle_data);
+	add_filter_ex("ctcp", mhandle_data, "client", 1000);
 	return TRUE;
 }

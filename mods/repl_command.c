@@ -120,12 +120,14 @@ static void repl_command(char **args, struct line *l)
 	}
 }
 
+char *name_plugin = "repl_command";
+
 gboolean init_plugin(struct plugin *p) {
 	if(!plugin_loaded("admin") && !plugin_loaded("libadmin")) {
 		g_warning("admin module required for repl_command module. Please load it first");
 		return FALSE;
 	}
-	add_filter("repl_command", log_data);
+	add_filter_ex("repl_command", log_data, "replicate", 1000);
 	register_admin_command("BACKLOG", repl_command, "[channel]", NULL);
 	command_backlog = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
 	return TRUE;

@@ -251,8 +251,10 @@ gboolean fini_plugin(struct plugin *p) {
 	return TRUE;
 }
 
+char *name_plugin = "strip";
+
 gboolean init_plugin(struct plugin *p) {
-	add_filter("strip", handle_data);
+	add_filter_ex("strip", handle_data, "client", 1);
 	return TRUE;
 }
 

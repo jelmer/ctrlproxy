@@ -255,6 +255,8 @@ gboolean fini_plugin(struct plugin *p)
 	return TRUE;
 }
 
+char *name_plugin = "stats";
+
 gboolean init_plugin(struct plugin *p)
 {
 	xmlNodePtr cur = p->xmlConf->xmlChildrenNode;
@@ -284,6 +286,6 @@ gboolean init_plugin(struct plugin *p)
 
 	free(statsdb);
 
-	add_filter("stats", log_data);
+	add_filter_ex("stats", log_data, "log", 1000);
 	return TRUE;
 }

@@ -136,6 +136,8 @@ gboolean fini_plugin(struct plugin *p) {
 	return TRUE;
 }
 
+char *name_plugin = "linestack_file";
+
 gboolean init_plugin(struct plugin *p) {
 	register_linestack(&file);
 	return TRUE;

@@ -133,6 +133,7 @@ struct network {
 
 struct plugin {
 	char *name;
+	char *path;
 	GModule *module;
 	xmlNodePtr xmlConf;
 	void *data;

@@ -56,6 +56,8 @@ gboolean fini_plugin(struct plugin *p) {
 	return TRUE;
 }
 
+char *name_plugin = "motd_file";
+
 gboolean init_plugin(struct plugin *p) {
 	xmlNodePtr cur = xmlFindChildByElementName(p->xmlConf, "file");
 	if(cur)motd_file = xmlNodeGetContent(cur);

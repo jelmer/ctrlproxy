@@ -24,6 +24,8 @@
 
 static PerlInterpreter *my_perl;  /***    The Perl interpreter    ***/
 
+char *name_plugin = "perl";
+
 int main(int argc, char **argv, char **env)
 {
 	my_perl = perl_alloc();

@@ -98,8 +98,10 @@ gboolean fini_plugin(struct plugin *p) {
 	return TRUE;
 }
 
+char *name_plugin = "repl_lastdisconnect";
+
 gboolean init_plugin(struct plugin *p) {
-	add_filter("repl_lastdisconnect", log_data);
+	add_filter_ex("repl_lastdisconnect", log_data, "replicate", 1000);
 	add_lose_client_hook("repl_lastdisconnect", lastdisconnect_clear);
 	add_new_client_hook("repl_lastdisconnect", lastdisconnect_replicate);
 	lastdisconnect_backlog = g_hash_table_new(NULL, NULL);

@@ -471,6 +471,8 @@ gboolean fini_plugin(struct plugin *p)
 	return TRUE;
 }
 
+char *name_plugin = "log_custom";
+
 gboolean init_plugin(struct plugin *p)
 {
 	xmlConf = p->xmlConf;
@@ -480,6 +482,6 @@ gboolean init_plugin(struct plugin *p)
 		return FALSE;
 	}
 	files = g_hash_table_new(g_str_hash, g_str_equal);
-	add_filter("log_custom", log_custom_data);
+	add_filter_ex("log_custom", log_custom_data, "log", 1000);
 	return TRUE;
 }
