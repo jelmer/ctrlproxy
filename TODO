@@ -1,0 +1,8 @@
+- docs
+- cascading support
+- fix quit bug
+- replication van backlog(aka client_advanced)
+
+future versions:
+- dcc support when detached
+- ctcp version, etc
