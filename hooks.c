@@ -148,7 +148,13 @@ gboolean filters_execute(struct line *l)
 	
 	while(cl) {
 		c = (struct filter_class *)cl->data;
-		if(c->name) filter_class_execute(c, l);
+		if(c->name && !strcmp(c->name, "client")) {
+			filter_class_execute(c, l);
+		} else if(c->name) {
+			struct line *tl = linedup(l);
+			filter_class_execute(c, tl);
+			free_line(tl);
+		}
 		cl = cl->next;
 	}
 
