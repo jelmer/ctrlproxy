@@ -275,6 +275,8 @@ int main(int argc, const char *argv[])
 	signal(SIGUSR1, signal_save);
 #endif
 
+	initialized_hook_execute();
+
 	main_loop = g_main_loop_new(NULL, FALSE);
 
 #ifdef HAVE_POPT_H

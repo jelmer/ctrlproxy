@@ -213,18 +213,21 @@ char *ctrlproxy_path(char *part);
 /* hooks.c */
 /* Returns TRUE if filter should be continued, FALSE if it should be stopped. */
 typedef gboolean (*filter_function) (struct line *);
-typedef char ** (*motd_hook) (struct network *n);
 void add_filter(char *name, filter_function);
 void del_filter(filter_function);
 gboolean filters_execute(struct line *l);
+
 typedef gboolean (*new_client_hook) (struct client *);
-typedef void (*lose_client_hook) (struct client *);
 void add_new_client_hook(char *name, new_client_hook h);
 void del_new_client_hook(char *name);
 gboolean new_client_hook_execute(struct client *c);
+
+typedef void (*lose_client_hook) (struct client *);
 void add_lose_client_hook(char *name, lose_client_hook h);
 void del_lose_client_hook(char *name);
 void lose_client_hook_execute(struct client *c);
+
+typedef char ** (*motd_hook) (struct network *n);
 void add_motd_hook(char *name, motd_hook);
 void del_motd_hook(char *name);
 char **get_motd_lines(struct network *n);
@@ -238,5 +241,9 @@ typedef void (*server_disconnected_hook) (struct network *);
 void add_server_disconnected_hook(char *name, server_disconnected_hook h);
 void del_server_disconnected_hook(char *name);
 void server_disconnected_hook_execute(struct network *);
+
+typedef void (*initialized_hook) (void);
+void add_initialized_hook(initialized_hook);
+void initialized_hook_execute(void);
 
 #endif /* __CTRLPROXY_H__ */

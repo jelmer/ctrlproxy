@@ -327,3 +327,20 @@ void server_disconnected_hook_execute(struct network *c)
 		l = l->next;
 	}
 }
+
+GList *initialized_hooks = NULL;
+
+void add_initialized_hook(initialized_hook h)
+{
+	initialized_hooks = g_list_append(initialized_hooks, h);
+}
+
+void initialized_hook_execute(void)
+{
+	GList *l = initialized_hooks;
+	while(l) {
+		initialized_hook h = (initialized_hook)l->data;
+		h();
+		l = l->next;
+	}
+}

@@ -156,6 +156,19 @@ void del_server_disconnected_hook(char *name);
 	</sect2>
 
 	<sect2>
+		<title>Registering a initialization function</title>
+
+		<para>The initialization hooks are called after ctrlproxy has been initialized - all plugins 
+			are loaded, all networks have been loaded.
+		</para>
+
+		<programlisting>
+			typedef void (*initialized_hook) (void);
+			void add_initialized_hook(initialized_hook);
+		</programlisting>
+	</sect2>
+
+	<sect2>
 		<title>Registering a MOTD function</title>
 
 		<para>MOTD functions are functions that add one or more lines to 
