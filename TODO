@@ -9,7 +9,6 @@
  - support running from inetd
  - fix issue with non-blocking connect
 - dcc module
-- repl_command: test
 - socket: finish gnutls support
 - rewrite stats stuff to use MySQL
 
