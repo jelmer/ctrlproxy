@@ -26,6 +26,7 @@ EPSTOPDF = @EPSTOPDF@
 .PHONY: all manpages htmlmanpages lint install clean distclean
 
 all: @DOCBUILDE@$(DOCS)
+everything: @DOCBUILE@ $(DOCS) htmlmanpages
 
 manpages: ctrlproxy.1 ctrlproxyrc.5 $(MOD_MANPAGES)
 htmlmanpages: $(MOD_MANPAGES_HTML)
