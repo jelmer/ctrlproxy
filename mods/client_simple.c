@@ -14,7 +14,22 @@ struct client_state {
 	fd_set readfd;
 	char *remaining[FD_SETSIZE];
 	char authenticated[FD_SETSIZE];
+	char **channels;
+	int no_channels;
 };
+
+void ensure_channel(struct client_state *st, char *name) 
+{
+	int i;
+	assert(st);
+	for(i = 0; i < st->no_channels; i++) {
+		if(!strcasecmp(st->channels[i], name))return;
+	}
+	st->channels = realloc(st->channels, (st->no_channels+2) * sizeof(char *));
+	st->channels[st->no_channels] = strdup(name);
+	st->no_channels++;
+	st->channels[st->no_channels] = NULL;
+}
 
 void minit(struct module_context *c)
 {
@@ -43,7 +58,7 @@ void mloop(struct module_context *c)
 	struct client_state *st = (struct client_state *)c->private_data;
 	fd_set activefd;
 	struct timeval tv;
-	int i;
+	int i,j;
 	int sock;
 	size_t size;
 	struct sockaddr clientname;
@@ -81,8 +96,8 @@ void mloop(struct module_context *c)
 			while((ret = anextline(&st->remaining[i]))) {
 				irc_parse_line(ret, &l);
 				if(!l.args[0])continue;
+				if(!get_conf(c->parent->abbrev, "clientpass"))st->authenticated[i] = 1;
 				if(!strcasecmp(l.args[0], "USER")){
-					if(!get_conf(c->parent->abbrev, "clientpass"))st->authenticated[i] = 1;
 					if(!st->authenticated[i]){
 						dprintf(i, ":%s 451 %s :You are not registered\r\n", my_hostname, c->parent->nick);
 						continue;
@@ -92,6 +107,12 @@ void mloop(struct module_context *c)
 					dprintf(i, ":%s 003 %s :Ctrlproxy (c) 2002 Jelmer Vernooij <jelmer@nl.linux.org>\r\n", my_hostname, c->parent->nick);
 					dprintf(i, ":%s 004 %s %s %s %s %s\r\n", my_hostname, c->parent->nick, CTRLPROXY_VERSION, allmodes, allmodes);
 					dprintf(i, ":%s 422 %s :No MOTD file\r\n", my_hostname, c->parent->nick);
+
+					/* Send JOIN for each channel */
+					if(st->channels){
+						for(j = 0; j < st->no_channels; j++)
+							dprintf(i, ":%s JOIN %s\r\n", c->parent->hostmask, st->channels[j]);
+					}
 				} else if(!strcasecmp(l.args[0], "PASS")) {
 					if (!get_conf(c->parent->abbrev, "clientpass"))
 						st->authenticated[i] = 1;
@@ -117,6 +138,7 @@ void mhandle_incoming_data(struct module_context *c, const struct line *l)
 	int i;
 	if(!st)return;
 	printf("To client: %s\n", l->raw);
+	if(!strcasecmp(l->args[0], "JOIN")) ensure_channel(st,l->args[1]);
 	for(i = 0; i < FD_SETSIZE; i++) {
 		if(FD_ISSET(i, &st->readfd) && i != st->listen_socket && st->authenticated[i])
 			dprintf(i, "%s\n", l->raw);
@@ -131,6 +153,7 @@ void mfinish(struct module_context *c)
 	for(i = 0; i < FD_SETSIZE; i++) {
 		if(FD_ISSET(i, &st->readfd) && i != st->listen_socket)
 			dprintf(i, ":%s QUIT :Server exiting\r\n", my_hostname);
+		FD_CLR(i, &st->readfd);
 	}
 	close(st->listen_socket);
 }
