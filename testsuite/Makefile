@@ -1,9 +1,5 @@
-modulesdir = @libdir@/ctrlproxy
-LIBS = @LIBS@ @PKG_LIBS@ @PKG_CFLAGS@
-CC = @CC@
-CFLAGS = @CFLAGS@ @PKG_CFLAGS@ -I.. -DHAVE_CONFIG_H
-INSTALL = @INSTALL@
-
+-include ../Makefile.settings
+CFLAGS += -I.. -DHAVE_CONFIG_H
 CFLAGS+=-ansi -Wall -DMODULESDIR=\"$(modulesdir)\"
 
 .PHONY: all clean distclean install

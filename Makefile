@@ -1,22 +1,8 @@
-LIBS = @LIBS@ @PKG_LIBS@ @PKG_CFLAGS@ @LIBINTL@
-CC = @CC@
-prefix = @prefix@
-exec_prefix = @exec_prefix@
-localedir = @datadir@/locale
-INSTALL = @INSTALL@
-bindir = @bindir@
-docdir = @prefix@/share/doc/ctrlproxy-@VERSION@
-modulesdir = @libdir@/ctrlproxy
-includedir = @includedir@
-destincludedir = @DESTINCLUDEDIR@
-man1dir = @mandir@/man1
-man5dir = @mandir@/man5
-cdatadir = @datadir@/ctrlproxy
-CFLAGS = @CFLAGS@ @PKG_CFLAGS@ -DHAVE_CONFIG_H -DLOCALEDIR=\"$(localedir)\" -DSHAREDIR=\"$(cdatadir)\" -DDTD_FILE=\"$(cdatadir)/ctrlproxyrc.dtd\"
+-include Makefile.settings
+
+CFLAGS+=-DHAVE_CONFIG_H -DLOCALEDIR=\"$(localedir)\" -DSHAREDIR=\"$(cdatadir)\" -DDTD_FILE=\"$(cdatadir)/ctrlproxyrc.dtd\"
 
 CFLAGS+=-ansi -Wall -DMODULESDIR=\"$(modulesdir)\"
-OBJS = server.o line.o main.o state.o util.o hooks.o linestack.o plugins.o config.o
-BINS = @BINS@
 
 .PHONY: all clean distclean install install-bin install-dirs install-doc install-data install-mods install-pkgconfig
 
@@ -24,11 +10,17 @@ all: $(BINS)
 	$(MAKE) -C mods all
 	$(MAKE) -C scripts all
 
-ctrlproxy@EXEEXT@: $(OBJS)
-	$(CC) $(LIBS) -rdynamic -o $@ $(OBJS)
+mods/static.o:
+	$(MAKE) -C mods static.o
 
-%.@OBJEXT@: %.c
+ctrlproxy$(EXEEXT): server.o line.o main.o state.o util.o hooks.o linestack.o plugins.o config.o mods/static.o
+	$(CC) $(LIBS) -rdynamic -o $@ $^
+
+%.$(OBJEXT): %.c
 	$(CC) $(CFLAGS) -c $<
+
+Makefile.settings:
+	@echo Please run ./configure first, then rerun make
 
 install: all install-dirs install-doc install-bin install-mods install-data install-pkgconfig install-scripts install-locale
 install-dirs:
@@ -39,13 +31,13 @@ install-dirs:
 	$(INSTALL) -d $(DESTDIR)$(modulesdir)
 	$(INSTALL) -d $(DESTDIR)$(docdir)
 	$(INSTALL) -d $(DESTDIR)$(cdatadir)
-	$(INSTALL) -d $(DESTDIR)@libdir@/pkgconfig
+	$(INSTALL) -d $(DESTDIR)$(libdir)/pkgconfig
 
 install-locale:
 	$(MAKE) -C po install
 	
 install-bin:
-	$(INSTALL) ctrlproxy@EXEEXT@ $(DESTDIR)$(bindir)
+	$(INSTALL) ctrlproxy$(EXEEXT) $(DESTDIR)$(bindir)
 	$(INSTALL) ctrlproxy-setup $(DESTDIR)$(bindir)
 
 install-doc:
@@ -76,10 +68,10 @@ install-scripts:
 	$(MAKE) -C scripts install
 
 install-pkgconfig:
-	$(INSTALL) ctrlproxy.pc $(DESTDIR)@libdir@/pkgconfig
+	$(INSTALL) ctrlproxy.pc $(DESTDIR)$(libdir)/pkgconfig
 
 clean:
-	rm -f *.@OBJEXT@ ctrlproxy@EXEEXT@ printstats *~
+	rm -f *.$(OBJEXT) ctrlproxy$(EXEEXT) printstats *~
 	$(MAKE) -C mods clean
 	$(MAKE) -C testsuite clean
 

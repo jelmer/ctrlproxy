@@ -5,7 +5,7 @@
 <!ATTLIST plugin file CDATA #REQUIRED>
 <!ATTLIST plugin autoload CDATA "1">
 
-<!ELEMENT network (listen?,(servers|program|virtual),channel*,autosend*)>
+<!ELEMENT network ((servers|program|virtual),channel*,autosend*)>
 <!ATTLIST network name CDATA #IMPLIED>
 <!ATTLIST network client_pass CDATA "">
 <!ATTLIST network password CDATA "">
@@ -15,26 +15,21 @@
 <!ATTLIST network autoconnect CDATA "0">
 <!ATTLIST network ignore_first_nick CDATA "0">
 
-<!ELEMENT listen (ipv4*,ipv6*)>
-
 <!ELEMENT autosend (#PCDATA)>
 <!ELEMENT channel EMPTY>
 <!ATTLIST channel name CDATA #REQUIRED>
 <!ATTLIST channel autojoin CDATA "0">
 <!ATTLIST channel key CDATA #IMPLIED>
 
-<!ELEMENT servers (ipv4*,ipv6*,pipe*)>
+<!ELEMENT servers (server*)>
 
-<!ELEMENT ipv4 EMPTY>
-<!ATTLIST ipv4 port CDATA #IMPLIED>
-<!ATTLIST ipv4 host CDATA #IMPLIED>
-<!ATTLIST ipv4 ssl CDATA #IMPLIED>
-<!ELEMENT ipv6 EMPTY>
-<!ATTLIST ipv6 port CDATA #IMPLIED>
-<!ATTLIST ipv6 host CDATA #IMPLIED>
-<!ATTLIST ipv6 ssl CDATA #IMPLIED>
-<!ELEMENT pipe (path)>
-<!ELEMENT path (#PCDATA)>
+<!ELEMENT server EMPTY>
+<!ATTLIST server port CDATA #IMPLIED>
+<!ATTLIST server host CDATA #IMPLIED>
+<!ATTLIST server ssl CDATA #IMPLIED>
+<!ELEMENT program (#PCDATA)>
+<!ELEMENT virtual ANY>
+<!ATTLIST virtual type CDATA #REQUIRED>
 
 <!ELEMENT nickserv (nick*)>
 <!ELEMENT nick EMPTY>

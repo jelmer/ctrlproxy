@@ -1,4 +1,3 @@
-Makefile
 aclocal.m4
 autom4te.cache
 config.h
@@ -11,7 +10,6 @@ ctrlproxy
 ctrlproxy.pc
 doc/Makefile
 mods/*.so
-mods/Makefile
 mods/gnutls/*.so
 mods/gnutls/Makefile
 mods/nss/*.so
@@ -29,6 +27,3 @@ po/Makefile.in
 po/POTFILES
 po/ctrlproxy.pot
 po/stamp-po
-scripts/Makefile
-scripts/web/Makefile
-testsuite/Makefile

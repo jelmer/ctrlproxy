@@ -38,14 +38,15 @@ gboolean fini_plugin(struct plugin *p)
 	return TRUE;
 }
 
-gboolean init_plugin(struct plugin *p)
+gboolean load_config(struct plugin *p, xmlNodePtr node)
 {
 	FILE *fd;
-	xmlNodePtr cur = p->xmlConf->xmlChildrenNode;
+	xmlNodePtr cur;
 
 	Py_Initialize();
 	
-	while(cur) {
+	for (cur = node->xmlChildrenNode; cur; cur = cur->next)
+	{
 		if(!xmlIsBlankNode(cur) && !strcmp(cur->name, "script")) {
 			const char *filename = xmlNodeGetContent(cur);
 			fd = fopen(filename, "r");
@@ -55,8 +56,12 @@ gboolean init_plugin(struct plugin *p)
 				PyRun_AnyFile(fd, filename);
 			}
 		}
-		cur = cur->next;
 	}
 
+	return TRUE;
+}
+
+gboolean init_plugin(struct plugin *p)
+{
 	return TRUE;
 }

@@ -361,17 +361,28 @@ static gboolean handle_client_data (GIOChannel *ioc, GIOCondition o, gpointer da
 						g_warning("Unable to return network matching %s:%d", hostname, port);
 						return socks_error(ioc, REP_NET_UNREACHABLE);
 					} else {
-						const char *hostname = get_my_hostname();
-						struct sockaddr 
-						
-						guint8 *data = g_new0(guint8, strlen(hostname)+3);
-						data[0] = strlen(hostname);
-						strcpy(data+1, hostname);
+						struct sockaddr_in6 *name6 = (struct sockaddr_in6 *)result->connection.tcp.local_name;
+						struct sockaddr_in *name4 = (struct sockaddr_in *)result->connection.tcp.local_name;
+						int atyp, len, port;
+						guint8 *data;
 
-						socks_reply(ioc, REP_OK, ATYP_, strlen(hostname)+1, data, 0); 
+						if (name4->sin_family == AF_INET) {
+							atyp = ATYP_IPV4;
+							data = (guint8 *)&name4->sin_addr;
+							len = 4;
+							port = name4->sin_port;
+						} else if (name6->sin6_family == AF_INET6) {
+							atyp = ATYP_IPV6;
+							data = (guint8 *)&name6->sin6_addr;
+							len = 16;
+							port = name6->sin6_port;
+						} else {
+							g_warning("Unable to obtain local address for connection to server");
+							return socks_error(ioc, REP_NET_UNREACHABLE);
+						}
+							
+						socks_reply(ioc, REP_OK, atyp, len, data, port); 
 						
-						g_free(data);
-
 						new_client(result, ioc);
 
 						return FALSE;

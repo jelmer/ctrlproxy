@@ -1,9 +1,7 @@
 - update documentation
  - repl changes
  - see FIXME's
-- fix bug in linestack_file
 - finish python module 
  - hooks
 - rewrite web script
 - support the - and + in front of lines as used by Freenode
-- allow compiling in of modules.

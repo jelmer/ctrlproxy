@@ -6,7 +6,7 @@ GNUTLS_LIBS=""
 if test "$gnutls_config" != "no" && test "`libgnutls-config --version | cut -f 1 -d .`" = "1"; then
 	GNUTLS_CFLAGS="`$gnutls_config --cflags`"
 	GNUTLS_LIBS="`$gnutls_config --libs`"
-	MODS_SUBDIRS="$MODS_SUBDIRS gnutls"
+	DEFMODULE(gnutls, $GNUTLS_LIBS)
 	AC_CHECK_HEADERS([gnutls/gnutls.h])
 fi
 

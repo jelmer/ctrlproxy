@@ -24,7 +24,7 @@ else
 			PY_LIBS=`$pythonpath -c 'import distutils.sysconfig; print distutils.sysconfig.get_config_var("BLDLIBRARY"),distutils.sysconfig.get_config_var("LIBS");'`
 			PY_CFLAGS=`$pythonpath -c 'import distutils.sysconfig; print distutils.sysconfig.get_config_var("CFLAGS");'`
 			PY_CFLAGS="$PY_CFLAGS -I$PY_INC"
-			MODS_SUBDIRS="$MODS_SUBDIRS python"
+			DEFMODULE(python)
 			AC_MSG_RESULT(ok)
 		else
 			AC_MSG_RESULT([can't find Python.h])

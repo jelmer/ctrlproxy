@@ -14,12 +14,35 @@ AC_CONFIG_HEADER([config.h])
 # Checks for programs.
 AC_PROG_CC
 AC_PROG_INSTALL
+AC_PATH_PROG(LD,ld)
 
-MODS=""
+module_default="shared"
 
 BINS="ctrlproxy$ac_cv_exeext"
-MODS="$MODS liblog_irssi.so libctcp.so liblinestack_memory.so libauto-away.so libstrip.so libadmin.so libnoticelog.so libnickserv.so liblog_custom.so libantiflood.so librepl_simple.so librepl_command.so librepl_highlight.so librepl_limited.so liblinestack_file.so libreport_time.so librepl_memory.so librepl_none.so libmotd_file.so librepl_lastdisconnect.so libautosave.so libdebug.so libsocks.so liblistener.so"
-MODS_SUBDIRS=""
+DEFMODULE(log_irssi)
+DEFMODULE(ctcp)
+DEFMODULE(linestack_memory)
+DEFMODULE(auto_away)
+DEFMODULE(strip)
+DEFMODULE(admin)
+DEFMODULE(noticelog)
+DEFMODULE(nickserv)
+DEFMODULE(log_custom)
+DEFMODULE(antiflood)
+DEFMODULE(repl_simple)
+DEFMODULE(repl_command)
+DEFMODULE(repl_highlight)
+DEFMODULE(repl_limited)
+DEFMODULE(linestack_file)
+DEFMODULE(report_time)
+DEFMODULE(repl_memory)
+DEFMODULE(repl_none)
+DEFMODULE(motd_file)
+DEFMODULE(repl_lastdisconnect)
+DEFMODULE(autosave)
+DEFMODULE(debug)
+DEFMODULE(socks)
+DEFMODULE(listener)
 
 # Checks for libraries.
 AC_CHECK_LIB([popt], [poptGetArg], , AC_MSG_WARN([Popt is strongly advised]))
@@ -53,15 +76,12 @@ AC_FUNC_REALLOC
 AC_TYPE_SIGNAL
 
 AC_SUBST(BINS)
-AC_SUBST(MODS)
-AC_SUBST(MODS_SUBDIRS)
+AC_SUBST(MODS_STATIC)
+AC_SUBST(MODS_SHARED)
 AC_CHECK_FUNCS([gethostbyname gethostname memset mkdir strcasecmp strchr strdup strerror strncasecmp strstr uname backtrace_symbols gettimeofday strrchr daemon])
-AC_MSG_RESULT([Going to build the following plugins: ])
-AC_MSG_RESULT([$MODS])
 
 DESTINCLUDEDIR="$includedir/ctrlproxy-2"
 AC_SUBST(DESTINCLUDEDIR)
 
-
-AC_CONFIG_FILES([Makefile mods/Makefile testsuite/Makefile ctrlproxy.pc po/Makefile.in scripts/Makefile scripts/web/Makefile])
+AC_CONFIG_FILES([Makefile.settings ctrlproxy.pc po/Makefile.in])
 AC_OUTPUT

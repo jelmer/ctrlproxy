@@ -1,7 +1,4 @@
-prefix = @prefix@
-exec_prefix = @exec_prefix@
-INSTALL = @INSTALL@
-scriptdir = @datadir@/ctrlproxy/scripts
+-include ../../Makefile.settings
 PAGES = $(wildcard pages/*.py) $(wildcard pages/*.css) $(wildcard pages/*.txt)
 INCLUDES = $(wildcard includes/*.*)
 
