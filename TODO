@@ -1,3 +1,4 @@
 - cascading support
 - replication of backlog(aka client_advanced)
 - clean up the code
+- add / remove servers and modules while running
