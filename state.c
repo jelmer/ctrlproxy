@@ -563,10 +563,11 @@ static void handle_005(struct network *s, struct line *l)
 	int i, j = 0;
 	if(l->direction == TO_SERVER)return;
 
-	for(j = 0; s->features[j]; j++);
-
-	if(!s->features)
+	if(s->features) {
+		for(j = 0; s->features[j]; j++);
+	} else {
 		s->features = malloc(sizeof(char *) * (l->argc+j));
+	}
 
 	for(i = 3; i < l->argc-1; i++) {
 		s->features[j] = strdup(l->args[i]);
