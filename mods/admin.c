@@ -391,7 +391,7 @@ static void dump_config (char **args, struct line *l)
 	int size;
 	int i;
 	char *tmp;
-	xmlDocDumpMemory(configuration, &buffer, &size);
+	xmlDocDumpMemory(config_doc(), &buffer, &size);
 	for(i = 0; i < size; i++)
 	{
 		/* If we encounter a newline or a null-character, we

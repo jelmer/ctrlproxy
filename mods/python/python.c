@@ -2215,7 +2215,7 @@ static PyObject * PyCtrlproxy_getconfig(PyObject *self, PyObject *args, PyObject
 	else if(!g_ascii_strcasecmp("plugins",type))
 		rv = PYCTRLPROXY_NODETOPYOB(config_node_plugins());
 	else
-		rv = PyInstance_New(PyObject_GetAttrString(xml_module,"xmlDoc"),Py_BuildValue("(O)",libxml_xmlDocPtrWrap((xmlDocPtr) configuration)),NULL);
+		rv = PyInstance_New(PyObject_GetAttrString(xml_module,"xmlDoc"),Py_BuildValue("(O)",libxml_xmlDocPtrWrap((xmlDocPtr) config_doc())),NULL);
 
 	return rv;
 }

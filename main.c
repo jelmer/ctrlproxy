@@ -36,8 +36,6 @@
 /* globals */
 GMainLoop *main_loop;
 char my_hostname[MAXHOSTNAMELEN+2];
-xmlNodePtr xmlNode_networks = NULL, xmlNode_plugins = NULL;
-xmlDocPtr configuration;
 char *configuration_file;
 FILE *debugfd = NULL;
 FILE *f_logfile = NULL;
@@ -74,12 +72,13 @@ void signal_crash(int sig)
 
 #endif
 	
-	if(current_plugin) {
-		if(!unload_plugin(current_plugin)) {
+	if(peek_plugin()) {
+		if(!unload_plugin(peek_plugin())) {
 			g_error(_("Can't unload crashing plugin, exiting..."));
 			abort();
 		} else {
-			g_warning(_("Plugin '%s' unloaded, because it crashed..."), current_plugin->name);
+			g_warning(_("Plugin '%s' unloaded, because it crashed..."), peek_plugin()->name);
+			pop_plugin();
 		}
 	} else {
 		g_error(_("Ctrlproxy core has segfaulted, exiting..."));
@@ -95,7 +94,7 @@ void log_handler(const gchar *log_domain, GLogLevelFlags flags, const gchar *mes
 
 void clean_exit()
 {
-	GList *gl = networks;
+	GList *gl = get_network_list();
 	while(gl) {
 		struct network *n = (struct network *)gl->data;
 		gl = gl->next;
@@ -120,45 +119,9 @@ void signal_quit(int sig)
 	g_main_loop_quit(main_loop);
 }
 
-void save_configuration()
-{
-	xmlSaveFile(configuration_file, configuration);
-}
-
 void signal_save(int sig)
 {
 	save_configuration();
-}
-
-void readConfig(char *file) {
-    xmlNodePtr cur;
-
-	configuration = xmlParseFile(file);
-	if(!configuration) {
-		g_error(_("Can't open configuration file '%s'"), file);
-		exit(1);
-	}
-
-	cur = xmlDocGetRootElement(configuration);
-	g_assert(cur);
-
-	g_assert(!strcmp(cur->name, "ctrlproxy"));
-
-	cur = cur->xmlChildrenNode;
-	while(cur) {
-		if(xmlIsBlankNode(cur) || !strcmp(cur->name, "comment")) {
-			cur = cur->next;
-			continue;
-		}
-		
-		if(!strcmp(cur->name, "plugins")) {
-			xmlNode_plugins = cur;
-		} else if(!strcmp(cur->name, "networks")) {
-			xmlNode_networks = cur;
-		} else g_assert(0);
-		
-		cur = cur->next;
-	}
 }
 
 int main(int argc, const char *argv[])
@@ -180,7 +143,6 @@ int main(int argc, const char *argv[])
 		POPT_TABLEEND
 	};
 #endif
-    xmlNodePtr cur;
 
 	bindtextdomain(PACKAGE_NAME, LOCALEDIR);
 	textdomain(PACKAGE_NAME);

@@ -14,7 +14,7 @@ cdatadir = @datadir@/ctrlproxy
 CFLAGS = @CFLAGS@ @PKG_CFLAGS@ -DHAVE_CONFIG_H -DLOCALEDIR=\"$(localedir)\" -DSHAREDIR=\"$(cdatadir)\"
 
 CFLAGS+=-ansi -Wall -DMODULESDIR=\"$(modulesdir)\"
-OBJS = server.o line.o main.o state.o util.o transport.o hooks.o linestack.o plugins.o
+OBJS = server.o line.o main.o state.o util.o transport.o hooks.o linestack.o plugins.o config.o
 BINS = @BINS@
 
 .PHONY: all clean distclean install install-bin install-dirs install-doc install-data install-mods install-pkgconfig

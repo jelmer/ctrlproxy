@@ -31,7 +31,7 @@
 #define tvtolong(v) (*v)
 #else
 #include <sys/time.h>
-#define TIMEVALUE struct TIMEVALUE
+#define TIMEVALUE struct timeval
 #define tvtolong(v) ((v)->tv_sec * 1000 + (v)->tv_usec / 1000)
 #endif
 

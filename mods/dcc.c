@@ -28,13 +28,14 @@
 #include <stdio.h>
 #include <sys/stat.h>
 #include <string.h>
-#ifdef HAVE_SYS_UTSNAME_H
-#include <sys/utsname.h>
-#endif
 #include <errno.h>
 #include <netinet/in.h>
 #include "gettext.h"
 #define _(s) gettext(s)
+
+#ifndef _WIN32
+#include <unistd.h>
+#endif
 
 #undef G_LOG_DOMAIN
 #define G_LOG_DOMAIN "dcc"

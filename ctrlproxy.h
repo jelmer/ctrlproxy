@@ -201,6 +201,9 @@ G_MODULE_EXPORT const char *get_shared_path();
 /* config.c */
 G_MODULE_EXPORT void save_configuration();
 G_MODULE_EXPORT xmlNodePtr config_node_root();
+G_MODULE_EXPORT xmlNodePtr config_node_networks();
+G_MODULE_EXPORT xmlNodePtr config_node_plugins();
+G_MODULE_EXPORT xmlNodePtr config_doc();
 
 /* plugins.c */
 G_MODULE_EXPORT gboolean load_plugin(xmlNodePtr);
@@ -256,8 +259,6 @@ G_MODULE_EXPORT gboolean linestack_add_line_list(struct linestack_context *, GSL
 G_MODULE_EXPORT char *list_make_string(char **);
 G_MODULE_EXPORT xmlNodePtr xmlFindChildByName(xmlNodePtr parent, const xmlChar *name);
 G_MODULE_EXPORT xmlNodePtr xmlFindChildByElementName(xmlNodePtr parent, const xmlChar *name);
-G_MODULE_EXPORT xmlNodePtr config_node_networks();
-G_MODULE_EXPORT xmlNodePtr config_node_plugins();
 G_MODULE_EXPORT int verify_client(struct network *s, struct client *c);
 G_MODULE_EXPORT char *ctrlproxy_path(char *part);
 G_MODULE_EXPORT int strrfc1459cmp(const char *a, const char *b);
