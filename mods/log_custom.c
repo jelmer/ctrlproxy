@@ -71,6 +71,35 @@ static char *get_seconds(struct line *l, gboolean case_sensitive) {
 	return ret;
 }
 
+static char *get_day(struct line *l, gboolean case_sensitive) { 
+	char *ret;
+	time_t ti = time(NULL);
+	struct tm *t = localtime(&ti);
+	asprintf(&ret, "%02d", t->tm_mday);
+	return ret;
+}
+
+static char *get_user(struct line *l, gboolean case_sensitive) {
+	char *nick = NULL;
+	char *user = NULL;
+
+	if(l->origin)nick = strdup(l->origin);
+	if(nick)user = strchr(nick, '!');
+	if(user){ *user = '\0';user++; }
+
+	if(case_sensitive) return g_ascii_strdown(user, -1);
+	else return strdup(user);
+}
+
+static char *get_monthname(struct line *l, gboolean case_sensitive) { 
+	char *ret;
+	char stime[512];
+	time_t ti = time(NULL);
+	strftime(stime, sizeof(stime), "%b", localtime(&ti));
+	asprintf(&ret, "%s", stime);
+	return ret;
+}
+
 static char *get_nick(struct line *l, gboolean case_sensitive) {
 	if(line_get_nick(l)) {
 		if(case_sensitive) return g_ascii_strdown(line_get_nick(l), -1);
@@ -96,12 +125,26 @@ static char *get_identifier(struct line *l, gboolean case_sensitive) {
 	else return strdup(identifier); 
 }
 
+static char *get_modechanges(struct line *l, gboolean case_sensitive) {
+	char buf[512] = "";
+	int i;
+
+	for( i = 3 ; l->args[i+1] != NULL; i++ )
+		if(i == 3) sprintf(buf, "%s", l->args[i]);
+		else sprintf(buf, "%s %s", buf, l->args[i]);
+
+	return strdup(buf);
+}
+
 static struct log_mapping mappings[] = {
 	{NULL, '@', -1, get_identifier },
 	{NULL, 'h', -1, get_hours },
 	{NULL, 'M', -1, get_minutes },
 	{NULL, 's', -1, get_seconds },
+	{NULL, 'd', -1, get_day },
+	{NULL, 'b', -1, get_monthname },
 	{NULL, 'n', -1, get_nick },
+	{NULL, 'u', -1, get_user },
 	{NULL, 'N', -1, get_network },
 	{NULL, 'S', -1, get_server },
 	{NULL, '%', -1, get_percent },
@@ -116,10 +159,13 @@ static struct log_mapping mappings[] = {
 	{"NOTICE", 'm', 2, NULL },
 	{"PRIVMSG", 't', 1, NULL },
 	{"PRIVMSG", 'm', 2, NULL },
+	{"MSG", 't', 1, NULL },
+	{"MSG", 'm', 2, NULL },
 	{"TOPIC", 'c', 1, NULL },
 	{"TOPIC", 't', 2, NULL },
 	{"MODE", 't', 1, NULL },
 	{"MODE", 'p', 2, NULL },
+	{"MODE", 'c', -1, get_modechanges },
 	{"NICK", 'r', 1, NULL },
 	{NULL, '0', 0, NULL },
 	{NULL, '1', 1, NULL },
@@ -193,6 +239,8 @@ Always:
  * %h -> hours
  * %m -> minutes
  * %s -> seconds
+ * %d -> day
+ * %b -> locale month name
  * %n -> initiating nick
  * %u -> initiating user
  * %N -> network name
@@ -207,7 +255,7 @@ If appropriate:
  -- KICK: %t (target nick), %r (reason)
  -- QUIT: %m
  -- NOTICE/PRIVMSG: %t (target nick/channel), %m
- -- MODE: %p(mode change), %c, %t (target nick)
+ -- MODE: %p(mode change), %t, %c (target nicks)
  -- TOPIC: %t
  -- NICK: %r
  */
