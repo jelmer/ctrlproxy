@@ -178,6 +178,9 @@ int main(int argc, const char *argv[])
 #endif
     xmlNodePtr cur;
 
+	bindtextdomain(PACKAGE_NAME, LOCALEDIR);
+	textdomain(PACKAGE_NAME);
+
 	signal(SIGINT, signal_quit);
 	signal(SIGTERM, signal_quit);
 #ifdef SIGPIPE
@@ -233,7 +236,7 @@ int main(int argc, const char *argv[])
 	add_filter_class("replicate", 50);
 	add_filter_class("log", 50);
 
-	g_info(_("Logfile opened"));
+	g_message(_("Logfile opened"));
 
 	if(isdaemon) {
 

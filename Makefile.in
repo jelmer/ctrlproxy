@@ -1,8 +1,9 @@
-LIBS = @LIBS@ @PKG_LIBS@ @PKG_CFLAGS@
+LIBS = @LIBS@ @PKG_LIBS@ @PKG_CFLAGS@ @LIBINTL@
 CC = @CC@
 prefix = @prefix@
 exec_prefix = @exec_prefix@
-CFLAGS = @CFLAGS@ @PKG_CFLAGS@ -DHAVE_CONFIG_H
+localedir = @datadir@/locale
+CFLAGS = @CFLAGS@ @PKG_CFLAGS@ -DHAVE_CONFIG_H -DLOCALEDIR=\"$(localedir)\"
 INSTALL = @INSTALL@
 bindir = @bindir@
 docdir = @prefix@/share/doc/ctrlproxy
@@ -39,6 +40,7 @@ install-dirs:
 	$(INSTALL) -d $(DESTDIR)$(datadir)
 	$(INSTALL) -d $(DESTDIR)@libdir@/pkgconfig
 	$(MAKE) -C doc install 
+	$(MAKE) -C po install
 	
 install-bin:
 	$(INSTALL) ctrlproxy $(DESTDIR)$(bindir)
