@@ -33,7 +33,7 @@ Package=<4>
 
 ###############################################################################
 
-Project: "auto_away"=".\auto_away\auto_away.dsp" - Package Owner=<4>
+Project: "auto_away"=".\auto_away.dsp" - Package Owner=<4>
 
 Package=<5>
 {{{

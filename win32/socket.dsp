@@ -39,6 +39,7 @@ RSC=rc.exe
 # PROP Use_Debug_Libraries 0
 # PROP Output_Dir "socket__"
 # PROP Intermediate_Dir "socket__"
+# PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MT /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /YX /FD /c
 # ADD CPP /nologo /MT /W3 /GX /O2 /I ".." /I "c:\dev\include" /I "c:\dev\include\glib-2.0" /I "c:\dev\lib\glib-2.0\include" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /YX /FD /c
@@ -64,6 +65,7 @@ LINK32=link.exe
 # PROP Use_Debug_Libraries 1
 # PROP Output_Dir "socket_0"
 # PROP Intermediate_Dir "socket_0"
+# PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MTd /W3 /Gm /GX /Zi /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /YX /FD /c
 # ADD CPP /nologo /MTd /W3 /Gm /GX /Zi /Od /I ".." /I "c:\dev\include" /I "c:\dev\include\glib-2.0" /I "c:\dev\lib\glib-2.0\include" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /YX /FD /c
@@ -84,5 +86,9 @@ LINK32=link.exe
 
 # Name "socket - Win32 Release"
 # Name "socket - Win32 Debug"
+# Begin Source File
+
+SOURCE=..\mods\socket\socket.c
+# End Source File
 # End Target
 # End Project
