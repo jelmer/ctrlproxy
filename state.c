@@ -240,7 +240,7 @@ static void handle_join(struct network *s, struct line *l)
 
 			if(!irccmp(s, line_get_nick(l), own_nick)) {
 				xmlSetProp(c->xmlConf, "autojoin", "1");
-				g_message("Joining channel %s", p);
+				g_message(_("Joining channel %s"), p);
 
 				/* send WHO command for updating hostmasks */
 				sj = malloc(sizeof(struct started_join));
@@ -281,7 +281,7 @@ static void handle_part(struct network *s, struct line *l)
 
 		if(!irccmp(s, line_get_nick(l), own_nick) && c) {
 			s->channels = g_list_remove(s->channels, c);
-			g_message("Leaving %s", p);
+			g_message(_("Leaving %s"), p);
 			xmlSetProp(c->xmlConf, "autojoin", "0");
 			free_channel(c);
 			free(c);
@@ -298,12 +298,12 @@ static void handle_part(struct network *s, struct line *l)
 			if(n) {
 				c->nicks = g_list_remove(c->nicks, n);
 				free_nick(n);
-			} else g_log(G_LOG_DOMAIN, G_LOG_LEVEL_WARNING, "Can't remove nick %s from channel %s: nick not on channel\n", line_get_nick(l), p);
+			} else g_warning(_("Can't remove nick %s from channel %s: nick not on channel\n"), line_get_nick(l), p);
 
 			continue;
 		}
 
-		g_log(G_LOG_DOMAIN, G_LOG_LEVEL_WARNING, "Can't part or let other nick part %s(unknown channel)\n", p);
+		g_warning(_("Can't part or let other nick part %s(unknown channel)\n"), p);
 		p = m + 1;
 	}
 	free(name);
@@ -330,7 +330,7 @@ static void handle_kick(struct network *s, struct line *l) {
 		if(nextchan){ *nextchan = '\0'; nextchan++; }
 
 		if((!nextnick && nextchan) || (nextnick && !nextchan)) {
-			g_warning("KICK command has unequal number of channels and nicks\n");
+			g_warning(_("KICK command has unequal number of channels and nicks\n"));
 		}
 
 		if(nextnick && nextchan) cont = 1;
@@ -339,14 +339,14 @@ static void handle_kick(struct network *s, struct line *l) {
 		c = find_channel(s, curchan);
 
 		if(!c){
-			g_log(G_LOG_DOMAIN, G_LOG_LEVEL_WARNING, "Can't kick nick %s from %s\n", curnick, curchan);
+			g_warning(_("Can't kick nick %s from %s\n"), curnick, curchan);
 			curchan = nextchan; curnick = nextnick;
 			continue;
 		}
 
 		n = find_nick(c, curnick);
 		if(!n) {
-			g_log(G_LOG_DOMAIN, G_LOG_LEVEL_WARNING, "Can't kick nick %s from channel %s: nick not on channel\n", curnick, curchan);
+			g_warning(_("Can't kick nick %s from channel %s: nick not on channel\n"), curnick, curchan);
 			curchan = nextchan; curnick = nextnick;
 			continue;
 		}
@@ -372,7 +372,7 @@ static void handle_332(struct network *s, struct line *l) {
 	struct channel *c = find_channel(s, l->args[2]);
 
 	if(!c) {
-		g_warning("Can't set topic for unknown channel '%s'!", l->args[2]);
+		g_warning(_("Can't set topic for unknown channel '%s'!"), l->args[2]);
 		return;
 	}
 
@@ -384,7 +384,7 @@ static void handle_no_topic(struct network *s, struct line *l) {
 	struct channel *c = find_channel(s, l->args[1]);
 
 	if(!c) {
-		g_warning("Can't unset topic for unknown channel '%s'!", l->args[2]);
+		g_warning(_("Can't unset topic for unknown channel '%s'!"), l->args[2]);
 		return;
 	}
 
@@ -396,7 +396,7 @@ static void handle_namreply(struct network *s, struct line *l) {
 	char *names, *tmp, *t;
 	struct channel *c = find_channel(s, l->args[3]);
 	if(!c) {
-		g_log(G_LOG_DOMAIN, G_LOG_LEVEL_WARNING, "Can't add names to %s: channel not found\n", l->args[3]);
+		g_warning(_("Can't add names to %s: channel not found\n"), l->args[3]);
 		return;
 	}
 	c->mode = l->args[2][0];
@@ -417,7 +417,7 @@ static void handle_namreply(struct network *s, struct line *l) {
 static void handle_end_names(struct network *s, struct line *l) {
 	struct channel *c = find_channel(s, l->args[2]);
 	if(c)c->namreply_started = 0;
-	else g_log(G_LOG_DOMAIN, G_LOG_LEVEL_WARNING, "Can't end /NAMES command for %s: channel not found\n", l->args[2]);
+	else g_warning(_("Can't end /NAMES command for %s: channel not found\n"), l->args[2]);
 }
 
 static void handle_whoreply(struct network *s, struct line *l) {
@@ -514,7 +514,7 @@ static void handle_mode(struct network *s, struct line *l)
 						  break;
 				case 'l':
 					if(!l->args[++arg]) {
-						g_error("Mode l requires argument, but no argument found");
+						g_error(_("Mode l requires argument, but no argument found"));
 						break;
 					}
 					c->limit = atol(l->args[arg]);
@@ -522,7 +522,7 @@ static void handle_mode(struct network *s, struct line *l)
 					break;
 				case 'k':
 					if(!l->args[++arg]) {
-						g_error("Mode k requires argument, but no argument found");
+						g_error(_("Mode k requires argument, but no argument found"));
 						break;
 					}
 
@@ -537,7 +537,7 @@ static void handle_mode(struct network *s, struct line *l)
 					  } else {
 							n = find_nick(c, l->args[++arg]);
 							if(!n) {
-								g_error("Can't set mode %c%c on nick %s on channel %s, because nick does not exist!", t == ADD?'+':'-', l->args[2][i], l->args[arg], l->args[1]);
+								g_error(_("Can't set mode %c%c on nick %s on channel %s, because nick does not exist!"), t == ADD?'+':'-', l->args[2][i], l->args[arg], l->args[1]);
 								break;
 							}
 							n->mode = (t == ADD?p:' ');
@@ -569,7 +569,7 @@ static void handle_005(struct network *s, struct line *l)
 		s->features[j] = strdup(l->args[i]);
 		if(!strncasecmp(s->features[j], "CASEMAPPING", strlen("CASEMAPPING"))) {
 			if(strlen(s->features[j]) < strlen("CASEMAPPING=")) {
-				g_warning("CASEMAPPING variable sent by server invalid");
+				g_warning(_("CASEMAPPING variable sent by server invalid"));
 			} else {
 				if(!strcasecmp(s->features[j]+strlen("CASEMAPPING="), "rfc1459")) {
 					s->casemapping = CASEMAP_RFC1459;
@@ -577,12 +577,12 @@ static void handle_005(struct network *s, struct line *l)
 					s->casemapping = CASEMAP_ASCII;
 				} else {
 					s->casemapping = CASEMAP_UNKNOWN;
-					g_warning("Unknown casemapping '%s'", s->features[j]+strlen("CASEMAPPING="));
+					g_warning(_("Unknown casemapping '%s'"), s->features[j]+strlen("CASEMAPPING="));
 				}
 			}
 		} else if(!strncasecmp(s->features[j], "NETWORK", strlen("NETWORK"))) {
 			if(strlen(s->features[j]) < strlen("NETWORK=")) {
-			   g_warning("NETWORK variable sent by server invalid");
+			   g_warning(_("NETWORK variable sent by server invalid"));
 			} else if(s->name_guessed) {
 				xmlSetProp(s->xmlConf, "name", s->features[j]+strlen("NETWORK="));
 			}
@@ -783,7 +783,7 @@ int irccmp(struct network *n, const char *a, const char *b)
 	case CASEMAP_RFC1459:
 		return strrfc1459cmp(a,b);
 	}
-	g_assert("Casemap invalid!");
+	g_assert(_("Casemap invalid!"));
 	return 0;
 }
 

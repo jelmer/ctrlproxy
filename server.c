@@ -40,7 +40,7 @@ void handle_server_receive (struct transport_context *c, char *raw, void *_serve
 	struct network *server = (struct network *)_server;
 	struct line *l;
 	
-	if(debugfd)fprintf(debugfd, "[From server] %s\n", raw);
+	if(debugfd)fprintf(debugfd, _("[From server] %s\n"), raw);
 
 	l = irc_parse_line(raw);
 	if(!l)return;
@@ -146,12 +146,12 @@ gboolean connect_current_server(struct network *s) {
 
 	if(!s->current_server){
 		xmlSetProp(s->xmlConf, "autoconnect", "0");
-		g_warning("No servers listed for network %s, not connecting\n", server_name);
+		g_warning(_("No servers listed for network %s, not connecting\n"), server_name);
 		xmlFree(server_name);
 		return TRUE;
 	}
 
-	g_message("Connecting with %s for server %s", s->current_server->name, server_name);
+	g_message(_("Connecting with %s for server %s"), s->current_server->name, server_name);
 
 	s->outgoing = transport_connect(s->current_server->name, s->current_server, handle_server_receive, reconnect, s);
 
@@ -163,7 +163,7 @@ gboolean connect_current_server(struct network *s) {
 	}
 
 	if(!s->outgoing) {
-		g_warning("Couldn't connect with network %s via transport %s", server_name, s->current_server->name);
+		g_warning(_("Couldn't connect with network %s via transport %s"), server_name, s->current_server->name);
 		xmlFree(server_name);
 		return TRUE;
 	}
@@ -204,7 +204,7 @@ void reconnect(struct transport_context *c, void *_server)
 	server_disconnected_hook_execute(server);
 	transport_free(server->outgoing); server->outgoing = NULL;
 
-	g_log(G_LOG_DOMAIN, G_LOG_LEVEL_WARNING, "Connection to server %s lost, trying to reconnect...", server_name);
+	g_warning(_("Connection to server %s lost, trying to reconnect..."), server_name);
 	xmlFree(server_name);
 
 	server->authenticated = 0;
@@ -260,7 +260,7 @@ void disconnect_client(struct client *c) {
 	c->authenticated = 2;
 
 	networkname = xmlGetProp(c->network->xmlConf, "name");
-	g_message("Removed client to %s", networkname);
+	g_message(_("Removed client to %s"), networkname);
 	g_free(networkname);
 	
 	free(c);
@@ -319,7 +319,7 @@ void handle_client_receive(struct transport_context *c, char *raw, void *_client
 
 	if(client->authenticated == 2)return;
 	
-	if(debugfd)fprintf(debugfd, "[From client] %s\n", raw);
+	if(debugfd)fprintf(debugfd, _("[From client] %s\n"), raw);
 
 	l = irc_parse_line(raw);
 	if(!l)return;
@@ -345,7 +345,7 @@ void handle_client_receive(struct transport_context *c, char *raw, void *_client
 
 	if(!clientpass && !client->authenticated) {
 		client->authenticated = 1;
-		g_log(G_LOG_DOMAIN, G_LOG_LEVEL_WARNING, "No password set for %s, allowing client _without_ authentication!", server_name);
+		g_log(G_LOG_DOMAIN, G_LOG_LEVEL_WARNING, _("No password set for %s, allowing client _without_ authentication!"), server_name);
 	}
 
 	if(!strcasecmp(l->args[0], "USER")){
@@ -372,7 +372,7 @@ void handle_client_receive(struct transport_context *c, char *raw, void *_client
 		}
 
 		send_motd(client->network, c);
-		g_log(G_LOG_DOMAIN, G_LOG_LEVEL_MESSAGE, "Client @%s successfully authenticated",
+		g_message(_("Client @%s successfully authenticated"),
 			  server_name);
 		if(!new_client_hook_execute(client))
 			disconnect_client(client);
@@ -382,7 +382,7 @@ void handle_client_receive(struct transport_context *c, char *raw, void *_client
 		else if(!strcmp(l->args[1], clientpass)) {
 			client->authenticated = 1;
 		} else {
-			g_warning("User tried to log in to %s with incorrect password!\n", server_name);
+			g_warning(_("User tried to log in to %s with incorrect password!\n"), server_name);
 			irc_sendf(c, ":%s %d %s :Password mismatch\r\n", server_name, ERR_PASSWDMISMATCH, nick);
 			disconnect_client(client);
 			free_line(l);
@@ -459,7 +459,7 @@ void network_add_listen(struct network *n, xmlNodePtr listen)
 	if(n->incoming)	{ for(i = 0; n->incoming[i]; i++); }
 	
 	if(!t) {
-		g_warning("Can't initialise transport %s", listen->name);
+		g_warning(_("Can't initialise transport %s"), listen->name);
 		return;
 	} 
 	
@@ -518,7 +518,7 @@ struct network *connect_network(xmlNodePtr conf) {
 
 	if(!s->servers) {
 		char *server_name = xmlGetProp(s->xmlConf, "name");
-		g_warning("No servers listed for network %s!\n", server_name);
+		g_warning(_("No servers listed for network %s!\n"), server_name);
 		xmlFree(server_name);
 	}
 
@@ -536,7 +536,7 @@ int close_network(struct network *s)
 	int i;
 	char *server_name = xmlGetProp(s->xmlConf, "name");
 	g_assert(s);
-	g_message("Closing connection to %s", server_name);
+	g_message(_("Closing connection to %s"), server_name);
 
 	while(l) {
 		struct client *c = l->data;

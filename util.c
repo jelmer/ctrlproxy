@@ -72,7 +72,7 @@ char *ctrlproxy_path(char *part)
 	char *p, *p1;
 	asprintf(&p, "%s/.ctrlproxy", g_get_home_dir());
 	if(mkdir(p, 0700) != 0 && errno != EEXIST) {
-		g_warning("Couldn't create '%s'!\n", p);
+		g_warning(_("Couldn't create '%s'!\n"), p);
 		free(p);
 		exit(1);
 	}

@@ -83,14 +83,14 @@ gboolean add_filter_ex(char *name, filter_function f, char *class, int prio)
 	struct filter_class *c;
 
 	d->name = strdup(name);
-	g_message("Filter '%s' added", d->name);
+	g_message(_("Filter '%s' added"), d->name);
 	d->function = f;
 	d->priority = prio;
 	d->plugin = current_plugin;
 
 	c = find_filter_class(class);
 	if(!c) {
-		g_message("Unable to find filter class '%s'", class);
+		g_message(_("Unable to find filter class '%s'"), class);
 		return FALSE;
 	}
 	
@@ -118,7 +118,7 @@ gboolean del_filter_ex(char *class, filter_function f)
 
 		if(d->function == f) 
 		{
-			g_message("Filter '%s' removed", d->name);
+			g_message(_("Filter '%s' removed"), d->name);
 			c->filters = g_list_remove(c->filters, d);
 			free(d->name);
 			free(d);
@@ -208,7 +208,7 @@ void add_new_client_hook(char *name, new_client_hook h)
 	
 	d = malloc(sizeof(struct new_client_hook_data));
 	d->name = strdup(name);
-	g_message("Adding new client hook '%s'", d->name);
+	g_message(_("Adding new client hook '%s'"), d->name);
 	d->hook = h;
 	d->plugin = current_plugin;
 	new_client_hooks = g_list_append(new_client_hooks, d);
@@ -220,7 +220,7 @@ void del_new_client_hook(char *name)
 	while(l) {
 		struct new_client_hook_data *d = (struct new_client_hook_data *)l->data;
 		if(!strcmp(d->name, name)) {
-			g_message("New client hook '%s' removed", d->name);
+			g_message(_("New client hook '%s' removed"), d->name);
 			free(d->name);
 			new_client_hooks = g_list_remove(new_client_hooks, d);
 			return;
@@ -237,7 +237,7 @@ gboolean new_client_hook_execute(struct client *c)
 		struct new_client_hook_data *d = (struct new_client_hook_data *)l->data;
 		current_plugin = d->plugin;
 		if(!d->hook(c)) {
-			g_message("New client hook '%s' refused new client", d->name);
+			g_message(_("New client hook '%s' refused new client"), d->name);
 			current_plugin = old_plugin;
 			return FALSE;
 		}
@@ -253,7 +253,7 @@ gboolean new_client_hook_execute(struct client *c)
 void add_lose_client_hook(char *name, lose_client_hook h)
 {
 	struct lose_client_hook_data *d;
-	g_message("Adding lose client hook '%s'", name);
+	g_message(_("Adding lose client hook '%s'"), name);
 	
 	d = malloc(sizeof(struct lose_client_hook_data));
 	d->name = strdup(name);
@@ -268,7 +268,7 @@ void del_lose_client_hook(char *name)
 	while(l) {
 		struct lose_client_hook_data *d = (struct lose_client_hook_data *)l->data;
 		if(!strcmp(d->name, name)) {
-			g_message("Lose client hook '%s' removed", d->name);
+			g_message(_("Lose client hook '%s' removed"), d->name);
 			free(d->name);
 			lose_client_hooks = g_list_remove(lose_client_hooks, d);
 			return;
@@ -301,7 +301,7 @@ GList *motd_hooks = NULL;
 void add_motd_hook(char *name, motd_hook h)
 {
 	struct motd_hook_data *d;
-	g_message("Adding MOTD hook '%s'", name);
+	g_message(_("Adding MOTD hook '%s'"), name);
 
 	d = malloc(sizeof(struct motd_hook_data));
 	d->name = strdup(name);
@@ -317,7 +317,7 @@ void del_motd_hook(char *name)
 	while(l) {
 		struct motd_hook_data *d = (struct motd_hook_data *)l->data;
 		if(!strcmp(d->name, name)) {
-			g_message("MOTD hook '%s' removed", d->name);
+			g_message(_("MOTD hook '%s' removed"), d->name);
 			free(d->name);
 			motd_hooks = g_list_remove(motd_hooks, d);
 			return;
@@ -382,7 +382,7 @@ GList *server_connected_hooks = NULL;
 void add_server_connected_hook(char *name, server_connected_hook h)
 {
 	struct server_connected_hook_data *d;
-	g_message("Adding lose client hook '%s'", name);
+	g_message(_("Adding lose client hook '%s'"), name);
 	
 	d = malloc(sizeof(struct server_connected_hook_data));
 	d->name = strdup(name);
@@ -396,7 +396,7 @@ void del_server_connected_hook(char *name)
 	while(l) {
 		struct server_connected_hook_data *d = (struct server_connected_hook_data *)l->data;
 		if(!strcmp(d->name, name)) {
-			g_message("Lose client hook '%s' removed", d->name);
+			g_message(_("Lose client hook '%s' removed"), d->name);
 			free(d->name);
 			server_connected_hooks = g_list_remove(server_connected_hooks, d);
 			return;
@@ -429,7 +429,7 @@ GList *server_disconnected_hooks = NULL;
 void add_server_disconnected_hook(char *name, server_disconnected_hook h)
 {
 	struct server_disconnected_hook_data *d;
-	g_message("Adding lose client hook '%s'", name);
+	g_message(_("Adding lose client hook '%s'"), name);
 	
 	d = malloc(sizeof(struct server_disconnected_hook_data));
 	d->name = strdup(name);
@@ -444,7 +444,7 @@ void del_server_disconnected_hook(char *name)
 	while(l) {
 		struct server_disconnected_hook_data *d = (struct server_disconnected_hook_data *)l->data;
 		if(!strcmp(d->name, name)) {
-			g_message("Lose client hook '%s' removed", d->name);
+			g_message(_("Lose client hook '%s' removed"), d->name);
 			free(d->name);
 			server_disconnected_hooks = g_list_remove(server_disconnected_hooks, d);
 			return;

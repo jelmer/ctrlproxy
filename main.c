@@ -51,14 +51,14 @@ void signal_crash(int sig)
 	size_t backtrace_size;
 	char **backtrace_strings;
 #endif
-	g_critical("Received SIGSEGV!");
+	g_critical(_("Received SIGSEGV!"));
 
 #ifdef HAVE_BACKTRACE_SYMBOLS
 	/* get the backtrace (stack frames) */
 	backtrace_size = backtrace(backtrace_stack,BACKTRACE_STACK_SIZE);
 	backtrace_strings = backtrace_symbols(backtrace_stack, backtrace_size);
 
-	g_critical ("BACKTRACE: %d stack frames:", backtrace_size);
+	g_critical (_("BACKTRACE: %d stack frames:"), backtrace_size);
 	
 	if (backtrace_strings) {
 		int i;
@@ -73,13 +73,13 @@ void signal_crash(int sig)
 	
 	if(current_plugin) {
 		if(!unload_plugin(current_plugin)) {
-			g_error("Can't unload crashing plugin, exiting...");
+			g_error(_("Can't unload crashing plugin, exiting..."));
 			abort();
 		} else {
-			g_warning("Plugin '%s' unloaded, because it crashed...", current_plugin->name);
+			g_warning(_("Plugin '%s' unloaded, because it crashed..."), current_plugin->name);
 		}
 	} else {
-		g_error("Ctrlproxy core has segfaulted, exiting...");
+		g_error(_("Ctrlproxy core has segfaulted, exiting..."));
 		abort();
 	}
 }
@@ -104,7 +104,7 @@ void clean_exit()
 void signal_quit(int sig)
 {
 	static int state = 0;
-	g_log(G_LOG_DOMAIN, G_LOG_LEVEL_MESSAGE, "Received signal %d, quitting...", sig);
+	g_message(_("Received signal %d, quitting..."), sig);
 	if(state == 1) { 
 		signal(SIGINT, SIG_IGN); 
 		exit(0);
@@ -112,7 +112,7 @@ void signal_quit(int sig)
 
 	state = 1;
 
-	g_log(G_LOG_DOMAIN, G_LOG_LEVEL_MESSAGE, "Closing connections...");
+	g_message(_("Closing connections..."));
 	g_main_loop_quit(main_loop);
 }
 
@@ -131,7 +131,7 @@ void readConfig(char *file) {
 
 	configuration = xmlParseFile(file);
 	if(!configuration) {
-		g_error("Can't open configuration file '%s'", file);
+		g_error(_("Can't open configuration file '%s'"), file);
 		exit(1);
 	}
 
@@ -167,12 +167,12 @@ int main(int argc, const char *argv[])
 	poptContext pc;
 	struct poptOption options[] = {
 		POPT_AUTOHELP
-		{"debug", 'd', POPT_ARG_STRING, NULL, 'd', "Write irc traffic to specified file", "FILE" },
-		{"daemon", 'D', POPT_ARG_NONE, &isdaemon, 0, "Run in the background (as a daemon)"},
-		{"log", 'l', POPT_ARG_STRING, &logfile, 0, "Log messages to specified file", "FILE"},
-		{"rc-file", 'r', POPT_ARG_STRING, &rcfile, 0, "Use configuration file from specified location", "FILE"},
-		{"seperate-processes", 's', POPT_ARG_NONE, &seperate_processes, 0, "Use one process per network" },
-		{"version", 'v', POPT_ARG_NONE, NULL, 'v', "Show version information"},
+		{"debug", 'd', POPT_ARG_STRING, NULL, 'd', _("Write irc traffic to specified file"), "FILE" },
+		{"daemon", 'D', POPT_ARG_NONE, &isdaemon, 0, _("Run in the background (as a daemon)")},
+		{"log", 'l', POPT_ARG_STRING, &logfile, 0, _("Log messages to specified file"), _("FILE")},
+		{"rc-file", 'r', POPT_ARG_STRING, &rcfile, 0, _("Use configuration file from specified location"), _("FILE")},
+		{"seperate-processes", 's', POPT_ARG_NONE, &seperate_processes, 0, _("Use one process per network") },
+		{"version", 'v', POPT_ARG_NONE, NULL, 'v', _("Show version information")},
 		POPT_TABLEEND
 	};
 #endif
@@ -210,20 +210,20 @@ int main(int argc, const char *argv[])
 			break;
 		case 'v':
 			printf("ctrlproxy %s\n", PACKAGE_VERSION);
-			printf("(c) 2002-2003 Jelmer Vernooij et al. <jelmer@nl.linux.org>\n");
+			printf(_("(c) 2002-2003 Jelmer Vernooij et al. <jelmer@nl.linux.org>\n"));
 			return 0;
 		}
 	}
 #endif
 
 	if(gethostname(my_hostname, MAXHOSTNAMELEN) != 0) {
-		g_log(G_LOG_DOMAIN, G_LOG_LEVEL_ERROR, "Can't figure out hostname of local host!");
+		g_error(_("Can't figure out hostname of local host!"));
 		return 1;
 	}
 
 	if(logfile) {
 		f_logfile = fopen(logfile, "a+");
-		if(!f_logfile) g_warning("Can't open logfile %s!", logfile);
+		if(!f_logfile) g_warning(_("Can't open logfile %s!"), logfile);
 	}
 
 	add_log_domain("GLib");
@@ -233,7 +233,7 @@ int main(int argc, const char *argv[])
 	add_filter_class("replicate", 50);
 	add_filter_class("log", 50);
 
-	g_log(G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "Logfile opened");
+	g_info(_("Logfile opened"));
 
 	if(isdaemon) {
 
@@ -266,9 +266,9 @@ int main(int argc, const char *argv[])
 	readConfig(configuration_file);
 
 	if(!g_module_supported()) {
-		g_warning("DSO's not supported on this platform. Not loading any modules");
+		g_warning(_("DSO's not supported on this platform. Not loading any modules"));
 	} else if(!xmlNode_plugins) {
-		g_warning("No modules set to be loaded");	
+		g_warning(_("No modules set to be loaded"));	
 	}else {
 		cur = xmlNode_plugins->xmlChildrenNode;
 		while(cur) {
@@ -280,7 +280,7 @@ int main(int argc, const char *argv[])
 
 			enabled = xmlGetProp(cur, "autoload");
 			if((!enabled || atoi(enabled) == 1) && !load_plugin(cur)) {
-				g_error("Can't load plugin %s, aborting...", xmlGetProp(cur, "file"));
+				g_error(_("Can't load plugin %s, aborting..."), xmlGetProp(cur, "file"));
 				abort();
 			}
 
@@ -291,7 +291,7 @@ int main(int argc, const char *argv[])
 	}
 
 	if(!xmlNode_networks) {
-		g_error("No networks listed");
+		g_error(_("No networks listed"));
 		return 1;
 	}
 

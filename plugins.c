@@ -33,11 +33,11 @@ gboolean unload_plugin(struct plugin *p)
 	/* Run exit function if present */
 	if(g_module_symbol(p->module, "fini_plugin", (gpointer)&f)) {
 		if(!f(p)) {
-			g_warning("Unable to unload plugin '%s': still in use?", p->name);
+			g_warning(_("Unable to unload plugin '%s': still in use?"), p->name);
 			return FALSE;
 		}
 	} else {
-		g_warning("No symbol 'fini_plugin' in plugin '%s'. Module does not support unloading, so no unload will be attempted", p->name);
+		g_warning(_("No symbol 'fini_plugin' in plugin '%s'. Module does not support unloading, so no unload will be attempted"), p->name);
 		return FALSE;
 	}
 
@@ -77,7 +77,7 @@ gboolean load_plugin(xmlNodePtr cur)
 
 	mod_name = xmlGetProp(cur, "file");
 	if(!mod_name) {
-		g_warning("No filename specified for plugin");
+		g_warning(_("No filename specified for plugin"));
 		return FALSE;
 	}
 
@@ -92,7 +92,7 @@ gboolean load_plugin(xmlNodePtr cur)
 	g_free(path_name);
 
 	if(!m) {
-		g_warning("Unable to open module %s(%s), ignoring", path_name, g_module_error());
+		g_warning(_("Unable to open module %s(%s), ignoring"), path_name, g_module_error());
 		return FALSE;
 	}
 
@@ -101,15 +101,15 @@ gboolean load_plugin(xmlNodePtr cur)
 	}
 
 	if(plugin_loaded(selfname)) {
-		g_warning("Plugin already loaded");
+		g_warning(_("Plugin already loaded"));
 		xmlFree(mod_name);
 		return FALSE;
 	}
 
-	g_message("Loading module '%s'", selfname);
+	g_message(_("Loading module '%s'"), selfname);
 	
 	if(!g_module_symbol(m, "init_plugin", (gpointer)&f)) {
-		g_warning("Can't find symbol 'init_plugin' in module %s", path_name);
+		g_warning(_("Can't find symbol 'init_plugin' in module %s"), path_name);
 		xmlFree(mod_name);
 		return FALSE;
 	}
@@ -122,7 +122,7 @@ gboolean load_plugin(xmlNodePtr cur)
 
 	current_plugin = p;
 	if(!f(p)) {
-		g_warning("Running initialization function for plugin '%s' failed.", mod_name);
+		g_warning(_("Running initialization function for plugin '%s' failed."), mod_name);
 		free(p->name);
 		free(p->path);
 		xmlFree(mod_name);

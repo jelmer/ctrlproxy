@@ -1,7 +1,11 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT([ctrlgdb], [2.7-CVS], [jelmer@vernstok.nl])
+AC_INIT(ctrlproxy, 2.7-CVS, [jelmer@vernstok.nl])
+PACKAGE="$PACKAGE_NAME"
+VERSION="$PACKAGE_VERSION"
+AC_SUBST(PACKAGE)
+AC_SUBST(VERSION)
 AC_CONFIG_SRCDIR([line.c])
 AC_CONFIG_HEADER([config.h])
 
@@ -34,6 +38,7 @@ AC_HEADER_DIRENT
 AC_HEADER_STDC
 AC_HEADER_TIME
 AC_CHECK_HEADERS([stdlib.h string.h unistd.h popt.h execinfo.h sys/time.h])
+AM_GNU_GETTEXT([external])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
@@ -53,5 +58,5 @@ AC_SUBST(MODS_SUBDIRS)
 AC_CHECK_FUNCS([gethostbyname gethostname memset mkdir strcasecmp strchr strdup strerror strncasecmp strstr uname backtrace_symbols gettimeofday strrchr])
 AC_MSG_RESULT([Going to build the following plugins: ])
 AC_MSG_RESULT([$MODS])
-AC_CONFIG_FILES([Makefile mods/Makefile testsuite/Makefile ctrlproxy.pc])
+AC_CONFIG_FILES([Makefile mods/Makefile testsuite/Makefile ctrlproxy.pc po/Makefile.in ])
 AC_OUTPUT

@@ -2,6 +2,7 @@
  	Jelmer Vernooij <jelmer@vernstok.nl>
 
 Ctrlproxy 2.7:
+ * Add gettext support
  * Extend linestack interface
  * Add repl_limited module
  * Add test-filter utility

@@ -138,12 +138,12 @@ gboolean linestack_destroy(struct linestack_context *b)
 
 void register_linestack(struct linestack_ops *b)
 {
-	g_message("Added linestack backend '%s'", b->name);
+	g_message(_("Added linestack backend '%s'"), b->name);
 	linestack_backends = g_slist_append(linestack_backends, b);
 }
 
 void unregister_linestack(struct linestack_ops *b)
 {
-	g_message("Removed linestack backend '%s'", b->name);
+	g_message(_("Removed linestack backend '%s'"), b->name);
 	linestack_backends = g_slist_remove(linestack_backends, b);
 }
