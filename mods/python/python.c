@@ -27,10 +27,10 @@
 //#include <string.h>
 #ifdef DEBUG
 #undef _DEBUG
-#include <python.h>
+#include <Python.h>
 #define DEBUG
 #else
-#include <python.h>
+#include <Python.h>
 #endif
 #include "structmember.h"
 #include "ctrlproxy.h"

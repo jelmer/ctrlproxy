@@ -70,7 +70,11 @@ static gboolean file_clear(struct linestack_context *c)
 	struct file_information *d = (struct file_information *)c->data;
 	GError *error = NULL;
 	g_io_channel_shutdown(d->channel, TRUE, NULL);
+#ifndef _WIN32
 	unlink(d->filename);
+#else 
+	/*FIXME*/
+#endif
 	d->channel = g_io_channel_new_file(d->filename, "w+", &error);
 	g_io_channel_set_encoding(d->channel, NULL, &error);
 

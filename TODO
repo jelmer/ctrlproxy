@@ -10,12 +10,12 @@
 2.8:
  - win32 support with traybar
  - gtk/gnome traybar item
- - rewrite stats stuff to use MySQL
+ - rewrite stats stuff to use MySQL (or SQLite?)
  - <network><listen/></network> -> <listen/>
  - support for various authenticators (pam,plain,etc)
  - Net::IRC-like interface
  - dircproxy-config-to-ctrlproxyrc script
- - replace transports by IOChannels?
+ - replace transports by IOChannels
   - support running from inetd
   - make openssl and gnutls support seperate modules
  - more tests in the testsuite
