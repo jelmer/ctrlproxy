@@ -1,3 +1,5 @@
+include Makefile.settings
+
 all: ctrlproxy
 	$(MAKE) -C mods all
 
@@ -8,6 +10,10 @@ ctrlproxy: $(OBJS)
 
 %.o: %.c
 	$(CC) -g3 -Wall -c $<
+
+install: all
+	cp ctrlproxy $(BINDIR)
+	cp ctrlproxy.1 $(MANDIR)/man1
 
 clean:
 	rm -f *.o ctrlproxy

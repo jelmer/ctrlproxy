@@ -1,0 +1,16 @@
+nick = ctrlproxy
+logfile = /home/jelmer/log/%s/%s
+modules = mods/log.so mods/client_simple.so
+clientpass = secret
+[oftc]
+host = irc.oftc.net
+autojoin = #ctrlproxy
+clientport = 6676
+[opn]
+host = irc.freenode.net
+autojoin = #ctrlproxy
+clientport = 6677
+[inu]
+host = irc.internetnu.nl
+autojoin = #ctrlproxy
+clientport = 6675

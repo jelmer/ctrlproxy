@@ -1,0 +1,32 @@
+ctrlproxy 0.1
+==============
+
+Jelmer Vernooij <jelmer@nl.linux.org>, 14 October 2002
+
+Why ctrlproxy?
+--------------
+CtrlProxy is a project I started because I got bored with running irssi in 
+screen on my server. My server isn't very fast and that meant 
+when it was on high load ircing was getting pretty hard. I could 
+of course run irssi on my workstation, but my workstation isn't on 
+24/7 and some people depend on the channel logs I generate.
+
+Requirements
+------------
+ * libpopt
+ * GNU libc
+
+Building
+--------
+ 
+ircproxy can be installed using:
+
+$ make
+$ make install
+
+You might want to change the PREFIX in Makefile.settings
+
+Documentation
+-------------
+Most documentation is in the manpages: ctrlproxy(1) and ctrlproxyrc(5)
+The example ctrlproxyrc file might be of some use..
