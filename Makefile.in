@@ -53,6 +53,7 @@ install-doc:
 	$(INSTALL) AUTHORS $(DESTDIR)$(docdir)
 	$(INSTALL) COPYING $(DESTDIR)$(docdir)
 	$(INSTALL) TODO $(DESTDIR)$(docdir)
+	$(INSTALL) UPGRADING $(DESTDIR)$(docdir)
 	$(MAKE) -C doc install 
 
 install-data:
