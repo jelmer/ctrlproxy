@@ -14,6 +14,8 @@
 - dircproxy-config-to-ctrlproxyrc script
 - add NICK to repl_*
 - free NICK stuff in repl
+- replace transports by IOChannels?
+- fix issue with non-blocking connect
 
 report_time:
  - test
@@ -33,4 +35,4 @@ socket:
 - add gnutls support
 
 2.8:
-- connect-class like system
+ - <network><listen/></network> -> <listen/>
