@@ -430,7 +430,6 @@ void network_add_listen(struct network *n, xmlNodePtr listen)
 struct network *connect_network(xmlNodePtr conf) {
 	struct network *s = malloc(sizeof(struct network));
 	char *nick, *user_name;
-	int i = 0;
 	xmlNodePtr cur;
 
 	memset(s, 0, sizeof(struct network));
@@ -453,17 +452,17 @@ struct network *connect_network(xmlNodePtr conf) {
 	s->listen = NULL;
 	s->incoming = malloc(sizeof(struct transport_context *));
 	s->incoming[0] = NULL;
-	cur = xmlFindChildByElementName(s->xmlConf, "listen");
+	s->listen = xmlFindChildByElementName(s->xmlConf, "listen");
 
-	if(s->listen)cur = s->listen->xmlChildrenNode;
-	else cur = NULL;
+	if(s->listen)cur = s->listen->xmlChildrenNode; else cur = NULL;
+
 	while(cur) {
 		if(xmlIsBlankNode(cur) || !strcmp(cur->name, "comment")) {
 			cur = cur->next; 
 			continue;
 		}
 
-		network_add_listen(s, cur); i++;
+		network_add_listen(s, cur); 
 		
 		cur = cur->next;
 	}
