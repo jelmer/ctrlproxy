@@ -15,6 +15,7 @@
 - system wide ctrlproxy?
  - connect to central daemon that does a fork and starts ctrlproxy in that?
 - Modules shouldn't be loaded twice
+- non-blocking connect
 
 Optional:
 - Net::IRC-like interface
