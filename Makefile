@@ -13,7 +13,7 @@ all: $(BINS)
 mods/static.o: Makefile.settings
 	$(MAKE) -C mods static.o
 
-ctrlproxy$(EXEEXT): server.o line.o main.o state.o util.o hooks.o linestack.o plugins.o config.o isupport.o $(shell test -n "$(MODS_STATIC)" && echo mods/static.o)
+ctrlproxy$(EXEEXT): server.o client.o line.o main.o state.o util.o hooks.o linestack.o plugins.o config.o isupport.o $(shell test -n "$(MODS_STATIC)" && echo mods/static.o)
 	$(CC) $(LIBS) -rdynamic -o $@ $^
 
 %.$(OBJEXT): %.c
