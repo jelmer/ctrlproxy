@@ -44,11 +44,9 @@ enum ssl_mode { SSL_MODE_NONE = 0, SSL_MODE_SERVER = 1, SSL_MODE_CLIENT = 2};
 GIOChannel *irssi_ssl_get_iochannel(GIOChannel *handle, gboolean server);
 GIOChannel *g_io_gnutls_get_iochannel(GIOChannel *handle, gboolean server);
 gboolean irssi_ssl_set_files(char *certf, char *keyf);
-gboolean g_io_gnutls_set_files(char *certf, char *keyf);
+gboolean g_io_gnutls_set_files(char *certf, char *keyf, char *caf);
 gboolean g_io_gnutls_fini();
 gboolean g_io_gnutls_init();
-
-gboolean g_io_gnutls_set_files(char *certf, char *keyf);
 
 static gboolean handle_in (GIOChannel *c, GIOCondition o, gpointer data);
 static gboolean handle_disc (GIOChannel *c, GIOCondition o, gpointer data);
@@ -634,7 +632,7 @@ const char name_plugin[] = "socket";
 gboolean init_plugin(struct plugin *p) {
 	xmlNodePtr cur;
 	char *cur2;
-	char *certf = NULL, *keyf = NULL, *defaultssl = NULL;;
+	char *certf = NULL, *keyf = NULL, *caf = NULL;;
 	register_transport(&ipv4);
 	register_transport(&ipv6);
 	register_transport(&pipe_transport);
@@ -645,6 +643,7 @@ gboolean init_plugin(struct plugin *p) {
 
 		if(!strcmp(cur->name, "sslkeyfile")) keyf = xmlNodeGetContent(cur);
 		else if(!strcmp(cur->name, "sslcertfile")) certf = xmlNodeGetContent(cur);
+		else if(!strcmp(cur->name, "sslcafile")) caf = xmlNodeGetContent(cur);
 		else if(!strcmp(cur->name, "tos") && xmlHasProp(cur, "port")) {
 			cur2 = xmlGetProp(cur, "value");
 			if(!strcasecmp(cur2,"Minimize-Delay")) {
@@ -663,37 +662,33 @@ gboolean init_plugin(struct plugin *p) {
 		cur = cur->next;
 	}
 
+
+	if(!certf) {
+		certf = ctrlproxy_path("cert.pem");
+		if(access(certf, R_OK) != 0) { free(certf); certf = NULL; }
+	}
+
+	if(!keyf) {
+		keyf = ctrlproxy_path("key.pem");
+		if(access(keyf, R_OK) != 0) { free(keyf); keyf = NULL; }
+	}
+
 #if defined(HAVE_GNUTLS_GNUTLS_H)
 	g_io_gnutls_init();
 
-	if(!certf || !keyf) {
-		defaultssl = ctrlproxy_path("ctrlproxy.pem");
-		if(access(defaultssl, R_OK) == 0) {
-			if(!certf) certf = strdup(defaultssl);
-			if(!keyf) keyf = strdup(defaultssl);
-			irssi_ssl_set_files(certf, keyf);
-		}
-		free(defaultssl);
-
-	} else {
-		g_io_gnutls_set_files(certf, keyf);
+	if(!caf) {
+		caf = ctrlproxy_path("ca.pem");
+		if(access(caf, R_OK) != 0) { free(caf); caf = NULL; }
 	}
+		
+	g_io_gnutls_set_files(certf, keyf, caf);
 #elif defined(HAVE_OPENSSL_SSL_H)
-	if(!certf || !keyf) {
-		defaultssl = ctrlproxy_path("ctrlproxy.pem");
-		if(access(defaultssl, R_OK) == 0) {
-			if(!certf) certf = strdup(defaultssl);
-			if(!keyf) keyf = strdup(defaultssl);
-			irssi_ssl_set_files(certf, keyf);
-		}
-		free(defaultssl);
-
-	} else {
-		irssi_ssl_set_files(certf, keyf);
-	}
+	irssi_ssl_set_files(certf, keyf);
 #endif
 
-	free(certf); free(keyf);
+	if(certf) free(certf); 
+	if(keyf) free(keyf); 
+	if(caf) free(caf);
 
 	return TRUE;
 }
