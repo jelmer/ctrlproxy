@@ -1,4 +1,4 @@
-/* 
+/*
 	ctrlproxy: A modular IRC proxy
 	(c) 2002-2003 Jelmer Vernooij <jelmer@nl.linux.org>
 
@@ -21,6 +21,13 @@
 
 enum mode_type { REMOVE = 0, ADD = 1};
 
+struct started_join {
+	char *channel;
+	void *network;
+};
+
+static GList *started_join_list = NULL;
+
 int is_channelname(char *name, struct network *n)
 {
 	if(name[0] == '#' || name[0] == '!' || name[0] == '&') return 1;
@@ -38,13 +45,25 @@ char *mode2string(char modes[255])
 	return ret;
 }
 
-static void free_names(struct channel *c) 
+static void free_nick(struct channel_nick *n)
 {
-	struct nick *n;
+	n->global->refcount--;
+	if(n->global->refcount == 0) {
+		if(n->global->hostmask != NULL)
+			free(n->global->hostmask);
+		free(n->global->name);
+		n->channel->network->nicks = g_list_remove(n->channel->network->nicks, n->global);
+		free(n->global);
+	}
+	free(n);
+}
+
+
+static void free_names(struct channel *c)
+{
 	GList *g = c->nicks;
 	while(g) {
-		n = (struct nick *)g->data;
-		free(n->name); free(n);
+		free_nick((struct channel_nick *)g->data);
 		g = g_list_next(g);
 	}
 	g_list_free(c->nicks);
@@ -58,7 +77,7 @@ static void free_channel(struct channel *c)
 	c->topic = NULL;
 }
 
-struct channel *find_channel(struct network *st, char *name) 
+struct channel *find_channel(struct network *st, char *name)
 {
 	GList *cl = st->channels;
 	while(cl) {
@@ -81,53 +100,82 @@ struct channel *find_add_channel(struct network *st, char *name) {
 
 	/* check if there is a XML node for this channel yet */
 	c->xmlConf = xmlFindChildByName(st->xmlConf, name);
-	
+
 	if(!c->xmlConf) {
 		c->xmlConf = xmlNewNode(NULL, "channel");
 		xmlSetProp(c->xmlConf, "name", name);
 		xmlAddChild(st->xmlConf, c->xmlConf);
 	}
-	
+
 	return c;
 }
 
-struct nick *find_nick(struct channel *c, char *name) {
+struct channel_nick *find_nick(struct channel *c, char *name) {
 	GList *l = c->nicks;
-	struct nick *n;
+	struct channel_nick *n;
 	char *realname = name;
 	if(realname[0] == '@' || realname[0] == '+')realname++;
 
 	while(l) {
-		n = (struct nick *)l->data;
-		if(!strcasecmp(n->name, realname))return n;
+		n = (struct channel_nick *)l->data;
+		if(!strcasecmp(n->global->name, realname))return n;
 		l = g_list_next(l);
 	}
 
 	return NULL;
 }
 
-struct nick *find_add_nick(struct channel *c, char *name) {
-	struct nick *n = find_nick(c, name);
+static struct network_nick *find_add_network_nick(struct network *n, char *name)
+{
+	GList *gl = n->nicks;
+	struct network_nick *nd;
+
+	/* search for a existing global object*/
+	while(gl) {
+		struct network_nick *ndd = (struct network_nick*)gl->data;
+		if(!strcasecmp(ndd->name, name)) {
+			ndd->refcount++;
+			return ndd;
+		}
+		gl = gl->next;
+	}
+
+	/* create one, if it doesn't exist */
+	nd = malloc(sizeof(struct network_nick));
+	memset(nd, 0, sizeof(struct network_nick));
+	nd->refcount = 1;
+	nd->name = strdup(name);
+	nd->hostmask = NULL;
+	n->nicks = g_list_append(n->nicks, nd);
+	return nd;
+}
+
+struct channel_nick *find_add_nick(struct channel *c, char *name) {
+	struct channel_nick *n = find_nick(c, name);
 	char *realname = name;
-	if(n)return n;
+	if(n) return n;
 	if(strlen(name) == 0)return NULL;
-	n = malloc(sizeof(struct nick));
-	memset(n, 0, sizeof(struct nick));
-	if(realname[0] == '@' || realname[0] == '+'){
+
+	n = malloc(sizeof(struct channel_nick));
+	memset(n, 0, sizeof(struct channel_nick));
+	if(realname[0] == '@' || realname[0] == '+') {
 		n->mode = realname[0];
 		realname++;
 	}
-	n->name = strdup(realname);
+	n->channel = c;
+	n->global = find_add_network_nick(c->network, realname);
 	c->nicks = g_list_append(c->nicks, n);
 	return n;
 }
 
 
-static void handle_join(struct network *s, struct line *l) 
+static void handle_join(struct network *s, struct line *l)
 {
 	struct channel *c;
+	struct channel_nick *ni;
+	struct started_join *sj;
 	int cont = 1;
-	char *own_nick;
+	char *own_nick, *tmp;
 	char *name = strdup(l->args[1]), *p, *n;
 
 	p = name;
@@ -136,21 +184,31 @@ static void handle_join(struct network *s, struct line *l)
 		n = strchr(p, ',');
 
 		if(!n) cont = 0;
-		else *n = '\0';	
+		else *n = '\0';
 
 		/* Someone is joining a channel the user is on */
 		if(l->direction == FROM_SERVER && line_get_nick(l)) {
 			c = find_add_channel(s, p);
-			find_add_nick(c, line_get_nick(l));
+			ni = find_add_nick(c, line_get_nick(l));
+			ni->global->hostmask = strdup((char *)l->origin);
 
 			/* The user is joining a channel */
 			own_nick = xmlGetProp(s->xmlConf, "nick");
-		
+
 			if(!strcasecmp(line_get_nick(l), own_nick)) {
 				xmlSetProp(c->xmlConf, "autojoin", "1");
 				g_message("Joining channel %s", p);
+
+				/* send WHO command for updating hostmasks */
+				sj = malloc(sizeof(struct started_join));
+				sj->channel = strdup(p);
+				sj->network = s;
+				started_join_list = g_list_append(started_join_list, sj);
+				asprintf(&tmp, "WHO %s\n", p);
+				transport_write(s->outgoing, tmp);
+				free(tmp);
 			}
-			
+
 			xmlFree(own_nick);
 		}
 		p = n+1;
@@ -159,10 +217,10 @@ static void handle_join(struct network *s, struct line *l)
 }
 
 
-static void handle_part(struct network *s, struct line *l) 
+static void handle_part(struct network *s, struct line *l)
 {
 	struct channel *c;
-	struct nick *n;
+	struct channel_nick *n;
 	int cont = 1;
 	char *own_nick;
 	char *name = strdup(l->args[1]), *p, *m;
@@ -174,12 +232,12 @@ static void handle_part(struct network *s, struct line *l)
 		m = strchr(p, ',');
 		if(!m) cont = 0;
 		else *m = '\0';
-		
+
 		c = find_channel(s, p);
 
 		/* The user is joining a channel */
 		own_nick = xmlGetProp(s->xmlConf, "nick");
-		
+
 		if(!strcasecmp(line_get_nick(l), own_nick) && c) {
 			s->channels = g_list_remove(s->channels, c);
 			g_message("Leaving %s", p);
@@ -191,20 +249,19 @@ static void handle_part(struct network *s, struct line *l)
 			p = m + 1;
 			continue;
 		}
-			
+
 		xmlFree(own_nick);
 
 		if(c){
 			n = find_nick(c, line_get_nick(l));
 			if(n) {
-				free(n->name);
 				c->nicks = g_list_remove(c->nicks, n);
-				free(n);
+				free_nick(n);
 			} else g_log(G_LOG_DOMAIN, G_LOG_LEVEL_WARNING, "Can't remove nick %s from channel %s: nick not on channel\n", line_get_nick(l), p);
-	
+
 			continue;
-		} 
-	
+		}
+
 		g_log(G_LOG_DOMAIN, G_LOG_LEVEL_WARNING, "Can't part or let other nick part %s(unknown channel)\n", p);
 		p = m + 1;
 	}
@@ -213,7 +270,7 @@ static void handle_part(struct network *s, struct line *l)
 
 static void handle_kick(struct network *s, struct line *l) {
 	struct channel *c;
-	struct nick *n;
+	struct channel_nick *n;
 	char *nicks = strdup(l->args[2]);
 	char *channels = strdup(l->args[1]);
 	char *curnick, *curchan, *nextchan, *nextnick;
@@ -223,7 +280,7 @@ static void handle_kick(struct network *s, struct line *l) {
 	while(cont) {
 		nextnick = strchr(curnick, ',');
 		if(nextnick){ *nextnick = '\0'; nextnick++; }
-		
+
 		nextchan = strchr(curchan, ',');
 		if(nextchan){ *nextchan = '\0'; nextchan++; }
 
@@ -247,10 +304,9 @@ static void handle_kick(struct network *s, struct line *l) {
 			curchan = nextchan; curnick = nextnick;
 			continue;
 		}
-		free(n->name);
+		
 		c->nicks = g_list_remove(c->nicks, n);
-		free(n);
-
+		free_nick(n);
 		curchan = nextchan; curnick = nextnick;
 	}
 }
@@ -263,8 +319,8 @@ static void handle_topic(struct network *s, struct line *l) {
 
 static void handle_332(struct network *s, struct line *l) {
 	struct channel *c = find_channel(s, l->args[2]);
-	
-	if(!c) { 
+
+	if(!c) {
 		g_warning("Can't set topic for unknown channel '%s'!", l->args[2]);
 		return;
 	}
@@ -276,11 +332,11 @@ static void handle_332(struct network *s, struct line *l) {
 static void handle_no_topic(struct network *s, struct line *l) {
 	struct channel *c = find_channel(s, l->args[1]);
 
-	if(!c) { 
+	if(!c) {
 		g_warning("Can't unset topic for unknown channel '%s'!", l->args[2]);
 		return;
 	}
-	
+
 	if(c->topic)free(c->topic);
 	c->topic = NULL;
 }
@@ -313,22 +369,62 @@ static void handle_end_names(struct network *s, struct line *l) {
 	else g_log(G_LOG_DOMAIN, G_LOG_LEVEL_WARNING, "Can't end /NAMES command for %s: channel not found\n", l->args[2]);
 }
 
+static void handle_whoreply(struct network *s, struct line *l) {
+	char *hostmask;
+	struct channel_nick *n; struct channel *c;
+	GList *gl = started_join_list;
+	/* don't send the who replay when caused by a join */
+	while(gl) {
+		struct started_join *sj = (struct started_join *)gl->data;
+		if((s == sj->network) && (!strcmp(sj->channel, l->args[2]))) {
+			l->options = l->options | LINE_DONT_SEND;
+			break;
+		}
+		gl = gl->next;
+	}
+	c = find_channel(s, l->args[2]);
+	if(!c) {
+		return;
+	}
+	n = find_add_nick(c, strdup(l->args[6]));
+	if(n->global->hostmask == NULL) {
+		asprintf(&hostmask, "%s!%s@%s", l->args[6], l->args[3], l->args[4]);
+		n->global->hostmask = hostmask;
+	}
+}
+
+static void handle_end_who(struct network *s, struct line *l) {
+	GList *gl = started_join_list;
+	/* remove entry added by join and don't send line */
+	while(gl) {
+		struct started_join *sj = (struct started_join *)gl->data;
+		if((s == sj->network) && (!strcmp(sj->channel, l->args[2]))) {
+   			l->options = l->options | LINE_DONT_SEND;
+			started_join_list = g_list_remove(started_join_list, sj);
+			free(sj->channel);
+			free(sj);
+			break;
+		}
+		gl = gl->next;
+	}
+}
+
+
 static void handle_quit(struct network *s, struct line *l) {
 	GList *g = s->channels;
 	if(!line_get_nick(l))return;
 	while(g) {
 		struct channel *c = (struct channel *)g->data;
-		struct nick *n = find_nick(c, line_get_nick(l));
+		struct channel_nick *n = find_nick(c, line_get_nick(l));
 		if(n) {
-			free(n->name);
 			c->nicks = g_list_remove(c->nicks, n);
-			free(n);
+			free_nick(n);
 		}
 		g = g_list_next(g);
 	}
 }
 
-static void handle_mode(struct network *s, struct line *l) 
+static void handle_mode(struct network *s, struct line *l)
 {
 	/* Format:
 	 * MODE %|<nick>|<channel> [<mode> [<mode parameters>]] */
@@ -355,17 +451,17 @@ static void handle_mode(struct network *s, struct line *l)
 
 	} else if(is_channelname(l->args[1], l->network)) {
 		struct channel *c = find_channel(s, l->args[1]);
-		struct nick *n;
+		struct channel_nick *n;
 		int arg = 2;
 		for(i = 0; l->args[2][i]; i++) {
 			switch(l->args[2][i]) {
 				case '+': t = ADD; break;
 				case '-': t = REMOVE; break;
-				case 'b': /* Don't do anything (like store, etc) with ban 
+				case 'b': /* Don't do anything (like store, etc) with ban
 							 for now */
 						  arg++;
 						  break;
-				case 'o': 
+				case 'o':
 					n = find_nick(c, l->args[++arg]);
 					if(!n) {
 						g_error("Can't set mode %c%c on nick %s on channel %s, because nick does not exist!", t == ADD?'+':'-', l->args[2][i], l->args[arg], l->args[1]);
@@ -404,7 +500,7 @@ static void handle_mode(struct network *s, struct line *l)
 					  break;
 			}
 		}
-	} 
+	}
 
 	xmlFree(nick);
 }
@@ -428,7 +524,7 @@ static void handle_005(struct network *s, struct line *l)
 		s->features[j] = strdup(l->args[i]);
 		j++;
 	}
-	
+
 	s->features[j] = NULL;
 }
 
@@ -441,24 +537,24 @@ static void handle_nick(struct network *s, struct line *l)
 	if(l->direction != FROM_SERVER || !l->args[1] || !line_get_nick(l)) return;
 	while(g) {
 		struct channel *c = (struct channel *)g->data;
-		struct nick *n = find_nick(c, line_get_nick(l));
+		struct channel_nick *n = find_nick(c, line_get_nick(l));
 		if(n) {
-			free(n->name);
-			n->name = strdup(l->args[1]);
+			free(n->global->name);
+			n->global->name = strdup(l->args[1]);
 		}
 		g = g_list_next(g);
 	}
-	
+
 	own_nick = xmlGetProp(s->xmlConf, "nick");
-	
+
 	if(!strcasecmp(line_get_nick(l), own_nick)) {
-		xmlSetProp(s->xmlConf, "nick", l->args[1]);				
+		xmlSetProp(s->xmlConf, "nick", l->args[1]);
 	}
-	
+
 	xmlFree(own_nick);
 }
 
-void state_reconnect(struct network *s) 
+void state_reconnect(struct network *s)
 {
 	GList *l = s->channels;
 
@@ -491,6 +587,8 @@ static struct irc_command {
 	{ "331", 1, handle_no_topic },
 	{ "353", 4, handle_namreply },
 	{ "366", 2, handle_end_names },
+	{ "352", 7, handle_whoreply },
+	{ "315", 1, handle_end_who },
 	{ "NICK", 1, handle_nick },
 	{ "MODE", 2, handle_mode },
 	{ NULL }
@@ -499,7 +597,7 @@ static struct irc_command {
 void state_handle_data(struct network *s, struct line *l)
 {
 	int i,j;
-	
+
 	if(!s || !l->args || !l->args[0])return;
 
 	for(i = 0; irc_commands[i].command; i++) {
@@ -520,7 +618,7 @@ GSList *gen_replication_channel(struct channel *c, char *hostmask, char *nick)
 	GSList *ret = NULL;
 	char *channel_name = xmlGetProp(c->xmlConf, "name");
 	char *key = xmlGetProp(c->xmlConf, "key");
-	struct nick *n;
+	struct channel_nick *n;
 	GList *nl;
 	ret = g_slist_append(ret, irc_parse_linef(":%s JOIN %s\r\n", nick, channel_name));
 
@@ -534,9 +632,9 @@ GSList *gen_replication_channel(struct channel *c, char *hostmask, char *nick)
 
 	nl = c->nicks;
 	while(nl) {
-		n = (struct nick *)nl->data;
-		if(n->mode && n->mode != ' ') { ret = g_slist_append(ret, irc_parse_linef(":%s 353 %s %c %s :%c%s\r\n", hostmask, nick, c->mode, channel_name, n->mode, n->name)); }
-		else { ret = g_slist_append(ret, irc_parse_linef(":%s 353 %s %c %s :%s\r\n", hostmask, nick, c->mode, channel_name, n->name)); }
+		n = (struct channel_nick *)nl->data;
+		if(n->mode && n->mode != ' ') { ret = g_slist_append(ret, irc_parse_linef(":%s 353 %s %c %s :%c%s\r\n", hostmask, nick, c->mode, channel_name, n->mode, n->global->name)); }
+		else { ret = g_slist_append(ret, irc_parse_linef(":%s 353 %s %c %s :%s\r\n", hostmask, nick, c->mode, channel_name, n->global->name)); }
 		nl = g_list_next(nl);
 	}
 	ret = g_slist_append(ret, irc_parse_linef(":%s 366 %s %s :End of /names list\r\n", hostmask, nick, channel_name));
@@ -564,9 +662,9 @@ GSList *gen_replication_network(struct network *s)
 			continue;
 		}
 		xmlFree(channel_name);
-		
+
 		ret = g_slist_concat(ret, gen_replication_channel(c, server_name, nick));
-		
+
 		cl = g_list_next(cl);
 	}
 
@@ -575,7 +673,7 @@ GSList *gen_replication_network(struct network *s)
 
 	xmlFree(server_name);
 	xmlFree(nick);
-	
+
 	return ret;
 }
 
@@ -583,7 +681,7 @@ struct linestack_context *linestack_new_by_network(struct network *n)
 {
 	char *linestack, *linestack_location;
 	struct linestack_context *ret;
-	
+
 	linestack = xmlGetProp(n->xmlConf, "linestack");
 	linestack_location = xmlGetProp(n->xmlConf, "linestack_location");
 
@@ -591,6 +689,6 @@ struct linestack_context *linestack_new_by_network(struct network *n)
 
 	xmlFree(linestack);
 	xmlFree(linestack_location);
-	
+
 	return ret;
 }

@@ -1,4 +1,4 @@
-/* 
+/*
 	ctrlproxy: A modular IRC proxy
 	(c) 2002 Jelmer Vernooij <jelmer@nl.linux.org>
 
@@ -71,14 +71,21 @@ struct line {
 };
 
 /* for the options fields */
-#define LINE_IS_PRIVATE      1 
-#define LINE_DONT_SEND       2 
+#define LINE_IS_PRIVATE      1
+#define LINE_DONT_SEND       2
 #define LINE_STOP_PROCESSING 4
 #define LINE_NO_LOGGING      8
 
-struct nick {
-	char *name;
+struct channel_nick {
 	char mode;
+	struct channel *channel;
+	struct network_nick *global;
+};
+
+struct network_nick {
+	uint refcount;
+	char *name;
+	char *hostmask;
 };
 
 struct channel {
@@ -101,12 +108,13 @@ struct client {
 	char did_nick_change;
 };
 
-struct network { 
+struct network {
 	xmlNodePtr xmlConf;
 	char mymodes[255];
 	xmlNodePtr servers;
 	char *hostmask;
 	GList *channels;
+	GList *nicks;
 	char authenticated;
 	GList *clients;
 	xmlNodePtr current_server;
@@ -120,7 +128,7 @@ struct network {
 
 struct plugin {
 	char *name;
-	GModule *module;		
+	GModule *module;
 	xmlNodePtr xmlConf;
 	void *data;
 };
@@ -130,7 +138,7 @@ typedef gboolean (*plugin_fini_function) (struct plugin *);
 
 /* state.c */
 struct channel *find_channel(struct network *st, char *name);
-struct nick *find_nick(struct channel *c, char *name);
+struct channel_nick *find_nick(struct channel *c, char *name);
 struct linestack_context *linestack_new_by_network(struct network *);
 GSList *gen_replication_network(struct network *s);
 GSList *gen_replication_channel(struct channel *c, char *hostmask, char *nick);

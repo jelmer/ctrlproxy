@@ -173,6 +173,11 @@ typedef struct {
 	void *ptr;
 } PyCtrlproxyObject;
 
+typedef struct {
+	PyObject_HEAD
+	struct transport_ops *ops;
+} PyCtrlproxyTransport;
+
 static void PyCtrlproxyObject_dealloc(PyCtrlproxyObject *self)
 {
 	//printf("DEALLOC ptr %p\n",self->ptr);
@@ -185,6 +190,7 @@ static PyObject *createClientObject(void *c);
 static PyObject *createNetworkObject(void *c);
 static PyObject *createLineObject(void *c);
 static PyObject *createNickObject(void *c);
+static PyObject *createChannelObject(void *c);
 
 
 // wrapper object for stdout, stderr -> g_log
@@ -323,20 +329,25 @@ static PyTypeObject PyCtrlproxyLogType = {
 // NICK
 
 static PyObject * PyCtrlproxyNick_get(PyCtrlproxyObject *self, char *closure) {
-	struct nick *n = NULL;
-	PyObject *rv = NULL;
+	struct channel_nick *n = NULL;
 
-	//printf("Nick access at %p\n",self->ptr);
-
-	PYCTRLPROXY_MAKESTRUCT(n, nick)
+	PYCTRLPROXY_MAKESTRUCT(n, channel_nick)
 
 	if(!strcmp(closure,"name")) {
-		rv = PyString_FromString(n->name);
+		return PyString_FromString(n->global->name);
 	} else if(!strcmp(closure,"mode")) {
-		rv = PyString_FromString(&n->mode);
+		return PyString_FromString(&n->mode);
+	} else if(!strcmp(closure,"hostmask")) {
+		if(n->global->hostmask != NULL) {
+			return PyString_FromString(n->global->hostmask);
+		} else {
+			Py_INCREF(Py_None);
+			return Py_None;
+		}
+	} else if(!strcmp(closure,"channel")) {
+		return (PyObject *)createChannelObject(n->channel);
 	}
 
-	return rv;
 }
 
 static int PyCtrlproxyNick_set(PyCtrlproxyObject *self, PyObject *var, void *closure) {
@@ -353,6 +364,10 @@ static PyMethodDef PyCtrlproxyNick_methods[] = {
 static PyGetSetDef PyCtrlproxyNick_GetSetDef[] = {
     {"name",(getter)PyCtrlproxyNick_get,(setter)PyCtrlproxyNick_get,
 	"name of the nick","name"},
+    {"channel",(getter)PyCtrlproxyNick_get,(setter)PyCtrlproxyNick_get,
+	"channel the nick is on","channel"},
+    {"hostmask",(getter)PyCtrlproxyNick_get,(setter)PyCtrlproxyNick_get,
+	"hostmask of the user","hostmask"},
     {"mode",(getter)PyCtrlproxyNick_get,(setter)PyCtrlproxyNick_get,
 	"mode","mode"},
 	{NULL}
@@ -417,6 +432,8 @@ static PyObject * PyCtrlproxyChannel_get(PyCtrlproxyObject *self, char *closure)
 
 	if(!strcmp(closure,"xmlConf")) {
 		rv = PYCTRLPROXY_NODETOPYOB(c->xmlConf)
+	} else if(!strcmp(closure,"name")) {
+		rv = PyString_FromString(xmlGetProp(c->xmlConf,"name"));
 	} else if(!strcmp(closure,"mode")) {
 		rv = PyString_FromString(&c->mode);
 	} else if(!strcmp(closure,"modes")) {
@@ -431,8 +448,8 @@ static PyObject * PyCtrlproxyChannel_get(PyCtrlproxyObject *self, char *closure)
 		GList *gl = c->nicks;
 		rv = PyDict_New();
 		while(gl) {
-			struct nick *n = (struct nick *)gl->data;
-			PyDict_SetItemString(rv,n->name,(PyObject *)createNickObject(&gl->data));
+			struct channel_nick *n = (struct channel_nick *)gl->data;
+			PyDict_SetItemString(rv,n->global->name,(PyObject *)createNickObject(gl->data));
 			gl = gl->next;
 		}
 	} else if(!strcmp(closure,"network")) {
@@ -456,6 +473,8 @@ static PyMethodDef PyCtrlproxyChannel_methods[] = {
 static PyGetSetDef PyCtrlproxyChannel_GetSetDef[] = {
 	{"xmlConf",(getter)PyCtrlproxyChannel_get,(setter)PyCtrlproxyChannel_set,
 	"XML Node of the network","xmlConf"},
+    {"name",(getter)PyCtrlproxyChannel_get,(setter)PyCtrlproxyChannel_set,
+	"Channel name","name"},
     {"topic",(getter)PyCtrlproxyChannel_get,(setter)PyCtrlproxyChannel_set,
 	"Current Topic","topic"},
     {"mode",(getter)PyCtrlproxyChannel_get,(setter)PyCtrlproxyChannel_set,
@@ -470,6 +489,8 @@ static PyGetSetDef PyCtrlproxyChannel_GetSetDef[] = {
 	"Channel Limit","limit"},
     {"nicks",(getter)PyCtrlproxyChannel_get,(setter)PyCtrlproxyChannel_set,
 	"List of Nicks","nicks"},
+    {"network",(getter)PyCtrlproxyChannel_get,(setter)PyCtrlproxyChannel_set,
+	"Network","network"},
 	{NULL}
 };
 
@@ -545,7 +566,7 @@ static PyObject * PyCtrlproxyNetwork_get(PyCtrlproxyObject *self, char *closure)
 		rv = PyDict_New();
 		while(gl) {
 			struct channel *c = (struct channel *)gl->data;
-			PyDict_SetItemString(rv,xmlGetProp(c->xmlConf, "name"),(PyObject *)createChannelObject(&gl->data));
+			PyDict_SetItemString(rv,xmlGetProp(c->xmlConf, "name"),(PyObject *)createChannelObject(gl->data));
 			gl = gl->next;
 		}
 	} else if(!strcmp(closure,"authenticated")) {
@@ -556,7 +577,7 @@ static PyObject * PyCtrlproxyNetwork_get(PyCtrlproxyObject *self, char *closure)
 		while(gl) {
 			struct client *c = (struct client *)gl->data;
 			//PyList_Append(createChannel(
-			PyList_Append(rv,(PyObject *)createClientObject(&gl->data));
+			PyList_Append(rv,(PyObject *)createClientObject(gl->data));
 			gl = gl->next;
 		}
 	} else if(!strcmp(closure,"current_server")) {
@@ -958,7 +979,12 @@ static PyObject * PyCtrlproxyLine_get(PyCtrlproxyObject *self, void *closure) {
 			rv = (PyObject *)createClientObject(l->client);
 		}
 	} else if(!strcmp(closure,"origin")) {
-		rv = PyString_FromString(l->origin);
+		if (l->origin != NULL)
+			rv = PyString_FromString(l->origin);
+		else {
+			Py_INCREF(Py_None);
+			rv = Py_None;
+		}
 	} else if(!strcmp(closure,"args")) {
 		rv = PyList_New(0);
 		for(i = 0; i < l->argc; i++) {
@@ -1084,7 +1110,7 @@ static int PyCtrlproxyEvent_init(PyCtrlproxyLog *self, PyObject *args, PyObject 
 		i = 0; \
 		for(; l->args[i] != NULL; i++) \
 			PyList_Append(nv,PyString_FromString(l->args[i])); \
-		PyList_Append(cur,nv);
+		PyList_Append(cur,nv); \
 
 #define PYCTRLPROXY_CALLEVENT(NAME) \
 		printf("CALL %s\n",NAME); \
@@ -1210,6 +1236,9 @@ static void PyCtrlproxyEvent_catch(PyCtrlproxyEvent *self, struct line *l){
 				PYCTRLPROXY_ADDLINECACHE();
 			case RPL_ENDOFLINKS:
 				PYCTRLPROXY_CALLEVENT("onList")
+				break;
+			case RPL_CHANNELMODEIS:
+				PYCTRLPROXY_CALLEVENT("onChannelMode")
 				break;
 			// error handling
 			case ERR_NOSUCHNICK:
@@ -1366,6 +1395,27 @@ static PyTypeObject PyCtrlproxyEventType = {
     0,                             /* tp_alloc */
     PyType_GenericNew,             /* tp_new */
 };
+
+// TRANSPORT OBJECT
+
+static void PyCtrlproxyTransport_dealloc(PyCtrlproxyTransport *self)
+{
+	//free((int *)self->log_level);
+	//free(self->buffer);
+    self->ob_type->tp_free((PyObject *)self);
+};
+
+static int PyCtrlproxyTransport_init(PyCtrlproxyTransport *self, PyObject *args, PyObject *kwds) {
+	static char *kwlist[] = {"loglevel", NULL};
+	int *log_level = NULL;
+
+    if (! PyArg_ParseTupleAndKeywords(args, kwds, "|i:__init__", kwlist,
+                                      &log_level))
+		return -1;
+
+	return 0;
+};
+
 
 
 
@@ -1807,6 +1857,23 @@ static PyObject * PyCtrlproxy_getconfig(PyObject *self, PyObject *args, PyObject
 	return rv;
 }
 
+static PyObject * PyCtrlproxy_getpath(PyObject *self, PyObject *args, PyObject *kwds){
+	static char *kwlist[] = {"type",NULL};
+	char *part = NULL;
+	PyObject *rv = NULL;
+
+    if (! PyArg_ParseTupleAndKeywords(args, kwds, "|s:get_path", kwlist,
+                                      &part))
+		return NULL;
+	if(!strcasecmp("config", part)) {
+		return PyString_FromString(ctrlproxy_path(""));
+	}
+
+	Py_INCREF(Py_None);
+	return Py_None;
+}
+
+
 static PyMethodDef CtrlproxyMethods[] = {
 	// hooks
     {"add_rcv_hook",  (PyCFunction)PyCtrlproxy_add_rcv_data_hook, METH_VARARGS | METH_KEYWORDS,
@@ -1851,6 +1918,8 @@ static PyMethodDef CtrlproxyMethods[] = {
 	// config
     {"get_config",  (PyCFunction)PyCtrlproxy_getconfig, METH_VARARGS | METH_KEYWORDS,
 	"Return xmlnode of config"},
+    {"get_path",  (PyCFunction)PyCtrlproxy_getpath, METH_VARARGS | METH_KEYWORDS,
+	"Get specific path"},
     {"save_config",  (PyCFunction)PyCtrlproxy_save_configuration, METH_VARARGS | METH_KEYWORDS,
 	"Save the configuration"},
 	// misc
