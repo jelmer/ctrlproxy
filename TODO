@@ -2,7 +2,7 @@
  - update documentation
   - finish UPGRADING
   - repl changes
-  - synopsis integration?
+  - see FIXME's
  - test dcc module
  - finish webconfig (worked on by poelzi)
  - fix bug in linestack_file

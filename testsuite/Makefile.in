@@ -62,8 +62,8 @@ LINESTACK_MODULES = linestack_file linestack_memory
 
 test-linestack_%: ../mods/liblinestack_%.so test-linestack
 	@echo -n Test 4-$(patsubst test-linestack_%,%:,%@)
-	@./test-linestack `pwd`/$< < test1.data > $@.tmp
-	@cmp $@.tmp test1.data
+	@./test-linestack `pwd`/$< < test4.data > $@.tmp
+	@cmp $@.tmp test4.data
 	@echo OK
 
 test4: test-linestack $(patsubst %,test-%,$(LINESTACK_MODULES))

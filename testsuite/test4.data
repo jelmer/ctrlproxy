@@ -1,0 +1,12 @@
+PRIVMSG :foo
+: PRIVMSG blah
+:  foo
+PRIVMSG #blah :moo
+bar blah foo
+CLEAR
+PRIVMSG
+PRIVMSG #foo meuh
+NOTICE
+NOTICE foo
+JOIN
+PART
