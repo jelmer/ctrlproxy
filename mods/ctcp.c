@@ -26,7 +26,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#ifdef HAVE_SYS_UTSNAME_H
+#ifndef _WIN32
 #include <sys/utsname.h>
 #endif
 #include "gettext.h"
@@ -66,7 +66,7 @@ static gboolean mhandle_data(struct line *l)
 	if(t){ *t = '\0';t++; }
 
 	if(!g_ascii_strcasecmp(data, "VERSION")) {
-#ifdef HAVE_SYS_UTSNAME_H
+#ifndef _WIN32
 		struct utsname u;
 		uname(&u);
 		asprintf(&msg, "\001VERSION ctrlproxy:%s:%s %s\001", ctrlproxy_version(), u.sysname, u.release);
