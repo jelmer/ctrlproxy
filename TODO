@@ -10,7 +10,6 @@
  - support running from inetd
  - fix issue with non-blocking connect
 - dcc module
-- linestack_file: test
 - repl_command: test
 - socket: finish gnutls support
 
