@@ -53,8 +53,9 @@ gboolean load_config(struct plugin *p, xmlNodePtr node)
 			if (!fd) {
 				g_warning("Unable to open python script %s: %s", filename, strerror(errno));
 			} else {
-				PyRun_AnyFile(fd, filename);
+				PyRun_SimpleFile(fd, filename);
 			}
+			fclose(fd);
 		}
 	}
 

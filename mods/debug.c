@@ -23,13 +23,13 @@
 #include "gettext.h"
 #define _(s) gettext(s)
 
-static void do_crash(char **args, struct line *l)
+static void do_crash(char **args, struct line *l, void *userdata)
 {
 	char *foo = NULL;
 	*foo='a';
 }
 
-static void dump_joined_channels(char **args, struct line *l)
+static void dump_joined_channels(char **args, struct line *l, void *userdata)
 {
 	struct network *n = l->network;
 	GList *gl;
@@ -63,7 +63,7 @@ gboolean init_plugin(struct plugin *p) {
 		g_warning(_("admin module required for repl_command module. Please load it first"));
 		return FALSE;
 	}
-	register_admin_command("DUMPJOINEDCHANNELS", dump_joined_channels, "[network]", NULL);
-	register_admin_command("CRASH", do_crash, "", NULL);
+	register_admin_command("DUMPJOINEDCHANNELS", dump_joined_channels, "[network]", NULL, NULL);
+	register_admin_command("CRASH", do_crash, "", NULL, NULL);
 	return TRUE;
 }

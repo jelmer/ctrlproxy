@@ -66,7 +66,7 @@ static void replicate_channel(gpointer key, gpointer val, gpointer user)
 	linestack_clear(co);
 }
 
-static void repl_command(char **args, struct line *l)
+static void repl_command(char **args, struct line *l, void *userdata)
 {
 	struct linestack_context *co;
 	char *desc;
@@ -106,7 +106,7 @@ gboolean init_plugin(struct plugin *p) {
 		return FALSE;
 	}
 	add_filter_ex("repl_command", log_data, NULL, "replicate", 1000);
-	register_admin_command("BACKLOG", repl_command, _("[channel]"), _("Send backlogs for this network or a channel, if specified"));
+	register_admin_command("BACKLOG", repl_command, _("[channel]"), _("Send backlogs for this network or a channel, if specified"), NULL);
 	command_backlog = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
 	return TRUE;
 }

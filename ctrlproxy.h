@@ -326,11 +326,6 @@ typedef void (*server_disconnected_hook) (struct network *, void *userdata);
 G_MODULE_EXPORT void add_server_disconnected_hook(char *name, server_disconnected_hook h, void *userdata);
 G_MODULE_EXPORT void del_server_disconnected_hook(char *name);
 
-#ifdef _WIN32
-G_MODULE_EXPORT int asprintf(char **dest, const char *fmt, ...);
-G_MODULE_EXPORT int vasprintf(char **dest, const char *fmt, va_list ap);
-#endif
-
 #if defined(_WIN32) && !defined(CTRLPROXY_CORE_BUILD)
 G_MODULE_EXPORT gboolean fini_plugin(struct plugin *p);
 G_MODULE_EXPORT gboolean init_plugin(struct plugin *p);

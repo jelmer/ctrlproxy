@@ -42,11 +42,6 @@
 #include "admin.h"
 #include "gettext.h"
 #define _(s) gettext(s)
-#ifdef _WIN32
-int asprintf(char **dest, const char *fmt, ...);
-int vasprintf(char **dest, const char *fmt, va_list ap);
-#endif
-
 
 static gboolean without_privmsg = FALSE;
 static GList *commands = NULL;
@@ -54,9 +49,10 @@ static guint longest_command = 0;
 
 struct admin_command {
 	char *name;
-	void (*handler) (char **args, struct line *l);
+	admin_command_handler handler;
 	const char *help;
 	const char *help_details;
+	void *userdata;
 	struct plugin *plugin;
 };
 
@@ -87,7 +83,7 @@ static struct network *find_network_struct(char *name)
 	return NULL;
 }
 
-static void add_network (char **args, struct line *l)
+static void add_network (char **args, struct line *l, void *userdata)
 {
 	if(!args[1]) {
 		admin_out(l, _("No name specified"));
@@ -97,7 +93,7 @@ static void add_network (char **args, struct line *l)
 	/* FIXME */
 }
 
-static void del_network (char **args, struct line *l)
+static void del_network (char **args, struct line *l, void *userdata)
 {
 	if(!args[1]) {
 		admin_out(l, _("Not enough parameters"));
@@ -112,7 +108,7 @@ static void del_network (char **args, struct line *l)
 	/* FIXME */
 }
 
-static void add_server (char **args, struct line *l)
+static void add_server (char **args, struct line *l, void *userdata)
 {
 	if(!args[1] || !args[2]) {
 		admin_out(l, _("Not enough parameters"));
@@ -122,7 +118,7 @@ static void add_server (char **args, struct line *l)
 	/* FIXME */
 }
 
-static void com_connect_network (char **args, struct line *l)
+static void com_connect_network (char **args, struct line *l, void *userdata)
 {
 	struct network *s;
 	if(!args[1]) {
@@ -144,7 +140,7 @@ static void com_connect_network (char **args, struct line *l)
 	}
 }
 
-static void disconnect_network (char **args, struct line *l)
+static void disconnect_network (char **args, struct line *l, void *userdata)
 {
 	struct network *n;
 	if(!args[1])n = l->network;
@@ -159,7 +155,7 @@ static void disconnect_network (char **args, struct line *l)
 	close_network(n);
 }
 
-static void com_next_server (char **args, struct line *l) {
+static void com_next_server (char **args, struct line *l, void *userdata) {
 	struct network *n;
 	const char *name;
 	if(args[1] != NULL) {
@@ -179,7 +175,7 @@ static void com_next_server (char **args, struct line *l) {
 	}
 }
 
-static void list_modules (char **args, struct line *l)
+static void list_modules (char **args, struct line *l, void *userdata)
 {
 	GList *g = get_plugin_list();
 	while(g) {
@@ -189,7 +185,7 @@ static void list_modules (char **args, struct line *l)
 	}
 }
 
-static void unload_module (char **args, struct line *l)
+static void unload_module (char **args, struct line *l, void *userdata)
 {
 	GList *g = get_plugin_list();
 
@@ -216,7 +212,7 @@ static void unload_module (char **args, struct line *l)
 	admin_out(l, _("No such plugin loaded"));
 }
 
-static void load_module (char **args, struct line *l)
+static void load_module (char **args, struct line *l, void *userdata)
 { 
 	if(!args[1]) { 
 		admin_out(l, _("No file specified"));
@@ -232,16 +228,16 @@ static void load_module (char **args, struct line *l)
 }
 
 
-static void reload_module (char **args, struct line *l)
+static void reload_module (char **args, struct line *l, void *userdata)
 {
-	unload_module(args, l);
-	load_module(args, l);
+	unload_module(args, l, NULL);
+	load_module(args, l, NULL);
 }
 
-static void save_config (char **args, struct line *l)
+static void save_config (char **args, struct line *l, void *userdata)
 { save_configuration(); }
 
-static void help (char **args, struct line *l)
+static void help (char **args, struct line *l, void *userdata)
 {
 	GList *gl = commands;
 	char *tmp;
@@ -283,7 +279,7 @@ static void help (char **args, struct line *l)
 	}
 }
 
-static void list_networks(char **args, struct line *l)
+static void list_networks(char **args, struct line *l, void *userdata)
 {
 	GList *gl = get_network_list();
 	while(gl) {
@@ -297,18 +293,18 @@ static void list_networks(char **args, struct line *l)
 	}
 }
 
-static void detach_client(char **args, struct line *l)
+static void detach_client(char **args, struct line *l, void *userdata)
 {
 	disconnect_client(l->client);
 	l->client = NULL;
 }
 
-static void handle_die(char **args, struct line *l)
+static void handle_die(char **args, struct line *l, void *userdata)
 {
 	exit(0);
 }
 
-void register_admin_command(char *name, void (*handler) (char **args, struct line *l), const char *help, const char *help_details)
+void register_admin_command(char *name, admin_command_handler handler, const char *help, const char *help_details, void *userdata)
 {
 	struct admin_command *cmd = g_new(struct admin_command,1);
 	cmd->name = g_strdup(name);
@@ -318,6 +314,7 @@ void register_admin_command(char *name, void (*handler) (char **args, struct lin
 	cmd->help = help;
 	cmd->help_details = help_details;
 	cmd->plugin = peek_plugin();
+	cmd->userdata = userdata;
 	commands = g_list_append(commands, cmd);
 }
 
@@ -375,7 +372,7 @@ static gboolean handle_data(struct line *l, void *userdata) {
 		struct admin_command *cmd = (struct admin_command *)gl->data;
 		if(!g_strcasecmp(cmd->name, args[0])) {
 			push_plugin(cmd->plugin);
-			cmd->handler(args, l);
+			cmd->handler(args, l, cmd->userdata);
 			pop_plugin();
 			g_strfreev(args);
 			g_free(tmp);
@@ -439,7 +436,7 @@ gboolean init_plugin(struct plugin *p) {
 	add_filter("admin", handle_data, NULL);
 
 	for(i = 0; builtin_commands[i].name; i++) {
-		register_admin_command(builtin_commands[i].name, builtin_commands[i].handler, builtin_commands[i].help, builtin_commands[i].help_details);
+		register_admin_command(builtin_commands[i].name, builtin_commands[i].handler, builtin_commands[i].help, builtin_commands[i].help_details, NULL);
 	}
 
 	return TRUE;

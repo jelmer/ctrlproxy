@@ -10,7 +10,7 @@ LDFLAGS +=
 all: build libpython2.so
 
 lib%.so: %.c
-	$(CC) $(LDFLAGS) $(PYLDFLAGS) -shared -o $@ $<
+	$(CC) $(CFLAGS) $(PYCFLAGS) $(LDFLAGS) $(PYLDFLAGS) -shared -o $@ $<
 
 %.o: %.c
 	$(CC) $(CFLAGS) $(PYCFLAGS) -Dinit_plugin=$*_init -Dfini_plugin=$*_fini -Dname_plugin=$*_name -Dload_config=$*_load_config -Dsave_config=$*_save_config -c $<
