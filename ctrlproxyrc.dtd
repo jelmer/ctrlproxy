@@ -21,6 +21,7 @@
 <!ELEMENT channel EMPTY>
 <!ATTLIST channel name CDATA #REQUIRED>
 <!ATTLIST channel autojoin CDATA "0">
+<!ATTLIST channel key CDATA #IMPLIED>
 
 <!ELEMENT servers (ipv4*,ipv6*,pipe*)>
 
