@@ -10,7 +10,8 @@ modulesdir = @libdir@/ctrlproxy
 includedir = @includedir@
 man1dir = @mandir@/man1
 man5dir = @mandir@/man5
-CFLAGS = @CFLAGS@ @PKG_CFLAGS@ -DHAVE_CONFIG_H -DLOCALEDIR=\"$(localedir)\" -DSHAREDIR=\"@datadir@/ctrlproxy\"
+cdatadir = @datadir@/ctrlproxy
+CFLAGS = @CFLAGS@ @PKG_CFLAGS@ -DHAVE_CONFIG_H -DLOCALEDIR=\"$(localedir)\" -DSHAREDIR=\"$(cdatadir)\"
 
 CFLAGS+=-ansi -Wall -DMODULESDIR=\"$(modulesdir)\"
 OBJS = server.o line.o main.o state.o util.o transport.o hooks.o linestack.o plugins.o
@@ -36,7 +37,7 @@ install-dirs:
 	$(INSTALL) -d $(DESTDIR)$(includedir)
 	$(INSTALL) -d $(DESTDIR)$(modulesdir)
 	$(INSTALL) -d $(DESTDIR)$(docdir)
-	$(INSTALL) -d $(DESTDIR)$(datadir)/ctrlproxy
+	$(INSTALL) -d $(DESTDIR)$(cdatadir)
 	$(INSTALL) -d $(DESTDIR)@libdir@/pkgconfig
 	$(MAKE) -C doc install 
 	$(MAKE) -C po install
@@ -52,8 +53,8 @@ install-doc:
 	$(INSTALL) TODO $(DESTDIR)$(docdir)
 
 install-data:
-	$(INSTALL) motd $(DESTDIR)$(datadir)/ctrlproxy
-	$(INSTALL) ctrlproxyrc.default $(DESTDIR)$(datadir)/ctrlproxy
+	$(INSTALL) motd $(DESTDIR)$(cdatadir)
+	$(INSTALL) ctrlproxyrc.default $(DESTDIR)$(cdatadir)
 
 install-mods:
 	$(MAKE) -C mods install
