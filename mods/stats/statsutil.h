@@ -59,4 +59,7 @@ STAT_VALUE channel_get_property(struct channel *channel, char *name);
 GList *get_nicks_sorted_by_property(struct channel *c, char *property);
 struct nick *get_highest_nick_for_property(struct channel *c, char *property);
 
+GList *get_networks();
+GList *get_channels(struct network *n);
+
 #endif /* __CTRLPROXY_STATSUTIL_H__ */

@@ -159,7 +159,8 @@ void stats_parse_file(const char *f)
 
 	tdb_context = tdb_open(f, 0, 0, O_RDONLY, 00700);
 
-	tdb_traverse(tdb_context, traverse_keys, NULL);
+	if(tdb_context)
+		tdb_traverse(tdb_context, traverse_keys, NULL);
 	return;
 }
 
@@ -224,4 +225,25 @@ struct network *get_network(char *name)
 struct channel *get_channel(struct network *n, char *name)
 {
 	return (struct channel *)g_hash_table_lookup(n->channels, name);
+}
+
+static void hash_add_to_glist(gpointer key, gpointer value, gpointer list)
+{
+	GList **ret = (GList **)list;
+
+	*ret = g_list_append(*ret, value);
+}
+
+GList *get_networks()
+{
+	GList *ret = NULL;
+	g_hash_table_foreach(networks, hash_add_to_glist, &ret);
+	return ret;
+}
+
+GList *get_channels(struct network *n)
+{
+	GList *ret = NULL;
+	g_hash_table_foreach(n->channels, hash_add_to_glist, &ret);
+	return ret;
 }

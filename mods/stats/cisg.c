@@ -282,30 +282,71 @@ void print_plain_chan(FILE *out, struct channel *c)
 
 void print_plain_networklist(FILE *out) 
 {
-	/* FIXME */	
+	GList *l = get_networks();
+	while(l) {
+		struct network *n = (struct network *)l->data;
+		fprintf(out, "%s\n", n->name);
+		l = l->next;
+	}
 }
 
-void print_html_networklist(FILE *out)
+char *urlencode(char *a)
 {
+	char *ret;
+	if(a[0] == '#') {
+		asprintf(&ret, "%%23%s", a+1);
+	} else { 
+		ret = strdup(a);
+	}
+	return ret;
+}
+
+void print_html_networklist(FILE *out, char *linkformat)
+{
+	GList *l = get_networks();
 	print_html_header(out, "Networks");
-	/* FIXME */
+	fprintf(out, "<ul>");
+	while(l) {
+		struct network *n = (struct network *)l->data;
+		if(linkformat) fprintf(out, "<li><a href=\"%s%s\">%s</a>", linkformat, n->name, n->name);
+		else fprintf(out, "<li>%s", n->name);
+		l = l->next;
+	}
+	fprintf(out, "</ul>");
 	print_html_footer(out);
 }
 
-void print_html_channellist(FILE *out, struct network *n) 
+void print_html_channellist(FILE *out, struct network *n, char *linkformat) 
 {
+	GList *l = get_channels(n);
 	char *title;
 	asprintf(&title, "Channels on %s", n->name);
 	print_html_header(out, title);
 	free(title);
+	fprintf(out, "<ul>");
 
-	/* FIXME */
+	while(l) { 
+		struct channel *c = (struct channel *)l->data;
+		if(linkformat) {
+			char *encchan = urlencode(c->name);
+			fprintf(out, "<li><a href=\"%s%s/%s\">%s</a>", linkformat, n->name, encchan, c->name);
+			free(encchan);
+		} else fprintf(out, "<li>%s", c->name);
+		l = l->next;
+	}
+
+	fprintf(out, "</ul>");
 	print_html_footer(out);
 }
 
 void print_plain_channellist(FILE *out, struct network *network)
 {
-	/* FIXME */
+	GList *l = get_channels(network);
+	while(l) {
+		struct channel *c = (struct channel *)l->data;
+		fprintf(out, "%s\n", c->name);
+		l = l->next;
+	}
 }
 
 int main(int argc, const char **argv)
@@ -314,13 +355,16 @@ int main(int argc, const char **argv)
 	char *network = NULL, *channel = NULL;
 	struct network *networkstruct;
 	struct channel *channelstruct;
-	int html = 0, all = 0;
+	char *linkformat = NULL;
+	int html = 0, all = 0, tofile = 0;
 	FILE *out = stdout;
 	int arg;
 	struct poptOption options[] = {
 		POPT_AUTOHELP
-		{"all", 'a', POPT_ARG_NONE, &all, 0, "Write a HTML file for each channel/network" },
+		{"all", 'a', POPT_ARG_NONE, &all, 0, "Process all channels/networks" },
+		{"tofile", 'f', POPT_ARG_NONE, &tofile, 0, "Write output to arg.html"},
 		{"html", 'h', POPT_ARG_NONE, &html, 0, "HTML output" },
+		{"linkprepend", 'l', POPT_ARG_STRING, &linkformat, 0, "String to put before each link in HTML files" },
 		POPT_TABLEEND
 	};
 	poptContext pc;
@@ -346,12 +390,19 @@ int main(int argc, const char **argv)
 	stats_parse_file(statsfile);
 
 	if(!poptPeekArg(pc)) { 
-		if(html) print_html_networklist(out);
+		if(html) print_html_networklist(out, linkformat);
 		else print_plain_networklist(out);
 		return 0;
 	}
 
 	while(fullchan = poptGetArg(pc)) {
+		if(tofile) {
+			char *fname;
+			fclose(out);
+			asprintf(&fname, "%s.html", fullchan);
+			out = fopen(fname, "w+");
+			free(fname);
+		}
 		network = strdup(fullchan);
 
 		channel = strchr(network, '/');
@@ -361,9 +412,9 @@ int main(int argc, const char **argv)
 				fprintf(stderr, "No such network '%s'\n", network);
 				continue;
 			}
-			if(html) print_html_channellist(out, networkstruct);
+			if(html) print_html_channellist(out, networkstruct, linkformat);
 			else print_plain_channellist(out, networkstruct);
-			return 0;
+			continue;
 		}
 
 		*channel = '\0'; channel++;
