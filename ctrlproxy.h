@@ -50,6 +50,7 @@ struct transport_ops {
 	int (*write) (struct transport_context *context, char *l);
 	int (*close) (struct transport_context *context);
 	int reference_count;
+	struct plugin *plugin;
 };
 
 struct transport_context {
@@ -172,6 +173,7 @@ extern GList *networks;
 void clients_send(struct network *, struct line *, struct transport_context *exception);
 void network_add_listen(struct network *, xmlNodePtr);
 void disconnect_client(struct client *c);
+void server_send_login (struct transport_context *c, void *_server);
 
 /* line.c */
 struct line *linedup(struct line *l);
@@ -197,6 +199,7 @@ gboolean plugin_loaded(char *name);
 extern struct plugin *current_plugin;
 
 /* transport.c */
+extern GList *transports;
 void register_transport(struct transport_ops *);
 gboolean unregister_transport(char *name);
 struct transport_context *transport_connect(const char *name, xmlNodePtr p, receive_handler, connected_handler, disconnect_handler, void *data);

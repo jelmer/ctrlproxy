@@ -23,7 +23,7 @@
 #include "config.h"
 #endif
 
-static GList *transports = NULL;
+GList *transports = NULL;
 extern FILE *debugfd;
 
 void register_transport(struct transport_ops *functions)
@@ -31,6 +31,7 @@ void register_transport(struct transport_ops *functions)
 	struct transport_ops *functions1 = malloc(sizeof(struct transport_ops));
 	memcpy(functions1, functions, sizeof(struct transport_ops));
 	functions1->reference_count = 0;
+	functions1->plugin = current_plugin;
 	transports = g_list_append(transports, functions1);
 }
 
