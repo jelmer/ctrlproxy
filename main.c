@@ -323,7 +323,7 @@ int main(int argc, const char *argv[])
 
 	g_timeout_add(1000 * 300, ping_loop, NULL);
 	initialized_hook_execute();
-	if(networks) g_main_loop_run(main_loop);
+	g_main_loop_run(main_loop);
 	clean_exit();
 
 	return 0;
