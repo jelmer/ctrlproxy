@@ -140,8 +140,14 @@ gboolean stop_listener(struct listener *l)
 {
 	g_message("Stopping listener at port %d", l->port);
 	g_source_remove(l->incoming_id);
-	listeners = g_list_remove(listeners, l);
 	return TRUE;
+}
+
+void free_listener(struct listener *l)
+{
+	g_free(l->password);
+	listeners = g_list_remove(listeners, l);
+	g_free(l);
 }
 
 struct listener *new_listener(guint16 port)
@@ -192,6 +198,7 @@ gboolean fini_plugin(struct plugin *p)
 	while(listeners) {
 		struct listener *l = listeners->data;
 		stop_listener(l);
+		free_listener(l);
 	}
 
 	return TRUE; 
