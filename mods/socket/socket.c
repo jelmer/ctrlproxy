@@ -1,4 +1,4 @@
-/* 
+/*
 	ctrlproxy: A modular IRC proxy
 	ip: support for connecting and listening on ipv4 and ipv6
 	(c) 2002-2003 Jelmer Vernooij <jelmer@nl.linux.org>
@@ -116,7 +116,7 @@ static void socket_to_iochannel(int sock, struct transport_context *c, enum ssl_
 	c->data = s;
 }
 
-static int connect_pipe(struct transport_context *c) 
+static int connect_pipe(struct transport_context *c)
 {
 	char *args[100];
 	int i;
@@ -128,9 +128,9 @@ static int connect_pipe(struct transport_context *c)
 
 
 	while(cur) {
-		if(xmlIsBlankNode(cur) || !strcmp(cur->name, "comment")) { 
-			cur = cur->next; 
-			continue; 
+		if(xmlIsBlankNode(cur) || !strcmp(cur->name, "comment")) {
+			cur = cur->next;
+			continue;
 		}
 
 		if(!strcmp(cur->name, "path")) args[0] = xmlNodeGetContent(cur);
@@ -253,11 +253,16 @@ static int connect_ip(struct transport_context *c)
 	char ipv6 = 0;
 	int family = AF_INET;
 	int domain = PF_INET;
+	char *bind_addr;
+	struct hostent *bind_host = NULL;
+	struct in_addr bind_host_ip4;
+	struct in6_addr bind_host_ip6;
 
-	if(!strcmp(c->functions->name, "ipv6")){ 
-		ipv6 = 1; 
-		domain = PF_INET6; 
-		family = AF_INET6; 
+
+	if(!strcmp(c->functions->name, "ipv6")){
+		ipv6 = 1;
+		domain = PF_INET6;
+		family = AF_INET6;
 	}
 	memset(&name6, 0, sizeof(name6));
 	memset(&name4, 0, sizeof(name4));
@@ -266,7 +271,7 @@ static int connect_ip(struct transport_context *c)
 	if(aPort)xmlFree(aPort);
 
 	g_assert(hostname);
-	
+
 	asprintf(&tempname, "%s:%d", hostname, port);
 
 	xmlSetProp(c->configuration, "name", tempname);
@@ -290,7 +295,18 @@ static int connect_ip(struct transport_context *c)
 		name4.sin_port = htons (port);
 	}
 
+	bind_addr = xmlGetProp(c->configuration, "bind");
+	if(bind_addr) {
+	 bind_host = gethostbyname2(bind_addr, family);
+	 if(bind_host && ipv6) {
+		memcpy((char *)&bind_host_ip6, bind_host->h_addr, bind_host->h_length);
+	 } else if(bind_host)
+  	 	bind_host_ip4 = (*((struct in_addr*) bind_host->h_addr_list[0]));
+	}
+	xmlFree(bind_addr);
+
 	hostinfo = gethostbyname2 (hostname, family);
+
 	if (hostinfo == NULL)
 	{
 		g_warning("Unknown host %s.", hostname);
@@ -298,12 +314,16 @@ static int connect_ip(struct transport_context *c)
 		free(tempname);
 		return -1;
 	}
-	
+
 	if(ipv6) {
 		memcpy((char *)&name6.sin6_addr, hostinfo->h_addr, hostinfo->h_length);
+		if(bind_host)
+			bind(sock, (struct sockaddr *)&bind_host_ip6, sizeof(name6));
 		ret = connect(sock, (struct sockaddr *)&name6, sizeof(name6));
 	} else {
 		name4.sin_addr = *(struct in_addr *) hostinfo->h_addr;
+		if(bind_host)
+			name4.sin_addr.s_addr = bind_host_ip4.s_addr;
 		ret = connect(sock, (struct sockaddr *)&name4, sizeof(name4));
 	}
 
@@ -358,9 +378,9 @@ static int write_socket(struct transport_context *t, char *l)
 		g_warning("Channel is not writeable!");
 		return -1;
 	}
-	
+
 	if(g_io_channel_write_chars(s->channel, l, -1, NULL, &error) == G_IO_STATUS_ERROR)
-	{ 
+	{
 		g_message("Can't send: %s", (error?error->message:"g_io_channel_write_chars failed"));
 		if(error)g_error_free(error);
 		return -1;
@@ -398,7 +418,7 @@ static int listen_ip(struct transport_context *c)
 		domain = PF_INET6;
 		family = AF_INET6;
 	}
-	
+
 	if(xmlHasProp(c->configuration, "port")) {
 		char *aport = xmlGetProp(c->configuration, "port");
 		port = atoi(aport);
@@ -430,7 +450,7 @@ static int listen_ip(struct transport_context *c)
 			name6.sin6_addr = in6addr_any;
 		}
 		ret = bind (sock, (struct sockaddr *) &name6, sizeof (name6));
-	} else { 
+	} else {
 		memset(&name4, 0, sizeof(name4));
 		name4.sin_family = AF_INET;
 		name4.sin_port = htons (port);
@@ -441,7 +461,7 @@ static int listen_ip(struct transport_context *c)
 		}
 		ret = bind (sock, (struct sockaddr *) &name4, sizeof (name4));
 	}
-	
+
 	if(ret < 0)
 	{
 		g_log(G_LOG_DOMAIN, G_LOG_LEVEL_WARNING, "bind: %s", strerror(errno));
