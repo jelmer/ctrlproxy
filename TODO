@@ -11,6 +11,7 @@
 - dcc module
 - repl_command: test
 - socket: finish gnutls support
+- rewrite stats stuff to use MySQL
 
 2.8:
  - <network><listen/></network> -> <listen/>
