@@ -64,10 +64,10 @@ install-pkgconfig:
 clean:
 	rm -f *.o ctrlproxy printstats *~
 	$(MAKE) -C mods clean
-@DOCE@	$(MAKE) -C doc clean
+@DOCBUILDE@	$(MAKE) -C doc clean
 
 distclean: clean
 	rm -f Makefile build config.h ctrlproxy.pc ctrlproxy.spec *.log
 	rm -rf autom4te.cache/ config.log
 	$(MAKE) -C mods distclean
-@DOCE@	$(MAKE) -C doc distclean
+	$(MAKE) -C doc distclean

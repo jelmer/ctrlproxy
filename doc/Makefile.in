@@ -103,7 +103,7 @@ endif
 	$(EPSTOPDF) $<
 
 clean: 
-	rm -f *.html *.pdf $(DOCS) $(MODS) overview{2,}.{eps,png,pdf}
+@DOCBUILDE@	rm -f *.html *.pdf $(DOCS) $(MODS) overview{2,}.{eps,png,pdf}
 
 distclean: clean
 	rm -f Makefile
