@@ -7,6 +7,7 @@ CFLAGS = @PY_CFLAGS@ -Wall -fno-strict-aliasing -fPIC -I../.. -I.. @CFLAGS@ @PKG
 LIBS = @PY_LIBS@
 PYLIBDIR = \"@libdir@/ctrlproxy/python\"
 DPREFIX = \"${prefix}\"
+DSHAREDIR = \"@datadir@\"
 
 .PHONY: all clean distclean install
 
@@ -15,17 +16,17 @@ all: libpython.so
 install:
 	$(INSTALL) -d $(DESTDIR)$(moddir)/python
 	$(INSTALL) libpython.so $(DESTDIR)$(moddir)
-	$(INSTALL) ctrlproxy_tools.py $(DSHAREDIR)$(moddir)/python/ctrlproxy_tools.py
-	$(INSTALL) __init__.py $(DSHAREDIR)$(moddir)/python/__init__.py
+	$(INSTALL) ctrlproxy_tools.py $(DESTDIR)$(moddir)/python/ctrlproxy_tools.py
+	$(INSTALL) __init__.py $(DESTDIR)$(moddir)/python/__init__.py
 
 %.o: %.c
-	$(CC) $(CFLAGS) -DPYLIBDIR=$(PYLIBDIR) -DPREFIX=$(DPREFIX) -fPIC -c $<
+	$(CC) $(CFLAGS) -DPYLIBDIR=$(PYLIBDIR) -DPREFIX=$(DPREFIX) -DSHAREDIR=$(DSHAREDIR) -fPIC -c $<
 
 libpython.so: python.o types.o
 	$(CC) $(CFLAGS) -shared -o $@ $(LIBS) types.o python.o
 
 clean:
-	rm -f $(MODS) *.o *.so
+	rm -f libpython.so *.o
 
 distclean: clean
 	rm -f Makefile

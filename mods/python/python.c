@@ -67,6 +67,9 @@ static int py_redirect_stderr = 0;
 #define PYCTRLPROXY_NODETOPYOB(node) \
 PyInstance_New(xml_node,Py_BuildValue("(O)",libxml_xmlNodePtrWrap((xmlNodePtr) node)),NULL)
 
+#define PYCTRLPROXY_OBTONODE(ob) \
+(xmlNodePtr)PyCObject_AsVoidPtr(PyObject_GetAttrString(ob,"_o"))
+
 #define PYCTRLPROXY_PYADDCALLBACK(function,callarray) \
  static PyObject * function(PyObject *self, PyObject *args, PyObject *keywds) { \
     PyObject *result = NULL; \
@@ -573,11 +576,13 @@ static PyObject * PyCtrlproxyNetwork_get(PyCtrlproxyObject *self, char *closure)
 	} else if(!strcmp(closure,"name")) {
 		rv = PyString_FromString(xmlGetProp(n->xmlConf,"name"));
 	} else if(!strcmp(closure,"mymodes")) {
-		rv = PyString_FromString(n->mymodes);
+		if (n->mymodes != NULL)
+			rv = PyString_FromString(n->mymodes);
 	} else if(!strcmp(closure,"servers")) {
 		rv = PYCTRLPROXY_NODETOPYOB(n->servers);
 	} else if(!strcmp(closure,"hostmask")) {
-		rv = PyString_FromString(n->hostmask);
+		if (n->hostmask != NULL)
+			rv = PyString_FromString(n->hostmask);
 	} else if(!strcmp(closure,"channels")) {
 		GList *gl = n->channels;
 		rv = PyDict_New();
@@ -587,7 +592,8 @@ static PyObject * PyCtrlproxyNetwork_get(PyCtrlproxyObject *self, char *closure)
 			gl = gl->next;
 		}
 	} else if(!strcmp(closure,"authenticated")) {
-		rv = PyString_FromString(&n->authenticated);
+		if (&n->authenticated != NULL)
+			rv = PyString_FromString(&n->authenticated);
 	} else if(!strcmp(closure,"clients")) {
 		GList *gl = n->clients;
 		rv = PyList_New(0);
@@ -642,20 +648,14 @@ static int PyCtrlproxyNetwork_set(PyCtrlproxyObject *self, PyObject *var, void *
 		PyObject_Print(var, stdout, 0);
 		xpt = (xmlNodePtr) PyxmlNode_Get(var);
 		printf("NAME: %s\n",xpt->name);
-		/*
-		Fixme: Doesn't work :(
-
 		if (var && !PyObject_IsInstance(var, xml_node)) {
 			PyErr_SetString(PyExc_TypeError, "Attribut is not a xmlNode");
 			return -1;
 		}
-		n->current_server = PyxmlNode_Get(var);
-		printf("NAME: %s\n",n->current_server->name);
+		n->current_server = PYCTRLPROXY_OBTONODE(var);
   		return 0;
-		*/
-		printf("STOP\n");
 	} else {
-		PyErr_SetString(PyExc_TypeError, "Networks object is readonly"); \
+		PyErr_SetString(PyExc_TypeError, "Value is readonly"); \
 		return -1;
 	}
 	return -1;
@@ -899,8 +899,8 @@ static PyObject * PyCtrlproxyClient_get(PyCtrlproxyObject *self, void *closure) 
 		//rv = PyString_FromString(l->authenticated);
 	} else if(!strcmp(closure,"connect_time")) {
 		rv = PyInt_FromLong((long)c->connect_time);
-	} else if(!strcmp(closure,"client_nick")) {
-		rv = PyString_FromString(c->nick);
+	} else if(!strcmp(closure,"did_nick_change")) {
+		rv = PyString_FromString(&c->did_nick_change);
 	} else if(!strcmp(closure,"nick")) {
 		rv = PyString_FromString(xmlGetProp(c->network->xmlConf, "nick"));
 	}
@@ -1196,6 +1196,24 @@ static int PyCtrlproxyPlugin_set(PyCtrlproxyObject *self, PyObject *var, void *c
     return -1;
 }
 
+static PyObject * PyCtrlproxyPlugin_unload(PyCtrlproxyObject *self, PyObject *args, PyObject *kwds){
+	struct plugin *p = NULL;
+
+	PYCTRLPROXY_MAKESTRUCT(p, plugin)
+
+	/* Find specified plugins' GModule and xmlNodePtr */
+	if(unload_plugin(p)) {
+		plugins = g_list_remove(plugins, p);
+		self->ptr = NULL;
+	    Py_INCREF(Py_None);
+		return Py_None;
+	}
+
+	PyErr_Format(PyExc_TypeError, "Can't unload module");
+	return NULL;
+}
+
+
 static PyGetSetDef PyCtrlproxyPlugin_GetSetDef[] = {
 	{"name",(getter)PyCtrlproxyPlugin_get,(setter)PyCtrlproxyPlugin_set,
 	"Name of Plugin","name"},
@@ -1204,6 +1222,13 @@ static PyGetSetDef PyCtrlproxyPlugin_GetSetDef[] = {
 	{"xmlConf",(getter)PyCtrlproxyPlugin_get,(setter)PyCtrlproxyPlugin_set,
 	"xmlConf","xmlConf"},
 	{NULL}
+};
+
+
+
+static PyMethodDef PyCtrlproxyPlugin_methods[] = {
+    {"unload", (PyCFunction)PyCtrlproxyPlugin_unload,METH_NOARGS, "Unload the plugin"},
+	{NULL}                      /* Sentinel */
 };
 
 static PyTypeObject PyCtrlproxyPluginType = {
@@ -1235,9 +1260,9 @@ static PyTypeObject PyCtrlproxyPluginType = {
     0,                          /* tp_weaklistoffset */
     0,                          /* tp_iter */
     0,                          /* tp_iternext */
-    0,     /* tp_methods */
-    0,     /* tp_members */
-    PyCtrlproxyPlugin_GetSetDef,                          /* tp_getset */
+    PyCtrlproxyPlugin_methods,  /* tp_methods */
+    0,     						/* tp_members */
+    PyCtrlproxyPlugin_GetSetDef, /* tp_getset */
     0,                          /* tp_base */
     0,                          /* tp_dict */
     0,                          /* tp_descr_get */
@@ -2030,6 +2055,7 @@ static PyObject * py_del_admin_command(PyObject *self, PyObject *args, PyObject 
 static PyObject * PyCtrlproxy_loadmodule(PyObject *self, PyObject *args, PyObject *kwds){
 	static char *kwlist[] = {"module",NULL};
 	PyObject *cur;
+	PyObject *tmp;
 
     if (! PyArg_ParseTupleAndKeywords(args, kwds, "O:load_module", kwlist,
                                       &cur))
@@ -2040,38 +2066,28 @@ static PyObject * PyCtrlproxy_loadmodule(PyObject *self, PyObject *args, PyObjec
 		return NULL;
 	}
 
-	if (!load_plugin(PyxmlNode_Get(cur))) {
+	tmp = PyObject_CallMethod(cur, "prop", "s","file");
+	if (!PyString_Check(tmp)) {
+		Py_DECREF(tmp);
+		PyErr_SetString(PyExc_TypeError, "No filename specified");
+		return NULL;
+	}
+
+	if (plugin_loaded(PyString_AsString(tmp))) {
+		Py_DECREF(tmp);
+		PyErr_SetString(PyExc_TypeError, "Already loaded");
+		return NULL;
+	}
+
+	Py_DECREF(tmp);
+
+	if (!load_plugin(PYCTRLPROXY_OBTONODE(cur))) {
 		PyErr_SetString(PyExc_TypeError, "Can't load module");
 		return NULL;
 	}
 
 	Py_INCREF(Py_None);
 	return Py_None;
-}
-
-
-static PyObject * PyCtrlproxy_unloadmodule(PyObject *self, PyObject *args, PyObject *kwds){
-	static char *kwlist[] = {"module",NULL};
-	GList *g = plugins;
-	char *module = NULL;
-
-    if (! PyArg_ParseTupleAndKeywords(args, kwds, "s:unload_module", kwlist,
-                                      &module))
-		return NULL;
-	/* Find specified plugins' GModule and xmlNodePtr */
-	while(g) {
-		struct plugin *p = (struct plugin *)g->data;
-		if(!strcmp(p->name, module)) {
-			if(unload_plugin(p))
-				plugins = g_list_remove(plugins, p);
-        	Py_INCREF(Py_None);
-			return Py_None;
-		}
-		g = g->next;
-	}
-	PyErr_Format(PyExc_TypeError, "module %s not loaded",module);
-	free(module);
-	return NULL;
 }
 
 static PyObject * PyCtrlproxy_listmodules(PyObject *self, PyObject *args, PyObject *kwds){
@@ -2181,6 +2197,8 @@ static PyObject * PyCtrlproxy_getpath(PyObject *self, PyObject *args, PyObject *
 		return PyString_FromString(ctrlproxy_path(""));
 	} else if(!strcasecmp("prefix", part)) {
 		return PyString_FromString(PREFIX);
+	} else if(!strcasecmp("share", part)) {
+		return PyString_FromString(SHAREDIR);
 	}
 
 	Py_INCREF(Py_None);
@@ -2230,8 +2248,6 @@ static PyMethodDef CtrlproxyMethods[] = {
 	 // module support
 	{"load_module",  (PyCFunction)PyCtrlproxy_loadmodule, METH_VARARGS | METH_KEYWORDS,
      "Load a module"},
-    {"unload_module",  (PyCFunction)PyCtrlproxy_unloadmodule, METH_VARARGS | METH_KEYWORDS,
-     "Unload a module"},
     {"list_modules",  (PyCFunction)PyCtrlproxy_listmodules, METH_VARARGS,
 	"List all loaded modules"},
     {"list_transports",  (PyCFunction)PyCtrlproxy_list_transports, METH_VARARGS,
@@ -2278,6 +2294,10 @@ gboolean in_load(char *c,PyObject *args, struct line *l) {
 	if (PyType_Ready(&PyCtrlproxyScriptType) < 0)
         return FALSE;
 
+	if(!g_file_test(c,G_FILE_TEST_EXISTS) && g_file_test(g_build_filename(SHAREDIR, "ctrlproxy", c),G_FILE_TEST_EXISTS)) {
+		// set file to datadir path
+		c = g_build_filename(SHAREDIR, "ctrlproxy", c);
+	}
 	fp = fopen(c,"r");
 	if(fp == NULL)
 		return FALSE;
@@ -2370,7 +2390,7 @@ gboolean in_load(char *c,PyObject *args, struct line *l) {
 	// extend module path and add tools object
 	PyList_Append(PyObject_GetAttrString(sys,"path"),PyString_FromString(pylibdir));
 	// add the script basedir to path
-	PyList_Append(PyObject_GetAttrString(sys,"path"),PyString_FromString(g_path_get_dirname(c)));
+	PyList_Append(PyObject_GetAttrString(sys,"path"),PyString_FromString(canonicalize_file_name(g_path_get_dirname(c))));
 
 	PyImport_ImportModule("ctrlproxy_tools");
 	PyModule_AddObject(m, "tools", PyImport_AddModule("ctrlproxy_tools"));
@@ -2587,15 +2607,14 @@ gboolean init_plugin(struct plugin *p) {
 	//add_motd_hook("python_motd", in_motd_hook);
 	cur = python_xmlConf->xmlChildrenNode;
 	while(cur) {
-		char *name;
 		char *value;
-		if(!xmlIsBlankNode(cur) && !strcmp(cur->name, "option")) {
-			name = xmlGetProp(cur, "name");
+		if(!xmlIsBlankNode(cur)) {
 			value = xmlNodeGetContent(cur);
-			if (!strcasecmp(name, "redirect-stdout"))
+			if(!strcmp(cur->name, "redirect-stdout"))
 				py_redirect_stdout = atoi(value);
-			if (!strcasecmp(name, "redirect-stderr"))
+			if(!strcmp(cur->name, "redirect-stderr"))
 				py_redirect_stderr = atoi(value);
+			xmlFree(value);
 		}
 		cur = cur->next;
 	}
@@ -2648,7 +2667,9 @@ gboolean fini_plugin(struct plugin *p) {
 	del_filter(in_rcv_data);
 	del_new_client_hook("python_new_client");
 	del_lose_client_hook("python_lose_client");
-	del_lose_client_hook("python_motd");
+	del_motd_hook("python_motd");
+	del_server_connected_hook("python_server_connected");
+	del_server_disconnected_hook("python_server_disconnected");
 
 	Py_Finalize();
 	//g_hash_table_destroy(highlight_backlog); highlight_backlog = NULL;

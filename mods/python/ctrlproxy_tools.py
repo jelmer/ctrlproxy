@@ -139,7 +139,7 @@ import libxml2
 
 def get_xml_module_names(typ = None):
 	"""Returns a list of modules for which a Moduleinfo is available"""
-	path = os.path.join(ctrlproxy.get_path("prefix"),"share","ctrlproxy","help")
+	path = os.path.join(ctrlproxy.get_path("share"),"ctrlproxy","help")
 	dl = os.listdir(path)
 	rv = []
 	for i in dl:
@@ -161,6 +161,9 @@ class Moduleinfo:
 	"""Returns informations of a module"""
 	def __init__(self, name):
 		self.name = name
-		self.path = os.path.join(ctrlproxy.get_path("prefix"),"share","ctrlproxy","help","%s.mod.xml" %name)
-		self.doc = libxml2.parseFile(self.path)
-		
+		self.path = os.path.join(ctrlproxy.get_path("share"),"ctrlproxy","help","%s.mod.xml" %name)
+		try:
+			self.doc = libxml2.parseFile(self.path)
+		except:
+			raise ValueError, "Can't parse infos for %s in %s" %(name, os.path.join(ctrlproxy.get_path("share"),"ctrlproxy","help"))
+
