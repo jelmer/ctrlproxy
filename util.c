@@ -80,8 +80,3 @@ char *ctrlproxy_path(char *part)
 	free(p);
 	return p1;
 }
-
-int irccmp(const char *a, const char *b)
-{
-	return strcasecmp(a, b);
-}

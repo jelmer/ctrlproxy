@@ -109,6 +109,8 @@ struct client {
 	char did_nick_change;
 };
 
+enum casemapping { CASEMAP_UNKNOWN = 0, CASEMAP_RFC1459 = 1, CASEMAP_ASCII = 2 };
+
 struct network {
 	xmlNodePtr xmlConf;
 	char mymodes[255];
@@ -125,6 +127,8 @@ struct network {
 	struct transport_context *outgoing;
 	struct transport_context **incoming;
 	guint reconnect_id;
+	enum casemapping casemapping;
+	gboolean name_guessed;
 };
 
 struct plugin {
@@ -147,6 +151,7 @@ int is_channelname(char *name, struct network *s);
 int is_prefix(char p, struct network *n);
 char get_prefix_by_mode(char p, struct network *n);
 const char *get_network_feature(struct network *n, char *name);
+int irccmp(struct network *n, const char *a, const char *b);
 
 /* server.c */
 struct network *connect_network(xmlNodePtr);
@@ -226,7 +231,6 @@ extern GList *plugins;
 extern xmlDocPtr configuration;
 int verify_client(struct network *s, struct client *c);
 char *ctrlproxy_path(char *part);
-int irccmp(const char *a, const char *b);
 
 /* hooks.c */
 /* Returns TRUE if filter should be continued, FALSE if it should be stopped. */

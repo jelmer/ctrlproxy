@@ -152,6 +152,7 @@ gboolean login_server(struct network *s) {
 
 	if(!xmlHasProp(s->xmlConf, "name") && xmlHasProp(s->current_server, "name")) {
 		xmlFree(server_name);
+		s->name_guessed = TRUE;
 		server_name = xmlGetProp(s->current_server, "name");
 		xmlSetProp(s->xmlConf, "name", server_name);
 	}

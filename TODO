@@ -7,9 +7,13 @@
 - non-blocking connect
 - add member 'nick' to struct line
 - add more help data
-- Use: NETWORK name sent by server
 - use irccmp everywhere
-- make irccmp use charset as set by CASEMAPPING
+- support RFC1459-style strcasecmp()
+- Net::IRC-like interface
+- automatically unload crashing modules?
+ - keep track of module related to filter, command, etc?
+- internationalization (i18n)
+- linestack_mysql
 
 report_time:
  - test report_time
@@ -23,16 +27,10 @@ repl_command:
  
 admin:
 - CONNECT command could try to connect immediately to a network if it is currently waiting for reconnect delay to end for example....
+- more commands: DELNETWORK, NEXTSERVER, DELLISTEN, DELSERVER
+
+nickserv:
+- be able to specify format of NICKSERV commands
 
 socket:
 - add gnutls support
-
-Ideas: (ideas for stuff you might want to work on, and is currently not 
-		planned to be implemented)
-- Net::IRC-like interface
-- more admin commands: DELNETWORK, NEXTSERVER, DELLISTEN, DELSERVER
-- automatically unload crashing modules?
-- internationalization (i18n)
-- linestack_mysql
-- be able to specify format of NICKSERV commands
-

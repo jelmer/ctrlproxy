@@ -1,5 +1,7 @@
 Ctrlproxy 2.7:
- * Add autosave (Daniel Poelzleithner <ctrlproxy@poelzi.org>)
+ * Respect CASEMAPPING sent by server
+ * Use NETWORK sent by server
+ * Add autosave module (Daniel Poelzleithner <ctrlproxy@poelzi.org>)
  * Use PREFIX sent by server
  * Add get_prefix_by_mode()
  * Use CHANTYPES sent by server

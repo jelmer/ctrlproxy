@@ -443,21 +443,21 @@ void unregister_admin_command(char *name)
 }
 
 static struct admin_command builtin_commands[] = {
-	{ "ADDNETWORK", add_network, "<name>",NULL },
-	{ "ADDSERVER", add_server, NULL, NULL },
-	{ "ADDLISTEN", add_listen, NULL, NULL },
-	{ "CONNECT", com_connect_network, NULL, NULL },
-	{ "DIE", handle_die, NULL, NULL },
-	{ "DISCONNECT", disconnect_network, NULL, NULL },
-	{ "LISTNETWORKS", list_networks, NULL, NULL },
-	{ "LOADMODULE", load_module, NULL, NULL },
-	{ "UNLOADMODULE", unload_module, NULL, NULL },
-	{ "RELOADMODULE", reload_module, NULL, NULL },
-	{ "LISTMODULES", list_modules, NULL, NULL },
-	{ "DUMPCONFIG", dump_config, NULL, NULL },
-	{ "SAVECONFIG", save_config, NULL, NULL },
-	{ "DETACH", detach_client, NULL, NULL },
-	{ "HELP", help, NULL, NULL },
+	{ "ADDNETWORK", add_network, "<name>", NULL },
+	{ "ADDSERVER", add_server, "<network> <type> [property1=value1] ...", NULL },
+	{ "ADDLISTEN", add_listen, "<network> <type> [property1=value1] ...", NULL },
+	{ "CONNECT", com_connect_network, "<network>", NULL },
+	{ "DIE", handle_die, "", NULL },
+	{ "DISCONNECT", disconnect_network, "<network>", NULL },
+	{ "LISTNETWORKS", list_networks, "", NULL },
+	{ "LOADMODULE", load_module, "<name>", NULL },
+	{ "UNLOADMODULE", unload_module, "<name>", NULL },
+	{ "RELOADMODULE", reload_module, "<name>", NULL },
+	{ "LISTMODULES", list_modules, "", NULL },
+	{ "DUMPCONFIG", dump_config, "", NULL },
+	{ "SAVECONFIG", save_config, "<name", NULL },
+	{ "DETACH", detach_client, "", NULL },
+	{ "HELP", help, "[command]", NULL },
 	{ NULL }
 };
 

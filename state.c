@@ -556,6 +556,26 @@ static void handle_005(struct network *s, struct line *l)
 
 	for(i = 3; i < l->argc-1; i++) {
 		s->features[j] = strdup(l->args[i]);
+		if(!strncasecmp(s->features[j], "CASEMAPPING", strlen("CASEMAPPING"))) {
+			if(strlen(s->features[j]) < strlen("CASEMAPPING=")) {
+				g_warning("CASEMAPPING variable sent by server invalid");
+			} else {
+				if(!strcasecmp(s->features[j]+strlen("CASEMAPPING="), "rfc1459")) {
+					s->casemapping = CASEMAP_RFC1459;
+				} else if(!strcasecmp(s->features[j]+strlen("CASEMAPPING="), "ascii")) {
+					s->casemapping = CASEMAP_ASCII;
+				} else {
+					s->casemapping = CASEMAP_UNKNOWN;
+					g_warning("Unknown casemapping '%s'", s->features[j]+strlen("CASEMAPPING="));
+				}
+			}
+		} else if(!strncasecmp(s->features[j], "NETWORK", strlen("NETWORK"))) {
+			if(strlen(s->features[j]) < strlen("NETWORK=")) {
+			   g_warning("NETWORK variable sent by server invalid");
+			} else if(s->name_guessed) {
+				xmlSetProp(s->xmlConf, "name", s->features[j]+strlen("NETWORK="));
+			}
+		}
 		j++;
 	}
 
@@ -738,4 +758,19 @@ const char *get_network_feature(struct network *n, char *name)
 		}
 	}
 	return NULL;
+}
+
+int irccmp(struct network *n, const char *a, const char *b)
+{
+	switch(n->casemapping) {
+	case CASEMAP_UNKNOWN:
+	case CASEMAP_ASCII:
+		return strcasecmp(a,b);
+
+	case CASEMAP_RFC1459:
+		/* FIXME */
+		return strcasecmp(a,b);
+		break;
+	}
+	return 0;
 }
