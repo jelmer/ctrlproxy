@@ -1,4 +1,4 @@
-/* 
+/*
 	ctrlproxy: A modular IRC proxy
 	(c) 2002-2003 Jelmer Vernooij <jelmer@nl.linux.org>
 
@@ -110,7 +110,7 @@ void signal_quit(int sig)
 	g_log(G_LOG_DOMAIN, G_LOG_LEVEL_MESSAGE, "Received signal %d, quitting...", sig);
 	if(state == 1) { 
 		signal(SIGINT, SIG_IGN); 
-		exit(0); 
+		exit(0);
 	}
 
 	state = 1;
@@ -159,7 +159,7 @@ gboolean load_plugin(xmlNodePtr cur)
 	struct plugin *p;
 	char *modulesdir;
 	gchar *path_name;
-	plugin_init_function f = NULL; 
+	plugin_init_function f = NULL;
 
 	mod_name = xmlGetProp(cur, "file");
 	if(!mod_name) {
@@ -167,8 +167,13 @@ gboolean load_plugin(xmlNodePtr cur)
 		return FALSE;
 	}
 
+	if(plugin_loaded(mod_name)) {
+		g_warning("Plugin already loaded");
+		return FALSE;
+	}
+
 	/* Determine correct modules directory */
-	if(getenv("MODULESDIR"))modulesdir = getenv("MODULESDIR"); 
+	if(getenv("MODULESDIR"))modulesdir = getenv("MODULESDIR");
 	else modulesdir = MODULESDIR;
 
 	if(mod_name[0] == '/')path_name = g_strdup(mod_name);
@@ -177,7 +182,7 @@ gboolean load_plugin(xmlNodePtr cur)
 
 	m = g_module_open(path_name, 0);
 	if(!m) {
-		g_warning("Unable to open module %s(%s), ignoring", path_name, g_module_error()); 
+		g_warning("Unable to open module %s(%s), ignoring", path_name, g_module_error());
 		xmlFree(mod_name);
 		g_free(path_name);
 		return FALSE;

@@ -304,8 +304,8 @@ static void load_module (char **args, struct line *l)
 		return;
 	}
 
-    if(!strcmp(args[1], "admin")) {
-		admin_out(l, "Can't load this module /again/");
+    if(plugin_loaded(args[1])) {
+		admin_out(l, "Module already loaded");
 		return;
 	}
 
