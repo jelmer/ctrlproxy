@@ -242,7 +242,7 @@ gboolean init_plugin(struct plugin *p)
 	}
 	
 	/* Create logfile directory if it doesn't exist yet */
-	mkdir(logfile, 0600);
+	mkdir(logfile, 0700);
 
 	files = g_hash_table_new(g_str_hash, g_str_equal);
 	add_filter_ex("log_irssi", log_data, "log", 1000);
