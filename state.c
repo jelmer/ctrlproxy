@@ -407,10 +407,10 @@ static void handle_namreply(struct network *s, struct line *l) {
 	tmp = names = strdup(l->args[4]);
 	while((t = strchr(tmp, ' '))) {
 		*t = '\0';
-		find_add_nick(c, tmp);
+		if(tmp[0])find_add_nick(c, tmp);
 		tmp = t+1;
 	}
-	find_add_nick(c, tmp);
+	if(tmp[0])find_add_nick(c, tmp);
 	free(names);
 }
 
