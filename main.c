@@ -88,6 +88,9 @@ static void clean_exit()
 {
 	extern gint ping_loop_id;
 	GList *gl;
+
+	kill_pending_clients();
+
 	while((gl = get_network_list())) {
 		struct network *n = (struct network *)gl->data;
 		close_network(n);

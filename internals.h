@@ -48,6 +48,7 @@
 /* server.c */
 int loop(struct network *server); /* Checks server socket for input and calls loop() on all of it's modules */
 gboolean init_networks();
+void kill_pending_clients(void);
 
 /* state.c */
 void state_handle_data(struct network *s, struct line *l);

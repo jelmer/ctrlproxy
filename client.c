@@ -35,6 +35,10 @@
 #include "internals.h"
 #include "irc.h"
 
+/* Linked list of clients currently connected (and authenticated, but still need to 
+ * send USER and NICK commands) */
+static GList *pending_clients = NULL;
+
 static char *network_generate_feature_string(struct network *n)
 {
 	GList *fs = NULL, *gl;
@@ -85,22 +89,6 @@ static gboolean process_from_client(struct line *l)
 	if(!g_strcasecmp(l->args[0], "QUIT")) {
 		disconnect_client(l->client);
 		return FALSE;
-	} else if(!g_strcasecmp(l->args[0], "NICK") && l->args[1] && !l->client->nick) {
-		/* Don't allow the client to change the nick now. We would change it after initialization */
-		if (strcmp(l->args[1], l->client->network->nick)) 
-			irc_sendf(l->client->incoming, ":%s NICK %s", l->args[1], l->client->network->nick);
-
-		l->client->nick = g_strdup(l->args[1]); /* Save nick */
-	} else if(!g_strcasecmp(l->args[0], "USER")) {
-		if (l->argc > 1) {
-			g_free(l->client->username);
-			l->client->username = g_strdup(l->args[1]);
-		}
-
-		if (l->argc > 4) {
-			g_free(l->client->fullname);
-			l->client->fullname = g_strdup(l->args[4]);
-		}
 	} else	if(!g_strcasecmp(l->args[0], "PING")) {
 		irc_sendf(l->client->incoming, ":%s PONG :%s\r\n", l->client->network->name, l->args[1]);
 	} else if(network_is_connected(l->client->network)) {
@@ -148,7 +136,12 @@ void disconnect_client(struct client *c) {
 	g_source_remove(c->incoming_id);
 	c->incoming = NULL;
 
-	c->network->clients = g_list_remove(c->network->clients, c);
+	if (c->network) {
+		c->network->clients = g_list_remove(c->network->clients, c);
+	} 
+
+	pending_clients = g_list_remove(pending_clients, c);
+
 	lose_client_hook_execute(c);
 
 	g_message(("Removed client to %s"), c->network->name);
@@ -212,32 +205,26 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition cond, void *_c
 	return TRUE;
 }
 
-struct client *new_client(struct network *n, GIOChannel *c)
+static gboolean welcome_client(struct client *client)
 {
-	struct client *client = g_new0(struct client, 1);
 	char *features;
-
-	g_io_channel_set_flags(c, G_IO_FLAG_NONBLOCK, NULL);
-	client->connect_time = time(NULL);
-	client->incoming = c;
-	client->network = n;
-
-	irc_sendf(c, ":%s 001 %s :Welcome to the ctrlproxy\r\n", client->network->name, client->network->nick);
-	irc_sendf(c, ":%s 002 %s :Host %s is running ctrlproxy\r\n", client->network->name, client->network->nick, get_my_hostname());
-	irc_sendf(c, ":%s 003 %s :Ctrlproxy (c) 2002-2004 Jelmer Vernooij <jelmer@vernstok.nl>\r\n", client->network->name, client->network->nick);
-	irc_sendf(c, ":%s 004 %s %s %s %s %s\r\n", 
-			  client->network->name, client->network->nick, client->network->name, ctrlproxy_version(), client->network->supported_modes[0]?client->network->supported_modes[0]:ALLMODES, client->network->supported_modes[1]?client->network->supported_modes[1]:ALLMODES);
+	irc_sendf(client->incoming, ":%s 001 %s :Welcome to the ctrlproxy\r\n", client->network->name, client->network->nick);
+	irc_sendf(client->incoming, ":%s 002 %s :Host %s is running ctrlproxy\r\n", client->network->name, client->network->nick, get_my_hostname());
+	irc_sendf(client->incoming, ":%s 003 %s :Ctrlproxy (c) 2002-2005 Jelmer Vernooij <jelmer@vernstok.nl>\r\n", client->network->name, client->network->nick);
+	irc_sendf(client->incoming, ":%s 004 %s %s %s %s %s\r\n", 
+	  client->network->name, client->network->nick, client->network->name, ctrlproxy_version(), client->network->supported_modes[0]?client->network->supported_modes[0]:ALLMODES, client->network->supported_modes[1]?client->network->supported_modes[1]:ALLMODES);
 
 	features = network_generate_feature_string(client->network);
 
-	irc_sendf(c, ":%s 005 %s %s :are supported on this server\r\n", client->network->name, client->network->nick, features);
+	irc_sendf(client->incoming, ":%s 005 %s %s :are supported on this server\r\n", client->network->name, client->network->nick, features);
 
 	g_free(features);
 
-	send_motd(client->network, c);
+	send_motd(client->network, client->incoming);
 
 	if(!new_client_hook_execute(client)) {
 		disconnect_client(client);
+		return FALSE;
 	} else {
 		/* Initialization was successful. Now we can almost safely try to change to the nick, which
 		 * was requested by the client earlier */
@@ -246,9 +233,96 @@ struct client *new_client(struct network *n, GIOChannel *c)
 				network_send_args(client->network, "NICK", client->nick, NULL);
 	}
 
-	client->incoming_id = g_io_add_watch(client->incoming, G_IO_IN | G_IO_HUP, handle_client_receive, client);
+	return TRUE;
+}
 
-	n->clients = g_list_append(n->clients, client);
+static gboolean handle_pending_client_receive(GIOChannel *c, GIOCondition cond, void *_client)
+{
+	struct client *client = (struct client *)_client;
+	struct line *l;
 
+	if (cond & G_IO_HUP) {
+		disconnect_client(client);
+		return FALSE;
+	}
+
+	if (cond & G_IO_IN) {
+		l = irc_recv_line(c);
+		if(!l) return TRUE;
+
+		/* Silently drop empty messages */
+		if (l->argc == 0) {
+			free_line(l);
+			return TRUE;
+		}
+
+		if(!g_strcasecmp(l->args[0], "NICK") && l->args[1] && !client->nick) {
+			/* Don't allow the client to change the nick now. We would change it after initialization */
+			if (strcmp(l->args[1], client->network->nick)) 
+				irc_sendf(client->incoming, ":%s NICK %s", l->args[1], client->network->nick);
+
+			client->nick = g_strdup(l->args[1]); /* Save nick */
+
+		} else if(!g_strcasecmp(l->args[0], "USER")) {
+			if (l->argc > 1) {
+				g_free(client->username);
+				client->username = g_strdup(l->args[1]);
+			}
+
+			if (l->argc > 4) {
+				g_free(client->fullname);
+				client->fullname = g_strdup(l->args[4]);
+			}
+			free_line(l);
+
+			if (!client->network) {
+				irc_sendf(client->incoming, "ERROR :Please select a network first, or specify one in your ctrlproxyrc\r\n");
+				disconnect_client(client);
+				return FALSE;
+			}
+
+			welcome_client(client);
+
+			client->incoming_id = g_io_add_watch(client->incoming, G_IO_IN | G_IO_HUP, handle_client_receive, client);
+
+			client->network->clients = g_list_append(client->network->clients, client);
+
+			return FALSE;
+		} else if(!g_strcasecmp(l->args[0], "CONNECT")) {
+			client->network = find_network_by_hostname(l->args[1], atoi(l->args[2]), TRUE);
+
+            if (client->network && !network_is_connected(client->network) && !connect_network(client->network)) {
+				g_warning("Unable to connect to network %s", client->network->name);
+			}
+		} else {
+			irc_sendf(client->incoming, ":%s 451 * :Register first\r\n"	, client->network?client->network->name:get_my_hostname());
+		}
+
+		free_line(l);
+
+		return TRUE;
+	}
+
+	return TRUE;
+
+}
+
+struct client *new_client(struct network *n, GIOChannel *c)
+{
+	struct client *client = g_new0(struct client, 1);
+
+	g_io_channel_set_flags(c, G_IO_FLAG_NONBLOCK, NULL);
+	client->connect_time = time(NULL);
+	client->incoming = c;
+	client->network = n;
+
+	client->incoming_id = g_io_add_watch(client->incoming, G_IO_IN | G_IO_HUP, handle_pending_client_receive, client);
+
+	pending_clients = g_list_append(pending_clients, client);
 	return client;
+}
+
+void kill_pending_clients()
+{
+	while(pending_clients) disconnect_client(pending_clients->data);
 }

@@ -52,7 +52,7 @@
 		<plugin autoload="1" file="libantiflood"/>
 
 		<!-- Automatically set AWAY after a certain period of time -->
-		<plugin autoload="1" file="libauto-away">
+		<plugin autoload="1" file="libauto_away">
 			<message time="300">"I'm currently away, sorry!</message>
 		</plugin>
 

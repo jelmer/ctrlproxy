@@ -2,6 +2,7 @@
  	Jelmer Vernooij <jelmer@vernstok.nl>
 
 Ctrlproxy 2.7:
+ * Support CONNECT proxy command as used by irssi
  * admin module can now also work as a seperate ('virtual') network
  * get rid of complicated filter class system
  * nickserv is now "self-learning"

@@ -214,6 +214,7 @@ G_MODULE_EXPORT struct network_nick *line_get_network_nick(struct line *l);
 
 /* server.c */
 G_MODULE_EXPORT gboolean network_is_connected(struct network *);
+G_MODULE_EXPORT struct network *find_network_by_hostname(const char *host, guint16 port, gboolean create);
 G_MODULE_EXPORT struct network *new_network(void);
 G_MODULE_EXPORT gboolean connect_network(struct network *);
 G_MODULE_EXPORT gboolean connect_current_tcp_server (struct network *);

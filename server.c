@@ -744,3 +744,72 @@ struct network *find_network(const char *name)
 
 	return NULL;
 }
+
+struct network *find_network_by_hostname(const char *hostname, guint16 port, gboolean create)
+{
+	GList *gl;
+	struct network *n;
+	
+	char *portname = g_strdup_printf("%d", port);
+	
+	for (gl = get_network_list(); gl; gl = gl->next) {
+		n = gl->data;
+		GList *sv;
+		
+		if (n->type != NETWORK_TCP) continue;
+		
+		sv = n->connection.tcp.servers;
+
+		while (sv) {
+			struct tcp_server *server = sv->data;
+
+			if (!strcasecmp(server->host, hostname) && !strcasecmp(server->port, portname)) {
+				g_free(portname);
+				return n;
+			}
+
+			sv = sv->next;
+		} 
+	}
+
+	if ((n = find_network(hostname))) {
+		g_free(portname);
+		return n;
+	}
+
+	/* Create a new server */
+	if (create)
+	{
+		struct addrinfo hints;
+		struct tcp_server *s = g_new0(struct tcp_server, 1);
+		int error;
+		n = new_network();
+
+		n->name = g_strdup(hostname);
+		n->name_guessed = TRUE;
+		n->type = NETWORK_TCP;
+		s->host = g_strdup(hostname);
+		s->port = portname;
+
+		memset(&hints, 0, sizeof(hints));
+		hints.ai_family = PF_UNSPEC;
+		hints.ai_socktype = SOCK_STREAM;
+
+		/* Lookup */
+		error = getaddrinfo(s->host, s->port, &hints, &s->addrinfo);
+		if (error) {
+			g_warning("Unable to lookup %s:%s %s", s->host, s->port, gai_strerror(error));
+			g_free(s->host);
+			g_free(portname);
+			g_free(s);
+			close_network(n);
+			return NULL;
+		}
+
+		n->connection.tcp.servers = g_list_append(n->connection.tcp.servers, s);
+
+		return n;
+	}
+
+	return NULL;
+}

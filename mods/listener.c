@@ -59,8 +59,7 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition condition, gpo
 			return FALSE;
 		}
 
-		g_message("Client @%s successfully authenticated",
-		  listener->network->name);
+		g_message("Client successfully authenticated");
 
 		new_client(listener->network, c);
 
