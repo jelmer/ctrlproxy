@@ -23,6 +23,7 @@
 #include "ctrlproxy.h"
 #include <arpa/inet.h>
 #include <netinet/in.h>
+#include <netinet/ip.h>
 #include <sys/socket.h>
 #include <errno.h>
 #include <netdb.h>
@@ -43,6 +44,8 @@ gboolean irssi_ssl_set_files(char *certf, char *keyf);
 
 static gboolean handle_in (GIOChannel *c, GIOCondition o, gpointer data);
 static gboolean handle_disc (GIOChannel *c, GIOCondition o, gpointer data);
+
+static int socket_tos = 0;
 
 struct socket_data {
 	GIOChannel *channel;
@@ -255,8 +258,6 @@ static int connect_ip(struct transport_context *c)
 	int domain = PF_INET;
 	char *bind_addr;
 	struct hostent *bind_host = NULL;
-	struct in_addr bind_host_ip4;
-	struct in6_addr bind_host_ip6;
 
 
 	if(!strcmp(c->functions->name, "ipv6")){
@@ -287,23 +288,34 @@ static int connect_ip(struct transport_context *c)
 		return -1;
 	}
 
+	bind_addr = xmlGetProp(c->configuration, "bind");
+	if(bind_addr)
+		bind_host = gethostbyname2(bind_addr, family);
+
 	if(ipv6) {
 		name6.sin6_family = AF_INET6;
 		name6.sin6_port = htons (port);
+		if(bind_host) {
+			memcpy((char *)&name6.sin6_addr, bind_host->h_addr, bind_host->h_length);
+			ret = bind (sock, (struct sockaddr *) &name6, sizeof (name6));
+		}
+
 	} else {
 		name4.sin_family = AF_INET;
 		name4.sin_port = htons (port);
+		if(bind_host) {
+			name4.sin_addr = *(struct in_addr *) bind_host->h_addr;
+			ret = bind (sock, (struct sockaddr *) &name4, sizeof (name4));
+		}
 	}
 
-	bind_addr = xmlGetProp(c->configuration, "bind");
-	if(bind_addr) {
-	 bind_host = gethostbyname2(bind_addr, family);
-	 if(bind_host && ipv6) {
-		memcpy((char *)&bind_host_ip6, bind_host->h_addr, bind_host->h_length);
-	 } else if(bind_host)
-  	 	bind_host_ip4 = (*((struct in_addr*) bind_host->h_addr_list[0]));
-	}
 	xmlFree(bind_addr);
+
+	if(ret < 0)
+	{
+		g_log(G_LOG_DOMAIN, G_LOG_LEVEL_WARNING, "bind: %s", strerror(errno));
+		return -1;
+	}
 
 	hostinfo = gethostbyname2 (hostname, family);
 
@@ -314,16 +326,15 @@ static int connect_ip(struct transport_context *c)
 		free(tempname);
 		return -1;
 	}
+	if(socket_tos != 0)
+        if (setsockopt(sock, IPPROTO_IP, IP_TOS, &socket_tos, sizeof(socket_tos)) < 0)
+                g_log(G_LOG_DOMAIN, G_LOG_LEVEL_WARNING, "setsockopt IP_TOS %d: %.100s:", socket_tos, strerror(errno));
 
 	if(ipv6) {
 		memcpy((char *)&name6.sin6_addr, hostinfo->h_addr, hostinfo->h_length);
-		if(bind_host)
-			bind(sock, (struct sockaddr *)&bind_host_ip6, sizeof(name6));
 		ret = connect(sock, (struct sockaddr *)&name6, sizeof(name6));
 	} else {
 		name4.sin_addr = *(struct in_addr *) hostinfo->h_addr;
-		if(bind_host)
-			name4.sin_addr.s_addr = bind_host_ip4.s_addr;
 		ret = connect(sock, (struct sockaddr *)&name4, sizeof(name4));
 	}
 
@@ -434,6 +445,9 @@ static int listen_ip(struct transport_context *c)
 	}
 
 	setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
+	if(socket_tos != 0)
+        if (setsockopt(sock, IPPROTO_IP, IP_TOS, &socket_tos, sizeof(socket_tos)) < 0)
+                g_log(G_LOG_DOMAIN, G_LOG_LEVEL_WARNING, "setsockopt IP_TOS %d: %.100s:", socket_tos, strerror(errno));
 
 	bind_addr = xmlGetProp(c->configuration, "bind");
 	if(bind_addr) bind_host = gethostbyname2(bind_addr, family);
@@ -585,6 +599,7 @@ gboolean fini_plugin(struct plugin *p) {
 
 gboolean init_plugin(struct plugin *p) {
 	xmlNodePtr cur;
+	char *cur2;
 	char *certf = NULL, *keyf = NULL, *defaultssl = NULL;;
 	register_transport(&ipv4);
 	register_transport(&ipv6);
@@ -596,6 +611,21 @@ gboolean init_plugin(struct plugin *p) {
 
 		if(!strcmp(cur->name, "sslkeyfile")) keyf = xmlNodeGetContent(cur);
 		else if(!strcmp(cur->name, "sslcertfile")) certf = xmlNodeGetContent(cur);
+		else if(!strcmp(cur->name, "tos") && xmlHasProp(cur, "port")) {
+			cur2 = xmlGetProp(cur, "value");
+			if(!strcasecmp(cur2,"Minimize-Delay")) {
+				socket_tos = IPTOS_LOWDELAY;
+			} else if(!strcasecmp(cur2,"Maximize-Throughput")) {
+				socket_tos = IPTOS_THROUGHPUT;
+			} else if(!strcasecmp(cur2,"Maximize-Reliability")) {
+				socket_tos = IPTOS_RELIABILITY;
+			} else if(!strcasecmp(cur2,"Minimize-Cost")) {
+				socket_tos = IPTOS_MINCOST;
+			} else if(!strcasecmp(cur2,"Normal-Service")) {
+				socket_tos = 0;
+			}
+			xmlFree(cur2);
+		}
 		cur = cur->next;
 	}
 

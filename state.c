@@ -31,8 +31,9 @@ static GList *started_join_list = NULL;
 int is_channelname(char *name, struct network *n)
 {
 	const char *chantypes = get_network_feature(n, "CHANTYPES");
+	printf("Chantypes: %s\n", chantypes);
 	if(!chantypes && (name[0] == '#' || name[0] == '&'))return 1;
-	if(chantypes && strchr(chantypes, name[0])) return 1;
+	else if(strchr(chantypes, name[0])) return 1;
 	return 0;
 }
 
@@ -673,6 +674,7 @@ GSList *gen_replication_channel(struct channel *c, char *hostmask, char *nick)
 	char *key = xmlGetProp(c->xmlConf, "key");
 	struct channel_nick *n;
 	GList *nl;
+	printf("replicating for channel '%s'\n", channel_name);
 	ret = g_slist_append(ret, irc_parse_linef(":%s JOIN %s\r\n", nick, channel_name));
 
 	xmlFree(key);
@@ -704,6 +706,7 @@ GSList *gen_replication_network(struct network *s)
 	char *nick, *server_name, *channel_name;
 	cl = s->channels,
 	server_name = xmlGetProp(s->xmlConf, "name");
+	printf("replicating for server '%s'\n", server_name);
 	nick = xmlGetProp(s->xmlConf, "nick");
 
 	while(cl) {
