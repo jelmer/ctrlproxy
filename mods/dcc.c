@@ -32,9 +32,7 @@
 #include <sys/utsname.h>
 #endif
 #include <errno.h>
-#ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
-#endif
 #include "gettext.h"
 #define _(s) gettext(s)
 
@@ -90,7 +88,9 @@ static struct in_addr numeric_to_ip(unsigned long r)
 static void dcc_list(struct line *l)
 {
 	char *p = ctrlproxy_path("dcc");
-	GDir *d = g_dir_open(p);	
+	char *e;
+	GError *error = NULL;
+	GDir *d = g_dir_open(p, 0, &error);
 	free(p);
 
 	if(!d) {
