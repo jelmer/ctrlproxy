@@ -36,14 +36,14 @@ struct channel {
 };
 
 
-FILE *find_channel(struct channel *channels, struct server *s, char *name)
+FILE *find_channel(struct module_context *e, struct server *s, char *name)
 {
 	char *location;
-	struct channel *c = channels;
+    struct channel *d = (struct channel *)e->private_data, *c = d;
 	time_t t;
 	if(!get_conf(s->abbrev, "logfile"))return NULL;
 	while(c) {
-		if(!strcmp(c->name, name))return c->log;
+		if(!strcasecmp(c->name, name))return c->log;
 		c = c->next;
 	}
 	c = malloc(sizeof(struct channel));
@@ -51,9 +51,11 @@ FILE *find_channel(struct channel *channels, struct server *s, char *name)
 	asprintf(&location, get_conf(s->abbrev, "logfile"), s->abbrev, name);
 	c->name = strdup(name);
 	c->log = fopen(location, "a+");
-	DLIST_ADD(channels, c);
+	free(location);
+	DLIST_ADD(d, c);
 	t = time(NULL);
-	fprintf(c->log, "--- log opened %s\n", ctime(&t));
+	fprintf(c->log, "--- log opened %s", ctime(&t));
+	e->private_data = d;
 	return c->log;
 }
 
@@ -61,12 +63,12 @@ void channel_log(struct module_context *c, char *channel, char *fmt, ... )
 {
 	va_list ap;
 	FILE *f;
-    struct channel *channels = (struct channel *)c->private_data;
-	f = find_channel(channels, c->parent, channel);
+	f = find_channel(c, c->parent, channel);
 	if(!f)return;
 	va_start(ap, fmt);
 	vfprintf(f, fmt, ap);
 	va_end(ap);
+	fflush(f);
 }
 
 void mhandle_data(struct module_context *c, const struct line *l)
