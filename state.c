@@ -31,8 +31,10 @@ static GList *started_join_list = NULL;
 int is_channelname(char *name, struct network *n)
 {
 	const char *chantypes = get_network_feature(n, "CHANTYPES");
-	if(!chantypes && (name[0] == '#' || name[0] == '&'))return 1;
-	else if(strchr(chantypes, name[0])) return 1;
+	if(!chantypes) {
+		if(name[0] == '#' || name[0] == '&')return 1;
+		return 0;
+	} else if(strchr(chantypes, name[0])) return 1;
 	return 0;
 }
 
@@ -749,6 +751,7 @@ struct linestack_context *linestack_new_by_network(struct network *n)
 const char *get_network_feature(struct network *n, char *name)
 {
 	int i;
+	if(!n) return NULL;
 	if(!n->features)return NULL;
 	for(i = 0; n->features[i]; i++) {
 		if(!strncmp(n->features[i], name, strlen(name))) {
