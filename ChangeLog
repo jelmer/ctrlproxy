@@ -1,3 +1,6 @@
+ Otherwise indicated differently, all changes made by 
+ 	Jelmer Vernooij <jelmer@vernstok.nl>
+
 Ctrlproxy 2.7:
  * Add support for unloading crashing modules
  * Use correct string comparison when necessary
