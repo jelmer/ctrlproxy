@@ -77,7 +77,7 @@ static gboolean highlight_replicate(struct client *c)
 }
 
 gboolean fini_plugin(struct plugin *p) {
-	del_filter(log_data);
+	del_filter_ex("replicate", log_data);
 	del_new_client_hook("repl_highlight");
 	g_hash_table_destroy(highlight_backlog); highlight_backlog = NULL;
 	return TRUE;

@@ -59,7 +59,7 @@ static gboolean log_data(struct line *l) {
 }
 
 gboolean fini_plugin(struct plugin *p) {
-	del_filter(log_data);
+	del_filter_ex("replicate", log_data);
 	unregister_admin_command("BACKLOG");
 	g_hash_table_destroy(command_backlog); command_backlog = NULL;
 	return TRUE;

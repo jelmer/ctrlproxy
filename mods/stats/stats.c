@@ -251,7 +251,7 @@ static gboolean log_data(struct line *l)
 
 gboolean fini_plugin(struct plugin *p)
 {
-	del_filter(log_data);
+	del_filter_ex("log", log_data);
 	return TRUE;
 }
 

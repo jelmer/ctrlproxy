@@ -103,7 +103,7 @@ static gboolean simple_replicate(struct client *c)
 }
 
 gboolean fini_plugin(struct plugin *p) {
-	del_filter(log_data);
+	del_filter_ex("replicate", log_data);
 	del_new_client_hook("repl_simple");
 	g_hash_table_destroy(simple_backlog); simple_backlog = NULL;
 	g_hash_table_destroy(simple_initialnick); simple_initialnick = NULL;

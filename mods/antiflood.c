@@ -117,7 +117,7 @@ static void free_antiflood_servers(gpointer key, gpointer value, gpointer user_d
 }
 
 gboolean fini_plugin(struct plugin *p) {
-	del_filter(log_data);
+	del_filter_ex("client", log_data);
 	
 	g_hash_table_foreach(antiflood_servers, free_antiflood_servers, NULL);
 	g_hash_table_destroy(antiflood_servers);

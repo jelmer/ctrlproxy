@@ -153,7 +153,7 @@ static gboolean mhandle_data(struct line *l)
 
 gboolean fini_plugin(struct plugin *p)
 {
-	del_filter(mhandle_data);
+	del_filter_ex("client", mhandle_data);
 	unregister_admin_command("DCC");
 	return TRUE;
 }

@@ -247,7 +247,7 @@ static gboolean handle_data(struct line *l) {
 }
 
 gboolean fini_plugin(struct plugin *p) {
-	del_filter(handle_data);
+	del_filter_ex("client", handle_data);
 	return TRUE;
 }
 
