@@ -393,7 +393,7 @@ void unregister_admin_command(char *name)
 		struct admin_command *cmd = (struct admin_command *)gl->data;
 		if(!strcasecmp(cmd->name, name)) {
 			free(cmd->name);
-			commands = g_list_remove(gl, cmd);
+			commands = g_list_remove(commands, cmd);
 			free(cmd);
 			return;
 		}
