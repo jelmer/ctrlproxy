@@ -15,6 +15,7 @@
 - more user-friendly admin command
 - system wide ctrlproxy?
  - connect to central daemon that does a fork and starts ctrlproxy in that?
+- Modules shouldn't be loaded twice
 
 Optional:
 - Net::IRC-like interface
