@@ -102,6 +102,15 @@ table.infos {
 	vertical-align:	top;
 }
 
+table.infos2 {
+	margin:		0px;
+	border-collapse:  collapse;
+	clear: left;
+	vertical-align:	top;
+	width:	500px;
+}
+
+
 table.head {
 	margin-top:		0px;
 	margin-bottom:		8px;
