@@ -7,7 +7,7 @@
 - non-blocking connect
 - add member 'nick' to struct line
 - add more help data
-- Use: CHANTYPES, PREFIX, NETWORK
+- Use: PREFIX, NETWORK
 - use irccmp everywhere
 - make irccmp use charset as set by CASEMAPPING
 

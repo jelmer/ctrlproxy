@@ -30,7 +30,8 @@ static GList *started_join_list = NULL;
 
 int is_channelname(char *name, struct network *n)
 {
-	if(name[0] == '#' || name[0] == '!' || name[0] == '&') return 1;
+	const char *chantypes = get_network_feature(n, "CHANTYPES");
+	if(strchr(chantypes, name[0])) return 1;
 	return 0;
 }
 
