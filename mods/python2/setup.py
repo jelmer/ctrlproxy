@@ -10,9 +10,7 @@ setup (name = 'CtrlProxy',
 	   description = 'CtrlProxy bindings',
 	   ext_modules = [
 	   		Extension('ctrlproxy', 
-		         	  sources = ['ctrlproxy_wrap.c'],
-					  extra_compile_args = split(os.environ['CFLAGS'],' '),
-					  extra_link_args = split(os.environ['LDFLAGS'],' ')
+		         	  sources = ['ctrlproxy_wrap.c']
 					 )
 			]
 		)
