@@ -16,6 +16,7 @@ all: $(MODS)
 install: all
 	$(INSTALL) -d $(DESTDIR)$(moddir)
 	$(INSTALL) $(MODS) $(DESTDIR)$(moddir)
+	for I in $(MODS_SUBDIRS); do cd $$I && $(MAKE) $@ && cd ..; done
 
 %.o: %.c
 	$(CC) $(CFLAGS) -fPIC -c $<
