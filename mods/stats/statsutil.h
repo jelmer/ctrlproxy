@@ -22,6 +22,8 @@
 
 #include <glib.h>
 
+#define STAT_VALUE long
+
 struct network;
 struct channel;
 
@@ -45,14 +47,14 @@ struct network {
 
 extern GHashTable *networks;
 
-void stats_parse_file(char *f);
+void stats_parse_file(const char *f);
 void stats_init();
 void stats_fini();
 
 struct channel *get_channel(struct network *, char *);
 struct network *get_network(char *);
-int nick_get_property(struct nick *nick, char *name);
-int channel_get_property(struct channel *channel, char *name);
+STAT_VALUE nick_get_property(struct nick *nick, char *name);
+STAT_VALUE channel_get_property(struct channel *channel, char *name);
 
 GList *get_nicks_sorted_by_property(struct channel *c, char *property);
 struct nick *get_highest_nick_for_property(struct channel *c, char *property);

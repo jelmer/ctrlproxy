@@ -39,7 +39,7 @@ static void free_channel(void *_c)
 	struct channel *c = (struct channel *)_c;
 	g_free(c->name);
 	g_hash_table_destroy(c->properties);
-	g_hash_tabel_destroy(c->nicks);
+	g_hash_table_destroy(c->nicks);
 	g_free(c);
 }
 
@@ -55,7 +55,7 @@ static struct network *find_add_network(char *name)
 {
 	struct network *n = g_hash_table_lookup(networks, name);
 	if(!n) { 
-		n = calloc(1, sizeof(struct network *));
+		n = calloc(1, sizeof(struct network));
 		n->name = g_strdup(name);
 		n->channels = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, free_channel);
 		g_hash_table_insert(networks, g_strdup(name), n);
@@ -67,7 +67,7 @@ static struct channel *find_add_channel(struct network *n, char *name)
 {
 	struct channel *c = g_hash_table_lookup(n->channels, name);
 	if(!c) { 
-		c = calloc(1, sizeof(struct channel *));
+		c = calloc(1, sizeof(struct channel));
 		c->network = n;
 		c->name = g_strdup(name);
 		c->nicks = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, free_nick);
@@ -81,7 +81,7 @@ static struct nick *find_add_nick(struct channel *c, char *name)
 {
 	struct nick *n = g_hash_table_lookup(c->nicks, name);
 	if(!n) { 
-		n = calloc(1, sizeof(struct nick *));
+		n = calloc(1, sizeof(struct nick));
 		n->channel = c;
 		n->name = g_strdup(name);
 		n->properties = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_free);
@@ -92,24 +92,28 @@ static struct nick *find_add_nick(struct channel *c, char *name)
 
 static void nick_set_property(struct nick *n, char *property, void *value)
 {
-	g_hash_table_insert(n->properties, property, value);
+	long *l = calloc(1, sizeof(STAT_VALUE));
+	*l = *(long *)value;
+	g_hash_table_insert(n->properties, g_strdup(property), l);
 }
 
 static void channel_set_property(struct channel *n, char *property, void *value)
-{
-	g_hash_table_insert(n->properties, property, value);
+{	
+	long *l = calloc(1, sizeof(STAT_VALUE));
+	*l = *(long *)value;
+	g_hash_table_insert(n->properties, g_strdup(property), l);
 }
 
-int nick_get_property(struct nick *n, char *p)
+STAT_VALUE nick_get_property(struct nick *n, char *p)
 {
-	int *r = (int *)g_hash_table_lookup(n->properties, p);
+	STAT_VALUE *r = (STAT_VALUE *)g_hash_table_lookup(n->properties, p);
 	if(!r) return 0;
 	return *r;
 }
 
-int channel_get_property(struct channel *n, char *p)
+STAT_VALUE channel_get_property(struct channel *n, char *p)
 {
-	int *r = (int *)g_hash_table_lookup(n->properties, p);
+	STAT_VALUE *r = (STAT_VALUE *)g_hash_table_lookup(n->properties, p);
 	if(!r) return 0;
 	return *r;
 }
@@ -149,7 +153,7 @@ void stats_init()
 	networks = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, free_network);
 }
 
-void stats_parse_file(char *f)
+void stats_parse_file(const char *f)
 {
 	TDB_CONTEXT *tdb_context;
 
@@ -165,14 +169,12 @@ static gint sort_property(gconstpointer a, gconstpointer b)
 {
 	struct nick *n1 = (struct nick *)a;
 	struct nick *n2 = (struct nick *)b;
-	int *v1 = g_hash_table_lookup(n1->properties, sortpropertyname);
-	int *v2 = g_hash_table_lookup(n2->properties, sortpropertyname);
+	
+	STAT_VALUE v1 = nick_get_property(n1, sortpropertyname);
+	STAT_VALUE v2 = nick_get_property(n2, sortpropertyname);
 
-	if(!v1) return -1;
-	if(!v2) return 1;
-
-	if(*v1 > *v2) return 1;
-	if(*v1 < *v2) return -1;
+	if(v1 > v2) return 1;
+	if(v1 < v2) return -1;
 	return 0;
 }
 
@@ -191,4 +193,35 @@ GList *get_nicks_sorted_by_property(struct channel *c, char *property)
 	
 	g_hash_table_foreach(c->nicks, hash2list_sorted, &ret);
 	return ret;
+}
+
+static void hash_highest(gpointer key, gpointer value, gpointer user_data)
+{
+	static STAT_VALUE max;
+	STAT_VALUE this;
+	struct nick *n = (struct nick *)value;
+	struct nick **ret = (struct nick **)user_data;
+
+	if(*ret == NULL) max = 0;
+
+	this = nick_get_property(n, sortpropertyname);
+	if(this > max) { *ret = n; max = this; }
+}
+
+struct nick *get_highest_nick_for_property(struct channel *c, char *p)
+{
+	struct nick *ret = NULL;
+	sortpropertyname = p;
+	g_hash_table_foreach(c->nicks, hash_highest, &ret);
+	return ret;
+}
+
+struct network *get_network(char *name)
+{
+	return (struct network *)g_hash_table_lookup(networks, name);
+}
+
+struct channel *get_channel(struct network *n, char *name)
+{
+	return (struct channel *)g_hash_table_lookup(n->channels, name);
 }

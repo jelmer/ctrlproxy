@@ -1,4 +1,5 @@
 CC = @CC@
+LIBS = @LIBS@ @PKG_LIBS@ @PKG_CFLAGS@
 prefix = @prefix@
 exec_prefix = @exec_prefix@
 bindir = @bindir@
@@ -28,10 +29,10 @@ printstats: printstats.o
 	$(CC) -o $@ -ltdb $<
 
 cisg: cisg.o statsutil.o
-	$(CC) -o $@ $< statsutil.o -ltdb
+	$(CC) -o $@ $< statsutil.o -ltdb $(LIBS)
 
 clean:
-	rm -f $(MODS) *.o
+	rm -f *.o  printstats cisg *.so
 
 distclean: clean
 	rm -f Makefile
