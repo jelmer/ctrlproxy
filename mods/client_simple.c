@@ -13,6 +13,7 @@ struct client_state {
 	int listen_socket;
 	fd_set readfd;
 	char *remaining[FD_SETSIZE];
+	char authenticated[FD_SETSIZE];
 };
 
 void minit(struct module_context *c)
@@ -71,23 +72,38 @@ void mloop(struct module_context *c)
 		} else {
 			if(aread(i, &st->remaining[i]) != 0) {
 				FD_CLR(i, &st->readfd);
+				st->authenticated[i] = 0;
+				if(st->remaining[i])free(st->remaining[i]);
+				st->remaining[i] = NULL;
 				continue;
 			}
 
 			while((ret = anextline(&st->remaining[i]))) {
 				irc_parse_line(ret, &l);
 				if(!l.args[0])continue;
-				if(strcasecmp(l.args[0], "USER")){
-					asprintf(&tmp, "%s\n", ret);
-					server_send_raw(c->parent, tmp);
-					free(tmp);
-				}
-				else {
+				if(!strcasecmp(l.args[0], "USER")){
+					if(!get_conf(c->parent->abbrev, "clientpass"))st->authenticated[i] = 1;
+					if(!st->authenticated[i]){
+						dprintf(i, ":%s 451 %s :You are not registered\r\n", my_hostname, c->parent->nick);
+						continue;
+					}
 					dprintf(i, ":%s 001 %s :Welcome to the ctrlproxy\r\n", my_hostname, c->parent->nick);
 					dprintf(i, ":%s 002 %s :Host %s is running ctrlproxy\r\n", my_hostname, c->parent->nick, my_hostname);
 					dprintf(i, ":%s 003 %s :Ctrlproxy (c) 2002 Jelmer Vernooij <jelmer@nl.linux.org>\r\n", my_hostname, c->parent->nick);
 					dprintf(i, ":%s 004 %s %s %s %s %s\r\n", my_hostname, c->parent->nick, CTRLPROXY_VERSION, allmodes, allmodes);
 					dprintf(i, ":%s 422 %s :No MOTD file\r\n", my_hostname, c->parent->nick);
+				} else if(!strcasecmp(l.args[0], "PASS")) {
+					if (!get_conf(c->parent->abbrev, "clientpass"))
+						st->authenticated[i] = 1;
+					else if(!strcmp(l.args[1], get_conf(c->parent->abbrev, "clientpass"))) {
+						st->authenticated[i] = 1;
+					} else {
+						dprintf(i, ":%s 464 %s :Password mismatch\r\n", my_hostname, c->parent->nick);
+					}
+				} else if(st->authenticated[i]) {
+					asprintf(&tmp, "%s\n", ret);
+					server_send_raw(c->parent, tmp);
+					free(tmp);
 				}
 				free(ret);
 			}
@@ -100,10 +116,10 @@ void mhandle_incoming_data(struct module_context *c, const struct line *l)
 	struct client_state *st = (struct client_state *)c->private_data;
 	int i;
 	if(!st)return;
-	printf("To client: %s\r\n", l->raw);
+	printf("To client: %s\n", l->raw);
 	for(i = 0; i < FD_SETSIZE; i++) {
-		if(FD_ISSET(i, &st->readfd) && i != st->listen_socket)
-			dprintf(i, "%s\r\n", l->raw);
+		if(FD_ISSET(i, &st->readfd) && i != st->listen_socket && st->authenticated[i])
+			dprintf(i, "%s\n", l->raw);
 	}
 }
 
@@ -114,8 +130,9 @@ void mfinish(struct module_context *c)
 	if(!st)return;
 	for(i = 0; i < FD_SETSIZE; i++) {
 		if(FD_ISSET(i, &st->readfd) && i != st->listen_socket)
-			dprintf(i, ":%s SQUIT\r\n", my_hostname);
+			dprintf(i, ":%s QUIT :Server exiting\r\n", my_hostname);
 	}
+	close(st->listen_socket);
 }
 
 struct module_functions ctrlproxy_functions = {
