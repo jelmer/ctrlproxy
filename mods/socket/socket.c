@@ -299,6 +299,7 @@ static int connect_ip(struct transport_context *c)
 	if (sock < 0)
 	{
 		g_warning( _("(While connecting to server %s with %s): socket: %s"), tempname, strerror(errno), c->functions->name);
+		xmlFree(hostname);
 		free(tempname);
 		return -1;
 	}
@@ -329,6 +330,7 @@ static int connect_ip(struct transport_context *c)
 	if(ret < 0)
 	{
 		g_warning( "bind: %s", strerror(errno));
+		xmlFree(hostname);
 		return -1;
 	}
 
@@ -356,6 +358,7 @@ static int connect_ip(struct transport_context *c)
 	if (ret < 0 && errno != EINPROGRESS)
 	{
 		g_warning( _("(While connecting to server %s): connect: %s"), tempname, strerror(errno));
+		xmlFree(hostname);
 		free(tempname);
 		return -1;
 	}

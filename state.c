@@ -437,7 +437,7 @@ static void handle_whoreply(struct network *s, struct line *l) {
 	if(!c) 
 		return;
 
-	n = find_add_nick(c, strdup(l->args[6]));
+	n = find_add_nick(c, l->args[6]);
 	if(n->global->hostmask == NULL) {
 		asprintf(&hostmask, "%s!%s@%s", l->args[6], l->args[3], l->args[4]);
 		n->global->hostmask = hostmask;
@@ -563,7 +563,10 @@ static void handle_005(struct network *s, struct line *l)
 	int i, j = 0;
 	if(l->direction == TO_SERVER)return;
 
-	s->features = malloc(sizeof(char *) * l->argc);
+	for(j = 0; s->features[j]; j++);
+
+	if(!s->features)
+		s->features = malloc(sizeof(char *) * (l->argc+j));
 
 	for(i = 3; i < l->argc-1; i++) {
 		s->features[j] = strdup(l->args[i]);

@@ -43,7 +43,7 @@ static gboolean log_data(struct line *l) {
 	if(!co) {
 		co = linestack_new_by_network(l->network);
 		g_hash_table_insert(command_backlog, desc, co);
-	} 
+	} else free(desc);
 	linestack_add_line(co, l);
 
 	xmlFree(networkname);

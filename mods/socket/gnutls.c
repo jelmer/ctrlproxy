@@ -125,7 +125,6 @@ static GIOStatus g_io_gnutls_close(GIOChannel *handle, GError **gerr)
 {
 	GIOTLSChannel *chan = (GIOTLSChannel *)handle;
 	gnutls_bye(chan->session, GNUTLS_SHUT_RDWR);
-	gnutls_deinit(chan->session);
 	g_io_channel_close(chan->giochan);
 	return G_IO_STATUS_NORMAL;
 }
