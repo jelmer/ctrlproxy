@@ -21,6 +21,7 @@ BINS = @BINS@
 
 all: $(BINS)
 	$(MAKE) -C mods all
+	$(MAKE) -C scripts all
 @DOCBUILDE@	$(MAKE) -C doc all
 
 ctrlproxy: $(OBJS)
@@ -29,7 +30,7 @@ ctrlproxy: $(OBJS)
 %.o: %.c
 	$(CC) $(CFLAGS) -c $<
 
-install: all install-dirs install-doc install-bin install-mods install-data install-pkgconfig
+install: all install-dirs install-doc install-bin install-mods install-data install-pkgconfig install-scripts
 install-dirs:
 	$(INSTALL) -d $(DESTDIR)$(bindir)
 	$(INSTALL) -d $(DESTDIR)$(man1dir)
@@ -58,6 +59,9 @@ install-data:
 
 install-mods:
 	$(MAKE) -C mods install
+
+install-scripts:
+	$(MAKE) -C scripts install
 
 install-pkgconfig:
 	$(INSTALL) ctrlproxy.pc $(DESTDIR)@libdir@/pkgconfig

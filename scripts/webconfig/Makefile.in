@@ -1,0 +1,20 @@
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+INSTALL = @INSTALL@
+scriptdir = @datadir@/ctrlproxy/scripts
+PAGES = $(wildcard pages/*.py) $(wildcard pages/*.css)
+
+.PHONY: all install clean distclean
+
+all: 
+
+install: all
+	$(INSTALL) -d $(DESTDIR)$(scriptdir)/webconfig
+	$(INSTALL) -d $(DESTDIR)$(scriptdir)/webconfig/pages
+	$(INSTALL) webconfig.py $(DESTDIR)$(scriptdir)/webconfig
+	$(INSTALL) $(PAGES) $(DESTDIR)$(scriptdir)/webconfig/pages
+
+clean:
+
+distclean: clean
+	rm -f Makefile

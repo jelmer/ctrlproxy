@@ -12,7 +12,7 @@ all:
 
 install: all
 	$(INSTALL) -d $(DESTDIR)$(scriptdir)
-	$(INSTALL) $(SCRIPTS) $(DESTDIR)$(scriptdir)
+	test -z "$(SCRIPTS)" || $(INSTALL) $(SCRIPTS) $(DESTDIR)$(scriptdir)
 	for I in $(SUBDIRS); do $(MAKE) -C $$I $@; done
 
 clean:
