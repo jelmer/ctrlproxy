@@ -40,7 +40,6 @@
 #include <fcntl.h>
 #include "gettext.h"
 
-
 #define _(s) gettext(s)
 
 #undef  G_LOG_DOMAIN
@@ -49,14 +48,20 @@
 #define DEFAULT_RECONNECT_INTERVAL 60
 
 #define MAXHOSTNAMELEN 4096
-extern char my_hostname[MAXHOSTNAMELEN+2];
 
 /* server.c */
 int loop(struct network *server); /* Checks server socket for input and calls loop() on all of it's modules */
-gboolean ping_loop(gpointer user_data);
+gboolean init_networks();
 
 /* state.c */
 void state_handle_data(struct network *s, struct line *l);
 void state_reconnect(struct network *s);
+
+/* config.c */
+void readConfig(char *file);
+extern char *configuration_file;
+
+/* plugins.c */
+gboolean init_plugins();
 
 #endif /* __INTERNALS_H__ */

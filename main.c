@@ -31,10 +31,6 @@
 #include <execinfo.h>
 #endif
 
-#ifdef _WIN32
-#include <winsock.h>
-#endif
-
 #define add_log_domain(domain) g_log_set_handler (domain, G_LOG_LEVEL_MASK | G_LOG_FLAG_FATAL | G_LOG_FLAG_RECURSION, log_handler, NULL);
 
 /* globals */
@@ -45,6 +41,11 @@ xmlDocPtr configuration;
 char *configuration_file;
 FILE *debugfd = NULL;
 FILE *f_logfile = NULL;
+
+const char *get_modules_path() { return MODULESDIR; }
+const char *get_shared_path() { return SHAREDIR"/ctrlproxy"; }
+const char *get_my_hostname() { return my_hostname; }
+const char *ctrlproxy_version() { return PACKAGE_VERSION; }
 
 void signal_crash(int sig) 
 {
@@ -101,6 +102,7 @@ void clean_exit()
 		if(n) close_network(n);
 	}
 	if(debugfd)fclose(debugfd);
+	g_main_loop_quit(main_loop);
 }
 
 void signal_quit(int sig)
@@ -281,63 +283,7 @@ int main(int argc, const char *argv[])
 		}
 	}
 
-	if(!g_module_supported()) {
-		g_warning(_("DSO's not supported on this platform. Not loading any modules"));
-	} else if(!xmlNode_plugins) {
-		g_warning(_("No modules set to be loaded"));	
-	}else {
-		cur = xmlNode_plugins->xmlChildrenNode;
-		while(cur) {
-			char *enabled;
-
-			if(xmlIsBlankNode(cur) || !strcmp(cur->name, "comment")){ cur = cur->next; continue; }
-
-			g_assert(!strcmp(cur->name, "plugin"));
-
-			enabled = xmlGetProp(cur, "autoload");
-			if((!enabled || atoi(enabled) == 1) && !load_plugin(cur)) {
-				g_error(_("Can't load plugin %s, aborting..."), xmlGetProp(cur, "file"));
-				abort();
-			}
-
-			xmlFree(enabled);
-
-			cur = cur->next;
-		}
-	}
-
-	if(!xmlNode_networks) {
-		g_error(_("No networks listed"));
-		return 1;
-	}
-
-	cur = xmlNode_networks->xmlChildrenNode;
-	while(cur) {
-		char *autoconnect;
-		if(xmlIsBlankNode(cur) || !strcmp(cur->name, "comment")){ cur = cur->next; continue; }
-		g_assert(!strcmp(cur->name, "network"));
-
-		autoconnect = xmlGetProp(cur, "autoconnect");
-		if(autoconnect && !strcmp(autoconnect, "1")) {
-#ifdef fork
-			if(seperate_processes) { 
-				if(fork() == 0) {  
-					connect_network(cur); 
-					break; 
-				}
-			} else 
-#endif
-			{
-				connect_network(cur);
-			}
-		}
-		xmlFree(autoconnect);
-
-		cur = cur->next;
-	}
-
-
-	g_timeout_add(1000 * 300, ping_loop, NULL);
+	if(!init_plugins() || !init_networks()) return -1;
 	initialized_hook_execute();
 	g_main_loop_run(main_loop);
 	clean_exit();

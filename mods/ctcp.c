@@ -69,9 +69,9 @@ static gboolean mhandle_data(struct line *l)
 #ifdef HAVE_SYS_UTSNAME_H
 		struct utsname u;
 		uname(&u);
-		asprintf(&msg, "\001VERSION ctrlproxy:%s:%s %s\001", PACKAGE_VERSION, u.sysname, u.release);
+		asprintf(&msg, "\001VERSION ctrlproxy:%s:%s %s\001", ctrlproxy_version(), u.sysname, u.release);
 #else
-		asprintf(&msg, "\001VERSION ctrlproxy:%s:Windows %d.%d\001", "FIXME", _winmajor, _winminor);
+		asprintf(&msg, "\001VERSION ctrlproxy:%s:Windows %d.%d\001", ctrlproxy_version(), _winmajor, _winminor);
 #endif
 		irc_sendf(l->network->outgoing, "NOTICE %s :%s", dest, msg);
 		free(msg);

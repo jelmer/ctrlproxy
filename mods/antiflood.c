@@ -21,17 +21,17 @@
 #include "ctrlproxy.h"
 #include <string.h>
 #include <time.h>
-//#include <sys/time.h>
 
 #ifdef _WIN32
 #include <windows.h>
 #include <winbase.h>
-#define TIMEVAL DWORD
+#define TIMEVALUE DWORD
 #define gettimeofday(a,b) {*a = GetTickCount();}
 #define timersub(a,b,c) {*c = *b - *a; }
 #define tvtolong(v) (*v)
 #else
-#define TIMEVAL struct timeval
+#include <sys/time.h>
+#define TIMEVALUE struct TIMEVALUE
 #define tvtolong(v) ((v)->tv_sec * 1000 + (v)->tv_usec / 1000)
 #endif
 
@@ -40,7 +40,7 @@ static GHashTable *antiflood_servers = NULL;
 static struct plugin *this_plugin = NULL;
 
 struct network_data {
-	TIMEVAL tv_last_message;
+	TIMEVALUE tv_last_message;
 	GQueue *message_queue;
 	unsigned long queue_speed;
 	guint timeout_id;
@@ -50,13 +50,12 @@ static gboolean send_queue(gpointer user_data) {
 	gpointer d;
 	struct network_data *sd;
 	struct line *l;
-	struct plugin *old_plugin = current_plugin;
-	current_plugin = this_plugin;
+	push_plugin(this_plugin);
 
 	sd = (struct network_data *)user_data;
 	d = g_queue_pop_tail(sd->message_queue);
 	if(!d){ 
-		current_plugin = old_plugin; 
+		pop_plugin();
 		return TRUE;
 	}
 	l = (struct line *)d;
@@ -65,17 +64,17 @@ static gboolean send_queue(gpointer user_data) {
 	free_line(l);
 
 	gettimeofday(&sd->tv_last_message, NULL);
-	current_plugin = old_plugin;
+	pop_plugin();
 	
 	return TRUE;
 }
 
 static gboolean log_data(struct line *l) {
-	TIMEVAL tv, cmp;
+	TIMEVALUE tv, cmp;
 	struct network_data *sd;
 	if(l->direction == FROM_SERVER)return TRUE;
 
-	memset(&tv, 0, sizeof(TIMEVAL));
+	memset(&tv, 0, sizeof(TIMEVALUE));
 
 	/* Get data for this server from the hash */
 	sd = g_hash_table_lookup(antiflood_servers, l->network);
@@ -94,7 +93,7 @@ static gboolean log_data(struct line *l) {
 			}
 		}
 
-		memset(&sd, 0, sizeof(TIMEVAL));
+		memset(&sd, 0, sizeof(TIMEVALUE));
 		if(sd->queue_speed) sd->timeout_id = g_timeout_add(sd->queue_speed, send_queue , sd);
 		else sd->timeout_id = -1;
 

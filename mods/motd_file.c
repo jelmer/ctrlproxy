@@ -25,7 +25,7 @@
 #include "gettext.h"
 #define _(s) gettext(s)
 
-static char *motd_file = SHAREDIR"/ctrlproxy/motd";
+static char *motd_file = NULL;
 
 char ** motd_file_handler(struct network *n)
 {
@@ -61,7 +61,8 @@ const char name_plugin[] = "motd_file";
 
 gboolean init_plugin(struct plugin *p) {
 	xmlNodePtr cur = xmlFindChildByElementName(p->xmlConf, "file");
-	if(cur)motd_file = xmlNodeGetContent(cur);
+	if(cur) motd_file = xmlNodeGetContent(cur);
+	else motd_file = g_build_filename(get_shared_path(), "motd");
 
 	if(g_file_test(motd_file, G_FILE_TEST_EXISTS)) {
 		g_warning(_("Can't open MOTD file '%s' for reading\n"), motd_file);

@@ -35,10 +35,9 @@ struct auto_away_data {
 };
 
 static gboolean check_time(gpointer user_data) {
-	struct plugin *old_plugin = current_plugin;
-	current_plugin = this_plugin;
+	push_plugin(this_plugin);
 	if(time(NULL) - last_message > max_idle_time && !is_away) { 
-		GList *sl = networks;
+		GList *sl = get_network_list();
 		is_away = TRUE;
 		while(sl) {
 			struct network *s = (struct network *)sl->data;
@@ -52,7 +51,7 @@ static gboolean check_time(gpointer user_data) {
 			sl = g_list_next(sl);
 		}
 	}
-	current_plugin = old_plugin;
+	pop_plugin();
 
 	return TRUE;
 }
@@ -67,7 +66,7 @@ static gboolean log_data(struct line *l) {
 	   (!g_ascii_strcasecmp(l->args[0], "PRIVMSG") || !g_ascii_strcasecmp(l->args[0], "NOTICE"))) {
 		last_message = time(NULL);
 		if(is_away) {
-			GList *sl = networks;
+			GList *sl = get_network_list();
 			while(sl) {
 				struct network *s = (struct network *)sl->data;
 				irc_send_args(s->outgoing, "AWAY", NULL);

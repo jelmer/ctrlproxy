@@ -39,8 +39,10 @@ void handle_server_receive (struct transport_context *c, char *raw, void *_serve
 {
 	struct network *server = (struct network *)_server;
 	struct line *l;
-	
+
+#ifndef _WIN32
 	if(debugfd)fprintf(debugfd, _("[From server] %s\n"), raw);
+#endif
 
 	l = irc_parse_line(raw);
 	if(!l)return;
@@ -153,12 +155,12 @@ void server_send_login (struct transport_context *c, void *_server) {
 	g_assert(strlen(nick));
 	g_assert(strlen(username));
 	g_assert(strlen(fullname));
-	g_assert(strlen(my_hostname));
+	g_assert(strlen(get_my_hostname()));
 	g_assert(strlen(server_name));
 
 	if(xmlHasProp(s->xmlConf, "password"))irc_send_args(s->outgoing, "PASS", password, NULL);
 	irc_send_args(s->outgoing, "NICK", nick, NULL);
-	irc_send_args(s->outgoing, "USER", username, my_hostname, server_name, fullname, NULL);
+	irc_send_args(s->outgoing, "USER", username, get_my_hostname(), server_name, fullname, NULL);
 
 	xmlFree(nick);
 	xmlFree(username);
@@ -335,7 +337,9 @@ void handle_client_receive(struct transport_context *c, char *raw, void *_client
 
 	if(client->authenticated == 2)return;
 	
+#ifndef _WIN32
 	if(debugfd)fprintf(debugfd, _("[From client] %s\n"), raw);
+#endif
 
 	l = irc_parse_line(raw);
 	if(!l)return;
@@ -375,10 +379,10 @@ void handle_client_receive(struct transport_context *c, char *raw, void *_client
 			return;
 		}
 		irc_sendf(c, ":%s 001 %s :Welcome to the ctrlproxy\r\n", server_name, nick);
-		irc_sendf(c, ":%s 002 %s :Host %s is running ctrlproxy\r\n", server_name, nick, my_hostname);
+		irc_sendf(c, ":%s 002 %s :Host %s is running ctrlproxy\r\n", server_name, nick, get_my_hostname());
 		irc_sendf(c, ":%s 003 %s :Ctrlproxy (c) 2002-2004 Jelmer Vernooij <jelmer@vernstok.nl>\r\n", server_name, nick);
 		irc_sendf(c, ":%s 004 %s %s %s %s %s\r\n", 
-				server_name, nick, server_name, PACKAGE_VERSION, client->network->supported_modes[0]?client->network->supported_modes[0]:allmodes, client->network->supported_modes[1]?client->network->supported_modes[1]:allmodes);
+				server_name, nick, server_name, ctrlproxy_version(), client->network->supported_modes[0]?client->network->supported_modes[0]:allmodes, client->network->supported_modes[1]?client->network->supported_modes[1]:allmodes);
 		
 		if(client->network->features) {
 			tmp = list_make_string(client->network->features);
@@ -514,7 +518,7 @@ struct network *connect_network(xmlNodePtr conf) {
 
    	nick = xmlGetProp(s->xmlConf, "nick");
 	user_name = xmlGetProp(s->xmlConf, "username");
-	asprintf(&s->hostmask, "%s!~%s@%s", nick, user_name, my_hostname);
+	asprintf(&s->hostmask, "%s!~%s@%s", nick, user_name, get_my_hostname());
 	xmlFree(nick); xmlFree(user_name);
 
 	/* Find <listen> tag */
@@ -645,7 +649,7 @@ gboolean network_change_nick(struct network *s, char *nick)
 	if (!s->hostmask) {
 		if(!xmlHasProp(s->xmlConf, "username"))	xmlSetProp(s->xmlConf, "username", g_get_user_name());
 		tmp = xmlGetProp(s->xmlConf, "username");
-		asprintf(&s->hostmask, "%s!~%s@%s", nick, tmp, my_hostname);
+		asprintf(&s->hostmask, "%s!~%s@%s", nick, tmp, get_my_hostname());
 		xmlFree(tmp);
 	} else { 
 		p = strchr(s->hostmask, '!');
@@ -657,3 +661,40 @@ gboolean network_change_nick(struct network *s, char *nick)
 	return TRUE;
 }
 
+gboolean init_networks() {
+	xmlNodePtr cur;
+	if(!config_node_networks()) {
+		g_error(_("No networks listed"));
+		return 1;
+	}
+
+	cur = config_node_networks()->xmlChildrenNode;
+	while(cur) {
+		char *autoconnect;
+		if(xmlIsBlankNode(cur) || !strcmp(cur->name, "comment")){ cur = cur->next; continue; }
+		g_assert(!strcmp(cur->name, "network"));
+
+		autoconnect = xmlGetProp(cur, "autoconnect");
+		if(autoconnect && !strcmp(autoconnect, "1")) {
+#ifdef fork
+			if(seperate_processes) { 
+				if(fork() == 0) {  
+					connect_network(cur); 
+					break; 
+				}
+			} else 
+#endif
+			{
+				connect_network(cur);
+			}
+		}
+		xmlFree(autoconnect);
+
+		cur = cur->next;
+	}
+
+
+	g_timeout_add(1000 * 300, ping_loop, NULL);
+}
+
+GList *get_network_list() { return networks; }

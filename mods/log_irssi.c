@@ -136,13 +136,13 @@ static gboolean log_data(struct line *l)
 		dest = l->args[1];
 		if(!irccmp(l->network, dest, nnick))dest = nick;
 		xmlFree(nnick);
-		if(l->args[2][0] == '') { 
+		if(l->args[2][0] == '\001') { 
 			l->args[2][strlen(l->args[2])-1] = '\0';
-			if(!g_ascii_strncasecmp(l->args[2], "ACTION ", 8)) { 
+			if(!g_ascii_strncasecmp(l->args[2], "\001ACTION ", 8)) { 
 				f = find_add_channel_file(l->network, dest);
 				if(f)fprintf(f, "%02d:%02d  * %s %s\n", t->tm_hour, t->tm_min, nick, l->args[2]+8);
 			}
-			l->args[2][strlen(l->args[2])] = '';
+			l->args[2][strlen(l->args[2])] = '\001';
 			/* Ignore all other ctcp messages */
 		} else {
 			f = find_add_channel_file(l->network, dest);

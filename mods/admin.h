@@ -6,7 +6,7 @@ G_MODULE_EXPORT void unregister_admin_command(char *cmd);
 G_MODULE_EXPORT void admin_out(struct line *l, const char *fmt, ...);
 
 #if defined(_WIN32) && !defined(ADMIN_CORE_BUILD)
-#pragma comment(lib,"admin.lib")
+#pragma comment(lib,"libadmin.lib")
 #endif
 
 #endif

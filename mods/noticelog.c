@@ -28,8 +28,8 @@ static void admin_log(const gchar *log_domain, GLogLevelFlags log_level, const g
 	struct network *n;
 	char *server_name, *nick;
 	struct line *l;
-	if(!networks)return;
-	n = (struct network *)networks->data;
+	if(!get_network_list())return;
+	n = (struct network *)get_network_list()->data;
 	server_name = xmlGetProp(n->xmlConf, "name");
 	nick = xmlGetProp(n->xmlConf, "nick");
 	l = irc_parse_linef(":ctrlproxy!ctrlproxy@%s NOTICE %s :%s", server_name, nick, message);

@@ -26,7 +26,7 @@
 
 static struct network *find_network(const char *name)
 {
-	GList *gl = networks;
+	GList *gl = get_network_list();
 	while(gl) { 
 		struct network *n = (struct network *)gl->data;
 		char *nname = xmlGetProp(n->xmlConf, "name");

@@ -30,7 +30,7 @@ void CConfigurationDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialog::DoDataExchange(pDX);
 	//{{AFX_DATA_MAP(CConfigurationDlg)
-	DDX_Control(pDX, IDC_CONFTREE, m_tree);
+	DDX_Control(pDX, IDC_CONFTREE, m_Tree);
 	//}}AFX_DATA_MAP
 }
 
@@ -53,22 +53,35 @@ void CConfigurationDlg::OnSaveConfig()
 void CConfigurationDlg::OnShowWindow(BOOL bShow, UINT nStatus) 
 {
 	CDialog::OnShowWindow(bShow, nStatus);
-	if(!bShow) return;
-
-	::MessageBox(NULL, "FOO", "BAR", MB_OK);
-
-	m_tree.DeleteAllItems();
-
-	fillinchildren(TVI_ROOT, config_node_root());
-
+	if(bShow) UpdateTree();
 }
 
 void CConfigurationDlg::fillinchildren(HTREEITEM i, xmlNodePtr cur)
 {
-	HTREEITEM t = m_tree.InsertItem((char *)cur->name, i);
+	HTREEITEM t = m_Tree.InsertItem((char *)cur->name, i);
 	xmlNodePtr c = cur->xmlChildrenNode;
 	while(c) {
 		fillinchildren(t, c);
 		c = c->next;
 	}
+}
+
+BOOL CConfigurationDlg::OnInitDialog() 
+{
+	CDialog::OnInitDialog();
+	
+	m_Tree.m_hWnd = m_hWnd;
+	// TODO: Add extra initialization here
+	
+	return TRUE;  // return TRUE unless you set the focus to a control
+	              // EXCEPTION: OCX Property Pages should return FALSE
+}
+
+void CConfigurationDlg::UpdateTree()
+{
+	if(!::IsWindow(m_Tree.m_hWnd)) return;
+	m_Tree.DeleteAllItems();
+
+	fillinchildren(TVI_ROOT, config_node_root());
+
 }

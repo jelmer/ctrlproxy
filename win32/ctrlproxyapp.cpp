@@ -71,10 +71,14 @@ BOOL CCtrlproxyApp::InitInstance()
 	Enable3dControlsStatic();	// Call this when linking to MFC statically
 #endif
 	
+	xmlMemSetup(free, malloc, realloc, strdup);
+	
 	dlg = new CCtrlproxyDlg();
 	m_pMainWnd = dlg;
 	dlg->Create(CCtrlproxyDlg::IDD);
 	dlg->ShowWindow(SW_HIDE);
+
+
 
 	NOTIFYICONDATA dat;
 	dat.cbSize = sizeof(NOTIFYICONDATA);
@@ -106,7 +110,7 @@ BOOL CCtrlproxyApp::InitInstance()
 
 const char *get_my_hostname() { return "localhost"; /* FIXME */ } 
 const char *get_modules_path() { return "C:\\Documents and Settings\\Jelmer Vernooij\\Desktop\\ctrlproxy-devel\\win32\\Debug"; /*FIXME*/ }
-const char *get_shared_path() { return NULL; /*FIXME*/} 
+const char *get_shared_path() { return "C:\\Documents and Settings\\Jelmer Vernooij\\Desktop\\ctrlproxy-devel"; /*FIXME*/} 
 
 const char *ctrlproxy_version() { 
 	return "FIXME";

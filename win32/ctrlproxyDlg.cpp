@@ -53,7 +53,6 @@ BOOL CCtrlproxyDlg::OnInitDialog()
 {
 	CDialog::OnInitDialog();
 
-
 	TC_ITEM TabCtrlItem;
 	TabCtrlItem.mask = TCIF_TEXT;
     TabCtrlItem.pszText = "Status";
@@ -149,7 +148,12 @@ void CCtrlproxyDlg::UpdateVisibleWindow()
    int current = m_Tab.GetCurSel();
 
    for(int i = 0; i < NUM_TABS; i++) {
-	   tabs[i]->ShowWindow(current == i ? SW_SHOW : SW_HIDE);
+	   ::ShowWindow(tabs[i]->m_hWnd, current == i ? SW_SHOW : SW_HIDE);
+   }
+
+      if(current == TAB_CONFIGURATION) {
+	   CConfigurationDlg *dlg = (CConfigurationDlg *)tabs[TAB_CONFIGURATION];
+		dlg->UpdateTree();
    }
 
 }

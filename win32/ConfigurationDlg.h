@@ -16,14 +16,14 @@ class CConfigurationDlg : public CDialog
 {
 // Construction
 public:
+	void UpdateTree();
 	CConfigurationDlg(CWnd* pParent = NULL);   // standard constructor
 
 // Dialog Data
 	//{{AFX_DATA(CConfigurationDlg)
 	enum { IDD = IDD_CONFIGURATION };
-	CTreeCtrl	m_tree;
+	CTreeCtrl	m_Tree;
 	//}}AFX_DATA
-
 
 // Overrides
 	// ClassWizard generated virtual function overrides
@@ -38,6 +38,7 @@ protected:
 	// Generated message map functions
 	//{{AFX_MSG(CConfigurationDlg)
 	afx_msg void OnSaveConfig();
+	virtual BOOL OnInitDialog();
 	afx_msg void OnShowWindow(BOOL bShow, UINT nStatus);
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()

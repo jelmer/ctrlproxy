@@ -31,7 +31,7 @@ G_MODULE_EXPORT void register_transport(struct transport_ops *functions)
 	struct transport_ops *functions1 = malloc(sizeof(struct transport_ops));
 	memcpy(functions1, functions, sizeof(struct transport_ops));
 	functions1->reference_count = 0;
-	functions1->plugin = current_plugin;
+	functions1->plugin = peek_plugin();
 	transports = g_list_append(transports, functions1);
 }
 
@@ -134,7 +134,9 @@ void transport_free(struct transport_context *t)
 
 G_MODULE_EXPORT int transport_write(struct transport_context *t, char *l)
 {
+#ifndef _WIN32
 	if(debugfd)fprintf(debugfd, "[TO] %s\n", l);
+#endif
 	if(!t->functions->write)return -1;
 	return t->functions->write(t, l);
 }
@@ -158,3 +160,5 @@ void transport_set_data(struct transport_context *t, void *data)
 {
 	t->caller_data = data;
 }
+
+GList *get_transport_list() { return transports; }

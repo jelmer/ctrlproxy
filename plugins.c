@@ -83,7 +83,7 @@ gboolean load_plugin(xmlNodePtr cur)
 
 	/* Determine correct modules directory */
 	if(getenv("MODULESDIR"))modulesdir = getenv("MODULESDIR");
-	else modulesdir = MODULESDIR;
+	else modulesdir = get_modules_path();
 
 	if(mod_name[0] == '/')path_name = g_strdup(mod_name);
 	else path_name = g_module_build_path(modulesdir, mod_name);
@@ -135,3 +135,49 @@ gboolean load_plugin(xmlNodePtr cur)
 	xmlFree(mod_name);
 	return TRUE;
 }
+
+gboolean init_plugins() {
+	gboolean ret = TRUE;
+	xmlNodePtr cur;
+	if(!g_module_supported()) {
+		g_warning(_("DSO's not supported on this platform. Not loading any modules"));
+	} else if(!config_node_plugins()) {
+		g_warning(_("No modules set to be loaded"));	
+	}else {
+		cur = config_node_plugins()->xmlChildrenNode;
+		while(cur) {
+			char *enabled;
+
+			if(xmlIsBlankNode(cur) || !strcmp(cur->name, "comment")){ cur = cur->next; continue; }
+
+			g_assert(!strcmp(cur->name, "plugin"));
+
+			enabled = xmlGetProp(cur, "autoload");
+			if((!enabled || atoi(enabled) == 1) && !load_plugin(cur)) {
+				g_error(_("Can't load plugin %s, aborting..."), xmlGetProp(cur, "file"));
+				ret = FALSE;
+			}
+
+			xmlFree(enabled);
+
+			cur = cur->next;
+		}
+	}
+	return ret;
+}
+
+GList *get_plugin_list() {
+	return plugins;
+}
+
+void push_plugin(struct plugin *p) {
+	/*FIXME*/
+}
+
+struct plugin * pop_plugin() {
+	/*FIXME*/
+	return NULL;
+}
+
+struct plugin *peek_plugin() { /*FIXME*/ return NULL; }
+

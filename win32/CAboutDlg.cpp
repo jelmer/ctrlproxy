@@ -1,6 +1,9 @@
 // CAboutDlg.cpp : implementation file
 //
 
+extern "C" {
+#include "internals.h"
+}
 #include "stdafx.h"
 #include "ctrlproxyapp.h"
 #include "CAboutDlg.h"
@@ -21,6 +24,7 @@ CAboutDlg::CAboutDlg(CWnd* pParent /*=NULL*/)
 	//{{AFX_DATA_INIT(CAboutDlg)
 	m_license = _T("");
 	//}}AFX_DATA_INIT
+	
 }
 
 
@@ -35,9 +39,26 @@ void CAboutDlg::DoDataExchange(CDataExchange* pDX)
 
 BEGIN_MESSAGE_MAP(CAboutDlg, CDialog)
 	//{{AFX_MSG_MAP(CAboutDlg)
-		// NOTE: the ClassWizard will add message map macros here
 	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
 // CAboutDlg message handlers
+
+BOOL CAboutDlg::OnInitDialog() 
+{
+	CDialog::OnInitDialog();
+
+	m_license = _T("FOOBAR");
+/*
+	char *license_path = g_build_filename(get_shared_path(), "COPYING");
+	char buf[255];
+	CFile f(license_path, CFile::modeRead);
+
+	while(f.Read(buf, sizeof(buf))) m_license+=(buf);
+
+	free(license_path);
+*/	
+	return TRUE;  // return TRUE unless you set the focus to a control
+	              // EXCEPTION: OCX Property Pages should return FALSE
+}

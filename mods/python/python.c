@@ -23,8 +23,8 @@
 	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 */
 
-//#define _GNU_SOURCE
-//#include <string.h>
+#define _GNU_SOURCE
+#include <string.h>
 #ifdef DEBUG
 #undef _DEBUG
 #include <Python.h>
@@ -1207,7 +1207,6 @@ static PyObject * PyCtrlproxyPlugin_unload(PyCtrlproxyObject *self, PyObject *ar
 
 	/* Find specified plugins' GModule and xmlNodePtr */
 	if(unload_plugin(p)) {
-		plugins = g_list_remove(plugins, p);
 		self->ptr = NULL;
 	    Py_INCREF(Py_None);
 		return Py_None;
@@ -1864,7 +1863,7 @@ static void in_server_disconnected_hook(struct network *l) {
 
 static PyObject * PyCtrlproxy_list_networks(PyObject *self, PyObject *args, PyObject *kwds){
 	PyObject *rv = PyList_New(0);
-	GList *l = networks;
+	GList *l = get_network_list();
 	while(l) {
 		struct network *s = (struct network *)l->data;
 		PyList_Append(rv,PyString_FromString(xmlGetProp(s->xmlConf, "name")));
@@ -1905,7 +1904,7 @@ static PyObject * PyCtrlproxy_add_event_object(PyObject *self, PyObject *args, P
 // networks interface
 static PyObject * PyCtrlproxy_get_network(PyObject *self, PyObject *args, PyObject *kwds){
 	static char *kwlist[] = {"network",NULL};
-	GList *l = networks;
+	GList *l = get_network_list();
 	char *net = NULL;
 	PyObject *rv = NULL;
 
@@ -1939,7 +1938,7 @@ static PyObject * PyCtrlproxy_connect_network(PyObject *self, PyObject *args, Py
                                       &net))
 		return NULL;
 	/* Find specified plugins' GModule and xmlNodePtr */
-	cur = xmlNode_networks->xmlChildrenNode;
+	cur = config_node_networks()->xmlChildrenNode;
 	while(cur) {
 		nname = xmlGetProp(cur, "name");
 		if(nname && !strcmp(nname, net)) {
@@ -1956,7 +1955,7 @@ static PyObject * PyCtrlproxy_connect_network(PyObject *self, PyObject *args, Py
 
 static PyObject * PyCtrlproxy_disconnect_network(PyObject *self, PyObject *args, PyObject *kwds){
 	static char *kwlist[] = {"network",NULL};
-	GList *l = networks;
+	GList *l = get_network_list();
 	char *net = NULL;
 	PyObject *rv = NULL;
 
@@ -2107,7 +2106,7 @@ static PyObject * PyCtrlproxy_loadmodule(PyObject *self, PyObject *args, PyObjec
 }
 
 static PyObject * PyCtrlproxy_listmodules(PyObject *self, PyObject *args, PyObject *kwds){
-	GList *g = plugins;
+	GList *g = get_plugin_list();
 	PyObject *rv = NULL;
 
 	rv = PyDict_New();
@@ -2122,7 +2121,7 @@ static PyObject * PyCtrlproxy_listmodules(PyObject *self, PyObject *args, PyObje
 }
 
 static PyObject * PyCtrlproxy_list_transports(PyObject *self, PyObject *args, PyObject *kwds){
-	GList *gl = transports;
+	GList *gl = get_transport_list();
 	PyObject *rv = PyDict_New();
 
 	while(gl) {
@@ -2212,9 +2211,9 @@ static PyObject * PyCtrlproxy_getconfig(PyObject *self, PyObject *args, PyObject
 		return NULL;
 
 	if (!g_ascii_strcasecmp("networks",type))
-		rv = PYCTRLPROXY_NODETOPYOB(xmlNode_networks);
+		rv = PYCTRLPROXY_NODETOPYOB(config_node_networks());
 	else if(!g_ascii_strcasecmp("plugins",type))
-		rv = PYCTRLPROXY_NODETOPYOB(xmlNode_plugins);
+		rv = PYCTRLPROXY_NODETOPYOB(config_node_plugins());
 	else
 		rv = PyInstance_New(PyObject_GetAttrString(xml_module,"xmlDoc"),Py_BuildValue("(O)",libxml_xmlDocPtrWrap((xmlDocPtr) configuration)),NULL);
 
@@ -2233,7 +2232,7 @@ static PyObject * PyCtrlproxy_getpath(PyObject *self, PyObject *args, PyObject *
 	} else if(!g_ascii_strcasecmp("prefix", part)) {
 		return PyString_FromString(PREFIX);
 	} else if(!g_ascii_strcasecmp("share", part)) {
-		return PyString_FromString(SHAREDIR);
+		return PyString_FromString(get_shared_path());
 	}
 
 	Py_INCREF(Py_None);
@@ -2336,10 +2335,29 @@ gboolean in_load(char *c,PyObject *args, struct line *l) {
 	PyCtrlproxyLog *pystdout;
 	PyCtrlproxyLog *pystderr;
 
+	if (PyType_Ready(&PyCtrlproxyLogType) < 0)
+        return FALSE;
+	if (PyType_Ready(&PyCtrlproxyLineType) < 0)
+        return FALSE;
+	if (PyType_Ready(&PyCtrlproxyClientType) < 0)
+        return FALSE;
+	if (PyType_Ready(&PyCtrlproxyNetworkType) < 0)
+        return FALSE;
+	if (PyType_Ready(&PyCtrlproxyNickType) < 0)
+        return FALSE;
+	if (PyType_Ready(&PyCtrlproxyChannelType) < 0)
+        return FALSE;
+	if (PyType_Ready(&PyCtrlproxyEventType) < 0)
+        return FALSE;
+	if (PyType_Ready(&PyCtrlproxyPluginType) < 0)
+        return FALSE;
+	if (PyType_Ready(&PyCtrlproxyScriptType) < 0)
+        return FALSE;
+
 	if(g_file_test(c,G_FILE_TEST_EXISTS)) {
 		cf = c;		
 	} else {
-		cf = g_build_filename(SHAREDIR, "ctrlproxy", "scripts", c, NULL);
+		cf = g_build_filename(get_shared_path(), "scripts", c, NULL);
 		if(!g_file_test(cf,G_FILE_TEST_EXISTS)) {
 			free(cf);
 			free(c);
@@ -2687,6 +2705,7 @@ static void init_finish() {
 
 gboolean init_plugin(struct plugin *p) {
 	xmlNodePtr cur;
+	PyObject *modlist, *moddir;
 
 	python_xmlConf = p->xmlConf;
 	python_plugin = p;
@@ -2738,12 +2757,23 @@ gboolean init_plugin(struct plugin *p) {
 	if (PyType_Ready(&PyCtrlproxyScriptType) < 0)
         return FALSE;
 
-	xml_module = PyImport_ImportModule("libxml2");
-	xml_modulemod = PyImport_ImportModule("libxml2mod");
+	//moddir = PyImport_ImportModule("libxmlmods");
+	xml_module = PyImport_ImportModule("libxml2a");
+	if(!xml_module)xml_module =PyImport_ImportModule("libxml2a");
+	if(!xml_module) {
+		g_error("Unable to load libxml2 bindings");
+		return FALSE;
+	} 
+
+	modlist = PyList_New(0);
+	//PyList_Append(modlist, moddir);
+	
+	PyRun_SimpleString("import libxmlmods.libxml2mod\n");
+	xml_modulemod = PyImport_ImportModuleEx("libxml2mod", NULL, NULL, modlist);
 	xml_node = PyObject_GetAttrString(xml_module,"xmlNode");
 
 	if(xml_modulemod == NULL) {
-		g_log(G_LOG_DOMAIN, G_LOG_LEVEL_ERROR, "libxml2 python bindings are required");
+		g_log(G_LOG_DOMAIN, G_LOG_LEVEL_ERROR, "libxml2mod python bindings are required");
 		return FALSE;
 
 	}
@@ -2765,7 +2795,7 @@ gboolean init_plugin(struct plugin *p) {
 	add_motd_hook("python_motd", in_motd_hook);
 	add_server_connected_hook("python_server_connected", in_server_connected_hook);
 	add_server_disconnected_hook("python_server_disconnected", in_server_disconnected_hook);
-	add_initialized_hook(&init_finish);
+	add_initialized_hook(init_finish);
 
 	return TRUE;
 }

@@ -28,10 +28,9 @@ static struct plugin *this_plugin = NULL;
 
 static gboolean loop_save_config(gpointer user_data)
 {
-	struct plugin *old_plugin = current_plugin;
-	current_plugin = this_plugin;
+	push_plugin(this_plugin);
 	save_configuration();
-	current_plugin = old_plugin;
+	pop_plugin();
 	return TRUE;
 }
 

@@ -150,6 +150,7 @@ struct plugin {
 typedef gboolean (*plugin_init_function) (struct plugin *);
 typedef gboolean (*plugin_fini_function) (struct plugin *);
 
+
 /* state.c */
 G_MODULE_EXPORT struct channel *find_channel(struct network *st, char *name);
 G_MODULE_EXPORT struct channel_nick *find_nick(struct channel *c, char *name);
@@ -169,7 +170,7 @@ G_MODULE_EXPORT gboolean connect_current_server (struct network *);
 G_MODULE_EXPORT gboolean connect_next_server (struct network *);
 G_MODULE_EXPORT int close_network(struct network *s);
 G_MODULE_EXPORT gboolean close_server(struct network *n);
-G_MODULE_EXPORT  GList *networks;
+G_MODULE_EXPORT GList *get_network_list();
 G_MODULE_EXPORT void clients_send(struct network *, struct line *, struct transport_context *exception);
 G_MODULE_EXPORT void network_add_listen(struct network *, xmlNodePtr);
 G_MODULE_EXPORT void disconnect_client(struct client *c);
@@ -191,16 +192,27 @@ G_MODULE_EXPORT struct line *irc_parse_linef( char *origin, ... );
 G_MODULE_EXPORT struct line *irc_parse_line_args( char *origin, ... );
 
 /* main.c */
-G_MODULE_EXPORT GMainLoop *main_loop;
 G_MODULE_EXPORT void clean_exit();
+G_MODULE_EXPORT const char *ctrlproxy_version();
+G_MODULE_EXPORT const char *get_my_hostname();
+G_MODULE_EXPORT const char *get_modules_path();
+G_MODULE_EXPORT const char *get_shared_path();
+
+/* config.c */
 G_MODULE_EXPORT void save_configuration();
+G_MODULE_EXPORT xmlNodePtr config_node_root();
+
+/* plugins.c */
 G_MODULE_EXPORT gboolean load_plugin(xmlNodePtr);
 G_MODULE_EXPORT gboolean unload_plugin(struct plugin *);
 G_MODULE_EXPORT gboolean plugin_loaded(char *name);
-G_MODULE_EXPORT struct plugin *current_plugin;
+G_MODULE_EXPORT void push_plugin(struct plugin *p);
+G_MODULE_EXPORT struct plugin *peek_plugin();
+G_MODULE_EXPORT struct plugin *pop_plugin();
+G_MODULE_EXPORT GList *get_plugin_list();
 
 /* transport.c */
-G_MODULE_EXPORT GList *transports;
+G_MODULE_EXPORT GList *get_transport_list();
 G_MODULE_EXPORT void register_transport(struct transport_ops *);
 G_MODULE_EXPORT gboolean unregister_transport(char *name);
 struct transport_context *transport_connect(const char *name, xmlNodePtr p, receive_handler, connected_handler, disconnect_handler, void *data);
@@ -244,9 +256,8 @@ G_MODULE_EXPORT gboolean linestack_add_line_list(struct linestack_context *, GSL
 G_MODULE_EXPORT char *list_make_string(char **);
 G_MODULE_EXPORT xmlNodePtr xmlFindChildByName(xmlNodePtr parent, const xmlChar *name);
 G_MODULE_EXPORT xmlNodePtr xmlFindChildByElementName(xmlNodePtr parent, const xmlChar *name);
-G_MODULE_EXPORT xmlNodePtr xmlNode_networks, xmlNode_plugins;
-G_MODULE_EXPORT GList *plugins;
-G_MODULE_EXPORT xmlDocPtr configuration;
+G_MODULE_EXPORT xmlNodePtr config_node_networks();
+G_MODULE_EXPORT xmlNodePtr config_node_plugins();
 G_MODULE_EXPORT int verify_client(struct network *s, struct client *c);
 G_MODULE_EXPORT char *ctrlproxy_path(char *part);
 G_MODULE_EXPORT int strrfc1459cmp(const char *a, const char *b);
@@ -297,6 +308,9 @@ G_MODULE_EXPORT int vasprintf(char **dest, const char *fmt, va_list ap);
 #endif
 
 #if defined(_WIN32) && !defined(CTRLPROXY_CORE_BUILD)
+G_MODULE_EXPORT gboolean fini_plugin(struct plugin *p);
+G_MODULE_EXPORT gboolean init_plugin(struct plugin *p);
+G_MODULE_EXPORT const char name_plugin[];
 #pragma comment(lib,"ctrlproxy.lib")
 #endif
 

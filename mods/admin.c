@@ -86,7 +86,7 @@ void admin_out(struct line *l, const char *fmt, ...)
 static xmlNodePtr find_network_xml(char *name)
 {
 	char *nname;
-	xmlNodePtr cur = xmlNode_networks->xmlChildrenNode;
+	xmlNodePtr cur = config_node_networks()->xmlChildrenNode;
 	while(cur)
 	{
 		nname = xmlGetProp(cur, "name");
@@ -100,7 +100,7 @@ static xmlNodePtr find_network_xml(char *name)
 static struct network *find_network_struct(char *name)
 {
 	char *nname;
-	GList *g = networks;
+	GList *g = get_network_list();
 	while(g) {
 		struct network *n = (struct network *)g->data;
 		nname = xmlGetProp(n->xmlConf, "name");
@@ -127,7 +127,7 @@ static void add_network (char **args, struct line *l)
 	/* Add node to networks node with specified name */
 	cur = xmlNewNode(NULL, "network");
 	xmlSetProp(cur, "name", args[1]);
-	xmlAddChild(xmlNode_networks, cur);
+	xmlAddChild(config_node_networks(), cur);
 
 	/* Add a 'servers' element */
 	xmlAddChild(cur, xmlNewNode(NULL, "servers"));
@@ -174,7 +174,7 @@ static void add_listen (char **args, struct line *l)
 		/* Add node to networks node with specified name */
 		net = xmlNewNode(NULL, "network");
 		xmlSetProp(net, "name", args[1]);
-		xmlAddChild(xmlNode_networks, net);
+		xmlAddChild(config_node_networks(), net);
 
 		/* Add a 'listen' element */
 		xmlAddChild(net, xmlNewNode(NULL, "listen"));
@@ -226,7 +226,7 @@ static void add_server (char **args, struct line *l)
 		/* Add node to networks node with specified name */
 		net = xmlNewNode(NULL, "network");
 		xmlSetProp(net, "name", args[1]);
-		xmlAddChild(xmlNode_networks, net);
+		xmlAddChild(config_node_networks(), net);
 
 		/* Add a 'servers' element */
 		xmlAddChild(net, xmlNewNode(NULL, "servers"));
@@ -322,7 +322,7 @@ static void com_next_server (char **args, struct line *l) {
 
 static void list_modules (char **args, struct line *l)
 {
-	GList *g = plugins;
+	GList *g = get_plugin_list();
 	while(g) {
 		struct plugin *p = (struct plugin *)g->data;
 		admin_out(l, "%s", p->name);
@@ -332,7 +332,7 @@ static void list_modules (char **args, struct line *l)
 
 static void unload_module (char **args, struct line *l)
 {
-	GList *g = plugins;
+	GList *g = get_plugin_list();
 
 	if(!args[1]) {
 		admin_out(l, _("Not enough arguments"));
@@ -348,7 +348,7 @@ static void unload_module (char **args, struct line *l)
 	while(g) {
 		struct plugin *p = (struct plugin *)g->data;
 		if(!strcmp(p->name, args[1])) {
-			if(unload_plugin(p)) plugins = g_list_remove(plugins, p);
+			unload_plugin(p);
 			return;
 		}
 		g = g->next;
@@ -372,7 +372,7 @@ static void load_module (char **args, struct line *l)
 
 	cur = xmlNewNode(NULL, "plugin");
 	xmlSetProp(cur, "file", args[1]);
-	xmlAddChild(xmlNode_plugins, cur);
+	xmlAddChild(config_node_plugins(), cur);
 
 	load_plugin(cur);
 }
@@ -453,7 +453,7 @@ static void help (char **args, struct line *l)
 static void list_networks(char **args, struct line *l)
 {
 	char *nname;
-	xmlNodePtr p = xmlNode_networks;
+	xmlNodePtr p = config_node_networks();
 	while(p) {
 		struct network *n = NULL;
 		nname = xmlGetProp(p, "name");
@@ -478,7 +478,7 @@ static void detach_client(char **args, struct line *l)
 
 static void handle_die(char **args, struct line *l)
 {
-	g_main_loop_quit(main_loop);
+	clean_exit();
 }
 
 void register_admin_command(char *name, void (*handler) (char **args, struct line *l), const char *help, const char *help_details)
@@ -490,7 +490,7 @@ void register_admin_command(char *name, void (*handler) (char **args, struct lin
 	cmd->handler = handler;
 	cmd->help = help;
 	cmd->help_details = help_details;
-	cmd->plugin = current_plugin;
+	cmd->plugin = peek_plugin();
 	commands = g_list_append(commands, cmd);
 }
 
@@ -514,7 +514,6 @@ static gboolean handle_data(struct line *l) {
 	int cmdoffset = 0;
 	int i;
 	GList *gl;
-	struct plugin *old_plugin = current_plugin;
 	if(l->direction != TO_SERVER) return TRUE;
 
 	if(g_ascii_strcasecmp(l->args[0], "CTRLPROXY") == 0)cmdoffset = 1;
@@ -548,9 +547,9 @@ static gboolean handle_data(struct line *l) {
 	while(gl) {
 		struct admin_command *cmd = (struct admin_command *)gl->data;
 		if(!g_ascii_strcasecmp(cmd->name, args[0])) {
-			current_plugin = cmd->plugin;
+			push_plugin(cmd->plugin);
 			cmd->handler(args, l);
-			current_plugin = old_plugin;
+			pop_plugin();
 			g_strfreev(args);
 			free(tmp);
 			return TRUE;
