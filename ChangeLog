@@ -1,3 +1,6 @@
+Ctrlproxy 2.7:
+ * Add repl_lastdisconnect.so
+
 Ctrlproxy 2.6:
  * Add bind to specific IP only support
  * Fix some bugs in parsing line structs
