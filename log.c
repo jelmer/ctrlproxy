@@ -28,3 +28,8 @@ void register_log_handler(char *name, log_handler h)
 {
 	/* FIXME */
 }
+
+void unregister_log_handler(char *name)
+{
+	/* FIXME */
+}

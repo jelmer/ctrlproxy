@@ -361,13 +361,16 @@ static void help (char **args, struct line *l)
 static void list_networks(char **args, struct line *l)
 {
 	char *nname;
-	GList *g = networks;
-	while(g) {
-		struct network *n = (struct network *)g->data;
-		nname = xmlGetProp(n->xmlConf, "name");
-		admin_out(l, nname);
+	xmlNodePtr p = xmlNode_networks;
+	while(p) {
+		struct network *n;
+		nname = xmlGetProp(p, "name");
+		n = find_network_struct(nname);
+		if(!n) admin_out(l, "%s: Not connected", nname);
+		else if(n->reconnect_id) admin_out(l, "%s: Reconnecting", nname);
+		else admin_out(l, "%s: connected", nname);
 		xmlFree(nname);
-		g = g->next;
+		p = p->next;
 	}
 }
 
