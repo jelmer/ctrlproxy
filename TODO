@@ -9,6 +9,7 @@
 - linestack_mysql
 - use new filter system
 - add timer that uses current_plugin
+- fix bug with no JOIN's sent
 
 report_time:
  - test
