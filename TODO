@@ -13,7 +13,6 @@
 
 report_time:
  - test
- - extend to include time in line itself
  
 linestack_file:
  - test

@@ -22,35 +22,25 @@
 #include <string.h>
 #include <time.h>
 
-static gboolean report_time(gpointer user_data) {
+static char *format = NULL;
+
+static gboolean report_time(struct line *l) {
 	/* Loop thru all channels on all servers */
-	GList *nl = networks;
-	struct line *l;
-	char *fmt = (char *)user_data;
 	char stime[512];
+	char *tmp;
 	time_t cur = time(NULL);
-	
-	strftime(stime, sizeof(stime), fmt?fmt:"%H:%M:%S", localtime(&cur));
-	
-	l = irc_parse_line_args("timestamp", "PRIVMSG", "DEST", stime, NULL);
-	l->direction = FROM_SERVER;
-	l->options|=LINE_NO_LOGGING;
 
-	while(nl) {
-		struct network *n = (struct network *)nl->data;
-		GList *cl = n->channels;
-		while(cl) {
-			struct channel *c = (struct channel *)cl->data;
-			free(l->args[1]);
-			l->args[1] = xmlGetProp(c->xmlConf, "name");
-			l->network = n;
-			filters_execute(l);
-			cl = cl->next;
-		}
-		nl = nl->next;
-	}
+	if(strcasecmp(l->args[0], "PRIVMSG") && strcasecmp(l->args[0], "NOTICE")) 
+		return TRUE;
 
-	free_line(l);
+	/* Don't add time in CTCP requests */
+	if(l->args[2][0] == '\001') return TRUE;
+	
+	strftime(stime, sizeof(stime), format?format:"%H:%M:%S", localtime(&cur));
+	
+	asprintf(&tmp, "[%s] %s", stime, l->args[2]);
+	free(l->args[2]);
+	l->args[2] = tmp;
 
 	return TRUE;
 }
@@ -68,20 +58,12 @@ char *name_plugin = "report_time";
 
 gboolean init_plugin(struct plugin *p) {
 	guint *timeout_id = malloc(sizeof(guint));
-	char *format = NULL;
-	int interval = 0;
-	xmlNodePtr cur = xmlFindChildByElementName(p->xmlConf, "interval");
-
-	if(cur && xmlNodeGetContent(cur))
-		interval = atoi(xmlNodeGetContent(cur));
-
-	if(interval == 0) interval = 60;
+	xmlNodePtr cur;
 
 	cur = xmlFindChildByElementName(p->xmlConf, "format");
 	if(cur) format = xmlNodeGetContent(cur);
 	
-	*timeout_id = g_timeout_add(1000 * interval, report_time, format);
-
+	add_filter_ex("report_time", report_time, "replicate", 50);
 	p->data = timeout_id;
 	return TRUE;
 }
