@@ -1,1 +1,11 @@
 ctrlproxy
+configure
+config.*
+aclocal.m4
+Makefile
+autom4te.cache
+build
+ctrlproxy.pc
+ctrlproxy.spec
+printstats
+*.o

@@ -1,6 +1,6 @@
 /* 
 	ctrlproxy: A modular IRC proxy
-	(c) 2002 Jelmer Vernooij <jelmer@nl.linux.org>
+	(c) 2002-2003 Jelmer Vernooij <jelmer@nl.linux.org>
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -20,32 +20,32 @@
 #define _GNU_SOURCE
 #include <time.h>
 #include "ctrlproxy.h"
+#include "../config.h"
 #include <malloc.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/utsname.h>
 
-CTRLPROXY_VERSIONING_MAGIC
+#undef G_LOG_DOMAIN
+#define G_LOG_DOMAIN "ctcp"
 
-void mhandle_incoming_data(struct module_context *c, const struct line *l)
+static gboolean mhandle_data(struct line *l)
 {
 	char *data, *t, *msg, *dest, *dhostmask = NULL;
 	time_t ti;
-	if(strcasecmp(l->args[0], "PRIVMSG"))return;
-
-	if(l->args[2][0] != '\001')return;
+	if(l->direction == TO_SERVER)return TRUE;
+	if(strcasecmp(l->args[0], "PRIVMSG") || l->args[2][0] != '\001')return TRUE;
 	data = strdup(l->args[2]+1);
 	t = strchr(data, '\001');
-	if(!t){ free(data); return; }
+	if(!t){ free(data); return TRUE; }
 	*t = '\0';
 
-	dest = l->args[1];
-	if(!strcasecmp(dest, c->parent->nick)) {
-		dhostmask = strdup(l->origin);
-		t = strchr(dhostmask, '!');
-		if(t)*t = '\0';
-		dest = dhostmask;
-	}
+	if(!l->origin)return TRUE;
+	
+	dhostmask = strdup(l->origin);
+	t = strchr(dhostmask, '!');
+	if(t)*t = '\0';
+	dest = dhostmask;
 
 	t = strchr(data, ' ');
 	if(t){ *t = '\0';t++; }
@@ -53,32 +53,44 @@ void mhandle_incoming_data(struct module_context *c, const struct line *l)
 	if(!strcasecmp(data, "VERSION")) {
 		struct utsname u;
 		uname(&u);
-		asprintf(&msg, "\001VERSION ctrlproxy:%s:%s %s\001", CTRLPROXY_VERSION, u.sysname, u.release);
-		server_send(c->parent, c->parent->hostmask, "NOTICE", dest, msg, NULL);
+		asprintf(&msg, "\001VERSION ctrlproxy:%s:%s %s\001", PACKAGE_VERSION, u.sysname, u.release);
+		irc_sendf(l->network->outgoing, "NOTICE %s :%s", dest, msg);
 		free(msg);
 	} else if(!strcasecmp(data, "TIME")) {
 		ti = time(NULL);
 		asprintf(&msg, "\001TIME %s\001", ctime(&ti));
 		t = strchr(msg, '\n');
 		if(t)*t = '\0';
-		server_send(c->parent, c->parent->hostmask, "NOTICE", dest, msg, NULL);
+		irc_sendf(l->network->outgoing, "NOTICE %s :%s", dest, msg);
 		free(msg);
 	} else if(!strcasecmp(data, "FINGER")) {
-		asprintf(&msg, "\001FINGER %s\001", c->parent->fullname);
-		server_send(c->parent, c->parent->hostmask, "NOTICE", dest, msg, NULL);
+		char *fullname = xmlGetProp(l->network->xmlConf, "fullname");
+		asprintf(&msg, "\001FINGER %s\001", fullname);
+		xmlFree(fullname);
+		irc_sendf(l->network->outgoing, "NOTICE %s :%s", dest, msg);
 		free(msg);
 	} else if(!strcasecmp(data, "SOURCE")) {
-		server_send(c->parent, c->parent->hostmask, "NOTICE", dest, "\001SOURCE http://nl.linux.org/~jelmer/ctrlproxy/\001", NULL);
+		irc_sendf(l->network->outgoing, "NOTICE %s :\001SOURCE http://nl.linux.org/~jelmer/ctrlproxy/\001", dest);
 	} else if(!strcasecmp(data, "CLIENTINFO")) {
-		server_send(c->parent, c->parent->hostmask, "NOTICE", dest, "\001CLIENTINFO VERSION TIME FINGER SOURCE CLIENTINFO PING\001", NULL);
+		irc_sendf(l->network->outgoing, "NOTICE %s :\001ACTION CLIENTINFO VERSION TIME FINGER SOURCE CLIENTINFO PING\001", dest);
 	} else if(!strcasecmp(data, "PING")) {
-		server_send(c->parent, c->parent->hostmask, "NOTICE", dest, l->args[2], NULL);
-	}
+		irc_sendf(l->network->outgoing, "NOTICE %s :%s", dest, l->args[2]?l->args[2]:"");
+	} else if(!strcasecmp(data, "ACTION")) {
+	} else g_warning("Received unknown CTCP request '%s'!\n", data);
 
 	free(data);
 	if(dhostmask)free(dhostmask);
+	return TRUE;
 }
 
-struct module_functions ctrlproxy_functions = {
-	NULL, NULL, mhandle_incoming_data, NULL, NULL
-};
+gboolean fini_plugin(struct plugin *p)
+{
+	del_filter(mhandle_data);
+	return TRUE;
+}
+
+gboolean init_plugin(struct plugin *p) 
+{
+	add_filter("ctcp", mhandle_data);
+	return TRUE;
+}
