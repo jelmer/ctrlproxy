@@ -29,8 +29,9 @@ public:
 	//{{AFX_VIRTUAL(CCtrlproxyApp)
 	public:
 	virtual BOOL InitInstance();
-	virtual int Run();
 	virtual int ExitInstance();
+	virtual BOOL OnIdle(LONG lCount);
+	virtual BOOL SaveAllModified();
 	//}}AFX_VIRTUAL
 
 // Implementation

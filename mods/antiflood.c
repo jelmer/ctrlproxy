@@ -93,7 +93,7 @@ static gboolean log_data(struct line *l) {
 			}
 		}
 
-		memset(&sd, 0, sizeof(TIMEVALUE));
+		memset(&sd->tv_last_message, 0, sizeof(TIMEVALUE));
 		if(sd->queue_speed) sd->timeout_id = g_timeout_add(sd->queue_speed, send_queue , sd);
 		else sd->timeout_id = -1;
 

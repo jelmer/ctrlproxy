@@ -43,6 +43,7 @@ Other TODO stuff:
 - Finish plugin config dialog
 - Make configuration dialog show attributes.
 - Icon!
+- clients can't connect yet?
 
 Known Bugs:
 -----------

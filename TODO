@@ -6,6 +6,9 @@
  - test dcc module
  - finish webconfig (worked on by poelzi)
  - fix bug in linestack_file
+ - replace transports by IOChannels
+  - support running from inetd
+  - make openssl and gnutls support seperate modules
 
 2.8:
  - win32 support with traybar
@@ -15,7 +18,4 @@
  - support for various authenticators (pam,plain,etc)
  - Net::IRC-like interface
  - dircproxy-config-to-ctrlproxyrc script
- - replace transports by IOChannels
-  - support running from inetd
-  - make openssl and gnutls support seperate modules
  - more tests in the testsuite

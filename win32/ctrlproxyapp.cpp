@@ -85,7 +85,7 @@ BOOL CCtrlproxyApp::InitInstance()
 	dat.uCallbackMessage = CTRLPROXY_TRAY_ICON;
 	strcpy(dat.szTip, "CtrlProxy manager");
 	Shell_NotifyIcon(NIM_ADD, &dat);
-//	g_log_set_handler (G_LOG_DOMAIN, G_LOG_LEVEL_MASK, log_handler, NULL);
+
 	add_filter_class("", -1);
 	add_filter_class("client", 100);
 	add_filter_class("replicate", 50);
@@ -118,12 +118,6 @@ void clean_exit()
 	exit(0);
 }	
 
-int CCtrlproxyApp::Run() 
-{
-	g_main_context_iteration(g_main_loop_get_context(main_loop), FALSE);
-	
-	return CWinApp::Run();
-}
 
 int CCtrlproxyApp::ExitInstance() 
 {
@@ -147,4 +141,19 @@ void CCtrlproxyApp::OnShow()
 {
 	m_pMainWnd->ShowWindow(SW_RESTORE);	
 	
+}
+
+BOOL CCtrlproxyApp::OnIdle(LONG lCount) 
+{
+	g_main_context_iteration(g_main_loop_get_context(main_loop), FALSE);
+
+	CWinApp::OnIdle(lCount);
+
+	return TRUE;
+}
+
+BOOL CCtrlproxyApp::SaveAllModified() 
+{
+	save_configuration();	
+	return CWinApp::SaveAllModified();
 }
