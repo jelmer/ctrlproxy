@@ -549,5 +549,8 @@ GSList *gen_replication(struct network *s)
 
 struct linestack_context *linestack_new_by_network(struct network *n)
 {
+	/* First, figure out if the network has a linestack attached to it */
+
 	/* FIXME */
+	return NULL;
 }

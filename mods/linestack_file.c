@@ -21,6 +21,7 @@
 #include "ctrlproxy.h"
 #include <string.h>
 #include <fcntl.h>
+#include <stdio.h>
 
 gboolean file_init(struct linestack_context *c, char *args)
 {
@@ -45,16 +46,14 @@ gboolean file_close(struct linestack_context *c)
 
 GSList *file_get_linked_list(struct linestack_context *c)
 {
-	int f = *(int *)c->data;
+	GIOChannel *io = (GIOChannel *)c->data;
+	GError *error;
 	GSList *ret = NULL;
+	char *raw;
 	
-	while(!feof(f)) {
-		char *raw;
+	while(g_io_channel_read_line(io, &raw, NULL, NULL, &error) == G_IO_STATUS_NORMAL) {
 		struct line *l;
-		if(fscanf(f, "%a\r\n", &raw) != 1) break;
-
 		l = irc_parse_line(raw);
-
 		free(raw);
 
 		ret = g_slist_append(ret, l);
@@ -65,21 +64,21 @@ GSList *file_get_linked_list(struct linestack_context *c)
 
 gboolean file_add_line(struct linestack_context *b, struct line *l)
 {
-	FILE *f = (FILE *)b->data;
+	GIOChannel *io = (GIOChannel *)b->data;
+	GError *error;
 	char *raw = irc_line_string_nl(l);
-	fputs(raw, f);
+	g_io_channel_write_chars(io, raw, -1, NULL, &error);
 	free(raw);
 	return TRUE;
 }	
 
 void file_send_file(struct linestack_context *b, struct transport_context *t) 
 {
-	FILE *f = (FILE *)b->data;
+	GIOChannel *io = (GIOChannel *)b->data;
+	char *raw;
+	GError *error;
 	
-	while(!feof(f)) {
-		char *raw;
-		if(fscanf(f, "%a\r\n", &raw) != 1) break;
-
+	while(g_io_channel_read_line(io, &raw, NULL, NULL, &error) == G_IO_STATUS_NORMAL)  {
 		transport_write(t, raw);
 		free(raw);
 	}

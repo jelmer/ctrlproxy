@@ -1,7 +1,6 @@
 Next release:
-- default linestack is used or explicitly specified linestack (specified 
-   at network level). Default linestack == ? How to specify argument 
-   to linestack?
+- FIXME's in code
+- use db2latex for generating PDF?
 - document: 
   * linestack_{file,memory}
   * repl_{simple,highlight,command}
