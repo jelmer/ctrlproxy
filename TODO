@@ -1,11 +1,7 @@
-2.7 
- - update documentation
-  - finish UPGRADING
-  - repl changes
-  - see FIXME's
- - test dcc module
- - finish webconfig (worked on by poelzi)
- - fix bug in linestack_file
- - replace transports by IOChannels
-  - support running from inetd
-  - make openssl and gnutls support seperate modules
+- update documentation
+ - finish UPGRADING
+ - repl changes
+ - see FIXME's
+- test dcc module
+- finish webconfig (worked on by poelzi)
+- fix bug in linestack_file
