@@ -2397,10 +2397,13 @@ gboolean in_load(char *c,PyObject *args, struct line *l) {
 	// extend module path and add tools object
 	PyList_Append(PyObject_GetAttrString(sys,"path"),PyString_FromString(pylibdir));
 	// add the script basedir to path
-#ifdef HAVE_CANONICALIZE_FILE_NAME
-	PyList_Append(PyObject_GetAttrString(sys,"path"),PyString_FromString(canonicalize_file_name(g_path_get_dirname(c))));
+#ifdef _WIN32
+	{
+		char abspath[_MAX_PATH];
+		PyList_Append(PyObject_GetAttrString(sys,"path"),PyString_FromString(_fullpath(abspath, g_path_get_dirname(c), _MAX_PATH)));
+	}
 #else 
-	/* FIXME */
+	PyList_Append(PyObject_GetAttrString(sys,"path"),PyString_FromString(canonicalize_file_name(g_path_get_dirname(c))));
 #endif
 
 	PyImport_ImportModule("ctrlproxy_tools");
