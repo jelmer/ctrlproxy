@@ -24,7 +24,9 @@ lib%.so: %.c
 	$(CC) $(CFLAGS) -shared -o $@ $<
 
 clean:
+	for I in $(MODS_SUBDIRS); do $(MAKE) -C $$I $@; done
 	rm -f $(MODS) *.o
 
 distclean: clean
+	for I in $(MODS_SUBDIRS); do $(MAKE) -C $$I $@; done
 	rm -f Makefile
