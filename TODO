@@ -1,12 +1,11 @@
 Next release:
-- improve docs
 - use namespaces and XML schemas instead of DTD
-- document linestack
+- add system for default linestack and selecting linestacks
 
 Optional:
 - improve PHP script for stats
 - more admin commands: DELNETWORK, NEXTSERVER, DELLISTEN, DELSERVER
-- automatically unload crashing modules
+- automatically unload crashing modules?
 - print time at regular intervals in replication
 - add file based linestack (DONE, need docs)
 - get a few replication modules: 
@@ -15,5 +14,4 @@ Optional:
   - save hash table per network
    - hash table contains entry with linestack_context for each channel/query
  - with only highlights (DONE, need docs)
-- don't automatically use loaded module for replication
 - only auto away when no client is connected (DONE, need docs!)

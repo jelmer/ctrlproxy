@@ -20,31 +20,32 @@
 #define _GNU_SOURCE
 #include "ctrlproxy.h"
 #include <string.h>
+#include <fcntl.h>
 
 gboolean file_init(struct linestack_context *c, char *args)
 {
-	c->data = fopen(args, "a+");
+	c->data = g_io_channel_new_file(args, "a+", NULL);
 	if(!c->data) return FALSE;
 	return TRUE;
 }
 
 gboolean file_clear(struct linestack_context *c)
 {
-	FILE *f = (FILE *)c->data;
-	rewind(f);
+	GIOChannel *io = c->data;
+	g_io_channel_seek_position(io, 0, G_SEEK_SET, NULL);
 	return TRUE;
 }
 
 gboolean file_close(struct linestack_context *c)
 {
-	FILE *f = (FILE *)c->data;
-	fclose(f);
+	GIOChannel *io = c->data;
+	g_io_channel_shutdown(io, TRUE, NULL);
 	return TRUE;
 }
 
 GSList *file_get_linked_list(struct linestack_context *c)
 {
-	FILE *f = (FILE *)c->data;
+	int f = *(int *)c->data;
 	GSList *ret = NULL;
 	
 	while(!feof(f)) {

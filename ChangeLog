@@ -1,7 +1,9 @@
 Ctrlproxy 2.6:
- * Ad linestack support
+ * Add attribute only_noclient
+ * Add linestack support
  * Split repl_memory into linestack_memory and repl_simple
- * ADd repl_command
+ * Add linestack_file
+ * Add repl_command
  * Added function plugin_loaded()
  * Admin commands can now be executed by /CTRLPROXY
  * Executing admin commands by sending them to the nick 'ctrlproxy' is now
