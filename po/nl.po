@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ctrlproxy 2.7-CVS\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2004-01-28 16:24+0100\n"
+"POT-Creation-Date: 2004-01-28 17:20+0100\n"
 "PO-Revision-Date: 2003-01-28 13:22+CET\n"
 "Last-Translator: Jelmer Vernooij <jelmer@vernstok.nl>\n"
 "Language-Team: Dutch <nl@li.org>\n"
@@ -139,38 +139,38 @@ msgstr "Gebruik één proces per netwerk"
 msgid "Show version information"
 msgstr ""
 
-#: main.c:213
+#: main.c:216
 #, c-format
-msgid "(c) 2002-2003 Jelmer Vernooij et al. <jelmer@nl.linux.org>\n"
+msgid "(c) 2002-2004 Jelmer Vernooij et al. <jelmer@nl.linux.org>\n"
 msgstr "(c) 2002-2004 Jelmer Vernooij en anderen. <jelmer@nl.linux.org>\n"
 
-#: main.c:220
+#: main.c:223
 msgid "Can't figure out hostname of local host!"
 msgstr ""
 
-#: main.c:226
+#: main.c:229
 #, c-format
 msgid "Can't open logfile %s!"
 msgstr ""
 
-#: main.c:236
+#: main.c:239
 msgid "Logfile opened"
 msgstr ""
 
-#: main.c:269
+#: main.c:272
 msgid "DSO's not supported on this platform. Not loading any modules"
 msgstr ""
 
-#: main.c:271
+#: main.c:274
 msgid "No modules set to be loaded"
 msgstr ""
 
-#: main.c:283
+#: main.c:286
 #, c-format
 msgid "Can't load plugin %s, aborting..."
 msgstr ""
 
-#: main.c:294
+#: main.c:297
 msgid "No networks listed"
 msgstr ""
 
@@ -327,6 +327,508 @@ msgstr ""
 #: util.c:75
 #, c-format
 msgid "Couldn't create '%s'!\n"
+msgstr ""
+
+#: mods/admin.c:111
+msgid "No name specified"
+msgstr ""
+
+#: mods/admin.c:116
+msgid "Such a network already exists"
+msgstr ""
+
+#: mods/admin.c:133 mods/admin.c:159 mods/admin.c:211
+msgid "Not enough parameters"
+msgstr ""
+
+#: mods/admin.c:138
+msgid "Can't remove active network"
+msgstr ""
+
+#: mods/admin.c:144
+#, c-format
+msgid "No such network '%s'"
+msgstr ""
+
+#: mods/admin.c:190 mods/admin.c:242
+msgid "Properties should be in the format 'key=value'"
+msgstr ""
+
+#: mods/admin.c:255
+msgid "No network specified"
+msgstr "Geen netwerk opgegeven"
+
+#: mods/admin.c:261
+#, c-format
+msgid "Can't find network named %s"
+msgstr ""
+
+#: mods/admin.c:268
+#, c-format
+msgid "Already connected to %s"
+msgstr ""
+
+#: mods/admin.c:270
+#, c-format
+msgid "Forcing reconnect to %s"
+msgstr ""
+
+#: mods/admin.c:274
+#, c-format
+msgid "Connecting to %s"
+msgstr ""
+
+#: mods/admin.c:286
+msgid "Can't find active network with that name"
+msgstr ""
+
+#: mods/admin.c:305 mods/admin.c:458
+#, c-format
+msgid "%s: Not connected"
+msgstr ""
+
+#: mods/admin.c:307 mods/admin.c:459
+#, c-format
+msgid "%s: Reconnecting"
+msgstr ""
+
+#: mods/admin.c:309
+#, c-format
+msgid "Cycle server in %s"
+msgstr ""
+
+#: mods/admin.c:331
+msgid "Not enough arguments"
+msgstr ""
+
+#: mods/admin.c:336
+msgid "Can't unload /this/ module"
+msgstr ""
+
+#: mods/admin.c:350
+msgid "No such plugin loaded"
+msgstr ""
+
+#: mods/admin.c:357
+msgid "No file specified"
+msgstr ""
+
+#: mods/admin.c:362
+msgid "Module already loaded"
+msgstr ""
+
+#: mods/admin.c:412
+#, c-format
+msgid "Details for command %s:"
+msgstr ""
+
+#: mods/admin.c:414
+msgid "The following commands are available:"
+msgstr ""
+
+#: mods/admin.c:427
+#, c-format
+msgid "Sorry, no help for %s available"
+msgstr ""
+
+#: mods/admin.c:442
+msgid "Unknown command"
+msgstr ""
+
+#: mods/admin.c:460
+#, c-format
+msgid "%s: connected"
+msgstr ""
+
+#: mods/admin.c:521
+msgid ""
+"Please give a command. Use the 'help' command to get a list of available "
+"commands"
+msgstr ""
+
+#: mods/admin.c:555
+#, c-format
+msgid "Can't find command '%s'. Type 'help' for a list of available commands. "
+msgstr ""
+
+#: mods/admin.c:574 mods/admin.c:584 mods/admin.c:585
+msgid "<name>"
+msgstr ""
+
+#: mods/admin.c:574
+msgid "Add new network with specified name"
+msgstr ""
+
+#: mods/admin.c:575 mods/admin.c:576
+msgid "<network> <type> [property1=value1] ..."
+msgstr ""
+
+#: mods/admin.c:575
+msgid "Add server with specified properties to the specified network"
+msgstr ""
+
+#: mods/admin.c:576
+msgid "Add listener with specified properties to the specified network"
+msgstr ""
+
+#: mods/admin.c:577 mods/admin.c:578 mods/admin.c:581
+msgid "<network>"
+msgstr ""
+
+#: mods/admin.c:577
+msgid "Connect to specified network. Forces reconnect when waiting."
+msgstr ""
+
+#: mods/admin.c:578
+msgid "Remove specified network"
+msgstr ""
+
+#: mods/admin.c:579
+msgid "[network]"
+msgstr ""
+
+#: mods/admin.c:579
+msgid "Disconnect and use to the next server in the list"
+msgstr ""
+
+#: mods/admin.c:580
+msgid "Exit ctrlproxy"
+msgstr ""
+
+#: mods/admin.c:581
+msgid "Disconnect specified network"
+msgstr ""
+
+#: mods/admin.c:582
+msgid "List current networks and their status"
+msgstr ""
+
+#: mods/admin.c:583
+msgid "Load specified module"
+msgstr ""
+
+#: mods/admin.c:584
+msgid "Unload specified module"
+msgstr ""
+
+#: mods/admin.c:585
+msgid "Reload specified module"
+msgstr ""
+
+#: mods/admin.c:586
+msgid "List currently loaded modules"
+msgstr ""
+
+#: mods/admin.c:587
+msgid "Send current XML configuration to client"
+msgstr ""
+
+#: mods/admin.c:588
+msgid "Save current XML configuration to specified file"
+msgstr ""
+
+#: mods/admin.c:589
+msgid "Detach current client"
+msgstr ""
+
+#: mods/admin.c:590
+msgid "This help command"
+msgstr ""
+
+#: mods/auto-away.c:47
+msgid "Auto Away"
+msgstr ""
+
+#: mods/ctcp.c:91
+#, c-format
+msgid "Received unknown CTCP request '%s'!"
+msgstr ""
+
+#: mods/log_custom.c:252 mods/log_irssi.c:66
+#, c-format
+msgid "Couldn't create directory %s for logging!"
+msgstr ""
+
+#: mods/log_custom.c:264 mods/log_irssi.c:81
+#, c-format
+msgid "Couldn't open file %s for logging!"
+msgstr ""
+
+#: mods/log_custom.c:481
+msgid "No <logfilename> tag for log_custom module"
+msgstr ""
+
+#: mods/motd_file.c:39
+#, c-format
+msgid "Can't open '%s'\n"
+msgstr "Kan het bestand '%s' niet openen"
+
+#: mods/motd_file.c:68
+#, c-format
+msgid "Can't open MOTD file '%s' for reading\n"
+msgstr ""
+
+#: mods/nickserv.c:100
+#, c-format
+msgid "Ghosting current user using '%s' on %s"
+msgstr ""
+
+#: mods/repl_command.c:85
+msgid "No backlogs saved yet"
+msgstr ""
+
+#: mods/repl_command.c:91
+#, c-format
+msgid "Sending backlog for network '%s'"
+msgstr ""
+
+#: mods/repl_command.c:101
+#, c-format
+msgid "Sending backlog for channel %s@%s"
+msgstr ""
+
+#: mods/repl_command.c:111
+#, c-format
+msgid "No backlog for %s"
+msgstr ""
+
+#: mods/repl_command.c:119 mods/debug.c:82
+msgid "admin module required for repl_command module. Please load it first"
+msgstr ""
+
+#: mods/repl_command.c:123
+msgid "[channel]"
+msgstr ""
+
+#: mods/repl_command.c:123
+msgid "Send backlogs for this network or a channel, if specified"
+msgstr ""
+
+#: mods/socket/socket.c:85
+#, c-format
+msgid "Failed to exec %s : %s"
+msgstr ""
+
+#: mods/socket/socket.c:108
+#, c-format
+msgid "Error setting nonblock %s"
+msgstr ""
+
+#: mods/socket/socket.c:124
+msgid "Can't convert socket to SSL"
+msgstr ""
+
+#: mods/socket/socket.c:159
+#, c-format
+msgid "Unknown element %s"
+msgstr ""
+
+#: mods/socket/socket.c:192
+msgid "Can't accept connection!"
+msgstr ""
+
+#: mods/socket/socket.c:195
+#, c-format
+msgid "New client %d"
+msgstr "Nieuwe client '%d'"
+
+#: mods/socket/socket.c:230
+msgid "Channel is not readeable!"
+msgstr ""
+
+#: mods/socket/socket.c:238
+msgid "Unknown error"
+msgstr ""
+
+#: mods/socket/socket.c:298
+#, c-format
+msgid "Connecting to %s:%d"
+msgstr ""
+
+#: mods/socket/socket.c:304
+#, c-format
+msgid "(While connecting to server %s with %s): socket: %s"
+msgstr ""
+
+#: mods/socket/socket.c:342
+#, c-format
+msgid "Unknown host %s."
+msgstr ""
+
+#: mods/socket/socket.c:363
+#, c-format
+msgid "(While connecting to server %s): connect: %s"
+msgstr ""
+
+#: mods/socket/socket.c:374
+#, c-format
+msgid "Successfully connected to %s:%d"
+msgstr ""
+
+#: mods/socket/socket.c:404
+#, c-format
+msgid "Trying to send line '%s' to socket that is not connected!"
+msgstr ""
+
+#: mods/socket/socket.c:409
+msgid "Channel is not writeable!"
+msgstr ""
+
+#: mods/socket/socket.c:415
+#, c-format
+msgid "Can't send: %s"
+msgstr ""
+
+#: mods/socket/socket.c:506
+#, c-format
+msgid "Error trying to listen on port %d: %s"
+msgstr ""
+
+#: mods/socket/socket.c:512
+#, c-format
+msgid "Listening on port %d(socket %d)"
+msgstr ""
+
+#: mods/socket/socket.c:569
+#, c-format
+msgid "Error trying to listen on %s: %s"
+msgstr ""
+
+#: mods/socket/socket.c:576
+#, c-format
+msgid "Listening on socket at %s(%d)"
+msgstr ""
+
+#: mods/stats/printstats.c:52
+#, c-format
+msgid "No file specified\n"
+msgstr ""
+
+#: mods/stats/stats.c:145
+#, c-format
+msgid "PCRE compilation failed at offset %d: %s\n"
+msgstr ""
+
+#: mods/stats/stats.c:282
+#, c-format
+msgid "Unable to open TDB database %s\n"
+msgstr ""
+
+#: mods/dcc.c:59 mods/dcc.c:60
+#, c-format
+msgid "Can't open directory '%s'"
+msgstr "Kan de directory '%s' niet openen"
+
+#: mods/dcc.c:76 mods/dcc.c:209
+msgid "Invalid filename"
+msgstr ""
+
+#: mods/dcc.c:85
+#, c-format
+msgid "Error occured while deleting %s: %s"
+msgstr ""
+
+#: mods/dcc.c:87
+#, c-format
+msgid "%s successfully deleted"
+msgstr ""
+
+#: mods/dcc.c:112
+#, c-format
+msgid "Error accepting incoming DCC connection: %s"
+msgstr ""
+
+#: mods/dcc.c:119
+#, c-format
+msgid "Couldn't read from '%s': %s"
+msgstr ""
+
+#: mods/dcc.c:126
+#, c-format
+msgid "Error sending file '%s': %s"
+msgstr ""
+
+#: mods/dcc.c:140
+msgid "Error listening for DCC connections"
+msgstr ""
+
+#: mods/dcc.c:152
+msgid "DCC SEND timed out, removing...\n"
+msgstr ""
+
+#: mods/dcc.c:166
+#, c-format
+msgid "Error creating socket: %s"
+msgstr ""
+
+#: mods/dcc.c:175
+#, c-format
+msgid "Unable to bind: %s"
+msgstr ""
+
+#: mods/dcc.c:180
+#, c-format
+msgid "Unable to listen: %s"
+msgstr ""
+
+#: mods/dcc.c:186
+#, c-format
+msgid "Unable to get socket name: %s"
+msgstr ""
+
+#: mods/dcc.c:218
+msgid "Unable to listen"
+msgstr ""
+
+#: mods/dcc.c:223
+#, c-format
+msgid "Unable to stat '%s': %s"
+msgstr ""
+
+#: mods/dcc.c:243
+#, c-format
+msgid "Unknown subcommand '%s'"
+msgstr ""
+
+#: mods/dcc.c:255
+msgid "DCC Connection closed"
+msgstr ""
+
+#: mods/dcc.c:261
+msgid "Error occured while receiving data over DCC"
+msgstr ""
+
+#: mods/dcc.c:284
+#, c-format
+msgid "Unable to create socket: %s"
+msgstr ""
+
+#: mods/dcc.c:292
+#, c-format
+msgid "Unable to connect to host: %s"
+msgstr ""
+
+#: mods/dcc.c:304
+#, c-format
+msgid "Can't open file for %s: %s"
+msgstr ""
+
+#: mods/dcc.c:322
+msgid "Invalidly formatted CTCP request received"
+msgstr ""
+
+#: mods/dcc.c:360
+msgid "admin module required for dcc module. Please load it first"
+msgstr ""
+
+#: mods/debug.c:57
+#, c-format
+msgid "Can't find network '%s'"
+msgstr ""
+
+#: mods/autosave.c:59
+#, c-format
+msgid "Interval of %i minutes is too short"
 msgstr ""
 
 #: plugins.c:36
