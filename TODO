@@ -1,8 +1,6 @@
 - finish configuration utility (worked on by Kyoshiro, see list in ctrlproxy-setup)
 - automated testsuite
 - dcc module
-- system wide ctrlproxy?
- - connect to central daemon that does a fork and starts ctrlproxy in that?
 - Modules shouldn't be loaded twice (worked on by poelzi)
 - non-blocking connect
 - add member 'nick' to struct line
