@@ -45,6 +45,17 @@ typedef struct
 
 static GIOStatus g_io_gnutls_error(gint e)
 {
+	
+	switch(e)
+	{
+		case GNUTLS_E_INTERRUPTED:
+		case GNUTLS_E_AGAIN:
+			return G_IO_STATUS_AGAIN;
+		default:
+			g_warning("TLS Error: %s", gnutls_strerror(e));
+			return G_IO_STATUS_ERROR;
+	}
+
 	return G_IO_STATUS_ERROR;
 }
 	
@@ -60,24 +71,20 @@ static GIOStatus g_io_gnutls_read(GIOChannel *handle, gchar *buf, guint len, gui
 {
 	GIOTLSChannel *chan = (GIOTLSChannel *)handle;
 	gint err;
+	*ret = 0;
 
 	if(!chan->secure) {
 		err = gnutls_handshake(chan->session);
 		if(err < 0) {
 			g_warning("TLS Handshake failed");
-			return G_IO_STATUS_ERROR;
+			return g_io_gnutls_error(err);
 		}
 		chan->secure = 1;
-		return G_IO_STATUS_NORMAL;
 	}
 
 	err = gnutls_record_recv(chan->session, buf, len);
 	if(err == 0) return G_IO_STATUS_EOF;
-	if(err < 0)
-	{
-		*ret = 0;
-		return g_io_gnutls_error(err);
-	}
+	if(err < 0) return g_io_gnutls_error(err);
 	*ret = err;
 	return G_IO_STATUS_NORMAL;
 }
@@ -92,7 +99,7 @@ static GIOStatus g_io_gnutls_write(GIOChannel *handle, const gchar *buf, gsize l
 		err = gnutls_handshake(chan->session);
 		if(err < 0) {
 			g_warning("TLS Handshake failed");
-			return G_IO_STATUS_ERROR;
+			return g_io_gnutls_error(err);
 		}
 	}
 
@@ -218,3 +225,4 @@ GIOChannel *g_io_gnutls_get_iochannel(GIOChannel *handle, gboolean server)
 	
 	return gchan;
 }
+
