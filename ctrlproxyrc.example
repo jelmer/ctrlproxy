@@ -92,7 +92,7 @@
 				</pipe>
 			</servers>
 		</network>
-		<network autoconnect="1" client_pass="secret" name="Freenode" nick="jelmer" username="jelmer" fullname="Jelmer Vernooij">
+		<network autoconnect="1" client_pass="secret" name="Freenode" fullname="CtrlProxy user">
 			<listen>
 				<ipv4 port="6667"/>
 				<ipv4 port="7667" ssl="1"/>
