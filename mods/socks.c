@@ -445,6 +445,23 @@ gboolean fini_plugin(struct plugin *p)
 
 const char name_plugin[] = "socks";
 
+gboolean save_config(struct plugin *p, xmlNodePtr node)
+{
+	GList *gl;
+	char *tmp;
+	
+	for (gl = allow_rules; gl ; gl = gl->next) {
+		struct allow_rule *r = gl->data;
+		xmlNodePtr n = xmlNewNode(NULL, "allow");
+		if (r->username) xmlSetProp(n, "username", r->username);
+		if (r->password) xmlSetProp(n, "password", r->password);
+
+		xmlAddChild(node, n);
+	}
+
+	/* FIXME: Set port */
+}
+
 gboolean load_config(struct plugin *p, xmlNodePtr conf)
 {
 	int sock;

@@ -52,6 +52,12 @@ gboolean fini_plugin(struct plugin *p) {
 
 const char name_plugin[] = "report_time";
 
+gboolean save_config(struct plugin *p, xmlNodePtr node)
+{
+	xmlNewTextChild(node, NULL, "format", format);
+	return TRUE;
+}
+
 gboolean load_config(struct plugin *p, xmlNodePtr node)
 {
 	xmlNodePtr cur;

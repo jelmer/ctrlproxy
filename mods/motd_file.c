@@ -61,6 +61,12 @@ gboolean fini_plugin(struct plugin *p) {
 
 const char name_plugin[] = "motd_file";
 
+gboolean save_config(struct plugin *p, xmlNodePtr node)
+{
+	xmlNewTextChild(node, NULL, "motd_file", motd_file);
+	return TRUE;
+}
+
 gboolean load_config(struct plugin *p, xmlNodePtr node) 
 {
 	xmlNodePtr cur;

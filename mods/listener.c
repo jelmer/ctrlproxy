@@ -162,6 +162,30 @@ struct listener *new_listener(guint16 port)
 	return l;
 }
 
+gboolean save_config(struct plugin *p, xmlNodePtr conf)
+{
+	GList *gl;
+	char *tmp;
+	
+	for (gl = listeners; gl; gl = gl->next) {
+		struct listener *l = gl->data;
+		xmlNodePtr n = xmlNewNode(NULL, "listen");
+	
+		xmlSetProp(n, "port", tmp = g_strdup_printf("%d", l->port));
+		g_free(tmp);
+
+		if (l->password) 
+			xmlSetProp(n, "password", l->password);
+
+		if (l->network) 
+			xmlSetProp(n, "network", l->network->name);
+
+		xmlAddChild(conf, n);
+	}
+
+	return TRUE;
+}
+
 gboolean load_config(struct plugin *p, xmlNodePtr conf)
 {
 	xmlNodePtr cur;

@@ -485,6 +485,22 @@ gboolean fini_plugin(struct plugin *p)
 
 const char name_plugin[] = "log_custom";
 
+static void savefmt(gpointer key, gpointer value, gpointer udata)
+{
+	xmlNodePtr node = udata;
+
+	xmlNewTextChild(node, NULL, key, value);
+}
+
+gboolean save_config(struct plugin *p, xmlNodePtr node)
+{
+	xmlNewTextChild(node, NULL, "logfilename", logfilename);
+
+	g_hash_table_foreach(fmts, savefmt, node);
+
+	return TRUE;
+}
+
 gboolean load_config(struct plugin *p, xmlNodePtr node)
 {
 	xmlNodePtr cur;
