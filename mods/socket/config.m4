@@ -19,7 +19,7 @@ if test "$gnutls_config" != "no" && test "`libgnutls-config --version | cut -f 1
 	CFLAGS="$CFLAGS `$gnutls_config --cflags`"
 	SOCKET_OBJS="$SOCKET_OBJS gnutls.o"
 	SSL_LIB="$SSL_LIB `$gnutls_config --libs`"
-	AC_CHECK_HEADERS([gnutls/openssl.h])
+	AC_CHECK_HEADERS([gnutls/gnutls.h])
 fi
 
 AC_SUBST(SOCKET_OBJS)

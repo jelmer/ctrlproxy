@@ -43,6 +43,10 @@ enum ssl_mode { SSL_MODE_NONE = 0, SSL_MODE_SERVER = 1, SSL_MODE_CLIENT = 2};
 /* Prototypes from network-openssl.c */
 GIOChannel *irssi_ssl_get_iochannel(GIOChannel *handle, gboolean server);
 gboolean irssi_ssl_set_files(char *certf, char *keyf);
+gboolean g_io_gnutls_fini();
+gboolean g_io_gnutls_init();
+
+gboolean g_io_gnutls_set_files(char *certf, char *keyf);
 
 static gboolean handle_in (GIOChannel *c, GIOCondition o, gpointer data);
 static gboolean handle_disc (GIOChannel *c, GIOCondition o, gpointer data);
@@ -99,8 +103,15 @@ static void socket_to_iochannel(int sock, struct transport_context *c, enum ssl_
 	struct socket_data *s = malloc(sizeof(struct socket_data));
 	GError *error = NULL;
 	ioc = g_io_channel_unix_new(sock);
+#if defined(HAVE_GNUTLS_GNUTLS_H)
+	if(ssl_mode != SSL_MODE_NONE) {
+		GIOChannel *newioc;
+		newioc = g_io_gnutls_get_iochannel(ioc, ssl_mode == SSL_MODE_SERVER);
 
-#ifdef HAVE_OPENSSL_SSL_H
+		if(!newioc) g_warning(_("Can't convert socket to SSL"));
+		else ioc = newioc;
+	}
+#elif defined(HAVE_OPENSSL_SSL_H)
 	if(ssl_mode != SSL_MODE_NONE) {
 		GIOChannel *newioc;
 		newioc = irssi_ssl_get_iochannel(ioc, ssl_mode == SSL_MODE_SERVER);
@@ -594,6 +605,7 @@ static struct transport_ops pipe_transport = {
 };
 
 gboolean fini_plugin(struct plugin *p) {
+	g_io_gnutls_fini();
 	return (unregister_transport("ipv4") &&
 			unregister_transport("ipv6") &&
 			unregister_transport("pipe"));
@@ -633,7 +645,22 @@ gboolean init_plugin(struct plugin *p) {
 		cur = cur->next;
 	}
 
-#ifdef HAVE_OPENSSL_SSL_H
+#if defined(HAVE_GNUTLS_GNUTLS_H)
+	g_io_gnutls_init();
+
+	if(!certf || !keyf) {
+		defaultssl = ctrlproxy_path("ctrlproxy.pem");
+		if(access(defaultssl, R_OK) == 0) {
+			if(!certf) certf = strdup(defaultssl);
+			if(!keyf) keyf = strdup(defaultssl);
+			irssi_ssl_set_files(certf, keyf);
+		}
+		free(defaultssl);
+
+	} else {
+		g_io_gnutls_set_files(certf, keyf);
+	}
+#elif defined(HAVE_OPENSSL_SSL_H)
 	if(!certf || !keyf) {
 		defaultssl = ctrlproxy_path("ctrlproxy.pem");
 		if(access(defaultssl, R_OK) == 0) {
@@ -647,6 +674,7 @@ gboolean init_plugin(struct plugin *p) {
 		irssi_ssl_set_files(certf, keyf);
 	}
 #endif
+
 	free(certf); free(keyf);
 
 	return TRUE;

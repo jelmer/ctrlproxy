@@ -178,7 +178,7 @@ gboolean g_io_gnutls_init()
 	return TRUE;
 }
 
-gboolean g_io_gnutls_set_files(char *certf)
+gboolean g_io_gnutls_set_files(char *certf, char *keyf)
 {
 	gnutls_certificate_set_x509_trust_file(xcred, certf, GNUTLS_X509_FMT_PEM);
 //FIXME	gnutls_certificate_set_x509_key_file(xcred, certf, GNUTLS_X509_FMT_PEM);
