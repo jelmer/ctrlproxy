@@ -1,0 +1,22 @@
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+INSTALL = @INSTALL@
+scriptdir = @datadir@/ctrlproxy/scripts
+SUBDIRS = webconfig
+SCRIPTS = 
+
+.PHONY: all install clean distclean
+
+all: 
+	for I in $(SUBDIRS); do $(MAKE) -C $$I $@; done
+
+install: all
+	$(INSTALL) -d $(DESTDIR)$(scriptdir)
+	$(INSTALL) $(SCRIPTS) $(DESTDIR)$(scriptdir)
+	for I in $(SUBDIRS); do $(MAKE) -C $$I $@; done
+
+clean:
+	for I in $(SUBDIRS); do $(MAKE) -C $$I $@; done
+
+distclean: clean
+	rm -f Makefile
