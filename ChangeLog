@@ -2,6 +2,7 @@
  	Jelmer Vernooij <jelmer@vernstok.nl>
 
 Ctrlproxy 2.7:
+ * Fix bug in unloading modules
  * Fix dependency system for modules
  * Add testsuite
  * Make CONNECT command force a reconnect if one is waiting to happen
