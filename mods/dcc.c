@@ -38,6 +38,38 @@
 #define G_LOG_DOMAIN "dcc"
 #define DCCBUFFERSIZE 1024
 
+/* Rules in the following format :
+ * <allow host=".. .. ..">
+ */
+
+static xmlNodePtr xmlConf;
+
+gboolean dcc_allowed(struct line *l)
+{
+	/* FIXME: Try to find a allow element that matches this line */
+	xmlNodePtr cur = xmlConf->xmlChildrenNode;
+	while(cur) {
+		char *c;
+		if(xmlIsBlankNode(cur) || !strcmp(cur->name, "comment")) {
+			cur = cur->next;
+			continue;
+		}
+
+		if(strcmp(cur->name, "allow")) {
+			g_warning("Unknown element '%s'", cur->name);
+			cur = cur->next;
+		}
+
+		c = xmlNodeGetContent(cur);
+
+		if(g_pattern_match_simple(c, l->origin)) return TRUE;
+
+		cur = cur->next;
+	}
+	
+	return FALSE;
+}
+
 static unsigned long ip_to_numeric(struct in_addr a) 
 {
 	return a.s_addr;
@@ -333,7 +365,10 @@ static gboolean mhandle_data(struct line *l)
 	/* DCC SEND */
 	if(cargs[0] && cargs[1] && 
 	   !strcasecmp(cargs[0], "DCC") && !strcasecmp(cargs[1], "SEND")) {
-		/* FIXME: Rules for what data to accept */
+		if(!dcc_allowed(l)) {
+			g_warning("Refusing DCC SEND from %s\n", l->origin);
+			return TRUE;
+		}
 
 		addr = numeric_to_ip(atol(cargs[3]));
 		port = atol(cargs[4]);
@@ -362,6 +397,7 @@ gboolean init_plugin(struct plugin *p)
 		g_warning(_("admin module required for dcc module. Please load it first"));
 		return FALSE;
 	}
+	xmlConf = p->xmlConf;
 	register_admin_command("DCC", dcc_command, NULL, NULL);
 	add_filter_ex("dcc", mhandle_data, "client", 1000);
 	return TRUE;

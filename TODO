@@ -1,9 +1,10 @@
 2.7 
  - finish configuration utility (worked on by Kyoshiro, see list in ctrlproxy-setup)
  - update documentation
- - finish dcc module
- - finish gnutls server support
+ - test dcc module
+ - test gnutls server support
  - apply poelzi's async patch
+ - synopsis integration?
 
 2.8:
  - rewrite stats stuff to use MySQL

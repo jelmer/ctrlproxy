@@ -27,10 +27,27 @@
 #include <gnutls/extra.h>
 #include <gnutls/x509.h>
 
+#define DH_BITS 1024
+
 #undef G_LOG_DOMAIN
 #define G_LOG_DOMAIN "gnutls"
 
 static gnutls_certificate_credentials xcred;
+
+static gnutls_dh_params dh_params;
+
+static int generate_dh_params(void) {
+
+	/* Generate Diffie Hellman parameters - for use with DHE
+	 * kx algorithms. These should be discarded and regenerated
+	 * once a day, once a week or once a month. Depending on the
+	 * security requirements.
+	 */
+	gnutls_dh_params_init( &dh_params);
+	gnutls_dh_params_generate2( dh_params, DH_BITS);
+
+	return 0;
+}
 
 /* gnutls i/o channel object */
 typedef struct
@@ -176,20 +193,22 @@ gboolean g_io_gnutls_init()
 		return FALSE;
 	}
 
+	generate_dh_params();
+
 	/* X509 stuff */
 	if (gnutls_certificate_allocate_credentials(&xcred) < 0) {	/* space for 2 certificates */
 		g_warning("gnutls memory error");
 		return FALSE;
 	}
+
+	gnutls_certificate_set_dh_params( xcred, dh_params);
+
 	return TRUE;
 }
 
 gboolean g_io_gnutls_set_files(char *certf, char *keyf)
 {
 	gint err;
-	err = gnutls_certificate_set_x509_trust_file(xcred, certf, GNUTLS_X509_FMT_PEM);
-	if(err < 0) return g_io_gnutls_error(err);
-
 	err = gnutls_certificate_set_x509_key_file(xcred, certf, keyf, GNUTLS_X509_FMT_PEM);
 	if(err < 0) return g_io_gnutls_error(err);
 
@@ -214,6 +233,7 @@ GIOChannel *g_io_gnutls_get_iochannel(GIOChannel *handle, gboolean server)
 	chan = g_new0(GIOTLSChannel, 1);
 
 	gnutls_init(&chan->session, server?GNUTLS_SERVER:GNUTLS_CLIENT);
+
 	gnutls_set_default_priority(chan->session);
 
 	gnutls_cipher_set_priority(chan->session, cipher_priority);
@@ -221,8 +241,9 @@ GIOChannel *g_io_gnutls_get_iochannel(GIOChannel *handle, gboolean server)
 	gnutls_handshake_set_private_extensions(chan->session, 1);
     gnutls_credentials_set(chan->session, GNUTLS_CRD_CERTIFICATE, xcred);
 	gnutls_transport_set_ptr(chan->session, (gnutls_transport_ptr)fd);
-                                                                               
+
 	gnutls_certificate_server_set_request(chan->session, GNUTLS_CERT_REQUEST);
+	gnutls_dh_set_prime_bits( chan->session, DH_BITS);
 						   
 	chan->fd = fd;
 	chan->secure = 0;
@@ -236,4 +257,3 @@ GIOChannel *g_io_gnutls_get_iochannel(GIOChannel *handle, gboolean server)
 	
 	return gchan;
 }
-
