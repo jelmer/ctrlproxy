@@ -10,8 +10,6 @@
 <xsl:param name="xmlCtrlproxyNsUri" select="'http://ctrlproxy.vernstok.nl/common'"/>
 <xsl:variable name="secnum" select="'7ctrlproxy'"/>
 
-<xsl:template match="networks"/>
-
 <xsl:template match="ctrlproxy:module">
 	<xsl:text disable-output-escaping="yes">
 &lt;!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
