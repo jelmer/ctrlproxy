@@ -1,6 +1,7 @@
 /* 
 	ctrlproxy: A modular IRC proxy
 	(c) 2005 Jelmer Vernooij <jelmer@nl.linux.org>
+	SOCKS server (see RFC 1928, 1929 and 1961)
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -63,19 +64,93 @@
 static GIOChannel *server_channel = NULL;
 static int server_channel_in = 0;
 
+enum socks_state { STATE_NEW = 0, STATE_AUTH, STATE_NORMAL };
+
 struct socks_client
 {
 	GIOChannel *connection;
-	guint8 socks_version;
-	guint8 num_methods;
 	const char *user;
 	const char *password;
 	gint watch_id;
+	guint8 method;
+	enum socks_state state;
 };
 
 static gboolean handle_client_data (GIOChannel *ioc, GIOCondition o, gpointer data)
 {
 	struct socks_client *cl = data;
+	GIOStatus status;
+	int i;
+
+	if (cl->state == STATE_NEW) {
+		guint8 header[2];
+		guint8 methods[0x100];
+		gsize read;
+		status = g_io_channel_read_chars(ioc, header, 2, &read, NULL);
+		if (status != G_IO_STATUS_NORMAL) {
+			return FALSE;
+		}
+
+		if (header[0] != SOCKS_VERSION) 
+		{
+			g_warning("Ignoring client with socks version %d", header[0]);
+			return FALSE;
+		}
+
+		g_message("New SOCKS client with version %d", header[0]);
+
+		/* None by default */
+		cl->method = SOCKS_METHOD_NOACCEPTABLE;
+
+		status = g_io_channel_read_chars(ioc, methods, header[1], &read, NULL);
+		for (i = 0; i < header[1]; i++) {
+			/* FIXME: Validate method */
+		}
+
+		header[0] = SOCKS_VERSION;
+		header[1] = cl->method;
+
+		status = g_io_channel_write_chars(ioc, header, 2, &read, NULL);
+		if (status != G_IO_STATUS_NORMAL) {
+			return FALSE;
+		} 
+
+		if (cl->method == 0xFF) {
+			g_warning("Refused client because no valid method was available");
+			g_io_channel_flush(ioc, NULL);
+			return FALSE;
+		}
+
+		g_message("Accepted authentication %x", cl->method);
+
+		cl->state = STATE_AUTH;
+	} else if (cl->state == STATE_AUTH) {
+		/* FIXME */
+	} else if (cl->state == STATE_NORMAL) {
+		guint8 header[4];
+		guint8 read;
+
+		status = g_io_channel_read_chars(ioc, header, 4, &read, NULL);
+		if (status != G_IO_STATUS_NORMAL) {
+			return FALSE;
+		}
+
+		if (header[0] != SOCKS_VERSION) {
+		 	socks_error(ioc, REP_GENERAL_FAILURE);
+			g_warning("Client suddenly changed socks version to %d", header[0]);
+			return FALSE;
+		}
+
+		if (header[1] != CMD_CONNECT) {
+			socks_error(ioc, REP_CMD_NOT_SUPPORTED);
+			g_warning("Client used unknown command %d", header[1]);
+			return FALSE;
+		}
+
+		/* FIXME */
+
+	}
+	
 	return TRUE;
 }
 
@@ -96,6 +171,7 @@ static gboolean handle_new_client (GIOChannel *ioc, GIOCondition o, gpointer dat
 	
 	cl = g_new0(struct socks_client, 1);
 	cl->connection = g_io_channel_unix_new(ns);
+	cl->state = STATE_NEW;
 	g_io_channel_set_encoding(cl->connection, NULL, NULL);
 	cl->watch_id = g_io_add_watch(cl->connection, G_IO_IN, handle_client_data, cl);
 	g_io_channel_unref(cl->connection);
