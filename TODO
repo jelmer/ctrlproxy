@@ -1,13 +1,12 @@
 - test report_time
 - test repl_command
 - finish configuration utility (worked on by Kyoshiro)
-
-Later releases:
 - internatiolization (i18n)
 - automated testsuite
 - use namespaces and XML schemas instead of DTD
 - improve PHP script for stats
 - use information from capabilities sent by server
+- python module (poelzi)
 
 Optional:
 - Net::IRC-like interface
