@@ -25,7 +25,20 @@
 
 gboolean file_init(struct linestack_context *c, char *args)
 {
-	c->data = g_io_channel_new_file(args, "a+", NULL);
+	if(args) {
+		c->data = g_io_channel_new_file(args, "a+", NULL);
+	} else  {
+		int tmpfd;
+		char tmpname[100];
+
+		strcpy(tmpname, "/tmp/ctrlproxy-XXXXXX");
+
+		tmpfd = g_mkstemp(tmpname);
+		if(tmpfd < 0) return FALSE;
+
+		c->data = g_io_channel_unix_new(tmpfd);
+	}
+
 	if(!c->data) return FALSE;
 	return TRUE;
 }

@@ -549,8 +549,16 @@ GSList *gen_replication(struct network *s)
 
 struct linestack_context *linestack_new_by_network(struct network *n)
 {
-	/* First, figure out if the network has a linestack attached to it */
+	char *linestack, *linestack_location;
+	struct linestack_context *ret;
+	
+	linestack = xmlGetProp(n->xmlConf, "linestack");
+	linestack_location = xmlGetProp(n->xmlConf, "linestack_location");
 
-	/* FIXME */
-	return NULL;
+	ret = linestack_new(linestack, linestack_location);
+
+	xmlFree(linestack);
+	xmlFree(linestack_location);
+	
+	return ret;
 }
