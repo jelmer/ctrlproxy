@@ -20,4 +20,14 @@
 		it should run on pretty much every OS that is POSIX-compatible.</para>
 </sect1>
 
+<sect1>
+	<title>Supported IRC clients</title>
+
+	<para>Question: What IRC clients does ctrlproxy work with?</para>
+
+	<para>Answer: All IRC clients should be supported (ctrlproxy acts just 
+		like any other IRC server and follows the RFC's). Please contact the 
+		mailinglist if you find that a client is not working well together 
+		with ctrlproxy.</para>
+</sect1>
 </chapter>
