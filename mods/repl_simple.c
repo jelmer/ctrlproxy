@@ -22,6 +22,14 @@
 #include <string.h>
 
 static GHashTable *simple_backlog = NULL;
+static GHashTable *simple_initialnick = NULL;
+
+static void change_nick(struct client *c, char *newnick) 
+{
+	struct line *l = irc_parse_line_args(c->network->hostmask, "NICK", newnick, NULL);
+	irc_send_line(c->incoming, l);
+	free_line(l);
+}
 
 static gboolean log_data(struct line *l) {
 	struct linestack_context *co = (struct linestack_context *)g_hash_table_lookup(simple_backlog, l->network);
@@ -29,8 +37,8 @@ static gboolean log_data(struct line *l) {
 
 	if(!co) {
 		co = linestack_new_by_network(l->network);
-		linestack_add_line_list( co, gen_replication_network(l->network));
 		g_hash_table_insert( simple_backlog, l->network, co);
+		g_hash_table_insert( simple_initialnick, l->network, xmlGetProp(l->network->xmlConf, "nick"));
 	}
 
 	if(l->argc < 1)return TRUE;
@@ -38,7 +46,8 @@ static gboolean log_data(struct line *l) {
 	if(l->direction == TO_SERVER &&  
 	   (!strcasecmp(l->args[0], "PRIVMSG") || !strcasecmp(l->args[0], "NOTICE"))) {
 		linestack_clear(co);
-		g_hash_table_remove(simple_backlog, l->network);
+		g_hash_table_replace( simple_initialnick, l->network, xmlGetProp(l->network->xmlConf, "nick"));
+		linestack_add_line_list( co, gen_replication_network(l->network));
 		return TRUE;
 	}
 
@@ -82,11 +91,14 @@ static gboolean log_data(struct line *l) {
 static gboolean simple_replicate(struct client *c)
 {
 	struct linestack_context *replication_data = (struct linestack_context *)g_hash_table_lookup(simple_backlog, c->network);
-	if(!replication_data) {
-		replication_data = linestack_new_by_network(c->network);
-		linestack_add_line_list(replication_data, gen_replication_network(c->network));
+	if(replication_data) {
+		char *initialnick = (char *)g_hash_table_lookup(simple_initialnick, c->network);
+		char *curnick = xmlGetProp(c->network->xmlConf, "nick");
+		change_nick(c, initialnick);
+		linestack_send(replication_data, c->incoming);
+		change_nick(c, curnick);
+		xmlFree(curnick);
 	}
-	linestack_send(replication_data, c->incoming);
 	return TRUE;
 }
 
@@ -94,6 +106,7 @@ gboolean fini_plugin(struct plugin *p) {
 	del_filter(log_data);
 	del_new_client_hook("repl_simple");
 	g_hash_table_destroy(simple_backlog); simple_backlog = NULL;
+	g_hash_table_destroy(simple_initialnick); simple_initialnick = NULL;
 	return TRUE;
 }
 
@@ -101,5 +114,6 @@ gboolean init_plugin(struct plugin *p) {
 	add_filter("repl_simple", log_data);
 	add_new_client_hook("repl_simple", simple_replicate);
 	simple_backlog = g_hash_table_new(NULL, NULL);
+	simple_initialnick = g_hash_table_new(NULL, NULL);
 	return TRUE;
 }

@@ -2,6 +2,7 @@
  	Jelmer Vernooij <jelmer@vernstok.nl>
 
 Ctrlproxy 2.7:
+ * Make repl_* work when NICK sent by client differs from current NICK
  * Build with -Wall
  * Add dircproxyrc-to-ctrlproxyrc script
  * Add TOS support (Daniel Poelzleithner <ctrlproxy@poelzi.org>)

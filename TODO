@@ -13,6 +13,8 @@
 - repl_limited (repl_simple with limited number of lines)
 - dircproxy-config-to-ctrlproxyrc script
 - connect-class like system
+- add NICK to repl_*
+- free NICK stuff in repl
 
 report_time:
  - test

@@ -510,9 +510,9 @@ static gboolean handle_data(struct line *l) {
 		if(!strcasecmp(cmd->name, args[0])) {
 			current_plugin = cmd->plugin;
 			cmd->handler(args, l);
+			current_plugin = old_plugin;
 			g_strfreev(args);
 			free(tmp);
-			current_plugin = old_plugin;
 			return TRUE;
 		}
 		gl = gl->next;
