@@ -2586,7 +2586,7 @@ static void in_load_from_config(char *name) {
 		xmlNodePtr curargs;
 		PyObject *args = NULL;
 		char *file = NULL;
-		char *enabled = 0;
+		char *enabled = NULL;
 		if(!xmlIsBlankNode(cur) && !strcmp(cur->name, "script")) {
 				PyEval_AcquireLock();
 				PyThreadState_Swap(mainThreadState);
@@ -2594,8 +2594,11 @@ static void in_load_from_config(char *name) {
 				if((enabled == NULL || atoi(enabled) == 0) && name == NULL) {
 					cur = cur->next;
 					PyEval_ReleaseLock();
+					xmlFree(enabled);
 					continue;
 				}
+				xmlFree(enabled);
+
 				// build arguments list
 				args = PyDict_New();
 				curargs = cur->xmlChildrenNode;
