@@ -4,6 +4,7 @@
 <!ELEMENT plugins (plugin*)>
 <!ELEMENT plugin ANY>
 <!ATTLIST plugin file CDATA #REQUIRED>
+<!ATTLIST plugin autoload CDATA "1">
 
 <!ELEMENT network (servers?,channel*,autosend*)>
 <!ATTLIST network name CDATA #IMPLIED>
@@ -12,6 +13,7 @@
 <!ATTLIST network username CDATA #IMPLIED>
 <!ATTLIST network fullname CDATA #IMPLIED>
 <!ATTLIST network autoconnect CDATA "0">
+<!ATTLIST network ignore_first_nick CDATA "0">
 
 <!ELEMENT autosend (#PCDATA)>
 <!ELEMENT channel EMPTY>

@@ -19,52 +19,137 @@
 
 #include "internals.h"
 
-GList *filters = NULL;
+GList *filter_classes = NULL;
+
+struct filter_class {
+	char *name;
+	int priority;
+	GList *filters;
+};
 
 struct filter_data {
 	char *name;
+	int priority;
 	filter_function function;
 };
 
-void add_filter(char *name, filter_function f) 
+static gint filter_cmp(gconstpointer _a, gconstpointer _b)
+{
+	struct filter_data *a = (struct filter_data *)_a;
+	struct filter_data *b = (struct filter_data *)_b;
+
+	return a->priority - b->priority;
+}
+
+static gint filter_class_cmp(gconstpointer _a, gconstpointer _b)
+{
+	struct filter_class *a = (struct filter_class *)_a;
+	struct filter_class *b = (struct filter_class *)_b;
+
+	return a->priority - b->priority;
+}
+
+static struct filter_class *find_filter_class(char *name)
+{
+	GList *gl = filter_classes;
+	while(gl) {
+		struct filter_class *c = (struct filter_class *)gl;
+		if(c->name == NULL && name == NULL) return c;
+		if(!strcmp(c->name, name)) return c;
+	}
+	return NULL;
+}
+
+void add_filter_class(char *name, int prio)
+{
+	struct filter_class *c;
+	
+	if(find_filter_class(name)) return;
+	
+	c = (struct filter_class *)malloc(sizeof(struct filter_class));
+	if(name)c->name = strdup(name);
+	else c->name = NULL;
+
+	c->filters = NULL;
+
+	c->priority = prio;
+	
+	filter_classes = g_list_insert_sorted(filter_classes, c, filter_class_cmp);
+}
+
+gboolean add_filter_ex(char *name, filter_function f, char *class, int prio)
 {
 	struct filter_data *d = (struct filter_data *)malloc(sizeof(struct filter_data));
+	struct filter_class *c;
 
 	d->name = strdup(name);
 	g_message("Filter '%s' added", d->name);
 	d->function = f;
+	d->priority = prio;
 
-	filters = g_list_append(filters, d);
+	c = find_filter_class(class);
+	if(!c) return FALSE;
+	
+	c->filters = g_list_insert_sorted(c->filters, d, filter_cmp);
+	return TRUE;
 }
 
-void del_filter(filter_function f) 
+void add_filter(char *name, filter_function f) 
 {
-	GList *gl = filters;
+	add_filter_ex(name, f, NULL, 500);
+}
+
+void del_filter(filter_function f)
+{
+	del_filter_ex(NULL, f);
+}
+
+gboolean del_filter_ex(char *class, filter_function f) 
+{
+	struct filter_class *c = find_filter_class(class);
+	if(!c) return FALSE;
+	GList *gl = c->filters;
 	while(gl) {
 		struct filter_data *d = (struct filter_data *)gl->data;
 
 		if(d->function == f) 
 		{
 			g_message("Filter '%s' removed", d->name);
-			filters = g_list_remove(filters, d);
+			c->filters = g_list_remove(c->filters, d);
 			free(d->name);
 			free(d);
-			return;
+			return TRUE;
 		}
 	
 		gl = gl->next;
 	}
+	return FALSE;
 }
 
-gboolean filters_execute(struct line *l) 
+static gboolean filter_class_execute(struct filter_class *c, struct line *l) 
 {
-	GList *gl = filters;
+	GList *gl = c->filters;
 	while(gl) {
 		struct filter_data *d = (struct filter_data *)gl->data;
 
 		if(!d->function(l))return FALSE;
 
 		gl = gl->next;
+	}
+	return TRUE;
+}
+
+gboolean filters_execute(struct line *l) 
+{
+	GList *cl = filter_classes;
+	struct filter_class *c;
+	c = find_filter_class(NULL);
+	if(!filter_class_execute(c, l)) return FALSE;
+	
+	while(cl) {
+		c = (struct filter_class *)cl->data;
+		if(c->name) filter_class_execute(c, l);
+		cl = cl->next;
 	}
 
 	return TRUE;

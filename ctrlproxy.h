@@ -227,8 +227,11 @@ char *ctrlproxy_path(char *part);
 /* Returns TRUE if filter should be continued, FALSE if it should be stopped. */
 typedef gboolean (*filter_function) (struct line *);
 void add_filter(char *name, filter_function);
+gboolean add_filter_ex(char *name, filter_function, char *classname, int priority);
 void del_filter(filter_function);
+gboolean del_filter_ex(char *classname, filter_function);
 gboolean filters_execute(struct line *l);
+void add_filter_class(char *name, int priority);
 
 typedef gboolean (*new_client_hook) (struct client *);
 void add_new_client_hook(char *name, new_client_hook h);

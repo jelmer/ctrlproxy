@@ -312,6 +312,8 @@ int main(int argc, const char *argv[])
 
 	add_log_domain("GLib");
 	add_log_domain("ctrlproxy");
+	add_filter_class(NULL, -1);
+	add_filter_class("client", 100);
 
 	g_log(G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "Logfile opened");
 
