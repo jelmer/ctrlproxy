@@ -64,7 +64,7 @@ gboolean init_plugin(struct plugin *p) {
 	if(cur) motd_file = xmlNodeGetContent(cur);
 	else motd_file = g_build_filename(get_shared_path(), "motd", NULL);
 
-	if(g_file_test(motd_file, G_FILE_TEST_EXISTS)) {
+	if(!g_file_test(motd_file, G_FILE_TEST_EXISTS)) {
 		g_warning(_("Can't open MOTD file '%s' for reading\n"), motd_file);
 		return FALSE;
 	}

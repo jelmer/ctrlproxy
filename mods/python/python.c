@@ -2336,7 +2336,7 @@ gboolean in_load(char *c,PyObject *args, struct line *l) {
 	if(g_file_test(c,G_FILE_TEST_EXISTS)) {
 		cf = c;		
 	} else {
-		cf = g_build_filename(get_shared_path(), "ctrlproxy", "scripts", c, NULL);
+		cf = g_build_filename(get_shared_path(), "scripts", c, NULL);
 		if(!g_file_test(cf,G_FILE_TEST_EXISTS)) {
 			free(cf);
 			free(c);

@@ -163,7 +163,7 @@ import libxml2
 
 def get_xml_module_names(typ = None):
 	"""Returns a list of modules for which a Moduleinfo is available"""
-	path = os.path.join(ctrlproxy.get_path("share"),"ctrlproxy","help")
+	path = os.path.join(ctrlproxy.get_path("share"),"help")
 	dl = os.listdir(path)
 	rv = []
 	for i in dl:
@@ -494,7 +494,7 @@ class Scriptinfo(Info):
 		self.config = None
 
 		if not os.path.exists(name):
-			name = os.path.join(ctrlproxy.get_path("share"),"ctrlproxy","scripts",name)
+			name = os.path.join(ctrlproxy.get_path("share"),"scripts",name)
 		f = open(name,"r")
 		f.seek(0)
 		fs = f.read(-1)
@@ -625,11 +625,11 @@ class Moduleinfo(Info):
 	"""
 	def __init__(self, name):
 		self.name = name
-		self.path = os.path.join(ctrlproxy.get_path("share"),"ctrlproxy","help","%s.mod.xml" %name)
+		self.path = os.path.join(ctrlproxy.get_path("share"),"help","%s.mod.xml" %name)
 		try:
 			self.doc = libxml2.parseFile(self.path)
 		except:
-			raise ValueError, "Can't parse infos for %s in %s" %(name, os.path.join(ctrlproxy.get_path("share"),"ctrlproxy","help"))
+			raise ValueError, "Can't parse infos for %s in %s" %(name, os.path.join(ctrlproxy.get_path("share"),"help"))
 
 		try:	self.config = self.doc.xpathEval("//configuration")[0]
 		except: self.config = None

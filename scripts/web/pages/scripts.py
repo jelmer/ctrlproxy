@@ -286,7 +286,7 @@ class scripts(page):
 		self.t.write(self.tmpl.format("p"))
 
 		t = self.t.open_layer("infos2", title="Library", colspan="1")
-		wlk(os.path.expanduser(os.path.join(ctrlproxy.get_path("share"),"ctrlproxy","scripts")),1)
+		wlk(os.path.expanduser(os.path.join(ctrlproxy.get_path("share"),"scripts")),1)
 
 		self.t.write(self.tmpl.format("p"))
 		f = self.t.open_layer("form", action="/scripts/load/0")
