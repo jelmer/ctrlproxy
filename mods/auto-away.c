@@ -17,7 +17,6 @@
 	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 */
 
-#define _GNU_SOURCE
 #include "ctrlproxy.h"
 #include <string.h>
 #include "gettext.h"
@@ -43,10 +42,10 @@ static gboolean check_time(gpointer user_data) {
 			struct network *s = (struct network *)sl->data;
 			if(!only_for_noclients || s->clients == NULL) {
 				char *new_msg;
-				asprintf(&new_msg, ":%s", message?message:_("Auto Away"));
-				irc_send_args(s->outgoing, "AWAY", new_msg, NULL);
+				new_msg = g_strdup_printf(":%s", message?message:_("Auto Away"));
+				network_send_args(s, "AWAY", new_msg, NULL);
 				g_free(new_msg);
-				if(nick) irc_send_args(s->outgoing, "NICK", nick, NULL);
+				if(nick) network_send_args(s, "NICK", nick, NULL);
 			}
 			sl = g_list_next(sl);
 		}
@@ -69,7 +68,7 @@ static gboolean log_data(struct line *l) {
 			GList *sl = get_network_list();
 			while(sl) {
 				struct network *s = (struct network *)sl->data;
-				irc_send_args(s->outgoing, "AWAY", NULL);
+				network_send_args(s, "AWAY", NULL);
 				sl = g_list_next(sl);
 			}
 			is_away = FALSE;
@@ -90,19 +89,14 @@ gboolean fini_plugin(struct plugin *p) {
 
 const char name_plugin[] = "auto-away";
 
-gboolean init_plugin(struct plugin *p) {
-	char *t = NULL;
-	struct auto_away_data *d;
+gboolean load_config(struct plugin *p, xmlNodePtr node)
+{
+	struct auto_away_data *d = (struct auto_away_data *)p->data;
 	xmlNodePtr cur;
+	char *t = NULL;
 
-	this_plugin = p;
-
-	d = g_new(struct auto_away_data,1);
-	
-	add_filter("auto-away", log_data);
-	
-	cur = p->xmlConf->xmlChildrenNode;
-	while(cur) {
+	for (cur = node->xmlChildrenNode; cur; cur = cur->next )
+	{
 		if(!xmlIsBlankNode(cur) && !strcmp(cur->name, "message")) { 
 			message = xmlNodeGetContent(cur); 
 			t = xmlGetProp(cur, "time"); 
@@ -111,16 +105,27 @@ gboolean init_plugin(struct plugin *p) {
 		} else if(!xmlIsBlankNode(cur) && !strcmp(cur->name, "nick")) {
 			nick = xmlNodeGetContent(cur);
 		}
-		cur = cur->next;
 	}
 
 	if(t) {
 		max_idle_time = atol(t);
 		xmlFree(t);
 	}
-	last_message = time(NULL);
 
 	d->timeout_id = g_timeout_add(1000, check_time, NULL);
+	return TRUE;
+}
+
+gboolean init_plugin(struct plugin *p) {
+	struct auto_away_data *d;
+
+	this_plugin = p;
+
+	d = g_new(struct auto_away_data,1);
+	
+	add_filter("auto-away", log_data);
+	
+	last_message = time(NULL);
 
 	p->data = d;
 	return TRUE;

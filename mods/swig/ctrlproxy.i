@@ -6,8 +6,9 @@
 
 /* These are not useful to non-C programmers */
 %ignore list_make_string;
-%ignore xmlFindChildByName;
-%ignore xmlFindChildByElementName;
+%immutable channel::name;
+%immutable network::connection;
+%immutable channel::joined;
 %rename(get_version) ctrlproxy_version;
 %rename(Line) line;
 %rename(Plugin) plugin;
@@ -53,10 +54,6 @@
 };
 
 %extend network {
-	void addListener(xmlNodePtr listener) {
-		network_add_listen(self, listener);
-	}
-
 	const char *getFeature(const char *feature)  {
 		return get_network_feature(self, feature);
 	}
@@ -101,7 +98,12 @@
 		return is_prefix(prefix, self);
 	}
 
-	void sendLine(struct line *l, struct client *exception = NULL) 
+	void sendToServer(struct line *l)
+	{
+		network_send_line(self, l);
+	}
+
+	void sendToClients(struct line *l, struct client *exception = NULL) 
 	{
 		clients_send(self, l, exception);
 	}

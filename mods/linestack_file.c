@@ -17,7 +17,6 @@
 	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 */
 
-#define _GNU_SOURCE
 #include "ctrlproxy.h"
 #include <string.h>
 #include <fcntl.h>
@@ -28,6 +27,9 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
+
+#include <sys/stat.h>
+
 #ifdef _WIN32
 #include <direct.h>
 #define mkdir(s,t) _mkdir(s)
@@ -49,7 +51,7 @@ static gboolean file_init(struct linestack_context *c, const char *args)
 		int tmpfd;
 		char *p = ctrlproxy_path("linestack_file");
 		mkdir(p, 0700);
-		asprintf(&d->filename, "%s/XXXXXX", p);
+		d->filename = g_strdup_printf("%s/XXXXXX", p);
 		g_free(p);
 		tmpfd = g_mkstemp(d->filename);
 		if(tmpfd < 0) return FALSE;
@@ -126,8 +128,9 @@ static gboolean file_add_line(struct linestack_context *b, struct line *l)
 	return TRUE;
 }	
 
-static void file_send_file(struct linestack_context *b, struct transport_context *t) 
+static void file_send_file(struct linestack_context *b, GIOChannel *t) 
 {
+	gsize written;
 	struct file_information *d = (struct file_information *)b->data;
 	char *raw;
 	
@@ -139,7 +142,7 @@ static void file_send_file(struct linestack_context *b, struct transport_context
 	g_io_channel_seek(d->channel, 0, G_SEEK_SET);
 	
 	while(g_io_channel_read_line(d->channel, &raw, NULL, NULL, &error) == G_IO_STATUS_NORMAL)  {
-		transport_write(t, raw);
+		g_io_channel_write_chars(t, raw, -1, &written, NULL);
 		g_free(raw);
 	}
 }

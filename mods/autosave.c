@@ -36,27 +36,32 @@ static gboolean loop_save_config(gpointer user_data)
 
 const char name_plugin[] = "autosave";
 
-gboolean init_plugin(struct plugin *p)
+gboolean load_config(struct plugin *p, xmlNodePtr node)
 {
 	int time = 0;
-	xmlNodePtr cur = p->xmlConf->children;
-	char *buf;
-	this_plugin = p;
+	xmlNodePtr cur;
 
-	while(cur) {
+	for (cur = node->children; cur; cur = cur->next) {
 		if(!strcmp(cur->name, "interval")) {
-			buf = xmlGetProp(cur, "time");
+			char *buf = xmlGetProp(cur, "time");
 			if(buf)
 				time = atoi(buf);
 			xmlFree(buf);
 		}
-		cur = cur->next;
 	}
+
 	if(time > 0)
 		autosave_id = g_timeout_add(1000 * 60 * time, loop_save_config, NULL);
 	else
 		g_warning(_("Interval of %i minutes is too short"), time);
 
+	return TRUE;
+}
+
+gboolean init_plugin(struct plugin *p)
+{
+	this_plugin = p;
+	
 	return TRUE;
 }
 

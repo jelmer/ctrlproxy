@@ -17,7 +17,6 @@
 	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 */
 
-#define _GNU_SOURCE
 #include "ctrlproxy.h"
 #include <stdio.h>
 #include <stdarg.h>
@@ -46,39 +45,35 @@ static GHashTable *files = NULL;
 static FILE *find_add_channel_file(struct network *s, char *name) {
 	char *n = NULL;
 	FILE *f;
-	char *server_name, *hash_name;
+	char *hash_name;
 	char *lowercase;
-	server_name = xmlGetProp(s->xmlConf, "name");
 
 	lowercase = g_ascii_strdown(name?name:"messages", -1);
-	asprintf(&hash_name, "%s/%s", server_name, lowercase);
+	hash_name = g_strdup_printf("%s/%s", s->name, lowercase);
 	g_free(lowercase);
-
-	xmlFree(server_name);
 
 	f = g_hash_table_lookup(files, hash_name);
 	if(!f) {
-		char *cn, *server_name;
+		char *cn; 
+		const char *server_name;
 
-		server_name = xmlGetProp(s->xmlConf, "name");
+		server_name = s->name;
 
 		if(strchr(server_name, '/'))server_name = strrchr(server_name, '/');
 
-		asprintf(&n, "%s/%s", logfile, server_name);
+		n = g_strdup_printf("%s/%s", logfile, server_name);
 		/* Check if directory needs to be created */
 		if(!g_file_test(n, G_FILE_TEST_IS_DIR) && mkdir(n, 0700) == -1) {
 			g_warning(_("Couldn't create directory %s for logging!"), n);
 			g_free(hash_name);
 			g_free(n);
-			xmlFree(server_name);
 			return NULL;
 		}
 		g_free(n);
 		
 		/* Then open the correct filename */
 		cn = g_ascii_strdown(name?name:"messages", -1);
-		asprintf(&n, "%s/%s/%s", logfile, server_name, cn);
-		xmlFree(server_name);
+		n = g_strdup_printf("%s/%s/%s", logfile, server_name, cn);
 		g_free(cn);
 		f = fopen(n, "a+");
 		if(!f) {
@@ -93,16 +88,12 @@ static FILE *find_add_channel_file(struct network *s, char *name) {
 	return f;
 }
 
-static FILE *find_channel_file(struct network *s, char *name) {
+static FILE *find_channel_file(struct network *s, const char *name) {
 	FILE *f;
-	char *server_name, *hash_name, *lowercase;
-	server_name = xmlGetProp(s->xmlConf, "name");
-
+	char *hash_name, *lowercase;
 	lowercase = g_ascii_strdown(name?name:"messages", -1);
-	asprintf(&hash_name, "%s/%s", server_name, lowercase);
+	hash_name = g_strdup_printf("%s/%s", s->name, lowercase);
 	g_free(lowercase);
-
-	xmlFree(server_name);
 
 	f = g_hash_table_lookup(files, hash_name);
 	g_free(hash_name);
@@ -121,7 +112,7 @@ static gboolean log_data(struct line *l)
 	if(l->origin)nick = g_strdup(l->origin);
 	if(nick)user = strchr(nick, '!');
 	if(user){ *user = '\0';user++; }
-	if(!nick && xmlHasProp(l->network->xmlConf, "nick"))nick = xmlGetProp(l->network->xmlConf, "nick");
+	if(!nick && l->network->nick)nick = l->network->nick;
 
 	g_assert(l->args[0]);
 
@@ -132,10 +123,8 @@ static gboolean log_data(struct line *l)
 		f = find_add_channel_file(l->network, l->args[1]);
 		if(f)fprintf(f, "%02d:%02d -!- %s [%s] has left %s [%s]\n", t->tm_hour, t->tm_min, nick, user, l->args[1], l->args[2]?l->args[2]:"");
 	} else if(!g_strcasecmp(l->args[0], "PRIVMSG")) {
-		char *nnick = xmlGetProp(l->network->xmlConf, "nick");
 		dest = l->args[1];
-		if(!irccmp(l->network, dest, nnick))dest = nick;
-		xmlFree(nnick);
+		if(!irccmp(l->network, dest, l->network->nick))dest = nick;
 		if(l->args[2][0] == '\001') { 
 			l->args[2][strlen(l->args[2])-1] = '\0';
 			if(!g_ascii_strncasecmp(l->args[2], "\001ACTION ", 8)) { 
@@ -157,9 +146,7 @@ static gboolean log_data(struct line *l)
 		while(gl) {
 			struct channel *c = (struct channel *)gl->data;
 			if(find_nick(c, nick)) {
-				char *channame = xmlGetProp(c->xmlConf, "name");
-				f = find_channel_file(l->network, channame);
-				xmlFree(channame);
+				f = find_channel_file(l->network, c->name);
 				if(f)fprintf(f, "%02d:%02d -!- %s [%s] has quit [%s]\n", t->tm_hour, t->tm_min, nick, user, l->args[1]?l->args[1]:"");
 			}
 			gl = gl->next;
@@ -215,8 +202,6 @@ static gboolean log_data(struct line *l)
 
 	if(f)fflush(f);
 
-	if(nick)xmlFree(nick);
-
 	return TRUE;
 }
 
@@ -229,12 +214,15 @@ gboolean fini_plugin(struct plugin *p)
 
 const char name_plugin[] = "log_irssi";
 
-gboolean init_plugin(struct plugin *p)
+gboolean load_config(struct plugin *p, xmlNodePtr node) 
 {
-	xmlNodePtr cur = p->xmlConf->xmlChildrenNode;
-	while(cur) {
-		if(!xmlIsBlankNode(cur) && !strcmp(cur->name, "logfile")) logfile = xmlNodeGetContent(cur);
-		cur = cur->next;
+	xmlNodePtr cur;
+
+	for (cur = node->children; cur; cur = cur->next)
+	{
+		if (cur->type != XML_ELEMENT_NODE) continue;
+
+		if(!strcmp(cur->name, "logfile")) logfile = xmlNodeGetContent(cur);
 	}
 
 	if(!logfile) {
@@ -244,6 +232,11 @@ gboolean init_plugin(struct plugin *p)
 	/* Create logfile directory if it doesn't exist yet */
 	mkdir(logfile, 0700);
 
+	return TRUE;
+}
+
+gboolean init_plugin(struct plugin *p)
+{
 	files = g_hash_table_new(g_str_hash, g_str_equal);
 	add_filter_ex("log_irssi", log_data, "log", 1000);
 	return TRUE;

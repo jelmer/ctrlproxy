@@ -8,13 +8,14 @@ bindir = @bindir@
 docdir = @prefix@/share/doc/ctrlproxy-@VERSION@
 modulesdir = @libdir@/ctrlproxy
 includedir = @includedir@
+destincludedir = @DESTINCLUDEDIR@
 man1dir = @mandir@/man1
 man5dir = @mandir@/man5
 cdatadir = @datadir@/ctrlproxy
 CFLAGS = @CFLAGS@ @PKG_CFLAGS@ -DHAVE_CONFIG_H -DLOCALEDIR=\"$(localedir)\" -DSHAREDIR=\"$(cdatadir)\" -DDTD_FILE=\"$(cdatadir)/ctrlproxyrc.dtd\"
 
 CFLAGS+=-ansi -Wall -DMODULESDIR=\"$(modulesdir)\"
-OBJS = server.o line.o main.o state.o util.o transport.o hooks.o linestack.o plugins.o config.o
+OBJS = server.o line.o main.o state.o util.o hooks.o linestack.o plugins.o config.o
 BINS = @BINS@
 
 .PHONY: all clean distclean install install-bin install-dirs install-doc install-data install-mods install-pkgconfig
@@ -34,7 +35,7 @@ install-dirs:
 	$(INSTALL) -d $(DESTDIR)$(bindir)
 	$(INSTALL) -d $(DESTDIR)$(man1dir)
 	$(INSTALL) -d $(DESTDIR)$(man5dir)
-	$(INSTALL) -d $(DESTDIR)$(includedir)
+	$(INSTALL) -d $(DESTDIR)$(destincludedir)
 	$(INSTALL) -d $(DESTDIR)$(modulesdir)
 	$(INSTALL) -d $(DESTDIR)$(docdir)
 	$(INSTALL) -d $(DESTDIR)$(cdatadir)
@@ -48,7 +49,7 @@ install-bin:
 	$(INSTALL) ctrlproxy-setup $(DESTDIR)$(bindir)
 
 install-doc:
-	$(INSTALL) ctrlproxy.h $(DESTDIR)$(includedir)
+	$(INSTALL) -m 644 ctrlproxy.h $(DESTDIR)$(destincludedir)
 	$(INSTALL) AUTHORS $(DESTDIR)$(docdir)
 	$(INSTALL) COPYING $(DESTDIR)$(docdir)
 	$(INSTALL) TODO $(DESTDIR)$(docdir)

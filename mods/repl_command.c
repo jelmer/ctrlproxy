@@ -17,7 +17,6 @@
 	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 */
 
-#define _GNU_SOURCE
 #include "ctrlproxy.h"
 #include <string.h>
 #include "admin.h"
@@ -28,15 +27,14 @@ static GHashTable *command_backlog = NULL;
 
 static gboolean log_data(struct line *l) {
 	struct linestack_context *co;
-	char *desc, *networkname;
+	char *desc;
 
 	if(l->argc < 1)return TRUE;
 
 	if(g_strcasecmp(l->args[0], "PRIVMSG") && g_strcasecmp(l->args[0], "NOTICE"))return TRUE;
 
 	/* Lookup this channel */
-	networkname = xmlGetProp(l->network->xmlConf, "name");
-	asprintf(&desc, "%s/%s", networkname, l->args[1]);
+	desc = g_strdup_printf("%s/%s", l->network->name, l->args[1]);
 	
 	co = g_hash_table_lookup(command_backlog, desc);
 	
@@ -45,8 +43,6 @@ static gboolean log_data(struct line *l) {
 		g_hash_table_insert(command_backlog, desc, co);
 	} else g_free(desc);
 	linestack_add_line(co, l);
-
-	xmlFree(networkname);
 
 	return TRUE;
 }
@@ -62,13 +58,9 @@ static void replicate_channel(gpointer key, gpointer val, gpointer user)
 {
 	struct linestack_context *co = (struct linestack_context *)val;
 	struct line *l = (struct line *)user;
-	char *networkname = xmlGetProp(l->network->xmlConf, "name");
 
-	if(g_ascii_strncasecmp(networkname, key, strlen(networkname))) {
-		xmlFree(networkname);
+	if(g_ascii_strncasecmp(l->network->name, key, strlen(l->network->name)))
 		return;
-	}
-	xmlFree(networkname);
 
 	linestack_send(co, l->client->incoming);
 	linestack_clear(co);
@@ -77,7 +69,7 @@ static void replicate_channel(gpointer key, gpointer val, gpointer user)
 static void repl_command(char **args, struct line *l)
 {
 	struct linestack_context *co;
-	char *networkname, *desc;
+	char *desc;
 
 	if(!command_backlog) { 
 		admin_out(l, _("No backlogs saved yet"));
@@ -85,9 +77,7 @@ static void repl_command(char **args, struct line *l)
 	}
 	
 	if(!args[1]) {
-		char *networkname = xmlGetProp(l->network->xmlConf, "name");
-		admin_out(l, _("Sending backlog for network '%s'"), networkname);
-		xmlFree(networkname);
+		admin_out(l, _("Sending backlog for network '%s'"), l->network->name);
 
 		/* Backlog everything for this network */
 		g_hash_table_foreach(command_backlog, replicate_channel, l);
@@ -95,10 +85,8 @@ static void repl_command(char **args, struct line *l)
 	} 
 
 	/* Backlog for specific nick/channel */
-	networkname = xmlGetProp(l->network->xmlConf, "name");
-	admin_out(l, _("Sending backlog for channel %s@%s"), args[1], networkname);
-	asprintf(&desc, "%s/%s", networkname, args[1]);
-	xmlFree(networkname);
+	admin_out(l, _("Sending backlog for channel %s@%s"), args[1], l->network->name);
+	desc = g_strdup_printf("%s/%s", l->network->name, args[1]);
 	co = g_hash_table_lookup(command_backlog, desc);
 	g_free(desc);
 

@@ -1,0 +1,28 @@
+CC = @CC@
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+INSTALL = @INSTALL@
+CFLAGS = -Wall -fPIC -I../.. -I.. @CFLAGS@ @PKG_CFLAGS@ @GNUTLS_CFLAGS@ -DSHAREDIR=\"@datadir@\" -DHAVE_CONFIG_H
+moddir = @libdir@/ctrlproxy
+MODS = libgnutls.so
+LDFLAGS = @GNUTLS_LIBS@
+
+.PHONY: all install clean distclean
+
+all: $(MODS)
+
+install: all
+	$(INSTALL) -d $(DESTDIR)$(moddir)
+	$(INSTALL) $(MODS) $(DESTDIR)$(moddir)
+
+%.o: %.c
+	$(CC) $(CFLAGS) -fPIC -c $<
+
+lib%.so: %.c
+	$(CC) $(CFLAGS) $(LDFLAGS) -shared -o $@ $<
+
+clean:
+	rm -f $(MODS) *.o
+
+distclean: clean
+	rm -f Makefile

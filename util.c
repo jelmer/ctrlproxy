@@ -25,46 +25,20 @@
 #define mkdir(s,t) _mkdir(s)
 #endif
 
-xmlNodePtr xmlFindChildByElementName(xmlNodePtr parent, const xmlChar *name)
+char *list_make_string(GList *list)
 {
-	xmlNodePtr cur = parent->xmlChildrenNode;
-	while(cur) {
-		if(!xmlIsBlankNode(cur) && !strcmp(cur->name, name))return cur;
-		cur = cur->next;
-	}
-	return NULL;
-}
-
-xmlNodePtr xmlFindChildByName(xmlNodePtr parent, const xmlChar *name) 
-{
-	xmlNodePtr cur = parent->xmlChildrenNode;
-	while(cur) {
-		char *nname = xmlGetProp(cur, "name");
-		
-		if(xmlIsBlankNode(cur) || !strcmp(cur->name, "comment")) { cur = cur->next; continue; }
-
-		if(nname && !strcmp(nname, name)) { xmlFree(nname); return cur; }
-
-		xmlFree(nname);
-		cur = cur->next;
-	}
-	return NULL;
-}
-
-char *list_make_string(char **list)
-{
-	int i;
 	size_t len = 20;
 	char *ret;
+	GList *gl;
 	/* First, calculate the length */
-	for(i = 0; list[i]; i++) len+=strlen(list[i])+1;
+	for(gl = list; gl; gl = gl->next) len+=strlen(gl->data)+1;
 
 	ret = g_new(char,len);
 	ret[0] = '\0';
 
-	for(i = 0; list[i]; i++) 
+	for(gl = list; gl; gl = gl->next) 
 	{ 
-		strncat(ret, list[i], len);
+		strncat(ret, gl->data, len);
 		strncat(ret, " ", len); 
 	}
 

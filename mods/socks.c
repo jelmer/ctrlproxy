@@ -25,7 +25,6 @@
  *  - support for ident method
  */
 
-#define _GNU_SOURCE
 #include "ctrlproxy.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -34,6 +33,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <netinet/in.h>
+#include <netdb.h>
 
 #undef G_LOG_DOMAIN
 #define G_LOG_DOMAIN "socks"
@@ -153,8 +153,6 @@ static gboolean pass_handle_data(struct socks_client *cl)
 
 	pass[header[0]] = '\0';
 
-	g_message("Client tried to log in with username %s, pass %s", uname, pass);
-
 	header[0] = 0x1;
 	header[1] = 0x0; /* FIXME: Verify password and set to non-zero if invalid */
 
@@ -175,62 +173,77 @@ static gboolean pass_handle_data(struct socks_client *cl)
 
 static struct network *socks_map_network_fqdn(const char *hostname, guint16 port)
 {
-	GList *gl = g_list_first(get_network_list());
+	GList *gl;
+	struct network *n;
 	
-	while (gl) {
-		struct network *n = gl->data;
-		xmlNodePtr server = n->servers;
+	char *portname = g_strdup_printf("%d", port);
+	
+	for (gl = get_network_list(); gl; gl = gl->next) {
+		n = gl->data;
+		GList *sv;
+		
+		if (n->type != NETWORK_TCP) continue;
+		
+		sv = n->connection.tcp.servers;
 
-		while (server) {
-			char *servername = xmlGetProp(server, "host");
-			char *serverport = xmlGetProp(server, "port");
+		while (sv) {
+			struct tcp_server *server = sv->data;
 
-			if (!serverport) serverport = strdup("6667");
-
-			if (servername && !strcasecmp(servername, hostname) && atoi(serverport) == port) {
-				xmlFree(servername); xmlFree(serverport);
+			if (!strcasecmp(server->host, hostname) && !strcasecmp(server->port, portname)) {
+				g_free(portname);
 				return n;
 			}
 
-			xmlFree(servername); xmlFree(serverport);
-			
-			server = server->next;
+			sv = sv->next;
 		} 
+	}
 
-		gl = gl->next;
+	if ((n = find_network(hostname))) {
+		return n;
 	}
 
 	/* Create a new server */
 	{
-		xmlNodePtr network = xmlNewNode(NULL, "network");
-		xmlNodePtr servers = xmlNewNode(NULL, "servers");
-		xmlNodePtr server = xmlNewNode(NULL, "ipv4");
-		xmlNodePtr listeners = xmlNewNode(NULL, "listen");
-		xmlNodePtr listener = xmlNewNode(NULL, "ipv4");
+		n = new_network();
+		struct addrinfo hints;
+		struct tcp_server *s = g_new0(struct tcp_server, 1);
+		int error;
 
-		xmlSetProp(network, "name", hostname);
+		n->name = g_strdup(hostname);
+		n->name_guessed = TRUE;
+		n->type = NETWORK_TCP;
+		s->host = g_strdup(hostname);
+		s->port = portname;
 
-		xmlAddChild(network, servers);
-		xmlAddChild(servers, server);
+		memset(&hints, 0, sizeof(hints));
+		hints.ai_family = PF_UNSPEC;
+		hints.ai_socktype = SOCK_STREAM;
 
-		xmlSetProp(server, "host", hostname);
-		xmlSetProp(server, "port", g_strdup_printf("%d", port));
+		/* Lookup */
+		error = getaddrinfo(s->host, s->port, &hints, &s->addrinfo);
+		if (error) {
+			g_warning("Unable to lookup %s:%s %s", s->host, s->port, gai_strerror(error));
+			return NULL;
+		}
 
-		xmlAddChild(network, listeners);
-		xmlAddChild(listeners, listener);
+		n->connection.tcp.servers = g_list_append(n->connection.tcp.servers, s);
 
-		return connect_network(network);
+		if (!connect_network(n)) 
+			return NULL;
+
+		return n;
 	}
 }
 
 struct socks_method {
 	gint id;
+	const char *name;
 	gboolean (*acceptable) (struct socks_client *cl);
 	gboolean (*handle_data) (struct socks_client *cl);
 } socks_methods[] = {
-	{ SOCKS_METHOD_NOAUTH, anon_acceptable, NULL },
-	{ SOCKS_METHOD_GSSAPI, NULL, NULL },
-	{ SOCKS_METHOD_USERNAME_PW, pass_acceptable, pass_handle_data },
+	{ SOCKS_METHOD_NOAUTH, "none", anon_acceptable, NULL },
+	{ SOCKS_METHOD_GSSAPI, "gssapi", NULL, NULL },
+	{ SOCKS_METHOD_USERNAME_PW, "username/password", pass_acceptable, pass_handle_data },
 	{ -1, NULL, NULL }
 };
 
@@ -254,8 +267,6 @@ static gboolean handle_client_data (GIOChannel *ioc, GIOCondition o, gpointer da
 			g_warning("Ignoring client with socks version %d", header[0]);
 			return FALSE;
 		}
-
-		g_message("New SOCKS client with version %d", header[0]);
 
 		/* None by default */
 		cl->method = NULL;
@@ -292,7 +303,7 @@ static gboolean handle_client_data (GIOChannel *ioc, GIOCondition o, gpointer da
 			return FALSE;
 		}
 
-		g_message("Accepted authentication %x", cl->method->id);
+		g_message("Accepted socks client authenticating using %s", cl->method->name);
 
 		if (!cl->method->handle_data) {
 			cl->state = STATE_NORMAL;
@@ -347,19 +358,21 @@ static gboolean handle_client_data (GIOChannel *ioc, GIOCondition o, gpointer da
 					result = socks_map_network_fqdn(hostname, port);
 
 					if (!result) {
+						g_warning("Unable to return network matching %s:%d", hostname, port);
 						return socks_error(ioc, REP_NET_UNREACHABLE);
 					} else {
 						const char *hostname = get_my_hostname();
-
+						struct sockaddr 
+						
 						guint8 *data = g_new0(guint8, strlen(hostname)+3);
 						data[0] = strlen(hostname);
 						strcpy(data+1, hostname);
 
-						socks_reply(ioc, REP_OK, ATYP_FQDN, strlen(hostname)+1, data, 0); /* FIXME: Save sockname when connecting to remote server and return it here */
+						socks_reply(ioc, REP_OK, ATYP_, strlen(hostname)+1, data, 0); 
 						
 						g_free(data);
 
-						/* FIXME: Create client structure for this client and add it to the server */
+						new_client(result, ioc);
 
 						return FALSE;
 					}
@@ -408,12 +421,20 @@ gboolean fini_plugin(struct plugin *p)
 
 const char name_plugin[] = "socks";
 
-gboolean init_plugin(struct plugin *p)
+gboolean load_config(struct plugin *p, xmlNodePtr conf)
 {
 	int sock;
 	const int on = 1;
 	struct sockaddr_in addr;
 	guint16 port;
+
+	port = DEFAULT_SOCKS_PORT;
+
+	if (xmlHasProp(conf, "port")) {
+		char *tmp = xmlGetProp(conf, "port");
+		port = atoi(tmp);
+		xmlFree(tmp);
+	}
 
 	sock = socket(PF_INET, SOCK_STREAM, 0);
 	if (sock < 0) {
@@ -421,9 +442,6 @@ gboolean init_plugin(struct plugin *p)
 		return FALSE;
 	}
 
-	port = DEFAULT_SOCKS_PORT;
-
-	/* FIXME: Get port from configuration */
 
     setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
 
@@ -452,6 +470,11 @@ gboolean init_plugin(struct plugin *p)
 	g_io_channel_unref(server_channel);
 
 	g_message("Listening for SOCKS connections on port %d", port);
-	
+
 	return TRUE;
+}
+
+gboolean init_plugin(struct plugin *p)
+{
+		return TRUE;
 }

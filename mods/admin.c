@@ -36,7 +36,6 @@
 	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 */
 
-#define _GNU_SOURCE
 #define ADMIN_CORE_BUILD
 #include "ctrlproxy.h"
 #include <string.h>
@@ -64,48 +63,25 @@ struct admin_command {
 void admin_out(struct line *l, const char *fmt, ...)
 {
 	va_list ap;
-	char *msg, *tot, *server_name;
-	char *nick;
+	char *msg;
+	char *hostmask;
 	va_start(ap, fmt);
-	vasprintf(&msg, fmt, ap);
+	msg = g_strdup_vprintf(fmt, ap);
 	va_end(ap);
 
-	nick = xmlGetProp(l->network->xmlConf, "nick");
-	server_name = xmlGetProp(l->network->xmlConf, "name");
+	hostmask = g_strdup_printf(":ctrlproxy!ctrlproxy@%s", l->network->name);
+	irc_send_args(l->client->incoming, hostmask, "NOTICE", l->network->nick, msg, NULL);
 
-
-	asprintf(&tot, ":ctrlproxy!ctrlproxy@%s NOTICE %s :%s\r\n", server_name, nick, msg);
-	g_free(msg);
-
-	transport_write(l->client->incoming, tot);
-	g_free(tot);
-	xmlFree(nick);
-	xmlFree(server_name);
-}
-
-static xmlNodePtr find_network_xml(char *name)
-{
-	char *nname;
-	xmlNodePtr cur = config_node_networks()->xmlChildrenNode;
-	while(cur)
-	{
-		nname = xmlGetProp(cur, "name");
-		if(nname && !strcmp(nname, name)){xmlFree(nname); return cur; }
-		xmlFree(nname);
-		cur = cur->next;
-	}
-	return NULL;
+	g_free(hostmask);
 }
 
 static struct network *find_network_struct(char *name)
 {
-	char *nname;
 	GList *g = get_network_list();
 	while(g) {
 		struct network *n = (struct network *)g->data;
-		nname = xmlGetProp(n->xmlConf, "name");
-		if(nname && !strcmp(nname, name)){ xmlFree(nname); return n; }
-		xmlFree(nname);
+		if(n->name && !strcmp(n->name, name)) 
+			return n;
 		g = g->next;
 	}
 	return NULL;
@@ -113,29 +89,16 @@ static struct network *find_network_struct(char *name)
 
 static void add_network (char **args, struct line *l)
 {
-	xmlNodePtr cur;
 	if(!args[1]) {
 		admin_out(l, _("No name specified"));
 		return;
 	}
 
-	if(find_network_xml(args[1])) {
-		admin_out(l, _("Such a network already exists"));
-		return;
-	}
-
-	/* Add node to networks node with specified name */
-	cur = xmlNewNode(NULL, "network");
-	xmlSetProp(cur, "name", args[1]);
-	xmlAddChild(config_node_networks(), cur);
-
-	/* Add a 'servers' element */
-	xmlAddChild(cur, xmlNewNode(NULL, "servers"));
+	/* FIXME */
 }
 
 static void del_network (char **args, struct line *l)
 {
-	xmlNodePtr cur;
 	if(!args[1]) {
 		admin_out(l, _("Not enough parameters"));
 		return;
@@ -146,127 +109,25 @@ static void del_network (char **args, struct line *l)
 		return;
 	}
 
-	cur = find_network_xml(args[1]);
-	if(!cur) {
-		admin_out(l, _("No such network '%s'"), args[1]);
-		return;
-	}
-	
-	xmlUnlinkNode(cur);
-	xmlFreeNode(cur);
-}
-
-static void add_listen (char **args, struct line *l)
-{
-	xmlNodePtr net, serv, listen;
-	struct network *n;
-	int i;
-
-	if(!args[1] || !args[2]) {
-		admin_out(l, _("Not enough parameters"));
-		return;
-	}
-
-	net = find_network_xml(args[1]);
-
-	/* Add network if it didn't exist yet */
-	if(!net) {
-		/* Add node to networks node with specified name */
-		net = xmlNewNode(NULL, "network");
-		xmlSetProp(net, "name", args[1]);
-		xmlAddChild(config_node_networks(), net);
-
-		/* Add a 'listen' element */
-		xmlAddChild(net, xmlNewNode(NULL, "listen"));
-	}
-
-	listen = xmlFindChildByElementName(net, "listen");
-
-	/* Add listen node if it didn't exist yet */
-	if(!listen) {
-		listen = xmlNewNode(NULL, "listen"); 
-		xmlAddChild(net, listen); 
-	}
-
-	serv = xmlNewNode(NULL, args[2]);
-	xmlAddChild(listen, serv);
-
-	for(i = 3; args[i]; i++) {
-		char *val = strchr(args[i], '=');
-		if(!val) {
-			admin_out(l, _("Properties should be in the format 'key=value'"));
-			continue;
-		}
-		*val = '\0'; val++;
-		xmlSetProp(serv, args[i], val);
-	}
-	
-	/* In case the network is active */
-	n = find_network_struct(args[1]);
-	if(n) {
-		if(!n->listen)n->listen = listen;
-		network_add_listen(n, serv);
-	}
+	/* FIXME */
 }
 
 static void add_server (char **args, struct line *l)
 {
-	xmlNodePtr net, serv, servers;
-	int i;
-
 	if(!args[1] || !args[2]) {
 		admin_out(l, _("Not enough parameters"));
 		return;
 	}
 
-	net = find_network_xml(args[1]);
-
-	/* Add network if it didn't exist yet */
-	if(!net) {
-		/* Add node to networks node with specified name */
-		net = xmlNewNode(NULL, "network");
-		xmlSetProp(net, "name", args[1]);
-		xmlAddChild(config_node_networks(), net);
-
-		/* Add a 'servers' element */
-		xmlAddChild(net, xmlNewNode(NULL, "servers"));
-	}
-
-	servers = xmlFindChildByElementName(net, "servers");
-
-	/* Add servers node if it didn't exist yet */
-	if(!servers) {
-		servers = xmlNewNode(NULL, "servers"); 
-		xmlAddChild(net, servers); 
-	}
-
-	serv = xmlNewNode(NULL, args[2]);
-	xmlAddChild(servers, serv);
-
-	for(i = 3; args[i]; i++) {
-		char *val = strchr(args[i], '=');
-		if(!val) {
-			admin_out(l, _("Properties should be in the format 'key=value'"));
-			continue;
-		}
-		*val = '\0'; val++;
-		xmlSetProp(serv, args[i], val);
-	}
+	/* FIXME */
 }
 
 static void com_connect_network (char **args, struct line *l)
 {
-	xmlNodePtr n;
 	struct network *s;
 	if(!args[1]) {
 		 admin_out(l, _("No network specified"));
 		 return;
-	}
-
-	n = find_network_xml(args[1]);
-	if(!n) {
-		admin_out(l, _("Can't find network named %s"), args[1]);
-		return;
 	}
 
 	s = find_network_struct(args[1]);
@@ -276,10 +137,10 @@ static void com_connect_network (char **args, struct line *l)
 	} else if(s) {
 		admin_out(l, _("Forcing reconnect to %s"), args[1]);
 		close_server(s);
-		connect_current_server(s);
+		connect_current_tcp_server(s);
 	} else {
 		g_message(_("Connecting to %s"), args[1]);
-		connect_network(n);
+		connect_network(s);
 	}
 }
 
@@ -300,13 +161,13 @@ static void disconnect_network (char **args, struct line *l)
 
 static void com_next_server (char **args, struct line *l) {
 	struct network *n;
-	char *name;
+	const char *name;
 	if(args[1] != NULL) {
 		name = args[1];
 		n = find_network_struct(args[1]);
 	} else {
 		n = l->network;
-		name = xmlGetProp(n->xmlConf,"name");
+		name = n->name;
 	}
 	if(!n) {
 		admin_out(l, _("%s: Not connected"), name);
@@ -314,10 +175,8 @@ static void com_next_server (char **args, struct line *l) {
 		admin_out(l, _("%s: Reconnecting"), name);
 		close_server(n);
 		g_log(G_LOG_DOMAIN, G_LOG_LEVEL_INFO, _("Cycle server in %s"), name);
-		connect_next_server(n);
+		connect_next_tcp_server(n);
 	}
-	if(!args[1])
-		xmlFree(name);
 }
 
 static void list_modules (char **args, struct line *l)
@@ -359,7 +218,6 @@ static void unload_module (char **args, struct line *l)
 
 static void load_module (char **args, struct line *l)
 { 
-	xmlNodePtr cur;
 	if(!args[1]) { 
 		admin_out(l, _("No file specified"));
 		return;
@@ -370,11 +228,7 @@ static void load_module (char **args, struct line *l)
 		return;
 	}
 
-	cur = xmlNewNode(NULL, "plugin");
-	xmlSetProp(cur, "file", args[1]);
-	xmlAddChild(config_node_plugins(), cur);
-
-	load_plugin(cur);
+	/* FIXME */
 }
 
 
@@ -382,27 +236,6 @@ static void reload_module (char **args, struct line *l)
 {
 	unload_module(args, l);
 	load_module(args, l);
-}
-
-static void dump_config (char **args, struct line *l)
-{
-	xmlChar *buffer;
-	int lastend = 0;
-	int size;
-	int i;
-	char *tmp;
-	xmlDocDumpMemory(config_doc(), &buffer, &size);
-	for(i = 0; i < size; i++)
-	{
-		/* If we encounter a newline or a null-character, we
-		 * print the last line */
-		if(buffer[i] != '\n' && buffer[i] != '\0') continue;
-
-		tmp = g_strndup(buffer + lastend, i - lastend);
-		admin_out(l, tmp);
-		g_free(tmp);
-		lastend = i+1;
-	}
 }
 
 static void save_config (char **args, struct line *l)
@@ -436,7 +269,7 @@ static void help (char **args, struct line *l)
 			}
 		} else {
 			if(cmd->help != NULL) {
-				asprintf(&tmp,"%s%s     %s",cmd->name,g_strnfill(longest_command - strlen(cmd->name),' '),cmd->help);
+				tmp = g_strdup_printf("%s%s     %s",cmd->name,g_strnfill(longest_command - strlen(cmd->name),' '),cmd->help);
 				admin_out(l, tmp);
 				g_free(tmp);
 			} else {
@@ -452,21 +285,15 @@ static void help (char **args, struct line *l)
 
 static void list_networks(char **args, struct line *l)
 {
-	char *nname;
-	xmlNodePtr p = config_node_networks();
-	while(p) {
-		struct network *n = NULL;
-		nname = xmlGetProp(p, "name");
-		if(!nname) {
-			p = p->next;
-			continue;
-		}
-		n = find_network_struct(nname);
-		if(!n) admin_out(l, _("%s: Not connected"), nname);
-		else if(n->reconnect_id) admin_out(l, _("%s: Reconnecting"), nname);
-		else admin_out(l, _("%s: connected"), nname);
-		xmlFree(nname);
-		p = p->next;
+	GList *gl = get_network_list();
+	while(gl) {
+		struct network *n = gl->data;
+
+		if(!n) admin_out(l, _("%s: Not connected"), n->name);
+		else if(n->reconnect_id) admin_out(l, _("%s: Reconnecting"), n->name);
+		else admin_out(l, _("%s: connected"), n->name);
+
+		gl = gl->next;
 	}
 }
 
@@ -535,7 +362,7 @@ static gboolean handle_data(struct line *l) {
 		/* Add everything after l->args[cmdoffset] to tmp */
 		for(i = cmdoffset+1; l->args[i]; i++) {
 			char *oldtmp = tmp;
-			asprintf(&tmp, "%s %s", oldtmp, l->args[i]);
+			tmp = g_strdup_printf("%s %s", oldtmp, l->args[i]);
 			g_free(oldtmp);
 		}
 	}
@@ -572,13 +399,27 @@ gboolean fini_plugin(struct plugin *p) {
 
 const char name_plugin[] = "admin";
 
-gboolean init_plugin(struct plugin *p) {
+gboolean load_config(struct plugin *p, xmlNodePtr node)
+{
 	xmlNodePtr cur;
+
+	for (cur = node->children; cur; cur = cur->next)
+	{
+		if (cur->type != XML_ELEMENT_NODE) continue;	
+
+		if (!strcmp(cur->name, "without_privmsg")) {
+			without_privmsg = TRUE;
+		}
+	}
+
+	return TRUE;
+}
+
+gboolean init_plugin(struct plugin *p) {
 	int i;
 	struct admin_command builtin_commands[] = {
 		{ "ADDNETWORK", add_network, _("<name>"), _("Add new network with specified name") },
 		{ "ADDSERVER", add_server, _("<network> <type> [property1=value1] ..."), _("Add server with specified properties to the specified network") },
-		{ "ADDLISTEN", add_listen, _("<network> <type> [property1=value1] ..."), _("Add listener with specified properties to the specified network") },
 		{ "CONNECT", com_connect_network, _("<network>"), _("Connect to specified network. Forces reconnect when waiting.") },
 		{ "DELNETWORK", del_network, _("<network>"), _("Remove specified network") },
 		{ "NEXTSERVER", com_next_server, _("[network]"), _("Disconnect and use to the next server in the list") },
@@ -589,18 +430,13 @@ gboolean init_plugin(struct plugin *p) {
 		{ "UNLOADMODULE", unload_module, _("<name>"), _("Unload specified module") },
 		{ "RELOADMODULE", reload_module, _("<name>"), _("Reload specified module") },
 		{ "LISTMODULES", list_modules, "", _("List currently loaded modules") },
-		{ "DUMPCONFIG", dump_config, "", _("Send current XML configuration to client") },
 		{ "SAVECONFIG", save_config, "<name>", _("Save current XML configuration to specified file") },
 		{ "DETACH", detach_client, "", _("Detach current client") },
 		{ "HELP", help, "[command]", _("This help command") },
 		{ NULL }
 	};
 
-
-
 	add_filter("admin", handle_data);
-	cur = xmlFindChildByElementName(p->xmlConf, "without_privmsg");
-	if(cur) without_privmsg = TRUE;
 
 	for(i = 0; builtin_commands[i].name; i++) {
 		register_admin_command(builtin_commands[i].name, builtin_commands[i].handler, builtin_commands[i].help, builtin_commands[i].help_details);

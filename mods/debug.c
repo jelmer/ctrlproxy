@@ -17,28 +17,11 @@
 	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 */
 
-#define _GNU_SOURCE
 #include "ctrlproxy.h"
 #include <string.h>
 #include "admin.h"
 #include "gettext.h"
 #define _(s) gettext(s)
-
-static struct network *find_network(const char *name)
-{
-	GList *gl = get_network_list();
-	while(gl) { 
-		struct network *n = (struct network *)gl->data;
-		char *nname = xmlGetProp(n->xmlConf, "name");
-		if(!g_strcasecmp(nname, name)) {
-			xmlFree(nname);
-			return n;
-		}
-		xmlFree(nname);
-		gl = gl->next;
-	}
-	return NULL;
-}
 
 static void do_crash(char **args, struct line *l)
 {
@@ -62,9 +45,7 @@ static void dump_joined_channels(char **args, struct line *l)
 	gl = n->channels;
 	while(gl) {
 		struct channel *c = (struct channel *)gl->data;
-		char *d = xmlGetProp(c->xmlConf, "name");
-		admin_out(l, "%s", d);
-		xmlFree(d);
+		admin_out(l, "%s", c->name);
 		gl = gl->next;
 	}
 }

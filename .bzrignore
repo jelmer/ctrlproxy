@@ -12,6 +12,12 @@ ctrlproxy.pc
 doc/Makefile
 mods/*.so
 mods/Makefile
+mods/gnutls/*.so
+mods/gnutls/Makefile
+mods/nss/*.so
+mods/nss/Makefile
+mods/openssl/*.so
+mods/openssl/Makefile
 mods/python/*.so
 mods/python/Makefile
 mods/socket/*.so

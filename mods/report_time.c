@@ -17,7 +17,6 @@
 	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 */
 
-#define _GNU_SOURCE
 #include "ctrlproxy.h"
 #include <string.h>
 #include <time.h>
@@ -38,7 +37,7 @@ static gboolean report_time(struct line *l) {
 	
 	strftime(stime, sizeof(stime), format?format:"%H:%M:%S", localtime(&cur));
 	
-	asprintf(&tmp, "[%s] %s", stime, l->args[2]);
+	tmp = g_strdup_printf("[%s] %s", stime, l->args[2]);
 	g_free(l->args[2]);
 	l->args[2] = tmp;
 
@@ -52,12 +51,23 @@ gboolean fini_plugin(struct plugin *p) {
 
 const char name_plugin[] = "report_time";
 
-gboolean init_plugin(struct plugin *p) {
+gboolean load_config(struct plugin *p, xmlNodePtr node)
+{
 	xmlNodePtr cur;
 
-	cur = xmlFindChildByElementName(p->xmlConf, "format");
-	if(cur) format = xmlNodeGetContent(cur);
-	
+	for (cur = node->children; cur; cur = cur->next)
+	{
+		if (cur->type != XML_ELEMENT_NODE) continue;
+
+		if (!strcmp(cur->name, "format")) {
+			format = xmlNodeGetContent(cur);
+		}
+	}
+
+	return TRUE;
+}
+
+gboolean init_plugin(struct plugin *p) {
 	add_filter_ex("report_time", report_time, "replicate", 50);
 	return TRUE;
 }

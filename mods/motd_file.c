@@ -17,10 +17,10 @@
 	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 */
 
-#define _GNU_SOURCE
 #include "ctrlproxy.h"
 #include <string.h>
 #include <errno.h>
+#include <stdio.h>
 #include "irc.h"
 #include "gettext.h"
 #define _(s) gettext(s)
@@ -59,16 +59,30 @@ gboolean fini_plugin(struct plugin *p) {
 
 const char name_plugin[] = "motd_file";
 
-gboolean init_plugin(struct plugin *p) {
-	xmlNodePtr cur = xmlFindChildByElementName(p->xmlConf, "file");
-	if(cur) motd_file = xmlNodeGetContent(cur);
-	else motd_file = g_build_filename(get_shared_path(), "motd", NULL);
+gboolean load_config(struct plugin *p, xmlNodePtr node) 
+{
+	xmlNodePtr cur;
+
+	for (cur = node->children; cur; cur = cur->next)
+	{
+		if (cur->type != XML_ELEMENT_NODE) continue;
+		
+		if (!strcmp(cur->name, "motd_file")) {
+			motd_file = xmlNodeGetContent(cur);
+		}
+	}
+
+	if (!motd_file) motd_file = g_build_filename(get_shared_path(), "motd", NULL);
 
 	if(!g_file_test(motd_file, G_FILE_TEST_EXISTS)) {
 		g_warning(_("Can't open MOTD file '%s' for reading\n"), motd_file);
 		return FALSE;
 	}
 
+	return TRUE;
+}
+
+gboolean init_plugin(struct plugin *p) {
 	add_motd_hook("motd_file", motd_file_handler);
 	return TRUE;
 }

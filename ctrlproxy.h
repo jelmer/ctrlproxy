@@ -26,8 +26,8 @@
 #include <stdarg.h>
 #include <glib.h>
 #include <gmodule.h>
-#include <libxml/xmlmemory.h>
-#include <libxml/parser.h>
+
+#include <libxml/tree.h>
 
 #ifdef STRICT_MEMORY_ALLOCS
 #define calloc(a,b) __ERROR_USE_G_NEW0__
@@ -47,37 +47,10 @@ struct client;
 struct line;
 struct channel_nick;
 struct network_nick;
-struct transport_context;
+struct plugin;
 
 enum data_direction { UNKNOWN = 0, TO_SERVER = 1, FROM_SERVER = 2 };
 enum has_colon { COLON_UNKNOWN = 0, WITH_COLON = 1, WITHOUT_COLON = 2 };
-
-typedef void (*disconnect_handler) (struct transport_context *, void *data);
-typedef void (*connected_handler) (struct transport_context *, void *data);
-typedef void (*receive_handler) (struct transport_context *, char *l, void *data);
-typedef void (*newclient_handler) (struct transport_context *, struct transport_context *, void *data);
-
-struct transport_ops {
-	char *name;
-	/* The connect and listen functions should add something to the poll */
-	int (*connect) (struct transport_context *context);
-	int (*listen) (struct transport_context *context);
-	int (*write) (struct transport_context *context, const char *l);
-	int (*close) (struct transport_context *context);
-	int reference_count;
-	struct plugin *plugin;
-};
-
-struct transport_context {
-	struct transport_ops *functions;
-	xmlNodePtr configuration;
-	void *data;
-	void *caller_data;
-	disconnect_handler on_disconnect;
-	connected_handler on_connect;
-	receive_handler on_receive;
-	newclient_handler on_new_client;
-};
 
 /* for the options fields */
 enum line_options {
@@ -101,8 +74,6 @@ struct line {
 	enum has_colon has_endcolon;
 };
 
-
-
 struct channel_nick {
 	char mode;
 	struct channel *channel;
@@ -117,12 +88,15 @@ struct network_nick {
 };
 
 struct channel {
-	xmlNodePtr xmlConf;
+	const char *name;
+	char *key;
 	char *topic;
+	gboolean autojoin;
+	gboolean joined;
 	char mode; /* Private, secret, etc */
 	char modes[255];
 	char introduced;
-	char namreply_started;
+	gboolean namreply_started;
 	long limit;
 	GList *nicks;
 	struct network *network;
@@ -130,46 +104,97 @@ struct channel {
 
 struct client {
 	struct network *network;
-	char authenticated;
 	char *description;
-	struct transport_context *incoming;
+	GIOChannel *incoming;
+	gint incoming_id;
+	gint hangup_id;
 	time_t connect_time;
 	char* nick;
+	char *fullname;
+	char *username;
 };
 
 enum casemapping { CASEMAP_UNKNOWN = 0, CASEMAP_RFC1459 = 1, CASEMAP_ASCII = 2 };
+enum network_type { NETWORK_TCP, NETWORK_PROGRAM, NETWORK_VIRTUAL };
 
 struct network {
-	xmlNodePtr xmlConf;
-	char mymodes[255];
-	xmlNodePtr servers;
+	char *name;
+	char *username;
+	char *fullname;
+	char *nick;
 	char *hostmask;
+	char *password;
+	gboolean autoconnect;
+	gboolean ignore_first_nick;
+	char mymodes[255];
 	GList *channels;
 	GList *nicks;
-	char authenticated;
+	gboolean authenticated;
 	GList *clients;
-	xmlNodePtr current_server;
-	xmlNodePtr listen;
+	GList *autosend_lines;
 	char *supported_modes[2];
-	char **features;
-	struct transport_context *outgoing;
-	struct transport_context **incoming;
+	GList *features;
 	guint reconnect_id;
 	enum casemapping casemapping;
 	gboolean name_guessed;
+	guint reconnect_interval;
+
+	enum network_type type;
+
+	union { 
+		struct {
+			GList *servers;
+			struct tcp_server {
+				char *name;
+				char *host;
+				char *port;
+				gboolean ssl;
+				char *password;
+				struct addrinfo *addrinfo;
+			} *current_server;
+
+			struct sockaddr *local_name;
+			size_t namelen;
+			GIOChannel *outgoing;
+			gint outgoing_id;
+			gint hangup_id;
+		} tcp;
+		
+		struct {
+			char *location;
+			GIOChannel *outgoing;
+			gint outgoing_id;
+		} program;
+
+		struct {
+			char *type;
+			void *private_data;
+			struct virtual_network_ops {
+				char *name;
+				gboolean (*init) (struct network *);
+				struct line * (*recv) (struct network *);
+				gboolean (*send) (struct network *, struct line *);
+				gboolean (*fini) (struct network *);
+			} *ops;
+		} virtual;
+	} connection;
 };
+
+typedef gboolean (*plugin_init_function) (struct plugin *);
+typedef gboolean (*plugin_fini_function) (struct plugin *);
+typedef xmlNodePtr (*plugin_save_function) (struct plugin *);
+typedef gboolean (*plugin_load_function) (struct plugin *, xmlNodePtr configuration);
 
 struct plugin {
 	char *name;
 	char *path;
 	GModule *module;
-	xmlNodePtr xmlConf;
 	void *data;
+	gboolean autoload;
+	gboolean loaded;
+	plugin_save_function save_config;
+	plugin_load_function load_config;
 };
-
-typedef gboolean (*plugin_init_function) (struct plugin *);
-typedef gboolean (*plugin_fini_function) (struct plugin *);
-
 
 /* state.c */
 G_MODULE_EXPORT struct channel *find_channel(struct network *st, const char *name);
@@ -183,34 +208,41 @@ G_MODULE_EXPORT char get_prefix_by_mode(char p, struct network *n);
 G_MODULE_EXPORT const char *get_network_feature(struct network *n, const char *name);
 G_MODULE_EXPORT int irccmp(struct network *n, const char *a, const char *b);
 G_MODULE_EXPORT struct network_nick *line_get_network_nick(struct line *l);
-G_MODULE_EXPORT struct network *find_network_by_xml(xmlNodePtr cur);
 
 /* server.c */
-G_MODULE_EXPORT struct network *connect_network(xmlNodePtr);
-G_MODULE_EXPORT gboolean connect_current_server (struct network *);
-G_MODULE_EXPORT gboolean connect_next_server (struct network *);
+G_MODULE_EXPORT gboolean network_is_connected(struct network *);
+G_MODULE_EXPORT struct network *new_network(void);
+G_MODULE_EXPORT gboolean connect_network(struct network *);
+G_MODULE_EXPORT gboolean connect_current_tcp_server (struct network *);
+G_MODULE_EXPORT gboolean connect_next_tcp_server (struct network *);
 G_MODULE_EXPORT int close_network(struct network *s);
 G_MODULE_EXPORT gboolean close_server(struct network *n);
 G_MODULE_EXPORT GList *get_network_list(void);
 G_MODULE_EXPORT void clients_send(struct network *, struct line *, struct client *exception);
-G_MODULE_EXPORT void network_add_listen(struct network *, xmlNodePtr);
 G_MODULE_EXPORT void disconnect_client(struct client *c);
-G_MODULE_EXPORT void server_send_login (struct transport_context *c, void *_server);
+G_MODULE_EXPORT void server_send_login (GIOChannel *c, void *_server);
 G_MODULE_EXPORT gboolean network_change_nick(struct network *s, const char *nick);
+G_MODULE_EXPORT struct client *new_client(struct network *, GIOChannel *);
+G_MODULE_EXPORT gboolean network_send_line(struct network *s, struct line *);
+G_MODULE_EXPORT gboolean network_send_args(struct network *s, ...);
+G_MODULE_EXPORT void register_virtual_network(struct virtual_network_ops *);
+G_MODULE_EXPORT void unregister_virtual_network(struct virtual_network_ops *);
+G_MODULE_EXPORT struct network *find_network(const char *name);
 
 /* line.c */
 G_MODULE_EXPORT struct line *linedup(struct line *l);
-G_MODULE_EXPORT struct line * irc_parse_line(char *data);
-G_MODULE_EXPORT struct line * virc_parse_line(char *origin, va_list ap);
+G_MODULE_EXPORT struct line * irc_parse_line(const char *data);
+G_MODULE_EXPORT struct line * virc_parse_line(const char *origin, va_list ap);
 G_MODULE_EXPORT char *irc_line_string(struct line *l);
 G_MODULE_EXPORT char *irc_line_string_nl(struct line *l);
 G_MODULE_EXPORT char *line_get_nick(struct line *l);
 G_MODULE_EXPORT void free_line(struct line *l);
-G_MODULE_EXPORT gboolean irc_send_args(struct transport_context *, ...);
-G_MODULE_EXPORT gboolean irc_sendf(struct transport_context *, char *fmt, ...);
-G_MODULE_EXPORT int irc_send_line(struct transport_context *, struct line *l);
+G_MODULE_EXPORT gboolean irc_send_args(GIOChannel *, ...);
+G_MODULE_EXPORT gboolean irc_sendf(GIOChannel *, char *fmt, ...);
+G_MODULE_EXPORT int irc_send_line(GIOChannel *, struct line *l);
 G_MODULE_EXPORT struct line *irc_parse_linef( char *origin, ... );
 G_MODULE_EXPORT struct line *irc_parse_line_args( char *origin, ... );
+G_MODULE_EXPORT struct line *irc_recv_line(GIOChannel *c);
 
 /* main.c */
 G_MODULE_EXPORT const char *ctrlproxy_version(void);
@@ -220,32 +252,17 @@ G_MODULE_EXPORT const char *get_shared_path(void);
 
 /* config.c */
 G_MODULE_EXPORT void save_configuration(void);
-G_MODULE_EXPORT xmlNodePtr config_node_root(void);
-G_MODULE_EXPORT xmlNodePtr config_node_networks(void);
-G_MODULE_EXPORT xmlNodePtr config_node_plugins(void);
-G_MODULE_EXPORT xmlDocPtr config_doc(void);
+G_MODULE_EXPORT gboolean load_configuration(const char *name);
 
 /* plugins.c */
-G_MODULE_EXPORT gboolean load_plugin(xmlNodePtr);
+G_MODULE_EXPORT struct plugin *new_plugin(const char *name);
+G_MODULE_EXPORT gboolean load_plugin(struct plugin *);
 G_MODULE_EXPORT gboolean unload_plugin(struct plugin *);
 G_MODULE_EXPORT gboolean plugin_loaded(char *name);
 G_MODULE_EXPORT void push_plugin(struct plugin *p);
 G_MODULE_EXPORT struct plugin *peek_plugin(void);
 G_MODULE_EXPORT struct plugin *pop_plugin(void);
 G_MODULE_EXPORT GList *get_plugin_list(void);
-
-/* transport.c */
-G_MODULE_EXPORT GList *get_transport_list(void);
-G_MODULE_EXPORT void register_transport(struct transport_ops *);
-G_MODULE_EXPORT gboolean unregister_transport(char *name);
-struct transport_context *transport_connect(const char *name, xmlNodePtr p, receive_handler, connected_handler, disconnect_handler, void *data);
-struct transport_context *transport_listen(const char *name, xmlNodePtr p, newclient_handler, void *data);
-void transport_free(struct transport_context *);
-G_MODULE_EXPORT int transport_write(struct transport_context *, const char *l);
-void transport_set_disconnect_handler(struct transport_context *, disconnect_handler);
-void transport_set_receive_handler(struct transport_context *, receive_handler);
-void transport_set_newclient_handler(struct transport_context *, newclient_handler);
-void transport_set_data(struct transport_context *, void *);
 
 /* linestack.c */
 struct linestack_context;
@@ -255,8 +272,8 @@ struct linestack_ops {
 	gboolean (*clear) (struct linestack_context *);
 	gboolean (*add_line) (struct linestack_context *, struct line *);
 	GSList *(*get_linked_list) (struct linestack_context *);
-	void (*send) (struct linestack_context *, struct transport_context *);
-	void (*send_limited) (struct linestack_context *, struct transport_context *, size_t);
+	void (*send) (struct linestack_context *, GIOChannel *);
+	void (*send_limited) (struct linestack_context *, GIOChannel *, size_t);
 	gboolean (*destroy) (struct linestack_context *);
 };
 
@@ -269,16 +286,14 @@ G_MODULE_EXPORT void register_linestack(struct linestack_ops *);
 G_MODULE_EXPORT void unregister_linestack(struct linestack_ops *);
 G_MODULE_EXPORT struct linestack_context *linestack_new(const char *name, const char *args);
 G_MODULE_EXPORT GSList *linestack_get_linked_list(struct linestack_context *);
-G_MODULE_EXPORT void linestack_send(struct linestack_context *, struct transport_context *);
+G_MODULE_EXPORT void linestack_send(struct linestack_context *, GIOChannel *);
 G_MODULE_EXPORT gboolean linestack_destroy(struct linestack_context *);
 G_MODULE_EXPORT gboolean linestack_clear(struct linestack_context *);
 G_MODULE_EXPORT gboolean linestack_add_line(struct linestack_context *, struct line *);
 G_MODULE_EXPORT gboolean linestack_add_line_list(struct linestack_context *, GSList *);
 
 /* util.c */
-G_MODULE_EXPORT char *list_make_string(char **);
-G_MODULE_EXPORT xmlNodePtr xmlFindChildByName(xmlNodePtr parent, const xmlChar *name);
-G_MODULE_EXPORT xmlNodePtr xmlFindChildByElementName(xmlNodePtr parent, const xmlChar *name);
+G_MODULE_EXPORT char *list_make_string(GList *);
 G_MODULE_EXPORT int verify_client(struct network *s, struct client *c);
 G_MODULE_EXPORT char *ctrlproxy_path(char *part);
 G_MODULE_EXPORT int strrfc1459cmp(const char *a, const char *b);
@@ -334,5 +349,7 @@ G_MODULE_EXPORT gboolean init_plugin(struct plugin *p);
 G_MODULE_EXPORT const char name_plugin[];
 #pragma comment(lib,"ctrlproxy.lib")
 #endif
+
+G_MODULE_EXPORT void set_sslize_function (GIOChannel *(*) (GIOChannel *));
 
 #endif /* __CTRLPROXY_H__ */

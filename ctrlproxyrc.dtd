@@ -5,7 +5,7 @@
 <!ATTLIST plugin file CDATA #REQUIRED>
 <!ATTLIST plugin autoload CDATA "1">
 
-<!ELEMENT network (listen?,servers?,channel*,autosend*)>
+<!ELEMENT network (listen?,(servers|program|virtual),channel*,autosend*)>
 <!ATTLIST network name CDATA #IMPLIED>
 <!ATTLIST network client_pass CDATA "">
 <!ATTLIST network password CDATA "">

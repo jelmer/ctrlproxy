@@ -17,7 +17,6 @@
 	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 */
 
-#define _GNU_SOURCE
 #include "ctrlproxy.h"
 #include <string.h>
 
@@ -25,18 +24,10 @@ gboolean fini_plugin(struct plugin *p) {
 	return TRUE;
 }
 
-static xmlNodePtr new_plugin_node(char *name) {
-	xmlNodePtr new;
-	new = xmlNewNode(NULL, "plugin");
-	xmlSetProp(new, "autoload", "1");
-	xmlSetProp(new, "file", name);
-	return new;
-}
-
 const char name_plugin[] = "repl_memory";
 
 gboolean init_plugin(struct plugin *p) {
-	xmlNodePtr xml_memory = new_plugin_node("linestack_memory"), xml_simple = new_plugin_node("repl_simple");
 	/* Load linestack_memory and repl_simple */
-	return load_plugin(xml_memory) && load_plugin(xml_simple);
+	/* FIXME: return load_plugin(xml_memory) && load_plugin(xml_simple);*/
+	return TRUE;
 }

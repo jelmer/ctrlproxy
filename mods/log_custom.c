@@ -17,7 +17,6 @@
 	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 */
 
-#define _GNU_SOURCE
 #include "ctrlproxy.h"
 #include <stdio.h>
 #include <stdarg.h>
@@ -41,7 +40,8 @@
 #undef G_LOG_DOMAIN
 #define G_LOG_DOMAIN "log_custom"
 
-static xmlNodePtr xmlConf = NULL;
+const char *logfilename = NULL;
+GHashTable *fmts = NULL;
 
 /* Translation table */
 struct log_mapping {
@@ -53,42 +53,32 @@ struct log_mapping {
 };
 
 static char *get_hours(struct line *l, gboolean case_sensitive) { 
-	char *ret;
 	time_t ti = time(NULL);
 	struct tm *t = localtime(&ti);
-	asprintf(&ret, "%02d", t->tm_hour);
-	return ret;
+	return g_strdup_printf("%02d", t->tm_hour);
 }
 
 static char *get_minutes(struct line *l, gboolean case_sensitive) { 
-	char *ret;
 	time_t ti = time(NULL);
 	struct tm *t = localtime(&ti);
-	asprintf(&ret, "%02d", t->tm_min);
-	return ret;
+	return g_strdup_printf("%02d", t->tm_min);
 }
 
 static char *get_seconds(struct line *l, gboolean case_sensitive) { 
-	char *ret;
 	time_t ti = time(NULL);
 	struct tm *t = localtime(&ti);
-	asprintf(&ret, "%02d", t->tm_sec);
-	return ret;
+	return g_strdup_printf("%02d", t->tm_sec);
 }
 
 static char *get_seconds_since_1970(struct line *l, gboolean case_sensitive) {
-	char *ret;
 	time_t ti = time(NULL);
-	asprintf(&ret, "%ld", ti);
-	return ret;
+	return g_strdup_printf("%ld", ti);
 }
 
 static char *get_day(struct line *l, gboolean case_sensitive) { 
-	char *ret;
 	time_t ti = time(NULL);
 	struct tm *t = localtime(&ti);
-	asprintf(&ret, "%02d", t->tm_mday);
-	return ret;
+	return g_strdup_printf("%02d", t->tm_mday);
 }
 
 static char *get_user(struct line *l, gboolean case_sensitive) {
@@ -104,12 +94,10 @@ static char *get_user(struct line *l, gboolean case_sensitive) {
 }
 
 static char *get_monthname(struct line *l, gboolean case_sensitive) { 
-	char *ret;
 	char stime[512];
 	time_t ti = time(NULL);
 	strftime(stime, sizeof(stime), "%b", localtime(&ti));
-	asprintf(&ret, "%s", stime);
-	return ret;
+	return g_strdup_printf("%s", stime);
 }
 
 static char *get_nick(struct line *l, gboolean case_sensitive) {
@@ -118,19 +106,19 @@ static char *get_nick(struct line *l, gboolean case_sensitive) {
 		else return g_strdup(line_get_nick(l)); 
 	}
 	
-	if(l->direction == TO_SERVER) return xmlGetProp(l->network->xmlConf, "nick");
+	if(l->direction == TO_SERVER) return l->network->nick;
 	
 	return g_strdup("");
 }
 
 static char *get_network(struct line *l, gboolean case_sensitive) 
-{ return xmlGetProp(l->network->xmlConf, "name"); }
+{ return g_strdup(l->network->name); }
 static char *get_server(struct line *l, gboolean case_sensitive)
-{ return xmlGetProp(l->network->current_server, "name"); }
+{ return g_strdup(l->network->connection.tcp.current_server->name); }
 
 static char *get_percent(struct line *l, gboolean case_sensitive) { return g_strdup("%"); }
 
-static char *identifier = NULL;
+static const char *identifier = NULL;
 
 static char *get_identifier(struct line *l, gboolean case_sensitive) { 
 	if(case_sensitive) return g_ascii_strdown(identifier, -1); 
@@ -209,7 +197,7 @@ static char *find_mapping(struct line *l, char c, gboolean case_sensitive)
 	return g_strdup("");
 }
 
-static void custom_subst(char **_new, char *fmt, struct line *l, char *_identifier, gboolean case_sensitive)
+static void custom_subst(char **_new, const char *fmt, struct line *l, const char *_identifier, gboolean case_sensitive)
 {
 	char *subst[MAX_SUBST];
 	char *new;
@@ -277,27 +265,17 @@ static GHashTable *files = NULL;
 
 static FILE *find_channel_file(struct line *l, char *identifier) {
 	char *n = NULL;
-	xmlNodePtr cur = xmlFindChildByElementName(xmlConf, "logfilename");
 	FILE *f;
-	char *logfilename;
-	if(!cur) return NULL;
-	logfilename = xmlNodeGetContent(cur);
 	if(!logfilename)return NULL;
 	custom_subst(&n, logfilename, l, identifier, TRUE);
-	g_free(logfilename);
 	f = g_hash_table_lookup(files, n);
 	g_free(n);
 	return f;
 }
 
-static FILE *find_add_channel_file(struct line *l, char *identifier) {
+static FILE *find_add_channel_file(struct line *l, const char *identifier) {
 	char *n = NULL, *dn, *p;
 	FILE *f;
-	xmlNodePtr cur = xmlFindChildByElementName(xmlConf, "logfilename");
-	char *logfilename;
-	if(!cur) return NULL;
-
-	logfilename = xmlNodeGetContent(cur);
 	if(!logfilename) return NULL;
 	custom_subst(&n, logfilename, l, identifier, TRUE);
 	f = g_hash_table_lookup(files, n);
@@ -311,7 +289,6 @@ static FILE *find_add_channel_file(struct line *l, char *identifier) {
 		/* Check if directory needs to be created */
 		if(!g_file_test(dn, G_FILE_TEST_IS_DIR) && mkdir(dn, 0700) == -1) {
 			g_warning(_("Couldn't create directory %s for logging!"), dn);
-			xmlFree(logfilename);
 			g_free(dn);
 			g_free(n);
 			return NULL;
@@ -323,45 +300,35 @@ static FILE *find_add_channel_file(struct line *l, char *identifier) {
 		f = fopen(n, "a+");
 		if(!f) {
 			g_warning(_("Couldn't open file %s for logging!"), n);
-			xmlFree(logfilename);
 			g_free(n);
 			return NULL;
 		}
 		g_hash_table_insert(files, n, f);
 		g_free(n);
 	} else g_free(n);
-	xmlFree(logfilename);
 	return f;
 }
 
 static void file_write_target(const char *n, struct line *l) 
 {
 	char *t, *s, *fmt;
-	xmlNodePtr cur;
 	FILE *f;
-	char *own_nick = xmlGetProp(l->network->xmlConf, "nick");
 
-	cur = xmlFindChildByElementName(xmlConf, n);
-	if(!cur) return;
-
-	fmt = xmlNodeGetContent(cur);
+	fmt = g_hash_table_lookup(fmts, n);
 	if(!fmt) return;
 
-
-	if(!irccmp(l->network, own_nick, l->args[1])) {
+	if(!irccmp(l->network, l->network->nick, l->args[1])) {
 		if(line_get_nick(l)) { t = g_strdup(line_get_nick(l)); }
 		else { t = g_strdup("_messages_"); }
 	} else {
 		t = g_strdup(l->args[1]);
 	}
-	xmlFree(own_nick);
 
 	f = find_add_channel_file(l, t);
 	if(!f) { g_free(t); return; }
 	
 	custom_subst(&s, fmt, l, t, FALSE);
 	g_free(t);
-	xmlFree(fmt);
 
     fputs(s, f);
 	fputc('\n', f);
@@ -373,20 +340,15 @@ static void file_write_target(const char *n, struct line *l)
 static void file_write_channel_only(const char *n, struct line *l)
 {
 	char *s, *fmt;
-	xmlNodePtr cur;
 	FILE *f;
 
-	cur = xmlFindChildByElementName(xmlConf, n);
-	if(!cur) return;
-
-	fmt = xmlNodeGetContent(cur);
-	if(!fmt)return;
+	fmt = g_hash_table_lookup(fmts, n);
+	if(!fmt) return;
 
 	f = find_add_channel_file(l, l->args[1]);
 	if(!f) return; 
 
 	custom_subst(&s, fmt, l, l->args[1], FALSE);
-	xmlFree(fmt);
 
 	fputs(s, f); fputc('\n', f);
 	fflush(f);
@@ -397,7 +359,6 @@ static void file_write_channel_only(const char *n, struct line *l)
 static void file_write_channel_query(const char *n, struct line *l)
 {
 	char *s, *fmt;
-	xmlNodePtr cur;
 	char *nick;
 	FILE *f;
 	GList *gl;
@@ -405,10 +366,8 @@ static void file_write_channel_query(const char *n, struct line *l)
 	nick = line_get_nick(l);
 	if(!nick)return;
 
-	cur = xmlFindChildByElementName(xmlConf, n);
-	if(!cur)return;
-	fmt = xmlNodeGetContent(cur);
-	if(!fmt)return;
+	fmt = g_hash_table_lookup(fmts, n);
+	if(!fmt) return;
 
 	/* check for the query first */
 	f = find_channel_file(l, nick);
@@ -425,32 +384,28 @@ static void file_write_channel_query(const char *n, struct line *l)
 	while(gl) {
 		struct channel *c = (struct channel *)gl->data;
 		if(find_nick(c, nick)) {
-			char *channame = xmlGetProp(c->xmlConf, "name");
-			f = find_add_channel_file(l, channame);
+			f = find_add_channel_file(l, c->name);
 			if(f) {
-				custom_subst(&s, fmt, l, channame, FALSE);
+				custom_subst(&s, fmt, l, c->name, FALSE);
 				fputs(s, f); fputc('\n', f);
 				fflush(f);
 				g_free(s);
 			}
-			xmlFree(channame);
 		}
 		gl = gl->next;
 	}
-	
-	xmlFree(fmt);
 }
 
 static gboolean log_custom_data(struct line *l)
 {
-	char *nick = NULL;
+	const char *nick = NULL;
 	char *user = NULL;
 	FILE *f = NULL;
 	if(!l->args || !l->args[0] || l->options & LINE_NO_LOGGING)return TRUE;
 	if(l->origin)nick = g_strdup(l->origin);
 	if(nick)user = strchr(nick, '!');
 	if(user){ *user = '\0';user++; }
-	if(!nick && xmlHasProp(l->network->xmlConf, "nick"))nick = xmlGetProp(l->network->xmlConf, "nick");
+	if(!nick && l->network->nick)nick = l->network->nick;
 
 	/* Loop thru possible values for %@ */
 
@@ -521,8 +476,6 @@ static gboolean log_custom_data(struct line *l)
 
 	if(f) fflush(f);
 
-	if(nick)g_free(nick);
-
 	return TRUE;
 }
 
@@ -534,15 +487,28 @@ gboolean fini_plugin(struct plugin *p)
 
 const char name_plugin[] = "log_custom";
 
+gboolean load_config(struct plugin *p, xmlNodePtr node)
+{
+	xmlNodePtr cur;
+	
+	for (cur = node->children; cur; cur = cur->next) 
+	{
+		if (cur->type != XML_ELEMENT_NODE) continue;
+
+		if (!strcmp(cur->name, "logfilename")) {
+			logfilename = xmlNodeGetContent(cur);
+		} else {
+			g_hash_table_insert(fmts, g_strdup(cur->name), xmlNodeGetContent(cur));
+		}
+	}
+
+	return TRUE;
+}
+
 gboolean init_plugin(struct plugin *p)
 {
-	xmlConf = p->xmlConf;
-	g_assert(p->xmlConf);
-	if(!xmlFindChildByElementName(xmlConf, "logfilename")) {
-		g_warning(_("No <logfilename> tag for log_custom module"));
-		return FALSE;
-	}
 	files = g_hash_table_new(g_str_hash, g_str_equal);
+	fmts = g_hash_table_new(g_str_hash, g_str_equal);
 	add_filter_ex("log_custom", log_custom_data, "log", 1000);
 	return TRUE;
 }

@@ -22,9 +22,6 @@
 #include "config.h"
 #endif
 
-#include <libxml/xmlmemory.h>
-#include <libxml/parser.h>
-
 #define BACKTRACE_STACK_SIZE 64
 
 #ifdef HAVE_EXECINFO_H
@@ -98,12 +95,12 @@ void log_handler(const gchar *log_domain, GLogLevelFlags flags, const gchar *mes
 
 static void clean_exit()
 {
-	GList *gl = get_network_list();
-	while(gl) {
+	GList *gl;
+	while((gl = get_network_list())) {
 		struct network *n = (struct network *)gl->data;
-		gl = gl->next;
-		if(n) close_network(n);
+		close_network(n);
 	}
+
 	if(debugfd)fclose(debugfd);
 	g_main_loop_quit(main_loop);
 }
@@ -120,6 +117,7 @@ void signal_quit(int sig)
 	state = 1;
 
 	g_message(_("Closing connections..."));
+
 	g_main_loop_quit(main_loop);
 }
 
@@ -237,7 +235,7 @@ int main(int argc, const char *argv[])
 
 	if(rcfile) {
 		configuration_file = g_strdup(rcfile);
-		readConfig(configuration_file);
+		load_configuration(configuration_file);
 	} else { 
 		const char *homedir = g_get_home_dir();
 #ifdef _WIN32
@@ -247,13 +245,12 @@ int main(int argc, const char *argv[])
 #endif
 		/* Copy configuration file from default location if none existed yet */
 		if(g_file_test(configuration_file, G_FILE_TEST_EXISTS)) {
-			readConfig(configuration_file);
+			load_configuration(configuration_file);
 		} else {
-			readConfig(SHAREDIR"/ctrlproxyrc.default");
+			load_configuration(SHAREDIR"/ctrlproxyrc.default");
 		}
 	}
 
-	if(!init_plugins() || !init_networks()) return -1;
 	initialized_hook_execute();
 
 	atexit(clean_exit);

@@ -81,7 +81,7 @@ GSList *linestack_get_linked_list(struct linestack_context *b)
 	return b->functions->get_linked_list(b);
 }
 
-void linestack_send_limited(struct linestack_context *b, struct transport_context *t, size_t last)
+void linestack_send_limited(struct linestack_context *b, GIOChannel *t, size_t last)
 {
 	GSList *lines, *gl;
 	unsigned int i;
@@ -100,18 +100,14 @@ void linestack_send_limited(struct linestack_context *b, struct transport_contex
 
 	while(gl) {
 		struct line *l = (struct line *)gl->data;
-		char *raw = irc_line_string_nl(l);
-		transport_write(t, raw);
-		g_free(raw);
+		irc_send_line(t, l);
 		free_line(l);
 		gl = gl->next;
 	}
 	g_slist_free(lines);
-
-	
 }
 
-void linestack_send(struct linestack_context *b, struct transport_context *t)
+void linestack_send(struct linestack_context *b, GIOChannel *t)
 {
 	GSList *lines, *gl;
 	if(!b) return;
@@ -126,9 +122,7 @@ void linestack_send(struct linestack_context *b, struct transport_context *t)
 	gl = lines;
 	while(gl) {
 		struct line *l = (struct line *)gl->data;
-		char *raw = irc_line_string_nl(l);
-		transport_write(t, raw);
-		g_free(raw);
+		irc_send_line(t, l);
 		free_line(l);
 		gl = gl->next;
 	}

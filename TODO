@@ -2,27 +2,8 @@
  - repl changes
  - see FIXME's
 - fix bug in linestack_file
-- check web script
 - finish python module 
  - hooks
-- finish socks module
-- less internal use of XML
-- kill transports and replace them with GIOChannels
+- rewrite web script
 - support the - and + in front of lines as used by Freenode
-- "password" attribute on server element rather then network element
-- check modules:
-  * admin
-  * antiflood
-  * auto-away
-  * debug
-  * linestack_file
-  * linestack_memory
-  * log_custom
-  * motd_file
-  * noticelog
-  * repl_highlight
-  * repl_lastdisconnect
-  * repl_limited
-  * repl_memory
-  * repl_none
-  * strip
+- allow compiling in of modules.

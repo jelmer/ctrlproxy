@@ -16,6 +16,7 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
+#include "ctrlproxy.h"
 #include <glib.h>
 #include "../config.h"
 #include <errno.h>
@@ -37,6 +38,8 @@
 static gnutls_certificate_credentials xcred;
 
 static gnutls_dh_params dh_params;
+gboolean g_io_gnutls_set_files(char *certf, char *keyf, char *caf);
+GIOChannel *g_io_gnutls_get_iochannel(GIOChannel *handle, gboolean server);
 
 static int generate_dh_params(void) {
 
@@ -181,14 +184,61 @@ static GIOFuncs g_io_gnutls_channel_funcs = {
     g_io_gnutls_get_flags
 };
 
-gboolean g_io_gnutls_fini()
+const char name_plugin[] = "gnutls";
+
+gboolean fini_plugin(struct plugin *p)
 {
-	gnutls_certificate_free_credentials(xcred);
-	gnutls_global_deinit();
 	return TRUE;
 }
 
-gboolean g_io_gnutls_init()
+#if 0
+
+gboolean load_configuration() 
+{
+	xmlNodePtr cur;
+	char *cafile = NULL, *certf = NULL, *keyf = NULL;
+
+cur = config_instance_get_setting(p->config, "keyfile");
+	if(cur) keyf = xmlNodeGetContent(cur);
+
+	cur = config_instance_get_setting(p->config, "certfile");
+	if(cur) certf = xmlNodeGetContent(cur);
+
+	cur = config_instance_get_setting(p->config, "cafile");
+	if(cur) cafile = xmlNodeGetContent(cur);
+
+	if(!certf) {
+		certf = ctrlproxy_path("cert.pem");
+		if(!g_file_test(certf, G_FILE_TEST_EXISTS)) {
+			free(certf);
+			certf = NULL;
+		}
+	}
+
+	if(!keyf) {
+		keyf = ctrlproxy_path("key.pem");
+		if(!g_file_test(keyf, G_FILE_TEST_EXISTS)) {
+			free(keyf);
+			keyf = NULL;
+		}
+	}
+
+	if(!cafile) {
+		cafile = ctrlproxy_path("ca.pem");
+		if(!g_file_test(cafile, G_FILE_TEST_EXISTS)) {
+			free(cafile);
+			cafile = NULL;
+		}
+	}
+
+	g_io_gnutls_set_files(certf, keyf, cafile);
+
+
+}
+
+#endif
+
+gboolean init_plugin(struct plugin *p)
 {
 	if(gnutls_global_init() < 0) {
 		g_warning("gnutls global state initialization error");
@@ -204,6 +254,8 @@ gboolean g_io_gnutls_init()
 	}
 
 	gnutls_certificate_set_dh_params( xcred, dh_params);
+
+	set_sslize_function (g_io_gnutls_get_iochannel);
 
 	return TRUE;
 }

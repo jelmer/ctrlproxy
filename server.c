@@ -17,42 +17,53 @@
 	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 */
 
-#include "internals.h"
-#include "irc.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#define SERVER_SEND_LINE(s,l) {if(!irc_send_line((s)->outgoing, l))reconnect(NULL, s);}
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+
+#define __USE_POSIX
+#include <netinet/in.h>
+#include <errno.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
+
+#include "internals.h"
+#include "irc.h"
+
+#define SERVER_SEND_LINE(s,l) {if(!network_send_line(s, l))reconnect(NULL, G_IO_HUP, s);}
 #define CLIENT_SEND_LINE(c,l) {if(!irc_send_line((c)->incoming, l))disconnect_client(c);}
 
-GList *networks = NULL;
+static GIOChannel * (*sslize_function) (GIOChannel *);
+
+static GList *networks = NULL;
 
 extern FILE *debugfd;
 
 extern char *debugfile;
 
-static void reconnect(struct transport_context *c, void *_server);
+static GHashTable *virtual_network_ops = NULL;
 
-void handle_server_receive (struct transport_context *c, char *raw, void *_server)
+static gboolean reconnect(GIOChannel *c, GIOCondition cond, void *_server);
+
+gboolean handle_server_receive (GIOChannel *c, GIOCondition cond, void *_server)
 {
 	struct network *server = (struct network *)_server;
 	struct line *l;
 
-#ifndef _WIN32
-	if(debugfd)fprintf(debugfd, _("[From server] %s\n"), raw);
-#endif
-
-	l = irc_parse_line(raw);
-	if(!l)return;
+	l = irc_recv_line(c);
+	if(!l)return TRUE;
 
 	/* Silently drop empty messages, as allowed by RFC */
 	if(l->argc == 0) {
 		free_line(l);
-		return;
+		return TRUE;
 	}
-	
+
 	l->direction = FROM_SERVER;
 	l->network = server;
 
@@ -62,170 +73,261 @@ void handle_server_receive (struct transport_context *c, char *raw, void *_serve
 	/* We need to handle pings.. we can't depend on a client
 	 * to do that for us*/
 	l->direction = FROM_SERVER;
-	if(l->args[0]) {
-		if(!g_strcasecmp(l->args[0], "PING")){
-			if(server->outgoing)irc_send_args(server->outgoing, "PONG", l->args[1], NULL);
-		} else if(!g_strcasecmp(l->args[0], "PONG")){
-		} else if(!g_strcasecmp(l->args[0], "433") && !server->authenticated){
-			if(server->outgoing) {
-				char *new_nick;
-				char *nick = xmlGetProp(server->xmlConf, "nick");
-				new_nick = g_strdup_printf("%s_", nick);
-				xmlSetProp(server->xmlConf, "nick", new_nick);
-				irc_send_args(server->outgoing, "NICK", new_nick, NULL);
-				xmlFree(nick);
-				g_free(new_nick);
+	if(!g_strcasecmp(l->args[0], "PING")){
+		network_send_args(server, "PONG", l->args[1], NULL);
+	} else if(!g_strcasecmp(l->args[0], "PONG")){
+	} else if(!g_strcasecmp(l->args[0], "433") && !server->authenticated){
+		char *old_nick = server->nick;
+		server->nick = g_strdup_printf("%s_", server->nick);
+		network_send_args(server, "NICK", server->nick, NULL);
+		g_free(old_nick);
+	} else if(atoi(l->args[0]) == 4) {
+		GList *gl;
+
+		server_connected_hook_execute(server);
+		server->authenticated = TRUE;
+
+		for (gl = server->autosend_lines; gl; gl = gl->next) {
+			char *data = gl->data;
+			struct line *newl;
+
+			newl = irc_parse_line(data);
+
+			SERVER_SEND_LINE(server, newl);
+
+			free_line(newl);
+		}
+
+		/* Rejoin channels */
+		for (gl = server->channels; gl; gl = gl->next) 
+		{
+			struct channel *c = gl->data;
+			if(c->autojoin) {
+				network_send_args(server, "JOIN", c->name, c->key, NULL);
+			} 
+		}
+
+		/* Make sure the current server is listed as a possible one for this network */
+		if (server->type == NETWORK_TCP && l->argc > 2) {
+			for (gl = server->connection.tcp.servers; gl; gl = gl->next) {
+				struct tcp_server *tcp = gl->data;
+				
+				if (!g_strcasecmp(tcp->host, l->args[1])) 
+					break;
 			}
-		} else if(server->authenticated) {
-			if(!(l->options & LINE_DONT_SEND))clients_send(server, l, NULL);
-		} else if(atoi(l->args[0]) == 4) {
-			xmlNodePtr cur = server->xmlConf->xmlChildrenNode;
-			server_connected_hook_execute(server);
-			server->authenticated = 1;
-			while(cur) {
-				if(!strcmp(cur->name, "autosend")) {
-					xmlChar *data = xmlNodeGetContent(cur);
-					struct line *newl;
-					
-					newl = irc_parse_line(data);
 
-					SERVER_SEND_LINE(server, newl);
+			/* Not found, add new one */
+			if (!gl) {
+				struct tcp_server *tcp = g_new0(struct tcp_server, 1);
+				int error;
+				struct addrinfo hints;
 
-					xmlFree(data);
-					free_line(newl);
+				tcp->host = g_strdup(l->args[2]);
+				tcp->name = g_strdup(l->args[2]);
+				tcp->port = g_strdup(server->connection.tcp.current_server->port);
+				tcp->ssl = server->connection.tcp.current_server->ssl;
+				tcp->password = g_strdup(server->connection.tcp.current_server->password);
+
+				memset(&hints, 0, sizeof(hints));
+				hints.ai_family = PF_UNSPEC;
+				hints.ai_socktype = SOCK_STREAM;
+
+				error = getaddrinfo(tcp->host, tcp->port, &hints, &tcp->addrinfo);
+				if (error) {
+					g_warning("Unable to lookup %s: %s", tcp->host, gai_strerror(error));
+				} else {
+					server->connection.tcp.servers = g_list_append(server->connection.tcp.servers, tcp);
 				}
-				cur = cur->next;
 			}
 			
-			/* Rejoin channels */
-			cur = server->xmlConf->xmlChildrenNode;
-			while(cur) {
-				if(!strcmp(cur->name, "channel")) {
-					char *n = xmlGetProp(cur, "name");
-					char *a = xmlGetProp(cur, "autojoin");
-					char *k=  xmlGetProp(cur, "key");
-					g_assert(n);
-					if(a && atoi(a))
-						irc_send_args(server->outgoing, "JOIN", n, k, NULL);
-					if(k)xmlFree(k);
-					if(n)xmlFree(n);
-					if(a)xmlFree(a);
-				} 
-				cur = cur->next;
-			}
 		}
+	} else if(server->authenticated) {
+		if(!(l->options & LINE_DONT_SEND))clients_send(server, l, NULL);
+
 	}
 	free_line(l); l = NULL;
+
+	return TRUE;
 }
 
-xmlNodePtr network_get_next_server(struct network *n)
+struct tcp_server *network_get_next_tcp_server(struct network *n)
 {
-	xmlNodePtr cur = n->current_server;
+	GList *cur = g_list_find(n->connection.tcp.servers, n->connection.tcp.current_server);
+
 	/* Get next available server */
-	if(cur) cur = cur->next;
+	if(cur && cur->next) cur = cur->next; else cur = n->connection.tcp.servers;
 
-	while(cur && (xmlIsBlankNode(cur) || !strcmp(cur->name, "comment"))) cur = cur->next;
+	if(cur) return cur->data; 
 
-	if(cur) return cur;
-
-	cur = n->servers;
-
-	while(cur && (xmlIsBlankNode(cur) || !strcmp(cur->name, "comment"))) cur = cur->next;
-
-	return cur;
+	return NULL;
 }
 
-gboolean connect_next_server(struct network *s) 
+gboolean connect_next_tcp_server(struct network *s) 
 {
-	s->current_server = network_get_next_server(s);
-	return connect_current_server(s);
+	s->connection.tcp.current_server = network_get_next_tcp_server(s);
+	return connect_current_tcp_server(s);
 }
 
-void server_send_login (struct transport_context *c, void *_server) {
+void server_send_login (GIOChannel *c, void *_server) {
 	struct network *s = (struct network *)_server;
-	char *server_name = xmlGetProp(s->xmlConf, "name");
-	char *nick, *username, *fullname, *password;
 
-	g_message(_("Successfully connected to %s"), server_name);
+	g_message(_("Successfully connected to %s"), s->name);
 
-	nick = xmlGetProp(s->xmlConf, "nick");
-	username = xmlGetProp(s->xmlConf, "username");
-	fullname = xmlGetProp(s->xmlConf, "fullname");
-	password = xmlGetProp(s->xmlConf, "password");
-	g_assert(strlen(nick));
-	g_assert(strlen(username));
-	g_assert(strlen(fullname));
 	g_assert(strlen(get_my_hostname()));
-	g_assert(strlen(server_name));
 
-	if(xmlHasProp(s->xmlConf, "password"))irc_send_args(s->outgoing, "PASS", password, NULL);
-	irc_send_args(s->outgoing, "NICK", nick, NULL);
-	irc_send_args(s->outgoing, "USER", username, get_my_hostname(), server_name, fullname, NULL);
-
-	xmlFree(nick);
-	xmlFree(username);
-	xmlFree(fullname);
-	xmlFree(password);
-
+	if(s->type == NETWORK_TCP && s->connection.tcp.current_server->password) { 
+		network_send_args(s, "PASS", s->connection.tcp.current_server->password, NULL);
+	} else if (s->password) {
+		network_send_args(s, "PASS", s->password, NULL);
+	}
+	network_send_args(s, "NICK", s->nick, NULL);
+	network_send_args(s, "USER", s->username, get_my_hostname(), s->name, s->fullname, NULL);
 }
 
-gboolean connect_current_server(struct network *s) {
-	char *server_name = xmlGetProp(s->xmlConf, "name");
+gboolean network_send_line(struct network *s, struct line *l)
+{
+	switch (s->type) {
+	case NETWORK_TCP:
+		return irc_send_line(s->connection.tcp.outgoing, l);
 
-	if(!s->current_server){
-		xmlSetProp(s->xmlConf, "autoconnect", "0");
-		g_warning(_("No servers listed for network %s, not connecting\n"), server_name);
-		xmlFree(server_name);
+	case NETWORK_PROGRAM:
+		return irc_send_line(s->connection.program.outgoing, l);
+
+	case NETWORK_VIRTUAL:
+		if (!s->connection.virtual.ops) 
+			return FALSE;
+		return s->connection.virtual.ops->send(s, l);
+
+	default:
+		return FALSE;
+	}
+}
+
+gboolean network_send_args(struct network *s, ...)
+{
+	va_list ap;
+	struct line *l;
+	va_start(ap, s);
+	l = virc_parse_line(NULL, ap);
+	va_end(ap);
+
+	return network_send_line(s, l);
+}
+
+
+gboolean connect_current_tcp_server(struct network *s) 
+{
+	struct addrinfo *res;
+	int sock;
+	int size;
+	struct tcp_server *cs = s->connection.tcp.current_server;
+
+	if(!cs) {
+		s->autoconnect = FALSE;
+		g_warning(_("No servers listed for network %s, not connecting\n"), s->name);
 		return TRUE;
 	}
 
-	g_message(_("Connecting with %s for server %s"), s->current_server->name, server_name);
+	g_message(_("Connecting with %s:%s for network %s"), 
+			  cs->host, 
+			  cs->port, s->name);
 
-	s->outgoing = transport_connect(s->current_server->name, s->current_server, handle_server_receive, server_send_login, reconnect, s);
+	/* Connect */
 
-	if(!xmlHasProp(s->xmlConf, "name") && xmlHasProp(s->current_server, "name")) {
-		xmlFree(server_name);
+	sock = -1;
+	for (res = cs->addrinfo; res; res = res->ai_next) {
+		sock = socket(res->ai_family, res->ai_socktype,
+					  res->ai_protocol);
+		if (sock < 0) {
+			continue;
+		}
+
+		if (connect(sock, res->ai_addr, res->ai_addrlen) < 0) {
+			close(sock); sock = -1;
+			continue;
+		}
+
+		break; 
+	}
+
+	if (sock < 0) {
+		g_warning("Unable to connect: %s", strerror(errno));
+		return FALSE;
+	}
+
+
+	size = sizeof(struct sockaddr_in6);
+	s->connection.tcp.local_name = g_malloc(size);
+	s->connection.tcp.namelen = getsockname(sock, s->connection.tcp.local_name, &size);
+
+	s->connection.tcp.outgoing = g_io_channel_unix_new(sock);
+
+	if (cs->ssl) {
+		if (!sslize_function) {
+			g_warning("SSL enabled for %s:%s, but no SSL support loaded", cs->host, cs->port);
+		} else {
+			s->connection.tcp.outgoing = sslize_function(s->connection.tcp.outgoing);
+		}
+	}
+
+	server_send_login(s->connection.tcp.outgoing, s);
+	
+	s->connection.tcp.outgoing_id = g_io_add_watch(s->connection.tcp.outgoing, G_IO_IN, handle_server_receive, s);
+	s->connection.tcp.hangup_id = g_io_add_watch(s->connection.tcp.outgoing, G_IO_HUP, reconnect, s);
+
+	g_io_channel_unref(s->connection.tcp.outgoing);
+
+	if(!s->name && cs->name) {
 		s->name_guessed = TRUE;
-		server_name = xmlGetProp(s->current_server, "name");
-		xmlSetProp(s->xmlConf, "name", server_name);
+		s->name = g_strdup(s->name);
 	}
 
-	if(!s->outgoing) {
-		g_warning(_("Couldn't connect with network %s via transport %s"), server_name, s->current_server->name);
-		xmlFree(server_name);
+	if(!s->connection.tcp.outgoing) {
+		g_warning(_("Couldn't connect with network %s via server %s:%s"), s->name, cs->host, cs->port);
 		return TRUE;
 	}
-
-	xmlFree(server_name);
 
 	return FALSE;
 }
 
-void reconnect(struct transport_context *c, void *_server)
+static gboolean reconnect(GIOChannel *c, GIOCondition cond, void *_server)
 {
 	struct network *server = (struct network *)_server;
-	char *server_name;
-	char *buf;
-	int time = DEFAULT_RECONNECT_INTERVAL;
 
 	/* Don't report disconnections twice */
-	g_assert(server);
-	server_name = xmlGetProp(server->xmlConf, "name");
 
-	if((buf = xmlGetProp(server->xmlConf, "reconnect_interval")))
-		time = atoi(buf);
-	xmlFree(buf);
-
-	if(!server->outgoing) return;
 	server_disconnected_hook_execute(server);
-	transport_free(server->outgoing); server->outgoing = NULL;
 
-	g_warning(_("Connection to server %s lost, trying to reconnect in %ds..."), server_name, time);
-	xmlFree(server_name);
+	switch (server->type) {
+	case NETWORK_TCP: 
+		g_source_remove(server->connection.tcp.outgoing_id); 
+		server->connection.tcp.outgoing = 0; 
+		break;
+	case NETWORK_PROGRAM: 
+		g_source_remove(server->connection.program.outgoing_id); 
+		server->connection.program.outgoing = 0; 
+		break;
+	default: break;
+	}
 
-	server->authenticated = 0;
+	g_warning(_("Connection to server %s lost, trying to reconnect in %ds..."), server->name, time);
+
+	server->authenticated = FALSE;
 	state_reconnect(server);
-	server->reconnect_id = g_timeout_add(1000 * time, (GSourceFunc) connect_next_server, server);
+	server->reconnect_id = g_timeout_add(1000 * server->reconnect_interval, (GSourceFunc) connect_next_tcp_server, server);
+
+	return FALSE;
+}
+
+gboolean network_is_connected(struct network *n)
+{
+	switch (n->type) {
+	case NETWORK_TCP: return (n->connection.tcp.outgoing != NULL);
+	case NETWORK_PROGRAM: return (n->connection.program.outgoing != NULL);
+	case NETWORK_VIRTUAL: return (n->connection.virtual.ops != NULL);
+	}
+
+	return FALSE;
 }
 
 gboolean close_server(struct network *n) {
@@ -236,11 +338,28 @@ gboolean close_server(struct network *n) {
 		n->reconnect_id = 0;
 	}
 
-	if(n->outgoing) {
-		irc_send_args(n->outgoing, "QUIT", NULL);
+	if(network_is_connected(n)) {
+		network_send_args(n, "QUIT", NULL);
 		server_disconnected_hook_execute(n);
-		transport_free(n->outgoing);
-		n->outgoing = NULL;
+		switch (n->type) {
+		case NETWORK_TCP: 
+			g_source_remove(n->connection.tcp.outgoing_id); 
+			n->connection.tcp.outgoing_id = 0; 
+			g_source_remove(n->connection.tcp.hangup_id); 
+			n->connection.tcp.hangup_id = 0; 
+			break;
+		case NETWORK_PROGRAM: 
+			g_source_remove(n->connection.program.outgoing_id); 
+			n->connection.program.outgoing_id = 0; 
+			break;
+		case NETWORK_VIRTUAL:
+			if (n->connection.virtual.ops) {
+				n->connection.virtual.ops->fini(n);
+			}
+			break;
+		default: break;
+		}
+
 		g_free(n->hostmask);
 		n->hostmask = NULL;
 
@@ -252,13 +371,16 @@ gboolean close_server(struct network *n) {
 		}
 
 		if(n->features){
-			for(i = 0; n->features[i]; i++)
-				g_free(n->features[i]);
-			g_free(n->features);
+			GList *gl;
+			for (gl = n->features; gl; gl = gl->next) {
+				g_free(gl->data);
+			}
+
+			g_list_free(n->features);
 			n->features = NULL;
 		}
 
-		n->authenticated = 0;
+		n->authenticated = FALSE;
 
 		return TRUE;
 	}
@@ -266,20 +388,17 @@ gboolean close_server(struct network *n) {
 }
 
 void disconnect_client(struct client *c) {
-	char *networkname;
 	if(!c->incoming)return;
 
-	transport_free(c->incoming);
+	g_source_remove(c->incoming_id);
+	g_source_remove(c->hangup_id);
 	c->incoming = NULL;
 
 	c->network->clients = g_list_remove(c->network->clients, c);
-	if(c->authenticated) lose_client_hook_execute(c);
-	c->authenticated = 2;
+	lose_client_hook_execute(c);
 
-	networkname = xmlGetProp(c->network->xmlConf, "name");
-	g_message(_("Removed client to %s"), networkname);
-	g_free(networkname);
-	
+	g_message(_("Removed client to %s"), c->network->name);
+
 	if (c->nick) g_free(c->nick);
 	g_free(c);
 
@@ -290,298 +409,269 @@ void clients_send(struct network *server, struct line *l, struct client *excepti
 	GList *g = server->clients;
 	while(g) {
 		struct client *c = (struct client *)g->data;
-		if(c->authenticated && c != exception)CLIENT_SEND_LINE(c, l);
+		if(c != exception)CLIENT_SEND_LINE(c, l);
 		g = g_list_next(g);
 	}
 }
 
-void handle_client_disconnect(struct transport_context *c, void *data)
+static gboolean handle_client_disconnect(GIOChannel *c, GIOCondition cond, void *data)
 {
 	struct client *client = (struct client *)data;
 	disconnect_client(client);
+	return FALSE;
 }
 
-void send_motd(struct network *n, struct transport_context *c)
+void send_motd(struct network *n, GIOChannel *c)
 {
 	char **lines;
 	int i;
-	char *server_name = xmlGetProp(n->xmlConf, "name");
-	char *nick = xmlGetProp(n->xmlConf, "nick");
-
 	lines = get_motd_lines(n);
 
 	if(!lines) {
-		irc_sendf(c, ":%s %d %s :No MOTD file\r\n", server_name, ERR_NOMOTD, nick);
-		xmlFree(nick); xmlFree(server_name);
+		irc_sendf(c, ":%s %d %s :No MOTD file\r\n", n->name, ERR_NOMOTD, n->nick);
 		return;
 	}
 
-	irc_sendf(c, ":%s %d %s :Start of MOTD\r\n", server_name, RPL_MOTDSTART, nick);
+	irc_sendf(c, ":%s %d %s :Start of MOTD\r\n", n->name, RPL_MOTDSTART, n->nick);
 	for(i = 0; lines[i]; i++) {
-		irc_sendf(c, ":%s %d %s :%s\r\n", server_name, RPL_MOTD, nick, lines[i]);
+		irc_sendf(c, ":%s %d %s :%s\r\n", n->name, RPL_MOTD, n->nick, lines[i]);
 		g_free(lines[i]);
 	}
 	g_free(lines);
-	irc_sendf(c, ":%s %d %s :End of MOTD\r\n", server_name, RPL_ENDOFMOTD, nick);
-	xmlFree(nick); xmlFree(server_name);
+	irc_sendf(c, ":%s %d %s :End of MOTD\r\n", n->name, RPL_ENDOFMOTD, n->nick);
 }
 
-void handle_client_receive(struct transport_context *c, char *raw, void *_client)
+static gboolean handle_client_receive(GIOChannel *c, GIOCondition cond, void *_client)
 {
 	struct client *client = (struct client *)_client;
-	char allmodes[] = "aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPqQrRsStTuUvVwWxXyYzZ";
 	struct line *l;
-	char *clientpass;
-	char *server_name, *nick;
-	char *tmp;
 
-	if(client->authenticated == 2)return;
-	
-#ifndef _WIN32
-	if(debugfd)fprintf(debugfd, _("[From client] %s\n"), raw);
-#endif
-
-	l = irc_parse_line(raw);
-	if(!l)return;
+	l = irc_recv_line(c);
+	if(!l) return TRUE;
 
 	/* Silently drop empty messages */
-	if(l->argc == 0) {
+	if (l->argc == 0) {
 		free_line(l);
-		return;
+		return TRUE;
 	}
-	
+
 	l->direction = TO_SERVER;
 	l->client = client;
 	l->network = client->network;
 
-	clientpass = xmlGetProp(client->network->xmlConf, "client_pass");
-	if(!l->args[0]){ 
-		free_line(l);
-		return;
+	state_handle_data(client->network, l);
+
+	filters_execute(l);
+
+	client = l->client;
+	if (!client) {
+		return TRUE;
 	}
 
-	server_name = xmlGetProp(client->network->xmlConf, "name");
-	nick = xmlGetProp(client->network->xmlConf, "nick");
-
-	if(!clientpass && !client->authenticated) {
-		client->authenticated = 1;
-		g_log(G_LOG_DOMAIN, G_LOG_LEVEL_WARNING, _("No password set for %s, allowing client _without_ authentication!"), server_name);
-	}
-
-	if(!g_strcasecmp(l->args[0], "USER")){
-		if(!client->authenticated){
-			irc_sendf(c, ":%s 451 %s :You are not registered\r\n", 
-					  server_name,
-					  nick);
-			free_line(l);l = NULL;
-			if(clientpass)xmlFree(clientpass);
-			xmlFree(server_name); xmlFree(nick);
-			return;
-		}
-		irc_sendf(c, ":%s 001 %s :Welcome to the ctrlproxy\r\n", server_name, nick);
-		irc_sendf(c, ":%s 002 %s :Host %s is running ctrlproxy\r\n", server_name, nick, get_my_hostname());
-		irc_sendf(c, ":%s 003 %s :Ctrlproxy (c) 2002-2004 Jelmer Vernooij <jelmer@vernstok.nl>\r\n", server_name, nick);
-		irc_sendf(c, ":%s 004 %s %s %s %s %s\r\n", 
-				server_name, nick, server_name, ctrlproxy_version(), client->network->supported_modes[0]?client->network->supported_modes[0]:allmodes, client->network->supported_modes[1]?client->network->supported_modes[1]:allmodes);
-		
-		if(client->network->features) {
-			tmp = list_make_string(client->network->features);
-		
-			irc_sendf(c, ":%s 005 %s %s :are supported on this server\r\n", server_name, nick, tmp);
-			g_free(tmp);
-		}
-
-		send_motd(client->network, c);
-		g_message(_("Client @%s successfully authenticated"),
-			  server_name);
-		if(!new_client_hook_execute(client)) {
-			disconnect_client(client);
-		} else {
-           /* Initialization was successful. Now we can almost safely try to change to the nick, which
-           * was requested by the client earlier */
-           if (!xmlHasProp(client->network->xmlConf, "ignore_first_nick") && client->nick)
-               if (strcmp(client->nick, nick)) irc_send_args(client->network->outgoing, "NICK", client->nick, NULL);
-       	}
-	} else if(!g_strcasecmp(l->args[0], "PASS")) {
-		if (!clientpass)
-			client->authenticated = 1;
-		else if(!strcmp(l->args[1], clientpass)) {
-			client->authenticated = 1;
-		} else {
-			g_warning(_("User tried to log in to %s with incorrect password!\n"), server_name);
-			irc_sendf(c, ":%s %d %s :Password mismatch\r\n", server_name, ERR_PASSWDMISMATCH, nick);
-			disconnect_client(client);
-			free_line(l);
-			if(clientpass) xmlFree(clientpass);
-			xmlFree(nick); xmlFree(server_name);
-			return;
-		}
-   } else if(!g_strcasecmp(l->args[0], "NICK") && l->args[1] && client->authenticated && !client->nick) {
-       /* Don't allow the client to change the nick now. We would change it after initialization */
-       if (strcmp(l->args[1], nick)) irc_sendf(c, ":%s NICK %s", l->args[1], nick);
-       client->nick = g_strdup(l->args[1]); /* Save nick */
-	} else if(!g_strcasecmp(l->args[0], "NICK") && l->args[1] && !g_strcasecmp(l->args[1], nick)) {
-		/* Ignore attempts to change nick to the current nick */
-	} else if(!g_strcasecmp(l->args[0], "QUIT")) {
+	if(!g_strcasecmp(l->args[0], "QUIT")) {
 		disconnect_client(client);
 		free_line(l);
-		if(clientpass)xmlFree(clientpass);
-		xmlFree(nick);
-		return;
-	} else if(!g_strcasecmp(l->args[0], "PING")) {
-		irc_sendf(c, ":%s PONG :%s\r\n", server_name, l->args[1]);
-	} else if(client->authenticated) {
+		return FALSE;
+	} else if(!g_strcasecmp(l->args[0], "NICK") && l->args[1] && !client->nick) {
+		/* Don't allow the client to change the nick now. We would change it after initialization */
+		if (strcmp(l->args[1], client->network->nick)) 
+			irc_sendf(c, ":%s NICK %s", l->args[1], client->network->nick);
 
-		state_handle_data(client->network, l);
-	
-		filters_execute(l);
-
-		client = l->client;
-		if (!client) {
-			xmlFree(nick);
-			return;
+		client->nick = g_strdup(l->args[1]); /* Save nick */
+	} else if(!g_strcasecmp(l->args[0], "USER")) {
+		if (l->argc > 1) {
+			g_free(client->username);
+			client->username = g_strdup(l->args[1]);
 		}
 
-		if(client->network->outgoing) {
-			char *old_origin;
-			if(!(l->options & LINE_DONT_SEND)) {SERVER_SEND_LINE(client->network, l) }
+		if (l->argc > 4) {
+			g_free(client->fullname);
+			client->fullname = g_strdup(l->args[4]);
+		}
+	} else if(!g_strcasecmp(l->args[0], "PING")) {
+		irc_sendf(c, ":%s PONG :%s\r\n", client->network->name, l->args[1]);
+	} else if(network_is_connected(client->network)) {
+		char *old_origin;
+		if(!(l->options & LINE_DONT_SEND)) {SERVER_SEND_LINE(client->network, l) }
 
-			/* Also write this message to all other clients currently connected */
-			if(!(l->options & LINE_IS_PRIVATE) && l->args[0] &&
-			   (!strcmp(l->args[0], "PRIVMSG") || !strcmp(l->args[0], "NOTICE"))) {
-				old_origin = l->origin; l->origin = nick;
-				clients_send(client->network, l, client);
-				l->origin = old_origin;
-			}
-		} else {
-			irc_sendf(c, ":%s NOTICE %s :Currently not connected to server, ignoring\r\n", (server_name != NULL?server_name:"ctrlproxy"), nick);
+		/* Also write this message to all other clients currently connected */
+		if(!(l->options & LINE_IS_PRIVATE) && l->args[0] &&
+		   (!strcmp(l->args[0], "PRIVMSG") || !strcmp(l->args[0], "NOTICE"))) {
+			old_origin = l->origin; l->origin = client->network->nick;
+			clients_send(client->network, l, client);
+			l->origin = old_origin;
 		}
 	} else {
-		irc_sendf(c, ":%s NOTICE %s :You are not logged in yet. Ignoring\r\n", server_name?server_name:"ctrlproxy", nick);
+		irc_sendf(c, ":%s NOTICE %s :Currently not connected to server, ignoring\r\n", (client->network->name?client->network->name:"ctrlproxy"), client->network->nick);
 	}
 	free_line(l);l = NULL;
-	if(clientpass)xmlFree(clientpass);
-	xmlFree(server_name); xmlFree(nick);
+
+	return TRUE;
 }
 
-void handle_new_client(struct transport_context *c_server, struct transport_context *c_client, void *_server)
+struct client *new_client(struct network *n, GIOChannel *c)
 {
-	struct network *n = (struct network *)_server;
-	struct client *d = g_new(struct client,1);
+	char allmodes[] = "aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPqQrRsStTuUvVwWxXyYzZ";
+	struct client *client = g_new0(struct client, 1);
 
-	d->authenticated = 0;
-	d->network = n;
-	d->connect_time = time(NULL);
-	d->incoming = c_client;
-	d->nick = NULL;
+	client->connect_time = time(NULL);
+	client->incoming = c;
+	client->network = n;
 
-	n->clients = g_list_append(n->clients, d);
+	irc_sendf(c, ":%s 001 %s :Welcome to the ctrlproxy\r\n", client->network->name, client->network->nick);
+	irc_sendf(c, ":%s 002 %s :Host %s is running ctrlproxy\r\n", client->network->name, client->network->nick, get_my_hostname());
+	irc_sendf(c, ":%s 003 %s :Ctrlproxy (c) 2002-2004 Jelmer Vernooij <jelmer@vernstok.nl>\r\n", client->network->name, client->network->nick);
+	irc_sendf(c, ":%s 004 %s %s %s %s %s\r\n", 
+			  client->network->name, client->network->nick, client->network->name, ctrlproxy_version(), client->network->supported_modes[0]?client->network->supported_modes[0]:allmodes, client->network->supported_modes[1]?client->network->supported_modes[1]:allmodes);
 
-	transport_set_receive_handler(c_client, handle_client_receive);
-	transport_set_disconnect_handler(c_client, handle_client_disconnect);
-	transport_set_data(c_client, d);
-}
+	if(client->network->features) {
+		char *tmp = list_make_string(client->network->features);
 
-void network_add_listen(struct network *n, xmlNodePtr listen)
-{
-	int i = 0;
-	struct transport_context *t = transport_listen(listen->name, listen, handle_new_client, n);
-
-	if(n->incoming)	{ for(i = 0; n->incoming[i]; i++); }
-	
-	if(!t) {
-		g_warning(_("Can't initialise transport %s"), listen->name);
-		return;
-	} 
-	
-	n->incoming = g_realloc(n->incoming, (i+2) * sizeof(struct transport_context *));
-	n->incoming[i] = t;
-	n->incoming[i+1] = NULL;
-
-}
-
-struct network *connect_network(xmlNodePtr conf) {
-	struct network *s = g_new(struct network,1);
-	char *nick, *user_name;
-	xmlNodePtr cur;
-
-	memset(s, 0, sizeof(struct network));
-	s->xmlConf = conf;
-	if(!xmlHasProp(s->xmlConf, "nick"))
-		xmlSetProp(s->xmlConf, "nick", g_get_user_name());
-
-	if(!xmlHasProp(s->xmlConf, "username"))
-		xmlSetProp(s->xmlConf, "username", g_get_user_name());
-
-	if(!xmlHasProp(s->xmlConf, "fullname"))
-		xmlSetProp(s->xmlConf, "fullname", g_get_real_name());
-
-   	nick = xmlGetProp(s->xmlConf, "nick");
-	user_name = xmlGetProp(s->xmlConf, "username");
-	s->hostmask = g_strdup_printf("%s!~%s@%s", nick, user_name, get_my_hostname());
-	xmlFree(nick); xmlFree(user_name);
-
-	/* Find <listen> tag */
-	s->listen = NULL;
-	s->incoming = g_new(struct transport_context *, 1);
-	s->incoming[0] = NULL;
-	s->listen = xmlFindChildByElementName(s->xmlConf, "listen");
-
-	if(s->listen)cur = s->listen->xmlChildrenNode; else cur = NULL;
-
-	while(cur) {
-		if(xmlIsBlankNode(cur) || !strcmp(cur->name, "comment")) {
-			cur = cur->next;
-			continue;
-		}
-
-		network_add_listen(s, cur);
-
-		cur = cur->next;
+		irc_sendf(c, ":%s 005 %s %s :are supported on this server\r\n", client->network->name, client->network->nick, tmp);
+		g_free(tmp);
 	}
 
-	s->servers = NULL;
-	s->current_server = NULL;
+	send_motd(client->network, c);
 
-	/* Find <servers> tag */
-	s->servers = xmlFindChildByElementName(s->xmlConf, "servers");
-	s->servers = s->servers->xmlChildrenNode;
-
-	if(!s->servers) {
-		char *server_name = xmlGetProp(s->xmlConf, "name");
-		g_warning(_("No servers listed for network %s!\n"), server_name);
-		xmlFree(server_name);
+	if(!new_client_hook_execute(client)) {
+		disconnect_client(client);
+	} else {
+		/* Initialization was successful. Now we can almost safely try to change to the nick, which
+		 * was requested by the client earlier */
+		if (!client->network->ignore_first_nick && client->nick)
+			if (strcmp(client->nick, client->network->nick)) 
+				network_send_args(client->network, "NICK", client->nick, NULL);
 	}
 
-	/* Add server by default. If connecting succeeds, it is
-	 * removed automagically by connect_current_server */
-	connect_next_server(s);
+	client->incoming_id = g_io_add_watch(client->incoming, G_IO_IN, handle_client_receive, client);
+	client->hangup_id = g_io_add_watch(client->incoming, G_IO_HUP, handle_client_disconnect, client);
+
+	n->clients = g_list_append(n->clients, client);
+
+	return client;
+}
+
+struct network *new_network() 
+{
+	struct network *s = g_new0(struct network,1);
+
+	s->nick = g_strdup(g_get_user_name());
+	s->username = g_strdup(g_get_user_name());
+	s->fullname = g_strdup(g_get_real_name());
+
+	s->reconnect_interval = DEFAULT_RECONNECT_INTERVAL;
+
+	s->hostmask = g_strdup_printf("%s!~%s@%s", s->nick, s->username, get_my_hostname());
+
 	networks = g_list_append(networks, s);
-
 	return s;
+}
+
+static pid_t piped_child(char* const command[], int *f_in)
+{
+	pid_t pid;
+	int sock[2];
+
+	if(socketpair(PF_UNIX, SOCK_STREAM, AF_LOCAL, sock) == -1) {
+		g_warning( "socketpair: %s", strerror(errno));
+		return -1;
+	}
+
+	*f_in = sock[0];
+
+	fcntl(sock[0], F_SETFL, O_NONBLOCK);
+
+	pid = fork();
+	if (pid == -1) {
+		g_warning( "fork: %s", strerror(errno));
+		return -1;
+	}
+
+	if (pid == 0) {
+		close(0);
+		close(1);
+		close(2);
+		close(sock[0]);
+
+		dup2(sock[1], 0);
+		dup2(sock[1], 1);
+		execvp(command[0], command);
+		g_warning( _("Failed to exec %s : %s"), command[0], strerror(errno));
+		return -1;
+	}
+
+	close(sock[1]);
+
+	return pid;
+}
+
+static gboolean connect_program(struct network *s)
+{
+	int sock;
+	char *cmd[2] = { s->connection.program.location, NULL };
+	pid_t pid = piped_child(cmd, &sock);
+
+	if (pid == -1) return FALSE;
+
+	s->connection.program.outgoing = g_io_channel_unix_new(sock);
+
+	server_send_login(s->connection.program.outgoing, s);
+	
+	s->connection.program.outgoing_id = g_io_add_watch(s->connection.program.outgoing, G_IO_IN, handle_server_receive, s);
+
+	g_io_channel_unref(s->connection.program.outgoing);
+
+	if(!s->name) {
+		s->name_guessed = TRUE;
+		if (strchr(s->connection.program.location, '/')) {
+			s->name = g_strdup(strrchr(s->connection.program.location, '/')+1);
+		} else {
+			s->name = g_strdup(s->connection.program.location);
+		}
+	}
+
+	return TRUE;
+}
+
+gboolean connect_network(struct network *s) {
+
+	switch (s->type) {
+	case NETWORK_TCP:
+		s->connection.tcp.current_server = NULL;
+		/* Add server by default. If connecting succeeds, it is
+		 * removed automagically by connect_current_tcp_server */
+		connect_next_tcp_server(s);
+		break;
+
+	case NETWORK_PROGRAM:
+		return connect_program(s);
+
+	case NETWORK_VIRTUAL:
+		s->connection.virtual.ops = g_hash_table_lookup(virtual_network_ops, s->connection.virtual.type);
+		if (!s->connection.virtual.ops) return FALSE;
+
+		if (s->connection.virtual.ops->init) 
+			return s->connection.virtual.ops->init(s);
+
+		return TRUE;
+	}
+
+	return TRUE;
 }
 
 int close_network(struct network *s)
 {
 	GList *l = s->clients;
-	int i;
-	char *server_name = xmlGetProp(s->xmlConf, "name");
 	g_assert(s);
-	g_message(_("Closing connection to %s"), server_name);
+	g_message(_("Closing connection to %s"), s->name);
 
 	while(l) {
 		struct client *c = l->data;
-		irc_sendf(c->incoming, ":%s QUIT :Server exiting\r\n", server_name);
+		irc_sendf(c->incoming, ":%s QUIT :Server exiting\r\n", s->name);
 		l = l->next;
 		disconnect_client(c);
 	}
 	g_list_free(s->clients);s->clients = NULL;
-
-	/* Remove all listening lines */
-	if(s->incoming) {
-		for(i = 0; s->incoming[i] != NULL; i++) transport_free(s->incoming[i]);
-		g_free(s->incoming);
-	}
 
 	close_server(s);
 
@@ -591,7 +681,6 @@ int close_network(struct network *s)
 
 	g_free(s);
 
-	xmlFree(server_name);
 	return 0;
 }
 
@@ -601,22 +690,19 @@ gboolean ping_loop(gpointer user_data) {
 	while(l) {
 		struct network *s = (struct network *)l->data;
 		GList *cl;
-		char *server_name = xmlGetProp(s->xmlConf, "name");
-		if(s->outgoing)irc_send_args(s->outgoing, "PING", server_name, NULL);
-		else reconnect(NULL, s);
-		xmlFree(server_name);
+		if(network_is_connected(s))network_send_args(s, "PING", s->name, NULL);
+		else reconnect(NULL, G_IO_HUP, s);
 
 		/* Throw out unauthorized clients that have been inactive for over a minute */
 		cl = s->clients;
 		while(cl) {
 			struct client *c = (struct client *)cl->data;
 			cl = g_list_next(cl);
-			if(c->authenticated)continue;
 			if(time(NULL) - c->connect_time > 60) {
 				disconnect_client(c);
 			}
 		}
-		
+
 		l = g_list_next(l);
 	}
 	return TRUE;
@@ -630,26 +716,24 @@ int verify_client(struct network *s, struct client *c)
 		if(c == nc)return 1;
 		gl = gl->next;
 	}
-	
+
 	return 0;
 }
 
 gboolean network_change_nick(struct network *s, const char *nick)
 {
 	char *tmp, *p = NULL;
-	
+
 	if (!s) return FALSE;
 
 	/* Change nick */
 	if (!nick) nick = g_get_user_name();
-	xmlSetProp(s->xmlConf, "nick", nick);
+
+	s->nick = g_strdup(nick);
 
 	/* Change hostmask */
 	if (!s->hostmask) {
-		if(!xmlHasProp(s->xmlConf, "username"))	xmlSetProp(s->xmlConf, "username", g_get_user_name());
-		tmp = xmlGetProp(s->xmlConf, "username");
-		s->hostmask = g_strdup_printf("%s!~%s@%s", nick, tmp, get_my_hostname());
-		xmlFree(tmp);
+		s->hostmask = g_strdup_printf("%s!~%s@%s", nick, s->username, get_my_hostname());
 	} else { 
 		p = strchr(s->hostmask, '!');
 		if (!p) return FALSE;
@@ -660,42 +744,64 @@ gboolean network_change_nick(struct network *s, const char *nick)
 	return TRUE;
 }
 
+void register_virtual_network(struct virtual_network_ops *ops)
+{
+	g_hash_table_insert(virtual_network_ops, ops->name, ops);
+}
+
+void unregister_virtual_network(struct virtual_network_ops *ops)
+{
+	g_hash_table_remove(virtual_network_ops, ops->name);
+}
+
 gboolean init_networks() {
-	xmlNodePtr cur;
-	if(!config_node_networks()) {
+	GList *gl;
+	if(!networks) {
 		g_error(_("No networks listed"));
 		return 1;
 	}
 
-	cur = config_node_networks()->xmlChildrenNode;
-	while(cur) {
-		char *autoconnect;
-		if(xmlIsBlankNode(cur) || !strcmp(cur->name, "comment")){ cur = cur->next; continue; }
-		g_assert(!strcmp(cur->name, "network"));
+	for (gl = networks; gl; gl = gl->next)
+	{
+		struct network *n = gl->data;
 
-		autoconnect = xmlGetProp(cur, "autoconnect");
-		if(autoconnect && !strcmp(autoconnect, "1")) {
+		if (!network_is_connected(n) && n->autoconnect) {
 #ifdef fork
 			if(seperate_processes) { 
 				if(fork() == 0) {  
-					connect_network(cur); 
+					connect_network(n); 
 					break; 
 				}
 			} else 
 #endif
 			{
-				connect_network(cur);
+				connect_network(n);
 			}
 		}
-		xmlFree(autoconnect);
-
-		cur = cur->next;
 	}
 
-
-	g_timeout_add(1000 * 300, ping_loop, NULL);
+	if (!virtual_network_ops) {
+		virtual_network_ops = g_hash_table_new(g_str_hash, g_str_equal);
+		g_timeout_add(1000 * 300, ping_loop, NULL);
+	}
 
 	return TRUE;
 }
 
 GList *get_network_list() { return networks; }
+
+void set_sslize_function (GIOChannel * (*f) (GIOChannel *)) 
+{
+	sslize_function = f;
+}
+
+struct network *find_network(const char *name)
+{
+	GList *gl;
+	for (gl = networks; gl; gl = gl->next) {
+		struct network *n = gl->data;
+		if (n->name && !g_strcasecmp(n->name, name)) return n;
+	}
+
+	return NULL;
+}

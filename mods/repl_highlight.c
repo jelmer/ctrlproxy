@@ -17,16 +17,15 @@
 	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 */
 
-#define _GNU_SOURCE
 #include "ctrlproxy.h"
 #include <string.h>
 
-static xmlNodePtr xmlConf;
 static GHashTable *highlight_backlog = NULL;
+static GList *matches = NULL;
 
 static gboolean log_data(struct line *l) {
 	struct linestack_context *co = (struct linestack_context *)g_hash_table_lookup(highlight_backlog, l->network);
-	xmlNodePtr cur;
+	GList *gl;
 
 	if(!co) {
 		co = linestack_new_by_network(l->network);
@@ -48,17 +47,15 @@ static gboolean log_data(struct line *l) {
 	if(strcasecmp(l->args[0], "PRIVMSG") && strcasecmp(l->args[0], "NOTICE")) 
 		return TRUE;
 
-	cur = xmlConf->xmlChildrenNode;
-	while(cur) {
-
-		if(!xmlIsBlankNode(cur) && !strcmp(cur->name, "match")) {
-			if(strstr(l->args[1], xmlNodeGetContent(cur)) || strstr(l->args[2], xmlNodeGetContent(cur))) {
-				linestack_add_line(co, l);
-				return TRUE;
-			}
+	gl = matches;
+	while(gl) {
+		const char *m = gl->data;
+		if(strstr(l->args[1], m) || strstr(l->args[2], m)) {
+			linestack_add_line(co, l);
+			return TRUE;
 		}
 
-		cur = cur->next;
+		gl = gl->next;
 	}
 
 	return TRUE;
@@ -81,7 +78,6 @@ gboolean fini_plugin(struct plugin *p) {
 const char name_plugin[] = "repl_highlight";
 
 gboolean init_plugin(struct plugin *p) {
-	xmlConf = p->xmlConf;
 	add_filter_ex("repl_highlight", log_data, "replicate", 1000);
 	add_new_client_hook("repl_highlight", highlight_replicate);
 	highlight_backlog = g_hash_table_new(NULL, NULL);

@@ -17,7 +17,6 @@
 	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 */
 
-#define _GNU_SOURCE
 #include "ctrlproxy.h"
 #include <string.h>
 
@@ -38,7 +37,7 @@ static gboolean log_data(struct line *l) {
 	if(!co) {
 		co = linestack_new_by_network(l->network);
 		g_hash_table_insert( simple_backlog, l->network, co);
-		g_hash_table_insert( simple_initialnick, l->network, xmlGetProp(l->network->xmlConf, "nick"));
+		g_hash_table_insert( simple_initialnick, l->network, l->network->nick);
 	}
 
 	if(l->argc < 1)return TRUE;
@@ -46,7 +45,7 @@ static gboolean log_data(struct line *l) {
 	if(l->direction == TO_SERVER &&  
 	   (!g_strcasecmp(l->args[0], "PRIVMSG") || !g_strcasecmp(l->args[0], "NOTICE"))) {
 		linestack_clear(co);
-		g_hash_table_replace( simple_initialnick, l->network, xmlGetProp(l->network->xmlConf, "nick"));
+		g_hash_table_replace( simple_initialnick, l->network, l->network->nick);
 		linestack_add_line_list( co, gen_replication_network(l->network));
 		return TRUE;
 	}
@@ -93,10 +92,8 @@ static gboolean simple_replicate(struct client *c)
 	struct linestack_context *replication_data = (struct linestack_context *)g_hash_table_lookup(simple_backlog, c->network);
 	if(replication_data) {
 		char *initialnick = (char *)g_hash_table_lookup(simple_initialnick, c->network);
-		char *curnick = xmlGetProp(c->network->xmlConf, "nick");
 		change_nick(c, initialnick);
 		linestack_send(replication_data, c->incoming);
-		xmlFree(curnick);
 	}
 	return TRUE;
 }

@@ -22,7 +22,6 @@
 
 #define CTRLPROXY_CORE_BUILD
 
-#define _GNU_SOURCE
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
 #endif
@@ -58,8 +57,6 @@ void state_handle_data(struct network *s, struct line *l);
 void state_reconnect(struct network *s);
 
 /* config.c */
-void readConfig(char *file);
-extern char *configuration_file;
 void init_config(void);
 
 /* plugins.c */

@@ -17,7 +17,6 @@
 	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 */
 
-#define _GNU_SOURCE
 #include "ctrlproxy.h"
 #include <string.h>
 #include <time.h>
@@ -37,6 +36,7 @@
 
 static GHashTable *antiflood_servers = NULL;
 
+static int default_queue_speed = 1000;
 static struct plugin *this_plugin = NULL;
 
 struct network_data {
@@ -60,7 +60,7 @@ static gboolean send_queue(gpointer user_data) {
 	}
 	l = (struct line *)d;
 
-	irc_send_line(l->network->outgoing, l);
+	network_send_line(l->network, l);
 	free_line(l);
 
 	gettimeofday(&sd->tv_last_message, NULL);
@@ -80,18 +80,8 @@ static gboolean log_data(struct line *l) {
 	sd = g_hash_table_lookup(antiflood_servers, l->network);
 
 	if(!sd) {
-		xmlNodePtr cur;
 		sd = g_new(struct network_data,1);
-		sd->queue_speed = 0;
-
-		cur = xmlFindChildByElementName(l->network->xmlConf, "queue_speed");
-		if(cur) {
-			char *contents = xmlNodeGetContent(cur);
-			if(contents) {
-				sd->queue_speed = atol(contents);
-				xmlFree(contents);
-			}
-		}
+		sd->queue_speed = default_queue_speed;
 
 		memset(&sd->tv_last_message, 0, sizeof(TIMEVALUE));
 		if(sd->queue_speed) sd->timeout_id = g_timeout_add(sd->queue_speed, send_queue , sd);
@@ -135,6 +125,17 @@ gboolean fini_plugin(struct plugin *p) {
 }
 
 const char name_plugin[] = "antiflood";
+
+gboolean load_config(struct plugin *p, xmlNodePtr node)
+{
+	char *qs = xmlGetProp(node, "queue-speed");
+	
+	if (qs) default_queue_speed = atoi(qs);
+
+	xmlFree(qs);
+
+	return TRUE;
+}
 
 gboolean init_plugin(struct plugin *p) {
 	this_plugin = p;

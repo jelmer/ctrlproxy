@@ -17,69 +17,53 @@
 	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 */
 
-#define _GNU_SOURCE
 #include "ctrlproxy.h"
 #include <string.h>
 #include "irc.h"
 #include "gettext.h"
 #define _(s) gettext(s)
 
-static xmlNodePtr nickserv_node(struct network *n)
+struct nickserv_entry {
+	struct network *network;
+	const char *nick;
+	const char *pass;
+};
+
+static GList *nicks = NULL;
+
+static const char *nickserv_find_nick(struct network *n, char *nick)
 {
-	xmlNodePtr cur = n->xmlConf->xmlChildrenNode;
-	while(cur) {
-		if(!strcmp(cur->name, "nickserv")) return cur;
-		cur = cur->next;
-	}
+	GList *gl;
+	for (gl = nicks; gl; gl = gl->next) {
+		struct nickserv_entry *e = gl->data;
 
-	return NULL;
-}
-
-static int nickserv_find_nick(struct network *n, char *nick, char **pass)
-{
-	xmlNodePtr p = nickserv_node(n);
-	xmlNodePtr cur;
-	if(!p) return 0;
-
-	cur = p->xmlChildrenNode;
-	while(cur) {
-		if(!strcmp(cur->name, "nick") && xmlHasProp(cur, "name")) {
-			char *name = xmlGetProp(cur, "name");
-			if(!irccmp(n, name, nick)) { 
-				xmlFree(name);
-				*pass = xmlGetProp(cur, "password");
-				return 1;
-			}
-			xmlFree(name);
+		if ((!e->network || e->network == n) && !strcmp(e->nick, nick)) {
+			return e->pass;
 		}
-		cur = cur->next;
 	}
-	return 0;
+	
+	return NULL;
 }
 
 static char *nickserv_nick(struct network *n)
 {
-	xmlNodePtr cur = nickserv_node(n);
-	if(!cur || !xmlHasProp(cur, "nick")) return g_strdup("NickServ");
-
-	return xmlGetProp(cur, "nick");
+	return g_strdup("NickServ");
 }
 
 static void identify_me(struct network *network, char *nick)
 {
-	char *pass;
-	if(nickserv_find_nick(network, nick, &pass)) {
+	const char *pass = nickserv_find_nick(network, nick);
+	
+	if (pass) {
 		char *nickserv_n = nickserv_nick(network), *raw;
-		asprintf(&raw, "IDENTIFY %s", pass);
-		g_free(pass);
-		irc_send_args(network->outgoing, "PRIVMSG", nickserv_n, raw, NULL);
+		raw = g_strdup_printf("IDENTIFY %s", pass);
+		network_send_args(network, "PRIVMSG", nickserv_n, raw, NULL);
 		g_free(raw);
-		xmlFree(nickserv_n);
+		g_free(nickserv_n);
 	}
 }
 
 static gboolean log_data(struct line *l) {
-	char *pass;
 	static char *nickattempt = NULL;
 
 	/* User has changed his/her nick. Check whether this nick needs to be identified */
@@ -95,18 +79,17 @@ static gboolean log_data(struct line *l) {
 
 	/* If we receive a nick-already-in-use message, ghost the current user */
 	if(l->direction == FROM_SERVER && atol(l->args[0]) == ERR_NICKNAMEINUSE) {
-		if(nickattempt && nickserv_find_nick(l->network, nickattempt, &pass)) {
-			char *nickserv_n = nickserv_nick(l->network), *raw, *netname;
-			netname = xmlGetProp(l->network->xmlConf, "name");
+		const char *pass = nickserv_find_nick(l->network, nickattempt);
+		if(nickattempt && pass) {
+			char *nickserv_n = nickserv_nick(l->network), *raw;
 			
-			g_message(_("Ghosting current user using '%s' on %s"), nickattempt, netname);
-			xmlFree(netname);
+			g_message(_("Ghosting current user using '%s' on %s"), nickattempt, l->network->name);
 
-			asprintf(&raw, "GHOST %s %s", nickattempt, pass);
-			irc_send_args(l->network->outgoing, "PRIVMSG", nickserv_n, raw, NULL);
+			raw = g_strdup_printf("GHOST %s %s", nickattempt, pass);
+			network_send_args(l->network, "PRIVMSG", nickserv_n, raw, NULL);
 			g_free(raw);
-			xmlFree(nickserv_n);
-			irc_send_args(l->network->outgoing, "NICK", nickattempt, NULL);
+			g_free(nickserv_n);
+			network_send_args(l->network, "NICK", nickattempt, NULL);
 		}
 	}
 
@@ -115,10 +98,30 @@ static gboolean log_data(struct line *l) {
 
 static void conned_data(struct network *n)
 {
-	char *nick;
-	nick = xmlGetProp(n->xmlConf, "nick");
-	identify_me(n, nick);
-	xmlFree(nick);
+	identify_me(n, n->nick);
+}
+
+gboolean load_config(struct plugin *p, xmlNodePtr node)
+{
+	xmlNodePtr cur;
+
+	for (cur = node->children; cur; cur = cur->next)
+	{
+		struct nickserv_entry *e;
+		if (cur->type != XML_ELEMENT_NODE) continue;
+
+		e = g_new0(struct nickserv_entry, 1);
+		e->nick = xmlGetProp(cur, "nick");
+		e->pass = xmlGetProp(cur, "password");
+
+		if (xmlHasProp(cur, "network")) {
+			char *tmp = xmlGetProp(cur, "network");
+			e->network = find_network(tmp);
+			xmlFree(tmp);
+		}
+	}
+
+	return TRUE;
 }
 
 gboolean fini_plugin(struct plugin *p) {

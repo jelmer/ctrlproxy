@@ -38,14 +38,14 @@ struct line *irc_parse_linef( char *fmt, ... ) {
 	char *ret;
 	struct line *l;
 	va_start(ap, fmt);
-	vasprintf(&ret, fmt, ap);
+	ret = g_strdup_vprintf(fmt, ap);
 	l = irc_parse_line(ret);
 	g_free(ret);
 	va_end(ap);
 	return l;
 }
 
-struct line *virc_parse_line( char *origin, va_list ap)
+struct line *virc_parse_line( const char *origin, va_list ap)
 {
 	char *arg;
 	struct line *l;
@@ -70,7 +70,7 @@ struct line *virc_parse_line( char *origin, va_list ap)
 	return l;
 }
 
-struct line * irc_parse_line(char *d)
+struct line * irc_parse_line(const char *d)
 {
 	char *p;
 	char dosplit = 1;
@@ -124,17 +124,21 @@ struct line * irc_parse_line(char *d)
 	return l;
 }
 
-gboolean irc_send_line(struct transport_context *c, struct line *l) {
+gboolean irc_send_line(GIOChannel *c, struct line *l) {
 	char *raw;
-	int ret;
+	GIOStatus ret;
+	gsize bytes_written;
 
 	if(!c) return FALSE;
 
 	raw = irc_line_string_nl(l);
-	ret = transport_write(c, raw);
+	ret = g_io_channel_write_chars(c, raw, -1, &bytes_written, NULL);
+	
 	g_free(raw);
 
-	return (ret != -1);
+	g_io_channel_flush(c, NULL);
+
+	return (ret == G_IO_STATUS_NORMAL);
 }
 
 
@@ -237,7 +241,7 @@ char *line_get_nick(struct line *l)
 	return nick;
 }
 
-gboolean irc_sendf(struct transport_context *c, char *fmt, ...) 
+gboolean irc_sendf(GIOChannel *c, char *fmt, ...) 
 {
 	va_list ap;
 	char *r = NULL;
@@ -247,7 +251,7 @@ gboolean irc_sendf(struct transport_context *c, char *fmt, ...)
 	if(!c) return FALSE;
 
 	va_start(ap, fmt);
-	vasprintf(&r, fmt, ap);
+	r = g_strdup_vprintf(fmt, ap);
 	l = irc_parse_line(r);
 	g_free(r);
 	ret = irc_send_line(c, l);
@@ -257,7 +261,7 @@ gboolean irc_sendf(struct transport_context *c, char *fmt, ...)
 	return ret;
 }
 
-gboolean irc_send_args(struct transport_context *c, ...) 
+gboolean irc_send_args(GIOChannel *c, ...) 
 {
 	struct line *l;
 	gboolean ret;
@@ -289,3 +293,24 @@ struct line *linedup(struct line *l) {
 	ret->args[i] = NULL;
 	return ret;
 }
+
+
+struct line *irc_recv_line(GIOChannel *c)
+{
+	gchar *raw;
+	GIOStatus status;
+	struct line *l;
+	
+	status = g_io_channel_read_line(c, &raw, NULL, NULL, NULL);
+
+	if (status != G_IO_STATUS_NORMAL) {
+		return NULL;
+	}
+
+	l = irc_parse_line(raw);
+
+	g_free(raw);
+
+	return l;
+}
+

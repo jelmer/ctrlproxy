@@ -17,7 +17,6 @@
 	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 */
 
-#define _GNU_SOURCE
 #include <time.h>
 #include "ctrlproxy.h"
 #ifdef HAVE_CONFIG_H
@@ -69,31 +68,29 @@ static gboolean mhandle_data(struct line *l)
 #ifndef _WIN32
 		struct utsname u;
 		uname(&u);
-		asprintf(&msg, "\001VERSION ctrlproxy:%s:%s %s\001", ctrlproxy_version(), u.sysname, u.release);
+		msg = g_strdup_printf("\001VERSION ctrlproxy:%s:%s %s\001", ctrlproxy_version(), u.sysname, u.release);
 #else
-		asprintf(&msg, "\001VERSION ctrlproxy:%s:Windows %d.%d\001", ctrlproxy_version(), _winmajor, _winminor);
+		msg = g_strdup_printf("\001VERSION ctrlproxy:%s:Windows %d.%d\001", ctrlproxy_version(), _winmajor, _winminor);
 #endif
-		irc_sendf(l->network->outgoing, "NOTICE %s :%s", dest, msg);
+		network_send_args(l->network, "NOTICE", dest, msg, NULL);
 		g_free(msg);
 	} else if(!g_strcasecmp(data, "TIME")) {
 		ti = time(NULL);
-		asprintf(&msg, "\001TIME %s\001", ctime(&ti));
+		msg = g_strdup_printf("\001TIME %s\001", ctime(&ti));
 		t = strchr(msg, '\n');
 		if(t)*t = '\0';
-		irc_sendf(l->network->outgoing, "NOTICE %s :%s", dest, msg);
+		network_send_args(l->network, "NOTICE", dest, msg, NULL);
 		g_free(msg);
 	} else if(!g_strcasecmp(data, "FINGER")) {
-		char *fullname = xmlGetProp(l->network->xmlConf, "fullname");
-		asprintf(&msg, "\001FINGER %s\001", fullname);
-		xmlFree(fullname);
-		irc_sendf(l->network->outgoing, "NOTICE %s :%s", dest, msg);
+		msg = g_strdup_printf("\001FINGER %s\001", l->network->fullname);
+		network_send_args(l->network, "NOTICE", dest, msg, NULL);
 		g_free(msg);
 	} else if(!g_strcasecmp(data, "SOURCE")) {
-		irc_sendf(l->network->outgoing, "NOTICE %s :\001SOURCE http://nl.linux.org/~jelmer/ctrlproxy/\001", dest);
+		network_send_args(l->network, "NOTICE", dest, "\001SOURCE http://nl.linux.org/~jelmer/ctrlproxy/\001", NULL);
 	} else if(!g_strcasecmp(data, "CLIENTINFO")) {
-		irc_sendf(l->network->outgoing, "NOTICE %s :\001ACTION CLIENTINFO VERSION TIME FINGER SOURCE CLIENTINFO PING\001", dest);
+		network_send_args(l->network, "NOTICE", dest, "\001ACTION CLIENTINFO VERSION TIME FINGER SOURCE CLIENTINFO PING\001", NULL);
 	} else if(!g_strcasecmp(data, "PING")) {
-		irc_sendf(l->network->outgoing, "NOTICE %s :%s", dest, l->args[2]?l->args[2]:"");
+		network_send_args(l->network, "NOTICE", dest, l->args[2]?l->args[2]:"", NULL);
 	} else if(!g_strcasecmp(data, "ACTION")) {
 	} else if(!g_strcasecmp(data, "DCC")) {
 	} else g_warning(_("Received unknown CTCP request '%s'!"), data);

@@ -20,17 +20,13 @@
 */
 
 #include <glib.h>
+
+#include <ctrlproxy.h>
 #include <openssl/crypto.h>
 #include <openssl/x509.h>
 #include <openssl/pem.h>
 #include <openssl/ssl.h>
 #include <openssl/err.h>
-#include <ctrlproxy.h>
-#include "openssl.h"
-
-static SSL_CTX *ssl_ctx = NULL;
-gboolean irssi_ssl_set_files(char *certf, char *keyf);
-GIOChannel *irssi_ssl_get_iochannel(GIOChannel *handle, gboolean server);
 
 /* ssl i/o channel object */
 typedef struct
@@ -193,7 +189,52 @@ static GIOFuncs irssi_ssl_channel_funcs = {
     irssi_ssl_get_flags
 };
 
-static gboolean irssi_ssl_init(void)
+GIOChannel *irssi_ssl_get_iochannel(GIOChannel *handle, gboolean server);
+static gboolean irssi_ssl_set_files(const char *certf, const char *keyf);
+static SSL_CTX *ssl_ctx = NULL;
+
+const char name_plugin[] = "openssl";
+
+gboolean fini_plugin(struct plugin *p) {
+	return TRUE;
+}
+
+gboolean load_config(struct plugin *p, xmlNodePtr node)
+{
+	const char *keyf = NULL, *certf = NULL;
+	xmlNodePtr cur;
+
+	for (cur = node->children; cur; cur = cur->next)
+	{
+		if (cur->type != XML_ELEMENT_NODE) continue;
+		
+		if (!strcmp(cur->name, "keyfile")) keyf = xmlNodeGetContent(cur);
+		if (!strcmp(cur->name, "certfile")) certf = xmlNodeGetContent(cur);
+	}
+
+	if(!certf) {
+		certf = ctrlproxy_path("cert.pem");
+		if(!g_file_test(certf, G_FILE_TEST_EXISTS)) {
+			certf = NULL; 
+		}
+	}
+
+	if(!keyf) {
+		keyf = ctrlproxy_path("key.pem");
+		if(!g_file_test(keyf, G_FILE_TEST_EXISTS)) { 
+			keyf = NULL; 
+		}
+	}
+
+	if(!irssi_ssl_set_files(certf, keyf)) {
+		g_warning("Unable to set appropriate files");
+		return FALSE;
+	}
+	
+	return TRUE;
+}
+
+gboolean init_plugin(struct plugin *p)
 {
 	SSL_library_init();
 	SSL_load_error_strings();
@@ -204,15 +245,17 @@ static gboolean irssi_ssl_init(void)
 		g_error("Initialization of the SSL library failed");
 		return FALSE;
 	}
+
+
+	set_sslize_function (irssi_ssl_get_iochannel);
+
 	return TRUE;
 }
 
-gboolean irssi_ssl_set_files(char *certf, char *keyf)
+static gboolean irssi_ssl_set_files(const char *certf, const char *keyf)
 {
-	if(!irssi_ssl_init() || !ssl_ctx) {
-		g_warning("Can't initialize SSL");
+	if(!ssl_ctx)
 		return FALSE;
-	}
 
 	if(SSL_CTX_use_certificate_file(ssl_ctx, certf, SSL_FILETYPE_PEM) <= 0) {
 		g_warning("Can't set SSL certificate file %s!", certf);

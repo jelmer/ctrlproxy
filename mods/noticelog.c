@@ -19,24 +19,18 @@
 	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 */
 
-#define _GNU_SOURCE
 #include "ctrlproxy.h"
 #include <string.h>
 
 static void admin_log(const gchar *log_domain, GLogLevelFlags log_level, const gchar *message, gpointer user_data) 
 {
 	struct network *n;
-	char *server_name, *nick;
 	struct line *l;
 	if(!get_network_list())return;
 	n = (struct network *)get_network_list()->data;
-	server_name = xmlGetProp(n->xmlConf, "name");
-	nick = xmlGetProp(n->xmlConf, "nick");
-	l = irc_parse_linef(":ctrlproxy!ctrlproxy@%s NOTICE %s :%s", server_name, nick, message);
+	l = irc_parse_linef(":ctrlproxy!ctrlproxy@%s NOTICE %s :%s", n->name, n->nick, message);
 	clients_send(n, l, NULL);
 	free_line(l);
-	xmlFree(server_name);
-	xmlFree(nick);
 }
 
 gboolean fini_plugin(struct plugin *p) {

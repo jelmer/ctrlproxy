@@ -43,8 +43,7 @@ gboolean unload_plugin(struct plugin *p)
 
 	g_module_close(p->module);
 
-	/* Remove autoload from this plugins' element */
-	xmlSetProp(p->xmlConf, "autoload", "0");
+	p->loaded = FALSE;
 
 	plugins = g_list_remove(plugins, p);
 	g_free(p->name);
@@ -53,39 +52,43 @@ gboolean unload_plugin(struct plugin *p)
 	return TRUE;
 }
 
+struct plugin *new_plugin(const char *name)
+{
+	struct plugin *p = g_new0(struct plugin, 1);
+
+	p->path = g_strdup(name);
+
+	plugins = g_list_append(plugins, p);
+
+	return p;
+}
+
 gboolean plugin_loaded(char *name)
 {
 	GList *gl = plugins;
 	while(gl) {
 		struct plugin *p = (struct plugin *)gl->data;
-		if(!strcmp(p->name, name)) return TRUE;
+		if(p->name && !strcmp(p->name, name)) return TRUE;
 		gl = gl->next;
 	}
 	return FALSE;
 }
 
-gboolean load_plugin(xmlNodePtr cur)
+gboolean load_plugin(struct plugin *p)
 {
 	GModule *m;
-	char *mod_name;
-	struct plugin *p;
 	const char *modulesdir;
 	char *selfname = NULL;
+	extern gboolean plugin_load_config(struct plugin *);
 	gchar *path_name;
 	plugin_init_function f = NULL;
-
-	mod_name = xmlGetProp(cur, "file");
-	if(!mod_name) {
-		g_warning(_("No filename specified for plugin"));
-		return FALSE;
-	}
 
 	/* Determine correct modules directory */
 	if(getenv("MODULESDIR"))modulesdir = getenv("MODULESDIR");
 	else modulesdir = get_modules_path();
 
-	if(g_file_test(mod_name, G_FILE_TEST_EXISTS))path_name = g_strdup(mod_name);
-	else path_name = g_module_build_path(modulesdir, mod_name);
+	if(g_file_test(p->path, G_FILE_TEST_EXISTS))path_name = g_strdup(p->path);
+	else path_name = g_module_build_path(modulesdir, p->path);
 	
 	m = g_module_open(path_name, G_MODULE_BIND_LAZY);
 
@@ -96,72 +99,65 @@ gboolean load_plugin(xmlNodePtr cur)
 	g_free(path_name);
 
 	if(!g_module_symbol(m, "name_plugin", (gpointer)&selfname)) {
-		selfname = mod_name;
+		selfname = p->path;
 	}
 
 	if(plugin_loaded(selfname)) {
 		g_warning(_("Plugin already loaded"));
-		xmlFree(mod_name);
 		return FALSE;
 	}
 
 	if(!g_module_symbol(m, "init_plugin", (gpointer)&f)) {
 		g_warning(_("Can't find symbol 'init_plugin' in module %s"), path_name);
-		xmlFree(mod_name);
 		return FALSE;
 	}
-	
-	p = g_new(struct plugin, 1);
+
 	p->name = g_strdup(selfname);
-	p->path = g_strdup(mod_name);
 	p->module = m;
-	p->xmlConf = cur;
+
+	g_module_symbol(m, "load_config", (gpointer)&p->load_config);
+	g_module_symbol(m, "save_config", (gpointer)&p->save_config);
 
 	push_plugin(p);
 	if(!f(p)) {
-		g_warning(_("Running initialization function for plugin '%s' failed."), mod_name);
+		g_warning(_("Running initialization function for plugin '%s' failed."), p->path);
 		g_free(p->name);
 		g_free(p->path);
-		xmlFree(mod_name);
 		g_free(p);
 		return FALSE;
 	}
+
+	if(!plugin_load_config(p)) {
+		g_warning("Error loading configuration for plugin '%s'", p->path);
+	}
+
 	pop_plugin();
 
-	plugins = g_list_append(plugins, p);
-	
-	xmlSetProp(cur, "autoload", "1");
-	xmlFree(mod_name);
+	p->loaded = TRUE;
 	return TRUE;
 }
 
 gboolean init_plugins() {
 	gboolean ret = TRUE;
-	xmlNodePtr cur;
+
 	if(!g_module_supported()) {
 		g_warning(_("DSO's not supported on this platform. Not loading any modules"));
-	} else if(!config_node_plugins()) {
+	} else if(!plugins) {
 		g_warning(_("No modules set to be loaded"));	
-	}else {
-		cur = config_node_plugins()->xmlChildrenNode;
-		while(cur) {
-			char *enabled;
+	} else {
+		GList *gl = plugins;
+		while(gl) {
+			struct plugin *p = gl->data;
 
-			if(xmlIsBlankNode(cur) || !strcmp(cur->name, "comment")){ cur = cur->next; continue; }
-
-			g_assert(!strcmp(cur->name, "plugin"));
-
-			enabled = xmlGetProp(cur, "autoload");
-			if((!enabled || atoi(enabled) == 1) && !load_plugin(cur)) {
-				g_error(_("Can't load plugin %s, aborting..."), xmlGetProp(cur, "file"));
+			if(!p->loaded && p->autoload && !load_plugin(p)) {
+				g_error(_("Can't load plugin %s, aborting..."), p->name);
 				ret = FALSE;
 			}
 
-			xmlFree(enabled);
-
-			cur = cur->next;
+			gl = gl->next;
 		}
 	}
+
 	return ret;
 }
 
