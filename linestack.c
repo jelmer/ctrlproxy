@@ -86,7 +86,10 @@ void linestack_send_limited(struct linestack_context *b, struct transport_contex
 	GSList *lines, *gl;
 	unsigned int i;
 	if(!b) return;
-	if(b->functions->send_limited) b->functions->send_limited(b, t, last);
+	if(b->functions->send_limited) { 
+		b->functions->send_limited(b, t, last);
+		return;
+	}
 
 	/* Fallback for if the backend doesn't implement this function */
 
@@ -112,7 +115,10 @@ void linestack_send(struct linestack_context *b, struct transport_context *t)
 {
 	GSList *lines, *gl;
 	if(!b) return;
-	if(b->functions->send) b->functions->send(b, t);
+	if(b->functions->send) {
+		b->functions->send(b, t);
+		return;
+	}
 
 	/* Fallback for if the backend doesn't implement this function */
 
