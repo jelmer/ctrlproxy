@@ -24,7 +24,7 @@
 			<match>foobar</match>
 		</plugin>
 		<!-- Backlog lines when command /CTRLPROXY BACKLOG is given -->
-		<plugin autoload="0" file="librepl_command"/>
+		<plugin autoload="1" file="librepl_command"/>
 		<plugin autoload="1" file="report_time"/>
 
 		<!-- Irssi-style logging -->

@@ -70,7 +70,7 @@ gboolean load_plugin(xmlNodePtr cur)
 	char *mod_name;
 	struct plugin *p;
 	char *modulesdir;
-	char *selfname;
+	char *selfname = NULL;
 	gchar *path_name;
 	plugin_init_function f = NULL;
 
@@ -104,6 +104,8 @@ gboolean load_plugin(xmlNodePtr cur)
 		xmlFree(mod_name);
 		return FALSE;
 	}
+
+	g_message("Loading module '%s'", selfname);
 	
 	if(!g_module_symbol(m, "init_plugin", (gpointer)&f)) {
 		g_warning("Can't find symbol 'init_plugin' in module %s", path_name);
@@ -111,7 +113,6 @@ gboolean load_plugin(xmlNodePtr cur)
 		return FALSE;
 	}
 	
-
 	p = malloc(sizeof(struct plugin));
 	p->name = strdup(selfname);
 	p->path = strdup(mod_name);

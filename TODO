@@ -3,22 +3,16 @@
 - automated testsuite
 - internationalization (i18n)
 - add timer that uses current_plugin
-- repl_limited (repl_simple with limited number of lines)
+- repl_limited (repl_highlight with limited number of lines)
 - dircproxy-config-to-ctrlproxyrc script
 - add NICK to repl_* in repl_command, repl_highlight, repl_lastdisconnect
 - replace transports by IOChannels?
  - support running from inetd
  - fix issue with non-blocking connect
 - dcc module
-
-linestack_file:
- - test
- 
-repl_command:
- - test
- 
-socket:
-- add gnutls support
+- linestack_file: test
+- repl_command: test
+- socket: finish gnutls support
 
 2.8:
  - <network><listen/></network> -> <listen/>
