@@ -8,8 +8,16 @@
 #endif
 
 typedef void (*admin_command_handler) (char **, struct line *, void *userdata);
-G_MODULE_EXPORT void register_admin_command(char *cmd, admin_command_handler h, const char *help, const char *help_details, void *userdata);
-G_MODULE_EXPORT void unregister_admin_command(char *cmd);
+struct admin_command {
+	char *name;
+	admin_command_handler handler;
+	const char *help;
+	const char *help_details;
+	void *userdata;
+};
+
+G_MODULE_EXPORT void register_admin_command(const struct admin_command *cmd);
+G_MODULE_EXPORT void unregister_admin_command(const struct admin_command *cmd);
 G_MODULE_EXPORT void admin_out(struct line *l, const char *fmt, ...);
 
 #if defined(_WIN32) && !defined(ADMIN_CORE_BUILD)

@@ -49,7 +49,7 @@ static gboolean reconnect(GIOChannel *c, GIOCondition cond, void *_server);
 
 static void server_send_login (struct network *s) 
 {
-	g_message(_("Successfully connected to %s"), s->name);
+	g_message(("Successfully connected to %s"), s->name);
 
 	if(s->type == NETWORK_TCP && s->connection.tcp.current_server->password) { 
 		network_send_args(s, "PASS", s->connection.tcp.current_server->password, NULL);
@@ -296,11 +296,11 @@ gboolean connect_current_tcp_server(struct network *s)
 
 	if(!cs) {
 		s->autoconnect = FALSE;
-		g_warning(_("No servers listed for network %s, not connecting\n"), s->name);
+		g_warning(("No servers listed for network %s, not connecting\n"), s->name);
 		return TRUE;
 	}
 
-	g_message(_("Connecting with %s:%s for network %s"), 
+	g_message(("Connecting with %s:%s for network %s"), 
 			  cs->host, 
 			  cs->port, s->name);
 
@@ -356,7 +356,7 @@ gboolean connect_current_tcp_server(struct network *s)
 	}
 
 	if(!s->connection.tcp.outgoing) {
-		g_warning(_("Couldn't connect with network %s via server %s:%s"), s->name, cs->host, cs->port);
+		g_warning(("Couldn't connect with network %s via server %s:%s"), s->name, cs->host, cs->port);
 		return TRUE;
 	}
 
@@ -383,7 +383,7 @@ static gboolean reconnect(GIOChannel *c, GIOCondition cond, void *_server)
 	default: break;
 	}
 
-	g_warning(_("Connection to network %s lost, trying to reconnect in %ds..."), server->name, server->reconnect_interval);
+	g_warning(("Connection to network %s lost, trying to reconnect in %ds..."), server->name, server->reconnect_interval);
 
 	server->authenticated = FALSE;
 	server->login_sent = FALSE;
@@ -509,7 +509,7 @@ static pid_t piped_child(char* const command[], int *f_in)
 		dup2(sock[1], 0);
 		dup2(sock[1], 1);
 		execvp(command[0], command);
-		g_warning( _("Failed to exec %s : %s"), command[0], strerror(errno));
+		g_warning( ("Failed to exec %s : %s"), command[0], strerror(errno));
 		return -1;
 	}
 
@@ -578,7 +578,7 @@ int close_network(struct network *s)
 {
 	GList *l = s->clients;
 	g_assert(s);
-	g_message(_("Closing connection to %s"), s->name);
+	g_message(("Closing connection to %s"), s->name);
 
 	while(l) {
 		struct client *c = l->data;

@@ -28,8 +28,6 @@
 #ifndef _WIN32
 #include <sys/utsname.h>
 #endif
-#include "gettext.h"
-#define _(s) gettext(s)
 
 #undef G_LOG_DOMAIN
 #define G_LOG_DOMAIN "ctcp"
@@ -93,7 +91,7 @@ static gboolean mhandle_data(struct line *l, void *userdata)
 		network_send_args(l->network, "NOTICE", dest, l->args[2]?l->args[2]:"", NULL);
 	} else if(!g_strcasecmp(data, "ACTION")) {
 	} else if(!g_strcasecmp(data, "DCC")) {
-	} else g_warning(_("Received unknown CTCP request '%s'!"), data);
+	} else g_warning("Received unknown CTCP request '%s'!", data);
 
 	g_free(data);
 	if(dhostmask)g_free(dhostmask);

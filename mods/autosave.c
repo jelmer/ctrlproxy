@@ -20,8 +20,6 @@
 
 #include <ctrlproxy.h>
 #include <string.h>
-#include "gettext.h"
-#define _(s) gettext(s)
 
 static int autosave_id;
 static struct plugin *this_plugin = NULL;
@@ -51,7 +49,7 @@ gboolean load_config(struct plugin *p, xmlNodePtr node)
 	if(time > 0)
 		autosave_id = g_timeout_add(1000 * 60 * time, loop_save_config, NULL);
 	else
-		g_warning(_("Interval of %i minutes is too short"), time);
+		g_warning(("Interval of %i minutes is too short"), time);
 
 	return TRUE;
 }

@@ -36,11 +36,11 @@ gboolean unload_plugin(struct plugin *p)
 	/* Run exit function if present */
 	if(g_module_symbol(p->module, "fini_plugin", (gpointer)&f)) {
 		if(!f(p)) {
-			g_warning(_("Unable to unload plugin '%s': still in use?"), p->name);
+			g_warning(("Unable to unload plugin '%s': still in use?"), p->name);
 			return FALSE;
 		}
 	} else {
-		g_warning(_("No symbol 'fini_plugin' in plugin '%s'. Module does not support unloading, so no unload will be attempted"), p->name);
+		g_warning(("No symbol 'fini_plugin' in plugin '%s'. Module does not support unloading, so no unload will be attempted"), p->name);
 		return FALSE;
 	}
 
@@ -94,7 +94,7 @@ gboolean load_plugin(struct plugin *p)
 	m = g_module_open(path_name, G_MODULE_BIND_LAZY);
 
 	if(!m) {
-		g_warning(_("Unable to open module %s(%s), ignoring"), path_name, g_module_error());
+		g_warning(("Unable to open module %s(%s), ignoring"), path_name, g_module_error());
 		g_free(path_name);
 		return FALSE;
 	}
@@ -104,13 +104,13 @@ gboolean load_plugin(struct plugin *p)
 	}
 
 	if(plugin_loaded(selfname)) {
-		g_warning(_("Plugin already loaded"));
+		g_warning(("Plugin already loaded"));
 		g_free(path_name);
 		return FALSE;
 	}
 
 	if(!g_module_symbol(m, "init_plugin", (gpointer)&f)) {
-		g_warning(_("Can't find symbol 'init_plugin' in module %s: %s"), path_name, g_module_error());
+		g_warning(("Can't find symbol 'init_plugin' in module %s: %s"), path_name, g_module_error());
 		g_free(path_name);
 		return FALSE;
 	}
@@ -123,7 +123,7 @@ gboolean load_plugin(struct plugin *p)
 	g_module_symbol(m, "save_config", (gpointer)&p->save_config);
 
 	if(!f(p)) {
-		g_warning(_("Running initialization function for plugin '%s' failed."), p->path);
+		g_warning(("Running initialization function for plugin '%s' failed."), p->path);
 		return FALSE;
 	}
 
@@ -159,16 +159,16 @@ gboolean init_plugins() {
 	gboolean ret = TRUE;
 
 	if(!g_module_supported()) {
-		g_warning(_("DSO's not supported on this platform. Not loading any modules"));
+		g_warning(("DSO's not supported on this platform. Not loading any modules"));
 	} else if(!plugins) {
-		g_warning(_("No modules set to be loaded"));	
+		g_warning(("No modules set to be loaded"));	
 	} else {
 		GList *gl = plugins;
 		while(gl) {
 			struct plugin *p = gl->data;
 
 			if(!p->loaded && p->autoload && !load_plugin(p)) {
-				g_error(_("Can't load plugin %s, aborting..."), p->name);
+				g_error(("Can't load plugin %s, aborting..."), p->name);
 				ret = FALSE;
 			}
 

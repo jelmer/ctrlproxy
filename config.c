@@ -29,6 +29,8 @@
 #define __USE_POSIX
 #include <netdb.h>
 
+#define DTD_URL "http://ctrlproxy.vernstok.nl/2.7/ctrlproxyrc.dtd"
+
 static xmlDtdPtr dtd;
 
 static char *last_config_file = NULL;
@@ -78,7 +80,7 @@ static xmlNodePtr config_save_networks()
 			struct channel *c = gl1->data;
 			xmlNodePtr x = xmlNewNode(NULL, "channel");
 			xmlSetProp(x, "name", c->name);
-			xmlSetProp(x, "key", c->key);
+			if (c->key) xmlSetProp(x, "key", c->key);
 			xmlSetProp(x, "autojoin", c->autojoin?"1":"0");
 
 			xmlAddChild(p, x);
@@ -143,7 +145,7 @@ gboolean plugin_load_config(struct plugin *p)
 
 void init_config()
 {
-	dtd = xmlParseDTD(NULL, DTD_FILE);
+	dtd = xmlParseDTD(DTD_URL, DTD_FILE);
 
 	if (!dtd) {
 		g_error("Can't load DTD file from %s", DTD_FILE);
@@ -342,7 +344,7 @@ gboolean load_configuration(const char *file)
 
 	configuration = xmlParseFile(file);
 	if(!configuration) {
-		g_error(_("Can't open configuration file '%s'"), file);
+		g_error(("Can't open configuration file '%s'"), file);
 		return FALSE;
 	}
 

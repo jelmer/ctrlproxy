@@ -40,22 +40,12 @@
 #include "ctrlproxy.h"
 #include <string.h>
 #include "admin.h"
-#include "gettext.h"
-#define _(s) gettext(s)
 
 #define ADMIN_CHANNEL "#ctrlproxy"
 
 static gboolean without_privmsg = FALSE;
 static GList *commands = NULL;
 static guint longest_command = 0;
-
-struct admin_command {
-	char *name;
-	admin_command_handler handler;
-	const char *help;
-	const char *help_details;
-	void *userdata;
-};
 
 void admin_out(struct line *l, const char *fmt, ...)
 {
@@ -94,7 +84,7 @@ static struct network *find_network_struct(char *name)
 static void add_network (char **args, struct line *l, void *userdata)
 {
 	if(!args[1]) {
-		admin_out(l, _("No name specified"));
+		admin_out(l, "No name specified");
 		return;
 	}
 
@@ -104,12 +94,12 @@ static void add_network (char **args, struct line *l, void *userdata)
 static void del_network (char **args, struct line *l, void *userdata)
 {
 	if(!args[1]) {
-		admin_out(l, _("Not enough parameters"));
+		admin_out(l, "Not enough parameters");
 		return;
 	}
 
 	if(find_network_struct(args[1])) {
-		admin_out(l, _("Can't remove active network"));
+		admin_out(l, "Can't remove active network");
 		return;
 	}
 
@@ -119,7 +109,7 @@ static void del_network (char **args, struct line *l, void *userdata)
 static void add_server (char **args, struct line *l, void *userdata)
 {
 	if(!args[1] || !args[2]) {
-		admin_out(l, _("Not enough parameters"));
+		admin_out(l, "Not enough parameters");
 		return;
 	}
 
@@ -130,20 +120,20 @@ static void com_connect_network (char **args, struct line *l, void *userdata)
 {
 	struct network *s;
 	if(!args[1]) {
-		 admin_out(l, _("No network specified"));
+		 admin_out(l, "No network specified");
 		 return;
 	}
 
 	s = find_network_struct(args[1]);
 
 	if(s && s->reconnect_id == 0) {
-		admin_out(l, _("Already connected to %s"), args[1]);
+		admin_out(l, "Already connected to %s", args[1]);
 	} else if(s) {
-		admin_out(l, _("Forcing reconnect to %s"), args[1]);
+		admin_out(l, "Forcing reconnect to %s", args[1]);
 		close_server(s);
 		connect_current_tcp_server(s);
 	} else {
-		g_message(_("Connecting to %s"), args[1]);
+		g_message("Connecting to %s", args[1]);
 		connect_network(s);
 	}
 }
@@ -155,7 +145,7 @@ static void disconnect_network (char **args, struct line *l, void *userdata)
 	else {
 		n = find_network_struct(args[1]);
 		if(!n) {
-			admin_out(l, _("Can't find active network with that name"));
+			admin_out(l, "Can't find active network with that name");
 			return;
 		}
 	}
@@ -174,11 +164,11 @@ static void com_next_server (char **args, struct line *l, void *userdata) {
 		name = n->name;
 	}
 	if(!n) {
-		admin_out(l, _("%s: Not connected"), name);
+		admin_out(l, "%s: Not connected", name);
 	} else {
-		admin_out(l, _("%s: Reconnecting"), name);
+		admin_out(l, "%s: Reconnecting", name);
 		close_server(n);
-		g_log(G_LOG_DOMAIN, G_LOG_LEVEL_INFO, _("Cycle server in %s"), name);
+		g_log(G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "Cycle server in %s", name);
 		connect_next_tcp_server(n);
 	}
 }
@@ -198,12 +188,12 @@ static void unload_module (char **args, struct line *l, void *userdata)
 	GList *g = get_plugin_list();
 
 	if(!args[1]) {
-		admin_out(l, _("Not enough arguments"));
+		admin_out(l, "Not enough arguments");
 		return;
 	}
 
 	if(!strcmp(args[1], "admin")) {
-		admin_out(l, _("Can't unload /this/ module"));
+		admin_out(l, "Can't unload /this/ module");
 		return;
 	}
 
@@ -217,18 +207,18 @@ static void unload_module (char **args, struct line *l, void *userdata)
 		g = g->next;
 	}
 
-	admin_out(l, _("No such plugin loaded"));
+	admin_out(l, "No such plugin loaded");
 }
 
 static void load_module (char **args, struct line *l, void *userdata)
 { 
 	if(!args[1]) { 
-		admin_out(l, _("No file specified"));
+		admin_out(l, "No file specified");
 		return;
 	}
 
     if(plugin_loaded(args[1])) {
-		admin_out(l, _("Module already loaded"));
+		admin_out(l, "Module already loaded");
 		return;
 	}
 
@@ -242,7 +232,7 @@ static void reload_module (char **args, struct line *l, void *userdata)
 	load_module(args, l, NULL);
 }
 
-static void save_config (char **args, struct line *l, void *userdata)
+static void com_save_config (char **args, struct line *l, void *userdata)
 { save_configuration(args[1]); }
 
 static void help (char **args, struct line *l, void *userdata)
@@ -253,9 +243,9 @@ static void help (char **args, struct line *l, void *userdata)
 	int i;
 
 	if(args[1]) {
-		admin_out(l, _("Details for command %s:"), args[1]);
+		admin_out(l, "Details for command %s:", args[1]);
 	} else {
-		admin_out(l, _("The following commands are available:"));
+		admin_out(l, ("The following commands are available:"));
 	}
 	while(gl) {
 		struct admin_command *cmd = (struct admin_command *)gl->data;
@@ -268,7 +258,7 @@ static void help (char **args, struct line *l, void *userdata)
 					}
 					return;
 				} else {
-					admin_out(l, _("Sorry, no help for %s available"), args[1]);
+					admin_out(l, ("Sorry, no help for %s available"), args[1]);
 				}
 			}
 		} else {
@@ -283,7 +273,7 @@ static void help (char **args, struct line *l, void *userdata)
 		gl = gl->next;
 	}
 	if(args[1]) {
-		admin_out(l, _("Unknown command"));
+		admin_out(l, ("Unknown command"));
 	}
 }
 
@@ -293,9 +283,9 @@ static void list_networks(char **args, struct line *l, void *userdata)
 	while(gl) {
 		struct network *n = gl->data;
 
-		if(!n) admin_out(l, _("%s: Not connected"), n->name);
-		else if(n->reconnect_id) admin_out(l, _("%s: Reconnecting"), n->name);
-		else admin_out(l, _("%s: connected"), n->name);
+		if(!n) admin_out(l, ("%s: Not connected"), n->name);
+		else if(n->reconnect_id) admin_out(l, ("%s: Reconnecting"), n->name);
+		else admin_out(l, ("%s: connected"), n->name);
 
 		gl = gl->next;
 	}
@@ -312,32 +302,14 @@ static void handle_die(char **args, struct line *l, void *userdata)
 	exit(0);
 }
 
-void register_admin_command(char *name, admin_command_handler handler, const char *help, const char *help_details, void *userdata)
+void register_admin_command(const struct admin_command *cmd)
 {
-	struct admin_command *cmd = g_new(struct admin_command,1);
-	cmd->name = g_strdup(name);
-	if(longest_command < strlen(name))
-		longest_command = strlen(name);
-	cmd->handler = handler;
-	cmd->help = help;
-	cmd->help_details = help_details;
-	cmd->userdata = userdata;
 	commands = g_list_append(commands, cmd);
 }
 
-void unregister_admin_command(char *name)
+void unregister_admin_command(const struct admin_command *cmd)
 {
-	GList *gl = commands;
-	while(gl) {
-		struct admin_command *cmd = (struct admin_command *)gl->data;
-		if(!g_strcasecmp(cmd->name, name)) {
-			g_free(cmd->name);
-			commands = g_list_remove(commands, cmd);
-			g_free(cmd);
-			return;
-		}
-		gl = gl->next;
-	}
+	commands = g_list_remove(commands, cmd);
 }
 
 static gboolean process_command(struct line *l, int cmdoffset)
@@ -347,7 +319,7 @@ static gboolean process_command(struct line *l, int cmdoffset)
 	GList *gl;
 
 	if(!l->args[cmdoffset]) {
-		admin_out(l, _("Please give a command. Use the 'help' command to get a list of available commands"));
+		admin_out(l, ("Please give a command. Use the 'help' command to get a list of available commands"));
 		return TRUE;
 	}
 
@@ -378,7 +350,7 @@ static gboolean process_command(struct line *l, int cmdoffset)
 		gl = gl->next;
 	}
 
-	admin_out(l, _("Can't find command '%s'. Type 'help' for a list of available commands. "), args[0]);
+	admin_out(l, ("Can't find command '%s'. Type 'help' for a list of available commands. "), args[0]);
 
 	g_strfreev(args);
 	g_free(tmp);
@@ -406,6 +378,15 @@ static gboolean handle_data(struct line *l, void *userdata) {
 }
 
 const char name_plugin[] = "admin";
+
+gboolean save_config(struct plugin *p, xmlNodePtr node)
+{
+	if (without_privmsg) {
+		xmlAddChild(node,xmlNewNode(NULL, "without_privmsg"));
+	}
+
+	return TRUE;
+}
 
 gboolean load_config(struct plugin *p, xmlNodePtr node)
 {
@@ -461,29 +442,29 @@ gboolean fini_plugin(struct plugin *p) {
 
 gboolean init_plugin(struct plugin *p) {
 	int i;
-	struct admin_command builtin_commands[] = {
-		{ "ADDNETWORK", add_network, _("<name>"), _("Add new network with specified name") },
-		{ "ADDSERVER", add_server, _("<network> <type> [property1=value1] ..."), _("Add server with specified properties to the specified network") },
-		{ "CONNECT", com_connect_network, _("<network>"), _("Connect to specified network. Forces reconnect when waiting.") },
-		{ "DELNETWORK", del_network, _("<network>"), _("Remove specified network") },
-		{ "NEXTSERVER", com_next_server, _("[network]"), _("Disconnect and use to the next server in the list") },
-		{ "DIE", handle_die, "", _("Exit ctrlproxy") },
-		{ "DISCONNECT", disconnect_network, _("<network>"), _("Disconnect specified network") },
-		{ "LISTNETWORKS", list_networks, "", _("List current networks and their status") },
-		{ "LOADMODULE", load_module, "<name>", _("Load specified module") },
-		{ "UNLOADMODULE", unload_module, _("<name>"), _("Unload specified module") },
-		{ "RELOADMODULE", reload_module, _("<name>"), _("Reload specified module") },
-		{ "LISTMODULES", list_modules, "", _("List currently loaded modules") },
-		{ "SAVECONFIG", save_config, "<name>", _("Save current XML configuration to specified file") },
-		{ "DETACH", detach_client, "", _("Detach current client") },
-		{ "HELP", help, "[command]", _("This help command") },
+	const static struct admin_command builtin_commands[] = {
+		{ "ADDNETWORK", add_network, ("<name>"), ("Add new network with specified name") },
+		{ "ADDSERVER", add_server, ("<network> <type> [property1=value1] ..."), ("Add server with specified properties to the specified network") },
+		{ "CONNECT", com_connect_network, ("<network>"), ("Connect to specified network. Forces reconnect when waiting.") },
+		{ "DELNETWORK", del_network, ("<network>"), ("Remove specified network") },
+		{ "NEXTSERVER", com_next_server, ("[network]"), ("Disconnect and use to the next server in the list") },
+		{ "DIE", handle_die, "", ("Exit ctrlproxy") },
+		{ "DISCONNECT", disconnect_network, ("<network>"), ("Disconnect specified network") },
+		{ "LISTNETWORKS", list_networks, "", ("List current networks and their status") },
+		{ "LOADMODULE", load_module, "<name>", ("Load specified module") },
+		{ "UNLOADMODULE", unload_module, ("<name>"), ("Unload specified module") },
+		{ "RELOADMODULE", reload_module, ("<name>"), ("Reload specified module") },
+		{ "LISTMODULES", list_modules, "", ("List currently loaded modules") },
+		{ "SAVECONFIG", com_save_config, "<name>", ("Save current XML configuration to specified file") },
+		{ "DETACH", detach_client, "", ("Detach current client") },
+		{ "HELP", help, "[command]", ("This help command") },
 		{ NULL }
 	};
 
 	add_client_filter("admin", handle_data, NULL, 1);
 
 	for(i = 0; builtin_commands[i].name; i++) {
-		register_admin_command(builtin_commands[i].name, builtin_commands[i].handler, builtin_commands[i].help, builtin_commands[i].help_details, NULL);
+		register_admin_command(&builtin_commands[i]);
 	}
 
 	register_virtual_network(&admin_network);

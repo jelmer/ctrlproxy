@@ -19,8 +19,6 @@
 
 #include "ctrlproxy.h"
 #include <string.h>
-#include "gettext.h"
-#define _(s) gettext(s)
 
 static time_t last_message = 0, max_idle_time = 60 * 10;
 static gboolean only_for_noclients = FALSE;
@@ -41,7 +39,7 @@ static gboolean check_time(gpointer user_data) {
 			struct network *s = (struct network *)sl->data;
 			if(!only_for_noclients || s->clients == NULL) {
 				char *new_msg;
-				new_msg = g_strdup_printf(":%s", message?message:_("Auto Away"));
+				new_msg = g_strdup_printf(":%s", message?message:"Auto Away");
 				network_send_args(s, "AWAY", new_msg, NULL);
 				g_free(new_msg);
 				if(nick) network_send_args(s, "NICK", nick, NULL);
@@ -87,6 +85,30 @@ gboolean fini_plugin(struct plugin *p) {
 }
 
 const char name_plugin[] = "auto-away";
+
+gboolean save_config(struct plugin *p, xmlNodePtr node)
+{
+	if (only_for_noclients) {
+		xmlAddChild(node, xmlNewNode(NULL, "only_noclients"));
+	}
+
+	if (nick) {
+		xmlNodePtr n = xmlNewNode(NULL, "nick");
+		xmlNodeSetContent(n, nick);
+		xmlAddChild(node, n);
+	}
+
+	if (message) {
+		char *tmp;
+		xmlNodePtr n = xmlNewNode(NULL, "message");
+		xmlNodeSetContent(n, message);
+		xmlSetProp(n, "time", tmp = g_strdup_printf("%ld", max_idle_time));
+		g_free(tmp);
+		xmlAddChild(node, n);
+	}
+
+	return TRUE;
+}
 
 gboolean load_config(struct plugin *p, xmlNodePtr node)
 {

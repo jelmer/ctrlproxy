@@ -193,7 +193,7 @@ static void handle_join(struct network *s, struct line *l)
 
 			if(!irccmp(s, line_get_nick(l), s->nick)) {
 				c->joined = TRUE;
-				g_message(_("Joining channel %s"), p);
+				g_message(("Joining channel %s"), p);
 				
 				/* send WHO command for updating hostmasks */
 				sj = g_new(struct started_join,1);
@@ -228,7 +228,7 @@ static void handle_part(struct network *s, struct line *l)
 
 		/* The user is joining a channel */
 		if(!irccmp(s, line_get_nick(l), s->nick) && c) {
-			g_message(_("Leaving %s"), p);
+			g_message(("Leaving %s"), p);
 			c->joined = FALSE;
 			free_channel(c);
 			c = NULL;
@@ -241,12 +241,12 @@ static void handle_part(struct network *s, struct line *l)
 			if(n) {
 				c->nicks = g_list_remove(c->nicks, n);
 				free_nick(n);
-			} else g_warning(_("Can't remove nick %s from channel %s: nick not on channel\n"), line_get_nick(l), p);
+			} else g_warning(("Can't remove nick %s from channel %s: nick not on channel\n"), line_get_nick(l), p);
 
 			continue;
 		}
 
-		g_warning(_("Can't part or let other nick part %s(unknown channel)\n"), p);
+		g_warning(("Can't part or let other nick part %s(unknown channel)\n"), p);
 		p = m + 1;
 	}
 	g_free(name);
@@ -270,7 +270,7 @@ static void handle_kick(struct network *s, struct line *l) {
 		if(nextchan){ *nextchan = '\0'; nextchan++; }
 
 		if((!nextnick && nextchan) || (nextnick && !nextchan)) {
-			g_warning(_("KICK command has unequal number of channels and nicks\n"));
+			g_warning(("KICK command has unequal number of channels and nicks\n"));
 		}
 
 		if(nextnick && nextchan) cont = 1;
@@ -279,14 +279,14 @@ static void handle_kick(struct network *s, struct line *l) {
 		c = find_channel(s, curchan);
 
 		if(!c){
-			g_warning(_("Can't kick nick %s from %s\n"), curnick, curchan);
+			g_warning(("Can't kick nick %s from %s\n"), curnick, curchan);
 			curchan = nextchan; curnick = nextnick;
 			continue;
 		}
 
 		n = find_nick(c, curnick);
 		if(!n) {
-			g_warning(_("Can't kick nick %s from channel %s: nick not on channel\n"), curnick, curchan);
+			g_warning(("Can't kick nick %s from channel %s: nick not on channel\n"), curnick, curchan);
 			curchan = nextchan; curnick = nextnick;
 			continue;
 		}
@@ -310,7 +310,7 @@ static void handle_332(struct network *s, struct line *l) {
 	struct channel *c = find_channel(s, l->args[2]);
 
 	if(!c) {
-		g_warning(_("Can't set topic for unknown channel '%s'!"), l->args[2]);
+		g_warning(("Can't set topic for unknown channel '%s'!"), l->args[2]);
 		return;
 	}
 
@@ -322,7 +322,7 @@ static void handle_no_topic(struct network *s, struct line *l) {
 	struct channel *c = find_channel(s, l->args[1]);
 
 	if(!c) {
-		g_warning(_("Can't unset topic for unknown channel '%s'!"), l->args[2]);
+		g_warning(("Can't unset topic for unknown channel '%s'!"), l->args[2]);
 		return;
 	}
 
@@ -334,7 +334,7 @@ static void handle_namreply(struct network *s, struct line *l) {
 	char *names, *tmp, *t;
 	struct channel *c = find_channel(s, l->args[3]);
 	if(!c) {
-		g_warning(_("Can't add names to %s: channel not found\n"), l->args[3]);
+		g_warning(("Can't add names to %s: channel not found\n"), l->args[3]);
 		return;
 	}
 	c->mode = l->args[2][0];
@@ -355,7 +355,7 @@ static void handle_namreply(struct network *s, struct line *l) {
 static void handle_end_names(struct network *s, struct line *l) {
 	struct channel *c = find_channel(s, l->args[2]);
 	if(c)c->namreply_started = FALSE;
-	else g_warning(_("Can't end /NAMES command for %s: channel not found\n"), l->args[2]);
+	else g_warning(("Can't end /NAMES command for %s: channel not found\n"), l->args[2]);
 }
 
 static void handle_whoreply(struct network *s, struct line *l) {
@@ -450,7 +450,7 @@ static void handle_mode(struct network *s, struct line *l)
 						  break;
 				case 'l':
 					if(!l->args[++arg]) {
-						g_error(_("Mode l requires argument, but no argument found"));
+						g_error(("Mode l requires argument, but no argument found"));
 						break;
 					}
 					c->limit = atol(l->args[arg]);
@@ -458,7 +458,7 @@ static void handle_mode(struct network *s, struct line *l)
 					break;
 				case 'k':
 					if(!l->args[++arg]) {
-						g_error(_("Mode k requires argument, but no argument found"));
+						g_error(("Mode k requires argument, but no argument found"));
 						break;
 					}
 
@@ -475,7 +475,7 @@ static void handle_mode(struct network *s, struct line *l)
 					  } else {
 							n = find_nick(c, l->args[++arg]);
 							if(!n) {
-								g_error(_("Can't set mode %c%c on nick %s on channel %s, because nick does not exist!"), t == ADD?'+':'-', l->args[2][i], l->args[arg], l->args[1]);
+								g_error(("Can't set mode %c%c on nick %s on channel %s, because nick does not exist!"), t == ADD?'+':'-', l->args[2][i], l->args[arg], l->args[1]);
 								break;
 							}
 							n->mode = (t == ADD?p:' ');

@@ -20,8 +20,6 @@
 #include "ctrlproxy.h"
 #include <string.h>
 #include "admin.h"
-#include "gettext.h"
-#define _(s) gettext(s)
 
 static GHashTable *command_backlog = NULL;
 
@@ -47,12 +45,6 @@ static gboolean log_data(struct line *l, void *userdata) {
 	return TRUE;
 }
 
-gboolean fini_plugin(struct plugin *p) {
-	del_replication_filter("repl_command");
-	unregister_admin_command("BACKLOG");
-	g_hash_table_destroy(command_backlog); command_backlog = NULL;
-	return TRUE;
-}
 
 static void replicate_channel(gpointer key, gpointer val, gpointer user)
 {
@@ -66,18 +58,20 @@ static void replicate_channel(gpointer key, gpointer val, gpointer user)
 	linestack_clear(co);
 }
 
+;
+
 static void repl_command(char **args, struct line *l, void *userdata)
 {
 	struct linestack_context *co;
 	char *desc;
 
 	if(!command_backlog) { 
-		admin_out(l, _("No backlogs saved yet"));
+		admin_out(l, ("No backlogs saved yet"));
 		return;
 	}
 	
 	if(!args[1]) {
-		admin_out(l, _("Sending backlog for network '%s'"), l->network->name);
+		admin_out(l, ("Sending backlog for network '%s'"), l->network->name);
 
 		/* Backlog everything for this network */
 		g_hash_table_foreach(command_backlog, replicate_channel, l);
@@ -85,7 +79,7 @@ static void repl_command(char **args, struct line *l, void *userdata)
 	} 
 
 	/* Backlog for specific nick/channel */
-	admin_out(l, _("Sending backlog for channel %s@%s"), args[1], l->network->name);
+	admin_out(l, ("Sending backlog for channel %s@%s"), args[1], l->network->name);
 	desc = g_strdup_printf("%s/%s", l->network->name, args[1]);
 	co = g_hash_table_lookup(command_backlog, desc);
 	g_free(desc);
@@ -94,19 +88,33 @@ static void repl_command(char **args, struct line *l, void *userdata)
 		linestack_send(co, l->client->incoming);
 		linestack_clear(co);
 	} else {
-		admin_out(l, _("No backlog for %s"), args[1]);
+		admin_out(l, ("No backlog for %s"), args[1]);
 	}
 }
 
+static const struct admin_command cmd_backlog = {
+	"BACKLOG",
+	repl_command, 
+	"[channel]",
+	"Send backlogs for this network or a channel, if specified"
+};
+
 const char name_plugin[] = "repl_command";
+
+gboolean fini_plugin(struct plugin *p) {
+	del_replication_filter("repl_command");
+	unregister_admin_command(&cmd_backlog);
+	g_hash_table_destroy(command_backlog); command_backlog = NULL;
+	return TRUE;
+}
 
 gboolean init_plugin(struct plugin *p) {
 	if(!plugin_loaded("admin")) {
-		g_warning(_("admin module required for repl_command module. Please load it first"));
+		g_warning(("admin module required for repl_command module. Please load it first"));
 		return FALSE;
 	}
 	add_replication_filter("repl_command", log_data, NULL, 1000);
-	register_admin_command("BACKLOG", repl_command, _("[channel]"), _("Send backlogs for this network or a channel, if specified"), NULL);
+	register_admin_command(&cmd_backlog);
 	command_backlog = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, linestack_destroy);
 	return TRUE;
 }

@@ -114,6 +114,14 @@ gboolean fini_plugin(struct plugin *p) {
 
 const char name_plugin[] = "antiflood";
 
+gboolean save_config(struct plugin *p, xmlNodePtr node)
+{
+	char *tmp = g_strdup_printf("%d", default_queue_speed);
+	xmlSetProp(node, "queue-speed", tmp);
+	g_free(tmp);
+	return TRUE;
+}
+
 gboolean load_config(struct plugin *p, xmlNodePtr node)
 {
 	char *qs = xmlGetProp(node, "queue-speed");

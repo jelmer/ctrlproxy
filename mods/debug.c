@@ -20,8 +20,6 @@
 #include "ctrlproxy.h"
 #include <string.h>
 #include "admin.h"
-#include "gettext.h"
-#define _(s) gettext(s)
 
 static void do_crash(char **args, struct line *l, void *userdata)
 {
@@ -37,7 +35,7 @@ static void dump_joined_channels(char **args, struct line *l, void *userdata)
 	if(args[1]) {
 		n = find_network(args[1]);
 		if(!n) {
-			admin_out(l, _("Can't find network '%s'"), args[1]);
+			admin_out(l, ("Can't find network '%s'"), args[1]);
 			return;
 		}
 	}
@@ -50,9 +48,21 @@ static void dump_joined_channels(char **args, struct line *l, void *userdata)
 	}
 }
 
+static const struct admin_command cmd_dumpjoined = {
+	"DUMPJOINEDCHANNELS",
+	dump_joined_channels, 
+	"[network]", 
+	NULL, 
+	NULL
+};
+
+static const struct admin_command cmd_crash = {
+	"CRASH", do_crash, "", NULL, NULL
+};
+
 gboolean fini_plugin(struct plugin *p) {
-	unregister_admin_command("DUMPJOINEDCHANNELS");
-	unregister_admin_command("CRASH");
+	unregister_admin_command(&cmd_dumpjoined);
+	unregister_admin_command(&cmd_crash);
 	return TRUE;
 }
 
@@ -60,10 +70,10 @@ const char name_plugin[] = "debug";
 
 gboolean init_plugin(struct plugin *p) {
 	if(!plugin_loaded("admin")) {
-		g_warning(_("admin module required for repl_command module. Please load it first"));
+		g_warning(("admin module required for repl_command module. Please load it first"));
 		return FALSE;
 	}
-	register_admin_command("DUMPJOINEDCHANNELS", dump_joined_channels, "[network]", NULL, NULL);
-	register_admin_command("CRASH", do_crash, "", NULL, NULL);
+	register_admin_command(&cmd_dumpjoined);
+	register_admin_command(&cmd_crash);
 	return TRUE;
 }

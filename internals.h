@@ -37,9 +37,6 @@
 #include <signal.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include "gettext.h"
-
-#define _(s) gettext(s)
 
 #undef  G_LOG_DOMAIN
 #define G_LOG_DOMAIN "ctrlproxy"

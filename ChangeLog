@@ -20,7 +20,6 @@ Ctrlproxy 2.7:
  * Add default ctrlproxyrc and install it
  * Add webconfig python script (Daniel Poelzleithner <ctrlproxy@poelzi.org>)
  * Add some tests to the testsuite
- * Add gettext support
  * Extend linestack interface
  * Add repl_limited module
  * Add test-filter utility

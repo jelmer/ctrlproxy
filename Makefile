@@ -1,6 +1,6 @@
 -include Makefile.settings
 
-CFLAGS+=-DHAVE_CONFIG_H -DLOCALEDIR=\"$(localedir)\" -DSHAREDIR=\"$(cdatadir)\" -DDTD_FILE=\"$(cdatadir)/ctrlproxyrc.dtd\"
+CFLAGS+=-DHAVE_CONFIG_H -DSHAREDIR=\"$(cdatadir)\" -DDTD_FILE=\"$(cdatadir)/ctrlproxyrc.dtd\"
 
 CFLAGS+=-ansi -Wall -DMODULESDIR=\"$(modulesdir)\"
 
@@ -22,7 +22,7 @@ ctrlproxy$(EXEEXT): server.o client.o line.o main.o state.o util.o hooks.o lines
 Makefile.settings:
 	@echo Please run ./configure first, then rerun make
 
-install: all install-dirs install-doc install-bin install-mods install-data install-pkgconfig install-scripts install-locale
+install: all install-dirs install-doc install-bin install-mods install-data install-pkgconfig install-scripts
 install-dirs:
 	$(INSTALL) -d $(DESTDIR)$(bindir)
 	$(INSTALL) -d $(DESTDIR)$(man1dir)
@@ -33,9 +33,6 @@ install-dirs:
 	$(INSTALL) -d $(DESTDIR)$(cdatadir)
 	$(INSTALL) -d $(DESTDIR)$(libdir)/pkgconfig
 
-install-locale:
-	$(MAKE) -C po install
-	
 install-bin:
 	$(INSTALL) ctrlproxy$(EXEEXT) $(DESTDIR)$(bindir)
 	$(INSTALL) ctrlproxy-setup $(DESTDIR)$(bindir)

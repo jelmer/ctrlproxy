@@ -47,7 +47,7 @@ void handle_005(struct network *s, struct line *l)
 				s->supports.casemapping = CASEMAP_ASCII;
 			} else {
 				s->supports.casemapping = CASEMAP_UNKNOWN;
-				g_warning(_("Unknown supports.casemapping '%s'"), l->args[i]+strlen("supports.casemapping="));
+				g_warning(("Unknown supports.casemapping '%s'"), l->args[i]+strlen("supports.casemapping="));
 			}
 		} else if(!strcmp(key, "NETWORK")) {
 			if(s->name_guessed) {

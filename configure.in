@@ -61,7 +61,6 @@ AC_HEADER_DIRENT
 AC_HEADER_STDC
 AC_HEADER_TIME
 AC_CHECK_HEADERS([stdlib.h string.h unistd.h popt.h execinfo.h sys/time.h])
-AM_GNU_GETTEXT([external])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST

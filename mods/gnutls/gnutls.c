@@ -23,8 +23,6 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "gettext.h"
-#define _(s) gettext(s)
 
 #include <gnutls/gnutls.h>
 #include <gnutls/extra.h>
@@ -265,13 +263,13 @@ gboolean g_io_gnutls_set_files(char *certf, char *keyf, char *caf)
 	gint err;
 	err = gnutls_certificate_set_x509_trust_file(xcred, caf, GNUTLS_X509_FMT_PEM);
 	if(err < 0) {
-		g_warning(_("Error setting x509 trust file: %s (file = %s)"), gnutls_strerror(err), caf);	
+		g_warning(("Error setting x509 trust file: %s (file = %s)"), gnutls_strerror(err), caf);	
 		return FALSE;
 	}
 	
 	err = gnutls_certificate_set_x509_key_file(xcred, certf, keyf, GNUTLS_X509_FMT_PEM);
 	if(err < 0) {
-		g_warning(_("Error setting x509 key+cert files: %s (key = %s, cert = %s)"), gnutls_strerror(err), keyf, certf);	
+		g_warning(("Error setting x509 key+cert files: %s (key = %s, cert = %s)"), gnutls_strerror(err), keyf, certf);	
 		return FALSE;
 	}
 

@@ -27,8 +27,6 @@
 #include <glib.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include "gettext.h"
-#define _(s) gettext(s)
 #ifdef _WIN32
 #include <direct.h>
 #define mkdir(s,t) _mkdir(s)
@@ -64,7 +62,7 @@ static FILE *find_add_channel_file(struct network *s, const char *name) {
 		n = g_strdup_printf("%s/%s", logfile, server_name);
 		/* Check if directory needs to be created */
 		if(!g_file_test(n, G_FILE_TEST_IS_DIR) && mkdir(n, 0700) == -1) {
-			g_warning(_("Couldn't create directory %s for logging!"), n);
+			g_warning("Couldn't create directory %s for logging!", n);
 			g_free(hash_name);
 			g_free(n);
 			return NULL;
@@ -77,7 +75,7 @@ static FILE *find_add_channel_file(struct network *s, const char *name) {
 		g_free(cn);
 		f = fopen(n, "a+");
 		if(!f) {
-			g_warning(_("Couldn't open file %s for logging!"), n);
+			g_warning("Couldn't open file %s for logging!", n);
 			g_free(n);
 			return NULL;
 		}

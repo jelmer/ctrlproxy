@@ -38,8 +38,6 @@
 #include "libxml_wrap.h"
 #include "../admin.h"
 
-#define _(s) gettext(s)
-
 xmlNodePtr python_xmlConf;
 struct plugin *python_plugin;
 

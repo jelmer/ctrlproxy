@@ -22,8 +22,6 @@
 #include <errno.h>
 #include <stdio.h>
 #include "irc.h"
-#include "gettext.h"
-#define _(s) gettext(s)
 
 static char *motd_file = NULL;
 
@@ -35,7 +33,7 @@ char ** motd_file_handler(struct network *n, void *userdata)
 
 	fd = fopen(motd_file, "r");
 	if(!fd) {
-		g_warning(_("Can't open '%s'\n"), motd_file);
+		g_warning(("Can't open '%s'\n"), motd_file);
 		return NULL;
 	}
 
@@ -79,7 +77,7 @@ gboolean load_config(struct plugin *p, xmlNodePtr node)
 	if (!motd_file) motd_file = g_build_filename(get_shared_path(), "motd", NULL);
 
 	if(!g_file_test(motd_file, G_FILE_TEST_EXISTS)) {
-		g_warning(_("Can't open MOTD file '%s' for reading\n"), motd_file);
+		g_warning(("Can't open MOTD file '%s' for reading\n"), motd_file);
 		return FALSE;
 	}
 

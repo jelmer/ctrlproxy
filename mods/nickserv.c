@@ -20,8 +20,6 @@
 #include "ctrlproxy.h"
 #include <string.h>
 #include "irc.h"
-#include "gettext.h"
-#define _(s) gettext(s)
 
 struct nickserv_entry {
 	const char *network;
@@ -90,12 +88,26 @@ static gboolean log_data(struct line *l, void *userdata) {
 	if (l->direction == TO_SERVER && 
 		(!g_strcasecmp(l->args[0], "PRIVMSG") || !g_strcasecmp(l->args[0], "NOTICE")) &&
 		(!g_strcasecmp(l->args[1], nickserv_nick(l->network)) && !g_strncasecmp(l->args[2], "IDENTIFY ", strlen("IDENTIFY ")))) {
-			struct nickserv_entry *e = g_new0(struct nickserv_entry, 1);
-			e->nick = g_strdup(l->network->nick);
-			e->pass = l->args[2] + strlen("IDENTIFY ");
-			e->network = g_strdup(l->network->name);
+			struct nickserv_entry *e = NULL;
+			GList *gl;
 		
-			nicks = g_list_prepend(nicks, e);
+			for (gl = nicks; gl; gl = gl->next) {
+				e = gl->data;
+
+				if (e->network && !strcasecmp(e->network, l->network->name) && !strcasecmp(e->nick, l->network->nick)) {
+					break;		
+				}
+			}
+
+			if (!gl) {
+				e = g_new0(struct nickserv_entry, 1);
+				e->nick = g_strdup(l->network->nick);
+				e->network = g_strdup(l->network->name);
+				nicks = g_list_prepend(nicks, e);
+			}
+
+			e->pass = g_strdup(l->args[2] + strlen("IDENTIFY "));
+			
 			g_message("Caching password for nick %s on network %s", e->nick, e->network);
 	}
 
@@ -106,7 +118,7 @@ static gboolean log_data(struct line *l, void *userdata) {
 			const char *nickserv_n = nickserv_nick(l->network);
 			char *raw;
 			
-			g_message(_("Ghosting current user using '%s' on %s"), nickattempt, l->network->name);
+			g_message(("Ghosting current user using '%s' on %s"), nickattempt, l->network->name);
 
 			raw = g_strdup_printf("GHOST %s %s", nickattempt, pass);
 			network_send_args(l->network, "PRIVMSG", nickserv_n, raw, NULL);
@@ -125,7 +137,19 @@ static void conned_data(struct network *n, void *userdata)
 
 gboolean save_config(struct plugin *p, xmlNodePtr node)
 {
-	/* FIXME */
+	GList *gl;
+
+	for (gl = nicks; gl; gl = gl->next) {
+		xmlNodePtr p = xmlNewNode(NULL, "nick");	
+		struct nickserv_entry *n = gl->data;
+
+		xmlSetProp(p, "nick", n->nick);
+		if (n->network) xmlSetProp(p, "network", n->network);
+		xmlSetProp(p, "password", n->pass);
+
+		xmlAddChild(node, p);
+	}
+
 	return TRUE;	
 }
 

@@ -151,7 +151,7 @@ void disconnect_client(struct client *c) {
 	c->network->clients = g_list_remove(c->network->clients, c);
 	lose_client_hook_execute(c);
 
-	g_message(_("Removed client to %s"), c->network->name);
+	g_message(("Removed client to %s"), c->network->name);
 
 	g_free(c->username);
 	g_free(c->fullname);

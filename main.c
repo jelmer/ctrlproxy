@@ -55,14 +55,14 @@ void signal_crash(int sig)
 	size_t backtrace_size;
 	char **backtrace_strings;
 #endif
-	g_critical(_("Received SIGSEGV!"));
+	g_critical(("Received SIGSEGV!"));
 
 #ifdef HAVE_BACKTRACE_SYMBOLS
 	/* get the backtrace (stack frames) */
 	backtrace_size = backtrace(backtrace_stack,BACKTRACE_STACK_SIZE);
 	backtrace_strings = backtrace_symbols(backtrace_stack, backtrace_size);
 
-	g_critical (_("BACKTRACE: %d stack frames:"), backtrace_size);
+	g_critical (("BACKTRACE: %d stack frames:"), backtrace_size);
 	
 	if (backtrace_strings) {
 		int i;
@@ -74,7 +74,7 @@ void signal_crash(int sig)
 	}
 
 #endif
-	g_error(_("Ctrlproxy core has segfaulted, exiting..."));
+	g_error(("Ctrlproxy core has segfaulted, exiting..."));
 	abort();
 }
 
@@ -106,7 +106,7 @@ static void clean_exit()
 void signal_quit(int sig)
 {
 	static int state = 0;
-	g_message(_("Received signal %d, quitting..."), sig);
+	g_message(("Received signal %d, quitting..."), sig);
 	if(state == 1) { 
 		signal(SIGINT, SIG_IGN); 
 		exit(0);
@@ -114,13 +114,14 @@ void signal_quit(int sig)
 
 	state = 1;
 
-	g_message(_("Closing connections..."));
+	g_message(("Closing connections..."));
 
 	exit(0);
 }
 
 void signal_save(int sig)
 {
+	g_message("Received USR1 signal, saving configuration...");
 	save_configuration(NULL);
 }
 
@@ -135,18 +136,15 @@ int main(int argc, const char *argv[])
 	poptContext pc;
 	struct poptOption options[] = {
 		POPT_AUTOHELP
-		{"debug", 'd', POPT_ARG_STRING, NULL, 'd', _("Write irc traffic to specified file"), "FILE" },
-		{"daemon", 'D', POPT_ARG_NONE, &isdaemon, 0, _("Run in the background (as a daemon)")},
-		{"log", 'l', POPT_ARG_STRING, &logfile, 0, _("Log messages to specified file"), _("FILE")},
-		{"rc-file", 'r', POPT_ARG_STRING, &rcfile, 0, _("Use configuration file from specified location"), _("FILE")},
-		{"seperate-processes", 's', POPT_ARG_NONE, &seperate_processes, 0, _("Use one process per network") },
-		{"version", 'v', POPT_ARG_NONE, NULL, 'v', _("Show version information")},
+		{"debug", 'd', POPT_ARG_STRING, NULL, 'd', ("Write irc traffic to specified file"), "FILE" },
+		{"daemon", 'D', POPT_ARG_NONE, &isdaemon, 0, ("Run in the background (as a daemon)")},
+		{"log", 'l', POPT_ARG_STRING, &logfile, 0, ("Log messages to specified file"), ("FILE")},
+		{"rc-file", 'r', POPT_ARG_STRING, &rcfile, 0, ("Use configuration file from specified location"), ("FILE")},
+		{"seperate-processes", 's', POPT_ARG_NONE, &seperate_processes, 0, ("Use one process per network") },
+		{"version", 'v', POPT_ARG_NONE, NULL, 'v', ("Show version information")},
 		POPT_TABLEEND
 	};
 #endif
-
-	bindtextdomain(PACKAGE_NAME, LOCALEDIR);
-	textdomain(PACKAGE_NAME);
 
 	signal(SIGINT, signal_quit);
 	signal(SIGTERM, signal_quit);
@@ -180,26 +178,26 @@ int main(int argc, const char *argv[])
 			break;
 		case 'v':
 			printf("ctrlproxy %s\n", PACKAGE_VERSION);
-			printf(_("(c) 2002-2004 Jelmer Vernooij et al. <jelmer@nl.linux.org>\n"));
+			printf(("(c) 2002-2004 Jelmer Vernooij et al. <jelmer@nl.linux.org>\n"));
 			return 0;
 		}
 	}
 #endif
 
 	if(gethostname(my_hostname, MAXHOSTNAMELEN) != 0) {
-		g_error(_("Can't figure out hostname of local host!"));
+		g_error(("Can't figure out hostname of local host!"));
 		return 1;
 	}
 
 	if(logfile) {
 		f_logfile = fopen(logfile, "a+");
-		if(!f_logfile) g_warning(_("Can't open logfile %s!"), logfile);
+		if(!f_logfile) g_warning(("Can't open logfile %s!"), logfile);
 	}
 
 	add_log_domain("GLib");
 	add_log_domain("ctrlproxy");
 
-	g_message(_("Logfile opened"));
+	g_message("Logfile opened");
 
 	if(isdaemon) {
 
