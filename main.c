@@ -180,7 +180,7 @@ gboolean load_plugin(xmlNodePtr cur)
 	else path_name = g_module_build_path(modulesdir, mod_name);
 
 
-	m = g_module_open(path_name, 0);
+	m = g_module_open(path_name, G_MODULE_BIND_LAZY);
 	if(!m) {
 		g_warning("Unable to open module %s(%s), ignoring", path_name, g_module_error());
 		xmlFree(mod_name);
