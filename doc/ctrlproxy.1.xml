@@ -86,6 +86,7 @@ on the number of servers it is connected to.
 
 <para>Current included plugins with ctrlproxy are:</para>
 
+<!--FIXME: Autogenerate ? -->
 <variablelist>
 	<varlistentry><term>repl_memory</term>
 	<listitem><para>Simple replication module. Replicates all data that has been said before you disconnected.</para></listitem>
@@ -197,7 +198,12 @@ Foundation, Inc., 59 Temple PLace, Suite 330, Boston, MA  02111-1307  USA
 <refsect1>
 	<title>AUTHOR</title>
 <para>
-<ulink url="mailto:jelmer@nl.linux.org">Jelmer Vernooij</ulink>
+<ulink url="mailto:jelmer@nl.linux.org">Jelmer Vernooij</ulink> (main developer)
 </para>
+<para>
+	<ulink url="mailto:ctrlproxy@poelzi.org">Daniel Poelzleithner</ulink> (several major patches)
+</para>
+
+<para>See the file AUTHORS for a full list of contributors.</para>
 </refsect1>
 </refentry>

@@ -9,6 +9,8 @@
 		<type>admin</type>
 	</modulemeta>
 
+	<!--FIXME: JUMPSERVER et al not documented yet -->
+
 	<description>
 		<para>This module provides a simple interface for 
 		remote administration of ControlProxy. Commands 

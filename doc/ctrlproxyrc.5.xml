@@ -27,7 +27,7 @@ so-called 'sections' in the file that are discussed below.
 <para>
 	This section contains a list of all the plugins that are to be loaded. A &lt;plugin&gt;
 tag specifies a plugin. The 'file' attribute specifies the location the 
-plugin can be found. Additional attributes or child elements can be specified, 
+plugin can be found. Additional child elements can be specified, 
 depending on the plugin.
 </para>
 </refsect2>
@@ -56,6 +56,8 @@ Each &lt;network&gt; element contains a &lt;servers&gt; element which contains
 several transport-specific elements. The standard 'socket' module provides 
 the transports 'ipv4', 'ipv6' and 'pipe'.
 </para>
+
+<!--FIXME:Listeners-->
 
 </refsect2>
 

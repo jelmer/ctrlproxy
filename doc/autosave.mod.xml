@@ -16,7 +16,7 @@
 	<configuration>
 		<element name="interval">
 			<attribute name="time">
-				<description>Number in minutes when the configuration should be saved</description>
+				<description>Interval at which the configuration should be saved</description>
 			</attribute>
 		</element>
 	</configuration>

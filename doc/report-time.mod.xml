@@ -9,15 +9,12 @@
 	</modulemeta>
 
 	<description>
-		<para>Very simple module that prints a message every X seconds. Such 
+		<para>Very simple module that prints the time before every message. Such 
 			messages are very useful for backlogs. That way, you can know at 
 			approximately which time something was said.</para>
 	</description>
 
 	<configuration>
-		<element name="interval">
-			<description>Interval (in seconds) at which a timestamp should be printed</description>
-		</element>
 		<element name="format">
 			<description>Format of the timestamp. See the manual page of the 
 				strftime() function for what is supported.</description>

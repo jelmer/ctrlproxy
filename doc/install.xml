@@ -9,6 +9,8 @@
 				van der Gaast</ulink> is maintaining the debian ctrlproxy 
 			package and <ulink url="mailto:agriffis@gentoo.org">Aron Griffis</ulink> maintains the gentoo package of ctrlproxy.</para>
 
+		<para>ctrlproxy is included with the BSD ports collection.</para>
+
 		<para>If you already have a packaged version of ctrlproxy installed, you can skip this chapter.</para>
 		
 	</sect1>
@@ -20,8 +22,8 @@
 			source files available there can be unpacked using tar and gzip:</para>
 
 		<para><screen>
-<prompt>$ </prompt><userinput>tar xvgz ctrlproxy-2.5.tar.gz</userinput>
-ctrlproxy-2.5/AUTHORS
+<prompt>$ </prompt><userinput>tar xvgz ctrlproxy-2.7.tar.gz</userinput>
+ctrlproxy-2.7/AUTHORS
 ...
 </screen></para>
 

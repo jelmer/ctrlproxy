@@ -66,7 +66,7 @@ ctrlproxy.Event Object.
 <programlisting>
 class myEvent(ctrlproxy.Event):
 	def onChannelJoin(self, line, data):
-		print "Jear, i got a join :)\n"
+		print "yeah, i got a join :)\n"
 		print data
 	def onElse(self, line, data):
 		print "something else\n"
