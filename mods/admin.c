@@ -5,6 +5,7 @@
 	 * ADDLISTEN <network> <type> [<key>=<value>] [...]
 	 * ADDSERVER <network> <type> [<key>=<value>] [...]
 	 * CONNECT <network>
+	 * NEXTSERVER <network>
 	 * DIE
 	 * DISCONNECT [<network>]
 	 * LISTNETWORKS
@@ -16,7 +17,7 @@
 	 * SAVECONFIG
 	 * DETACH
 	 * HELP
-	
+
 	(c) 2003 Jelmer Vernooij <jelmer@nl.linux.org>
 
 	This program is free software; you can redistribute it and/or modify
@@ -93,7 +94,7 @@ static struct network *find_network_struct(char *name)
 	while(g) {
 		struct network *n = (struct network *)g->data;
 		nname = xmlGetProp(n->xmlConf, "name");
-		if(!strcmp(nname, name)){ xmlFree(nname); return n; }
+		if(nname && !strcmp(nname, name)){ xmlFree(nname); return n; }
 		xmlFree(nname);
 		g = g->next;
 	}
@@ -107,7 +108,7 @@ static void add_network (char **args, struct line *l)
 		admin_out(l, "No name specified");
 		return;
 	}
-	
+
 	if(find_network_xml(args[1])) {
 		admin_out(l, "Such a network already exists");
 		return;
@@ -127,7 +128,7 @@ static void add_listen (char **args, struct line *l)
 	xmlNodePtr net, serv, listen;
 	struct network *n;
 	int i;
-	
+
 	if(!args[1] || !args[2]) {
 		admin_out(l, "Not enough parameters");
 		return;
@@ -179,7 +180,7 @@ static void add_server (char **args, struct line *l)
 {
 	xmlNodePtr net, serv, servers;
 	int i;
-	
+
 	if(!args[1] || !args[2]) {
 		admin_out(l, "Not enough parameters");
 		return;
@@ -221,7 +222,7 @@ static void add_server (char **args, struct line *l)
 }
 
 static void com_connect_network (char **args, struct line *l)
-{ 
+{
 	xmlNodePtr n;
 	if(!args[1]) {
 		 admin_out(l, "No network specified");
@@ -245,7 +246,7 @@ static void com_connect_network (char **args, struct line *l)
 }
 
 static void disconnect_network (char **args, struct line *l)
-{ 
+{
 	struct network *n;
 	if(!args[1])n = l->network;
 	else {
@@ -257,6 +258,28 @@ static void disconnect_network (char **args, struct line *l)
 	}
 
 	close_network(n);
+}
+
+static void com_next_server (char **args, struct line *l) {
+	struct network *n;
+	char *name;
+	if(args[1] != NULL) {
+		name = args[1];
+		n = find_network_struct(args[1]);
+	} else {
+		n = l->network;
+		name = xmlGetProp(n->xmlConf,"name");
+	}
+	if(!n) {
+		admin_out(l, "%s: Not connected", name);
+	} else {
+		admin_out(l, "%s: Reconnecting", name);
+		close_server(n);
+		g_log(G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "Cycle server in %s", name);
+		login_server(n);
+	}
+	if(!args[1])
+		xmlFree(name);
 }
 
 static void list_modules (char **args, struct line *l)
@@ -282,7 +305,7 @@ static void unload_module (char **args, struct line *l)
 		admin_out(l, "Can't unload /this/ module");
 		return;
 	}
-	
+
 	/* Find specified plugins' GModule and xmlNodePtr */
 	while(g) {
 		struct plugin *p = (struct plugin *)g->data;
@@ -394,8 +417,12 @@ static void list_networks(char **args, struct line *l)
 	char *nname;
 	xmlNodePtr p = xmlNode_networks;
 	while(p) {
-		struct network *n;
+		struct network *n = NULL;
 		nname = xmlGetProp(p, "name");
+		if(!nname) {
+			p = p->next;
+			continue;
+		}
 		n = find_network_struct(nname);
 		if(!n) admin_out(l, "%s: Not connected", nname);
 		else if(n->reconnect_id) admin_out(l, "%s: Reconnecting", nname);
@@ -449,6 +476,7 @@ static struct admin_command builtin_commands[] = {
 	{ "ADDSERVER", add_server, "<network> <type> [property1=value1] ...", NULL },
 	{ "ADDLISTEN", add_listen, "<network> <type> [property1=value1] ...", NULL },
 	{ "CONNECT", com_connect_network, "<network>", NULL },
+	{ "NEXTSERVER", com_next_server, "[network]", "Disconnect and use to the next server in the list" },
 	{ "DIE", handle_die, "", NULL },
 	{ "DISCONNECT", disconnect_network, "<network>", NULL },
 	{ "LISTNETWORKS", list_networks, "", NULL },

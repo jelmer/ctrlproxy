@@ -1,4 +1,4 @@
-/* 
+/*
 	ctrlproxy: A modular IRC proxy
 	(c) 2002-2003 Jelmer Vernooij <jelmer@nl.linux.org>
 
@@ -123,23 +123,23 @@ xmlNodePtr network_get_next_server(struct network *n)
 	if(cur) cur = cur->next;
 
 	while(cur && (xmlIsBlankNode(cur) || !strcmp(cur->name, "comment"))) cur = cur->next;
-	
+
 	if(cur) return cur;
 
 	cur = n->servers;
 
 	while(cur && (xmlIsBlankNode(cur) || !strcmp(cur->name, "comment"))) cur = cur->next;
-	
+
 	return cur;
 }
 
 gboolean login_server(struct network *s) {
 	char *server_name = xmlGetProp(s->xmlConf, "name"),
 	     *fullname, *nick, *username, *password;
-	
+
 	s->current_server = network_get_next_server(s);
 
-	if(!s->current_server){ 
+	if(!s->current_server){
 		xmlSetProp(s->xmlConf, "autoconnect", "0");
 		g_warning("No servers listed for network %s, not connecting\n", server_name);
 		xmlFree(server_name);
@@ -172,7 +172,7 @@ gboolean login_server(struct network *s) {
 	g_assert(strlen(fullname));
 	g_assert(strlen(my_hostname));
 	g_assert(strlen(server_name));
-	
+
 	if(xmlHasProp(s->xmlConf, "password"))irc_send_args(s->outgoing, "PASS", password, NULL);
 	irc_send_args(s->outgoing, "NICK", nick, NULL);
 	irc_send_args(s->outgoing, "USER", username, my_hostname, server_name, fullname, NULL);
@@ -190,11 +190,11 @@ void reconnect(struct transport_context *c, void *_server)
 {
 	struct network *server = (struct network *)_server;
 	char *server_name;
-	
+
 	/* Don't report disconnections twice */
 	g_assert(server);
 	server_name = xmlGetProp(server->xmlConf, "name");
-	
+
 	if(!server->outgoing) return;
 	server_disconnected_hook_execute(server);
 	transport_free(server->outgoing); server->outgoing = NULL;
@@ -205,6 +205,42 @@ void reconnect(struct transport_context *c, void *_server)
 	server->authenticated = 0;
 	state_reconnect(server);
 	server->reconnect_id = g_timeout_add(RECONNECT_INTERVAL, (GSourceFunc) login_server, server);
+}
+
+gboolean close_server(struct network *n) {
+	int i;
+
+	if(n->reconnect_id) {
+		g_source_remove(n->reconnect_id);
+		n->reconnect_id = 0;
+	}
+
+	if(n->outgoing) {
+		irc_send_args(n->outgoing, "QUIT", NULL);
+		server_disconnected_hook_execute(n);
+		transport_free(n->outgoing);
+		n->outgoing = NULL;
+		free(n->hostmask);
+
+		for(i = 0; i < 2; i++) {
+			if(n->supported_modes[i]) {
+				free(n->supported_modes[i]);
+				n->supported_modes[i] = NULL;
+			}
+		}
+
+		if(n->features){
+			for(i = 0; n->features[i]; i++)
+				free(n->features[i]);
+			free(n->features);
+			n->features = NULL;
+		}
+
+		n->authenticated = 0;
+
+		return TRUE;
+	}
+	return FALSE;
 }
 
 void disconnect_client(struct client *c) {
@@ -329,11 +365,11 @@ void handle_client_receive(struct transport_context *c, char *raw, void *_client
 			irc_sendf(c, ":%s 005 %s %s :are supported on this server\r\n", server_name, nick, tmp);
 			free(tmp);
 		}
-	
+
 		send_motd(client->network, c);
-		g_log(G_LOG_DOMAIN, G_LOG_LEVEL_MESSAGE, "Client @%s successfully authenticated", 
+		g_log(G_LOG_DOMAIN, G_LOG_LEVEL_MESSAGE, "Client @%s successfully authenticated",
 			  server_name);
-		if(!new_client_hook_execute(client)) 
+		if(!new_client_hook_execute(client))
 			disconnect_client(client);
 	} else if(!strcasecmp(l->args[0], "PASS")) {
 		if (!clientpass)
@@ -375,7 +411,7 @@ void handle_client_receive(struct transport_context *c, char *raw, void *_client
 			if(!(l->options & LINE_DONT_SEND)) {SERVER_SEND_LINE(client->network, l) }
 
 			/* Also write this message to all other clients currently connected */
-			if(!(l->options & LINE_IS_PRIVATE) && l->args[0] && 
+			if(!(l->options & LINE_IS_PRIVATE) && l->args[0] &&
 			   (!strcmp(l->args[0], "PRIVMSG") || !strcmp(l->args[0], "NOTICE"))) {
 				old_origin = l->origin; l->origin = nick;
 				clients_send(client->network, l, c);
@@ -443,7 +479,7 @@ struct network *connect_network(xmlNodePtr conf) {
 
 	if(!xmlHasProp(s->xmlConf, "fullname"))
 		xmlSetProp(s->xmlConf, "fullname", g_get_real_name());
-	
+
    	nick = xmlGetProp(s->xmlConf, "nick");
 	user_name = xmlGetProp(s->xmlConf, "username");
 	asprintf(&s->hostmask, "%s!~%s@%s", nick, user_name, my_hostname);
@@ -459,18 +495,18 @@ struct network *connect_network(xmlNodePtr conf) {
 
 	while(cur) {
 		if(xmlIsBlankNode(cur) || !strcmp(cur->name, "comment")) {
-			cur = cur->next; 
+			cur = cur->next;
 			continue;
 		}
 
-		network_add_listen(s, cur); 
-		
+		network_add_listen(s, cur);
+
 		cur = cur->next;
 	}
 
 	s->servers = NULL;
 	s->current_server = NULL;
-	
+
 	/* Find <servers> tag */
 	s->servers = xmlFindChildByElementName(s->xmlConf, "servers");
 	s->servers = s->servers->xmlChildrenNode;
@@ -479,9 +515,9 @@ struct network *connect_network(xmlNodePtr conf) {
 		char *server_name = xmlGetProp(s->xmlConf, "name");
 		g_warning("No servers listed for network %s!\n", server_name);
 		xmlFree(server_name);
-	} 
-	
-	/* Add server by default. If connecting succeeds, it is 
+	}
+
+	/* Add server by default. If connecting succeeds, it is
 	 * removed automagically by login_server */
 	login_server(s);
 	networks = g_list_append(networks, s);
@@ -496,9 +532,7 @@ int close_network(struct network *s)
 	char *server_name = xmlGetProp(s->xmlConf, "name");
 	g_assert(s);
 	g_message("Closing connection to %s", server_name);
-	if(s->outgoing)irc_sendf(s->outgoing, "QUIT\r\n");
-	free(s->hostmask);
-	
+
 	while(l) {
 		struct client *c = l->data;
 		irc_sendf(c->incoming, ":%s QUIT :Server exiting\r\n", server_name);
@@ -513,27 +547,14 @@ int close_network(struct network *s)
 		free(s->incoming);
 	}
 
-	transport_free(s->outgoing);
-
-	for(i = 0; i < 2; i++) {
-		if(s->supported_modes[i]) {
-			free(s->supported_modes[i]);
-			s->supported_modes[i] = NULL;
-		}
-	}
-
-	if(s->features){
-		for(i = 0; s->features[i]; i++)free(s->features[i]);
-		free(s->features);
-		s->features = NULL;
-	}
+	close_server(s);
 
 	networks = g_list_remove(networks, s);
 
 	if(s->reconnect_id) g_source_remove(s->reconnect_id);
 
 	free(s);
-	
+
 	xmlFree(server_name);
 	if(!networks)clean_exit();
 	return 0;
@@ -549,7 +570,7 @@ gboolean ping_loop(gpointer user_data) {
 		if(s->outgoing)irc_send_args(s->outgoing, "PING", server_name, NULL);
 		else reconnect(NULL, s);
 		xmlFree(server_name);
-		
+
 		/* Throw out unauthorized clients that have been inactive for over a minute */
 		cl = s->clients;
 		while(cl) {
