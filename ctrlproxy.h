@@ -38,6 +38,10 @@
 #define strndup(a) __ERROR_USE_G_STRNDUP__
 #endif
 
+#ifndef G_MODULE_EXPORT
+#define G_MODULE_EXPORT 
+#endif
+
 struct network;
 struct client;
 struct line;
@@ -80,7 +84,7 @@ struct line {
 	int options;
 	struct network *network;
 	struct client *client;
-	const char *origin;
+	char *origin;
 	char **args; /* NULL terminated */
 	size_t argc;
 	/* Don't use the following properties. Use line_get_network_nick() 

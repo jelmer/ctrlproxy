@@ -443,7 +443,7 @@ void handle_client_receive(struct transport_context *c, char *raw, void *_client
 		}
 
 		if(client->network->outgoing) {
-			const char *old_origin;
+			char *old_origin;
 			if(!(l->options & LINE_DONT_SEND)) {SERVER_SEND_LINE(client->network, l) }
 
 			/* Also write this message to all other clients currently connected */
