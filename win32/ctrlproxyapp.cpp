@@ -25,6 +25,8 @@ static char THIS_FILE[] = __FILE__;
 BEGIN_MESSAGE_MAP(CCtrlproxyApp, CWinApp)
 	//{{AFX_MSG_MAP(CCtrlproxyApp)
 	ON_COMMAND(IDM_EXIT, OnExit)
+	ON_COMMAND(IDM_ABOUT, OnAbout)
+	ON_COMMAND(IDM_STATUS, OnStatus)
 	//}}AFX_MSG_MAP
 	ON_COMMAND(ID_HELP, CWinApp::OnHelp)
 END_MESSAGE_MAP()
@@ -140,5 +142,17 @@ int CCtrlproxyApp::ExitInstance()
 void CCtrlproxyApp::OnExit() 
 {
 	clean_exit();
+	
+}
+
+void CCtrlproxyApp::OnAbout() 
+{
+	// TODO: Add your command handler code here
+	
+}
+
+void CCtrlproxyApp::OnStatus() 
+{
+	// TODO: Add your command handler code here
 	
 }

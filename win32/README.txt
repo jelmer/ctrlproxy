@@ -41,6 +41,6 @@ stats: will get rewrite in 2.8
 Other TODO stuff:
 -----------------
 - Finish network config dialog
-- Fix traybar popup menu
 - Finish plugin config dialog
-- FInish status bar
+- Finish status dialog
+- Icon!

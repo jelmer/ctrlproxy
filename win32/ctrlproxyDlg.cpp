@@ -183,9 +183,12 @@ void CCtrlproxyDlg::ShowQuickMenu ()
    
    GetCursorPos (&CurPos);
 
+   CMenu *submenu = qmenu.GetSubMenu(0);
+
+   SetForegroundWindow();
    // Display the menu. This menu is a popup loaded elsewhere.
 
-   qmenu.TrackPopupMenu (TPM_RIGHTBUTTON | TPM_RIGHTALIGN,
+	submenu->TrackPopupMenu (TPM_RIGHTBUTTON | TPM_RIGHTALIGN,
                    CurPos.x,
                    CurPos.y,this);
 
