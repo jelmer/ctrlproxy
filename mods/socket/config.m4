@@ -14,9 +14,8 @@ AC_CHECK_LIB(ssl, SSL_connect, [ SOCKET_OBJS="$SOCKET_OBJS openssl.o"; SSL_LIB="
 dnl gnutls
 AC_PATH_PROG(gnutls_config, libgnutls-config, no)
 
-MAJVER="`libgnutls-config --version | cut -f 1 -d .`"
 
-if test "$gnutls_config" != "no" && "$MAJVER" = "1"; then
+if test "$gnutls_config" != "no" && test "`libgnutls-config --version | cut -f 1 -d .`" = "1"; then
 	CFLAGS="$CFLAGS `$gnutls_config --cflags`"
 	SOCKET_OBJS="$SOCKET_OBJS gnutls.o"
 	SSL_LIB="$SSL_LIB `$gnutls_config --libs`"

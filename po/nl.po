@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ctrlproxy 2.7-CVS\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2004-01-28 17:20+0100\n"
+"POT-Creation-Date: 2004-01-29 01:16+0100\n"
 "PO-Revision-Date: 2003-01-28 13:22+CET\n"
 "Last-Translator: Jelmer Vernooij <jelmer@vernstok.nl>\n"
 "Language-Team: Dutch <nl@li.org>\n"
@@ -159,7 +159,9 @@ msgstr "Logbestand geopent"
 
 #: main.c:272
 msgid "DSO's not supported on this platform. Not loading any modules"
-msgstr "Plugins worden niet ondersteund op dit platform. Er zal niet getracht worden modules te laden"
+msgstr ""
+"Plugins worden niet ondersteund op dit platform. Er zal niet getracht worden "
+"modules te laden"
 
 #: main.c:274
 msgid "No modules set to be loaded"
@@ -182,7 +184,9 @@ msgstr "[Van server] %s\n"
 #: server.c:149
 #, c-format
 msgid "No servers listed for network %s, not connecting\n"
-msgstr "Geen servers opgegeven voor netwerk %s, er zal niet verbonden worden met dit netwerk\n"
+msgstr ""
+"Geen servers opgegeven voor netwerk %s, er zal niet verbonden worden met dit "
+"netwerk\n"
 
 #: server.c:154
 #, c-format
@@ -212,7 +216,9 @@ msgstr "[Van client] %s\n"
 #: server.c:348
 #, c-format
 msgid "No password set for %s, allowing client _without_ authentication!"
-msgstr "Geen wachtwoord opgegeven voor %s, client wordt toegelaten zonder authenticate!"
+msgstr ""
+"Geen wachtwoord opgegeven voor %s, client wordt toegelaten zonder "
+"authenticate!"
 
 #: server.c:375
 #, c-format
@@ -252,12 +258,16 @@ msgstr "Kanaal %s wordt verlaten"
 #: state.c:301
 #, c-format
 msgid "Can't remove nick %s from channel %s: nick not on channel\n"
-msgstr "Kan de naam %s niet verwijderen van kanaal %s: naam is niet aanwezig op kanaal\n"
+msgstr ""
+"Kan de naam %s niet verwijderen van kanaal %s: naam is niet aanwezig op "
+"kanaal\n"
 
 #: state.c:306
 #, c-format
 msgid "Can't part or let other nick part %s(unknown channel)\n"
-msgstr "Kan kanaal %s niet verlaten of andere naam het kanaal laten verlaten(onbekend kanaal)\n"
+msgstr ""
+"Kan kanaal %s niet verlaten of andere naam het kanaal laten verlaten"
+"(onbekend kanaal)\n"
 
 #: state.c:333
 msgid "KICK command has unequal number of channels and nicks\n"
@@ -271,7 +281,8 @@ msgstr "Kan nick %s niet verwijderen uit %s\n"
 #: state.c:349
 #, c-format
 msgid "Can't kick nick %s from channel %s: nick not on channel\n"
-msgstr "Kan nick %s niet verwijderen uit kanaal %s: nick niet aanwezig op kanaal\n"
+msgstr ""
+"Kan nick %s niet verwijderen uit kanaal %s: nick niet aanwezig op kanaal\n"
 
 #: state.c:375
 #, c-format
@@ -306,7 +317,8 @@ msgstr "Mode k vereist een argument, maar er is geen argument aangetroffen"
 msgid ""
 "Can't set mode %c%c on nick %s on channel %s, because nick does not exist!"
 msgstr ""
-"Kan mode %c%c niet zetten op nick %s op kanaal %s, omdat de nick niet bestaat!"
+"Kan mode %c%c niet zetten op nick %s op kanaal %s, omdat de nick niet "
+"bestaat!"
 
 #: state.c:572
 msgid "CASEMAPPING variable sent by server invalid"
@@ -452,7 +464,9 @@ msgstr ""
 #: mods/admin.c:555
 #, c-format
 msgid "Can't find command '%s'. Type 'help' for a list of available commands. "
-msgstr "Kan geen commando '%s' vinden. Type 'help' voor een lijst van beschikbare commando's"
+msgstr ""
+"Kan geen commando '%s' vinden. Type 'help' voor een lijst van beschikbare "
+"commando's"
 
 #: mods/admin.c:574 mods/admin.c:584 mods/admin.c:585
 msgid "<name>"
@@ -480,7 +494,9 @@ msgstr "<netwerk>"
 
 #: mods/admin.c:577
 msgid "Connect to specified network. Forces reconnect when waiting."
-msgstr "Maak verbinding met het opgegeven wachtwoord. Dwingt tot opnieuw verbinden tijdens wachten."
+msgstr ""
+"Maak verbinding met het opgegeven wachtwoord. Dwingt tot opnieuw verbinden "
+"tijdens wachten."
 
 #: mods/admin.c:578
 msgid "Remove specified network"
@@ -597,7 +613,8 @@ msgstr "Geen geschiedenis voor %s"
 
 #: mods/repl_command.c:119 mods/debug.c:82
 msgid "admin module required for repl_command module. Please load it first"
-msgstr "de admin module is vereist voor de repl_command module. Laad deze aub eerst."
+msgstr ""
+"de admin module is vereist voor de repl_command module. Laad deze aub eerst."
 
 #: mods/repl_command.c:123
 msgid "[channel]"
@@ -607,97 +624,92 @@ msgstr "[kanaal]"
 msgid "Send backlogs for this network or a channel, if specified"
 msgstr "Stuur geschiedenis voor dit netwerk of kanaal, als opgegeven"
 
-#: mods/socket/socket.c:85
+#: mods/socket/socket.c:87
 #, c-format
 msgid "Failed to exec %s : %s"
 msgstr "Fout tijdens uitvoeren %s: %s"
 
 #: mods/socket/socket.c:108
-#, c-format
-msgid "Error setting nonblock %s"
-msgstr "Fout tijdens niet-blokkerend maken %s"
-
-#: mods/socket/socket.c:124
 msgid "Can't convert socket to SSL"
 msgstr "Kan socket niet omzetten naar SSL"
 
-#: mods/socket/socket.c:159
+#: mods/socket/socket.c:143
 #, c-format
 msgid "Unknown element %s"
 msgstr "Onbekend element %s"
 
-#: mods/socket/socket.c:192
+#: mods/socket/socket.c:176
 msgid "Can't accept connection!"
 msgstr "Kan verbinding niet accepteren!"
 
-#: mods/socket/socket.c:195
+#: mods/socket/socket.c:179
 #, c-format
 msgid "New client %d"
 msgstr "Nieuwe client '%d'"
 
-#: mods/socket/socket.c:230
+#: mods/socket/socket.c:214
 msgid "Channel is not readeable!"
 msgstr "Kanaal is niet leesbaar!"
 
-#: mods/socket/socket.c:238
+#: mods/socket/socket.c:222
 msgid "Unknown error"
 msgstr "Onbekende fout"
 
-#: mods/socket/socket.c:298
+#: mods/socket/socket.c:282
 #, c-format
 msgid "Connecting to %s:%d"
 msgstr "Verbinden met %s:%d"
 
-#: mods/socket/socket.c:304
+#: mods/socket/socket.c:288
 #, c-format
 msgid "(While connecting to server %s with %s): socket: %s"
 msgstr "(Tijdens verbinden met server %s met %s): socket: %s"
 
-#: mods/socket/socket.c:342
+#: mods/socket/socket.c:326
 #, c-format
 msgid "Unknown host %s."
 msgstr "Onbekende host %s."
 
-#: mods/socket/socket.c:363
+#: mods/socket/socket.c:345
 #, c-format
 msgid "(While connecting to server %s): connect: %s"
 msgstr "(Tijdens verbinden met server %s): connect: %s"
 
-#: mods/socket/socket.c:374
+#: mods/socket/socket.c:356
 #, c-format
 msgid "Successfully connected to %s:%d"
 msgstr "Met succes verbonden met %s:%d"
 
-#: mods/socket/socket.c:404
+#: mods/socket/socket.c:386
 #, c-format
 msgid "Trying to send line '%s' to socket that is not connected!"
 msgstr "Kan regel '%s' niet versturen naar een socket dat niet is verbonden!"
 
-#: mods/socket/socket.c:409
+#: mods/socket/socket.c:391
 msgid "Channel is not writeable!"
 msgstr "Kanaal is niet schrijfbaar!"
 
-#: mods/socket/socket.c:415
+#: mods/socket/socket.c:397
 #, c-format
 msgid "Can't send: %s"
 msgstr "Kan niet zenden: %s"
 
-#: mods/socket/socket.c:506
+#: mods/socket/socket.c:488
 #, c-format
 msgid "Error trying to listen on port %d: %s"
 msgstr "Fout tijdens proberen te luisteren op poort %d: %s"
 
-#: mods/socket/socket.c:512
+#: mods/socket/socket.c:492
 #, c-format
 msgid "Listening on port %d(socket %d)"
 msgstr "Luisteren op poort %d(socket %d)"
 
-#: mods/socket/socket.c:569
+#: mods/socket/socket.c:549
 #, c-format
 msgid "Error trying to listen on %s: %s"
 msgstr "Fout tijdens proberen te luisteren op %s: %s"
 
-#: mods/socket/socket.c:576
+#: mods/socket/socket.c:554
 #, c-format
 msgid "Listening on socket at %s(%d)"
 msgstr "Luisteren op socket op %s(%d)"
@@ -852,7 +864,7 @@ msgstr ""
 msgid "No filename specified for plugin"
 msgstr "Geen bestandsnaam opgegeven voor plugin"
 
-#: plugins.c:95
+#: plugins.c:94
 #, c-format
 msgid "Unable to open module %s(%s), ignoring"
 msgstr "Kan module %s niet openen(%s), wordt genegeerd"
@@ -861,17 +873,18 @@ msgstr "Kan module %s niet openen(%s), wordt genegeerd"
 msgid "Plugin already loaded"
 msgstr "Plugin reeds geladen"
 
-#: plugins.c:109
-#, c-format
-msgid "Loading module '%s'"
-msgstr "Laden van module '%s'"
-
-#: plugins.c:112
+#: plugins.c:110
 #, c-format
 msgid "Can't find symbol 'init_plugin' in module %s"
 msgstr "Kan symbool 'init_plugin' in module %s niet vinden"
 
-#: plugins.c:125
+#: plugins.c:123
 #, c-format
 msgid "Running initialization function for plugin '%s' failed."
 msgstr "Uitvoeren initialisatie functie voor plugin '%s' mislukt."
+
+#~ msgid "Error setting nonblock %s"
+#~ msgstr "Fout tijdens niet-blokkerend maken %s"
+
+#~ msgid "Loading module '%s'"
+#~ msgstr "Laden van module '%s'"
