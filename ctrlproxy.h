@@ -251,4 +251,6 @@ typedef void (*initialized_hook) (void);
 void add_initialized_hook(initialized_hook);
 void initialized_hook_execute(void);
 
+/* log.c */
+
 #endif /* __CTRLPROXY_H__ */
