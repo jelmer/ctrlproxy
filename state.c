@@ -229,7 +229,9 @@ static void handle_join(struct network *s, struct line *l)
 		if(l->direction == FROM_SERVER && line_get_nick(l)) {
 			c = find_add_channel(s, p);
 			ni = find_add_nick(c, line_get_nick(l));
-			ni->global->hostmask = strdup((char *)l->origin);
+			if(ni->global->hostmask)
+				free(ni->global->hostmask);
+			ni->global->hostmask = strdup(l->origin);
 
 			/* The user is joining a channel */
 			own_nick = xmlGetProp(s->xmlConf, "nick");
@@ -420,9 +422,9 @@ static void handle_whoreply(struct network *s, struct line *l) {
 		gl = gl->next;
 	}
 	c = find_channel(s, l->args[2]);
-	if(!c) {
+	if(!c) 
 		return;
-	}
+
 	n = find_add_nick(c, strdup(l->args[6]));
 	if(n->global->hostmask == NULL) {
 		asprintf(&hostmask, "%s!%s@%s", l->args[6], l->args[3], l->args[4]);
@@ -436,7 +438,7 @@ static void handle_end_who(struct network *s, struct line *l) {
 	while(gl) {
 		struct started_join *sj = (struct started_join *)gl->data;
 		if((s == sj->network) && (!strcmp(sj->channel, l->args[2]))) {
-   			l->options = l->options | LINE_DONT_SEND;
+   			l->options |= LINE_DONT_SEND;
 			started_join_list = g_list_remove(started_join_list, sj);
 			free(sj->channel);
 			free(sj);
@@ -445,7 +447,6 @@ static void handle_end_who(struct network *s, struct line *l) {
 		gl = gl->next;
 	}
 }
-
 
 static void handle_quit(struct network *s, struct line *l) {
 	GList *g = s->channels;
