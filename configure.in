@@ -82,5 +82,5 @@ AC_CHECK_FUNCS([gethostbyname gethostname memset mkdir strcasecmp strchr strdup 
 DESTINCLUDEDIR="$includedir/ctrlproxy-2"
 AC_SUBST(DESTINCLUDEDIR)
 
-AC_CONFIG_FILES([Makefile.settings ctrlproxy.pc po/Makefile.in])
+AC_CONFIG_FILES([Makefile.settings ctrlproxy.pc])
 AC_OUTPUT
