@@ -22,54 +22,31 @@
 #include <string.h>
 
 static gboolean log_data(struct line *l) {
-	struct linestack_context *co = (struct linestack_context *)l->network->replication_data;
-	char *repl_backend = xmlGetProp(l->network->xmlConf, "linestack");
+	GHashTable *h = (GHashTable *)l->network->replication_data;
+	char *repl_backend;
+	struct linestack_context *co;
 	struct channel *c;
 
-	if(!co) co = linestack_new(repl_backend, NULL);
 
 	if(l->argc < 1)return TRUE;
 
-	if(l->direction == TO_SERVER &&  
-	   (!strcasecmp(l->args[0], "PRIVMSG") || !strcasecmp(l->args[0], "NOTICE"))) {
-		linestack_clear(co);
-		return TRUE;
+	if(strcasecmp(l->args[0], "PRIVMSG") && strcasecmp(l->args[0], "NOTICE"))return TRUE
+
+	/* Add hash table if hasn't been added yet */
+	if(!h) {
+		h = g_hash_table_new(g_str_hash());
+		l->network->replication_data = h;
 	}
 
-	if(l->direction == TO_SERVER)return TRUE;
-
-	if(!co) linestack_add_line_list( co, gen_replication(l->network));
-
-	if(!strcasecmp(l->args[0], "PRIVMSG") ||
-	   !strcasecmp(l->args[0], "NOTICE") ||
-	   !strcasecmp(l->args[0], "MODE") || 
-	   !strcasecmp(l->args[0], "JOIN") || 
-	   !strcasecmp(l->args[0], "PART") || 
-	   !strcasecmp(l->args[0], "KICK") || 
-	   !strcasecmp(l->args[0], "QUIT") ||
-	   !strcasecmp(l->args[0], "TOPIC") ||
-	   !strcasecmp(l->args[0], "NICK")) {
-		linestack_add_line(co, linedup(l));
-	} else if(!strcasecmp(l->args[0], "353")) {
-		c = find_channel(l->network, l->args[3]);
-		if(c && !(c->introduced & 2)) {
-			linestack_add_line(co, linedup(l));
-		}
-		/* Only do 366 if not & 2. Set | 2 */
-	} else if(!strcasecmp(l->args[0], "366")) {
-		c = find_channel(l->network, l->args[2]);
-		if(c && !(c->introduced & 2)) {
-			linestack_add_line(co, linedup(l));
-			c->introduced |= 2;
-		}
-		/* Only do 331 or 332 if not & 1. Set | 1 */
-	} else if(!strcasecmp(l->args[0], "331") || !strcasecmp(l->args[0], "332")) {
-		c = find_channel(l->network, l->args[2]);
-		if(c && !(c->introduced & 1)) {
-			linestack_add_line(co, linedup(l));
-			c->introduced |= 1;
-		}
+	/* Lookup this channel */
+	co = g_hash_table_lookup(h, l->args[1]);
+	if(!co) {
+		repl_backend = xmlGetProp(l->network->xmlConf, "linestack");
+		co = linestack_new(repl_backend, NULL);
+		xmlFree(repl_backend);
 	}
+
+	linestack_add_line_list( co, gen_replication(l->network));
 
 	return TRUE;
 }
@@ -82,7 +59,12 @@ gboolean fini_plugin(struct plugin *p) {
 
 static void repl_command(char **args, struct line *l)
 {
-	/* Args: [channel|nick [nroflines]] */
+	if(!args[1]) {
+		/* Backlog everything for this network */
+
+	} 
+	/* FIXME Args: [channel|nick [nroflines]] */
+	linestack_clear(co);
 }
 
 gboolean init_plugin(struct plugin *p) {
