@@ -4,17 +4,15 @@
 		<description>Linestack file backend</description>
 		<version>0.1</version>
 		<author>Jelmer Vernooij</author>
-		<homepage>http://jelmer.vernstok.nl/ctrlproxy/</homepage>
+		<email>jelmer@vernstok.nl</email>
+		<homepage>http://ctrlproxy.vernstok.nl/</homepage>
 	</modulemeta>
 
 	<description>
-		<para>Sends all messages to a new client that were sent since the 
-		last time the user wrote something.
+		<para>Linestack backend that stores the data in a plain text 
+			file. If an argument is specified, the data will be specifiedat 
+			the specified location. Otherwise, a temporary file is used.
 		</para>
-
-		<para>The messages are stored in memory.</para>
-
-		<note><para>Note: If you don't IRC very often and you're on very active channels, this module might use up too much memory for you.</para></note>
 	</description>
 
 </ctrlproxy:module>

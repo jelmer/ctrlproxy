@@ -111,7 +111,7 @@ static gboolean log_data(struct line *l)
 	time_t ti = time(NULL);
 	struct tm *t = localtime(&ti);
 	FILE *f = NULL;
-	if(!l->args || !l->args[0])return TRUE;
+	if(!l->args || !l->args[0] || l->options & LINE_NO_LOGGING)return TRUE;
 	if(l->origin)nick = strdup(l->origin);
 	if(nick)user = strchr(nick, '!');
 	if(user){ *user = '\0';user++; }
@@ -216,7 +216,7 @@ static gboolean log_data(struct line *l)
 
 gboolean fini_plugin(struct plugin *p)
 {
-	free(logfile);
+	free(logfile); logfile = NULL;
 	del_filter(log_data);
 	return TRUE;
 }
@@ -225,7 +225,7 @@ gboolean init_plugin(struct plugin *p)
 {
 	xmlNodePtr cur = p->xmlConf->xmlChildrenNode;
 	while(cur) {
-		if(!xmlIsBlankNode(cur) && !strcmp(cur->name, "logfile")) logfile = strdup(xmlNodeGetContent(cur));
+		if(!xmlIsBlankNode(cur) && !strcmp(cur->name, "logfile")) logfile = xmlNodeGetContent(cur);
 		cur = cur->next;
 	}
 
@@ -235,7 +235,7 @@ gboolean init_plugin(struct plugin *p)
 	
 	/* Create logfile directory if it doesn't exist yet */
 	mkdir(logfile, 0600);
-	
+
 	files = g_hash_table_new(g_str_hash, g_str_equal);
 	add_filter("log_irssi", log_data);
 	return TRUE;

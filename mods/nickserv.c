@@ -96,7 +96,12 @@ static gboolean log_data(struct line *l) {
 	/* If we receive a nick-already-in-use message, ghost the current user */
 	if(l->direction == FROM_SERVER && atol(l->args[0]) == ERR_NICKNAMEINUSE) {
 		if(nickattempt && nickserv_find_nick(l->network, nickattempt, &pass)) {
-			char *nickserv_n = nickserv_nick(l->network), *raw;
+			char *nickserv_n = nickserv_nick(l->network), *raw, *netname;
+			netname = xmlGetProp(l->network->xmlConf, "name");
+			
+			g_message("Ghosting current user using '%s' on %s\n", nickattempt, netname);
+			xmlFree(netname);
+
 			asprintf(&raw, "GHOST %s %s", nickattempt, pass);
 			irc_send_args(l->network->outgoing, "PRIVMSG", nickserv_n, raw, NULL);
 			free(raw);

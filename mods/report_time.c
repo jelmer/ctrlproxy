@@ -34,6 +34,7 @@ static gboolean report_time(gpointer user_data) {
 	
 	l = irc_parse_line_args("timestamp", "PRIVMSG", "DEST", stime, NULL);
 	l->direction = FROM_SERVER;
+	l->options|=LINE_NO_LOGGING;
 
 	while(nl) {
 		struct network *n = (struct network *)nl->data;
@@ -41,7 +42,7 @@ static gboolean report_time(gpointer user_data) {
 		while(cl) {
 			struct channel *c = (struct channel *)cl->data;
 			free(l->args[1]);
-			l->args[1] = xmlGetProp(c->xmlConf, "nick");
+			l->args[1] = xmlGetProp(c->xmlConf, "name");
 			l->network = n;
 			filters_execute(l);
 			cl = cl->next;

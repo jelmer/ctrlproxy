@@ -1,5 +1,5 @@
 <chapter id="linestack">
-	<title>Line stacks</title>
+	<title>Line Stacks (lists of lines)</title>
 
 <para>Line stacks are structures that contain a bunch of line structs. They 
 are used for various things inside ctrlproxy, but usually for replication. 
@@ -17,7 +17,7 @@ clear the stack.</para>
 	<sect2><title>linestack_new</title>
 		
 	<programlisting>
-		struct linestack_context *linestack_new(char *name, char *args);</title>
+		struct linestack_context *linestack_new(char *name, char *args);
 	</programlisting>
 
 	<para>Create a new linestack_context based on the backend with the specified 
@@ -95,7 +95,7 @@ gboolean linestack_add_line(struct linestack_context *, struct line *);
 <programlisting>
 /* linestack.c */
 struct linestack_context;
-struct linestack {
+struct linestack_ops {
 	char *name;
 	gboolean (*init) (struct linestack_context *, char *args);
 	gboolean (*clear) (struct linestack_context *);
@@ -106,7 +106,7 @@ struct linestack {
 	};
 
 struct linestack_context {
-	struct linestack *functions;
+	struct linestack_ops *functions;
 	void *data;
 };
 </programlisting>
@@ -161,10 +161,12 @@ struct linestack_context {
 	</varlistentry>
 </variablelist>
 
+</sect2>
+
 <sect2><title>register_linestack</title>
 
 <programlisting>
-void register_linestack(struct linestack *);
+void register_linestack(struct linestack_ops *);
 </programlisting>
 
 <para>Register a new linestack backend (ie, make it available, not necessarily use it), described by the specified linestack 
@@ -175,7 +177,7 @@ void register_linestack(struct linestack *);
 <sect2><title>unregister_linestack</title>
 
 <programlisting>
-void unregister_linestack(struct linestack *);
+void unregister_linestack(struct linestack_ops *);
 </programlisting>
 
 <para>Register a new linestack backend (ie, make it available, not necessarily use it), described by the specified linestack 

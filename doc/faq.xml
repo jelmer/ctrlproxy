@@ -6,16 +6,9 @@
       connect to it via the XChat client.
    </para>
 
-   <para>Answer: You can't manually connect to ctrlproxy.  The password
-      needs to be sent before the NICK and USER gets implemented.  If you
-      open a new server tab and connect to ctrlproxy with "/server", NICK
-      and USER will get sent before you can manually send "/pass".
-   </para>
-   <para>To connect to ctrlproxy via XChat, you will need to create a
-      server entry where the "Server Password" field lists the password
-      given in your ctrlproxyrc file.  Then use the server list to connect
-      to the ctrlproxy.  It should then connect and connect to the
-      channel(s) you listed for that server.
+   <para>Answer: Ctrlproxy needs a password. Use the following /server command :
+   <command>/server hostname port password</command>.
+   
    </para>
 </sect1>
 
@@ -23,7 +16,7 @@
 
 	<para>Question: On what operating systems does ctrlproxy run?</para>
 
-	<para>Answer: It has been tested with most major Linux distributions and FreeBSD. However,
+	<para>Answer: It has been tested with all major Linux distributions and FreeBSD. However,
 		it should run on pretty much every OS that is POSIX-compatible.</para>
 </sect1>
 

@@ -1,217 +1,373 @@
 #!/usr/bin/env perl
+
 use strict;
 use IO::File;
 use Data::Dumper;
 
 my $maxcolumns = 80;
 my $spool = $ENV{'HOME'}."/.ctrlproxy";
-# Data structure
-# Known data for servers: type, name, port, ssl
-# Known data for listeners: type, port
-my %conf = (
-	modules	=> {
-		'admin'		=> {
-			autoload	=> 1,
-			desc		=> "allows you to configure ctrlproxy via IRC"
-		},
-		'antiflood'	=> {
-			autoload	=> 1,
-			desc		=> "prevents you from getting kicked from the server for 'Excess flooding' with a message queue"
-		},
-		'auto-away'	=> {
-			autoload	=> 1,
-			desc		=> "sets you away after a certain amount of time",
-			options		=> {
-				message	=> {
-					_data	=> "I'm away, please leave me a message",
-					time	=> 600,
-				}
-			},
-		},
-		'ctcp'	=> {
-			autoload	=> 1,
-			desc		=> "replies to various CTCP requests like VERSION",
-		},
-		'linestack_'	=> {
-			suffix		=> "memory",
-			autoload	=> 1,
-			desc		=> "allows you to choose where backlogs will be recorded",
-			allowed		=> {
-				'memory'	=> "writes replication data into memory (faster but requires memory or/and swap)",
-				'file'		=> "writes replication data into files",
-			},
-		},
-		'log_'	=> {
-			suffix		=> "irssi",
-			autoload	=> 1,
-			desc		=> "allows you to log discussions into files.",
-			allowed		=> {
-				'irssi'		=> "log into irssi IRC client format",
-				'custom'	=> "log into a user-defined format",
-			},
-			options		=> {
-				logfile	=> "$spool/logs/",
-			},
-		},
-		'motd_file'	=> {
-			autoload	=> 0,
-			desc		=> "adds a Message Of The Day to ctrlproxy's server emulation",
-		},
-		'nickserv'	=> {
-			autoload	=> 1,
-			desc		=> "handles NickServ's identification",
-		},
-		'noticelog'	=> {
-			autoload	=> 1,
-			desc		=> "",
-		},
-		'repl_'	=> {
-			suffix		=> "none",
-			autoload	=> 1,
-			desc		=> "replicates messages and events which occured when you were not connected to ctrlproxy. None doesn't replicate anything, highlight only replicates events involving certain words, simple replicates everything on the chan or private since last time you said something on the channel or you connected to the proxy.",
-			allowed		=> {
-				'none'		=> "No backlogs",
-				'simple'	=> "All backlogs since last moment you said something",
-				'command'	=> "Backlogs on demand (when running specific command)",
-				'highlight'	=> "Backlogs of all lines matching certain conditions",
-			},
-		},
-		'report_time'	=> {
-			autoload	=> 0,
-			desc		=> 
-"prints time periodically to have an idea of chronology in backlog replication",
-			options		=> {
-				interval	=> "300",
-				format		=> '%h:%m',
-			},
-		},
-		'stats'	=> {
-			autoload	=> 0,
-			desc		=> 
-"generates a file with stats containing class of words or regexes",
-		},
-		'strip'	=> {
-			autoload	=> 1,
-			desc		=> 
-"avoids to have a reply for a command requested by a client into other clients
-connected to the same network",
-		},
-		'socket' => {
-			autoload	=> 1,
-			desc		=> "allows you to connect to a server",
-			needed		=> 1,
-			options		=> {
-				sslcertfile		=> "$spool/ctrlproxy.pem",
-				sslkeyfile		=> "$spool/ctrlproxy.pem",
-			},
-		},
-	},
+
+my %defs = (
+    modules => {
+        'admin'     => {
+            autoload    => 1,
+            desc        => "allows you to configure ctrlproxy via IRC"
+        },
+        'antiflood' => {
+            autoload    => 1,
+            desc        => "prevents you from getting kicked from the server for 'Excess flooding' with a message queue"
+        },
+        'auto-away' => {
+            autoload    => 1,
+            desc        => "sets you away after a certain amount of time",
+            options     => {
+                message => {
+                    default => "I'm away, please leave me a message",
+                    type    => "text",
+                    desc    => "allows you to specify your away message when auto-away sets you away.",
+                    parameters  => {
+                        only_noclient   => {
+                            default => 0,
+                            type    => "bool",
+                            desc    => "tells ctrlproxy whether to set away only if no client is attached or not",
+                        },
+                        time    => {
+                            default => 600,
+                            type    => "text",
+                            desc    => "tells ctrlproxy the max idle time before setting away.",
+							allowed	=> '^\d+$',
+                        },
+                    },
+                },
+            },
+        },
+        'ctcp'  => {
+            autoload    => 1,
+            desc        => "replies to various CTCP requests like VERSION",
+        },
+        'linestack_'    => {
+            suffix      => "memory",
+            autoload    => 1,
+            desc        => "allows you to choose where backlogs will be recorded",
+            allowed     => {
+                'memory'    => "writes replication data into memory (faster but requires memory or/and swap)",
+                'file'      => "writes replication data into files",
+            },
+        },
+        'log_'  => {
+            suffix      => "irssi",
+            autoload    => 1,
+            desc        => "allows you to log discussions into files.",
+            allowed     => {
+                'irssi'     => "log into irssi IRC client format",
+                'custom'    => "log into a user-defined format",
+            },
+            options     => {
+                logfile => {
+                    default => "$spool/logs/",
+                    desc    => "tells ctrlproxy where to store log files",
+                    type    => "text",
+                },
+            },
+        },
+        'motd_file' => {
+            autoload    => 0,
+            desc        => "adds a Message Of The Day to ctrlproxy's server emulation",
+        },
+        'nickserv'  => {
+            autoload    => 1,
+            desc        => "handles NickServ's identification",
+        },
+        'noticelog' => {
+            autoload    => 1,
+            desc        => "sends ctrlproxy's output as notices to attached clients",
+        },
+        'repl_' => {
+            suffix      => "none",
+            autoload    => 1,
+            desc        => "replicates messages and events which occured when you were not connected to ctrlproxy. None doesn't replicate anything, highlight only replicates events involving certain words, simple replicates everything on the chan or private since last time you said something on the channel or you connected to the proxy.",
+            allowed     => {
+                'none'      => "No backlogs",
+                'simple'    => "All backlogs since last moment you said something",
+                'command'   => "Backlogs on demand (when running specific command)",
+                'highlight' => "Backlogs of all lines matching certain conditions",
+            },
+        },
+        'report_time'   => {
+            autoload    => 0,
+            desc        => "prints time periodically to have an idea of chronology in backlog replication",
+            options     => {
+                interval    => {
+                    default => "300",
+                    desc    => "tells ctrlproxy the frequency of time report in backlog
+s",
+                    type    => "text",
+                },
+                format      => {
+                    default => '%h:%m',
+                    desc    => "allows you to specify a format for timestamps reported"
+,
+                    type    => "text",
+                }
+            },
+        },
+        'stats' => {
+            autoload    => 0,
+            desc        => "generates a file with stats containing class of words or re
+gexes",
+        },
+        'strip' => {
+            autoload    => 1,
+            desc        => "avoids to have a reply for a command requested by a client into other clients connected to the same network",
+        },
+        'socket' => {
+            autoload    => 1,
+            desc        => "allows you to connect to a server",
+            needed      => 1,
+            options     => {
+                sslcertfile     => {
+                    default => "$spool/ctrlproxy.pem",
+                    desc    => "tells ctrlproxy where to find certificate for SSL listening",
+                    type    => "text",
+                },
+                sslkeyfile      => {
+                    default => "$spool/ctrlproxy.pem",
+                    desc    => "tells ctrlproxy where to find key for SSL listening",
+                    type    => "text",
+                },
+            },
+        },
+    },
+    networks    => {
+        nickname    => {
+            desc    => "is your nickname on IRC",
+            type    => "text",
+            needed  => 1,
+        },
+        username    => {
+            desc    => "is the name used for user/ident",
+            type    => "text",
+            default => $ENV{'USER'},
+        },
+        fullname    => {
+            desc    => "is the name shown in whois reply",
+            type    => "text",
+            default => "CtrlProxy User",
+        },
+        password    => {
+            desc    => "is the password needed to connect to server",
+            type    => "text",
+        },
+        client_pass => {
+            desc    => "is the password needed for a client to attach",
+            type    => "text",
+        },
+        autoconnect => {
+            desc    => "says if ctrlproxy should connect automatically or not",
+            type    => "bool",
+            default => "1",
+        },
+        ignore_first_nick   => {
+            desc    => "says if ctrlproxy shoulf change nick when a new client sends NICK for the first time",
+            type    => "bool",
+            default => "1",
+        },
+    },
 );
 
-my %netoptions = (
-	nickname	=> {
-		desc	=> "Nickname",
-		type	=> "text",
-		needed	=> 1,
-	},
-	username	=> {
-		desc	=> "Username",
-		type	=> "text",
-		default	=> $ENV{'USER'},
-	},
-	fullname	=> {
-		desc	=> "Fullname",
-		type	=> "text",
-		default	=> "CtrlProxy User",
-	},
-	password	=> {
-		desc	=> "Server password",
-		type	=> "text",
-	},
-	client_pass	=> {
-		desc	=> "Client password",
-		type	=> "text",
-	},
-	autoconnect	=> {
-		desc	=> "Autoconnect",
-		type	=> "bool",
-		default	=> "1",
-	},
-	ignore_first_nick	=> {
-		desc	=> "Ignore first nick",
-		type	=> "bool",
-		default	=> "1",
-	},
-);
+###########################################################################
+#         And the code begins.... edit below at your own risk ;)          #
+###########################################################################
+
+
 ###
 # Initialisations
 #$SIG{'INT'} = \&goback;
 my $clear_string = `clear`;
 my $level;
-my %levels = (
-	'main'		=> '0',
-	'networks'	=> \&main,
-	'subnet'	=> \&MenuNetworks,
-	'modules'	=> \&main,
-	'submod'	=> \&MenuModules,
-	'confignet'	=> \&MenuNetworks,
-	'subconfignet'	=> \&ConfigureNetwork,
-);
+my $modified = 0;
+my %levels;
+my %conf;
+my $title;
 
-###########################################################################
-if (-e $spool)
-{
-	if (! -d $spool)
-	{
-		print "$spool already exists and is not a directory !!
-Please move this file to another place and try again.\n";
-		exit(1);
-	}
-}
-else
-{
-	mkdir $spool;
-}
 
+CheckSpool();
 main();
 
+sub CheckSpool {
+	if (-e $spool) {
+	    if (! -d $spool) {
+	        print "$spool already exists and is not a directory !!
+	Please move this file to another place and try again.\n";
+	        exit(1);
+	    }
+	} else {
+	    mkdir $spool;
+	}
+}
+
+sub bool2text {
+    my ($bool) = @_;
+    return ($bool eq '<undefined>' ? $bool : ($bool ? "Yes" : "No"));
+}
+
 sub getchar {
-	system "stty", '-icanon', 'eol', "\001";
-	my $key = getc(STDIN);
-	system "stty", 'icanon', 'eol', '^@'; # ASCII null
-	print "\n" unless ($key eq "\n");
-	return $key;
+    system "stty", '-icanon', 'eol', "\001";
+    system "stty", '-echo';
+    my $key = getc(STDIN);
+    system "stty", 'icanon', 'eol', '^@'; # ASCII null
+    system "stty", 'echo';
+#print "\n" unless ($key eq "\n");
+    return $key;
 }
 
 sub getline {
-	my $line = <STDIN>;
-	chomp($line);
-	return $line;
+    my $line = <STDIN>;
+    chomp($line);
+    return $line;
 }
 
 sub printsleep {
-	my ($line) = @_;
-	chomp($line);
-	print "$line\n";
-	sleep 1;
+    my ($line) = @_;
+    chomp($line);
+    print "$line\n";
+    sleep 1;
 }
 
 sub goback {
-	my $ref = $levels{$level};
-	if (ref($ref)) {
-		&{$ref}();
+    my $ref = $levels{$level};
+    if (ref($ref)) {
+        &{$ref}();
+    } else {
+        exit(0);
+    }
+}
+
+sub newScreen {
+    print $clear_string;
+    print "\033[7;40m CtrlProxy setup                                                  \n$title\n\033[0;0m\n";
+}
+
+sub Pause {
+    my ($title) = @_;
+    print "\n\nPress a key to continue...\n";
+    getchar();
+    newScreen();
+}
+
+sub getOption {
+	# verbose mode deactivated... 
+	my ($text,$default,$needed,$type,$allowed,$notallowed,$verbose,$redraw) = @_;
+	my ($value,$end);
+	chomp($text);
+	chomp($default);
+	
+	if ($type eq "text") {
+		while (!$end) {
+			newScreen() if ($redraw);
+			print $text;
+			print ' ['.$default.']' if ($default);
+			print ": ";
+			$value = getline();
+			if (!$value and $default) {
+				$end = 1;
+				next;
+			}
+			if ($value) {
+				if ($notallowed) {
+					next if (exists $notallowed->{$value});
+				}
+				if ($allowed) {
+					$end = 1 if ($value =~ /$allowed/i);
+					next;
+				} else {
+					$end = 1;
+					next;
+				}
+			} else {
+				$end = 1 if (!$needed);
+			}
+		}
+		if (!$value and $default) {
+			$value = $default;
+			print "\t(default value used)\n";
+		}
+#		print "\t$value\n" if ($verbose);
+	} elsif ($type eq "bool") {
+		while (!$end) {
+			newScreen() if ($redraw);
+			my $optionstext;
+			print $text;
+			if (defined $default) {
+				$optionstext = ($default ? ' [Y/n]' : ' [y/N]');
+				print $optionstext;
+			}
+			print ": ";
+			$value = getchar();
+			if ($value !~ /[yn]/i) {
+				$value = $default if (defined $default);
+				$end = 1;
+				next;
+			} else {
+				if ($value =~ /y/i) {
+					$value = 1;
+					$end = 1;
+					next;
+				} else {
+					$value = 0;
+					$end = 1;
+					next;
+				}
+			}
+		}
+		print " ".bool2text($value);# if ($verbose);
+		print "\n";
+	} elsif ($type eq "list") {
+		while (!$end) {
+			newScreen() if ($redraw);
+			my $optionslist = join(', ',sort keys %{$allowed});
+			print "Allowed values list: $optionslist\n";
+			print $text;
+			print ' ['.$default.']' if ($default);
+			print ": ";
+			$value = getline();
+			if (!$value and $default) {
+				$end = 1;
+				next;
+			}
+			if (!$value and !$needed) {
+				$end = 1;
+				next;
+			} elsif (!$value and $needed) {
+				next;
+			} else {
+				if (defined $allowed->{$value}) {
+					$end = 1;
+					next;
+				} else {
+					next;
+				}
+			}
+		}
+		if (!$value and $default) {
+			$value = $default;
+			print "\t(default value used)\n";
+		}
+#		print "\t$value\n" if ($verbose);
 	} else {
-		exit(0);
+		newScreen() if ($redraw);
+		die "No such type $type";
 	}
-		
+
+	return $value;
 }
 
 sub main {
-	$level = 'main';
-	while (1)
-	{
-    	print $clear_string;
-		print <<EOI;
+    while (1)
+    {
+		$title = "Main menu";
+        newScreen();
+        print <<EOI;
 This program will help you with the configuration of ctrlproxy. It will ask you
 some questions on what modules you want to use, networks to add, and then it
 will generate a configuration file for you.
@@ -220,669 +376,238 @@ will generate a configuration file for you.
 2. Configure networks
 3. Generate SSL Certificate/Key
 4. Write configuration
-5. Exit
+5. Load basic modules configuration (soon !)
+6. Load default modules configuration (soon !)
+7. Load configuration from file (soon !)
+8. Wipe configuration (soon !)
+0. Exit
 EOI
-		my $char = getchar();
-		if ($char eq '1') {
-			$level = 'modules';
-			MenuModules();
-		} elsif ($char eq '2') {
-			$level = 'networks';
-			MenuNetworks();
-		} elsif ($char eq '3') {
-			GenerateSSL();
-		} elsif ($char eq '4') {
-			WriteConfig();
-		} elsif ($char eq '5') {
-	    	print $clear_string;
-			print <<EOI;
-Thanks for using ctrlproxy's configuration editor.
+        my $char = getchar();
+        if ($char eq '1') {
+            MenuModules();
+        } elsif ($char eq '2') {
+            MenuNetworks();
+        } elsif ($char eq '3') {
+            GenerateSSL();
+        } elsif ($char eq '4') {
+            WriteConfig();
+        } elsif ($char eq '0') {
+			$title = "Thanks for using ctrlproxy's configuration editor !";
+            newScreen();
+            print <<EOI;
 Please report any bug to ctrlproxy\@vernstok.nl.
 If you generated a configuration file, you can now launch ctrlproxy
 and enjoy ;)
 EOI
-			exit;
-		}
-	}
+			printCtrlproxyUsage();
+            exit;
+        }
+    }
+}
+
+sub printCtrlproxyUsage {
 }
 
 sub MenuNetworks {
-	while (1)
-	{
-    	print $clear_string;
-		print <<EOI;
+    while (1) 
+    {
+		$title = "Networks - main menu";
+        newScreen();
+        print <<EOI;
 This menu will help you to add networks and configure them.
 
 1. Print networks
 2. Add network
 3. Delete network
 4. Configure network
-5. Return to main menu
+0. Return to main menu
 EOI
-		my $char = getchar();
-		if ($char eq '1') {
-			$level = 'subnet';
-			PrintNetworks();
-		} elsif ($char eq '2') {
-			$level = 'subnet';
-			AddNetwork();
-		} elsif ($char eq '3') {
-			$level = 'subnet';
-			DelNetwork();
-		} elsif ($char eq '4') {
-			$level = 'confignet';
-			ConfigureNetwork();
-		} elsif ($char eq '5') {
-			return 0;
-		}
-	}
-}
-
-sub AddNetwork {
-	my $name;
-	my $start = 1;
-	
-	while ($start or ($name and exists $conf{'networks'}->{$name})) {
-		$start = 0;
-	   	print $clear_string;
-		print "Network $name already exists ! Please choose another name.\n"
-			if exists $conf{'networks'}->{$name};
-		print "Enter network name to add: ";
-		$name = getline();
-	}
-
-	return -1 unless $name;
-
-	$conf{'networks'}->{$name} = {};
-	print "\n\nDo you want to configure $name network now ? [Y/n]";
-	my $key = getchar();
-	if ($key !~ /n/i) {
-		$level = 'confignet';
-		ConfigureNetwork($name);
-	}
-	return 0;
-}
-
-sub SelectNetwork {
-	my $line;
-	my $start = 1;
-
-	if (scalar keys %{$conf{'networks'}} eq 0) {
-    	print $clear_string;
-		printsleep "No network has been defined yet !
-Please choose Add network option in menu.\n";
-		return 0;
-	}
-	
-	while ($start or ($line and !exists $conf{'networks'}->{$line})) {
-		my $first = 1;
-		$start = 0;
-
-    	print $clear_string;
-		print "Please choose a network to delete in the list below :\n\n";
-		my $count = 0;
-		foreach my $network (sort keys %{$conf{'networks'}}) {
-			while ($network =~ /./g) { $count++ }
-			if ($count >= $maxcolumns) {
-				print "\n";
-				$count = 0;
-			} elsif (!$first) {
-				print ", ";
-				$count += 2;
-			}
-			$first = 0;
-			print $network;
-		}
-
-		print "\n";
-		print "\nUnknown network !!! Please chose in the list..." if ($line);
-		print "\nnetwork name: ";
-		$line = getline();
-	}
-	return $line;
-}
-
-
-sub DelNetwork {
-	my ($network) = @_;
-
-	$network = SelectNetwork() unless $network;
-	return -1 unless $network;
-
-	print $clear_string;
-	print "Are you sure you want to delete $network network ? [y/N]";
-	my $key = getchar();
-
-	if ($key =~ /y/i) {
-		delete $conf{'networks'}->{$network};
-		printsleep "\n\nNetwork has successfully been deleted.\n";
-	}
-}
+        my $char = getchar();
+        if ($char eq '1') {
+            PrintNetworks();
+        } elsif ($char eq '2') {
+            AddNetwork(); 
+        } elsif ($char eq '3') {
+            DelNetwork();
+        } elsif ($char eq '4') {
+            ConfigureNetwork();
+        } elsif ($char eq '0') {
+            return 0;
+        }
+    }
+}           
 
 sub ConfigureNetwork {
-	my ($network) = @_;
-	
-	$network = SelectNetwork() unless $network;
-	return -1 unless $network;
-	while (1)
-	{
-    	print $clear_string;
-		print <<EOI;
-This menu will help you to configure $network network.
+    my ($network) = @_;
+            
+    $network = SelectNetwork() unless $network;
+    return -1 unless $network;
+	$conf{'networks'}->{$network} = () unless defined $conf{'networks'}->{$network};
 
+    while (1)
+    {
+		$title = "Networks - configure $network network";
+        newScreen();
+        print <<EOI;
+This menu will help you to configure $network network.
+        
 1. Configure global options
 2. Configure listeners
 3. Configure servers
 4. Configure channels
 5. Configure nickserv
 6. Print network
-7. Return to network menu
+0. Return to network menu
 EOI
-		my $char = getchar();
-		if ($char eq '1') {
-			$level = 'subconfignet';
-			ConfigureNetworkOpt($network);
-		} elsif ($char eq '2') {
-			$level = 'listeners';
-			ConfigureNetworkListen($network);
-		} elsif ($char eq '3') {
-			$level = 'servers';
-			#ConfigureNetworkServers($network);
-		} elsif ($char eq '4') {
-			$level = 'channels';
-			#ConfigureNetworkChans($network);
-		} elsif ($char eq '5') {
-			$level = 'subconfignet';
-			#ConfigureNetworkNS($network);
-		} elsif ($char eq '6') {
-			$level = 'subconfignet';
-			PrintNetwork($network);
-		} elsif ($char eq '7') {
-			$level = 'networks';
-			return 0;
-		}
-	}
+        my $char = getchar();
+        if ($char eq '1') {
+			$title = "Networks - $network\'s global options";
+			newScreen();
+			$conf{'networks'}->{$network}->{'parameters'} = {}
+				if (!defined $conf{'networks'}->{$network}->{'parameters'});
+			HandleParameters($conf{'networks'}->{$network},$defs{'networks'});
+        } elsif ($char eq '2') {
+            ConfigureNetworkListen($network);
+        } elsif ($char eq '3') {
+            ConfigureNetworkServers($network);
+        } elsif ($char eq '4') {
+            #ConfigureNetworkChans($network);
+        } elsif ($char eq '5') {
+            #ConfigureNetworkNS($network);
+        } elsif ($char eq '6') {
+            PrintNetwork($network);
+        } elsif ($char eq '0') {
+            return 0;
+        }
+    }
+}
+
+sub ConfigureNetworkServers {
+    my ($network) = @_;
+	return -1 unless $network;
+
+    while (1)
+    {
+		$title = "Networks - configure $network\'s servers";
+        newScreen();
+        print <<EOI;
+This menu will help you to configure $network\'s server list.
+
+1. Print servers
+2. Add server
+3. Delete server
+0. Return to network configure menu
+EOI
+        my $char = getchar();
+        if ($char eq '1') {
+			$title = "Networks - configure $network\'s servers";
+            newScreen();
+            my $ret = PrintServers($network);
+            if ($ret < 0) {
+                sleep 1;
+            } else {
+                Pause();
+            }
+        } elsif ($char eq '2') {
+            AddServer($network);
+        } elsif ($char eq '3') {
+            DelServer($network);
+        } elsif ($char eq '0') {
+            return 0;
+        }
+    }
 }
 
 sub ConfigureNetworkListen {
-	my ($network) = @_;
-	
-	while (1)
-	{
-    	print $clear_string;
-		print <<EOI;
+    my ($network) = @_;
+    return -1 unless $network;
+
+    while (1)
+    {
+		$title = "Networks - configure $network\'s listeners";
+        newScreen();
+        print <<EOI;
 This menu will help you to configure $network\'s listeners.
 
 1. Print listeners
 2. Add listener
 3. Delete listener
-4. Return to network configure menu
+0. Return to network configure menu
 EOI
-		my $char = getchar();
-		if ($char eq '1') {
-			$level = 'listeners';
-    		print $clear_string;
-			my $ret = PrintListeners($conf{'networks'}->{$network}->{'listeners'});
-			print "debug $ret \n";
-			sleep 2 if ($ret < 0);
-		} elsif ($char eq '2') {
-			$level = 'listeners';
-			AddListener($network);
-		} elsif ($char eq '3') {
-			$level = 'listeners';
-			DelListener($network);
-		} elsif ($char eq '4') {
-			$level = 'confignetwork';
-			return 0;
-		}
-	}
-
-}
-
-sub PrintListeners {
-	my ($hashref) = @_;
-	
-	if (scalar keys %{$hashref} eq 0) {
-		print "No listener has been defined yet !\n";
-		return -1;
-	}
-	
-	foreach my $listen (sort keys %{$hashref}) {
-		PrintListen($listen, $hashref->{$listen});
-	}
-}
-
-sub PrintServers {
-	my ($hashref) = @_;
-	
-	if (scalar keys %{$hashref} eq 0) {
-		print "No server has been defined yet !\n";
-		return -1;
-	}
-	
-	foreach my $key (sort keys %{$hashref}) {
-		PrintServer($key, $hashref->{$key});
-	}
-}
-
-sub AddListener {
-	my ($network) = @_;
-	my $net = $conf{'networks'}->{$network};
-	my ($port,$ssl,$bind,$proto);
-	
-	print $clear_string;
-	while ($proto ne 4 and $proto ne 6) {
-		print "IP protocol (IPv)? [4/6] ";
-		$proto = getchar();
-	}
-	print "\tProtocol: IPv$proto\n";
-	while ($port !~ /^\d+$/) {
-		print "Port to listen to ? ";
-		$port = getline();
-	}
-	print "\tPort: $port\n";
-	$bind = -1;
-	if ($proto eq 4) {
-		while (!$bind or $bind !~ /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/) {
-			print "IPv$proto address to bind ? [0.0.0.0] ";
-			$bind = getline();
-			$bind = '0.0.0.0' unless $bind;
-		}
-	} elsif ($proto eq 6) {
-		while (!$bind or $bind !~ /^[\d:]+$/) {
-			print "IPv$proto address to bind ? [::] ";
-			$bind = getline();
-			$bind = '::' unless $bind;
-		}
-	}
-	print "\tIPv$proto address to bind: $bind\n";
-
-	print "Use SSL ? [y/N] ";
-	$ssl = getchar();
-	if ($ssl =~ /y/i) {
-		$ssl = 1;
-	} else {
-		$ssl = 0;
-	}
-
-	my $next = 1;
-	foreach my $listen (keys %{$net->{'listeners'}}) {
-		$next =  ($listen >= $next ? $listen+1 : $next);
-	}
-	$net->{'listeners'}->{$next}->{'ssl'} = $ssl;
-	$net->{'listeners'}->{$next}->{'bind'} = $bind;
-	$net->{'listeners'}->{$next}->{'proto'} = 'IPv'.$proto;
-	$net->{'listeners'}->{$next}->{'port'} = $port;
-}
-
-sub DelListener {
-	my ($network) = @_;
-	my $net = $conf{'networks'}->{$network};
-	my $line;
-	my $start = 1;
-	
-	while ($start or ($line and !defined $net->{'listeners'}->{$line})) {
-		$start = 0;
-		print $clear_string;
-		my $ret = PrintListeners($net->{'listeners'});
-		if ($ret < 0) {
-			sleep 2;
-			return 0;
-		}
-		print "\nInvalid listener id ! Please choose in the list..." if $line;
-		print "\nWhat listener do you want to delete ? ";
-		$line = getline();
-	}
-	return 0 unless $line;
-	delete $net->{'listeners'}->{$line};
-	printsleep "Listener $line deleted.\n";
-}
-
-sub ConfigureNetworkOpt {
-	my ($network) = @_;
-	my $net = $conf{'networks'}->{$network};
-	
-   	print $clear_string;
-	foreach my $param (keys %netoptions) {
-		my $default;
-		if (defined $net->{$param}) {
-			$default = $net->{$param};
-		} elsif (defined $netoptions{$param}->{'default'}) {
-			$default = $netoptions{$param}->{'default'};
-		}
-
-		if (defined $netoptions{$param}->{'needed'} and
-				$netoptions{$param}->{'needed'} eq 1 and
-				!defined $netoptions{$param}->{'default'} and
-				!defined $net->{$param}) {
-			while (!defined $net->{$param}) {
-				$net->{$param} = GetOptValue($param,$default);
-			}
-		} else {
-			$net->{$param} = GetOptValue($param,$default);
-		}
-
-		if ($netoptions{$param}->{'type'} eq "bool") {
-			print "\t".$netoptions{$param}->{'desc'}.": ".
-				bool2text($net->{$param})."\n";
-		} elsif ($netoptions{$param}->{'type'} eq "text") {
-			if (defined $net->{$param}) {
-				print "\t".$netoptions{$param}->{'desc'}.": ".
-					$net->{$param}."\n";
-			} else {
-				print "\t".$netoptions{$param}->{'desc'}.": <undefined>\n";
-			}
-		}
-	}
-}
-
-sub GetOptValue {
-	my ($param,$default) = @_;
-	
-	if ($netoptions{$param}->{'type'} eq "bool") {
-		my $y = ($default ? 'Y' : 'y');
-		my $n = ($y eq 'Y' ? 'n' : 'N');
-		print $netoptions{$param}->{'desc'}." ? [$y/$n] ";
-		my $key = getchar();
-		if ($y eq 'Y') {
-			return 0 if ($key =~ /n/i);
-			return 1;
-		} else {
-			return 1 if ($key =~ /y/i);
-			return 0;
-		}
-	} elsif ($netoptions{$param}->{'type'} eq "text") {
-		print $netoptions{$param}->{'desc'}." ? [$default] ";
-		my $line = getline();
-		if ($line) {
-			return $line;
-		} else {
-			return $default;
-		}
-	}
-}
-
-sub PrintNetworks {
-	if (scalar keys %{$conf{'networks'}} eq 0) {
-    	print $clear_string;
-		printsleep "No network has been defined yet !
-Please choose Add network option in menu.\n";
-		return -1;
-	}
-	
-	foreach my $net (sort keys %{$conf{'networks'}}) {
-		PrintNetwork($net);
-	}
-}
-
-sub bool2text {
-	my ($bool) = @_;
-	return ($bool eq '<undefined>' ? $bool : ($bool ? "Yes" : "No"));
-}
-
-sub PrintNetwork {
-	my ($net) = @_;
-
-	$net = SelectNetwork() unless $net;
-	return -1 unless $net;
-
-	my $nethash = $conf{'networks'}->{$net};
-    print $clear_string;
-	print "$net network :\n";
-
-	foreach my $param (keys %netoptions) {
-		$nethash->{$param} = '<undefined>' if (!defined $nethash->{$param});
-
-		if ($netoptions{$param}->{'type'} eq "bool") {
-			print "\t".$netoptions{$param}->{'desc'}.": ".
-				bool2text($nethash->{$param})."\n";
-		} elsif ($netoptions{$param}->{'type'} eq "text") {
-			print "\t".$netoptions{$param}->{'desc'}.": ".
-				$nethash->{$param}."\n";
-		}
-	}
-
-	print "\nChannels to join (* password protected, ° no autojoin):\n";
-		
-	if (defined $nethash->{'channels'}) {
-		my $first = 1;
-		my $count = 0;
-		foreach my $chan (sort keys %{$nethash->{'channels'}}) {
-			my ($chanhash) =  $nethash->{'channels'}->{$chan};
-			next unless defined $chanhash->{'channel'};
-
-			my $channel = $chanhash->{'channel'};
-			$channel .= ((defined($chanhash->{'autojoin'}) and
-						$chanhash->{'autojoin'} eq 1) ? '' : '°');
-			$channel .= (defined $chanhash->{'key'} ? '*' : '');
-			while ($channel =~ /./g) { $count++ }
-			if ($count >= $ENV{'COLUMNS'}) {
-				print "\n";
-				$count = 0;
-			} elsif (!$first) {
-				print ", ";
-				$count += 2;
-			}
-			$first = 0;
-			print $channel;
-		}
-	} else {
-		print "\tNo channels defined yet !\n";
-	}
-
-	Pause();
-
-	print "Servers :\n";
-#	if (scalar keys %{$nethash->{'servers'}}) {
-#		foreach my $serv (sort keys %{$nethash->{'servers'}}) {
-	PrintServers($nethash->{'servers'});
-#		}
-#	} else {
-#		print "\tNo servers defined yet !\n";
-#	}
-	
-	print "Listeners :\n";
-	PrintListeners($nethash->{'listeners'});
-
-	Pause();
-}
-
-sub Pause {
-	print "\n\nPress a key to continue...\n";
-	getchar();
-   	print $clear_string;
-}
-
-sub PrintListen {
-	my ($listen,$listenhash) = @_;
-	
-	next unless defined $listenhash->{'port'};
-	my $port = $listenhash->{'port'};
-	my $ssl = ((defined($listenhash->{'ssl'}) and $listenhash->{'ssl'} eq 1)
-			? '(SSL)' : '');
-	my $proto = $listenhash->{'proto'};
-	my $bind = (defined $listenhash->{'bind'} ? $listenhash->{'bind'} :
-				($proto eq 'IPv4' ? '0.0.0.0' : '::' ));
-	print "$listen. $proto\://$bind\:$port $ssl\n";
-}
-
-
-sub PrintServer {
-	my ($serv,$servhash) = @_;
-	
-	next unless defined $servhash->{'host'};
-	my $port = (defined($servhash->{'port'}) ? $servhash->{'port'}
-			: 6667);
-	my $ssl = ((defined($servhash->{'ssl'}) and $servhash->{'ssl'} eq 1)
-			? '(SSL)' : '');
-	my $proto = (defined($servhash->{'proto'}) ? $servhash->{'proto'}
-			: 'ipv4');
-	my $host = $servhash->{'host'};
-	print "$serv. $proto\://$host\:$port $ssl\n";
-}
-
-sub WriteConfig {
+        my $char = getchar();
+        if ($char eq '1') {
+			$title = "Networks - configure $network\'s listeners";
+            newScreen();
+            my $ret = PrintListeners($network);
+            if ($ret < 0) {
+                sleep 1;
+            } else {
+                Pause();
+            }
+        } elsif ($char eq '2') {
+            AddListener($network);
+        } elsif ($char eq '3') {
+            DelListener($network);
+        } elsif ($char eq '0') {
+            return 0;
+        }
+    }
 }
 
 sub MenuModules
 {
-	while (1)
-	{
-    	print $clear_string;
-		print <<EOI;
+    while (1)
+    {
+		$title = "Modules - main menu";
+        newScreen();
+        print <<EOI;
 This menu allows you to configure and select modules.
+(work in progress. Changing a module's options is not possible atm)
 
 1. Configure and select modules
 2. Configure and select a specific module
 3. Print selection and configuration of modules
 4. Print configuration of a specific module
-5. Return to main menu
+0. Return to main menu
 EOI
 
-		my $char = getchar();
-		if ($char eq '1') {
-			$level = 'submod';
-			foreach my $module (sort keys %{$conf{'modules'}}) {
-				my $ret = ConfigureModule($module);
-				last if ($ret);
-			}
-		} elsif ($char eq '2') {
-			$level = 'submod';
-			ConfigureModule();
-		} elsif ($char eq '3') {
-			$level = 'submod';
-			foreach my $module (sort keys %{$conf{'modules'}}) {
-				my $ret = DumpModule($module);
-				last if ($ret);
-			}
-		} elsif ($char eq '4') {
-			$level = 'submod';
-			DumpModule();
-		} elsif ($char eq '5') {
-			main();
-		}
-	}
-}
-
-sub DumpModule {
-	my ($module) = @_;
-
-	$module = SelectModule() unless $module;
-	return -1 unless $module;
-	
-    print $clear_string;
-	print "Module $module :\n";
-	print Dumper($conf{'modules'}->{$module});
-	Pause();
-	return 0;
-}
-
-sub ConfigureModule {
-	my ($module) = @_;
-	my $changed = 0;
-
-	$module = SelectModule() unless $module;
-	return -1 unless $module;
-
-    print $clear_string;
-	print "This module ".$conf{'modules'}->{$module}->{'desc'}."\n\n";
-
-	if ($conf{'modules'}->{$module}->{'needed'} eq 1) {
-		print "This module is needed, thus you cannot deactivate it.\n";
-	} else {
-		my $isact = ($conf{'modules'}->{$module}->{'autoload'} ? '' : 'de');
-		my $doact = ($isact ? 'activate' : 'deactivate');
-		print "Module is currently ".$isact."activated. Do you want to $doact it [y/N] ?";
-		my $key = getchar();
-		if ($key =~ /y/i) {
-			$conf{'modules'}->{$module}->{'autoload'} = 0;
-			printsleep("Module has been deactivated");
-			return 0;
-		}
-	}
-
-	if (defined $conf{'modules'}->{$module}->{'options'}) {
-		HandleOptionsTree()
-	} else {
-		print "This module hasn't any options.\n";
-	}
-
-	print "\n\n";
-	if ($changed)
-	{
-		print "Do you accept this configuration ? [Y/n]";
-		my $key = getchar();
-		if ($key =~ /n/i) {
-			printsleep("Configuration refused, $module configuration will restart now.");
-			ConfigureModule($module);
-			return 0;
-		} else {
-			printsleep("Configuration accepted.");
-			return 0;
-		}
-	} else {
-		 printsleep("No changes.");
-		 return 0;
-	}
-}
-
-sub HandleOptionsTree {
-	print "Function not implemented at the moment.\n";
-}
-
-sub SelectModule {
-	my $line;
-	my $start = 1;
-
-	while ($start or ($line and !exists $conf{'modules'}->{$line})) {
-		my $first = 1;
-		$start = 0;
-		
-    	print $clear_string;
-		print "Please choose a module in the list below :\n\n";
-		my $count = 0;
-		foreach my $module (sort keys %{$conf{'modules'}}) {
-			while ($module =~ /./g) { $count++ }
-			if ($count >= $maxcolumns) {
-				print "\n";
-				$count = 0;
-			} elsif (!$first) {
-				print ", ";
-				$count += 2;
-			}
-			$first = 0;
-			print $module;
-		}
-
-		print "\n";
-		print "\nInvalid module !!! Please chose in the list..." if ($line);
-		print "\nmodule name: ";
-		$line = getline();
-	}
-	return $line;
+        my $char = getchar();
+        if ($char eq '1') {
+            foreach my $module (sort keys %{$defs{'modules'}}) {
+                my $ret = ConfigureModule($module);
+                last if ($ret);
+            }
+        } elsif ($char eq '2') {
+            ConfigureModule();
+        } elsif ($char eq '3') {
+            foreach my $module (sort keys %{$defs{'modules'}}) {
+                my $ret = DumpModule($module);
+                last if ($ret);
+            }
+        } elsif ($char eq '4') {
+            DumpModule();
+        } elsif ($char eq '0') {
+            return 0;
+        }
+    }
 }
 
 sub GenerateSSL {
-   	print $clear_string;
-	print "Short hostname to use: [localhost]";
-	my $HOSTNAME = getline();
-	$HOSTNAME = "localhost" unless $HOSTNAME;
+	$title = "SSL - generate a certificate";
+    newScreen();
+	my $HOSTNAME = getOption("Short hostname to	use","localhost",1,"text",undef,undef,0);
+	my $FQDN = getOption("FQDN to use","localhost.localdomain",1,"text",undef,undef,0);
+    my $file = "$spool/ctrlproxy.pem";
+    if (-e $file)
+    {
+        rename $file,"$file.old";
+        print "An existing certificate was found, and renamed to $file.old\n";
+    }
 
-	print "FQDN to use: [localhost.localdomain]";
-	my $FQDN = getline();
-	$FQDN = "localhost.localdomain" unless $FQDN;
-
-	my $file = "$spool/ctrlproxy.pem";
-	if (-e $file)
-	{
-		rename $file,"$file.old";
-		print "An existing certificate was found, and renamed to $file.old\n";
-	}
-
-	my $fh = new IO::File;
-	my $tmpssl = "$spool/.tmpssl";
-	$fh->open(">$tmpssl");
-	print $fh <<EOS;
+    my $fh = new IO::File;
+    my $tmpssl = "$spool/.tmpssl";
+    $fh->open(">$tmpssl");
+    print $fh <<EOS;
 .
 .
 .
@@ -891,16 +616,437 @@ $HOSTNAME
 $FQDN
 $ENV{'USER'}\@$HOSTNAME
 EOS
-	print "Generating SSL certificate...\n";
-	system("openssl req -new -x509 -days 365 -nodes -out $file -keyout $file <$tmpssl >/dev/null 2>&1");
-	unlink $tmpssl;
 
-	if (-e $file)
-	{
-		print "SSL certificate generated into $spool/ctrlproxy.pem...\n";
+    print "Generating SSL certificate...\n";
+    system("openssl req -new -x509 -days 365 -nodes -out $file -keyout $file <$tmpssl >/dev/null 2>&1");
+    unlink $tmpssl;
+
+    if (-e $file)
+    {
+        print "SSL certificate generated into $spool/ctrlproxy.pem...\n";
+    } else {
+        print "An error occured during certificate generation...\n";
+    }
+
+    Pause();
+}
+
+sub AddNetwork {
+    my ($name,$key);
+ 
+	$title = "Networks - add network";
+    newScreen();
+	# $text,$default,$needed,$type,$allowed,$notallowed,$verbose
+	$name = getOption("Enter network name to add",undef,0,"text",undef,$conf{'networks'},0,0);
+    return -1 unless $name;
+        
+    $conf{'networks'}->{$name} = {};
+    $key = getOption("Configure $name network now",1,1,"bool",undef,undef,0,0);
+    ConfigureNetwork($name) if ($key);
+    return 0;
+}
+
+sub SelectNetwork {
+    if (scalar keys %{$conf{'networks'}} eq 0) {
+		$title = "ERROR";
+        newScreen();
+        printsleep "No network has been defined yet !
+Please choose Add network option in menu.\n";
+        return 0;
+    }
+
+	return getOption("Please choose a network in the list",undef, 0,"list", $conf{'networks'}, undef, 0,1);
+}
+
+sub SelectModule {
+	return getOption("Please choose a module in the list",undef,0,"list", $defs{'modules'}, undef, 0, 1);
+}
+
+sub DelNetwork {
+    my ($network) = @_;
+
+    $network = SelectNetwork() unless $network;
+    return -1 unless $network;
+
+	$title = "Networks - delete a network";
+    newScreen();
+	my $key = getOption("Are you sure you want to delete $network network ?",0,1,"bool",$conf{'networks'},undef,0,0);
+    if ($key) {
+        delete $conf{'networks'}->{$network};
+        printsleep "\n\nNetwork has successfully been deleted.\n";
+    }
+}
+
+sub PrintIPList {
+    my ($hashref,$name,$funref) = @_;
+    
+    if (scalar keys %{$hashref} eq 0) {
+        printsleep "No $name has been defined yet !\n";
+        return -1;
+    }
+    
+    foreach my $key (sort keys %{$hashref}) {
+        &{$funref}($key, $hashref->{$key});
+    }
+}   
+
+sub AddServer {
+    my ($network) = @_;
+    my ($port,$ssl,$host,$proto);
+
+	$title = "Networks - add a server to $network";
+	newScreen();
+
+	$proto = getOption("IP protocol (IPv)",4,1,"text",'^[46]$',undef,1,0);
+	$port = getOption("Port to connect to",6667,1,"text",'^\d{0,5}$',undef,0,0);
+	$host = getOption("Host/IPv$proto to connect to",($proto eq 4 ? '0.0.0.0' :
+				'::'),1,"text",undef,undef,0,0);
+	$ssl = getOption("Use SSL",0,1,"bool",undef,undef,1,0);
+	Pause();
+
+	my $next = 1;
+	foreach my $key (keys %{$conf{'networks'}->{$network}->{'servers'}}) {
+		$next =  ($key >= $next ? $key+1 : $next);
+	}
+	$conf{'networks'}->{$network}->{'servers'} = {}
+		unless defined $conf{'networks'}->{$network}->{'servers'};
+	$conf{'networks'}->{$network}->{'servers'}->{$next} = {}
+		unless defined $conf{'networks'}->{$network}->{'servers'}->{$next};
+    $conf{'networks'}->{$network}->{'servers'}->{$next}->{'ssl'} = $ssl;
+    $conf{'networks'}->{$network}->{'servers'}->{$next}->{'host'} = $host;
+    $conf{'networks'}->{$network}->{'servers'}->{$next}->{'proto'} = 'IPv'.$proto;
+    $conf{'networks'}->{$network}->{'servers'}->{$next}->{'port'} = $port;
+
+}
+
+sub AddListener {
+    my ($network) = @_;
+    my ($port,$ssl,$host,$proto);
+
+	$title = "Networks - add a listener to $network";
+	newScreen();
+
+	$proto = getOption("IP protocol (IPv)",4,1,"text",'^[46]$',undef,1,0);
+	$port = getOption("Port to listen to",undef,1,"text",'^\d{0,5}$',undef,0,0);
+	$host = getOption("Host/IPv$proto to bind to",($proto eq 4 ? '0.0.0.0' : 
+					                '::'),1,"text",undef,undef,0,0);
+	$ssl = getOption("Use SSL",0,1,"bool",undef,undef,1,0);
+	Pause();
+
+	my $next = 1;
+	foreach my $key (keys %{$conf{'networks'}->{$network}->{'listeners'}}) {
+		$next =  ($key >= $next ? $key+1 : $next);
+	}
+	$conf{'networks'}->{$network}->{'listeners'} = {}
+		unless defined $conf{'networks'}->{$network}->{'listeners'};
+	$conf{'networks'}->{$network}->{'listeners'}->{$next} = {}
+		unless defined $conf{'networks'}->{$network}->{'listeners'}->{$next};
+    $conf{'networks'}->{$network}->{'listeners'}->{$next}->{'ssl'} = $ssl;
+    $conf{'networks'}->{$network}->{'listeners'}->{$next}->{'host'} = $host;
+    $conf{'networks'}->{$network}->{'listeners'}->{$next}->{'proto'} = 'IPv'.$proto;
+    $conf{'networks'}->{$network}->{'listeners'}->{$next}->{'port'} = $port;
+}
+
+
+sub DelServer {
+    my ($network) = @_;
+    my $net = $conf{'networks'}->{$network};
+    my $line;
+    
+	$title = "Networks - delete a server from $network";
+	newScreen();
+	my $ret = PrintIPList($net->{'servers'},"servers",\&PrintServer);
+	return 0 if ($ret);
+	my $line = getOption("Please choose a server in the list",undef, 0,"text", $net->{'servers'}, undef, 0,0);
+    return 0 unless $line;
+
+    delete $net->{'servers'}->{$line};
+    printsleep "Server $line deleted.\n";
+}       
+
+sub DelListener {
+    my ($network) = @_;
+    my $net = $conf{'networks'}->{$network};
+    my $line;
+    
+	$title = "Networks - delete a listener from $network";
+	newScreen();
+	my $ret = PrintIPList($net->{'listeners'},"listeners",\&PrintListen);
+	return 0 if ($ret);
+	my $line = getOption("Please choose a listener in the list",undef, 0,"text",
+			'('.join('|',keys %{$net->{'listeners'}}).')', undef, 0,0);
+    return 0 unless $line;
+
+    delete $net->{'listeners'}->{$line};
+    printsleep "Listener $line deleted.\n";
+}
+
+sub PrintNetworks {
+    if (scalar keys %{$conf{'networks'}} eq 0) {
+		$title = "Networks - networks information";
+        newScreen();
+        printsleep "No network has been defined yet !\n";
+        return -1;
+    }       
+                
+    foreach my $net (sort keys %{$conf{'networks'}}) {
+        PrintNetwork($net);
+    }           
+}       
+
+sub PrintListeners {
+	my ($network) = @_;
+	
+    if (scalar keys %{$conf{'networks'}->{$network}->{'listeners'}} eq 0) {
+		$title = "Networks - $network\'s listeners information";
+        newScreen();
+        printsleep "No listener has been defined yet !\n";
+        return -1;
+    }       
+                
+    foreach my $net (sort keys %{$conf{'networks'}->{$network}->{'listeners'}}) {
+        PrintListen($net,$conf{'networks'}->{$network}->{'listeners'}->{$net});
+    }           
+}       
+
+sub PrintServers {
+	my ($network) = @_;
+	
+    if (scalar keys %{$conf{'networks'}->{$network}->{'listeners'}} eq 0) {
+		$title = "Networks - $network\'s servers information";
+        newScreen();
+        printsleep "No server has been defined yet !\n";
+        return -1;
+    }       
+                
+    foreach my $net (sort keys %{$conf{'networks'}->{$network}->{'servers'}}) {
+        PrintServer($net,$conf{'networks'}->{$network}->{'servers'}->{$net});
+    }           
+}       
+
+
+sub PrintListen {
+    my ($listen,$listenhash) = @_;
+
+    next unless defined $listenhash->{'port'};
+    my $port = $listenhash->{'port'};
+    my $ssl = ((defined($listenhash->{'ssl'}) and $listenhash->{'ssl'} eq 1)
+            ? '(SSL)' : '');
+    my $proto = $listenhash->{'proto'};
+    my $bind = (defined $listenhash->{'bind'} ? $listenhash->{'bind'} :
+                ($proto eq 'IPv4' ? '0.0.0.0' : '::' ));
+    print "$listen. $proto\://$bind\:$port $ssl\n";
+}
+
+sub PrintServer {
+    my ($serv,$servhash) = @_;
+
+    next unless defined $servhash->{'host'};
+    my $port = (defined($servhash->{'port'}) ? $servhash->{'port'}
+            : 6667);
+    my $ssl = ((defined($servhash->{'ssl'}) and $servhash->{'ssl'} eq 1)
+            ? '(SSL)' : '');
+    my $proto = (defined($servhash->{'proto'}) ? $servhash->{'proto'}
+            : 'ipv4');
+    my $host = $servhash->{'host'};
+    print "$serv. $proto\://$host\:$port $ssl\n";
+}
+
+sub DumpModule {
+    my ($module) = @_;
+
+    $module = SelectModule() unless $module;
+    return -1 unless $module;
+
+	$title = "Modules - $module\'s configuration";
+    newScreen();
+    print "Module $module :\n";
+    print Dumper($conf{'modules'}->{$module});
+    Pause();
+    return 0;
+}
+
+sub PrintNetwork {
+    my ($net) = @_;
+
+    $net = SelectNetwork() unless $net;
+    return -1 unless $net;
+
+    my $nethash = $conf{'networks'}->{$net};
+	$title = "Networks - $net\'s information";
+	newScreen();
+    print "$net network :\n";
+
+    foreach my $param (keys %{$defs{'networks'}}) {
+        $nethash->{$param} = '<undefined>' if (!defined $nethash->{$param});
+
+        if ($defs{'networks'}->{$param}->{'type'} eq "bool") {
+            print "\t$param\: ".
+                bool2text($nethash->{$param})."\n";
+        } elsif ($defs{'networks'}->{$param}->{'type'} eq "text") {
+            print "\t$param\: ".
+                $nethash->{$param}."\n";
+        }
+    }
+
+    print "\nChannels to join (* password protected, ° no autojoin):\n";
+    if (defined $nethash->{'channels'}) {
 	} else {
-		print "An error occured during certificate generation...\n";
+        print "\tNo channels defined yet !\n";
+    }
+	Pause();
+
+    print "Servers :\n";
+    PrintIPList($nethash->{'servers'},"servers",\&PrintServer);
+	    print "Listeners :\n";
+    PrintIPList($nethash->{'listeners'},"listeners",\&PrintListen);
+	Pause();
+}
+
+sub isYes {
+	my ($hash,$key) = @_;
+
+	return (defined($hash->{$key}) ? ($hash->{$key} eq 1 ? 1 : 0) : 0);
+}
+
+sub ConfigureModule {
+    my ($module) = @_;
+    my $changed = 0;
+
+    $module = SelectModule() unless $module;
+    return -1 unless $module;
+    
+	$title = "Modules - select and configure $module";
+    newScreen();
+    print "This module ".$defs{'modules'}->{$module}->{'desc'}."\n\n";
+    
+    if (isYes($defs{'modules'}->{$module},'needed')) {
+        print "This module is needed, thus you cannot deactivate it.\n";
+		$conf{'modules'}->{$module}->{'autoload'} = 1;
+    } else {
+		$conf{'modules'}->{$module}->{'autoload'} =
+			 getOption("Activate this module", $defs{'modules'}->{$module}->{'autoload'},1,"bool",undef,undef,1,0);
 	}
 
+	if ($conf{'modules'}->{$module}->{'autoload'} eq 0) {
+		Pause();
+		return 0;
+	}
+
+	if (defined $defs{'modules'}->{$module}->{'allowed'}) {
+		$conf{'modules'}->{$module}->{'suffix'} = 
+			getOption("Please select a type for this module",
+				$defs{'modules'}->{$module}->{'suffix'},1,"list",
+				$defs{'modules'}->{$module}->{'allowed'},undef,0,0);
+		Pause();
+	}
+	
+    if (defined $defs{'modules'}->{$module}->{'options'}) {
+		$title = "Modules - configure $module\'s options";
+		$conf{'modules'}->{$module}->{'options'} = {}
+			if (!defined $conf{'modules'}->{$module}->{'options'});
+        HandleOptionsTree($conf{'modules'}->{$module}->{'options'},
+				$defs{'modules'}->{$module}->{'options'});
+    } else {
+        print "This module hasn't any options.\n";
+    }
+	Pause();
+	return 0;
+}
+
+sub HandleOptionsTree {
+	my ($hash,$defaults) = @_;
+
+	foreach my $option (sort keys %{$defaults}) {
+		newScreen();
+		my $default = (defined $hash->{$option}->{'value'}
+			? $hash->{$option}->{'value'}
+			: (defined $defaults->{$option}->{'default'}
+				? $defaults->{$option}->{'default'}
+				: undef));
+		my $h = $defaults->{$option};
+
+		print "The $option option ".$h->{'desc'}."\n";
+		$hash->{$option}->{'value'} = getOption($option, $default, 
+			$h->{'needed'}, $h->{'type'}, $h->{'allowed'}, undef,
+			($h->{'type'} eq "bool" ? 1 : 0 ),0);
+
+		if (defined $h->{'parameters'}) {
+			$hash->{$option}->{'parameters'} = {}
+				if (!defined $hash->{$option}->{'parameters'});
+			HandleParameters($hash->{$option}->{'parameters'},$h->{'parameters'});
+		}
+
+		if (defined $h->{'options'}) {
+			$hash->{$option}->{'options'} = {}
+				if (!defined $hash->{$option}->{'options'});
+			HandleOptionsTree($hash->{$option}->{'options'},$h->{'options'});
+		}
+
+	}
+}
+
+sub HandleParameters {
+    my ($config,$defaults) = @_;
+
+    foreach my $param (sort keys %{$defaults}) {
+		my $default = (defined $config->{$param}->{'value'}
+			? $config->{$param}->{'value'}
+			: (defined $defaults->{$param}->{'default'}
+				? $defaults->{$param}->{'default'}
+				: undef));
+		my $h = $defaults->{$param};
+
+		print "The $param parameter ".$h->{'desc'}."\n";
+		$config->{$param}->{'value'} = getOption($param, $default,
+			$h->{'needed'}, $h->{'type'}, $h->{'allowed'}, undef,
+			($h->{'type'} eq "bool" ? 1 : 0 ),0);
+	}
+}
+
+sub WriteConfig {
+	my $file = "$spool/ctrlproxyrc";
+	my $fh = new IO::File;
+	$title = "Write configuration file";
+	newScreen();
+	
+	if (!$fh->open(">$file")) {
+		printsleep "Unable to write into $file !";
+		return -1;
+	}
+	print $fh "<?xml version=\"1.0\"?>\n<ctrlproxy>\n";
+	print $fh "  <plugins>\n";
+
+	foreach my $module (sort keys %{$conf{'modules'}}) {
+		my $autoload = (isYes($conf{'modules'}->{$module},'autoload') ? 1 : 0);
+		print $fh '    <plugin autoload="'.$autoload.'" file="lib'.$module;
+		print $fh $conf{'modules'}->{$module}->{'suffix'} if defined
+			$conf{'modules'}->{$module}->{'suffix'};
+		if (scalar keys %{$conf{'modules'}->{$module}->{'options'}}) {
+			print $fh "\">\n";
+			
+			print $fh "    </plugin>\n";
+		} else {
+			print $fh "\"/>\n";
+		}
+	}
+
+	print $fh "  </plugins>\n  <networks>\n";
+
+	foreach my $network (sort keys %{$conf{'networks'}}) {
+		print $fh '    <network ';
+		foreach my $param (sort keys
+				%{$conf{'networks'}->{$network}->{'parameters'}}) {
+			print $fh
+				"$param=\"".$conf{'networks'}->{$network}->{'parameters'}->{$param}."\" ";
+		}
+		print $fh ">\n\n";
+	}
+
+	print $fh "  </networks>\n";
+	print $fh "</ctrlproxy>\n";
+
+	$fh->close();
+	print "Config has been written in $file sucessfully.\n";
 	Pause();
 }

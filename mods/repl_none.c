@@ -23,7 +23,7 @@
 
 static gboolean none_replicate(struct client *c)
 {
-	GSList *d, *orig = gen_replication(c->network);
+	GSList *d, *orig = gen_replication_network(c->network);
 	d = orig;
 	while(d) {
 		struct line *l = (struct line *)d->data;

@@ -56,6 +56,8 @@ static gboolean log_data(struct line *l) {
 	struct network_data *sd;
 	if(l->direction == FROM_SERVER)return TRUE;
 
+	memset(&tv, 0, sizeof(struct timeval));
+
 	/* Get data for this server from the hash */
 	sd = g_hash_table_lookup(antiflood_servers, l->network);
 

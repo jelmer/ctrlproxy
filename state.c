@@ -514,13 +514,41 @@ void state_handle_data(struct network *s, struct line *l)
 }
 
 
-GSList *gen_replication(struct network *s)
+GSList *gen_replication_channel(struct channel *c, char *hostmask, char *nick)
 {
+	GSList *ret = NULL;
+	char *channel_name = xmlGetProp(c->xmlConf, "name");
+	char *key = xmlGetProp(c->xmlConf, "key");
 	struct nick *n;
-	GList *cl, *nl;
+	GList *nl;
+	ret = g_slist_append(ret, irc_parse_linef(":%s JOIN %s\r\n", nick, channel_name));
+
+	xmlFree(key);
+
+	if(c->topic) {
+		ret = g_slist_append(ret, irc_parse_linef(":%s 332 %s %s :%s\r\n", hostmask, nick, channel_name, c->topic));
+	} else {
+		ret = g_slist_append(ret, irc_parse_linef(":%s 331 %s %s :No topic set\r\n", hostmask, nick, channel_name));
+	}
+
+	nl = c->nicks;
+	while(nl) {
+		n = (struct nick *)nl->data;
+		if(n->mode && n->mode != ' ') { ret = g_slist_append(ret, irc_parse_linef(":%s 353 %s %c %s :%c%s\r\n", hostmask, nick, c->mode, channel_name, n->mode, n->name)); }
+		else { ret = g_slist_append(ret, irc_parse_linef(":%s 353 %s %c %s :%s\r\n", hostmask, nick, c->mode, channel_name, n->name)); }
+		nl = g_list_next(nl);
+	}
+	ret = g_slist_append(ret, irc_parse_linef(":%s 366 %s %s :End of /names list\r\n", hostmask, nick, channel_name));
+	c->introduced = 3;
+	xmlFree(channel_name);
+	return ret;
+}
+
+GSList *gen_replication_network(struct network *s)
+{
+	GList *cl;
 	struct channel *c;
 	GSList *ret = NULL;
-	char *key;
 	char *nick, *server_name, *channel_name;
 	cl = s->channels,
 	server_name = xmlGetProp(s->xmlConf, "name");
@@ -529,33 +557,16 @@ GSList *gen_replication(struct network *s)
 	while(cl) {
 		c = (struct channel *)cl->data;
 		channel_name = xmlGetProp(c->xmlConf, "name");
-		key = xmlGetProp(c->xmlConf, "key");
 		if(!is_channelname(channel_name, s)) {
 			cl = g_list_next(cl);
 			xmlFree(channel_name);
 			continue;
 		}
-		ret = g_slist_append(ret, irc_parse_linef(":%s JOIN %s\r\n", nick, channel_name));
-
-		xmlFree(key);
-
-		if(c->topic) {
-			ret = g_slist_append(ret, irc_parse_linef(":%s 332 %s %s :%s\r\n", server_name, nick, channel_name, c->topic));
-		} else {
-			ret = g_slist_append(ret, irc_parse_linef(":%s 331 %s %s :No topic set\r\n", server_name, nick, channel_name));
-		}
-
-		nl = c->nicks;
-		while(nl) {
-			n = (struct nick *)nl->data;
-			if(n->mode && n->mode != ' ') { ret = g_slist_append(ret, irc_parse_linef(":%s 353 %s %c %s :%c%s\r\n", server_name, nick, c->mode, channel_name, n->mode, n->name)); }
-			else { ret = g_slist_append(ret, irc_parse_linef(":%s 353 %s %c %s :%s\r\n", server_name, nick, c->mode, channel_name, n->name)); }
-			nl = g_list_next(nl);
-		}
-		ret = g_slist_append(ret, irc_parse_linef(":%s 366 %s %s :End of /names list\r\n", server_name, nick, channel_name));
-		c->introduced = 3;
-		cl = g_list_next(cl);
 		xmlFree(channel_name);
+		
+		ret = g_slist_concat(ret, gen_replication_channel(c, server_name, nick));
+		
+		cl = g_list_next(cl);
 	}
 
 	if(strlen(mode2string(s->mymodes)))

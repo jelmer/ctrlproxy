@@ -383,7 +383,7 @@ static gboolean log_custom_data(struct line *l)
 	char *nick = NULL;
 	char *user = NULL;
 	FILE *f = NULL;
-	if(!l->args || !l->args[0])return TRUE;
+	if(!l->args || !l->args[0] || l->options & LINE_NO_LOGGING)return TRUE;
 	if(l->origin)nick = strdup(l->origin);
 	if(nick)user = strchr(nick, '!');
 	if(user){ *user = '\0';user++; }

@@ -72,14 +72,6 @@ To build the documentation, run ./configure --enable-docs. Please not that
 a pregenerated version of the documentation is available in the tarball. So, 
 in most cases, you shouldn't need to rebuild.
 
-Petnames
---------
-During the time I have been using ctrlproxy, people have been giving it some 
-weird nick names, you'd probably have to know dutch to understand them:
-
-- ctrlbraxy
-- ctrlprutsy
-
 Quick start
 -----------
 1. Install ctrlproxy (either from debian, or from source, see above)

@@ -477,7 +477,7 @@ static gboolean handle_data(struct line *l) {
 		gl = gl->next;
 	}
 
-	admin_out(l, "Can't find command '%s'", args[0]);
+	admin_out(l, "Can't find command '%s'. Type 'help' for a list of available commands. ", args[0]);
 
 	free(args);
 	free(tmp);

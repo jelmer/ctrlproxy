@@ -34,6 +34,7 @@ gboolean linestack_clear(struct linestack_context *p)
 
 gboolean linestack_add_line(struct linestack_context *p, struct line *l)
 {
+	if(!p || !l) return FALSE;
 	if(!p->functions->add_line) return FALSE;
 	return p->functions->add_line(p, l);
 }

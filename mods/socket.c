@@ -586,8 +586,8 @@ gboolean init_plugin(struct plugin *p) {
 	if(!certf || !keyf) {
 		defaultssl = ctrlproxy_path("ctrlproxy.pem");
 		if(access(defaultssl, R_OK) == 0) {
-			if(!certf) certf = defaultssl;
-			if(!keyf) keyf = defaultssl;
+			if(!certf) certf = strdup(defaultssl);
+			if(!keyf) keyf = strdup(defaultssl);
 			irssi_ssl_set_files(certf, keyf);
 		}
 		free(defaultssl);
@@ -596,6 +596,7 @@ gboolean init_plugin(struct plugin *p) {
 		irssi_ssl_set_files(certf, keyf);
 	}
 #endif
+	free(certf); free(keyf);
 
 	return TRUE;
 }

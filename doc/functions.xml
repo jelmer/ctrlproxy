@@ -223,14 +223,25 @@ struct nick *find_nick(struct channel *c, char *name);
 
 	</sect2>
 
-	<sect2><title>gen_replication()</title>
+	<sect2><title>gen_replication_network()</title>
 
 	<programlisting>
-GSList *gen_replication(struct network *s);
+GSList *gen_replication_network(struct network *s);
 	</programlisting>
 
 	<para>Generates double-linked list of strings that need to be send 
-		to a client to give it a good view of the channels that have been joined, the users on those channels and the modes of those channels.</para>
+		to a client to give it a good view of the channels that have been joined, the users on those channels and the modes of those channels. </para>
+
+	</sect2>
+
+	<sect2><title>gen_replication_channel()</title>
+
+	<programlisting>
+GSList *gen_replication_channel(struct channel *s, char *hostmask, char *nick);
+	</programlisting>
+
+	<para>Generates double-linked list of strings that need to be send 
+		to a client to give it a good view of a channel that ctrlproxy has joined. hostmask should be the name of the server the messages are coming from and nick the name of the user the replication is sent to.</para>
 
 	</sect2>
 

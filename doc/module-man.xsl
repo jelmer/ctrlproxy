@@ -45,7 +45,7 @@
 			<xsl:element name="para">
 				<xsl:text>ctrlproxyrc(5), ctrlproxy(1), </xsl:text>
 				<xsl:element name="ulink"><xsl:attribute name="url"><xsl:text>http://ctrlproxy.vernstok.nl/</xsl:text></xsl:attribute><xsl:text>http://ctrlproxy.vernstok.nl/</xsl:text></xsl:element>
-				<xsl:if test="modulemeta/homepage != ''">
+				<xsl:if test="modulemeta/homepage != '' and modulemeta/homepage != 'http://ctrlproxy.vernstok.nl/'">
 					<xsl:text>, </xsl:text><xsl:element name="ulink"><xsl:attribute name="url"><xsl:value-of select="modulemeta/homepage"/></xsl:attribute><xsl:value-of select="modulemeta/homepage"/></xsl:element>
 				</xsl:if>
 			</xsl:element>

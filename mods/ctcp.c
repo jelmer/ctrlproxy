@@ -33,8 +33,17 @@ static gboolean mhandle_data(struct line *l)
 {
 	char *data, *t, *msg, *dest, *dhostmask = NULL;
 	time_t ti;
-	if(l->direction == TO_SERVER)return TRUE;
+
+	/* Don't answer our own CTCP requests */
+	if(l->direction == TO_SERVER && l->args[2][0] != '\001') {
+		l->options|=LINE_IS_PRIVATE;
+		return TRUE;
+	}
+
+	if(l->direction == TO_SERVER) return TRUE;
+
 	if(strcasecmp(l->args[0], "PRIVMSG") || l->args[2][0] != '\001')return TRUE;
+
 	data = strdup(l->args[2]+1);
 	t = strchr(data, '\001');
 	if(!t){ free(data); return TRUE; }

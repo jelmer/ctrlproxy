@@ -128,7 +128,8 @@ typedef gboolean (*plugin_fini_function) (struct plugin *);
 struct channel *find_channel(struct network *st, char *name);
 struct nick *find_nick(struct channel *c, char *name);
 struct linestack_context *linestack_new_by_network(struct network *);
-GSList *gen_replication(struct network *s);
+GSList *gen_replication_network(struct network *s);
+GSList *gen_replication_channel(struct channel *c, char *hostmask, char *nick);
 int is_channelname(char *name, struct network *s);
 
 /* server.c */

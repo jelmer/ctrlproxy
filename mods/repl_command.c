@@ -26,6 +26,7 @@ static GHashTable *command_backlog = NULL;
 static gboolean log_data(struct line *l) {
 	struct linestack_context *co;
 	struct channel *c;
+	char *nick;
 	char *desc, *networkname;
 
 	if(l->argc < 1)return TRUE;
@@ -35,18 +36,24 @@ static gboolean log_data(struct line *l) {
 	/* Lookup this channel */
 	networkname = xmlGetProp(l->network->xmlConf, "name");
 	asprintf(&desc, "%s/%s", networkname, l->args[1]);
-	xmlFree(networkname);
 	
 	co = g_hash_table_lookup(command_backlog, desc);
 	
 	if(!co) {
+		struct channel *ch = find_channel(l->network, l->args[1]);
 		co = linestack_new_by_network(l->network);
 		g_hash_table_insert(command_backlog, desc, co);
-		linestack_add_line_list( co, gen_replication(l->network));
-	}
+		if(ch) {
+			nick = xmlGetProp(l->network->xmlConf, "nick");
+			linestack_add_line_list( co, gen_replication_channel(ch, networkname, nick));
+			xmlFree(nick);
+		}
+	} 
 	linestack_add_line(co, l);
 
-	free(desc);
+	g_hash_table_replace(command_backlog, desc, co);
+
+	xmlFree(networkname);
 
 	return TRUE;
 }
@@ -121,6 +128,6 @@ gboolean init_plugin(struct plugin *p) {
 	}
 	add_filter("repl_command", log_data);
 	register_admin_command("BACKLOG", repl_command);
-	command_backlog = g_hash_table_new(g_str_hash, g_str_equal);
+	command_backlog = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
 	return TRUE;
 }

@@ -96,8 +96,15 @@ void clean_exit()
 
 void signal_quit(int sig)
 {
+	static int state = 0;
 	g_log(G_LOG_DOMAIN, G_LOG_LEVEL_MESSAGE, "Received signal %d, quitting...", sig);
-	signal(SIGINT, SIG_IGN);
+	if(state == 1) { 
+		signal(SIGINT, SIG_IGN); 
+		exit(0); 
+	}
+
+	state = 1;
+
 	g_log(G_LOG_DOMAIN, G_LOG_LEVEL_MESSAGE, "Closing connections...");
 	g_main_loop_quit(main_loop);
 }
