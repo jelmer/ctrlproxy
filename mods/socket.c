@@ -557,7 +557,9 @@ gboolean init_plugin(struct plugin *p) {
 		cur = cur->next;
 	}
 
+#ifdef HAVE_OPENSSL_SSL_H
 	if(certf && keyf) irssi_ssl_set_files(certf, keyf);
+#endif
 
 	xmlFree(certf); xmlFree(keyf);
 	return TRUE;
