@@ -1,5 +1,4 @@
 #!/usr/bin/env perl
-# (C) 2003 Kyoshiro
 
 use strict;
 use IO::File;
@@ -10,10 +9,10 @@ use Data::Dumper;
 # - add maxlines handling to reprint screen when number of lines printed is over
 # - add maxcolumns handling to auto-cut printed text between words and adjust
 #   title bar
-# - add per network channel/nickserv support
+# - add per network nickserv support
 # - add import config from file support
 # - improve exit message with available ports to connect to
-# - add checks for IRC stuff
+# - add more checks for IRC stuff
 # - add checks/replace for XML write
 
 my $maxcolumns = 80;
@@ -155,16 +154,34 @@ gexes",
             },
         },
     },
+	channels	=> {
+		name	=> {
+			desc	=> "is the channel name, for example #foo",
+			type	=> "text",
+			needed	=> 1,
+			allowed	=> '^[#&$%][^\s\n\r,]+$'
+		},
+		autojoin	=> {
+			desc	=> "tells if ctrlproxy has to connect automatically to network",
+			type	=> "bool",
+		},
+		key			=> {
+			desc	=> "allows you to specify a key to join the channel",
+			type	=> "text",
+		},
+	},
     networks    => {
         nickname    => {
             desc    => "is your nickname on IRC",
             type    => "text",
             needed  => 1,
+			allowed	=> '^[a-zA-Z][-\[\]\\`^{}a-zA-Z0-9]*$',
         },
         username    => {
             desc    => "is the name used for user/ident",
             type    => "text",
             default => $ENV{'USER'},
+			allowed	=> '^\S+$',
         },
         fullname    => {
             desc    => "is the name shown in whois reply",
@@ -558,7 +575,7 @@ EOI
         } elsif ($char eq '3') {
             ConfigureNetworkServers($network);
         } elsif ($char eq '4') {
-            #ConfigureNetworkChans($network);
+            ConfigureNetworkChans($network);
         } elsif ($char eq '5') {
             #ConfigureNetworkNS($network);
         } elsif ($char eq '6') {
@@ -567,6 +584,100 @@ EOI
             return 0;
         }
     }
+}
+
+sub ConfigureNetworkChans {
+    my ($network) = @_;
+	return -1 unless $network;
+
+    while (1)
+    {
+		$title = "Networks - configure $network\'s chans";
+        newScreen();
+        print <<EOI;
+This menu will help you to configure $network\'s channel list.
+
+1. Print channels
+2. Add channel
+3. Delete channel
+0. Return to network configure menu
+EOI
+        my $char = getchar();
+        if ($char eq '1') {
+			PrintChans($network);
+        } elsif ($char eq '2') {
+            AddChan($network);
+        } elsif ($char eq '3') {
+            DelChan($network);
+        } elsif ($char eq '0') {
+            return 0;
+        }
+    }
+}
+
+sub PrintChans {
+	my ($network) = @_;
+	
+	$title = "Networks - configure $network\'s channels";
+    newScreen();
+    if (scalar keys %{$conf{'networks'}->{$network}->{'channels'}} eq 0) {
+		$title = "ERROR";
+        printsleep "No channel has been defined yet !";
+        return 0;
+    }
+	
+	foreach my $chan (sort keys %{$conf{'networks'}->{$network}->{'channels'}}){
+		my $ch = $conf{'networks'}->{$network}->{'channels'}->{$chan};
+		print "\t$chan";
+		print " (".$ch->{'key'}.")" if (defined $ch->{'key'});
+		print " noauto" if (!isYes($ch,'autojoin'));
+		print "\n";
+	}
+    Pause();
+}
+sub AddChan {
+	my ($network) = @_;
+	my ($chan, $aj, $key);
+	
+	$title = "Networks - add a channel to $network";
+    newScreen();
+	$chan = getOption("Channel name",
+			undef,0,"text",$defs{'channels'}->{'name'}->{'allowed'},
+			$conf{'networks'}->{$network}->{'channels'},0,0);
+	return -1 unless $chan;
+    $key = getOption("Channel key",undef,0,"text",undef,undef,0,0);
+	$aj = getOption("Autojoin channel on connect ?",1,1,"bool",undef,undef,0,0);
+
+	$conf{'networks'}->{$network}->{'channels'}->{$chan} = {};
+	$conf{'networks'}->{$network}->{'channels'}->{$chan}->{'key'} = $key if
+		($key);
+	$conf{'networks'}->{$network}->{'channels'}->{$chan}->{'autojoin'} = $aj;
+}
+
+sub SelectChan {
+	my ($network) = @_;
+	
+    if (scalar keys %{$conf{'networks'}->{$network}->{'channels'}} eq 0) {
+		$title = "ERROR";
+        newScreen();
+        printsleep "No channel has been defined yet !";
+        return 0;
+    }
+
+	return getOption("Please choose a channel in the list",undef, 0,"list",
+			$conf{'networks'}->{$network}->{'channels'}, undef, 0,1);
+}
+
+sub DelChan {
+	my ($network) = @_;
+
+	my $chan = SelectChan($network);
+	return -1 unless $chan;
+	my $key = getOption("Are you sure you want to delete $chan from $network",
+			0, 1,"bool",undef,undef,0,1);
+	return 0 unless $key;
+    delete $conf{'networks'}->{$network}->{'channels'}->{$chan};
+    printsleep "Channel $chan deleted from $network.";
 }
 
 sub ConfigureNetworkServers {
@@ -683,8 +794,8 @@ EOI
 sub GenerateSSL {
 	$title = "SSL - generate a certificate";
     newScreen();
-	my $HOSTNAME = getOption("Short hostname to	use","localhost",1,"text",undef,undef,0);
-	my $FQDN = getOption("FQDN to use","localhost.localdomain",1,"text",undef,undef,0);
+	my $HOSTNAME = getOption("Short hostname to	use","localhost",1,"text",'^\S+$',undef,0);
+	my $FQDN = getOption("FQDN to use","localhost.localdomain",1,"text",'^\S+$',undef,0);
     my $file = "$spool/ctrlproxy.pem";
     if (-e $file)
     {
@@ -725,7 +836,7 @@ sub AddNetwork {
 	$title = "Networks - add network";
     newScreen();
 	# $text,$default,$needed,$type,$allowed,$notallowed,$verbose
-	$name = getOption("Enter network name to add",undef,0,"text",undef,$conf{'networks'},0,0);
+	$name = getOption("Enter network name to add (no space)",undef,0,"text",'^\S+$',$conf{'networks'},0,0);
     return -1 unless $name;
         
     $conf{'networks'}->{$name} = {};
@@ -787,7 +898,7 @@ sub AddServer {
 
 	$proto = getOption("IP protocol (IPv)",4,1,"text",'^[46]$',undef,1,0);
 	$port = getOption("Port to connect to",6667,1,"text",'^\d{0,5}$',undef,0,0);
-	$host = getOption("Host/IPv$proto to connect to",undef,1,"text",undef,undef,0,0);
+	$host = getOption("Host/IPv$proto to connect to",undef,1,"text",'^\S+$',undef,0,0);
 	$ssl = getOption("Use SSL",0,1,"bool",undef,undef,1,0);
 	Pause();
 
@@ -816,7 +927,7 @@ sub AddListener {
 	$proto = getOption("IP protocol (IPv)",4,1,"text",'^[46]$',undef,1,0);
 	$port = getOption("Port to listen to",undef,1,"text",'^\d{0,5}$',undef,0,0);
 	$host = getOption("Host/IPv$proto to bind to",($proto eq 4 ? '0.0.0.0' : 
-					                '::'),1,"text",undef,undef,0,0);
+					                '::'),1,"text",'^\S+$',undef,0,0);
 	$ssl = getOption("Use SSL",0,1,"bool",undef,undef,1,0);
 	Pause();
 
@@ -954,6 +1065,20 @@ sub PrintNetwork {
 
     print "\nChannels to join (* password protected, ° no autojoin):\n";
     if (defined $conf{'networks'}->{$net}->{'channels'}) {
+		my $start = 1;
+		foreach my $chan (sort keys %{$conf{'networks'}->{$net}->{'channels'}}) {
+			if (!$start) {
+				print ", ";
+			} else {
+				$start = 0;
+			}
+			print "*" if defined
+				$conf{'networks'}->{$net}->{'channels'}->{$chan}->{'key'};
+			print "°" unless 
+				isYes($conf{'networks'}->{$net}->{'channels'}->{$chan},
+						'autojoin');
+			print $chan;
+		}
 	} else {
         print "\tNo channels defined yet !\n";
     }
@@ -1174,6 +1299,13 @@ sub WriteConfig {
 		}
 		print $fh "      </servers>\n\n";
 		
+		foreach my $ch (sort keys %{$net->{'channels'}}) {
+			my $hash = $net->{'channels'}->{$ch};
+			my ($aj,$key);
+			$aj = (isYes($hash,'autojoin') ? 'autojoin="1" ' : 'autojoin="0" ');
+			$key = 'key="'.$hash->{'key'}.'" ' if defined $hash->{'key'};
+			print $fh '      <channel name="'.$ch.'" '.$aj.$key.'/>'."\n";
+		}
 	
 		print $fh '    </network>'."\n";
 	}
