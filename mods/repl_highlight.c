@@ -27,7 +27,6 @@ static GHashTable *highlight_backlog = NULL;
 static gboolean log_data(struct line *l) {
 	struct linestack_context *co = (struct linestack_context *)g_hash_table_lookup(highlight_backlog, l->network);
 	xmlNodePtr cur;
-	struct channel *c;
 
 	if(!co) {
 		co = linestack_new_by_network(l->network);

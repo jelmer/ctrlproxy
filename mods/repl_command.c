@@ -20,12 +20,12 @@
 #define _GNU_SOURCE
 #include "ctrlproxy.h"
 #include <string.h>
+#include "admin.h"
 
 static GHashTable *command_backlog = NULL;
 
 static gboolean log_data(struct line *l) {
 	struct linestack_context *co;
-	struct channel *c;
 	char *nick;
 	char *desc, *networkname;
 
@@ -121,7 +121,6 @@ static void repl_command(char **args, struct line *l)
 }
 
 gboolean init_plugin(struct plugin *p) {
-	char *ival;
 	if(!plugin_loaded("admin") && !plugin_loaded("libadmin")) {
 		g_warning("admin module required for repl_command module. Please load it first");
 		return FALSE;

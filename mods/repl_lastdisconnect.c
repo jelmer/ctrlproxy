@@ -29,7 +29,7 @@ static gboolean log_data(struct line *l) {
 
 	if(!co) {
 		co = linestack_new_by_network(l->network);
-		linestack_add_line_list( co, gen_replication(l->network));
+		linestack_add_line_list( co, gen_replication_network(l->network));
 		g_hash_table_insert( lastdisconnect_backlog, l->network, co);
 	}
 
@@ -84,7 +84,7 @@ static gboolean lastdisconnect_replicate(struct client *c)
 	struct linestack_context *replication_data = (struct linestack_context *)g_hash_table_lookup(lastdisconnect_backlog, c->network);
 	if(!replication_data) {
 		replication_data = linestack_new_by_network(c->network);
-		linestack_add_line_list(replication_data, gen_replication(c->network));
+		linestack_add_line_list(replication_data, gen_replication_network(c->network));
 	}
 	linestack_send(replication_data, c->incoming);
 	return TRUE;

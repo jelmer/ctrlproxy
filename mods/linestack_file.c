@@ -21,6 +21,7 @@
 #include "ctrlproxy.h"
 #include <string.h>
 #include <fcntl.h>
+#include <unistd.h>
 #include <stdio.h>
 
 struct file_information {
@@ -37,7 +38,6 @@ static gboolean file_init(struct linestack_context *c, char *args)
 		d->filename = strdup(args);
 	} else  {
 		int tmpfd;
-		char *tmpname;
 		char *p = ctrlproxy_path("linestack_file");
 		mkdir(p, 0700);
 		asprintf(&d->filename, "%s/XXXXXX", p);

@@ -76,6 +76,7 @@ struct channel *find_add_channel(struct network *st, char *name) {
 	if(c)return c;
 	c = malloc(sizeof(struct channel));
 	memset(c, 0, sizeof(struct channel));
+	c->network = st;
 	st->channels = g_list_append(st->channels, c);
 
 	/* check if there is a XML node for this channel yet */

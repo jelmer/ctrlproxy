@@ -88,6 +88,7 @@ struct channel {
 	char namreply_started;
 	long limit;
 	GList *nicks;
+	struct network *network;
 };
 
 struct client {

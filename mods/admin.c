@@ -344,7 +344,6 @@ static void save_config (char **args, struct line *l)
 
 static void help (char **args, struct line *l)
 {
-	int i;
 	GList *gl = commands;
 	admin_out(l, "The following commands are available:");
 	while(gl) {
@@ -421,9 +420,8 @@ static struct admin_command builtin_commands[] = {
 };
 
 static gboolean handle_data(struct line *l) {
-	char *tmp, **args = NULL, *p, *n;
+	char *tmp, **args = NULL, *p;
 	int cmdoffset = 0;
-	int curarg = 0;
 	int i;
 	GList *gl;
 	if(l->direction != TO_SERVER) return TRUE;

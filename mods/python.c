@@ -30,6 +30,7 @@
 #include "ctrlproxy.h"
 #include <string.h>
 #include "irc.h"
+#include "admin.h"
 #include "python_libxml_wrap.h"
 
 xmlNodePtr xmlConf;
@@ -112,7 +113,6 @@ static PyObject *NAME(void *c) { \
 	rv->ptr = c; \
 	return (PyObject *)rv; \
 }
-// 	rv->ptr = PyCObject_FromVoidPtr(c, &de_alloc); \
 
 struct script_thread {
 	char *script;
@@ -178,7 +178,6 @@ static PyObject * PyCtrlproxyLog_log(PyCtrlproxyLog *self, PyObject *args, PyObj
 	char *msg = NULL;
 	char **smsg = NULL;
 	int i;
-	PyObject *rv = NULL;
 
     if (! PyArg_ParseTupleAndKeywords(args, kwds, "|is:log", kwlist,
                                       &log_level,&msg))
@@ -198,7 +197,6 @@ static PyObject * PyCtrlproxyLog_log(PyCtrlproxyLog *self, PyObject *args, PyObj
 static PyObject * PyCtrlproxyLog_write(PyCtrlproxyLog *self, PyObject *args, PyObject *kwds)
 {
 	char *msg = NULL;
-	PyObject *rv = NULL;
 
     if (! PyArg_ParseTuple(args, "|s:write",
 										&msg)) // |z is not unicode save
@@ -269,7 +267,7 @@ static PyTypeObject PyCtrlproxyLogType = {
 // NETWORK
 
 static PyObject * PyCtrlproxyNetwork_get(PyCtrlproxyObject *self, void *closure) {
-	printf("--GET%s\n",closure);
+	printf("--GET%s\n", (char *)closure);
 	return PyString_FromString("Blubb");
 }
 static int PyCtrlproxyNetwork_set(PyCtrlproxyObject *self, PyObject *var, void *closure) {
@@ -394,7 +392,6 @@ PYCTRLPROXY_CREATEWRAPPER(createNetworkObject,PyCtrlproxyNetworkType);
 static PyObject * PyCtrlproxyClient_get(PyCtrlproxyObject *self, void *closure) {
 	struct client *l = NULL;
 	PyObject *rv = NULL;
-	int i = 0;
 
 	printf("Client access at %p\n",self->ptr);
 
@@ -426,8 +423,7 @@ static PyObject * PyCtrlproxyClient_get(PyCtrlproxyObject *self, void *closure) 
 
 static PyObject * PyCtrlproxyClient_send(PyCtrlproxyObject *self, PyObject *args, PyObject *kwds) {
 	static char *kwlist[] = {"msg",NULL};
-	char *msg, *nick,*tot;
-	PyObject *rv = NULL;
+	char *msg;
 	struct client *c = NULL;
 
 	printf("Client send at %p\n",self->ptr);
@@ -614,8 +610,6 @@ static PyObject * PyCtrlproxyLine_get(PyCtrlproxyObject *self, void *closure) {
 
 static int PyCtrlproxyLine_set(PyCtrlproxyObject *self, PyObject *var, void *closure) {
 	struct line *l = NULL;
-	PyObject *rv = NULL;
-	int i = 0;
 
 	if(self->ptr == NULL) {
 		PyErr_SetString(PyExc_TypeError, "Line Object is not initialized");
@@ -714,8 +708,8 @@ static void list_scripts(struct line *l)
 	while(g) {
 		struct script_thread *p = (struct script_thread *)g->data;
 		if(l != NULL)
-			admin_out(l, "#%i: %s",p->id,p->script);
-		printf("ID:%i:%s\n",p->id,p->script);
+			admin_out(l, "#%d: %s",p->id,p->script);
+		printf("ID:%d:%s\n",p->id,p->script);
 		g = g->next;
 	}
 }
@@ -723,15 +717,13 @@ static void list_scripts(struct line *l)
 
 static void in_admin_command(char **args, struct line *l)
 {
-	GList *gl = loaded_scripts;
-
 	if(args[1] != NULL && !strcasecmp("load", args[1]) && args[2] != NULL) {
 		printf("Python Load %s\n", args[2]);
 		in_load(args[2],NULL);
 		return;
 	}
 	if(args[1] != NULL && !strcasecmp("unload", args[1]) && args[2] != NULL) {
-		printf("Python Unload %i\n", args[2]);
+		printf("Python Unload %s\n", args[2]);
 		in_unload(atoi(args[2]),l);
 		return;
 	}
@@ -756,8 +748,6 @@ PYCTRLPROXY_PYADDCALLBACK(py_add_rcv_data_hook,py_rcv_hooks)
 
 static gboolean in_rcv_data(struct line *l) {
 	// python shell support
-	int cmdoffset = 0;
-
 	printf("ORGCLIENT %p\n",&l->client);
 	printf("ORGNET %p\n",&l->network);
 	printf("ORGCLIENTNET %p\n",&l->client->network);
@@ -772,11 +762,11 @@ static gboolean in_rcv_data(struct line *l) {
 		printf("PYSHELLSUPPORT\n");
 	}
 */
+	return TRUE;
 }
 
 static PyObject * py_del_rcv_data_hook(PyObject *self, PyObject *args, PyObject *keywds) {
     char *command;
-    int sts;
 
     if (!PyArg_ParseTuple(args, "s", &command))
         return NULL;
@@ -934,7 +924,6 @@ static void in_py_admin_command(char **args, struct line *l)
 static PyObject * py_add_admin_command(PyObject *self, PyObject *args, PyObject *kwds) {
 	static char *kwlist[] = {"name","callback",NULL};
 	char *name = NULL;
-	PyObject *rv = NULL;
 	PyObject *temp = NULL;
 	struct admin_callback_object *c;
 
@@ -1038,7 +1027,6 @@ static PyObject * PyCtrlproxy_unloadmodule(PyObject *self, PyObject *args, PyObj
 
 static PyObject * PyCtrlproxy_listmodules(PyObject *self, PyObject *args, PyObject *kwds){
 	GList *g = plugins;
-	char *module = NULL;
 	PyObject *rv = NULL;
 
     //if (! PyArg_ParseTuple(args, kwds, ":list_modules"))
@@ -1080,7 +1068,6 @@ static PyObject * PyCtrlproxy_read_config(PyObject *self, PyObject *args, PyObje
 
 static PyObject * PyCtrlproxy_getconfig(PyObject *self, PyObject *args, PyObject *kwds){
 	static char *kwlist[] = {"type",NULL};
-	GList *g = plugins;
 	char *type = NULL;
 	PyObject *rv = NULL;
 
@@ -1152,18 +1139,12 @@ gboolean in_load(char *c,PyObject *attrs) {
 	PyCtrlproxyLog *stdout;
 	PyCtrlproxyLog *stderr;
 
-	if (PyType_Ready(&PyCtrlproxyLogType) < 0)
-        return;
-	if (PyType_Ready(&PyCtrlproxyLineType) < 0)
-        return;
-	if (PyType_Ready(&PyCtrlproxyClientType) < 0)
-        return;
-	if (PyType_Ready(&PyCtrlproxyNetworkType) < 0)
-        return;
-	/*if (PyType_Ready(&PyCtrlproxyNickType) < 0)
-        return;
-	if (PyType_Ready(&PyCtrlproxyChannelType) < 0)
-        return;
+	if (PyType_Ready(&PyCtrlproxyLogType) < 0) return FALSE;
+	if (PyType_Ready(&PyCtrlproxyLineType) < 0) return FALSE;
+	if (PyType_Ready(&PyCtrlproxyClientType) < 0) return FALSE;
+	if (PyType_Ready(&PyCtrlproxyNetworkType) < 0) return FALSE;
+	/*if (PyType_Ready(&PyCtrlproxyNickType) < 0) return FALSE;
+	if (PyType_Ready(&PyCtrlproxyChannelType) < 0) return FALSE;
 	*/
 
 	fp = fopen(c,"r");
@@ -1183,8 +1164,7 @@ gboolean in_load(char *c,PyObject *attrs) {
 	PyImport_AddModule("ctrlproxy");
 	m = Py_InitModule("ctrlproxy", CtrlproxyMethods);
 
-	if (m == NULL)
-      return;
+	if (m == NULL) return FALSE;
 
 	PyModule_AddIntConstant(m, "RECURSION", G_LOG_FLAG_RECURSION);
 	PyModule_AddIntConstant(m, "FATAL", G_LOG_FLAG_FATAL);
@@ -1264,6 +1244,7 @@ gboolean in_unload(int i,struct line *l) {
 		}
 		g = g->next;
 	}
+	return FALSE;
 }
 
 static void init_finish() {
@@ -1292,8 +1273,6 @@ static void init_finish() {
 }
 
 gboolean init_plugin(struct plugin *p) {
-	xmlNodePtr cur;
-	GList *gl = NULL;
 	PyObject *pyxml = NULL;
 
 	xmlConf = p->xmlConf;

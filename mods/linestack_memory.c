@@ -24,6 +24,7 @@
 gboolean memory_init(struct linestack_context *c, char *args)
 {
 	c->data = NULL;
+	return TRUE;
 }
 
 gboolean memory_clear(struct linestack_context *c)
@@ -35,6 +36,7 @@ gboolean memory_clear(struct linestack_context *c)
 		gl = g_slist_next(gl);
 	}
 	g_slist_free(c->data); c->data = NULL;
+	return TRUE;
 }
 
 GSList *memory_get_linked_list(struct linestack_context *c)
