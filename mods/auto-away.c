@@ -28,6 +28,7 @@ static gboolean only_for_noclients = FALSE;
 static gboolean is_away = FALSE;
 
 static char *message = NULL;
+static char *nick = NULL;
 
 struct auto_away_data {
 	guint timeout_id;
@@ -44,6 +45,7 @@ static gboolean check_time(gpointer user_data) {
 				asprintf(&new_msg, ":%s", message?message:"Auto Away");
 				irc_send_args(s->outgoing, "AWAY", new_msg, NULL);
 				free(new_msg);
+				if(nick) irc_send_args(s->outgoing, "NICK", nick, NULL);
 			}
 			sl = g_list_next(sl);
 		}
@@ -100,6 +102,8 @@ gboolean init_plugin(struct plugin *p) {
 			t = xmlGetProp(cur, "time"); 
 		} else if(!xmlIsBlankNode(cur) && !strcmp(cur->name, "only_noclient")) {
 			only_for_noclients = TRUE;
+		} else if(!xmlIsBlankNode(cur) && !strcmp(cur->name, "nick")) {
+			nick = xmlNodeGetContent(cur);
 		}
 		cur = cur->next;
 	}

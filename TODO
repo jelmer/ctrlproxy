@@ -9,7 +9,6 @@
 - use new filter system
 - add timer that uses current_plugin
 - support running from inetd
-- module for changing nick when detaching
 - repl_limited (repl_simple with limited number of lines)
 - dircproxy-config-to-ctrlproxyrc script
 - connect-class like system
