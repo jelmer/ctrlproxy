@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <glib/glib.h>
 #include "ctrlproxy.h"
 
 FILE *debugfd = NULL;
@@ -22,6 +23,7 @@ int main(int argc, char **argv)
 	char *raw;
 
 	/* FIXME: Load specified plugin */
+	
 
 	if(!ff) {
 		fprintf(stderr, "Module doesn't provide filter\n");

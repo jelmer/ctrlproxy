@@ -13,7 +13,7 @@ man5dir = @mandir@/man5
 datadir = @datadir@/ctrlproxy
 
 CFLAGS+=-ansi -Wall -DMODULESDIR=\"$(modulesdir)\"
-OBJS = server.o line.o main.o state.o util.o transport.o hooks.o linestack.o
+OBJS = server.o line.o main.o state.o util.o transport.o hooks.o linestack.o plugins.o
 BINS = @BINS@
 
 .PHONY: all clean distclean install install-bin install-dirs install-doc install-data install-mods install-pkgconfig

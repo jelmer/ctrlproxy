@@ -11,7 +11,7 @@
 - add NICK to repl_* in repl_command, repl_highlight, repl_lastdisconnect
 - replace transports by IOChannels?
  - support running from inetd
-- fix issue with non-blocking connect
+ - fix issue with non-blocking connect
 - dcc module
 
 report_time:
