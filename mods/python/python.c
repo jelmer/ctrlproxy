@@ -34,7 +34,7 @@
 #include "libxml_wrap.h"
 #include "../admin.h"
 
-xmlNodePtr xmlConf;
+xmlNodePtr python_xmlConf;
 
 static GList *py_rcv_hooks = NULL;
 static GList *py_lose_client_hooks = NULL;
@@ -2130,7 +2130,7 @@ gboolean in_unload(int i,struct line *l) {
 When name is NULL, every script with autoload = 1 will be loaded.
 */
 static void in_load_from_config(char *name) {
-	xmlNodePtr cur = xmlConf->xmlChildrenNode;
+	xmlNodePtr cur = python_xmlConf->xmlChildrenNode;
 	while(cur) {
 		xmlNodePtr curargs;
 		PyObject *args = NULL;
@@ -2304,7 +2304,7 @@ gboolean init_plugin(struct plugin *p) {
 	PyObject *pyxml = NULL;
 	xmlNodePtr cur;
 
-	xmlConf = p->xmlConf;
+	python_xmlConf = p->xmlConf;
 
 
 	if(!plugin_loaded("admin") && !plugin_loaded("libadmin")) {
@@ -2314,7 +2314,7 @@ gboolean init_plugin(struct plugin *p) {
 	}
 
 	//add_motd_hook("python_motd", in_motd_hook);
-	cur = xmlConf->xmlChildrenNode;
+	cur = python_xmlConf->xmlChildrenNode;
 	while(cur) {
 		char *name;
 		char *value;
