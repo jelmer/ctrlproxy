@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<html>
+	<header>
+	<title>%title%</title>
+	<link rel="stylesheet" type="text/css" media="screen" href="/default.css" />
+	</header>
+	<body>
+	<table class="head">
+		<tr>
+			<td><p class="title">Ctrlproxy webconfig</p></td>
+			<td><p class="mirror"><a href="http://ctrlproxy.vernstok.nl/">homepage</a></p></td>
+		</tr>
+	</table>
+	<table class="main">
+		<tr><td><table class="menu">
+
+%links%
+
+</table></td><td class="content">
+
+{contents}
+
+{menu_links}
+<tr><td><a class="menu" href="/%link%">%name%</a></td></tr>
+{/menu_links}
+
+{info}
+<p>%msg%</p>
+{/info}
+
+{warning}
+<p class="warning">%msg%</p>
+{/warning}
+
+{example}
+<p><pre>%contents%</pre></p>
+{/example}
+
+
+
+// NETWORKS
+
+{networks}
+<table class="infos">
+<tr><th class="topic" colspan="5">Networks</th></tr>
+%contents%
+<tr><td class="title">New</td><td colspan="4" type="value"><form action="/networks/new" method="post"><input name="name"></form></td></tr>
+</table>
+{/networks}
+
+{networks_row}
+<tr><td class="title"><a href="/networks/view/%uname%">%name%</a></td>
+<td class="%cl%">%status%</td>
+<td class="value"><a href="/networks/%do%/%uname%">%dotxt%</a></td>
+<td class="value"><a href="/networks/view/%uname%">view</a></td>
+<td class="value"><a href="/networks/edit/%uname%">edit</a></td>
+</tr>
+{/networks_row}
+
+// DEFAULT INFO BOX
+
+{infos}
+<table class="infos">
+<tr><th class="topic" colspan="%colspan%">%title%</th></tr>
+%contents%
+</table>
+{/infos}
+
+{infos2}
+<table class="infos2">
+<tr><th class="topic" colspan="%colspan%">%title%</th></tr>
+%contents%
+</table>
+{/infos2}
+
+{topic}
+<tr><th class="topic" colspan="%colspan%">%contents%</th></tr>
+{/topic}
+
+
+{row}
+<tr>%contents%</tr>
+{/row}
+
+{cell}
+<td>%contents%</td>
+{/cell}
+
+{cell_cl}
+<td class="%cl%">%contents%</td>
+{/cell_cl}
+
+{cell_span_cl}
+<td class="%cl%" colspan="%colspan%">%contents%</td>
+{/cell_span_cl}
+
+{span_row_cl}
+<tr><td class="%cl%" colspan="%colspan%">%contents%</td></tr>
+{/span_row_cl}
+
+{empty_row}
+<tr><td colspan="%colspan%">&nbsp;</td></tr>
+{/empty_row}
+
+{pair_row}
+<tr><td class="title">%title%</td><td class="value">%contents%</td></tr>
+{/pair_row}
+
+{pair_row_desc}
+<tr><td class="title">%title%</td><td class="value">%contents%</td><td class="description">%description%</td></tr>
+{/pair_row_desc}
+
+
+{a_func}
+<a class="func" href="%href%">%name%</a>
+{/a_func}
+
+{a}
+<a href="%href%">%name%</a>
+{/a}
+{a_line}
+<a href="%href%">%name%</a><br>
+{/a_line}
+
+
+// FORM ELEMENTS
+
+{form}
+<form method="post" action="%action%">
+%contents%
+</form>
+{/form}
+
+{select}
+<select name="%name%">
+%contents%
+</select>
+{/select}
+
+{option}
+<option value="%value%" %selected%>%name%</option>
+{/option}
+
+{toggle}
+<select name="%name%">
+<option value="0" %off%>%no%</option>
+<option value="1" %on%>%yes%</option>
+</select>
+{/toggle}
+
+{submit}
+<input type="submit" value="%title%" />
+{/submit}
+
+{input}
+<input name="%name%" value="%value%" />
+{/input}
+
+{password}
+<input type="password" name="%name%" value="%value%" />
+{/password}
+
+{br}
+<br />
+{/br}
+
+{/contents}
+
+</body>
+</html>

@@ -13,12 +13,13 @@ import os.path
 import cgi
 import time
 import mimetypes
-from pages import *
 import ctrlproxy
 import traceback
 import string
 import cStringIO
 import sys
+import SocketServer
+from pages import *
 
 version = 0.1
 
@@ -27,7 +28,12 @@ print ctrlproxy.args
 pages = {}
 statics = []
 
+sys.path.append(os.path.join(os.path.dirname(__file__),"includes"))
+
 top = os.path.join(os.path.dirname(__file__),"pages")
+
+class ThreadHTTPServer(SocketServer.ThreadingTCPServer, BaseHTTPServer.HTTPServer):
+	pass
 
 class SendFile(page):
 	"""Serves a File"""
@@ -132,6 +138,7 @@ class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
 		self.do_GET()
 
 
+#def run(server_class=ThreadHTTPServer, handler_class=Handler):
 def run(server_class=BaseHTTPServer.HTTPServer, handler_class=Handler):
 	try:
 		server_address = ('', int(ctrlproxy.args["port"].content))

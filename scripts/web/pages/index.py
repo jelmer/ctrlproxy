@@ -10,11 +10,15 @@ from __init__ import *
 
 
 class index(page):
+	title = "Ctrlproxy"
+
 	def send(self):
 		self.header()
+		self.openTemplate()
 		self.html_header("Ctrlproxy configuration")
-		self.wfile.write("""Welcome to ctrlproxy webconfig""")
-		self.html_footer()
+		self.t.write(self.tmpl.format('info',
+					msg="""Welcome to ctrlproxy webconfig"""))
+		self.footer()
 
 def init():
 	add_menu("","Start",0)

@@ -6,7 +6,10 @@
 #
 ###########################################################################
 
-version = 0.1
+import includes.templayer as templayer
+import os.path
+
+version = 0.4
 
 menu = []
 
@@ -19,47 +22,41 @@ def add_menu(site, name, priority):
 		i += 1
 	menu.append((site,name,priority))
 
+def nstr(value):
+		if value != None:
+			return str(value)
+		return ""
+
 def selectedSwitch(var):
 	if var == '1' or var == 1:
 		return ' selected="1" '
+	return ""
+
+def sel(test):
+	if test:
+		return templayer.RawHTML('selected="selected"')
 	return ""
 
 class page:
 	def __init__(self, handler):
 		self.handler = handler
 		self.wfile = handler.wfile
+		# tmp
+		reload(templayer)
 
-	def html_header(self, title):
-		self.wfile.write("""
-		<?xml version="1.0" encoding="iso-8859-1"?>
-		<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-		<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
-		<html>
-			<header>
-			<title>""" + title + """</title>
-			<link rel="stylesheet" type="text/css" media="screen" href="/default.css" />
-			</header>
-			<body>
-			<table class="head">
-				<tr>
-					<td><p class="title">Ctrlproxy webconfig</p></td>
-					<td><p class="mirror"><a href="http://ctrlproxy.vernstok.nl/">homepage</a></p></td>
-				</tr>
-			</table>
-			<table class="main">
-				<tr><td><table class="menu">""")
+	def html_header(self, title = None):
+
+		links = []
 		for (p,n,pi) in menu:
-			self.wfile.write('<tr><td><a class="menu" href="/%s">%s</a></td></tr>\n' %(p,n))
-		self.wfile.write("""
-		</table></td><td class="content">
-		""")
+			links.append(self.tmpl.format("menu_links", link=p, name=n))
+
+		if title == None:
+			self.t = self.tmplf.open( title=self.title, links=links)
+		else:
+			self.t = self.tmplf.open( title=title, links=links)
 
 	def html_footer(self):
-		self.wfile.write("""
-		</td></tr>
-		</table>
-		</body></html>
-		""")
+		pass;
 
 	def index(self):
 		pass
@@ -69,8 +66,16 @@ class page:
 		self.handler.send_header("Content-type", ctype)
 		self.handler.end_headers()
 
+	def openTemplate(self, name = "includes/default.tmpl"):
+		self.tmpl = templayer.HtmlTemplate(os.path.join(os.path.dirname(__file__),"..","includes","default.tmpl"))
+		self.tmplf = self.tmpl.start_file(self.wfile)
+
+	def footer(self):
+		self.tmplf.close()
+
 	def send_default(self, pages):
 		self.header()
+		self.openTemplate()
 		self.html_header(self.title)
 
 		if len(self.handler.splited_path) == 1:
@@ -84,6 +89,13 @@ class page:
 				self.index()
 		else:
 			self.index()
-		self.html_footer()
 
+		self.footer()
+
+	def _input(self, dscnode, name, value):
+		if dscnode.prop("type") == "bool":
+			return self.tmpl.format("toggle", yes="Yes", no="No", name=name,
+						on=sel(value == "1"),
+						off=sel(value in ["0","",None]))
+		return self.tmpl.format("input", name=name, value=value)
 

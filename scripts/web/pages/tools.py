@@ -7,7 +7,6 @@
 ###########################################################################
 
 import ctrlproxy
-import cgi
 from __init__ import *
 
 class tools(page):
@@ -15,24 +14,25 @@ class tools(page):
 
 	def save(self):
 		ctrlproxy.save_config()
-		self.wfile.write("""<p class="info">Saved</p>""")
+		self.t.write(self.tmpl.format("info", msg="Saved"))
+		self.index()
 
 	def viewconfig(self):
 		node = ctrlproxy.get_config("")
-		self.wfile.write("""<pre>""")
-		self.wfile.write(cgi.escape(node.serialize()))
-		self.wfile.write("""</pre>""")
+		x = self.t.open_layer("example")
+		x.write(node.serialize())
 
 	def shutdown(self):
 		ctrlproxy.exit(0)
 
 
 	def index(self):
-		self.wfile.write("""
-		<a href="/tools/save">Save configuration</a><br />
-		<a href="/tools/viewconfig">View configuration</a><br />
-		<a href="/downloadconfig">Download configuration</a><p />
-		<a href="/tools/shutdown">Shutdown Ctrlproxy</a><br />""")
+
+		self.t.write(self.tmpl.format("a_line", href="/tools/save", name="Save configuration"))
+		self.t.write(self.tmpl.format("a_line", href="/tools/viewconfig", name="View configuration"))
+		self.t.write(self.tmpl.format("a_line", href="/downloadconfig", name="Download configuration"))
+		self.t.write(self.tmpl.format("br"))
+		self.t.write(self.tmpl.format("a_line", href="/tools/shutdown", name="Shutdown ctrlproxy"))
 
 	def send(self):
 		pages = {

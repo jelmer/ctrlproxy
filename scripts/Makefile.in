@@ -2,7 +2,7 @@ prefix = @prefix@
 exec_prefix = @exec_prefix@
 INSTALL = @INSTALL@
 scriptdir = @datadir@/ctrlproxy/scripts
-SUBDIRS = webconfig
+SUBDIRS = web
 SCRIPTS = 
 
 .PHONY: all install clean distclean
