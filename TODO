@@ -1,4 +1,5 @@
 - test report_time
+- test linestack_file
 - test repl_command
 - finish configuration utility (worked on by Kyoshiro)
 - internationalization (i18n)

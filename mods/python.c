@@ -1612,7 +1612,7 @@ static PyObject * PyCtrlproxy_disconnect_network(PyObject *self, PyObject *args,
 	while(l) {
 		struct network *n = (struct network *)l->data;
 		if(!strcasecmp(xmlGetProp(n->xmlConf, "name"), net)) {
-			close_server(n);
+			close_network(n);
 			Py_INCREF(Py_None);
 			return Py_None;
 		}
