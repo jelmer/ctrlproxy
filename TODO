@@ -2,7 +2,6 @@
 - update documentation
 - automated testsuite
 - add member 'nick' to struct line
-- add more help data
 - internationalization (i18n)
 - add timer that uses current_plugin
 - repl_limited (repl_simple with limited number of lines)

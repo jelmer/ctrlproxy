@@ -123,12 +123,12 @@ static void repl_command(char **args, struct line *l)
 char *name_plugin = "repl_command";
 
 gboolean init_plugin(struct plugin *p) {
-	if(!plugin_loaded("admin") && !plugin_loaded("libadmin")) {
+	if(!plugin_loaded("admin")) {
 		g_warning("admin module required for repl_command module. Please load it first");
 		return FALSE;
 	}
 	add_filter_ex("repl_command", log_data, "replicate", 1000);
-	register_admin_command("BACKLOG", repl_command, "[channel]", NULL);
+	register_admin_command("BACKLOG", repl_command, "[channel]", "Send backlogs for this network or a channel, if specified");
 	command_backlog = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
 	return TRUE;
 }
