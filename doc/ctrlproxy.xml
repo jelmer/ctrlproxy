@@ -76,7 +76,6 @@
 &repl-lastdisconnect;
 &socket;
 &noticelog;
-&stats;
 &strip;
 &log-custom;
 &nickserv;
