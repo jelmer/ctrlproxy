@@ -24,10 +24,10 @@ all: $(BINS)
 	$(MAKE) -C scripts all
 @DOCBUILDE@	$(MAKE) -C doc all
 
-ctrlproxy: $(OBJS)
+ctrlproxy@EXEEXT@: $(OBJS)
 	$(CC) $(LIBS) -rdynamic -o $@ $(OBJS)
 
-%.o: %.c
+%.@OBJEXT@: %.c
 	$(CC) $(CFLAGS) -c $<
 
 install: all install-dirs install-doc install-bin install-mods install-data install-pkgconfig install-scripts install-locale
@@ -45,7 +45,7 @@ install-locale:
 	$(MAKE) -C po install
 	
 install-bin:
-	$(INSTALL) ctrlproxy $(DESTDIR)$(bindir)
+	$(INSTALL) ctrlproxy@EXEEXT@ $(DESTDIR)$(bindir)
 	$(INSTALL) ctrlproxy-setup $(DESTDIR)$(bindir)
 
 install-doc:
@@ -71,7 +71,7 @@ install-pkgconfig:
 	$(INSTALL) ctrlproxy.pc $(DESTDIR)@libdir@/pkgconfig
 
 clean:
-	rm -f *.o ctrlproxy printstats *~
+	rm -f *.@OBJEXT@ ctrlproxy@EXEEXT@ printstats *~
 	$(MAKE) -C mods clean
 @DOCBUILDE@	$(MAKE) -C doc clean
 	$(MAKE) -C testsuite clean
