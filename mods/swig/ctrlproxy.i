@@ -44,7 +44,7 @@
 		free_line(self);
 	}
 
-	const char *toString() {
+	const char *__str__() {
 		return irc_line_string(self);
 	}
 

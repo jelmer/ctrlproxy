@@ -9,7 +9,7 @@ LDFLAGS +=
 
 all: build libpython2.so
 
-lib%.so: %.o
+lib%.so: %.c
 	$(CC) $(LDFLAGS) $(PYLDFLAGS) -shared -o $@ $<
 
 %.o: %.c
