@@ -348,7 +348,7 @@ static int connect_ip(struct transport_context *c)
         if (setsockopt(sock, IPPROTO_IP, IP_TOS, &socket_tos, sizeof(socket_tos)) < 0)
                 g_log(G_LOG_DOMAIN, G_LOG_LEVEL_WARNING, "setsockopt IP_TOS %d: %.100s:", socket_tos, strerror(errno));
 
-	set_nonblock_flag(sock,1);
+//FIXME	set_nonblock_flag(sock,1);
 
 	if(ipv6) {
 		memcpy((char *)&name6.sin6_addr, hostinfo->h_addr, hostinfo->h_length);
@@ -507,7 +507,7 @@ static int listen_ip(struct transport_context *c)
 		return -1;
 	}
 
-	set_nonblock_flag(sock,1);
+//FIXME	set_nonblock_flag(sock,1);
 
 	g_log(G_LOG_DOMAIN, G_LOG_LEVEL_MESSAGE, "Listening on port %d(socket %d)", port, sock);
 
@@ -571,7 +571,7 @@ static int listen_pipe(struct transport_context *c)
 		return -1;
 	}
 
-	set_nonblock_flag(sock,1);
+//FIXME	set_nonblock_flag(sock,1);
 
 	g_message("Listening on socket at %s(%d)", f, sock);
 

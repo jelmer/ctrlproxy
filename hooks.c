@@ -55,8 +55,7 @@ static struct filter_class *find_filter_class(char *name)
 	GList *gl = filter_classes;
 	while(gl) {
 		struct filter_class *c = (struct filter_class *)gl->data;
-		if(c->name == NULL && name == NULL) return c;
-		if(c->name && !strcmp(c->name, name)) return c;
+		if(!strcmp(c->name, name)) return c;
 		gl = gl->next;
 	}
 	return NULL;
@@ -69,9 +68,8 @@ void add_filter_class(char *name, int prio)
 	if(find_filter_class(name)) return;
 	
 	c = (struct filter_class *)malloc(sizeof(struct filter_class));
-	if(name)c->name = strdup(name);
-	else c->name = NULL;
-
+	c->name = strdup(name);
+	
 	c->filters = NULL;
 
 	c->priority = prio;
@@ -102,7 +100,7 @@ gboolean add_filter_ex(char *name, filter_function f, char *class, int prio)
 
 void add_filter(char *name, filter_function f) 
 {
-	add_filter_ex(name, f, NULL, 500);
+	add_filter_ex(name, f, "", 500);
 }
 
 void del_filter(filter_function f)
@@ -167,14 +165,14 @@ gboolean filters_execute(struct line *l)
 {
 	GList *cl = filter_classes;
 	struct filter_class *c;
-	c = find_filter_class(NULL);
+	c = find_filter_class("");
 	if(!filter_class_execute(c, l)) return FALSE;
 	
 	while(cl) {
 		c = (struct filter_class *)cl->data;
-		if(c->name && !strcmp(c->name, "client")) {
+		if(!strcmp(c->name, "client")) {
 			filter_class_execute(c, l);
-		} else if(c->name) {
+		} else if(strcmp(c->name,"")) {
 			struct line *tl = linedup(l);
 			filter_class_execute(c, tl);
 			free_line(tl);
