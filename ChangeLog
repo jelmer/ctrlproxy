@@ -1,4 +1,5 @@
 Ctrlproxy 2.6:
+ * Several bugs in log_custom fixed (thanks, igla)
  * Fix build without libssl
  * Add attribute only_noclient
  * Add linestack support

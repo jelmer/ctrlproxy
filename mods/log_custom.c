@@ -179,6 +179,7 @@ void custom_subst(char **_new, char *fmt, struct line *l, char *_identifier, gbo
 			curpos++;
 		}
 	}
+	new[curpos] = '\0';
 
 	for(i = 0; i < MAX_SUBST; i++) { if(subst[i])free(subst[i]); }
 	*_new = new;
