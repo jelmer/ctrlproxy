@@ -2,6 +2,7 @@
  	Jelmer Vernooij <jelmer@vernstok.nl>
 
 Ctrlproxy 2.7:
+ * Support non-blocking connects (Daniel Poelzleithner <ctrlproxy@poelzi.org>)
  * Add 'JUMP' command (Daniel Poelzleithner <ctrlproxy@poelzi.org>)
  * Unset autojoin on KICK (Daniel Poelzleithner <ctrlproxy@poelzi.org>)
  * Add ability to change NICK when away

@@ -91,6 +91,24 @@ static pid_t piped_child(char* const command[], int *f_in)
 	return pid;
 }
 
+static int set_nonblock_flag (int desc, int value) {
+  int ret = 0;
+  int oldflags = fcntl (desc, F_GETFL, 0);
+  /* If reading the flags failed, return error indication now. */
+  if (oldflags == -1)
+    return -1;
+  /* Set just the flag we want to set. */
+  if (value)
+    oldflags |= O_NONBLOCK;
+  else
+    oldflags &= ~O_NONBLOCK;
+  /* Store modified flag word in the descriptor. */
+  ret = fcntl (desc, F_SETFL, oldflags);
+  if(ret < 0)
+  	g_warning("Error setting nonblock %s", strerror(errno));
+  return ret;
+}
+
 static void socket_to_iochannel(int sock, struct transport_context *c, enum ssl_mode ssl_mode)
 {
 	GIOChannel *ioc;
@@ -329,6 +347,8 @@ static int connect_ip(struct transport_context *c)
         if (setsockopt(sock, IPPROTO_IP, IP_TOS, &socket_tos, sizeof(socket_tos)) < 0)
                 g_log(G_LOG_DOMAIN, G_LOG_LEVEL_WARNING, "setsockopt IP_TOS %d: %.100s:", socket_tos, strerror(errno));
 
+	set_nonblock_flag(sock,1);
+
 	if(ipv6) {
 		memcpy((char *)&name6.sin6_addr, hostinfo->h_addr, hostinfo->h_length);
 		ret = connect(sock, (struct sockaddr *)&name6, sizeof(name6));
@@ -337,7 +357,7 @@ static int connect_ip(struct transport_context *c)
 		ret = connect(sock, (struct sockaddr *)&name4, sizeof(name4));
 	}
 
-	if (ret < 0)
+	if (ret < 0 && errno != EINPROGRESS)
 	{
 		g_log(G_LOG_DOMAIN, G_LOG_LEVEL_WARNING, "(While connecting to server %s): connect: %s", tempname, strerror(errno));
 		free(tempname);
@@ -486,6 +506,8 @@ static int listen_ip(struct transport_context *c)
 		return -1;
 	}
 
+	set_nonblock_flag(sock,1);
+
 	g_log(G_LOG_DOMAIN, G_LOG_LEVEL_MESSAGE, "Listening on port %d(socket %d)", port, sock);
 
 	gio = g_io_channel_unix_new(sock);
@@ -547,6 +569,8 @@ static int listen_pipe(struct transport_context *c)
 		free(f);
 		return -1;
 	}
+
+	set_nonblock_flag(sock,1);
 
 	g_message("Listening on socket at %s(%d)", f, sock);
 
