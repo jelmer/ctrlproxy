@@ -139,7 +139,7 @@ gboolean load_config(struct plugin *p, xmlNodePtr node)
 
 gboolean init_plugin(struct plugin *p) {
 	this_plugin = p;
-	add_server_filter("antiflood", log_data, NULL, 1);
+	add_server_filter("antiflood", log_data, NULL, 2000);
 	antiflood_servers = g_hash_table_new(NULL, NULL);
 	
 	return TRUE;

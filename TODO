@@ -1,6 +1,7 @@
 - update documentation
  - repl changes
  - see FIXME's
+
 - finish python module 
  - hooks. 
    - typemap for each kind of callback

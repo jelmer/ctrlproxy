@@ -198,20 +198,9 @@ static gboolean process_from_client(struct line *l)
 	struct line *lc;
 	
 	l->direction = TO_SERVER;
-	state_handle_data(l->client->network, l);
 
 	if (!run_client_filter(l)) 
 		return TRUE;
-
-	if (!run_server_filter(l))
-		return TRUE;
-
-	run_log_filter(lc = linedup(l)); free_line(lc);
-	run_replication_filter(lc = linedup(l)); free_line(lc);
-
-	if (!l->client) {
-		return FALSE;
-	}
 
 	if(!g_strcasecmp(l->args[0], "QUIT")) {
 		disconnect_client(l->client);
@@ -232,10 +221,23 @@ static gboolean process_from_client(struct line *l)
 			g_free(l->client->fullname);
 			l->client->fullname = g_strdup(l->args[4]);
 		}
-	} else if(!g_strcasecmp(l->args[0], "PING")) {
+	} else	if(!g_strcasecmp(l->args[0], "PING")) {
 		irc_sendf(l->client->incoming, ":%s PONG :%s\r\n", l->client->network->name, l->args[1]);
 	} else if(network_is_connected(l->client->network)) {
 		char *old_origin;
+
+		state_handle_data(l->client->network, l);
+
+		if (!run_server_filter(l))
+			return TRUE;
+
+		run_log_filter(lc = linedup(l)); free_line(lc);
+		run_replication_filter(lc = linedup(l)); free_line(lc);
+
+		if (!l->client) {
+			return FALSE;
+		}
+
 		if(!(l->options & LINE_DONT_SEND)) {
 			network_send_line(l->client->network, l);
 		}
@@ -280,6 +282,10 @@ gboolean client_send_line(struct client *c, struct line *l)
 gboolean network_send_line(struct network *s, struct line *l)
 {
 	l->network = s;
+
+	if (!strcmp(l->args[0], "USER") && l->network->authenticated) {
+		abort();
+	}
 
 	switch (s->type) {
 	case NETWORK_TCP:

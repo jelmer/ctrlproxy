@@ -393,7 +393,6 @@ static gboolean handle_client_data (GIOChannel *ioc, GIOCondition o, gpointer da
 
 					result = socks_map_network_fqdn(hostname, port);
 
-
 					if (!result) {
 						g_warning("Unable to return network matching %s:%d", hostname, port);
 						return socks_error(ioc, REP_NET_UNREACHABLE);

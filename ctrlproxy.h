@@ -256,7 +256,7 @@ G_MODULE_EXPORT const char *get_modules_path(void);
 G_MODULE_EXPORT const char *get_shared_path(void);
 
 /* config.c */
-G_MODULE_EXPORT void save_configuration(void);
+G_MODULE_EXPORT void save_configuration(const char *name);
 G_MODULE_EXPORT gboolean load_configuration(const char *name);
 
 /* plugins.c */

@@ -244,7 +244,7 @@ static void reload_module (char **args, struct line *l, void *userdata)
 }
 
 static void save_config (char **args, struct line *l, void *userdata)
-{ save_configuration(); }
+{ save_configuration(args[1]); }
 
 static void help (char **args, struct line *l, void *userdata)
 {

@@ -132,7 +132,7 @@ void signal_quit(int sig)
 
 void signal_save(int sig)
 {
-	save_configuration();
+	save_configuration(NULL);
 }
 
 int main(int argc, const char *argv[])

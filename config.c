@@ -30,9 +30,10 @@
 #include <netdb.h>
 
 static xmlDtdPtr dtd;
-char *configuration_file;
 
-xmlNodePtr config_save_plugins()
+static char *last_config_file = NULL;
+
+static xmlNodePtr config_save_plugins()
 {
 	GList *gl;
 	xmlNodePtr ret = xmlNewNode(NULL, "plugins");
@@ -54,7 +55,7 @@ xmlNodePtr config_save_plugins()
 	return ret;
 }
 
-xmlNodePtr config_save_networks()
+static xmlNodePtr config_save_networks()
 {
 	xmlNodePtr ret = xmlNewNode(NULL, "networks");
 	GList *gl;
@@ -93,7 +94,7 @@ xmlNodePtr config_save_networks()
 	return ret;
 }
 
-void save_configuration()
+void save_configuration(const char *configuration_file)
 {
 	xmlNodePtr root;
 	xmlDocPtr configuration = xmlNewDoc("1.0");
@@ -105,7 +106,7 @@ void save_configuration()
 	xmlAddChild(root, config_save_plugins());
 	xmlAddChild(root, config_save_networks());
 
-	xmlSaveFile(configuration_file, configuration);
+	xmlSaveFile(configuration_file?configuration_file:last_config_file, configuration);
 
 	xmlFreeDoc(configuration);
 }
@@ -151,6 +152,7 @@ void init_config()
 
 void fini_config()
 {
+	g_free(last_config_file);
 	xmlFreeDtd(dtd);
 }
 
@@ -335,6 +337,8 @@ gboolean load_configuration(const char *file)
 	xmlDocPtr configuration;
     xmlNodePtr root, cur;
 	gboolean ret;
+
+	g_free(last_config_file); last_config_file = g_strdup(file);
 
 	configuration = xmlParseFile(file);
 	if(!configuration) {

@@ -37,7 +37,7 @@ static gboolean log_data(struct line *l, void *userdata) {
 	if(!co) {
 		co = linestack_new_by_network(l->network);
 		g_hash_table_insert( simple_backlog, l->network, co);
-		g_hash_table_insert( simple_initialnick, l->network, l->network->nick);
+		g_hash_table_insert( simple_initialnick, l->network, g_strdup(l->network->nick));
 	}
 
 	if(l->argc < 1)return TRUE;
@@ -112,6 +112,6 @@ gboolean init_plugin(struct plugin *p) {
 	add_replication_filter("repl_simple", log_data, NULL, 1000);
 	add_new_client_hook("repl_simple", simple_replicate, NULL);
 	simple_backlog = g_hash_table_new_full(NULL, NULL, NULL, linestack_destroy);
-	simple_initialnick = g_hash_table_new_full(NULL, NULL, NULL, NULL);
+	simple_initialnick = g_hash_table_new_full(NULL, NULL, NULL, g_free);
 	return TRUE;
 }
