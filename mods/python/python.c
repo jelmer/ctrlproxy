@@ -899,8 +899,8 @@ static PyObject * PyCtrlproxyClient_get(PyCtrlproxyObject *self, void *closure) 
 		//rv = PyString_FromString(l->authenticated);
 	} else if(!strcmp(closure,"connect_time")) {
 		rv = PyInt_FromLong((long)c->connect_time);
-	} else if(!strcmp(closure,"did_nick_change")) {
-		rv = PyString_FromString(&c->did_nick_change);
+	} else if(!strcmp(closure,"client_nick")) {
+		rv = PyString_FromString(c->nick);
 	} else if(!strcmp(closure,"nick")) {
 		rv = PyString_FromString(xmlGetProp(c->network->xmlConf, "nick"));
 	}

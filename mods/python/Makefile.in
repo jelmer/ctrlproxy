@@ -25,7 +25,7 @@ libpython.so: python.o types.o
 	$(CC) $(CFLAGS) -shared -o $@ $(LIBS) types.o python.o
 
 clean:
-	rm -f $(MODS) *.o
+	rm -f $(MODS) *.o *.so
 
 distclean: clean
 	rm -f Makefile

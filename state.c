@@ -209,7 +209,6 @@ struct channel_nick *find_add_nick(struct channel *c, char *name) {
 	return n;
 }
 
-
 static void handle_join(struct network *s, struct line *l)
 {
 	struct channel *c;
@@ -616,9 +615,7 @@ static void handle_nick(struct network *s, struct line *l)
 
 	own_nick = xmlGetProp(s->xmlConf, "nick");
 
-	if(!irccmp(s, line_get_nick(l), own_nick)) {
-		xmlSetProp(s->xmlConf, "nick", l->args[1]);
-	}
+	if(!irccmp(s, line_get_nick(l), own_nick)) network_change_nick(s, l->args[1]);
 
 	xmlFree(own_nick);
 }

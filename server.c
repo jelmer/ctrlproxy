@@ -277,6 +277,7 @@ void disconnect_client(struct client *c) {
 	g_message(_("Removed client to %s"), networkname);
 	g_free(networkname);
 	
+	if (c->nick) free(c->nick);
 	free(c);
 
 }
@@ -388,8 +389,14 @@ void handle_client_receive(struct transport_context *c, char *raw, void *_client
 		send_motd(client->network, c);
 		g_message(_("Client @%s successfully authenticated"),
 			  server_name);
-		if(!new_client_hook_execute(client))
+		if(!new_client_hook_execute(client)) {
 			disconnect_client(client);
+		} else {
+           /* Initialization was successful. Now we can almost safely try to change to the nick, which
+           * was requested by the client earlier */
+           if (!xmlHasProp(client->network->xmlConf, "ignore_first_nick") && client->nick)
+               if (strcmp(client->nick, nick)) irc_send_args(client->network->outgoing, "NICK", client->nick, NULL);
+       	}
 	} else if(!g_ascii_strcasecmp(l->args[0], "PASS")) {
 		if (!clientpass)
 			client->authenticated = 1;
@@ -404,10 +411,10 @@ void handle_client_receive(struct transport_context *c, char *raw, void *_client
 			xmlFree(nick); xmlFree(server_name);
 			return;
 		}
-	} else if(!g_ascii_strcasecmp(l->args[0], "NICK") && l->args[1] && !client->did_nick_change && xmlHasProp(client->network->xmlConf, "ignore_first_nick")) {
-		/* Ignore the first nick change attempt */
-		client->did_nick_change = 1;
-		irc_sendf(c, ":%s NICK %s", l->args[1], nick);
+   } else if(!strcasecmp(l->args[0], "NICK") && l->args[1] && client->authenticated && !client->nick) {
+       /* Don't allow the client to change the nick now. We would change it after initialization */
+       if (strcmp(l->args[1], nick)) irc_sendf(c, ":%s NICK %s", l->args[1], nick);
+       client->nick = strdup(l->args[1]); /* Save nick */
 	} else if(!g_ascii_strcasecmp(l->args[0], "NICK") && l->args[1] && !g_ascii_strcasecmp(l->args[1], nick)) {
 		/* Ignore attempts to change nick to the current nick */
 	} else if(!g_ascii_strcasecmp(l->args[0], "QUIT")) {
@@ -419,6 +426,7 @@ void handle_client_receive(struct transport_context *c, char *raw, void *_client
 	} else if(!g_ascii_strcasecmp(l->args[0], "PING")) {
 		irc_sendf(c, ":%s PONG :%s\r\n", server_name, l->args[1]);
 	} else if(client->authenticated) {
+
 		state_handle_data(client->network, l);
 	
 		filters_execute(l);
@@ -460,7 +468,7 @@ void handle_new_client(struct transport_context *c_server, struct transport_cont
 	d->network = n;
 	d->connect_time = time(NULL);
 	d->incoming = c_client;
-	d->did_nick_change = 0;
+	d->nick = NULL;
 
 	n->clients = g_list_append(n->clients, d);
 
@@ -621,3 +629,30 @@ int verify_client(struct network *s, struct client *c)
 	
 	return 0;
 }
+
+gboolean network_change_nick(struct network *s, char *nick)
+{
+	char *tmp, *p = NULL;
+	
+	if (!s) return FALSE;
+
+	/* Change nick */
+	if (!nick) nick = (char*)g_get_user_name();
+	xmlSetProp(s->xmlConf, "nick", nick);
+
+	/* Change hostmask */
+	if (!s->hostmask) {
+		if(!xmlHasProp(s->xmlConf, "username"))	xmlSetProp(s->xmlConf, "username", g_get_user_name());
+		tmp = xmlGetProp(s->xmlConf, "username");
+		asprintf(&s->hostmask, "%s!~%s@%s", nick, tmp, my_hostname);
+		xmlFree(tmp);
+	} else { 
+		p = strchr(s->hostmask, '!');
+		if (!p) return FALSE;
+		asprintf(&tmp, "%s%s", nick, p);
+		free(s->hostmask);
+		s->hostmask = tmp;
+	}
+	return TRUE;
+}
+

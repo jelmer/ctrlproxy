@@ -114,7 +114,7 @@ struct client {
 	char authenticated;
 	struct transport_context *incoming;
 	time_t connect_time;
-	char did_nick_change;
+	char* nick;
 };
 
 enum casemapping { CASEMAP_UNKNOWN = 0, CASEMAP_RFC1459 = 1, CASEMAP_ASCII = 2 };
@@ -174,6 +174,7 @@ void clients_send(struct network *, struct line *, struct transport_context *exc
 void network_add_listen(struct network *, xmlNodePtr);
 void disconnect_client(struct client *c);
 void server_send_login (struct transport_context *c, void *_server);
+gboolean network_change_nick(struct network *s, char *nick);
 
 /* line.c */
 struct line *linedup(struct line *l);

@@ -96,7 +96,6 @@ static gboolean simple_replicate(struct client *c)
 		char *curnick = xmlGetProp(c->network->xmlConf, "nick");
 		change_nick(c, initialnick);
 		linestack_send(replication_data, c->incoming);
-		change_nick(c, curnick);
 		xmlFree(curnick);
 	}
 	return TRUE;
