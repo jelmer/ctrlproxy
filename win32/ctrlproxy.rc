@@ -1,0 +1,453 @@
+//Microsoft Developer Studio generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "afxres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// English (U.S.) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+#endif //_WIN32
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "#define _AFX_NO_SPLITTER_RESOURCES\r\n"
+    "#define _AFX_NO_OLE_RESOURCES\r\n"
+    "#define _AFX_NO_TRACKER_RESOURCES\r\n"
+    "#define _AFX_NO_PROPERTY_RESOURCES\r\n"
+    "\r\n"
+    "#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)\r\n"
+    "#ifdef _WIN32\r\n"
+    "LANGUAGE 9, 1\r\n"
+    "#pragma code_page(1252)\r\n"
+    "#endif\r\n"
+    "#include ""res\\ctrlproxy.rc2""  // non-Microsoft Visual C++ edited resources\r\n"
+    "#include ""afxres.rc""         // Standard components\r\n"
+    "#endif\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDR_MAINFRAME           ICON    DISCARDABLE     "res\\ctrlproxy.ico"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_PLUGINS DIALOG DISCARDABLE  0, 0, 256, 191
+STYLE WS_CHILD | WS_DISABLED | WS_CAPTION
+CAPTION "Plugins"
+FONT 8, "MS Sans Serif"
+BEGIN
+    PUSHBUTTON      "Add",IDC_ADD_PLUGIN,7,7,18,14
+    CONTROL         "List1",IDC_PLUGIN_LIST,"SysListView32",LVS_REPORT | 
+                    WS_BORDER | WS_TABSTOP,7,28,242,156
+    PUSHBUTTON      "&Load",IDC_LOAD,29,7,21,14,WS_DISABLED
+    PUSHBUTTON      "&Unload",IDC_UNLOAD,53,7,28,14,WS_DISABLED
+    PUSHBUTTON      "&Configure...",IDC_CONFIG,83,7,41,14,WS_DISABLED
+END
+
+IDD_ABOUT DIALOG DISCARDABLE  0, 0, 280, 189
+STYLE WS_CHILD | WS_DISABLED | WS_CAPTION
+CAPTION "About"
+FONT 8, "MS Sans Serif"
+BEGIN
+    GROUPBOX        "Authors",IDC_STATIC,7,7,266,67
+    LTEXT           "(C) 2002-2004 Jelmer Vernooij <jelmer@vernstok.nl>",
+                    IDC_STATIC,14,18,167,11
+    LTEXT           "Written by :\nJelmer Vernooij <jelmer@vernstok.nl>\nDaniel Poelzleithner <ctrlproxy@poelzi.org>\nSee the file AUTHORS for a list of contributors.",
+                    IDC_STATIC,35,28,185,33
+    LTEXT           "http://ctrlproxy.vernstok.nl/",IDC_STATIC,14,64,221,8
+    EDITTEXT        IDC_LICENSE,7,82,266,100,ES_MULTILINE | ES_AUTOHSCROLL | 
+                    ES_READONLY | WS_VSCROLL | WS_HSCROLL
+END
+
+IDD_NETWORKS DIALOG DISCARDABLE  0, 0, 286, 194
+STYLE WS_CHILD | WS_DISABLED | WS_CAPTION
+CAPTION "Edit Networks"
+FONT 8, "MS Sans Serif"
+BEGIN
+    GROUPBOX        "Networks",IDC_STATIC,7,7,104,131
+    LISTBOX         IDC_NETWORKLIST,13,39,93,96,LBS_SORT | 
+                    LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "&Add",IDC_ADD,13,17,30,14
+    PUSHBUTTON      "&Edit",IDC_EDIT,45,17,29,14
+    PUSHBUTTON      "&Delete",IDC_DEL,77,17,27,14
+    GROUPBOX        "Networkinformation",IDC_STATIC,115,7,158,30
+    PUSHBUTTON      "&Connect",IDC_CONNECT,127,18,64,12,WS_DISABLED
+    GROUPBOX        "Clients",IDC_STATIC,7,143,204,44
+    LISTBOX         IDC_CLIENTLIST,13,153,126,29,LBS_SORT | 
+                    LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "&Kick",IDC_KICK,146,153,60,13
+    PUSHBUTTON      "&Disconnect",IDC_DISCONNECT,197,18,66,13,WS_DISABLED
+END
+
+IDD_LOG DIALOG DISCARDABLE  0, 0, 284, 178
+STYLE WS_CHILD | WS_DISABLED | WS_CAPTION
+CAPTION "Log"
+FONT 8, "MS Sans Serif"
+BEGIN
+    LISTBOX         IDC_LOG,7,7,270,164,LBS_SORT | LBS_NOINTEGRALHEIGHT | 
+                    WS_VSCROLL | WS_HSCROLL | WS_TABSTOP
+END
+
+IDD_CONFIGURATION DIALOG DISCARDABLE  0, 0, 256, 194
+STYLE WS_CHILD | WS_DISABLED | WS_CAPTION
+CAPTION "Configuration"
+FONT 8, "MS Sans Serif"
+BEGIN
+    CONTROL         "Tree2",IDC_CONFTREE,"SysTreeView32",WS_BORDER | 
+                    WS_TABSTOP,7,30,242,157
+    PUSHBUTTON      "&Save configuration",IDC_SAVECONFIG,175,7,74,17
+END
+
+IDD_STATUS DIALOG DISCARDABLE  0, 0, 182, 210
+STYLE WS_CHILD | WS_DISABLED | WS_CAPTION
+CAPTION "Status"
+FONT 8, "MS Sans Serif"
+BEGIN
+    LTEXT           "CtrlProxy Version 2.7",IDC_STATIC,17,18,111,11
+    GROUPBOX        "Statistics",IDC_STATIC,7,39,168,46
+    LTEXT           "",IDC_NUMNETWORKS,14,49,148,9
+    LTEXT           "",IDC_NUMCLIENTS,14,59,152,10
+    LTEXT           "",IDC_NUMCHANNELS,14,70,150,9
+END
+
+IDD_EDIT_NETWORK DIALOG DISCARDABLE  0, 0, 358, 252
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Edit network"
+FONT 8, "MS Sans Serif"
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,301,7,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,301,24,50,14
+    GROUPBOX        "Settings for <network>",IDC_STATIC,7,7,162,149
+    LTEXT           "Nick Name:",IDC_STATIC,20,32,72,10
+    EDITTEXT        IDC_NICKNAME,94,32,68,13,ES_AUTOHSCROLL
+    LTEXT           "User Name:",IDC_STATIC,20,48,72,10
+    EDITTEXT        IDC_USERNAME,94,48,68,13,ES_AUTOHSCROLL
+    GROUPBOX        "Servers",IDC_STATIC,171,7,123,149
+    GROUPBOX        "Channels",IDC_STATIC,7,156,162,83
+    LISTBOX         IDC_SERVERLIST,173,33,115,114,LBS_SORT | 
+                    LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Full name:",IDC_STATIC,20,64,72,10
+    EDITTEXT        IDC_FULLNAME,94,64,68,13,ES_AUTOHSCROLL
+    LTEXT           "Client Password:",IDC_STATIC,20,80,72,10
+    EDITTEXT        IDC_CLIENTPASS,94,80,68,13,ES_AUTOHSCROLL
+    CONTROL         "SSL",IDC_SSL,"Button",BS_AUTOCHECKBOX | WS_DISABLED | 
+                    WS_TABSTOP,16,112,29,10
+    LTEXT           "Server Password:",IDC_STATIC,20,95,72,10
+    EDITTEXT        IDC_SERVERPASS,94,95,68,13,ES_AUTOHSCROLL
+    CONTROL         "Autoconnect",IDC_AUTOCONNECT,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,16,122,118,12
+    GROUPBOX        "Listeners",IDC_STATIC,171,155,124,84
+    LISTBOX         IDC_CHANNELLIST,15,188,147,46,LBS_SORT | 
+                    LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Name:",IDC_STATIC,20,17,72,10
+    EDITTEXT        IDC_NAME,94,17,68,13,ES_AUTOHSCROLL
+    PUSHBUTTON      "&Add",IDC_ADD_CHANNEL,18,170,18,14
+    PUSHBUTTON      "&Remove",IDC_REMOVE_CHANNEL,39,170,32,14,WS_DISABLED
+    PUSHBUTTON      "&Add",IDC_ADD_SERVER,176,18,18,14
+    PUSHBUTTON      "&Remove",IDC_REMOVE_SERVER,196,18,32,14,WS_DISABLED
+    LISTBOX         IDC_LISTENERLIST,175,189,115,46,LBS_SORT | 
+                    LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "&Add",IDC_ADD_LISTENER,177,171,18,14
+    PUSHBUTTON      "&Remove",IDC_REMOVE_LISTENER,198,171,32,14,WS_DISABLED
+    PUSHBUTTON      "&Edit",IDC_EDIT_CHANNEL,75,170,17,14,WS_DISABLED
+END
+
+IDD_NEW_NETWORK DIALOG DISCARDABLE  0, 0, 186, 50
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "New network"
+FONT 8, "MS Sans Serif"
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,129,7,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,129,24,50,14
+    LTEXT           "Name:",IDC_STATIC,7,17,22,8
+    EDITTEXT        IDC_NEWNETWORKNAME,59,17,62,12,ES_AUTOHSCROLL
+END
+
+IDD_EDIT_CHANNEL DIALOG DISCARDABLE  0, 0, 186, 76
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Edit Channel"
+FONT 8, "MS Sans Serif"
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,129,7,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,129,24,50,14
+    LTEXT           "Name:",IDC_STATIC,7,16,53,12
+    LTEXT           "Key:",IDC_STATIC,7,33,15,8
+    CONTROL         "Join on connect",IDC_AUTOJOIN,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,7,53,108,12
+    EDITTEXT        IDC_NAME,65,16,61,12,ES_AUTOHSCROLL
+    EDITTEXT        IDC_KEY,65,33,62,12,ES_AUTOHSCROLL
+END
+
+IDD_EDIT_LISTENER DIALOG DISCARDABLE  0, 0, 182, 46
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Edit Listener"
+FONT 8, "MS Sans Serif"
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,125,7,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,125,24,50,14
+    LTEXT           "Port:",IDC_STATIC,7,14,16,8
+    EDITTEXT        IDC_PORT,68,14,46,11,ES_AUTOHSCROLL
+END
+
+IDD_EDIT_SERVER DIALOG DISCARDABLE  0, 0, 186, 58
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Edit Server"
+FONT 8, "MS Sans Serif"
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,129,7,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,129,24,50,14
+    LTEXT           "Host:",IDC_STATIC,7,14,18,8
+    LTEXT           "Port:",IDC_STATIC,7,32,16,8
+    EDITTEXT        IDC_HOST,68,13,53,13,ES_AUTOHSCROLL
+    EDITTEXT        IDC_PORT,68,29,53,13,ES_AUTOHSCROLL
+END
+
+IDD_PHONY DIALOG DISCARDABLE  0, 0, 9, 9
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Dialog"
+FONT 8, "MS Sans Serif"
+BEGIN
+END
+
+
+#ifndef _MAC
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 1,0,0,1
+ PRODUCTVERSION 2,7,0,1
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x4L
+ FILETYPE 0x1L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904b0"
+        BEGIN
+            VALUE "CompanyName", "\0"
+            VALUE "FileDescription", "CtrlProxy for Windows\0"
+            VALUE "FileVersion", "1, 0, 0, 1\0"
+            VALUE "InternalName", "ctrlproxy\0"
+            VALUE "LegalCopyright", "Copyright (C) 2002-2004 Jelmer Vernooij\0"
+            VALUE "OriginalFilename", "ctrlproxy.exe\0"
+            VALUE "ProductName", "CtrlProxy\0"
+            VALUE "ProductVersion", "2, 7, 0, 1\0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END
+END
+
+#endif    // !_MAC
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO DISCARDABLE 
+BEGIN
+    IDD_PLUGINS, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 249
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 184
+    END
+
+    IDD_ABOUT, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 273
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 182
+    END
+
+    IDD_NETWORKS, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 279
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 187
+    END
+
+    IDD_LOG, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 277
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 171
+    END
+
+    IDD_CONFIGURATION, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 249
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 187
+    END
+
+    IDD_STATUS, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 175
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 203
+    END
+
+    IDD_EDIT_NETWORK, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 351
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 245
+    END
+
+    IDD_NEW_NETWORK, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 179
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 43
+    END
+
+    IDD_EDIT_CHANNEL, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 179
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 69
+    END
+
+    IDD_EDIT_LISTENER, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 175
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 39
+    END
+
+    IDD_EDIT_SERVER, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 179
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 51
+    END
+
+    IDD_PHONY, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 2
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 2
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Menu
+//
+
+IDR_POPUP MENU DISCARDABLE 
+BEGIN
+    POPUP "traybar"
+    BEGIN
+        MENUITEM "&Show",                       IDM_SHOW
+        MENUITEM SEPARATOR
+        MENUITEM "&Exit",                       IDM_EXIT
+    END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    IDP_SOCKETS_INIT_FAILED "Windows sockets initialization failed."
+END
+
+#endif    // English (U.S.) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+#define _AFX_NO_SPLITTER_RESOURCES
+#define _AFX_NO_OLE_RESOURCES
+#define _AFX_NO_TRACKER_RESOURCES
+#define _AFX_NO_PROPERTY_RESOURCES
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE 9, 1
+#pragma code_page(1252)
+#endif
+#include "afxres.rc"         // Standard components
+#endif
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+
