@@ -80,6 +80,7 @@ struct line * irc_parse_line(char *d)
 	struct line *l;
 
 	l = calloc(1, sizeof(struct line));
+	l->has_endcolon = WITHOUT_COLON;
 	p = data;
 
 	if(p[0] == ':') {
@@ -102,7 +103,11 @@ struct line * irc_parse_line(char *d)
 			*p = '\0';
 			l->argc++;
 			l->args[l->argc] = p+1;
-			if(*(p+1) == ':'){ dosplit = 0; l->args[l->argc]++; }
+			if(*(p+1) == ':'){ 
+				l->has_endcolon = WITH_COLON; 
+				dosplit = 0; 
+				l->args[l->argc]++; 
+			}
 		}
 
 		if(*p == '\r') {
@@ -141,11 +146,16 @@ char *irc_line_string_nl(struct line *l)
 	return raw;
 }
 
-int requires_colon(char *ch)
+int requires_colon(struct line *l)
 {
-	int c = atoi(ch);
-	if(!strcasecmp(ch, "MODE"))return 0;
-	if(!strcasecmp(ch, "NICK"))return 0;
+	int c;
+
+	if(l->has_endcolon == WITH_COLON) return 1;
+	else if(l->has_endcolon == WITHOUT_COLON) return 0;
+
+	c = atoi(l->args[0]);
+	if(!strcasecmp(l->args[0], "MODE"))return 0;
+	if(!strcasecmp(l->args[0], "NICK"))return 0;
 
 	switch(c) {
 	case RPL_CHANNELMODEIS:
@@ -193,7 +203,7 @@ char *irc_line_string(struct line *l) {
 	if(l->origin) sprintf(ret, ":%s ", l->origin);
 
 	for(i = 0; i < l->argc; i++) {
-		if(i == l->argc-1 && requires_colon(l->args[0]) && i != 0)
+		if(i == l->argc-1 && requires_colon(l) && i != 0)
 			strcat(ret, ":");
 		strcat(ret, l->args[i]);
 		if(i != l->argc-1)strcat(ret, " ");

@@ -67,7 +67,7 @@ struct line {
 	const char *origin;
 	char **args; /* NULL terminated */
 	size_t argc;
-	enum has_colon requires_endcolon;
+	enum has_colon has_endcolon;
 };
 
 /* for the options fields */

@@ -9,7 +9,6 @@
 - dcc module
 - CONNECT command could try to connect immediately to a network if it is currently waiting for reconnect delay to end for example....
 - maybe a command STATUS to display a list of networks, their current state (connected | error and which error | reconnecting + time to reconnect | disconnected), the list of listeners, the list of servers, etc....
-- keep track of whether colon should be used
 - add gnutls support
 - new log system
 - generate data for configuration editor from XSL files
