@@ -19,19 +19,25 @@
 */
 
 #define _GNU_SOURCE
+#ifdef HAVE_CONFIG_H
 #include "config.h"
+#endif
 #include "ctrlproxy.h"
+#ifdef _WIN32
+#include <winsock.h>
+#else
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <netinet/ip.h>
 #include <sys/socket.h>
 #include <errno.h>
 #include <netdb.h>
+#include <unistd.h>
+#include <sys/un.h>
+#endif
 #include <string.h>
 #include <fcntl.h>
 #include <stdlib.h>
-#include <sys/un.h>
-#include <unistd.h>
 #include "gettext.h"
 #define _(s) gettext(s)
 

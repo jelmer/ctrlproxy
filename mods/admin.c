@@ -37,6 +37,7 @@
 */
 
 #define _GNU_SOURCE
+#define ADMIN_CORE_BUILD
 #include "ctrlproxy.h"
 #include <string.h>
 #include "admin.h"

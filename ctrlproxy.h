@@ -296,4 +296,8 @@ G_MODULE_EXPORT int asprintf(char **dest, const char *fmt, ...);
 G_MODULE_EXPORT int vasprintf(char **dest, const char *fmt, va_list ap);
 #endif
 
+#if defined(_WIN32) && !defined(CTRLPROXY_CORE_BUILD)
+#pragma comment(lib,"ctrlproxy.lib")
+#endif
+
 #endif /* __CTRLPROXY_H__ */

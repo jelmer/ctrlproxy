@@ -20,6 +20,8 @@
 #ifndef __INTERNALS_H__
 #define __INTERNALS_H__
 
+#define CTRLPROXY_CORE_BUILD
+
 #define _GNU_SOURCE
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
