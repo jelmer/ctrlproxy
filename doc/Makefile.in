@@ -1,11 +1,13 @@
 MOD_SOURCES = $(shell echo *.mod.xml)
-MOD_DOCS = $(patsubst %.mod.xml,%.7ctrlproxy,$(MOD_SOURCES))
+MOD_MANPAGES = $(patsubst %.mod.xml,%.7ctrlproxy,$(MOD_SOURCES))
+MOD_MANPAGES_HTML = $(patsubst %.mod.xml,%.7ctrlproxy.html,$(MOD_SOURCES))
 MODS = $(patsubst %.mod.xml,%.xml,$(MOD_SOURCES))
-DOCS = ctrlproxy.1 ctrlproxyrc.5 ctrlproxy.pdf ctrlproxy.html $(MOD_DOCS)
+DOCS = ctrlproxy.1 ctrlproxyrc.5 ctrlproxy.pdf ctrlproxy.html $(MOD_MANPAGES)
 XSLTPROC = @XSLTPROC@ --xinclude
 XMLTO = @XMLTO@
 docdir = @prefix@/share/doc/ctrlproxy
 INSTALL = @INSTALL@
+XMLLINT = @XMLLINT@
 prefix = @prefix@
 mandir = @mandir@
 man1dir = @mandir@/man1
@@ -15,6 +17,9 @@ DIA = @DIA@
 EPSTOPDF = @EPSTOPDF@
 
 all: $(DOCS)
+
+manpages: ctrlproxy.1 ctrlproxyrc.5 $(MOD_MANPAGES)
+htmlmanpages: $(MOD_MANPAGES_HTML)
 
 %.7ctrlproxy.xml: %.mod.xml module-man.xsl
 	$(XSLTPROC) -o $@ module-man.xsl $<
@@ -28,8 +33,17 @@ all: $(DOCS)
 %.fo: %.xml $(MODS)
 	$(XMLTO) fo $<
 
+%.7ctrlproxy.html: %.7ctrlproxy.xml
+	$(XMLTO) html-nochunks $<
+
 %.html: %.xml $(MODS) overview.png overview2.png
 	$(XMLTO) html-nochunks $<
+
+%.ps: %.xml $(MODS) overview.eps overview2.eps
+	$(XMLTO) ps $<
+
+lint: ctrlproxy.xml $(MODS)
+	$(XMLLINT) --xinclude ctrlproxy.xml
 
 install: all
 	$(INSTALL) -d $(DESTDIR)$(man1dir)
@@ -38,7 +52,7 @@ install: all
 	$(INSTALL) -d $(DESTDIR)$(docdir)
 	$(INSTALL) ctrlproxy.1 $(DESTDIR)$(man1dir)
 	$(INSTALL) ctrlproxyrc.5 $(DESTDIR)$(man5dir)
-	$(INSTALL) $(MOD_DOCS) $(DESTDIR)$(man7dir)
+	$(INSTALL) $(MOD_MANPAGES) $(DESTDIR)$(man7dir)
 	$(INSTALL) ctrlproxy.pdf $(DESTDIR)$(docdir)
 	$(INSTALL) ctrlproxy.html $(DESTDIR)$(docdir)
 
