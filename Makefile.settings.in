@@ -1,4 +1,4 @@
-LIBS = @LIBS@ @PKG_LIBS@ @PKG_CFLAGS@ @LIBINTL@
+LIBS = @LIBS@ @PKG_LIBS@ @PKG_CFLAGS@ 
 CC = @CC@
 prefix = @prefix@
 exec_prefix = @exec_prefix@
