@@ -412,7 +412,7 @@ void handle_client_receive(struct transport_context *c, char *raw, void *_client
 			xmlFree(nick); xmlFree(server_name);
 			return;
 		}
-   } else if(!strcasecmp(l->args[0], "NICK") && l->args[1] && client->authenticated && !client->nick) {
+   } else if(!g_ascii_strcasecmp(l->args[0], "NICK") && l->args[1] && client->authenticated && !client->nick) {
        /* Don't allow the client to change the nick now. We would change it after initialization */
        if (strcmp(l->args[1], nick)) irc_sendf(c, ":%s NICK %s", l->args[1], nick);
        client->nick = strdup(l->args[1]); /* Save nick */
