@@ -84,6 +84,7 @@ static gboolean log_data(struct line *l) {
 			}
 		}
 
+		sd->tv_last_message.tv_usec = 0;
 		sd->tv_last_message.tv_sec = 0;
 		if(sd->queue_speed) sd->timeout_id = g_timeout_add(sd->queue_speed, send_queue , sd);
 		else sd->timeout_id = -1;

@@ -32,6 +32,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <libintl.h>
+#define _(s) gettext(s)
 
 #define MAX_REGEX_SUBMATCHES 30
 
