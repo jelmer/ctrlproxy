@@ -1,3 +1,7 @@
+Even though CtrlProxy is published under the GPL, it is explicitly allowed 
+to link it to the OpenSSL library. 
+
+--
 		    GNU GENERAL PUBLIC LICENSE
 		       Version 2, June 1991
 
