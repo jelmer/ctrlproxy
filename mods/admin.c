@@ -1,4 +1,4 @@
-/* 
+/*
 	ctrlproxy: A modular IRC proxy
 	admin: module for remote administration. Available commands:
 	 * ADDNETWORK <network>
@@ -12,7 +12,7 @@
 	 * RELOADMODULE <location>
 	 * UNLOADMODULE <location>
 	 * LISTMODULES
-	 * DUMPCONFIG 
+	 * DUMPCONFIG
 	 * SAVECONFIG
 	 * DETACH
 	 * HELP
@@ -40,10 +40,13 @@
 
 static gboolean without_privmsg = FALSE;
 static GList *commands = NULL;
+static uint longest_command = 0;
 
 struct admin_command {
 	char *name;
 	void (*handler) (char **args, struct line *l);
+	char *help;
+	char *help_details;
 };
 
 void admin_out(struct line *l, char *fmt, ...)
@@ -57,6 +60,7 @@ void admin_out(struct line *l, char *fmt, ...)
 
 	nick = xmlGetProp(l->network->xmlConf, "nick");
 	server_name = xmlGetProp(l->network->xmlConf, "name");
+
 
 	asprintf(&tot, ":ctrlproxy!ctrlproxy@%s NOTICE %s :%s\r\n", server_name, nick, msg);
 	free(msg);
@@ -96,7 +100,7 @@ static struct network *find_network_struct(char *name)
 }
 
 static void add_network (char **args, struct line *l)
-{ 	
+{
 	xmlNodePtr cur;
 	if(!args[1]) {
 		admin_out(l, "No name specified");
@@ -235,7 +239,7 @@ static void com_connect_network (char **args, struct line *l)
 	}
 
 	g_message("Connecting to %s", args[1]);
-	
+
 	connect_network(n);
 }
 
@@ -250,7 +254,7 @@ static void disconnect_network (char **args, struct line *l)
 			return;
 		}
 	}
-	
+
 	close_network(n);
 }
 
@@ -281,9 +285,9 @@ static void unload_module (char **args, struct line *l)
 	/* Find specified plugins' GModule and xmlNodePtr */
 	while(g) {
 		struct plugin *p = (struct plugin *)g->data;
-		if(!strcmp(p->name, args[1])) { 
+		if(!strcmp(p->name, args[1])) {
 			if(unload_plugin(p)) plugins = g_list_remove(plugins, p);
-			return; 
+			return;
 		}
 		g = g->next;
 	}
@@ -319,7 +323,7 @@ static void reload_module (char **args, struct line *l)
 }
 
 static void dump_config (char **args, struct line *l)
-{ 
+{
 	xmlChar *buffer;
 	int lastend = 0;
 	int size;
@@ -328,7 +332,7 @@ static void dump_config (char **args, struct line *l)
 	xmlDocDumpMemory(configuration, &buffer, &size);
 	for(i = 0; i < size; i++)
 	{
-		/* If we encounter a newline or a null-character, we 
+		/* If we encounter a newline or a null-character, we
 		 * print the last line */
 		if(buffer[i] != '\n' && buffer[i] != '\0') continue;
 
@@ -345,16 +349,42 @@ static void save_config (char **args, struct line *l)
 static void help (char **args, struct line *l)
 {
 	GList *gl = commands;
+	char *tmp;
+	char **details;
+	int i;
 
 	if(args[1]) {
-		/* FIXME: Read /usr/share/ctrlproxy/help/commands/args[1] and send it to the user */
+		admin_out(l, "Details for command %s:", args[1]);
+	} else {
+		admin_out(l, "The following commands are available:");
 	}
-		
-	admin_out(l, "The following commands are available:");
 	while(gl) {
 		struct admin_command *cmd = (struct admin_command *)gl->data;
-		admin_out(l, cmd->name);
+		if(args[1]) {
+			if(!strcasecmp(args[1], cmd->name)) {
+				if(cmd->help_details != NULL) {
+					details = g_strsplit(cmd->help_details, "\n", 0);
+					for(i = 0; details[i] != NULL; i++) {
+						admin_out(l, details[i]);
+					}
+					return;
+				} else {
+					admin_out(l, "Sorry, no help for %s available", args[1]);
+				}
+			}
+		} else {
+			if(cmd->help != NULL) {
+				asprintf(&tmp,"%s%s     %s",cmd->name,g_strnfill(longest_command - strlen(cmd->name),' '),cmd->help);
+				admin_out(l, tmp);
+				free(tmp);
+			} else {
+				admin_out(l, cmd->name);
+			}
+		}
 		gl = gl->next;
+	}
+	if(args[1]) {
+		admin_out(l, "Unknown command");
 	}
 }
 
@@ -380,16 +410,20 @@ static void detach_client(char **args, struct line *l)
 	l->client = NULL;
 }
 
-static void handle_die(char **args, struct line *l) 
+static void handle_die(char **args, struct line *l)
 {
 	g_main_loop_quit(main_loop);
 }
 
-void register_admin_command(char *name, void (*handler) (char **args, struct line *l))
+void register_admin_command(char *name, void (*handler) (char **args, struct line *l), char *help, char *help_details)
 {
 	struct admin_command *cmd = malloc(sizeof(struct admin_command));
 	cmd->name = strdup(name);
+	if(longest_command < strlen(name))
+		longest_command = strlen(name);
 	cmd->handler = handler;
+	cmd->help = help;
+	cmd->help_details = help_details;
 	commands = g_list_append(commands, cmd);
 }
 
@@ -409,21 +443,21 @@ void unregister_admin_command(char *name)
 }
 
 static struct admin_command builtin_commands[] = {
-	{ "ADDNETWORK", add_network },
-	{ "ADDSERVER", add_server },
-	{ "ADDLISTEN", add_listen },
-	{ "CONNECT", com_connect_network },
-	{ "DIE", handle_die },
-	{ "DISCONNECT", disconnect_network },
-	{ "LISTNETWORKS", list_networks },
-	{ "LOADMODULE", load_module },
-	{ "UNLOADMODULE", unload_module },
-	{ "RELOADMODULE", reload_module },
-	{ "LISTMODULES", list_modules },
-	{ "DUMPCONFIG", dump_config },
-	{ "SAVECONFIG", save_config },
-	{ "DETACH", detach_client },
-	{ "HELP", help },
+	{ "ADDNETWORK", add_network, "<name>",NULL },
+	{ "ADDSERVER", add_server, NULL, NULL },
+	{ "ADDLISTEN", add_listen, NULL, NULL },
+	{ "CONNECT", com_connect_network, NULL, NULL },
+	{ "DIE", handle_die, NULL, NULL },
+	{ "DISCONNECT", disconnect_network, NULL, NULL },
+	{ "LISTNETWORKS", list_networks, NULL, NULL },
+	{ "LOADMODULE", load_module, NULL, NULL },
+	{ "UNLOADMODULE", unload_module, NULL, NULL },
+	{ "RELOADMODULE", reload_module, NULL, NULL },
+	{ "LISTMODULES", list_modules, NULL, NULL },
+	{ "DUMPCONFIG", dump_config, NULL, NULL },
+	{ "SAVECONFIG", save_config, NULL, NULL },
+	{ "DETACH", detach_client, NULL, NULL },
+	{ "HELP", help, NULL, NULL },
 	{ NULL }
 };
 
@@ -438,7 +472,7 @@ static gboolean handle_data(struct line *l) {
 
 	if(strcasecmp(l->args[0], "CTRLPROXY") == 0)cmdoffset = 1;
 
-	if(!without_privmsg && strcasecmp(l->args[0], "PRIVMSG") == 0 && 
+	if(!without_privmsg && strcasecmp(l->args[0], "PRIVMSG") == 0 &&
 	   strcasecmp(l->args[1], "CTRLPROXY") == 0) cmdoffset = 2;
 
 	if(cmdoffset == 0) return TRUE;
@@ -501,8 +535,8 @@ gboolean init_plugin(struct plugin *p) {
 	if(cur) without_privmsg = TRUE;
 
 	for(i = 0; builtin_commands[i].name; i++) {
-		register_admin_command(builtin_commands[i].name, builtin_commands[i].handler);
+		register_admin_command(builtin_commands[i].name, builtin_commands[i].handler, builtin_commands[i].help, builtin_commands[i].help_details);
 	}
-	
+
 	return TRUE;
 }

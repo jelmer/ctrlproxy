@@ -1,4 +1,4 @@
-/* 
+/*
 	ctrlproxy: A modular IRC proxy
 	(c) 2003 Jelmer Vernooij <jelmer@nl.linux.org>
 
@@ -62,7 +62,7 @@ gboolean init_plugin(struct plugin *p)
 		g_warning("admin module required for dcc module. Please load it first");
 		return FALSE;
 	}
-	register_admin_command("DCC", dcc_command);
+	register_admin_command("DCC", dcc_command, NULL, NULL);
 	add_filter("dcc", mhandle_data);
 	return TRUE;
 }

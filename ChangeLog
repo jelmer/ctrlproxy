@@ -1,7 +1,9 @@
 Ctrlproxy 2.7:
  * New, more advanced filter system supporting classes and priorities
+ * Add help support in admin module
+ 	(Daniel Poelzleithner <ctrlproxy@poelzi.org>)
  * Make name and hostmask attribute of nick on network shared 
- 	(Daniel Poelzleithner <ctrlproxy@poelzi.org>
+ 	(Daniel Poelzleithner <ctrlproxy@poelzi.org>)
  * Do the actual NICK after GHOST'ing another nick
  * Fix bug with setting PRIVATE too often
  * Fix issue with NickServ IDENTIFY'ing when connecting to server

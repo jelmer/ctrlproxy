@@ -32,6 +32,7 @@
 #include "irc.h"
 #include "admin.h"
 #include "libxml_wrap.h"
+#include "../admin.h"
 
 xmlNodePtr xmlConf;
 
@@ -1712,8 +1713,8 @@ static void in_py_admin_command(char **args, struct line *l)
 
 
 static PyObject * py_add_admin_command(PyObject *self, PyObject *args, PyObject *kwds) {
-	static char *kwlist[] = {"name","callback",NULL};
-	char *name = NULL;
+	static char *kwlist[] = {"name","callback","help","details",NULL};
+	char *name, *help, *help_details = NULL;
 	PyObject *temp = NULL;
 	struct admin_callback_object *c;
 
@@ -1722,8 +1723,8 @@ static PyObject * py_add_admin_command(PyObject *self, PyObject *args, PyObject 
 		return NULL;
 	}
 
-	if (! PyArg_ParseTupleAndKeywords(args, kwds, "sO:add_admin_command", kwlist,
-                                      &name,&temp))
+	if (! PyArg_ParseTupleAndKeywords(args, kwds, "sO|ss:add_admin_command", kwlist,
+                                      &name,&temp,&help,&help_details))
 		return NULL;
 	if (!PyCallable_Check(temp)) {
 		PyErr_SetString(PyExc_TypeError, "Object must be callable");
@@ -1737,7 +1738,7 @@ static PyObject * py_add_admin_command(PyObject *self, PyObject *args, PyObject 
 	Py_INCREF(c->callback);         /* Add a reference to new callback */
 
 	admin_commands = g_list_append(admin_commands, c);
-	register_admin_command(name, in_py_admin_command);
+	register_admin_command(name, in_py_admin_command, help, help_details);
 
 	Py_INCREF(Py_None);
 	return Py_None;
@@ -2309,7 +2310,7 @@ gboolean init_plugin(struct plugin *p) {
 	if(!plugin_loaded("admin") && !plugin_loaded("libadmin")) {
 		g_warning("admin module required for dynamic load/unload of python scripts");
 	} else {
-		register_admin_command("PYTHON", in_admin_command);
+		register_admin_command("PYTHON", in_admin_command, "[COMMAND]", "Type \n/ctrlproxy python help\nfor more details");
 	}
 
 	//add_motd_hook("python_motd", in_motd_hook);

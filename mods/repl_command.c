@@ -1,4 +1,4 @@
-/* 
+/*
 	ctrlproxy: A modular IRC proxy
 	(c) 2002-2003 Jelmer Vernooij <jelmer@nl.linux.org>
 
@@ -126,7 +126,7 @@ gboolean init_plugin(struct plugin *p) {
 		return FALSE;
 	}
 	add_filter("repl_command", log_data);
-	register_admin_command("BACKLOG", repl_command);
+	register_admin_command("BACKLOG", repl_command, "[channel]", NULL);
 	command_backlog = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
 	return TRUE;
 }

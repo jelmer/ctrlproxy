@@ -1,4 +1,4 @@
-/* 
+/*
 	ctrlproxy: A modular IRC proxy
 	(c) 2002 Jelmer Vernooij <jelmer@nl.linux.org>
 
