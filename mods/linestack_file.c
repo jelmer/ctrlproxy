@@ -38,7 +38,7 @@ struct file_information {
 	char *filename;
 };
 
-static gboolean file_init(struct linestack_context *c, char *args)
+static gboolean file_init(struct linestack_context *c, const char *args)
 {
 	struct file_information *d = g_new(struct file_information,1);
 	GError *error = NULL;

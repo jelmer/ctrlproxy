@@ -634,14 +634,14 @@ int verify_client(struct network *s, struct client *c)
 	return 0;
 }
 
-gboolean network_change_nick(struct network *s, char *nick)
+gboolean network_change_nick(struct network *s, const char *nick)
 {
 	char *tmp, *p = NULL;
 	
 	if (!s) return FALSE;
 
 	/* Change nick */
-	if (!nick) nick = (char*)g_get_user_name();
+	if (!nick) nick = g_get_user_name();
 	xmlSetProp(s->xmlConf, "nick", nick);
 
 	/* Change hostmask */

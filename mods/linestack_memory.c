@@ -21,7 +21,7 @@
 #include <ctrlproxy.h>
 #include <string.h>
 
-gboolean memory_init(struct linestack_context *c, char *args)
+gboolean memory_init(struct linestack_context *c, const char *args)
 {
 	c->data = NULL;
 	return TRUE;

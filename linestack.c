@@ -50,7 +50,7 @@ gboolean linestack_add_line_list(struct linestack_context *p, GSList *l)
 	return TRUE;
 }
 
-struct linestack_context *linestack_new(char *name, char *args)
+struct linestack_context *linestack_new(const char *name, const char *args)
 {
 	struct linestack_ops *b = NULL;
 	struct linestack_context *c = NULL;

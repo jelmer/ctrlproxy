@@ -28,7 +28,7 @@ struct started_join {
 
 static GList *started_join_list = NULL;
 
-int is_channelname(char *name, struct network *n)
+int is_channelname(const char *name, struct network *n)
 {
 	const char *chantypes = get_network_feature(n, "CHANTYPES");
 	if(!chantypes) {
@@ -115,7 +115,7 @@ static void free_channel(struct channel *c)
 	c->topic = NULL;
 }
 
-struct channel *find_channel(struct network *st, char *name)
+struct channel *find_channel(struct network *st, const char *name)
 {
 	GList *cl = st->channels;
 	while(cl) {
@@ -677,7 +677,7 @@ void state_handle_data(struct network *s, struct line *l)
 }
 
 
-GSList *gen_replication_channel(struct channel *c, char *hostmask, char *nick)
+GSList *gen_replication_channel(struct channel *c, const char *hostmask, const char *nick)
 {
 	GSList *ret = NULL;
 	char *channel_name = xmlGetProp(c->xmlConf, "name");
@@ -757,7 +757,7 @@ struct linestack_context *linestack_new_by_network(struct network *n)
 	return ret;
 }
 
-const char *get_network_feature(struct network *n, char *name)
+const char *get_network_feature(struct network *n, const char *name)
 {
 	int i;
 	if(!n) return NULL;
