@@ -74,9 +74,9 @@ static gboolean log_data(struct line *l) {
 
 static void lastdisconnect_clear(struct client *c)
 {
-	struct linestack_context *co = (struct linestack_context *)g_hash_table_lookup(lastdisconnect_backlog, l->network);
+	struct linestack_context *co = (struct linestack_context *)g_hash_table_lookup(lastdisconnect_backlog, c->network);
 	linestack_clear(co);
-	g_hash_table_remove(lastdisconnect_backlog, l->network);
+	g_hash_table_remove(lastdisconnect_backlog, c->network);
 }
 
 static gboolean lastdisconnect_replicate(struct client *c)
