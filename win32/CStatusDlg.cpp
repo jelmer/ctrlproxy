@@ -4,6 +4,9 @@
 #include "stdafx.h"
 #include "ctrlproxyapp.h"
 #include "CStatusDlg.h"
+extern "C" {
+#include "internals.h"
+}
 
 #ifdef _DEBUG
 #define new DEBUG_NEW

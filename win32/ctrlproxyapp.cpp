@@ -3,7 +3,6 @@
 
 #include "stdafx.h"
 #include "ctrlproxyapp.h"
-#include "ctrlproxyDlg.h"
 #include "traynot.h"
 #include "maindlg.h"
 extern "C" {
@@ -75,6 +74,8 @@ BOOL CCtrlproxyApp::InitInstance()
 	dlg = new CMainDlg();
 	not = new CTrayNot(dlg);
 	m_pMainWnd = not;
+
+	SetRegistryKey("CtrlProxy");
 
 	register_log_function();	
 

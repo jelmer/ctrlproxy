@@ -43,7 +43,7 @@ CTrayNot::~CTrayNot()
 }
 
 
-BEGIN_MESSAGE_MAP(CTrayNot, CWnd)
+BEGIN_MESSAGE_MAP(CTrayNot, CDialog)
 	//{{AFX_MSG_MAP(CTrayNot)
 		// NOTE - the ClassWizard will add and remove mapping macros here.
 		ON_MESSAGE (CTRLPROXY_TRAY_ICON, OnSysTrayIconClick)

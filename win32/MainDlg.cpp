@@ -4,6 +4,13 @@
 #include "ctrlproxyapp.h"
 #include "MainDlg.h"
 
+#include "caboutdlg.h"
+#include "cpluginsdlg.h"
+#include "cnetworksdlg.h"
+#include "cstatusdlg.h"
+#include "configurationdlg.h"
+#include "Clogdlg.h"
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #undef THIS_FILE

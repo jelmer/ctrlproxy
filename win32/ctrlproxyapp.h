@@ -13,7 +13,6 @@
 #endif
 
 #include "resource.h"		// main symbols
-#include "ctrlproxydlg.h"
 #include "traynot.h"
 /////////////////////////////////////////////////////////////////////////////
 // CCtrlproxyApp:
