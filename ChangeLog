@@ -1,6 +1,6 @@
 Ctrlproxy 2.7:
  * Add repl_lastdisconnect.so
- * Add python plugin (Daniel Poelzi)
+ * Add python plugin (Daniel Poelzleithner <ctrlproxy@poelzi.org>)
 
 Ctrlproxy 2.6:
  * Configuration utility (Kyoshiro)
