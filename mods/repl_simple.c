@@ -58,20 +58,20 @@ static gboolean log_data(struct line *l) {
 	} else if(!strcasecmp(l->args[0], "353")) {
 		c = find_channel(l->network, l->args[3]);
 		if(c && !(c->introduced & 2)) {
-			linestack_add_line(co, linedup(l));
+			linestack_add_line(co, l);
 		}
 		/* Only do 366 if not & 2. Set | 2 */
 	} else if(!strcasecmp(l->args[0], "366")) {
 		c = find_channel(l->network, l->args[2]);
 		if(c && !(c->introduced & 2)) {
-			linestack_add_line(co, linedup(l));
+			linestack_add_line(co, l);
 			c->introduced |= 2;
 		}
 		/* Only do 331 or 332 if not & 1. Set | 1 */
 	} else if(!strcasecmp(l->args[0], "331") || !strcasecmp(l->args[0], "332")) {
 		c = find_channel(l->network, l->args[2]);
 		if(c && !(c->introduced & 1)) {
-			linestack_add_line(co, linedup(l));
+			linestack_add_line(co, l);
 			c->introduced |= 1;
 		}
 	}
