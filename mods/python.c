@@ -30,7 +30,7 @@
 #include "ctrlproxy.h"
 #include <string.h>
 #include "irc.h"
-#include "libxml_wrap.h"
+#include "python_libxml_wrap.h"
 
 xmlNodePtr xmlConf;
 
