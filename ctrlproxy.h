@@ -30,6 +30,8 @@
 struct network;
 struct client;
 struct line;
+struct channel_nick;
+struct network_nick;
 struct transport_context;
 
 enum data_direction { UNKNOWN = 0, TO_SERVER = 1, FROM_SERVER = 2 };
@@ -67,6 +69,9 @@ struct line {
 	const char *origin;
 	char **args; /* NULL terminated */
 	size_t argc;
+	/* Don't use the following properties. Use line_get_network_nick() 
+	 * instead. */
+	struct network_nick *network_nick; 
 	enum has_colon has_endcolon;
 };
 
@@ -153,6 +158,7 @@ int is_prefix(char p, struct network *n);
 char get_prefix_by_mode(char p, struct network *n);
 const char *get_network_feature(struct network *n, char *name);
 int irccmp(struct network *n, const char *a, const char *b);
+struct network_nick *line_get_network_nick(struct line *l);
 
 /* server.c */
 struct network *connect_network(xmlNodePtr);

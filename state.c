@@ -786,3 +786,11 @@ int irccmp(struct network *n, const char *a, const char *b)
 	g_assert("Casemap invalid!");
 	return 0;
 }
+
+struct network_nick *line_get_network_nick(struct line *l)
+{
+	char *n = line_get_nick(l);
+	if(!n) return NULL;
+	l->network_nick = find_add_network_nick(l->network, n);
+	return l->network_nick;
+}
