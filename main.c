@@ -114,7 +114,7 @@ gboolean unload_plugin(struct plugin *p)
 	plugin_fini_function f;
 
 	/* Run exit function if present */
-	if(g_module_symbol(p->module, "fini_plugin", (gpointer *)&f)) {
+	if(g_module_symbol(p->module, "fini_plugin", (gpointer)&f)) {
 		if(!f(p)) {
 			g_warning("Unable to unload plugin '%s': still in use?", p->name);
 			return FALSE;
@@ -172,7 +172,7 @@ gboolean load_plugin(xmlNodePtr cur)
 		g_free(path_name);
 		return FALSE;
 	} else {
-		if(!g_module_symbol(m, "init_plugin", (gpointer *)&f)) {
+		if(!g_module_symbol(m, "init_plugin", (gpointer)&f)) {
 			g_warning("Can't find symbol 'init_plugin' in module %s", path_name);
 			g_free(path_name);
 			return FALSE;

@@ -420,7 +420,7 @@ static struct admin_command builtin_commands[] = {
 };
 
 static gboolean handle_data(struct line *l) {
-	char *tmp, **args = NULL, *p;
+	char *tmp, **args = NULL;
 	int cmdoffset = 0;
 	GError *error = NULL;
 	int argc = 0;

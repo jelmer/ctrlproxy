@@ -95,7 +95,7 @@ static void socket_to_iochannel(int sock, struct transport_context *c, enum ssl_
 	GError *error = NULL;
 	ioc = g_io_channel_unix_new(sock);
 
-#ifdef HAVE_OPENSSL_SSL_H
+#if defined(HAVE_OPENSSL_SSL_H) || defined(HAVE_GNUTLS_OPENSSL_H)
 	if(ssl_mode != SSL_MODE_NONE) {
 		GIOChannel *newioc;
 		newioc = irssi_ssl_get_iochannel(ioc, ssl_mode == SSL_MODE_SERVER);
@@ -582,7 +582,7 @@ gboolean init_plugin(struct plugin *p) {
 		cur = cur->next;
 	}
 
-#ifdef HAVE_OPENSSL_SSL_H
+#if defined(HAVE_OPENSSL_SSL_H) || defined(HAVE_GNUTlS_OPENSSL_H)
 	if(!certf || !keyf) {
 		defaultssl = ctrlproxy_path("ctrlproxy.pem");
 		if(access(defaultssl, R_OK) == 0) {

@@ -25,13 +25,27 @@ AC_HEADER_DIRENT
 AC_HEADER_STDC
 AC_HEADER_TIME
 AC_CHECK_LIB(pcre, pcre_compile, [ LIB_PCRE="-lpcre" ] )
-AC_CHECK_HEADERS([arpa/inet.h fcntl.h netdb.h netinet/in.h stdlib.h string.h sys/ioctl.h sys/socket.h unistd.h popt.h tdb.h regex.h pcre.h openssl/ssl.h execinfo.h sys/time.h])
+AC_CHECK_HEADERS([arpa/inet.h fcntl.h netdb.h netinet/in.h stdlib.h string.h sys/ioctl.h sys/socket.h unistd.h popt.h tdb.h regex.h pcre.h execinfo.h sys/time.h])
 
 SSL_LIB=""
 
 AC_CHECK_LIB(tdb, tdb_open, [ BINS="$BINS printstats"; MODS="$MODS libstats.so" ] )
 AC_CHECK_LIB(crypto, DES_set_key)
+
+dnl SSL Support
+dnl libssl
+AC_CHECK_HEADERS([openssl/ssl.h])
 AC_CHECK_LIB(ssl, SSL_connect, [ SOCKET_OBJS="$SOCKET_OBJS network-openssl.o"; SSL_LIB="-lssl" ] )
+
+dnl gnutls
+AC_PATH_PROG(gnutls_config, libgnutls-config, no)
+
+if test "$gnutls_config" != "no"; then
+	CFLAGS="$CFLAGS `$gnutls_config --cflags`"
+	SOCKET_OBJS="$SOCKET_OBJS network-gnutls.o"
+	SSL_LIB=`$gnutls_config --libs`
+	AC_CHECK_HEADERS([gnutls/openssl.h])
+fi
 
 dnl *********************************************************************
 dnl ** PYTHON ***********************************************************

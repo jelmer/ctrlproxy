@@ -204,7 +204,7 @@ char *irc_line_string(struct line *l) {
 
 void free_line(struct line *l) {
 	int i;
-	if(l->origin)free(l->origin);
+	if(l->origin)free((char *)l->origin);
 	if(l->args) {
 		for(i = 0; l->args[i]; i++)free(l->args[i]);
 		free(l->args);
