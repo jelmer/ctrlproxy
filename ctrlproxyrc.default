@@ -1,11 +1,9 @@
 <?xml version="1.0"?>
 <!--
-	Example RC file for ctrlproxy
+	Default RC file for ctrlproxy
 	(C) 2003-2004 Jelmer Vernooij <jelmer@vernstok.nl>
 	Read the documentation for more information about certain plugins, 
 	elements or attributes.
-		
-	Please adapt to your needs!
 -->
 <ctrlproxy>
 	<plugins>
@@ -66,7 +64,6 @@
 		<!-- Generate a TDB file with statistics about how much 
 		certain patterns where used in a channel -->
 		<plugin file="libstats" autoload="0">
-			<tdbfile>/home/jelmer/.ctrlproxy-stats.tdb</tdbfile>
 			<pattern type="happy">[:;]([-]*)[\)D]</pattern>
 			<pattern type="unhappy">[:;]([-]*)[\/\(]</pattern>
 			<pattern type="question">\?([^ ]*)$</pattern>
