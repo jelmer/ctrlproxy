@@ -6,18 +6,18 @@
 	 * ADDSERVER <network> <type> [<key>=<value>] [...]
 	 * CONNECT <network>
 	 * DELNETWORK <network>
-	 * NEXTSERVER <network>
+	 * DETACH
 	 * DIE
 	 * DISCONNECT [<network>]
+	 * DUMPCONFIG
+	 * HELP
+	 * LISTMODULES
 	 * LISTNETWORKS
 	 * LOADMODULE <location>
+	 * NEXTSERVER <network>
 	 * RELOADMODULE <location>
-	 * UNLOADMODULE <location>
-	 * LISTMODULES
-	 * DUMPCONFIG
 	 * SAVECONFIG
-	 * DETACH
-	 * HELP
+	 * UNLOADMODULE <location>
 
 	(c) 2003 Jelmer Vernooij <jelmer@nl.linux.org>
 
