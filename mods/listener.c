@@ -97,6 +97,8 @@ gboolean start_listener(struct listener *l)
 	const int on = 1;
 	struct sockaddr_in addr;
 
+	g_message("Starting listener at port %d", l->port);
+
 	sock = socket(PF_INET, SOCK_STREAM, 0);
 	if (sock < 0) {
 		g_warning( "error creating socket: %s", strerror(errno));
@@ -136,6 +138,7 @@ gboolean start_listener(struct listener *l)
 
 gboolean stop_listener(struct listener *l)
 {
+	g_message("Stopping listener at port %d", l->port);
 	g_source_remove(l->incoming_id);
 	listeners = g_list_remove(listeners, l);
 	return TRUE;

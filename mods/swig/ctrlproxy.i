@@ -2,6 +2,7 @@
 %{
 #include "ctrlproxy.h"
 %}
+%include "common.i";
 %feature("autodoc", 1);
 %nodefault;
 
