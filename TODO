@@ -5,4 +5,3 @@
  - hooks
 - rewrite web script
 - support the - and + in front of lines as used by Freenode
-- non-blocking sockets once again

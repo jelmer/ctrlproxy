@@ -37,9 +37,11 @@ static const char *nickserv_find_nick(struct network *n, char *nick)
 	for (gl = nicks; gl; gl = gl->next) {
 		struct nickserv_entry *e = gl->data;
 
-		if ((!e->network || !g_strcasecmp(e->network, n->name)) && !g_strcasecmp(e->nick, nick)) {
-			return e->pass;
-		}
+		if (g_strcasecmp(e->nick, nick)) 
+			continue;
+
+		if (!e->network) return e->pass;
+		if (!g_strcasecmp(e->network, n->name)) return e->pass;
 	}
 	
 	return NULL;
@@ -78,15 +80,22 @@ static gboolean log_data(struct line *l) {
 		identify_me(l->network, l->args[1]);
 	}
 
-	if(l->direction == FROM_SERVER && !g_strcasecmp(l->args[0], "NOTICE") && 
-	   line_get_nick(l) && !g_strcasecmp(line_get_nick(l), nickserv_nick(l->network))) {
-		identify_me(l->network, l->args[1]);
-	}
-
 	/* Keep track of the last nick that the user tried to take */
 	if(l->direction == TO_SERVER && !g_strcasecmp(l->args[0], "NICK")) {
 		if(nickattempt) g_free(nickattempt);
 		nickattempt = g_strdup(l->args[1]);
+	}
+
+	if (l->direction == TO_SERVER && 
+		(!g_strcasecmp(l->args[0], "PRIVMSG") || !g_strcasecmp(l->args[0], "NOTICE")) &&
+		(!g_strcasecmp(l->args[1], nickserv_nick(l->network)) && !g_strncasecmp(l->args[2], "IDENTIFY ", strlen("IDENTIFY ")))) {
+			struct nickserv_entry *e = g_new0(struct nickserv_entry, 1);
+			e->nick = g_strdup(l->network->nick);
+			e->pass = l->args[2] + strlen("IDENTIFY ");
+			e->network = g_strdup(l->network->name);
+		
+			nicks = g_list_prepend(nicks, e);
+			g_message("Caching password for nick %s on network %s", e->nick, e->network);
 	}
 
 	/* If we receive a nick-already-in-use message, ghost the current user */

@@ -254,12 +254,13 @@ gboolean connect_current_tcp_server(struct network *s)
 		return FALSE;
 	}
 
-
 	size = sizeof(struct sockaddr_in6);
 	s->connection.tcp.local_name = g_malloc(size);
 	s->connection.tcp.namelen = getsockname(sock, s->connection.tcp.local_name, &size);
 
 	s->connection.tcp.outgoing = g_io_channel_unix_new(sock);
+
+	g_io_channel_set_flags(s->connection.tcp.outgoing, G_IO_FLAG_NONBLOCK, NULL);
 
 	if (cs->ssl) {
 		if (!sslize_function) {
@@ -309,7 +310,7 @@ static gboolean reconnect(GIOChannel *c, GIOCondition cond, void *_server)
 	default: break;
 	}
 
-	g_warning(_("Connection to server %s lost, trying to reconnect in %ds..."), server->name, time);
+	g_warning(_("Connection to network %s lost, trying to reconnect in %ds..."), server->name, server->reconnect_interval);
 
 	server->authenticated = FALSE;
 	state_reconnect(server);
@@ -513,6 +514,7 @@ struct client *new_client(struct network *n, GIOChannel *c)
 	char allmodes[] = "aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPqQrRsStTuUvVwWxXyYzZ";
 	struct client *client = g_new0(struct client, 1);
 
+	g_io_channel_set_flags(c, G_IO_FLAG_NONBLOCK, NULL);
 	client->connect_time = time(NULL);
 	client->incoming = c;
 	client->network = n;
@@ -691,16 +693,6 @@ gboolean ping_loop(gpointer user_data) {
 		GList *cl;
 		if(network_is_connected(s))network_send_args(s, "PING", s->name, NULL);
 		else reconnect(NULL, G_IO_HUP, s);
-
-		/* Throw out unauthorized clients that have been inactive for over a minute */
-		cl = s->clients;
-		while(cl) {
-			struct client *c = (struct client *)cl->data;
-			cl = g_list_next(cl);
-			if(time(NULL) - c->connect_time > 60) {
-				disconnect_client(c);
-			}
-		}
 
 		l = g_list_next(l);
 	}

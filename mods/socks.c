@@ -383,16 +383,18 @@ static gboolean handle_client_data (GIOChannel *ioc, GIOCondition o, gpointer da
 					if (!result) {
 						g_warning("Unable to return network matching %s:%d", hostname, port);
 						return socks_error(ioc, REP_NET_UNREACHABLE);
-					} else {
+					} 
+
+					if (!network_is_connected(result) && !connect_network(result)) {
+						g_warning("Unable to connect to network %s", result->name);
+						return socks_error(ioc, REP_NET_UNREACHABLE);
+					}
+
+					if (result->type == NETWORK_TCP) {
 						struct sockaddr_in6 *name6; 
 						struct sockaddr_in *name4; 
 						int atyp, len, port;
 						guint8 *data;
-
-						if (!network_is_connected(result) && !connect_network(result)) {
-							g_warning("Unable to connect to network %s", result->name);
-							return socks_error(ioc, REP_NET_UNREACHABLE);
-						}
 
 						name6 = (struct sockaddr_in6 *)result->connection.tcp.local_name;
 						name4 = (struct sockaddr_in *)result->connection.tcp.local_name;
@@ -414,6 +416,15 @@ static gboolean handle_client_data (GIOChannel *ioc, GIOCondition o, gpointer da
 							
 						socks_reply(ioc, REP_OK, atyp, len, data, port); 
 						
+						new_client(result, ioc);
+
+						return FALSE;
+					} else {
+						char *data = g_strdup("xlocalhost");
+						data[0] = strlen(data+1);
+						
+						socks_reply(ioc, REP_OK, ATYP_FQDN, data[0]+1, data, 1025);
+
 						new_client(result, ioc);
 
 						return FALSE;
