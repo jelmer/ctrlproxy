@@ -7,6 +7,7 @@ XSLTPROC = @XSLTPROC@ --xinclude
 PDFLATEX = @PDFLATEX@
 XMLTO = @XMLTO@
 docdir = @prefix@/share/doc/ctrlproxy-@VERSION@
+share = @prefix@/share/ctrlproxy
 INSTALL = @INSTALL@
 XMLLINT = @XMLLINT@
 prefix = @prefix@
@@ -32,11 +33,11 @@ htmlmanpages: $(MOD_MANPAGES_HTML)
 
 %.xml: %.mod.xml module.xsl
 	$(XSLTPROC) -o $@ module.xsl $<
-	
+
 %.fo: %.xml $(MODS)
 	$(XMLTO) fo $<
 
-ctrlproxy-setup.conf: 
+ctrlproxy-setup.conf:
 	@echo "my %%modules_defs = ("
 	@for I in $(wildcard *.mod.xml); do $(XSLTPROC) ctrlproxy-setup-config.xsl $$I; done
 	@echo ");"
@@ -53,7 +54,11 @@ ctrlproxy-setup.conf:
 lint: ctrlproxy.xml $(MODS)
 	$(XMLLINT) --xinclude ctrlproxy.xml
 
-install: all
+install-xml:
+	$(INSTALL) -d $(DESTDIR)$(share)
+	$(INSTALL) $(MOD_SOURCES) $(DESTDIR)$(share)
+
+install: all install-xml
 ifeq ($(ENABLED_DOC_INSTALL), 1)
 	$(INSTALL) -d $(DESTDIR)$(man1dir)
 	$(INSTALL) -d $(DESTDIR)$(man5dir)

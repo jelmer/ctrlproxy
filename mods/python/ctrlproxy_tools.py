@@ -17,6 +17,12 @@
 
 # some functions are taken from python-irclib-0.4.1
 
+"""
+This functions are accessable over
+
+ctrlproxy.tools
+"""
+
 def ip_numstr_to_quad(num):
     """Convert an IP number as an integer given in ASCII
     representation (e.g. '3232235521') to an IP address string
@@ -74,7 +80,7 @@ def parse_nick_modes(mode_string):
 
     Example:
 
-    >>> irclib.parse_nick_modes(\"+ab-c\")
+    >>> ctrlproxy.tools.parse_nick_modes(\"+ab-c\")
     [['+', 'a', None], ['+', 'b', None], ['-', 'c', None]]
     """
 
@@ -89,7 +95,7 @@ def parse_channel_modes(mode_string):
 
     Example:
 
-    >>> irclib.parse_channel_modes(\"+ab-c foo\")
+    >>> ctrlproxy.tools.parse_channel_modes(\"+ab-c foo\")
     [['+', 'a', None], ['+', 'b', 'foo'], ['-', 'c', None]]
     """
 
@@ -125,3 +131,35 @@ def _parse_modes(mode_string, unary_modes=""):
         else:
             modes.append([sign, ch, None])
     return modes
+
+import ctrlproxy
+import os
+import os.path
+import libxml2
+
+def get_xml_module_names(typ = None):
+	"""Returns a list of modules for which a Moduleinfo is available"""
+	path = os.path.join(ctrlproxy.get_path("prefix"),"share","ctrlproxy","xml")
+	dl = os.listdir(path)
+	rv = []
+	for i in dl:
+		if i[-8:] == ".mod.xml":
+			if typ != None:
+				d = libxml2.parseFile(os.path.join(path, i))
+				#d.dump(1)
+				xl = d.xpathEval("//modulemeta/type")
+				for node in xl:
+					if node.content == typ:
+						rv.append(i[:-8])
+				d.freeDoc()
+			else:
+				rv.append(i[:-8])
+	return rv
+
+
+class Moduleinfo:
+	"""Returns informations of a module"""
+	def __init__(self, name):
+		self.path = os.path.join(ctrlproxy.get_path("prefix"),"share","ctrlproxy","xml","%s.mod.xml" %name)
+		self.doc = libxml2.parseFile(self.path)
+		

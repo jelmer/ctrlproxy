@@ -7,6 +7,7 @@
 		<email>jelmer@vernstok.nl</email>
 		<homepage>http://ctrlproxy.vernstok.nl/</homepage>
 		<requires>SSL(optional)</requires>
+		<type>transport</type>
 	</modulemeta>
 
 	<description>
@@ -38,6 +39,26 @@
 			<description>Name of file to load certificate from. Only required when acting as a server</description>
 		</element>
 	</configuration>
+
+	<transports>
+	   <transport name="ipv4">
+		   <attribute type="bool" name="ssl">Enable ssl</attribute>
+		   <attribute name="host" only="connect">Host name or IP address to connect to</attribute>
+		   <attribute name="port">Port to connect to or listen on</attribute>
+		   <attribute name="bind">Address to bind to</attribute>
+	   </transport>
+	   <transport name="ipv6">
+		   <attribute type="bool" name="ssl">Enable ssl</attribute>
+		   <attribute name="host" only="connect">Host name or IP address to connect to</attribute>
+		   <attribute name="port">Port to connect to or listen on</attribute>
+		   <attribute name="bind">Address to bind to</attribute>
+	   </transport>
+	   <transport name="pipe">
+		   <children>
+			   <content name="path">String to executeable</content>
+		   </children>
+	   </transport>
+	</transports>
 
 	<section>
 		<title>Configuration</title>
