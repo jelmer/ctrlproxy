@@ -29,7 +29,7 @@ static gboolean loop_save_config(gpointer user_data)
 	return TRUE;
 }
 
-char *name_plugin = "autosave";
+const char name_plugin[] = "autosave";
 
 gboolean init_plugin(struct plugin *p)
 {

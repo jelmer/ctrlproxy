@@ -46,7 +46,7 @@ gboolean fini_plugin(struct plugin *p) {
 	return TRUE;
 }
 
-char *name_plugin = "noticelog";
+const char name_plugin[] = "noticelog";
 
 gboolean init_plugin(struct plugin *p) {
 	guint id = g_log_set_handler(NULL, G_LOG_LEVEL_MASK | G_LOG_FLAG_RECURSION, admin_log, NULL);

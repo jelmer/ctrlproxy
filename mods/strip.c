@@ -251,7 +251,7 @@ gboolean fini_plugin(struct plugin *p) {
 	return TRUE;
 }
 
-char *name_plugin = "strip";
+const char name_plugin[] = "strip";
 
 gboolean init_plugin(struct plugin *p) {
 	add_filter_ex("strip", handle_data, "client", 1);

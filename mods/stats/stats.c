@@ -255,7 +255,7 @@ gboolean fini_plugin(struct plugin *p)
 	return TRUE;
 }
 
-char *name_plugin = "stats";
+const char name_plugin[] = "stats";
 
 gboolean init_plugin(struct plugin *p)
 {

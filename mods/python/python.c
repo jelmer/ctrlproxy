@@ -2364,7 +2364,7 @@ gboolean init_plugin(struct plugin *p) {
 	return TRUE;
 }
 
-char *name_plugin = "python";
+const char name_plugin[] = "python";
 
 gboolean fini_plugin(struct plugin *p) {
 	del_filter(in_rcv_data);

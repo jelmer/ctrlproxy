@@ -621,7 +621,7 @@ gboolean fini_plugin(struct plugin *p) {
 			unregister_transport("pipe"));
 }
 
-char *name_plugin = "socket";
+const char name_plugin[] = "socket";
 
 gboolean init_plugin(struct plugin *p) {
 	xmlNodePtr cur;

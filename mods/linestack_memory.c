@@ -75,7 +75,7 @@ gboolean fini_plugin(struct plugin *p) {
 	return TRUE;
 }
 
-char *name_plugin = "linestack_memory";
+const char name_plugin[] = "linestack_memory";
 
 gboolean init_plugin(struct plugin *p) {
 	register_linestack(&memory);

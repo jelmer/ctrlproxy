@@ -33,7 +33,7 @@ static xmlNodePtr new_plugin_node(char *name) {
 	return new;
 }
 
-char *name_plugin = "repl_memory";
+const char name_plugin[] = "repl_memory";
 
 gboolean init_plugin(struct plugin *p) {
 	xmlNodePtr xml_memory = new_plugin_node("linestack_memory"), xml_simple = new_plugin_node("repl_simple");

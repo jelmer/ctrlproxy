@@ -120,7 +120,7 @@ static void repl_command(char **args, struct line *l)
 	}
 }
 
-char *name_plugin = "repl_command";
+const char name_plugin[] = "repl_command";
 
 gboolean init_plugin(struct plugin *p) {
 	if(!plugin_loaded("admin")) {

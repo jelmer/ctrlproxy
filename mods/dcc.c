@@ -158,7 +158,7 @@ gboolean fini_plugin(struct plugin *p)
 	return TRUE;
 }
 
-char *name_plugin = "dcc";
+const char name_plugin[] = "dcc";
 
 gboolean init_plugin(struct plugin *p) 
 {

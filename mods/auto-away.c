@@ -86,7 +86,7 @@ gboolean fini_plugin(struct plugin *p) {
 	return TRUE;
 }
 
-char *name_plugin = "auto-away";
+const char name_plugin[] = "auto-away";
 
 gboolean init_plugin(struct plugin *p) {
 	char *t = NULL;

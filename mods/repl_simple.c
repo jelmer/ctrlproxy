@@ -110,7 +110,7 @@ gboolean fini_plugin(struct plugin *p) {
 	return TRUE;
 }
 
-char *name_plugin = "repl_simple";
+const char name_plugin[] = "repl_simple";
 
 gboolean init_plugin(struct plugin *p) {
 	add_filter_ex("repl_simple", log_data, "replicate", 1000);

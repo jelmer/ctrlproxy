@@ -99,7 +99,7 @@ gboolean fini_plugin(struct plugin *p)
 	return TRUE;
 }
 
-char *name_plugin = "ctcp";
+const char name_plugin[] = "ctcp";
 
 gboolean init_plugin(struct plugin *p) 
 {

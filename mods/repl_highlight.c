@@ -83,7 +83,7 @@ gboolean fini_plugin(struct plugin *p) {
 	return TRUE;
 }
 
-char *name_plugin = "repl_highlight";
+const char name_plugin[] = "repl_highlight";
 
 gboolean init_plugin(struct plugin *p) {
 	xmlConf = p->xmlConf;

@@ -98,7 +98,7 @@ gboolean fini_plugin(struct plugin *p) {
 	return TRUE;
 }
 
-char *name_plugin = "repl_lastdisconnect";
+const char name_plugin[] = "repl_lastdisconnect";
 
 gboolean init_plugin(struct plugin *p) {
 	add_filter_ex("repl_lastdisconnect", log_data, "replicate", 1000);

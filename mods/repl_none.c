@@ -40,7 +40,7 @@ gboolean fini_plugin(struct plugin *p) {
 	return TRUE;
 }
 
-char *name_plugin = "repl_none";
+const char name_plugin[] = "repl_none";
 
 gboolean init_plugin(struct plugin *p) {
 	add_new_client_hook("repl_none", none_replicate);

@@ -116,7 +116,7 @@ gboolean fini_plugin(struct plugin *p) {
 	return TRUE;
 }
 
-char *name_plugin = "antiflood";
+const char name_plugin[] = "antiflood";
 
 gboolean init_plugin(struct plugin *p) {
 	add_filter_ex("antiflood", log_data, "client", 1);

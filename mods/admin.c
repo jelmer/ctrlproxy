@@ -589,7 +589,7 @@ gboolean fini_plugin(struct plugin *p) {
 	return TRUE;
 }
 
-char *name_plugin = "admin";
+const char name_plugin[] = "admin";
 
 gboolean init_plugin(struct plugin *p) {
 	xmlNodePtr cur;

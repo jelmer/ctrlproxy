@@ -221,7 +221,7 @@ gboolean fini_plugin(struct plugin *p)
 	return TRUE;
 }
 
-char *name_plugin = "log_irssi";
+const char name_plugin[] = "log_irssi";
 
 gboolean init_plugin(struct plugin *p)
 {

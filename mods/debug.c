@@ -73,7 +73,7 @@ gboolean fini_plugin(struct plugin *p) {
 	return TRUE;
 }
 
-char *name_plugin = "debug";
+const char name_plugin[] = "debug";
 
 gboolean init_plugin(struct plugin *p) {
 	if(!plugin_loaded("admin") && !plugin_loaded("libadmin")) {
