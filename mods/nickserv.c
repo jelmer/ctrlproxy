@@ -70,6 +70,7 @@ static void identify_me(struct network *network, char *nick)
 	if(nickserv_find_nick(network, nick, &pass)) {
 		char *nickserv_n = nickserv_nick(network), *raw;
 		asprintf(&raw, "IDENTIFY %s", pass);
+		free(pass);
 		irc_send_args(network->outgoing, "PRIVMSG", nickserv_n, raw, NULL);
 		free(raw);
 		xmlFree(nickserv_n);

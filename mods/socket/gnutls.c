@@ -45,7 +45,6 @@ typedef struct
 
 static GIOStatus g_io_gnutls_error(gint e)
 {
-	
 	switch(e)
 	{
 		case GNUTLS_E_INTERRUPTED:
@@ -53,6 +52,7 @@ static GIOStatus g_io_gnutls_error(gint e)
 			return G_IO_STATUS_AGAIN;
 		default:
 			g_warning("TLS Error: %s", gnutls_strerror(e));
+			if(gnutls_error_is_fatal(e)) return G_IO_STATUS_EOF;
 			return G_IO_STATUS_ERROR;
 	}
 
