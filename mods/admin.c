@@ -522,7 +522,6 @@ static gboolean handle_data(struct line *l) {
 		return TRUE;
 	}
 
-	args = malloc(sizeof(char *) * 2);
 	l->options |= LINE_DONT_SEND | LINE_IS_PRIVATE;
 	tmp = strdup(l->args[cmdoffset]);
 

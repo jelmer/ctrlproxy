@@ -50,6 +50,7 @@ static int nickserv_find_nick(struct network *n, char *nick, char **pass)
 				*pass = xmlGetProp(cur, "password");
 				return 1;
 			}
+			xmlFree(name);
 		}
 		cur = cur->next;
 	}

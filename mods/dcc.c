@@ -362,6 +362,8 @@ static gboolean mhandle_data(struct line *l)
 
 	cargs = g_strsplit(p, " ", 0);
 
+	free(p);
+
 	/* DCC SEND */
 	if(cargs[0] && cargs[1] && 
 	   !strcasecmp(cargs[0], "DCC") && !strcasecmp(cargs[1], "SEND")) {
