@@ -256,17 +256,23 @@ int main(int argc, const char *argv[])
 		isdaemon = 1;
 	} else if(!f_logfile)f_logfile = stdout;
 
-	if(rcfile) configuration_file = strdup(rcfile);
-	else { 
+	if(rcfile) {
+		configuration_file = strdup(rcfile);
+		readConfig(configuration_file);
+	} else { 
 		const char *homedir = g_get_home_dir();
 #ifdef _WIN32
 		asprintf(&configuration_file, "%s/_ctrlproxyrc", homedir);
 #else
 		asprintf(&configuration_file, "%s/.ctrlproxyrc", homedir);
 #endif
+		/* Copy configuration file from default location if none existed yet */
+		if(access(configuration_file, F_OK) != 0) {
+			readConfig(SHAREDIR"/ctrlproxyrc.default");
+		} else {
+			readConfig(configuration_file);
+		}
 	}
-
-	readConfig(configuration_file);
 
 	if(!g_module_supported()) {
 		g_warning(_("DSO's not supported on this platform. Not loading any modules"));

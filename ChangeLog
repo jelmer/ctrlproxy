@@ -2,6 +2,7 @@
  	Jelmer Vernooij <jelmer@vernstok.nl>
 
 Ctrlproxy 2.7:
+ * Use ctrlproxyrc.default if ~/.ctrlproxyrc does not exist
  * Make reconnect_timeout changeable (Alexander Wild <wild@te-elektronik.com>)
  * Add scripts/ directory and framework
  * Add default ctrlproxyrc and install it
