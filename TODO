@@ -7,7 +7,6 @@
 - non-blocking connect
 - add member 'nick' to struct line
 - add more help data
-- use irccmp everywhere
 - Net::IRC-like interface
 - automatically unload crashing modules?
  - keep track of module related to filter, command, etc?

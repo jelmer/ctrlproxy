@@ -43,7 +43,7 @@ static int nickserv_find_nick(struct network *n, char *nick, char **pass)
 	while(cur) {
 		if(!strcmp(cur->name, "nick") && xmlHasProp(cur, "name")) {
 			char *name = xmlGetProp(cur, "name");
-			if(!strcasecmp(name, nick)) { 
+			if(!irccmp(n, name, nick)) { 
 				xmlFree(name);
 				*pass = xmlGetProp(cur, "password");
 				return 1;

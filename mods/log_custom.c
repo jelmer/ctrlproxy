@@ -285,7 +285,7 @@ static void file_write_target(const char *n, struct line *l)
 	if(!fmt) return;
 
 
-	if(!strcasecmp(own_nick, l->args[1])) {
+	if(!irccmp(l->network, own_nick, l->args[1])) {
 		if(line_get_nick(l)) { t = strdup(line_get_nick(l)); }
 		else { t = strdup("_messages_"); }
 	} else {

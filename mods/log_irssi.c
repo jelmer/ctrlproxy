@@ -128,7 +128,7 @@ static gboolean log_data(struct line *l)
 	} else if(!strcasecmp(l->args[0], "PRIVMSG")) {
 		char *nnick = xmlGetProp(l->network->xmlConf, "nick");
 		dest = l->args[1];
-		if(!strcasecmp(dest, nnick))dest = nick;
+		if(!irccmp(l->network, dest, nnick))dest = nick;
 		xmlFree(nnick);
 		if(l->args[2][0] == '') { 
 			l->args[2][strlen(l->args[2])-1] = '\0';

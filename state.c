@@ -119,7 +119,7 @@ struct channel *find_channel(struct network *st, char *name)
 	while(cl) {
 		struct channel *c = (struct channel *)cl->data;
 		char *channel_name = xmlGetProp(c->xmlConf, "name");
-		if(!strcasecmp(channel_name, name)) { xmlFree(channel_name); return c; }
+		if(!irccmp(st, channel_name, name)) { xmlFree(channel_name); return c; }
 		xmlFree(channel_name);
 		cl = g_list_next(cl);
 	}
@@ -154,7 +154,7 @@ struct channel_nick *find_nick(struct channel *c, char *name) {
 
 	while(l) {
 		n = (struct channel_nick *)l->data;
-		if(!strcasecmp(n->global->name, realname))return n;
+		if(!irccmp(c->network, n->global->name, realname))return n;
 		l = g_list_next(l);
 	}
 
@@ -169,7 +169,7 @@ static struct network_nick *find_add_network_nick(struct network *n, char *name)
 	/* search for a existing global object*/
 	while(gl) {
 		struct network_nick *ndd = (struct network_nick*)gl->data;
-		if(!strcasecmp(ndd->name, name)) {
+		if(!irccmp(n, ndd->name, name)) {
 			ndd->refcount++;
 			return ndd;
 		}
@@ -234,7 +234,7 @@ static void handle_join(struct network *s, struct line *l)
 			/* The user is joining a channel */
 			own_nick = xmlGetProp(s->xmlConf, "nick");
 
-			if(!strcasecmp(line_get_nick(l), own_nick)) {
+			if(!irccmp(s, line_get_nick(l), own_nick)) {
 				xmlSetProp(c->xmlConf, "autojoin", "1");
 				g_message("Joining channel %s", p);
 
@@ -277,7 +277,7 @@ static void handle_part(struct network *s, struct line *l)
 		/* The user is joining a channel */
 		own_nick = xmlGetProp(s->xmlConf, "nick");
 
-		if(!strcasecmp(line_get_nick(l), own_nick) && c) {
+		if(!irccmp(s, line_get_nick(l), own_nick) && c) {
 			s->channels = g_list_remove(s->channels, c);
 			g_message("Leaving %s", p);
 			xmlSetProp(c->xmlConf, "autojoin", "0");
@@ -601,7 +601,7 @@ static void handle_nick(struct network *s, struct line *l)
 
 	own_nick = xmlGetProp(s->xmlConf, "nick");
 
-	if(!strcasecmp(line_get_nick(l), own_nick)) {
+	if(!irccmp(s, line_get_nick(l), own_nick)) {
 		xmlSetProp(s->xmlConf, "nick", l->args[1]);
 	}
 
