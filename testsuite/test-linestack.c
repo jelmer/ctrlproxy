@@ -25,7 +25,10 @@ int main(int argc, char **argv)
 	
 	while(!feof(stdin)) {
 		fgets(buf, sizeof(buf), stdin);
-		if(!strcmp(buf, "CLEAR\n")) linestack_clear(c);
+		if(!strncmp(buf, "CLEAR", 5)) {
+			linestack_clear(c);
+			continue;
+		}
 		l = irc_parse_line(buf);
 		if(l) {
 			linestack_add_line(c, l);
