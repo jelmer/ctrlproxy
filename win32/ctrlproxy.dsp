@@ -127,10 +127,6 @@ SOURCE=.\snprintf.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\snprintf.h
-# End Source File
-# Begin Source File
-
 SOURCE=..\state.c
 # End Source File
 # Begin Source File
