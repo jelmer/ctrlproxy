@@ -11,6 +11,7 @@ includedir = @includedir@
 man1dir = @mandir@/man1
 man5dir = @mandir@/man5
 cdatadir = @datadir@/ctrlproxy
+HAVE_DOCS = $(shell test -d doc && echo _)
 CFLAGS = @CFLAGS@ @PKG_CFLAGS@ -DHAVE_CONFIG_H -DLOCALEDIR=\"$(localedir)\" -DSHAREDIR=\"$(cdatadir)\" -DDTD_FILE=\"$(cdatadir)/ctrlproxyrc.dtd\"
 
 CFLAGS+=-ansi -Wall -DMODULESDIR=\"$(modulesdir)\"
@@ -22,7 +23,6 @@ BINS = @BINS@
 all: $(BINS)
 	$(MAKE) -C mods all
 	$(MAKE) -C scripts all
-@DOCBUILDE@	$(MAKE) -C doc all
 
 ctrlproxy@EXEEXT@: $(OBJS)
 	$(CC) $(LIBS) -rdynamic -o $@ $(OBJS)
@@ -54,7 +54,15 @@ install-doc:
 	$(INSTALL) COPYING $(DESTDIR)$(docdir)
 	$(INSTALL) TODO $(DESTDIR)$(docdir)
 	$(INSTALL) UPGRADING $(DESTDIR)$(docdir)
+ifdef HAVE_DOCS
 	$(MAKE) -C doc install 
+else
+	@echo "------------------------------------------------------------"
+	@echo " It looks like you are compiling ctrlproxy from Subversion"
+	@echo " Documentation will not be installed, but is available from "
+	@echo " a seperate repository"
+	@echo "------------------------------------------------------------"
+endif
 
 install-data:
 	$(INSTALL) motd $(DESTDIR)$(cdatadir)
@@ -73,14 +81,12 @@ install-pkgconfig:
 clean:
 	rm -f *.@OBJEXT@ ctrlproxy@EXEEXT@ printstats *~
 	$(MAKE) -C mods clean
-@DOCBUILDE@	$(MAKE) -C doc clean
 	$(MAKE) -C testsuite clean
 
 distclean: clean
 	rm -f Makefile build config.h ctrlproxy.pc ctrlproxy.spec *.log
 	rm -rf autom4te.cache/ config.log config.status
 	$(MAKE) -C mods distclean
-	$(MAKE) -C doc distclean
 	$(MAKE) -C testsuite distclean
 
 ctags:
