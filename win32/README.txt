@@ -42,5 +42,6 @@ Other TODO stuff:
 -----------------
 - Finish network config dialog
 - Finish plugin config dialog
+- Make configuration dialog show attributes.
 - Finish status dialog
 - Icon!

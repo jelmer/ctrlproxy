@@ -86,6 +86,8 @@ BOOL CCtrlproxyDlg::OnInitDialog()
 		VERIFY(tabs[i]->SetWindowPos(GetDlgItem(IDC_TAB1), rect.left + 20, rect.top + 35, rect.Width()-20, rect.Height()-35, SWP_SHOWWINDOW));
 	}
 
+	m_Tab.SetCurSel(0);
+
 	UpdateVisibleWindow();
 
 	// Set the icon for this dialog.  The framework does this automatically
@@ -152,7 +154,7 @@ void CCtrlproxyDlg::UpdateVisibleWindow()
 	   ::ShowWindow(tabs[i]->m_hWnd, current == i ? SW_SHOW : SW_HIDE);
    }
 
-      if(current == TAB_CONFIGURATION) {
+   if(current == TAB_CONFIGURATION) {
 	   CConfigurationDlg *dlg = (CConfigurationDlg *)tabs[TAB_CONFIGURATION];
 		dlg->UpdateTree();
    }
@@ -196,8 +198,7 @@ void CCtrlproxyDlg::ShowQuickMenu ()
 
 void CCtrlproxyDlg::OnClose() 
 {
-	ShowWindow(SW_HIDE);
-	
+	ShowWindow(SW_HIDE);	
 }
 
 void CCtrlproxyDlg::OnExit() 

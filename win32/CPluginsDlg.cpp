@@ -1,9 +1,15 @@
 // CPluginsDlg.cpp : implementation file
 //
 
+extern "C" {
+#include "internals.h"
+#include <direct.h>
+}
+
 #include "stdafx.h"
 #include "ctrlproxyapp.h"
 #include "CPluginsDlg.h"
+#include "commdlg.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -46,15 +52,32 @@ END_MESSAGE_MAP()
 
 void CPluginsDlg::OnAddPlugin() 
 {
-	// TODO: Add your control notification handler code here
+	chdir(get_modules_path());
 	
+	CFileDialog dlg(TRUE,NULL,NULL,OFN_OVERWRITEPROMPT,"CtrlProxy plugins (*.dll)|*.dll|All Files (*.*)|*.*||",this);
+	if(dlg.DoModal() == IDCANCEL) return;
+
+	CString f = dlg.GetPathName();
+	const char *filename = f;
+	TRACE(TEXT("Opening %s\n"), filename);
+
+	xmlNodePtr cur = xmlNewNode(NULL, (xmlChar *)"plugin");
+	xmlSetProp(cur, (xmlChar *)"file", (xmlChar *)filename);
+	xmlAddChild(config_node_plugins(), cur);
+
+	load_plugin(cur);
 }
 
 
 void CPluginsDlg::OnShowWindow(BOOL bShow, UINT nStatus) 
 {
 	CDialog::OnShowWindow(bShow, nStatus);
-	m_list.InsertColumn(0, "Foobar");	
-	// TODO: Add your message handler code here
+
+	if(bShow)UpdatePluginList();
 	
+}
+
+void CPluginsDlg::UpdatePluginList()
+{
+
 }

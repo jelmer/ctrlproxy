@@ -84,7 +84,7 @@ gboolean load_plugin(xmlNodePtr cur)
 	if(getenv("MODULESDIR"))modulesdir = getenv("MODULESDIR");
 	else modulesdir = get_modules_path();
 
-	if(mod_name[0] == '/')path_name = g_strdup(mod_name);
+	if(g_file_test(mod_name, G_FILE_TEST_EXISTS))path_name = g_strdup(mod_name);
 	else path_name = g_module_build_path(modulesdir, mod_name);
 	
 	m = g_module_open(path_name, G_MODULE_BIND_LAZY);

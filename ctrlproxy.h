@@ -174,6 +174,7 @@ G_MODULE_EXPORT char get_prefix_by_mode(char p, struct network *n);
 G_MODULE_EXPORT const char *get_network_feature(struct network *n, char *name);
 G_MODULE_EXPORT int irccmp(struct network *n, const char *a, const char *b);
 G_MODULE_EXPORT struct network_nick *line_get_network_nick(struct line *l);
+G_MODULE_EXPORT struct network *find_network_by_xml(xmlNodePtr cur);
 
 /* server.c */
 G_MODULE_EXPORT struct network *connect_network(xmlNodePtr);

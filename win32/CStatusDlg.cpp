@@ -20,7 +20,6 @@ CStatusDlg::CStatusDlg(CWnd* pParent /*=NULL*/)
 {
 	CDialog::Create(IDD, pParent);
 	//{{AFX_DATA_INIT(CStatusDlg)
-		// NOTE: the ClassWizard will add member initialization here
 	//}}AFX_DATA_INIT
 }
 
@@ -29,7 +28,9 @@ void CStatusDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialog::DoDataExchange(pDX);
 	//{{AFX_DATA_MAP(CStatusDlg)
-		// NOTE: the ClassWizard will add DDX and DDV calls here
+	DDX_Control(pDX, IDC_NUMCLIENTS, m_numclients);
+	DDX_Control(pDX, IDC_NUMCHANNELS, m_numchannels);
+	DDX_Control(pDX, IDC_NUMNETWORKS, m_numnetworks);
 	//}}AFX_DATA_MAP
 }
 
@@ -47,6 +48,9 @@ void CStatusDlg::OnShowWindow(BOOL bShow, UINT nStatus)
 {
 	CDialog::OnShowWindow(bShow, nStatus);
 	if(!bShow) return;
-	// FIXME: Set status messages
-	
+		
+	CString tmp;
+	tmp.Format("Connected to %d networks", g_list_length(get_network_list()));
+
+	m_numnetworks.SetWindowText(tmp);
 }

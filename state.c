@@ -793,3 +793,16 @@ struct network_nick *line_get_network_nick(struct line *l)
 	l->network_nick = find_add_network_nick(l->network, n);
 	return l->network_nick;
 }
+
+struct network *find_network_by_xml(xmlNodePtr cur)
+{
+	GList *gl = get_network_list();
+	if(!cur) return NULL;
+	while(gl) {
+		struct network *n = (struct network *)gl->data;
+		if(n->xmlConf == cur) return n;
+		gl = gl->next;
+	}
+	return NULL;
+
+}

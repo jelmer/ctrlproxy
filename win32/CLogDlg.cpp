@@ -51,4 +51,5 @@ END_MESSAGE_MAP()
 
 void log_handler(const gchar *log_domain, GLogLevelFlags flags, const gchar *message, gpointer user_data) {
 	if(logbox)logbox->AddString(message);
+	TRACE(TEXT("%s\n"), message);
 }

@@ -19,7 +19,9 @@ public:
 // Dialog Data
 	//{{AFX_DATA(CStatusDlg)
 	enum { IDD = IDD_STATUS };
-		// NOTE: the ClassWizard will add data members here
+	CStatic	m_numclients;
+	CStatic	m_numchannels;
+	CStatic	m_numnetworks;
 	//}}AFX_DATA
 
 

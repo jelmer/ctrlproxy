@@ -153,6 +153,6 @@ void CCtrlproxyApp::OnAbout()
 
 void CCtrlproxyApp::OnStatus() 
 {
-	// TODO: Add your command handler code here
+	CStatusDlg dlg();
 	
 }

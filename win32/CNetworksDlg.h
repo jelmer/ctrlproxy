@@ -7,6 +7,10 @@
 // NetworksDlg.h : header file
 //
 
+extern "C" {
+#include "internals.h"
+}
+
 /////////////////////////////////////////////////////////////////////////////
 // CNetworksDlg dialog
 
@@ -19,7 +23,11 @@ public:
 // Dialog Data
 	//{{AFX_DATA(CNetworksDlg)
 	enum { IDD = IDD_NETWORKS };
-		// NOTE: the ClassWizard will add data members here
+	CButton	m_disconnect;
+	CButton	m_connect;
+	CListBox	m_networklist;
+	CListBox	m_clientlist;
+	CString	m_status;
 	//}}AFX_DATA
 
 
@@ -35,9 +43,19 @@ protected:
 
 	// Generated message map functions
 	//{{AFX_MSG(CNetworksDlg)
-	afx_msg void OnButton2();
+	afx_msg void OnAdd();
+	afx_msg void OnConnect();
+	afx_msg void OnDel();
+	afx_msg void OnEdit();
+	afx_msg void OnKick();
+	afx_msg void OnSelchangeNetworklist();
+	afx_msg void OnShowWindow(BOOL bShow, UINT nStatus);
+	afx_msg void OnDisconnect();
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
+private:
+	void UpdateNetworkList();
+	struct network *curnetwork;
 };
 
 //{{AFX_INSERT_LOCATION}}

@@ -65,6 +65,7 @@ void CConfigurationDlg::fillinchildren(HTREEITEM i, xmlNodePtr cur)
 		if(!xmlIsBlankNode(c))fillinchildren(t, c);
 		c = c->next;
 	}
+	m_Tree.Expand(t, TVE_EXPAND);
 }
 
 

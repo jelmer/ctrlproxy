@@ -19,6 +19,8 @@ public:
 // Dialog Data
 	//{{AFX_DATA(CAboutDlg)
 	enum { IDD = IDD_ABOUT };
+	CEdit	m_licenseControl;
+	CString	m_license;
 	//}}AFX_DATA
 
 
@@ -35,6 +37,7 @@ protected:
 	// Generated message map functions
 	//{{AFX_MSG(CAboutDlg)
 	virtual BOOL OnInitDialog();
+	afx_msg void OnShowWindow(BOOL bShow, UINT nStatus);
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 };
