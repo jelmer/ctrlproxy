@@ -35,7 +35,6 @@ END_MESSAGE_MAP()
 
 CCtrlproxyApp::CCtrlproxyApp()
 {
-	// TODO: add construction code here,
 	// Place all significant initialization in InitInstance
 }
 

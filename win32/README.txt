@@ -40,7 +40,10 @@ stats: will get rewrite in 2.8
 
 Other TODO stuff:
 -----------------
-- Finish network edit dialog
 - Finish plugin config dialog
 - Make configuration dialog show attributes.
 - Icon!
+
+Known Bugs:
+-----------
+- ESC or enter make the current page dissappear

@@ -26,7 +26,6 @@ CNetworksDlg::CNetworksDlg(CWnd* pParent /*=NULL*/)
 {
 	Create(IDD, pParent);
 	//{{AFX_DATA_INIT(CNetworksDlg)
-	m_status = _T("");
 	//}}AFX_DATA_INIT
 }
 
@@ -39,7 +38,6 @@ void CNetworksDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_CONNECT, m_connect);
 	DDX_Control(pDX, IDC_NETWORKLIST, m_networklist);
 	DDX_Control(pDX, IDC_CLIENTLIST, m_clientlist);
-	DDX_Text(pDX, IDC_STATUS, m_status);
 	//}}AFX_DATA_MAP
 }
 
@@ -103,6 +101,11 @@ void CNetworksDlg::OnEdit()
 {
 	int cursel = m_networklist.GetCurSel();
 	if(cursel == LB_ERR) return;
+	if(curnetwork) {
+		MessageBox("Network is still in use. Disconnect first!", "Editing Network", MB_ICONEXCLAMATION | MB_OK);
+		return;
+	}
+
 	CEditNetworkDlg *dlg = new CEditNetworkDlg(this, (xmlNodePtr)m_networklist.GetItemData(cursel));	
 	dlg->DoModal();
 	UpdateNetworkList();

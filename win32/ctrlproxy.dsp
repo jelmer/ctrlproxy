@@ -120,6 +120,13 @@ SOURCE=.\CStatusDlg.cpp
 # Begin Source File
 
 SOURCE=.\ctrlproxy.rc
+
+!IF  "$(CFG)" == "ctrlproxy - Win32 Release"
+
+!ELSEIF  "$(CFG)" == "ctrlproxy - Win32 Debug"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
@@ -131,7 +138,19 @@ SOURCE=.\ctrlproxyDlg.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=.\EditChannel.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\EditListener.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=.\EditNetworkDlg.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\EditServer.cpp
 # End Source File
 # Begin Source File
 
@@ -224,7 +243,19 @@ SOURCE=.\ctrlproxyDlg.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\EditChannel.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\EditListener.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\EditNetworkDlg.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\EditServer.h
 # End Source File
 # Begin Source File
 
