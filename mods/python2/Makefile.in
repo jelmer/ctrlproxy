@@ -34,4 +34,4 @@ clean:
 	rm -rf build/
 
 %_wrap.c: ../swig/%.i
-	$(SWIG) -python $<
+	$(SWIG) -I../swig -python $*.i
