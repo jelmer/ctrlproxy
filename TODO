@@ -5,3 +5,5 @@
  - hooks
 - rewrite web script
 - support the - and + in front of lines as used by Freenode
+- put save support back in
+- don't simply pass feature list along

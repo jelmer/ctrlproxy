@@ -80,15 +80,23 @@
 
 		<plugin autoload="1" file="linestack_file"/>
 		<plugin autoload="0" file="linestack_memory"/>
+
+		<plugin autoload="1" file="liblistener">
+			<listen port="7667" network="Freenode" password="secret"/>
+		</plugin>
 	</plugins>
 
 	<networks>
-		<network autoconnect="1" client_pass="secret" name="Freenode" fullname="CtrlProxy user">
+		<network autoconnect="1" name="Freenode" fullname="CtrlProxy user">
 			<servers>
 				<server host="irc.freenode.net"/>
 			</servers>
 			<channel name="#ctrlproxy-test" autojoin="1"/>
 			<autosend>PRIVMSG #ctrlproxy-test :Hi There, I'm using ctrlproxy!</autosend>
+		</network>
+
+		<network name="BitlBee">
+			<program>/usr/sbin/bitlbee</program>
 		</network>
 	</networks>
 </ctrlproxy>
