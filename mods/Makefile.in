@@ -4,6 +4,10 @@ exec_prefix = @exec_prefix@
 INSTALL = @INSTALL@
 CFLAGS = -fPIC -I.. @CFLAGS@ @PKG_CFLAGS@ -DSHAREDIR=\"@datadir@\"
 moddir = @libdir@/ctrlproxy
+PY_LIBS = @PY_LIBS@
+PY_CFLAGS = @PY_CFLAGS@
+pythonpath = @pythonpath@
+PYINCLUDES = $(INCLUDES) $(PY_CFLAGS) $(COMMON_CFLAGS) -I$(srcdir)/..
 
 MODS = @MODS@
 
@@ -12,6 +16,12 @@ all: $(MODS)
 install: all
 	$(INSTALL) -d $(DESTDIR)$(moddir)
 	$(INSTALL) $(MODS) $(DESTDIR)$(moddir)
+
+python.o: python.c
+	$(CC) $(CFLAGS) -fPIC $(PY_CFLAGS) -c $<
+
+python_types.o: python_types.c
+	$(CC) $(CFLAGS) -fPIC $(PY_CFLAGS) -c $<
 
 %.o: %.c
 	$(CC) $(CFLAGS) -fPIC -c $<
@@ -22,8 +32,11 @@ libstats.so: stats.o
 libsocket.so: @SOCKET_OBJS@
 	$(CC) $(CFLAGS) -shared -o $@ @SOCKET_OBJS@ @SSL_LIB@
 
+libpython.so: python.o python_types.o
+	$(CC) $(CFLAGS) -shared -o $@ $(PY_CFLAGS) $(PY_LIBS) python_types.o python.o
+
 lib%.so: %.c
-	$(CC) $(CFLAGS) -shared -o $@ $< 
+	$(CC) $(CFLAGS) -shared -o $@ $<
 
 clean:
 	rm -f $(MODS) *.o

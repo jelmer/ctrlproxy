@@ -1,8 +1,20 @@
 #!/usr/bin/env perl
+# (C) 2003 Kyoshiro
 
 use strict;
 use IO::File;
+use POSIX qw/strftime/;
 use Data::Dumper;
+
+# TODO
+# - add maxlines handling to reprint screen when number of lines printed is over
+# - add maxcolumns handling to auto-cut printed text between words and adjust
+#   title bar
+# - add per network channel/nickserv support
+# - add import config from file support
+# - improve exit message with available ports to connect to
+# - add checks for IRC stuff
+# - add checks/replace for XML write
 
 my $maxcolumns = 80;
 my $spool = $ENV{'HOME'}."/.ctrlproxy";
@@ -11,7 +23,12 @@ my %defs = (
     modules => {
         'admin'     => {
             autoload    => 1,
-            desc        => "allows you to configure ctrlproxy via IRC"
+            desc        => "allows you to configure ctrlproxy via IRC",
+			parameters	=> {
+				tata	=> {
+					default => "plop",
+					}
+			},
         },
         'antiflood' => {
             autoload    => 1,
@@ -192,6 +209,7 @@ my $title;
 
 
 CheckSpool();
+LoadDefaultConf(1);
 main();
 
 sub CheckSpool {
@@ -377,9 +395,9 @@ will generate a configuration file for you.
 3. Generate SSL Certificate/Key
 4. Write configuration
 5. Load basic modules configuration (soon !)
-6. Load default modules configuration (soon !)
+6. Load recommended modules configuration
 7. Load configuration from file (soon !)
-8. Wipe configuration (soon !)
+8. Wipe configuration
 0. Exit
 EOI
         my $char = getchar();
@@ -391,21 +409,90 @@ EOI
             GenerateSSL();
         } elsif ($char eq '4') {
             WriteConfig();
+        } elsif ($char eq '5') {
+        } elsif ($char eq '6') {
+			LoadDefaultConf();
+        } elsif ($char eq '7') {
+        } elsif ($char eq '8') {
+			EraseConf();
         } elsif ($char eq '0') {
-			$title = "Thanks for using ctrlproxy's configuration editor !";
-            newScreen();
-            print <<EOI;
-Please report any bug to ctrlproxy\@vernstok.nl.
-If you generated a configuration file, you can now launch ctrlproxy
-and enjoy ;)
-EOI
 			printCtrlproxyUsage();
             exit;
         }
     }
 }
 
+sub EraseConf {
+	$title = "Configuration wiping";
+	newScreen();
+	my $key = getOption("Completely erase configuration",0,1,"bool",undef,undef,0);
+	if ($key) {
+		%conf = ();
+		printsleep "Configuration has been deleted.";
+	} else {
+		printsleep "Configuration has *not* been deleted.";
+	}
+}
+
+sub LoadDefaultConf {
+	my ($auto) = @_;
+	my $key;
+
+	if (!$auto) {
+		$title = "Configuration load";
+		newScreen();
+		$key = getOption("Load default modules configuration",0,1,"bool",undef,undef,0);
+	}
+	if ($key or $auto) {
+		$conf{'modules'} = {};
+		foreach my $option (keys %{$defs{'modules'}}) {
+			$conf{'modules'}->{$option}->{'autoload'} =
+				$defs{'modules'}->{$option}->{'autoload'};
+			$conf{'modules'}->{$option}->{'suffix'} =
+				$defs{'modules'}->{$option}->{'suffix'};
+			if (defined $defs{'modules'}->{$option}->{'parameters'}) {
+				foreach my $param (keys %{$defs{'modules'}->{$option}->{'parameters'}}) {
+					$conf{'modules'}->{$option}->{'parameters'}->{$param} = {};
+					$conf{'modules'}->{$option}->{'parameters'}->{$param}->{'value'} =
+						$defs{'modules'}->{$option}->{'parameters'}->{$param}->{'default'};
+				}
+			}
+			if (defined $defs{'modules'}->{$option}->{'options'}) {
+				foreach my $opt (keys %{$defs{'modules'}->{$option}->{'options'}}) {
+					$conf{'modules'}->{$option}->{'options'}->{$opt} = { 
+						CopyOptions($defs{'modules'}->{$option}->{'options'}->{$opt}) };
+				}
+			}
+		}
+		printsleep "Default modules configuration has been loaded." unless $auto;
+	} else {
+		printsleep "Configuration keeped.";
+	}
+}
+
+sub CopyOptions {
+	my ($h) = @_;
+	my %copy = ();
+
+	$copy{'value'} = $h->{'default'} if exists $h->{'default'};
+	$copy{'suffix'} = $h->{'suffix'} if exists $h->{'suffix'};
+	foreach my $param (keys %{$h->{'parameters'}}) {
+		$copy{'parameters'}->{$param} = {};
+		$copy{'parameters'}->{$param}->{'value'} =
+			$h->{'parameters'}->{$param}->{'default'};
+	}
+	$copy{'options'} = CopyOptions($h->{'options'}) if exists $h->{'options'};
+	return %copy;
+}
+
 sub printCtrlproxyUsage {
+	$title = "Thanks for using ctrlproxy's configuration editor !";
+    newScreen();
+    print <<EOI;
+Please report any bug to ctrlproxy\@vernstok.nl.
+If you generated a configuration file, you can now launch ctrlproxy
+and enjoy ;)
+EOI
 }
 
 sub MenuNetworks {
@@ -465,7 +552,7 @@ EOI
 			newScreen();
 			$conf{'networks'}->{$network}->{'parameters'} = {}
 				if (!defined $conf{'networks'}->{$network}->{'parameters'});
-			HandleParameters($conf{'networks'}->{$network},$defs{'networks'});
+			HandleParameters($conf{'networks'}->{$network}->{'parameters'},$defs{'networks'});
         } elsif ($char eq '2') {
             ConfigureNetworkListen($network);
         } elsif ($char eq '3') {
@@ -502,8 +589,8 @@ EOI
         if ($char eq '1') {
 			$title = "Networks - configure $network\'s servers";
             newScreen();
-            my $ret = PrintServers($network);
-            if ($ret < 0) {
+			my $ret = PrintIPList($conf{'networks'}->{$network}->{'servers'},"server",\&PrintServer);
+            if ($ret) {
                 sleep 1;
             } else {
                 Pause();
@@ -538,8 +625,9 @@ EOI
         if ($char eq '1') {
 			$title = "Networks - configure $network\'s listeners";
             newScreen();
-            my $ret = PrintListeners($network);
-            if ($ret < 0) {
+			my $ret =
+				PrintIPList($conf{'networks'}->{$network}->{'listeners'},"listener",\&PrintListen);
+            if ($ret) {
                 sleep 1;
             } else {
                 Pause();
@@ -681,7 +769,7 @@ sub PrintIPList {
     my ($hashref,$name,$funref) = @_;
     
     if (scalar keys %{$hashref} eq 0) {
-        printsleep "No $name has been defined yet !\n";
+        print "No $name has been defined yet !\n";
         return -1;
     }
     
@@ -699,8 +787,7 @@ sub AddServer {
 
 	$proto = getOption("IP protocol (IPv)",4,1,"text",'^[46]$',undef,1,0);
 	$port = getOption("Port to connect to",6667,1,"text",'^\d{0,5}$',undef,0,0);
-	$host = getOption("Host/IPv$proto to connect to",($proto eq 4 ? '0.0.0.0' :
-				'::'),1,"text",undef,undef,0,0);
+	$host = getOption("Host/IPv$proto to connect to",undef,1,"text",undef,undef,0,0);
 	$ssl = getOption("Use SSL",0,1,"bool",undef,undef,1,0);
 	Pause();
 
@@ -714,7 +801,7 @@ sub AddServer {
 		unless defined $conf{'networks'}->{$network}->{'servers'}->{$next};
     $conf{'networks'}->{$network}->{'servers'}->{$next}->{'ssl'} = $ssl;
     $conf{'networks'}->{$network}->{'servers'}->{$next}->{'host'} = $host;
-    $conf{'networks'}->{$network}->{'servers'}->{$next}->{'proto'} = 'IPv'.$proto;
+    $conf{'networks'}->{$network}->{'servers'}->{$next}->{'proto'} = $proto;
     $conf{'networks'}->{$network}->{'servers'}->{$next}->{'port'} = $port;
 
 }
@@ -743,7 +830,7 @@ sub AddListener {
 		unless defined $conf{'networks'}->{$network}->{'listeners'}->{$next};
     $conf{'networks'}->{$network}->{'listeners'}->{$next}->{'ssl'} = $ssl;
     $conf{'networks'}->{$network}->{'listeners'}->{$next}->{'host'} = $host;
-    $conf{'networks'}->{$network}->{'listeners'}->{$next}->{'proto'} = 'IPv'.$proto;
+    $conf{'networks'}->{$network}->{'listeners'}->{$next}->{'proto'} = $proto;
     $conf{'networks'}->{$network}->{'listeners'}->{$next}->{'port'} = $port;
 }
 
@@ -755,9 +842,13 @@ sub DelServer {
     
 	$title = "Networks - delete a server from $network";
 	newScreen();
-	my $ret = PrintIPList($net->{'servers'},"servers",\&PrintServer);
-	return 0 if ($ret);
-	my $line = getOption("Please choose a server in the list",undef, 0,"text", $net->{'servers'}, undef, 0,0);
+	my $ret = PrintIPList($net->{'servers'},"server",\&PrintServer);
+	if ($ret) {
+		sleep 1;
+		return 0;
+	}
+	my $line = getOption("Please choose a server in the list",undef, 0,"text",
+			'('.join('|',keys %{$net->{'servers'}}).')', undef, 0,0);
     return 0 unless $line;
 
     delete $net->{'servers'}->{$line};
@@ -771,8 +862,11 @@ sub DelListener {
     
 	$title = "Networks - delete a listener from $network";
 	newScreen();
-	my $ret = PrintIPList($net->{'listeners'},"listeners",\&PrintListen);
-	return 0 if ($ret);
+	my $ret = PrintIPList($net->{'listeners'},"listener",\&PrintListen);
+	if ($ret) {
+		sleep 1;
+		return 0;
+	}
 	my $line = getOption("Please choose a listener in the list",undef, 0,"text",
 			'('.join('|',keys %{$net->{'listeners'}}).')', undef, 0,0);
     return 0 unless $line;
@@ -794,37 +888,6 @@ sub PrintNetworks {
     }           
 }       
 
-sub PrintListeners {
-	my ($network) = @_;
-	
-    if (scalar keys %{$conf{'networks'}->{$network}->{'listeners'}} eq 0) {
-		$title = "Networks - $network\'s listeners information";
-        newScreen();
-        printsleep "No listener has been defined yet !\n";
-        return -1;
-    }       
-                
-    foreach my $net (sort keys %{$conf{'networks'}->{$network}->{'listeners'}}) {
-        PrintListen($net,$conf{'networks'}->{$network}->{'listeners'}->{$net});
-    }           
-}       
-
-sub PrintServers {
-	my ($network) = @_;
-	
-    if (scalar keys %{$conf{'networks'}->{$network}->{'listeners'}} eq 0) {
-		$title = "Networks - $network\'s servers information";
-        newScreen();
-        printsleep "No server has been defined yet !\n";
-        return -1;
-    }       
-                
-    foreach my $net (sort keys %{$conf{'networks'}->{$network}->{'servers'}}) {
-        PrintServer($net,$conf{'networks'}->{$network}->{'servers'}->{$net});
-    }           
-}       
-
-
 sub PrintListen {
     my ($listen,$listenhash) = @_;
 
@@ -833,9 +896,9 @@ sub PrintListen {
     my $ssl = ((defined($listenhash->{'ssl'}) and $listenhash->{'ssl'} eq 1)
             ? '(SSL)' : '');
     my $proto = $listenhash->{'proto'};
-    my $bind = (defined $listenhash->{'bind'} ? $listenhash->{'bind'} :
-                ($proto eq 'IPv4' ? '0.0.0.0' : '::' ));
-    print "$listen. $proto\://$bind\:$port $ssl\n";
+    my $bind = (defined $listenhash->{'host'} ? $listenhash->{'host'} :
+                ($proto eq 4 ? '0.0.0.0' : '::' ));
+    print "$listen. IPv$proto\://$bind\:$port $ssl\n";
 }
 
 sub PrintServer {
@@ -847,9 +910,9 @@ sub PrintServer {
     my $ssl = ((defined($servhash->{'ssl'}) and $servhash->{'ssl'} eq 1)
             ? '(SSL)' : '');
     my $proto = (defined($servhash->{'proto'}) ? $servhash->{'proto'}
-            : 'ipv4');
+            : '4');
     my $host = $servhash->{'host'};
-    print "$serv. $proto\://$host\:$port $ssl\n";
+    print "$serv. IPv$proto\://$host\:$port $ssl\n";
 }
 
 sub DumpModule {
@@ -872,34 +935,34 @@ sub PrintNetwork {
     $net = SelectNetwork() unless $net;
     return -1 unless $net;
 
-    my $nethash = $conf{'networks'}->{$net};
+    my $nethash = $conf{'networks'}->{$net}->{'parameters'};
 	$title = "Networks - $net\'s information";
 	newScreen();
     print "$net network :\n";
 
     foreach my $param (keys %{$defs{'networks'}}) {
-        $nethash->{$param} = '<undefined>' if (!defined $nethash->{$param});
+        my $value = (defined $nethash->{$param}->{'value'}
+				? $nethash->{$param}->{'value'}
+				: '<undefined>');
 
         if ($defs{'networks'}->{$param}->{'type'} eq "bool") {
-            print "\t$param\: ".
-                bool2text($nethash->{$param})."\n";
+            print "\t$param\: ".bool2text($value)."\n";
         } elsif ($defs{'networks'}->{$param}->{'type'} eq "text") {
-            print "\t$param\: ".
-                $nethash->{$param}."\n";
+            print "\t$param\: ".$value."\n";
         }
     }
 
     print "\nChannels to join (* password protected, ° no autojoin):\n";
-    if (defined $nethash->{'channels'}) {
+    if (defined $conf{'networks'}->{$net}->{'channels'}) {
 	} else {
         print "\tNo channels defined yet !\n";
     }
 	Pause();
 
     print "Servers :\n";
-    PrintIPList($nethash->{'servers'},"servers",\&PrintServer);
-	    print "Listeners :\n";
-    PrintIPList($nethash->{'listeners'},"listeners",\&PrintListen);
+    PrintIPList($conf{'networks'}->{$net}->{'servers'},"server",\&PrintServer);
+    print "Listeners :\n";
+    PrintIPList($conf{'networks'}->{$net}->{'listeners'},"listener",\&PrintListen);
 	Pause();
 }
 
@@ -1004,12 +1067,57 @@ sub HandleParameters {
 	}
 }
 
+sub PrintXMLOptions {
+	my ($h) = @_;
+	my $text;
+
+	foreach my $option (sort keys %{$h}) {
+		$text .= "        <$option";
+		if (defined $h->{$option}->{'parameters'}) {
+			$text .= PrintXMLParams($h->{$option}->{'parameters'});
+		}
+		if (defined $h->{$option}->{'options'} or defined
+				$h->{$option}->{'value'}) {
+			$text .= ">";
+			$text .= "\n" unless defined $h->{$option}->{'value'};
+			$text .= PrintXMLOptions($h->{$option}->{'options'}) if defined
+				$h->{$option}->{'options'};
+			$text .= $h->{$option}->{'value'} if defined
+				$h->{$option}->{'value'};
+			$text .= "        " unless defined $h->{$option}->{'value'};
+			$text .= "</$option>\n";
+		} else {
+			$text .= "/>\n";
+		}
+	}
+	return $text;
+}
+
+sub PrintXMLParams {
+	my ($h) = @_;
+	my $text;
+
+	foreach my $param (sort keys %{$h}) {
+		$text .= ' '.$param.'="'.$h->{$param}->{'value'}.'"' if defined
+			$h->{$param}->{'value'};
+	}
+	return $text;
+}
+
 sub WriteConfig {
-	my $file = "$spool/ctrlproxyrc";
-	my $fh = new IO::File;
+	my ($file,$fh);
 	$title = "Write configuration file";
 	newScreen();
+
+	$file = getOption("Configuration file","$spool/ctrlproxyrc",1,"text",undef,undef,0);
+
+	if (-e $file) {
+		my $time = strftime('%s',localtime);
+		rename $file,"$file.$time";
+		print "Warning: $file already existed and was renamed to $file.$time\n\n";
+	}
 	
+	$fh = new IO::File;
 	if (!$fh->open(">$file")) {
 		printsleep "Unable to write into $file !";
 		return -1;
@@ -1024,7 +1132,7 @@ sub WriteConfig {
 			$conf{'modules'}->{$module}->{'suffix'};
 		if (scalar keys %{$conf{'modules'}->{$module}->{'options'}}) {
 			print $fh "\">\n";
-			
+			print $fh PrintXMLOptions($conf{'modules'}->{$module}->{'options'});
 			print $fh "    </plugin>\n";
 		} else {
 			print $fh "\"/>\n";
@@ -1034,13 +1142,40 @@ sub WriteConfig {
 	print $fh "  </plugins>\n  <networks>\n";
 
 	foreach my $network (sort keys %{$conf{'networks'}}) {
-		print $fh '    <network ';
-		foreach my $param (sort keys
-				%{$conf{'networks'}->{$network}->{'parameters'}}) {
-			print $fh
-				"$param=\"".$conf{'networks'}->{$network}->{'parameters'}->{$param}."\" ";
-		}
+		my $net = $conf{'networks'}->{$network};
+		print $fh '    <network';
+		print $fh PrintXMLParams($net->{'parameters'});
+#		foreach my $param (sort keys %{$net->{'parameters'}}) {
+#			print $fh "$param=\"".$net->{'parameters'}->{$param}->{'value'}."\" ";
+#		}
 		print $fh ">\n\n";
+		
+		print $fh "      <listen>\n";
+		foreach my $listen (sort keys %{$net->{'listeners'}}) {
+			my $listener = $net->{'listeners'}->{$listen};
+			my ($host,$ssl);
+			next unless (defined $listener->{'proto'} and defined $listener->{'port'});
+			$host = 'bind="'.$listener->{'host'}.'" ' if defined $listener->{'host'};
+			$ssl = 'ssl="1" ' if isYes($listener,'ssl');
+			print $fh '        <ipv'.$listener->{'proto'}.' '.$host.$ssl.
+				'port="'.$listener->{'port'}.'"/>'."\n";
+		}
+		print $fh "      </listen>\n\n";
+			
+		print $fh "      <servers>\n";
+		foreach my $serv (sort keys %{$net->{'servers'}}) {
+			my $server = $net->{'servers'}->{$serv};
+			my ($port,$ssl);
+			next unless (defined $server->{'proto'} and defined $server->{'host'});
+			$port = (defined $server->{'port'} ? $server->{'port'} : '6667');
+			$ssl = 'ssl="1" ' if isYes($server,'ssl');
+			print $fh '        <ipv'.$server->{'proto'}.' host="'.$server->{'host'}.
+				'" '.$ssl.'port="'.$port.'"/>'."\n";
+		}
+		print $fh "      </servers>\n\n";
+		
+	
+		print $fh '    </network>'."\n";
 	}
 
 	print $fh "  </networks>\n";
