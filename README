@@ -68,7 +68,7 @@ The example ctrlproxyrc file might be of some use..
 After you've installed, configured and started ctrlproxy you can connect to 
 it on port 6668 and up.
 
-To build the documentation, run ./configure --enable-docs. Please not that 
+To build the documentation, run ./configure --enable-docs. Please note that 
 a pregenerated version of the documentation is available in the tarball. So, 
 in most cases, you shouldn't need to rebuild.
 
