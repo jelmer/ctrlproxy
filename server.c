@@ -138,6 +138,7 @@ int server_send_raw(struct server *s, char *data)
 	struct module_context *c = s->handlers;
 	irc_parse_line(data, &l);
 	l.origin = s->hostmask;
+	DEBUG("-> %s", data);
 
 	while(c) {
 		if(c->functions->handle_outgoing_data)

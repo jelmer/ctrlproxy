@@ -1,6 +1,7 @@
 #include "internals.h"
 
 char my_hostname[MAXHOSTNAMELEN+2];
+char output_debug = 0;
 
 void signal_quit(int sig)
 {
@@ -28,6 +29,7 @@ int main(int argc, const char *argv[])
 		{"rc-file", 'r', POPT_ARG_STRING, &rcfile, 0, "Use alternative ctrlproxyrc file", "RCFILE"},
 		{"daemon", 'D', POPT_ARG_VAL, &daemon, 1, "Run in the background (as a daemon)"},
 		{"version", 'v', POPT_ARG_NONE, NULL, 'v', "Show version information"},
+		{"debug", 'd', POPT_ARG_VAL, &output_debug, 1, "Output debug information"},
 		POPT_TABLEEND
 	};
 

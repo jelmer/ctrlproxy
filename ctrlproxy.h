@@ -9,6 +9,10 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 
+extern char output_debug;
+
+#define DEBUG if(output_debug)printf
+
 struct server;
 struct line;
 

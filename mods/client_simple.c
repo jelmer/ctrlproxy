@@ -110,8 +110,11 @@ void mloop(struct module_context *c)
 
 					/* Send JOIN for each channel */
 					if(st->channels){
-						for(j = 0; j < st->no_channels; j++)
+						for(j = 0; j < st->no_channels; j++) {
 							dprintf(i, ":%s JOIN %s\r\n", c->parent->hostmask, st->channels[j]);
+							server_send(c->parent, c->parent->hostmask, "NAMES", st->channels[j], NULL);
+							server_send(c->parent, c->parent->hostmask, "TOPIC", st->channels[j], NULL);
+						}
 					}
 				} else if(!strcasecmp(l.args[0], "PASS")) {
 					if (!get_conf(c->parent->abbrev, "clientpass"))
@@ -137,7 +140,7 @@ void mhandle_incoming_data(struct module_context *c, const struct line *l)
 	struct client_state *st = (struct client_state *)c->private_data;
 	int i;
 	if(!st)return;
-	printf("To client: %s\n", l->raw);
+	DEBUG("<- %s\n", l->raw);
 	if(!strcasecmp(l->args[0], "JOIN")) ensure_channel(st,l->args[1]);
 	for(i = 0; i < FD_SETSIZE; i++) {
 		if(FD_ISSET(i, &st->readfd) && i != st->listen_socket && st->authenticated[i])
