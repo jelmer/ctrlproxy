@@ -6,7 +6,7 @@ localedir = @datadir@/locale
 CFLAGS = @CFLAGS@ @PKG_CFLAGS@ -DHAVE_CONFIG_H -DLOCALEDIR=\"$(localedir)\"
 INSTALL = @INSTALL@
 bindir = @bindir@
-docdir = @prefix@/share/doc/ctrlproxy
+docdir = @prefix@/share/doc/ctrlproxy-@VERSION@
 modulesdir = @libdir@/ctrlproxy
 includedir = @includedir@
 man1dir = @mandir@/man1
