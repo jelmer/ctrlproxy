@@ -49,3 +49,7 @@
 
 <!ELEMENT pattern (#PCDATA)>
 <!ATTLIST pattern type CDATA #REQUIRED>
+
+<!ELEMENT allow EMPTY>
+<!ATTLIST allow password CDATA #IMPLIED>
+<!ATTLIST allow username CDATA #IMPLIED>

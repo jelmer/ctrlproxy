@@ -68,6 +68,13 @@ static GIOChannel *server_channel = NULL;
 static int server_channel_in = 0;
 enum socks_state { STATE_NEW = 0, STATE_AUTH, STATE_NORMAL };
 
+struct allow_rule {
+	const char *username;
+	const char *password;
+};
+
+static GList *allow_rules = NULL;
+
 struct socks_method;
 struct socks_client
 {
@@ -108,8 +115,7 @@ static gboolean socks_error(GIOChannel *ioc, guint8 err)
 
 static gboolean anon_acceptable(struct socks_client *cl)
 {
-	return TRUE; /* FIXME: Check whether anonymous connects
-	should be allowed */
+	return FALSE; /* Don't allow anonymous connects */
 }
 
 static gboolean pass_acceptable(struct socks_client *cl)
@@ -119,6 +125,7 @@ static gboolean pass_acceptable(struct socks_client *cl)
 
 static gboolean pass_handle_data(struct socks_client *cl)
 {
+	GList *gl;
 	guint8 header[2];
 	gsize read;
 	GIOStatus status;
@@ -154,7 +161,24 @@ static gboolean pass_handle_data(struct socks_client *cl)
 	pass[header[0]] = '\0';
 
 	header[0] = 0x1;
-	header[1] = 0x0; /* FIXME: Verify password and set to non-zero if invalid */
+	header[1] = 0x0; /* set to non-zero if invalid */
+
+	for (gl = allow_rules; gl; gl = gl->next)
+	{
+		struct allow_rule *r = gl->data;
+
+		if (!r->password || !r->username) 
+			continue;
+
+		if (strcmp(r->username, uname)) 
+			continue;
+
+		if (strcmp(r->password, pass))
+			continue;
+		break;
+	}
+
+	header[1] = (gl == NULL);
 
 	status = g_io_channel_write_chars(cl->connection, header, 2, &read, NULL);
 	if (status != G_IO_STATUS_NORMAL) {
@@ -167,6 +191,7 @@ static gboolean pass_handle_data(struct socks_client *cl)
 		cl->state = STATE_NORMAL;		
 		return TRUE;
 	} else {
+		g_warning("Password mismatch for user %s", uname);
 		return FALSE;
 	}
 }
@@ -227,9 +252,6 @@ static struct network *socks_map_network_fqdn(const char *hostname, guint16 port
 		}
 
 		n->connection.tcp.servers = g_list_append(n->connection.tcp.servers, s);
-
-		if (!connect_network(n)) 
-			return NULL;
 
 		return n;
 	}
@@ -357,6 +379,7 @@ static gboolean handle_client_data (GIOChannel *ioc, GIOCondition o, gpointer da
 
 					result = socks_map_network_fqdn(hostname, port);
 
+
 					if (!result) {
 						g_warning("Unable to return network matching %s:%d", hostname, port);
 						return socks_error(ioc, REP_NET_UNREACHABLE);
@@ -365,6 +388,11 @@ static gboolean handle_client_data (GIOChannel *ioc, GIOCondition o, gpointer da
 						struct sockaddr_in *name4 = (struct sockaddr_in *)result->connection.tcp.local_name;
 						int atyp, len, port;
 						guint8 *data;
+
+						if (!network_is_connected(result) && !connect_network(result)) {
+							g_warning("Unable to connect to network %s", result->name);
+							return socks_error(ioc, REP_NET_UNREACHABLE);
+						}
 
 						if (name4->sin_family == AF_INET) {
 							atyp = ATYP_IPV4;
@@ -438,6 +466,21 @@ gboolean load_config(struct plugin *p, xmlNodePtr conf)
 	const int on = 1;
 	struct sockaddr_in addr;
 	guint16 port;
+	xmlNodePtr cur;
+
+	for (cur = conf->children; cur; cur = cur->next)
+	{
+		if (cur->type != XML_ELEMENT_NODE) continue;
+
+		if (!strcmp(cur->name, "allow")) {
+			struct allow_rule *r = g_new0(struct allow_rule, 1);
+			
+			r->username = xmlGetProp(cur, "username");
+			r->password = xmlGetProp(cur, "password");
+
+			allow_rules = g_list_append(allow_rules, r);
+		}
+	}
 
 	port = DEFAULT_SOCKS_PORT;
 
