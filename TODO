@@ -1,17 +1,18 @@
-- finish configuration utility (worked on by Kyoshiro, see list in ctrlproxy-setup)
-- update documentation
-- automated testsuite
-- internationalization (i18n)
-- repl_limited (repl_highlight with limited number of lines)
-- dircproxy-config-to-ctrlproxyrc script
-- add NICK to repl_* in repl_highlight, repl_lastdisconnect
-- replace transports by IOChannels?
- - support running from inetd
- - fix issue with non-blocking connect
-- dcc module
-- socket: finish gnutls support
-- rewrite stats stuff to use MySQL
+2.7 
+ - finish configuration utility (worked on by Kyoshiro, see list in ctrlproxy-setup)
+ - update documentation
+ - automated testsuite
+ - dircproxy-config-to-ctrlproxyrc script
+ - add NICK to repl_* in repl_highlight, repl_lastdisconnect
+ - dcc module
+ - socket: finish gnutls support
 
 2.8:
+ - repl_limited (repl_highlight with limited number of lines)
+ - rewrite stats stuff to use MySQL
+ - internationalization (i18n)
  - <network><listen/></network> -> <listen/>
  - Net::IRC-like interface
+ - replace transports by IOChannels?
+  - support running from inetd
+  - fix issue with non-blocking connect
