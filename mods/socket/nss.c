@@ -78,7 +78,7 @@ static GIOStatus g_io_nss_write(GIOChannel *handle, const gchar *buf, gsize len,
 	return G_IO_STATUS_NORMAL;
 }
 
-static GIOStatus g_io_gnutls_seek(GIOChannel *handle, gint64 offset, GSeekType type, GError **gerr)
+static GIOStatus g_io_nss_seek(GIOChannel *handle, gint64 offset, GSeekType type, GError **gerr)
 {
 	GIONSSChannel *chan = (GIONSSChannel *)handle;
 	GIOError e;
@@ -86,7 +86,7 @@ static GIOStatus g_io_gnutls_seek(GIOChannel *handle, gint64 offset, GSeekType t
 	return (e == G_IO_ERROR_NONE) ? G_IO_STATUS_NORMAL : G_IO_STATUS_ERROR;
 }
 
-static GIOStatus g_io_gnutls_close(GIOChannel *handle, GError **gerr)
+static GIOStatus g_io_nss_close(GIOChannel *handle, GError **gerr)
 {
 	GIONSSChannel *chan = (GIONSSChannel *)handle;
 	PR_Close(chan->session);
@@ -94,21 +94,21 @@ static GIOStatus g_io_gnutls_close(GIOChannel *handle, GError **gerr)
 	return G_IO_STATUS_NORMAL;
 }
 
-static GSource *g_io_gnutls_create_watch(GIOChannel *handle, GIOCondition cond)
+static GSource *g_io_nss_create_watch(GIOChannel *handle, GIOCondition cond)
 {
 	GIONSSChannel *chan = (GIONSSChannel *)handle;
 
 	return chan->giochan->funcs->io_create_watch(handle, cond);
 }
 
-static GIOStatus g_io_gnutls_set_flags(GIOChannel *handle, GIOFlags flags, GError **gerr)
+static GIOStatus g_io_nss_set_flags(GIOChannel *handle, GIOFlags flags, GError **gerr)
 {
     GIONSSChannel *chan = (GIONSSChannel *)handle;
 
     return chan->giochan->funcs->io_set_flags(handle, flags, gerr);
 }
 
-static GIOFlags g_io_gnutls_get_flags(GIOChannel *handle)
+static GIOFlags g_io_nss_get_flags(GIOChannel *handle)
 {
     GIONSSChannel *chan = (GIONSSChannel *)handle;
 
@@ -141,15 +141,6 @@ gboolean g_io_nss_init()
 	NSS_NoDB_Init(NULL);
 	NSS_SetDomesticPolicy();
 	_identity = PR_GetUniqueIdentity("CtrlProxy");
-	
-
-	/* X509 stuff */
-	if (gnutls_certificate_allocate_credentials(&xcred) < 0) {	/* space for 2 certificates */
-		g_warning("gnutls memory error");
-		return FALSE;
-	}
-
-	gnutls_certificate_set_dh_params( xcred, dh_params);
 
 	return TRUE;
 }
