@@ -240,6 +240,7 @@ gboolean close_server(struct network *n) {
 		transport_free(n->outgoing);
 		n->outgoing = NULL;
 		free(n->hostmask);
+		n->hostmask = NULL;
 
 		for(i = 0; i < 2; i++) {
 			if(n->supported_modes[i]) {
