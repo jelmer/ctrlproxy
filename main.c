@@ -43,6 +43,7 @@ xmlDocPtr configuration;
 char *configuration_file;
 FILE *debugfd = NULL;
 FILE *f_logfile = NULL;
+struct plugin *current_plugin = NULL;
 
 GList *plugins = NULL;
 
@@ -73,8 +74,17 @@ void signal_crash(int sig)
 
 #endif
 	
-	g_error("Ctrlproxy core has segfaulted, exiting...");
-	abort();
+	if(current_plugin) {
+		if(!unload_plugin(current_plugin)) {
+			g_error("Can't unload crashing plugin, exiting...");
+			abort();
+		} else {
+			g_warning("Plugin '%s' unloaded, because it crashed...", current_plugin->name);
+		}
+	} else {
+		g_error("Ctrlproxy core has segfaulted, exiting...");
+		abort();
+	}
 }
 
 void log_handler(const gchar *log_domain, GLogLevelFlags flags, const gchar *message, gpointer user_data) {

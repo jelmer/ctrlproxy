@@ -6,8 +6,7 @@
 - add member 'nick' to struct line
 - add more help data
 - Net::IRC-like interface
-- automatically unload crashing modules?
- - keep track of module related to filter, command, etc?
+- use current_plugin
 - internationalization (i18n)
 - linestack_mysql
 - use new filter system

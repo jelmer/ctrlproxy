@@ -182,6 +182,7 @@ void save_configuration();
 gboolean load_plugin(xmlNodePtr);
 gboolean unload_plugin(struct plugin *);
 gboolean plugin_loaded(char *name);
+extern struct plugin *current_plugin;
 
 /* transport.c */
 void register_transport(struct transport_ops *);
@@ -272,6 +273,5 @@ typedef void (*initialized_hook) (void);
 void add_initialized_hook(initialized_hook);
 void initialized_hook_execute(void);
 
-/* log.c */
 
 #endif /* __CTRLPROXY_H__ */
