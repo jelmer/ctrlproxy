@@ -3,13 +3,16 @@
 
 FILE *debugfd = NULL;
 
+static filter_function ff = NULL;
+
 void add_filter(char *name, filter_function f) 
 {
-	add_filter_Ex(name, f, NULL, 100);
+	ff = f;
 }
 
-gboolean add_filter_ex(char *name, filter_function, char *classname, int priority) {
-	return FALSE;
+gboolean add_filter_ex(char *name, filter_function f, char *classname, int priority) {
+	ff = f;
+	return TRUE;
 }
 
 int main(int argc, char **argv)
@@ -19,13 +22,18 @@ int main(int argc, char **argv)
 	char *raw;
 
 	/* FIXME: Load specified plugin */
+
+	if(!ff) {
+		fprintf(stderr, "Module doesn't provide filter\n");
+		return 1;
+	}
 	
 	while(!feof(stdin)) {
 		fgets(buf, sizeof(buf), stdin);
 		l = irc_parse_line(buf);
 		if(l) {
 			raw = irc_line_string(l);
-			puts(raw);
+			ff(l);
 			free(raw);
 			free_line(l);
 		} else { 
