@@ -1,5 +1,4 @@
 - update documentation
  - repl changes
  - see FIXME's
-- test dcc module
 - fix bug in linestack_file

@@ -28,7 +28,6 @@ PKG_CHECK_MODULES(PKG, libxml-2.0 glib-2.0 gmodule-2.0, , AC_MSG_ERROR([libxml a
 
 sinclude(doc/config.m4)
 sinclude(mods/python/config.m4)
-sinclude(mods/stats/config.m4)
 sinclude(mods/socket/config.m4)
 
 # Checks for header files.

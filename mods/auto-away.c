@@ -125,3 +125,4 @@ gboolean init_plugin(struct plugin *p) {
 	p->data = d;
 	return TRUE;
 }
+
