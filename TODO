@@ -2,7 +2,7 @@
  - finish configuration utility (worked on by Kyoshiro, see list in ctrlproxy-setup)
  - update documentation
  - finish dcc module
- - finish gnutls support
+ - finish gnutls server support
  - apply poelzi's async patch
 
 2.8:

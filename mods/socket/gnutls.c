@@ -101,6 +101,7 @@ static GIOStatus g_io_gnutls_write(GIOChannel *handle, const gchar *buf, gsize l
 			g_warning("TLS Handshake failed");
 			return g_io_gnutls_error(err);
 		}
+		chan->secure = 1;
 	}
 
 	*ret = 0;
@@ -124,6 +125,7 @@ static GIOStatus g_io_gnutls_close(GIOChannel *handle, GError **gerr)
 {
 	GIOTLSChannel *chan = (GIOTLSChannel *)handle;
 	gnutls_bye(chan->session, GNUTLS_SHUT_RDWR);
+	gnutls_deinit(chan->session);
 	g_io_channel_close(chan->giochan);
 	return G_IO_STATUS_NORMAL;
 }
@@ -179,17 +181,12 @@ gboolean g_io_gnutls_init()
 		g_warning("gnutls memory error");
 		return FALSE;
 	}
-	
-	gnutls_certificate_set_verify_flags(xcred, GNUTLS_VERIFY_ALLOW_X509_V1_CA_CRT);
-
 	return TRUE;
 }
 
 gboolean g_io_gnutls_set_files(char *certf, char *keyf)
 {
 	gnutls_certificate_set_x509_trust_file(xcred, certf, GNUTLS_X509_FMT_PEM);
-//FIXME	gnutls_certificate_set_x509_key_file(xcred, certf, GNUTLS_X509_FMT_PEM);
-	gnutls_certificate_set_x509_crl_file(xcred, certf, GNUTLS_X509_FMT_PEM);
 
 	return TRUE;
 }
@@ -198,6 +195,7 @@ GIOChannel *g_io_gnutls_get_iochannel(GIOChannel *handle, gboolean server)
 {
 	GIOTLSChannel *chan;
 	GIOChannel *gchan;
+	static const int cert_type_priority[2] = { GNUTLS_CRT_X509, 0 };
 	int fd;
 
 	g_return_val_if_fail(handle != NULL, NULL);
@@ -208,13 +206,17 @@ GIOChannel *g_io_gnutls_get_iochannel(GIOChannel *handle, gboolean server)
 	chan = g_new0(GIOTLSChannel, 1);
 
 	gnutls_init(&chan->session, server?GNUTLS_SERVER:GNUTLS_CLIENT);
+	gnutls_set_default_priority(chan->session);
+
+	gnutls_certificate_type_set_priority(chan->session, cert_type_priority);
 	gnutls_handshake_set_private_extensions(chan->session, 1);
-	gnutls_transport_set_ptr(chan->session, (gnutls_transport_ptr)fd);
     gnutls_credentials_set(chan->session, GNUTLS_CRD_CERTIFICATE, xcred);
+	gnutls_transport_set_ptr(chan->session, (gnutls_transport_ptr)fd);
                                                                                
 	gnutls_certificate_server_set_request(chan->session, GNUTLS_CERT_REQUEST);
 						   
 	chan->fd = fd;
+	chan->secure = 0;
 	chan->giochan = handle;
 	chan->isserver = server;
 	g_io_channel_ref(handle);
