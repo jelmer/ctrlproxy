@@ -31,6 +31,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <libintl.h>
+#define _(s) gettext(s)
 
 int traverse_keys(TDB_CONTEXT *tdb_context, TDB_DATA key, TDB_DATA value, void *pattern)
 {
@@ -47,7 +49,7 @@ int main(int argc, char **argv)
 	TDB_CONTEXT *tdb_context;
 
 	if(argc < 2) { 
-		fprintf(stderr, "No file specified\n");
+		fprintf(stderr, _("No file specified\n"));
 		return 1;
 	}
 

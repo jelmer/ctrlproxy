@@ -142,7 +142,7 @@ static int compile_pattern(struct pattern *p)
 	int erroffset;
     p->re = pcre_compile(p->string, 0, &error, &erroffset, NULL);
 	if(p->re == NULL) {
-		g_log(G_LOG_DOMAIN, G_LOG_LEVEL_WARNING, "PCRE compilation failed at offset %d: %s\n", erroffset, error);
+		g_log(G_LOG_DOMAIN, G_LOG_LEVEL_WARNING, _("PCRE compilation failed at offset %d: %s\n"), erroffset, error);
 		return -1;
 	}
 	return 0;
@@ -279,7 +279,7 @@ gboolean init_plugin(struct plugin *p)
 	tdb_context = tdb_open(statsdb, 0, 0, O_RDWR | O_CREAT, 00700);
 
 	if(!tdb_context) {
-		g_warning("Unable to open TDB database %s\n", statsdb);
+		g_warning(_("Unable to open TDB database %s\n"), statsdb);
 		free(statsdb);
 		return FALSE;
 	}

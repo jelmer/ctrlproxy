@@ -67,6 +67,7 @@ struct linestack_ops memory = {
 	memory_add_line,
 	memory_get_linked_list,
 	NULL, 
+	NULL,
 	memory_clear
 };
 

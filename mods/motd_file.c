@@ -23,6 +23,8 @@
 #include <errno.h>
 #include <unistd.h>
 #include "irc.h"
+#include <libintl.h>
+#define _(s) gettext(s)
 
 static char *motd_file = SHAREDIR"/ctrlproxy/motd";
 
@@ -34,7 +36,7 @@ char ** motd_file_handler(struct network *n)
 
 	fd = fopen(motd_file, "r");
 	if(!fd) {
-		g_warning("Can't open '%s'\n", motd_file);
+		g_warning(_("Can't open '%s'\n"), motd_file);
 		return NULL;
 	}
 
@@ -63,7 +65,7 @@ gboolean init_plugin(struct plugin *p) {
 	if(cur)motd_file = xmlNodeGetContent(cur);
 
 	if(access(motd_file, R_OK) != 0) {
-		g_warning("Can't open MOTD file '%s' for reading\n", motd_file);
+		g_warning(_("Can't open MOTD file '%s' for reading\n"), motd_file);
 		return FALSE;
 	}
 

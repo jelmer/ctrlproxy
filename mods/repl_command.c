@@ -21,6 +21,8 @@
 #include "ctrlproxy.h"
 #include <string.h>
 #include "admin.h"
+#include <libintl.h>
+#define _(s) gettext(s)
 
 static GHashTable *command_backlog = NULL;
 
@@ -80,13 +82,13 @@ static void repl_command(char **args, struct line *l)
 	char *networkname, *desc;
 
 	if(!command_backlog) { 
-		admin_out(l, "No backlogs saved yet");
+		admin_out(l, _("No backlogs saved yet"));
 		return;
 	}
 	
 	if(!args[1]) {
 		char *networkname = xmlGetProp(l->network->xmlConf, "name");
-		admin_out(l, "Sending backlog for network '%s'", networkname);
+		admin_out(l, _("Sending backlog for network '%s'"), networkname);
 		xmlFree(networkname);
 
 		/* Backlog everything for this network */
@@ -96,7 +98,7 @@ static void repl_command(char **args, struct line *l)
 
 	/* Backlog for specific nick/channel */
 	networkname = xmlGetProp(l->network->xmlConf, "name");
-	admin_out(l, "Sending backlog for channel %s@%s", args[1], networkname);
+	admin_out(l, _("Sending backlog for channel %s@%s"), args[1], networkname);
 	asprintf(&desc, "%s/%s", networkname, args[1]);
 	xmlFree(networkname);
 	co = g_hash_table_lookup(command_backlog, desc);
@@ -106,7 +108,7 @@ static void repl_command(char **args, struct line *l)
 		linestack_send(co, l->client->incoming);
 		linestack_clear(co);
 	} else {
-		admin_out(l, "No backlog for %s", args[1]);
+		admin_out(l, _("No backlog for %s"), args[1]);
 	}
 }
 
@@ -114,11 +116,11 @@ const char name_plugin[] = "repl_command";
 
 gboolean init_plugin(struct plugin *p) {
 	if(!plugin_loaded("admin")) {
-		g_warning("admin module required for repl_command module. Please load it first");
+		g_warning(_("admin module required for repl_command module. Please load it first"));
 		return FALSE;
 	}
 	add_filter_ex("repl_command", log_data, "replicate", 1000);
-	register_admin_command("BACKLOG", repl_command, "[channel]", "Send backlogs for this network or a channel, if specified");
+	register_admin_command("BACKLOG", repl_command, _("[channel]"), _("Send backlogs for this network or a channel, if specified"));
 	command_backlog = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
 	return TRUE;
 }

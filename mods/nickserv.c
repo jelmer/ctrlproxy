@@ -21,6 +21,8 @@
 #include "ctrlproxy.h"
 #include <string.h>
 #include "irc.h"
+#include <libintl.h>
+#define _(s) gettext(s)
 
 static xmlNodePtr nickserv_node(struct network *n)
 {
@@ -95,7 +97,7 @@ static gboolean log_data(struct line *l) {
 			char *nickserv_n = nickserv_nick(l->network), *raw, *netname;
 			netname = xmlGetProp(l->network->xmlConf, "name");
 			
-			g_message("Ghosting current user using '%s' on %s\n", nickattempt, netname);
+			g_message(_("Ghosting current user using '%s' on %s"), nickattempt, netname);
 			xmlFree(netname);
 
 			asprintf(&raw, "GHOST %s %s", nickattempt, pass);

@@ -29,6 +29,8 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <libintl.h>
+#define _(s) gettext(s)
 
 #define MAX_SUBST 256
 #undef G_LOG_DOMAIN
@@ -247,7 +249,7 @@ static FILE *find_add_channel_file(struct line *l, char *identifier) {
 
 		/* Check if directory needs to be created */
 		if(access(dn, F_OK) != 0 && mkdir(dn, 0700) == -1) {
-			g_warning("Couldn't create directory %s for logging!", dn);
+			g_warning(_("Couldn't create directory %s for logging!"), dn);
 			xmlFree(logfilename);
 			free(dn);
 			free(n);
@@ -259,7 +261,7 @@ static FILE *find_add_channel_file(struct line *l, char *identifier) {
 		custom_subst(&n, logfilename, l, identifier, TRUE);
 		f = fopen(n, "a+");
 		if(!f) {
-			g_warning("Couldn't open file %s for logging!", n);
+			g_warning(_("Couldn't open file %s for logging!"), n);
 			xmlFree(logfilename);
 			free(n);
 			return NULL;
@@ -389,8 +391,6 @@ static gboolean log_custom_data(struct line *l)
 	if(user){ *user = '\0';user++; }
 	if(!nick && xmlHasProp(l->network->xmlConf, "nick"))nick = xmlGetProp(l->network->xmlConf, "nick");
 
-	printf("Writing logs for line of %s\n", l->args[0]);
-	
 	/* Loop thru possible values for %@ */
 
 	/* There are a few possibilities:
@@ -478,7 +478,7 @@ gboolean init_plugin(struct plugin *p)
 	xmlConf = p->xmlConf;
 	g_assert(p->xmlConf);
 	if(!xmlFindChildByElementName(xmlConf, "logfilename")) {
-		g_warning("No <logfilename> tag for log_custom module");
+		g_warning(_("No <logfilename> tag for log_custom module"));
 		return FALSE;
 	}
 	files = g_hash_table_new(g_str_hash, g_str_equal);

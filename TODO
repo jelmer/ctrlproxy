@@ -2,7 +2,6 @@
  - finish configuration utility (worked on by Kyoshiro, see list in ctrlproxy-setup)
  - update documentation
  - automated testsuite
- - dircproxy-config-to-ctrlproxyrc script
  - dcc module
  - socket: finish gnutls support
 
@@ -11,6 +10,7 @@
  - rewrite stats stuff to use MySQL
  - <network><listen/></network> -> <listen/>
  - Net::IRC-like interface
+ - dircproxy-config-to-ctrlproxyrc script
  - replace transports by IOChannels?
   - support running from inetd
   - fix issue with non-blocking connect

@@ -39,6 +39,8 @@
 #define _GNU_SOURCE
 #include "ctrlproxy.h"
 #include <string.h>
+#include <libintl.h>
+#define _(s) gettext(s)
 
 static gboolean without_privmsg = FALSE;
 static GList *commands = NULL;
@@ -106,12 +108,12 @@ static void add_network (char **args, struct line *l)
 {
 	xmlNodePtr cur;
 	if(!args[1]) {
-		admin_out(l, "No name specified");
+		admin_out(l, _("No name specified"));
 		return;
 	}
 
 	if(find_network_xml(args[1])) {
-		admin_out(l, "Such a network already exists");
+		admin_out(l, _("Such a network already exists"));
 		return;
 	}
 
@@ -128,18 +130,18 @@ static void del_network (char **args, struct line *l)
 {
 	xmlNodePtr cur;
 	if(!args[1]) {
-		admin_out(l, "Not enough parameters");
+		admin_out(l, _("Not enough parameters"));
 		return;
 	}
 
 	if(find_network_struct(args[1])) {
-		admin_out(l, "Can't remove active network");
+		admin_out(l, _("Can't remove active network"));
 		return;
 	}
 
 	cur = find_network_xml(args[1]);
 	if(!cur) {
-		admin_out(l, "No such network '%s'", args[1]);
+		admin_out(l, _("No such network '%s'"), args[1]);
 		return;
 	}
 	
@@ -154,7 +156,7 @@ static void add_listen (char **args, struct line *l)
 	int i;
 
 	if(!args[1] || !args[2]) {
-		admin_out(l, "Not enough parameters");
+		admin_out(l, _("Not enough parameters"));
 		return;
 	}
 
@@ -185,7 +187,7 @@ static void add_listen (char **args, struct line *l)
 	for(i = 3; args[i]; i++) {
 		char *val = strchr(args[i], '=');
 		if(!val) {
-			admin_out(l, "Properties should be in the format 'key=value'");
+			admin_out(l, _("Properties should be in the format 'key=value'"));
 			continue;
 		}
 		*val = '\0'; val++;
@@ -206,7 +208,7 @@ static void add_server (char **args, struct line *l)
 	int i;
 
 	if(!args[1] || !args[2]) {
-		admin_out(l, "Not enough parameters");
+		admin_out(l, _("Not enough parameters"));
 		return;
 	}
 
@@ -237,7 +239,7 @@ static void add_server (char **args, struct line *l)
 	for(i = 3; args[i]; i++) {
 		char *val = strchr(args[i], '=');
 		if(!val) {
-			admin_out(l, "Properties should be in the format 'key=value'");
+			admin_out(l, _("Properties should be in the format 'key=value'"));
 			continue;
 		}
 		*val = '\0'; val++;
@@ -250,26 +252,26 @@ static void com_connect_network (char **args, struct line *l)
 	xmlNodePtr n;
 	struct network *s;
 	if(!args[1]) {
-		 admin_out(l, "No network specified");
+		 admin_out(l, _("No network specified"));
 		 return;
 	}
 
 	n = find_network_xml(args[1]);
 	if(!n) {
-		admin_out(l, "Can't find network named %s", args[1]);
+		admin_out(l, _("Can't find network named %s"), args[1]);
 		return;
 	}
 
 	s = find_network_struct(args[1]);
 
 	if(s && s->reconnect_id == 0) {
-		admin_out(l, "Already connected to %s", args[1]);
+		admin_out(l, _("Already connected to %s"), args[1]);
 	} else if(s) {
-		admin_out(l, "Forcing reconnect to %s", args[1]);
+		admin_out(l, _("Forcing reconnect to %s"), args[1]);
 		close_server(s);
 		connect_current_server(s);
 	} else {
-		g_message("Connecting to %s", args[1]);
+		g_message(_("Connecting to %s"), args[1]);
 		connect_network(n);
 	}
 }
@@ -281,7 +283,7 @@ static void disconnect_network (char **args, struct line *l)
 	else {
 		n = find_network_struct(args[1]);
 		if(!n) {
-			admin_out(l, "Can't find active network with that name");
+			admin_out(l, _("Can't find active network with that name"));
 			return;
 		}
 	}
@@ -300,11 +302,11 @@ static void com_next_server (char **args, struct line *l) {
 		name = xmlGetProp(n->xmlConf,"name");
 	}
 	if(!n) {
-		admin_out(l, "%s: Not connected", name);
+		admin_out(l, _("%s: Not connected"), name);
 	} else {
-		admin_out(l, "%s: Reconnecting", name);
+		admin_out(l, _("%s: Reconnecting"), name);
 		close_server(n);
-		g_log(G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "Cycle server in %s", name);
+		g_log(G_LOG_DOMAIN, G_LOG_LEVEL_INFO, _("Cycle server in %s"), name);
 		connect_next_server(n);
 	}
 	if(!args[1])
@@ -326,12 +328,12 @@ static void unload_module (char **args, struct line *l)
 	GList *g = plugins;
 
 	if(!args[1]) {
-		admin_out(l, "Not enough arguments");
+		admin_out(l, _("Not enough arguments"));
 		return;
 	}
 
 	if(!strcmp(args[1], "admin")) {
-		admin_out(l, "Can't unload /this/ module");
+		admin_out(l, _("Can't unload /this/ module"));
 		return;
 	}
 
@@ -345,19 +347,19 @@ static void unload_module (char **args, struct line *l)
 		g = g->next;
 	}
 
-	admin_out(l, "No such plugin loaded");
+	admin_out(l, _("No such plugin loaded"));
 }
 
 static void load_module (char **args, struct line *l)
 { 
 	xmlNodePtr cur;
 	if(!args[1]) { 
-		admin_out(l, "No file specified");
+		admin_out(l, _("No file specified"));
 		return;
 	}
 
     if(plugin_loaded(args[1])) {
-		admin_out(l, "Module already loaded");
+		admin_out(l, _("Module already loaded"));
 		return;
 	}
 
@@ -407,9 +409,9 @@ static void help (char **args, struct line *l)
 	int i;
 
 	if(args[1]) {
-		admin_out(l, "Details for command %s:", args[1]);
+		admin_out(l, _("Details for command %s:"), args[1]);
 	} else {
-		admin_out(l, "The following commands are available:");
+		admin_out(l, _("The following commands are available:"));
 	}
 	while(gl) {
 		struct admin_command *cmd = (struct admin_command *)gl->data;
@@ -422,7 +424,7 @@ static void help (char **args, struct line *l)
 					}
 					return;
 				} else {
-					admin_out(l, "Sorry, no help for %s available", args[1]);
+					admin_out(l, _("Sorry, no help for %s available"), args[1]);
 				}
 			}
 		} else {
@@ -437,7 +439,7 @@ static void help (char **args, struct line *l)
 		gl = gl->next;
 	}
 	if(args[1]) {
-		admin_out(l, "Unknown command");
+		admin_out(l, _("Unknown command"));
 	}
 }
 
@@ -453,9 +455,9 @@ static void list_networks(char **args, struct line *l)
 			continue;
 		}
 		n = find_network_struct(nname);
-		if(!n) admin_out(l, "%s: Not connected", nname);
-		else if(n->reconnect_id) admin_out(l, "%s: Reconnecting", nname);
-		else admin_out(l, "%s: connected", nname);
+		if(!n) admin_out(l, _("%s: Not connected"), nname);
+		else if(n->reconnect_id) admin_out(l, _("%s: Reconnecting"), nname);
+		else admin_out(l, _("%s: connected"), nname);
 		xmlFree(nname);
 		p = p->next;
 	}
@@ -500,27 +502,6 @@ void unregister_admin_command(char *name)
 	}
 }
 
-static struct admin_command builtin_commands[] = {
-	{ "ADDNETWORK", add_network, "<name>", "Add new network with specified name" },
-	{ "ADDSERVER", add_server, "<network> <type> [property1=value1] ...", "Add server with specified properties to the specified network" },
-	{ "ADDLISTEN", add_listen, "<network> <type> [property1=value1] ...", "Add listener with specified properties to the specified network" },
-	{ "CONNECT", com_connect_network, "<network>", "Connect to specified network. Forces reconnect when waiting." },
-	{ "DELNETWORK", del_network, "<network>", "Remove specified network" },
-	{ "NEXTSERVER", com_next_server, "[network]", "Disconnect and use to the next server in the list" },
-	{ "DIE", handle_die, "", "Exit ctrlproxy" },
-	{ "DISCONNECT", disconnect_network, "<network>", "Disconnect specified network" },
-	{ "LISTNETWORKS", list_networks, "", "List current networks and their status" },
-	{ "LOADMODULE", load_module, "<name>", "Load specified module" },
-	{ "UNLOADMODULE", unload_module, "<name>", "Unload specifiedm odule" },
-	{ "RELOADMODULE", reload_module, "<name>", "Reload specified module" },
-	{ "LISTMODULES", list_modules, "", "List currently loaded modules" },
-	{ "DUMPCONFIG", dump_config, "", "Send current XML configuration to client" },
-	{ "SAVECONFIG", save_config, "<name>", "Save current XML configuration to specified file" },
-	{ "DETACH", detach_client, "", "Detach current client" },
-	{ "HELP", help, "[command]", "This help command" },
-	{ NULL }
-};
-
 static gboolean handle_data(struct line *l) {
 	char *tmp, **args = NULL;
 	int cmdoffset = 0;
@@ -537,7 +518,7 @@ static gboolean handle_data(struct line *l) {
 	if(cmdoffset == 0) return TRUE;
 
 	if(!l->args[cmdoffset]) {
-		admin_out(l, "Please give a command. Use the 'help' command to get a list of available commands");
+		admin_out(l, _("Please give a command. Use the 'help' command to get a list of available commands"));
 		return TRUE;
 	}
 
@@ -571,7 +552,7 @@ static gboolean handle_data(struct line *l) {
 		gl = gl->next;
 	}
 
-	admin_out(l, "Can't find command '%s'. Type 'help' for a list of available commands. ", args[0]);
+	admin_out(l, _("Can't find command '%s'. Type 'help' for a list of available commands. "), args[0]);
 
 	g_strfreev(args);
 	free(tmp);
@@ -589,6 +570,28 @@ const char name_plugin[] = "admin";
 gboolean init_plugin(struct plugin *p) {
 	xmlNodePtr cur;
 	int i;
+	struct admin_command builtin_commands[] = {
+		{ "ADDNETWORK", add_network, _("<name>"), _("Add new network with specified name") },
+		{ "ADDSERVER", add_server, _("<network> <type> [property1=value1] ..."), _("Add server with specified properties to the specified network") },
+		{ "ADDLISTEN", add_listen, _("<network> <type> [property1=value1] ..."), _("Add listener with specified properties to the specified network") },
+		{ "CONNECT", com_connect_network, _("<network>"), _("Connect to specified network. Forces reconnect when waiting.") },
+		{ "DELNETWORK", del_network, _("<network>"), _("Remove specified network") },
+		{ "NEXTSERVER", com_next_server, _("[network]"), _("Disconnect and use to the next server in the list") },
+		{ "DIE", handle_die, "", _("Exit ctrlproxy") },
+		{ "DISCONNECT", disconnect_network, _("<network>"), _("Disconnect specified network") },
+		{ "LISTNETWORKS", list_networks, "", _("List current networks and their status") },
+		{ "LOADMODULE", load_module, "<name>", _("Load specified module") },
+		{ "UNLOADMODULE", unload_module, _("<name>"), _("Unload specified module") },
+		{ "RELOADMODULE", reload_module, _("<name>"), _("Reload specified module") },
+		{ "LISTMODULES", list_modules, "", _("List currently loaded modules") },
+		{ "DUMPCONFIG", dump_config, "", _("Send current XML configuration to client") },
+		{ "SAVECONFIG", save_config, "<name>", _("Save current XML configuration to specified file") },
+		{ "DETACH", detach_client, "", _("Detach current client") },
+		{ "HELP", help, "[command]", _("This help command") },
+		{ NULL }
+	};
+
+
 
 	add_filter("admin", handle_data);
 	cur = xmlFindChildByElementName(p->xmlConf, "without_privmsg");

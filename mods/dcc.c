@@ -56,8 +56,8 @@ static void dcc_list(struct line *l)
 	free(p);
 
 	if(!d) {
-		g_warning("Can't open directory '%s'", p);
-		admin_out(l, "Can't open directory '%s'", p);
+		g_warning(_("Can't open directory '%s'"), p);
+		admin_out(l, _("Can't open directory '%s'"), p);
 		return;
 	}
 
@@ -73,7 +73,7 @@ static void dcc_del(struct line *l, const char *f)
 	char *p;
 	char *r;
 	if(strchr(f, '/')) {
-		admin_out(l, "Invalid filename");
+		admin_out(l, _("Invalid filename"));
 		return;
 	}
 
@@ -82,9 +82,9 @@ static void dcc_del(struct line *l, const char *f)
 	free(r);
 
 	if(unlink(p) != 0) {
-		admin_out(l, "Error occured while deleting %s: %s", p, strerror(errno));
+		admin_out(l, _("Error occured while deleting %s: %s"), p, strerror(errno));
 	} else {
-		admin_out(l, "%s successfully deleted", p);
+		admin_out(l, _("%s successfully deleted"), p);
 	}
 	free(p);
 }
@@ -109,21 +109,21 @@ static gboolean handle_dcc_send(GIOChannel *source, GIOCondition c, gpointer dat
 		g_io_channel_shutdown(source, FALSE, &error);
 
 		if(new < 0) {
-			g_warning("Error accepting incoming DCC connection: %s", strerror(errno));
+			g_warning(_("Error accepting incoming DCC connection: %s"), strerror(errno));
 			free(file);
 			return FALSE;
 		}
 
 		f = fopen(file, "r");
 		if(!f) {
-			g_warning("Couldn't read from '%s': %s", file, strerror(errno));
+			g_warning(_("Couldn't read from '%s': %s"), file, strerror(errno));
 			free(file); 
 			return FALSE;
 		}
 
 		while((read = fread(buf, 1, sizeof(buf), f))) {
 			if(send(new, buf, read, 0) < 0) {
-				g_warning("Error sending file '%s': %s", file, strerror(errno));
+				g_warning(_("Error sending file '%s': %s"), file, strerror(errno));
 				free(file);
 				fclose(f);
 				return FALSE;
@@ -137,7 +137,7 @@ static gboolean handle_dcc_send(GIOChannel *source, GIOCondition c, gpointer dat
 	}
 
 	if(c & G_IO_HUP || c & G_IO_ERR) {
-		g_warning("Error listening for DCC connections");
+		g_warning(_("Error listening for DCC connections"));
 		free(file);
 		return FALSE;
 	}
@@ -149,7 +149,7 @@ static gboolean close_dcc_listen(gpointer data)
 {
 	GError *error = NULL;
 	GIOChannel *ioc = (GIOChannel *)data;
-	g_message("DCC SEND timed out, removing...\n");
+	g_message(_("DCC SEND timed out, removing...\n"));
 	g_io_channel_shutdown(ioc, FALSE, &error);
 	return FALSE;
 }
@@ -163,7 +163,7 @@ static int dcc_start_listen(struct in_addr *addr, int *port, const char *file)
 
 	sock = socket(PF_INET, SOCK_STREAM, 0);
 	if(sock < 0) {
-		g_warning("Error creating socket: %s", strerror(errno));
+		g_warning(_("Error creating socket: %s"), strerror(errno));
 		return -1;
 	}
 
@@ -172,18 +172,18 @@ static int dcc_start_listen(struct in_addr *addr, int *port, const char *file)
 	name.sin_addr.s_addr = htonl(INADDR_ANY);
 
 	if(bind(sock, (struct sockaddr *)&name, sizeof(name)) < 0) {
-		g_warning("Unable to bind: %s", strerror(errno));
+		g_warning(_("Unable to bind: %s"), strerror(errno));
 		return -1;
 	}
 
 	if(listen(sock, 1) < 0) {
-		g_warning("Unable to listen: %s", strerror(errno));
+		g_warning(_("Unable to listen: %s"), strerror(errno));
 		return -1;
 	}
 
 	namesize = sizeof(name);
 	if(getsockname(sock, &name, &namesize) < 0) {
-		g_warning("Unable to get socket name: %s", strerror(errno));
+		g_warning(_("Unable to get socket name: %s"), strerror(errno));
 		return -1;
 	}
 	*addr = name.sin_addr;
@@ -206,7 +206,7 @@ static void dcc_send(struct line *l, const char *f)
 	struct stat lstat;
 	
 	if(strchr(f, '/')) {
-		admin_out(l, "Invalid filename");
+		admin_out(l, _("Invalid filename"));
 		return;
 	}
 
@@ -215,12 +215,12 @@ static void dcc_send(struct line *l, const char *f)
 	free(r);
 
 	if(dcc_start_listen(&addr, &port, p) < 0) {
-		g_warning("Unable to listen");
+		g_warning(_("Unable to listen"));
 		return;
 	}
 
 	if(stat(p, &lstat) < 0) {
-		g_warning("Unable to stat '%s': %s", p, strerror(errno));
+		g_warning(_("Unable to stat '%s': %s"), p, strerror(errno));
 		free(p);
 		return;
 	}
@@ -240,7 +240,7 @@ static void dcc_command(char **args, struct line *l)
 	} else if(!strcasecmp(args[2], "DEL")) {
 		dcc_del(l, args[3]);
 	} else {
-		admin_out(l, "Unknown subcommand '%s'", args[2]);
+		admin_out(l, _("Unknown subcommand '%s'"), args[2]);
 	}
 }
 
@@ -252,13 +252,13 @@ static gboolean handle_dcc_receive(GIOChannel *i, GIOCondition c, gpointer data)
 	char buf[DCCBUFFERSIZE];
 
 	if(c & G_IO_HUP) {
-		g_warning("DCC Connection closed");
+		g_warning(_("DCC Connection closed"));
 		fclose(f);
 		return FALSE;
 	}
 
 	if(c & G_IO_ERR) {
-		g_warning("Error occured while receiving data over DCC");
+		g_warning(_("Error occured while receiving data over DCC"));
 		fclose(f);
 		return FALSE;
 	}
@@ -281,7 +281,7 @@ static void dcc_start_receive(struct in_addr a, int port, char *fname, size_t si
 	
 	sock = socket(PF_INET, SOCK_STREAM, 0);
 	if(sock < 0) {
-		g_warning("Unable to create socket: %s", strerror(errno));
+		g_warning(_("Unable to create socket: %s"), strerror(errno));
 		return;
 	}
 
@@ -289,7 +289,7 @@ static void dcc_start_receive(struct in_addr a, int port, char *fname, size_t si
 	addr.sin_port = port;
 
 	if(connect(sock, &addr, sizeof(addr)) < 0) {
-		g_warning("Unable to connect to host; %s", strerror(errno));
+		g_warning(_("Unable to connect to host: %s"), strerror(errno));
 		return;
 	}
 	
@@ -301,7 +301,7 @@ static void dcc_start_receive(struct in_addr a, int port, char *fname, size_t si
 	fd = fopen(newpath, "w+");
 	free(newpath);
 	if(!fd) {
-		g_warning("Can't open file for %s: %s", fname, strerror(errno));
+		g_warning(_("Can't open file for %s: %s"), fname, strerror(errno));
 		return;
 	}
 	g_io_add_watch(io, G_IO_IN | G_IO_ERR | G_IO_HUP, handle_dcc_receive, fd);
@@ -319,7 +319,7 @@ static gboolean mhandle_data(struct line *l)
 
 	pe = strchr(p, '\001');
 	if(!pe) {
-		g_warning("Invalidly formatted CTCP request received");
+		g_warning(_("Invalidly formatted CTCP request received"));
 		free(p);
 		return TRUE;
 	}
@@ -357,7 +357,7 @@ const char name_plugin[] = "dcc";
 gboolean init_plugin(struct plugin *p) 
 {
 	if(!plugin_loaded("admin")) {
-		g_warning("admin module required for dcc module. Please load it first");
+		g_warning(_("admin module required for dcc module. Please load it first"));
 		return FALSE;
 	}
 	register_admin_command("DCC", dcc_command, NULL, NULL);

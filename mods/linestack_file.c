@@ -131,6 +131,7 @@ static struct linestack_ops file = {
 	file_add_line,
 	file_get_linked_list,
 	file_send_file, 
+	NULL,
 	file_close
 };
 

@@ -25,6 +25,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/utsname.h>
+#include <libintl.h>
+#define _(s) gettext(s)
 
 #undef G_LOG_DOMAIN
 #define G_LOG_DOMAIN "ctcp"
@@ -86,7 +88,7 @@ static gboolean mhandle_data(struct line *l)
 		irc_sendf(l->network->outgoing, "NOTICE %s :%s", dest, l->args[2]?l->args[2]:"");
 	} else if(!strcasecmp(data, "ACTION")) {
 	} else if(!strcasecmp(data, "DCC")) {
-	} else g_warning("Received unknown CTCP request '%s'!", data);
+	} else g_warning(_("Received unknown CTCP request '%s'!"), data);
 
 	free(data);
 	if(dhostmask)free(dhostmask);

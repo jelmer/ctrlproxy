@@ -21,6 +21,8 @@
 #include "ctrlproxy.h"
 #include <string.h>
 #include "admin.h"
+#include <libintl.h>
+#define _(s) gettext(s)
 
 static struct network *find_network(const char *name)
 {
@@ -52,7 +54,7 @@ static void dump_joined_channels(char **args, struct line *l)
 	if(args[1]) {
 		n = find_network(args[1]);
 		if(!n) {
-			admin_out(l, "Can't find network '%s'", args[1]);
+			admin_out(l, _("Can't find network '%s'"), args[1]);
 			return;
 		}
 	}
@@ -76,8 +78,8 @@ gboolean fini_plugin(struct plugin *p) {
 const char name_plugin[] = "debug";
 
 gboolean init_plugin(struct plugin *p) {
-	if(!plugin_loaded("admin") && !plugin_loaded("libadmin")) {
-		g_warning("admin module required for repl_command module. Please load it first");
+	if(!plugin_loaded("admin")) {
+		g_warning(_("admin module required for repl_command module. Please load it first"));
 		return FALSE;
 	}
 	register_admin_command("DUMPJOINEDCHANNELS", dump_joined_channels, "[network]", NULL);

@@ -59,7 +59,7 @@ static pid_t piped_child(char* const command[], int *f_in)
 	int sock[2];
 
 	if(socketpair(PF_UNIX, SOCK_STREAM, AF_LOCAL, sock) == -1) {
-		g_log(G_LOG_DOMAIN, G_LOG_LEVEL_WARNING, "socketpair: %s", strerror(errno));
+		g_warning( "socketpair: %s", strerror(errno));
 		return -1;
 	}
 
@@ -69,7 +69,7 @@ static pid_t piped_child(char* const command[], int *f_in)
 
 	pid = fork();
 	if (pid == -1) {
-		g_log(G_LOG_DOMAIN, G_LOG_LEVEL_WARNING, "fork: %s", strerror(errno));
+		g_warning( "fork: %s", strerror(errno));
 		return -1;
 	}
 
@@ -82,7 +82,7 @@ static pid_t piped_child(char* const command[], int *f_in)
 		dup2(sock[1], 0);
 		dup2(sock[1], 1);
 		execvp(command[0], command);
-		g_log(G_LOG_DOMAIN, G_LOG_LEVEL_WARNING, "Failed to exec %s : %s", command[0], strerror(errno));
+		g_warning( _("Failed to exec %s : %s"), command[0], strerror(errno));
 		return -1;
 	}
 
@@ -105,7 +105,7 @@ static int set_nonblock_flag (int desc, int value) {
   /* Store modified flag word in the descriptor. */
   ret = fcntl (desc, F_SETFL, oldflags);
   if(ret < 0)
-  	g_warning("Error setting nonblock %s", strerror(errno));
+  	g_warning(_("Error setting nonblock %s"), strerror(errno));
   return ret;
 }
 
@@ -121,7 +121,7 @@ static void socket_to_iochannel(int sock, struct transport_context *c, enum ssl_
 		GIOChannel *newioc;
 		newioc = irssi_ssl_get_iochannel(ioc, ssl_mode == SSL_MODE_SERVER);
 
-		if(!newioc) g_warning("Can't convert socket to SSL");
+		if(!newioc) g_warning(_("Can't convert socket to SSL"));
 		else ioc = newioc;
 	}
 #endif
@@ -156,7 +156,7 @@ static int connect_pipe(struct transport_context *c)
 
 		if(!strcmp(cur->name, "path")) args[0] = xmlNodeGetContent(cur);
 		else if(!strcmp(cur->name, "arg")) args[++argc] = xmlNodeGetContent(cur);
-		else g_log(G_LOG_DOMAIN, G_LOG_LEVEL_WARNING, "Unknown element %s", cur->name);
+		else g_warning( _("Unknown element %s"), cur->name);
 
 		cur = cur->next;
 	}
@@ -189,10 +189,10 @@ static gboolean handle_new_client(GIOChannel *c, GIOCondition o, gpointer data)
 	size = sizeof(clientname);
 	sock = accept(g_io_channel_unix_get_fd(c), (struct sockaddr *)&clientname, &size);
 	if(!sock) {
-		g_log(G_LOG_DOMAIN, G_LOG_LEVEL_WARNING, "Can't accept connection!");
+		g_warning( _("Can't accept connection!"));
 		return FALSE;
 	}
-	g_log(G_LOG_DOMAIN, G_LOG_LEVEL_MESSAGE, "New client %d", sock);
+	g_message(_("New client %d"), sock);
 
 	newcontext = malloc(sizeof(struct transport_context));
 	memset(newcontext, 0, sizeof(struct transport_context));
@@ -227,7 +227,7 @@ static gboolean handle_in (GIOChannel *ioc, GIOCondition o, gpointer data)
 	g_assert(o == G_IO_IN);
 
 	if(!(g_io_channel_get_flags(ioc) & G_IO_FLAG_IS_READABLE)) {
-		g_warning("Channel is not readeable!");
+		g_warning(_("Channel is not readeable!"));
 		return -1;
 	}
 
@@ -235,7 +235,7 @@ static gboolean handle_in (GIOChannel *ioc, GIOCondition o, gpointer data)
 
 	switch(status){
 	case G_IO_STATUS_ERROR:
-		g_log(G_LOG_DOMAIN, G_LOG_LEVEL_WARNING, "%s", (error?error->message:"Unknown error"));
+		g_warning( "%s", (error?error->message:_("Unknown error")));
 		if(error)g_error_free(error);
 		return TRUE;
 
@@ -295,13 +295,13 @@ static int connect_ip(struct transport_context *c)
 
 	xmlSetProp(c->configuration, "name", tempname);
 
-	g_log(G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "Connecting to %s:%d", hostname, port);
+	g_log(G_LOG_DOMAIN, G_LOG_LEVEL_INFO, _("Connecting to %s:%d"), hostname, port);
 
 	sock = socket (domain, SOCK_STREAM, 0);
 
 	if (sock < 0)
 	{
-		g_log(G_LOG_DOMAIN, G_LOG_LEVEL_WARNING, "(While connecting to server %s with %s): socket: %s", tempname, strerror(errno), c->functions->name);
+		g_warning( _("(While connecting to server %s with %s): socket: %s"), tempname, strerror(errno), c->functions->name);
 		free(tempname);
 		return -1;
 	}
@@ -331,7 +331,7 @@ static int connect_ip(struct transport_context *c)
 
 	if(ret < 0)
 	{
-		g_log(G_LOG_DOMAIN, G_LOG_LEVEL_WARNING, "bind: %s", strerror(errno));
+		g_warning( "bind: %s", strerror(errno));
 		return -1;
 	}
 
@@ -339,14 +339,14 @@ static int connect_ip(struct transport_context *c)
 
 	if (hostinfo == NULL)
 	{
-		g_warning("Unknown host %s.", hostname);
+		g_warning(_("Unknown host %s."), hostname);
 		xmlFree(hostname);
 		free(tempname);
 		return -1;
 	}
 	if(socket_tos != 0)
         if (setsockopt(sock, IPPROTO_IP, IP_TOS, &socket_tos, sizeof(socket_tos)) < 0)
-                g_log(G_LOG_DOMAIN, G_LOG_LEVEL_WARNING, "setsockopt IP_TOS %d: %.100s:", socket_tos, strerror(errno));
+                g_warning( "setsockopt IP_TOS %d: %.100s:", socket_tos, strerror(errno));
 
 //FIXME	set_nonblock_flag(sock,1);
 
@@ -360,7 +360,7 @@ static int connect_ip(struct transport_context *c)
 
 	if (ret < 0 && errno != EINPROGRESS)
 	{
-		g_log(G_LOG_DOMAIN, G_LOG_LEVEL_WARNING, "(While connecting to server %s): connect: %s", tempname, strerror(errno));
+		g_warning( _("(While connecting to server %s): connect: %s"), tempname, strerror(errno));
 		free(tempname);
 		return -1;
 	}
@@ -371,7 +371,7 @@ static int connect_ip(struct transport_context *c)
 	socket_to_iochannel(sock, c, (ssl && atoi(ssl))?SSL_MODE_CLIENT:SSL_MODE_NONE);
 	xmlFree(ssl);
 
-	g_log(G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "Successfully connected to %s:%d", hostname, port);
+	g_log(G_LOG_DOMAIN, G_LOG_LEVEL_INFO, _("Successfully connected to %s:%d"), hostname, port);
 	xmlFree(hostname);
 	return 0;
 }
@@ -401,18 +401,18 @@ static int write_socket(struct transport_context *t, char *l)
 	struct socket_data *s = (struct socket_data *)t->data;
 
 	if(!s->channel) {
-		g_message("Trying to send line '%s' to socket that is not connected!", l);
+		g_message(_("Trying to send line '%s' to socket that is not connected!"), l);
 		return -1;
 	}
 
 	if(!(g_io_channel_get_flags(s->channel) & G_IO_FLAG_IS_WRITEABLE)) {
-		g_warning("Channel is not writeable!");
+		g_warning(_("Channel is not writeable!"));
 		return -1;
 	}
 
 	if(g_io_channel_write_chars(s->channel, l, -1, NULL, &error) == G_IO_STATUS_ERROR)
 	{
-		g_message("Can't send: %s", (error?error->message:"g_io_channel_write_chars failed"));
+		g_message(_("Can't send: %s", (error?error->message:"g_io_channel_write_chars failed")));
 		if(error)g_error_free(error);
 		return -1;
 	}
@@ -460,14 +460,14 @@ static int listen_ip(struct transport_context *c)
 	sock = socket (domain, SOCK_STREAM, 0);
 	if (sock < 0)
 	{
-		g_log(G_LOG_DOMAIN, G_LOG_LEVEL_WARNING, "socket: %s", strerror(errno));
+		g_warning( "socket: %s", strerror(errno));
 		return -1;
 	}
 
 	setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
 	if(socket_tos != 0)
         if (setsockopt(sock, IPPROTO_IP, IP_TOS, &socket_tos, sizeof(socket_tos)) < 0)
-                g_log(G_LOG_DOMAIN, G_LOG_LEVEL_WARNING, "setsockopt IP_TOS %d: %.100s:", socket_tos, strerror(errno));
+                g_warning( "setsockopt IP_TOS %d: %.100s:", socket_tos, strerror(errno));
 
 	bind_addr = xmlGetProp(c->configuration, "bind");
 	if(bind_addr) bind_host = gethostbyname2(bind_addr, family);
@@ -498,18 +498,18 @@ static int listen_ip(struct transport_context *c)
 
 	if(ret < 0)
 	{
-		g_log(G_LOG_DOMAIN, G_LOG_LEVEL_WARNING, "bind: %s", strerror(errno));
+		g_warning( "bind: %s", strerror(errno));
 		return -1;
 	}
 
 	if(listen(sock, 5) < 0) {
-		g_log(G_LOG_DOMAIN, G_LOG_LEVEL_WARNING, "Error trying to listen on port %d: %s", port, strerror(errno));
+		g_warning( _("Error trying to listen on port %d: %s"), port, strerror(errno));
 		return -1;
 	}
 
 //FIXME	set_nonblock_flag(sock,1);
 
-	g_log(G_LOG_DOMAIN, G_LOG_LEVEL_MESSAGE, "Listening on port %d(socket %d)", port, sock);
+	g_log(G_LOG_DOMAIN, G_LOG_LEVEL_MESSAGE, _("Listening on port %d(socket %d)"), port, sock);
 
 	gio = g_io_channel_unix_new(sock);
 
@@ -566,14 +566,14 @@ static int listen_pipe(struct transport_context *c)
 	}
 
 	if(listen(sock, 128) < 0) {
-		g_warning("Error trying to listen on %s: %s", f, strerror(errno));
+		g_warning(_("Error trying to listen on %s: %s"), f, strerror(errno));
 		free(f);
 		return -1;
 	}
 
 //FIXME	set_nonblock_flag(sock,1);
 
-	g_message("Listening on socket at %s(%d)", f, sock);
+	g_message(_("Listening on socket at %s(%d)"), f, sock);
 
 	gio = g_io_channel_unix_new(sock);
 

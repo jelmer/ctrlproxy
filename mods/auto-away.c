@@ -20,6 +20,8 @@
 #define _GNU_SOURCE
 #include "ctrlproxy.h"
 #include <string.h>
+#include <libintl.h>
+#define _(s) gettext(s)
 
 static time_t last_message = 0, max_idle_time = 60 * 10;
 static gboolean only_for_noclients = FALSE;
@@ -42,7 +44,7 @@ static gboolean check_time(gpointer user_data) {
 			struct network *s = (struct network *)sl->data;
 			if(!only_for_noclients || s->clients == NULL) {
 				char *new_msg;
-				asprintf(&new_msg, ":%s", message?message:"Auto Away");
+				asprintf(&new_msg, ":%s", message?message:_("Auto Away"));
 				irc_send_args(s->outgoing, "AWAY", new_msg, NULL);
 				free(new_msg);
 				if(nick) irc_send_args(s->outgoing, "NICK", nick, NULL);

@@ -29,6 +29,8 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <libintl.h>
+#define _(s) gettext(s)
 
 
 #undef G_LOG_DOMAIN
@@ -61,7 +63,7 @@ static FILE *find_add_channel_file(struct network *s, char *name) {
 		asprintf(&n, "%s/%s", logfile, server_name);
 		/* Check if directory needs to be created */
 		if(access(n, F_OK) != 0 && mkdir(n, 0700) == -1) {
-			g_warning("Couldn't create directory %s for logging!", n);
+			g_warning(_("Couldn't create directory %s for logging!"), n);
 			free(hash_name);
 			free(n);
 			xmlFree(server_name);
@@ -76,7 +78,7 @@ static FILE *find_add_channel_file(struct network *s, char *name) {
 		g_free(cn);
 		f = fopen(n, "a+");
 		if(!f) {
-			g_warning("Couldn't open file %s for logging!", n);
+			g_warning(_("Couldn't open file %s for logging!"), n);
 			free(n);
 			return NULL;
 		}
