@@ -2,14 +2,14 @@ DOCBUILDE="#"
 DOCINSTALLE="#"
 
 AC_ARG_ENABLE(docs,
-[ --enable-docs		 Build the documentation ],
+[  --enable-docs		  build the documentation ],
 [ test x$enableval = xyes && DOCBUILDE=""; ])
 
 test -f doc/ctrlproxy.1 && DOCINSTALLE=""
 
 DB2LATEXPATH=""
 AC_ARG_WITH(db2latex,
-[ --with-db2latex=path	Use db2latex from specified path ],
+[  --with-db2latex=path	  use db2latex from specified path ],
 [ DB2LATEXPATH="$withval" ])
 
 for I in /usr/share/sgml/docbook/stylesheet/xsl/db2latex/latex/docbook.xsl
