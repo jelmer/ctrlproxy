@@ -54,6 +54,7 @@ int main(int argc, const char *argv[])
 
 	signal(SIGINT, signal_quit);
 	signal(SIGTERM, signal_quit);
+	signal(SIGPIPE, SIG_IGN);
 
 	asprintf(&rcfile_default, "%s/.ctrlproxyrc", getenv("HOME")?getenv("HOME"):"");
 	rcfile = rcfile_default;
