@@ -13,7 +13,7 @@ else
 	PY_VER=`$pythonpath -c 'import distutils.sysconfig; print distutils.sysconfig.get_config_vars("VERSION")[0];'`
 	PY_LIB=`$pythonpath -c 'import distutils.sysconfig; print distutils.sysconfig.get_config_vars("LIBDEST")[0];'`
 	PY_INC=`$pythonpath -c 'import distutils.sysconfig; print distutils.sysconfig.get_config_vars("INCLUDEPY")[0];'`
-	$pythonpath -c "import sys; map(int,sys.version[:3].split('.')) >= [2,2] or sys.exit(1)"
+	$pythonpath -c "import sys; map(int,sys.version[:3].split('.')) >= [2,3] or sys.exit(1)"
 	changequote([, ])dnl
 	AC_MSG_RESULT($PY_VER)
 	if test "$?" != "1"; then
@@ -29,7 +29,7 @@ else
 			AC_MSG_RESULT([can't find Python.h])
 		fi
 	else
-		AC_MSG_RESULT([too old. Only 2.2 or above is supported.])
+		AC_MSG_RESULT([too old. Only 2.3 or above is supported.])
 	fi
 fi
 

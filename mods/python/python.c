@@ -52,11 +52,14 @@ static PyObject *xml_module = NULL;
 static PyObject *xml_modulemod = NULL;
 static PyObject *xml_node = NULL;
 
+static char *pylibdir = PYLIBDIR;
 
 // Thread support
 PyThreadState * mainThreadState = NULL;
 
 static int sid = 0;
+static int py_redirect_stdout = 0;
+static int py_redirect_stderr = 0;
 
 #define PYCTRLPROXY_NODETOPYOB(node) \
 PyInstance_New(xml_node,Py_BuildValue("(O)",libxml_xmlNodePtrWrap((xmlNodePtr) node)),NULL);
@@ -97,6 +100,7 @@ PyInstance_New(xml_node,Py_BuildValue("(O)",libxml_xmlNodePtrWrap((xmlNodePtr) n
 		PyThreadState_Swap(c->thread); \
 		r = PyObject_CallObject((PyObject *)c->callback, arglist); \
 		PyErr_Print(); \
+		Py_XDECREF(r); \
 		PyThreadState_Swap(NULL); \
 		PyEval_ReleaseLock(); \
 		g = g->next; \
@@ -152,6 +156,7 @@ struct admin_callback_object {
 typedef struct {
     PyObject_HEAD
 	long log_level; // we have to use longs here, because python int is a c long
+	char *buffer;
 } PyCtrlproxyLog;
 
 
@@ -187,6 +192,7 @@ static PyObject *createNickObject(void *c);
 static void PyCtrlproxyLog_dealloc(PyCtrlproxyLog *self)
 {
 	free((int *)self->log_level);
+	free(self->buffer);
     self->ob_type->tp_free((PyObject *)self);
 };
 
@@ -202,6 +208,8 @@ static int PyCtrlproxyLog_init(PyCtrlproxyLog *self, PyObject *args, PyObject *k
 
 	}
 
+	self->buffer = "";
+
 	return 0;
 };
 
@@ -216,12 +224,25 @@ static PyObject * PyCtrlproxyLog_log(PyCtrlproxyLog *self, PyObject *args, PyObj
                                       &log_level,&msg))
 		return NULL;
 
-	smsg = g_strsplit (msg,"\n",0);
-	for(i = 0;smsg[i] != NULL;i++) {
-		if(smsg[i] != NULL && strcasecmp(smsg[i],"")) {
-			g_log(G_LOG_DOMAIN, (int)log_level, "%s", smsg[i]);
-			//printf("%s\n", smsg[i]);
+	if(self->buffer == NULL) {
+		self->buffer = "";
+	}
+
+	self->buffer = g_strconcat(self->buffer,msg,NULL);
+
+	// we only print messages, when they contain a \n
+	// this is required for stderr to work correctly
+	if(g_strrstr(self->buffer,"\n")) {
+		smsg = g_strsplit (self->buffer,"\n",0);
+		for(i = 0;smsg[i] != NULL;i++) {
+			if(smsg[i] != NULL && strcasecmp(smsg[i],"")) {
+				g_log(G_LOG_DOMAIN, (int)log_level, "%s", smsg[i]);
+				//printf("%s\n", smsg[i]);
+			}
 		}
+		free(self->buffer);
+		g_strfreev(smsg);
+		self->buffer = "";
 	}
 	Py_INCREF(Py_None);
 	return Py_None;
@@ -1068,8 +1089,9 @@ static int PyCtrlproxyEvent_init(PyCtrlproxyLog *self, PyObject *args, PyObject 
 #define PYCTRLPROXY_CALLEVENT(NAME) \
 		printf("CALL %s\n",NAME); \
 		if(PyObject_HasAttrString((PyObject *)self, NAME)) { \
-			PyObject_CallMethod((PyObject *)self, NAME, "(OO)", createLineObject(l),cur); \
+			r = PyObject_CallMethod((PyObject *)self, NAME, "(OO)", createLineObject(l),cur); \
 			PyErr_Print(); \
+			Py_XDECREF(r); \
 		 } \
 		PyDict_DelItemString(self->cache,net);
 
@@ -1083,6 +1105,7 @@ static void PyCtrlproxyEvent_catch(PyCtrlproxyEvent *self, struct line *l){
 	PyObject *nv = NULL;
 	PyObject *cur = NULL;
 	PyObject *all = PyList_New(0);
+	PyObject *r = NULL;
 	int i = 0;
 	char *net = xmlGetProp(l->network->xmlConf, "name");
 
@@ -1280,8 +1303,9 @@ static void PyCtrlproxyEvent_catch(PyCtrlproxyEvent *self, struct line *l){
 	if(PyObject_HasAttrString((PyObject *)self, "onRcv")) {
 		for(i = 0; l->args[i] != NULL; i++)
 			PyList_Append(all,PyString_FromString(l->args[i]));
-		PyObject_CallMethod((PyObject *)self, "onRcv", "(OO)", createLineObject(l),all);
+		r = PyObject_CallMethod((PyObject *)self, "onRcv", "(OO)", createLineObject(l),all);
 		PyErr_Print();
+		Py_XDECREF(r);
 	}
 
 	free(net);
@@ -1462,6 +1486,7 @@ char ** in_motd_hook(struct network *n)
 			nrlines++;
 			//rv[nrlines] = NULL;
 		}
+		Py_XDECREF(r);
 		PyThreadState_Swap(NULL);
 		PyEval_ReleaseLock();
 		g = g->next;
@@ -1527,24 +1552,6 @@ static PyObject * PyCtrlproxy_add_event_object(PyObject *self, PyObject *args, P
 	Py_INCREF(Py_None);
 	return Py_None;
 }
-
-#define PYCTRLPROXY_PYCALLPYCALLBACKS(LIST,CREATE) \
-	GList *g = LIST; \
-	PyObject *r = NULL; \
-	PyThreadState *tstate; \
-	while(g) { \
-		struct callback_object *c = (struct callback_object *)g->data; \
-		PyObject *lo = CREATE(l); \
-		PyObject *arglist = Py_BuildValue("(O)", lo); \
-		PyEval_AcquireLock(); \
-		PyThreadState_Swap(c->thread); \
-    	r = PyObject_CallObject((PyObject *)c->callback, arglist); \
-		PyErr_Print(); \
-		PyThreadState_Swap(NULL); \
-		PyEval_ReleaseLock(); \
-		g = g->next; \
-	}
-
 
 
 // networks interface
@@ -1852,16 +1859,16 @@ static PyMethodDef CtrlproxyMethods[] = {
 	{NULL, NULL, 0, NULL}        /* Sentinel */
 };
 
-
 gboolean in_load(char *c,PyObject *args, struct line *l) {
 	PyThreadState *ni;
 	FILE *fp;
 	struct script_thread *s;
 	PyObject *m;
 	PyObject *sys;
-	PyCtrlproxyLog *stdout;
-	PyCtrlproxyLog *stderr;
+	PyCtrlproxyLog *pystdout;
+	PyCtrlproxyLog *pystderr;
 	PyThreadState *newInterpreter;
+	int rv = TRUE;
 
 	if (PyType_Ready(&PyCtrlproxyLogType) < 0)
         return FALSE;
@@ -1891,9 +1898,10 @@ gboolean in_load(char *c,PyObject *args, struct line *l) {
 	}
 	PyThreadState_Swap(ni);
 
+	printf("CREATED THREAD %i\n",ni->thread_id);
+
 	g_log(G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "Loading script[%i] %s", sid+1, c);
 
-	// replace sys.stdout and sys.stderr
 	xml_module = PyImport_ImportModule("libxml2");
 	xml_modulemod = PyImport_ImportModule("libxml2mod");
 	xml_node = PyObject_GetAttrString(xml_module,"xmlNode");
@@ -1947,36 +1955,43 @@ gboolean in_load(char *c,PyObject *args, struct line *l) {
 	sys = PyImport_AddModule("sys");
 
 	// set default stdout and stderr
-	stdout = PyObject_New(PyCtrlproxyLog, &PyCtrlproxyLogType);
-	Py_INCREF(stdout);
-	if(stdout != NULL) {
-		PyObject_CallMethod((PyObject *)stdout, "__init__", "i", G_LOG_LEVEL_INFO);
-		PyObject_SetAttrString(sys, "stdout", (PyObject *)stdout);
+	if(py_redirect_stdout) {
+		pystdout = PyObject_New(PyCtrlproxyLog, &PyCtrlproxyLogType);
+		if(pystdout != NULL) {
+			PyObject_CallMethod((PyObject *)pystdout, "__init__", "i", G_LOG_LEVEL_INFO);
+			PyObject_SetAttrString(sys, "stdout", (PyObject *)pystdout);
+		}
 	}
+	if(py_redirect_stderr) {
+		pystderr = PyObject_New(PyCtrlproxyLog, &PyCtrlproxyLogType);
+		if(pystderr != NULL) {
+			PyObject_CallMethod((PyObject *)pystderr, "__init__", "i", G_LOG_LEVEL_WARNING);
+			PyObject_SetAttrString(sys, "stderr", (PyObject *)pystderr);
+		}
+	}
+	// extend module path and add tools object
+	PyList_Append(PyObject_GetAttrString(sys,"path"),PyString_FromString(pylibdir));
+	PyObject_Print(PyObject_GetAttrString(sys,"path"), stdout, 0);
 
-	stderr = PyObject_New(PyCtrlproxyLog, &PyCtrlproxyLogType);
-	Py_INCREF(stderr);
-	if(stderr != NULL) {
-		PyObject_CallMethod((PyObject *)stderr, "__init__", "i", G_LOG_LEVEL_WARNING);
-		PyObject_SetAttrString(sys, "sterr", (PyObject *)stderr);
-	}
+	PyImport_ImportModule("ctrlproxy_tools");
+	PyModule_AddObject(m, "tools", PyImport_AddModule("ctrlproxy_tools"));
 
 	s = malloc(sizeof(struct script_thread));
 	s->thread = ni;
 	s->id = GINT_TO_POINTER(sid++);
 	s->script = strdup(c);
 	loaded_scripts = g_list_append(loaded_scripts, s);
+
 	PyRun_SimpleFile(fp, c);
-	//
-	//Py_UNBLOCK_THREADS
+
 	PyThreadState_Swap(NULL);
 	PyEval_ReleaseLock();
-	//PyEval_ReleaseThread(ni);
+
 	if(l != NULL && (!plugin_loaded("libnoticelog") || !plugin_loaded("noticelog")))
 		admin_out(l,"Load of script #%i complete",sid);
 	g_log(G_LOG_DOMAIN, G_LOG_LEVEL_INFO,"Load of script #%i complete",sid);
 
-	return TRUE;
+	return rv;
 }
 
 #define PYCTRLPROXY_REMOVECALLBACKFROMTHREAD(LIST) \
@@ -2041,6 +2056,42 @@ gboolean in_unload(int i,struct line *l) {
 	return FALSE;
 }
 
+/* Load script configured in the config.
+When name is NULL, every script with autoload = 1 will be loaded.
+*/
+static void in_load_from_config(char *name) {
+	xmlNodePtr cur = xmlConf->xmlChildrenNode;
+	while(cur) {
+		xmlNodePtr curargs;
+		PyObject *args = NULL;
+		char *file = NULL;
+		char *enabled = 0;
+		if(!xmlIsBlankNode(cur) && !strcmp(cur->name, "script")) {
+				enabled = xmlGetProp(cur, "autoload");
+				if((enabled == NULL || atoi(enabled) == 0) && name == NULL) {
+					cur = cur->next;
+					continue;
+				}
+				// build arguments list
+				args = PyDict_New();
+				curargs = cur->xmlChildrenNode;
+				while(curargs) {
+					if(!xmlIsBlankNode(cur) && !strcmp(curargs->name, "argument") && xmlHasProp(curargs, "name"))
+						PyDict_SetItemString(args,xmlGetProp(curargs, "name"),PyString_FromString(xmlNodeGetContent(curargs)));
+					if(!xmlIsBlankNode(cur) && !strcmp(curargs->name, "file"))
+						file = xmlNodeGetContent(curargs);
+					curargs = curargs->next;
+				}
+
+				if(name != NULL && strcasecmp(name, file)) {
+					cur = cur->next;
+					continue;
+				}
+				in_load(file, args, NULL);
+		}
+		cur = cur->next;
+	}
+}
 
 static void in_admin_command(char **args, struct line *l)
 {
@@ -2065,6 +2116,11 @@ static void in_admin_command(char **args, struct line *l)
 			admin_out(l, "Error, File does not exist");
 		return;
 	}
+	// load script configured in the config file
+	if(args[1] != NULL && !strcasecmp("loadc", args[1]) && args[2] != NULL) {
+		in_load_from_config(args[2]);
+	}
+
 	if(args[1] != NULL && !strcasecmp("unload", args[1]) && args[2] != NULL) {
 		printf("Python Unload %i\n", atoi(args[2]));
 		in_unload(atoi(args[2]),l);
@@ -2074,52 +2130,61 @@ static void in_admin_command(char **args, struct line *l)
 		list_scripts(l);
 		return;
 	}
-
+	if(args[1] != NULL && !strcasecmp("help", args[1])) {
+		if(args[2] != NULL) {
+			admin_out(l, "Help for %s",args[2]);
+			if(!strcasecmp("LOAD", args[2])) {
+				admin_out(l, "Load a python script. Arguments are handeled like bash");
+			} else if(!strcasecmp("LOADC", args[2])) {
+				admin_out(l, "Load a python script that is already configured in the configuration but not loaded");
+			} else if(!strcasecmp("UNLOAD", args[2])) {
+				admin_out(l, "Unload a the plugin with the given id");
+			} else if(!strcasecmp("LIST", args[2])) {
+				admin_out(l, "List all loaded scripts");
+			} else if(!strcasecmp("HELP", args[2])) {
+				admin_out(l, "Prints detailed informations about a command");
+			} else {
+				admin_out(l, "Unknown command");
+			}
+		} else {
+			admin_out(l, "Command required");
+		}
+		return;
+	}
 	admin_out(l, "Need command");
-	admin_out(l, "LOAD [filename]");
+	admin_out(l, "LOAD <filename> [arguments]");
+	admin_out(l, "LOADC [filename]");
 	admin_out(l, "UNLOAD #id");
 	admin_out(l, "LIST");
+	admin_out(l, "HELP [command]");
 	//admin_out(l, "OPENSHELL");
 	admin_out(l, "");
 }
 
-
-
-// load python script
+// load python scripts
 
 static void init_finish() {
 	g_log(G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "Loading Python scripts");
-	xmlNodePtr cur = xmlConf->xmlChildrenNode;
-	while(cur) {
-		xmlNodePtr curargs;
-		PyObject *args = NULL;
-		char *file = NULL;
-		if(!xmlIsBlankNode(cur) && !strcmp(cur->name, "load")) {
-				// build arguments list
-				args = PyDict_New();
-				curargs = cur->xmlChildrenNode;
-				while(curargs) {
-					if(!xmlIsBlankNode(cur) && !strcmp(curargs->name, "argument") && xmlHasProp(curargs, "name"))
-						PyDict_SetItemString(args,xmlGetProp(curargs, "name"),PyString_FromString(xmlNodeGetContent(curargs)));
-					if(!xmlIsBlankNode(cur) && !strcmp(curargs->name, "file"))
-						file = xmlNodeGetContent(curargs);
-					curargs = curargs->next;
-				}
-				in_load(file, args, NULL);
-		}
-		cur = cur->next;
-	}
+	in_load_from_config(NULL);
 	list_scripts(NULL);
 }
+
+
+/*
 
 gboolean thread_loop(gpointer user_data) {
 	//GList *l = loaded_scripts;
 	//while(l) {
 		int rcv;
+		GList *gl = loaded_scripts;
 		printf("--------- Run Thread loop ---------\n");
 		//struct script_thread *s = (struct script_thread *)l->data;
-		PyEval_AcquireLock();
 		PyThreadState_Swap(mainThreadState);
+		while(gl) {
+			struct script_thread *p = (struct script_thread *)gl->data;
+			PyThreadState_Swap(p->thread);
+			gl = gl->next;
+		}
 		//PyInterpreterState_Clear(mainThreadState->interp);
 		//PyThreadState_Swap(mainInterpreterState);
 		//PyEval_RestoreThread(mainThreadState);
@@ -2128,18 +2193,49 @@ gboolean thread_loop(gpointer user_data) {
 			printf("Got signal");
 		//PyErr_Print();
 		//PyThreadState_Clear(s->thread);
-		//PyThreadState_Swap(NULL);
+		PyThreadState_Swap(NULL);
 		//PyEval_ReleaseThread(mainThreadState);
 		PyEval_ReleaseLock();
 		//l = g_list_next(l);
 	//}
+
+	PyInterpreterState *is = PyInterpreterState_Head();
+	PyEval_AcquireLock();
+
+	while(is) {
+		PyThreadState *ts =  PyInterpreterState_ThreadHead(is);
+		printf("IS: %p %i\n",is);
+		while(ts) {
+			PyThreadState_Swap(ts);
+			if(PyRun_SimpleString("import os\nprint os.getpid()") == -1) {
+				PyThreadState *ts2 = PyThreadState_Next(ts);
+				printf("Deleted thread ? %i\n",ts->thread_id);
+				PyThreadState_Swap(NULL);
+				PyThreadState_Clear(ts);
+				PyThreadState_Delete(ts);
+				ts = ts2;
+			} else {
+				PyThreadState_Swap(NULL);
+				printf("TS: %p %i\n",ts,ts->thread_id);
+				ts = PyThreadState_Next(ts);
+			}
+		}
+		is = PyInterpreterState_Next(is);
+
+	}
+	PyThreadState_Swap(NULL);
+	PyEval_ReleaseLock();
 	return TRUE;
 }
+*/
+
 
 gboolean init_plugin(struct plugin *p) {
 	PyObject *pyxml = NULL;
+	xmlNodePtr cur;
 
 	xmlConf = p->xmlConf;
+
 
 	if(!plugin_loaded("admin") && !plugin_loaded("libadmin")) {
 		g_warning("admin module required for dynamic load/unload of python scripts");
@@ -2148,9 +2244,23 @@ gboolean init_plugin(struct plugin *p) {
 	}
 
 	//add_motd_hook("python_motd", in_motd_hook);
+	cur = xmlConf->xmlChildrenNode;
+	while(cur) {
+		char *name;
+		char *value;
+		if(!xmlIsBlankNode(cur) && !strcmp(cur->name, "option")) {
+			name = xmlGetProp(cur, "name");
+			value = xmlNodeGetContent(cur);
+			if (!strcasecmp(name, "redirect-stdout"))
+				py_redirect_stdout = atoi(value);
+			if (!strcasecmp(name, "redirect-stderr"))
+				py_redirect_stderr = atoi(value);
+		}
+		cur = cur->next;
+	}
 
 	// init python
-	//Py_SetProgramName(argv[0]);
+
 	Py_Initialize();
 	PyEval_InitThreads();
 	mainThreadState = PyThreadState_Get();
@@ -2164,10 +2274,10 @@ gboolean init_plugin(struct plugin *p) {
 
 
 	/* Execute some Python statements (in module __main__) */
-	PyRun_SimpleString("import sys\n");
-	PyRun_SimpleString("print sys.builtin_module_names\n");
-//	PyRun_SimpleString("print ctrlproxy.__dict__\n");
-//	PyRun_SimpleString("print sys.modules.keys()\n");
+	//PyRun_SimpleString("import sys\n");
+	//PyRun_SimpleString("print sys.builtin_module_names\n");
+	//PyRun_SimpleString("print ctrlproxy.__dict__\n");
+	//PyRun_SimpleString("print sys.modules.keys()\n");
 
 	//cur = xmlFindChildByElementName(p->xmlConf, "load");
 	PyEval_ReleaseLock();
@@ -2180,7 +2290,7 @@ gboolean init_plugin(struct plugin *p) {
 	add_server_connected_hook("python_server_connected", in_server_connected_hook);
 	add_server_disconnected_hook("python_server_disconnected", in_server_disconnected_hook);
 	add_initialized_hook(&init_finish);
-	//g_timeout_add(1000, thread_loop, NULL);
+
 	return TRUE;
 }
 

@@ -5,16 +5,20 @@ moddir = @libdir@/ctrlproxy
 INSTALL = @INSTALL@
 CFLAGS = @PY_CFLAGS@ -fPIC -I../.. -I.. @CFLAGS@ @PKG_CFLAGS@  -DSHAREDIR=\"@datadir@\"
 LIBS = @PY_LIBS@
+PYLIBDIR = \"@libdir@/ctrlproxy/python\"
 
 .PHONY: all clean distclean install
 
 all: libpython.so
 
 install:
+	$(INSTALL) -d $(DESTDIR)$(moddir)/python
 	$(INSTALL) libpython.so $(DESTDIR)$(moddir)
+	$(INSTALL) ctrlproxy_tools.py $(DSHAREDIR)$(moddir)/python/ctrlproxy_tools.py
+	$(INSTALL) __init__.py $(DSHAREDIR)$(moddir)/python/__init__.py
 
 %.o: %.c
-	$(CC) $(CFLAGS) -fPIC -c $<
+	$(CC) $(CFLAGS) -DPYLIBDIR=$(PYLIBDIR) -fPIC -c $<
 
 libpython.so: python.o types.o
 	$(CC) $(CFLAGS) -shared -o $@ $(LIBS) types.o python.o
