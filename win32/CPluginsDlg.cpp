@@ -21,10 +21,9 @@ static char THIS_FILE[] = __FILE__;
 // CPluginsDlg dialog
 
 
-CPluginsDlg::CPluginsDlg(CWnd* pParent /*=NULL*/)
-	: CDialog(CPluginsDlg::IDD, pParent)
+CPluginsDlg::CPluginsDlg()
+	: CPropertyPage(CPluginsDlg::IDD)
 {
-	Create(IDD, pParent);
 	//{{AFX_DATA_INIT(CPluginsDlg)
 		// NOTE: the ClassWizard will add member initialization here
 	//}}AFX_DATA_INIT
@@ -80,6 +79,7 @@ void CPluginsDlg::OnShowWindow(BOOL bShow, UINT nStatus)
 void CPluginsDlg::UpdatePluginList()
 {
 	m_list.DeleteAllItems();
+	if(!config_node_plugins()) return;
 	xmlNodePtr cur = config_node_plugins()->xmlChildrenNode;
 	while(cur) {
 		if(!strcmp((char *)cur->name, "plugin")) { 

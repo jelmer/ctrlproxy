@@ -64,5 +64,8 @@ void readConfig(char *file) {
 
 xmlNodePtr config_node_networks() { return xmlNode_networks; }
 xmlNodePtr config_node_plugins() { return xmlNode_plugins; }
-xmlNodePtr config_node_root() { return configuration->children; }
+xmlNodePtr config_node_root() { 
+	if(configuration) return configuration->children; 
+	return NULL;
+}
 xmlDocPtr config_doc() { return configuration; }

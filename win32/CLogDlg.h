@@ -10,11 +10,11 @@
 /////////////////////////////////////////////////////////////////////////////
 // CLogDlg dialog
 
-class CLogDlg : public CDialog
+class CLogDlg : public CPropertyPage
 {
 // Construction
 public:
-	CLogDlg(CWnd* pParent = NULL);   // standard constructor
+	CLogDlg();   // standard constructor
 
 // Dialog Data
 	//{{AFX_DATA(CLogDlg)

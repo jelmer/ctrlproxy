@@ -15,10 +15,9 @@ static char THIS_FILE[] = __FILE__;
 // CStatusDlg dialog
 
 
-CStatusDlg::CStatusDlg(CWnd* pParent /*=NULL*/)
-	: CDialog(CStatusDlg::IDD, pParent)
+CStatusDlg::CStatusDlg()
+	: CPropertyPage(CStatusDlg::IDD)
 {
-	CDialog::Create(IDD, pParent);
 	//{{AFX_DATA_INIT(CStatusDlg)
 	//}}AFX_DATA_INIT
 }

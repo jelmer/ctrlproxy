@@ -22,10 +22,9 @@ CListBox *logbox = NULL;
 // CLogDlg dialog
 
 
-CLogDlg::CLogDlg(CWnd* pParent /*=NULL*/)
-	: CDialog(CLogDlg::IDD, pParent)
+CLogDlg::CLogDlg()
+	: CPropertyPage(CLogDlg::IDD)
 {
-	Create(IDD, pParent);
 	logbox = &m_log;
 	//{{AFX_DATA_INIT(CLogDlg)
 		// NOTE: the ClassWizard will add member initialization here
@@ -50,6 +49,6 @@ END_MESSAGE_MAP()
 
 
 void log_handler(const gchar *log_domain, GLogLevelFlags flags, const gchar *message, gpointer user_data) {
-	if(logbox)logbox->AddString(message);
+	if(logbox && logbox->m_hWnd)logbox->AddString(message);
 	TRACE(TEXT("%s\n"), message);
 }

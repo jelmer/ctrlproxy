@@ -14,6 +14,7 @@
 
 #include "resource.h"		// main symbols
 #include "ctrlproxydlg.h"
+#include "traynot.h"
 /////////////////////////////////////////////////////////////////////////////
 // CCtrlproxyApp:
 // See ctrlproxy.cpp for the implementation of this class
@@ -42,7 +43,8 @@ public:
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 	private:
-	CCtrlproxyDlg *dlg;
+	CPropertySheet *dlg;
+	CTrayNot *not;
 
 };
 

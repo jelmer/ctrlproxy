@@ -18,10 +18,9 @@ static char THIS_FILE[] = __FILE__;
 // CConfigurationDlg dialog
 
 
-CConfigurationDlg::CConfigurationDlg(CWnd* pParent /*=NULL*/)
-	: CDialog(CConfigurationDlg::IDD, pParent)
+CConfigurationDlg::CConfigurationDlg()
+	: CPropertyPage(CConfigurationDlg::IDD)
 {
-	CDialog::Create(IDD, pParent);
 	//{{AFX_DATA_INIT(CConfigurationDlg)
 	//}}AFX_DATA_INIT
 }
@@ -74,6 +73,7 @@ void CConfigurationDlg::UpdateTree()
 	if(!::IsWindow(m_Tree.m_hWnd)) return;
 	m_Tree.DeleteAllItems();
 
-	fillinchildren(TVI_ROOT, config_node_root());
+	if(config_node_root())
+		fillinchildren(TVI_ROOT, config_node_root());
 
 }

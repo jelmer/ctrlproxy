@@ -18,10 +18,9 @@ static char THIS_FILE[] = __FILE__;
 // CAboutDlg dialog
 
 
-CAboutDlg::CAboutDlg(CWnd* pParent /*=NULL*/)
-	: CDialog(CAboutDlg::IDD, pParent)
+CAboutDlg::CAboutDlg()
+	: CPropertyPage(CAboutDlg::IDD)
 {
-	Create(IDD, pParent);
 	//{{AFX_DATA_INIT(CAboutDlg)
 	m_license = _T("foo");
 	//}}AFX_DATA_INIT

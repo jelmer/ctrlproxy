@@ -4,6 +4,8 @@
 #include "stdafx.h"
 #include "ctrlproxyapp.h"
 #include "ctrlproxyDlg.h"
+#include "traynot.h"
+#include "maindlg.h"
 extern "C" {
 #include "internals.h"
 #include <libxml/xmlmemory.h>
@@ -70,21 +72,11 @@ BOOL CCtrlproxyApp::InitInstance()
 	
 	xmlMemSetup(g_free, (void *(__cdecl *)(unsigned int))g_malloc, (void *(__cdecl *)(void *, unsigned int))g_realloc, g_strdup);
 	
-	dlg = new CCtrlproxyDlg();
-	m_pMainWnd = dlg;
-	dlg->Create(CCtrlproxyDlg::IDD);
-	dlg->ShowWindow(SW_HIDE);
+	dlg = new CMainDlg();
+	not = new CTrayNot(dlg);
+	m_pMainWnd = not;
 
 	register_log_function();	
-
-	NOTIFYICONDATA dat;
-	dat.cbSize = sizeof(NOTIFYICONDATA);
-	dat.hWnd = dlg->m_hWnd;
-	dat.uFlags = NIF_ICON + NIF_TIP + NIF_MESSAGE;
-	dat.hIcon = LoadIcon(IDR_MAINFRAME);
-	dat.uCallbackMessage = CTRLPROXY_TRAY_ICON;
-	strcpy(dat.szTip, "CtrlProxy manager");
-	Shell_NotifyIcon(NIM_ADD, &dat);
 
 	add_filter_class("", -1);
 	add_filter_class("client", 100);
@@ -127,6 +119,8 @@ int CCtrlproxyApp::ExitInstance()
 		gl = gl->next;
 		if(n) close_network(n);
 	}
+
+	delete not;
 	
 	return CWinApp::ExitInstance();
 }
@@ -139,13 +133,21 @@ void CCtrlproxyApp::OnExit()
 
 void CCtrlproxyApp::OnShow() 
 {
-	m_pMainWnd->ShowWindow(SW_RESTORE);	
-	
+	dlg->DoModal();
 }
 
 BOOL CCtrlproxyApp::OnIdle(LONG lCount) 
 {
-	g_main_context_iteration(g_main_loop_get_context(main_loop), FALSE);
+	char msg[200];
+	__try {
+		g_main_context_iteration(g_main_loop_get_context(main_loop), FALSE);
+	} __except (GetExceptionCode() == EXCEPTION_ACCESS_VIOLATION?EXCEPTION_EXECUTE_HANDLER : EXCEPTION_CONTINUE_SEARCH)  {
+		{ 
+		g_snprintf(msg, 200, "Plugin %s has caused an access violation and will be unloaded.", peek_plugin()->name);
+		MessageBox(NULL, msg, "CtrlProxy", MB_OK | MB_ICONEXCLAMATION);
+		unload_plugin(peek_plugin());
+		}
+	}
 
 	CWinApp::OnIdle(lCount);
 
@@ -157,3 +159,4 @@ BOOL CCtrlproxyApp::SaveAllModified()
 	save_configuration();	
 	return CWinApp::SaveAllModified();
 }
+

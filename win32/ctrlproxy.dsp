@@ -134,10 +134,6 @@ SOURCE=.\ctrlproxyapp.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\ctrlproxyDlg.cpp
-# End Source File
-# Begin Source File
-
 SOURCE=.\EditChannel.cpp
 # End Source File
 # Begin Source File
@@ -163,6 +159,10 @@ SOURCE=..\line.c
 # Begin Source File
 
 SOURCE=..\linestack.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\MainDlg.cpp
 # End Source File
 # Begin Source File
 
@@ -192,6 +192,10 @@ SOURCE=.\StdAfx.cpp
 # Begin Source File
 
 SOURCE=..\transport.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\TrayNot.cpp
 # End Source File
 # Begin Source File
 
@@ -239,10 +243,6 @@ SOURCE=.\ctrlproxyapp.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\ctrlproxyDlg.h
-# End Source File
-# Begin Source File
-
 SOURCE=.\EditChannel.h
 # End Source File
 # Begin Source File
@@ -271,6 +271,10 @@ SOURCE=..\irc.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\MainDlg.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\NewNetworkDlg.h
 # End Source File
 # Begin Source File
@@ -280,6 +284,10 @@ SOURCE=.\Resource.h
 # Begin Source File
 
 SOURCE=.\StdAfx.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\TrayNot.h
 # End Source File
 # End Group
 # Begin Group "Resource Files"

@@ -14,11 +14,11 @@ extern "C" {
 /////////////////////////////////////////////////////////////////////////////
 // CNetworksDlg dialog
 
-class CNetworksDlg : public CDialog
+class CNetworksDlg : public CPropertyPage
 {
 // Construction
 public:
-	CNetworksDlg(CWnd* pParent = NULL);   // standard constructor
+	CNetworksDlg();   // standard constructor
 
 // Dialog Data
 	//{{AFX_DATA(CNetworksDlg)

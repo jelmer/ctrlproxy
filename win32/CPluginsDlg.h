@@ -10,11 +10,11 @@
 /////////////////////////////////////////////////////////////////////////////
 // CPluginsDlg dialog
 
-class CPluginsDlg : public CDialog
+class CPluginsDlg : public CPropertyPage
 {
 // Construction
 public:
-	CPluginsDlg(CWnd* pParent = NULL);   // standard constructor
+	CPluginsDlg();   // standard constructor
 
 // Dialog Data
 	//{{AFX_DATA(CPluginsDlg)

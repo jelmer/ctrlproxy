@@ -10,11 +10,11 @@
 /////////////////////////////////////////////////////////////////////////////
 // CAboutDlg dialog
 
-class CAboutDlg : public CDialog
+class CAboutDlg : public CPropertyPage
 {
 // Construction
 public:
-	CAboutDlg(CWnd* pParent = NULL);   // standard constructor
+	CAboutDlg();   // standard constructor
 
 // Dialog Data
 	//{{AFX_DATA(CAboutDlg)

@@ -21,10 +21,9 @@ static char THIS_FILE[] = __FILE__;
 // CNetworksDlg dialog
 
 
-CNetworksDlg::CNetworksDlg(CWnd* pParent /*=NULL*/)
-	: CDialog(CNetworksDlg::IDD, pParent)
+CNetworksDlg::CNetworksDlg()
+	: CPropertyPage(CNetworksDlg::IDD)
 {
-	Create(IDD, pParent);
 	//{{AFX_DATA_INIT(CNetworksDlg)
 	//}}AFX_DATA_INIT
 }

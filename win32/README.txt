@@ -42,9 +42,5 @@ Other TODO stuff:
 -----------------
 - Finish plugin config dialog
 - Make configuration dialog show attributes.
+- immediately change Connect/Disconnect buttons when network gets connected
 - Icon!
-- clients can't connect yet?
-
-Known Bugs:
------------
-- ESC or enter make the current page dissappear

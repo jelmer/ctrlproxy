@@ -10,11 +10,11 @@
 /////////////////////////////////////////////////////////////////////////////
 // CStatusDlg dialog
 
-class CStatusDlg : public CDialog
+class CStatusDlg : public CPropertyPage
 {
 // Construction
 public:
-	CStatusDlg(CWnd* pParent = NULL);   // standard constructor
+	CStatusDlg();   // standard constructor
 
 // Dialog Data
 	//{{AFX_DATA(CStatusDlg)

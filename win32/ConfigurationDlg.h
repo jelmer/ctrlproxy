@@ -12,12 +12,12 @@
 /////////////////////////////////////////////////////////////////////////////
 // CConfigurationDlg dialog
 
-class CConfigurationDlg : public CDialog
+class CConfigurationDlg : public CPropertyPage
 {
 // Construction
 public:
 	void UpdateTree();
-	CConfigurationDlg(CWnd* pParent = NULL);   // standard constructor
+	CConfigurationDlg();   // standard constructor
 
 // Dialog Data
 	//{{AFX_DATA(CConfigurationDlg)
