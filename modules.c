@@ -5,6 +5,7 @@ struct module_context *load_module(struct server *s, char *name)
 	void *handle;
 	struct module_functions *f;
 	struct module_context *c;
+	int *version;
 	handle = dlopen(name, RTLD_LAZY);
 
 	if(!handle) 
@@ -13,7 +14,21 @@ struct module_context *load_module(struct server *s, char *name)
 		return NULL;
 	}
 
-	f = dlsym(handle, "functions");
+	version = dlsym(handle, "ctrlproxy_module_version");
+
+	if(!version)
+	{
+		fprintf(stderr, "Error loading %s(while figuring out interface version): %s\n", name, dlerror());
+		return NULL;
+	}
+
+	if(*version != CTRLPROXY_INTERFACE_VERSION) 
+	{
+		fprintf(stderr, "Module versioning mismatch: module has version %d, while ctrlproxy has %d\n", *version, CTRLPROXY_INTERFACE_VERSION);
+		return NULL;
+	}
+
+	f = dlsym(handle, "ctrlproxy_functions");
 
 	if(!f)
 	{
@@ -25,6 +40,7 @@ struct module_context *load_module(struct server *s, char *name)
 	memset(c, 0, sizeof(struct module_context));
 
 	DLIST_ADD(s->handlers, c);
+	assert(s->handlers);
 	c->handle = handle;
 	c->functions = f;
 	c->parent = s;

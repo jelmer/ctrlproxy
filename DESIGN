@@ -20,9 +20,9 @@ name = value
   pass = 
   port = 6667
   nick = 
-  {
+  }
 	  file = "log.so";
-	  
+  }
 }
 
 ctrlproxy.h: 'global' include file - only include file used by modules

@@ -2,11 +2,14 @@
 
 struct server *servers = NULL;
 
-struct server *connect_to_server(char *name, int port, char *nick, char *fullname, char *pass) {
+struct server *connect_to_server(char *name, int port, char *nick, char *pass) {
+	uid_t uid;
+	struct passwd *pwd;
 	struct sockaddr_in servername;
 	struct server *s = malloc(sizeof(struct server));
 	memset(s, 0, sizeof(struct server));
 	s->name = name;
+	s->nick = nick;
 
 	/* Create the socket. */
 	s->socket = socket (PF_INET, SOCK_STREAM, 0);
@@ -26,14 +29,54 @@ struct server *connect_to_server(char *name, int port, char *nick, char *fullnam
 		return NULL;
 	}
 
+	uid = getuid();
+	pwd = getpwuid(uid);
 
 	if(pass)dprintf(s->socket, "PASS %s\n", pass);
 	dprintf(s->socket, "NICK %s\n", nick);
-	dprintf(s->socket, "USER %s %s %s :%s\n", getenv("USER"), "FIXME", name, fullname);
-
+	dprintf(s->socket, "USER %s %s %s :%s\n", pwd->pw_name, my_hostname, name, pwd->pw_gecos);
+	
 	DLIST_ADD(servers, s);
+	assert(servers);
+
+	asprintf(&s->hostmask, "%s!~%s@%s", nick, getenv("USER"), my_hostname);
 
 	return s;
+}
+
+int close_all(void)
+{
+	struct server *s = servers;
+	while(s) {
+		close_server(s);
+		s = s->next;
+	}
+	return 0;
+}
+
+int close_server(struct server *s)
+{
+	struct module_context *c = s->handlers;
+	server_send_raw(s, "QUIT\r\n");
+	while(c) {
+		unload_module(c);
+		c = c->next;
+	}
+	free(s->hostmask);
+	DLIST_REMOVE(servers, s);
+	return 0;
+}
+
+int loop_all(void)
+{
+	struct server *s = servers;
+	int i = 0;
+
+	while(s) {
+		if(loop(s) != 0)i = -1;
+		s = s->next;
+	}
+	return i;
 }
 
 int loop(struct server *server) /* Checks server socket for input and calls loop() on all of it's modules */
@@ -77,11 +120,10 @@ int loop(struct server *server) /* Checks server socket for input and calls loop
 		if(!strcasecmp(l.args[0], "PING")){
 			server_send(server, NULL, "PONG", l.args[1], NULL);
 		}
-		printf("%s\n", l.args[0]);
 		c = server->handlers;
 		while(c) {
-			if(c->functions->handle_data)
-				c->functions->handle_data(c, &l);
+			if(c->functions->handle_incoming_data)
+				c->functions->handle_incoming_data(c, &l);
 			c = c->next;
 		}
 		free(ret);
@@ -91,7 +133,18 @@ int loop(struct server *server) /* Checks server socket for input and calls loop
 
 int server_send_raw(struct server *s, char *data)
 {
-	write(s->socket, data, strlen(data));
+	struct line l;
+	struct module_context *c = s->handlers;
+	irc_parse_line(data, &l);
+	l.origin = s->hostmask;
+
+	while(c) {
+		if(c->functions->handle_outgoing_data)
+			c->functions->handle_outgoing_data(c, &l);
+		c = c->next;
+	}
+
+	return write(s->socket, data, strlen(data));
 }
 
 int server_send(struct server *s, char *origin, ...) 
@@ -101,6 +154,7 @@ int server_send(struct server *s, char *origin, ...)
 	char nosplit = 0;
 	char msg[IRC_MSG_LEN];
 	strcpy(msg, "");
+	va_start(ap, origin);
 
 	if(origin) {
 		snprintf(msg, IRC_MSG_LEN, ":%s ", origin);
@@ -113,6 +167,7 @@ int server_send(struct server *s, char *origin, ...)
 		strcat(msg, " ");
 	}
 	strcat(msg, "\r\n");
+	va_end(ap);
 
 	return server_send_raw(s, msg);
 }

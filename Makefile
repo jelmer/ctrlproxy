@@ -1,17 +1,14 @@
-MODS = log.so
+all: ctrlproxy
+	$(MAKE) -C mods all
 
-all: ctrlproxy $(MODS)
-
-OBJS = server.o util.o main.o modules.o
+OBJS = server.o util.o main.o modules.o conf.o
 
 ctrlproxy: $(OBJS)
-	$(CC) -ldl -rdynamic -o ctrlproxy $(OBJS)
+	$(CC) -lpopt -ldl -rdynamic -o ctrlproxy $(OBJS)
 
 %.o: %.c
-	$(CC) -c $<
-
-%.so: %.c
-	$(CC) -shared -o $@ $<
+	$(CC) -g3 -Wall -c $<
 
 clean:
-	rm -f *.o ctrlproxy $(MODS)
+	rm -f *.o ctrlproxy
+	$(MAKE) -C mods clean
