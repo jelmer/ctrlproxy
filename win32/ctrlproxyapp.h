@@ -37,8 +37,7 @@ public:
 
 	//{{AFX_MSG(CCtrlproxyApp)
 	afx_msg void OnExit();
-	afx_msg void OnAbout();
-	afx_msg void OnStatus();
+	afx_msg void OnShow();
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 	private:

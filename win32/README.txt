@@ -34,14 +34,13 @@ socket
 
 Modules that need work:
 -----------------------
-python: compiles, but doesn't run yet.
+python: compiles, but doesn't run yet (worked on by poelzi)
 dcc: needs tcp update
 stats: will get rewrite in 2.8
 
 Other TODO stuff:
 -----------------
-- Finish network config dialog
+- Finish network edit dialog
 - Finish plugin config dialog
 - Make configuration dialog show attributes.
-- Finish status dialog
 - Icon!

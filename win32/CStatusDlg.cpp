@@ -51,6 +51,21 @@ void CStatusDlg::OnShowWindow(BOOL bShow, UINT nStatus)
 		
 	CString tmp;
 	tmp.Format("Connected to %d networks", g_list_length(get_network_list()));
-
 	m_numnetworks.SetWindowText(tmp);
+
+	int nch = 0, ncl = 0;
+	GList *gl = get_network_list();
+	while(gl) {
+		struct network *n = (struct network *)gl->data;
+		ncl+= g_list_length(n->clients);
+		nch+= g_list_length(n->channels);
+		gl = gl->next;
+	}
+
+	tmp.Format("Connected to %d channels", nch);
+	m_numchannels.SetWindowText(tmp);
+
+	tmp.Format("Connected to %d clients", nch);
+	m_numclients.SetWindowText(tmp);
+
 }

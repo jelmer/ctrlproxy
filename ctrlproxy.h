@@ -123,6 +123,7 @@ struct channel {
 struct client {
 	struct network *network;
 	char authenticated;
+	char *description;
 	struct transport_context *incoming;
 	time_t connect_time;
 	char* nick;

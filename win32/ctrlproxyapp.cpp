@@ -25,8 +25,7 @@ static char THIS_FILE[] = __FILE__;
 BEGIN_MESSAGE_MAP(CCtrlproxyApp, CWinApp)
 	//{{AFX_MSG_MAP(CCtrlproxyApp)
 	ON_COMMAND(IDM_EXIT, OnExit)
-	ON_COMMAND(IDM_ABOUT, OnAbout)
-	ON_COMMAND(IDM_STATUS, OnStatus)
+	ON_COMMAND(IDM_SHOW, OnShow)
 	//}}AFX_MSG_MAP
 	ON_COMMAND(ID_HELP, CWinApp::OnHelp)
 END_MESSAGE_MAP()
@@ -145,14 +144,8 @@ void CCtrlproxyApp::OnExit()
 	
 }
 
-void CCtrlproxyApp::OnAbout() 
+void CCtrlproxyApp::OnShow() 
 {
-	// TODO: Add your command handler code here
-	
-}
-
-void CCtrlproxyApp::OnStatus() 
-{
-	CStatusDlg dlg();
+	m_pMainWnd->ShowWindow(SW_RESTORE);	
 	
 }

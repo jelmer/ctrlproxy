@@ -79,5 +79,26 @@ void CPluginsDlg::OnShowWindow(BOOL bShow, UINT nStatus)
 
 void CPluginsDlg::UpdatePluginList()
 {
+	m_list.DeleteAllItems();
+	xmlNodePtr cur = config_node_plugins()->xmlChildrenNode;
+	while(cur) {
+		if(!strcmp((char *)cur->name, "plugin")) { 
+			char *name = (char *)xmlGetProp(cur, (xmlChar *)"file");
+			m_list.InsertItem(0, name);		
+			xmlFree(name);
+		}
+		cur = cur->next;
+	}
 
+}
+
+BOOL CPluginsDlg::OnInitDialog() 
+{
+	CDialog::OnInitDialog();
+	
+	m_list.InsertColumn(0, "Name", LVCFMT_LEFT, 200);
+	m_list.InsertColumn(1, "Loaded",LVCFMT_RIGHT, 60);
+	
+	return TRUE;  // return TRUE unless you set the focus to a control
+	              // EXCEPTION: OCX Property Pages should return FALSE
 }

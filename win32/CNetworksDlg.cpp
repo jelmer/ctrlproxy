@@ -87,15 +87,25 @@ void CNetworksDlg::OnConnect()
 
 void CNetworksDlg::OnDel() 
 {
-	
-	
+	xmlNodePtr cur = (xmlNodePtr)m_networklist.GetItemData(m_networklist.GetCurSel());
+	if(curnetwork) {
+		MessageBox("Network is still in use. Disconnect first!", "Deleting Network", MB_ICONEXCLAMATION | MB_OK);
+		return;
+	}
+
+	xmlUnlinkNode(cur);
+	xmlFreeNode(cur);
+
+	UpdateNetworkList();	
 }
 
 void CNetworksDlg::OnEdit() 
 {
 	int cursel = m_networklist.GetCurSel();
+	if(cursel == LB_ERR) return;
 	CEditNetworkDlg *dlg = new CEditNetworkDlg(this, (xmlNodePtr)m_networklist.GetItemData(cursel));	
 	dlg->DoModal();
+	UpdateNetworkList();
 }
 
 void CNetworksDlg::OnKick() 
@@ -110,6 +120,18 @@ void CNetworksDlg::OnSelchangeNetworklist()
 	curnetwork = find_network_by_xml(cur);
 	m_disconnect.EnableWindow(curnetwork?TRUE:FALSE);
 	m_connect.EnableWindow(curnetwork?FALSE:TRUE);
+	m_clientlist.EnableWindow(TRUE);
+	m_clientlist.ResetContent();
+	
+	if(curnetwork) {
+		GList *gl = curnetwork->clients;
+		while(gl) {
+			struct client *c = (struct client *)gl->data;
+			int idx = m_clientlist.AddString(c->description?c->description:"<UNKNOWN>");
+			m_clientlist.SetItemData(idx, (unsigned long)c);
+			gl = gl->next;
+		}
+	}
 	
 }
 
@@ -129,6 +151,11 @@ void CNetworksDlg::UpdateNetworkList()
 
 		n = n->next;
 	}
+	if(m_networklist.GetCurSel() == LB_ERR) {
+		m_connect.EnableWindow(FALSE);
+		m_disconnect.EnableWindow(FALSE);
+		m_clientlist.EnableWindow(FALSE);
+	}
 }
 
 void CNetworksDlg::OnShowWindow(BOOL bShow, UINT nStatus) 
@@ -141,5 +168,8 @@ void CNetworksDlg::OnShowWindow(BOOL bShow, UINT nStatus)
 
 void CNetworksDlg::OnDisconnect() 
 {
-	if(curnetwork)close_network(curnetwork);
+	if(curnetwork){
+		close_network(curnetwork);
+		OnSelchangeNetworklist();
+	}
 }

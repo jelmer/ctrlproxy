@@ -119,47 +119,7 @@ SOURCE=.\CStatusDlg.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\hlp\ctrlproxy.hpj
-
-!IF  "$(CFG)" == "ctrlproxy - Win32 Release"
-
-# Begin Custom Build - Making help file...
-OutDir=.\Release
-ProjDir=.
-TargetName=ctrlproxy
-InputPath=.\hlp\ctrlproxy.hpj
-
-"$(OutDir)\$(TargetName).hlp" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	call "$(ProjDir)\makehelp.bat"
-
-# End Custom Build
-
-!ELSEIF  "$(CFG)" == "ctrlproxy - Win32 Debug"
-
-# Begin Custom Build - Making help file...
-OutDir=.\Debug
-ProjDir=.
-TargetName=ctrlproxy
-InputPath=.\hlp\ctrlproxy.hpj
-
-"$(OutDir)\$(TargetName).hlp" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	call "$(ProjDir)\makehelp.bat"
-
-# End Custom Build
-
-!ENDIF 
-
-# End Source File
-# Begin Source File
-
 SOURCE=.\ctrlproxy.rc
-
-!IF  "$(CFG)" == "ctrlproxy - Win32 Release"
-
-!ELSEIF  "$(CFG)" == "ctrlproxy - Win32 Debug"
-
-!ENDIF 
-
 # End Source File
 # Begin Source File
 
@@ -301,22 +261,6 @@ SOURCE=.\res\ctrlproxy.ico
 # Begin Source File
 
 SOURCE=.\res\ctrlproxy.rc2
-# End Source File
-# End Group
-# Begin Group "Help Files"
-
-# PROP Default_Filter ""
-# Begin Source File
-
-SOURCE=.\hlp\AfxDlg.rtf
-# End Source File
-# Begin Source File
-
-SOURCE=.\hlp\ctrlproxy.cnt
-# End Source File
-# Begin Source File
-
-SOURCE=.\MakeHelp.bat
 # End Source File
 # End Group
 # Begin Source File

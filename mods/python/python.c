@@ -268,7 +268,7 @@ static PyObject * PyCtrlproxyLog_log(PyCtrlproxyLog *self, PyObject *args, PyObj
 	if(g_strrstr(self->buffer,"\n")) {
 		smsg = g_strsplit (self->buffer,"\n",0);
 		for(i = 0;smsg[i] != NULL;i++) {
-			if(smsg[i] != NULL && strcasecmp(smsg[i],"")) {
+			if(smsg[i] != NULL && g_ascii_strcasecmp(smsg[i],"")) {
 				// FIXME: Should we split the message into 1024 byte chunks ?
 				g_log(PY_LOG_DOMAIN, (int)log_level, "%s", smsg[i]);
 				//printf("%s\n", smsg[i]);
@@ -2767,7 +2767,7 @@ gboolean init_plugin(struct plugin *p) {
 	modlist = PyList_New(0);
 	//PyList_Append(modlist, moddir);
 	
-	PyRun_SimpleString("import libxmlmods.libxml2mod\n");
+	PyRun_SimpleString("from import libxmlmods import libxml2mod\n");
 	xml_modulemod = PyImport_ImportModuleEx("libxml2mod", NULL, NULL, modlist);
 	xml_node = PyObject_GetAttrString(xml_module,"xmlNode");
 

@@ -38,6 +38,7 @@ protected:
 	//{{AFX_MSG(CPluginsDlg)
 	afx_msg void OnAddPlugin();
 	afx_msg void OnShowWindow(BOOL bShow, UINT nStatus);
+	virtual BOOL OnInitDialog();
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 private:
