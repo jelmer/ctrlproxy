@@ -55,7 +55,7 @@ static gboolean log_data(struct line *l) {
 	while(cur) {
 
 		if(!xmlIsBlankNode(cur) && !strcmp(cur->name, "match")) {
-			if(strstr(l->args[1], xmlNodeGetContent(cur))) {
+			if(strstr(l->args[1], xmlNodeGetContent(cur)) || strstr(l->args[2], xmlNodeGetContent(cur))) {
 				linestack_add_line(co, linedup(l));
 				return TRUE;
 			}
