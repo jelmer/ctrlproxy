@@ -57,7 +57,7 @@ void readConfig(char *file) {
 		} else if(!strcmp(cur->name, "networks")) {
 			xmlNode_networks = cur;
 		} else {
-			fprintf(stderr, "Ignoring unknown element %s\n", cur->name);
+			g_warning("Encountered unknown element : %s\n", cur->name);
 		}
 		
 		cur = cur->next;
