@@ -25,7 +25,7 @@ Features
  * irssi-style logging support
  * Transparent detaching and attaching of clients
  * Password support
- * Replication support (from memory)
+ * Replication support (from memory or file)
  * Auto-Away support
  * Keeping track of events occuring 
  * Direct, inetd-style interfacing with local IRC servers (such as bitlbee)

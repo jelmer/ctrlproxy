@@ -387,7 +387,7 @@ int main(int argc, const char *argv[])
 		}
 	}
 
-	if(xmlNode_networks) {
+	if(!xmlNode_networks) {
 		g_error("No networks listed");
 		return 1;
 	}
