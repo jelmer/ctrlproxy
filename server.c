@@ -21,45 +21,54 @@
 
 struct server *servers = NULL;
 
-struct server *connect_to_server(char *name, int port, char *nick, char *pass) {
-	uid_t uid;
-	struct passwd *pwd;
+int login_server(struct server *s) {
 	struct sockaddr_in servername;
-	struct server *s = malloc(sizeof(struct server));
-	memset(s, 0, sizeof(struct server));
-	s->name = name;
-	s->nick = nick;
-
 	/* Create the socket. */
 	s->socket = socket (PF_INET, SOCK_STREAM, 0);
 	if (s->socket < 0)
 	{
 		perror ("socket (client)");
-		return NULL;
+		s->socket = 0;
+		return 1;
 	}
 
 	/* Connect to the server. */
-	init_sockaddr (&servername, name, port);
+	init_sockaddr (&servername, s->name, s->port);
 	if (0 > connect (s->socket,
 					 (struct sockaddr *) &servername,
 					 sizeof (servername)))
 	{
 		perror ("connect (client)");
-		return NULL;
+		s->socket = 0;
+		return 1;
 	}
+
+	if(s->password)dprintf(s->socket, "PASS %s\n", s->password);
+	dprintf(s->socket, "NICK %s\n", s->nick);
+	dprintf(s->socket, "USER %s %s %s :%s\n", s->username, my_hostname, s->name, s->fullname);
+	s->last_msg_time = time(NULL);
+	s->ping_time = time(NULL);
+	return 0;
+}
+
+struct server *connect_to_server(char *name, int port, char *nick, char *pass) {
+	uid_t uid;
+	struct passwd *pwd;
+	struct server *s = malloc(sizeof(struct server));
+	memset(s, 0, sizeof(struct server));
+	s->name = strdup(name);
+	s->nick = strdup(nick);
+	s->password = pass?strdup(pass):NULL;
+	s->port = port;
 
 	uid = getuid();
 	pwd = getpwuid(uid);
-
-	if(pass)dprintf(s->socket, "PASS %s\n", pass);
-	dprintf(s->socket, "NICK %s\n", nick);
-	dprintf(s->socket, "USER %s %s %s :%s\n", pwd->pw_name, my_hostname, name, pwd->pw_gecos);
+	s->username = strdup(pwd->pw_name);
 	s->fullname = strdup(pwd->pw_gecos);
-	
+	asprintf(&s->hostmask, "%s!~%s@%s", s->nick, getenv("USER"), my_hostname);
 	DLIST_ADD(servers, s);
-	assert(servers);
 
-	asprintf(&s->hostmask, "%s!~%s@%s", nick, getenv("USER"), my_hostname);
+	if(login_server(s))s->reconnect_time = time(NULL);
 
 	return s;
 }
@@ -108,10 +117,40 @@ int loop(struct server *server) /* Checks server socket for input and calls loop
 	int retval;
 	struct module_context *c;
 	char *ret;
+	static int timeout = -1, ping_interval = -1;
+	char *conf;
 
 	tv.tv_sec = 0;
 	tv.tv_usec = 5;
+
+	/* We need to reconnect */
+	if(server->socket == 0) {
+		conf = get_conf(server->abbrev, "reconnecttime");
+		if(time(NULL) - server->reconnect_time < (conf?atoi(conf):30)) return 0;
+		if(login_server(server) != 0)server->reconnect_time = time(NULL);
+	}
+
+	if(timeout == -1) {
+		conf = get_conf(server->abbrev, "timeout");
+		timeout = conf?atoi(conf):300;
+	}
+
+	if(ping_interval == -1) {
+		conf = get_conf(server->abbrev, "ping_interval");
+		ping_interval = conf?atoi(conf):100;
+	}
+
+	if(time(NULL) - server->last_msg_time > timeout) {
+		server->socket = 0;
+		server->reconnect_time = time(NULL);
+		return 1;
+	}
 	
+	if(time(NULL) - server->ping_time > ping_interval) {
+		server_send(server, NULL, "PING", server->name, NULL);
+		server->ping_time = time(NULL);
+	}
+
 	/* Call loop on all modules */
 	c = server->handlers;
 
@@ -131,11 +170,12 @@ int loop(struct server *server) /* Checks server socket for input and calls loop
 
 	if(aread(server->socket, &server->remaining) != 0) {
 		server->socket = 0;
-		/* FIXME: Reconnect */
+		server->reconnect_time = time(NULL);
 		return 1;
 	}
 
 	while((ret = anextline(&server->remaining))) {
+		server->last_msg_time = time(NULL);
 		irc_parse_line(ret, &l);
 		/* We only need to handle pings */
 		if(!strcasecmp(l.args[0], "PING")){

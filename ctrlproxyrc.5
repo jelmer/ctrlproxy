@@ -56,6 +56,21 @@ Password used to log in to server.
 \fBmodules\fP
 Modules to load
 
+.TP
+\fBreconnecttime\fP
+Number of seconds to wait before attempting to connect once again to the server after 
+our link has been closed. Defaults to 30.
+
+.TP
+\fBtimeout\fP
+Number of seconds to wait for data before we can assume the server 
+is dead (defaults to 300).
+
+.TP
+\fBping_interval\fP
+Interval (in seconds) in which to send PING's to the server (defaults to 100). This value should
+\fBalways\fP be lower than the value of "timeout".
+
 .SH "MODULES"
 .PP
 This section contains a list of variables supported by the modules included with 

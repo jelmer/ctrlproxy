@@ -25,6 +25,7 @@
 #define CTRLPROXY_VERSION "0.3"
 
 #include <unistd.h>
+#include <time.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 
@@ -62,9 +63,15 @@ struct server {
 	struct server *prev, *next;
 	char *name;
 	char *abbrev;
+	char *username;
 	char *fullname;
 	char *hostmask;
+	char *password;
 	char *nick;
+	time_t reconnect_time;
+	time_t ping_time;
+	time_t last_msg_time;
+	int port;
 	int socket;
 	struct module_context *handlers;
 	char *remaining;

@@ -85,18 +85,18 @@ void mhandle_data(struct module_context *c, const struct line *l)
 	}
 	
 	if(!strcasecmp(l->args[0], "JOIN")) {
-		channel_log(c, l->args[1], "%2d:%2d -!- %s [%s] has joined %s\n", t->tm_hour, t->tm_min, nick, user, l->args[1]);
+		channel_log(c, l->args[1], "%02d:%02d -!- %s [%s] has joined %s\n", t->tm_hour, t->tm_min, nick, user, l->args[1]);
 	} else if(!strcasecmp(l->args[0], "PART")) {
-		channel_log(c, l->args[1], "%2d:%2d -!- %s [%s] has left %s [%s]\n", t->tm_hour, t->tm_min, nick, user, l->args[1], l->args[2]?l->args[2]:"");
+		channel_log(c, l->args[1], "%02d:%02d -!- %s [%s] has left %s [%s]\n", t->tm_hour, t->tm_min, nick, user, l->args[1], l->args[2]?l->args[2]:"");
 	} else if(!strcasecmp(l->args[0], "PRIVMSG")) {
 		dest = l->args[1];
 		if(!strcasecmp(dest, c->parent->nick))dest = nick;
 		if(!strncasecmp(l->args[2], "ACTION ", 8))
-			channel_log(c, dest, "%2d:%2d  * %s %s\n", t->tm_hour, t->tm_min, nick, l->args[2]+8);
+			channel_log(c, dest, "%02d:%02d  * %s %s\n", t->tm_hour, t->tm_min, nick, l->args[2]+8);
 		else 
-			channel_log(c, dest, "%2d:%2d < %s> %s\n", t->tm_hour, t->tm_min, nick, l->args[2]);
+			channel_log(c, dest, "%02d:%02d < %s> %s\n", t->tm_hour, t->tm_min, nick, l->args[2]);
 	} else if(!strcasecmp(l->args[0], "MODE") && (l->args[1][1] == '#' || l->args[1][1] == '&')) {
-		channel_log(c, l->args[1], "%2d:%2d -!- mode/%s [%s %s] by %s\n", t->tm_hour, t->tm_min, l->args[1], l->args[2], l->args[3], nick);
+		channel_log(c, l->args[1], "%02d:%02d -!- mode/%s [%s %s] by %s\n", t->tm_hour, t->tm_min, l->args[1], l->args[2], l->args[3], nick);
 	}
 }
 

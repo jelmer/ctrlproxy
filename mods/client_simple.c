@@ -130,9 +130,12 @@ void mloop(struct module_context *c)
 					/* Send JOIN for each channel */
 					if(st->channels){
 						for(j = 0; j < st->no_channels; j++) {
-							dprintf(i, ":%s JOIN %s\r\n", c->parent->hostmask, st->channels[j]);
-							server_send(c->parent, c->parent->hostmask, "NAMES", st->channels[j], NULL);
-							server_send(c->parent, c->parent->hostmask, "TOPIC", st->channels[j], NULL);
+							/* Only for channels */
+							if(st->channels[j][0] == '#' || st->channels[j][0] == '&') {
+								dprintf(i, ":%s JOIN %s\r\n", c->parent->hostmask, st->channels[j]);
+								server_send(c->parent, c->parent->hostmask, "NAMES", st->channels[j], NULL);
+								server_send(c->parent, c->parent->hostmask, "TOPIC", st->channels[j], NULL);
+							}
 						}
 					}
 				} else if(!strcasecmp(l.args[0], "PASS")) {
