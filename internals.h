@@ -21,6 +21,9 @@
 #define __INTERNALS_H__
 
 #define _GNU_SOURCE
+#ifdef HAVE_CONFIG_H
+#  include "config.h"
+#endif
 #ifdef HAVE_POPT_H
 #  include <popt.h>
 #endif
