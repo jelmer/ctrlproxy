@@ -233,10 +233,10 @@ void print_html_chan(struct channel *channelstruct)
 		printf(" </p>\n");
 	}
 
-	n = get_highest_nick_for_property(channelstruct, "kicks");
+	n = get_highest_nick_for_property(channelstruct, "dokick");
 	if(n) {
 		printf(" <p class=\"isection\">\n");
-		printf("  <b>%s</b> kicked the ass most, <b>%ld</b> times to be exact!\n", n->name, nick_get_property(n, "kicks"));
+		printf("  <b>%s</b> kicked the ass most, <b>%ld</b> times to be exact!\n", n->name, nick_get_property(n, "dokick"));
 		printf(" </p>\n");
 	}
 

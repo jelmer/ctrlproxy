@@ -194,6 +194,7 @@ static gboolean log_data(struct line *l)
 	if(!strcasecmp(l->args[0], "JOIN"))DO_INCREASE("joins");
 	if(!strcasecmp(l->args[0], "PART") || !strcasecmp(l->args[0], "QUIT"))DO_INCREASE("parts");
 	if(!strcasecmp(l->args[0], "PRIVMSG")) {
+		DO_INCREASE("lines");
 		g = patterns;
 		while(g) {
 			struct pattern *p = (struct pattern *)g->data;
