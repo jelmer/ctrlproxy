@@ -22,10 +22,14 @@
 #include <string.h>
 
 static int autosave_id;
+static struct plugin *this_plugin = NULL;
 
 static gboolean loop_save_config(gpointer user_data)
 {
+	struct plugin *old_plugin = current_plugin;
+	current_plugin = this_plugin;
 	save_configuration();
+	current_plugin = old_plugin;
 	return TRUE;
 }
 
@@ -36,6 +40,8 @@ gboolean init_plugin(struct plugin *p)
 	int time = 0;
 	xmlNodePtr cur = p->xmlConf->children;
 	char *buf;
+	this_plugin = p;
+
 	while(cur) {
 		if(!strcmp(cur->name, "interval")) {
 			buf = xmlGetProp(cur, "time");

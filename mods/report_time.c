@@ -46,24 +46,18 @@ static gboolean report_time(struct line *l) {
 }
 
 gboolean fini_plugin(struct plugin *p) {
-	guint *timeout_id = (guint *)p->data;
-
-	g_source_remove(*timeout_id);
-
-	free(timeout_id);
+	del_filter_ex("replicate", report_time);
 	return TRUE;
 }
 
 const char name_plugin[] = "report_time";
 
 gboolean init_plugin(struct plugin *p) {
-	guint *timeout_id = malloc(sizeof(guint));
 	xmlNodePtr cur;
 
 	cur = xmlFindChildByElementName(p->xmlConf, "format");
 	if(cur) format = xmlNodeGetContent(cur);
 	
 	add_filter_ex("report_time", report_time, "replicate", 50);
-	p->data = timeout_id;
 	return TRUE;
 }

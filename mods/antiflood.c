@@ -25,6 +25,8 @@
 
 static GHashTable *antiflood_servers = NULL;
 
+static struct plugin *this_plugin = NULL;
+
 struct network_data {
 	struct timeval tv_last_message;
 	GQueue *message_queue;
@@ -34,17 +36,24 @@ struct network_data {
 
 static gboolean send_queue(gpointer user_data) {
 	gpointer d;
-	struct network_data *sd = (struct network_data *)user_data;
+	struct network_data *sd;
 	struct line *l;
+	struct plugin *old_plugin = current_plugin;
+	current_plugin = this_plugin;
 
+	sd = (struct network_data *)user_data;
 	d = g_queue_pop_tail(sd->message_queue);
-	if(!d)return TRUE;
+	if(!d){ 
+		current_plugin = old_plugin; 
+		return TRUE;
+	}
 	l = (struct line *)d;
 
 	irc_send_line(l->network->outgoing, l);
 	free_line(l);
 
 	gettimeofday(&sd->tv_last_message, NULL);
+	current_plugin = old_plugin;
 	
 	return TRUE;
 }
@@ -119,6 +128,7 @@ gboolean fini_plugin(struct plugin *p) {
 const char name_plugin[] = "antiflood";
 
 gboolean init_plugin(struct plugin *p) {
+	this_plugin = p;
 	add_filter_ex("antiflood", log_data, "client", 1);
 	antiflood_servers = g_hash_table_new(NULL, NULL);
 	

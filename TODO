@@ -2,7 +2,6 @@
 - update documentation
 - automated testsuite
 - internationalization (i18n)
-- add timer that uses current_plugin
 - repl_limited (repl_highlight with limited number of lines)
 - dircproxy-config-to-ctrlproxyrc script
 - add NICK to repl_* in repl_highlight, repl_lastdisconnect

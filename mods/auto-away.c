@@ -22,19 +22,19 @@
 #include <string.h>
 
 static time_t last_message = 0, max_idle_time = 60 * 10;
-
 static gboolean only_for_noclients = FALSE;
-
 static gboolean is_away = FALSE;
-
 static char *message = NULL;
 static char *nick = NULL;
+static struct plugin *this_plugin = NULL;
 
 struct auto_away_data {
 	guint timeout_id;
 };
 
 static gboolean check_time(gpointer user_data) {
+	struct plugin *old_plugin = current_plugin;
+	current_plugin = this_plugin;
 	if(time(NULL) - last_message > max_idle_time && !is_away) { 
 		GList *sl = networks;
 		is_away = TRUE;
@@ -50,6 +50,7 @@ static gboolean check_time(gpointer user_data) {
 			sl = g_list_next(sl);
 		}
 	}
+	current_plugin = old_plugin;
 
 	return TRUE;
 }
@@ -92,6 +93,8 @@ gboolean init_plugin(struct plugin *p) {
 	char *t = NULL;
 	struct auto_away_data *d;
 	xmlNodePtr cur;
+
+	this_plugin = p;
 
 	d = malloc(sizeof(struct auto_away_data));
 	
