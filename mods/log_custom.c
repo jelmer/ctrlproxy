@@ -48,7 +48,7 @@ char *get_hours(struct line *l) {
 	char *ret;
 	time_t ti = time(NULL);
 	struct tm *t = localtime(&ti);
-	asprintf(&ret, "%d", t->tm_hour);
+	asprintf(&ret, "%02d", t->tm_hour);
 	return ret;
 }
 
@@ -56,7 +56,7 @@ char *get_minutes(struct line *l) {
 	char *ret;
 	time_t ti = time(NULL);
 	struct tm *t = localtime(&ti);
-	asprintf(&ret, "%d", t->tm_min);
+	asprintf(&ret, "%02d", t->tm_min);
 	return ret;
 }
 
@@ -64,7 +64,7 @@ char *get_seconds(struct line *l) {
 	char *ret;
 	time_t ti = time(NULL);
 	struct tm *t = localtime(&ti);
-	asprintf(&ret, "%d", t->tm_sec);
+	asprintf(&ret, "%02d", t->tm_sec);
 	return ret;
 }
 
