@@ -233,7 +233,7 @@ static gboolean handle_data(struct line *l) {
 					/* Remove from stack */
 					if(!p)stack = s->next;	
 					else p->next = s->next;
-					free(s);
+					g_free(s);
 				}
 
 				l->options |= LINE_DONT_SEND;
@@ -260,7 +260,7 @@ gboolean init_plugin(struct plugin *p) {
 
 static int handle_default(struct line *l, struct query *q)
 {
-	struct query_stack *s = malloc(sizeof(struct query_stack));
+	struct query_stack *s = g_new(struct query_stack,1);
 	s->network = l->network;
 	s->client = l->client;
 	s->query = q;

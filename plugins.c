@@ -47,9 +47,9 @@ gboolean unload_plugin(struct plugin *p)
 	xmlSetProp(p->xmlConf, "autoload", "0");
 
 	plugins = g_list_remove(plugins, p);
-	free(p->name);
-	free(p->path);
-	free(p);
+	g_free(p->name);
+	g_free(p->path);
+	g_free(p);
 	return TRUE;
 }
 
@@ -69,9 +69,8 @@ gboolean load_plugin(xmlNodePtr cur)
 	GModule *m;
 	char *mod_name;
 	struct plugin *p;
-	char *modulesdir;
+	const char *modulesdir;
 	char *selfname = NULL;
-	struct plugin *old_plugin = current_plugin;
 	gchar *path_name;
 	plugin_init_function f = NULL;
 
@@ -112,22 +111,22 @@ gboolean load_plugin(xmlNodePtr cur)
 		return FALSE;
 	}
 	
-	p = malloc(sizeof(struct plugin));
-	p->name = strdup(selfname);
-	p->path = strdup(mod_name);
+	p = g_new(struct plugin, 1);
+	p->name = g_strdup(selfname);
+	p->path = g_strdup(mod_name);
 	p->module = m;
 	p->xmlConf = cur;
 
-	current_plugin = p;
+	push_plugin(p);
 	if(!f(p)) {
 		g_warning(_("Running initialization function for plugin '%s' failed."), mod_name);
-		free(p->name);
-		free(p->path);
+		g_free(p->name);
+		g_free(p->path);
 		xmlFree(mod_name);
-		free(p);
+		g_free(p);
 		return FALSE;
 	}
-	current_plugin = old_plugin;
+	pop_plugin();
 
 	plugins = g_list_append(plugins, p);
 	

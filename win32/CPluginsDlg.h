@@ -19,7 +19,7 @@ public:
 // Dialog Data
 	//{{AFX_DATA(CPluginsDlg)
 	enum { IDD = IDD_PLUGINS };
-		// NOTE: the ClassWizard will add data members here
+	CListCtrl	m_list;
 	//}}AFX_DATA
 
 

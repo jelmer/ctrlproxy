@@ -40,7 +40,7 @@ struct line *irc_parse_linef( char *fmt, ... ) {
 	va_start(ap, fmt);
 	vasprintf(&ret, fmt, ap);
 	l = irc_parse_line(ret);
-	free(ret);
+	g_free(ret);
 	va_end(ap);
 	return l;
 }
@@ -49,21 +49,21 @@ struct line *virc_parse_line( char *origin, va_list ap)
 {
 	char *arg;
 	struct line *l;
-	l = calloc(1, sizeof(struct line));
+	l = g_new0(struct line, 1);
 	l->argc = 0;
-	if(origin)l->origin = strdup(origin);
+	if(origin)l->origin = g_strdup(origin);
 	else l->origin = NULL;
 	
-	l->args = malloc(sizeof(char *) * (MAX_LINE_ARGS+2));
+	l->args = g_new(char *, MAX_LINE_ARGS+2);
 	
 	while((arg = va_arg(ap, char *))) {
 		if(l->argc > MAX_LINE_ARGS) {
-			free(l); 
-			free(l->args); 
+			g_free(l); 
+			g_free(l->args); 
 			return NULL; 
 		}
-		l->args[l->argc] = strdup(arg);
-		l->args = realloc(l->args, (((++l->argc)+2)* sizeof(char *)));
+		l->args[l->argc] = g_strdup(arg);
+		l->args = g_realloc(l->args, (((++l->argc)+2)* sizeof(char *)));
 	}
 	l->args[l->argc] = NULL;
 
@@ -75,26 +75,26 @@ struct line * irc_parse_line(char *d)
 	char *p;
 	char dosplit = 1;
 	size_t estimate = 0;
-	char *data = strdup(d);
+	char *data = g_strdup(d);
 	int i;
 	struct line *l;
 
-	l = calloc(1, sizeof(struct line));
+	l = g_new0(struct line, 1);
 	l->has_endcolon = WITHOUT_COLON;
 	p = data;
 
 	if(p[0] == ':') {
 		p = strchr(data, ' ');
-		if(!p){ free(data); free(l); return NULL; }
+		if(!p){ g_free(data); g_free(l); return NULL; }
 		*p = '\0';
-		l->origin = strdup(data+1);
+		l->origin = g_strdup(data+1);
 		for(; *(p+1) == ' '; p++);
 		p++;
 	}
 
 	for(i = 0; p[i]; i++) if(p[i] == ' ')estimate++;
 
-	l->args = malloc(sizeof(char *) * (estimate+2));
+	l->args = g_new(char *, estimate+2);
 
 	l->args[0] = p;
 
@@ -118,8 +118,8 @@ struct line * irc_parse_line(char *d)
 	
 	l->argc++;
 	l->args[l->argc] = NULL;
-	for(i = 0; l->args[i]; i++) l->args[i] = strdup(l->args[i]);
-	free(data);
+	for(i = 0; l->args[i]; i++) l->args[i] = g_strdup(l->args[i]);
+	g_free(data);
 
 	return l;
 }
@@ -132,7 +132,7 @@ gboolean irc_send_line(struct transport_context *c, struct line *l) {
 
 	raw = irc_line_string_nl(l);
 	ret = transport_write(c, raw);
-	free(raw);
+	g_free(raw);
 
 	return (ret != -1);
 }
@@ -141,7 +141,7 @@ gboolean irc_send_line(struct transport_context *c, struct line *l) {
 char *irc_line_string_nl(struct line *l) 
 {
 	char *raw = irc_line_string(l);
-	raw = realloc(raw, strlen(raw)+10);
+	raw = g_realloc(raw, strlen(raw)+10);
 	strcat(raw, "\r\n");
 	return raw;
 }
@@ -193,11 +193,11 @@ char *irc_line_string(struct line *l) {
 	char *ret;
 
 	/* Silently ignore empty messages */
-	if(l->argc == 0) return strdup("");
+	if(l->argc == 0) return g_strdup("");
 
 	if(l->origin)len+=strlen(l->origin);
 	for(i = 0; l->args[i]; i++) len+=strlen(l->args[i])+2;
-	ret = malloc(len+20);
+	ret = g_malloc(len+20);
 	strcpy(ret, "");
 	
 	if(l->origin) sprintf(ret, ":%s ", l->origin);
@@ -214,14 +214,14 @@ char *irc_line_string(struct line *l) {
 
 void free_line(struct line *l) {
 	int i;
-	if(l->origin)free((char *)l->origin);
+	if(l->origin)g_free((char *)l->origin);
 	if(l->args) {
-		for(i = 0; l->args[i]; i++)free(l->args[i]);
-		free(l->args);
+		for(i = 0; l->args[i]; i++)g_free(l->args[i]);
+		g_free(l->args);
 	}
 	l->args = NULL;
 	l->origin = NULL;
-	free(l);
+	g_free(l);
 }
 
 char *line_get_nick(struct line *l)
@@ -229,8 +229,8 @@ char *line_get_nick(struct line *l)
 	static char *nick = NULL;
 	char *t;
 	if(!l || !l->origin)return NULL;
-	if(nick)free(nick);
-	nick = strdup(l->origin);
+	if(nick)g_free(nick);
+	nick = g_strdup(l->origin);
 	t = strchr(nick, '!');
 	if(!t)return nick;
 	*t = '\0';
@@ -249,7 +249,7 @@ gboolean irc_sendf(struct transport_context *c, char *fmt, ...)
 	va_start(ap, fmt);
 	vasprintf(&r, fmt, ap);
 	l = irc_parse_line(r);
-	free(r);
+	g_free(r);
 	ret = irc_send_line(c, l);
 
 	free_line(l); 
@@ -280,11 +280,11 @@ struct line *linedup(struct line *l) {
 	int i;
 	struct line *ret = calloc(1, sizeof(struct line));
 	memcpy(ret, l, sizeof(struct line));
-	if(l->origin)ret->origin = strdup(l->origin);
+	if(l->origin)ret->origin = g_strdup(l->origin);
 	ret->options = l->options;
-	ret->args = malloc(sizeof(char *) * (ret->argc+MAX_LINE_ARGS));
+	ret->args = g_new(char *, ret->argc+MAX_LINE_ARGS);
 	for(i = 0; l->args[i]; i++) {
-		ret->args[i] = strdup(l->args[i]);
+		ret->args[i] = g_strdup(l->args[i]);
 	}
 	ret->args[i] = NULL;
 	return ret;

@@ -35,7 +35,7 @@ protected:
 
 	// Generated message map functions
 	//{{AFX_MSG(CNetworksDlg)
-		// NOTE: the ClassWizard will add member functions here
+	afx_msg void OnButton2();
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 };

@@ -52,7 +52,7 @@ static FILE *find_add_channel_file(struct network *s, char *name) {
 
 	lowercase = g_ascii_strdown(name?name:"messages", -1);
 	asprintf(&hash_name, "%s/%s", server_name, lowercase);
-	free(lowercase);
+	g_free(lowercase);
 
 	xmlFree(server_name);
 
@@ -68,12 +68,12 @@ static FILE *find_add_channel_file(struct network *s, char *name) {
 		/* Check if directory needs to be created */
 		if(!g_file_test(n, G_FILE_TEST_IS_DIR) && mkdir(n, 0700) == -1) {
 			g_warning(_("Couldn't create directory %s for logging!"), n);
-			free(hash_name);
-			free(n);
+			g_free(hash_name);
+			g_free(n);
 			xmlFree(server_name);
 			return NULL;
 		}
-		free(n);
+		g_free(n);
 		
 		/* Then open the correct filename */
 		cn = g_ascii_strdown(name?name:"messages", -1);
@@ -83,12 +83,12 @@ static FILE *find_add_channel_file(struct network *s, char *name) {
 		f = fopen(n, "a+");
 		if(!f) {
 			g_warning(_("Couldn't open file %s for logging!"), n);
-			free(n);
+			g_free(n);
 			return NULL;
 		}
-		free(n);
+		g_free(n);
 		g_hash_table_insert(files, hash_name, f);
-	} else free(hash_name);
+	} else g_free(hash_name);
 	g_assert(f);
 	return f;
 }
@@ -105,7 +105,7 @@ static FILE *find_channel_file(struct network *s, char *name) {
 	xmlFree(server_name);
 
 	f = g_hash_table_lookup(files, hash_name);
-	free(hash_name);
+	g_free(hash_name);
 	return f;
 }
 
@@ -118,7 +118,7 @@ static gboolean log_data(struct line *l)
 	struct tm *t = localtime(&ti);
 	FILE *f = NULL;
 	if(!l->args || !l->args[0] || l->options & LINE_NO_LOGGING)return TRUE;
-	if(l->origin)nick = strdup(l->origin);
+	if(l->origin)nick = g_strdup(l->origin);
 	if(nick)user = strchr(nick, '!');
 	if(user){ *user = '\0';user++; }
 	if(!nick && xmlHasProp(l->network->xmlConf, "nick"))nick = xmlGetProp(l->network->xmlConf, "nick");
@@ -169,8 +169,8 @@ static gboolean log_data(struct line *l)
 			f = find_add_channel_file(l->network, l->args[1]);
 			if(f)fprintf(f, "%02d:%02d -!- %s has been kicked by %s [%s]\n", t->tm_hour, t->tm_min, l->args[2], nick, l->args[3]?l->args[3]:"");
 		} else { 
-			char *channels = strdup(l->args[1]);
-			char *nicks = strdup(l->args[1]);
+			char *channels = g_strdup(l->args[1]);
+			char *nicks = g_strdup(l->args[1]);
 			char *p,*n; char cont = 1;
 			char *_nick;
 
@@ -191,8 +191,8 @@ static gboolean log_data(struct line *l)
 				_nick++;
 			}
 			
-			free(channels);
-			free(nicks);
+			g_free(channels);
+			g_free(nicks);
 		}
 	} else if(!g_ascii_strcasecmp(l->args[0], "TOPIC") && l->direction == FROM_SERVER && l->args[1]) {
 		f = find_add_channel_file(l->network, l->args[1]);
@@ -215,14 +215,14 @@ static gboolean log_data(struct line *l)
 
 	if(f)fflush(f);
 
-	if(nick)free(nick);
+	if(nick)xmlFree(nick);
 
 	return TRUE;
 }
 
 gboolean fini_plugin(struct plugin *p)
 {
-	free(logfile); logfile = NULL;
+	g_free(logfile); logfile = NULL;
 	del_filter_ex("log", log_data);
 	return TRUE;
 }

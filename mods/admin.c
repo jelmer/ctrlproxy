@@ -75,10 +75,10 @@ void admin_out(struct line *l, const char *fmt, ...)
 
 
 	asprintf(&tot, ":ctrlproxy!ctrlproxy@%s NOTICE %s :%s\r\n", server_name, nick, msg);
-	free(msg);
+	g_free(msg);
 
 	transport_write(l->client->incoming, tot);
-	free(tot);
+	g_free(tot);
 	xmlFree(nick);
 	xmlFree(server_name);
 }
@@ -400,7 +400,7 @@ static void dump_config (char **args, struct line *l)
 
 		tmp = g_strndup(buffer + lastend, i - lastend);
 		admin_out(l, tmp);
-		free(tmp);
+		g_free(tmp);
 		lastend = i+1;
 	}
 }
@@ -438,7 +438,7 @@ static void help (char **args, struct line *l)
 			if(cmd->help != NULL) {
 				asprintf(&tmp,"%s%s     %s",cmd->name,g_strnfill(longest_command - strlen(cmd->name),' '),cmd->help);
 				admin_out(l, tmp);
-				free(tmp);
+				g_free(tmp);
 			} else {
 				admin_out(l, cmd->name);
 			}
@@ -483,8 +483,8 @@ static void handle_die(char **args, struct line *l)
 
 void register_admin_command(char *name, void (*handler) (char **args, struct line *l), const char *help, const char *help_details)
 {
-	struct admin_command *cmd = malloc(sizeof(struct admin_command));
-	cmd->name = strdup(name);
+	struct admin_command *cmd = g_new(struct admin_command,1);
+	cmd->name = g_strdup(name);
 	if(longest_command < strlen(name))
 		longest_command = strlen(name);
 	cmd->handler = handler;
@@ -500,9 +500,9 @@ void unregister_admin_command(char *name)
 	while(gl) {
 		struct admin_command *cmd = (struct admin_command *)gl->data;
 		if(!g_ascii_strcasecmp(cmd->name, name)) {
-			free(cmd->name);
+			g_free(cmd->name);
 			commands = g_list_remove(commands, cmd);
-			free(cmd);
+			g_free(cmd);
 			return;
 		}
 		gl = gl->next;
@@ -529,14 +529,14 @@ static gboolean handle_data(struct line *l) {
 	}
 
 	l->options |= LINE_DONT_SEND | LINE_IS_PRIVATE;
-	tmp = strdup(l->args[cmdoffset]);
+	tmp = g_strdup(l->args[cmdoffset]);
 
 	if(l->args[cmdoffset+1]) {
 		/* Add everything after l->args[cmdoffset] to tmp */
 		for(i = cmdoffset+1; l->args[i]; i++) {
 			char *oldtmp = tmp;
 			asprintf(&tmp, "%s %s", oldtmp, l->args[i]);
-			free(oldtmp);
+			g_free(oldtmp);
 		}
 	}
 
@@ -551,7 +551,7 @@ static gboolean handle_data(struct line *l) {
 			cmd->handler(args, l);
 			pop_plugin();
 			g_strfreev(args);
-			free(tmp);
+			g_free(tmp);
 			return TRUE;
 		}
 		gl = gl->next;
@@ -560,7 +560,7 @@ static gboolean handle_data(struct line *l) {
 	admin_out(l, _("Can't find command '%s'. Type 'help' for a list of available commands. "), args[0]);
 
 	g_strfreev(args);
-	free(tmp);
+	g_free(tmp);
 
 	return TRUE;
 }

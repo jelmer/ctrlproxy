@@ -10,6 +10,8 @@ extern "C" {
 #include <libxml/parser.h>
 }
 
+
+
 GMainLoop *main_loop = NULL;
 
 #ifdef _DEBUG
@@ -71,7 +73,7 @@ BOOL CCtrlproxyApp::InitInstance()
 	Enable3dControlsStatic();	// Call this when linking to MFC statically
 #endif
 	
-	xmlMemSetup(free, malloc, realloc, strdup);
+	xmlMemSetup(g_free, (void *(__cdecl *)(unsigned int))g_malloc, (void *(__cdecl *)(void *, unsigned int))g_realloc, g_strdup);
 	
 	dlg = new CCtrlproxyDlg();
 	m_pMainWnd = dlg;
@@ -88,7 +90,7 @@ BOOL CCtrlproxyApp::InitInstance()
 	dat.uCallbackMessage = CTRLPROXY_TRAY_ICON;
 	strcpy(dat.szTip, "CtrlProxy manager");
 	Shell_NotifyIcon(NIM_ADD, &dat);
-	g_log_set_handler (G_LOG_DOMAIN, G_LOG_LEVEL_MASK, log_handler, NULL);
+//	g_log_set_handler (G_LOG_DOMAIN, G_LOG_LEVEL_MASK, log_handler, NULL);
 	add_filter_class("", -1);
 	add_filter_class("client", 100);
 	add_filter_class("replicate", 50);

@@ -42,8 +42,8 @@ char ** motd_file_handler(struct network *n)
 	while(!feof(fd)) {
 		char buf[512];
 		if(!fgets(buf, sizeof(buf), fd))break;
-		lines = realloc(lines, (nrlines+2) * sizeof(char *));
-		lines[nrlines] = strdup(buf);
+		lines = g_realloc(lines, (nrlines+2) * sizeof(char *));
+		lines[nrlines] = g_strdup(buf);
 		nrlines++;
 		lines[nrlines] = NULL;
 	}

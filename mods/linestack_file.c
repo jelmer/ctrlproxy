@@ -40,17 +40,17 @@ struct file_information {
 
 static gboolean file_init(struct linestack_context *c, char *args)
 {
-	struct file_information *d = malloc(sizeof(struct file_information));
+	struct file_information *d = g_new(struct file_information,1);
 	GError *error = NULL;
 	if(args) {
 		d->channel = g_io_channel_new_file(args, "a+", NULL);
-		d->filename = strdup(args);
+		d->filename = g_strdup(args);
 	} else  {
 		int tmpfd;
 		char *p = ctrlproxy_path("linestack_file");
 		mkdir(p, 0700);
 		asprintf(&d->filename, "%s/XXXXXX", p);
-		free(p);
+		g_free(p);
 		tmpfd = g_mkstemp(d->filename);
 		if(tmpfd < 0) return FALSE;
 
@@ -86,8 +86,8 @@ static gboolean file_close(struct linestack_context *c)
 	struct file_information *d = (struct file_information *)c->data;
 	g_io_channel_shutdown(d->channel, TRUE, NULL);
 	unlink(d->filename);
-	free(d->filename);
-	free(d);
+	g_free(d->filename);
+	g_free(d);
 	c->data = NULL;
 	return TRUE;
 }
@@ -107,7 +107,7 @@ static GSList *file_get_linked_list(struct linestack_context *c)
 	while(g_io_channel_read_line(d->channel, &raw, NULL, NULL, &error) == G_IO_STATUS_NORMAL) {
 		struct line *l;
 		l = irc_parse_line(raw);
-		free(raw);
+		g_free(raw);
 
 		ret = g_slist_append(ret, l);
 	}
@@ -122,7 +122,7 @@ static gboolean file_add_line(struct linestack_context *b, struct line *l)
 	char *raw = irc_line_string_nl(l);
 	g_assert(d->channel);
 	g_io_channel_write_chars(d->channel, raw, -1, NULL, &error);
-	free(raw);
+	g_free(raw);
 	return TRUE;
 }	
 
@@ -140,7 +140,7 @@ static void file_send_file(struct linestack_context *b, struct transport_context
 	
 	while(g_io_channel_read_line(d->channel, &raw, NULL, NULL, &error) == G_IO_STATUS_NORMAL)  {
 		transport_write(t, raw);
-		free(raw);
+		g_free(raw);
 	}
 }
 

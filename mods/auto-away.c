@@ -45,7 +45,7 @@ static gboolean check_time(gpointer user_data) {
 				char *new_msg;
 				asprintf(&new_msg, ":%s", message?message:_("Auto Away"));
 				irc_send_args(s->outgoing, "AWAY", new_msg, NULL);
-				free(new_msg);
+				g_free(new_msg);
 				if(nick) irc_send_args(s->outgoing, "NICK", nick, NULL);
 			}
 			sl = g_list_next(sl);
@@ -84,7 +84,7 @@ gboolean fini_plugin(struct plugin *p) {
 	del_filter(log_data);
 	g_source_remove(d->timeout_id);
 
-	free(d);
+	g_free(d);
 	return TRUE;
 }
 
@@ -97,7 +97,7 @@ gboolean init_plugin(struct plugin *p) {
 
 	this_plugin = p;
 
-	d = malloc(sizeof(struct auto_away_data));
+	d = g_new(struct auto_away_data,1);
 	
 	add_filter("auto-away", log_data);
 	

@@ -20,12 +20,22 @@
 #ifndef __CTRLPROXY_H__
 #define __CTRLPROXY_H__
 
+#include <stdlib.h>
+#include <string.h>
 #include <time.h>
 #include <stdarg.h>
 #include <glib.h>
 #include <gmodule.h>
 #include <libxml/xmlmemory.h>
 #include <libxml/parser.h>
+
+#ifdef STRICT_MEMORY_ALLOCS
+#define malloc(a) __ERROR_USE_G_MALLOC_OR_G_NEW__
+#define realloc(a,b) __ERROR_USE_G_REALLOC_OR_G_RE_NEW__
+#define free(a) __ERROR_USE_G_FREE__
+#define strdup(a) __ERROR_USE_G_STRDUP__
+#define strndup(a) __ERROR_USE_G_STRNDUP__
+#endif
 
 struct network;
 struct client;
@@ -203,7 +213,7 @@ G_MODULE_EXPORT void save_configuration();
 G_MODULE_EXPORT xmlNodePtr config_node_root();
 G_MODULE_EXPORT xmlNodePtr config_node_networks();
 G_MODULE_EXPORT xmlNodePtr config_node_plugins();
-G_MODULE_EXPORT xmlNodePtr config_doc();
+G_MODULE_EXPORT xmlDocPtr config_doc();
 
 /* plugins.c */
 G_MODULE_EXPORT gboolean load_plugin(xmlNodePtr);

@@ -81,7 +81,7 @@ static gboolean log_data(struct line *l) {
 
 	if(!sd) {
 		xmlNodePtr cur;
-		sd = malloc(sizeof(struct network_data));
+		sd = g_new(struct network_data,1);
 		sd->queue_speed = 0;
 
 		cur = xmlFindChildByElementName(l->network->xmlConf, "queue_speed");
@@ -122,7 +122,7 @@ static void free_antiflood_servers(gpointer key, gpointer value, gpointer user_d
 	struct network_data *sd = (struct network_data *)value;
 	g_queue_free(sd->message_queue);
 	if(sd->timeout_id != -1)g_source_remove(sd->timeout_id);
-	free(sd);
+	g_free(sd);
 }
 
 gboolean fini_plugin(struct plugin *p) {

@@ -22,7 +22,7 @@ CAboutDlg::CAboutDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(CAboutDlg::IDD, pParent)
 {
 	//{{AFX_DATA_INIT(CAboutDlg)
-	m_license = _T("");
+	m_license = _T("Published under the GPL");
 	//}}AFX_DATA_INIT
 	
 }
@@ -50,7 +50,7 @@ BOOL CAboutDlg::OnInitDialog()
 	CDialog::OnInitDialog();
 
 	m_license = _T("FOOBAR");
-/*
+/*FIXME
 	char *license_path = g_build_filename(get_shared_path(), "COPYING");
 	char buf[255];
 	CFile f(license_path, CFile::modeRead);

@@ -50,14 +50,14 @@ static gboolean mhandle_data(struct line *l)
 
 	if(g_ascii_strcasecmp(l->args[0], "PRIVMSG") || l->args[2][0] != '\001')return TRUE;
 
-	data = strdup(l->args[2]+1);
+	data = g_strdup(l->args[2]+1);
 	t = strchr(data, '\001');
-	if(!t){ free(data); return TRUE; }
+	if(!t){ g_free(data); return TRUE; }
 	*t = '\0';
 
 	if(!l->origin)return TRUE;
 	
-	dhostmask = strdup(l->origin);
+	dhostmask = g_strdup(l->origin);
 	t = strchr(dhostmask, '!');
 	if(t)*t = '\0';
 	dest = dhostmask;
@@ -74,20 +74,20 @@ static gboolean mhandle_data(struct line *l)
 		asprintf(&msg, "\001VERSION ctrlproxy:%s:Windows %d.%d\001", ctrlproxy_version(), _winmajor, _winminor);
 #endif
 		irc_sendf(l->network->outgoing, "NOTICE %s :%s", dest, msg);
-		free(msg);
+		g_free(msg);
 	} else if(!g_ascii_strcasecmp(data, "TIME")) {
 		ti = time(NULL);
 		asprintf(&msg, "\001TIME %s\001", ctime(&ti));
 		t = strchr(msg, '\n');
 		if(t)*t = '\0';
 		irc_sendf(l->network->outgoing, "NOTICE %s :%s", dest, msg);
-		free(msg);
+		g_free(msg);
 	} else if(!g_ascii_strcasecmp(data, "FINGER")) {
 		char *fullname = xmlGetProp(l->network->xmlConf, "fullname");
 		asprintf(&msg, "\001FINGER %s\001", fullname);
 		xmlFree(fullname);
 		irc_sendf(l->network->outgoing, "NOTICE %s :%s", dest, msg);
-		free(msg);
+		g_free(msg);
 	} else if(!g_ascii_strcasecmp(data, "SOURCE")) {
 		irc_sendf(l->network->outgoing, "NOTICE %s :\001SOURCE http://nl.linux.org/~jelmer/ctrlproxy/\001", dest);
 	} else if(!g_ascii_strcasecmp(data, "CLIENTINFO")) {
@@ -98,8 +98,8 @@ static gboolean mhandle_data(struct line *l)
 	} else if(!g_ascii_strcasecmp(data, "DCC")) {
 	} else g_warning(_("Received unknown CTCP request '%s'!"), data);
 
-	free(data);
-	if(dhostmask)free(dhostmask);
+	g_free(data);
+	if(dhostmask)g_free(dhostmask);
 	return TRUE;
 }
 

@@ -59,7 +59,7 @@ char *list_make_string(char **list)
 	/* First, calculate the length */
 	for(i = 0; list[i]; i++) len+=strlen(list[i])+1;
 
-	ret = malloc(sizeof(char *) * len);
+	ret = g_new(char,len);
 	ret[0] = '\0';
 
 	for(i = 0; list[i]; i++) 
@@ -77,12 +77,12 @@ char *ctrlproxy_path(char *part)
 	asprintf(&p, "%s/.ctrlproxy", g_get_home_dir());
 	if(mkdir(p, 0700) != 0 && errno != EEXIST) {
 		g_warning(_("Couldn't create '%s'!\n"), p);
-		free(p);
+		g_free(p);
 		exit(1);
 	}
 
 	asprintf(&p1, "%s/%s", p, part);
-	free(p);
+	g_free(p);
 	return p1;
 }
 

@@ -28,7 +28,7 @@ void CPluginsDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialog::DoDataExchange(pDX);
 	//{{AFX_DATA_MAP(CPluginsDlg)
-		// NOTE: the ClassWizard will add DDX and DDV calls here
+	DDX_Control(pDX, IDC_PLUGIN_LIST, m_list);
 	//}}AFX_DATA_MAP
 }
 

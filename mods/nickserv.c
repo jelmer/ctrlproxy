@@ -60,7 +60,7 @@ static int nickserv_find_nick(struct network *n, char *nick, char **pass)
 static char *nickserv_nick(struct network *n)
 {
 	xmlNodePtr cur = nickserv_node(n);
-	if(!cur || !xmlHasProp(cur, "nick")) return strdup("NickServ");
+	if(!cur || !xmlHasProp(cur, "nick")) return g_strdup("NickServ");
 
 	return xmlGetProp(cur, "nick");
 }
@@ -71,9 +71,9 @@ static void identify_me(struct network *network, char *nick)
 	if(nickserv_find_nick(network, nick, &pass)) {
 		char *nickserv_n = nickserv_nick(network), *raw;
 		asprintf(&raw, "IDENTIFY %s", pass);
-		free(pass);
+		g_free(pass);
 		irc_send_args(network->outgoing, "PRIVMSG", nickserv_n, raw, NULL);
-		free(raw);
+		g_free(raw);
 		xmlFree(nickserv_n);
 	}
 }
@@ -89,8 +89,8 @@ static gboolean log_data(struct line *l) {
 
 	/* Keep track of the last nick that the user tried to take */
 	if(l->direction == TO_SERVER && !g_ascii_strcasecmp(l->args[0], "NICK")) {
-		if(nickattempt) free(nickattempt);
-		nickattempt = strdup(l->args[1]);
+		if(nickattempt) g_free(nickattempt);
+		nickattempt = g_strdup(l->args[1]);
 	}
 
 	/* If we receive a nick-already-in-use message, ghost the current user */
@@ -104,7 +104,7 @@ static gboolean log_data(struct line *l) {
 
 			asprintf(&raw, "GHOST %s %s", nickattempt, pass);
 			irc_send_args(l->network->outgoing, "PRIVMSG", nickserv_n, raw, NULL);
-			free(raw);
+			g_free(raw);
 			xmlFree(nickserv_n);
 			irc_send_args(l->network->outgoing, "NICK", nickattempt);
 		}

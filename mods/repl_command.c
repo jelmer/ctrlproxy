@@ -43,7 +43,7 @@ static gboolean log_data(struct line *l) {
 	if(!co) {
 		co = linestack_new_by_network(l->network);
 		g_hash_table_insert(command_backlog, desc, co);
-	} else free(desc);
+	} else g_free(desc);
 	linestack_add_line(co, l);
 
 	xmlFree(networkname);
@@ -100,7 +100,7 @@ static void repl_command(char **args, struct line *l)
 	asprintf(&desc, "%s/%s", networkname, args[1]);
 	xmlFree(networkname);
 	co = g_hash_table_lookup(command_backlog, desc);
-	free(desc);
+	g_free(desc);
 
 	if(co)  {
 		linestack_send(co, l->client->incoming);

@@ -28,8 +28,7 @@ extern FILE *debugfd;
 
 G_MODULE_EXPORT void register_transport(struct transport_ops *functions)
 {
-	struct transport_ops *functions1 = malloc(sizeof(struct transport_ops));
-	memcpy(functions1, functions, sizeof(struct transport_ops));
+	struct transport_ops *functions1 = g_memdup(functions, sizeof(struct transport_ops));
 	functions1->reference_count = 0;
 	functions1->plugin = peek_plugin();
 	transports = g_list_append(transports, functions1);
@@ -43,7 +42,7 @@ G_MODULE_EXPORT gboolean unregister_transport(char *name)
 		if(!strcmp(t->name, name)) {
 			if(t->reference_count == 0) {
 				transports = g_list_remove(transports, gl->data);
-				free(t);
+				g_free(t);
 				return TRUE;
 			} else {
 				return FALSE; /* Transport is still in use */
@@ -70,7 +69,7 @@ struct transport_context *transport_connect(const char *name, xmlNodePtr p, rece
 
 	t->reference_count++;
 	
-	ret = malloc(sizeof(struct transport_context));
+	ret = g_new(struct transport_context,1);
 	ret->configuration = p;
 	ret->functions = t;
 	ret->data = NULL;
@@ -82,7 +81,7 @@ struct transport_context *transport_connect(const char *name, xmlNodePtr p, rece
 	
 	if(!ret->functions->connect || ret->functions->connect(ret) == -1)
 	{ 
-		free(ret);
+		g_free(ret);
 		return NULL;
 	}
 	
@@ -105,7 +104,7 @@ struct transport_context *transport_listen(const char *name, xmlNodePtr p, newcl
 	
 	t->reference_count++;
 	
-	ret = malloc(sizeof(struct transport_context));
+	ret = g_new(struct transport_context,1);
 	ret->configuration = p;
 	ret->functions = t;
 	ret->data = NULL;
@@ -117,7 +116,7 @@ struct transport_context *transport_listen(const char *name, xmlNodePtr p, newcl
 	
 	if(!ret->functions->listen || ret->functions->listen(ret) == -1)
 	{ 
-		free(ret);
+		g_free(ret);
 		return NULL;
 	}
 	
@@ -129,7 +128,7 @@ void transport_free(struct transport_context *t)
 	if(!t) return;
 	t->functions->reference_count++;
 	if(t->functions->close)	t->functions->close(t);
-	free(t);
+	g_free(t);
 }
 
 G_MODULE_EXPORT int transport_write(struct transport_context *t, char *l)

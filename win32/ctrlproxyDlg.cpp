@@ -175,16 +175,18 @@ afx_msg LONG CCtrlproxyDlg::OnSysTrayIconClick (WPARAM wParam, LPARAM lParam)
 
 void CCtrlproxyDlg::ShowQuickMenu ()
 {
-   POINT CurPos ;
+   POINT CurPos;
+   int mid = 0;
 
    CMenu qmenu;
    qmenu.LoadMenu(IDR_POPUP);
-
+   CMenu *popup = qmenu.GetSubMenu(mid);
+   
    GetCursorPos (&CurPos);
 
    // Display the menu. This menu is a popup loaded elsewhere.
 
-   qmenu.TrackPopupMenu (TPM_LEFTBUTTON | TPM_CENTERALIGN,
+   popup->TrackPopupMenu (TPM_RIGHTBUTTON | TPM_RIGHTALIGN,
                    CurPos.x,
                    CurPos.y,this);
 

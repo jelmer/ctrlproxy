@@ -74,7 +74,7 @@ void handle_server_receive (struct transport_context *c, char *raw, void *_serve
 				xmlSetProp(server->xmlConf, "nick", new_nick);
 				irc_send_args(server->outgoing, "NICK", new_nick, NULL);
 				xmlFree(nick);
-				free(new_nick);
+				g_free(new_nick);
 			}
 		} else if(server->authenticated) {
 			if(!(l->options & LINE_DONT_SEND))clients_send(server, l, NULL);
@@ -241,20 +241,20 @@ gboolean close_server(struct network *n) {
 		server_disconnected_hook_execute(n);
 		transport_free(n->outgoing);
 		n->outgoing = NULL;
-		free(n->hostmask);
+		g_free(n->hostmask);
 		n->hostmask = NULL;
 
 		for(i = 0; i < 2; i++) {
 			if(n->supported_modes[i]) {
-				free(n->supported_modes[i]);
+				g_free(n->supported_modes[i]);
 				n->supported_modes[i] = NULL;
 			}
 		}
 
 		if(n->features){
 			for(i = 0; n->features[i]; i++)
-				free(n->features[i]);
-			free(n->features);
+				g_free(n->features[i]);
+			g_free(n->features);
 			n->features = NULL;
 		}
 
@@ -280,8 +280,8 @@ void disconnect_client(struct client *c) {
 	g_message(_("Removed client to %s"), networkname);
 	g_free(networkname);
 	
-	if (c->nick) free(c->nick);
-	free(c);
+	if (c->nick) g_free(c->nick);
+	g_free(c);
 
 }
 
@@ -319,9 +319,9 @@ void send_motd(struct network *n, struct transport_context *c)
 	irc_sendf(c, ":%s %d %s :Start of MOTD\r\n", server_name, RPL_MOTDSTART, nick);
 	for(i = 0; lines[i]; i++) {
 		irc_sendf(c, ":%s %d %s :%s\r\n", server_name, RPL_MOTD, nick, lines[i]);
-		free(lines[i]);
+		g_free(lines[i]);
 	}
-	free(lines);
+	g_free(lines);
 	irc_sendf(c, ":%s %d %s :End of MOTD\r\n", server_name, RPL_ENDOFMOTD, nick);
 	xmlFree(nick); xmlFree(server_name);
 }
@@ -388,7 +388,7 @@ void handle_client_receive(struct transport_context *c, char *raw, void *_client
 			tmp = list_make_string(client->network->features);
 		
 			irc_sendf(c, ":%s 005 %s %s :are supported on this server\r\n", server_name, nick, tmp);
-			free(tmp);
+			g_free(tmp);
 		}
 
 		send_motd(client->network, c);
@@ -419,7 +419,7 @@ void handle_client_receive(struct transport_context *c, char *raw, void *_client
    } else if(!g_ascii_strcasecmp(l->args[0], "NICK") && l->args[1] && client->authenticated && !client->nick) {
        /* Don't allow the client to change the nick now. We would change it after initialization */
        if (strcmp(l->args[1], nick)) irc_sendf(c, ":%s NICK %s", l->args[1], nick);
-       client->nick = strdup(l->args[1]); /* Save nick */
+       client->nick = g_strdup(l->args[1]); /* Save nick */
 	} else if(!g_ascii_strcasecmp(l->args[0], "NICK") && l->args[1] && !g_ascii_strcasecmp(l->args[1], nick)) {
 		/* Ignore attempts to change nick to the current nick */
 	} else if(!g_ascii_strcasecmp(l->args[0], "QUIT")) {
@@ -467,7 +467,7 @@ void handle_client_receive(struct transport_context *c, char *raw, void *_client
 void handle_new_client(struct transport_context *c_server, struct transport_context *c_client, void *_server)
 {
 	struct network *n = (struct network *)_server;
-	struct client *d = malloc(sizeof(struct client));
+	struct client *d = g_new(struct client,1);
 
 	d->authenticated = 0;
 	d->network = n;
@@ -494,14 +494,14 @@ void network_add_listen(struct network *n, xmlNodePtr listen)
 		return;
 	} 
 	
-	n->incoming = realloc(n->incoming, (i+2) * sizeof(struct transport_context *));
+	n->incoming = g_realloc(n->incoming, (i+2) * sizeof(struct transport_context *));
 	n->incoming[i] = t;
 	n->incoming[i+1] = NULL;
 
 }
 
 struct network *connect_network(xmlNodePtr conf) {
-	struct network *s = malloc(sizeof(struct network));
+	struct network *s = g_new(struct network,1);
 	char *nick, *user_name;
 	xmlNodePtr cur;
 
@@ -523,7 +523,7 @@ struct network *connect_network(xmlNodePtr conf) {
 
 	/* Find <listen> tag */
 	s->listen = NULL;
-	s->incoming = malloc(sizeof(struct transport_context *));
+	s->incoming = g_new(struct transport_context *, 1);
 	s->incoming[0] = NULL;
 	s->listen = xmlFindChildByElementName(s->xmlConf, "listen");
 
@@ -580,7 +580,7 @@ int close_network(struct network *s)
 	/* Remove all listening lines */
 	if(s->incoming) {
 		for(i = 0; s->incoming[i] != NULL; i++) transport_free(s->incoming[i]);
-		free(s->incoming);
+		g_free(s->incoming);
 	}
 
 	close_server(s);
@@ -589,7 +589,7 @@ int close_network(struct network *s)
 
 	if(s->reconnect_id) g_source_remove(s->reconnect_id);
 
-	free(s);
+	g_free(s);
 
 	xmlFree(server_name);
 	if(!networks)clean_exit();
@@ -655,7 +655,7 @@ gboolean network_change_nick(struct network *s, char *nick)
 		p = strchr(s->hostmask, '!');
 		if (!p) return FALSE;
 		asprintf(&tmp, "%s%s", nick, p);
-		free(s->hostmask);
+		g_free(s->hostmask);
 		s->hostmask = tmp;
 	}
 	return TRUE;

@@ -88,12 +88,12 @@ static void free_nick(struct channel_nick *n)
 	n->global->refcount--;
 	if(n->global->refcount == 0) {
 		if(n->global->hostmask != NULL)
-			free(n->global->hostmask);
-		free(n->global->name);
+			g_free(n->global->hostmask);
+		g_free(n->global->name);
 		n->channel->network->nicks = g_list_remove(n->channel->network->nicks, n->global);
-		free(n->global);
+		g_free(n->global);
 	}
-	free(n);
+	g_free(n);
 }
 
 
@@ -111,7 +111,7 @@ static void free_names(struct channel *c)
 static void free_channel(struct channel *c)
 {
 	free_names(c);
-	if(c->topic)free(c->topic);
+	if(c->topic)g_free(c->topic);
 	c->topic = NULL;
 }
 
@@ -131,7 +131,7 @@ struct channel *find_channel(struct network *st, char *name)
 struct channel *find_add_channel(struct network *st, char *name) {
 	struct channel *c = find_channel(st, name);
 	if(c)return c;
-	c = malloc(sizeof(struct channel));
+	c = g_new(struct channel,1);
 	memset(c, 0, sizeof(struct channel));
 	c->network = st;
 	st->channels = g_list_append(st->channels, c);
@@ -179,10 +179,9 @@ static struct network_nick *find_add_network_nick(struct network *n, char *name)
 	}
 
 	/* create one, if it doesn't exist */
-	nd = malloc(sizeof(struct network_nick));
-	memset(nd, 0, sizeof(struct network_nick));
+	nd = g_new0(struct network_nick,1);
 	nd->refcount = 1;
-	nd->name = strdup(name);
+	nd->name = g_strdup(name);
 	nd->hostmask = NULL;
 	nd->channels = NULL;
 	
@@ -196,8 +195,7 @@ struct channel_nick *find_add_nick(struct channel *c, char *name) {
 	if(n) return n;
 	if(strlen(name) == 0)return NULL;
 
-	n = malloc(sizeof(struct channel_nick));
-	memset(n, 0, sizeof(struct channel_nick));
+	n = g_new0(struct channel_nick,1);
 	if(is_prefix(realname[0], c->network)) {
 		n->mode = realname[0];
 		realname++;
@@ -216,7 +214,7 @@ static void handle_join(struct network *s, struct line *l)
 	struct started_join *sj;
 	int cont = 1;
 	char *own_nick;
-	char *name = strdup(l->args[1]), *p, *n;
+	char *name = g_strdup(l->args[1]), *p, *n;
 
 	p = name;
 
@@ -231,8 +229,8 @@ static void handle_join(struct network *s, struct line *l)
 			c = find_add_channel(s, p);
 			ni = find_add_nick(c, line_get_nick(l));
 			if(ni->global->hostmask)
-				free(ni->global->hostmask);
-			ni->global->hostmask = strdup(l->origin);
+				g_free(ni->global->hostmask);
+			ni->global->hostmask = g_strdup(l->origin);
 
 			/* The user is joining a channel */
 			own_nick = xmlGetProp(s->xmlConf, "nick");
@@ -240,10 +238,10 @@ static void handle_join(struct network *s, struct line *l)
 			if(!irccmp(s, line_get_nick(l), own_nick)) {
 				xmlSetProp(c->xmlConf, "autojoin", "1");
 				g_message(_("Joining channel %s"), p);
-
+				
 				/* send WHO command for updating hostmasks */
-				sj = malloc(sizeof(struct started_join));
-				sj->channel = strdup(p);
+				sj = g_new(struct started_join,1);
+				sj->channel = g_strdup(p);
 				sj->network = s;
 				started_join_list = g_list_append(started_join_list, sj);
 				irc_send_args(s->outgoing, "WHO", p, NULL);
@@ -253,7 +251,7 @@ static void handle_join(struct network *s, struct line *l)
 		}
 		p = n+1;
 	}
-	free(name);
+	g_free(name);
 }
 
 
@@ -263,7 +261,7 @@ static void handle_part(struct network *s, struct line *l)
 	struct channel_nick *n;
 	int cont = 1;
 	char *own_nick;
-	char *name = strdup(l->args[1]), *p, *m;
+	char *name = g_strdup(l->args[1]), *p, *m;
 
 	p = name;
 	if(!line_get_nick(l))return;
@@ -283,7 +281,7 @@ static void handle_part(struct network *s, struct line *l)
 			g_message(_("Leaving %s"), p);
 			xmlSetProp(c->xmlConf, "autojoin", "0");
 			free_channel(c);
-			free(c);
+			g_free(c);
 			c = NULL;
 			xmlFree(own_nick);
 			p = m + 1;
@@ -305,14 +303,14 @@ static void handle_part(struct network *s, struct line *l)
 		g_warning(_("Can't part or let other nick part %s(unknown channel)\n"), p);
 		p = m + 1;
 	}
-	free(name);
+	g_free(name);
 }
 
 static void handle_kick(struct network *s, struct line *l) {
 	struct channel *c;
 	struct channel_nick *n;
-	char *nicks = strdup(l->args[2]);
-	char *channels = strdup(l->args[1]);
+	char *nicks = g_strdup(l->args[2]);
+	char *channels = g_strdup(l->args[1]);
 	char *curnick, *curchan, *nextchan, *nextnick;
 	char cont = 1;
 	char *own_nick;
@@ -363,8 +361,8 @@ static void handle_kick(struct network *s, struct line *l) {
 
 static void handle_topic(struct network *s, struct line *l) {
 	struct channel *c = find_channel(s, l->args[1]);
-	if(c->topic)free(c->topic);
-	c->topic = strdup(l->args[2]);
+	if(c->topic)g_free(c->topic);
+	c->topic = g_strdup(l->args[2]);
 }
 
 static void handle_332(struct network *s, struct line *l) {
@@ -375,8 +373,8 @@ static void handle_332(struct network *s, struct line *l) {
 		return;
 	}
 
-	if(c->topic)free(c->topic);
-	c->topic = strdup(l->args[3]);
+	if(c->topic)g_free(c->topic);
+	c->topic = g_strdup(l->args[3]);
 }
 
 static void handle_no_topic(struct network *s, struct line *l) {
@@ -387,7 +385,7 @@ static void handle_no_topic(struct network *s, struct line *l) {
 		return;
 	}
 
-	if(c->topic)free(c->topic);
+	if(c->topic)g_free(c->topic);
 	c->topic = NULL;
 }
 
@@ -403,14 +401,14 @@ static void handle_namreply(struct network *s, struct line *l) {
 		free_names(c);
 		c->namreply_started = 1;
 	}
-	tmp = names = strdup(l->args[4]);
+	tmp = names = g_strdup(l->args[4]);
 	while((t = strchr(tmp, ' '))) {
 		*t = '\0';
 		if(tmp[0])find_add_nick(c, tmp);
 		tmp = t+1;
 	}
 	if(tmp[0])find_add_nick(c, tmp);
-	free(names);
+	g_free(names);
 }
 
 static void handle_end_names(struct network *s, struct line *l) {
@@ -451,8 +449,8 @@ static void handle_end_who(struct network *s, struct line *l) {
 		if((s == sj->network) && (!strcmp(sj->channel, l->args[2]))) {
    			l->options |= LINE_DONT_SEND;
 			started_join_list = g_list_remove(started_join_list, sj);
-			free(sj->channel);
-			free(sj);
+			g_free(sj->channel);
+			g_free(sj);
 			break;
 		}
 		gl = gl->next;
@@ -553,8 +551,8 @@ static void handle_004(struct network *s, struct line *l)
 {
 	if(l->direction == TO_SERVER)return;
 
-	s->supported_modes[0] = strdup(l->args[4]);
-	s->supported_modes[1] = strdup(l->args[5]);
+	s->supported_modes[0] = g_strdup(l->args[4]);
+	s->supported_modes[1] = g_strdup(l->args[5]);
 }
 
 static void handle_005(struct network *s, struct line *l)
@@ -566,10 +564,10 @@ static void handle_005(struct network *s, struct line *l)
 		for(j = 0; s->features[j]; j++);
 	} 
 
-	s->features = realloc(s->features, sizeof(char *) * (l->argc+j));
+	s->features = g_realloc(s->features, sizeof(char *) * (l->argc+j));
 
 	for(i = 3; i < l->argc-1; i++) {
-		s->features[j] = strdup(l->args[i]);
+		s->features[j] = g_strdup(l->args[i]);
 		if(!g_ascii_strncasecmp(s->features[j], "CASEMAPPING", strlen("CASEMAPPING"))) {
 			if(strlen(s->features[j]) < strlen("CASEMAPPING=")) {
 				g_warning(_("CASEMAPPING variable sent by server invalid"));
@@ -607,8 +605,8 @@ static void handle_nick(struct network *s, struct line *l)
 		struct channel *c = (struct channel *)g->data;
 		struct channel_nick *n = find_nick(c, line_get_nick(l));
 		if(n) {
-			free(n->global->name);
-			n->global->name = strdup(l->args[1]);
+			g_free(n->global->name);
+			n->global->name = g_strdup(l->args[1]);
 		}
 		g = g_list_next(g);
 	}
@@ -628,7 +626,7 @@ void state_reconnect(struct network *s)
 	while(l) {
 		struct channel *ch = (struct channel *)l->data;
 		free_channel(ch);
-		free(ch);
+		g_free(ch);
 		l = g_list_next(l);
 	}
 

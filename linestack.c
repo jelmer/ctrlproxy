@@ -63,11 +63,11 @@ struct linestack_context *linestack_new(char *name, char *args)
 
 	if(!b) return NULL;
 
-	c = malloc(sizeof(struct linestack_context));
+	c = g_new(struct linestack_context, 1);
 	c->functions = b;
 	c->data = NULL;
 	if(!b->init(c, args)) { 
-		free(c);
+		g_free(c);
 		return NULL;
 	}
 
@@ -102,7 +102,7 @@ void linestack_send_limited(struct linestack_context *b, struct transport_contex
 		struct line *l = (struct line *)gl->data;
 		char *raw = irc_line_string_nl(l);
 		transport_write(t, raw);
-		free(raw);
+		g_free(raw);
 		free_line(l);
 		gl = gl->next;
 	}
@@ -128,7 +128,7 @@ void linestack_send(struct linestack_context *b, struct transport_context *t)
 		struct line *l = (struct line *)gl->data;
 		char *raw = irc_line_string_nl(l);
 		transport_write(t, raw);
-		free(raw);
+		g_free(raw);
 		free_line(l);
 		gl = gl->next;
 	}
@@ -138,7 +138,7 @@ void linestack_send(struct linestack_context *b, struct transport_context *t)
 gboolean linestack_destroy(struct linestack_context *b) 
 {
 	if(b->functions->destroy)b->functions->destroy(b);
-	free(b);
+	g_free(b);
 	return TRUE;
 }
 
