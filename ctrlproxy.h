@@ -139,6 +139,7 @@ int close_server(struct network *s);
 extern GList *networks;
 void clients_send(struct network *, struct line *, struct transport_context *exception);
 void network_add_listen(struct network *, xmlNodePtr);
+void disconnect_client(struct client *c);
 
 /* line.c */
 struct line *linedup(struct line *l);
