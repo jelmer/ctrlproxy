@@ -24,6 +24,7 @@
 #include <stdlib.h>
 
 #include <gnutls/gnutls.h>
+#include <gnutls/extra.h>
 #include <gnutls/x509.h>
 
 #undef G_LOG_DOMAIN
@@ -185,7 +186,12 @@ gboolean g_io_gnutls_init()
 
 gboolean g_io_gnutls_set_files(char *certf, char *keyf)
 {
-	gnutls_certificate_set_x509_trust_file(xcred, certf, GNUTLS_X509_FMT_PEM);
+	gint err;
+	err = gnutls_certificate_set_x509_trust_file(xcred, certf, GNUTLS_X509_FMT_PEM);
+	if(err < 0) return g_io_gnutls_error(err);
+
+	err = gnutls_certificate_set_x509_key_file(xcred, certf, keyf, GNUTLS_X509_FMT_PEM);
+	if(err < 0) return g_io_gnutls_error(err);
 
 	return TRUE;
 }
@@ -194,7 +200,10 @@ GIOChannel *g_io_gnutls_get_iochannel(GIOChannel *handle, gboolean server)
 {
 	GIOTLSChannel *chan;
 	GIOChannel *gchan;
-	static const int cert_type_priority[2] = { GNUTLS_CRT_X509, 0 };
+	static const int cert_type_priority[3] = { GNUTLS_CRT_X509, GNUTLS_CRT_OPENPGP, 0 };
+	static const int cipher_priority[5] =
+    { GNUTLS_CIPHER_AES_128_CBC, GNUTLS_CIPHER_3DES_CBC,
+   GNUTLS_CIPHER_ARCFOUR_128, GNUTLS_CIPHER_ARCFOUR_40, 0 };
 	int fd;
 
 	g_return_val_if_fail(handle != NULL, NULL);
@@ -207,6 +216,7 @@ GIOChannel *g_io_gnutls_get_iochannel(GIOChannel *handle, gboolean server)
 	gnutls_init(&chan->session, server?GNUTLS_SERVER:GNUTLS_CLIENT);
 	gnutls_set_default_priority(chan->session);
 
+	gnutls_cipher_set_priority(chan->session, cipher_priority);
 	gnutls_certificate_type_set_priority(chan->session, cert_type_priority);
 	gnutls_handshake_set_private_extensions(chan->session, 1);
     gnutls_credentials_set(chan->session, GNUTLS_CRD_CERTIFICATE, xcred);
