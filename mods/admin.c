@@ -47,6 +47,7 @@ struct admin_command {
 	void (*handler) (char **args, struct line *l);
 	char *help;
 	char *help_details;
+	struct plugin *plugin;
 };
 
 void admin_out(struct line *l, char *fmt, ...)
@@ -424,6 +425,7 @@ void register_admin_command(char *name, void (*handler) (char **args, struct lin
 	cmd->handler = handler;
 	cmd->help = help;
 	cmd->help_details = help_details;
+	cmd->plugin = current_plugin;
 	commands = g_list_append(commands, cmd);
 }
 
@@ -468,6 +470,7 @@ static gboolean handle_data(struct line *l) {
 	int argc = 0;
 	int i;
 	GList *gl;
+	struct plugin *old_plugin = current_plugin;
 	if(l->direction != TO_SERVER) return TRUE;
 
 	if(strcasecmp(l->args[0], "CTRLPROXY") == 0)cmdoffset = 1;
@@ -505,9 +508,11 @@ static gboolean handle_data(struct line *l) {
 	while(gl) {
 		struct admin_command *cmd = (struct admin_command *)gl->data;
 		if(!strcasecmp(cmd->name, args[0])) {
+			current_plugin = cmd->plugin;
 			cmd->handler(args, l);
 			g_strfreev(args);
 			free(tmp);
+			current_plugin = old_plugin;
 			return TRUE;
 		}
 		gl = gl->next;

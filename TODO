@@ -6,10 +6,10 @@
 - add member 'nick' to struct line
 - add more help data
 - Net::IRC-like interface
-- use current_plugin
 - internationalization (i18n)
 - linestack_mysql
 - use new filter system
+- add timer that uses current_plugin
 
 report_time:
  - test

@@ -1,5 +1,5 @@
 Ctrlproxy 2.7:
- * Add initial support for unloading crashing modules
+ * Add support for unloading crashing modules
  * Use correct string comparison when necessary
  * Support 'true' RFC1459 string comparison
  * Respect CASEMAPPING sent by server
