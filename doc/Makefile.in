@@ -16,7 +16,6 @@ man5dir = @mandir@/man5
 man7dir = @mandir@/man7
 @NODB2LATEX@DB2LATEXPATH = @DB2LATEXPATH@
 DIA = @DIA@
-ENABLED_DOCS = $(test ctrlproxy.1 && echo 1)
 @DOCE@ENABLED_DOCS = 1
 EPSTOPDF = @EPSTOPDF@
 
