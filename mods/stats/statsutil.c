@@ -18,39 +18,5 @@
 */
 
 #define _GNU_SOURCE
-#include "ctrlproxy.h"
-#include <stdio.h>
-#include <stdarg.h>
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <time.h>
+#include "statsutil.h"
 #include <tdb.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-
-int traverse_keys(TDB_CONTEXT *tdb_context, TDB_DATA key, TDB_DATA value, void *pattern)
-{
-	long *ivalue;
-	if(!key.dptr) return 0;
-
-	ivalue = (long *)value.dptr;
-	printf("%s: %ld\n", key.dptr, *ivalue);
-	return 0;
-}
-
-int main(int argc, char **argv)
-{
-	TDB_CONTEXT *tdb_context;
-
-	if(argc < 2) { 
-		fprintf(stderr, "No file specified\n");
-		return 1;
-	}
-
-	tdb_context = tdb_open(argv[1], 0, 0, O_RDONLY, 00700);
-
-	tdb_traverse(tdb_context, traverse_keys, NULL);
-	return 0;
-}
