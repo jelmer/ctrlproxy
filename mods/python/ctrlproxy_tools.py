@@ -139,7 +139,7 @@ import libxml2
 
 def get_xml_module_names(typ = None):
 	"""Returns a list of modules for which a Moduleinfo is available"""
-	path = os.path.join(ctrlproxy.get_path("prefix"),"share","ctrlproxy","xml")
+	path = os.path.join(ctrlproxy.get_path("prefix"),"share","ctrlproxy","help")
 	dl = os.listdir(path)
 	rv = []
 	for i in dl:

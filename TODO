@@ -8,6 +8,8 @@
  - fix bug in repl_simple (not all channels are always synced)
 
 2.8:
+ - win32 support with traybar
+ - gtk/gnome traybar item
  - rewrite stats stuff to use MySQL
  - <network><listen/></network> -> <listen/>
  - support for various authenticators (pam,plain,etc)

@@ -56,7 +56,7 @@
 
 		<plugin autoload="1" file="libpython">
 			<script autoload="1">
-				<file>scripts/webconfig/webconfig.py</file>
+				<file>scripts/web/server.py</file>
 			</script>
 		</plugin>
 		

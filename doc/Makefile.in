@@ -55,8 +55,8 @@ lint: ctrlproxy.xml $(MODS)
 	$(XMLLINT) --xinclude ctrlproxy.xml
 
 install-xml:
-	$(INSTALL) -d $(DESTDIR)$(share)
-	$(INSTALL) $(MOD_SOURCES) $(DESTDIR)$(share)
+	$(INSTALL) -d $(DESTDIR)$(share)/help
+	$(INSTALL) $(MOD_SOURCES) $(DESTDIR)$(share)/help
 
 install: all install-xml
 ifeq ($(ENABLED_DOC_INSTALL), 1)
