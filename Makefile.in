@@ -53,6 +53,7 @@ install-doc:
 
 install-data:
 	$(INSTALL) motd $(DESTDIR)$(datadir)/ctrlproxy
+	$(INSTALL) ctrlproxyrc.default $(DESTDIR)$(datadir)/ctrlproxy
 
 install-mods:
 	$(MAKE) -C mods install
