@@ -524,8 +524,6 @@ static struct admin_command builtin_commands[] = {
 static gboolean handle_data(struct line *l) {
 	char *tmp, **args = NULL;
 	int cmdoffset = 0;
-	GError *error = NULL;
-	int argc = 0;
 	int i;
 	GList *gl;
 	struct plugin *old_plugin = current_plugin;
@@ -556,10 +554,7 @@ static gboolean handle_data(struct line *l) {
 		}
 	}
 
-	if(!g_shell_parse_argv(tmp, &argc, &args, &error)) {
-		admin_out(l, "Parse error of argument %s", error->message);
-		return FALSE;
-	}
+	args = g_strsplit(tmp, " ", 0);
 
 	/* Ok, arguments are processed now. Execute the corresponding command */
 	gl = commands;
