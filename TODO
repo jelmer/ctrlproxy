@@ -1,10 +1,10 @@
 2.7 
  - update documentation
-  - upgrading from 2.6 SSL support to 2.7 SSL/GNUTLS support
+  - finish UPGRADING
   - repl changes
-  - special doc/part for users that are upgrading
   - synopsis integration?
  - test dcc module
+ - finish webconfig (worked on by poelzi)
  - fix bug in repl_simple (not all channels are always synced)
 
 2.8:

@@ -274,10 +274,10 @@ int main(int argc, const char *argv[])
 		asprintf(&configuration_file, "%s/.ctrlproxyrc", homedir);
 #endif
 		/* Copy configuration file from default location if none existed yet */
-		if(!g_file_test(configuration_file, G_FILE_TEST_EXISTS)) {
-			readConfig(SHAREDIR"/ctrlproxyrc.default");
-		} else {
+		if(g_file_test(configuration_file, G_FILE_TEST_EXISTS)) {
 			readConfig(configuration_file);
+		} else {
+			readConfig(SHAREDIR"/ctrlproxyrc.default");
 		}
 	}
 
