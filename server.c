@@ -56,11 +56,12 @@ int close_all(void)
 
 int close_server(struct server *s)
 {
-	struct module_context *c = s->handlers;
+	struct module_context *c = s->handlers, *d;
 	server_send_raw(s, "QUIT\r\n");
 	while(c) {
+		d = c->next;
 		unload_module(c);
-		c = c->next;
+		c = d;
 	}
 	free(s->hostmask);
 	DLIST_REMOVE(servers, s);

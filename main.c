@@ -15,7 +15,7 @@ int main(int argc, const char *argv[])
 	char **sections;
 	int i;
 	char *t;
-	char *nick, *port, *host, *fullname, *pass, *mods, *modsdup;
+	char *nick, *port, *host, *pass, *mods, *modsdup;
 	char *tmp;
 	char *autojoin;
 	int final = 0;
@@ -70,7 +70,6 @@ int main(int argc, const char *argv[])
 			fprintf(stderr, "No host specified for %s !\n", t);
 			return 1;
 		}
-		fullname = get_conf(t, "fullname");
 		pass = get_conf(t, "password");
 		
 		s = connect_to_server(host, atoi(port), nick, pass);
