@@ -48,7 +48,24 @@ void CStatusDlg::OnShowWindow(BOOL bShow, UINT nStatus)
 {
 	CDialog::OnShowWindow(bShow, nStatus);
 	if(!bShow) return;
-		
+	
+	UpdateStats();
+
+}
+
+BOOL CStatusDlg::OnInitDialog() 
+{
+	CDialog::OnInitDialog();
+	
+	UpdateStats();
+
+	return TRUE;  // return TRUE unless you set the focus to a control
+	              // EXCEPTION: OCX Property Pages should return FALSE
+}
+
+void CStatusDlg::UpdateStats()
+{
+			
 	CString tmp;
 	tmp.Format("Connected to %d networks", g_list_length(get_network_list()));
 	m_numnetworks.SetWindowText(tmp);
@@ -62,10 +79,9 @@ void CStatusDlg::OnShowWindow(BOOL bShow, UINT nStatus)
 		gl = gl->next;
 	}
 
-	tmp.Format("Connected to %d channels", nch);
+	tmp.Format("%d channels joined", nch);
 	m_numchannels.SetWindowText(tmp);
 
-	tmp.Format("Connected to %d clients", nch);
+	tmp.Format("%d clients connected", nch);
 	m_numclients.SetWindowText(tmp);
-
 }
