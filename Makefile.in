@@ -23,6 +23,9 @@ all: $(BINS)
 ctrlproxy: $(OBJS)
 	$(CC) $(LIBS) -rdynamic -o $@ $(OBJS)
 
+test-parser: test-parser.o line.o transport.o
+	$(CC) -o $@ test-parser.o line.o transport.o
+
 printstats: printstats.o
 	$(CC) -ltdb -o $@ $<
 

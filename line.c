@@ -119,6 +119,20 @@ struct line * irc_parse_line(char *d)
 	return l;
 }
 
+gboolean irc_send_line(struct transport_context *c, struct line *l) {
+	char *raw;
+	int ret;
+
+	if(!c) return FALSE;
+
+	raw = irc_line_string_nl(l);
+	ret = transport_write(c, raw);
+	free(raw);
+
+	return (ret != -1);
+}
+
+
 char *irc_line_string_nl(struct line *l) 
 {
 	char *raw = irc_line_string(l);
@@ -167,7 +181,6 @@ int requires_colon(char *ch)
 char *irc_line_string(struct line *l) {
 	size_t len = 0; unsigned int i;
 	char *ret;
-	g_assert(l);
 
 	/* Silently ignore empty messages */
 	if(l->argc == 0) return strdup("");
@@ -212,19 +225,6 @@ char *line_get_nick(struct line *l)
 	if(!t)return nick;
 	*t = '\0';
 	return nick;
-}
-
-gboolean irc_send_line(struct transport_context *c, struct line *l) {
-	char *raw;
-	int ret;
-
-	if(!c) return FALSE;
-
-	raw = irc_line_string_nl(l);
-	ret = transport_write(c, raw);
-	free(raw);
-
-	return (ret != -1);
 }
 
 gboolean irc_sendf(struct transport_context *c, char *fmt, ...) 
