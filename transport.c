@@ -53,7 +53,7 @@ gboolean unregister_transport(char *name)
 	return FALSE;
 }
 
-struct transport_context *transport_connect(const char *name, xmlNodePtr p, receive_handler r_h, disconnect_handler d_h, void *d)
+struct transport_context *transport_connect(const char *name, xmlNodePtr p, receive_handler r_h, connected_handler c_h, disconnect_handler d_h, void *d)
 {
 	struct transport_context *ret;
 	struct transport_ops *t;
@@ -75,6 +75,7 @@ struct transport_context *transport_connect(const char *name, xmlNodePtr p, rece
 	ret->data = NULL;
 	ret->caller_data = d;
 	ret->on_new_client = NULL;
+	ret->on_connect = c_h;
 	ret->on_disconnect = d_h;
 	ret->on_receive = r_h;
 	
@@ -108,6 +109,7 @@ struct transport_context *transport_listen(const char *name, xmlNodePtr p, newcl
 	ret->functions = t;
 	ret->data = NULL;
 	ret->caller_data = d;
+	ret->on_connect = NULL;
 	ret->on_new_client = n_h;
 	ret->on_disconnect = NULL;
 	ret->on_receive = NULL;

@@ -38,6 +38,7 @@ enum data_direction { UNKNOWN = 0, TO_SERVER = 1, FROM_SERVER = 2 };
 enum has_colon { COLON_UNKNOWN = 0, WITH_COLON = 1, WITHOUT_COLON = 2 };
 
 typedef void (*disconnect_handler) (struct transport_context *, void *data);
+typedef void (*connected_handler) (struct transport_context *, void *data);
 typedef void (*receive_handler) (struct transport_context *, char *l, void *data);
 typedef void (*newclient_handler) (struct transport_context *, struct transport_context *, void *data);
 
@@ -57,6 +58,7 @@ struct transport_context {
 	void *data;
 	void *caller_data;
 	disconnect_handler on_disconnect;
+	connected_handler on_connect;
 	receive_handler on_receive;
 	newclient_handler on_new_client;
 };
@@ -197,7 +199,7 @@ extern struct plugin *current_plugin;
 /* transport.c */
 void register_transport(struct transport_ops *);
 gboolean unregister_transport(char *name);
-struct transport_context *transport_connect(const char *name, xmlNodePtr p, receive_handler, disconnect_handler, void *data);
+struct transport_context *transport_connect(const char *name, xmlNodePtr p, receive_handler, connected_handler, disconnect_handler, void *data);
 struct transport_context *transport_listen(const char *name, xmlNodePtr p, newclient_handler, void *data);
 void transport_free(struct transport_context *);
 int transport_write(struct transport_context *, char *l);

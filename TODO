@@ -6,7 +6,7 @@
   - special doc/part for users that are upgrading
   - synopsis integration?
  - test dcc module
- - apply poelzi's async patch
+ - fix bug in repl_simple (not all channels are always synced)
 
 2.8:
  - rewrite stats stuff to use MySQL

@@ -139,34 +139,12 @@ gboolean connect_next_server(struct network *s)
 	return connect_current_server(s);
 }
 
-gboolean connect_current_server(struct network *s) {
-	char *server_name = xmlGetProp(s->xmlConf, "name"),
-	     *fullname, *nick, *username, *password;
+void server_send_login (struct transport_context *c, void *_server) {
+	struct network *s = (struct network *)_server;
+	char *server_name = xmlGetProp(s->xmlConf, "name");
+	char *nick, *username, *fullname, *password;
 
-
-	if(!s->current_server){
-		xmlSetProp(s->xmlConf, "autoconnect", "0");
-		g_warning(_("No servers listed for network %s, not connecting\n"), server_name);
-		xmlFree(server_name);
-		return TRUE;
-	}
-
-	g_message(_("Connecting with %s for server %s"), s->current_server->name, server_name);
-
-	s->outgoing = transport_connect(s->current_server->name, s->current_server, handle_server_receive, reconnect, s);
-
-	if(!xmlHasProp(s->xmlConf, "name") && xmlHasProp(s->current_server, "name")) {
-		xmlFree(server_name);
-		s->name_guessed = TRUE;
-		server_name = xmlGetProp(s->current_server, "name");
-		xmlSetProp(s->xmlConf, "name", server_name);
-	}
-
-	if(!s->outgoing) {
-		g_warning(_("Couldn't connect with network %s via transport %s"), server_name, s->current_server->name);
-		xmlFree(server_name);
-		return TRUE;
-	}
+	g_log(G_LOG_DOMAIN, G_LOG_LEVEL_INFO, _("Successfully connected to %s"), server_name);
 
 	nick = xmlGetProp(s->xmlConf, "nick");
 	username = xmlGetProp(s->xmlConf, "username");
@@ -182,11 +160,41 @@ gboolean connect_current_server(struct network *s) {
 	irc_send_args(s->outgoing, "NICK", nick, NULL);
 	irc_send_args(s->outgoing, "USER", username, my_hostname, server_name, fullname, NULL);
 
-	xmlFree(server_name);
 	xmlFree(nick);
 	xmlFree(username);
 	xmlFree(fullname);
 	xmlFree(password);
+
+}
+
+gboolean connect_current_server(struct network *s) {
+	char *server_name = xmlGetProp(s->xmlConf, "name");
+
+	if(!s->current_server){
+		xmlSetProp(s->xmlConf, "autoconnect", "0");
+		g_warning(_("No servers listed for network %s, not connecting\n"), server_name);
+		xmlFree(server_name);
+		return TRUE;
+	}
+
+	g_message(_("Connecting with %s for server %s"), s->current_server->name, server_name);
+
+	s->outgoing = transport_connect(s->current_server->name, s->current_server, handle_server_receive, server_send_login, reconnect, s);
+
+	if(!xmlHasProp(s->xmlConf, "name") && xmlHasProp(s->current_server, "name")) {
+		xmlFree(server_name);
+		s->name_guessed = TRUE;
+		server_name = xmlGetProp(s->current_server, "name");
+		xmlSetProp(s->xmlConf, "name", server_name);
+	}
+
+	if(!s->outgoing) {
+		g_warning(_("Couldn't connect with network %s via transport %s"), server_name, s->current_server->name);
+		xmlFree(server_name);
+		return TRUE;
+	}
+
+	xmlFree(server_name);
 
 	return FALSE;
 }

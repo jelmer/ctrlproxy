@@ -99,6 +99,18 @@ static pid_t piped_child(char* const command[], int *f_in)
 	return pid;
 }
 
+static gboolean handle_out (GIOChannel *ioc, GIOCondition o, gpointer data)
+{
+	struct transport_context *c = (struct transport_context *)data;
+
+	g_assert(o == G_IO_OUT);
+
+	/* only on outgoing connections */
+	if(c->on_connect) c->on_connect(c, c->caller_data);
+
+	return FALSE;
+}
+
 static void socket_to_iochannel(int sock, struct transport_context *c, enum ssl_mode ssl_mode)
 {
 	GIOChannel *ioc;
@@ -129,6 +141,8 @@ static void socket_to_iochannel(int sock, struct transport_context *c, enum ssl_
 	g_io_channel_set_close_on_unref(ioc, TRUE);
 	s->disc_id = g_io_add_watch(ioc, G_IO_IN, handle_in, (gpointer)c);
 	s->in_id = g_io_add_watch(ioc, G_IO_HUP, handle_disc, (gpointer)c);
+	
+	g_io_add_watch(ioc, G_IO_OUT, handle_out, (gpointer)c);
 
 	s->channel = ioc;
 	c->data = s;
@@ -369,7 +383,6 @@ static int connect_ip(struct transport_context *c)
 	socket_to_iochannel(sock, c, (ssl && atoi(ssl))?SSL_MODE_CLIENT:SSL_MODE_NONE);
 	xmlFree(ssl);
 
-	g_log(G_LOG_DOMAIN, G_LOG_LEVEL_INFO, _("Successfully connected to %s:%d"), hostname, port);
 	xmlFree(hostname);
 	return 0;
 }
