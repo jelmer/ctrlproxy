@@ -305,7 +305,6 @@ def run(server_class=BaseHTTPServer.HTTPServer, handler_class=Handler):
 	global server
 	print "Starting up"
 	print ctrl_args["port"]
-	print ctrl_args["port"].content
 	try:
 	#print ctrl_args["port"].content
 		server_address = ('', int(ctrl_args["port"].content))

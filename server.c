@@ -695,6 +695,8 @@ gboolean init_networks() {
 
 
 	g_timeout_add(1000 * 300, ping_loop, NULL);
+
+	return TRUE;
 }
 
 GList *get_network_list() { return networks; }
