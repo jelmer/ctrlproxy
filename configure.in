@@ -9,8 +9,10 @@ AC_CONFIG_HEADER([config.h])
 AC_PROG_CC
 AC_PROG_INSTALL
 
+
 BINS="ctrlproxy"
 MODS="liblog_irssi.so libctcp.so liblinestack_memory.so libauto-away.so libstrip.so libadmin.so libsocket.so libnoticelog.so libnickserv.so liblog_custom.so libantiflood.so librepl_simple.so librepl_command.so librepl_highlight.so liblinestack_file.so libreport_time.so librepl_memory.so librepl_none.so libmotd_file.so librepl_lastdisconnect.so libdcc.so"
+MODS_SUBDIRS=""
 
 # Checks for libraries.
 AC_CHECK_LIB([popt], [poptGetArg], , AC_MSG_ERROR([Popt is required]))
@@ -42,6 +44,7 @@ AC_TYPE_SIGNAL
 
 AC_SUBST(BINS)
 AC_SUBST(MODS)
+AC_SUBST(MODS_SUBDIRS)
 AC_CHECK_FUNCS([gethostbyname gethostname memset mkdir strcasecmp strchr strdup strerror strncasecmp strstr uname backtrace_symbols gettimeofday strrchr])
 AC_MSG_RESULT([Going to build the following plugins: ])
 AC_MSG_RESULT([$MODS])

@@ -1,19 +1,11 @@
 CC = @CC@
 prefix = @prefix@
 exec_prefix = @exec_prefix@
-INSTALL = @INSTALL@
-CFLAGS = -fPIC -I.. @CFLAGS@ @PKG_CFLAGS@ -DSHAREDIR=\"@datadir@\"
-moddir = @libdir@/ctrlproxy
+CFLAGS = -fPIC -I.. -I../.. @CFLAGS@ @PKG_CFLAGS@ -DSHAREDIR=\"@datadir@\"
 
-MODS = @MODS@
+.PHONY: all clean distclean
 
-.PHONY: all install clean distclean
-
-all: $(MODS)
-
-install: all
-	$(INSTALL) -d $(DESTDIR)$(moddir)
-	$(INSTALL) $(MODS) $(DESTDIR)$(moddir)
+all: libsocket.so
 
 %.o: %.c
 	$(CC) $(CFLAGS) -fPIC -c $<
@@ -22,7 +14,7 @@ libsocket.so: @SOCKET_OBJS@
 	$(CC) $(CFLAGS) -shared -o $@ @SOCKET_OBJS@ @SSL_LIB@
 
 clean:
-	rm -f $(MODS) *.o
+	rm -f *.o *.so
 
 distclean: clean
 	rm -f Makefile
