@@ -56,11 +56,8 @@
 		<plugin autoload="1" file="libmotd_file"/>
 
 
-		<plugin autoload="0" file="libpython">
-			<script autoload="1">
-				<file>scripts/web/server.py</file>
-				<argument name="port">8888</argument>
-			</script>
+		<plugin autoload="1" file="libpython2">
+			<!--			<script>scripts/web/server.py</script> -->
 		</plugin>
 		
 

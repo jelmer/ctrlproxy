@@ -23,13 +23,15 @@ lib%.so: %.o
 build: ctrlproxy_wrap.c 
 	LDFLAGS="$(LDFLAGS)" CFLAGS="$(CFLAGS)" $(PYTHON) setup.py build
 
-install:
+install: all
 	$(PYTHON) setup.py install
 	$(INSTALL) libpython2.so $(DESTDIR)$(moddir)
 
 clean:
-	rm -f *_wrap.c
+	rm -f *_wrap.c *.pyc
+	rm -f ctrlproxy.py
 	$(PYTHON) setup.py clean
+	rm -rf build/
 
 %_wrap.c: %.i
 	$(SWIG) -python $<

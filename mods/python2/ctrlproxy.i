@@ -8,9 +8,6 @@
 %ignore list_make_string;
 %ignore xmlFindChildByName;
 %ignore xmlFindChildByElementName;
-
-%include "../../ctrlproxy.h";
-
 %rename(get_version) ctrlproxy_version;
 %rename(Line) line;
 %rename(Plugin) plugin;
@@ -18,6 +15,8 @@
 %rename(Channel) channel;
 %rename(LineStack) linestack_context;
 %rename(Transport) transport_context;
+%include "../../ctrlproxy.h";
+
 
 %extend line {
 	line(struct line *l) {
@@ -85,6 +84,10 @@
 
 	int contains(struct client *c) {
 		return verify_client(self, c);
+	}
+
+	int compareNicks(const char *n1, const char *n2) {
+		return irccmp(self, n1, n2);
 	}
 
 	GSList *replicate() {

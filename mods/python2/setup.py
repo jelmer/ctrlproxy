@@ -1,6 +1,4 @@
 from distutils.core import setup, Extension
-from string import split
-import os
 
 setup (name = 'CtrlProxy',
 	   version = '2.7',
@@ -8,9 +6,11 @@ setup (name = 'CtrlProxy',
 	   author_email = 'jelmer@vernstok.nl',
 	   url = 'http://ctrlproxy.vernstok.nl/',
 	   description = 'CtrlProxy bindings',
+	   license = 'GPL',
 	   ext_modules = [
-	   		Extension('ctrlproxy', 
+	   		Extension('_ctrlproxy', 
 		         	  sources = ['ctrlproxy_wrap.c']
 					 )
-			]
+			],
+		py_modules = [ 'ctrlproxy' ]
 		)
