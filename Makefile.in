@@ -69,6 +69,6 @@ clean:
 
 distclean: clean
 	rm -f Makefile build config.h ctrlproxy.pc ctrlproxy.spec *.log
-	rm -rf autom4te.cache/ config.log
+	rm -rf autom4te.cache/ config.log config.status
 	$(MAKE) -C mods distclean
 	$(MAKE) -C doc distclean
