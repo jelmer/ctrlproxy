@@ -62,30 +62,26 @@ static char *nickserv_nick(struct network *n)
 	return xmlGetProp(cur, "nick");
 }
 
+static void identify_me(struct network *network, char *nick)
+{
+	char *pass;
+	if(nickserv_find_nick(network, nick, &pass)) {
+		char *nickserv_n = nickserv_nick(network), *raw;
+		asprintf(&raw, "IDENTIFY %s", pass);
+		irc_send_args(network->outgoing, "PRIVMSG", nickserv_n, raw, NULL);
+		free(raw);
+		xmlFree(nickserv_n);
+	}
+}
+
 static gboolean log_data(struct line *l) {
 	char *pass;
 	static char *nickattempt = NULL;
-	static gboolean last_line_was_user = FALSE;
 
-	if(
-		/* User has changed his/her nick. Check whether this nick needs to be identified */
-	   (l->direction == FROM_SERVER && !strcasecmp(l->args[0], "NICK")) ||
-		/* We're in a login sequence */
-	   (last_line_was_user && l->direction == TO_SERVER && !strcasecmp(l->args[0], "NICK"))) {
-		if(nickserv_find_nick(l->network, l->args[1], &pass)) {
-			char *nickserv_n = nickserv_nick(l->network), *raw;
-			asprintf(&raw, "IDENTIFY %s", pass);
-			irc_send_args(l->network->outgoing, "PRIVMSG", nickserv_n, raw, NULL);
-			free(raw);
-			xmlFree(nickserv_n);
-		}
+	/* User has changed his/her nick. Check whether this nick needs to be identified */
+	if(l->direction == FROM_SERVER && !strcasecmp(l->args[0], "NICK")) {
+		identify_me(l->network, l->args[0]);
 	}
-
-	last_line_was_user = FALSE;
-	
-	/* Used in if-statement above */
-	if(l->direction == TO_SERVER && !strcasecmp(l->args[0], "USER")) 
-		last_line_was_user = TRUE;
 
 	/* Keep track of the last nick that the user tried to take */
 	if(l->direction == TO_SERVER && !strcasecmp(l->args[0], "NICK")) {
@@ -112,12 +108,22 @@ static gboolean log_data(struct line *l) {
 	return TRUE;
 }
 
+static void conned_data(struct network *n)
+{
+	char *nick;
+	nick = xmlGetProp(n->xmlConf, "nick");
+	identify_me(n, nick);
+	xmlFree(nick);
+}
+
 gboolean fini_plugin(struct plugin *p) {
+	del_server_connected_hook("nickserv");
 	del_filter(log_data);
 	return TRUE;
 }
 
 gboolean init_plugin(struct plugin *p) {
+	add_server_connected_hook("nickserv", conned_data);
 	add_filter("nickserv", log_data);
 	return TRUE;
 }

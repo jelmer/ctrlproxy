@@ -9,7 +9,6 @@
 - CONNECT command could try to connect immediately to a network if it is currently waiting for reconnect delay to end for example....
 - add gnutls support
 - new log system
-- generate data for configuration editor from XSL files
 - more user-friendly admin command
 - system wide ctrlproxy?
  - connect to central daemon that does a fork and starts ctrlproxy in that?

@@ -1,4 +1,5 @@
 Ctrlproxy 2.7:
+ * Fix issue with NickServ IDENTIFY'ing when connecting to server
  * Support multiple processes
  * Add cisg utility
  * Update items kept track of by stats by default
