@@ -76,9 +76,9 @@ Quick start
 -----------
 1. Install ctrlproxy (either from debian, or from source, see above)
 
-2. Run ctrlproxy-setup
+2. Run ctrlproxy --daemon
 
-3. Run ctrlproxy --daemon
+3. Surf to localhost:8888 with your webbrowser and configure ctrlproxy.
 
 4. Connect to ctrlproxy from your IRC client. By default, you can connect 
 to port 6670.
