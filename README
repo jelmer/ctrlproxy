@@ -11,6 +11,15 @@ when it was on high load ircing was getting pretty hard. I could
 of course run irssi on my workstation, but my workstation isn't on 
 24/7 and some people depend on the channel logs I generate.
 
+Features
+--------
+ * Connect to one server with many clients under one nick transparently
+ * Connect to multiple servers using only one process
+ * CTCP support when no client is attached
+ * irssi-style logging support
+ * Transparent detaching and attaching of clients
+ * Password support
+
 Requirements
 ------------
  * libpopt
