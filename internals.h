@@ -39,6 +39,9 @@
 #include <arpa/inet.h>
 #include <signal.h>
 #include <dlfcn.h>
+#include <sys/ioctl.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 /* conf.c */
 int load_conf_file(char *file);

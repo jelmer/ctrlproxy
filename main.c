@@ -22,6 +22,12 @@
 char my_hostname[MAXHOSTNAMELEN+2];
 char output_debug = 0;
 
+void signal_crash(int sig) 
+{
+	/* Just loop until someone runs gdb on us */
+	while(1)sleep(5);
+}
+
 void signal_quit(int sig)
 {
 	close_all();
@@ -55,6 +61,8 @@ int main(int argc, const char *argv[])
 	signal(SIGINT, signal_quit);
 	signal(SIGTERM, signal_quit);
 	signal(SIGPIPE, SIG_IGN);
+	signal(SIGHUP, SIG_IGN);
+	signal(SIGSEGV, signal_crash);
 
 	asprintf(&rcfile_default, "%s/.ctrlproxyrc", getenv("HOME")?getenv("HOME"):"");
 	rcfile = rcfile_default;
@@ -123,9 +131,29 @@ int main(int argc, const char *argv[])
 	}
 	
 	if(daemon) {
+		int fd;
+#ifdef SIGTTOU
+		signal(SIGTTOU, SIG_IGN);
+#endif
+
+#ifdef SIGTTIN
+		signal(SIGTTIN, SIG_IGN);
+#endif
+
+#ifdef SIGTSTP
+		signal(SIGTSTP, SIG_IGN);
+#endif
+
 		if(fork() != 0)exit(0);
+
+		setsid();
+		signal(SIGHUP, SIG_IGN);
+		close(STDIN_FILENO);
+		close(STDOUT_FILENO);
+		close(STDERR_FILENO);
+
 	}
-	
+
 	while(1) {
 		loop_all();
 	}
