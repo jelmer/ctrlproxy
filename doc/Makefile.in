@@ -23,6 +23,12 @@ DIA = @DIA@
 @DOCINSTALLE@ENABLED_DOC_INSTALL = 1
 EPSTOPDF = @EPSTOPDF@
 
+ifdef DEBUG_LATEX
+PDFLATEX += --interaction errorstopmode
+else
+PDFLATEX += --interaction nonstopmode
+endif
+
 .PHONY: all manpages htmlmanpages lint install clean distclean
 
 all: @DOCBUILDE@$(DOCS)
