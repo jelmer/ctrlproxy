@@ -57,3 +57,13 @@ TEST3_MODULES = ctcp log_custom log_irssi repl_command repl_highlight repl_lastd
 
 test3: test-filter $(patsubst %,test3.data.%.out,$(TEST3_MODULES))
 	@# Run all modules for which this is possible thru the test data files
+
+LINESTACK_MODULES = linestack_file linestack_memory
+
+test-linestack_%: ../mods/liblinestack_%.so test-linestack
+	@echo -n Test 4-$(patsubst test-linestack_%,%:,%@)
+	@./test-linestack `pwd`/$< < test1.data > $@.tmp
+	@cmp $@.tmp test1.data
+	@echo OK
+
+test4: test-linestack $(patsubst %,test-%,$(LINESTACK_MODULES))
