@@ -5,7 +5,7 @@
 <!ATTLIST plugin file CDATA #REQUIRED>
 <!ATTLIST plugin autoload CDATA "1">
 
-<!ELEMENT network ((servers|program|virtual),channel*,autosend*)>
+<!ELEMENT network ((servers|program|virtual),channel*,nickserv?,autosend*)>
 <!ATTLIST network name CDATA #IMPLIED>
 <!ATTLIST network client_pass CDATA "">
 <!ATTLIST network password CDATA "">
@@ -40,6 +40,10 @@
 
 <!ELEMENT message (#PCDATA)>
 <!ATTLIST message time CDATA #IMPLIED>
+
+<!ELEMENT sslcafile (#PCDATA)>
+<!ELEMENT sslcertfile (#PCDATA)>
+<!ELEMENT sslkeyfile (#PCDATA)>
 
 <!ELEMENT script (file,argument*)>
 <!ELEMENT file (#PCDATA)>
