@@ -214,7 +214,7 @@ static void handle_join(struct network *s, struct line *l)
 	struct channel_nick *ni;
 	struct started_join *sj;
 	int cont = 1;
-	char *own_nick, *tmp;
+	char *own_nick;
 	char *name = strdup(l->args[1]), *p, *n;
 
 	p = name;
@@ -243,9 +243,7 @@ static void handle_join(struct network *s, struct line *l)
 				sj->channel = strdup(p);
 				sj->network = s;
 				started_join_list = g_list_append(started_join_list, sj);
-				asprintf(&tmp, "WHO %s\n", p);
-				transport_write(s->outgoing, tmp);
-				free(tmp);
+				irc_send_args(s->outgoing, "WHO", p, NULL);
 			}
 
 			xmlFree(own_nick);
