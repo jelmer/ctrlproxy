@@ -20,7 +20,7 @@ BINS = @BINS@
 
 all: $(BINS)
 	$(MAKE) -C mods all
-@DOCE@	$(MAKE) -C doc all
+@DOCBUILDE@	$(MAKE) -C doc all
 
 ctrlproxy: $(OBJS)
 	$(CC) $(LIBS) -rdynamic -o $@ $(OBJS)

@@ -2,7 +2,6 @@
 - test linestack_file
 - test repl_command
 - finish configuration utility (worked on by Kyoshiro)
-- internationalization (i18n)
 - automated testsuite
 - use namespaces and XML schemas instead of DTD
 - use information from capabilities sent by server
@@ -21,5 +20,6 @@ Optional:
 - Net::IRC-like interface
 - more admin commands: DELNETWORK, NEXTSERVER, DELLISTEN, DELSERVER
 - automatically unload crashing modules?
+- internationalization (i18n)
 - linestack_mysql
 - be able to specify format of NICKSERV commands

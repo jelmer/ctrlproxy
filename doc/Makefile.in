@@ -16,12 +16,13 @@ man5dir = @mandir@/man5
 man7dir = @mandir@/man7
 @NODB2LATEX@DB2LATEXPATH = @DB2LATEXPATH@
 DIA = @DIA@
-@DOCE@ENABLED_DOCS = 1
+@DOCBUILDE@ENABLED_DOC_BUILD = 1
+@DOCINSTALL@ENABLED_DOC_INSTALL = 1
 EPSTOPDF = @EPSTOPDF@
 
 .PHONY: all manpages htmlmanpages lint install clean distclean
 
-all: @DOCE@$(DOCS)
+all: @DOCBUILDE@$(DOCS)
 
 manpages: ctrlproxy.1 ctrlproxyrc.5 $(MOD_MANPAGES)
 htmlmanpages: $(MOD_MANPAGES_HTML)
@@ -48,7 +49,7 @@ lint: ctrlproxy.xml $(MODS)
 	$(XMLLINT) --xinclude ctrlproxy.xml
 
 install: all
-ifeq ($(ENABLED_DOCS), 1)
+ifeq ($(ENABLED_DOC_INSTALL), 1)
 	$(INSTALL) -d $(DESTDIR)$(man1dir)
 	$(INSTALL) -d $(DESTDIR)$(man5dir)
 	$(INSTALL) -d $(DESTDIR)$(man7dir)

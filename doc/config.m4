@@ -1,8 +1,11 @@
-DOCE="#"
+DOCBUILDE="#"
+DOCINSTALLE="#"
 
 AC_ARG_ENABLE(docs,
 [ --enable-docs		 Build the documentation ],
-[ test x$enableval = xyes && DOCE=""; ])
+[ test x$enableval = xyes && DOCBUILDE=""; ])
+
+test -f doc/ctrlproxy.1 && DOCINSTALLE=""
 
 DB2LATEXPATH=""
 AC_ARG_WITH(db2latex,
@@ -35,5 +38,6 @@ AC_SUBST(DB2LATEXPATH)
 AC_SUBST(NODB2LATEX)
 AC_SUBST(DIA)
 AC_SUBST(EPSTOPDF)
-AC_SUBST(DOCE)
+AC_SUBST(DOCBUILDE)
+AC_SUBST(DOCINSTALLE)
 AC_CONFIG_FILES([doc/Makefile])

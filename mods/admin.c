@@ -345,6 +345,11 @@ static void save_config (char **args, struct line *l)
 static void help (char **args, struct line *l)
 {
 	GList *gl = commands;
+
+	if(args[1]) {
+		/* FIXME: Read /usr/share/ctrlproxy/help/commands/args[1] and send it to the user */
+	}
+		
 	admin_out(l, "The following commands are available:");
 	while(gl) {
 		struct admin_command *cmd = (struct admin_command *)gl->data;
