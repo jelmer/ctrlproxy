@@ -1,0 +1,41 @@
+Have a program that:
+
+- Connects to multiple IRC servers
+- various modules, interface:
+  init()
+  loop()
+  handle_data()
+  finish()
+- modules: 
+ - replicate_simple (only does replication when client is connected)
+ - replicate_advanced (tries to figure out what and who is in the channels and stores channel logs)
+ - log (logs data to files)
+
+Configuration file syntax:
+
+name = value
+
+{
+  host = irc.freenode.net
+  pass = 
+  port = 6667
+  nick = 
+  {
+	  file = "log.so";
+	  
+}
+
+ctrlproxy.h: 'global' include file - only include file used by modules
+dlinklist.h: Tridge's double linked list defines
+internals.h: Stuff not used by modules
+server.c: communication with server, parsing of lines
+- SERVER *connect_to_server(char *name, int port, char *nick);
+- loop(SERVER *server); /* Checks server socket for input and calls loop() on all of it's modules */
+modules.c: 
+- MODULE_CONTEXT *load_module(SERVER *s, char *name);
+- unload_module(MODULE_CONTEXT *); /* Removes specified module from server and unloads module if necessary */
+conf.c:
+- load_conf_file(char *file);
+- get_conf_context(struct module_context *c, char *name);
+- get_conf_server(struct server *s, char *name);
+- get_conf_global(char *name);
