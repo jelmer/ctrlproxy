@@ -1,0 +1,6 @@
+*.gmo
+stamp-po
+POTFILES
+ctrlproxy.pot
+messages.mo
+remove-potcdate.sed
