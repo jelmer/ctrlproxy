@@ -18,7 +18,10 @@
 */
 
 #include "internals.h"
+
+#ifdef HAVE_CONFIG_H
 #include "config.h"
+#endif /* HAVE_CONFIG_H */
 
 GSList *linestack_backends = NULL;
 
@@ -48,18 +51,18 @@ gboolean linestack_add_line_list(struct linestack_context *p, GSList *l)
 
 struct linestack_context *linestack_new(char *name, char *args)
 {
-	struct linestack *b = NULL;
+	struct linestack_ops *b = NULL;
 	struct linestack_context *c = NULL;
 	GSList *gl = linestack_backends;
 	while(gl) {
-		struct linestack *b1 = (struct linestack *)gl->data;
+		struct linestack_ops *b1 = (struct linestack_ops *)gl->data;
 		if(!name || !strcmp(b1->name, name)) b = b1;
 		gl = gl->next;
 	}
 
 	if(!b) return NULL;
 
-	c = malloc(sizeof(struct linestack_context *));
+	c = malloc(sizeof(struct linestack_context));
 	c->functions = b;
 	c->data = NULL;
 	if(!b->init(c, args)) { 
@@ -80,7 +83,7 @@ GSList *linestack_get_linked_list(struct linestack_context *b)
 void linestack_send(struct linestack_context *b, struct transport_context *t)
 {
 	GSList *lines, *gl;
-	if(b->functions->send) return b->functions->send(b, t);
+	if(b->functions->send) b->functions->send(b, t);
 
 	/* Fallback for if the backend doesn't implement this function */
 
@@ -104,12 +107,14 @@ gboolean linestack_destroy(struct linestack_context *b)
 	return TRUE;
 }
 
-void register_linestack(struct linestack *b)
+void register_linestack(struct linestack_ops *b)
 {
+	g_message("Added linestack backend '%s'", b->name);
 	linestack_backends = g_slist_append(linestack_backends, b);
 }
 
-void unregister_linestack(struct linestack *b)
+void unregister_linestack(struct linestack_ops *b)
 {
+	g_message("Removed linestack backend '%s'", b->name);
 	linestack_backends = g_slist_remove(linestack_backends, b);
 }
