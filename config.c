@@ -271,6 +271,9 @@ static void config_load_servers(struct network *n, xmlNodePtr root)
 
 		s->name = xmlGetProp(cur, "name");
 		if (!s->name) s->name = xmlGetProp(cur, "host");
+		if (s->name && strchr(s->name, ' ')) {
+			g_warning("Network name \"%s\" contains spaces!", s->name);
+		}
 
     	memset(&hints, 0, sizeof(hints));
 	    hints.ai_family = PF_UNSPEC;
