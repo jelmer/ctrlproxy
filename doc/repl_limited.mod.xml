@@ -9,7 +9,8 @@
 	</modulemeta>
 
 	<description>
-		<!--FIXME-->
+		<para>Provides limited replication (only sends messsages and 
+			notices and initial join, no changes).</para>
 	</description>
 
 </ctrlproxy:module>

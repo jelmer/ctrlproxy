@@ -9,8 +9,6 @@
 		<type>admin</type>
 	</modulemeta>
 
-	<!--FIXME: JUMPSERVER et al not documented yet -->
-
 	<description>
 		<para>This module provides a simple interface for 
 		remote administration of ControlProxy. Commands 
@@ -53,6 +51,10 @@
 
 			<listitem><para>Connect to the specifed network. Ctrlproxy will connect to the first known server for this network.</para></listitem></varlistentry>
 
+			<varlistentry><term>DELNETWORK &lt;network&gt;</term>
+
+			<listitem><para>Remove the specified network. The network may not be connected.</para></listitem></varlistentry>
+
 			<varlistentry><term>DIE</term>
 
 			<listitem><para>Disconnect all clients and servers and exit ctrlproxy.</para></listitem></varlistentry>
@@ -68,6 +70,10 @@
 			<varlistentry><term>LISTNETWORKS</term>
 			<listitem><para>Prints out a list of all networks 
 			ctrlproxy is connected to at the moment.</para></listitem></varlistentry>
+
+			<varlistentry><term>NEXTSERVER</term>
+				<listitem><para>Makes the specified network disconnect from the current server and go to the next one.</para></listitem>
+			</varlistentry>
 
 			<varlistentry><term>LOADMODULE &lt;location&gt;</term>
 			<listitem><para>Load DSO module (aka 'plugin') from the specified location. </para></listitem></varlistentry>

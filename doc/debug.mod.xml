@@ -11,13 +11,25 @@
 	<description>
 		<!--FIXME-->
 	</description>
+	
 	<section>
 		<title>Commands</title>
 
 		<para>The following commands are supported:</para>
 
 		<variablelist>
-			<!--FIXME-->
+			<varlistentry><term>DUMPJOINEDCHANNELS</term>
+				<listitem><para>
+						Makes ctrlproxy print a list of the channels it 
+						thinks it has joined on the current network.
+			</para></listitem></varlistentry>
+
+			<varlistentry><term>CRASH</term>
+				<listitem><para>
+						Makes the current plugin crash. This is useful 
+						for testing the auto-unload-on-crash functionality.
+			</para></listitem></varlistentry>
+				
 		</variablelist>
 	</section>
 
