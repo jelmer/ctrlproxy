@@ -229,4 +229,14 @@ void add_motd_hook(char *name, motd_hook);
 void del_motd_hook(char *name);
 char **get_motd_lines(struct network *n);
 
+typedef void (*server_connected_hook) (struct network *);
+void add_server_connected_hook(char *name, server_connected_hook h);
+void del_server_connected_hook(char *name);
+void server_connected_hook_execute(struct network *);
+
+typedef void (*server_disconnected_hook) (struct network *);
+void add_server_disconnected_hook(char *name, server_disconnected_hook h);
+void del_server_disconnected_hook(char *name);
+void server_disconnected_hook_execute(struct network *);
+
 #endif /* __CTRLPROXY_H__ */

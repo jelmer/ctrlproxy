@@ -241,3 +241,89 @@ char ** get_motd_lines(struct network *n)
 
 	return l;
 }
+
+struct server_connected_hook_data {
+	char *name;
+	server_connected_hook hook;
+};
+
+GList *server_connected_hooks = NULL;
+
+void add_server_connected_hook(char *name, server_connected_hook h)
+{
+	struct server_connected_hook_data *d;
+	g_message("Adding lose client hook '%s'", name);
+	
+	d = malloc(sizeof(struct server_connected_hook_data));
+	d->name = strdup(name);
+	d->hook = h;
+	server_connected_hooks = g_list_append(server_connected_hooks, d);
+}
+
+void del_server_connected_hook(char *name)
+{
+	GList *l = server_connected_hooks;
+	while(l) {
+		struct server_connected_hook_data *d = (struct server_connected_hook_data *)l->data;
+		if(!strcmp(d->name, name)) {
+			g_message("Lose client hook '%s' removed", d->name);
+			free(d->name);
+			server_connected_hooks = g_list_remove(server_connected_hooks, d);
+			return;
+		}
+		l = l->next;
+	}
+}
+
+void server_connected_hook_execute(struct network *c)
+{
+	GList *l = server_connected_hooks;
+	while(l) {
+		struct server_connected_hook_data *d = (struct server_connected_hook_data *)l->data;
+		d->hook(c);
+		l = l->next;
+	}
+}
+
+struct server_disconnected_hook_data {
+	char *name;
+	server_disconnected_hook hook;
+};
+
+GList *server_disconnected_hooks = NULL;
+
+void add_server_disconnected_hook(char *name, server_disconnected_hook h)
+{
+	struct server_disconnected_hook_data *d;
+	g_message("Adding lose client hook '%s'", name);
+	
+	d = malloc(sizeof(struct server_disconnected_hook_data));
+	d->name = strdup(name);
+	d->hook = h;
+	server_disconnected_hooks = g_list_append(server_disconnected_hooks, d);
+}
+
+void del_server_disconnected_hook(char *name)
+{
+	GList *l = server_disconnected_hooks;
+	while(l) {
+		struct server_disconnected_hook_data *d = (struct server_disconnected_hook_data *)l->data;
+		if(!strcmp(d->name, name)) {
+			g_message("Lose client hook '%s' removed", d->name);
+			free(d->name);
+			server_disconnected_hooks = g_list_remove(server_disconnected_hooks, d);
+			return;
+		}
+		l = l->next;
+	}
+}
+
+void server_disconnected_hook_execute(struct network *c)
+{
+	GList *l = server_disconnected_hooks;
+	while(l) {
+		struct server_disconnected_hook_data *d = (struct server_disconnected_hook_data *)l->data;
+		d->hook(c);
+		l = l->next;
+	}
+}

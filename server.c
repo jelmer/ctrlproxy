@@ -78,6 +78,7 @@ void handle_server_receive (struct transport_context *c, char *raw, void *_serve
 			if(!(l->options & LINE_DONT_SEND))clients_send(server, l, NULL);
 		} else if(atoi(l->args[0]) == 4) {
 			xmlNodePtr cur = server->xmlConf->xmlChildrenNode;
+			server_connected_hook_execute(server);
 			server->authenticated = 1;
 			while(cur) {
 				if(!strcmp(cur->name, "autosend")) {
@@ -178,11 +179,13 @@ void reconnect(struct transport_context *c, void *_server)
 {
 	struct network *server = (struct network *)_server;
 	char *server_name;
+	
 	/* Don't report disconnections twice */
 	g_assert(server);
 	server_name = xmlGetProp(server->xmlConf, "name");
 	
 	if(!server->outgoing) return;
+	server_disconnected_hook_execute(server);
 	transport_free(server->outgoing); server->outgoing = NULL;
 
 	g_log(G_LOG_DOMAIN, G_LOG_LEVEL_WARNING, "Connection to server %s lost, trying to reconnect...", server_name);

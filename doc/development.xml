@@ -127,10 +127,11 @@ static gboolean my_message_handler(struct line *l);
 
 	</sect2>
 
-	<sect2><title>Registering a new client or lose client handler</title>
+	<sect2><title>Registering a new client/server or lose client/server handler</title>
 
 	<para>A module can also register a function that should be called when a new 
-		client connects or when a client disconnects. </para>
+		client connects or when a client disconnects and when the server has successfully connected to 
+		the client or when the connection to the client is broken.</para>
 
 	<programlisting>
 typedef gboolean (*new_client_hook) (struct client *);
@@ -139,6 +140,13 @@ void add_new_client_hook(char *name, new_client_hook h);
 void del_new_client_hook(char *name);
 void add_lose_client_hook(char *name, lose_client_hook h);
 void del_lose_client_hook(char *name);
+
+typedef void (*server_connected_hook) (struct network *);
+typedef void (*server_disconnected_hook) (struct network *);
+void add_server_connected_hook(char *name, server_connected_hook);
+void del_server_connected_hook(char *name);
+void add_server_disconnected_hook(char *name, server_disconnected_hook);
+void del_server_disconnected_hook(char *name);
 	</programlisting>
 
 	<para>The prototypes of these functions pretty much speak for themselves. 
