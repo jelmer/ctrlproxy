@@ -70,24 +70,23 @@ int load_conf_file(char *file)
 	return 0;
 }
 
-char *first_section(void)
+char **enum_sections(void)
 {
-	if(global_section)return global_section->name;
-	return NULL;
-}
-
-char *next_section(char *last_section)
-{
+	static char **enums = NULL;
+	int nr_entries = 0;
 	struct confsection *s = global_section;
 
 	while(s) {
-		if((!last_section && !s->name) || (last_section && s->name && !strcmp(last_section, s->name))){
-			if(s->next)return s->next->name;
-			return NULL;
+		if(s->name) {
+			enums = realloc(enums, (nr_entries+2) * sizeof(char *));
+			enums[nr_entries] = s->name;
+			nr_entries++;
 		}
 		s = s->next;
 	}
-	return NULL;
+	enums = realloc(enums, (nr_entries+2) * sizeof(char *));
+	enums[nr_entries] = NULL;
+	return enums;
 }
 
 char *get_conf(char *section, char *name)

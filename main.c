@@ -12,8 +12,10 @@ void signal_quit(int sig)
 int main(int argc, const char *argv[])
 {
 	struct server *s;
+	char **sections;
+	int i;
 	char *t;
-	char *nick, *port, *host, *fullname, *pass, *mods;
+	char *nick, *port, *host, *fullname, *pass, *mods, *modsdup;
 	char *tmp;
 	char *autojoin;
 	int final = 0;
@@ -55,9 +57,10 @@ int main(int argc, const char *argv[])
 	if(load_conf_file(rcfile) == -1)
 		return 0;
 	
-	t = first_section();
+	sections = enum_sections();
 
-	while(t) {
+	for(i = 0; sections[i]; i++) {
+		t = sections[i];
 		nick = get_conf(t, "nick");
 		if(!nick)nick = getenv("USER");
 		port = get_conf(t, "port");
@@ -71,16 +74,21 @@ int main(int argc, const char *argv[])
 		pass = get_conf(t, "password");
 		
 		s = connect_to_server(host, atoi(port), nick, pass);
-		s->abbrev = t;
-		autojoin = get_conf(t, "autojoin");
-		if(autojoin)server_send(s, NULL, "JOIN", autojoin, NULL);
-		
 		if(!s)return 1;
 
+		s->abbrev = t;
+
+		/* Do autojoin stuff */
+		autojoin = get_conf(t, "autojoin");
+		if(autojoin)server_send(s, NULL, "JOIN", autojoin, NULL);
+
+		/* Load modules */
 		mods = get_conf(t, "modules");
-		t = next_section(t);
 		if(!mods)continue;
+		modsdup = strdup(mods);
 		
+		final = 0;
+		mods = modsdup;
 		while((tmp = strchr(mods, ' ')) || (tmp = strchr(mods, '\0'))) {
 			if(*tmp == '\0')final = 1;
 			*tmp = '\0';
@@ -90,6 +98,7 @@ int main(int argc, const char *argv[])
 			if(final)break;
 			mods = tmp+1;
 		}
+		free(modsdup);
 	}
 	
 	if(daemon) {

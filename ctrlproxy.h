@@ -18,9 +18,8 @@ int server_send_raw(struct server *s, char *data);
 int server_send(struct server *s, char *origin, ...);
 
 /* conf.c */
-char *first_section(void);
+char **enum_sections(void);
 char *get_conf(char *section, char *name);
-char *next_section(char *last_section);
 
 /* util.c */
 void init_sockaddr (struct sockaddr_in *name, const char *hostname, uint16_t port);
