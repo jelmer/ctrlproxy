@@ -1,16 +1,20 @@
+PYTHON = @PYTHON@
 SWIG = @SWIG@
 CC = @CC@
-LD = @LD@
+CFLAGS = @CFLAGS@
+LDFLAGS = @LDFLAGS@
 
-all: ctrlproxy.so
+all: build
 
-ctrlproxy.so: ctrlproxy_wrap.o
+build: ctrlproxy_wrap.c
+	$(PYTHON) setup.py build
 
-%.o: %.c
-	$(CC) -c $<
+install:
+	$(PYTHON) setup.py install
 
-%.so: 
-	$(LD) -shared $^ -o $@
+clean:
+	rm -f *_wrap.c
+	$(PYTHON) setup.py clean
 
 %_wrap.c: %.i
 	$(SWIG) -python $<

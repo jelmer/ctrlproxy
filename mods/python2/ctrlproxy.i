@@ -1,4 +1,4 @@
 %module ctrlproxy
 %{
-#include "ctrlproxy.h"
 %}
+#include "ctrlproxy.h"
