@@ -384,8 +384,8 @@ static gboolean handle_client_data (GIOChannel *ioc, GIOCondition o, gpointer da
 						g_warning("Unable to return network matching %s:%d", hostname, port);
 						return socks_error(ioc, REP_NET_UNREACHABLE);
 					} else {
-						struct sockaddr_in6 *name6 = (struct sockaddr_in6 *)result->connection.tcp.local_name;
-						struct sockaddr_in *name4 = (struct sockaddr_in *)result->connection.tcp.local_name;
+						struct sockaddr_in6 *name6; 
+						struct sockaddr_in *name4; 
 						int atyp, len, port;
 						guint8 *data;
 
@@ -393,6 +393,9 @@ static gboolean handle_client_data (GIOChannel *ioc, GIOCondition o, gpointer da
 							g_warning("Unable to connect to network %s", result->name);
 							return socks_error(ioc, REP_NET_UNREACHABLE);
 						}
+
+						name6 = (struct sockaddr_in6 *)result->connection.tcp.local_name;
+						name4 = (struct sockaddr_in *)result->connection.tcp.local_name;
 
 						if (name4->sin_family == AF_INET) {
 							atyp = ATYP_IPV4;

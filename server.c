@@ -168,9 +168,8 @@ gboolean connect_next_tcp_server(struct network *s)
 	return connect_current_tcp_server(s);
 }
 
-void server_send_login (GIOChannel *c, void *_server) {
-	struct network *s = (struct network *)_server;
-
+static void server_send_login (struct network *s) 
+{
 	g_message(_("Successfully connected to %s"), s->name);
 
 	g_assert(strlen(get_my_hostname()));
@@ -270,7 +269,7 @@ gboolean connect_current_tcp_server(struct network *s)
 		}
 	}
 
-	server_send_login(s->connection.tcp.outgoing, s);
+	server_send_login(s);
 	
 	s->connection.tcp.outgoing_id = g_io_add_watch(s->connection.tcp.outgoing, G_IO_IN, handle_server_receive, s);
 	s->connection.tcp.hangup_id = g_io_add_watch(s->connection.tcp.outgoing, G_IO_HUP, reconnect, s);
@@ -615,7 +614,7 @@ static gboolean connect_program(struct network *s)
 
 	s->connection.program.outgoing = g_io_channel_unix_new(sock);
 
-	server_send_login(s->connection.program.outgoing, s);
+	server_send_login(s);
 	
 	s->connection.program.outgoing_id = g_io_add_watch(s->connection.program.outgoing, G_IO_IN, handle_server_receive, s);
 

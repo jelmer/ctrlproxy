@@ -24,7 +24,7 @@
 #define _(s) gettext(s)
 
 struct nickserv_entry {
-	struct network *network;
+	const char *network;
 	const char *nick;
 	const char *pass;
 };
@@ -37,7 +37,7 @@ static const char *nickserv_find_nick(struct network *n, char *nick)
 	for (gl = nicks; gl; gl = gl->next) {
 		struct nickserv_entry *e = gl->data;
 
-		if ((!e->network || e->network == n) && !strcmp(e->nick, nick)) {
+		if ((!e->network || !g_strcasecmp(e->network, n->name)) && !g_strcasecmp(e->nick, nick)) {
 			return e->pass;
 		}
 	}
@@ -45,21 +45,28 @@ static const char *nickserv_find_nick(struct network *n, char *nick)
 	return NULL;
 }
 
-static char *nickserv_nick(struct network *n)
+static const char *nickserv_nick(struct network *n)
 {
-	return g_strdup("NickServ");
+	return "NickServ";
 }
 
 static void identify_me(struct network *network, char *nick)
 {
-	const char *pass = nickserv_find_nick(network, nick);
+	const char *pass;
+
+	/* Don't try to identify if we're already identified */
+	if (network->mymodes['R']) return;
+	
+	pass = nickserv_find_nick(network, nick);
 	
 	if (pass) {
-		char *nickserv_n = nickserv_nick(network), *raw;
+		const char *nickserv_n = nickserv_nick(network);
+		char *raw;
 		raw = g_strdup_printf("IDENTIFY %s", pass);
 		network_send_args(network, "PRIVMSG", nickserv_n, raw, NULL);
 		g_free(raw);
-		g_free(nickserv_n);
+	} else {
+		g_message("Not identifying for %s, network %s; no entries found", nick, network->name);
 	}
 }
 
@@ -68,6 +75,11 @@ static gboolean log_data(struct line *l) {
 
 	/* User has changed his/her nick. Check whether this nick needs to be identified */
 	if(l->direction == FROM_SERVER && !g_strcasecmp(l->args[0], "NICK")) {
+		identify_me(l->network, l->args[1]);
+	}
+
+	if(l->direction == FROM_SERVER && !g_strcasecmp(l->args[0], "NOTICE") && 
+	   line_get_nick(l) && !g_strcasecmp(line_get_nick(l), nickserv_nick(l->network))) {
 		identify_me(l->network, l->args[1]);
 	}
 
@@ -81,14 +93,14 @@ static gboolean log_data(struct line *l) {
 	if(l->direction == FROM_SERVER && atol(l->args[0]) == ERR_NICKNAMEINUSE) {
 		const char *pass = nickserv_find_nick(l->network, nickattempt);
 		if(nickattempt && pass) {
-			char *nickserv_n = nickserv_nick(l->network), *raw;
+			const char *nickserv_n = nickserv_nick(l->network);
+			char *raw;
 			
 			g_message(_("Ghosting current user using '%s' on %s"), nickattempt, l->network->name);
 
 			raw = g_strdup_printf("GHOST %s %s", nickattempt, pass);
 			network_send_args(l->network, "PRIVMSG", nickserv_n, raw, NULL);
 			g_free(raw);
-			g_free(nickserv_n);
 			network_send_args(l->network, "NICK", nickattempt, NULL);
 		}
 	}
@@ -110,14 +122,13 @@ gboolean load_config(struct plugin *p, xmlNodePtr node)
 		struct nickserv_entry *e;
 		if (cur->type != XML_ELEMENT_NODE) continue;
 
-		e = g_new0(struct nickserv_entry, 1);
-		e->nick = xmlGetProp(cur, "nick");
-		e->pass = xmlGetProp(cur, "password");
-
-		if (xmlHasProp(cur, "network")) {
-			char *tmp = xmlGetProp(cur, "network");
-			e->network = find_network(tmp);
-			xmlFree(tmp);
+		if (!strcmp(cur->name, "nick")) {
+			e = g_new0(struct nickserv_entry, 1);
+			e->nick = xmlGetProp(cur, "nick");
+			e->pass = xmlGetProp(cur, "password");
+			e->network = xmlGetProp(cur, "network");
+		
+			nicks = g_list_append(nicks, e);
 		}
 	}
 

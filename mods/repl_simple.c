@@ -112,6 +112,6 @@ gboolean init_plugin(struct plugin *p) {
 	add_filter_ex("repl_simple", log_data, "replicate", 1000);
 	add_new_client_hook("repl_simple", simple_replicate);
 	simple_backlog = g_hash_table_new(NULL, NULL);
-	simple_initialnick = g_hash_table_new_full(NULL, NULL, NULL, g_free);
+	simple_initialnick = g_hash_table_new_full(NULL, NULL, NULL, NULL);
 	return TRUE;
 }

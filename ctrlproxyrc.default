@@ -24,7 +24,9 @@
 		<plugin autoload="1" file="librepl_command"/>
 		<plugin autoload="1" file="report_time"/>
 
-		<plugin autoload="1" file="socks"/>
+		<plugin autoload="1" file="socks">
+			<allow username="me" password="geheim"/>
+		</plugin>
 
 		<!-- Irssi-style logging -->
 		<plugin autoload="1" file="liblog_irssi">
@@ -40,7 +42,10 @@
 		<plugin autoload="1" file="libstrip"/>
 
 		<!-- Support for automatic identify'ing with nickserv -->
-		<plugin autoload="1" file="libnickserv"/>
+		<plugin autoload="1" file="libnickserv">
+			<nick network="OFTC" nick="me" password="secret"/>
+			<nick network="FreeNode" nick="me" password="alsosecret"/>
+		</plugin>
 
 		<!-- Make sure messages are not sent too fast after each other 
 		     (prevents being kicked by the server for 'Excess flooding' -->
