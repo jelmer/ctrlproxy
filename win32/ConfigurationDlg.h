@@ -7,6 +7,8 @@
 // ConfigurationDlg.h : header file
 //
 
+#include <libxml/tree.h>
+
 /////////////////////////////////////////////////////////////////////////////
 // CConfigurationDlg dialog
 
@@ -19,7 +21,7 @@ public:
 // Dialog Data
 	//{{AFX_DATA(CConfigurationDlg)
 	enum { IDD = IDD_CONFIGURATION };
-		// NOTE: the ClassWizard will add data members here
+	CTreeCtrl	m_tree;
 	//}}AFX_DATA
 
 
@@ -35,9 +37,12 @@ protected:
 
 	// Generated message map functions
 	//{{AFX_MSG(CConfigurationDlg)
-		// NOTE: the ClassWizard will add member functions here
+	afx_msg void OnSaveConfig();
+	afx_msg void OnShowWindow(BOOL bShow, UINT nStatus);
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
+private:
+	void fillinchildren(HTREEITEM i, xmlNodePtr cur);
 };
 
 //{{AFX_INSERT_LOCATION}}

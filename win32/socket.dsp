@@ -37,8 +37,8 @@ RSC=rc.exe
 # PROP BASE Target_Dir ""
 # PROP Use_MFC 0
 # PROP Use_Debug_Libraries 0
-# PROP Output_Dir "socket__"
-# PROP Intermediate_Dir "socket__"
+# PROP Output_Dir "Release"
+# PROP Intermediate_Dir "Release"
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MT /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /YX /FD /c
@@ -52,7 +52,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /dll /machine:I386
-# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /dll /machine:I386 /libpath:"c:\dev\lib" /libpath:"Debug"
+# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib asprintf.lib libxml2.lib iconv.lib intl.lib gobject-2.0.lib gmodule-2.0.lib glib-2.0.lib ws2_32.lib /nologo /subsystem:windows /dll /machine:I386 /out:"Release/libsocket.dll" /libpath:"c:\dev\lib" /libpath:"Debug"
 
 !ELSEIF  "$(CFG)" == "socket - Win32 Debug"
 
@@ -63,8 +63,8 @@ LINK32=link.exe
 # PROP BASE Target_Dir ""
 # PROP Use_MFC 0
 # PROP Use_Debug_Libraries 1
-# PROP Output_Dir "socket_0"
-# PROP Intermediate_Dir "socket_0"
+# PROP Output_Dir "Debug"
+# PROP Intermediate_Dir "Debug"
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MTd /W3 /Gm /GX /Zi /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /YX /FD /c
@@ -78,7 +78,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /dll /debug /machine:I386 /pdbtype:sept
-# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /dll /debug /machine:I386 /pdbtype:sept /libpath:"c:\dev\lib" /libpath:"Debug"
+# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib asprintf.lib libxml2.lib iconv.lib intl.lib gobject-2.0.lib gmodule-2.0.lib glib-2.0.lib ws2_32.lib /nologo /subsystem:windows /dll /debug /machine:I386 /out:"Debug/libsocket.dll" /pdbtype:sept /libpath:"c:\dev\lib" /libpath:"Debug"
 
 !ENDIF 
 
@@ -88,7 +88,7 @@ LINK32=link.exe
 # Name "socket - Win32 Debug"
 # Begin Source File
 
-SOURCE=..\mods\socket\socket.c
+SOURCE=..\mods\socket\winsock.c
 # End Source File
 # End Target
 # End Project

@@ -19,7 +19,7 @@ public:
 // Dialog Data
 	//{{AFX_DATA(CLogDlg)
 	enum { IDD = IDD_LOG };
-		// NOTE: the ClassWizard will add data members here
+	CListBox	m_log;
 	//}}AFX_DATA
 
 
@@ -28,6 +28,7 @@ public:
 	//{{AFX_VIRTUAL(CLogDlg)
 	protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
+	virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
 	//}}AFX_VIRTUAL
 
 // Implementation

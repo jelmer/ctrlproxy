@@ -35,7 +35,7 @@ protected:
 
 	// Generated message map functions
 	//{{AFX_MSG(CStatusDlg)
-		// NOTE: the ClassWizard will add member functions here
+	afx_msg void OnShowWindow(BOOL bShow, UINT nStatus);
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 };

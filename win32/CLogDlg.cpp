@@ -28,7 +28,7 @@ void CLogDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialog::DoDataExchange(pDX);
 	//{{AFX_DATA_MAP(CLogDlg)
-		// NOTE: the ClassWizard will add DDX and DDV calls here
+	DDX_Control(pDX, IDC_LOG, m_log);
 	//}}AFX_DATA_MAP
 }
 
@@ -41,3 +41,10 @@ END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
 // CLogDlg message handlers
+
+BOOL CLogDlg::PreCreateWindow(CREATESTRUCT& cs) 
+{
+	/* FIXME: Register log */
+	
+	return CDialog::PreCreateWindow(cs);
+}

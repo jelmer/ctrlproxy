@@ -4,6 +4,13 @@
 #include "stdafx.h"
 #include "ctrlproxyapp.h"
 #include "ctrlproxyDlg.h"
+extern "C" {
+#include "internals.h"
+#include <libxml/xmlmemory.h>
+#include <libxml/parser.h>
+}
+
+GMainLoop *main_loop = NULL;
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -11,16 +18,13 @@
 static char THIS_FILE[] = __FILE__;
 #endif
 
-#define SYSTRAY_QUICK_ID WM_USER+1
-
 /////////////////////////////////////////////////////////////////////////////
 // CCtrlproxyApp
 
 BEGIN_MESSAGE_MAP(CCtrlproxyApp, CWinApp)
 	//{{AFX_MSG_MAP(CCtrlproxyApp)
-		// NOTE - the ClassWizard will add and remove mapping macros here.
-		//    DO NOT EDIT what you see in these blocks of generated code!
-	//}}AFX_MSG
+	ON_COMMAND(IDM_EXIT, OnExit)
+	//}}AFX_MSG_MAP
 	ON_COMMAND(ID_HELP, CWinApp::OnHelp)
 END_MESSAGE_MAP()
 
@@ -40,6 +44,11 @@ CCtrlproxyApp theApp;
 
 /////////////////////////////////////////////////////////////////////////////
 // CCtrlproxyApp initialization
+
+
+void log_handler(const gchar *log_domain, GLogLevelFlags flags, const gchar *message, gpointer user_data) {
+	/*FIXME*/
+}
 
 BOOL CCtrlproxyApp::InitInstance()
 {
@@ -75,10 +84,60 @@ BOOL CCtrlproxyApp::InitInstance()
 	dat.uCallbackMessage = CTRLPROXY_TRAY_ICON;
 	strcpy(dat.szTip, "CtrlProxy manager");
 	Shell_NotifyIcon(NIM_ADD, &dat);
+	g_log_set_handler (G_LOG_DOMAIN, G_LOG_LEVEL_MASK, log_handler, NULL);
+	add_filter_class("", -1);
+	add_filter_class("client", 100);
+	add_filter_class("replicate", 50);
+	add_filter_class("log", 50);
 
-	// Since the dialog has been closed, return FALSE so that we exit the
-	//  application, rather than start the application's message pump.
+	g_message(_("Logfile opened"));
+
+	configuration_file = "C:\\ctrlproxyrc.txt"; /*FIXME*/
+	readConfig(configuration_file);
+	
+	init_plugins();
+	init_networks();
+
+	initialized_hook_execute();
+
+	main_loop = g_main_loop_new(NULL, FALSE);
 	return TRUE;
 }
 
+const char *get_my_hostname() { return "localhost"; /* FIXME */ } 
+const char *get_modules_path() { return "C:\\Documents and Settings\\Jelmer Vernooij\\Desktop\\ctrlproxy-devel\\win32\\Debug"; /*FIXME*/ }
+const char *get_shared_path() { return NULL; /*FIXME*/} 
 
+const char *ctrlproxy_version() { 
+	return "FIXME";
+}
+
+void clean_exit()
+{
+	exit(0);
+}	
+
+int CCtrlproxyApp::Run() 
+{
+	g_main_context_iteration(g_main_loop_get_context(main_loop), FALSE);
+	
+	return CWinApp::Run();
+}
+
+int CCtrlproxyApp::ExitInstance() 
+{
+	GList *gl = get_network_list();
+	while(gl) {
+		struct network *n = (struct network *)gl->data;
+		gl = gl->next;
+		if(n) close_network(n);
+	}
+	
+	return CWinApp::ExitInstance();
+}
+
+void CCtrlproxyApp::OnExit() 
+{
+	clean_exit();
+	
+}

@@ -29,13 +29,14 @@ public:
 	//{{AFX_VIRTUAL(CCtrlproxyApp)
 	public:
 	virtual BOOL InitInstance();
+	virtual int Run();
+	virtual int ExitInstance();
 	//}}AFX_VIRTUAL
 
 // Implementation
 
 	//{{AFX_MSG(CCtrlproxyApp)
-		// NOTE - the ClassWizard will add and remove member functions here.
-		//    DO NOT EDIT what you see in these blocks of generated code !
+	afx_msg void OnExit();
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 	private:

@@ -19,7 +19,7 @@ public:
 // Dialog Data
 	//{{AFX_DATA(CAboutDlg)
 	enum { IDD = IDD_ABOUT };
-		// NOTE: the ClassWizard will add data members here
+	CString	m_license;
 	//}}AFX_DATA
 
 

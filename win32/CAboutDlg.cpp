@@ -19,7 +19,7 @@ CAboutDlg::CAboutDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(CAboutDlg::IDD, pParent)
 {
 	//{{AFX_DATA_INIT(CAboutDlg)
-		// NOTE: the ClassWizard will add member initialization here
+	m_license = _T("");
 	//}}AFX_DATA_INIT
 }
 
@@ -28,7 +28,7 @@ void CAboutDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialog::DoDataExchange(pDX);
 	//{{AFX_DATA_MAP(CAboutDlg)
-		// NOTE: the ClassWizard will add DDX and DDV calls here
+	DDX_Text(pDX, IDC_LICENSE, m_license);
 	//}}AFX_DATA_MAP
 }
 

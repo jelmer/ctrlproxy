@@ -35,9 +35,17 @@ void CStatusDlg::DoDataExchange(CDataExchange* pDX)
 
 BEGIN_MESSAGE_MAP(CStatusDlg, CDialog)
 	//{{AFX_MSG_MAP(CStatusDlg)
-		// NOTE: the ClassWizard will add message map macros here
+	ON_WM_SHOWWINDOW()
 	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
 // CStatusDlg message handlers
+
+void CStatusDlg::OnShowWindow(BOOL bShow, UINT nStatus) 
+{
+	CDialog::OnShowWindow(bShow, nStatus);
+	if(!bShow) return;
+	// FIXME: Set status messages
+	
+}
