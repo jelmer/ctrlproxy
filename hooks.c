@@ -54,9 +54,10 @@ static struct filter_class *find_filter_class(char *name)
 {
 	GList *gl = filter_classes;
 	while(gl) {
-		struct filter_class *c = (struct filter_class *)gl;
+		struct filter_class *c = (struct filter_class *)gl->data;
 		if(c->name == NULL && name == NULL) return c;
-		if(!strcmp(c->name, name)) return c;
+		if(c->name && !strcmp(c->name, name)) return c;
+		gl = gl->next;
 	}
 	return NULL;
 }
@@ -90,7 +91,10 @@ gboolean add_filter_ex(char *name, filter_function f, char *class, int prio)
 	d->plugin = current_plugin;
 
 	c = find_filter_class(class);
-	if(!c) return FALSE;
+	if(!c) {
+		g_message("Unable to find filter class '%s'", class);
+		return FALSE;
+	}
 	
 	c->filters = g_list_insert_sorted(c->filters, d, filter_cmp);
 	return TRUE;
