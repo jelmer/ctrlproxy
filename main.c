@@ -38,7 +38,7 @@
 /* globals */
 GMainLoop *main_loop;
 char my_hostname[MAXHOSTNAMELEN+2];
-xmlNodePtr xmlNode_networks, xmlNode_plugins;
+xmlNodePtr xmlNode_networks = NULL, xmlNode_plugins = NULL;
 xmlDocPtr configuration;
 char *configuration_file;
 FILE *debugfd = NULL;
@@ -364,7 +364,9 @@ int main(int argc, const char *argv[])
 
 	if(!g_module_supported()) {
 		g_warning("DSO's not supported on this platform. Not loading any modules");
-	} else {
+	} else if(!xmlNode_plugins) {
+		g_warning("No modules set to be loaded");	
+	}else {
 		cur = xmlNode_plugins->xmlChildrenNode;
 		while(cur) {
 			char *enabled;
@@ -383,6 +385,11 @@ int main(int argc, const char *argv[])
 
 			cur = cur->next;
 		}
+	}
+
+	if(xmlNode_networks) {
+		g_error("No networks listed");
+		return 1;
 	}
 
 	cur = xmlNode_networks->xmlChildrenNode;

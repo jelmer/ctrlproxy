@@ -6,7 +6,6 @@
 - add more help data
 - Net::IRC-like interface
 - internationalization (i18n)
-- linestack_mysql
 - use new filter system
 - add timer that uses current_plugin
 - fix MiRC bug

@@ -80,21 +80,23 @@ static void dcc_send(struct line *l, const char *f)
 
 static void dcc_command(char **args, struct line *l)
 {
-	if(!strcasecmp(args[1], "GET")) {
-		dcc_send(l, args[1]);
-	} else if(!strcasecmp(args[1], "LIST")) {
+	if(!strcasecmp(args[2], "GET")) {
+		dcc_send(l, args[3]);
+	} else if(!strcasecmp(args[2], "LIST")) {
 		dcc_list(l);
-	} else if(!strcasecmp(args[1], "DEL")) {
-		dcc_del(l, args[1]);
+	} else if(!strcasecmp(args[2], "DEL")) {
+		dcc_del(l, args[3]);
 	} else {
-		admin_out(l, "Unknown subcommand '%s'", args[1]);
+		admin_out(l, "Unknown subcommand '%s'", args[2]);
 	}
 }
 
 static gboolean mhandle_data(struct line *l)
 {
 	if(l->direction == TO_SERVER || l->args[1][0] != '\001') return TRUE;
-	/* FIXME */
+
+	/* FIXME: DCC SEND/FILE */
+
 	return TRUE;
 }
 
