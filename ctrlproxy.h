@@ -33,6 +33,7 @@ struct line;
 struct transport_context;
 
 enum data_direction { UNKNOWN = 0, TO_SERVER = 1, FROM_SERVER = 2 };
+enum has_colon { UNKNOWN = 0, YES = 1, NO = 2 };
 
 typedef void (*disconnect_handler) (struct transport_context *, void *data);
 typedef void (*receive_handler) (struct transport_context *, char *l, void *data);
@@ -66,6 +67,7 @@ struct line {
 	const char *origin;
 	char **args; /* NULL terminated */
 	size_t argc;
+	enum has_colon requires_endcolon;
 };
 
 /* for the options fields */

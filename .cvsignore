@@ -8,4 +8,5 @@ build
 ctrlproxy.pc
 ctrlproxy.spec
 printstats
+test-parser
 *.o
