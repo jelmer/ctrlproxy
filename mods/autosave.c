@@ -55,7 +55,7 @@ gboolean init_plugin(struct plugin *p)
 	if(time > 0)
 		autosave_id = g_timeout_add(1000 * 60 * time, loop_save_config, NULL);
 	else
-		g_error(_("Interval of %i minutes is too short"), time);
+		g_warning(_("Interval of %i minutes is too short"), time);
 
 	return TRUE;
 }
