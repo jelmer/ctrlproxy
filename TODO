@@ -15,5 +15,4 @@ typedef void (*server_connected_hook) (struct network *);
 typedef void (*server_disconnected_hook) (struct network *);
 
 - rewrite web script
-- put save support back in
 - cascading filters

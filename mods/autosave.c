@@ -32,6 +32,12 @@ static gboolean loop_save_config(gpointer user_data)
 
 const char name_plugin[] = "autosave";
 
+gboolean save_config(struct plugin *p, xmlNodePtr node)
+{
+	/*FIXME */
+	return TRUE;
+}
+
 gboolean load_config(struct plugin *p, xmlNodePtr node)
 {
 	int time = 0;

@@ -57,6 +57,25 @@ static xmlNodePtr config_save_plugins()
 	return ret;
 }
 
+static xmlNodePtr config_save_tcp_servers(struct network *n)
+{
+	GList *gl;
+	xmlNodePtr s = xmlNewNode(NULL, "servers");
+	for (gl = n->connection.tcp.servers; gl; gl = gl->next) {
+		struct tcp_server *ts = gl->data;
+		xmlNodePtr x = xmlNewNode(NULL, "server");
+		if (ts->name) xmlSetProp(x, "name", ts->name);
+		if (ts->host) xmlSetProp(x, "host", ts->host);
+		if (ts->port) xmlSetProp(x, "port", ts->port);
+		if (ts->ssl) xmlSetProp(x, "ssl", "1");
+		if (ts->password) xmlSetProp(x, "password", ts->password);
+
+		xmlAddChild(s, x);
+	}
+
+	return s;
+}
+
 static xmlNodePtr config_save_networks()
 {
 	xmlNodePtr ret = xmlNewNode(NULL, "networks");
@@ -65,7 +84,7 @@ static xmlNodePtr config_save_networks()
 	for (gl = get_network_list(); gl; gl = gl->next) {
 		GList *gl1;
 		struct network *n = gl->data;		
-		xmlNodePtr p = xmlNewNode(NULL, "network");
+		xmlNodePtr p = xmlNewNode(NULL, "network"), p1;
 
 		xmlSetProp(p, "autoconnect", n->autoconnect?"1":"0");
 		if (!n->name_guessed)
@@ -74,7 +93,19 @@ static xmlNodePtr config_save_networks()
 		xmlSetProp(p, "nick", n->nick);
 		xmlSetProp(p, "username", n->username);
 
-		/* FIXME: servers */
+		switch(n->type) {
+		case NETWORK_VIRTUAL:
+			p1 = xmlNewChild(p, NULL, "virtual", NULL);
+			xmlSetProp(p1, "type", n->connection.virtual.ops->name);
+			break;
+		case NETWORK_PROGRAM:
+			p1 = xmlNewChild(p, NULL, "program", n->connection.program.location);
+			break;
+		case NETWORK_TCP:
+			xmlAddChild(p, config_save_tcp_servers(n));
+			break;
+		default:break;
+		}
 		
 		for (gl1 = n->channels; gl1; gl1 = gl1->next) {
 			struct channel *c = gl1->data;
