@@ -2,6 +2,8 @@
  	Jelmer Vernooij <jelmer@vernstok.nl>
 
 Ctrlproxy 2.7:
+ * Support mIRC and ksirc
+ * Add internationalization
  * Don't crash on non-existing <networks> or <plugins>
  * Add 'debug' module for easier debugging
  * Make sure modules are never loaded twice (Daniel Poelzleithner

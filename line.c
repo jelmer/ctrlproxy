@@ -110,7 +110,7 @@ struct line * irc_parse_line(char *d)
 			}
 		}
 
-		if(*p == '\r') {
+		if(*p == '\r' || *p == '\n') {
 			*p = '\0';
 			break;
 		}
