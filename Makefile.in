@@ -32,7 +32,7 @@ printstats: printstats.o
 %.o: %.c
 	$(CC) $(CFLAGS) -c $<
 
-install: all install-dirs install-doc install-bin install-mods install-data
+install: all install-dirs install-doc install-bin install-mods install-data install-pkgconfig
 install-dirs:
 	$(INSTALL) -d $(DESTDIR)$(bindir)
 	$(INSTALL) -d $(DESTDIR)$(man1dir)
@@ -41,6 +41,7 @@ install-dirs:
 	$(INSTALL) -d $(DESTDIR)$(modulesdir)
 	$(INSTALL) -d $(DESTDIR)$(docdir)
 	$(INSTALL) -d $(DESTDIR)$(datadir)
+	$(INSTALL) -d $(DESTDIR)@libdir@/pkgconfig
 	$(MAKE) -C doc install 
 	
 install-bin:
@@ -57,6 +58,9 @@ install-data:
 
 install-mods:
 	$(MAKE) -C mods install
+
+install-pkgconfig:
+	$(INSTALL) ctrlproxy.pc $(DESTDIR)@libdir@/pkgconfig
 
 clean:
 	rm -f *.o ctrlproxy printstats *~
