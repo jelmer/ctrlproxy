@@ -36,6 +36,11 @@ htmlmanpages: $(MOD_MANPAGES_HTML)
 %.fo: %.xml $(MODS)
 	$(XMLTO) fo $<
 
+ctrlproxy-setup.conf: 
+	@echo "my %%modules_defs = ("
+	@for I in $(wildcard *.mod.xml); do $(XSLTPROC) ctrlproxy-setup-config.xsl $$I; done
+	@echo ");"
+
 %.7ctrlproxy.html: %.7ctrlproxy.xml
 	$(XMLTO) html-nochunks $<
 
