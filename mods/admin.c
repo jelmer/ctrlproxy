@@ -478,7 +478,7 @@ static void detach_client(char **args, struct line *l)
 
 static void handle_die(char **args, struct line *l)
 {
-	clean_exit();
+	exit(0);
 }
 
 void register_admin_command(char *name, void (*handler) (char **args, struct line *l), const char *help, const char *help_details)

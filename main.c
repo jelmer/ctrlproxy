@@ -92,7 +92,7 @@ void log_handler(const gchar *log_domain, GLogLevelFlags flags, const gchar *mes
 	fflush(f_logfile);
 }
 
-void clean_exit()
+static void clean_exit()
 {
 	GList *gl = get_network_list();
 	while(gl) {
@@ -249,8 +249,10 @@ int main(int argc, const char *argv[])
 
 	if(!init_plugins() || !init_networks()) return -1;
 	initialized_hook_execute();
+
+	atexit(clean_exit);
+
 	g_main_loop_run(main_loop);
-	clean_exit();
 
 	return 0;
 }
