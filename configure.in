@@ -11,7 +11,7 @@ AC_PROG_INSTALL
 
 
 BINS="ctrlproxy"
-MODS="liblog_irssi.so libctcp.so liblinestack_memory.so libauto-away.so libstrip.so libadmin.so libnoticelog.so libnickserv.so liblog_custom.so libantiflood.so librepl_simple.so librepl_command.so librepl_highlight.so liblinestack_file.so libreport_time.so librepl_memory.so librepl_none.so libmotd_file.so librepl_lastdisconnect.so libdcc.so libautosave.so"
+MODS="liblog_irssi.so libctcp.so liblinestack_memory.so libauto-away.so libstrip.so libadmin.so libnoticelog.so libnickserv.so liblog_custom.so libantiflood.so librepl_simple.so librepl_command.so librepl_highlight.so liblinestack_file.so libreport_time.so librepl_memory.so librepl_none.so libmotd_file.so librepl_lastdisconnect.so libdcc.so libautosave.so libdebug.so"
 MODS_SUBDIRS=""
 
 # Checks for libraries.
