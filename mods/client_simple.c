@@ -1,5 +1,5 @@
-#include "ctrlproxy.h"
 #define _GNU_SOURCE
+#include "ctrlproxy.h"
 #include <assert.h>
 #include <string.h>
 #include <stdlib.h>
@@ -105,7 +105,7 @@ void mloop(struct module_context *c)
 					dprintf(i, ":%s 001 %s :Welcome to the ctrlproxy\r\n", my_hostname, c->parent->nick);
 					dprintf(i, ":%s 002 %s :Host %s is running ctrlproxy\r\n", my_hostname, c->parent->nick, my_hostname);
 					dprintf(i, ":%s 003 %s :Ctrlproxy (c) 2002 Jelmer Vernooij <jelmer@nl.linux.org>\r\n", my_hostname, c->parent->nick);
-					dprintf(i, ":%s 004 %s %s %s %s %s\r\n", my_hostname, c->parent->nick, CTRLPROXY_VERSION, allmodes, allmodes);
+					dprintf(i, ":%s 004 %s %s %s %s %s\r\n", my_hostname, c->parent->nick, my_hostname, CTRLPROXY_VERSION, allmodes, allmodes);
 					dprintf(i, ":%s 422 %s :No MOTD file\r\n", my_hostname, c->parent->nick);
 
 					/* Send JOIN for each channel */

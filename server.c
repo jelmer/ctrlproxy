@@ -35,6 +35,7 @@ struct server *connect_to_server(char *name, int port, char *nick, char *pass) {
 	if(pass)dprintf(s->socket, "PASS %s\n", pass);
 	dprintf(s->socket, "NICK %s\n", nick);
 	dprintf(s->socket, "USER %s %s %s :%s\n", pwd->pw_name, my_hostname, name, pwd->pw_gecos);
+	s->fullname = strdup(pwd->pw_gecos);
 	
 	DLIST_ADD(servers, s);
 	assert(servers);

@@ -1,5 +1,5 @@
 include ../Makefile.settings
-MODS = log.so client_simple.so
+MODS = log.so client_simple.so ctcp.so
 
 all: $(MODS)
 

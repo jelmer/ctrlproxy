@@ -1,6 +1,6 @@
+#define _GNU_SOURCE
 #include "ctrlproxy.h"
 #include "dlinklist.h"
-#define _GNU_SOURCE
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>

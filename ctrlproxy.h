@@ -43,6 +43,7 @@ struct server {
 	struct server *prev, *next;
 	char *name;
 	char *abbrev;
+	char *fullname;
 	char *hostmask;
 	char *nick;
 	int socket;
