@@ -18,6 +18,10 @@
 
 	</description>
 
+	<networks>
+		<element name="queuespeed">Milliseconds the client has to wait before sending a new message</element>
+	</networks>
+
 	<example>
 		<![CDATA[
 		<ctrlproxy>

@@ -11,6 +11,7 @@ import cgi
 import urllib
 from __init__ import *
 import sys
+import string
 
 def simple_transform(msg):
 	msg = msg.replace("<file>","<i>")
@@ -21,10 +22,13 @@ class modules(page):
 	title = "Modules"
 
 	def load(self, name):
-		xml = ctrlproxy.get_config("plugins").xpathEval('plugin[@file="lib%s"]' %name)[0]
-		try: ctrlproxy.load_module(xml)
+		try:
+			xml = ctrlproxy.get_config("plugins").xpathEval('plugin[@file="lib%s"]' %name)[0]
+			ctrlproxy.load_module(xml)
 		except Exception, e:
 			self.t.write(self.tmpl.format("warning", msg=str(e)))
+			self.t.write(self.tmpl.format("info", msg="Disable autoload"))
+			xml.setProp("autoload", "0")
 		self.index()
 
 	def unload(self, name):
@@ -55,6 +59,7 @@ class modules(page):
 			conf = ctrlproxy.get_config("plugins").newChild(None,"plugin","")
 			conf.setProp("autoload", "0")
 			conf.setProp("file", "lib%s" %name)
+			conf.addNextSibling(conf.doc.newDocText("\n" + ctrlproxy.tools.mkspaces(conf.parent)))
 
 		module = ctrlproxy.tools.Moduleinfo(name)
 		f = self.t.open_layer("form", action="/modules/save/%s" %name)
@@ -63,7 +68,27 @@ class modules(page):
 						contents=self.tmpl.format("toggle", yes="Yes", no="No", name="autoload",
 							on=sel(conf.prop("autoload") == "1"),
 							off=sel(conf.prop("autoload") in ["0","",None]))))
+		lst = module.config2list(conf)
+		print lst
+		t = f.open_layer("infos", title="Options", colspan="2")
 
+		for (name, title, value, flags, doc) in lst:
+			#t2 = t.open_layer("infos", title="Options", colspan="2")
+			if flags & module.TYPE_EMPTY:
+				pass
+			elif flags & module.SEPERATOR:
+				t.write(self.tmpl.format("empty_row", colspan="3"))
+			else:
+				l = t.open_layer("pair_row_desc", title=title.capitalize(), description=doc)
+				if flags & module.TYPE_BOOL:
+					l.write(self.tmpl.format("toggle", name=name, yes="Yes", no="No",
+													on = sel(value == "1"),
+													off = sel(value in ["0", "", None])))
+				elif flags & module.TYPE_PWD:
+					l.write(self.tmpl.format("password", name=name, value=value))
+				else:
+					l.write(self.tmpl.format("input", name=name, value=value))
+		"""
 		def showNode(j, vnode):
 			desc = ""
 			for de in j.xpathEval("description"):
@@ -108,7 +133,7 @@ class modules(page):
 			else:
 				for j in i.xpathEval("element"):
 					showNodes(j, conf)
-
+		"""
 		t.write(self.tmpl.format("empty_row", colspan="2"))
 		t.write(self.tmpl.format("span_row_cl", cl="value", colspan="2",
 						contents=self.tmpl.format("submit", title="Save")))
@@ -116,7 +141,15 @@ class modules(page):
 		ex = module.doc.xpathEval("//example")
 		if len(ex):
 			x = self.t.open_layer("example")
-			x.write(ex[0].content)
+			lst = string.split(ex[0].content, "\n")
+			skip = 0
+			for i in range(len(lst[1])):
+				if lst[1][i] == "\t":
+					skip += 1
+				else:
+					break
+			for l in lst:
+				x.write(l[skip:] + "\n")
 
 
 	def save(self, name):
@@ -128,6 +161,7 @@ class modules(page):
 			conf = ctrlproxy.get_config("plugins").newChild(None,"plugin","")
 			conf.setProp("autoload", "0")
 			conf.setProp("file", "lib%s" %name)
+			conf.addNextSibling(conf.doc.newDocText("\n" + ctrlproxy.tools.mkspaces(conf.parent)))
 
 		if self.handler.post_headers.has_key("autoload"):
 			conf.setProp("autoload", self.handler.post_headers["autoload"][0])
@@ -135,6 +169,15 @@ class modules(page):
 			conf.setProp("autoload", "0")
 
 		module = ctrlproxy.tools.Moduleinfo(name)
+		lst = {}
+		for (n,v) in self.handler.post_headers.items():
+			lst[n] = v[0]
+
+		module.list2config(lst, conf)
+
+		self.t.write(self.tmpl.format("info", msg="Wrote:"))
+		self.t.write(self.tmpl.format("example", contents=conf.serialize()))
+		"""
 		for i in module.doc.xpathEval("//configuration/*"):
 			if name == "python" and i.prop("name") == "script":
 				continue;
@@ -173,7 +216,7 @@ class modules(page):
 					except:
 						if not self.handler.post_headers.has_key(j.prop("name")):
 							conf.newChild(None,j.prop("name"), self.handler.post_headers[j.prop("name")][0])
-
+		"""
 		self.view(name)
 
 	def infos(self, name):
@@ -235,7 +278,7 @@ class modules(page):
 
 
 	def moduleslist(self):
-		t = self.t.open_layer("infos", title="Modules", colspan="2")
+		t = self.t.open_layer("infos2", title="Modules", colspan="2")
 		lst = ctrlproxy.tools.get_xml_module_names()
 		lst.sort()
 		for name in lst:
@@ -280,6 +323,7 @@ class modules(page):
 		self.moduleslist()
 
 	def send(self):
+		reload(ctrlproxy.tools)
 		pages = {
 		"view":[1,self.view],
 		"infos":[1,self.infos],

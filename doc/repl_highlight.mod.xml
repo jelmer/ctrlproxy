@@ -16,7 +16,7 @@
 	</description>
 
 	<configuration>
-		<element name="match">
+		<element name="match" multiple="1">
 			<description>Log all lines that contain the string this element contains.</description>
 		</element>
 	</configuration>

@@ -9,3 +9,5 @@ ctrlproxy.pc
 ctrlproxy.spec
 test-parser
 *.o
+*.pyc
+*.pyo

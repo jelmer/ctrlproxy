@@ -1,20 +1,19 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
-<html>
-	<header>
+<header>
 	<title>%title%</title>
 	<link rel="stylesheet" type="text/css" media="screen" href="/default.css" />
-	</header>
-	<body>
-	<table class="head">
-		<tr>
-			<td><p class="title">Ctrlproxy webconfig</p></td>
-			<td><p class="mirror"><a href="http://ctrlproxy.vernstok.nl/">homepage</a></p></td>
-		</tr>
-	</table>
-	<table class="main">
-		<tr><td><table class="menu">
+</header>
+<body>
+<table class="head">
+	<tr>
+		<td><p class="title">Ctrlproxy webconfig</p></td>
+		<td><a class="a_func" href="http://ctrlproxy.vernstok.nl/">homepage</a> - <a class="a_func" href="/logout">logout</a></td>
+	</tr>
+</table>
+<table class="main">
+	<tr><td><table class="menu">
 
 %links%
 
@@ -34,10 +33,17 @@
 <p class="warning">%msg%</p>
 {/warning}
 
+{error}
+<p class="error">%msg%</p>
+{/error}
+
 {example}
 <p><pre>%contents%</pre></p>
 {/example}
 
+{documentation}
+<pre>%contents%</pre>
+{/documentation}
 
 
 // NETWORKS
@@ -112,6 +118,9 @@
 <tr><td class="title">%title%</td><td class="value">%contents%</td><td class="description">%description%</td></tr>
 {/pair_row_desc}
 
+{description}
+<i class="description">%contents%</i>
+{/description}
 
 {a_func}
 <a class="func" href="%href%">%name%</a>
@@ -124,7 +133,7 @@
 <a href="%href%">%name%</a><br>
 {/a_line}
 
-
+http://www.heise.de/
 // FORM ELEMENTS
 
 {form}
@@ -158,6 +167,10 @@
 <input name="%name%" value="%value%" />
 {/input}
 
+{hidden}
+<input type="hidden" name="%name%" value="%value%" />
+{/hidden}
+
 {password}
 <input type="password" name="%name%" value="%value%" />
 {/password}
@@ -166,7 +179,16 @@
 <br />
 {/br}
 
+{p}
+<p />
+{/p}
+
+{h1}
+<h1>%msg%</h1>
+{/h1}
+
 {/contents}
+</td></tr></table>
 
 </body>
 </html>

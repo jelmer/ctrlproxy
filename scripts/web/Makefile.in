@@ -2,7 +2,7 @@ prefix = @prefix@
 exec_prefix = @exec_prefix@
 INSTALL = @INSTALL@
 scriptdir = @datadir@/ctrlproxy/scripts
-PAGES = $(wildcard pages/*.py) $(wildcard pages/*.css)
+PAGES = $(wildcard pages/*.py) $(wildcard pages/*.css) $(wildcard pages/*.txt)
 INCLUDES = $(wildcard includes/*.*)
 
 .PHONY: all install clean distclean

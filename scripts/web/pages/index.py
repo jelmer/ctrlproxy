@@ -7,6 +7,7 @@
 ###########################################################################
 
 from __init__ import *
+import ctrlproxy
 
 
 class index(page):

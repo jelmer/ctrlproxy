@@ -15,6 +15,8 @@ menu = []
 
 def add_menu(site, name, priority):
 	i = 0
+	if (site,name,priority) in menu:
+		return
 	for (s,n,p) in menu:
 		if p > priority:
 			menu.insert(i,(site,name,priority))

@@ -32,9 +32,7 @@
 			</attribute>
 		</element>
 	</configuration>
-
-	<example>
-		<![CDATA[
+	<example><![CDATA[
 	<plugin autoload="1" file="stats">
 		<tdbfile>/home/jelmer/.ctrlproxy-stats.tdb</tdbfile>
 		<pattern type="happy">[:;]([-]*)[\)D]</pattern>

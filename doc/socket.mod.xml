@@ -39,13 +39,12 @@
 			<description>Name of file to load certificate from. Only required when acting as a server</description>
 		</element>
 
+		<element name="tos" type="empty">
 		<element name="sslcafile">
 			<description>Name of file that contains the CA file to load. Only 
 				required when acting as a server and when GNUTLS is used.
 			</description>
 		</element>
-
-		<element name="tos">
 			<attribute name="value">
 				<description>TOS value for outgoing packages. Has to be 'Minimize-Delay', 'Maximize-Throughput', 'Maximize-Reliability', 'Minimize-Cost' or 'Normal-Service' (default)</description>
 			</attribute>
@@ -56,17 +55,17 @@
 	<transports>
 	   <transport name="ipv4">
 		   <attribute type="bool" name="ssl">Enable ssl</attribute>
-		   <attribute name="host" only="connect">Host name or IP address to connect to</attribute>
+		   <attribute name="host" only="server">Host name or IP address to connect to</attribute>
 		   <attribute name="port">Port to connect to or listen on</attribute>
 		   <attribute name="bind">Address to bind to</attribute>
 	   </transport>
 	   <transport name="ipv6">
 		   <attribute type="bool" name="ssl">Enable ssl</attribute>
-		   <attribute name="host" only="connect">Host name or IP address to connect to</attribute>
+		   <attribute name="host" only="server">Host name or IP address to connect to</attribute>
 		   <attribute name="port">Port to connect to or listen on</attribute>
 		   <attribute name="bind">Address to bind to</attribute>
 	   </transport>
-	   <transport name="pipe">
+	   <transport name="pipe" only="server">
 		   <children>
 			   <content name="path">String to executeable</content>
 		   </children>
