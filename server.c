@@ -1,6 +1,6 @@
 /*
 	ctrlproxy: A modular IRC proxy
-	(c) 2002-2003 Jelmer Vernooij <jelmer@nl.linux.org>
+	(c) 2002-2004 Jelmer Vernooij <jelmer@nl.linux.org>
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -376,7 +376,7 @@ void handle_client_receive(struct transport_context *c, char *raw, void *_client
 		}
 		irc_sendf(c, ":%s 001 %s :Welcome to the ctrlproxy\r\n", server_name, nick);
 		irc_sendf(c, ":%s 002 %s :Host %s is running ctrlproxy\r\n", server_name, nick, my_hostname);
-		irc_sendf(c, ":%s 003 %s :Ctrlproxy (c) 2002 Jelmer Vernooij <jelmer@nl.linux.org>\r\n", server_name, nick);
+		irc_sendf(c, ":%s 003 %s :Ctrlproxy (c) 2002-2004 Jelmer Vernooij <jelmer@vernstok.nl>\r\n", server_name, nick);
 		irc_sendf(c, ":%s 004 %s %s %s %s %s\r\n", 
 				server_name, nick, server_name, PACKAGE_VERSION, client->network->supported_modes[0]?client->network->supported_modes[0]:allmodes, client->network->supported_modes[1]?client->network->supported_modes[1]:allmodes);
 		
