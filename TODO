@@ -17,3 +17,5 @@ typedef void (*server_disconnected_hook) (struct network *);
 - put save support back in
 - don't simply pass feature list along
  - support the - and + in front of lines as used by Freenode
+
+- support CONNECT command a la irssi

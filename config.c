@@ -32,13 +32,82 @@
 static xmlDtdPtr dtd;
 char *configuration_file;
 
+xmlNodePtr config_save_plugins()
+{
+	GList *gl;
+	xmlNodePtr ret = xmlNewNode(NULL, "plugins");
+
+	for (gl = get_plugin_list(); gl; gl = gl->next) {
+		struct plugin *p = gl->data;
+		xmlNodePtr n = xmlNewNode(NULL, "plugin");
+
+		xmlSetProp(n, "autoload", p->autoload?"1":"0");
+		xmlSetProp(n, "file", p->path);
+		
+		if (p->save_config) {
+			p->save_config(p, n);
+		}
+
+		xmlAddChild(ret, n);
+	}
+
+	return ret;
+}
+
+xmlNodePtr config_save_networks()
+{
+	xmlNodePtr ret = xmlNewNode(NULL, "networks");
+	GList *gl;
+
+	for (gl = get_network_list(); gl; gl = gl->next) {
+		GList *gl1;
+		struct network *n = gl->data;		
+		xmlNodePtr p = xmlNewNode(NULL, "network");
+
+		xmlSetProp(p, "autoconnect", n->autoconnect?"1":"0");
+		if (!n->name_guessed)
+			xmlSetProp(p, "name", n->name);
+		xmlSetProp(p, "fullname", n->fullname);
+		xmlSetProp(p, "nick", n->nick);
+		xmlSetProp(p, "username", n->username);
+
+		/* FIXME: servers */
+		
+		for (gl1 = n->channels; gl1; gl1 = gl1->next) {
+			struct channel *c = gl1->data;
+			xmlNodePtr x = xmlNewNode(NULL, "channel");
+			xmlSetProp(x, "name", c->name);
+			xmlSetProp(x, "key", c->key);
+			xmlSetProp(x, "autojoin", c->autojoin?"1":"0");
+
+			xmlAddChild(p, x);
+		}
+
+		for (gl1 = n->autosend_lines; gl1; gl1 = gl1->next) {
+			xmlNewTextChild(p, NULL, "autosend", (char *)gl1->data);
+		}
+		
+		xmlAddChild(ret, p);
+	}
+
+	return ret;
+}
+
 void save_configuration()
 {
+	xmlNodePtr root;
 	xmlDocPtr configuration = xmlNewDoc("1.0");
+	
+	root = xmlNewNode(NULL, "ctrlproxy");
 
-	/* FIXME: Build tree */
+	xmlDocSetRootElement(configuration, root);
+
+	xmlAddChild(root, config_save_plugins());
+	xmlAddChild(root, config_save_networks());
 
 	xmlSaveFile(configuration_file, configuration);
+
+	xmlFreeDoc(configuration);
 }
 
 static gboolean validate_config(xmlDocPtr configuration)
@@ -69,17 +138,6 @@ gboolean plugin_load_config(struct plugin *p)
 		return TRUE;
 
 	return p->load_config(p, cur);
-}
-
-xmlNodePtr plugin_save_config(struct plugin *p)
-{
-	if (!p) 
-		return NULL;
-
-	if (!p->save_config)
-		return NULL;
-
-	return p->save_config(p);
 }
 
 void init_config()

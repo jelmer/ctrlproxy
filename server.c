@@ -64,10 +64,102 @@ static void server_send_login (struct network *s)
 	s->login_sent = TRUE;
 }
 
+static gboolean process_from_server(struct line *l)
+{
+	struct line *lc;
+
+	l->direction = FROM_SERVER;
+
+	run_log_filter(lc = linedup(l)); free_line(lc);
+	run_replication_filter(lc = linedup(l)); free_line(lc);
+
+	state_handle_data(l->network,l);
+
+	/* We need to handle pings.. we can't depend on a client
+	 * to do that for us*/
+	if(!g_strcasecmp(l->args[0], "PING")){
+		network_send_args(l->network, "PONG", l->args[1], NULL);
+	} else if(!g_strcasecmp(l->args[0], "PONG")){
+	} else if(!g_strcasecmp(l->args[0], "ERROR")) {
+		g_warning("%s error: %s", l->network->name, l->args[1]);
+	} else if(!g_strcasecmp(l->args[0], "433") && !l->network->authenticated){
+		char *old_nick = l->network->nick;
+		l->network->nick = g_strdup_printf("%s_", l->network->nick);
+		network_send_args(l->network, "NICK", l->network->nick, NULL);
+		g_free(old_nick);
+	} else if(atoi(l->args[0]) == 4) {
+		GList *gl;
+
+		server_connected_hook_execute(l->network);
+		l->network->authenticated = TRUE;
+
+		for (gl = l->network->autosend_lines; gl; gl = gl->next) {
+			char *data = gl->data;
+			struct line *newl;
+
+			newl = irc_parse_line(data);
+
+			network_send_line(l->network, newl);
+
+			free_line(newl);
+		}
+
+		/* Rejoin channels */
+		for (gl = l->network->channels; gl; gl = gl->next) 
+		{
+			struct channel *c = gl->data;
+			if(c->autojoin) {
+				network_send_args(l->network, "JOIN", c->name, c->key, NULL);
+			} 
+		}
+
+		/* Make sure the current server is listed as a possible one for this network */
+		if (l->network->type == NETWORK_TCP && l->argc > 2) {
+			for (gl = l->network->connection.tcp.servers; gl; gl = gl->next) {
+				struct tcp_server *tcp = gl->data;
+
+				if (!g_strcasecmp(tcp->host, l->args[1])) 
+					break;
+			}
+
+			/* Not found, add new one */
+			if (!gl) {
+				struct tcp_server *tcp = g_new0(struct tcp_server, 1);
+				int error;
+				struct addrinfo hints;
+
+				tcp->host = g_strdup(l->args[2]);
+				tcp->name = g_strdup(l->args[2]);
+				tcp->port = g_strdup(l->network->connection.tcp.current_server->port);
+				tcp->ssl = l->network->connection.tcp.current_server->ssl;
+				tcp->password = g_strdup(l->network->connection.tcp.current_server->password);
+
+				memset(&hints, 0, sizeof(hints));
+				hints.ai_family = PF_UNSPEC;
+				hints.ai_socktype = SOCK_STREAM;
+
+				error = getaddrinfo(tcp->host, tcp->port, &hints, &tcp->addrinfo);
+				if (error) {
+					g_warning("Unable to lookup %s: %s", tcp->host, gai_strerror(error));
+				} else {
+					l->network->connection.tcp.servers = g_list_append(l->network->connection.tcp.servers, tcp);
+				}
+			}
+
+		}
+	} 
+
+	if(!(l->options & LINE_DONT_SEND) && run_server_filter(l))
+		clients_send(l->network, l, NULL);
+
+	return TRUE;
+}
+
 gboolean handle_server_receive (GIOChannel *c, GIOCondition cond, void *_server)
 {
 	struct network *server = (struct network *)_server;
-	struct line *l, *lc;
+	struct line *l;
+	gboolean ret;
 
 	if (cond & G_IO_HUP) {
 		return reconnect(c, cond, _server);
@@ -89,97 +181,78 @@ gboolean handle_server_receive (GIOChannel *c, GIOCondition cond, void *_server)
 			return TRUE;
 		}
 
-		l->direction = FROM_SERVER;
 		l->network = server;
 
-		run_log_filter(lc = linedup(l)); free_line(lc);
-		run_replication_filter(lc = linedup(l)); free_line(lc);
+		ret = process_from_server(l);
 
-		state_handle_data(server,l);
+		free_line(l);
 
-		/* We need to handle pings.. we can't depend on a client
-		 * to do that for us*/
-		if(!g_strcasecmp(l->args[0], "PING")){
-			network_send_args(server, "PONG", l->args[1], NULL);
-		} else if(!g_strcasecmp(l->args[0], "PONG")){
-		} else if(!g_strcasecmp(l->args[0], "ERROR")) {
-			g_warning("%s error: %s", l->network->name, l->args[1]);
-		} else if(!g_strcasecmp(l->args[0], "433") && !server->authenticated){
-			char *old_nick = server->nick;
-			server->nick = g_strdup_printf("%s_", server->nick);
-			network_send_args(server, "NICK", server->nick, NULL);
-			g_free(old_nick);
-		} else if(atoi(l->args[0]) == 4) {
-			GList *gl;
-
-			server_connected_hook_execute(server);
-			server->authenticated = TRUE;
-
-			for (gl = server->autosend_lines; gl; gl = gl->next) {
-				char *data = gl->data;
-				struct line *newl;
-
-				newl = irc_parse_line(data);
-
-				network_send_line(server, newl);
-
-				free_line(newl);
-			}
-
-			/* Rejoin channels */
-			for (gl = server->channels; gl; gl = gl->next) 
-			{
-				struct channel *c = gl->data;
-				if(c->autojoin) {
-					network_send_args(server, "JOIN", c->name, c->key, NULL);
-				} 
-			}
-
-			/* Make sure the current server is listed as a possible one for this network */
-			if (server->type == NETWORK_TCP && l->argc > 2) {
-				for (gl = server->connection.tcp.servers; gl; gl = gl->next) {
-					struct tcp_server *tcp = gl->data;
-
-					if (!g_strcasecmp(tcp->host, l->args[1])) 
-						break;
-				}
-
-				/* Not found, add new one */
-				if (!gl) {
-					struct tcp_server *tcp = g_new0(struct tcp_server, 1);
-					int error;
-					struct addrinfo hints;
-
-					tcp->host = g_strdup(l->args[2]);
-					tcp->name = g_strdup(l->args[2]);
-					tcp->port = g_strdup(server->connection.tcp.current_server->port);
-					tcp->ssl = server->connection.tcp.current_server->ssl;
-					tcp->password = g_strdup(server->connection.tcp.current_server->password);
-
-					memset(&hints, 0, sizeof(hints));
-					hints.ai_family = PF_UNSPEC;
-					hints.ai_socktype = SOCK_STREAM;
-
-					error = getaddrinfo(tcp->host, tcp->port, &hints, &tcp->addrinfo);
-					if (error) {
-						g_warning("Unable to lookup %s: %s", tcp->host, gai_strerror(error));
-					} else {
-						server->connection.tcp.servers = g_list_append(server->connection.tcp.servers, tcp);
-					}
-				}
-
-			}
-		} 
-
-		if(!(l->options & LINE_DONT_SEND) && run_server_filter(l))
-			clients_send(server, l, NULL);
-
-		free_line(l); l = NULL;
+		return ret;
 	}
 
 	return TRUE;
 }
 
+static gboolean process_from_client(struct line *l)
+{
+	struct line *lc;
+	
+	l->direction = TO_SERVER;
+	state_handle_data(l->client->network, l);
+
+	if (!run_client_filter(l)) 
+		return TRUE;
+
+	if (!run_server_filter(l))
+		return TRUE;
+
+	run_log_filter(lc = linedup(l)); free_line(lc);
+	run_replication_filter(lc = linedup(l)); free_line(lc);
+
+	if (!l->client) {
+		return FALSE;
+	}
+
+	if(!g_strcasecmp(l->args[0], "QUIT")) {
+		disconnect_client(l->client);
+		return FALSE;
+	} else if(!g_strcasecmp(l->args[0], "NICK") && l->args[1] && !l->client->nick) {
+		/* Don't allow the client to change the nick now. We would change it after initialization */
+		if (strcmp(l->args[1], l->client->network->nick)) 
+			irc_sendf(l->client->incoming, ":%s NICK %s", l->args[1], l->client->network->nick);
+
+		l->client->nick = g_strdup(l->args[1]); /* Save nick */
+	} else if(!g_strcasecmp(l->args[0], "USER")) {
+		if (l->argc > 1) {
+			g_free(l->client->username);
+			l->client->username = g_strdup(l->args[1]);
+		}
+
+		if (l->argc > 4) {
+			g_free(l->client->fullname);
+			l->client->fullname = g_strdup(l->args[4]);
+		}
+	} else if(!g_strcasecmp(l->args[0], "PING")) {
+		irc_sendf(l->client->incoming, ":%s PONG :%s\r\n", l->client->network->name, l->args[1]);
+	} else if(network_is_connected(l->client->network)) {
+		char *old_origin;
+		if(!(l->options & LINE_DONT_SEND)) {
+			network_send_line(l->client->network, l);
+		}
+
+		/* Also write this message to all other clients currently connected */
+		if(!(l->options & LINE_IS_PRIVATE) && l->args[0] &&
+		   (!strcmp(l->args[0], "PRIVMSG") || !strcmp(l->args[0], "NOTICE"))) {
+			old_origin = l->origin; l->origin = l->client->network->nick;
+			clients_send(l->client->network, l, l->client);
+			l->origin = old_origin;
+		}
+	} else {
+		irc_sendf(l->client->incoming, ":%s NOTICE %s :Currently not connected to server, ignoring\r\n", (l->client->network->name?l->client->network->name:"ctrlproxy"), l->client->network->nick);
+	}
+
+	return TRUE;
+}
 struct tcp_server *network_get_next_tcp_server(struct network *n)
 {
 	GList *cur = g_list_find(n->connection.tcp.servers, n->connection.tcp.current_server);
@@ -206,6 +279,8 @@ gboolean client_send_line(struct client *c, struct line *l)
 
 gboolean network_send_line(struct network *s, struct line *l)
 {
+	l->network = s;
+
 	switch (s->type) {
 	case NETWORK_TCP:
 		return irc_send_line(s->connection.tcp.outgoing, l);
@@ -216,11 +291,38 @@ gboolean network_send_line(struct network *s, struct line *l)
 	case NETWORK_VIRTUAL:
 		if (!s->connection.virtual.ops) 
 			return FALSE;
-		return s->connection.virtual.ops->send(s, l);
+		return s->connection.virtual.ops->to_server(s, l);
 
 	default:
 		return FALSE;
 	}
+}
+
+gboolean virtual_network_recv_line(struct network *s, struct line *l)
+{
+	l->network = s;
+
+	if (!l->origin) 
+		l->origin = g_strdup(s->name);
+
+	return process_from_server(l);
+}
+
+gboolean virtual_network_recv_args(struct network *s, const char *origin, ...)
+{
+	va_list ap;
+	struct line *l;
+	gboolean ret;
+
+	va_start(ap, origin);
+	l = virc_parse_line(origin, ap);
+	va_end(ap);
+
+	ret = virtual_network_recv_line(s, l);
+
+	free_line(l);
+
+	return ret;
 }
 
 gboolean network_send_args(struct network *s, ...)
@@ -244,7 +346,7 @@ gboolean connect_current_tcp_server(struct network *s)
 {
 	struct addrinfo *res;
 	int sock;
-	int size;
+	size_t size;
 	struct tcp_server *cs = s->connection.tcp.current_server;
 	GIOChannel *ioc = NULL;
 
@@ -379,7 +481,7 @@ gboolean close_server(struct network *n) {
 			n->connection.program.outgoing_id = 0; 
 			break;
 		case NETWORK_VIRTUAL:
-			if (n->connection.virtual.ops) {
+			if (n->connection.virtual.ops && n->connection.virtual.ops->fini) {
 				n->connection.virtual.ops->fini(n);
 			}
 			break;
@@ -456,83 +558,34 @@ void send_motd(struct network *n, GIOChannel *c)
 
 static gboolean handle_client_receive(GIOChannel *c, GIOCondition cond, void *_client)
 {
+	gboolean ret;
 	struct client *client = (struct client *)_client;
-	struct line *l, *lc;
+	struct line *l;
 
 	if (cond & G_IO_HUP) {
 		disconnect_client(client);
 		return FALSE;
 	}
 
-	l = irc_recv_line(c);
-	if(!l) return TRUE;
+	if (cond & G_IO_IN) {
+		l = irc_recv_line(c);
+		if(!l) return TRUE;
 
-	/* Silently drop empty messages */
-	if (l->argc == 0) {
+		/* Silently drop empty messages */
+		if (l->argc == 0) {
+			free_line(l);
+			return TRUE;
+		}
+
+		l->client = client;
+		l->network = client->network;
+
+		ret = process_from_client(l);
+
 		free_line(l);
-		return TRUE;
+
+		return ret;
 	}
-
-	l->direction = TO_SERVER;
-	l->client = client;
-	l->network = client->network;
-
-	state_handle_data(client->network, l);
-
-	if (!run_client_filter(l)) 
-		return TRUE;
-
-	if (!run_server_filter(l))
-		return TRUE;
-
-	run_log_filter(lc = linedup(l)); free_line(lc);
-	run_replication_filter(lc = linedup(l)); free_line(lc);
-
-	client = l->client;
-	if (!client) {
-		return TRUE;
-	}
-
-	if(!g_strcasecmp(l->args[0], "QUIT")) {
-		disconnect_client(client);
-		free_line(l);
-		return FALSE;
-	} else if(!g_strcasecmp(l->args[0], "NICK") && l->args[1] && !client->nick) {
-		/* Don't allow the client to change the nick now. We would change it after initialization */
-		if (strcmp(l->args[1], client->network->nick)) 
-			irc_sendf(c, ":%s NICK %s", l->args[1], client->network->nick);
-
-		client->nick = g_strdup(l->args[1]); /* Save nick */
-	} else if(!g_strcasecmp(l->args[0], "USER")) {
-		if (l->argc > 1) {
-			g_free(client->username);
-			client->username = g_strdup(l->args[1]);
-		}
-
-		if (l->argc > 4) {
-			g_free(client->fullname);
-			client->fullname = g_strdup(l->args[4]);
-		}
-	} else if(!g_strcasecmp(l->args[0], "PING")) {
-		irc_sendf(c, ":%s PONG :%s\r\n", client->network->name, l->args[1]);
-	} else if(network_is_connected(client->network)) {
-		char *old_origin;
-		if(!(l->options & LINE_DONT_SEND)) {
-			network_send_line(client->network, l);
-		}
-
-		/* Also write this message to all other clients currently connected */
-		if(!(l->options & LINE_IS_PRIVATE) && l->args[0] &&
-		   (!strcmp(l->args[0], "PRIVMSG") || !strcmp(l->args[0], "NOTICE"))) {
-			old_origin = l->origin; l->origin = client->network->nick;
-			clients_send(client->network, l, client);
-			l->origin = old_origin;
-		}
-	} else {
-		irc_sendf(c, ":%s NOTICE %s :Currently not connected to server, ignoring\r\n", (client->network->name?client->network->name:"ctrlproxy"), client->network->nick);
-	}
-	free_line(l);l = NULL;
-
 	return TRUE;
 }
 
@@ -718,6 +771,8 @@ gboolean connect_network(struct network *s) {
 		if (s->connection.virtual.ops->init) 
 			return s->connection.virtual.ops->init(s);
 
+		/* FIXME: Set s->connection.virtual.ops->send */
+
 		return TRUE;
 	}
 
@@ -736,7 +791,7 @@ int close_network(struct network *s)
 		l = l->next;
 		disconnect_client(c);
 	}
-	g_list_free(s->clients);s->clients = NULL;
+	g_list_free(s->clients); s->clients = NULL;
 
 	close_server(s);
 
@@ -834,6 +889,9 @@ gboolean network_change_nick(struct network *s, const char *nick)
 
 void register_virtual_network(struct virtual_network_ops *ops)
 {
+	if (!virtual_network_ops) {
+		virtual_network_ops = g_hash_table_new(g_str_hash, g_str_equal);
+	}
 	g_hash_table_insert(virtual_network_ops, ops->name, ops);
 }
 
@@ -842,13 +900,13 @@ void unregister_virtual_network(struct virtual_network_ops *ops)
 	g_hash_table_remove(virtual_network_ops, ops->name);
 }
 
-gint ping_loop_id;
+gint ping_loop_id = -1;
 
 gboolean init_networks() {
 	GList *gl;
-	if(!networks) {
-		g_error(_("No networks listed"));
-		return 1;
+
+	if (ping_loop_id == -1) {
+		ping_loop_id = g_timeout_add(1000 * 300, ping_loop, NULL);
 	}
 
 	for (gl = networks; gl; gl = gl->next)
@@ -868,11 +926,6 @@ gboolean init_networks() {
 				connect_network(n);
 			}
 		}
-	}
-
-	if (!virtual_network_ops) {
-		virtual_network_ops = g_hash_table_new(g_str_hash, g_str_equal);
-		ping_loop_id = g_timeout_add(1000 * 300, ping_loop, NULL);
 	}
 
 	return TRUE;

@@ -176,8 +176,7 @@ struct network {
 			struct virtual_network_ops {
 				char *name;
 				gboolean (*init) (struct network *);
-				struct line * (*recv) (struct network *);
-				gboolean (*send) (struct network *, struct line *);
+				gboolean (*to_server) (struct network *, struct line *);
 				gboolean (*fini) (struct network *);
 			} *ops;
 		} virtual;
@@ -186,7 +185,7 @@ struct network {
 
 typedef gboolean (*plugin_init_function) (struct plugin *);
 typedef gboolean (*plugin_fini_function) (struct plugin *);
-typedef xmlNodePtr (*plugin_save_function) (struct plugin *);
+typedef gboolean (*plugin_save_function) (struct plugin *, xmlNodePtr);
 typedef gboolean (*plugin_load_function) (struct plugin *, xmlNodePtr configuration);
 
 struct plugin {
@@ -232,6 +231,8 @@ G_MODULE_EXPORT void register_virtual_network(struct virtual_network_ops *);
 G_MODULE_EXPORT void unregister_virtual_network(struct virtual_network_ops *);
 G_MODULE_EXPORT struct network *find_network(const char *name);
 G_MODULE_EXPORT gboolean client_send_line(struct client *c, struct line *);
+G_MODULE_EXPORT gboolean virtual_network_recv_line(struct network *l, struct line *);
+G_MODULE_EXPORT gboolean virtual_network_recv_args(struct network *l, const char *origin, ...); 
 
 /* line.c */
 G_MODULE_EXPORT struct line *linedup(struct line *l);

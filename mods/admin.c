@@ -43,6 +43,8 @@
 #include "gettext.h"
 #define _(s) gettext(s)
 
+#define ADMIN_CHANNEL "#ctrlproxy"
+
 static gboolean without_privmsg = FALSE;
 static GList *commands = NULL;
 static guint longest_command = 0;
@@ -66,7 +68,13 @@ void admin_out(struct line *l, const char *fmt, ...)
 	va_end(ap);
 
 	hostmask = g_strdup_printf(":ctrlproxy!ctrlproxy@%s", l->network->name);
-	irc_send_args(l->client->incoming, hostmask, "NOTICE", l->network->nick, msg, NULL);
+	if (l->network->type == NETWORK_VIRTUAL && 
+		!strcmp(l->network->connection.virtual.ops->name, "admin") &&
+		!strcmp(l->args[1], ADMIN_CHANNEL)) {
+		virtual_network_recv_args(l->network, hostmask+1, "PRIVMSG", ADMIN_CHANNEL, msg, NULL);
+	} else {
+		irc_send_args(l->client->incoming, hostmask, "NOTICE", l->network->nick, msg, NULL);
+	}
 	g_free(hostmask);
 
 	g_free(msg);
@@ -334,19 +342,11 @@ void unregister_admin_command(char *name)
 	}
 }
 
-static gboolean handle_data(struct line *l, void *userdata) {
+static gboolean process_command(struct line *l, int cmdoffset)
+{
 	char *tmp, **args = NULL;
-	int cmdoffset = 0;
 	int i;
 	GList *gl;
-	if(l->direction != TO_SERVER) return TRUE;
-
-	if(g_strcasecmp(l->args[0], "CTRLPROXY") == 0)cmdoffset = 1;
-
-	if(!without_privmsg && g_strcasecmp(l->args[0], "PRIVMSG") == 0 &&
-	   g_strcasecmp(l->args[1], "CTRLPROXY") == 0) cmdoffset = 2;
-
-	if(cmdoffset == 0) return TRUE;
 
 	if(!l->args[cmdoffset]) {
 		admin_out(l, _("Please give a command. Use the 'help' command to get a list of available commands"));
@@ -390,8 +390,22 @@ static gboolean handle_data(struct line *l, void *userdata) {
 	return TRUE;
 }
 
-gboolean fini_plugin(struct plugin *p) {
-	del_client_filter("admin");
+static gboolean handle_data(struct line *l, void *userdata) {
+	int cmdoffset = 0;
+
+	if(l->direction != TO_SERVER) 
+		return TRUE;
+
+	if(g_strcasecmp(l->args[0], "CTRLPROXY") == 0)cmdoffset = 1;
+
+	if(!without_privmsg && g_strcasecmp(l->args[0], "PRIVMSG") == 0 &&
+	   g_strcasecmp(l->args[1], "CTRLPROXY") == 0) cmdoffset = 2;
+
+	if(cmdoffset == 0) 
+		return TRUE;
+
+	process_command(l, cmdoffset);
+
 	return TRUE;
 }
 
@@ -410,6 +424,42 @@ gboolean load_config(struct plugin *p, xmlNodePtr node)
 		}
 	}
 
+	return TRUE;
+}
+
+static gboolean admin_net_init(struct network *n)
+{
+	n->authenticated = TRUE;
+	virtual_network_recv_args(n, n->hostmask, "JOIN", ADMIN_CHANNEL, NULL);
+	virtual_network_recv_args(n, n->name, "332", n->nick, ADMIN_CHANNEL, "CtrlProxy administration channel", NULL);
+	virtual_network_recv_args(n, n->name, "353", n->nick, "=", ADMIN_CHANNEL, n->nick, NULL);
+	virtual_network_recv_args(n, n->name, "366", n->nick, ADMIN_CHANNEL, "End of /names list", NULL);
+
+	return TRUE;
+}
+
+static gboolean admin_to_server (struct network *n, struct line *l)
+{
+	if (strcmp(l->args[0], "PRIVMSG"))
+		return TRUE;
+
+	if (strcmp(l->args[1], ADMIN_CHANNEL)) {
+		return TRUE;
+	}
+
+	return process_command(l, 2);
+}
+
+struct virtual_network_ops admin_network = {
+	"admin",
+	admin_net_init, 
+	admin_to_server,
+	NULL
+};
+
+gboolean fini_plugin(struct plugin *p) {
+	unregister_virtual_network(&admin_network);
+	del_client_filter("admin");
 	return TRUE;
 }
 
@@ -439,6 +489,8 @@ gboolean init_plugin(struct plugin *p) {
 	for(i = 0; builtin_commands[i].name; i++) {
 		register_admin_command(builtin_commands[i].name, builtin_commands[i].handler, builtin_commands[i].help, builtin_commands[i].help_details, NULL);
 	}
+
+	register_virtual_network(&admin_network);
 
 	return TRUE;
 }

@@ -134,12 +134,6 @@ gboolean irc_send_line(GIOChannel *c, struct line *l) {
 	raw = irc_line_string_nl(l);
 	ret = g_io_channel_write_chars(c, raw, -1, &bytes_written, NULL);
 
-	switch (ret) {
-	case G_IO_STATUS_AGAIN: g_message("AGAIN? "); break;
-	case G_IO_STATUS_ERROR: g_message("ERORR!"); break;
-	default: break;
-	}
-	
 	g_free(raw);
 
 	g_io_channel_flush(c, NULL);

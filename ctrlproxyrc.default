@@ -84,5 +84,9 @@
 		<network name="BitlBee">
 			<program>/usr/sbin/bitlbee</program>
 		</network>
+
+		<network autoconnect="1" name="Admin">
+			<virtual type="admin"/>
+		</network>
 	</networks>
 </ctrlproxy>
