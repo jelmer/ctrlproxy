@@ -47,6 +47,7 @@ char *mode2string(char modes[255])
 
 static void free_nick(struct channel_nick *n)
 {
+	n->global->channels = g_list_remove(n->global->channels, n->channel);
 	n->global->refcount--;
 	if(n->global->refcount == 0) {
 		if(n->global->hostmask != NULL)
@@ -146,6 +147,8 @@ static struct network_nick *find_add_network_nick(struct network *n, char *name)
 	nd->refcount = 1;
 	nd->name = strdup(name);
 	nd->hostmask = NULL;
+	nd->channels = NULL;
+	
 	n->nicks = g_list_append(n->nicks, nd);
 	return nd;
 }
@@ -165,6 +168,7 @@ struct channel_nick *find_add_nick(struct channel *c, char *name) {
 	n->channel = c;
 	n->global = find_add_network_nick(c->network, realname);
 	c->nicks = g_list_append(c->nicks, n);
+	n->global->channels = g_list_append(n->global->channels, c);
 	return n;
 }
 

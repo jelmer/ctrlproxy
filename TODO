@@ -7,8 +7,8 @@
  - connect to central daemon that does a fork and starts ctrlproxy in that?
 - Modules shouldn't be loaded twice (worked on by poelzi)
 - non-blocking connect
-- keep list of channels a nick is on
 - add member 'nick' to struct line
+- add more help data
 
 report_time:
  - test report_time
