@@ -5,7 +5,7 @@
   - synopsis integration?
  - test dcc module
  - finish webconfig (worked on by poelzi)
- - fix bug in repl_simple (not all channels are always synced)
+ - fix bug in linestack_file
 
 2.8:
  - win32 support with traybar
