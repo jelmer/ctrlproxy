@@ -31,6 +31,10 @@
 #include <execinfo.h>
 #endif
 
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+
 #define add_log_domain(domain) g_log_set_handler (domain, G_LOG_LEVEL_MASK | G_LOG_FLAG_FATAL | G_LOG_FLAG_RECURSION, log_handler, NULL);
 
 /* globals */
@@ -204,9 +208,9 @@ int main(int argc, const char *argv[])
 
 	g_message(_("Logfile opened"));
 
-#ifdef daemon
 	if(isdaemon) {
 
+#ifdef HAVE_DAEMON 
 #ifdef SIGTTOU
 		signal(SIGTTOU, SIG_IGN);
 #endif
@@ -223,8 +227,10 @@ int main(int argc, const char *argv[])
 #endif
 		daemon(1, 0);
 		isdaemon = 1;
-	} else 
+#else
+		g_warning("Daemon mode not compiled in");
 #endif
+	} else 
 		if(!f_logfile)f_logfile = stdout;
 
 	init_config();

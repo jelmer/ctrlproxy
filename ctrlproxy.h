@@ -205,7 +205,6 @@ G_MODULE_EXPORT struct line *irc_parse_linef( char *origin, ... );
 G_MODULE_EXPORT struct line *irc_parse_line_args( char *origin, ... );
 
 /* main.c */
-G_MODULE_EXPORT void clean_exit(void);
 G_MODULE_EXPORT const char *ctrlproxy_version(void);
 G_MODULE_EXPORT const char *get_my_hostname(void);
 G_MODULE_EXPORT const char *get_modules_path(void);

@@ -7,6 +7,7 @@
 - support the - and + in front of lines as used by Freenode
 - strict checking of XML syntax
 - "password" attribute on server element rather then network element
+- move docs to seperate repository ?
 - check modules:
   * admin
   * antiflood

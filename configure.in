@@ -52,7 +52,7 @@ AC_TYPE_SIGNAL
 AC_SUBST(BINS)
 AC_SUBST(MODS)
 AC_SUBST(MODS_SUBDIRS)
-AC_CHECK_FUNCS([gethostbyname gethostname memset mkdir strcasecmp strchr strdup strerror strncasecmp strstr uname backtrace_symbols gettimeofday strrchr])
+AC_CHECK_FUNCS([gethostbyname gethostname memset mkdir strcasecmp strchr strdup strerror strncasecmp strstr uname backtrace_symbols gettimeofday strrchr daemon])
 AC_MSG_RESULT([Going to build the following plugins: ])
 AC_MSG_RESULT([$MODS])
 AC_CONFIG_FILES([Makefile mods/Makefile testsuite/Makefile ctrlproxy.pc po/Makefile.in scripts/Makefile scripts/web/Makefile])
