@@ -1,0 +1,4 @@
+Information for users upgrading from 2.6:
+=========================================
+- GNUTLS is now used by default when it is available instead of SSL. GNUTLS 
+  needs a cafile next to the key and cert files.
