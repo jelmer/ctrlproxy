@@ -1,3 +1,6 @@
 *.o
+test-filter
+test-linestack
+*.tmp
 test-parser
 Makefile
