@@ -143,6 +143,8 @@ void mloop(struct module_context *c)
 					} else {
 						dprintf(i, ":%s 464 %s :Password mismatch\r\n", c->parent->name, c->parent->nick);
 					}
+				} else if(!strcasecmp(l.args[0], "QUIT")) {
+					/* Ignore */
 				} else if(st->authenticated[i]) {
 					asprintf(&tmp, "%s\n", ret);
 					server_send_raw(c->parent, tmp);
