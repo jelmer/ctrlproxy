@@ -38,6 +38,12 @@ static struct network *find_network(const char *name)
 	return NULL;
 }
 
+static void do_crash(char **args, struct line *l)
+{
+	char *foo = NULL;
+	*foo='a';
+}
+
 static void dump_joined_channels(char **args, struct line *l)
 {
 	struct network *n = l->network;
@@ -63,6 +69,7 @@ static void dump_joined_channels(char **args, struct line *l)
 
 gboolean fini_plugin(struct plugin *p) {
 	unregister_admin_command("DUMPJOINEDCHANNELS");
+	unregister_admin_command("CRASH");
 	return TRUE;
 }
 
@@ -72,5 +79,6 @@ gboolean init_plugin(struct plugin *p) {
 		return FALSE;
 	}
 	register_admin_command("DUMPJOINEDCHANNELS", dump_joined_channels, "[network]", NULL);
+	register_admin_command("CRASH", do_crash, "", NULL);
 	return TRUE;
 }
