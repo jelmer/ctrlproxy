@@ -4,11 +4,10 @@ CFLAGS = @CFLAGS@ @PKG_CFLAGS@ -I.. -DHAVE_CONFIG_H
 INSTALL = @INSTALL@
 
 CFLAGS+=-ansi -Wall -DMODULESDIR=\"$(modulesdir)\"
-BINS = test-parser
 
 .PHONY: all clean distclean install
 
-all: $(BINS)
+all: 
 
 test-parser: test-parser.o ../line.o ../transport.o
 	$(CC) $(LIBS) -o $@ test-parser.o ../line.o ../transport.o
