@@ -75,7 +75,24 @@ static void dcc_del(struct line *l, const char *f)
 
 static void dcc_send(struct line *l, const char *f)
 {
-	/* FIXME */
+	char *p;
+	char *r;
+	char *s;
+	if(strchr(f, '/')) {
+		admin_out(l, "Invalid filename");
+		return;
+	}
+
+	asprintf(&r, "dcc/%s", f);
+	p = ctrlproxy_path(r);
+	free(r);
+	
+	asprintf(&s, "\001DCC SEND %s address port size", p);
+	free(p);
+	irc_send_args(l->client->incoming, "PRIVMSG", s, NULL);
+	free(s);
+
+	/* FIXME: Listen */
 }
 
 static void dcc_command(char **args, struct line *l)
@@ -93,9 +110,29 @@ static void dcc_command(char **args, struct line *l)
 
 static gboolean mhandle_data(struct line *l)
 {
-	if(l->direction == TO_SERVER || l->args[1][0] != '\001') return TRUE;
+	char *p, *pe, **cargs;
+	if(l->direction == TO_SERVER || l->args[2][0] != '\001') return TRUE;
 
-	/* FIXME: DCC SEND/FILE */
+	p = strdup(l->args[2]+1);
+
+	pe = strchr(p, '\001');
+	if(!pe) {
+		g_warning("Invalidly formatted CTCP request received");
+		free(p);
+		return TRUE;
+	}
+
+	*pe = '\0';
+
+	cargs = g_strsplit(p, " ", 0);
+
+	/* DCC SEND */
+	if(cargs[0] && cargs[1] && 
+	   !strcasecmp(cargs[0], "DCC") && !strcasecmp(cargs[1], "SEND")) {
+		/* FIXME: Rules for what data to accept */
+	}
+
+	g_strfreev(cargs);
 
 	return TRUE;
 }
