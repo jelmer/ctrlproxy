@@ -3,11 +3,9 @@
  - see FIXME's
 - fix bug in linestack_file
 - check web script
-- fix memory leaks in python module
-- support the - and + in front of lines
+- fix memory leaks in python module (partially rewrite python module?)
+- support the - and + in front of lines as used by Freenode
 - strict checking of XML syntax
-- crash bug in /CTRLPROXY DIE
-- bug with setting modes for irssi mkdir
 - "password" attribute on server element rather then network element
 - check modules:
   * admin
