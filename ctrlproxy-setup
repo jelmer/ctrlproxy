@@ -508,7 +508,7 @@ sub printCtrlproxyUsage {
 	$title = "Thanks for using ctrlproxy's configuration editor !";
     newScreen();
     print <<EOI;
-Please report any bug to ctrlproxy\@vernstok.nl.
+Please report any bug to ctrlproxy\@lists.vernstok.nl.
 If you generated a configuration file, you can now launch ctrlproxy
 and enjoy ;)
 EOI
