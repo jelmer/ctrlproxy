@@ -131,7 +131,7 @@ void transport_free(struct transport_context *t)
 	g_free(t);
 }
 
-G_MODULE_EXPORT int transport_write(struct transport_context *t, char *l)
+G_MODULE_EXPORT int transport_write(struct transport_context *t, const char *l)
 {
 #ifndef _WIN32
 	if(debugfd)fprintf(debugfd, "[TO] %s\n", l);

@@ -285,12 +285,12 @@ void disconnect_client(struct client *c) {
 
 }
 
-void clients_send(struct network *server, struct line *l, struct transport_context *exception) 
+void clients_send(struct network *server, struct line *l, struct client *exception) 
 {
 	GList *g = server->clients;
 	while(g) {
 		struct client *c = (struct client *)g->data;
-		if(c->authenticated && c->incoming != exception)CLIENT_SEND_LINE(c, l);
+		if(c->authenticated && c != exception)CLIENT_SEND_LINE(c, l);
 		g = g_list_next(g);
 	}
 }
@@ -450,7 +450,7 @@ void handle_client_receive(struct transport_context *c, char *raw, void *_client
 			if(!(l->options & LINE_IS_PRIVATE) && l->args[0] &&
 			   (!strcmp(l->args[0], "PRIVMSG") || !strcmp(l->args[0], "NOTICE"))) {
 				old_origin = l->origin; l->origin = nick;
-				clients_send(client->network, l, c);
+				clients_send(client->network, l, client);
 				l->origin = old_origin;
 			}
 		} else {

@@ -1,16 +1,31 @@
 PYTHON = @PYTHON@
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+PYTHON_PREFIX = @PYTHON_PREFIX@
 SWIG = @SWIG@
 CC = @CC@
+PYCFLAGS = -I$(shell $(PYTHON) -c 'import distutils.sysconfig; print distutils.sysconfig.get_python_inc()')
+PYLDFLAGS = -L$(shell $(PYTHON) -c 'import distutils.sysconfig; print distutils.sysconfig.get_python_lib(standard_lib=1)')
+PYLDFLAGS += $(shell $(PYTHON) -c 'import distutils.sysconfig; print distutils.sysconfig.get_config_var("BLDLIBRARY")')
 CFLAGS = @CFLAGS@ @PKG_CFLAGS@ -I../..
 LDFLAGS = @LDFLAGS@ @PKG_LIBS@
+INSTALL = @INSTALL@
+moddir = @libdir@/ctrlproxy
 
-all: build
+all: build libpython2.so
 
-build: ctrlproxy_wrap.c
+lib%.so: %.o
+	$(CC) $(LDFLAGS) $(PYLDFLAGS) -shared -o $@ $<
+
+%.o: %.c
+	$(CC) $(CFLAGS) $(PYCFLAGS) -c $<
+
+build: ctrlproxy_wrap.c 
 	LDFLAGS="$(LDFLAGS)" CFLAGS="$(CFLAGS)" $(PYTHON) setup.py build
 
 install:
 	$(PYTHON) setup.py install
+	$(INSTALL) libpython2.so $(DESTDIR)$(moddir)
 
 clean:
 	rm -f *_wrap.c

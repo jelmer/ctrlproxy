@@ -62,7 +62,7 @@ struct transport_ops {
 	/* The connect and listen functions should add something to the poll */
 	int (*connect) (struct transport_context *context);
 	int (*listen) (struct transport_context *context);
-	int (*write) (struct transport_context *context, char *l);
+	int (*write) (struct transport_context *context, const char *l);
 	int (*close) (struct transport_context *context);
 	int reference_count;
 	struct plugin *plugin;
@@ -192,7 +192,7 @@ G_MODULE_EXPORT gboolean connect_next_server (struct network *);
 G_MODULE_EXPORT int close_network(struct network *s);
 G_MODULE_EXPORT gboolean close_server(struct network *n);
 G_MODULE_EXPORT GList *get_network_list(void);
-G_MODULE_EXPORT void clients_send(struct network *, struct line *, struct transport_context *exception);
+G_MODULE_EXPORT void clients_send(struct network *, struct line *, struct client *exception);
 G_MODULE_EXPORT void network_add_listen(struct network *, xmlNodePtr);
 G_MODULE_EXPORT void disconnect_client(struct client *c);
 G_MODULE_EXPORT void server_send_login (struct transport_context *c, void *_server);
@@ -241,7 +241,7 @@ G_MODULE_EXPORT gboolean unregister_transport(char *name);
 struct transport_context *transport_connect(const char *name, xmlNodePtr p, receive_handler, connected_handler, disconnect_handler, void *data);
 struct transport_context *transport_listen(const char *name, xmlNodePtr p, newclient_handler, void *data);
 void transport_free(struct transport_context *);
-G_MODULE_EXPORT int transport_write(struct transport_context *, char *l);
+G_MODULE_EXPORT int transport_write(struct transport_context *, const char *l);
 void transport_set_disconnect_handler(struct transport_context *, disconnect_handler);
 void transport_set_receive_handler(struct transport_context *, receive_handler);
 void transport_set_newclient_handler(struct transport_context *, newclient_handler);

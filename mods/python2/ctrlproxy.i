@@ -3,16 +3,22 @@
 #include "ctrlproxy.h"
 %}
 %nodefault;
+
+/* These are not useful to non-C programmers */
 %ignore list_make_string;
 %ignore xmlFindChildByName;
 %ignore xmlFindChildByElementName;
+
 %include "../../ctrlproxy.h";
+
 %rename(get_version) ctrlproxy_version;
 %rename(Line) line;
 %rename(Plugin) plugin;
 %rename(Network) network;
 %rename(Channel) channel;
 %rename(LineStack) linestack_context;
+%rename(Transport) transport_context;
+
 %extend line {
 	line(struct line *l) {
 		return linedup(l);
@@ -92,6 +98,11 @@
 	int isPrefix(char prefix) {
 		return is_prefix(prefix, self);
 	}
+
+	void sendLine(struct line *l, struct client *exception = NULL) 
+	{
+		clients_send(self, l, exception);
+	}
 };
 
 %extend linestack_context {
@@ -128,6 +139,21 @@
 %extend channel {
 	GSList *replicate(const char *hostmask, const char *nick) {
 		return gen_replication_channel(self, hostmask, nick);
+	}
+};
+
+%extend transport_context {
+	transport_context(const char *name) {
+		return transport_connect(name, NULL, NULL, NULL, NULL, NULL);
+	}
+	/* FIXME: What about transport_listen? */
+	
+	~transport_context() {
+		transport_free(self);
+	}
+
+	int write(const char *l) {
+		return transport_write(self, l);	
 	}
 };
 
