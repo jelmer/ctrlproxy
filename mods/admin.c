@@ -456,14 +456,8 @@ static gboolean handle_data(struct line *l) {
 	args[0] = tmp;
 	p = tmp;
 
-	while((n = strchr(p, ' '))) {
-		args = realloc(args, (curarg + 2) * sizeof(char *));
-		args[++curarg] = n+1;
-		*n = '\0'; p = n+1;
-	}
-	
-	args[++curarg] = NULL;
-	
+	args = g_strsplit(p, " ",0);
+
 	/* Ok, arguments are processed now. Execute the corresponding command */
 	gl = commands;
 	while(gl) {

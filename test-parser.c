@@ -12,10 +12,14 @@ int main(int argc, char **argv)
 	while(!feof(stdin)) {
 		fgets(buf, sizeof(buf), stdin);
 		l = irc_parse_line(buf);
-		raw = irc_line_string(l);
-		puts(raw);
-		free(raw);
-		free_line(l);
+		if(l) {
+			raw = irc_line_string(l);
+			puts(raw);
+			free(raw);
+			free_line(l);
+		} else { 
+			fprintf(stderr, "Unparseable\n");
+		}
 	}
 	return 0;
 }

@@ -84,7 +84,7 @@ struct line * irc_parse_line(char *d)
 
 	if(p[0] == ':') {
 		p = strchr(data, ' ');
-		if(!p){ free(l); return NULL; }
+		if(!p){ free(data); free(l); return NULL; }
 		*p = '\0';
 		l->origin = strdup(data+1);
 		for(; *(p+1) == ' '; p++);
