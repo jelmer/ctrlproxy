@@ -696,3 +696,16 @@ struct linestack_context *linestack_new_by_network(struct network *n)
 
 	return ret;
 }
+
+const char *get_network_feature(struct network *n, char *name)
+{
+	int i;
+	for(i = 0; n->features[i]; i++) {
+		if(strncmp(n->features[i], name, strlen(name) < strlen(n->features[i])?strlen(name):strlen(n->features[i]))) {
+			char *eq = strchr(n->features[i], '=');
+			if(eq) return eq+1;
+			return "";		
+		}
+	}
+	return NULL;
+}

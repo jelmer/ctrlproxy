@@ -1,4 +1,5 @@
 Ctrlproxy 2.7:
+ * Add way to get network features
  * Keep track of channels nick is on in network_nick structure
  * New, more advanced filter system supporting classes and priorities
  * Add help support in admin module
