@@ -65,7 +65,7 @@ static int py_redirect_stdout = 0;
 static int py_redirect_stderr = 0;
 
 #define PYCTRLPROXY_NODETOPYOB(node) \
-PyInstance_New(xml_node,Py_BuildValue("(O)",libxml_xmlNodePtrWrap((xmlNodePtr) node)),NULL);
+PyInstance_New(xml_node,Py_BuildValue("(O)",libxml_xmlNodePtrWrap((xmlNodePtr) node)),NULL)
 
 #define PYCTRLPROXY_PYADDCALLBACK(function,callarray) \
  static PyObject * function(PyObject *self, PyObject *args, PyObject *keywds) { \
@@ -446,7 +446,7 @@ static PyObject * PyCtrlproxyChannel_get(PyCtrlproxyObject *self, char *closure)
 	PYCTRLPROXY_MAKESTRUCT(c, channel)
 
 	if(!strcmp(closure,"xmlConf")) {
-		rv = PYCTRLPROXY_NODETOPYOB(c->xmlConf)
+		rv = PYCTRLPROXY_NODETOPYOB(c->xmlConf);
 	} else if(!strcmp(closure,"name")) {
 		rv = PyString_FromString(xmlGetProp(c->xmlConf,"name"));
 	} else if(!strcmp(closure,"mode")) {
@@ -567,13 +567,13 @@ static PyObject * PyCtrlproxyNetwork_get(PyCtrlproxyObject *self, char *closure)
 	PYCTRLPROXY_MAKESTRUCT(n, network)
 
 	if(!strcmp(closure,"xmlConf")) {
-		rv = PYCTRLPROXY_NODETOPYOB(n->xmlConf)
+		rv = PYCTRLPROXY_NODETOPYOB(n->xmlConf);
 	} else if(!strcmp(closure,"name")) {
 		rv = PyString_FromString(xmlGetProp(n->xmlConf,"name"));
 	} else if(!strcmp(closure,"mymodes")) {
 		rv = PyString_FromString(n->mymodes);
 	} else if(!strcmp(closure,"servers")) {
-		rv = PYCTRLPROXY_NODETOPYOB(n->servers)
+		rv = PYCTRLPROXY_NODETOPYOB(n->servers);
 	} else if(!strcmp(closure,"hostmask")) {
 		rv = PyString_FromString(n->hostmask);
 	} else if(!strcmp(closure,"channels")) {
@@ -596,9 +596,9 @@ static PyObject * PyCtrlproxyNetwork_get(PyCtrlproxyObject *self, char *closure)
 			gl = gl->next;
 		}
 	} else if(!strcmp(closure,"current_server")) {
-		rv = PYCTRLPROXY_NODETOPYOB(n->current_server)
+		rv = PYCTRLPROXY_NODETOPYOB(n->current_server);
 	} else if(!strcmp(closure,"listen")) {
-		rv = PYCTRLPROXY_NODETOPYOB(n->listen)
+		rv = PYCTRLPROXY_NODETOPYOB(n->listen);
 	} else if(!strcmp(closure,"supported_modes")) {
 		if(n->supported_modes != NULL) {
 			rv = PyList_New(0);
@@ -1180,7 +1180,7 @@ static PyObject * PyCtrlproxyPlugin_get(PyCtrlproxyObject *self, void *closure) 
 	PYCTRLPROXY_MAKESTRUCT(p, plugin)
 
 	if(!strcmp(closure,"xmlConf")) {
-		rv = PYCTRLPROXY_NODETOPYOB(p->xmlConf)
+		rv = PYCTRLPROXY_NODETOPYOB(p->xmlConf);
 	} else if(!strcmp(closure,"name")) {
 		rv = PyString_FromString(p->name);
 	} else if(!strcmp(closure,"path")) {
@@ -2023,9 +2023,9 @@ static PyObject * PyCtrlproxy_getconfig(PyObject *self, PyObject *args, PyObject
 		return NULL;
 
 	if (!strcasecmp("networks",type))
-		rv = PYCTRLPROXY_NODETOPYOB(xmlNode_networks)
+		rv = PYCTRLPROXY_NODETOPYOB(xmlNode_networks);
 	else if(!strcasecmp("plugins",type))
-		rv = PYCTRLPROXY_NODETOPYOB(xmlNode_plugins)
+		rv = PYCTRLPROXY_NODETOPYOB(xmlNode_plugins);
 	else
 		rv = PyInstance_New(PyObject_GetAttrString(xml_module,"xmlDoc"),Py_BuildValue("(O)",libxml_xmlDocPtrWrap((xmlDocPtr) configuration)),NULL);
 
@@ -2149,10 +2149,6 @@ gboolean in_load(char *c,PyObject *args, struct line *l) {
 
 	g_log(G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "Loading script[%i] %s", sid+1, c);
 
-	xml_module = PyImport_ImportModule("libxml2");
-	xml_modulemod = PyImport_ImportModule("libxml2mod");
-	xml_node = PyObject_GetAttrString(xml_module,"xmlNode");
-
 	PyImport_ImportModule("time");
 	PyImport_AddModule("ctrlproxy");
 	m = Py_InitModule("ctrlproxy", CtrlproxyMethods);
@@ -2220,6 +2216,8 @@ gboolean in_load(char *c,PyObject *args, struct line *l) {
 	}
 	// extend module path and add tools object
 	PyList_Append(PyObject_GetAttrString(sys,"path"),PyString_FromString(pylibdir));
+	// add the script basedir to path
+	PyList_Append(PyObject_GetAttrString(sys,"path"),PyString_FromString(g_path_get_dirname(c)));
 	//PyObject_Print(PyObject_GetAttrString(sys,"path"), stdout, 0);
 
 	PyImport_ImportModule("ctrlproxy_tools");
@@ -2325,9 +2323,9 @@ static void in_load_from_config(char *name) {
 				args = PyDict_New();
 				curargs = cur->xmlChildrenNode;
 				while(curargs) {
-					if(!xmlIsBlankNode(cur) && !strcmp(curargs->name, "argument") && xmlHasProp(curargs, "name"))
-						PyDict_SetItemString(args,xmlGetProp(curargs, "name"),PyString_FromString(xmlNodeGetContent(curargs)));
-					if(!xmlIsBlankNode(cur) && !strcmp(curargs->name, "file"))
+					if(!xmlIsBlankNode(cur) && !strcmp(curargs->name, "argument") && xmlHasProp(curargs, "name")) {
+						PyDict_SetItemString(args,xmlGetProp(curargs, "name"),PYCTRLPROXY_NODETOPYOB(curargs));
+					} if(!xmlIsBlankNode(cur) && !strcmp(curargs->name, "file"))
 						file = xmlNodeGetContent(curargs);
 					curargs = curargs->next;
 				}
@@ -2346,17 +2344,17 @@ static void in_admin_command(char **args, struct line *l)
 {
 	if(args[1] != NULL && !strcasecmp("load", args[1]) && args[2] != NULL) {
 		PyObject *pargs = PyDict_New();
+		xmlNodePtr narg = NULL;
 		int i = 3;
 		printf("Python Load %s\n", args[2]);
 		for(;args[i] != NULL;i++) {
 			char **na = g_strsplit(args[i],"=",2);
 			if(na[0] != NULL) {
+				narg = xmlNewNode(NULL, "argument");
+				xmlSetProp(narg, "name", na[0]);
 				if(na[1] != NULL)
-					PyDict_SetItemString(pargs, na[0], PyString_FromString(na[1]));
-				else {
-					Py_INCREF(Py_None);
-					PyDict_SetItemString(pargs, na[0], Py_None);
-				}
+					xmlNodeAddContent(narg, na[1]);
+				PyDict_SetItemString(pargs, na[0], PYCTRLPROXY_NODETOPYOB(narg));
 			}
 		}
 		if(!access(args[2], F_OK))
@@ -2453,6 +2451,10 @@ gboolean init_plugin(struct plugin *p) {
 	Py_Initialize();
 	PyEval_InitThreads();
 	mainThreadState = PyThreadState_Get();
+
+	xml_module = PyImport_ImportModule("libxml2");
+	xml_modulemod = PyImport_ImportModule("libxml2mod");
+	xml_node = PyObject_GetAttrString(xml_module,"xmlNode");
 
 	pyxml = PyImport_ImportModule("libxml2mod");
 	if(pyxml == NULL) {
