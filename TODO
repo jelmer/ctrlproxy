@@ -1,6 +1,5 @@
 - finish configuration utility (worked on by Kyoshiro, see list in ctrlproxy-setup)
 - automated testsuite
-- use information from capabilities sent by server
 - dcc module
 - new log system
 - system wide ctrlproxy?
@@ -9,6 +8,9 @@
 - non-blocking connect
 - add member 'nick' to struct line
 - add more help data
+- Use: CHANTYPES, PREFIX, NETWORK
+- use irccmp everywhere
+- make irccmp use charset as set by CASEMAPPING
 
 report_time:
  - test report_time
@@ -34,3 +36,4 @@ Ideas: (ideas for stuff you might want to work on, and is currently not
 - internationalization (i18n)
 - linestack_mysql
 - be able to specify format of NICKSERV commands
+

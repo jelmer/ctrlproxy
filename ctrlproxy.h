@@ -224,6 +224,7 @@ extern GList *plugins;
 extern xmlDocPtr configuration;
 int verify_client(struct network *s, struct client *c);
 char *ctrlproxy_path(char *part);
+int irccmp(const char *a, const char *b);
 
 /* hooks.c */
 /* Returns TRUE if filter should be continued, FALSE if it should be stopped. */
