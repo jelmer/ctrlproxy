@@ -632,7 +632,7 @@ static PyObject * PyCtrlproxyNetwork_disconnect(PyCtrlproxyObject *self, PyObjec
 
 	PYCTRLPROXY_MAKESTRUCT(n, network)
 
-	close_server(n);
+	close_network(n);
 
 	// we are now invalide :)
 	self->ptr = NULL;
