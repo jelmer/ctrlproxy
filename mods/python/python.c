@@ -23,7 +23,8 @@
 	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 */
 
-#include <string.h>
+//#define _GNU_SOURCE
+//#include <string.h>
 #ifdef DEBUG
 #undef _DEBUG
 #include <Python.h>
@@ -59,7 +60,6 @@ static GList *loaded_scripts = NULL;
 static GList *admin_commands = NULL;
 
 static PyObject *xml_module = NULL;
-static PyObject *xml_modulemod = NULL;
 static PyObject *xml_node = NULL;
 
 static char *pylibdir = PYLIBDIR;
@@ -2329,34 +2329,14 @@ gboolean in_load(char *c,PyObject *args, struct line *l) {
 	FILE *fp;
 	char *cf = NULL;
 	struct script_thread *s;
-	PyObject *m;
-	PyObject *sys;
+	PyObject *m, *sys, *comp, *ma, *dict;
 	PyCtrlproxyLog *pystdout;
 	PyCtrlproxyLog *pystderr;
-
-	if (PyType_Ready(&PyCtrlproxyLogType) < 0)
-        return FALSE;
-	if (PyType_Ready(&PyCtrlproxyLineType) < 0)
-        return FALSE;
-	if (PyType_Ready(&PyCtrlproxyClientType) < 0)
-        return FALSE;
-	if (PyType_Ready(&PyCtrlproxyNetworkType) < 0)
-        return FALSE;
-	if (PyType_Ready(&PyCtrlproxyNickType) < 0)
-        return FALSE;
-	if (PyType_Ready(&PyCtrlproxyChannelType) < 0)
-        return FALSE;
-	if (PyType_Ready(&PyCtrlproxyEventType) < 0)
-        return FALSE;
-	if (PyType_Ready(&PyCtrlproxyPluginType) < 0)
-        return FALSE;
-	if (PyType_Ready(&PyCtrlproxyScriptType) < 0)
-        return FALSE;
 
 	if(g_file_test(c,G_FILE_TEST_EXISTS)) {
 		cf = c;		
 	} else {
-		cf = g_build_filename(get_shared_path(), "scripts", c, NULL);
+		cf = g_build_filename(get_shared_path(), "ctrlproxy", "scripts", c, NULL);
 		if(!g_file_test(cf,G_FILE_TEST_EXISTS)) {
 			free(cf);
 			free(c);
@@ -2479,23 +2459,40 @@ gboolean in_load(char *c,PyObject *args, struct line *l) {
 	s->xmlConf = args;
 	loaded_scripts = g_list_append(loaded_scripts, s);
 
-	PyRun_SimpleFile(fp, c);
-
+	
+	// every file runs in its globales and locales space
+	ma = PyImport_AddModule("__main__");
+	dict = PyDict_Copy(PyModule_GetDict(ma));
+	PyDict_SetItemString(dict, "__file__", PyString_FromString(cf));
+	comp = PyRun_File(fp, cf, Py_file_input, dict, dict);
+	
+	if (comp == NULL) {
+		PyErr_Print();
+	} else {
+		Py_DECREF(comp);
+	}
+	
 	PyThreadState_Swap(NULL);
 	PyEval_ReleaseLock();
-
-	if(l != NULL && !plugin_loaded("noticelog"))
-		admin_out(l,"Load of script #%i complete",sid);
-	g_log(G_LOG_DOMAIN, G_LOG_LEVEL_INFO,"Load of script #%i complete",sid);
 	
 	if (cf != c)
 		free(cf);
 	//if (c)
 	//	free(c);
 
+	if (comp == NULL) {
+		if(l != NULL && !plugin_loaded("noticelog"))
+			admin_out(l,"Load of script #%i failed",sid);
+		g_log(G_LOG_DOMAIN, G_LOG_LEVEL_INFO,"Load of script #%i failed",sid);
+		return FALSE;
+	}
+	
+	if(l != NULL && !plugin_loaded("noticelog"))
+		admin_out(l,"Load of script #%i complete",sid);
+	g_log(G_LOG_DOMAIN, G_LOG_LEVEL_INFO,"Load of script #%i complete",sid);
+	
 	return TRUE;
-	
-	
+		
 }
 
 #define PYCTRLPROXY_REMOVECALLBACKFROMTHREAD(LIST) \
@@ -2593,7 +2590,6 @@ static void in_load_from_config(char *name) {
 		if(!xmlIsBlankNode(cur) && !strcmp(cur->name, "script")) {
 				PyEval_AcquireLock();
 				PyThreadState_Swap(mainThreadState);
-				printf("RUN\n");
 				enabled = xmlGetProp(cur, "autoload");
 				if((enabled == NULL || atoi(enabled) == 0) && name == NULL) {
 					cur = cur->next;
@@ -2704,7 +2700,6 @@ static void init_finish() {
 
 gboolean init_plugin(struct plugin *p) {
 	xmlNodePtr cur;
-	PyObject *modlist, *moddir;
 
 	python_xmlConf = p->xmlConf;
 	python_plugin = p;
@@ -2756,23 +2751,11 @@ gboolean init_plugin(struct plugin *p) {
 	if (PyType_Ready(&PyCtrlproxyScriptType) < 0)
         return FALSE;
 
-	//moddir = PyImport_ImportModule("libxmlmods");
-	xml_module = PyImport_ImportModule("libxml2a");
-	if(!xml_module)xml_module =PyImport_ImportModule("libxml2a");
-	if(!xml_module) {
-		g_error("Unable to load libxml2 bindings");
-		return FALSE;
-	} 
-
-	modlist = PyList_New(0);
-	//PyList_Append(modlist, moddir);
-	
-	PyRun_SimpleString("from import libxmlmods import libxml2mod\n");
-	xml_modulemod = PyImport_ImportModuleEx("libxml2mod", NULL, NULL, modlist);
+	xml_module = PyImport_ImportModule("libxml2");
 	xml_node = PyObject_GetAttrString(xml_module,"xmlNode");
 
-	if(xml_modulemod == NULL) {
-		g_log(G_LOG_DOMAIN, G_LOG_LEVEL_ERROR, "libxml2mod python bindings are required");
+	if(xml_module == NULL) {
+		g_log(G_LOG_DOMAIN, G_LOG_LEVEL_ERROR, "libxml2 python bindings are required");
 		return FALSE;
 
 	}
