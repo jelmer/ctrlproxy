@@ -58,9 +58,18 @@
 		<!-- Use /usr/share/ctrlproxy/motd as motd -->
 		<plugin autoload="1" file="libmotd_file"/>
 
+
+		<plugin autoload="1" file="libpython">
+			<load>
+				<file>example/example.py</file>
+				<argument name="test">blubbdada</argument>
+			</load>
+		</plugin>
+		
+
 		<!-- Generate a TDB file with statistics about how much 
 		certain patterns where used in a channel -->
-		<plugin file="libstats">
+		<plugin file="libstats" autoload="0">
 			<tdbfile>/home/jelmer/.ctrlproxy-stats.tdb</tdbfile>
 			<pattern type="happy">[:;]([-]*)[\)D]</pattern>
 			<pattern type="unhappy">[:;]([-]*)[\/\(]</pattern>
