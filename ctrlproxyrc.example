@@ -60,10 +60,10 @@
 
 
 		<plugin autoload="1" file="libpython">
-			<load>
+			<script autoload="0">
 				<file>example/example.py</file>
 				<argument name="test">blubbdada</argument>
-			</load>
+			</script>
 		</plugin>
 		
 
