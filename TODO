@@ -3,6 +3,7 @@
  - update documentation
  - dcc module
  - socket: finish gnutls support
+ - apply poelzi's async patch
 
 2.8:
  - repl_limited (repl_highlight with limited number of lines)
