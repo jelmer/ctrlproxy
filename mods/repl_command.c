@@ -78,8 +78,7 @@ static void replicate_channel(gpointer key, gpointer val, gpointer user)
 	xmlFree(networkname);
 
 	linestack_send(co, l->client->incoming);
-	linestack_destroy(co);
-	g_hash_table_remove(command_backlog, key);
+	linestack_clear(co);
 }
 
 static void repl_command(char **args, struct line *l)
@@ -112,8 +111,7 @@ static void repl_command(char **args, struct line *l)
 
 	if(co)  {
 		linestack_send(co, l->client->incoming);
-		linestack_destroy(co);
-		g_hash_table_remove(command_backlog, desc);
+		linestack_clear(co);
 	} else {
 		admin_out(l, "No backlog for %s", args[1]);
 	}

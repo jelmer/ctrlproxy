@@ -71,6 +71,7 @@ gboolean load_plugin(xmlNodePtr cur)
 	struct plugin *p;
 	char *modulesdir;
 	char *selfname = NULL;
+	struct plugin *old_plugin = current_plugin;
 	gchar *path_name;
 	plugin_init_function f = NULL;
 
@@ -119,6 +120,7 @@ gboolean load_plugin(xmlNodePtr cur)
 	p->module = m;
 	p->xmlConf = cur;
 
+	current_plugin = p;
 	if(!f(p)) {
 		g_warning("Running initialization function for plugin '%s' failed.", mod_name);
 		free(p->name);
@@ -127,6 +129,7 @@ gboolean load_plugin(xmlNodePtr cur)
 		free(p);
 		return FALSE;
 	}
+	current_plugin = old_plugin;
 
 	plugins = g_list_append(plugins, p);
 	

@@ -105,7 +105,7 @@ void add_filter(char *name, filter_function f)
 
 void del_filter(filter_function f)
 {
-	del_filter_ex(NULL, f);
+	del_filter_ex("", f);
 }
 
 gboolean del_filter_ex(char *class, filter_function f) 
