@@ -4,8 +4,8 @@ Version: 2.5
 Release: 2
 License: GPL
 Group: Applications/Internet
-Source: http://nl.linux.org/~jelmer/ctrlproxy/ctrlproxy-%{version}.tar.gz
-Url: http://nl.linux.org/~jelmer/ctrlproxy
+Source: http://ctrlproxy.vernstok.nl/ctrlproxy-%{version}.tar.gz
+Url: http://ctrlproxy.vernstok.nl/
 Packager: Jelmer Vernooij <jelmer@nl.linux.org>
 BuildRoot: /var/tmp/%{name}-buildroot
 
