@@ -8,9 +8,8 @@ extern "C" {
 #include "internals.h"
 #include <libxml/xmlmemory.h>
 #include <libxml/parser.h>
+void register_log_function();
 }
-
-
 
 GMainLoop *main_loop = NULL;
 
@@ -48,10 +47,6 @@ CCtrlproxyApp theApp;
 // CCtrlproxyApp initialization
 
 
-void log_handler(const gchar *log_domain, GLogLevelFlags flags, const gchar *message, gpointer user_data) {
-	/*FIXME*/
-}
-
 BOOL CCtrlproxyApp::InitInstance()
 {
 	if (!AfxSocketInit())
@@ -80,7 +75,7 @@ BOOL CCtrlproxyApp::InitInstance()
 	dlg->Create(CCtrlproxyDlg::IDD);
 	dlg->ShowWindow(SW_HIDE);
 
-
+	register_log_function();	
 
 	NOTIFYICONDATA dat;
 	dat.cbSize = sizeof(NOTIFYICONDATA);

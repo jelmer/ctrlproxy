@@ -91,9 +91,7 @@
  *    if the C library has some snprintf functions already.
  **************************************************************/
 
-#define NULL 0
-
-#include <string.h>
+#include "internals.h"
 
 #ifdef HAVE_STRINGS_H
 #include <strings.h>
@@ -835,7 +833,7 @@ G_MODULE_EXPORT int vasprintf(char **ptr, const char *format, va_list ap)
 	ret = vsnprintf(NULL, 0, format, ap2);
 	if (ret <= 0) return ret;
 
-	(*ptr) = (char *)malloc(ret+1);
+	(*ptr) = (char *)g_malloc(ret+1);
 	if (!*ptr) return -1;
 
 	VA_COPY(ap2, ap);

@@ -39,7 +39,7 @@ static gboolean report_time(struct line *l) {
 	strftime(stime, sizeof(stime), format?format:"%H:%M:%S", localtime(&cur));
 	
 	asprintf(&tmp, "[%s] %s", stime, l->args[2]);
-	xmlFree(l->args[2]);
+	g_free(l->args[2]);
 	l->args[2] = tmp;
 
 	return TRUE;

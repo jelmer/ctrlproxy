@@ -146,7 +146,7 @@ void server_send_login (struct transport_context *c, void *_server) {
 	char *server_name = xmlGetProp(s->xmlConf, "name");
 	char *nick, *username, *fullname, *password;
 
-	g_log(G_LOG_DOMAIN, G_LOG_LEVEL_INFO, _("Successfully connected to %s"), server_name);
+	g_message(_("Successfully connected to %s"), server_name);
 
 	nick = xmlGetProp(s->xmlConf, "nick");
 	username = xmlGetProp(s->xmlConf, "username");

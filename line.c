@@ -278,8 +278,7 @@ gboolean irc_send_args(struct transport_context *c, ...)
 
 struct line *linedup(struct line *l) {
 	int i;
-	struct line *ret = calloc(1, sizeof(struct line));
-	memcpy(ret, l, sizeof(struct line));
+	struct line *ret = g_memdup(l, sizeof(struct line));
 	if(l->origin)ret->origin = g_strdup(l->origin);
 	ret->options = l->options;
 	ret->args = g_new(char *, ret->argc+MAX_LINE_ARGS);

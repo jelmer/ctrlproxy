@@ -18,6 +18,7 @@ static char THIS_FILE[] = __FILE__;
 CLogDlg::CLogDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(CLogDlg::IDD, pParent)
 {
+
 	//{{AFX_DATA_INIT(CLogDlg)
 		// NOTE: the ClassWizard will add member initialization here
 	//}}AFX_DATA_INIT
@@ -44,7 +45,11 @@ END_MESSAGE_MAP()
 
 BOOL CLogDlg::PreCreateWindow(CREATESTRUCT& cs) 
 {
+	
+
 	/* FIXME: Register log */
 	
 	return CDialog::PreCreateWindow(cs);
 }
+
+
