@@ -99,6 +99,8 @@
 
 <xsl:template match="element/description"></xsl:template>
 
+<xsl:template match="transports"/>
+
 <xsl:template match="attribute">
 	<xsl:element name="varlistentry">
 		<xsl:element name="term"><xsl:element name="emphasis"><xsl:value-of select="@name"/></xsl:element></xsl:element>

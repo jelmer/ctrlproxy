@@ -1,5 +1,6 @@
 MOD_SOURCES = $(shell echo *.mod.xml)
 MOD_MANPAGES = $(patsubst %.mod.xml,%.7ctrlproxy,$(MOD_SOURCES))
+MOD_MANPAGES_INTER = $(patsubst %.mod.xml,%.xml,$(MOD_SOURCES))
 MOD_MANPAGES_HTML = $(patsubst %.mod.xml,%.7ctrlproxy.html,$(MOD_SOURCES))
 MODS = $(patsubst %.mod.xml,%.xml,$(MOD_SOURCES))
 DOCS = ctrlproxy.1 ctrlproxyrc.5 ctrlproxy.pdf ctrlproxy.html $(MOD_MANPAGES)
@@ -113,7 +114,7 @@ endif
 	$(EPSTOPDF) $<
 
 clean: 
-@DOCBUILDE@	rm -f *.html *.pdf $(DOCS) $(MODS) overview{2,}.{eps,png,pdf}
+@DOCBUILDE@	rm -f *.html *.pdf $(DOCS) $(MODS) overview{2,}.{eps,png,pdf} $(MOD_MANPAGES_INTER)
 
 distclean: clean
 	rm -f Makefile
