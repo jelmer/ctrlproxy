@@ -1,0 +1,25 @@
+LIBS = @LIBS@ @PKG_LIBS@ @PKG_CFLAGS@
+CC = @CC@
+CFLAGS = @CFLAGS@ @PKG_CFLAGS@ -I.. -DHAVE_CONFIG_H
+INSTALL = @INSTALL@
+
+CFLAGS+=-ansi -Wall -DMODULESDIR=\"$(modulesdir)\"
+BINS = test-parser
+
+.PHONY: all clean distclean install
+
+all: $(BINS)
+
+test-parser: test-parser.o ../line.o ../transport.o
+	$(CC) $(LIBS) -o $@ test-parser.o ../line.o ../transport.o
+
+%.o: %.c
+	$(CC) $(CFLAGS) -c $<
+
+install: 
+
+clean:
+	rm -f *.o test-parser
+
+distclean: clean
+	rm -f Makefile 

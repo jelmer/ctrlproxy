@@ -83,7 +83,7 @@ struct channel_nick {
 };
 
 struct network_nick {
-	uint refcount;
+	guint refcount;
 	char *name;
 	char *hostmask;
 	GList *channels;

@@ -25,9 +25,6 @@ all: $(BINS)
 ctrlproxy: $(OBJS)
 	$(CC) $(LIBS) -rdynamic -o $@ $(OBJS)
 
-test-parser: test-parser.o line.o transport.o
-	$(CC) $(LIBS) -o $@ test-parser.o line.o transport.o
-
 %.o: %.c
 	$(CC) $(CFLAGS) -c $<
 
@@ -66,9 +63,11 @@ clean:
 	rm -f *.o ctrlproxy printstats *~
 	$(MAKE) -C mods clean
 @DOCBUILDE@	$(MAKE) -C doc clean
+	$(MAKE) -C testsuite clean
 
 distclean: clean
 	rm -f Makefile build config.h ctrlproxy.pc ctrlproxy.spec *.log
 	rm -rf autom4te.cache/ config.log config.status
 	$(MAKE) -C mods distclean
 	$(MAKE) -C doc distclean
+	$(MAKE) -C testsuite distclean
