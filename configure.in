@@ -25,7 +25,7 @@ AC_HEADER_DIRENT
 AC_HEADER_STDC
 AC_HEADER_TIME
 AC_CHECK_LIB(pcre, pcre_compile, [ LIB_PCRE="-lpcre" ] )
-AC_CHECK_HEADERS([arpa/inet.h fcntl.h malloc.h netdb.h netinet/in.h stdlib.h string.h sys/ioctl.h sys/socket.h unistd.h popt.h tdb.h regex.h pcre.h openssl/ssl.h execinfo.h sys/time.h])
+AC_CHECK_HEADERS([arpa/inet.h fcntl.h netdb.h netinet/in.h stdlib.h string.h sys/ioctl.h sys/socket.h unistd.h popt.h tdb.h regex.h pcre.h openssl/ssl.h execinfo.h sys/time.h])
 
 SSL_LIB=""
 
