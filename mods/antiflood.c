@@ -21,104 +21,92 @@
 #include <string.h>
 #include <time.h>
 
-#ifdef _WIN32
-#include <windows.h>
-#include <winbase.h>
-#define TIMEVALUE DWORD
-#define gettimeofday(a,b) {*a = GetTickCount();}
-#define timersub(a,b,c) {*c = *b - *a; }
-#define tvtolong(v) (*v)
-#else
 #include <sys/time.h>
-#define TIMEVALUE struct timeval
-#define tvtolong(v) ((v)->tv_sec * 1000 + (v)->tv_usec / 1000)
-#endif
 
 static GHashTable *antiflood_servers = NULL;
 
-static int default_queue_speed = 1000;
+static int default_queue_speed = 2;
 static struct plugin *this_plugin = NULL;
 
 struct network_data {
-	TIMEVALUE tv_last_message;
+	time_t tv_last_message;
 	GQueue *message_queue;
-	unsigned long queue_speed;
 	guint timeout_id;
+	unsigned long queue_speed;
 };
 
 static gboolean send_queue(gpointer user_data) {
 	gpointer d;
-	struct network_data *sd;
-	struct line *l;
-	push_plugin(this_plugin);
+	time_t now = time(NULL);
+	struct network_data *sd = (struct network_data *)user_data;
 
-	sd = (struct network_data *)user_data;
-	d = g_queue_pop_tail(sd->message_queue);
-	if(!d){ 
-		pop_plugin();
-		return TRUE;
-	}
-	l = (struct line *)d;
-
-	network_send_line(l->network, l);
-	free_line(l);
-
-	gettimeofday(&sd->tv_last_message, NULL);
-	pop_plugin();
+	if (sd->tv_last_message < now) 
+		sd->tv_last_message = now;
 	
+	while (sd->tv_last_message < now && (d = g_queue_pop_tail(sd->message_queue))) {
+		struct line *l = (struct line *)d;
+
+		network_send_line(l->network, l);
+
+		free_line(l);
+		
+		sd->tv_last_message += sd->queue_speed;
+	}
+
 	return TRUE;
 }
 
 static gboolean log_data(struct line *l, void *userdata) {
-	TIMEVALUE tv, cmp;
 	struct network_data *sd;
-	if(l->direction == FROM_SERVER)return TRUE;
+	time_t now;
+	if (l->direction == FROM_SERVER)return TRUE;
 
-	memset(&tv, 0, sizeof(TIMEVALUE));
+	if (l->network->type != NETWORK_TCP) return TRUE;
 
 	/* Get data for this server from the hash */
 	sd = g_hash_table_lookup(antiflood_servers, l->network);
 
+	now = time(NULL);
+	
 	if(!sd) {
 		sd = g_new(struct network_data,1);
 		sd->queue_speed = default_queue_speed;
+		sd->tv_last_message = 0;
 
-		memset(&sd->tv_last_message, 0, sizeof(TIMEVALUE));
-		if(sd->queue_speed) sd->timeout_id = g_timeout_add(sd->queue_speed, send_queue , sd);
-		else sd->timeout_id = -1;
+		sd->timeout_id = g_timeout_add(1000, send_queue , sd);
 
 		sd->message_queue = g_queue_new();
 
 		g_hash_table_insert(antiflood_servers, l->network, sd);
 	}
+
+	if (sd->tv_last_message < now) 
+		sd->tv_last_message = now;
 	
-	gettimeofday(&tv, NULL);
-
-	timersub(&tv, &sd->tv_last_message, &cmp);
-
-	if(sd->queue_speed > 0 && tvtolong(&cmp) < sd->queue_speed) {
+	if (sd->tv_last_message - now > 10) {
+		g_message("Queueing message to %s to prevent excess flood", l->network->name);
 		/* Push it up the stack! */
 		g_queue_push_head(sd->message_queue, linedup(l));
 		l->options |= LINE_DONT_SEND;
+		return TRUE;
 	} else {
-		gettimeofday(&sd->tv_last_message, NULL);
+		sd->tv_last_message += sd->queue_speed;
 	}
 		
 	return TRUE;
 }
 
-static void free_antiflood_servers(gpointer key, gpointer value, gpointer user_data)
+static void free_antiflood_server(gpointer user_data)
 {
-	struct network_data *sd = (struct network_data *)value;
+	struct network_data *sd = (struct network_data *)user_data;
 	g_queue_free(sd->message_queue);
-	if(sd->timeout_id != -1)g_source_remove(sd->timeout_id);
+	g_source_remove(sd->timeout_id);
 	g_free(sd);
 }
 
 gboolean fini_plugin(struct plugin *p) {
 	del_server_filter("antiflood");
 	
-	g_hash_table_foreach(antiflood_servers, free_antiflood_servers, NULL);
 	g_hash_table_destroy(antiflood_servers);
 	
 	return TRUE;
@@ -140,7 +128,7 @@ gboolean load_config(struct plugin *p, xmlNodePtr node)
 gboolean init_plugin(struct plugin *p) {
 	this_plugin = p;
 	add_server_filter("antiflood", log_data, NULL, 2000);
-	antiflood_servers = g_hash_table_new(NULL, NULL);
+	antiflood_servers = g_hash_table_new_full(NULL, NULL, NULL, free_antiflood_server);
 	
 	return TRUE;
 }

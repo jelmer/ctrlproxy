@@ -45,7 +45,7 @@ static gboolean log_data(struct line *l, void *userdata) {
 	if(l->direction == TO_SERVER &&  
 	   (!g_strcasecmp(l->args[0], "PRIVMSG") || !g_strcasecmp(l->args[0], "NOTICE"))) {
 		linestack_clear(co);
-		g_hash_table_replace( simple_initialnick, l->network, l->network->nick);
+		g_hash_table_replace( simple_initialnick, l->network, g_strdup(l->network->nick));
 		linestack_add_line_list( co, gen_replication_network(l->network));
 		return TRUE;
 	}

@@ -33,9 +33,7 @@ struct auto_away_data {
 };
 
 static gboolean check_time(gpointer user_data) {
-	struct plugin *this_plugin = user_data;
 
-	push_plugin(this_plugin);
 	if(time(NULL) - last_message > max_idle_time && !is_away) { 
 		GList *sl = get_network_list();
 		is_away = TRUE;
@@ -51,7 +49,6 @@ static gboolean check_time(gpointer user_data) {
 			sl = g_list_next(sl);
 		}
 	}
-	pop_plugin();
 
 	return TRUE;
 }

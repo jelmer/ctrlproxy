@@ -55,7 +55,6 @@ struct admin_command {
 	const char *help;
 	const char *help_details;
 	void *userdata;
-	struct plugin *plugin;
 };
 
 void admin_out(struct line *l, const char *fmt, ...)
@@ -322,7 +321,6 @@ void register_admin_command(char *name, admin_command_handler handler, const cha
 	cmd->handler = handler;
 	cmd->help = help;
 	cmd->help_details = help_details;
-	cmd->plugin = peek_plugin();
 	cmd->userdata = userdata;
 	commands = g_list_append(commands, cmd);
 }
@@ -372,9 +370,7 @@ static gboolean process_command(struct line *l, int cmdoffset)
 	while(gl) {
 		struct admin_command *cmd = (struct admin_command *)gl->data;
 		if(!g_strcasecmp(cmd->name, args[0])) {
-			push_plugin(cmd->plugin);
 			cmd->handler(args, l, cmd->userdata);
-			pop_plugin();
 			g_strfreev(args);
 			g_free(tmp);
 			return TRUE;

@@ -23,7 +23,6 @@ struct filter_data {
 	char *name;
 	int priority;
 	filter_function function;
-	struct plugin *plugin;
 	void *userdata;
 };
 
@@ -42,7 +41,6 @@ static GList *add_filter_ex(GList *class, const char *name, filter_function f, v
 	d->name = g_strdup(name);
 	d->function = f;
 	d->priority = prio;
-	d->plugin = peek_plugin();
 	d->userdata = userdata;
 
 	return g_list_insert_sorted(class, d, filter_cmp);
@@ -74,13 +72,9 @@ static gboolean filter_class_execute(GList *gl, struct line *l)
 	while(gl) {
 		struct filter_data *d = (struct filter_data *)gl->data;
 		
-		push_plugin(d->plugin);
-		
 		if(!d->function(l, d->userdata)) {
-			pop_plugin();
 			return FALSE;
 		}
-		pop_plugin();
 
 		gl = gl->next;
 	}
@@ -122,7 +116,6 @@ FILTER_FUNCTIONS(server,server_filters)
 struct new_client_hook_data {
 	char *name;
 	new_client_hook hook;
-	struct plugin *plugin;
 	void *userdata;
 };
 
@@ -131,7 +124,6 @@ GList *new_client_hooks = NULL;
 struct lose_client_hook_data {
 	char *name;
 	lose_client_hook hook;
-	struct plugin *plugin;
 	void *userdata;
 };
 
@@ -146,7 +138,6 @@ void add_new_client_hook(char *name, new_client_hook h, void *userdata)
 	d->userdata = userdata;
 	g_message(_("Adding new client hook '%s'"), d->name);
 	d->hook = h;
-	d->plugin = peek_plugin();
 	new_client_hooks = g_list_append(new_client_hooks, d);
 }
 
@@ -171,14 +162,11 @@ gboolean new_client_hook_execute(struct client *c)
 	GList *l = new_client_hooks;
 	while(l) {
 		struct new_client_hook_data *d = (struct new_client_hook_data *)l->data;
-		push_plugin(d->plugin);
 	
 		if(!d->hook(c, d->userdata)) {
 			g_message(_("New client hook '%s' refused new client"), d->name);
-			pop_plugin();
 			return FALSE;
 		}
-		pop_plugin();
 
 		l = l->next;
 	}
@@ -195,7 +183,6 @@ void add_lose_client_hook(char *name, lose_client_hook h, void *userdata)
 	d->name = g_strdup(name);
 	d->hook = h;
 	d->userdata = userdata;
-	d->plugin = peek_plugin();
 	lose_client_hooks = g_list_append(lose_client_hooks, d);
 }
 
@@ -219,9 +206,7 @@ void lose_client_hook_execute(struct client *c)
 	GList *l = lose_client_hooks;
 	while(l) {
 		struct lose_client_hook_data *d = (struct lose_client_hook_data *)l->data;
-		push_plugin(d->plugin);
 		d->hook(c, d->userdata);
-		pop_plugin();
 		l = l->next;
 	}
 }
@@ -229,7 +214,6 @@ void lose_client_hook_execute(struct client *c)
 struct motd_hook_data {
 	char *name;
 	motd_hook hook;
-	struct plugin *plugin;
 	void *userdata;
 };
 
@@ -244,7 +228,6 @@ void add_motd_hook(char *name, motd_hook h, void *userdata)
 	d->name = g_strdup(name);
 	d->hook = h;
 	d->userdata = userdata;
-	d->plugin = peek_plugin();
 
 	motd_hooks = g_list_append(motd_hooks, d);
 }
@@ -275,9 +258,7 @@ char ** get_motd_lines(struct network *n)
 		int i,j;
 		struct motd_hook_data *d = (struct motd_hook_data *)gl->data;
 
-		push_plugin(d->plugin);
 		nl = d->hook(n, d->userdata);
-		pop_plugin();
 
 		if(!nl) { 
 			gl = gl->next;
@@ -311,7 +292,6 @@ char ** get_motd_lines(struct network *n)
 struct server_connected_hook_data {
 	char *name;
 	server_connected_hook hook;
-	struct plugin *plugin;
 	void *userdata;
 };
 
@@ -350,9 +330,7 @@ void server_connected_hook_execute(struct network *c)
 	GList *l = server_connected_hooks;
 	while(l) {
 		struct server_connected_hook_data *d = (struct server_connected_hook_data *)l->data;
-		push_plugin(d->plugin);
 		d->hook(c, d->userdata);
-		pop_plugin();
 		l = l->next;
 	}
 }
@@ -360,7 +338,6 @@ void server_connected_hook_execute(struct network *c)
 struct server_disconnected_hook_data {
 	char *name;
 	server_disconnected_hook hook;
-	struct plugin *plugin;
 	void *userdata;
 };
 
@@ -375,7 +352,6 @@ void add_server_disconnected_hook(char *name, server_disconnected_hook h, void *
 	d->name = g_strdup(name);
 	d->hook = h;
 	d->userdata = userdata;
-	d->plugin = peek_plugin();
 	server_disconnected_hooks = g_list_append(server_disconnected_hooks, d);
 }
 
@@ -400,9 +376,7 @@ void server_disconnected_hook_execute(struct network *c)
 	GList *l = server_disconnected_hooks;
 	while(l) {
 		struct server_disconnected_hook_data *d = (struct server_disconnected_hook_data *)l->data;
-		push_plugin(d->plugin);
 		d->hook(c, d->userdata);
-		pop_plugin();
 		l = l->next;
 	}
 }

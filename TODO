@@ -19,4 +19,5 @@ typedef void (*server_disconnected_hook) (struct network *);
 - don't simply pass feature list along
  - support the - and + in front of lines as used by Freenode
 
+- cascading filters
 - support CONNECT command a la irssi

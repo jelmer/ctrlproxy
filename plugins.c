@@ -122,7 +122,6 @@ gboolean load_plugin(struct plugin *p)
 	g_module_symbol(m, "load_config", (gpointer)&p->load_config);
 	g_module_symbol(m, "save_config", (gpointer)&p->save_config);
 
-	push_plugin(p);
 	if(!f(p)) {
 		g_warning(_("Running initialization function for plugin '%s' failed."), p->path);
 		return FALSE;
@@ -131,8 +130,6 @@ gboolean load_plugin(struct plugin *p)
 	if(!plugin_load_config(p)) {
 		g_warning("Error loading configuration for plugin '%s'", p->path);
 	}
-
-	pop_plugin();
 
 	p->loaded = TRUE;
 	return TRUE;
@@ -185,15 +182,3 @@ gboolean init_plugins() {
 GList *get_plugin_list() {
 	return plugins;
 }
-
-void push_plugin(struct plugin *p) {
-	/*FIXME*/
-}
-
-struct plugin * pop_plugin() {
-	/*FIXME*/
-	return NULL;
-}
-
-struct plugin *peek_plugin() { /*FIXME*/ return NULL; }
-

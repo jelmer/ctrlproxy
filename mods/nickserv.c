@@ -123,6 +123,12 @@ static void conned_data(struct network *n, void *userdata)
 	identify_me(n, n->nick);
 }
 
+gboolean save_config(struct plugin *p, xmlNodePtr node)
+{
+	/* FIXME */
+	return TRUE;	
+}
+
 gboolean load_config(struct plugin *p, xmlNodePtr node)
 {
 	xmlNodePtr cur;

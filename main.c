@@ -74,19 +74,8 @@ void signal_crash(int sig)
 	}
 
 #endif
-	
-	if(peek_plugin()) {
-		if(!unload_plugin(peek_plugin())) {
-			g_error(_("Can't unload crashing plugin, exiting..."));
-			abort();
-		} else {
-			g_warning(_("Plugin '%s' unloaded, because it crashed..."), peek_plugin()->name);
-			pop_plugin();
-		}
-	} else {
-		g_error(_("Ctrlproxy core has segfaulted, exiting..."));
-		abort();
-	}
+	g_error(_("Ctrlproxy core has segfaulted, exiting..."));
+	abort();
 }
 
 void log_handler(const gchar *log_domain, GLogLevelFlags flags, const gchar *message, gpointer user_data) {

@@ -28,9 +28,7 @@ static struct plugin *this_plugin = NULL;
 
 static gboolean loop_save_config(gpointer user_data)
 {
-	push_plugin(this_plugin);
 	save_configuration(NULL);
-	pop_plugin();
 	return TRUE;
 }
 

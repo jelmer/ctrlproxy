@@ -35,8 +35,6 @@
 #include "internals.h"
 #include "irc.h"
 
-#define CLIENT_SEND_LINE(c,l) {}
-
 static GIOChannel * (*sslize_function) (GIOChannel *);
 
 static GList *networks = NULL;
@@ -74,6 +72,8 @@ static gboolean process_from_server(struct line *l)
 	run_replication_filter(lc = linedup(l)); free_line(lc);
 
 	state_handle_data(l->network,l);
+
+	g_message("FROM SERVER: %s", l->args[0]);
 
 	/* We need to handle pings.. we can't depend on a client
 	 * to do that for us*/
@@ -149,8 +149,14 @@ static gboolean process_from_server(struct line *l)
 		}
 	} 
 
-	if(!(l->options & LINE_DONT_SEND) && run_server_filter(l))
-		clients_send(l->network, l, NULL);
+	if(!(l->options & LINE_DONT_SEND)) {
+		if( run_server_filter(l)) {
+			g_message("filter allowed sending %s to clients", l->args[0]);
+			clients_send(l->network, l, NULL);
+		} else {
+			g_message("filter didn't allow sending %s to clients", l->args[0]);
+		}
+	}
 
 	return TRUE;
 }
@@ -793,7 +799,7 @@ int close_network(struct network *s)
 
 	while(l) {
 		struct client *c = l->data;
-		irc_sendf(c->incoming, ":%s QUIT :Server exiting\r\n", s->name);
+		irc_send_args(c->incoming, "ERROR", "Server exiting", NULL);
 		l = l->next;
 		disconnect_client(c);
 	}
@@ -878,6 +884,7 @@ gboolean network_change_nick(struct network *s, const char *nick)
 	/* Change nick */
 	if (!nick) nick = g_get_user_name();
 
+	g_free(s->nick);
 	s->nick = g_strdup(nick);
 
 	/* Change hostmask */

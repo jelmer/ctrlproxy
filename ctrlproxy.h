@@ -264,9 +264,6 @@ G_MODULE_EXPORT struct plugin *new_plugin(const char *name);
 G_MODULE_EXPORT gboolean load_plugin(struct plugin *);
 G_MODULE_EXPORT gboolean unload_plugin(struct plugin *);
 G_MODULE_EXPORT gboolean plugin_loaded(char *name);
-G_MODULE_EXPORT void push_plugin(struct plugin *p);
-G_MODULE_EXPORT struct plugin *peek_plugin(void);
-G_MODULE_EXPORT struct plugin *pop_plugin(void);
 G_MODULE_EXPORT GList *get_plugin_list(void);
 
 /* linestack.c */
@@ -341,6 +338,8 @@ G_MODULE_EXPORT void del_server_disconnected_hook(char *name);
 #if defined(_WIN32) && !defined(CTRLPROXY_CORE_BUILD)
 G_MODULE_EXPORT gboolean fini_plugin(struct plugin *p);
 G_MODULE_EXPORT gboolean init_plugin(struct plugin *p);
+G_MODULE_EXPORT gboolean load_config(struct plugin *p, xmlNodePtr);
+G_MODULE_EXPORT gboolean save_config(struct plugin *p, xmlNodePtr);
 G_MODULE_EXPORT const char name_plugin[];
 #pragma comment(lib,"ctrlproxy.lib")
 #endif
