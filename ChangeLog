@@ -2,6 +2,7 @@
  	Jelmer Vernooij <jelmer@vernstok.nl>
 
 Ctrlproxy 2.7:
+ * Make reconnect_timeout changeable (Alexander Wild <wild@te-elektronik.com>)
  * Add scripts/ directory and framework
  * Add default ctrlproxyrc and install it
  * Add webconfig python script (Daniel Poelzleithner <ctrlproxy@poelzi.org>)

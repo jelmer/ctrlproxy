@@ -203,21 +203,27 @@ void reconnect(struct transport_context *c, void *_server)
 {
 	struct network *server = (struct network *)_server;
 	char *server_name;
+	char *buf;
+	int time = DEFAULT_RECONNECT_INTERVAL;
 
 	/* Don't report disconnections twice */
 	g_assert(server);
 	server_name = xmlGetProp(server->xmlConf, "name");
 
+	if((buf = xmlGetProp(server->xmlConf, "reconnect_interval")))
+		time = atoi(buf);
+	xmlFree(buf);
+
 	if(!server->outgoing) return;
 	server_disconnected_hook_execute(server);
 	transport_free(server->outgoing); server->outgoing = NULL;
 
-	g_warning(_("Connection to server %s lost, trying to reconnect..."), server_name);
+	g_warning(_("Connection to server %s lost, trying to reconnect in %ds..."), server_name, time);
 	xmlFree(server_name);
 
 	server->authenticated = 0;
 	state_reconnect(server);
-	server->reconnect_id = g_timeout_add(RECONNECT_INTERVAL, (GSourceFunc) connect_next_server, server);
+	server->reconnect_id = g_timeout_add(1000 * time, (GSourceFunc) connect_next_server, server);
 }
 
 gboolean close_server(struct network *n) {

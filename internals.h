@@ -40,7 +40,7 @@
 #undef  G_LOG_DOMAIN
 #define G_LOG_DOMAIN "ctrlproxy"
 
-#define RECONNECT_INTERVAL (1000 * 60)
+#define DEFAULT_RECONNECT_INTERVAL 60
 
 #define MAXHOSTNAMELEN 4096
 extern char my_hostname[MAXHOSTNAMELEN+2];
