@@ -139,22 +139,22 @@ static int connect_pipe(struct transport_context *c)
 		if(!strcmp(cur->name, "path")) args[0] = xmlNodeGetContent(cur);
 		else if(!strcmp(cur->name, "arg")) args[++argc] = xmlNodeGetContent(cur);
 		else g_log(G_LOG_DOMAIN, G_LOG_LEVEL_WARNING, "Unknown element %s", cur->name);
-	
+
 		cur = cur->next;
 	}
 
 	xmlSetProp(c->configuration, "name", args[0]);
-	
+
 	args[++argc] = NULL;
-	
+
 	pid = piped_child(args, &sock);
-	
+
 	for(i = 0; i < argc; i++) xmlFree(args[i]);
-	
+
 	if(pid == -1) return -1;
 
 	socket_to_iochannel(sock, c, SSL_MODE_NONE);
-	
+
 	return 0;
 }
 
@@ -178,7 +178,7 @@ static gboolean handle_new_client(GIOChannel *c, GIOCondition o, gpointer data)
 
 	newcontext = malloc(sizeof(struct transport_context));
 	memset(newcontext, 0, sizeof(struct transport_context));
-	
+
 	ssl = xmlGetProp(oldcontext->configuration, "ssl");
 	socket_to_iochannel(sock, newcontext, (ssl && atoi(ssl))?SSL_MODE_SERVER:SSL_MODE_NONE);
 	xmlFree(ssl);
@@ -235,13 +235,13 @@ static gboolean handle_in (GIOChannel *ioc, GIOCondition o, gpointer data)
 		free(ret);
 		return TRUE;
 
-	default: break; 
+	default: break;
 	}
-	g_assert(0); 
+	g_assert(0);
 	return TRUE;
 }
 
-static int connect_ip(struct transport_context *c) 
+static int connect_ip(struct transport_context *c)
 {
 	struct sockaddr_in name4;
 	struct sockaddr_in6 name6;
@@ -294,19 +294,18 @@ static int connect_ip(struct transport_context *c)
 
 	if(ipv6) {
 		name6.sin6_family = AF_INET6;
-		name6.sin6_port = htons (port);
 		if(bind_host) {
 			memcpy((char *)&name6.sin6_addr, bind_host->h_addr, bind_host->h_length);
 			ret = bind (sock, (struct sockaddr *) &name6, sizeof (name6));
 		}
-
+		name6.sin6_port = htons (port);
 	} else {
 		name4.sin_family = AF_INET;
-		name4.sin_port = htons (port);
 		if(bind_host) {
 			name4.sin_addr = *(struct in_addr *) bind_host->h_addr;
 			ret = bind (sock, (struct sockaddr *) &name4, sizeof (name4));
 		}
+		name4.sin_port = htons (port);
 	}
 
 	xmlFree(bind_addr);
@@ -515,7 +514,7 @@ static int listen_pipe(struct transport_context *c)
 
 	if(xmlHasProp(c->configuration, "file")) {
 		f = xmlGetProp(c->configuration, "file");
-	} else { 
+	} else {
 		char *nname = xmlGetProp(c->configuration, "name");
 		asprintf(&f, "%s/ctrlproxy-%s", getenv("TMPDIR")?getenv("TMPDIR"):"/tmp", nname?nname:"");
 		xmlFree(nname);
@@ -593,7 +592,7 @@ static struct transport_ops pipe_transport = {
 
 gboolean fini_plugin(struct plugin *p) {
 	return (unregister_transport("ipv4") &&
-			unregister_transport("ipv6") && 
+			unregister_transport("ipv6") &&
 			unregister_transport("pipe"));
 }
 
