@@ -244,6 +244,7 @@ void readConfig(char *file) {
 int main(int argc, const char *argv[])
 {
 	int isdaemon = 0;
+	int seperate_processes = 0;
 	char *logfile = NULL, *rcfile = NULL;
 #ifdef HAVE_POPT_H
 	int c;
@@ -254,6 +255,7 @@ int main(int argc, const char *argv[])
 		{"daemon", 'D', POPT_ARG_NONE, &isdaemon, 0, "Run in the background (as a daemon)"},
 		{"log", 'l', POPT_ARG_STRING, &logfile, 0, "Log messages to specified file", "FILE"},
 		{"rc-file", 'r', POPT_ARG_STRING, &rcfile, 0, "Use configuration file from specified location", "FILE"},
+		{"seperate-processes", 's', POPT_ARG_NONE, &seperate_processes, 0, "Use one process per network" },
 		{"version", 'v', POPT_ARG_NONE, NULL, 'v', "Show version information"},
 		POPT_TABLEEND
 	};
@@ -373,7 +375,16 @@ int main(int argc, const char *argv[])
 		g_assert(!strcmp(cur->name, "network"));
 
 		autoconnect = xmlGetProp(cur, "autoconnect");
-		if(autoconnect && !strcmp(autoconnect, "1"))connect_network(cur);
+		if(autoconnect && !strcmp(autoconnect, "1")) {
+			if(seperate_processes) { 
+				if(fork() == 0) {  
+					connect_network(cur); 
+					break; 
+				}
+			} else {
+				connect_network(cur);
+			}
+		}
 		xmlFree(autoconnect);
 
 		cur = cur->next;
@@ -382,7 +393,7 @@ int main(int argc, const char *argv[])
 
 	g_timeout_add(1000 * 300, ping_loop, NULL);
 	initialized_hook_execute();
-	g_main_loop_run(main_loop);
+	if(networks) g_main_loop_run(main_loop);
 	clean_exit();
 
 	return 0;

@@ -5,7 +5,6 @@
 - internationalization (i18n)
 - automated testsuite
 - use namespaces and XML schemas instead of DTD
-- improve PHP script for stats
 - use information from capabilities sent by server
 - dcc module
 - CONNECT command could try to connect immediately to a network if it is currently waiting for reconnect delay to end for example....
@@ -15,6 +14,8 @@
 - generate data for configuration editor from XSL files
 - support for one process per network
 - more user-friendly admin command
+- system wide ctrlproxy?
+ - connect to central daemon that does a fork and starts ctrlproxy in that?
 
 Optional:
 - Net::IRC-like interface

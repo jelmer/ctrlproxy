@@ -534,6 +534,7 @@ int close_network(struct network *s)
 	free(s);
 	
 	xmlFree(server_name);
+	if(!networks)clean_exit();
 	return 0;
 }
 

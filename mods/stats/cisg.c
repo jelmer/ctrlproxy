@@ -34,33 +34,33 @@
 #endif
 #include <popt.h>
 
-#define PERCENTAGE(n,p) (nick_get_property((n),"lines") > 0.0?(nick_get_property((n),(p)) / nick_get_property((n), "lines") * 100.0):0.0)
+#define PERCENTAGE(n,p) (nick_get_property((n),"lines") > 0.0?((1.0 * nick_get_property((n),(p))) / (1.0 * nick_get_property((n), "lines")) * 100.0):0.0)
 
 time_t start_time;
 
-void print_html_header(char *title) {
-	printf("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">\n");
-	printf("<html xmlns=\"http://www.w3.org/1999/xhtml\">\n");
-	printf("<head>\n");
-	printf(" <meta http-equiv=\"Content-Type\" content=\"text/html; charset=iso-8859-1\" />\n");
-	printf(" <link rel=\"stylesheet\" title=\"Default\" href=\"style.css\" type=\"text/css\" />\n");
-	printf(" <meta name=\"Author\" content=\"CISG (ControlProxy IRC Stats Generator)\" />\n");
-	printf(" <title>%s</title>\n", title);
-	printf("</head>\n");
-	printf("<body>\n");
-	printf("<div align=\"center\">\n");
-	printf("<div class=\"icontents\">\n");
+void print_html_header(FILE *out, char *title) {
+	fprintf(out, "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">\n");
+	fprintf(out, "<html xmlns=\"http://www.w3.org/1999/xhtml\">\n");
+	fprintf(out, "<head>\n");
+	fprintf(out, " <meta http-equiv=\"Content-Type\" content=\"text/html; charset=iso-8859-1\" />\n");
+	fprintf(out, " <link rel=\"stylesheet\" title=\"Default\" href=\"style.css\" type=\"text/css\" />\n");
+	fprintf(out, " <meta name=\"Author\" content=\"CISG (ControlProxy IRC Stats Generator)\" />\n");
+	fprintf(out, " <title>%s</title>\n", title);
+	fprintf(out, "</head>\n");
+	fprintf(out, "<body>\n");
+	fprintf(out, "<div align=\"center\">\n");
+	fprintf(out, "<div class=\"icontents\">\n");
 }
 
-void print_html_footer() {
-	printf("<!-- ============================================= -->\n");
-	printf("</div>\n");
-	printf("</div>\n");
-	printf("</body>\n");
-	printf("</html>\n");
+void print_html_footer(FILE *out) {
+	fprintf(out, "<!-- ============================================= -->\n");
+	fprintf(out, "</div>\n");
+	fprintf(out, "</div>\n");
+	fprintf(out, "</body>\n");
+	fprintf(out, "</html>\n");
 }
 
-void print_html_chan(struct channel *channelstruct)
+void print_html_chan(FILE *out, struct channel *channelstruct)
 {
 	time_t curtime;
 	struct nick *n;
@@ -69,21 +69,21 @@ void print_html_chan(struct channel *channelstruct)
 	char *title;
 	GList *nicks;
 	asprintf(&title, "CISG Statistics for %s", channelstruct->name);
-	print_html_header(title);
+	print_html_header(out, title);
 	free(title);
 	nicks = get_nicks_sorted_by_property(channelstruct, "lines");
 	
- 	printf("<div class=\"iinfo\">\n");
- 	printf("<h1>%s</h1>\n", channelstruct->name);
-	printf("  <p class=\"idate\">Statistics generated on <b>%s</b></p>\n", ctime(&curtime));
-	printf("  <p class=\"ivisitors\">A total of <b>%ld</b> different nicks/users were represented on <b>%s</b>.</p>\n", g_list_length(nicks), channelstruct->name);
-	printf("  <p class=\"imessage\"></p>\n");
-	printf(" </div>\n");
-	printf("<!-- ============================================= -->\n");
-	printf(" <div class=\"ihourly\">\n");
-	printf("  <h2>Most active times</h2>\n");
-	printf("  <table class=\"ihourly\" align=\"center\">\n");
-	printf("   <tr>\n");
+ 	fprintf(out, "<div class=\"iinfo\">\n");
+ 	fprintf(out, "<h1>%s</h1>\n", channelstruct->name);
+	fprintf(out, "  <p class=\"idate\">Statistics generated on <b>%s</b></p>\n", ctime(&curtime));
+	fprintf(out, "  <p class=\"ivisitors\">A total of <b>%ld</b> different nicks/users were represented on <b>%s</b>.</p>\n", g_list_length(nicks), channelstruct->name);
+	fprintf(out, "  <p class=\"imessage\"></p>\n");
+	fprintf(out, " </div>\n");
+	fprintf(out, "<!-- ============================================= -->\n");
+	fprintf(out, " <div class=\"ihourly\">\n");
+	fprintf(out, "  <h2>Most active times</h2>\n");
+	fprintf(out, "  <table class=\"ihourly\" align=\"center\">\n");
+	fprintf(out, "   <tr>\n");
 	/*
     <th valign="bottom">11.3%<br /><img src="./blue-v.png" width="15" height="100" alt="11.3%" /></th>\n
     <th valign="bottom">8.9%<br /><img src="./blue-v.png" width="15" height="78" alt="8.9%" /></th>\n
@@ -109,201 +109,201 @@ void print_html_chan(struct channel *channelstruct)
     <th valign="bottom">8.6%<br /><img src="./red-v.png" width="15" height="75" alt="8.6%" /></th>\n
     <th valign="bottom">9.0%<br /><img src="./red-v.png" width="15" height="79" alt="9.0%" /></th>\n
     <th valign="bottom">9.0%<br /><img src="./red-v.png" width="15" height="79" alt="9.0%" /></th>\n*/
-	printf("   </tr>\n");
-	printf("   <tr>\n");
-	printf("    <td class=\"hirank\">0</td>\n");
-	printf("    <td class=\"rank\">1</td>\n");
-	printf("    <td class=\"rank\">2</td>\n");
-	printf("    <td class=\"rank\">3</td>\n");
-	printf("    <td class=\"rank\">4</td>\n");
-	printf("    <td class=\"rank\">5</td>\n");
-	printf("    <td class=\"rank\">6</td>\n");
-	printf("    <td class=\"rank\">7</td>\n");
-	printf("    <td class=\"rank\">8</td>\n");
-	printf("    <td class=\"rank\">9</td>\n");
-	printf("    <td class=\"rank\">10</td>\n");
-	printf("    <td class=\"rank\">11</td>\n");
-	printf("    <td class=\"rank\">12</td>\n");
-	printf("    <td class=\"rank\">13</td>\n");
-	printf("    <td class=\"rank\">14</td>\n");
-	printf("    <td class=\"rank\">15</td>\n");
-	printf("    <td class=\"rank\">16</td>\n");
-	printf("    <td class=\"rank\">17</td>\n");
-	printf("    <td class=\"rank\">18</td>\n");
-	printf("    <td class=\"rank\">19</td>\n");
-	printf("    <td class=\"rank\">20</td>\n");
-	printf("    <td class=\"rank\">21</td>\n");
-	printf("    <td class=\"rank\">22</td>\n");
-	printf("    <td class=\"rank\">23</td>\n");
-	printf("   </tr>\n");
-	printf("  </table>\n");
-	printf("\n");
-	printf("  <table  class=\"ihourbars\" align=\"center\">\n");
-	printf("   <tr>\n");
-	printf("    <td class=\"asmall\"><img src=\"./blue-h.png\" width=\"40\" height=\"15\" alt=\"0-5\" /> = 0-5</td>\n");
-	printf("    <td class=\"asmall\"><img src=\"./green-h.png\" width=\"40\" height=\"15\" alt=\"6-11\" /> = 6-11</td>\n");
-	printf("    <td class=\"asmall\"><img src=\"./yellow-h.png\" width=\"40\" height=\"15\" alt=\"12-17\" /> = 12-17</td>\n");
-	printf("    <td class=\"asmall\"><img src=\"./red-h.png\" width=\"40\" height=\"15\" alt=\"18-23\" /> = 18-23</td>\n");
-	printf("   </tr>\n");
-	printf("  </table>\n");
-	printf(" </div>\n");
-	printf("<!-- ============================================= -->\n");
-	printf(" <div class=\"itoptalkers\">\n");
-	printf("  <h2>Most active users</h2>\n");
-	printf("  <table  class=\"itoptalkers\" align=\"center\">\n");
-	printf("   <tr>\n");
-	printf("    <th width=\"2%%\" class=\"nrank\">#</th>\n");
-	printf("    <th width=\"2%%\" class=\"nhappiness\">?</th>\n");
-	printf("    <th width=\"10%%\" class=\"nhandle\">Nickname</th>\n");
-	printf("    <th width=\"6%%\" class=\"npublics\">Lines</th>\n");
-	printf("    <th width=\"15%\" class=\"nactivity\">Activity</th>\n");
-	printf("    <th width=\"5%%\" class=\"nwords\">Words</th>\n");
-	printf("    <th width=\"2%%\" class=\"nwpp\">W/P</th>\n");
-	printf("    <th width=\"2%%\" class=\"ncpw\">C/W</th>\n");
-	printf("    <th width=\"50%%\" class=\"ncomment\">Comment</th>\n");
-	printf("   </tr>\n");
+	fprintf(out, "   </tr>\n");
+	fprintf(out, "   <tr>\n");
+	fprintf(out, "    <td class=\"hirank\">0</td>\n");
+	fprintf(out, "    <td class=\"rank\">1</td>\n");
+	fprintf(out, "    <td class=\"rank\">2</td>\n");
+	fprintf(out, "    <td class=\"rank\">3</td>\n");
+	fprintf(out, "    <td class=\"rank\">4</td>\n");
+	fprintf(out, "    <td class=\"rank\">5</td>\n");
+	fprintf(out, "    <td class=\"rank\">6</td>\n");
+	fprintf(out, "    <td class=\"rank\">7</td>\n");
+	fprintf(out, "    <td class=\"rank\">8</td>\n");
+	fprintf(out, "    <td class=\"rank\">9</td>\n");
+	fprintf(out, "    <td class=\"rank\">10</td>\n");
+	fprintf(out, "    <td class=\"rank\">11</td>\n");
+	fprintf(out, "    <td class=\"rank\">12</td>\n");
+	fprintf(out, "    <td class=\"rank\">13</td>\n");
+	fprintf(out, "    <td class=\"rank\">14</td>\n");
+	fprintf(out, "    <td class=\"rank\">15</td>\n");
+	fprintf(out, "    <td class=\"rank\">16</td>\n");
+	fprintf(out, "    <td class=\"rank\">17</td>\n");
+	fprintf(out, "    <td class=\"rank\">18</td>\n");
+	fprintf(out, "    <td class=\"rank\">19</td>\n");
+	fprintf(out, "    <td class=\"rank\">20</td>\n");
+	fprintf(out, "    <td class=\"rank\">21</td>\n");
+	fprintf(out, "    <td class=\"rank\">22</td>\n");
+	fprintf(out, "    <td class=\"rank\">23</td>\n");
+	fprintf(out, "   </tr>\n");
+	fprintf(out, "  </table>\n");
+	fprintf(out, "\n");
+	fprintf(out, "  <table  class=\"ihourbars\" align=\"center\">\n");
+	fprintf(out, "   <tr>\n");
+	fprintf(out, "    <td class=\"asmall\"><img src=\"./blue-h.png\" width=\"40\" height=\"15\" alt=\"0-5\" /> = 0-5</td>\n");
+	fprintf(out, "    <td class=\"asmall\"><img src=\"./green-h.png\" width=\"40\" height=\"15\" alt=\"6-11\" /> = 6-11</td>\n");
+	fprintf(out, "    <td class=\"asmall\"><img src=\"./yellow-h.png\" width=\"40\" height=\"15\" alt=\"12-17\" /> = 12-17</td>\n");
+	fprintf(out, "    <td class=\"asmall\"><img src=\"./red-h.png\" width=\"40\" height=\"15\" alt=\"18-23\" /> = 18-23</td>\n");
+	fprintf(out, "   </tr>\n");
+	fprintf(out, "  </table>\n");
+	fprintf(out, " </div>\n");
+	fprintf(out, "<!-- ============================================= -->\n");
+	fprintf(out, " <div class=\"itoptalkers\">\n");
+	fprintf(out, "  <h2>Most active users</h2>\n");
+	fprintf(out, "  <table  class=\"itoptalkers\" align=\"center\">\n");
+	fprintf(out, "   <tr>\n");
+	fprintf(out, "    <th width=\"2%%\" class=\"nrank\">#</th>\n");
+	fprintf(out, "    <th width=\"2%%\" class=\"nhappiness\">?</th>\n");
+	fprintf(out, "    <th width=\"10%%\" class=\"nhandle\">Nickname</th>\n");
+	fprintf(out, "    <th width=\"6%%\" class=\"npublics\">Lines</th>\n");
+	fprintf(out, "    <th width=\"15%\" class=\"nactivity\">Activity</th>\n");
+	fprintf(out, "    <th width=\"5%%\" class=\"nwords\">Words</th>\n");
+	fprintf(out, "    <th width=\"2%%\" class=\"nwpp\">W/P</th>\n");
+	fprintf(out, "    <th width=\"2%%\" class=\"ncpw\">C/W</th>\n");
+	fprintf(out, "    <th width=\"50%%\" class=\"ncomment\">Comment</th>\n");
+	fprintf(out, "   </tr>\n");
 
 
 	for(i = 1; i <= 15 && nicks; nicks = nicks->next, i++) {
 		n = (struct nick *)nicks->data;
 		
-		printf("   <tr>\n");
-		printf("    <td class=\"nrank\">%d</td>\n", i);
-		printf("    <td class=\"nhappiness\"><img src=\"./happy1.gif\" alt=\"1\" /></td>\n");
-		printf("    <td class=\"nhandle\">%s</td>\n", n->name);
-		printf("    <td class=\"npublics\">%ld</td>\n", nick_get_property(n, "lines"));
-		printf("    <td class=\"nactivity\"><img src=\"./blue-h.png\" width=\"15\" height=\"15\" alt=\"\" /><img src=\"./yellow-h.png\" width=\"18\" height=\"15\" alt=\"\" /><img src=\"./red-h.png\" width=\"31\" height=\"15\" alt=\"\" /></td>\n");
-		printf("    <td class=\"nwords\">%ld</td>\n", nick_get_property(n, "word"));
-		printf("    <td class=\"nwpp\">%f</td>\n", PERCENTAGE(n, "happy"));
-		printf("    <td class=\"ncpw\">%f</td>\n", PERCENTAGE(n, "unhappy"));
-		printf("    <td class=\"ncomment\">FIXME</td>\n");
-		printf("   </tr>\n");
+		fprintf(out, "   <tr>\n");
+		fprintf(out, "    <td class=\"nrank\">%d</td>\n", i);
+		fprintf(out, "    <td class=\"nhappiness\"><img src=\"./happy1.gif\" alt=\"1\" /></td>\n");
+		fprintf(out, "    <td class=\"nhandle\">%s</td>\n", n->name);
+		fprintf(out, "    <td class=\"npublics\">%ld</td>\n", nick_get_property(n, "lines"));
+		fprintf(out, "    <td class=\"nactivity\"><img src=\"./blue-h.png\" width=\"15\" height=\"15\" alt=\"\" /><img src=\"./yellow-h.png\" width=\"18\" height=\"15\" alt=\"\" /><img src=\"./red-h.png\" width=\"31\" height=\"15\" alt=\"\" /></td>\n");
+		fprintf(out, "    <td class=\"nwords\">%ld</td>\n", nick_get_property(n, "word"));
+		fprintf(out, "    <td class=\"nwpp\">%f</td>\n", PERCENTAGE(n, "happy"));
+		fprintf(out, "    <td class=\"ncpw\">%f</td>\n", PERCENTAGE(n, "unhappy"));
+		fprintf(out, "    <td class=\"ncomment\">FIXME</td>\n");
+		fprintf(out, "   </tr>\n");
 	}
-	printf("  </table>\n");
+	fprintf(out, "  </table>\n");
 
-	printf("<!-- ============================================= -->\n");
-	printf(" <h3>These didn't make it to the top:</h3>\n");
-	printf(" <table  class=\"ialmosttop\">\n");
+	fprintf(out, "<!-- ============================================= -->\n");
+	fprintf(out, " <h3>These didn't make it to the top:</h3>\n");
+	fprintf(out, " <table  class=\"ialmosttop\">\n");
 
 	for(i = 0; i < 5 && nicks; i++) {
-		printf("  <tr>\n");
+		fprintf(out, "  <tr>\n");
 		for(j = 0; j < 4 && nicks; j++) {
 			n = (struct nick *)nicks->data;
 			nicks = nicks->next;
-			printf("   <td>%s (%ld)</td>\n", n->name, nick_get_property(n, "lines"));
+			fprintf(out, "   <td>%s (%ld)</td>\n", n->name, nick_get_property(n, "lines"));
 		}
-		printf("  </tr>\n");
+		fprintf(out, "  </tr>\n");
 	}
 	
-	printf(" </table>\n");
+	fprintf(out, " </table>\n");
 
 	for(i = 0; nicks; i++) nicks = nicks->next;
 	g_list_free(nicks);
 
-	printf(" <h3>There were also <b>%ld</b> other nicks</h3>\n", i);
-	printf(" </div>\n");
-	printf("<!-- ============================================= -->\n");
-	printf("<div class=\"ibignumbers\">\n");
-	printf(" <h2>Big Numbers</h2>\n");
+	fprintf(out, " <h3>There were also <b>%ld</b> other nicks</h3>\n", i);
+	fprintf(out, " </div>\n");
+	fprintf(out, "<!-- ============================================= -->\n");
+	fprintf(out, "<div class=\"ibignumbers\">\n");
+	fprintf(out, " <h2>Big Numbers</h2>\n");
 
 	n = get_highest_nick_for_property(channelstruct, "question");
 	if(n) {
-		printf(" <p class=\"isection\">\n");
-		printf("  Is <b>%s</b> stupid or just asking too many questions? <b>%f%%</b> of his lines contained a question!\n", n->name, PERCENTAGE(n, "question"));
-		printf(" </p>\n");
+		fprintf(out, " <p class=\"isection\">\n");
+		fprintf(out, "  Is <b>%s</b> stupid or just asking too many questions? <b>%f%%</b> of his lines contained a question!\n", n->name, PERCENTAGE(n, "question"));
+		fprintf(out, " </p>\n");
 	}
 	
 	n = get_highest_nick_for_property(channelstruct, "loud");
 	if(n) {
-		printf(" <p class=\"isection\">\n");
-		printf("  The loudest one was <b>%s</b>, who yelled <b>%f%%</b> of the time. </p>\n", n->name, PERCENTAGE(n, "loud"));
+		fprintf(out, " <p class=\"isection\">\n");
+		fprintf(out, "  The loudest one was <b>%s</b>, who yelled <b>%f%%</b> of the time. </p>\n", n->name, PERCENTAGE(n, "loud"));
 	}
 	
 	n = get_highest_nick_for_property(channelstruct, "url");
 	if(n) {
-		printf(" <p class=\"isection\">\n");
-		printf("  Total of <b>%ld</b> URLs were pasted by <b>%s</b>!!\n", nick_get_property(n, "url"), n->name);
-		printf(" </p>\n");
+		fprintf(out, " <p class=\"isection\">\n");
+		fprintf(out, "  Total of <b>%ld</b> URLs were pasted by <b>%s</b>!!\n", nick_get_property(n, "url"), n->name);
+		fprintf(out, " </p>\n");
 	}
 
 	n = get_highest_nick_for_property(channelstruct, "joins");
 	if(n) {
-		printf(" <p class=\"isection\">\n");
-		printf("  <b>%s</b> didn't know whether to stay. He/she joined the channel <b>%ld</b> times!\n", n->name, nick_get_property(n, "joins"));
-		printf(" </p>\n");
+		fprintf(out, " <p class=\"isection\">\n");
+		fprintf(out, "  <b>%s</b> didn't know whether to stay. He/she joined the channel <b>%ld</b> times!\n", n->name, nick_get_property(n, "joins"));
+		fprintf(out, " </p>\n");
 	}
 
 	n = get_highest_nick_for_property(channelstruct, "dokick");
 	if(n) {
-		printf(" <p class=\"isection\">\n");
-		printf("  <b>%s</b> kicked the ass most, <b>%ld</b> times to be exact!\n", n->name, nick_get_property(n, "dokick"));
-		printf(" </p>\n");
+		fprintf(out, " <p class=\"isection\">\n");
+		fprintf(out, "  <b>%s</b> kicked the ass most, <b>%ld</b> times to be exact!\n", n->name, nick_get_property(n, "dokick"));
+		fprintf(out, " </p>\n");
 	}
 
 	n = get_highest_nick_for_property(channelstruct, "getkick");
 	if(n) {
-		printf(" <p class=\"isection\">\n");
-		printf("  Obviously someone does not like <b>%s</b>, he/she was kicked <b>%ld</b> times!\n", n->name, nick_get_property(n, "getkick"));
-		printf(" </p>\n");
+		fprintf(out, " <p class=\"isection\">\n");
+		fprintf(out, "  Obviously someone does not like <b>%s</b>, he/she was kicked <b>%ld</b> times!\n", n->name, nick_get_property(n, "getkick"));
+		fprintf(out, " </p>\n");
 	}
 
 	n = get_highest_nick_for_property(channelstruct, "caps");
 	if(n) {
-		printf(" <p class=\"isection\">\n");
-		printf("  <b>%s</b> is a clear caps-abuser, <b>%f%%</b> of time he/she wrote in CAPS. </p>\n", n->name, PERCENTAGE(n, "caps"));
+		fprintf(out, " <p class=\"isection\">\n");
+		fprintf(out, "  <b>%s</b> is a clear caps-abuser, <b>%f%%</b> of time he/she wrote in CAPS. </p>\n", n->name, PERCENTAGE(n, "caps"));
 	}
 
 	n = get_highest_nick_for_property(channelstruct, "happy");
 	if(n) {
-		printf(" <p class=\"isection\">\n");
-		printf("  <b>%s</b> is either using drugs or is otherwise very <b>happy</b> person <b>;D</b> </p>\n", n->name);
+		fprintf(out, " <p class=\"isection\">\n");
+		fprintf(out, "  <b>%s</b> is either using drugs or is otherwise very <b>happy</b> person <b>;D</b> </p>\n", n->name);
 	}
 	
 	n = get_highest_nick_for_property(channelstruct, "unhappy");
 	if(n) {
-		printf(" <p class=\"isection\">\n");
-		printf("  On the other hand <b>%s</b> seems to be quite <b>sad</b> <b>:(</b> </p>\n", n->name);
+		fprintf(out, " <p class=\"isection\">\n");
+		fprintf(out, "  On the other hand <b>%s</b> seems to be quite <b>sad</b> <b>:(</b> </p>\n", n->name);
 	}
 
-	printf("</div>\n");
+	fprintf(out, "</div>\n");
 
-	printf("<!-- ============================================= -->\n");
-	printf(" <div class=\"irestinfo\">\n");
-	printf("  <p class=\"iauthor\">Statistics generated by CISG (part of <a href=\"http://ctrlproxy.vernstok.nl/\">ctrlproxy</a> by Jelmer Vernooij). HTML output based on the HTML output from <a href=\"http://www.tnsp.org/fisg.php\">FISG (Fast IRC Stats Generator) v0.3.8</a> by ccr/TNSP (C) Copyright 2003 TNSP</p>\n");
-	printf("  <p class=\"itime\">Stats generated in <b>%ld seconds</b>.</p>\n", time(NULL) - start_time);
-	printf(" </div>\n");
-	print_html_footer();
+	fprintf(out, "<!-- ============================================= -->\n");
+	fprintf(out, " <div class=\"irestinfo\">\n");
+	fprintf(out, "  <p class=\"iauthor\">Statistics generated by CISG (part of <a href=\"http://ctrlproxy.vernstok.nl/\">ctrlproxy</a> by Jelmer Vernooij). HTML output based on the HTML output from <a href=\"http://www.tnsp.org/fisg.php\">FISG (Fast IRC Stats Generator) v0.3.8</a> by ccr/TNSP (C) Copyright 2003 TNSP</p>\n");
+	fprintf(out, "  <p class=\"itime\">Stats generated in <b>%ld seconds</b>.</p>\n", time(NULL) - start_time);
+	fprintf(out, " </div>\n");
+	print_html_footer(out);
 }
 
-void print_plain_chan(struct channel *c)
+void print_plain_chan(FILE *out, struct channel *c)
 {
 	/* FIXME */
 }
 
-void print_plain_networklist() 
+void print_plain_networklist(FILE *out) 
 {
 	/* FIXME */	
 }
 
-void print_html_networklist()
+void print_html_networklist(FILE *out)
 {
-	print_html_header("Networks");
+	print_html_header(out, "Networks");
 	/* FIXME */
-	print_html_footer();
+	print_html_footer(out);
 }
 
-void print_html_channellist(struct network *n) 
+void print_html_channellist(FILE *out, struct network *n) 
 {
 	char *title;
 	asprintf(&title, "Channels on %s", n->name);
-	print_html_header(title);
+	print_html_header(out, title);
 	free(title);
 
 	/* FIXME */
-	print_html_footer();
+	print_html_footer(out);
 }
 
-void print_plain_channellist(struct network *network)
+void print_plain_channellist(FILE *out, struct network *network)
 {
 	/* FIXME */
 }
@@ -346,8 +346,8 @@ int main(int argc, const char **argv)
 	stats_parse_file(statsfile);
 
 	if(!poptPeekArg(pc)) { 
-		if(html) print_html_networklist();
-		else print_plain_networklist();
+		if(html) print_html_networklist(out);
+		else print_plain_networklist(out);
 		return 0;
 	}
 
@@ -361,8 +361,8 @@ int main(int argc, const char **argv)
 				fprintf(stderr, "No such network '%s'\n", network);
 				continue;
 			}
-			if(html) print_html_channellist(networkstruct);
-			else print_plain_channellist(networkstruct);
+			if(html) print_html_channellist(out, networkstruct);
+			else print_plain_channellist(out, networkstruct);
 			return 0;
 		}
 
@@ -378,8 +378,8 @@ int main(int argc, const char **argv)
 			fprintf(stderr, "No such channel '%s' on network '%s'\n", channel, network);
 			continue;
 		}			
-		if(html) print_html_chan(channelstruct);
-		else print_plain_chan(channelstruct);
+		if(html) print_html_chan(out, channelstruct);
+		else print_plain_chan(out, channelstruct);
 	}
 
 	stats_fini();

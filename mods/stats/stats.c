@@ -173,13 +173,16 @@ static void increase_item(const char *server, const char *channel, const char *n
 	free(key);
 }
 
-int has_lowercase(char *a) 
+int has_caps(char *a) 
 {
-	int i;
-	for(i = 0; a[i]; i++)
+	int i; int capsseen = 0;
+	for(i = 0; a[i]; i++) {
+		if(a[i] >= 'A' && a[i] <= 'Z') capsseen++;
 		if(a[i] >= 'a' && a[i] <= 'z') 
 			return 1;
-	return 0;
+	}
+
+	return capsseen > 2;
 }
 
 static gboolean log_data(struct line *l)
@@ -211,7 +214,7 @@ static gboolean log_data(struct line *l)
 		DO_INCREASE(buf);
 		DO_INCREASE("lines");
 
-		if(!has_lowercase(l->args[2])) 
+		if(has_caps(l->args[2])) 
 			DO_INCREASE("caps");
 		
 		g = patterns;
