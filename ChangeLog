@@ -1,5 +1,6 @@
 Ctrlproxy 2.7:
  * Do the actual NICK after GHOST'ing another nick
+ * Fix bug with setting PRIVATE too often
  * Fix issue with NickServ IDENTIFY'ing when connecting to server
  * Support multiple processes
  * Add cisg utility
