@@ -84,14 +84,14 @@ char *mode2string(char modes[255])
 
 static void free_nick(struct channel_nick *n)
 {
-	n->global->channels = g_list_remove(n->global->channels, n->channel);
-	n->global->refcount--;
-	if(n->global->refcount == 0) {
-		if(n->global->hostmask != NULL)
-			g_free(n->global->hostmask);
-		g_free(n->global->name);
-		n->channel->network->nicks = g_list_remove(n->channel->network->nicks, n->global);
-		g_free(n->global);
+	n->global_nick->channels = g_list_remove(n->global_nick->channels, n->channel);
+	n->global_nick->refcount--;
+	if(n->global_nick->refcount == 0) {
+		if(n->global_nick->hostmask != NULL)
+			g_free(n->global_nick->hostmask);
+		g_free(n->global_nick->name);
+		n->channel->network->nicks = g_list_remove(n->channel->network->nicks, n->global_nick);
+		g_free(n->global_nick);
 	}
 	g_free(n);
 }
@@ -156,7 +156,7 @@ struct channel_nick *find_nick(struct channel *c, char *name) {
 
 	while(l) {
 		n = (struct channel_nick *)l->data;
-		if(!irccmp(c->network, n->global->name, realname))return n;
+		if(!irccmp(c->network, n->global_nick->name, realname))return n;
 		l = g_list_next(l);
 	}
 
@@ -201,9 +201,9 @@ struct channel_nick *find_add_nick(struct channel *c, char *name) {
 		realname++;
 	}
 	n->channel = c;
-	n->global = find_add_network_nick(c->network, realname);
+	n->global_nick = find_add_network_nick(c->network, realname);
 	c->nicks = g_list_append(c->nicks, n);
-	n->global->channels = g_list_append(n->global->channels, c);
+	n->global_nick->channels = g_list_append(n->global_nick->channels, c);
 	return n;
 }
 
@@ -228,9 +228,9 @@ static void handle_join(struct network *s, struct line *l)
 		if(l->direction == FROM_SERVER && line_get_nick(l)) {
 			c = find_add_channel(s, p);
 			ni = find_add_nick(c, line_get_nick(l));
-			if(ni->global->hostmask)
-				g_free(ni->global->hostmask);
-			ni->global->hostmask = g_strdup(l->origin);
+			if(ni->global_nick->hostmask)
+				g_free(ni->global_nick->hostmask);
+			ni->global_nick->hostmask = g_strdup(l->origin);
 
 			/* The user is joining a channel */
 			own_nick = xmlGetProp(s->xmlConf, "nick");
@@ -348,7 +348,7 @@ static void handle_kick(struct network *s, struct line *l) {
 			continue;
 		}
 
-		if(!g_strcasecmp(n->global->name, own_nick))
+		if(!g_strcasecmp(n->global_nick->name, own_nick))
 			xmlSetProp(c->xmlConf, "autojoin", "0");
 
 		c->nicks = g_list_remove(c->nicks, n);
@@ -435,9 +435,9 @@ static void handle_whoreply(struct network *s, struct line *l) {
 		return;
 
 	n = find_add_nick(c, l->args[6]);
-	if(n->global->hostmask == NULL) {
+	if(n->global_nick->hostmask == NULL) {
 		asprintf(&hostmask, "%s!%s@%s", l->args[6], l->args[3], l->args[4]);
-		n->global->hostmask = hostmask;
+		n->global_nick->hostmask = hostmask;
 	}
 }
 
@@ -605,8 +605,8 @@ static void handle_nick(struct network *s, struct line *l)
 		struct channel *c = (struct channel *)g->data;
 		struct channel_nick *n = find_nick(c, line_get_nick(l));
 		if(n) {
-			g_free(n->global->name);
-			n->global->name = g_strdup(l->args[1]);
+			g_free(n->global_nick->name);
+			n->global_nick->name = g_strdup(l->args[1]);
 		}
 		g = g_list_next(g);
 	}
@@ -697,8 +697,8 @@ GSList *gen_replication_channel(struct channel *c, char *hostmask, char *nick)
 	nl = c->nicks;
 	while(nl) {
 		n = (struct channel_nick *)nl->data;
-		if(n->mode && n->mode != ' ') { ret = g_slist_append(ret, irc_parse_linef(":%s 353 %s %c %s :%c%s\r\n", hostmask, nick, c->mode, channel_name, n->mode, n->global->name)); }
-		else { ret = g_slist_append(ret, irc_parse_linef(":%s 353 %s %c %s :%s\r\n", hostmask, nick, c->mode, channel_name, n->global->name)); }
+		if(n->mode && n->mode != ' ') { ret = g_slist_append(ret, irc_parse_linef(":%s 353 %s %c %s :%c%s\r\n", hostmask, nick, c->mode, channel_name, n->mode, n->global_nick->name)); }
+		else { ret = g_slist_append(ret, irc_parse_linef(":%s 353 %s %c %s :%s\r\n", hostmask, nick, c->mode, channel_name, n->global_nick->name)); }
 		nl = g_list_next(nl);
 	}
 	ret = g_slist_append(ret, irc_parse_linef(":%s 366 %s %s :End of /names list\r\n", hostmask, nick, channel_name));

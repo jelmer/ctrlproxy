@@ -98,7 +98,7 @@ struct line {
 struct channel_nick {
 	char mode;
 	struct channel *channel;
-	struct network_nick *global;
+	struct network_nick *global_nick;
 };
 
 struct network_nick {

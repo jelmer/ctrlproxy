@@ -357,12 +357,12 @@ static PyObject * PyCtrlproxyNick_get(PyCtrlproxyObject *self, char *closure) {
 	PYCTRLPROXY_MAKESTRUCT(n, channel_nick)
 
 	if(!strcmp(closure,"name")) {
-		return PyString_FromString(n->global->name);
+		return PyString_FromString(n->global_nick->name);
 	} else if(!strcmp(closure,"mode")) {
 		return PyString_FromString(&n->mode);
 	} else if(!strcmp(closure,"hostmask")) {
-		if(n->global->hostmask != NULL) {
-			return PyString_FromString(n->global->hostmask);
+		if(n->global_nick->hostmask != NULL) {
+			return PyString_FromString(n->global_nick->hostmask);
 		} else {
 			Py_INCREF(Py_None);
 			return Py_None;
@@ -473,7 +473,7 @@ static PyObject * PyCtrlproxyChannel_get(PyCtrlproxyObject *self, char *closure)
 		rv = PyDict_New();
 		while(gl) {
 			struct channel_nick *n = (struct channel_nick *)gl->data;
-			PyDict_SetItemString(rv,n->global->name,(PyObject *)createNickObject(gl->data));
+			PyDict_SetItemString(rv,n->global_nick->name,(PyObject *)createNickObject(gl->data));
 			gl = gl->next;
 		}
 	} else if(!strcmp(closure,"network")) {
@@ -2193,7 +2193,7 @@ static PyObject * PyCtrlproxy_save_configuration(PyObject *self, PyObject *args,
 
 static PyObject * PyCtrlproxy_exit(PyObject *self, PyObject *args, PyObject *kwds){
 	fini_plugin(python_plugin);
-	clean_exit();
+	exit(0);
 
 	return Py_None;
 }
