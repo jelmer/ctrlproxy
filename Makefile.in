@@ -11,7 +11,6 @@ includedir = @includedir@
 man1dir = @mandir@/man1
 man5dir = @mandir@/man5
 cdatadir = @datadir@/ctrlproxy
-HAVE_DOCS = $(shell test -d doc && echo _)
 CFLAGS = @CFLAGS@ @PKG_CFLAGS@ -DHAVE_CONFIG_H -DLOCALEDIR=\"$(localedir)\" -DSHAREDIR=\"$(cdatadir)\" -DDTD_FILE=\"$(cdatadir)/ctrlproxyrc.dtd\"
 
 CFLAGS+=-ansi -Wall -DMODULESDIR=\"$(modulesdir)\"
@@ -54,14 +53,14 @@ install-doc:
 	$(INSTALL) COPYING $(DESTDIR)$(docdir)
 	$(INSTALL) TODO $(DESTDIR)$(docdir)
 	$(INSTALL) UPGRADING $(DESTDIR)$(docdir)
-ifdef HAVE_DOCS
+ifeq ($(shell test -d doc && echo _),_)
 	$(MAKE) -C doc install 
 else
-	@echo "------------------------------------------------------------"
+	@echo "--------------------------------------------------------------------"
 	@echo " It looks like you are compiling ctrlproxy from Subversion"
 	@echo " Documentation will not be installed, but is available from "
-	@echo " a seperate repository"
-	@echo "------------------------------------------------------------"
+	@echo " a seperate SVN repository (http://ctrlproxy.vernstok.nl/doc/svn/)."
+	@echo "--------------------------------------------------------------------"
 endif
 
 install-data:
