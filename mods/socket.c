@@ -95,7 +95,7 @@ static void socket_to_iochannel(int sock, struct transport_context *c, enum ssl_
 	GError *error = NULL;
 	ioc = g_io_channel_unix_new(sock);
 
-#if defined(HAVE_OPENSSL_SSL_H) || defined(HAVE_GNUTLS_OPENSSL_H)
+#ifdef HAVE_OPENSSL_SSL_H
 	if(ssl_mode != SSL_MODE_NONE) {
 		GIOChannel *newioc;
 		newioc = irssi_ssl_get_iochannel(ioc, ssl_mode == SSL_MODE_SERVER);
@@ -108,6 +108,7 @@ static void socket_to_iochannel(int sock, struct transport_context *c, enum ssl_
 	g_io_channel_set_encoding(ioc, NULL, &error);
 	if(error)g_error_free(error);
 
+	g_io_channel_set_close_on_unref(ioc, TRUE);
 	s->disc_id = g_io_add_watch(ioc, G_IO_IN, handle_in, (gpointer)c);
 	s->in_id = g_io_add_watch(ioc, G_IO_HUP, handle_disc, (gpointer)c);
 
@@ -258,6 +259,8 @@ static int connect_ip(struct transport_context *c)
 		domain = PF_INET6; 
 		family = AF_INET6; 
 	}
+	memset(&name6, 0, sizeof(name6));
+	memset(&name4, 0, sizeof(name4));
 
 	port = aPort?atoi(aPort):6667;
 	if(aPort)xmlFree(aPort);
@@ -325,19 +328,15 @@ static int connect_ip(struct transport_context *c)
 static int close_socket(struct transport_context *c)
 {
 	struct socket_data *s;
-	GError *error = NULL;
 
 	if(!c) return -1;
 
 	s = (struct socket_data *)c->data;
 	if(!s) return -1;
 
-	g_io_channel_shutdown(s->channel, TRUE, &error);
-	if(error)g_error_free(error);
-
-	g_io_channel_unref(s->channel);
 	g_source_remove(s->in_id);
 	g_source_remove(s->disc_id);
+	g_io_channel_unref(s->channel);
 
 	free(c->data);
 
@@ -465,7 +464,6 @@ static int listen_ip(struct transport_context *c)
 	s->channel = gio;
 	s->disc_id = -1;
 	s->in_id = g_io_add_watch(gio, G_IO_IN, handle_new_client, c);
-	g_io_channel_unref(gio);
 
 	c->data = s;
 
@@ -524,7 +522,6 @@ static int listen_pipe(struct transport_context *c)
 	g_io_channel_set_encoding(gio, NULL, &error);
 	if(error)g_error_free(error);
 
-	g_io_channel_unref(gio);
 	s = malloc(sizeof(struct socket_data));
 	s->channel = gio;
 	s->in_id = g_io_add_watch(gio, G_IO_IN, handle_new_client, c);
@@ -582,7 +579,7 @@ gboolean init_plugin(struct plugin *p) {
 		cur = cur->next;
 	}
 
-#if defined(HAVE_OPENSSL_SSL_H) || defined(HAVE_GNUTlS_OPENSSL_H)
+#ifdef HAVE_OPENSSL_SSL_H
 	if(!certf || !keyf) {
 		defaultssl = ctrlproxy_path("ctrlproxy.pem");
 		if(access(defaultssl, R_OK) == 0) {
