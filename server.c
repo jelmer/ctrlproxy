@@ -177,16 +177,18 @@ int loop(struct server *server) /* Checks server socket for input and calls loop
 	while((ret = anextline(&server->remaining))) {
 		server->last_msg_time = time(NULL);
 		irc_parse_line(ret, &l);
-		/* We only need to handle pings */
+		/* We need to handle pings.. we can't depend on a client 
+		 * to do that for us*/
 		if(!strcasecmp(l.args[0], "PING")){
 			server_send(server, NULL, "PONG", l.args[1], NULL);
-		}
-		
-		c = server->handlers;
-		while(c) {
-			if(c->functions->handle_incoming_data)
-				c->functions->handle_incoming_data(c, &l);
-			c = c->next;
+		} else if(!strcasecmp(l.args[0], "PONG")){
+		} else {
+			c = server->handlers;
+			while(c) {
+				if(c->functions->handle_incoming_data)
+					c->functions->handle_incoming_data(c, &l);
+				c = c->next;
+			}
 		}
 		free(ret);
 	}

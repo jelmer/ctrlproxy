@@ -148,6 +148,8 @@ void mloop(struct module_context *c)
 					}
 				} else if(!strcasecmp(l.args[0], "QUIT")) {
 					/* Ignore */
+				} else if(!strcasecmp(l.args[0], "PING")) {
+					dprintf(i, ":%s PONG :%s\r\n", c->parent->name, l.args[1]);
 				} else if(st->authenticated[i]) {
 					asprintf(&tmp, "%s\n", ret);
 					server_send_raw(c->parent, tmp);
