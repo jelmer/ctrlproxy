@@ -3,7 +3,7 @@ prefix = @prefix@
 exec_prefix = @exec_prefix@
 moddir = @libdir@/ctrlproxy
 INSTALL = @INSTALL@
-CFLAGS = @PY_CFLAGS@ -fPIC -I../.. -I.. @CFLAGS@ @PKG_CFLAGS@  -DSHAREDIR=\"@datadir@\"
+CFLAGS = @PY_CFLAGS@ -Wall -fPIC -I../.. -I.. @CFLAGS@ @PKG_CFLAGS@  -DSHAREDIR=\"@datadir@\"
 LIBS = @PY_LIBS@
 PYLIBDIR = \"@libdir@/ctrlproxy/python\"
 

@@ -2,7 +2,7 @@ CC = @CC@
 prefix = @prefix@
 exec_prefix = @exec_prefix@
 INSTALL = @INSTALL@
-CFLAGS = -fPIC -I.. @CFLAGS@ @PKG_CFLAGS@ -DSHAREDIR=\"@datadir@\"
+CFLAGS = -Wall -fPIC -I.. @CFLAGS@ @PKG_CFLAGS@ -DSHAREDIR=\"@datadir@\"
 moddir = @libdir@/ctrlproxy
 MODS_SUBDIRS = @MODS_SUBDIRS@
 MODS = @MODS@

@@ -1,80 +1,92 @@
 #!/usr/bin/env perl
 # Convert dircproxyrc to ctrlproxyrc
 
-listen_port -> <listen><ipv4 port="$"/></listen>
-pid_file
-client_timeout
-connect_timeout
-dns_timeout
+while(<STDIN>) {
+	next unless(/([^ ]+) (.+)/);
+	next if(/#(.*)/);
+	$var{$1} = $2;
+}
 
-server_port -> port
-server_retry
-server_maxattempts
-server_maxinitattempts
-server_keepalive
-server_pingtimeout
-server_throttle
-server_autoconnect -> autoconnect
-channel_rejoin
-channel_leave_on_detach
-channel_rejoin_on_attach
-idle_maxtime
-disconnect_existing_user
-disconnect_on_detach
-initial_modes
-drop_modes
-refuse_modes
-local_address -> bind
-away_message -> away plugin -> message
-quit_message
-attach_message
-detach_message
-detach_nickname
-nick_keep
-ctcp_replies -> load ctcp module
-chan_log_enabled -> load irssi module
-chan_log_always -> repl_simple
-chan_log_maxsize
-chan_log_recall
-chan_log_timestamp
-chan_log_relativetime
-chan_log_copydir
-chan_log_program
-other_log_enabled
-other_log_always
-other_log_maxsize
-other_log_recall
-other_log_timestamp
-other_log_relativetime
-other_log_copydir
-other_log_program
-log_timeoffset
-log_events
-dcc_proxy_incoming -> load dcc module
-dcc_proxy_outgoing
-dcc_proxy_ports
-dcc_proxy_timeout
-dcc_proxy_sendreject
-dcc_send_fast
-dcc_capture_directory -> dcc directory
-dcc_capture_always
-dcc_capture_withnick
-dcc_capture_maxsize
-dcc_tunnel_incoming
-dcc_tunnel_outgoing
-switch_user
-motd_logo
-motd_file -> load motd module with specified file
-motd_stats
-allow_persist
-allow_jump
-allow_jump_new
-allow_host
-allow_die
-allow_users
-allow_kill
-password -> client_pass
-server -> server
-from
-join -> channel
+foreach(keys %var) {
+	print "$_ => " . $var{$_} . "\n";
+}
 
+
+#
+#listen_port -> <listen><ipv4 port="$"/></listen>
+#pid_file
+#client_timeout
+#connect_timeout
+#dns_timeout
+#
+#server_port -> port
+#server_retry
+#server_maxattempts
+#server_maxinitattempts
+#server_keepalive
+#server_pingtimeout
+#server_throttle
+#server_autoconnect -> autoconnect
+#channel_rejoin
+#channel_leave_on_detach
+#channel_rejoin_on_attach
+#idle_maxtime
+#disconnect_existing_user
+#disconnect_on_detach
+#initial_modes
+#drop_modes
+#refuse_modes
+#local_address -> bind
+#away_message -> away plugin -> message
+#quit_message
+#attach_message
+#detach_message
+#detach_nickname
+#nick_keep
+#ctcp_replies -> load ctcp module
+#chan_log_enabled -> load irssi module
+#chan_log_always -> repl_simple
+#chan_log_maxsize
+#chan_log_recall
+#chan_log_timestamp
+#chan_log_relativetime
+#chan_log_copydir
+#chan_log_program
+#other_log_enabled
+#other_log_always
+#other_log_maxsize
+#other_log_recall
+#other_log_timestamp
+#other_log_relativetime
+#other_log_copydir
+#other_log_program
+#log_timeoffset
+#log_events
+#dcc_proxy_incoming -> load dcc module
+#dcc_proxy_outgoing
+#dcc_proxy_ports
+#dcc_proxy_timeout
+#dcc_proxy_sendreject
+#dcc_send_fast
+#dcc_capture_directory -> dcc directory
+#dcc_capture_always
+#dcc_capture_withnick
+#dcc_capture_maxsize
+#dcc_tunnel_incoming
+#dcc_tunnel_outgoing
+#switch_user
+#motd_logo
+#motd_file -> load motd module with specified file
+#motd_stats
+#allow_persist
+#allow_jump
+#allow_jump_new
+#allow_host
+#allow_die
+#allow_users
+#allow_kill
+#password -> client_pass
+#server -> server
+#from
+#join -> channel
+#
