@@ -1,13 +1,13 @@
 PYTHON = @PYTHON@
 SWIG = @SWIG@
 CC = @CC@
-CFLAGS = @CFLAGS@
-LDFLAGS = @LDFLAGS@
+CFLAGS = @CFLAGS@ @PKG_CFLAGS@
+LDFLAGS = @LDFLAGS@ @PKG_LIBS@
 
 all: build
 
 build: ctrlproxy_wrap.c
-	$(PYTHON) setup.py build
+	LDFLAGS="$(LDFLAGS)" CFLAGS="$(CFLAGS)" $(PYTHON) setup.py build
 
 install:
 	$(PYTHON) setup.py install

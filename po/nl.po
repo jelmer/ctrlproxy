@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ctrlproxy 2.7-CVS\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2004-12-07 01:20+0100\n"
+"POT-Creation-Date: 2005-01-20 15:01+0100\n"
 "PO-Revision-Date: 2003-01-28 13:22+CET\n"
 "Last-Translator: Jelmer Vernooij <jelmer@vernstok.nl>\n"
 "Language-Team: Dutch <nl@li.org>\n"
@@ -75,80 +75,80 @@ msgstr "Linestack backend '%s' toegevoegd"
 msgid "Removed linestack backend '%s'"
 msgstr "Linestack backend '%s' verwijderd"
 
-#: main.c:55
+#: main.c:59
 msgid "Received SIGSEGV!"
 msgstr "SIGSEGV ontvangen"
 
-#: main.c:62
+#: main.c:66
 #, c-format
 msgid "BACKTRACE: %d stack frames:"
 msgstr "BACKTRACE: %d frames op de stack:"
 
-#: main.c:77
+#: main.c:81
 msgid "Can't unload crashing plugin, exiting..."
 msgstr "Kan gecrashte plugin niet ontladen, afsluiten..."
 
-#: main.c:80
+#: main.c:84
 #, c-format
 msgid "Plugin '%s' unloaded, because it crashed..."
 msgstr "Plugin '%s' verwijderd omdat het crashte..."
 
-#: main.c:84
+#: main.c:88
 msgid "Ctrlproxy core has segfaulted, exiting..."
 msgstr "Ctlrproxy basis is gecrasht, afsluiten..."
 
-#: main.c:110
+#: main.c:114
 #, c-format
 msgid "Received signal %d, quitting..."
 msgstr "Signaal %d ontvangen, afsluiten..."
 
-#: main.c:118
+#: main.c:122
 msgid "Closing connections..."
 msgstr "Sluiten verbindingen..."
 
-#: main.c:137
+#: main.c:141
 msgid "Write irc traffic to specified file"
 msgstr "Schrijven irc verkeer naar opgegeven bestand"
 
-#: main.c:138
+#: main.c:142
 msgid "Run in the background (as a daemon)"
 msgstr "Draai in de achtergrond (als daemon)"
 
-#: main.c:139
+#: main.c:143
 msgid "Log messages to specified file"
 msgstr "Log berichten naar opgegeven bestand"
 
-#: main.c:139 main.c:140
+#: main.c:143 main.c:144
 msgid "FILE"
 msgstr "BESTAND"
 
-#: main.c:140
+#: main.c:144
 msgid "Use configuration file from specified location"
 msgstr "Gebruik configuratie bestand van opgegeven locatie"
 
-#: main.c:141
+#: main.c:145
 msgid "Use one process per network"
 msgstr "Gebruik één proces per netwerk"
 
-#: main.c:142
+#: main.c:146
 msgid "Show version information"
 msgstr "Toon versie informatie"
 
-#: main.c:182
+#: main.c:186
 #, c-format
 msgid "(c) 2002-2004 Jelmer Vernooij et al. <jelmer@nl.linux.org>\n"
 msgstr "(c) 2002-2004 Jelmer Vernooij en anderen. <jelmer@nl.linux.org>\n"
 
-#: main.c:189
+#: main.c:193
 msgid "Can't figure out hostname of local host!"
 msgstr "Kan de naam van de lokale computer niet bepalen!"
 
-#: main.c:195
+#: main.c:199
 #, c-format
 msgid "Can't open logfile %s!"
 msgstr "Kan logbestand %s niet openen!"
 
-#: main.c:205
+#: main.c:209
 msgid "Logfile opened"
 msgstr "Logbestand geopent"
 
@@ -548,17 +548,17 @@ msgstr "Automatisch Weg"
 msgid "Received unknown CTCP request '%s'!"
 msgstr "Onbekend CTCP verzoek '%s' ontvangen!"
 
-#: mods/log_custom.c:305 mods/log_irssi.c:70
+#: mods/log_custom.c:313 mods/log_irssi.c:70
 #, c-format
 msgid "Couldn't create directory %s for logging!"
 msgstr "Kan directory %s niet aanmaken voor loggen!"
 
-#: mods/log_custom.c:317 mods/log_irssi.c:85
+#: mods/log_custom.c:325 mods/log_irssi.c:85
 #, c-format
 msgid "Couldn't open file %s for logging!"
 msgstr "Kan het bestand %s niet openen voor loggen!"
 
-#: mods/log_custom.c:534
+#: mods/log_custom.c:542
 msgid "No <logfilename> tag for log_custom module"
 msgstr "Geen <logfilename> tag voor de log_custom module"
 

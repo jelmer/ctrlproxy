@@ -209,7 +209,7 @@ static gboolean handle_new_client(GIOChannel *c, GIOCondition o, gpointer data)
 	sock = accept(g_io_channel_unix_get_fd(c), (struct sockaddr *)&clientname, &size);
 	if(!sock) {
 		g_warning( _("Can't accept connection!"));
-		return FALSE;
+		return TRUE;
 	}
 	g_message(_("New client %d"), sock);
 

@@ -63,17 +63,97 @@
 
 static GIOChannel *server_channel = NULL;
 static int server_channel_in = 0;
-
 enum socks_state { STATE_NEW = 0, STATE_AUTH, STATE_NORMAL };
 
+struct socks_method;
 struct socks_client
 {
 	GIOChannel *connection;
 	const char *user;
 	const char *password;
 	gint watch_id;
-	guint8 method;
+	struct socks_method *method;
 	enum socks_state state;
+	void *method_data;
+};
+
+static void socks_error(GIOChannel *ioc, guint8 err)
+{
+	/* FIXME */
+}
+
+static gboolean anon_acceptable(struct socks_client *cl)
+{
+	return TRUE; /* FIXME: Check whether anonymous connects
+	should be allowed */
+}
+
+static gboolean pass_acceptable(struct socks_client *cl)
+{
+	return TRUE; /* FIXME: Check whether there is a password specified */
+}
+
+static gboolean pass_handle_data(struct socks_client *cl)
+{
+	guint8 header[2];
+	gsize read;
+	GIOStatus status;
+	guint8 uname[0x100], pass[0x100];
+
+	status = g_io_channel_read_chars(cl->connection, header, 2, &read, NULL);
+	if (status != G_IO_STATUS_NORMAL) {
+		return FALSE;
+	}
+
+	if (header[0] != 0x1) {
+	 	socks_error(cl->connection, REP_GENERAL_FAILURE);
+		g_warning("Client suddenly changed socks version to %x", header[0]);
+		return FALSE;
+	}
+
+	status = g_io_channel_read_chars(cl->connection, uname, header[1], &read, NULL);
+	if (status != G_IO_STATUS_NORMAL) {
+		return FALSE;
+	}
+
+	uname[header[1]] = '\0';
+
+	status = g_io_channel_read_chars(cl->connection, header, 1, &read, NULL);
+	if (status != G_IO_STATUS_NORMAL) {
+		return FALSE;
+	}
+
+	status = g_io_channel_read_chars(cl->connection, pass, header[0], &read, NULL);
+	if (status != G_IO_STATUS_NORMAL) {
+		return FALSE;
+	}
+
+	pass[header[0]] = '\0';
+
+	g_message("Client tried to log in with username %s, pass %s", uname, pass);
+
+	header[0] = 0x1;
+	header[1] = 0x0; /* FIXME: Verify password and set to non-zero if invalid */
+
+	status = g_io_channel_write_chars(cl->connection, header, 2, &read, NULL);
+	if (status != G_IO_STATUS_NORMAL) {
+		return FALSE;
+	} 
+
+	g_io_channel_flush(cl->connection, NULL);
+
+	return header[1] == 0x0;
+}
+
+struct socks_method {
+	gint id;
+	gboolean (*acceptable) (struct socks_client *cl);
+	gboolean (*handle_data) (struct socks_client *cl);
+} socks_methods[] = {
+	{ SOCKS_METHOD_NOAUTH, anon_acceptable, NULL },
+	{ SOCKS_METHOD_GSSAPI, NULL, NULL },
+	{ SOCKS_METHOD_USERNAME_PW, pass_acceptable, pass_handle_data },
+	{ -1, NULL, NULL }
 };
 
 static gboolean handle_client_data (GIOChannel *ioc, GIOCondition o, gpointer data)
@@ -100,35 +180,52 @@ static gboolean handle_client_data (GIOChannel *ioc, GIOCondition o, gpointer da
 		g_message("New SOCKS client with version %d", header[0]);
 
 		/* None by default */
-		cl->method = SOCKS_METHOD_NOACCEPTABLE;
+		cl->method = NULL;
 
 		status = g_io_channel_read_chars(ioc, methods, header[1], &read, NULL);
+		if (status != G_IO_STATUS_NORMAL) {
+			return FALSE;
+		}
 		for (i = 0; i < header[1]; i++) {
-			/* FIXME: Validate method */
+			int j;
+			for (j = 0; socks_methods[j].id != -1; j++)
+			{
+				if (socks_methods[j].id == methods[i] && 
+					socks_methods[j].acceptable &&
+					socks_methods[j].acceptable(cl)) {
+					cl->method = &socks_methods[j];
+					break;
+				}
+			}
 		}
 
 		header[0] = SOCKS_VERSION;
-		header[1] = cl->method;
+		header[1] = cl->method?cl->method->id:SOCKS_METHOD_NOACCEPTABLE;
 
 		status = g_io_channel_write_chars(ioc, header, 2, &read, NULL);
 		if (status != G_IO_STATUS_NORMAL) {
 			return FALSE;
 		} 
 
-		if (cl->method == 0xFF) {
+		g_io_channel_flush(ioc, NULL);
+
+		if (!cl->method) {
 			g_warning("Refused client because no valid method was available");
-			g_io_channel_flush(ioc, NULL);
 			return FALSE;
 		}
 
-		g_message("Accepted authentication %x", cl->method);
+		g_message("Accepted authentication %x", cl->method->id);
 
-		cl->state = STATE_AUTH;
+		if (!cl->method->handle_data) {
+			cl->state = STATE_NORMAL;
+		} else {
+			cl->state = STATE_AUTH;
+		}
 	} else if (cl->state == STATE_AUTH) {
-		/* FIXME */
+		return cl->method->handle_data(cl);
 	} else if (cl->state == STATE_NORMAL) {
 		guint8 header[4];
-		guint8 read;
+		gsize read;
 
 		status = g_io_channel_read_chars(ioc, header, 4, &read, NULL);
 		if (status != G_IO_STATUS_NORMAL) {
@@ -137,13 +234,13 @@ static gboolean handle_client_data (GIOChannel *ioc, GIOCondition o, gpointer da
 
 		if (header[0] != SOCKS_VERSION) {
 		 	socks_error(ioc, REP_GENERAL_FAILURE);
-			g_warning("Client suddenly changed socks version to %d", header[0]);
+			g_warning("Client suddenly changed socks version to %x", header[0]);
 			return FALSE;
 		}
 
 		if (header[1] != CMD_CONNECT) {
 			socks_error(ioc, REP_CMD_NOT_SUPPORTED);
-			g_warning("Client used unknown command %d", header[1]);
+			g_warning("Client used unknown command %x", header[1]);
 			return FALSE;
 		}
 
