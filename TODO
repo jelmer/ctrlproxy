@@ -5,6 +5,9 @@
 - check web script
 - fix memory leaks in python module
 - support the - and + in front of lines
+- strict checking of XML syntax
+- crash bug in /CTRLPROXY DIE
+- bug with setting modes for irssi mkdir
 - check modules:
   * admin
   * antiflood
