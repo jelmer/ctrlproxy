@@ -4,11 +4,12 @@ exec_prefix = @exec_prefix@
 bindir = @bindir@
 INSTALL = @INSTALL@
 CFLAGS = -fPIC -I../.. -I.. @CFLAGS@ @PKG_CFLAGS@ -DSHAREDIR=\"@datadir@\"
+
 moddir = @libdir@/ctrlproxy
 
 .PHONY: all install clean distclean
 
-all: libstats.so printstats
+all: libstats.so printstats libstatsutil.so
 
 install: all
 	$(INSTALL) libstats.so $(DESTDIR)$(moddir)
@@ -16,6 +17,9 @@ install: all
 
 %.o: %.c
 	$(CC) $(CFLAGS) -fPIC -c $<
+
+libstatsutil.so: statsutil.o
+	$(CC) $(CFLAGS) -shared -o $@ $< -ltdb
 
 libstats.so: stats.o
 	$(CC) $(CFLAGS) -shared -o $@ $< -ltdb @LIB_PCRE@

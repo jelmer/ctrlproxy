@@ -20,6 +20,30 @@
 #ifndef __CTRLPROXY_STATSUTIL_H__
 #define __CTRLPROXY_STATSUTIL_H__
 
+#include <glib.h>
 
+struct network;
+struct channel;
+
+struct nick {
+	GHashTable *properties;
+	struct channel *channel;
+};
+
+struct channel {
+	GHashTable *properties;
+	struct network *network;
+	GHashTable *nicks;
+};
+
+struct network {
+	GHashTable *channels;
+};
+
+extern GHashTable *networks;
+
+void stats_parse_file(char *f);
+void stats_init();
+void stats_fini();
 
 #endif /* __CTRLPROXY_STATSUTIL_H__ */
