@@ -1,7 +1,7 @@
 - test report_time
 - test repl_command
 - finish configuration utility (worked on by Kyoshiro)
-- internatiolization (i18n)
+- internationalization (i18n)
 - automated testsuite
 - use namespaces and XML schemas instead of DTD
 - improve PHP script for stats
