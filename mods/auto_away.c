@@ -27,13 +27,14 @@ static gboolean only_for_noclients = FALSE;
 static gboolean is_away = FALSE;
 static char *message = NULL;
 static char *nick = NULL;
-static struct plugin *this_plugin = NULL;
 
 struct auto_away_data {
 	guint timeout_id;
 };
 
 static gboolean check_time(gpointer user_data) {
+	struct plugin *this_plugin = user_data;
+
 	push_plugin(this_plugin);
 	if(time(NULL) - last_message > max_idle_time && !is_away) { 
 		GList *sl = get_network_list();
@@ -55,7 +56,7 @@ static gboolean check_time(gpointer user_data) {
 	return TRUE;
 }
 
-static gboolean log_data(struct line *l) {
+static gboolean log_data(struct line *l, void *userdata) {
 	if(l->direction == TO_SERVER && !g_strcasecmp(l->args[0], "AWAY")) {
 		if(l->args[1])is_away = TRUE;
 		else is_away = FALSE;
@@ -112,18 +113,16 @@ gboolean load_config(struct plugin *p, xmlNodePtr node)
 		xmlFree(t);
 	}
 
-	d->timeout_id = g_timeout_add(1000, check_time, NULL);
+	d->timeout_id = g_timeout_add(1000, check_time, p);
 	return TRUE;
 }
 
 gboolean init_plugin(struct plugin *p) {
 	struct auto_away_data *d;
 
-	this_plugin = p;
-
 	d = g_new(struct auto_away_data,1);
 	
-	add_filter("auto-away", log_data);
+	add_filter("auto-away", log_data, p);
 	
 	last_message = time(NULL);
 

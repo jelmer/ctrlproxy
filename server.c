@@ -690,7 +690,7 @@ gboolean ping_loop(gpointer user_data) {
 	GList *l = networks;
 	while(l) {
 		struct network *s = (struct network *)l->data;
-		GList *cl;
+
 		if(network_is_connected(s))network_send_args(s, "PING", s->name, NULL);
 		else reconnect(NULL, G_IO_HUP, s);
 

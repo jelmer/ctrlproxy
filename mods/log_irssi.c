@@ -100,7 +100,7 @@ static FILE *find_channel_file(struct network *s, const char *name) {
 	return f;
 }
 
-static gboolean log_data(struct line *l)
+static gboolean log_data(struct line *l, void *userdata)
 {
 	char *nick = NULL;
 	char *dest = NULL;
@@ -238,6 +238,6 @@ gboolean load_config(struct plugin *p, xmlNodePtr node)
 gboolean init_plugin(struct plugin *p)
 {
 	files = g_hash_table_new(g_str_hash, g_str_equal);
-	add_filter_ex("log_irssi", log_data, "log", 1000);
+	add_filter_ex("log_irssi", log_data, NULL, "log", 1000);
 	return TRUE;
 }

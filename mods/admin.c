@@ -336,7 +336,7 @@ void unregister_admin_command(char *name)
 	}
 }
 
-static gboolean handle_data(struct line *l) {
+static gboolean handle_data(struct line *l, void *userdata) {
 	char *tmp, **args = NULL;
 	int cmdoffset = 0;
 	int i;
@@ -436,7 +436,7 @@ gboolean init_plugin(struct plugin *p) {
 		{ NULL }
 	};
 
-	add_filter("admin", handle_data);
+	add_filter("admin", handle_data, NULL);
 
 	for(i = 0; builtin_commands[i].name; i++) {
 		register_admin_command(builtin_commands[i].name, builtin_commands[i].handler, builtin_commands[i].help, builtin_commands[i].help_details);

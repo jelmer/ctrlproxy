@@ -299,31 +299,31 @@ G_MODULE_EXPORT int strrfc1459cmp(const char *a, const char *b);
 
 /* hooks.c */
 /* Returns TRUE if filter should be continued, FALSE if it should be stopped. */
-typedef gboolean (*filter_function) (struct line *);
-G_MODULE_EXPORT void add_filter(char *name, filter_function);
-G_MODULE_EXPORT gboolean add_filter_ex(char *name, filter_function, char *classname, int priority);
+typedef gboolean (*filter_function) (struct line *, void *userdata);
+G_MODULE_EXPORT void add_filter(char *name, filter_function, void *userdata);
+G_MODULE_EXPORT gboolean add_filter_ex(char *name, filter_function, void *userdata, char *classname, int priority);
 G_MODULE_EXPORT void del_filter(filter_function);
 G_MODULE_EXPORT gboolean del_filter_ex(char *classname, filter_function);
 G_MODULE_EXPORT void add_filter_class(char *name, int priority);
 
-typedef gboolean (*new_client_hook) (struct client *);
-G_MODULE_EXPORT void add_new_client_hook(char *name, new_client_hook h);
+typedef gboolean (*new_client_hook) (struct client *, void *userdata);
+G_MODULE_EXPORT void add_new_client_hook(char *name, new_client_hook h, void *userdata);
 G_MODULE_EXPORT void del_new_client_hook(char *name);
 
-typedef void (*lose_client_hook) (struct client *);
-G_MODULE_EXPORT void add_lose_client_hook(char *name, lose_client_hook h);
+typedef void (*lose_client_hook) (struct client *, void *userdata);
+G_MODULE_EXPORT void add_lose_client_hook(char *name, lose_client_hook h, void *userdata);
 G_MODULE_EXPORT void del_lose_client_hook(char *name);
 
-typedef char ** (*motd_hook) (struct network *n);
-G_MODULE_EXPORT void add_motd_hook(char *name, motd_hook);
+typedef char ** (*motd_hook) (struct network *n, void *userdata);
+G_MODULE_EXPORT void add_motd_hook(char *name, motd_hook, void *userdata);
 G_MODULE_EXPORT void del_motd_hook(char *name);
 
-typedef void (*server_connected_hook) (struct network *);
-G_MODULE_EXPORT void add_server_connected_hook(char *name, server_connected_hook h);
+typedef void (*server_connected_hook) (struct network *, void *userdata);
+G_MODULE_EXPORT void add_server_connected_hook(char *name, server_connected_hook h, void *userdata);
 G_MODULE_EXPORT void del_server_connected_hook(char *name);
 
-typedef void (*server_disconnected_hook) (struct network *);
-G_MODULE_EXPORT void add_server_disconnected_hook(char *name, server_disconnected_hook h);
+typedef void (*server_disconnected_hook) (struct network *, void *userdata);
+G_MODULE_EXPORT void add_server_disconnected_hook(char *name, server_disconnected_hook h, void *userdata);
 G_MODULE_EXPORT void del_server_disconnected_hook(char *name);
 
 #ifdef _WIN32

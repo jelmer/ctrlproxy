@@ -69,7 +69,7 @@ static gboolean send_queue(gpointer user_data) {
 	return TRUE;
 }
 
-static gboolean log_data(struct line *l) {
+static gboolean log_data(struct line *l, void *userdata) {
 	TIMEVALUE tv, cmp;
 	struct network_data *sd;
 	if(l->direction == FROM_SERVER)return TRUE;
@@ -139,7 +139,7 @@ gboolean load_config(struct plugin *p, xmlNodePtr node)
 
 gboolean init_plugin(struct plugin *p) {
 	this_plugin = p;
-	add_filter_ex("antiflood", log_data, "client", 1);
+	add_filter_ex("antiflood", log_data, NULL, "client", 1);
 	antiflood_servers = g_hash_table_new(NULL, NULL);
 	
 	return TRUE;

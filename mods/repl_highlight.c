@@ -23,7 +23,7 @@
 static GHashTable *highlight_backlog = NULL;
 static GList *matches = NULL;
 
-static gboolean log_data(struct line *l) {
+static gboolean log_data(struct line *l, void *userdata) {
 	struct linestack_context *co = (struct linestack_context *)g_hash_table_lookup(highlight_backlog, l->network);
 	GList *gl;
 
@@ -61,7 +61,7 @@ static gboolean log_data(struct line *l) {
 	return TRUE;
 }
 
-static gboolean highlight_replicate(struct client *c)
+static gboolean highlight_replicate(struct client *c, void *userdata)
 {
 	struct linestack_context *replication_data = (struct linestack_context *)g_hash_table_lookup(highlight_backlog, c->network);
 	linestack_send(replication_data, c->incoming);
@@ -78,8 +78,8 @@ gboolean fini_plugin(struct plugin *p) {
 const char name_plugin[] = "repl_highlight";
 
 gboolean init_plugin(struct plugin *p) {
-	add_filter_ex("repl_highlight", log_data, "replicate", 1000);
-	add_new_client_hook("repl_highlight", highlight_replicate);
+	add_filter_ex("repl_highlight", log_data, NULL, "replicate", 1000);
+	add_new_client_hook("repl_highlight", highlight_replicate, NULL);
 	highlight_backlog = g_hash_table_new(NULL, NULL);
 	return TRUE;
 }

@@ -30,7 +30,7 @@ static void change_nick(struct client *c, char *newnick)
 	free_line(l);
 }
 
-static gboolean log_data(struct line *l) {
+static gboolean log_data(struct line *l, void *userdata) {
 	struct linestack_context *co = (struct linestack_context *)g_hash_table_lookup(simple_backlog, l->network);
 	struct channel *c;
 
@@ -87,7 +87,7 @@ static gboolean log_data(struct line *l) {
 	return TRUE;
 }
 
-static gboolean simple_replicate(struct client *c)
+static gboolean simple_replicate(struct client *c, void *userdata)
 {
 	struct linestack_context *replication_data = (struct linestack_context *)g_hash_table_lookup(simple_backlog, c->network);
 	if(replication_data) {
@@ -109,8 +109,8 @@ gboolean fini_plugin(struct plugin *p) {
 const char name_plugin[] = "repl_simple";
 
 gboolean init_plugin(struct plugin *p) {
-	add_filter_ex("repl_simple", log_data, "replicate", 1000);
-	add_new_client_hook("repl_simple", simple_replicate);
+	add_filter_ex("repl_simple", log_data, NULL, "replicate", 1000);
+	add_new_client_hook("repl_simple", simple_replicate, NULL);
 	simple_backlog = g_hash_table_new(NULL, NULL);
 	simple_initialnick = g_hash_table_new_full(NULL, NULL, NULL, NULL);
 	return TRUE;

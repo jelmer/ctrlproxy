@@ -22,7 +22,7 @@
 
 static GHashTable *limited_backlog = NULL;
 
-static gboolean log_data(struct line *l) {
+static gboolean log_data(struct line *l, void *userdata) {
 	struct linestack_context *co = (struct linestack_context *)g_hash_table_lookup(limited_backlog, l->network);
 
 	if(!co) {
@@ -46,7 +46,7 @@ static gboolean log_data(struct line *l) {
 	return TRUE;
 }
 
-static gboolean limited_replicate(struct client *c)
+static gboolean limited_replicate(struct client *c, void *userdata)
 {
 	struct linestack_context *replication_data = (struct linestack_context *)g_hash_table_lookup(limited_backlog, c->network);
 	linestack_send(replication_data, c->incoming);
@@ -63,8 +63,8 @@ gboolean fini_plugin(struct plugin *p) {
 const char name_plugin[] = "repl_limited";
 
 gboolean init_plugin(struct plugin *p) {
-	add_filter_ex("repl_limited", log_data, "replicate", 1000);
-	add_new_client_hook("repl_limited", limited_replicate);
+	add_filter_ex("repl_limited", log_data, NULL, "replicate", 1000);
+	add_new_client_hook("repl_limited", limited_replicate, NULL);
 	limited_backlog = g_hash_table_new(NULL, NULL);
 	return TRUE;
 }

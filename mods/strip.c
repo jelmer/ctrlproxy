@@ -202,7 +202,7 @@ static struct query *find_query(char *name)
 	return NULL;
 }
 
-static gboolean handle_data(struct line *l) {
+static gboolean handle_data(struct line *l, void *userdata) {
 	struct query *q;
 	
 	if(l->direction == TO_SERVER) {
@@ -253,7 +253,7 @@ gboolean fini_plugin(struct plugin *p) {
 const char name_plugin[] = "strip";
 
 gboolean init_plugin(struct plugin *p) {
-	add_filter_ex("strip", handle_data, "client", 1);
+	add_filter_ex("strip", handle_data, NULL, "client", 1);
 	return TRUE;
 }
 

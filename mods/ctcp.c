@@ -34,7 +34,7 @@
 #undef G_LOG_DOMAIN
 #define G_LOG_DOMAIN "ctcp"
 
-static gboolean mhandle_data(struct line *l)
+static gboolean mhandle_data(struct line *l, void *userdata)
 {
 	char *data, *t, *msg, *dest, *dhostmask = NULL;
 	time_t ti;
@@ -110,6 +110,6 @@ const char name_plugin[] = "ctcp";
 
 gboolean init_plugin(struct plugin *p) 
 {
-	add_filter_ex("ctcp", mhandle_data, "client", 1000);
+	add_filter_ex("ctcp", mhandle_data, NULL, "client", 1000);
 	return TRUE;
 }

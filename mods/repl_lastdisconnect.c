@@ -22,7 +22,7 @@
 
 static GHashTable *lastdisconnect_backlog = NULL;
 
-static gboolean log_data(struct line *l) {
+static gboolean log_data(struct line *l, void *userdata) {
 	struct linestack_context *co = (struct linestack_context *)g_hash_table_lookup(lastdisconnect_backlog, l->network);
 	struct channel *c;
 
@@ -69,14 +69,14 @@ static gboolean log_data(struct line *l) {
 	return TRUE;
 }
 
-static void lastdisconnect_clear(struct client *c)
+static void lastdisconnect_clear(struct client *c, void *userdata)
 {
 	struct linestack_context *co = (struct linestack_context *)g_hash_table_lookup(lastdisconnect_backlog, c->network);
 	linestack_clear(co);
 	linestack_add_line_list( co, gen_replication_network(c->network));
 }
 
-static gboolean lastdisconnect_replicate(struct client *c)
+static gboolean lastdisconnect_replicate(struct client *c, void *userdata)
 {
 	struct linestack_context *replication_data = (struct linestack_context *)g_hash_table_lookup(lastdisconnect_backlog, c->network);
 	if(!replication_data) {
@@ -98,9 +98,9 @@ gboolean fini_plugin(struct plugin *p) {
 const char name_plugin[] = "repl_lastdisconnect";
 
 gboolean init_plugin(struct plugin *p) {
-	add_filter_ex("repl_lastdisconnect", log_data, "replicate", 1000);
-	add_lose_client_hook("repl_lastdisconnect", lastdisconnect_clear);
-	add_new_client_hook("repl_lastdisconnect", lastdisconnect_replicate);
+	add_filter_ex("repl_lastdisconnect", log_data, NULL, "replicate", 1000);
+	add_lose_client_hook("repl_lastdisconnect", lastdisconnect_clear, NULL);
+	add_new_client_hook("repl_lastdisconnect", lastdisconnect_replicate, NULL);
 	lastdisconnect_backlog = g_hash_table_new(NULL, NULL);
 	return TRUE;
 }

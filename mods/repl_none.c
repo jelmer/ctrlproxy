@@ -20,7 +20,7 @@
 #include "ctrlproxy.h"
 #include <string.h>
 
-static gboolean none_replicate(struct client *c)
+static gboolean none_replicate(struct client *c, void *userdata)
 {
 	GSList *d, *orig = gen_replication_network(c->network);
 	d = orig;
@@ -42,6 +42,6 @@ gboolean fini_plugin(struct plugin *p) {
 const char name_plugin[] = "repl_none";
 
 gboolean init_plugin(struct plugin *p) {
-	add_new_client_hook("repl_none", none_replicate);
+	add_new_client_hook("repl_none", none_replicate, NULL);
 	return TRUE;
 }

@@ -27,7 +27,7 @@
 
 static char *motd_file = NULL;
 
-char ** motd_file_handler(struct network *n)
+char ** motd_file_handler(struct network *n, void *userdata)
 {
 	char **lines = NULL;
 	size_t nrlines = 0;
@@ -83,6 +83,6 @@ gboolean load_config(struct plugin *p, xmlNodePtr node)
 }
 
 gboolean init_plugin(struct plugin *p) {
-	add_motd_hook("motd_file", motd_file_handler);
+	add_motd_hook("motd_file", motd_file_handler, NULL);
 	return TRUE;
 }

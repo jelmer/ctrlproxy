@@ -72,7 +72,7 @@ static void identify_me(struct network *network, char *nick)
 	}
 }
 
-static gboolean log_data(struct line *l) {
+static gboolean log_data(struct line *l, void *userdata) {
 	static char *nickattempt = NULL;
 
 	/* User has changed his/her nick. Check whether this nick needs to be identified */
@@ -118,7 +118,7 @@ static gboolean log_data(struct line *l) {
 	return TRUE;
 }
 
-static void conned_data(struct network *n)
+static void conned_data(struct network *n, void *userdata)
 {
 	identify_me(n, n->nick);
 }
@@ -154,7 +154,7 @@ gboolean fini_plugin(struct plugin *p) {
 const char name_plugin[] = "nickserv";
 
 gboolean init_plugin(struct plugin *p) {
-	add_server_connected_hook("nickserv", conned_data);
-	add_filter("nickserv", log_data);
+	add_server_connected_hook("nickserv", conned_data, NULL);
+	add_filter("nickserv", log_data, NULL);
 	return TRUE;
 }

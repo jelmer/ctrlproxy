@@ -396,7 +396,7 @@ static void file_write_channel_query(const char *n, struct line *l)
 	}
 }
 
-static gboolean log_custom_data(struct line *l)
+static gboolean log_custom_data(struct line *l, void *userdata)
 {
 	const char *nick = NULL;
 	char *user = NULL;
@@ -509,6 +509,6 @@ gboolean init_plugin(struct plugin *p)
 {
 	files = g_hash_table_new(g_str_hash, g_str_equal);
 	fmts = g_hash_table_new(g_str_hash, g_str_equal);
-	add_filter_ex("log_custom", log_custom_data, "log", 1000);
+	add_filter_ex("log_custom", log_custom_data, NULL, "log", 1000);
 	return TRUE;
 }
