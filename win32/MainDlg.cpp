@@ -22,7 +22,7 @@ static char THIS_FILE[] = __FILE__;
 
 IMPLEMENT_DYNAMIC(CMainDlg, CPropertySheet)
 
-CMainDlg::CMainDlg() :CPropertySheet() {
+CMainDlg::CMainDlg() :CPropertySheet("CtrlProxy") {
 	AddPage(new CStatusDlg());
 	AddPage(new CNetworksDlg());
 	AddPage(new CPluginsDlg());

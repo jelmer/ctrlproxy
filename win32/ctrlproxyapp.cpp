@@ -13,6 +13,7 @@ void register_log_function();
 }
 
 GMainLoop *main_loop = NULL;
+char *modules_path = NULL, *shared_path = NULL;
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -86,7 +87,23 @@ BOOL CCtrlproxyApp::InitInstance()
 
 	g_message(_("Logfile opened"));
 
-	configuration_file = "C:\\ctrlproxyrc.txt"; /*FIXME*/
+	HKEY key;
+	unsigned char databuf[256];
+	DWORD len;
+	RegOpenKey(HKEY_LOCAL_MACHINE, "SOFTWARE\\CtrlProxy", &key);
+	
+	if(RegQueryValueEx(key, "configfile", NULL, NULL, databuf, &len) == ERROR_SUCCESS) configuration_file = g_strdup((char *)databuf);
+	else {
+		MessageBox(NULL, "Unable to find registry key", "CtrlProxy", MB_OK | MB_ICONEXCLAMATION);
+		return FALSE;
+	}
+
+	if(RegQueryValueEx(key, "modulesdir", NULL, NULL, databuf, &len) == ERROR_SUCCESS) modules_path = g_strdup((char *)databuf);
+	else MessageBox(NULL, "Unable to find registry key for modules path", "CtrlProxy", MB_OK | MB_ICONEXCLAMATION);
+
+	if(RegQueryValueEx(key, "shareddir", NULL, NULL, databuf, &len) == ERROR_SUCCESS) shared_path = g_strdup((char *)databuf);
+	else MessageBox(NULL, "Unable to find registry key for shared path", "CtrlProxy", MB_OK | MB_ICONEXCLAMATION);
+	
 	readConfig(configuration_file);
 	
 	init_plugins();
@@ -98,12 +115,12 @@ BOOL CCtrlproxyApp::InitInstance()
 	return TRUE;
 }
 
-const char *get_my_hostname() { return "localhost"; /* FIXME */ } 
-const char *get_modules_path() { return "C:\\Documents and Settings\\Jelmer Vernooij\\Desktop\\ctrlproxy-devel\\win32\\Debug"; /*FIXME*/ }
-const char *get_shared_path() { return "C:\\Documents and Settings\\Jelmer Vernooij\\Desktop\\ctrlproxy-devel"; /*FIXME*/} 
+const char *get_my_hostname() { return "localhost"; } 
+const char *get_modules_path() { return modules_path; }
+const char *get_shared_path() { return shared_path; }
 
 const char *ctrlproxy_version() { 
-	return "FIXME";
+	return VERSION;
 }
 
 void clean_exit()
