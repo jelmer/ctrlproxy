@@ -30,7 +30,7 @@
 #include "ctrlproxy.h"
 #include <string.h>
 #include "irc.h"
-#include "admin.h"
+#include <admin.h>
 #include "libxml_wrap.h"
 #include "../admin.h"
 
@@ -260,7 +260,7 @@ static PyObject * PyCtrlproxyLog_log(PyCtrlproxyLog *self, PyObject *args, PyObj
 	if(g_strrstr(self->buffer,"\n")) {
 		smsg = g_strsplit (self->buffer,"\n",0);
 		for(i = 0;smsg[i] != NULL;i++) {
-			if(smsg[i] != NULL && strcasecmp(smsg[i],"")) {
+			if(smsg[i] != NULL && g_ascii_strcasecmp(smsg[i],"")) {
 				g_log(G_LOG_DOMAIN, (int)log_level, "%s", smsg[i]);
 				//printf("%s\n", smsg[i]);
 			}
@@ -1046,7 +1046,7 @@ PYCTRLPROXY_CREATEWRAPPER(createClientObject,PyCtrlproxyClientType);
 static PyObject * PyCtrlproxyLine_get(PyCtrlproxyObject *self, void *closure) {
 	struct line *l = NULL;
 	PyObject *rv = NULL;
-	int i = 0;
+	unsigned int i = 0;
 
 	PYCTRLPROXY_MAKESTRUCT(l, line)
 
@@ -1427,52 +1427,52 @@ static void PyCtrlproxyEvent_catch(PyCtrlproxyEvent *self, struct line *l){
 
 	PYCTRLPROXY_INITCUR()
 
-	if(!strcasecmp(l->args[0],"TOPIC")) {
+	if(!g_ascii_strcasecmp(l->args[0],"TOPIC")) {
 			PYCTRLPROXY_ADDLINECACHE();
 			PYCTRLPROXY_CALLEVENT("onTopicChange")
-	} else if(!strcasecmp(l->args[0],"JOIN")) {
+	} else if(!g_ascii_strcasecmp(l->args[0],"JOIN")) {
 			PYCTRLPROXY_ADDLINECACHE();
 			PYCTRLPROXY_CALLEVENT("onChannelJoin")
-	} else if(!strcasecmp(l->args[0],"PART")) {
+	} else if(!g_ascii_strcasecmp(l->args[0],"PART")) {
 			PYCTRLPROXY_ADDLINECACHE();
 			PYCTRLPROXY_CALLEVENT("onChannelPart")
-	} else if(!strcasecmp(l->args[0],"INVITE")) {
+	} else if(!g_ascii_strcasecmp(l->args[0],"INVITE")) {
 			PYCTRLPROXY_ADDLINECACHE();
 			PYCTRLPROXY_CALLEVENT("onInvite")
-	} else if(!strcasecmp(l->args[0],"MODE")) {
+	} else if(!g_ascii_strcasecmp(l->args[0],"MODE")) {
 			PYCTRLPROXY_ADDLINECACHE();
 			PYCTRLPROXY_CALLEVENT("onMode")
-	} else if(!strcasecmp(l->args[0],"MODE") && l->args[2] != NULL && !strcasecmp(l->args[2],"+v")) {
+	} else if(!g_ascii_strcasecmp(l->args[0],"MODE") && l->args[2] != NULL && !g_ascii_strcasecmp(l->args[2],"+v")) {
 			PYCTRLPROXY_ADDLINECACHE();
 			PYCTRLPROXY_CALLEVENT("onVoice")
-	} else if(!strcasecmp(l->args[0],"MODE") && l->args[2] != NULL && !strcasecmp(l->args[2],"-v")) {
+	} else if(!g_ascii_strcasecmp(l->args[0],"MODE") && l->args[2] != NULL && !g_ascii_strcasecmp(l->args[2],"-v")) {
 			PYCTRLPROXY_ADDLINECACHE();
 			PYCTRLPROXY_CALLEVENT("onDeVoice")
-	} else if(!strcasecmp(l->args[0],"MODE") && l->args[2] != NULL && !strcasecmp(l->args[2],"+o")) {
+	} else if(!g_ascii_strcasecmp(l->args[0],"MODE") && l->args[2] != NULL && !g_ascii_strcasecmp(l->args[2],"+o")) {
 			PYCTRLPROXY_ADDLINECACHE();
 			PYCTRLPROXY_CALLEVENT("onOp")
-	} else if(!strcasecmp(l->args[0],"MODE") && l->args[2] != NULL && !strcasecmp(l->args[2],"-o")) {
+	} else if(!g_ascii_strcasecmp(l->args[0],"MODE") && l->args[2] != NULL && !g_ascii_strcasecmp(l->args[2],"-o")) {
 			PYCTRLPROXY_ADDLINECACHE();
 			PYCTRLPROXY_CALLEVENT("onDeOp")
-	} else if(!strcasecmp(l->args[0],"MODE") && l->args[2] != NULL && !strcasecmp(l->args[2],"+b")) {
+	} else if(!g_ascii_strcasecmp(l->args[0],"MODE") && l->args[2] != NULL && !g_ascii_strcasecmp(l->args[2],"+b")) {
 			PYCTRLPROXY_ADDLINECACHE();
 			PYCTRLPROXY_CALLEVENT("onBan")
-	} else if(!strcasecmp(l->args[0],"MODE") && l->args[2] != NULL && !strcasecmp(l->args[2],"-b")) {
+	} else if(!g_ascii_strcasecmp(l->args[0],"MODE") && l->args[2] != NULL && !g_ascii_strcasecmp(l->args[2],"-b")) {
 			PYCTRLPROXY_ADDLINECACHE();
 			PYCTRLPROXY_CALLEVENT("onUnBan")
-	} else if(!strcasecmp(l->args[0],"KICK")) {
+	} else if(!g_ascii_strcasecmp(l->args[0],"KICK")) {
 			PYCTRLPROXY_ADDLINECACHE();
 			PYCTRLPROXY_CALLEVENT("onKick")
-	} else if(!strcasecmp(l->args[0],"NOTICE")) {
+	} else if(!g_ascii_strcasecmp(l->args[0],"NOTICE")) {
 			PYCTRLPROXY_ADDLINECACHE();
 			PYCTRLPROXY_CALLEVENT("onNotice")
-	} else if(!strcasecmp(l->args[0],"PING")) {
+	} else if(!g_ascii_strcasecmp(l->args[0],"PING")) {
 			PYCTRLPROXY_ADDLINECACHE();
 			PYCTRLPROXY_CALLEVENT("onPing")
-	} else if(!strcasecmp(l->args[0],"PONG")) {
+	} else if(!g_ascii_strcasecmp(l->args[0],"PONG")) {
 			PYCTRLPROXY_ADDLINECACHE();
 			PYCTRLPROXY_CALLEVENT("onPong")
-	} else if(!strcasecmp(l->args[0],"PRIVMSG")) {
+	} else if(!g_ascii_strcasecmp(l->args[0],"PRIVMSG")) {
 			PYCTRLPROXY_ADDLINECACHE();
 			PYCTRLPROXY_CALLEVENT("onPrivmsg")
 	} else {
@@ -1744,8 +1744,8 @@ static gboolean in_rcv_data(struct line *l) {
 		g = g->next;
 	}
 
-/*	if(l->direction == TO_SERVER && !strcasecmp(l->args[0], "PRIVMSG") &&
-	   	strcasecmp("!PYSHELL",l->args[1]) == 0) {
+/*	if(l->direction == TO_SERVER && !g_ascii_strcasecmp(l->args[0], "PRIVMSG") &&
+	   	g_ascii_strcasecmp("!PYSHELL",l->args[1]) == 0) {
 		l->options |= LINE_DONT_SEND | LINE_IS_PRIVATE;
 		printf("PYSHELLSUPPORT\n");
 	}
@@ -1901,7 +1901,7 @@ static PyObject * PyCtrlproxy_get_network(PyObject *self, PyObject *args, PyObje
 	rv = PyList_New(0);
 	while(l) {
 		struct network *n = (struct network *)l->data;
-		if(!strcasecmp(xmlGetProp(n->xmlConf, "name"), net)) {
+		if(!g_ascii_strcasecmp(xmlGetProp(n->xmlConf, "name"), net)) {
 			rv = (PyObject *)createNetworkObject(l->data);
 			break;
 		}
@@ -1917,12 +1917,13 @@ static PyObject * PyCtrlproxy_connect_network(PyObject *self, PyObject *args, Py
 	static char *kwlist[] = {"network",NULL};
 	char *net = NULL;
 	char *nname;
+	xmlNodePtr cur;
 
     if (! PyArg_ParseTupleAndKeywords(args, kwds, "s:connect_network", kwlist,
                                       &net))
 		return NULL;
 	/* Find specified plugins' GModule and xmlNodePtr */
-	xmlNodePtr cur = xmlNode_networks->xmlChildrenNode;
+	cur = xmlNode_networks->xmlChildrenNode;
 	while(cur) {
 		nname = xmlGetProp(cur, "name");
 		if(nname && !strcmp(nname, net)) {
@@ -1950,7 +1951,7 @@ static PyObject * PyCtrlproxy_disconnect_network(PyObject *self, PyObject *args,
 
 	while(l) {
 		struct network *n = (struct network *)l->data;
-		if(!strcasecmp(xmlGetProp(n->xmlConf, "name"), net)) {
+		if(!g_ascii_strcasecmp(xmlGetProp(n->xmlConf, "name"), net)) {
 			close_network(n);
 			Py_INCREF(Py_None);
 			return Py_None;
@@ -1974,7 +1975,7 @@ static void in_py_admin_command(char **args, struct line *l)
 		int i = 0;
 		printf("%s",c->name);
 
-		if(!strcasecmp(c->name, args[0])) {
+		if(!g_ascii_strcasecmp(c->name, args[0])) {
 			arglist = PyList_New(0);
 			while(args[i] != NULL) {
 				PyList_Append(arglist,PyString_FromString(args[i]));
@@ -2037,7 +2038,7 @@ static PyObject * py_del_admin_command(PyObject *self, PyObject *args, PyObject 
 	while(g) {
 		struct admin_callback_object *c = (struct admin_callback_object *)g->data;
 
-		if(!strcasecmp(c->name, name)) {
+		if(!g_ascii_strcasecmp(c->name, name)) {
 			unregister_admin_command(c->name);
 			Py_XDECREF(c->callback);
 			free(c->name);
@@ -2176,9 +2177,9 @@ static PyObject * PyCtrlproxy_getconfig(PyObject *self, PyObject *args, PyObject
                                       &type))
 		return NULL;
 
-	if (!strcasecmp("networks",type))
+	if (!g_ascii_strcasecmp("networks",type))
 		rv = PYCTRLPROXY_NODETOPYOB(xmlNode_networks);
-	else if(!strcasecmp("plugins",type))
+	else if(!g_ascii_strcasecmp("plugins",type))
 		rv = PYCTRLPROXY_NODETOPYOB(xmlNode_plugins);
 	else
 		rv = PyInstance_New(PyObject_GetAttrString(xml_module,"xmlDoc"),Py_BuildValue("(O)",libxml_xmlDocPtrWrap((xmlDocPtr) configuration)),NULL);
@@ -2193,11 +2194,11 @@ static PyObject * PyCtrlproxy_getpath(PyObject *self, PyObject *args, PyObject *
     if (! PyArg_ParseTupleAndKeywords(args, kwds, "|s:get_path", kwlist,
                                       &part))
 		return NULL;
-	if(!strcasecmp("config", part)) {
+	if(!g_ascii_strcasecmp("config", part)) {
 		return PyString_FromString(ctrlproxy_path(""));
-	} else if(!strcasecmp("prefix", part)) {
+	} else if(!g_ascii_strcasecmp("prefix", part)) {
 		return PyString_FromString(PREFIX);
-	} else if(!strcasecmp("share", part)) {
+	} else if(!g_ascii_strcasecmp("share", part)) {
 		return PyString_FromString(SHAREDIR);
 	}
 
@@ -2504,7 +2505,7 @@ static void in_load_from_config(char *name) {
 					curargs = curargs->next;
 				}
 				PyDict_SetItemString(args,"__config__",PYCTRLPROXY_NODETOPYOB(cur));
-				if(name != NULL && strcasecmp(name, file)) {
+				if(name != NULL && g_ascii_strcasecmp(name, file)) {
 					cur = cur->next;
 					continue;
 				}
@@ -2517,7 +2518,7 @@ static void in_load_from_config(char *name) {
 
 static void in_admin_command(char **args, struct line *l)
 {
-	if(args[1] != NULL && !strcasecmp("load", args[1]) && args[2] != NULL) {
+	if(args[1] != NULL && !g_ascii_strcasecmp("load", args[1]) && args[2] != NULL) {
 		PyObject *pargs = PyDict_New();
 		xmlNodePtr narg = NULL;
 		int i = 3;
@@ -2532,38 +2533,38 @@ static void in_admin_command(char **args, struct line *l)
 				PyDict_SetItemString(pargs, na[0], PYCTRLPROXY_NODETOPYOB(narg));
 			}
 		}
-		if(!access(args[2], F_OK))
+		if(g_file_test(args[2], G_FILE_TEST_EXISTS))
 			in_load(args[2],pargs, l);
 		else
 			admin_out(l, "Error, File does not exist");
 		return;
 	}
 	// load script configured in the config file
-	if(args[1] != NULL && !strcasecmp("loadc", args[1]) && args[2] != NULL) {
+	if(args[1] != NULL && !g_ascii_strcasecmp("loadc", args[1]) && args[2] != NULL) {
 		in_load_from_config(args[2]);
 	}
 
-	if(args[1] != NULL && !strcasecmp("unload", args[1]) && args[2] != NULL) {
+	if(args[1] != NULL && !g_ascii_strcasecmp("unload", args[1]) && args[2] != NULL) {
 		printf("Python Unload %i\n", atoi(args[2]));
 		in_unload(atoi(args[2]),l);
 		return;
 	}
-	if(args[1] != NULL && !strcasecmp("list", args[1])) {
+	if(args[1] != NULL && !g_ascii_strcasecmp("list", args[1])) {
 		list_scripts(l);
 		return;
 	}
-	if(args[1] != NULL && !strcasecmp("help", args[1])) {
+	if(args[1] != NULL && !g_ascii_strcasecmp("help", args[1])) {
 		if(args[2] != NULL) {
 			admin_out(l, "Help for %s",args[2]);
-			if(!strcasecmp("LOAD", args[2])) {
+			if(!g_ascii_strcasecmp("LOAD", args[2])) {
 				admin_out(l, "Load a python script. Arguments are handeled like bash");
-			} else if(!strcasecmp("LOADC", args[2])) {
+			} else if(!g_ascii_strcasecmp("LOADC", args[2])) {
 				admin_out(l, "Load a python script that is already configured in the configuration but not loaded");
-			} else if(!strcasecmp("UNLOAD", args[2])) {
+			} else if(!g_ascii_strcasecmp("UNLOAD", args[2])) {
 				admin_out(l, "Unload a the plugin with the given id");
-			} else if(!strcasecmp("LIST", args[2])) {
+			} else if(!g_ascii_strcasecmp("LIST", args[2])) {
 				admin_out(l, "List all loaded scripts");
-			} else if(!strcasecmp("HELP", args[2])) {
+			} else if(!g_ascii_strcasecmp("HELP", args[2])) {
 				admin_out(l, "Prints detailed informations about a command");
 			} else {
 				admin_out(l, "Unknown command");
