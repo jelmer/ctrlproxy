@@ -5,6 +5,7 @@
 	 * ADDLISTEN <network> <type> [<key>=<value>] [...]
 	 * ADDSERVER <network> <type> [<key>=<value>] [...]
 	 * CONNECT <network>
+	 * DELNETWORK <network>
 	 * NEXTSERVER <network>
 	 * DIE
 	 * DISCONNECT [<network>]
@@ -121,6 +122,29 @@ static void add_network (char **args, struct line *l)
 
 	/* Add a 'servers' element */
 	xmlAddChild(cur, xmlNewNode(NULL, "servers"));
+}
+
+static void del_network (char **args, struct line *l)
+{
+	xmlNodePtr cur;
+	if(!args[1]) {
+		admin_out(l, "Not enough parameters");
+		return;
+	}
+
+	if(find_network_struct(args[1])) {
+		admin_out(l, "Can't remove active network");
+		return;
+	}
+
+	cur = find_network_xml(args[1]);
+	if(!cur) {
+		admin_out(l, "No such network '%s'", args[1]);
+		return;
+	}
+	
+	xmlUnlinkNode(cur);
+	xmlFreeNode(cur);
 }
 
 static void add_listen (char **args, struct line *l)
@@ -476,6 +500,7 @@ static struct admin_command builtin_commands[] = {
 	{ "ADDSERVER", add_server, "<network> <type> [property1=value1] ...", NULL },
 	{ "ADDLISTEN", add_listen, "<network> <type> [property1=value1] ...", NULL },
 	{ "CONNECT", com_connect_network, "<network>", NULL },
+	{ "DELNETWORK", del_network, "<network>", NULL },
 	{ "NEXTSERVER", com_next_server, "[network]", "Disconnect and use to the next server in the list" },
 	{ "DIE", handle_die, "", NULL },
 	{ "DISCONNECT", disconnect_network, "<network>", NULL },

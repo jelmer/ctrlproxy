@@ -4,7 +4,6 @@
 - dcc module
 - add member 'nick' to struct line
 - add more help data
-- Net::IRC-like interface
 - internationalization (i18n)
 - use new filter system
 - add timer that uses current_plugin
@@ -12,8 +11,7 @@
 - repl_limited (repl_simple with limited number of lines)
 - change behaviour of login_connect
 - dircproxy-config-to-ctrlproxyrc script
-- add NICK to repl_*
-- free NICK stuff in repl
+- add NICK to repl_* in repl_command, repl_highlight, repl_lastdisconnect
 - replace transports by IOChannels?
 - fix issue with non-blocking connect
 
@@ -29,10 +27,10 @@ repl_command:
  
 admin:
 - CONNECT command could try to connect immediately to a network if it is currently waiting for reconnect delay to end for example....
-- more commands: DELNETWORK, NEXTSERVER, DELLISTEN, DELSERVER
 
 socket:
 - add gnutls support
 
 2.8:
  - <network><listen/></network> -> <listen/>
+ - Net::IRC-like interface

@@ -2,10 +2,11 @@
  	Jelmer Vernooij <jelmer@vernstok.nl>
 
 Ctrlproxy 2.7:
+ * Add DELNETWORK command
  * Introduce functions to use filter classes
  * Support different NICK sent by client in replication
  * Support non-blocking connects (Daniel Poelzleithner <ctrlproxy@poelzi.org>)
- * Add 'JUMP' command (Daniel Poelzleithner <ctrlproxy@poelzi.org>)
+ * Add 'NEXTSERVER' command (Daniel Poelzleithner <ctrlproxy@poelzi.org>)
  * Unset autojoin on KICK (Daniel Poelzleithner <ctrlproxy@poelzi.org>)
  * Add ability to change NICK when away
  * Make repl_* work when NICK sent by client differs from current NICK
