@@ -41,7 +41,6 @@ AC_FUNC_FORK
 AC_FUNC_MALLOC
 AC_FUNC_REALLOC
 AC_TYPE_SIGNAL
-AM_GNU_GETTEXT([external])
 
 AC_SUBST(BINS)
 AC_SUBST(MODS)
@@ -49,5 +48,5 @@ AC_SUBST(MODS_SUBDIRS)
 AC_CHECK_FUNCS([gethostbyname gethostname memset mkdir strcasecmp strchr strdup strerror strncasecmp strstr uname backtrace_symbols gettimeofday strrchr])
 AC_MSG_RESULT([Going to build the following plugins: ])
 AC_MSG_RESULT([$MODS])
-AC_CONFIG_FILES([Makefile mods/Makefile ctrlproxy.pc po/Makefile.in ])
+AC_CONFIG_FILES([Makefile mods/Makefile ctrlproxy.pc])
 AC_OUTPUT
