@@ -160,6 +160,7 @@ def get_xml_module_names(typ = None):
 class Moduleinfo:
 	"""Returns informations of a module"""
 	def __init__(self, name):
+		self.name = name
 		self.path = os.path.join(ctrlproxy.get_path("prefix"),"share","ctrlproxy","xml","%s.mod.xml" %name)
 		self.doc = libxml2.parseFile(self.path)
 		

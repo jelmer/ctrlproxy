@@ -151,7 +151,8 @@ static PyObject *NAME(void *c) { \
 
 struct script_thread {
 	char *script;
-	int	*id;
+	int	id;
+	PyObject *xmlConf;
 	PyThreadState *thread;
 };
 
@@ -205,7 +206,8 @@ static PyObject *createLineObject(void *c);
 static PyObject *createNickObject(void *c);
 static PyObject *createChannelObject(void *c);
 gboolean fini_plugin(struct plugin *p);
-
+gboolean in_unload(int i,struct line *l);
+gboolean in_load(char *c,PyObject *args, struct line *l);
 
 // wrapper object for stdout, stderr -> g_log
 
@@ -1249,6 +1251,102 @@ static PyTypeObject PyCtrlproxyPluginType = {
 
 PYCTRLPROXY_CREATEWRAPPER(createPluginObject,PyCtrlproxyPluginType);
 
+// Script Object
+
+static PyObject * PyCtrlproxyScript_get(PyCtrlproxyObject *self, void *closure) {
+	struct script_thread *s = NULL;
+	PyObject *rv = NULL;
+
+	PYCTRLPROXY_MAKESTRUCT(s, script_thread)
+
+	if(!strcmp(closure,"xmlConf")) {
+		rv = s->xmlConf;
+		Py_INCREF(rv);
+	} else if(!strcmp(closure,"script")) {
+		rv = PyString_FromString(s->script);
+	} else if(!strcmp(closure,"id")) {
+		rv = PyInt_FromLong((long)s->id);
+	}
+	return rv;
+}
+
+static int PyCtrlproxyScript_set(PyCtrlproxyObject *self, PyObject *var, void *closure) {
+    (void)PyErr_Format(PyExc_RuntimeError, "Script is Read-only");
+    return -1;
+}
+
+static PyGetSetDef PyCtrlproxyScript_GetSetDef[] = {
+	{"xmlConf",(getter)PyCtrlproxyScript_get,(setter)PyCtrlproxyScript_set,
+	"Configuration xml node","xmlConf"},
+	{"script",(getter)PyCtrlproxyScript_get,(setter)PyCtrlproxyScript_set,
+	"Path of Script","script"},
+	{"id",(getter)PyCtrlproxyScript_get,(setter)PyCtrlproxyScript_set,
+	"Id of script","id"},
+	{NULL}
+};
+
+static PyObject * PyCtrlproxyScript_unload(PyCtrlproxyObject *self, PyObject *args, PyObject *kwds) {
+	struct script_thread *s = NULL;
+
+	PYCTRLPROXY_MAKESTRUCT(s, script_thread)
+
+	in_unload(s->id,NULL);
+
+	Py_INCREF(Py_None);
+	return Py_None;
+}
+
+static PyMethodDef PyCtrlproxyScript_methods[] = {
+    {"unload", (PyCFunction)PyCtrlproxyScript_unload,METH_NOARGS, "Unloads the script"},
+	{NULL}                      /* Sentinel */
+};
+
+static PyTypeObject PyCtrlproxyScriptType = {
+    PyObject_HEAD_INIT(NULL)
+    0,                          /* ob_size */
+    "ctrlproxy.Script",       /* tp_name */
+    sizeof(PyCtrlproxyObject), /* tp_basicsize */
+    0,                          /* tp_itemsize */
+    (destructor)PyCtrlproxyObject_dealloc,/* tp_dealloc */
+    0,                         /* tp_print */
+    0,                         /* tp_getattr */
+    0,                         /* tp_setattr */
+    0,                         /* tp_compare */
+    0,                         /* tp_repr */
+    0,                         /* tp_as_number */
+    0,                         /* tp_as_sequence */
+    0,                         /* tp_as_mapping */
+    0,                         /* tp_hash */
+    0,                         /* tp_call */
+    0,                         /* tp_str */
+    0,                         /* tp_getattro */
+    0,                         /* tp_setattro */
+    0,                         /* tp_as_buffer */
+    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, /* tp_flags */
+    "Script Object", 	/* tp_doc */
+    0,                          /* tp_traverse */
+    0,                          /* tp_clear */
+    0,                          /* tp_richcompare */
+    0,                          /* tp_weaklistoffset */
+    0,                          /* tp_iter */
+    0,                          /* tp_iternext */
+    PyCtrlproxyScript_methods,     /* tp_methods */
+    0,     /* tp_members */
+    PyCtrlproxyScript_GetSetDef,                          /* tp_getset */
+    0,                          /* tp_base */
+    0,                          /* tp_dict */
+    0,                          /* tp_descr_get */
+    0,                          /* tp_descr_set */
+    0,                          /* tp_dictoffset */
+    0, /* tp_init */
+    0,                             /* tp_alloc */
+    PyType_GenericNew,             /* tp_new */
+};
+
+
+PYCTRLPROXY_CREATEWRAPPER(createScriptObject,PyCtrlproxyScriptType);
+
+
 // Event Object
 
 static void PyCtrlproxyEvent_dealloc(PyCtrlproxyLog *self)
@@ -1770,7 +1868,7 @@ static PyObject * PyCtrlproxy_get_network(PyObject *self, PyObject *args, PyObje
 	char *net = NULL;
 	PyObject *rv = NULL;
 
-    if (! PyArg_ParseTupleAndKeywords(args, kwds, "s:load_module", kwlist,
+    if (! PyArg_ParseTupleAndKeywords(args, kwds, "s:get_network", kwlist,
                                       &net))
 		return rv;
 
@@ -1820,7 +1918,7 @@ static PyObject * PyCtrlproxy_disconnect_network(PyObject *self, PyObject *args,
 	char *net = NULL;
 	PyObject *rv = NULL;
 
-    if (! PyArg_ParseTupleAndKeywords(args, kwds, "s:load_module", kwlist,
+    if (! PyArg_ParseTupleAndKeywords(args, kwds, "s:disconnect", kwlist,
                                       &net))
 		return rv;
 	/* Find specified plugins' GModule and xmlNodePtr */
@@ -1931,18 +2029,21 @@ static PyObject * py_del_admin_command(PyObject *self, PyObject *args, PyObject 
 // load und load plugins
 static PyObject * PyCtrlproxy_loadmodule(PyObject *self, PyObject *args, PyObject *kwds){
 	static char *kwlist[] = {"module",NULL};
-	char *module = NULL;
-	xmlNodePtr cur;
+	PyObject *cur;
 
-    if (! PyArg_ParseTupleAndKeywords(args, kwds, "s:load_module", kwlist,
-                                      &module))
+    if (! PyArg_ParseTupleAndKeywords(args, kwds, "O:load_module", kwlist,
+                                      &cur))
 		return NULL;
 
-	cur = xmlNewNode(NULL, "plugin");
-	xmlSetProp(cur, "file", module);
-	xmlAddChild(xmlNode_plugins, cur);
+	if(! PyObject_IsInstance(cur, xml_node)) {
+		PyErr_SetString(PyExc_TypeError, "Parameter is not a xmlNodeObject");
+		return NULL;
+	}
 
-	load_plugin(cur);
+	if (!load_plugin(PyxmlNode_Get(cur))) {
+		PyErr_SetString(PyExc_TypeError, "Can't load module");
+		return NULL;
+	}
 
 	Py_INCREF(Py_None);
 	return Py_None;
@@ -1997,6 +2098,43 @@ static PyObject * PyCtrlproxy_list_transports(PyObject *self, PyObject *args, Py
 		PyDict_SetItemString(rv, t->name, createPluginObject(t->plugin));
 		gl = gl->next;
 	}
+	return rv;
+}
+
+// scripts
+
+static PyObject * PyCtrlproxy_list_scripts(PyObject *self, PyObject *args, PyObject *kwds){
+	GList *g = loaded_scripts;
+	PyObject *rv = PyList_New(0);
+	while(g) {
+		//struct script_thread *p = (struct script_thread *)g->data;
+		PyList_Append(rv,createScriptObject(g->data));
+		g = g->next;
+	}
+	return rv;
+}
+
+static PyObject * PyCtrlproxy_load_script(PyObject *self, PyObject *args, PyObject *kwds){
+	static char *kwlist[] = {"script","config",NULL};
+	char *script = NULL;
+	PyObject *arg = NULL;
+	PyThreadState *old = NULL;
+	PyObject *rv = NULL;
+
+    if (! PyArg_ParseTupleAndKeywords(args, kwds, "s|O:load_script", kwlist,
+                                      &script, &args))
+		return NULL;
+
+	old = PyThreadState_Get();
+	PyThreadState_Swap(NULL);
+	PyEval_ReleaseLock();
+	if(in_load(script, arg, NULL))
+		rv = PyInt_FromLong((long)sid);
+	PyEval_AcquireLock();
+	PyThreadState_Swap(old);
+
+	if(rv == NULL)
+		PyErr_SetString(PyExc_RuntimeError, "Can't load script");
 	return rv;
 }
 
@@ -2079,6 +2217,11 @@ static PyMethodDef CtrlproxyMethods[] = {
 	 "Disconnect a Network"},
     {"connect_network",  (PyCFunction)PyCtrlproxy_connect_network, METH_VARARGS | METH_KEYWORDS,
 	 "Connect a Network"},
+	// scripts
+    {"list_scripts",  (PyCFunction)PyCtrlproxy_list_scripts, METH_NOARGS,
+	 "List all loaded scripts"},
+    {"load_script",  (PyCFunction)PyCtrlproxy_load_script, METH_VARARGS | METH_KEYWORDS,
+	 "Load a script"},
 	// admin commands
     {"add_admin_command",  (PyCFunction)py_add_admin_command, METH_VARARGS | METH_KEYWORDS,
      "Registers an admin command"},
@@ -2115,7 +2258,6 @@ gboolean in_load(char *c,PyObject *args, struct line *l) {
 	PyCtrlproxyLog *pystdout;
 	PyCtrlproxyLog *pystderr;
 	PyThreadState *newInterpreter;
-	int rv = TRUE;
 
 	if (PyType_Ready(&PyCtrlproxyLogType) < 0)
         return FALSE;
@@ -2133,6 +2275,8 @@ gboolean in_load(char *c,PyObject *args, struct line *l) {
         return FALSE;
 	if (PyType_Ready(&PyCtrlproxyPluginType) < 0)
         return FALSE;
+	if (PyType_Ready(&PyCtrlproxyScriptType) < 0)
+        return FALSE;
 
 	fp = fopen(c,"r");
 	if(fp == NULL)
@@ -2146,6 +2290,7 @@ gboolean in_load(char *c,PyObject *args, struct line *l) {
 		return FALSE;
 	}
 	PyThreadState_Swap(ni);
+	sid++;
 
 	g_log(G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "Loading script[%i] %s", sid+1, c);
 
@@ -2177,27 +2322,35 @@ gboolean in_load(char *c,PyObject *args, struct line *l) {
 
 	Py_INCREF(&PyCtrlproxyLogType);
 	Py_INCREF(&PyCtrlproxyLineType);
-	Py_INCREF(&PyCtrlproxyNetworkType);
 	Py_INCREF(&PyCtrlproxyClientType);
+	Py_INCREF(&PyCtrlproxyNetworkType);
 	Py_INCREF(&PyCtrlproxyNickType);
 	Py_INCREF(&PyCtrlproxyChannelType);
-	Py_INCREF(&PyCtrlproxyNetworkType);
 	Py_INCREF(&PyCtrlproxyEventType);
 	Py_INCREF(&PyCtrlproxyPluginType);
+	Py_INCREF(&PyCtrlproxyScriptType);
+
+	PyImport_ImportModule("libxml2");
+	PyImport_ImportModule("libxml2mod");
 
     PyModule_AddObject(m, "Log", (PyObject *)&PyCtrlproxyLogType);
     PyModule_AddObject(m, "Line", (PyObject *)&PyCtrlproxyLineType);
     PyModule_AddObject(m, "Client", (PyObject *)&PyCtrlproxyClientType);
 	PyModule_AddObject(m, "Network", (PyObject *)&PyCtrlproxyNetworkType);
-	PyModule_AddObject(m, "args", args);
+	if(args)
+		PyModule_AddObject(m, "args", args);
+	else
+		PyModule_AddObject(m, "args", PyDict_New());
 	PyModule_AddObject(m, "Nick", (PyObject *)&PyCtrlproxyNickType);
 	PyModule_AddObject(m, "Channel", (PyObject *)&PyCtrlproxyChannelType);
 	PyModule_AddObject(m, "Event", (PyObject *)&PyCtrlproxyEventType);
 	PyModule_AddObject(m, "Plugin", (PyObject *)&PyCtrlproxyPluginType);
+	PyModule_AddObject(m, "Script", (PyObject *)&PyCtrlproxyPluginType);
 
 	// we cache this objects staticly
 
 	sys = PyImport_AddModule("sys");
+
 
 	// set default stdout and stderr
 	if(py_redirect_stdout) {
@@ -2218,15 +2371,15 @@ gboolean in_load(char *c,PyObject *args, struct line *l) {
 	PyList_Append(PyObject_GetAttrString(sys,"path"),PyString_FromString(pylibdir));
 	// add the script basedir to path
 	PyList_Append(PyObject_GetAttrString(sys,"path"),PyString_FromString(g_path_get_dirname(c)));
-	//PyObject_Print(PyObject_GetAttrString(sys,"path"), stdout, 0);
 
 	PyImport_ImportModule("ctrlproxy_tools");
 	PyModule_AddObject(m, "tools", PyImport_AddModule("ctrlproxy_tools"));
 
 	s = malloc(sizeof(struct script_thread));
 	s->thread = ni;
-	s->id = GINT_TO_POINTER(sid++);
+	s->id = sid;
 	s->script = strdup(c);
+	s->xmlConf = args;
 	loaded_scripts = g_list_append(loaded_scripts, s);
 
 	PyRun_SimpleFile(fp, c);
@@ -2238,7 +2391,7 @@ gboolean in_load(char *c,PyObject *args, struct line *l) {
 		admin_out(l,"Load of script #%i complete",sid);
 	g_log(G_LOG_DOMAIN, G_LOG_LEVEL_INFO,"Load of script #%i complete",sid);
 
-	return rv;
+	return TRUE;
 }
 
 #define PYCTRLPROXY_REMOVECALLBACKFROMTHREAD(LIST) \
@@ -2314,6 +2467,7 @@ static void in_load_from_config(char *name) {
 		char *file = NULL;
 		char *enabled = 0;
 		if(!xmlIsBlankNode(cur) && !strcmp(cur->name, "script")) {
+				PyThreadState_Swap(mainThreadState);
 				enabled = xmlGetProp(cur, "autoload");
 				if((enabled == NULL || atoi(enabled) == 0) && name == NULL) {
 					cur = cur->next;
@@ -2323,19 +2477,20 @@ static void in_load_from_config(char *name) {
 				args = PyDict_New();
 				curargs = cur->xmlChildrenNode;
 				while(curargs) {
-					if(!xmlIsBlankNode(cur) && !strcmp(curargs->name, "argument") && xmlHasProp(curargs, "name")) {
+					if(!xmlIsBlankNode(curargs) && !strcmp(curargs->name, "argument") && xmlHasProp(curargs, "name")) {
 						PyDict_SetItemString(args,xmlGetProp(curargs, "name"),PYCTRLPROXY_NODETOPYOB(curargs));
-					} if(!xmlIsBlankNode(cur) && !strcmp(curargs->name, "file"))
+					} if(!xmlIsBlankNode(curargs) && !strcmp(curargs->name, "file"))
 						file = xmlNodeGetContent(curargs);
 					curargs = curargs->next;
 				}
-
+				PyDict_SetItemString(args,"__config__",PYCTRLPROXY_NODETOPYOB(cur));
 				if(name != NULL && strcasecmp(name, file)) {
 					cur = cur->next;
 					continue;
 				}
 				in_load(file, args, NULL);
 		}
+		free(file);
 		cur = cur->next;
 	}
 }
@@ -2417,7 +2572,6 @@ static void init_finish() {
 }
 
 gboolean init_plugin(struct plugin *p) {
-	PyObject *pyxml = NULL;
 	xmlNodePtr cur;
 
 	python_xmlConf = p->xmlConf;
@@ -2456,8 +2610,7 @@ gboolean init_plugin(struct plugin *p) {
 	xml_modulemod = PyImport_ImportModule("libxml2mod");
 	xml_node = PyObject_GetAttrString(xml_module,"xmlNode");
 
-	pyxml = PyImport_ImportModule("libxml2mod");
-	if(pyxml == NULL) {
+	if(xml_modulemod == NULL) {
 		g_log(G_LOG_DOMAIN, G_LOG_LEVEL_ERROR, "libxml2 python bindings are required");
 		return FALSE;
 
