@@ -1,10 +1,7 @@
 Jelmer Vernooij <jelmer@nl.linux.org>
 
 Thanks to the following people for patches and useful bugreports:
-mibukyoshiro@altern.org
-
-And of course also thanks to the maintainers of the ctrlproxy packages:
+Barnaba Marcello <vjt@users.sf.net>, original author of network-openssl.c
 Wilmer van der Gaast <lintux@debian.org> (debian package)
-Aron Griffis <agriffis@gentoo.org> (gentoo package)
-
-Thanks to 'vjt', he wrote network-openssl.c, which was borrowed from irssi
+Aron Griffis <agriffis@gentoo.org> (gentoo package, bug reports)
+mibukyoshiro@altern.org (bug reports)
