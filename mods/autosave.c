@@ -20,7 +20,7 @@
 
 #include <ctrlproxy.h>
 #include <string.h>
-#include <libintl.h>
+#include "gettext.h"
 #define _(s) gettext(s)
 
 static int autosave_id;

@@ -36,7 +36,7 @@
 #include <signal.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <libintl.h>
+#include "gettext.h"
 #ifdef _WIN32
 int asprintf(char **dest, const char *fmt, ...);
 int vasprintf(char **dest, const char *fmt, va_list ap);

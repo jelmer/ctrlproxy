@@ -22,7 +22,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <libintl.h>
+#include "gettext.h"
 #define _(s) gettext(s)
 
 #include <gnutls/gnutls.h>

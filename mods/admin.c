@@ -39,7 +39,7 @@
 #define _GNU_SOURCE
 #include "ctrlproxy.h"
 #include <string.h>
-#include <libintl.h>
+#include "gettext.h"
 #define _(s) gettext(s)
 
 static gboolean without_privmsg = FALSE;

@@ -30,7 +30,7 @@ ctrlproxy: $(OBJS)
 %.o: %.c
 	$(CC) $(CFLAGS) -c $<
 
-install: all install-dirs install-doc install-bin install-mods install-data install-pkgconfig install-scripts
+install: all install-dirs install-doc install-bin install-mods install-data install-pkgconfig install-scripts install-locale
 install-dirs:
 	$(INSTALL) -d $(DESTDIR)$(bindir)
 	$(INSTALL) -d $(DESTDIR)$(man1dir)
@@ -40,7 +40,8 @@ install-dirs:
 	$(INSTALL) -d $(DESTDIR)$(docdir)
 	$(INSTALL) -d $(DESTDIR)$(cdatadir)
 	$(INSTALL) -d $(DESTDIR)@libdir@/pkgconfig
-	$(MAKE) -C doc install 
+
+install-locale:
 	$(MAKE) -C po install
 	
 install-bin:
@@ -52,6 +53,7 @@ install-doc:
 	$(INSTALL) AUTHORS $(DESTDIR)$(docdir)
 	$(INSTALL) COPYING $(DESTDIR)$(docdir)
 	$(INSTALL) TODO $(DESTDIR)$(docdir)
+	$(MAKE) -C doc install 
 
 install-data:
 	$(INSTALL) motd $(DESTDIR)$(cdatadir)

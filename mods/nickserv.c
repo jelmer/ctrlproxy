@@ -21,7 +21,7 @@
 #include "ctrlproxy.h"
 #include <string.h>
 #include "irc.h"
-#include <libintl.h>
+#include "gettext.h"
 #define _(s) gettext(s)
 
 static xmlNodePtr nickserv_node(struct network *n)

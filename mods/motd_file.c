@@ -23,7 +23,7 @@
 #include <errno.h>
 #include <unistd.h>
 #include "irc.h"
-#include <libintl.h>
+#include "gettext.h"
 #define _(s) gettext(s)
 
 static char *motd_file = SHAREDIR"/ctrlproxy/motd";

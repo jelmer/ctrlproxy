@@ -20,7 +20,7 @@
 #define _GNU_SOURCE
 #include "ctrlproxy.h"
 #include <string.h>
-#include <libintl.h>
+#include "gettext.h"
 #define _(s) gettext(s)
 
 static time_t last_message = 0, max_idle_time = 60 * 10;

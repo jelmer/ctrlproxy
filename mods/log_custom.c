@@ -29,7 +29,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include <libintl.h>
+#include "gettext.h"
 #define _(s) gettext(s)
 
 #define MAX_SUBST 256

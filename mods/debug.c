@@ -21,7 +21,7 @@
 #include "ctrlproxy.h"
 #include <string.h>
 #include "admin.h"
-#include <libintl.h>
+#include "gettext.h"
 #define _(s) gettext(s)
 
 static struct network *find_network(const char *name)
