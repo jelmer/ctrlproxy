@@ -80,7 +80,7 @@ endif
 ifdef DB2LATEXPATH
 
 %.tex: %.xml $(MODS)
-	$(XSLTPROC) --stringparam l10n.gentext.default.language en --stringparam latex.documentclass.common english --stringparam latex.babel.language english $(DB2LATEXPATH) $< > $@
+	$(XSLTPROC) --stringparam latex.fancyhdr.truncation.partition "" --stringparam l10n.gentext.default.language en --stringparam latex.documentclass.common english --stringparam latex.babel.language english $(DB2LATEXPATH) $< > $@
 
 %.pdf: %.tex overview.png overview2.png
 	$(PDFLATEX) $<
