@@ -1,7 +1,6 @@
 2.7 
  - finish configuration utility (worked on by Kyoshiro, see list in ctrlproxy-setup)
  - update documentation
- - automated testsuite
  - dcc module
  - socket: finish gnutls support
 
@@ -14,3 +13,4 @@
  - replace transports by IOChannels?
   - support running from inetd
   - fix issue with non-blocking connect
+ - more tests in the testsuite

@@ -1,0 +1,5 @@
+PRIVMSG :foo
+: PRIVMSG blah
+:  foo
+PRIVMSG #blah :moo
+bar blah foo

@@ -1,3 +1,4 @@
+modulesdir = @libdir@/ctrlproxy
 LIBS = @LIBS@ @PKG_LIBS@ @PKG_CFLAGS@
 CC = @CC@
 CFLAGS = @CFLAGS@ @PKG_CFLAGS@ -I.. -DHAVE_CONFIG_H
@@ -12,8 +13,9 @@ all:
 test-parser: test-parser.o ../line.o ../transport.o
 	$(CC) $(LIBS) -o $@ test-parser.o ../line.o ../transport.o
 
-test-filter: test-filter.o ../line.o ../transport.o ../plugins.o
-	$(CC) $(LIBS) -o $@ test-filter.o ../line.o ../transport.o ../plugins.o
+
+test-filter: test-filter.o ../line.o ../transport.o ../plugins.o ../linestack.o ../util.o ../state.o 
+	$(CC) $(LIBS) -o $@ test-filter.o ../line.o ../transport.o ../plugins.o ../linestack.o ../util.o ../state.o 
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $<
@@ -21,7 +23,34 @@ test-filter: test-filter.o ../line.o ../transport.o ../plugins.o
 install: 
 
 clean:
-	rm -f *.o test-parser
+	rm -f *.o test-parser *.out *.tmp
 
 distclean: clean
 	rm -f Makefile 
+
+tests: test1 test2 test3
+
+test1: test-parser
+	@# Check to see whether the parser can handle all kinds of nifty 
+	@# input without crashing
+	@echo -n Test1: 
+	@dd if=/dev/urandom of=random.in count=300 2>/dev/null > /dev/null
+	@./test-parser < random.in 2>/dev/null > /dev/null
+	@echo OK
+	
+test2: test-parser
+	@# Check for some other data that might crash the parser
+	@echo -n Test2: 
+	@./test-parser < test1.data 2>/dev/null > test1.data.out
+	@echo OK
+
+test3.data.%.out: ../mods/lib%.so test-filter
+	@echo -n Test3-$(patsubst test3.data.%.out,%:,$@)
+	@./test-filter `pwd`/$< < test3.data > $@.tmp
+	@echo OK
+	@mv $@.tmp $@
+
+TEST3_MODULES = ctcp log_custom log_irssi repl_command repl_highlight repl_lastdisconnect repl_limited repl_simple report_time debug auto-away antiflood admin
+
+test3: test-filter $(patsubst %,test3.data.%.out,$(TEST3_MODULES))
+	@# Run all modules for which this is possible thru the test data files

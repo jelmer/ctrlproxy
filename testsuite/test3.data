@@ -1,0 +1,6 @@
+PRIVMSG
+PRIVMSG #foo meuh
+NOTICE
+NOTICE foo
+JOIN
+PART

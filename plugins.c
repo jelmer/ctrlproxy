@@ -89,12 +89,12 @@ gboolean load_plugin(xmlNodePtr cur)
 	else path_name = g_module_build_path(modulesdir, mod_name);
 	
 	m = g_module_open(path_name, G_MODULE_BIND_LAZY);
-	g_free(path_name);
 
 	if(!m) {
 		g_warning(_("Unable to open module %s(%s), ignoring"), path_name, g_module_error());
 		return FALSE;
 	}
+	g_free(path_name);
 
 	if(!g_module_symbol(m, "name_plugin", (gpointer)&selfname)) {
 		selfname = mod_name;
@@ -106,8 +106,6 @@ gboolean load_plugin(xmlNodePtr cur)
 		return FALSE;
 	}
 
-	g_message(_("Loading module '%s'"), selfname);
-	
 	if(!g_module_symbol(m, "init_plugin", (gpointer)&f)) {
 		g_warning(_("Can't find symbol 'init_plugin' in module %s"), path_name);
 		xmlFree(mod_name);
