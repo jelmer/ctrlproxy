@@ -1,8 +1,5 @@
 /*
-	(Based on network-openssl.c from g_io)
-
-    Copyright (C) 2002 vjt
-    Copyright (C) 2003 Jelmer Vernooij
+    Copyright (C) 2003-2004 Jelmer Vernooij
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -45,6 +42,11 @@ typedef struct
 	gnutls_x509_crt cert;
 	char secure;
 } GIOTLSChannel;
+
+static GIOStatus g_io_gnutls_error(gint e)
+{
+	return G_IO_STATUS_ERROR;
+}
 	
 static void g_io_gnutls_free(GIOChannel *handle)
 {
@@ -58,20 +60,26 @@ static GIOStatus g_io_gnutls_read(GIOChannel *handle, gchar *buf, guint len, gui
 {
 	GIOTLSChannel *chan = (GIOTLSChannel *)handle;
 	gint err;
-	
+
+	if(!chan->secure) {
+		err = gnutls_handshake(chan->session);
+		if(err < 0) {
+			g_warning("TLS Handshake failed");
+			return G_IO_STATUS_ERROR;
+		}
+		chan->secure = 1;
+		return G_IO_STATUS_NORMAL;
+	}
+
 	err = gnutls_record_recv(chan->session, buf, len);
-	/* FIXME */
+	if(err == 0) return G_IO_STATUS_EOF;
 	if(err < 0)
 	{
 		*ret = 0;
-		return g_io_gnutls_errno(err);
-	} else {
-		*ret = err;
-		if(err == 0) return G_IO_STATUS_EOF;
-		return G_IO_STATUS_NORMAL;
+		return g_io_gnutls_error(err);
 	}
-	/*UNREACH*/
-	return G_IO_STATUS_ERROR;
+	*ret = err;
+	return G_IO_STATUS_NORMAL;
 }
 
 static GIOStatus g_io_gnutls_write(GIOChannel *handle, const gchar *buf, gsize len, gsize *ret, GError **gerr)
@@ -79,19 +87,22 @@ static GIOStatus g_io_gnutls_write(GIOChannel *handle, const gchar *buf, gsize l
 	GIOTLSChannel *chan = (GIOTLSChannel *)handle;
 	gint err;
 
-	if(chan->secure) 
+	if(!chan->secure) 
 	{
-		err = gnutls_record_send(chan->session, (const char *)buf, len);
-		/* FIXME*/
-		} else {
-			*ret = err;
-			return G_IO_STATUS_NORMAL;
+		err = gnutls_handshake(chan->session);
+		if(err < 0) {
+			g_warning("TLS Handshake failed");
+			return G_IO_STATUS_ERROR;
 		}
-	} else {
-		return /* FIXME */1; 
 	}
-	/*UNREACH*/
-	return G_IO_STATUS_ERROR;
+
+	*ret = 0;
+
+	err = gnutls_record_send(chan->session, (const char *)buf, len);
+	if(err == 0) return G_IO_STATUS_EOF;
+	if(err < 0) return g_io_gnutls_error(err);
+	*ret = err;
+	return G_IO_STATUS_NORMAL;
 }
 
 static GIOStatus g_io_gnutls_seek(GIOChannel *handle, gint64 offset, GSeekType type, GError **gerr)
@@ -156,9 +167,6 @@ gboolean g_io_gnutls_init()
 		return FALSE;
 	}
 
-    generate_rsa_params();
-    generate_dh_primes();
-
 	/* X509 stuff */
 	if (gnutls_certificate_allocate_credentials(&xcred) < 0) {	/* space for 2 certificates */
 		g_warning("gnutls memory error");
@@ -173,7 +181,8 @@ gboolean g_io_gnutls_init()
 gboolean g_io_gnutls_set_files(char *certf)
 {
 	gnutls_certificate_set_x509_trust_file(xcred, certf, GNUTLS_X509_FMT_PEM);
-	gnutls_certificate_set_x509_key_file(xcred, certf, GNUTLS_X509_FMT_PEM);
+//FIXME	gnutls_certificate_set_x509_key_file(xcred, certf, GNUTLS_X509_FMT_PEM);
+	gnutls_certificate_set_x509_crl_file(xcred, certf, GNUTLS_X509_FMT_PEM);
 
 	return TRUE;
 }
@@ -182,7 +191,7 @@ GIOChannel *g_io_gnutls_get_iochannel(GIOChannel *handle, gboolean server)
 {
 	GIOTLSChannel *chan;
 	GIOChannel *gchan;
-	int err, fd;
+	int fd;
 
 	g_return_val_if_fail(handle != NULL, NULL);
 	
@@ -195,7 +204,6 @@ GIOChannel *g_io_gnutls_get_iochannel(GIOChannel *handle, gboolean server)
 	gnutls_handshake_set_private_extensions(chan->session, 1);
 	gnutls_transport_set_ptr(chan->session, (gnutls_transport_ptr)fd);
     gnutls_credentials_set(chan->session, GNUTLS_CRD_CERTIFICATE, xcred);
-
                                                                                
 	gnutls_certificate_server_set_request(chan->session, GNUTLS_CERT_REQUEST);
 						   
