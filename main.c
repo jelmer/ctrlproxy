@@ -227,6 +227,8 @@ int main(int argc, const char *argv[])
 #endif
 		if(!f_logfile)f_logfile = stdout;
 
+	init_config();
+
 	if(rcfile) {
 		configuration_file = g_strdup(rcfile);
 		readConfig(configuration_file);

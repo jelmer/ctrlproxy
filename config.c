@@ -24,11 +24,33 @@
 
 xmlNodePtr xmlNode_networks = NULL, xmlNode_plugins = NULL;
 xmlDocPtr configuration;
+static xmlDtdPtr dtd;
 char *configuration_file;
 
 void save_configuration()
 {
 	xmlSaveFile(configuration_file, configuration);
+}
+
+static gboolean validate_config()
+{
+	gboolean ret;
+	xmlValidCtxtPtr ctxt = xmlNewValidCtxt();
+
+	ret = xmlValidateDtd(ctxt, configuration, dtd);
+
+	xmlFreeValidCtxt(ctxt);
+
+	return ret;
+}
+
+void init_config()
+{
+	dtd = xmlParseDTD(NULL, DTD_FILE);
+
+	if (!dtd) {
+		g_error("Can't load DTD file from %s", DTD_FILE);
+	}
 }
 
 void readConfig(char *file) {
@@ -38,6 +60,10 @@ void readConfig(char *file) {
 	if(!configuration) {
 		g_error(_("Can't open configuration file '%s'"), file);
 		exit(1);
+	}
+
+	if (!validate_config()) {
+		g_warning("Errors while parsing configuration file");
 	}
 
 	cur = xmlDocGetRootElement(configuration);

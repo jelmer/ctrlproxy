@@ -60,8 +60,9 @@ void state_reconnect(struct network *s);
 /* config.c */
 void readConfig(char *file);
 extern char *configuration_file;
+void init_config(void);
 
 /* plugins.c */
-gboolean init_plugins();
+gboolean init_plugins(void);
 
 #endif /* __INTERNALS_H__ */

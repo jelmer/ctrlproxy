@@ -8,6 +8,7 @@
 - strict checking of XML syntax
 - crash bug in /CTRLPROXY DIE
 - bug with setting modes for irssi mkdir
+- "password" attribute on server element rather then network element
 - check modules:
   * admin
   * antiflood
