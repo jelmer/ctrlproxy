@@ -59,7 +59,10 @@ static gboolean file_init(struct linestack_context *c, char *args)
 static gboolean file_clear(struct linestack_context *c)
 {
 	struct file_information *d = (struct file_information *)c->data;
-	g_io_channel_seek_position(d->channel, 0, G_SEEK_SET, NULL);
+	GError *error = NULL;
+	g_io_channel_shutdown(d->channel, TRUE, NULL);
+	unlink(d->filename);
+	d->channel = g_io_channel_new_file(d->filename, "w+", &error);
 	return TRUE;
 }
 

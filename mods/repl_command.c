@@ -92,7 +92,6 @@ static void repl_command(char **args, struct line *l)
 		return;
 	}
 	
-	
 	if(!args[1]) {
 		char *networkname = xmlGetProp(l->network->xmlConf, "name");
 		admin_out(l, "Sending backlog for network '%s'", networkname);
