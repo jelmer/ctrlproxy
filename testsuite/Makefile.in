@@ -12,6 +12,9 @@ all:
 test-parser: test-parser.o ../line.o ../transport.o
 	$(CC) $(LIBS) -o $@ test-parser.o ../line.o ../transport.o
 
+test-filter: test-filter.o ../line.o ../transport.o
+	$(CC) $(LIBS) -o $@ test-filter.o ../line.o ../transport.o
+
 %.o: %.c
 	$(CC) $(CFLAGS) -c $<
 
