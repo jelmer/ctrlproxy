@@ -29,6 +29,7 @@ GHashTable *networks;
 static void free_network(void *_n) 
 {
 	struct network *n = (struct network *)_n;
+	g_free(n->name);
 	g_hash_table_destroy(n->channels);
 	g_free(n);
 }
@@ -36,6 +37,7 @@ static void free_network(void *_n)
 static void free_channel(void *_c) 
 {
 	struct channel *c = (struct channel *)_c;
+	g_free(c->name);
 	g_hash_table_destroy(c->properties);
 	g_hash_tabel_destroy(c->nicks);
 	g_free(c);
@@ -44,6 +46,7 @@ static void free_channel(void *_c)
 static void free_nick(void *_n) 
 {
 	struct nick *n = (struct nick *)_n;
+	g_free(n->name);
 	g_hash_table_destroy(n->properties);
 	g_free(n);
 }
@@ -53,6 +56,7 @@ static struct network *find_add_network(char *name)
 	struct network *n = g_hash_table_lookup(networks, name);
 	if(!n) { 
 		n = calloc(1, sizeof(struct network *));
+		n->name = g_strdup(name);
 		n->channels = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, free_channel);
 		g_hash_table_insert(networks, g_strdup(name), n);
 	}
@@ -65,6 +69,7 @@ static struct channel *find_add_channel(struct network *n, char *name)
 	if(!c) { 
 		c = calloc(1, sizeof(struct channel *));
 		c->network = n;
+		c->name = g_strdup(name);
 		c->nicks = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, free_nick);
 		c->properties = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_free);
 		g_hash_table_insert(n->channels, g_strdup(name), c);
@@ -78,6 +83,7 @@ static struct nick *find_add_nick(struct channel *c, char *name)
 	if(!n) { 
 		n = calloc(1, sizeof(struct nick *));
 		n->channel = c;
+		n->name = g_strdup(name);
 		n->properties = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_free);
 		g_hash_table_insert(c->nicks, g_strdup(name), n);
 	}
@@ -92,6 +98,20 @@ static void nick_set_property(struct nick *n, char *property, void *value)
 static void channel_set_property(struct channel *n, char *property, void *value)
 {
 	g_hash_table_insert(n->properties, property, value);
+}
+
+int nick_get_property(struct nick *n, char *p)
+{
+	int *r = (int *)g_hash_table_lookup(n->properties, p);
+	if(!r) return 0;
+	return *r;
+}
+
+int channel_get_property(struct channel *n, char *p)
+{
+	int *r = (int *)g_hash_table_lookup(n->properties, p);
+	if(!r) return 0;
+	return *r;
 }
 
 static int traverse_keys(TDB_CONTEXT *tdb_context, TDB_DATA key, TDB_DATA value, void *pattern)
@@ -137,4 +157,38 @@ void stats_parse_file(char *f)
 
 	tdb_traverse(tdb_context, traverse_keys, NULL);
 	return;
+}
+
+static char *sortpropertyname = NULL;
+
+static gint sort_property(gconstpointer a, gconstpointer b)
+{
+	struct nick *n1 = (struct nick *)a;
+	struct nick *n2 = (struct nick *)b;
+	int *v1 = g_hash_table_lookup(n1->properties, sortpropertyname);
+	int *v2 = g_hash_table_lookup(n2->properties, sortpropertyname);
+
+	if(!v1) return -1;
+	if(!v2) return 1;
+
+	if(*v1 > *v2) return 1;
+	if(*v1 < *v2) return -1;
+	return 0;
+}
+
+static void hash2list_sorted(gpointer key, gpointer value, gpointer user_data)
+{
+	GList **ret = (GList **)user_data;
+
+	*ret = g_list_insert_sorted(*ret, value, sort_property);
+}
+
+GList *get_nicks_sorted_by_property(struct channel *c, char *property)
+{
+	GList *ret = NULL;
+
+	sortpropertyname = property;
+	
+	g_hash_table_foreach(c->nicks, hash2list_sorted, &ret);
+	return ret;
 }

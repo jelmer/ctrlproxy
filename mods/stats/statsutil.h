@@ -27,16 +27,19 @@ struct channel;
 
 struct nick {
 	GHashTable *properties;
+	char *name;
 	struct channel *channel;
 };
 
 struct channel {
+	char *name;
 	GHashTable *properties;
 	struct network *network;
 	GHashTable *nicks;
 };
 
 struct network {
+	char *name;
 	GHashTable *channels;
 };
 
@@ -46,9 +49,12 @@ void stats_parse_file(char *f);
 void stats_init();
 void stats_fini();
 
+struct channel *get_channel(struct network *, char *);
+struct network *get_network(char *);
 int nick_get_property(struct nick *nick, char *name);
 int channel_get_property(struct channel *channel, char *name);
 
 GList *get_nicks_sorted_by_property(struct channel *c, char *property);
+struct nick *get_highest_nick_for_property(struct channel *c, char *property);
 
 #endif /* __CTRLPROXY_STATSUTIL_H__ */
