@@ -68,7 +68,11 @@ char *get_seconds(struct line *l) {
 	return ret;
 }
 
-char *get_nick(struct line *l) { return strdup(line_get_nick(l)); }
+char *get_nick(struct line *l) {
+	if(line_get_nick(l)) return strdup(line_get_nick(l)); 
+	return strdup("");
+}
+
 char *get_network(struct line *l) 
 { return xmlGetProp(l->network->xmlConf, "name"); }
 char *get_server(struct line *l)
