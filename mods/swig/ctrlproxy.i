@@ -14,7 +14,6 @@
 %rename(Network) network;
 %rename(Channel) channel;
 %rename(LineStack) linestack_context;
-%rename(Transport) transport_context;
 %include "../../ctrlproxy.h";
 
 
@@ -142,21 +141,6 @@
 %extend channel {
 	GSList *replicate(const char *hostmask, const char *nick) {
 		return gen_replication_channel(self, hostmask, nick);
-	}
-};
-
-%extend transport_context {
-	transport_context(const char *name) {
-		return transport_connect(name, NULL, NULL, NULL, NULL, NULL);
-	}
-	/* FIXME: What about transport_listen? */
-	
-	~transport_context() {
-		transport_free(self);
-	}
-
-	int write(const char *l) {
-		return transport_write(self, l);	
 	}
 };
 

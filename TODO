@@ -3,10 +3,13 @@
  - see FIXME's
 - fix bug in linestack_file
 - check web script
-- fix memory leaks in python module (partially rewrite python module using SWIG?)
+- finish python module 
+ - hooks
+- finish socks module
+- less internal use of XML
+- kill transports and replace them with GIOChannels
 - support the - and + in front of lines as used by Freenode
 - "password" attribute on server element rather then network element
-- move docs to seperate repository ?
 - check modules:
   * admin
   * antiflood

@@ -19,7 +19,10 @@
 */
 
 /* TODO:
- *  - ipv6 support
+ *  - ipv6 support (listen)
+ *  - support for ipv4 and ipv6 atyp's
+ *  - support for gssapi method
+ *  - support for ident method
  */
 
 #define _GNU_SOURCE
@@ -77,9 +80,30 @@ struct socks_client
 	void *method_data;
 };
 
-static void socks_error(GIOChannel *ioc, guint8 err)
+static gboolean socks_reply(GIOChannel *ioc, guint8 err, guint8 atyp, guint8 data_len, guint8 *data, guint16 port)
 {
-	/* FIXME */
+	guint8 *header = g_new0(guint8, 7 + data_len);
+	GIOStatus status;
+	gsize read;
+
+	header[0] = SOCKS_VERSION;
+	header[1] = err;
+	header[2] = 0x0; /* Reserved */
+	header[3] = atyp;
+	memcpy(header+4, data, data_len);
+	*((guint16 *)(header+4+data_len)) = htons(port);
+
+	status = g_io_channel_write_chars(ioc, header, 6 + data_len, &read, NULL);
+
+	g_io_channel_flush(ioc, NULL);
+	
+	return (err == REP_OK);
+}
+
+static gboolean socks_error(GIOChannel *ioc, guint8 err)
+{
+	guint8 data = 0x0;
+	return socks_reply(ioc, err, ATYP_FQDN, 1, &data, 0);
 }
 
 static gboolean anon_acceptable(struct socks_client *cl)
@@ -105,10 +129,9 @@ static gboolean pass_handle_data(struct socks_client *cl)
 		return FALSE;
 	}
 
-	if (header[0] != 0x1) {
-	 	socks_error(cl->connection, REP_GENERAL_FAILURE);
-		g_warning("Client suddenly changed socks version to %x", header[0]);
-		return FALSE;
+	if (header[0] != SOCKS_VERSION && header[0] != 0x1) {
+		g_warning("Client suddenly changed socks uname/pwd version to %x", header[0]);
+	 	return socks_error(cl->connection, REP_GENERAL_FAILURE);
 	}
 
 	status = g_io_channel_read_chars(cl->connection, uname, header[1], &read, NULL);
@@ -142,7 +165,62 @@ static gboolean pass_handle_data(struct socks_client *cl)
 
 	g_io_channel_flush(cl->connection, NULL);
 
-	return header[1] == 0x0;
+	if (header[1] == 0x0) {
+		cl->state = STATE_NORMAL;		
+		return TRUE;
+	} else {
+		return FALSE;
+	}
+}
+
+static struct network *socks_map_network_fqdn(const char *hostname, guint16 port)
+{
+	GList *gl = g_list_first(get_network_list());
+	
+	while (gl) {
+		struct network *n = gl->data;
+		xmlNodePtr server = n->servers;
+
+		while (server) {
+			char *servername = xmlGetProp(server, "host");
+			char *serverport = xmlGetProp(server, "port");
+
+			if (!serverport) serverport = strdup("6667");
+
+			if (servername && !strcasecmp(servername, hostname) && atoi(serverport) == port) {
+				xmlFree(servername); xmlFree(serverport);
+				return n;
+			}
+
+			xmlFree(servername); xmlFree(serverport);
+			
+			server = server->next;
+		} 
+
+		gl = gl->next;
+	}
+
+	/* Create a new server */
+	{
+		xmlNodePtr network = xmlNewNode(NULL, "network");
+		xmlNodePtr servers = xmlNewNode(NULL, "servers");
+		xmlNodePtr server = xmlNewNode(NULL, "ipv4");
+		xmlNodePtr listeners = xmlNewNode(NULL, "listen");
+		xmlNodePtr listener = xmlNewNode(NULL, "ipv4");
+
+		xmlSetProp(network, "name", hostname);
+
+		xmlAddChild(network, servers);
+		xmlAddChild(servers, server);
+
+		xmlSetProp(server, "host", hostname);
+		xmlSetProp(server, "port", g_strdup_printf("%d", port));
+
+		xmlAddChild(network, listeners);
+		xmlAddChild(listeners, listener);
+
+		return connect_network(network);
+	}
 }
 
 struct socks_method {
@@ -233,19 +311,63 @@ static gboolean handle_client_data (GIOChannel *ioc, GIOCondition o, gpointer da
 		}
 
 		if (header[0] != SOCKS_VERSION) {
-		 	socks_error(ioc, REP_GENERAL_FAILURE);
 			g_warning("Client suddenly changed socks version to %x", header[0]);
-			return FALSE;
+		 	return socks_error(ioc, REP_GENERAL_FAILURE);
 		}
 
 		if (header[1] != CMD_CONNECT) {
-			socks_error(ioc, REP_CMD_NOT_SUPPORTED);
 			g_warning("Client used unknown command %x", header[1]);
-			return FALSE;
+			return socks_error(ioc, REP_CMD_NOT_SUPPORTED);
 		}
 
-		/* FIXME */
+		/* header[2] is reserved */
+	
+		switch (header[3]) {
+			case ATYP_IPV4: 
+				return socks_error(ioc, REP_ATYP_NOT_SUPPORTED);
 
+			case ATYP_IPV6:
+				return socks_error(ioc, REP_ATYP_NOT_SUPPORTED);
+
+			case ATYP_FQDN:
+				{
+					char hostname[0x100];
+					guint16 port;
+					struct network *result;
+					
+					status = g_io_channel_read_chars(ioc, header, 1, &read, NULL);
+					status = g_io_channel_read_chars(ioc, hostname, header[0], &read, NULL);
+					hostname[header[0]] = '\0';
+
+					status = g_io_channel_read_chars(ioc, header, 2, &read, NULL);
+					port = ntohs(*(guint16 *)header);
+
+					g_message("Request to connect to %s:%d", hostname, port);
+
+					result = socks_map_network_fqdn(hostname, port);
+
+					if (!result) {
+						return socks_error(ioc, REP_NET_UNREACHABLE);
+					} else {
+						const char *hostname = get_my_hostname();
+
+						guint8 *data = g_new0(guint8, strlen(hostname)+3);
+						data[0] = strlen(hostname);
+						strcpy(data+1, hostname);
+
+						socks_reply(ioc, REP_OK, ATYP_FQDN, strlen(hostname)+1, data, 0); /* FIXME: Save sockname when connecting to remote server and return it here */
+						
+						g_free(data);
+
+						/* FIXME: Create client structure for this client and add it to the server */
+
+						return FALSE;
+					}
+				}
+			default:
+				return socks_error(ioc, REP_ATYP_NOT_SUPPORTED);
+
+		}
 	}
 	
 	return TRUE;

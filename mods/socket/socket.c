@@ -414,7 +414,7 @@ static int close_socket(struct transport_context *c)
 	return 0;
 }
 
-static int write_socket(struct transport_context *t, char *l)
+static int write_socket(struct transport_context *t, const char *l)
 {
 	GError *error = NULL;
 	struct socket_data *s = (struct socket_data *)t->data;
@@ -449,7 +449,6 @@ static int write_socket(struct transport_context *t, char *l)
 
 static int listen_ip(struct transport_context *c)
 {
-	static int client_port = 6667;
 	char ipv6 = 0;
 	struct sockaddr_in6 name6;
 	struct sockaddr_in name4;
@@ -457,7 +456,8 @@ static int listen_ip(struct transport_context *c)
 	char *bind_addr = NULL;
 	struct hostent *bind_host = NULL;
 	const int on = 1;
-	int port, sock;
+	int port = 0;
+	int sock;
 	int domain = PF_INET, family = AF_INET;
 	int ret;
 	GIOChannel *gio;
@@ -468,12 +468,6 @@ static int listen_ip(struct transport_context *c)
 		domain = PF_INET6;
 		family = AF_INET6;
 	}
-
-	if(xmlHasProp(c->configuration, "port")) {
-		char *aport = xmlGetProp(c->configuration, "port");
-		port = atoi(aport);
-		xmlFree(aport);
-	} else port = ++client_port;
 
 	/* Create the socket. */
 	sock = socket (domain, SOCK_STREAM, 0);
@@ -488,43 +482,73 @@ static int listen_ip(struct transport_context *c)
         if (setsockopt(sock, IPPROTO_IP, IP_TOS, &socket_tos, sizeof(socket_tos)) < 0)
                 g_warning( "setsockopt IP_TOS %d: %.100s:", socket_tos, strerror(errno));
 
-	bind_addr = xmlGetProp(c->configuration, "bind");
-	if(bind_addr) bind_host = gethostbyname2(bind_addr, family);
-	xmlFree(bind_addr);
 
-	/* Give the socket a name. */
-	if(ipv6) {
-		memset(&name6, 0, sizeof(name6));
-		name6.sin6_family = AF_INET6;
-		name6.sin6_port = htons(port);
-		if(bind_host) {
-			memcpy((char *)&name6.sin6_addr, bind_host->h_addr, bind_host->h_length);
-		} else {
-			name6.sin6_addr = in6addr_any;
-		}
-		ret = bind (sock, (struct sockaddr *) &name6, sizeof (name6));
-	} else {
-		memset(&name4, 0, sizeof(name4));
-		name4.sin_family = AF_INET;
-		name4.sin_port = htons (port);
-		if(bind_host) {
-			name4.sin_addr = *(struct in_addr *) bind_host->h_addr;
-		} else {
-			name4.sin_addr.s_addr = htonl (INADDR_ANY);
-		}
-		ret = bind (sock, (struct sockaddr *) &name4, sizeof (name4));
-	}
+	if(xmlHasProp(c->configuration, "port") || xmlHasProp(c->configuration, "bind")) {
+		char *aport = xmlGetProp(c->configuration, "port");
+		port = atoi(aport);
+		xmlFree(aport);
 
-	if(ret < 0)
-	{
-		g_warning( "bind: %s", strerror(errno));
-		return -1;
-	}
+		bind_addr = xmlGetProp(c->configuration, "bind");
+		if(bind_addr) bind_host = gethostbyname2(bind_addr, family);
+		xmlFree(bind_addr);
+
+		/* Give the socket a name. */
+		if(ipv6) {
+			memset(&name6, 0, sizeof(name6));
+			name6.sin6_family = AF_INET6;
+			name6.sin6_port = htons(port);
+			if(bind_host) {
+				memcpy((char *)&name6.sin6_addr, bind_host->h_addr, bind_host->h_length);
+			} else {
+				name6.sin6_addr = in6addr_any;
+			}
+			ret = bind (sock, (struct sockaddr *) &name6, sizeof (name6));
+		} else {
+			memset(&name4, 0, sizeof(name4));
+			name4.sin_family = AF_INET;
+			name4.sin_port = htons (port);
+			if(bind_host) {
+				name4.sin_addr = *(struct in_addr *) bind_host->h_addr;
+			} else {
+				name4.sin_addr.s_addr = htonl (INADDR_ANY);
+			}
+			ret = bind (sock, (struct sockaddr *) &name4, sizeof (name4));
+		}
+
+		if(ret < 0)
+		{
+			g_warning( "bind: %s", strerror(errno));
+			return -1;
+		}
+	} 
 
 	if(listen(sock, 5) < 0) {
-		g_warning( _("Error trying to listen on port %d: %s"), port, strerror(errno));
+		g_warning( _("Error trying to listen: %s"), strerror(errno));
 		return -1;
 	}
+
+	if (!xmlHasProp(c->configuration, "port")) {
+		size_t size;
+		if (ipv6) {
+			size = sizeof(name6);
+			if (getsockname(sock, &name6, &size) < 0) {
+				g_warning( "Unable to obtain assigned port after listening");
+				return -1;
+			}
+
+			port = ntohs(name6.sin6_port);
+		} else {
+			size = sizeof(name4);
+			if (getsockname(sock, &name4, &size) < 0) {
+				g_warning( "Unable to obtain assigned port after listening");
+				return -1;
+			}
+
+			port = ntohs(name4.sin_port);
+		}
+	}
+
+	xmlSetProp(c->configuration, "port", g_strdup_printf("%d", port));
 
 	g_log(G_LOG_DOMAIN, G_LOG_LEVEL_MESSAGE, _("Listening on port %d(socket %d)"), port, sock);
 
