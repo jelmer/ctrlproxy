@@ -42,7 +42,9 @@ enum ssl_mode { SSL_MODE_NONE = 0, SSL_MODE_SERVER = 1, SSL_MODE_CLIENT = 2};
 
 /* Prototypes from network-openssl.c */
 GIOChannel *irssi_ssl_get_iochannel(GIOChannel *handle, gboolean server);
+GIOChannel *g_io_gnutls_get_iochannel(GIOChannel *handle, gboolean server);
 gboolean irssi_ssl_set_files(char *certf, char *keyf);
+gboolean g_io_gnutls_set_files(char *certf, char *keyf);
 gboolean g_io_gnutls_fini();
 gboolean g_io_gnutls_init();
 
