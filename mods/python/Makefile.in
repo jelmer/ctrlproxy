@@ -9,6 +9,8 @@ PY_CFLAGS = @PY_CFLAGS@
 pythonpath = @pythonpath@
 PYINCLUDES = $(INCLUDES) $(PY_CFLAGS) $(COMMON_CFLAGS) -I$(srcdir)/..
 
+.PHONY all install clean distclean
+
 all: libpython.so
 
 install: all

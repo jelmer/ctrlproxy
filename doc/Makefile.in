@@ -19,6 +19,8 @@ DIA = @DIA@
 @DOCE@ENABLED_DOCS = 1
 EPSTOPDF = @EPSTOPDF@
 
+.PHONY: all manpages htmlmanpages lint install clean distclean
+
 all: @DOCE@$(DOCS)
 
 manpages: ctrlproxy.1 ctrlproxyrc.5 $(MOD_MANPAGES)

@@ -16,6 +16,8 @@ CFLAGS+=-ansi -Wall -DMODULESDIR=\"$(modulesdir)\"
 OBJS = server.o line.o main.o state.o util.o transport.o hooks.o linestack.o
 BINS = @BINS@
 
+.PHONY: all clean distclean install install-bin install-dirs install-doc install-data install-mods install-pkgconfig
+
 all: $(BINS)
 	$(MAKE) -C mods all
 @DOCE@	$(MAKE) -C doc all
@@ -25,9 +27,6 @@ ctrlproxy: $(OBJS)
 
 test-parser: test-parser.o line.o transport.o
 	$(CC) $(LIBS) -o $@ test-parser.o line.o transport.o
-
-printstats: printstats.o
-	$(CC) -ltdb -o $@ $<
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $<

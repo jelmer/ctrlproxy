@@ -7,6 +7,8 @@ moddir = @libdir@/ctrlproxy
 
 MODS = @MODS@
 
+.PHONY: all install clean distclean
+
 all: $(MODS)
 
 install: all
