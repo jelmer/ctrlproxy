@@ -3,10 +3,9 @@
 - use information from capabilities sent by server
 - dcc module
 - new log system
-- more user-friendly admin command
 - system wide ctrlproxy?
  - connect to central daemon that does a fork and starts ctrlproxy in that?
-- Modules shouldn't be loaded twice
+- Modules shouldn't be loaded twice (worked on by poelzi)
 - non-blocking connect
 - keep list of channels a nick is on
 - add member 'nick' to struct line
