@@ -23,7 +23,7 @@ install:
 	$(CC) $(CFLAGS) -DPYLIBDIR=$(PYLIBDIR) -DPREFIX=$(DPREFIX) -DSHAREDIR=$(DSHAREDIR) -fPIC -c $<
 
 libpython.so: python.o types.o
-	$(CC) $(CFLAGS) -shared -o $@ $(LIBS) types.o python.o
+	$(CC) -shared -o $@ $^ $(LIBS)
 
 clean:
 	rm -f libpython.so *.o
