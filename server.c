@@ -1,6 +1,6 @@
 /* 
 	ctrlproxy: A modular IRC proxy
-	(c) 2002 Jelmer Vernooij <jelmer@nl.linux.org>
+	(c) 2002-2003 Jelmer Vernooij <jelmer@nl.linux.org>
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -18,225 +18,534 @@
 */
 
 #include "internals.h"
+#include "config.h"
+#include "irc.h"
 
-struct server *servers = NULL;
+#define SERVER_SEND_LINE(s,l) {if(!irc_send_line((s)->outgoing, l))reconnect(NULL, s);}
+#define CLIENT_SEND_LINE(c,l) {if(!irc_send_line((c)->incoming, l))disconnect_client(c);}
 
-int login_server(struct server *s) {
-	struct sockaddr_in servername;
-	/* Create the socket. */
-	s->socket = socket (PF_INET, SOCK_STREAM, 0);
-	if (s->socket < 0)
-	{
-		perror ("socket (client)");
-		s->socket = 0;
-		return 1;
+GList *networks = NULL;
+
+extern FILE *debugfd;
+
+extern char *debugfile;
+
+void (*replicate_function) (struct network *, struct transport_context *client);
+
+static void reconnect(struct transport_context *c, void *_server);
+
+void handle_server_receive (struct transport_context *c, char *raw, void *_server)
+{
+	struct network *server = (struct network *)_server;
+	char *new_nick;
+	struct line *l;
+	
+	if(debugfd)fprintf(debugfd, "[From server] %s\n", raw);
+
+	l = irc_parse_line(raw);
+	if(!l)return;
+
+	/* Silently drop empty messages, as allowed by RFC */
+	if(l->argc == 0) {
+		free_line(l);
+		return;
 	}
+	
+	l->direction = FROM_SERVER;
+	l->network = server;
 
-	/* Connect to the server. */
-	init_sockaddr (&servername, s->name, s->port);
-	if (0 > connect (s->socket,
-					 (struct sockaddr *) &servername,
-					 sizeof (servername)))
-	{
-		perror ("connect (client)");
-		s->socket = 0;
-		return 1;
+	filters_execute(l);
+	state_handle_data(server,l);
+
+	/* We need to handle pings.. we can't depend on a client
+	 *          * to do that for us*/
+	l->direction = FROM_SERVER;
+	if(l->args[0]) {
+		if(!strcasecmp(l->args[0], "PING")){
+			if(server->outgoing)irc_send_args(server->outgoing, "PONG", l->args[1], NULL);
+		} else if(!strcasecmp(l->args[0], "PONG")){
+		} else if(!strcasecmp(l->args[0], "433") && !server->authenticated){
+			if(server->outgoing) {
+				char *nick = xmlGetProp(server->xmlConf, "nick");
+				asprintf(&new_nick, "%s_", nick);
+				xmlSetProp(server->xmlConf, "nick", new_nick);
+				irc_send_args(server->outgoing, "NICK", new_nick, NULL);
+				xmlFree(nick);
+			}
+		} else if(server->authenticated) {
+			if(!(l->options & LINE_DONT_SEND))clients_send(server, l, NULL);
+		} else if(atoi(l->args[0]) == 4) {
+			xmlNodePtr cur = server->xmlConf->xmlChildrenNode;
+			server->authenticated = 1;
+			while(cur) {
+				if(!strcmp(cur->name, "autosend")) {
+					xmlChar *data = xmlNodeGetContent(cur);
+					struct line *newl;
+					
+					newl = irc_parse_line(data);
+
+					SERVER_SEND_LINE(server, newl);
+
+					xmlFree(data);
+					free_line(newl);
+				}
+				cur = cur->next;
+			}
+			
+			/* Rejoin channels */
+			cur = server->xmlConf->xmlChildrenNode;
+			while(cur) {
+				if(!strcmp(cur->name, "channel")) {
+					char *n = xmlGetProp(cur, "name");
+					char *a = xmlGetProp(cur, "autojoin");
+					char *k=  xmlGetProp(cur, "key");
+					g_assert(n);
+					if(a && atoi(a))
+						irc_send_args(server->outgoing, "JOIN", n, k, NULL);
+					if(k)xmlFree(k);
+					if(n)xmlFree(n);
+					if(a)xmlFree(a);
+				} 
+				cur = cur->next;
+			}
+		}
 	}
-
-	if(s->password)dprintf(s->socket, "PASS %s\n", s->password);
-	dprintf(s->socket, "NICK %s\n", s->nick);
-	dprintf(s->socket, "USER %s %s %s :%s\n", s->username, my_hostname, s->name, s->fullname);
-	s->last_msg_time = time(NULL);
-	s->ping_time = time(NULL);
-	return 0;
+	free_line(l); l = NULL;
 }
 
-struct server *connect_to_server(char *name, int port, char *nick, char *pass) {
-	uid_t uid;
-	struct passwd *pwd;
-	struct server *s = malloc(sizeof(struct server));
-	memset(s, 0, sizeof(struct server));
-	s->name = strdup(name);
-	s->nick = strdup(nick);
-	s->password = pass?strdup(pass):NULL;
-	s->port = port;
 
-	uid = getuid();
-	pwd = getpwuid(uid);
-	s->username = strdup(pwd->pw_name);
-	s->fullname = strdup(pwd->pw_gecos);
-	asprintf(&s->hostmask, "%s!~%s@%s", s->nick, getenv("USER"), my_hostname);
-	DLIST_ADD(servers, s);
 
-	if(login_server(s))s->reconnect_time = time(NULL);
+gboolean login_server(struct network *s) {
+	char *server_name = xmlGetProp(s->xmlConf, "name"),
+	     *fullname, *nick, *username, *password;
+	
+	if(!s->current_server){ 
+		xmlSetProp(s->xmlConf, "autoconnect", "0");
+		g_warning("No servers listed for network %s, aborting reconnect.\n", server_name);
+		xmlFree(server_name);
+		return FALSE;
+	}
+
+	g_message("Connecting with %s for server %s", s->current_server->name, server_name);
+
+	s->outgoing = transport_connect(s->current_server->name, s->current_server, handle_server_receive, reconnect, s);
+
+	if(!xmlHasProp(s->xmlConf, "name") && xmlHasProp(s->current_server, "name")) {
+		xmlFree(server_name);
+		server_name = xmlGetProp(s->current_server, "name");
+		xmlSetProp(s->xmlConf, "name", server_name);
+	}
+
+	if(!s->outgoing) {
+		g_warning("Couldn't connect with network %s via transport %s", server_name, s->current_server->name);
+		s->current_server = s->current_server->next;
+		/* Handle comments */
+		while(!strcmp(s->current_server->name, "comment")) {
+			s->current_server = s->current_server->next;
+			if(!s->current_server)s->current_server = s->servers->xmlChildrenNode;
+		}
+		xmlFree(server_name);
+		return TRUE;
+	}
+
+
+	nick = xmlGetProp(s->xmlConf, "nick");
+	username = xmlGetProp(s->xmlConf, "username");
+	fullname = xmlGetProp(s->xmlConf, "fullname");
+	password = xmlGetProp(s->xmlConf, "password");
+	g_assert(strlen(nick));
+	g_assert(strlen(username));
+	g_assert(strlen(fullname));
+	g_assert(strlen(my_hostname));
+	g_assert(strlen(server_name));
+	
+	if(xmlHasProp(s->xmlConf, "password"))irc_send_args(s->outgoing, "PASS", password, NULL);
+	irc_send_args(s->outgoing, "NICK", nick, NULL);
+	irc_send_args(s->outgoing, "USER", username, my_hostname, server_name, fullname, NULL);
+
+	xmlFree(server_name);
+	xmlFree(nick);
+	xmlFree(username);
+	xmlFree(fullname);
+	xmlFree(password);
+
+	return FALSE;
+}
+
+void reconnect(struct transport_context *c, void *_server)
+{
+	struct network *server = (struct network *)_server;
+	char *server_name;
+	/* Don't report disconnections twice */
+	g_assert(server);
+	server_name = xmlGetProp(server->xmlConf, "name");
+	
+	if(!server->outgoing) return;
+	transport_free(server->outgoing); server->outgoing = NULL;
+
+	g_log(G_LOG_DOMAIN, G_LOG_LEVEL_WARNING, "Connection to server %s lost, trying to reconnect...", server_name);
+	xmlFree(server_name);
+
+	server->authenticated = 0;
+	state_reconnect(server);
+	g_timeout_add(RECONNECT_INTERVAL, (GSourceFunc) login_server, server);
+}
+
+void disconnect_client(struct client *c) {
+	if(!c->incoming)return;
+
+	transport_free(c->incoming);
+	c->incoming = NULL;
+
+	c->network->clients = g_list_remove(c->network->clients, c);
+	c->authenticated = 2;
+	free(c);
+	g_message("Removed client");
+}
+
+void clients_send(struct network *server, struct line *l, struct transport_context *exception) 
+{
+	GList *g = server->clients;
+	while(g) {
+		struct client *c = (struct client *)g->data;
+		if(c->authenticated && c->incoming != exception)CLIENT_SEND_LINE(c, l);
+		g = g_list_next(g);
+	}
+}
+
+void handle_client_disconnect(struct transport_context *c, void *data)
+{
+	struct client *client = (struct client *)data;
+	disconnect_client(client);
+}
+
+void handle_client_receive(struct transport_context *c, char *raw, void *_client)
+{
+	struct client *client = (struct client *)_client;
+	char allmodes[] = "aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPqQrRsStTuUvVwWxXyYzZ";
+	struct line *l;
+	char *clientpass;
+	char *server_name, *nick;
+	char *tmp;
+
+	if(client->authenticated == 2)return;
+	
+	if(debugfd)fprintf(debugfd, "[From client] %s\n", raw);
+
+	l = irc_parse_line(raw);
+	if(!l)return;
+
+	/* Silently drop empty messages */
+	if(l->argc == 0) {
+		free_line(l);
+		return;
+	}
+	
+	l->direction = TO_SERVER;
+	l->client = client;
+	l->network = client->network;
+
+	state_handle_data(client->network, l);
+	
+	filters_execute(l);
+
+	clientpass = xmlGetProp(client->network->xmlConf, "client_pass");
+	if(!l->args[0]){ 
+		free_line(l);
+		return;
+	}
+
+	server_name = xmlGetProp(client->network->xmlConf, "name");
+	nick = xmlGetProp(client->network->xmlConf, "nick");
+
+	if(!clientpass && !client->authenticated) {
+		client->authenticated = 1;
+		g_log(G_LOG_DOMAIN, G_LOG_LEVEL_WARNING, "No password set for %s, allowing client _without_ authentication!", server_name);
+	}
+
+	if(!strcasecmp(l->args[0], "USER")){
+		if(!client->authenticated){
+			irc_sendf(c, ":%s 451 %s :You are not registered\r\n", 
+					  server_name,
+					  nick);
+			free_line(l);l = NULL;
+			if(clientpass)xmlFree(clientpass);
+			xmlFree(server_name); xmlFree(nick);
+			return;
+		}
+		irc_sendf(c, ":%s 001 %s :Welcome to the ctrlproxy\r\n", server_name, nick);
+		irc_sendf(c, ":%s 002 %s :Host %s is running ctrlproxy\r\n", server_name, nick, my_hostname);
+		irc_sendf(c, ":%s 003 %s :Ctrlproxy (c) 2002 Jelmer Vernooij <jelmer@nl.linux.org>\r\n", server_name, nick);
+		irc_sendf(c, ":%s 004 %s %s %s %s %s\r\n", 
+				server_name, nick, server_name, PACKAGE_VERSION, client->network->supported_modes[0]?client->network->supported_modes[0]:allmodes, client->network->supported_modes[1]?client->network->supported_modes[1]:allmodes);
+		
+		if(client->network->features) {
+			tmp = list_make_string(client->network->features);
+		
+			irc_sendf(c, ":%s 005 %s %s :are supported on this server\r\n", server_name, nick, tmp);
+			free(tmp);
+		}
+		
+		irc_sendf(c, ":%s 422 %s :No MOTD file\r\n", 
+				server_name, nick);
+		g_log(G_LOG_DOMAIN, G_LOG_LEVEL_MESSAGE, "Client @%s successfully authenticated", 
+			  server_name);
+
+		replicate_function(client->network, c);
+	} else if(!strcasecmp(l->args[0], "PASS")) {
+		if (!clientpass)
+			client->authenticated = 1;
+		else if(!strcmp(l->args[1], clientpass)) {
+			client->authenticated = 1;
+		} else {
+			g_warning("User tried to log in to %s with incorrect password!\n", server_name);
+			irc_sendf(c, ":%s %d %s :Password mismatch\r\n", server_name, ERR_PASSWDMISMATCH, nick);
+			disconnect_client(client);
+			free_line(l);
+			if(clientpass) xmlFree(clientpass);
+			xmlFree(nick); xmlFree(server_name);
+			return;
+		}
+	} else if(!strcasecmp(l->args[0], "NICK") && l->args[1] && !client->did_nick_change && xmlHasProp(client->network->xmlConf, "ignore_first_nick")) {
+		/* Ignore the first nick change attempt */
+		client->did_nick_change = 1;
+		irc_sendf(c, ":%s NICK %s", l->args[1], nick);
+	} else if(!strcasecmp(l->args[0], "NICK") && l->args[1] && !strcasecmp(l->args[1], nick)) {
+		/* Ignore attempts to change nick to the current nick */
+	} else if(!strcasecmp(l->args[0], "QUIT")) {
+		disconnect_client(client);
+		free_line(l);
+		if(clientpass)xmlFree(clientpass);
+		return;
+	} else if(!strcasecmp(l->args[0], "PING")) {
+		irc_sendf(c, ":%s PONG :%s\r\n", server_name, l->args[1]);
+	} else if(client->authenticated) {
+		if(client->network->outgoing) {
+			const char *old_origin;
+			if(!(l->options & LINE_DONT_SEND)) {SERVER_SEND_LINE(client->network, l) }
+
+			/* Also write this message to all other clients currently connected */
+			if(!(l->options & LINE_IS_PRIVATE) && l->args[0] && 
+			   (!strcmp(l->args[0], "PRIVMSG") || !strcmp(l->args[0], "NOTICE"))) {
+				old_origin = l->origin; l->origin = nick;
+				clients_send(client->network, l, c);
+				l->origin = old_origin;
+			}
+		} else {
+			irc_sendf(c, ":%s NOTICE %s :Currently not connected to server, ignoring\r\n", (server_name != NULL?server_name:"ctrlproxy"), nick);
+		}
+	} else {
+		irc_sendf(c, ":%s NOTICE %s :You are not logged in yet. Ignoring\r\n", server_name?server_name:"ctrlproxy", nick);
+	}
+	free_line(l);l = NULL;
+	if(clientpass)xmlFree(clientpass);
+	xmlFree(server_name); xmlFree(nick);
+}
+
+void handle_new_client(struct transport_context *c_server, struct transport_context *c_client, void *_server)
+{
+	struct network *n = (struct network *)_server;
+	struct client *d = malloc(sizeof(struct client));
+
+	d->authenticated = 0;
+	d->network = n;
+	d->connect_time = time(NULL);
+	d->incoming = c_client;
+	d->did_nick_change = 0;
+
+	n->clients = g_list_append(n->clients, d);
+
+	transport_set_receive_handler(c_client, handle_client_receive);
+	transport_set_disconnect_handler(c_client, handle_client_disconnect);
+	transport_set_data(c_client, d);
+}
+
+void network_add_listen(struct network *n, xmlNodePtr listen)
+{
+	int i = 0;
+	struct transport_context *t = transport_listen(listen->name, listen, handle_new_client, n);
+
+	if(n->incoming)	{ for(i = 0; n->incoming[i]; i++); }
+	
+	if(!t) {
+		g_warning("Can't initialise transport %s", listen->name);
+		return;
+	} 
+	
+	n->incoming = realloc(n->incoming, (i+2) * sizeof(struct transport_context *));
+	n->incoming[i] = t;
+	n->incoming[i+1] = NULL;
+
+}
+
+struct network *connect_to_server(xmlNodePtr conf) {
+	struct network *s = malloc(sizeof(struct network));
+	char *nick, *user_name;
+	int i = 0;
+	xmlNodePtr cur;
+
+	memset(s, 0, sizeof(struct network));
+	s->xmlConf = conf;
+	if(!xmlHasProp(s->xmlConf, "nick"))
+		xmlSetProp(s->xmlConf, "nick", g_get_user_name());
+
+	if(!xmlHasProp(s->xmlConf, "username"))
+		xmlSetProp(s->xmlConf, "username", g_get_user_name());
+
+	if(!xmlHasProp(s->xmlConf, "fullname"))
+		xmlSetProp(s->xmlConf, "fullname", g_get_real_name());
+	
+   	nick = xmlGetProp(s->xmlConf, "nick");
+	user_name = xmlGetProp(s->xmlConf, "username");
+	asprintf(&s->hostmask, "%s!~%s@%s", nick, user_name, my_hostname);
+	xmlFree(nick); xmlFree(user_name);
+
+	/* Find <listen> tag */
+	s->listen = NULL;
+	s->incoming = malloc(sizeof(struct transport_context *)); s->incoming[0] = NULL;
+	cur = s->xmlConf->xmlChildrenNode;
+	while(cur) {
+		if(!strcmp(cur->name, "listen"))s->listen = cur;
+		cur = cur->next;	
+	}
+
+	if(s->listen)cur = s->listen->xmlChildrenNode;
+	else cur = NULL;
+	while(cur) {
+		if(xmlIsBlankNode(cur) || !strcmp(cur->name, "comment")) {
+			cur = cur->next; 
+			continue;
+		}
+
+		network_add_listen(s, cur);
+		
+		cur = cur->next;
+	}
+
+	if(i) s->incoming[i] = NULL;
+
+	s->servers = NULL;
+	s->current_server = NULL;
+	
+	/* Find <servers> tag */
+	cur = s->xmlConf->xmlChildrenNode;
+	while(cur) {
+		if(!strcmp(cur->name, "servers"))s->servers = cur;
+		cur = cur->next;	
+	}
+
+	if(!s->servers) {
+		char *server_name = xmlGetProp(s->xmlConf, "name");
+		g_warning("No servers listed for network %s!\n", server_name);
+		xmlFree(server_name);
+	} else {
+		s->current_server = s->servers->xmlChildrenNode;	
+		while((xmlIsBlankNode(s->current_server) || !strcmp(s->current_server->name, "comment")) && 
+			  s->current_server) {
+			s->current_server = s->current_server->next;
+		}
+	}
+	
+	/* Add server by default. If connecting succeeds, it is 
+	 * removed automagically by login_server */
+	login_server(s);
+	networks = g_list_append(networks, s);
 
 	return s;
 }
 
-int close_all(void)
+int close_server(struct network *s)
 {
-	struct server *s = servers;
-	while(s) {
-		close_server(s);
-		s = s->next;
-	}
-	return 0;
-}
-
-int close_server(struct server *s)
-{
-	struct module_context *c = s->handlers, *d;
-	server_send_raw(s, "QUIT\r\n");
-	while(c) {
-		d = c->next;
-		unload_module(c);
-		c = d;
-	}
+	GList *l = s->clients;
+	int i;
+	char *server_name = xmlGetProp(s->xmlConf, "name");
+	if(s->outgoing)irc_sendf(s->outgoing, "QUIT\r\n");
 	free(s->hostmask);
-	DLIST_REMOVE(servers, s);
+	
+	while(l) {
+		struct client *c = l->data;
+		irc_sendf(c->incoming, ":%s QUIT :Server exiting\r\n", server_name);
+		transport_free(c->incoming);
+		l = l->next;
+	}
+	g_list_free(s->clients);s->clients = NULL;
+
+	/* Remove all incoming lines */
+	if(s->incoming) {
+		for(i = 0; s->incoming[i]; i++) 
+			transport_free(s->incoming[i]);
+	}
+
+	transport_free(s->outgoing);
+
+	for(i = 0; i < 2; i++) {
+		if(s->supported_modes[i]) {
+			free(s->supported_modes[i]);
+			s->supported_modes[i] = NULL;
+		}
+	}
+
+	if(s->features){
+		for(i = 0; s->features[i]; i++)free(s->features[i]);
+		free(s->features);
+		s->features = NULL;
+	}
+
+	networks = g_list_remove(networks, s);
+	
+
+	xmlFree(server_name);
 	return 0;
 }
 
-int loop_all(void)
-{
-	struct server *s = servers;
-	int i = 0;
 
-	while(s) {
-		if(loop(s) != 0)i = -1;
-		s = s->next;
-	}
-	return i;
-}
-
-int loop(struct server *server) /* Checks server socket for input and calls loop() on all of it's modules */
-{
-	fd_set activefd;
-	struct line l;
-	struct timeval tv;
-	int retval;
-	char *ret;
-	static int timeout = -1, ping_interval = -1;
-	char *conf;
-
-	tv.tv_sec = 0;
-	tv.tv_usec = 5;
-
-	/* We need to reconnect */
-	if(server->socket == 0) {
-		conf = get_conf(server->abbrev, "reconnecttime");
-		if(time(NULL) - server->reconnect_time < (conf?atoi(conf):30)) return 0;
-		if(login_server(server) != 0)server->reconnect_time = time(NULL);
-	}
-
-	if(timeout == -1) {
-		conf = get_conf(server->abbrev, "timeout");
-		timeout = conf?atoi(conf):300;
-	}
-
-	if(ping_interval == -1) {
-		conf = get_conf(server->abbrev, "ping_interval");
-		ping_interval = conf?atoi(conf):100;
-	}
-
-	if(time(NULL) - server->last_msg_time > timeout) {
-		server->socket = 0;
-		server->reconnect_time = time(NULL);
-		return 1;
-	}
-	
-	if(time(NULL) - server->ping_time > ping_interval) {
-		server_send(server, NULL, "PING", server->name, NULL);
-		server->ping_time = time(NULL);
-	}
-
-	/* Call loop on all modules */
-	active_context = server->handlers;
-
-	while(active_context) {
-		if(active_context->functions->loop) {
-			active_context->functions->loop(active_context);
-		}
-		active_context = active_context->next;
-	}
-
-	active_context = NULL;
-
-	/* Now, check for activity from the servers we're connected to */ 
-	
-	FD_ZERO(&activefd);
-	FD_SET(server->socket, &activefd);
-	retval = select(FD_SETSIZE, &activefd, NULL, NULL, &tv);
-
-	if(!retval)return 0;
-
-	if(aread(server->socket, &server->remaining) != 0) {
-		server->socket = 0;
-		server->reconnect_time = time(NULL);
-		return 1;
-	}
-
-	while((ret = anextline(&server->remaining))) {
-		server->last_msg_time = time(NULL);
-		irc_parse_line(ret, &l);
-		/* We need to handle pings.. we can't depend on a client 
-		 * to do that for us*/
-		if(!strcasecmp(l.args[0], "PING")){
-			server_send(server, NULL, "PONG", l.args[1], NULL);
-		} else if(!strcasecmp(l.args[0], "PONG")){
-		} else {
-			active_context = server->handlers;
-			while(active_context) {
-				if(active_context->functions->handle_incoming_data)
-					active_context->functions->handle_incoming_data(active_context, &l);
-				active_context = active_context->next;
+gboolean ping_loop(gpointer user_data) {
+	GList *l = networks;
+	while(l) {
+		struct network *s = (struct network *)l->data;
+		GList *cl;
+		char *server_name = xmlGetProp(s->xmlConf, "name");
+		if(s->outgoing)irc_send_args(s->outgoing, "PING", server_name, NULL);
+		else reconnect(NULL, s);
+		xmlFree(server_name);
+		
+		/* Throw out unauthorized clients that have been inactive for over a minute */
+		cl = s->clients;
+		while(cl) {
+			struct client *c = (struct client *)cl->data;
+			cl = g_list_next(cl);
+			if(c->authenticated)continue;
+			if(time(NULL) - c->connect_time > 60) {
+				disconnect_client(c);
 			}
-			active_context = NULL;
 		}
-		free(ret);
+		
+		l = g_list_next(l);
 	}
+	return TRUE;
+}
+
+void default_replicate_function(struct network *s, struct transport_context *io) {
+	GSList *g = gen_replication(s);
+	while(g) {
+		struct line *rl = (struct line *)g->data;
+		if(rl) {
+			irc_send_line(io, rl);
+			free_line(rl);
+		}
+		g = g_slist_next(g);
+	}
+	g_slist_free(g);
+}
+
+int verify_client(struct network *s, struct client *c)
+{
+	GList *gl = s->clients;
+	while(gl) {
+		struct client *nc = (struct client *)gl->data;
+		if(c == nc)return 1;
+		gl = gl->next;
+	}
+	
 	return 0;
-}
-
-int server_send_raw(struct server *s, char *data)
-{
-	struct line l;
-	irc_parse_line(data, &l);
-	l.origin = s->hostmask;
-	DEBUG("-> %s", data);
-
-	active_context = s->handlers;
-
-	while(active_context) {
-		if(active_context->functions->handle_outgoing_data)
-			active_context->functions->handle_outgoing_data(active_context, &l);
-		active_context = active_context->next;
-	}
-
-	return write(s->socket, data, strlen(data));
-}
-
-int server_send(struct server *s, char *origin, ...) 
-{
-	va_list ap;
-	char *arg;
-	char nosplit = 0;
-	char msg[IRC_MSG_LEN];
-	strcpy(msg, "");
-	va_start(ap, origin);
-
-	if(origin) {
-		snprintf(msg, IRC_MSG_LEN, ":%s ", origin);
-	}
-
-	while((arg = va_arg(ap, char *))) {
-		if(nosplit)return -2;
-		if(strchr(arg, ' ') || arg[0] == ':') { strcat(msg, ":"); nosplit = 1; }
-		strcat(msg, arg);
-		strcat(msg, " ");
-	}
-	strcat(msg, "\r\n");
-	va_end(ap);
-
-	return server_send_raw(s, msg);
 }

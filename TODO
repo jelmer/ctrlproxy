@@ -1,10 +1,19 @@
-- cascading support
-- replication of backlog(aka client_advanced)
-- clean up the code
-- add / remove servers and modules while running 
- - by communicating to some nick, $ctrlproxy for example, one can give commands 
-commands:
- - load module (unload if necessary)
- - unload module
- - disconnect server
- - connect server
+Next release:
+- improve docs
+- use namespaces and XML schemas instead of DTD
+- document linestack
+
+Optional:
+- improve PHP script for stats
+- more admin commands: DELNETWORK, NEXTSERVER, DELLISTEN, DELSERVER
+- automatically unload crashing modules
+- print time at regular intervals in replication
+- add file based linestack (DONE, need docs)
+- get a few replication modules: 
+ - simple (DONE, need docs)
+ - with BACKLOG admin command
+  - save hash table per network
+   - hash table contains entry with linestack_context for each channel/query
+ - with only highlights (DONE, need docs)
+- don't automatically use loaded module for replication
+- only auto away when no client is connected (DONE, need docs!)

@@ -1,0 +1,261 @@
+<ctrlproxy:module name="log_custom" xmlns:ctrlproxy="http://ctrlproxy.vernstok.nl/common">
+	<title>Custom logging module</title>
+	<modulemeta>
+		<description>Logging in a predefined format</description>
+		<version>0.1</version>
+		<author>Jelmer Vernooij</author>
+		<homepage>http://jelmer.vernstok.nl/ctrlproxy/</homepage>
+	</modulemeta>
+
+	<description>
+		<para>Module that writes logs to one or more files using a
+			defined format.</para>
+
+		<para>This module may be used to write out log files that can 			be parsed by scripts or bots or logs in the same format as your favorite
+			IRC client.</para>
+
+	</description>
+
+	<section>
+		<title>Substitutes</title>
+
+		<para>The configuration values define the syntax that is used to
+			write out log file lines. In these configuration values, 
+			values beginning with a '%' can be substituted.</para>
+
+		<para>The following characters are allowed after a percent 
+			sign for all types of lines:</para>
+
+		<variablelist>
+			<varlistentry><term>h</term>
+				<listitem><para>Current time of day, hours field.</para></listitem>
+			</varlistentry>
+
+			<varlistentry><term>M</term>
+				<listitem><para>Current time of day, number of minutes.</para></listitem>
+			</varlistentry>
+
+			<varlistentry><term>s</term>
+				<listitem><para>Current time of day, number of seconds.</para></listitem>
+			</varlistentry>
+
+			<varlistentry><term>n</term>
+				<listitem><para>Nick originating the line (saying the message, doing the kick, quitting, joining, etc).</para></listitem>
+			</varlistentry>
+
+			<varlistentry><term>u</term>
+				<listitem><para>Hostmask of the user originating the line.</para></listitem>
+			</varlistentry>
+
+			<varlistentry><term>N</term>
+				<listitem><para>Name of the current IRC network.</para></listitem>
+			</varlistentry>
+
+			<varlistentry><term>S</term>
+				<listitem><para>Name of the server (as set by the transport).</para></listitem>
+			</varlistentry>
+
+			<varlistentry><term>%</term>
+				<listitem><para>Percent sign</para></listitem>
+			</varlistentry>
+
+			<varlistentry><term>0,1,2,3,4,5,6,7,8,9</term>
+				<listitem><para>Substituted with the respective argument 
+						in the IRC line.</para></listitem>
+			</varlistentry>
+
+			<varlistentry><term>@</term>
+				<listitem><para>Replaced by channel name if the message 
+						is directed to a channel, the nick name to which 
+						the message is being sent, or the name of the sender 
+						of the message when the receiver is the user 
+						running ctrlproxy.</para>
+
+						<para>This substitute will be the name of the first channel 
+							on which the user is active if the line type 
+							is NICK or QUIT.</para>
+					</listitem>
+				</varlistentry>
+		</variablelist>
+
+		<para>Each type of line also has some variables of it's own that it substitutes.</para>
+
+		<subsection><title>join</title>
+
+			<para>
+				<variablelist>
+					<varlistentry><term>%c</term>
+						<listitem><para>Name of the channel the user joins.</para></listitem>
+					</varlistentry>
+				</variablelist>
+			</para>
+		</subsection>
+
+		<subsection><title>part</title>
+			<para>
+				<variablelist>
+					<varlistentry><term>%c</term>
+						<listitem><para>Name of the channel the user is leaving. </para></listitem>
+					</varlistentry>
+					<varlistentry><term>%m</term>
+						<listitem><para>Comment</para></listitem>
+					</varlistentry>
+				</variablelist>
+			</para>
+		</subsection>
+
+		<subsection><title>kick</title>
+			<para>
+				<variablelist>
+					<varlistentry><term>%t</term>
+						<listitem><para>Nick of the user that is being kicked.</para></listitem>
+					</varlistentry>
+
+					<varlistentry><term>%c</term>
+						<listitem><para>Channel the user is being kicked from.</para></listitem>
+					</varlistentry>
+
+					<varlistentry><term>%r</term>
+						<listitem><para>Reason the user is being kicked.</para></listitem>
+					</varlistentry>
+				</variablelist>
+			</para>
+		</subsection>
+
+		<subsection><title>quit</title>
+			<para>
+				<variablelist>
+					<varlistentry><term>%m</term>
+						<listitem><para>Comment.</para></listitem>
+					</varlistentry>
+				</variablelist>
+			</para>
+		</subsection>
+
+		<subsection><title>topic/notopic</title>
+			<para>
+				<variablelist>
+					<varlistentry><term>%c</term>
+						<listitem><para>Name of the channel of which the 
+								topic is being changed.</para></listitem>
+					</varlistentry>
+					<varlistentry><term>%t</term>
+						<listitem><para>The new topic. Only set 
+								for 'topic', not for 'notopic'.</para></listitem>
+					</varlistentry>
+				</variablelist>
+			</para>
+		</subsection>
+
+		<subsection><title>mode</title>
+			<para>
+				<variablelist>
+					<varlistentry><term>%c</term>
+						<listitem><para>Name of user or channel of which the mode 
+								is being changed.</para></listitem>
+					</varlistentry>
+					<varlistentry><term>%p</term>
+						<listitem><para>Change in the mode, e.g. <parameter>+oie</parameter></para></listitem>
+					</varlistentry>
+
+					<varlistentry><term>%t</term>
+						<listitem><para>Target of which the mode is being changed.</para></listitem>
+					</varlistentry>
+				</variablelist>
+			</para>
+
+			<para>To retrieve any additional arguments for a MODE command, 
+				use <parameter>%1</parameter>, <parameter>%2</parameter>, etc.</para>
+		</subsection>
+
+		<subsection><title>notice/privmsg/action</title>
+
+			<para>
+				<variablelist>
+					<varlistentry><term>%t</term>
+						<listitem><para>Name of channel or nickname of user to which 
+								the notice/privmsg/ or action is being sent.</para></listitem>
+					</varlistentry>
+					<varlistentry><term>%m</term>
+						<listitem><para>Message that is being sent.</para></listitem>
+					</varlistentry>
+				</variablelist>
+			</para>
+		</subsection>
+
+		<subsection><title>nick</title>
+			<para>
+				<variablelist>
+					<varlistentry><term>%r</term>
+						<listitem><para>New nickname the user is changing his/her name to.</para></listitem>
+					</varlistentry>
+				</variablelist>
+			</para>
+		</subsection>
+
+	</section>
+
+	<configuration>
+		<element name="logfile">
+			<description>Path to the logfile that will be written. Supports 
+				substitution depending on the type of line that is being parsed.</description>
+		</element>
+		<element name="join">
+			<description>Format to use for lines where a user joins a channel.</description>
+		</element>
+		<element name="part">
+			<description>Format to use for lines where a user leaves a channel.</description>
+		</element>
+		<element name="msg">
+			<description>Format to use for 'regular' messages - when a user says something.</description>
+		</element>
+		<element name="notice">
+			<description>Format to use for notices.</description>
+		</element>
+		<element name="action">
+			<description>Format to use for CTCP actions (e.g. /me ...) </description>
+		</element>
+		<element name="mode">
+			<description>Format to use for MODE changes (including bans)</description>
+		</element>
+		<element name="quit">
+			<description>Format to use for quit lines.</description>
+		</element>
+		<element name="kick">
+			<description>Format to use for kicks.</description>
+		</element>
+		<element name="topic">
+			<description>Format to use for topic changes to a valid topic</description>
+		</element>
+		<element name="notopic">
+			<description>Format to use when the topic is unset.</description>
+		</element>
+		<element name="nickchange">
+			<description>Format to use when a user changes his/her nick name.</description>
+		</element>
+	</configuration>
+
+	<example>
+		<![CDATA[
+		<ctrlproxy>
+			<plugins>
+				<plugin autoload="1" file="log_custom">
+					<logfile>/home/jelmer/log/ctrlproxy/%@</logfile>
+					<join>%h%M%s -!- User %n [%u] has joined %c</join>
+					<part>%h%M%s -!- User %n [%u] has left %c [%m]</part>
+					<quit>%h%M%s -!- User %n [%u] has quit [%m]</quit>
+					<action>%h%M%s * %n %m</action>
+				</plugin>
+				<plugin autoload="1" file="socket"/>
+			</plugins>
+
+			<networks>
+				<network name="OFTC">
+					<servers><ipv4 host="irc.oftc.net"/></servers>
+					<channel name="#flood"/>
+				</network>
+			</networks>
+		</ctrlproxy>
+		]]>
+	</example>
+</ctrlproxy:module>

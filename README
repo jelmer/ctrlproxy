@@ -1,7 +1,6 @@
-ctrlproxy 0.6
+ctrlproxy
 ==============
-
-Jelmer Vernooij <jelmer@nl.linux.org>, 14 October 2002
+Jelmer Vernooij <jelmer@nl.linux.org>
 
 Why ctrlproxy?
 --------------
@@ -11,6 +10,8 @@ when it was on high load ircing was getting pretty hard. I could
 of course run irssi on my workstation, but my workstation isn't on 
 24/7 and some people depend on the channel logs I generate.
 
+The structure of ctrlproxy is very modular and it is easily extendible.
+
 Features
 --------
  * Connect to one server with many clients under one nick transparently
@@ -19,23 +20,54 @@ Features
  * irssi-style logging support
  * Transparent detaching and attaching of clients
  * Password support
+ * Replication support (from memory)
+ * Auto-Away support
+ * Keeping track of events occuring 
+ * Direct, inetd-style interfacing with local IRC servers (such as bitlbee)
+ * Responses to queries are only sent to the originator of the query
+ * SSL support
+ * Custom logging in any format you specify
+ * Flood protection
 
 Requirements
 ------------
  * libpopt
- * GNU libc
+ * GNU glib
+ * libxml2
+ 
+ And for the stats module:
+ * libtdb
+ * libpcre (optional)
 
 Building
 --------
- 
-ircproxy can be installed using:
 
+ctrlproxy can be installed using:
+
+$ ./configure
 $ make
 $ make install
 
-You might want to change the PREFIX in Makefile.settings
+If you have a CVS checkout, run :
+
+$ autoreconf
+
+before you run ./configure, make and make install
 
 Documentation
 -------------
-Most documentation is in the manpages: ctrlproxy(1) and ctrlproxyrc(5)
+Most documentation is in the manual and the 
+manpages: ctrlproxy(1) and ctrlproxyrc(5).
 The example ctrlproxyrc file might be of some use..
+
+After you've installed, configured and started ctrlproxy you can connect to 
+it on port 6668 and up.
+
+Petnames
+--------
+During the time I have been using ctrlproxy, people have been giving it some 
+weird nick names, you'd probably have to know dutch to understand them:
+
+- ctrlbraxy
+- ctrlprutsy
+- kont-rol proxy

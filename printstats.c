@@ -1,6 +1,6 @@
 /* 
 	ctrlproxy: A modular IRC proxy
-	(c) 2002 Jelmer Vernooij <jelmer@nl.linux.org>
+	(c) 2002-2003 Jelmer Vernooij <jelmer@nl.linux.org>
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -17,42 +17,42 @@
 	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 */
 
-#ifndef __INTERNALS_H__
-#define __INTERNALS_H__
+/* Keep track of certain 'events' for every nick and for total */
 
 #define _GNU_SOURCE
-#include <popt.h>
 #include "ctrlproxy.h"
-#include <pwd.h>
 #include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <string.h>
 #include <stdarg.h>
-#include <signal.h>
-#include <sys/ioctl.h>
+#include <string.h>
+#include <malloc.h>
+#include <stdio.h>
+#include <time.h>
+#include <tdb.h>
+#include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <dirent.h>
 
-#undef  G_LOG_DOMAIN
-#define G_LOG_DOMAIN "ctrlproxy"
+int traverse_keys(TDB_CONTEXT *tdb_context, TDB_DATA key, TDB_DATA value, void *pattern)
+{
+	if(!key.dptr) return 0;
 
-#define RECONNECT_INTERVAL (1000 * 60)
+	long *ivalue;
+	ivalue = (long *)value.dptr;
+	printf("%s: %ld\n", key.dptr, *ivalue);
+	return 0;
+}
 
-#define MAXHOSTNAMELEN 4096
-extern char my_hostname[MAXHOSTNAMELEN+2];
+int main(int argc, char **argv)
+{
+	TDB_CONTEXT *tdb_context;
 
-/* server.c */
-int loop(struct network *server); /* Checks server socket for input and calls loop() on all of it's modules */
-gboolean ping_loop(gpointer user_data);
+	if(argc < 2) { 
+		fprintf(stderr, "No file specified\n");
+		return 1;
+	}
 
-/* state.c */
-void state_handle_data(struct network *s, struct line *l);
-void state_reconnect(struct network *s);
+	tdb_context = tdb_open(argv[1], 0, 0, O_RDONLY, 00700);
 
-/* filter.c */
-gboolean filters_execute(struct line *l);
-
-#endif /* __INTERNALS_H__ */
+	tdb_traverse(tdb_context, traverse_keys, NULL);
+	return 0;
+}

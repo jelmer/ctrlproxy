@@ -1,0 +1,23 @@
+<!-- Samba parameter, used for the smb.conf options -->
+<!ELEMENT ctrlproxy (plugins?,networks?)>
+<!ELEMENT networks (network*)>
+<!ELEMENT plugins (plugin*)>
+<!ELEMENT plugin ANY>
+<!ATTLIST plugin file CDATA #REQUIRED>
+
+<!ELEMENT network (servers?,channel*,autosend*)>
+<!ATTLIST network name CDATA #IMPLIED>
+<!ATTLIST network client_pass CDATA "">
+<!ATTLIST network nick CDATA #IMPLIED>
+<!ATTLIST network username CDATA #IMPLIED>
+<!ATTLIST network fullname CDATA #IMPLIED>
+<!ATTLIST network autoconnect CDATA "0">
+
+<!ELEMENT autosend (#PCDATA)>
+<!ELEMENT channel EMPTY>
+<!ATTLIST channel name CDATA #REQUIRED>
+<!ATTLIST channel autojoin CDATA "0">
+
+<!-- Plugin specific stuff -->
+
+<!ELEMENT servers ANY>

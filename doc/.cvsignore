@@ -1,0 +1,6 @@
+*.pdf
+*.html
+*.eps
+Makefile
+*.?
+*.?ctrlproxy

@@ -1,0 +1,32 @@
+CC = @CC@
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+INSTALL = @INSTALL@
+CFLAGS = -I.. @CFLAGS@ @PKG_CFLAGS@
+moddir = @libdir@/ctrlproxy
+
+MODS = @MODS@
+
+all: $(MODS)
+
+install: all
+	$(INSTALL) -d $(DESTDIR)$(moddir)
+	$(INSTALL) $(MODS) $(DESTDIR)$(moddir)
+
+%.o: %.c
+	$(CC) $(CFLAGS) -fPIC -c $<
+
+libstats.so: stats.o
+	$(CC) $(CFLAGS) -shared -o $@ $< -ltdb @LIB_PCRE@
+
+libsocket.so: @SOCKET_OBJS@
+	$(CC) $(CFLAGS) -shared -o $@ @SOCKET_OBJS@ @SSL_LIB@
+
+lib%.so: %.c
+	$(CC) $(CFLAGS) -shared -o $@ $< 
+
+clean:
+	rm -f $(MODS) *.o
+
+distclean: clean
+	rm -f Makefile

@@ -1,6 +1,6 @@
 /* 
 	ctrlproxy: A modular IRC proxy
-	(c) 2002 Jelmer Vernooij <jelmer@nl.linux.org>
+	(c) 2002-2003 Jelmer Vernooij <jelmer@nl.linux.org>
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -18,134 +18,282 @@
 */
 
 #include "internals.h"
+#include "config.h"
 
-struct module_context *active_context = NULL;
+#include <libxml/xmlmemory.h>
+#include <libxml/parser.h>
 
+#define BACKTRACE_STACK_SIZE 64
+
+#ifdef HAVE_EXECINFO_H
+#include <execinfo.h>
+#endif
+
+#define add_log_domain(domain) g_log_set_handler (domain, G_LOG_LEVEL_MASK | G_LOG_FLAG_FATAL | G_LOG_FLAG_RECURSION, log_handler, NULL);
+
+/* globals */
 char my_hostname[MAXHOSTNAMELEN+2];
-char output_debug = 0;
+xmlNodePtr xmlNode_networks, xmlNode_plugins;
+GHookList data_hook;
+xmlDocPtr configuration;
+char *configuration_file;
+FILE *debugfd = NULL;
+FILE *f_logfile = NULL;
+
+GList *plugins = NULL;
 
 void signal_crash(int sig) 
 {
-	if(active_context) 
-	{
-		/* If we crashed in the middle of a module, unload that module */
-		unload_module(active_context);
-	} else {
-		/* Bug in the core. Just loop until someone runs gdb on us */ 
-		while(1)sleep(5);
+#ifdef HAVE_BACKTRACE_SYMBOLS
+	void *backtrace_stack[BACKTRACE_STACK_SIZE];
+	size_t backtrace_size;
+	char **backtrace_strings;
+#endif
+	g_critical("Received SIGSEGV!\n");
+
+#ifdef HAVE_BACKTRACE_SYMBOLS
+	/* get the backtrace (stack frames) */
+	backtrace_size = backtrace(backtrace_stack,BACKTRACE_STACK_SIZE);
+	backtrace_strings = backtrace_symbols(backtrace_stack, backtrace_size);
+
+	g_critical ("BACKTRACE: %d stack frames:\n", backtrace_size);
+	
+	if (backtrace_strings) {
+		int i;
+
+		for (i = 0; i < backtrace_size; i++)
+			g_critical(" #%u %s", i, backtrace_strings[i]);
+
+		free(backtrace_strings);
 	}
+
+#endif
+	
+	g_error("Ctrlproxy core has segfaulted, exiting...\n");
+}
+
+void log_handler(const gchar *log_domain, GLogLevelFlags flags, const gchar *message, gpointer user_data) {
+	if(!f_logfile)return;
+	fprintf(f_logfile, "%s\n", message);
+	fflush(f_logfile);
+}
+
+void clean_exit()
+{
+	GList *gl = networks;
+	while(gl) {
+		struct network *n = (struct network *)gl->data;
+		close_server(n);
+		gl = gl->next;
+	}
+	if(debugfd)fclose(debugfd);
 }
 
 void signal_quit(int sig)
 {
-	close_all();
-	sleep(5);
+	g_log(G_LOG_DOMAIN, G_LOG_LEVEL_MESSAGE, "Received signal %d, quitting...\n", sig);
+	clean_exit();
 	exit(0);
+}
+
+gboolean unload_plugin(struct plugin *p)
+{
+	plugin_fini_function f;
+
+	/* Run exit function if present */
+	if(g_module_symbol(p->module, "fini_plugin", (gpointer *)&f)) {
+		if(!f(p)) {
+			g_warning("Unable to unload plugin '%s': still in use?\n", p->name);
+			return FALSE;
+		}
+	} else {
+		g_warning("No symbol 'fini_plugin' in plugin '%s'. Module does not support unloading, so no unload will be attempted\n", p->name);
+		return FALSE;
+	}
+
+	g_module_close(p->module);
+
+	/* Remove autoload from this plugins' element */
+	xmlUnsetProp(p->xmlConf, "autoload");
+	return TRUE;
+}
+
+gboolean plugin_loaded(char *name)
+{
+	GList *gl = plugins;
+	while(gl) {
+		struct plugin *p = (struct plugin *)gl->data;
+		if(!strcmp(p->name, name)) return TRUE;
+		gl = gl->next;
+	}
+	return FALSE;
+}
+
+gboolean load_plugin(xmlNodePtr cur)
+{
+	GModule *m;
+	char *mod_name;
+	struct plugin *p;
+	char *modulesdir;
+	gchar *path_name;
+	plugin_init_function f = NULL; 
+
+	mod_name = xmlGetProp(cur, "file");
+	if(!mod_name) {
+		g_warning("No filename specified for plugin");
+		return FALSE;
+	}
+
+	/* Determine correct modules directory */
+	if(getenv("MODULESDIR"))modulesdir = getenv("MODULESDIR"); 
+	else modulesdir = MODULESDIR;
+
+	if(mod_name[0] == '/')path_name = g_strdup(mod_name);
+	else path_name = g_module_build_path(modulesdir, mod_name);
+
+
+	m = g_module_open(path_name, 0);
+	if(!m) {
+		g_warning("Unable to open module %s(%s), ignoring\n", path_name, g_module_error()); 
+		xmlFree(mod_name);
+		g_free(path_name);
+		return FALSE;
+	} else {
+		if(!g_module_symbol(m, "init_plugin", (gpointer *)&f)) {
+			g_warning("Can't find symbol 'init_plugin' in module %s\n", path_name);
+			g_free(path_name);
+			return FALSE;
+		}
+	}
+
+	g_free(path_name);
+
+	p = malloc(sizeof(struct plugin));
+	p->name = strdup(mod_name);
+	p->module = m;
+	p->xmlConf = cur;
+
+	if(!f(p)) {
+		g_warning("Running initialization function for plugin '%s' failed.\n", mod_name);
+		free(p->name);
+		free(p);
+		return FALSE;
+	}
+
+	plugins = g_list_append(plugins, p);
+	
+	xmlSetProp(cur, "autoload", "1");
+	xmlFree(mod_name);
+	return TRUE;
+}
+
+void save_configuration()
+{
+	xmlSaveFile(configuration_file, configuration);
+}
+
+void signal_save(int sig)
+{
+	save_configuration();
+}
+
+void readConfig(char *file) {
+    xmlNodePtr cur;
+
+	configuration = xmlParseFile(file);
+	g_assert(configuration);
+
+	cur = xmlDocGetRootElement(configuration);
+	g_assert(cur);
+
+	g_assert(!strcmp(cur->name, "ctrlproxy"));
+
+	cur = cur->xmlChildrenNode;
+	while(cur) {
+		if(xmlIsBlankNode(cur) || !strcmp(cur->name, "comment")) {
+			cur = cur->next;
+			continue;
+		}
+		
+		if(!strcmp(cur->name, "plugins")) {
+			xmlNode_plugins = cur;
+		} else if(!strcmp(cur->name, "networks")) {
+			xmlNode_networks = cur;
+		} else g_assert(0);
+		
+		cur = cur->next;
+	}
 }
 
 int main(int argc, const char *argv[])
 {
-	struct server *s;
-	char **sections;
-	int i;
-	char *t;
-	char *nick, *port, *host, *pass, *mods, *modsdup;
-	char *tmp;
-	char *autojoin;
-	int final = 0;
-	poptContext pc;
-	char daemon = 0;
-	char *rcfile_default, *rcfile;
+	GMainLoop *loop;
+	char isdaemon = 0;
+	char *logfile = NULL, *rcfile = NULL;
+#ifdef HAVE_POPT_H
 	int c;
+	poptContext pc;
 	struct poptOption options[] = {
 		POPT_AUTOHELP
-		{"rc-file", 'r', POPT_ARG_STRING, &rcfile, 0, "Use alternative ctrlproxyrc file", "RCFILE"},
-		{"daemon", 'D', POPT_ARG_VAL, &daemon, 1, "Run in the background (as a daemon)"},
+		{"debug", 'd', POPT_ARG_STRING, NULL, 'd', "Write irc traffic to specified file", "FILE" },
+		{"daemon", 'D', POPT_ARG_VAL, &isdaemon, 1, "Run in the background (as a daemon)"},
+		{"log", 'l', POPT_ARG_STRING, &logfile, 0, "Log messages to specified file", "FILE"},
+		{"rc-file", 'r', POPT_ARG_STRING, &rcfile, 0, "Use configuration file from specified location", "FILE"},
 		{"version", 'v', POPT_ARG_NONE, NULL, 'v', "Show version information"},
-		{"debug", 'd', POPT_ARG_VAL, &output_debug, 1, "Output debug information"},
 		POPT_TABLEEND
 	};
+#endif
+    xmlNodePtr cur;
 
 	signal(SIGINT, signal_quit);
 	signal(SIGTERM, signal_quit);
 	signal(SIGPIPE, SIG_IGN);
 	signal(SIGHUP, SIG_IGN);
 	signal(SIGSEGV, signal_crash);
+	signal(SIGUSR1, signal_save);
 
-	asprintf(&rcfile_default, "%s/.ctrlproxyrc", getenv("HOME")?getenv("HOME"):"");
-	rcfile = rcfile_default;
+	replicate_function = default_replicate_function;
+	g_hook_list_init(&data_hook, sizeof(GHook));
 
+	loop = g_main_new(FALSE);
+
+#ifdef HAVE_POPT_H
 	pc = poptGetContext(argv[0], argc, argv, options, 0);
 
 	while((c = poptGetNextOpt(pc)) >= 0) {
 		switch(c) {
-		case 'v':
-			printf("ctrlproxy %s\n", CTRLPROXY_VERSION);
-			printf("(c) 2002 Jelmer Vernooij <jelmer@nl.linux.org>\n");
-			exit(1);
+		case 'd': 
+			{
+				const char *fname = poptGetOptArg(pc);
+				if(!strcmp(fname, "-")) { debugfd = stdout; break; }
+				debugfd = fopen(fname, "w+"); 
+			}
 			break;
+		case 'v':
+			printf("ctrlproxy %s\n", PACKAGE_VERSION);
+			printf("(c) 2002-2003 Jelmer Vernooij <jelmer@nl.linux.org>\n");
+			return 0;
 		}
 	}
+#endif
 
 	if(gethostname(my_hostname, MAXHOSTNAMELEN) != 0) {
-		fprintf(stderr, "Can't figure out hostname of local host!\n");
+		g_log(G_LOG_DOMAIN, G_LOG_LEVEL_ERROR, "Can't figure out hostname of local host!\n");
 		return 1;
 	}
 
-	if(SLang_init_slang() == -1) {
-		fprintf(stderr, "Unable to initialize S-Lang\n");
-		return 1;
+	if(logfile) {
+		f_logfile = fopen(logfile, "a+");
+		if(!f_logfile) g_warning("Can't open logfile %s!", logfile);
 	}
 
-	if(SLang_load_file(rcfile) == -1) {
-		fprintf(stderr, "Unable to load %s!\n", rcfile);
-		return 1;
-	}
-	
-	sections = enum_sections();
+	add_log_domain("GLib");
+	add_log_domain("ctrlproxy");
 
-	for(i = 0; sections[i]; i++) {
-		t = sections[i];
-		nick = get_conf(t, "nick");
-		if(!nick)nick = getenv("USER");
-		port = get_conf(t, "port");
-		if(!port)port = "6667";
-		host = get_conf(t, "host");
-		if(!host) {
-			fprintf(stderr, "No host specified for %s !\n", t);
-			return 1;
-		}
-		pass = get_conf(t, "password");
-		
-		s = connect_to_server(host, atoi(port), nick, pass);
-		if(!s)return 1;
+	g_log(G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "Logfile opened");
 
-		s->abbrev = t;
+	if(isdaemon) {
 
-		/* Do autojoin stuff */
-		autojoin = get_conf(t, "autojoin");
-		if(autojoin)server_send(s, NULL, "JOIN", autojoin, NULL);
-
-		/* Load modules */
-		mods = get_conf(t, "modules");
-		if(!mods)continue;
-		modsdup = strdup(mods);
-		
-		final = 0;
-		mods = modsdup;
-		while((tmp = strchr(mods, ' ')) || (tmp = strchr(mods, '\0'))) {
-			if(*tmp == '\0')final = 1;
-			*tmp = '\0';
-			
-			load_module(s, mods);
-
-			if(final)break;
-			mods = tmp+1;
-		}
-		free(modsdup);
-	}
-	
-	if(daemon) {
 #ifdef SIGTTOU
 		signal(SIGTTOU, SIG_IGN);
 #endif
@@ -157,18 +305,52 @@ int main(int argc, const char *argv[])
 #ifdef SIGTSTP
 		signal(SIGTSTP, SIG_IGN);
 #endif
-
-		if(fork() != 0)exit(0);
-
-		setsid();
 		signal(SIGHUP, SIG_IGN);
-		close(STDIN_FILENO);
-		close(STDOUT_FILENO);
-		close(STDERR_FILENO);
+		daemon(0, 0);
+		isdaemon = 1;
+	} else if(!f_logfile)f_logfile = stdout;
 
+	if(rcfile) configuration_file = strdup(rcfile);
+	else { 
+		asprintf(&configuration_file, "%s/.ctrlproxyrc", g_get_home_dir());
 	}
 
-	while(1) {
-		loop_all();
+	readConfig(configuration_file);
+
+	if(!g_module_supported()) {
+		g_warning("DSO's not supported on this platform. Not loading any modules");
+	} else {
+		cur = xmlNode_plugins->xmlChildrenNode;
+		while(cur) {
+
+			if(xmlIsBlankNode(cur) || !strcmp(cur->name, "comment")){ cur = cur->next; continue; }
+
+			g_assert(!strcmp(cur->name, "plugin"));
+
+			if(xmlHasProp(cur, "autoload"))load_plugin(cur);
+
+			cur = cur->next;
+		}
 	}
+
+	cur = xmlNode_networks->xmlChildrenNode;
+	while(cur) {
+		char *autoconnect;
+		if(xmlIsBlankNode(cur) || !strcmp(cur->name, "comment")){ cur = cur->next; continue; }
+		g_assert(!strcmp(cur->name, "network"));
+
+		autoconnect = xmlGetProp(cur, "autoconnect");
+		if(autoconnect && !strcmp(autoconnect, "1"))connect_to_server(cur);
+		xmlFree(autoconnect);
+
+		cur = cur->next;
+	}
+
+
+	g_timeout_add(1000 * 300, ping_loop, NULL);
+	g_main_run(loop);
+
+	return 0;
 }
+
+

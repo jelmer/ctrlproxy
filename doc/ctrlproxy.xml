@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd" [
+<!ENTITY admin SYSTEM "admin.xml">
+<!ENTITY auto-away SYSTEM "auto-away.xml">
+<!ENTITY ctcp SYSTEM "ctcp.xml">
+<!ENTITY log-irssi SYSTEM "log_irssi.xml">
+<!ENTITY nickserv SYSTEM "nickserv.xml">
+<!ENTITY log-custom SYSTEM "log_custom.xml">
+<!ENTITY repl-memory SYSTEM "repl_memory.xml">
+<!ENTITY socket SYSTEM "socket.xml">
+<!ENTITY stats SYSTEM "stats.xml">
+<!ENTITY strip SYSTEM "strip.xml">
+<!ENTITY noticelog SYSTEM "noticelog.xml">
+<!ENTITY install SYSTEM "install.xml">
+<!ENTITY syntax SYSTEM "syntax.xml">
+<!ENTITY transports SYSTEM "transports.xml">
+<!ENTITY dev-introduction SYSTEM "development.xml">
+<!ENTITY introduction SYSTEM "introduction.xml">
+<!ENTITY antiflood SYSTEM "antiflood.xml">
+<!ENTITY linestack SYSTEM "linestack.xml">
+<!ENTITY functions SYSTEM "functions.xml">
+]>
+
+<book id="ctrlproxy">
+	<title>The ControlProxy Manual</title>
+
+<bookinfo>
+	<author>
+		<firstname>Jelmer</firstname><surname>Vernooij</surname>
+		<affiliation>
+			<address><email>jelmer@vernstok.nl</email></address>
+		</affiliation>
+	</author>
+	<releaseinfo>$Revision: 1.2 $</releaseinfo>
+	<pubdate>$Date: 2003/10/19 00:02:01 $</pubdate>
+
+	<abstract><para>This documentation is a draft. It is full of typo's and 
+			grammar errors. It might be unclear at some points.</para>
+	
+		<para>Future versions of ctrlproxy will include an improved version of this document.</para>
+
+		<para>Meanwhile, all comments, questions and updates are welcome at <ulink url="mailto:jelmer@vernstok.nl">jelmer@vernstok.nl</ulink>.</para>
+	</abstract>
+</bookinfo>
+
+&introduction;
+
+<part id="installation">
+	<title>Installation</title>
+	&install;
+</part>
+
+<part id="configuration">
+	<title>Configuration</title>
+	&syntax;
+</part>
+
+<part id="modules">
+	<title>Modules</title>
+&admin;
+&auto-away;
+&ctcp;
+&log-irssi;
+&repl-memory;
+&socket;
+&noticelog;
+&stats;
+&strip;
+&log-custom;
+&nickserv;
+&antiflood;
+</part>
+
+<part id="extending">
+	<title>Writing your own modules</title>
+
+	&dev-introduction;
+	&functions;
+	&transports;
+	&linestack;
+
+</part>
+</book>

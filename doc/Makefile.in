@@ -1,0 +1,67 @@
+MOD_SOURCES = $(shell echo *.mod.xml)
+MOD_DOCS = $(patsubst %.mod.xml,%.7ctrlproxy,$(MOD_SOURCES))
+MODS = $(patsubst %.mod.xml,%.xml,$(MOD_SOURCES))
+DOCS = ctrlproxy.1 ctrlproxyrc.5 ctrlproxy.pdf ctrlproxy.html $(MOD_DOCS)
+XSLTPROC = @XSLTPROC@ --xinclude
+XMLTO = @XMLTO@
+docdir = @prefix@/doc/ctrlproxy
+INSTALL = @INSTALL@
+prefix = @prefix@
+mandir = @mandir@
+man1dir = @mandir@/man1
+man5dir = @mandir@/man5
+man7dir = @mandir@/man7
+DIA = @DIA@
+EPSTOPDF = @EPSTOPDF@
+
+all: $(DOCS)
+
+%.7ctrlproxy.xml: %.mod.xml module-man.xsl
+	$(XSLTPROC) -o $@ module-man.xsl $<
+
+%.xml: %.mod.xml module.xsl
+	$(XSLTPROC) -o $@ module.xsl $<
+	
+%.pdf: %.xml $(MODS) overview.pdf overview2.pdf
+	$(XMLTO) pdf $<
+
+%.fo: %.xml $(MODS)
+	$(XMLTO) fo $<
+
+%.html: %.xml $(MODS) overview.png overview2.png
+	$(XMLTO) html-nochunks $<
+
+install: all
+	$(INSTALL) -d $(DESTDIR)$(man1dir)
+	$(INSTALL) -d $(DESTDIR)$(man5dir)
+	$(INSTALL) -d $(DESTDIR)$(man7dir)
+	$(INSTALL) -d $(DESTDIR)$(docdir)
+	$(INSTALL) ctrlproxy.1 $(DESTDIR)$(man1dir)
+	$(INSTALL) ctrlproxyrc.5 $(DESTDIR)$(man5dir)
+	$(INSTALL) $(MOD_DOCS) $(DESTDIR)$(man7dir)
+	$(INSTALL) ctrlproxy.pdf $(DESTDIR)$(docdir)
+	$(INSTALL) ctrlproxy.html $(DESTDIR)$(docdir)
+
+%.1: %.1.xml
+	$(XMLTO) man $<
+
+%.7ctrlproxy: %.7ctrlproxy.xml
+	$(XMLTO) man $<
+
+%.5: %.5.xml
+	$(XMLTO) man $<
+
+%.png: %.dia
+	$(DIA) -n -e $@ $<
+
+%.eps: %.dia
+	$(DIA) -n -e $@ $<
+
+%.pdf: %.eps
+	$(EPSTOPDF) $<
+
+clean: 
+	rm -f *.html *.pdf $(DOCS) $(MODS) overview{2,}.{eps,png,pdf}
+
+distclean: clean
+	rm -f Makefile

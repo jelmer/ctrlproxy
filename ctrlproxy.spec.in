@@ -1,0 +1,49 @@
+Summary: A flexible and modular IRC proxy
+Name: ctrlproxy
+Version: @PACKAGE_VERSION@
+Release: 0
+License: GPL
+Group: Applications/Internet
+Source: http://nl.linux.org/~jelmer/ctrlproxy/ctrlproxy-%{version}.tar.gz
+Url: http://nl.linux.org/~jelmer/ctrlproxy
+Packager: Jelmer Vernooij <jelmer@nl.linux.org>
+Requires: lsb
+BuildRoot: /var/tmp/%{name}-buildroot
+
+%description
+ctrlproxy is an IRC server with multiserver support. It runs as a daemon
+and connects to a number of IRC servers, then allows you to connect from
+a workstation and work as the user that is logged in to the IRC server.
+After you disconnect, it maintains the connection to the server. It acts
+like any normal IRC server, so you can use any IRC client to connect to
+it. It supports multiple client connections to one IRC server (under the
+same nick), allowing you to connect to IRC using your IRC nick, even
+while you have an IRC session open somewhere else. It supports logging
+(in the same format as the irssi IRC client), password authentication,
+and ctcp (in case no clients are connected).
+
+%prep
+%setup -q
+
+%build
+PREFIX=/usr make
+
+%install
+rm -rf $RPM_BUILD_ROOT
+mkdir $RPM_BUILD_ROOT
+DESTDIR=$RPM_BUILD_ROOT PREFIX=/usr make install
+
+%clean
+rm -rf $RPM_BUILD_ROOT
+
+%files
+%defattr(-,root,root)
+%doc AUTHORS ChangeLog COPYING TODO PLAN-2 PLAN-4 README
+%dir /usr/bin
+/usr/bin/*
+%dir /usr/share/man
+/usr/share/man/*
+%dir /usr/lib/ctrlproxy
+/usr/lib/ctrlproxy/*
+%dir /usr/include
+/usr/include/*

@@ -1,0 +1,602 @@
+<chapter id="functions">
+	<title>API</title>
+
+	<para>This chapter describes the functions that are available for 
+	third-party plugin writers.</para>
+
+<sect1><title>Main structs</title>
+
+	 <mediaobject>
+	    <imageobject role="html">
+	      <imagedata format="PNG" align="center" fileref="overview.png"/>
+        </imageobject>
+	 	<imageobject role="fo">
+		  <imagedata format="EPS" align="center" fileref="overview.eps"/>
+	 	</imageobject>
+     </mediaobject>
+
+	<sect2><title>struct client</title>
+
+<programlisting>
+struct client {
+	struct network *network;
+	char authenticated;
+	struct transport_context *incoming;
+	time_t connect_time;
+};
+</programlisting>
+
+	<para>Describes one single client connection to ctrlproxy. </para>
+
+	<variablelist>
+		<varlistentry><term>struct network *network</term>
+			<listitem><para>Pointer to network struct this client belongs to. </para></listitem>
+		</varlistentry>
+
+		<varlistentry><term>char authenticated</term>
+			<listitem><para>Indicates whether the client has been authenticated 
+					by ctrlproxy. (By sending the correct <quote>PASS ...</quote> line). If set to 0, the client has not been authenticated, if set to 1, the client has been successfully authenticated. A value of 2 means the client has disconnected.</para></listitem>
+		</varlistentry>
+
+		<varlistentry><term>struct transport_context *incoming</term>
+			<listitem><para>Transport context to be used to communicate with the client.</para></listitem>
+		</varlistentry>
+
+		<varlistentry><term>time_t connect_time</term>
+			<listitem><para>Contains unix timestamp of the moment the client 
+					did its initial connect. This field is used to kick clients that have not authenticated after one minute.</para></listitem>
+		</varlistentry>
+	</variablelist>
+
+	</sect2>
+
+	<sect2><title>struct network</title>
+	
+		<programlisting>
+struct network { 
+	xmlNodePtr xmlConf;
+	char modes[255];
+	xmlNodePtr servers;
+	char *hostmask;
+	GList *channels;
+	char authenticated;
+	GList *clients;
+	xmlNodePtr current_server;
+	xmlNodePtr listen;
+	char *supported_modes[2];
+	char **features;
+	struct transport_context *outgoing;
+	struct transport_context **incoming;
+};
+</programlisting>
+
+	<para>Describes an IRC network that ctrlproxy is connected to.</para>
+
+	<variablelist>
+	<varlistentry><term>xmlNodePtr xmlConf;</term>
+		<listitem><para>Points to XML node with configuration for this network.</para></listitem>
+	</varlistentry>
+
+	<varlistentry><term>char modes[255];</term>
+		<listitem><para>Array with modes of the user on this network. For modes that have been set, the index in this array has been set to 1. The rest of the array is set to 0. </para>
+
+			<para>For example, if mode <quote>i</quote>(invisible) is set on this user, <quote>modes['i']</quote> is set to 1.</para>
+		</listitem></varlistentry>
+
+		<varlistentry><term>xmlNodePtr servers;</term>
+			<listitem><para>Pointer to XML node &lt;servers&gt; for this server.</para></listitem></varlistentry>
+		
+	<varlistentry><term>char *hostmask;</term>
+		<listitem><para>Hostmask that ctrlproxy uses to communicate to the server.</para></listitem>
+	</varlistentry>
+	
+	<varlistentry><term>GList *channels;</term>
+		<listitem><para>List of <quote>struct channel</quote> pointers 
+				with channels the user has joined on this network.</para></listitem>
+	</varlistentry>
+
+	<varlistentry><term>char authenticated;</term>
+		<listitem><para>Indicates whether the connection to this network is 
+				established. It is set to true after a 004 message has been 
+				received.</para></listitem>
+	</varlistentry>
+			
+	<varlistentry><term>GList *clients;</term>
+		<listitem><para>List of <quote>struct client</quote> pointers 
+				with all the clients that have connected to ctrlproxy 
+				for this network.</para></listitem>
+	</varlistentry>
+
+	<varlistentry><term>xmlNodePtr current_server;</term>
+		<listitem><para>Pointer to XML node that contains the configuration 
+				data of the current server ctrlproxy is connected to for 
+				this network.</para></listitem>
+	</varlistentry>
+	<varlistentry><term>xmlNodePtr listen;</term>
+		<listitem><para>Pointer to XML node &lt;listen&gt;.</para></listitem>
+	</varlistentry>
+	
+	<varlistentry><term>char *supported_modes[2];</term>
+		<listitem><para>Contains 2 arrays of modes that is supported by the remote server. This list is sent by the server after the connection has just been set-up.</para></listitem>
+	</varlistentry>
+	
+	<varlistentry><term>char **features;</term>
+		<listitem><para>Array of options supported by the server. Same format as unix environment variables, though a value is not required.</para></listitem>
+	</varlistentry>
+
+	<varlistentry><term>struct transport_context *outgoing;</term>
+		<listitem><para>Transport context to use to communicate with the remote
+				server.</para></listitem>
+	</varlistentry>
+	
+	<varlistentry><term>struct transport_context **incoming;</term>
+		<listitem><para>List with transport contexts for the clients that 
+				are currently connected to ctrlproxy for this server.</para></listitem>
+	</varlistentry>
+</variablelist>
+</sect2>
+
+</sect1>
+		
+<sect1><title>State data</title>
+
+<para>This section covers everything related to the current (known) state information of the network the user is on.</para>
+
+<sect2><title>struct nick</title>
+
+<programlisting>
+struct nick {
+	char *name;
+	char mode;
+};
+</programlisting>
+
+<para>Covers one nick in a certain channel. Mode is either a space, indicating 
+the user has no special rights, a '@' if the user is an operator or a '+' if
+the user has voice.</para>
+
+</sect2>
+
+<sect2><title>struct channel</title>
+
+<programlisting>
+struct channel {
+	xmlNodePtr xmlConf;
+	char *topic;
+	char mode; 
+	char *modes[255];
+	char introduced;
+	long limit;
+	char *key;
+	GList *nicks;
+};
+</programlisting>
+
+<para>Covers one channel at a certain network that the user is currently on. Here is a small list with explanation of the various fields.</para>
+
+<variablelist>
+	<varlistentry><term>xmlNodePtr xmlConf</term>
+		<listitem><para>Pointer to XML node describing this channel.</para></listitem>
+	</varlistentry>
+
+	<varlistentry><term>char mode</term>
+		<listitem><para>Indicates whether the channel is private or secret. </para></listitem>
+	</varlistentry>
+
+	<varlistentry><term>char *topic</term>
+		<listitem><para>Pointer to string containing the topic of this channel. NULL if no topic has been set or if the topic is unknown.</para></listitem></varlistentry>
+		
+	<varlistentry><term>char *modes[255]</term>
+		<listitem><para>Modes that have been set on this channel. FIXME</para></listitem></varlistentry>
+	<varlistentry><term>char introduced</term>
+		<listitem><para>Reserved for use by replication functions. Private. Do not use.</para></listitem></varlistentry>
+	<varlistentry><term>long limit</term>
+		<listitem><para>Maximum number of users on the channel. 0 means no limit has been set.</para></listitem></varlistentry>
+	<varlistentry><term>char *key</term>
+		<listitem><para>Key users have to enter to enter the channel. If no key is required, this field is set to NULL.</para></listitem></varlistentry>
+	<varlistentry><term>GList *nicks</term>
+		<listitem><para>List of <quote>struct nick</quote>, one for each user that is joined to the channel.</para></listitem></varlistentry>
+</variablelist>
+	
+	</sect2>
+	<sect2><title>find_channel()</title>
+
+	<programlisting>
+struct channel *find_channel(struct network *st, char *name);
+	</programlisting>
+
+	<para>Returns a pointer to the struct of the channel with the specified name on the specified network. Returns NULL if no channel struct was found.</para>
+
+	<para>Note that this function only works for channels the user has currently used.</para>
+
+	</sect2>
+
+	<sect2><title>find_nick()</title>
+
+	<programlisting>
+struct nick *find_nick(struct channel *c, char *name);
+	</programlisting>
+
+	<para>Find data pointer to <quote>struct nick</quote> of the user with the specified name on the specified channel.</para>
+
+	<para>If the user was not found, NULL is returned.</para>
+
+	</sect2>
+
+	<sect2><title>gen_replication()</title>
+
+	<programlisting>
+GSList *gen_replication(struct network *s);
+	</programlisting>
+
+	<para>Generates double-linked list of strings that need to be send 
+		to a client to give it a good view of the channels that have been joined, the users on those channels and the modes of those channels.</para>
+
+	</sect2>
+
+	<sect2><title>default_replicate_function</title>
+
+	<programlisting>
+void default_replicate_function (struct network *, struct transport_context *);
+extern void (*replicate_function) (struct network *, struct transport_context *);
+	</programlisting>
+
+	<para>Default replication function. What this basically does is sending 
+		the strings returned by gen_replication() to the specified transport_context.</para>
+
+	</sect2>
+</sect1>
+
+<sect1><title>Maintaining the main process</title>
+
+<programlisting>
+extern GList *networks;
+extern xmlNodePtr xmlNode_networks, xmlNode_plugins;
+extern GList *plugins;
+extern xmlDocPtr configuration;
+extern GHookList data_hook; 
+</programlisting>
+
+<para>Pointers to various useful varables. The <parameter>xmlNode_*</parameter> variables point to 
+	the &lt;networks&gt; and &lt;plugins&gt; elements in the rc file.</para>
+
+<para><parameter>configuration</parameter> points to the top level XML document.</para>
+
+<para><parameter>data_hook</parameter> can be used to register a function that should be called whenever ctrlproxy receives or sends IRC messages.</para>
+
+<para><parameter>plugins</parameter> and <parameter>networks</parameter> contain 
+	lists to all <quote>struct plugin</quote>s and <quote>struct network</quote>s, respectively.</para>
+
+	<sect2><title>network_add_listen()</title>
+
+	<programlisting>
+void network_add_listen(struct network *, xmlNodePtr);
+	</programlisting>
+
+	<para>Add listener to specified network with configuration specified 
+	in xmlNodePtr.</para>
+
+	</sect2>
+
+	<sect2><title>save_configuration()</title>
+
+	<programlisting>
+void save_configuration();
+	</programlisting>
+
+	<para>Save the current state of the XML configuration of ctrlproxy 
+		to the same file it was loaded from.</para>
+
+	</sect2>
+
+	<sect2><title>load_plugin()</title>
+
+	<programlisting>
+gboolean load_plugin(xmlNodePtr);
+	</programlisting>
+
+	<para>Load plugin with specified configuration. xmlNodePtr should 
+		point to a &lt;plugin&gt; element.</para>
+
+	</sect2>
+
+	<sect2><title>unload_plugin()</title>
+
+	<programlisting>
+gboolean unload_plugin(struct plugin *);
+	</programlisting>
+
+	<para>Try to unload the specified plugin. Not all plugins support this at the moment. Returns TRUE if the unloading succeeded, FALSE otherwise. Failure of unloading may be caused by resources that are still in use.</para>
+	</sect2>
+
+	<sect2><title>plugin_loaded()</title>
+
+	<programlisting>
+gboolean plugin_loaded(char *name);
+	</programlisting>
+
+	<para>Returns TRUE if a plugin with the specified name was loaded.</para>
+</sect2>
+</sect1>
+
+<sect1><title>Transports</title>
+
+<programlisting>
+struct transport;
+struct transport_context;
+</programlisting>
+
+<sect2><title>register_transport()</title>
+
+<programlisting>
+void register_transport(struct transport *);
+</programlisting>
+
+<para>Register the specified transport. See <link linkend="transports">the next chapter</link> for details.</para>
+</sect2>
+
+<sect2><title>transport_connect()</title>
+
+<programlisting>
+struct transport_context *transport_connect(const char *name, xmlNodePtr p, receive_handler, disconnect_handler, void *data);
+</programlisting>
+
+<para>Connect using the transport with name <parameter>name</parameter> and configuration <parameter>p</parameter>. </para>
+
+<para>The receive_handler and disconnect_handler will be called when new data is
+	received and when the remote has disconnected, respectively. The <parameter>data</parameter> pointer will be passed to the disconnect and receive handlers.</para>
+
+</sect2>
+
+<sect2><title>transport_listen()</title>
+
+<programlisting>
+struct transport_context *transport_listen(const char *name, xmlNodePtr p, newclient_handler, void *data);
+</programlisting>
+
+<para>Listen for incoming connections using the transport with name <parameter>name</parameter>, which has configuration <parameter>p</parameter>.</para>
+
+<para>The newclient_handler will be called whenever a new client connects to the transport. <parameter>data</parameter> will be passed to it.</para>
+
+</sect2>
+
+<sect2><title>transport_free</title>
+
+<programlisting>
+void transport_free(struct transport_context *);
+</programlisting>
+
+<para>Disconnect the specified transport and free all data associated with it.</para>
+
+</sect2>
+
+<sect2><title>transport_write()</title>
+
+<programlisting>
+int transport_write(struct transport_context *, char *l);
+</programlisting>
+
+<para>Write specified line to the transport. <parameter>l</parameter> has to be null-terminated!</para>
+
+</sect2>
+
+<sect2><title>transport_set_disconnect_handler()</title>
+<programlisting>
+void transport_set_disconnect_handler(struct transport_context *, disconnect_handler);
+typedef void (*disconnect_handler) (struct transport_context *, void *data);
+</programlisting>
+
+<para>Set function to call when the remote closes the transport.</para>
+
+</sect2>
+
+<sect2><title>transport_set_receive_handler()</title>
+
+<programlisting>
+void transport_set_receive_handler(struct transport_context *, receive_handler);
+typedef void (*receive_handler) (struct transport_context *, char *l, void *data);
+</programlisting>
+
+<para>Set function to call when new data is received on the socket. <parameter>l</parameter> will be a null-terminated string.</para>
+
+</sect2>
+
+<sect2><title>transport_set_newclient_handler()</title>
+
+<programlisting>
+typedef void (*newclient_handler) (struct transport_context *, struct transport_context *, void *data);
+void transport_set_newclient_handler(struct transport_context *, newclient_handler);
+</programlisting>
+
+<para>Set function to call whenever a new client connects to the specified (listening) transport context.</para>
+
+</sect2>
+
+<sect2><title>transport_set_data()</title>
+
+<programlisting>
+void transport_set_data(struct transport_context *, void *);
+</programlisting>
+
+<para>Set user data to pass to the various callback functions (receive_handler, disconnect_handler, newclient_handler).</para>
+
+</sect2>
+</sect1>
+
+<sect1><title>Line parsing/creation/handling</title>
+
+	<para>These functions all have to do with manipulating line structs.
+		Pretty much all internal functions of ctrlproxy work with these 
+		instead of manipulating plain strings.</para>
+
+<programlisting>
+struct line {
+	enum data_direction direction;
+	int options;
+	struct network *network;
+	struct client *client;
+	const char *origin;
+	char **args; /* NULL terminated */
+	size_t argc;
+};
+
+/* for the options fields */
+#define LINE_IS_PRIVATE      1 
+#define LINE_DONT_SEND       2 
+#define LINE_STOP_PROCESSING 4
+
+enum data_direction { UNKNOWN = 0, TO_SERVER = 1, FROM_SERVER = 2 };
+</programlisting>
+
+<variablelist>
+	<varlistentry><term>enum data_direction direction;</term>
+		<listitem><para>Direction of this line. A value of TO_SERVER means it's going to the server, FROM_SERVER means it's coming from a remote IRC server. UNKNOWN is used in cases where the direction is not known.</para></listitem>
+	</varlistentry>
+	<varlistentry><term>int options;</term>
+		<listitem><para>Sum of one of LINE_IS_PRIVATE, LINE_DONT_SEND and LINE_STOP_PROCESSING. LINE_IS_PRIVATE means this line was send by a client and should not be sent to the other clients. LINE_DONT_SEND should be used to tell ctrlproxy to not send this line to its destination (either client or server). LINE_STOP_PROCESSING will stop further filtering of the line.</para>
+		</listitem>
+	</varlistentry>
+	<varlistentry><term>struct network *network;</term>
+		<listitem><para>Points to the network this line came from or is going to.</para></listitem>
+	</varlistentry>
+	<varlistentry><term>struct client *client;</term>
+		<listitem><para>Points to the client this line came from, if any. Set to NULL if unknown.</para></listitem>
+	</varlistentry>
+	<varlistentry><term>const char *origin;</term>
+		<listitem><para>Hostmask of the user who sent the message. NULL if unknown.</para></listitem>
+	</varlistentry>
+	<varlistentry><term>char **args;</term>
+		<listitem><para>IRC arguments/commands in an array. Last element is set to NULL.</para></listitem>
+	</varlistentry>
+	<varlistentry><term>size_t argc;</term>
+		<listitem><para>Contains number of arguments/commands in <parameter>args</parameter>.</para></listitem>
+	</varlistentry>
+</variablelist>
+
+<sect2><title>linedup()</title>
+
+<programlisting>
+struct line *linedup(struct line *l);
+</programlisting>
+<para>Duplicate the given line struct.</para>
+
+</sect2>
+
+<sect2><title>irc_parse_line()</title>
+
+<programlisting>
+struct line * irc_parse_line(char *data);
+</programlisting>
+<para>Takes a string as sent by an IRC client or an IRC server and generates 
+	a struct line.</para>
+</sect2>
+
+<sect2><title>virc_parse_line()</title>
+
+<programlisting>
+struct line * virc_parse_line(char *origin, va_list ap);
+struct line *irc_parse_line_args( char *origin, ... );
+gboolean irc_send_args(struct transport_context *, ...);
+</programlisting>
+<para>Generates a line struct with the hostmask specified in <parameter>origin</parameter> or NULL if none should be set.</para>
+
+<para>For virc_parse_line(), the <parameter>ap</parameter> should be a list of strings 
+	that are each that are a seperate part of the IRC line. The last argument 
+should be NULL to indicate the end of the list.</para>
+
+<para>irc_parse_line_args() is similar to virc_parse_line(), except that now the commands don't need to be passed in a <parameter>va_list</parameter>, but can be passed as arguments.</para>
+
+<para>irc_send_args() sends the specified commands, terminated by a NULL to the specified transport_context.</para>
+
+</sect2>
+
+<sect2><title>irc_line_string()</title>
+
+<programlisting>
+char *irc_line_string(struct line *l);
+char *irc_line_string_nl(struct line *l);
+</programlisting>
+<para>Generate a string representation of a line struct in the format used 
+	by IRC clients and servers.</para>
+
+<para>irc_Line_string_nl() is similar to irc_line_string(), except that it 
+	adds a newline and a carriage-return to the string (\r\n).</para>
+
+</sect2>
+
+<sect2><title>line_get_nick()</title>
+
+<programlisting>
+char *line_get_nick(struct line *l);
+</programlisting>
+<para>Get the nick name of the user that sent <parameter>l</parameter> or 
+	NULL if the nick name was unknown.</para>
+
+</sect2>
+
+<sect2><title>free_line()</title>
+
+<programlisting>
+void free_line(struct line *l);
+</programlisting>
+<para>Free all data associated with <parameter>l</parameter>.</para>
+
+</sect2>
+
+<sect2><title>irc_sendf()</title>
+
+<programlisting>
+gboolean irc_sendf(struct transport_context *, char *fmt, ...);
+struct line *irc_parse_linef( char *fmt, ... );
+</programlisting>
+<para>irc_sendf() sends the specified transport_context a IRC line. fmt 
+	is a printf-like string and the remaining arguments correspond to 
+	the data in <parameter>fmt</parameter>. See the printf manpage for details.</para>
+
+<para>irc_parse_linef() is similar, but instead of sending the string it generates a struct line and returns it.</para>
+
+</sect2>
+
+<sect2><title>irc_send_line()</title>
+
+<programlisting>
+int irc_send_line(struct transport_context *, struct line *l);
+</programlisting>
+<para>Send the specified line to the specified transport_context. </para>
+
+</sect2>
+
+<sect2><title>clients_send()</title>
+
+<programlisting>
+void clients_send(struct network *, struct line *, struct transport_context *exception);
+</programlisting>
+<para>Send the specified line to all clients on the specified network, except for the client with transport_context <parameter>exception</parameter>. <parameter>exception</parameter> can be NULL.</para>
+
+</sect2>
+
+</sect1>
+
+<sect1><title>General purpose functions</title>
+	<sect2><title>list_make_string()</title>
+
+	<programlisting>
+char *list_make_string(char **l);
+	</programlisting>
+	<para>Creates a string with all the elements in string array <parameter>l</parameter>, seperated by spaces. The last element in <parameter>l</parameter> should be NULL.</para>
+
+	</sect2>
+
+	<sect2><title>xmLFindChildByName()</title>
+
+	<programlisting>
+xmlNodePtr xmlFindChildByName(xmlNodePtr parent, const xmlChar *name);
+	</programlisting>
+	<para>Find a child node of the XML node <parameter>parent</parameter> that is an element with name <parameter>name</parameter> and return the xml Node pointer of it. </para>
+
+	<para>Returns NULL if no such child was found.</para>
+
+	</sect2>
+</sect1>
+
+</chapter>

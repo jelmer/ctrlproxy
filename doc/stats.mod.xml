@@ -1,0 +1,61 @@
+<ctrlproxy:module name="stats"
+	xmlns:ctrlproxy="http://ctrlproxy.vernstok.nl/common">
+	<modulemeta>
+		<description>Stats generation</description>
+		<version>0.1</version>
+		<author>Jelmer Vernooij</author>
+		<homepage>http://jelmer.vernstok.nl/ctrlproxy/</homepage>
+		<requirements>tdb, pcre(optional)</requirements>
+	</modulemeta>
+
+	<description>
+	<para>This module keeps track of the number of times a certain 
+	expression is used and stores that data in a TDB-file. This 
+	TDB file can be read later with the <command>printstats</command> 
+	utility.</para>
+
+	<para>Expressions should be Perl-compatible regexes whenever pcre 
+	is found, normal regular expressions when only the POSIX regex 
+	functions are found. If no regex functionality was found, 
+	just 'plain' text should be specified.</para>
+	</description>
+
+	<configuration>
+		<element name="tdbfile">
+			<description>Location of TDB file to store statistics in. <filename>$HOME/.ctrlproxy-stats.tdb</filename> is used when none is specified.</description>
+		</element>
+		<element name="pattern">
+			<description>Pattern to search for and keep track of.</description>
+			<attribute name="type">
+				<description>'Variable' to add up to whenever this pattern is used</description>
+			</attribute>
+		</element>
+	</configuration>
+
+	<example>
+		<![CDATA[
+		<ctrlproxy>
+			<plugin autoload="1" file="stats">
+				<tdbfile>/home/jelmer/.ctrlproxy-stats.tdb</tdbfile>
+				<pattern type="happy">[:;]([-]*)[\)D]</pattern>
+				<pattern type="unhappy">[:;]([-]*)[\/\(]</pattern>
+				<pattern type="foul">(shit|damn|fuck)</pattern>
+				<pattern type="question">\?([^ ]*)$</pattern>
+				<pattern type="exclamation">!([^ ]*)$</pattern>
+				<pattern type="lines">(.*)</pattern>
+				<pattern type="word">([^ ]+)</pattern>
+				<pattern type="caps">^([^a-z]+)$</pattern>
+				<pattern type="action">.ACTION .</pattern>
+				<pattern type="violent">.ACTION .*(mept|slaat|kickt|kicks|duwt|slaps)</pattern>
+			</plugin>
+			<plugin autoload="1" file="socket"/>
+	</plugins>
+	<networks>
+		<network autoconnect="1">
+			<servers><ipv4 host="irc.freenode.net"/></servers>
+			<channel name="#flood" autojoin="1"/>
+		</network>
+	</networks>
+	</ctrlproxy>
+	]]></example>
+</ctrlproxy:module>

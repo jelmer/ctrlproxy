@@ -1,0 +1,91 @@
+<chapter id="transports">
+<title>Transports</title>
+
+<para>Transports are ctrlproxy's own layer for sending and receiving data 
+in a way that is independant of the implementation underneath (IP, UNIX 
+sockets, etc). Since transports are aimed at IRC-only data, they work 
+with lines (<parameter>char *</parameter>) and not with lengths, etc. Data is 
+only passed to the main process when a complete line is in, not parts of it.
+</para>
+
+<para>Implementors of a certain transport backend should call 
+<command>register_transport()</command> with a pointer to 
+a <parameter>struct transport</parameter>. </para>
+
+<sect1><title>Transport contexts</title>
+
+<para>The following struct is passed to all transport functions. </para>
+
+<programlisting>
+struct transport_context {
+	struct transport *functions;
+	xmlNodePtr configuration;
+	void *data;
+	void *caller_data;
+	disconnect_handler on_disconnect;
+	receive_handler on_receive;
+	newclient_handler on_new_client;
+};
+</programlisting>
+
+<para>The <parameter>configuration</parameter> xmlNodePtr contains 
+configuration for this specific instance of the transport. The <parameter>data</parameter> pointer can be used by the transport to store instance-specific data. The three 'handler' functions should be called whenever one of these events occur. Please note that you have to check for available data yourself. See the 
+documentation about the main context in GLib for details on registering polling 
+and idle functions.</para>
+
+</sect1>
+
+<sect1><title>Functions to provide</title>
+
+<para>A transport struct should contain function pointers to the following 
+functions:</para>
+
+<variablelist>
+	<varlistentry><term>connect</term>
+	<listitem><para>This function should connect to a IRC server.</para></listitem>
+	</varlistentry>
+
+	<varlistentry><term>listen</term>
+		<listitem><para>This function should make the transport waiting for 
+	incoming connections.</para></listitem>
+	</varlistentry>
+
+	<varlistentry><term>write</term>
+		<listitem><para>Function to write/send the specified line using the transport.</para></listitem>
+	</varlistentry>
+
+	<varlistentry><term>close</term>
+	<listitem><para>Close (if necessary) any outstanding ports, file handles, etc. This function is always called before a transport is freed.</para></listitem>
+	</varlistentry>
+	</variablelist>
+
+	<para>Each of the function pointers listed above can be set to NULL, 
+	to indicate that the function is not implemented.</para>
+	
+</sect1>
+
+<sect1><title>Callbacks to call</title>
+
+	<para>
+	The following callbacks, which are listed in transport_context should be called by your transport. The <quote>data</quote> argument in all of these 
+	calls should be the <quote>callerdata</quote> member field 
+	of the struct transport_context.</para>
+
+	<variablelist>
+	<varlistentry><term>typedef void (*disconnect_handler) (struct transport_context *, void *data);</term>
+	<listitem><para>Called when the remote host closes the connection. </para></listitem>
+	</varlistentry>
+	
+	<varlistentry><term>typedef void (*receive_handler) (struct transport_context *, char *l, void *data);</term>
+	<listitem><para>Called when a new line with contents <quote>l</quote> has arrived.</para></listitem>
+	</varlistentry>
+
+	<varlistentry><term>typedef void (*newclient_handler) (struct transport_context *, struct transport_context *, void *data);</term>
+	<listitem><para>Function to be called when a new client has connected to 
+	the transport. The second argument contains a pointer to a new transport_context which can be used to talk to the new client.</para></listitem>
+	</varlistentry>
+	
+	</variablelist>
+</sect1>
+
+</chapter>

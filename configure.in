@@ -1,0 +1,65 @@
+# Process this file with autoconf to produce a configure script.
+
+AC_PREREQ(2.57)
+AC_INIT([ctrlgdb], [2.6-CVS], [jelmer@vernstok.nl])
+AC_CONFIG_SRCDIR([line.c])
+AC_CONFIG_HEADER([config.h])
+
+# Checks for programs.
+AC_PROG_CC
+AC_PROG_INSTALL
+
+BINS="ctrlproxy"
+MODS="liblog_irssi.so libctcp.so liblinestack_memory.so libauto-away.so libstrip.so libadmin.so libsocket.so libnoticelog.so libnickserv.so liblog_custom.so libantiflood.so librepl_simple.so librepl_command.so librepl_highlight.so liblinestack_file.so"
+SOCKET_OBJS="socket.o"
+
+# Checks for libraries.
+AC_CHECK_LIB([popt], [poptGetArg], , AC_MSG_ERROR([Popt is required]))
+
+PKG_CHECK_MODULES(PKG, libxml-2.0 glib-2.0 gmodule-2.0, , AC_MSG_ERROR([libxml and glib are required]))
+
+LIB_PCRE=""
+
+# Checks for header files.
+AC_HEADER_DIRENT
+AC_HEADER_STDC
+AC_HEADER_TIME
+AC_CHECK_LIB(pcre, pcre_compile, [ LIB_PCRE="-lpcre" ] )
+AC_CHECK_HEADERS([arpa/inet.h fcntl.h malloc.h netdb.h netinet/in.h stdlib.h string.h sys/ioctl.h sys/socket.h unistd.h popt.h tdb.h regex.h pcre.h openssl/ssl.h execinfo.h sys/time.h])
+
+SSL_LIB=""
+
+AC_CHECK_LIB(tdb, tdb_open, [ BINS="$BINS printstats"; MODS="$MODS libstats.so" ] )
+AC_CHECK_LIB(ssl, SSL_connect, [ SOCKET_OBJS="$SOCKET_OBJS network-openssl.o"; SSL_LIB="-lssl" ] )
+
+# Checks for typedefs, structures, and compiler characteristics.
+AC_C_CONST
+AC_TYPE_SIZE_T
+AC_STRUCT_TM
+AC_TYPE_UID_T
+
+# Checks for library functions.
+AC_FUNC_FORK
+AC_FUNC_MALLOC
+AC_FUNC_REALLOC
+AC_TYPE_SIGNAL
+
+# For the docs
+AC_PATH_PROG(XSLTPROC, xsltproc)
+AC_PATH_PROG(XMLTO, xmlto)
+AC_PATH_PROG(DIA, dia)
+AC_PATH_PROG(EPSTOPDF, epstopdf)
+
+AC_SUBST(BINS)
+AC_SUBST(MODS)
+AC_SUBST(SOCKET_OBJS)
+AC_SUBST(SSL_LIB)
+AC_SUBST(LIB_PCRE)
+AC_SUBST(DIA)
+AC_SUBST(EPSTOPDF)
+AC_CHECKING([which plugins to build])
+AC_MSG_RESULT(["$MODS"])
+AC_CHECK_FUNCS([gethostbyname gethostname memset mkdir socket strcasecmp strchr strdup strerror strncasecmp strstr uname dup2 backtrace_symbols gettimeofday strndup strrchr])
+
+AC_CONFIG_FILES([Makefile mods/Makefile ctrlproxy.spec ctrlproxy.pc doc/Makefile])
+AC_OUTPUT

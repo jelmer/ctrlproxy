@@ -1,0 +1,152 @@
+<chapter id="development">
+	<title>General</title>
+
+	<para>As has been said in the introduction, ctrlproxy 
+	is easily extendible. At the time of writing, there 
+	are nine modules available. </para>
+
+	<para>The simplest possible module would be:</para>
+
+	<programlisting>
+	<![CDATA[
+#include <ctrlproxy.h>
+
+gboolean init_plugin(struct plugin *p)
+{   
+	/* Do something */
+	return TRUE;
+}
+
+gboolean fini_plugin(struct plugin *p)
+{
+	/* Free my structures here */
+	return TRUE;
+}
+
+	]]>
+	</programlisting>
+
+	<para>The init_plugin function is called when the module is loaded. 
+	In this function, you should register whatever functions the module 
+	provides, such as a 'message handler' or a transport. You 
+	can use the <parameter>data</parameter> member of the 
+	plugin struct to store data for your plugin. This function 
+	should return a boolean: false when initialisation failed 
+	or true when it succeeded.</para>
+
+<para>THe fini_plugin function is called before the module is unloaded.
+	In this function, you should free the data structures your module is 
+	using and make sure there are no other pointers in ctrlproxy pointing 
+	to functions or data structures from your module. For example, 
+	unregister transports or hooks.</para>
+
+<para>The fini_plugin should return a boolean as well. This value should be 
+	true if the unloading may preceed, or false if there are reasons 
+	ctrlproxy should not attempt to unload the module (such as resources 
+	that are currently in use, etc).</para>
+
+	<sect1><title>Building and installing</title>
+
+	<para>A module is in fact a shared library that's loaded 
+	at run-time, when the program is already running. The <filename>.so</filename> file can compiled with a command like:</para>
+
+	<screen>
+<prompt>$ </prompt><userinput>gcc -shared -o foo.so input1.c input2.o input3.c</userinput>
+	</screen>
+
+	</sect1>
+
+	<sect1><title>Message handler functions</title>
+
+	<para>A message handling function is a function that is called 
+	whenever ctrlproxy receives an IRC message. The only argument 
+	this function should have would be a line struct. </para>
+
+	<para>Flags can be set on the line (the field in the struct 
+	to use is called 'options') to influence the handling 
+	of the packet by the rest of ctrlproxy. At the time of writing, 
+	the following two flags are available:</para>
+
+	<variablelist>
+		<varlistentry><term>LINE_DONT_SEND</term>
+		<listitem><para>Continue processing, but do not send this line.</para></listitem>
+		</varlistentry>
+
+		<varlistentry><term>LINE_STOP_PROCESSING</term>
+			<listitem><para>Immediately stop processing the line (passing it to other message handlers). Implemented as of version 2.5.</para></listitem>
+		</varlistentry>
+	</variablelist>
+
+	<para>There is one other option that can be specified, but is only 
+	useful when sending your own messages:</para>
+
+	<variablelist>
+		<varlistentry><term>LINE_IS_PRIVATE</term>
+		<listitem><para>Do not send this line to other 
+		clients currently connected.</para></listitem>
+		</varlistentry>
+	</variablelist>
+
+	<sect2><title>Registering a message handler</title>
+
+	<para>All IRC lines that ctrlproxy receives and sends are passed thru 
+		so-called 'filter functions'. These functions can do things based on 
+		the contents of these lines, change the lines or stop further 
+		processing of these lines. </para>
+
+	<para>To add a filter function, call 'add_filter'. To remove the filter 
+		function again (usually when your plugin is being unloaded) call 'del_filter'.</para>
+
+	<para>Example:</para>
+
+	<programlisting>
+...
+add_filter("my_module", my_message_handler);
+...
+	</programlisting>
+
+	<para>The prototype for the message handling function in the example 
+	above would look something like this:
+	</para>
+
+	<programlisting>
+static gboolean my_message_handler(struct line *l);
+	</programlisting>
+
+	<para>Your message handler should return TRUE if the rest of the filter 
+		functions should also see the message and FALSE if ctrlproxy should 
+		stop running filter functions on the given line struct.</para>
+
+	<note><para>These hooks are executed <emphasis>before</emphasis> 
+		the data as returned by find_channel() and find_nick() is updated</para>
+</note>
+
+	</sect2>
+
+	</sect1>
+
+	<sect1><title>Log functionality</title>
+
+	<para>Ctrlproxy uses GLib's logging functions. Read the related section in the GLib documentation for details.</para>
+
+	</sect1>
+
+	<sect1><title>Replication</title>
+
+	<para>The default replication function (default_replicate_function) of ctrlproxy is very basic. 
+	It only makes sure the client knows on which channels the user is, but 
+	does not do any replication of the messages that have been received.</para>
+
+	<para>To use your own replicate function instead, set the function pointer
+	<command>replicate_function</command> to your replicate function.</para>
+
+	<para>The prototype for a replicate function is:</para>
+
+	<programlisting>
+	void replicatef(struct network *s, struct transport_context *c);
+	</programlisting>
+
+	<para>The replication data should be sent to the specified transport_context.</para>
+	</sect1>
+
+</chapter>

@@ -1,0 +1,18 @@
+<ctrlproxy:module name="noticelog"
+	xmlns:ctrlproxy="http://ctrlproxy.vernstok.nl/common">
+	<modulemeta>
+		<description>Logging ctrlproxy messages via IRC</description>
+		<version>0.1</version>
+		<author>Jelmer Vernooij</author>
+		<homepage>http://jelmer.vernstok.nl/ctrlproxy/</homepage>
+	</modulemeta>
+
+	<description>
+		<para>This module sends all ctrlproxy log files to all 
+		connected clients using IRC NOTICE's.</para>
+
+		<para>Currently only messages from the main ctrlproxy process 
+			will be send as NOTICE's. Messages from plugins will be 
+			ignored.</para>
+	</description>
+</ctrlproxy:module>

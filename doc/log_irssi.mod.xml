@@ -1,0 +1,47 @@
+<ctrlproxy:module name="log_irssi"
+	xmlns:ctrlproxy="http://ctrlproxy.vernstok.nl/common">
+	<modulemeta>
+		<description>Irssi-style log files</description>
+		<version>0.1</version>
+		<author>Jelmer Vernooij</author>
+		<homepage>http://jelmer.vernstok.nl/ctrlproxy/</homepage>
+	</modulemeta>
+
+	<description>
+		<para>Module that logs IRC data to the specified file 
+		in the same format that the irssi(1) IRC client uses.</para>
+
+		<para>Each channel or nick gets it's own seperate log file, 
+		which is located in a directory with the name of the IRC 
+		network.</para>
+
+	</description>
+
+	<configuration>
+		<element name="logfile">
+			<description>Should specify a base path that log files 
+			are to be generated in. For each network, a subdirectory 
+			will be created in this directory.</description>
+		</element>
+	</configuration>
+
+	<example>
+		<![CDATA[
+		<ctrlproxy>
+			<plugins>
+				<plugin autoload="1" file="log_irssi">
+					<logfile>/home/jelmer/log/ctrlproxy</logfile>
+				</plugin>
+				<plugin autoload="1" file="socket"/>
+			</plugins>
+
+			<networks>
+				<network name="OFTC">
+					<servers><ipv4 host="irc.oftc.net"/></servers>
+					<channel name="#flood"/>
+				</network>
+			</networks>
+		</ctrlproxy>
+		]]>
+	</example>
+</ctrlproxy:module>

@@ -1,0 +1,20 @@
+<ctrlproxy:module name="repl_memory"
+	xmlns:ctrlproxy="http://ctrlproxy.vernstok.nl/common">
+	<modulemeta>
+		<description>Replication from memory</description>
+		<version>0.1</version>
+		<author>Jelmer Vernooij</author>
+		<homepage>http://jelmer.vernstok.nl/ctrlproxy/</homepage>
+	</modulemeta>
+
+	<description>
+		<para>Sends all messages to a new client that were sent since the 
+		last time the user wrote something.
+		</para>
+
+		<para>The messages are stored in memory.</para>
+
+		<note><para>Note: If you don't IRC very often and you're on very active channels, this module might use up too much memory for you.</para></note>
+	</description>
+
+</ctrlproxy:module>

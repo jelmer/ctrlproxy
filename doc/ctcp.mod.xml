@@ -1,0 +1,30 @@
+<ctrlproxy:module name="ctcp"
+	xmlns:ctrlproxy="http://ctrlproxy.vernstok.nl/common">
+	<modulemeta>
+		<description>Standard CTCP module</description>
+		<version>0.1</version>
+		<author>Jelmer Vernooij</author>
+		<homepage>http://jelmer.vernstok.nl/ctrlproxy/</homepage>
+	</modulemeta>
+
+	<description>
+		<para>Simple CTCP module that implements some basic CTCP commands.
+		Use for this module is having CTCP support available when there 
+		is no client connected that can answer CTCP queries and providing 
+		the ability to detect ctrlproxy. 
+		</para>
+
+		<para>The following CTCP commands are supported:</para>
+
+		<simplelist>
+		<member>VERSION</member>
+		<member>TIME</member>
+		<member>FINGER</member>
+		<member>SOURCE</member>
+		<member>CLIENTINFO</member>
+		<member>PING</member>
+		</simplelist>
+		
+	</description>
+
+</ctrlproxy:module>

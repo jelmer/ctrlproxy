@@ -1,0 +1,3 @@
+This directory contains a very basic example module for ctrlproxy. 
+It only requires ctrlproxy.h and the ctrlproxy binary to be installed.
+Please read the Ctrlproxy manual for details on ctrlproxy hacking.

@@ -1,20 +1,63 @@
-nick = ctrlproxy
-logfile = /home/jelmer/log/%s/%s
-modules = mods/log.so mods/client_simple.so
-clientpass = secret
+<?xml version="1.0"?>
+<ctrlproxy>
+	<plugins>
+		<plugin autoload="1" file="/home/jelmer/ctrlproxy/mods/libsocket">
+			<sslcertfile>./ctrlproxy.pem</sslcertfile>
+			<sslkeyfile>./ctrlproxy.pem</sslkeyfile>
+		</plugin>
+		<plugin autoload="1" file="/home/jelmer/ctrlproxy/mods/librepl_memory"/>
+		<plugin autoload="1" file="/home/jelmer/ctrlproxy/mods/libadmin"/>
+		<plugin autoload="1" file="/home/jelmer/ctrlproxy/mods/liblog_irssi">
+			<logfile>/home/jelmer/tmp/ctrlproxy</logfile>
+		</plugin>
+		<plugin autoload="1" file="/home/jelmer/ctrlproxy/mods/libctcp"/>
+		<plugin autoload="1" file="/home/jelmer/ctrlproxy/mods/libstrip"/>
+		<plugin autoload="1" file="/home/jelmer/ctrlproxy/mods/libnickserv"/>
+		<plugin autoload="1" file="/home/jelmer/ctrlproxy/mods/libantiflood"/>
+		<plugin autoload="1" file="/home/jelmer/ctrlproxy/mods/libauto-away">
+			<message time="300">"I'm currently away, sorry!</message>
+		</plugin>
+		<plugin file="/home/jelmer/ctrlproxy/mods/libstats">
+			<tdbfile>/home/jelmer/.ctrlproxy-stats.tdb</tdbfile>
+			<pattern type="happy">[:;]([-]*)[\)D]</pattern>
+			<pattern type="unhappy">[:;]([-]*)[\/\(]</pattern>
+			<pattern type="question">\?([^ ]*)$</pattern>
+			<pattern type="exclamation">!([^ ]*)$</pattern>
+			<pattern type="lines">(.*)</pattern>
+			<pattern type="word">([^ ]+)</pattern>
+			<pattern type="caps">^([^a-z]+)$</pattern>
+			<pattern type="action">.ACTION .</pattern>
+		</plugin>
+	</plugins>
+	<networks>
+		<network autoconnect="1" client_pass="secret" name="BEE" replication="memory">
+			<listen>
+				<ipv4 port="8004"/>
+			</listen>
+			<servers>
+				<pipe>
+					<path>/usr/sbin/bitlbee</path>
+				</pipe>
+			</servers>
+		</network>
+		<network autoconnect="1" client_pass="secret" name="OFTC" nick="jelmer" username="jelmer" fullname="Jelmer Vernooij">
+			<listen>
+				<ipv4 port="6667"/>
+				<ipv4 port="7667" ssl="1"/>
+			</listen>
 
-[oftc]
-host = irc.oftc.net
-autojoin = #ctrlproxy
-clientport = 6676
-# I don't want to be named ctrlsoft on this network
-nick = jelmer
+			<servers>
+				<ipv4 host="irc.freenode.net"/>
+			</servers>
+			<channel name="#ctrlproxy" autojoin="1"/>
+			<autosend>PRIVMSG ctrlsoft :Hi There, I'm using ctrlproxy!</autosend>
+			<channel name="#flood" autojoin="1"/>
+			<channel name="#bla" autojoin="0"/>
 
-[opn]
-host = irc.freenode.net
-autojoin = #ctrlproxy,#samba
-clientport = 6677
-
-[inu]
-host = irc.internetnu.nl
-clientport = 6675
+			<!-- Automatically send IDENTIFY and GHOST messages when necessary -->
+			<nickserv>
+				<nick name="jelmer" password="foobar"/>
+			</nickserv>
+		</network>
+	</networks>
+</ctrlproxy>

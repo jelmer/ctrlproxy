@@ -1,0 +1,87 @@
+Ctrlproxy 2.6:
+ * Ad linestack support
+ * Split repl_memory into linestack_memory and repl_simple
+ * ADd repl_command
+ * Added function plugin_loaded()
+ * Admin commands can now be executed by /CTRLPROXY
+ * Executing admin commands by sending them to the nick 'ctrlproxy' is now
+ optional
+
+Ctrlproxy 2.5:
+ * Added configuration example for log_custom
+ * Fixed log_custom (works correct and with multiple files now!)
+ * Fix in personal nick MODE replication
+ * Fix bug in ignore_first_nickchange
+ * Add DIE command to admin module
+ * Correctly handle MODE +o and +v
+ * Correctly disconnect from server on exit
+ * Only add mode if mode is either @ or + in replication
+ * Sockets are now correctly closed when exiting
+ * Fix double loading bug in stats module
+ * Add ability to ignore first NICK command the user executes
+ * Fix daemon mode
+ * Print backtrace on crash
+ * Fix parsing of MODE +b and -b
+ * Add antiflood module
+ * Add function to unregister transports
+ * Add log_custom module that can be used for logging in a self-defined
+ format.
+ * Update plugin API to include data pointer that can be used by backend
+ * Add fini_plugin() function to all modules (RELOADMODULE and UNLOADMODULE
+    should work correctly now)
+ * Fix bug in strip.c when client disconnects before answer to query arrives
+ * Don't send MODE if nothing set
+ * Fix synchronisation bug in strip module
+ * Support multiple arguments to KICK
+ * Add nickserv module
+ * Add support to log_irssi for TOPIC, QUIT, NICK and KICK
+ * Fix support in log_irssi for MODE
+ * Fix bug where xchat does not show first letter of last argument
+ * Fix documentation build and installation system
+ * Fix bug in reconnect after the connection to the server was lost
+ * Only send PRIVMSG and NOTICE messages to fellow clients
+ * Don't crash when nick can't be found in channel when setting MODE
+
+Ctrlproxy 2.4:
+ * Better handling of comma-seperated arguments (e.g. multiple channels 
+   for JOIN or PART)
+ * Support listening on IPv6
+ * Support MODE
+ * Handle own nick changes correctly
+ * Add logging support to admin module
+ * Implement admin module
+ * Handle disconnected clients more cleanly
+ * Listening on multiple ports is now possible
+ * Client SSL support added
+ * Add first docs
+ * Do smart rebinding to ports to prevent 'address in use' errors
+   (SO_REUSEADDR)
+ * Server SSL support added
+ * Don't freak out on errors when JOINing or PARTing channels
+ * Send 'real' list of supported MODE's
+ * Cleanups in headers and functions
+ * Support channel keys
+ * Support environment variable MODULESDIR
+
+Ctrlproxy 2.3:
+ * Use general glib functions to retrieve homedir, username and fullname
+   instead of getenv() and getpwuid()
+ * Improve Makefile
+ * Throw out debian directory (maintained downstream now)
+ * Don't echo nick when changing it to exactly the same nick
+ * Several segfaults have been fixed
+ * Direct interfacing with inetd-style IRC servers
+ * Added stats module, which logs the frequency of certain patterns in a tdb 
+   database
+ * Added printstats utility that prints contents of tdb database
+ * Added strip module that prevents responses to a query from one client 
+   to go to all clients
+ * New interface for 'transports', and migrated transport-specific stuff 
+   (TCP/IP) to seperate module
+ * Added DTD file for ctrlproxyrc file
+ * Added example stats PHP script
+ * Support saving configuration when receiving USR1 signal.
+ * Added autoconf support
+
+Ctrlproxy previously didn't have a ChangeLog file, check CVS history 
+for the changes.

@@ -1,0 +1,71 @@
+<chapter id="introduction">
+	<title>Introduction</title>
+
+	<sect1>
+		<title>Why ctrlproxy?</title>
+
+<para>
+CtrlProxy is a project I started because I got bored with running irssi in 
+screen on my server. My server isn't very fast and that meant 
+when it was on high load ircing was getting pretty hard. I could 
+of course run irssi on my workstation, but my workstation isn't on 
+24/7 and some people depend on the channel logs I generate.
+</para>
+
+<para>
+The structure of ctrlproxy is very modular and it is easily extendible.
+</para>
+
+</sect1>
+
+<sect1><title>What is ctrlproxy?</title>
+
+	<para>Ctrlproxy is a so-called IRC proxy or BNC (bouncer). It keeps a 
+		permanent connection to one or more IRC servers. The user can then 
+		connect and disconnect his/her IRC client to the bouncer without actually disconnecting from the 'real' IRC server.</para>
+
+	 <mediaobject>
+	    <imageobject role="html">
+		      <imagedata format="PNG" align="center" fileref="overview2.png"/>
+        </imageobject>
+		<imageobject role="fo">
+			<imagedata format="EPS" align="center" fileref="overview2.eps"/>
+		</imageobject>
+	</mediaobject>
+	
+</sect1>
+
+<sect1><title>Features</title>
+
+<itemizedlist>
+	<listitem><para>Connect to one server with many clients under one nick transparently</para></listitem>
+ <listitem><para>Connect to multiple servers using only one process</para></listitem>
+ <listitem><para>CTCP support when no client is attached</para></listitem>
+ <listitem><para>irssi-style logging support</para></listitem>
+ <listitem><para>Transparent detaching and attaching of clients</para></listitem>
+ <listitem><para>Password support</para></listitem>
+ <listitem><para>Replication support (from memory)</para></listitem>
+ <listitem><para>Auto-Away support</para></listitem>
+ <listitem><para>Keeping track of events occuring </para></listitem>
+ <listitem><para>Direct, inetd-style interfacing with local IRC servers (such as bitlbee)</para></listitem>
+ <listitem><para>Responses to queries are only sent to the originator of the query</para></listitem>
+ <listitem><para>SSL support</para></listitem>
+</itemizedlist>
+
+</sect1>
+
+<sect1>
+	<title>Requirements</title>
+
+<itemizedlist>
+	<listitem><para>libpopt</para></listitem>
+	<listitem><para>GNU glib</para></listitem>
+	<listitem><para>libxml2</para></listitem>
+</itemizedlist>
+
+	<para>Some of the modules have additional requirements. Read the 
+	chapters about those specific modules for details.</para>
+
+</sect1>
+
+</chapter>
