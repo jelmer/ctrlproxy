@@ -14,6 +14,11 @@ AC_CHECK_LIB(ssl, SSL_connect, [ SOCKET_OBJS="$SOCKET_OBJS openssl.o"; SSL_LIB="
 dnl gnutls
 AC_PATH_PROG(gnutls_config, libgnutls-config, no)
 
+dnl Mozilla NSS
+PKG_CHECK_MODULES(NSS, mozilla-nss, 
+	[ AC_DEFINE(HAVE_NSS,yes,[mozilla-nss])
+	  SOCKET_OBJS="$SOCKET_OBJS nss.o"; ])
+
 
 if test "$gnutls_config" != "no" && test "`libgnutls-config --version | cut -f 1 -d .`" = "1"; then
 	CFLAGS="$CFLAGS `$gnutls_config --cflags`"

@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2004 Jelmer Vernooij
+    Copyright (C) 2003-2004 Jelmer Vernooij
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -25,33 +25,15 @@
 #include "gettext.h"
 #define _(s) gettext(s)
 
-#include <gnutls/gnutls.h>
-#include <gnutls/extra.h>
-#include <gnutls/x509.h>
-
-#define DH_BITS 1024
+#include <nspr.h>
+#include <nss.h>
+#include <ssl.h>
+#include <sslerr.h>
+#include <sslproto.h>
 
 #undef G_LOG_DOMAIN
-#define G_LOG_DOMAIN "gnutls"
+#define G_LOG_DOMAIN "nss"
 
-static gnutls_certificate_credentials xcred;
-
-static gnutls_dh_params dh_params;
-
-static int generate_dh_params(void) {
-
-	/* Generate Diffie Hellman parameters - for use with DHE
-	 * kx algorithms. These should be discarded and regenerated
-	 * once a day, once a week or once a month. Depending on the
-	 * security requirements.
-	 */
-	gnutls_dh_params_init( &dh_params);
-	gnutls_dh_params_generate2( dh_params, DH_BITS);
-
-	return 0;
-}
-
-/* gnutls i/o channel object */
 typedef struct
 {
 	GIOChannel pad;
@@ -61,72 +43,35 @@ typedef struct
 	gboolean isserver;
 	gnutls_x509_crt cert;
 	char secure;
-} GIOTLSChannel;
+} GIONSSChannel;
 
-static GIOStatus g_io_gnutls_error(gint e)
-{
-	switch(e)
-	{
-		case GNUTLS_E_INTERRUPTED:
-		case GNUTLS_E_AGAIN:
-			return G_IO_STATUS_AGAIN;
-		default:
-			g_warning("TLS Error: %s", gnutls_strerror(e));
-			if(gnutls_error_is_fatal(e)) return G_IO_STATUS_EOF;
-			return G_IO_STATUS_ERROR;
-	}
-
-	return G_IO_STATUS_ERROR;
-}
-	
 static void g_io_gnutls_free(GIOChannel *handle)
 {
-	GIOTLSChannel *chan = (GIOTLSChannel *)handle;
+	GIONSSChannel *chan = (GIONSSChannel *)handle;
 	g_io_channel_unref(chan->giochan);
 	gnutls_deinit(chan->session);
 	g_free(chan);
 }
 
-static GIOStatus g_io_gnutls_read(GIOChannel *handle, gchar *buf, guint len, guint *ret, GError **gerr)
+static GIOStatus g_io_nss_read(GIOChannel *handle, gchar *buf, guint len, guint *ret, GError **gerr)
 {
-	GIOTLSChannel *chan = (GIOTLSChannel *)handle;
+	GIONSSChannel *chan = (GIONSSChannel *)handle;
 	gint err;
 	*ret = 0;
 
-	if(!chan->secure) {
-		err = gnutls_handshake(chan->session);
-		if(err < 0) {
-			g_warning("TLS Handshake failed");
-			return g_io_gnutls_error(err);
-		}
-		chan->secure = 1;
-	}
-
-	err = gnutls_record_recv(chan->session, buf, len);
+	err = PR_Read(chan->session, buf, len);
 	if(err == 0) return G_IO_STATUS_EOF;
 	if(err < 0) return g_io_gnutls_error(err);
 	*ret = err;
 	return G_IO_STATUS_NORMAL;
 }
 
-static GIOStatus g_io_gnutls_write(GIOChannel *handle, const gchar *buf, gsize len, gsize *ret, GError **gerr)
+static GIOStatus g_io_nss_write(GIOChannel *handle, const gchar *buf, gsize len, gsize *ret, GError **gerr)
 {
-	GIOTLSChannel *chan = (GIOTLSChannel *)handle;
+	GIONSSChannel *chan = (GIONSSChannel *)handle;
 	gint err;
 
-	if(!chan->secure) 
-	{
-		err = gnutls_handshake(chan->session);
-		if(err < 0) {
-			g_warning("TLS Handshake failed");
-			return g_io_gnutls_error(err);
-		}
-		chan->secure = 1;
-	}
-
-	*ret = 0;
-
-	err = gnutls_record_send(chan->session, (const char *)buf, len);
+	err = PR_Write(chan->session, buf, len);
 	if(err == 0) return G_IO_STATUS_EOF;
 	if(err < 0) return g_io_gnutls_error(err);
 	*ret = err;
@@ -135,7 +80,7 @@ static GIOStatus g_io_gnutls_write(GIOChannel *handle, const gchar *buf, gsize l
 
 static GIOStatus g_io_gnutls_seek(GIOChannel *handle, gint64 offset, GSeekType type, GError **gerr)
 {
-	GIOTLSChannel *chan = (GIOTLSChannel *)handle;
+	GIONSSChannel *chan = (GIONSSChannel *)handle;
 	GIOError e;
 	e = g_io_channel_seek(chan->giochan, offset, type);
 	return (e == G_IO_ERROR_NONE) ? G_IO_STATUS_NORMAL : G_IO_STATUS_ERROR;
@@ -143,59 +88,60 @@ static GIOStatus g_io_gnutls_seek(GIOChannel *handle, gint64 offset, GSeekType t
 
 static GIOStatus g_io_gnutls_close(GIOChannel *handle, GError **gerr)
 {
-	GIOTLSChannel *chan = (GIOTLSChannel *)handle;
-	gnutls_bye(chan->session, GNUTLS_SHUT_RDWR);
+	GIONSSChannel *chan = (GIONSSChannel *)handle;
+	PR_Close(chan->session);
 	g_io_channel_close(chan->giochan);
 	return G_IO_STATUS_NORMAL;
 }
 
 static GSource *g_io_gnutls_create_watch(GIOChannel *handle, GIOCondition cond)
 {
-	GIOTLSChannel *chan = (GIOTLSChannel *)handle;
+	GIONSSChannel *chan = (GIONSSChannel *)handle;
 
 	return chan->giochan->funcs->io_create_watch(handle, cond);
 }
 
 static GIOStatus g_io_gnutls_set_flags(GIOChannel *handle, GIOFlags flags, GError **gerr)
 {
-    GIOTLSChannel *chan = (GIOTLSChannel *)handle;
+    GIONSSChannel *chan = (GIONSSChannel *)handle;
 
     return chan->giochan->funcs->io_set_flags(handle, flags, gerr);
 }
 
 static GIOFlags g_io_gnutls_get_flags(GIOChannel *handle)
 {
-    GIOTLSChannel *chan = (GIOTLSChannel *)handle;
+    GIONSSChannel *chan = (GIONSSChannel *)handle;
 
     return chan->giochan->funcs->io_get_flags(handle);
 }
 
-static GIOFuncs g_io_gnutls_channel_funcs = {
-    g_io_gnutls_read,
-    g_io_gnutls_write,
-    g_io_gnutls_seek,
-    g_io_gnutls_close,
-    g_io_gnutls_create_watch,
-    g_io_gnutls_free,
-    g_io_gnutls_set_flags,
-    g_io_gnutls_get_flags
+static GIOFuncs g_io_nss_channel_funcs = {
+    g_io_nss_read,
+    g_io_nss_write,
+    g_io_nss_seek,
+    g_io_nss_close,
+    g_io_nss_create_watch,
+    g_io_nss_free,
+    g_io_nss_set_flags,
+    g_io_nss_get_flags
 };
 
-gboolean g_io_gnutls_fini()
+gboolean g_io_nss_fini()
 {
-	gnutls_certificate_free_credentials(xcred);
-	gnutls_global_deinit();
+	PR_Cleanup();
 	return TRUE;
 }
 
-gboolean g_io_gnutls_init()
-{
-	if(gnutls_global_init() < 0) {
-		g_warning("gnutls global state initialization error");
-		return FALSE;
-	}
+static PRDescIdentity _identity;
+static const PRIOMethods *_nss_methods;
 
-	generate_dh_params();
+gboolean g_io_nss_init()
+{
+	PR_Init(PR_SYSTEM_THREAD, PR_PRIORITY_NORMAL, 1);
+	NSS_NoDB_Init(NULL);
+	NSS_SetDomesticPolicy();
+	_identity = PR_GetUniqueIdentity("CtrlProxy");
+	
 
 	/* X509 stuff */
 	if (gnutls_certificate_allocate_credentials(&xcred) < 0) {	/* space for 2 certificates */
@@ -228,7 +174,7 @@ gboolean g_io_gnutls_set_files(char *certf, char *keyf, char *caf)
 
 GIOChannel *g_io_gnutls_get_iochannel(GIOChannel *handle, gboolean server)
 {
-	GIOTLSChannel *chan;
+	GIONSSChannel *chan;
 	GIOChannel *gchan;
 	static const int cert_type_priority[3] = { GNUTLS_CRT_X509, GNUTLS_CRT_OPENPGP, 0 };
 	static const int cipher_priority[5] =
@@ -241,17 +187,15 @@ GIOChannel *g_io_gnutls_get_iochannel(GIOChannel *handle, gboolean server)
 	if(!(fd = g_io_channel_unix_get_fd(handle)))
 		return NULL;
 
-	chan = g_new0(GIOTLSChannel, 1);
+	chan = g_new0(GIONSSChannel, 1);
 
 	gnutls_init(&chan->session, server?GNUTLS_SERVER:GNUTLS_CLIENT);
 
-	gnutls_set_default_priority(chan->session);
-
-	gnutls_cipher_set_priority(chan->session, cipher_priority);
-	gnutls_certificate_type_set_priority(chan->session, cert_type_priority);
-	gnutls_handshake_set_private_extensions(chan->session, 1);
     gnutls_credentials_set(chan->session, GNUTLS_CRD_CERTIFICATE, xcred);
-	gnutls_transport_set_ptr(chan->session, (gnutls_transport_ptr)fd);
+	chan->session = SSL_ImportFD(NULL, PR_ImportTCPSocket(fd));
+	SSL_OptionSet(chan->session, SSL_SECURITY, PR_TRUE);
+	SSL_OptionSet(chan->session, server?SSL_HANDSHAKE_AS_SERVER:SSL_HANDSHAKE_AS_CLIENT, PR_TRUE);
+	SSL_ResetHandshake(chan->session, PR_FALSE);
 
 	gnutls_certificate_server_set_request(chan->session, GNUTLS_CERT_REQUEST);
 	gnutls_dh_set_prime_bits( chan->session, DH_BITS);

@@ -2,6 +2,7 @@
  	Jelmer Vernooij <jelmer@vernstok.nl>
 
 Ctrlproxy 2.7:
+ * Add Mozilla NSS support
  * Enhance custom_log (Alexander Wild <wild@te-elektronik.com>)
  * Use ctrlproxyrc.default if ~/.ctrlproxyrc does not exist
  * Make reconnect_timeout changeable (Alexander Wild <wild@te-elektronik.com>)
