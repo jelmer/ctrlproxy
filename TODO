@@ -6,13 +6,11 @@
  - apply poelzi's async patch
 
 2.8:
- - repl_limited (repl_highlight with limited number of lines)
  - rewrite stats stuff to use MySQL
  - <network><listen/></network> -> <listen/>
  - Net::IRC-like interface
  - dircproxy-config-to-ctrlproxyrc script
  - replace transports by IOChannels?
   - support running from inetd
-  - fix issue with non-blocking connect
   - make openssl and gnutls support seperate modules
  - more tests in the testsuite
