@@ -1,11 +1,19 @@
-<chapter id="python">
-	<title>Python</title>
+<ctrlproxy:module name="python"
+	xmlns:ctrlproxy="http://ctrlproxy.vernstok.nl/common">
+	<modulemeta>
+		<description>Python scripting support</description>
+		<version>0.5</version>
+		<author>Daniel Poelzleithner</author>
+		<email>ctrlproxy@poelzi.org</email>
+		<homepage>http://ctrlproxy.vernstok.nl/</homepage>
+		<requirements>python</requirements>
+	</modulemeta>
 
-	<sect1>
-		<title>A short introduction in scripting</title>
+	<description>
+		<para>This module provides python scripting support inside ctrlproxy.</para>
+	</description>
 
-
-	<sect2>
+	<section>
 		<title>Function callbacks</title>
 		
 		<itemizedlist>
@@ -112,9 +120,9 @@ signon time']]
 Every message except the onRcv which is always only one line, is a List
 in a List, even, when there is only one line in the result.
 </para>
-</sect2>
+</section>
 
-<sect2><title>Where the data comes from....</title>
+<section><title>Where the data comes from....</title>
 
 <para>
 The Python interface is a realtime interface to the data structures in
@@ -189,9 +197,9 @@ but now he is gone.
 you can send directly into the network.
 </para>
 
-<progrmalisting>
+<programlisting>
 n.send("whois test test",ctrlproxy.TO_SERVER)
-</programliksting>
+</programlisting>
 
 <para>
 or something to all clients connected to this network
@@ -243,9 +251,9 @@ line.options = line.option | ctrlproxy.LINE_DONT_SEND
 the line will not be send to the target.
 </para>
 
-</sect2>
+</section>
 
-<sect2>
+<section>
 	<title>Threads</title>
 
 <para>
@@ -274,9 +282,9 @@ As soon as i know how to recieve the exit code of the thread, this is
 solved :)
 </para>
 
-</sect2>
+</section>
 
-<sect2><title>Something general</title>
+<section><title>Something general</title>
 
 <para>
 The stdout and stderr streams from python are wrapped to the general
@@ -286,9 +294,9 @@ to the client. So, you should not print every line you get via a rcv
 method, or you will create a endless loop :)
 </para>
 
-</sect1>
+</section>
 
-<sect1><title>Requirements</title>
+<section><title>Requirements</title>
 
 <itemizedlist>
 	<listitem><para>python2.3 (maybe 2.2 works too)</para></listitem>
@@ -296,9 +304,44 @@ method, or you will create a endless loop :)
 	<listitem><para>libxml2-python</para></listitem>
 </itemizedlist>
 
-</sect1>
+</section>
 
-<sect1><title>TODO</title>
+<example>
+	<![CDATA[
+	<ctrlproxy>
+		<plugin autoload="1" file="libpython">
+			<load>
+				<file>/home/poelzi/Projects/ctrlproxy/example/test.py</file>
+				<argument name="test">blubbdada</argument>
+			</load>
+		</plugin>
+	</ctrlproxy>
+	]]>
+</example>
+
+<section><title>Configuration</title>
+	<para>
+	Each argument and value pair becomes a entry in the ctrlproxy.args
+	array. This array is runtime and script specific.
+</para>
+
+<para>
+	When you load a python script via the admin command.
+</para>
+
+<programlisting>
+/ctrlproxy python load /home/bla/.ctrlproxy/test.py abc="huhu dada"
+hihi=" blabla "
+</programlisting>
+
+<para>
+will load test.py with the argument dict:
+{"abc":"huhu dada","hihi":" blabla"}
+</para>
+
+</section>
+
+<todo>
 
 <itemizedlist>
 	<listitem><para>del_...._hook</para></listitem>
@@ -306,6 +349,6 @@ method, or you will create a endless loop :)
 	<listitem><para>implement some more functions to ctrlproxy</para></listitem>
 </itemizedlist>
 
-</sect1>
+</todo>
 
-</chapter>
+</ctrlproxy:module>

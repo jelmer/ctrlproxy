@@ -41,7 +41,7 @@
 	</author>
 	<pubdate>December, 2003</pubdate>
 
-	<abstract><para>This documentation is a draft. It is full of typo's and 
+	<abstract><para>This documentation is a draft. It is full of typos and 
 			grammar errors. It might be unclear at some points.</para>
 	
 		<para>Future versions of ctrlproxy will include an improved version of this document.</para>
@@ -61,7 +61,6 @@
 	<title>Configuration</title>
 	&syntax;
 	&faq;
-	&python;
 </part>
 
 <part id="modules">
@@ -84,6 +83,7 @@
 &antiflood;
 &report-time;
 &motd-file;
+&python;
 </part>
 
 <part id="extending">
