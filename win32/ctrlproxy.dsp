@@ -30,54 +30,53 @@ RSC=rc.exe
 
 !IF  "$(CFG)" == "ctrlproxy - Win32 Release"
 
-# PROP BASE Use_MFC 0
+# PROP BASE Use_MFC 6
 # PROP BASE Use_Debug_Libraries 0
 # PROP BASE Output_Dir "Release"
 # PROP BASE Intermediate_Dir "Release"
 # PROP BASE Target_Dir ""
-# PROP Use_MFC 0
+# PROP Use_MFC 6
 # PROP Use_Debug_Libraries 0
 # PROP Output_Dir "Release"
 # PROP Intermediate_Dir "Release"
 # PROP Target_Dir ""
-# ADD BASE CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /YX /FD /c
-# ADD CPP /nologo /MD /W3 /GX /O2 /I "c:\dev\include" /I "c:\dev\include\glib-2.0" /I "c:\dev\lib\glib-2.0\include" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D PACKAGE_NAME=\"ctrlproxy\" /D PACKAGE_VERSION="1.0" /D LOCALEDIR=\"FIXME\" /D SHAREDIR=\"FIXME\" /D MODULESDIR=\"FIXME\" /YX /FD /c
+# ADD BASE CPP /nologo /MD /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_AFXDLL" /Yu"stdafx.h" /FD /c
+# ADD CPP /nologo /MD /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_AFXDLL" /Yu"stdafx.h" /FD /c
 # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /o NUL /win32
 # ADD MTL /nologo /D "NDEBUG" /mktyplib203 /o NUL /win32
-# ADD BASE RSC /l 0x409 /d "NDEBUG"
-# ADD RSC /l 0x409 /d "NDEBUG"
+# ADD BASE RSC /l 0x409 /d "NDEBUG" /d "_AFXDLL"
+# ADD RSC /l 0x409 /d "NDEBUG" /d "_AFXDLL"
 BSC32=bscmake.exe
 # ADD BASE BSC32 /nologo
 # ADD BSC32 /nologo
 LINK32=link.exe
-# ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /machine:I386
-# ADD LINK32 asprintf.lib libxml2.lib iconv.lib intl.lib gobject-2.0.lib gmodule-2.0.lib glib-2.0.lib ws2_32.lib /nologo /subsystem:windows /machine:I386 /libpath:"c:\dev\lib"
+# ADD BASE LINK32 /nologo /subsystem:windows /machine:I386
+# ADD LINK32 /nologo /subsystem:windows /machine:I386
 
 !ELSEIF  "$(CFG)" == "ctrlproxy - Win32 Debug"
 
-# PROP BASE Use_MFC 0
+# PROP BASE Use_MFC 6
 # PROP BASE Use_Debug_Libraries 1
 # PROP BASE Output_Dir "Debug"
 # PROP BASE Intermediate_Dir "Debug"
 # PROP BASE Target_Dir ""
-# PROP Use_MFC 2
+# PROP Use_MFC 6
 # PROP Use_Debug_Libraries 1
 # PROP Output_Dir "Debug"
 # PROP Intermediate_Dir "Debug"
-# PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
-# ADD BASE CPP /nologo /W3 /Gm /GX /Zi /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /YX /FD /c
-# ADD CPP /nologo /MDd /W3 /Gm /GX /Zi /Od /I "c:\dev\include" /I "c:\dev\include\glib-2.0" /I "c:\dev\lib\glib-2.0\include" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D PACKAGE_NAME=\"ctrlproxy\" /D PACKAGE_VERSION="1.0" /D LOCALEDIR=\"FIXME\" /D SHAREDIR=\"FIXME\" /D MODULESDIR=\"FIXME\" /D "_AFXDLL" /YX /FD /c
+# ADD BASE CPP /nologo /MDd /W3 /Gm /GX /Zi /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_AFXDLL" /Yu"stdafx.h" /FD /c
+# ADD CPP /nologo /MDd /W3 /Gm /GX /Zi /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_AFXDLL" /Yu"stdafx.h" /FD /c
 # ADD BASE MTL /nologo /D "_DEBUG" /mktyplib203 /o NUL /win32
 # ADD MTL /nologo /D "_DEBUG" /mktyplib203 /o NUL /win32
-# ADD BASE RSC /l 0x409 /d "_DEBUG"
+# ADD BASE RSC /l 0x409 /d "_DEBUG" /d "_AFXDLL"
 # ADD RSC /l 0x409 /d "_DEBUG" /d "_AFXDLL"
 BSC32=bscmake.exe
 # ADD BASE BSC32 /nologo
 # ADD BSC32 /nologo
 LINK32=link.exe
-# ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /debug /machine:I386 /pdbtype:sept
-# ADD LINK32 asprintf.lib libxml2.lib iconv.lib intl.lib gobject-2.0.lib gmodule-2.0.lib glib-2.0.lib ws2_32.lib /nologo /subsystem:windows /debug /machine:I386 /pdbtype:sept /libpath:"c:\dev\lib"
+# ADD BASE LINK32 /nologo /subsystem:windows /debug /machine:I386 /pdbtype:sept
+# ADD LINK32 /nologo /subsystem:windows /debug /machine:I386 /pdbtype:sept
 
 !ENDIF 
 
@@ -85,73 +84,166 @@ LINK32=link.exe
 
 # Name "ctrlproxy - Win32 Release"
 # Name "ctrlproxy - Win32 Debug"
+# Begin Group "Source Files"
+
+# PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 # Begin Source File
 
-SOURCE=..\ctrlproxy.h
+SOURCE=.\CAboutDlg.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=..\hooks.c
+SOURCE=.\CLogDlg.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\icon1.ico
+SOURCE=.\CNetworksDlg.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=..\internals.h
+SOURCE=.\ConfigurationDlg.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=..\irc.h
+SOURCE=.\CPluginsDlg.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=..\line.c
+SOURCE=.\CStatusDlg.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=..\linestack.c
+SOURCE=.\ctrlproxy.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=..\main.c
+SOURCE=.\hlp\ctrlproxy.hpj
+
+!IF  "$(CFG)" == "ctrlproxy - Win32 Release"
+
+# Begin Custom Build - Making help file...
+OutDir=.\Release
+ProjDir=.
+TargetName=ctrlproxy
+InputPath=.\hlp\ctrlproxy.hpj
+
+"$(OutDir)\$(TargetName).hlp" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
+	call "$(ProjDir)\makehelp.bat"
+
+# End Custom Build
+
+!ELSEIF  "$(CFG)" == "ctrlproxy - Win32 Debug"
+
+# Begin Custom Build - Making help file...
+OutDir=.\Debug
+ProjDir=.
+TargetName=ctrlproxy
+InputPath=.\hlp\ctrlproxy.hpj
+
+"$(OutDir)\$(TargetName).hlp" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
+	call "$(ProjDir)\makehelp.bat"
+
+# End Custom Build
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
-SOURCE=..\plugins.c
+SOURCE=.\ctrlproxy.rc
+
+!IF  "$(CFG)" == "ctrlproxy - Win32 Release"
+
+!ELSEIF  "$(CFG)" == "ctrlproxy - Win32 Debug"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
-SOURCE=.\res.rc
+SOURCE=.\ctrlproxyDlg.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\resource.rct
+SOURCE=.\StdAfx.cpp
+# ADD CPP /Yc"stdafx.h"
+# End Source File
+# End Group
+# Begin Group "Header Files"
+
+# PROP Default_Filter "h;hpp;hxx;hm;inl"
+# Begin Source File
+
+SOURCE=.\CAboutDlg.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\server.c
+SOURCE=.\CLogDlg.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\snprintf.c
+SOURCE=.\CNetworksDlg.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\state.c
+SOURCE=.\ConfigurationDlg.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\transport.c
+SOURCE=.\CPluginsDlg.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\util.c
+SOURCE=.\CStatusDlg.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\winmain.cpp
+SOURCE=.\ctrlproxy.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\ctrlproxyDlg.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\Resource.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\StdAfx.h
+# End Source File
+# End Group
+# Begin Group "Resource Files"
+
+# PROP Default_Filter "ico;cur;bmp;dlg;rc2;rct;bin;cnt;rtf;gif;jpg;jpeg;jpe"
+# Begin Source File
+
+SOURCE=.\res\ctrlproxy.ico
+# End Source File
+# Begin Source File
+
+SOURCE=.\res\ctrlproxy.rc2
+# End Source File
+# End Group
+# Begin Group "Help Files"
+
+# PROP Default_Filter ""
+# Begin Source File
+
+SOURCE=.\hlp\AfxDlg.rtf
+# End Source File
+# Begin Source File
+
+SOURCE=.\hlp\ctrlproxy.cnt
+# End Source File
+# Begin Source File
+
+SOURCE=.\MakeHelp.bat
+# End Source File
+# End Group
+# Begin Source File
+
+SOURCE=.\ReadMe.txt
 # End Source File
 # End Target
 # End Project
