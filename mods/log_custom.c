@@ -209,6 +209,7 @@ static void custom_subst(char **_new, const char *fmt, struct line *l, const cha
 	for(i = 0; i < strlen(fmt); i++) {
 		if(fmt[i] == '%') {
 			subst[(int)fmt[i+1]] = find_mapping(l, fmt[i+1], case_sensitive);	
+			if (subst[(int)fmt[i+1]] == NULL) subst[(int)fmt[i+1]] = g_strdup("");
 			len += strlen(subst[(int)fmt[i+1]]);
 		}
 	}
