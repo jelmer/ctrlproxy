@@ -38,7 +38,7 @@ static struct network *find_network(const char *name)
 	return NULL;
 }
 
-static void dump_channels(char **args, struct line *l)
+static void dump_joined_channels(char **args, struct line *l)
 {
 	struct network *n = l->network;
 	GList *gl;
@@ -62,7 +62,7 @@ static void dump_channels(char **args, struct line *l)
 }
 
 gboolean fini_plugin(struct plugin *p) {
-	unregister_admin_command("DUMPCHANNELS");
+	unregister_admin_command("DUMPJOINEDCHANNELS");
 	return TRUE;
 }
 
@@ -71,6 +71,6 @@ gboolean init_plugin(struct plugin *p) {
 		g_warning("admin module required for repl_command module. Please load it first");
 		return FALSE;
 	}
-	register_admin_command("DUMPCHANNELS", dump_channels, "[network]", NULL);
+	register_admin_command("DUMPJOINEDCHANNELS", dump_joined_channels, "[network]", NULL);
 	return TRUE;
 }
