@@ -10,12 +10,12 @@ MODS = @MODS@
 .PHONY: all install clean distclean
 
 all: $(MODS)
-	for I in $(MODS_SUBDIRS); do cd $$I && $(MAKE) $@ && cd ..; done
+	for I in $(MODS_SUBDIRS); do $(MAKE) -C $$I $@; done
 
 install: all
 	$(INSTALL) -d $(DESTDIR)$(moddir)
 	$(INSTALL) $(MODS) $(DESTDIR)$(moddir)
-	for I in $(MODS_SUBDIRS); do cd $$I && $(MAKE) $@ && cd ..; done
+	for I in $(MODS_SUBDIRS); do $(MAKE) -C $$I $@; done
 
 %.o: %.c
 	$(CC) $(CFLAGS) -fPIC -c $<
