@@ -102,6 +102,7 @@ static gboolean log_data(struct line *l) {
 			irc_send_args(l->network->outgoing, "PRIVMSG", nickserv_n, raw, NULL);
 			free(raw);
 			xmlFree(nickserv_n);
+			irc_send_args(l->network->outgoing, "NICK", nickattempt);
 		}
 	}
 
