@@ -31,7 +31,6 @@ mods/socket/openssl.c
 mods/socket/socket.c
 mods/strip.c
 mods/repl_memory.c
-mods/dcc.c
 mods/repl_limited.c
 mods/debug.c
 mods/autosave.c
