@@ -141,6 +141,7 @@ int loop(struct server *server) /* Checks server socket for input and calls loop
 		if(!strcasecmp(l.args[0], "PING")){
 			server_send(server, NULL, "PONG", l.args[1], NULL);
 		}
+		
 		c = server->handlers;
 		while(c) {
 			if(c->functions->handle_incoming_data)

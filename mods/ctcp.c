@@ -58,7 +58,7 @@ void mhandle_incoming_data(struct module_context *c, const struct line *l)
 		free(msg);
 	} else if(!strcasecmp(data, "TIME")) {
 		ti = time(NULL);
-		asprintf(&msg, "\001TIME :%s\001", ctime(&ti));
+		asprintf(&msg, "\001TIME %s\001", ctime(&ti));
 		t = strchr(msg, '\n');
 		if(t)*t = '\0';
 		server_send(c->parent, c->parent->hostmask, "NOTICE", dest, msg, NULL);
@@ -70,7 +70,7 @@ void mhandle_incoming_data(struct module_context *c, const struct line *l)
 	} else if(!strcasecmp(data, "SOURCE")) {
 		server_send(c->parent, c->parent->hostmask, "NOTICE", dest, "\001SOURCE http://nl.linux.org/~jelmer/ctrlproxy/\001", NULL);
 	} else if(!strcasecmp(data, "CLIENTINFO")) {
-		server_send(c->parent, c->parent->hostmask, "NOTICE", dest, "\001CLIENTINFO ctrlproxy supports VERSION, TIME, FINGER, SOURCE, CLIENTINFO\001", NULL);
+		server_send(c->parent, c->parent->hostmask, "NOTICE", dest, "\001CLIENTINFO VERSION TIME FINGER SOURCE CLIENTINFO PING\001", NULL);
 	} else if(!strcasecmp(data, "PING")) {
 		server_send(c->parent, c->parent->hostmask, "NOTICE", dest, l->args[2], NULL);
 	}

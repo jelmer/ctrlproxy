@@ -22,7 +22,7 @@
 
 #define IRC_MSG_LEN 540
 #define MAXHOSTNAMELEN 4096
-#define CTRLPROXY_VERSION "0.1"
+#define CTRLPROXY_VERSION "0.2"
 
 #include <unistd.h>
 #include <sys/socket.h>

@@ -14,6 +14,7 @@ ctrlproxy: $(OBJS)
 install: all
 	cp ctrlproxy $(BINDIR)
 	cp ctrlproxy.1 $(MANDIR)/man1
+	cp ctrlproxy.h $(INCLUDEDIR)
 
 clean:
 	rm -f *.o ctrlproxy

@@ -39,3 +39,7 @@ conf.c:
 - get_conf_context(struct module_context *c, char *name);
 - get_conf_server(struct server *s, char *name);
 - get_conf_global(char *name);
+
+client_advanced:
+- add incoming and outgoing data to array of strings if there are no clients connected
+- output all strings in array when a client connects and then empty the array

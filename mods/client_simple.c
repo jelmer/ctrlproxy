@@ -118,14 +118,14 @@ void mloop(struct module_context *c)
 				if(!get_conf(c->parent->abbrev, "clientpass"))st->authenticated[i] = 1;
 				if(!strcasecmp(l.args[0], "USER")){
 					if(!st->authenticated[i]){
-						dprintf(i, ":%s 451 %s :You are not registered\r\n", my_hostname, c->parent->nick);
+						dprintf(i, ":%s 451 %s :You are not registered\r\n", c->parent->name, c->parent->nick);
 						continue;
 					}
-					dprintf(i, ":%s 001 %s :Welcome to the ctrlproxy\r\n", my_hostname, c->parent->nick);
-					dprintf(i, ":%s 002 %s :Host %s is running ctrlproxy\r\n", my_hostname, c->parent->nick, my_hostname);
-					dprintf(i, ":%s 003 %s :Ctrlproxy (c) 2002 Jelmer Vernooij <jelmer@nl.linux.org>\r\n", my_hostname, c->parent->nick);
-					dprintf(i, ":%s 004 %s %s %s %s %s\r\n", my_hostname, c->parent->nick, my_hostname, CTRLPROXY_VERSION, allmodes, allmodes);
-					dprintf(i, ":%s 422 %s :No MOTD file\r\n", my_hostname, c->parent->nick);
+					dprintf(i, ":%s 001 %s :Welcome to the ctrlproxy\r\n", c->parent->name, c->parent->nick);
+					dprintf(i, ":%s 002 %s :Host %s is running ctrlproxy\r\n", c->parent->name, c->parent->nick, my_hostname);
+					dprintf(i, ":%s 003 %s :Ctrlproxy (c) 2002 Jelmer Vernooij <jelmer@nl.linux.org>\r\n", c->parent->name, c->parent->nick);
+					dprintf(i, ":%s 004 %s %s %s %s %s\r\n", c->parent->name, c->parent->nick, c->parent->name, CTRLPROXY_VERSION, allmodes, allmodes);
+					dprintf(i, ":%s 422 %s :No MOTD file\r\n", c->parent->name, c->parent->nick);
 
 					/* Send JOIN for each channel */
 					if(st->channels){
@@ -141,7 +141,7 @@ void mloop(struct module_context *c)
 					else if(!strcmp(l.args[1], get_conf(c->parent->abbrev, "clientpass"))) {
 						st->authenticated[i] = 1;
 					} else {
-						dprintf(i, ":%s 464 %s :Password mismatch\r\n", my_hostname, c->parent->nick);
+						dprintf(i, ":%s 464 %s :Password mismatch\r\n", c->parent->name, c->parent->nick);
 					}
 				} else if(st->authenticated[i]) {
 					asprintf(&tmp, "%s\n", ret);
@@ -174,7 +174,7 @@ void mfinish(struct module_context *c)
 	if(!st)return;
 	for(i = 0; i < FD_SETSIZE; i++) {
 		if(FD_ISSET(i, &st->readfd) && i != st->listen_socket)
-			dprintf(i, ":%s QUIT :Server exiting\r\n", my_hostname);
+			dprintf(i, ":%s QUIT :Server exiting\r\n", c->parent->name);
 		FD_CLR(i, &st->readfd);
 	}
 	close(st->listen_socket);
