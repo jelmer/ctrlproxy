@@ -37,10 +37,26 @@ and run specific python scripts.
 			</attribute>
 		</element>
 	</element>
-
+	
+	<element name="allowed">
+		<description>This option controlls which pages will be served. When this element is empty, all files excluding everything from "denied" will be served. CSS files and logout.py are always allowed.</description>
+		<element name="file" multiple="1" type="text">
+			<description>file/page to allow (ex: modules; test.ext)</description>
+		</element>
+	</element>
+	
+	<element name="denied">
+		<description>This option controlls which pages will never be served. When this element is empty.</description>
+		<element name="file" multiple="1" type="text">
+				<description>file/page to deny (ex: modules; test.ext)</description>
+		</element>
+	</element>
+	
+	
 	<element name="developer" type="bool">
 		<description>This option enables developer functions</description>
 	</element>
+	
 </configuration>
 
 CTRLPROXY CONFIG"""
@@ -60,6 +76,7 @@ import cStringIO
 import sys
 import SocketServer
 from pages import *
+from pages.__init__ import menu
 import base64
 import libxml2
 
@@ -118,7 +135,7 @@ class SendFile(page):
 class AccessDenied(page):
 	def send(self):
 		self.openTemplate()
-		self.html_header("Access denied")
+		self.t = self.tmplf.open(title="Access Denied", links="")
 		self.t.write(self.tmpl.format('h1',msg="Authorization Required"))
 		self.t.write(self.tmpl.format('warning',
 					msg="""
@@ -130,6 +147,17 @@ browser doesn't understand how to supply
 the credentials required."""))
 		self.footer()
 
+class PageDenied(page):
+	title = "Access denied"
+	menu = menu
+	def index(self):
+		self.t.write(self.tmpl.format('warning',
+					msg="""Access to this page denied"""))
+		
+	def send(self):
+		self.send_default({})
+
+		
 class Webconf_css(SendFile):
 	"""Sends Stylesheet"""
 	def send(self):
@@ -146,8 +174,13 @@ class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
 	def auth_required(self):
 		self.send_response(401,"Unauth")
 		self.send_header('WWW-authenticate', 'Basic realm=ctrlproxy"%s"' %("/"))
+		self.send_header("Content-type", "text/html")
 		self.end_headers()
 		npage = AccessDenied(self)
+		npage.send()
+	
+	def access_denied(self):
+		npage = PageDenied(self)
 		npage.send()
 
 	def do_GET(self):
@@ -165,6 +198,7 @@ class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
 		self.splited_path = self.parsed[2][1:].split("/")
 		name = None
 		page = None
+		fpage = None
 		print self.parsed
 		print pages
 
@@ -186,7 +220,7 @@ class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
 			elif ctrl_args.has_key("users"):
 				self.auth_required()
 				return
-
+		
 		if self.path == "/":
 			name = "index"
 			page = "index"
@@ -195,11 +229,24 @@ class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
 			for i in range(len(self.splited_path),0,-1):
 				if pages.has_key(string.join(self.splited_path[0:i],".")):
 					page = string.join(self.splited_path[0:i],".")
+					fpage =  string.join(self.splited_path[0:i],"/")
 					name = self.splited_path[i-1]
+		if (self.splited_path[0][-4:] != ".css" and self.splited_path[0] != "logout"):
+			if ctrl_args.has_key("allowed"):
+				if len(ctrl_args["allowed"].xpathEval("file")):
+					for tst in ctrl_args["allowed"].xpathEval("file/text()"):
+						if tst.content == fpage:
+							break
+					else:
+						return self.access_denied()
+	
+			if ctrl_args.has_key("denied"):
+				if len(ctrl_args["denied"].xpathEval("file")):
+					for tst in ctrl_args["denied"].xpathEval("file/text()"):
+						if tst.content == fpage:
+							return self.access_denied()
 
-		print name
-		print page
-
+					
 		# never serve __init__ files
 		if name == "__init__":
 			self.send_error(404,"File not found")
@@ -211,7 +258,8 @@ class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
 				mod = __import__("pages.%s" %page,globals(),locals(),name)
 				try:
 					if int(ctrl_args["developer"].content):
-						reload(mod)
+						try: reload(mod)
+						except Exception, e: print e
 				except: pass
 				npage = mod.__dict__[name](self)
 				if npage == None:
@@ -308,12 +356,11 @@ def walk_tree(arg, dirname, names):
 os.path.walk(os.path.join(os.path.dirname(__file__),"pages"), walk_tree, None)
 print pages
 
-print "TOP", top
-
 def unload_script():
 	print "UNLOAD WEBSERVER"
+	server.socket.shutdown(2)
 	server.server_close()
 
 ctrlproxy.at_exit(unload_script)
-	
+
 thread.start_new_thread(run, ())

@@ -43,13 +43,15 @@ class page:
 	def __init__(self, handler):
 		self.handler = handler
 		self.wfile = handler.wfile
-		# tmp
-		reload(templayer)
 
 	def html_header(self, title = None):
+		global menu
 
 		links = []
-		for (p,n,pi) in menu:
+		try:	m = self.menu
+		except:	m = menu
+			
+		for (p,n,pi) in m:
 			links.append(self.tmpl.format("menu_links", link=p, name=n))
 
 		if title == None:
