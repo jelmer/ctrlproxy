@@ -1,0 +1,23 @@
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+INSTALL = @INSTALL@
+scriptdir = @datadir@/ctrlproxy/scripts
+PAGES = $(wildcard pages/*.py) $(wildcard pages/*.css)
+TEMPLATES = $(wildcard templates/*.*)
+
+.PHONY: all install clean distclean
+
+all: 
+
+install: all
+	$(INSTALL) -d $(DESTDIR)$(scriptdir)/web
+	$(INSTALL) -d $(DESTDIR)$(scriptdir)/web/pages
+	$(INSTALL) -d $(DESTDIR)$(scriptdir)/web/templates
+	$(INSTALL) server.py $(DESTDIR)$(scriptdir)/web
+	$(INSTALL) $(PAGES) $(DESTDIR)$(scriptdir)/web/pages
+	$(INSTALL) $(TEMPLATES) $(DESTDIR)$(scriptdir)/web/templates
+
+clean:
+
+distclean: clean
+	rm -f Makefile
