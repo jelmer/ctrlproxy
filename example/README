@@ -1,3 +1,14 @@
-This directory contains a very basic example module for ctrlproxy. 
-It only requires ctrlproxy.h and the ctrlproxy binary to be installed.
-Please read the Ctrlproxy manual for details on ctrlproxy hacking.
+This directory contains various examples for extending ctrlproxy.
+
+example.py, test.py, test2.py
+---------
+Example python scripts that can be used with the python module.
+
+foo.c
+------
+Example of a very basic ctrlproxy module. Read the manual for more information 
+on writing your own modules.
+
+stats.php
+---------
+PHP script that generates webpages based on the output of the stats module.
