@@ -1,13 +1,7 @@
-- test report_time
-- test linestack_file
-- test repl_command
-- finish configuration utility (worked on by Kyoshiro)
+- finish configuration utility (worked on by Kyoshiro, see list in ctrlproxy-setup)
 - automated testsuite
-- use namespaces and XML schemas instead of DTD
 - use information from capabilities sent by server
 - dcc module
-- CONNECT command could try to connect immediately to a network if it is currently waiting for reconnect delay to end for example....
-- add gnutls support
 - new log system
 - more user-friendly admin command
 - system wide ctrlproxy?
@@ -17,6 +11,22 @@
 - make filter order adjustable
 - keep list of channels a nick is on
 - add member 'nick' to struct line
+
+report_time:
+ - test report_time
+ - extend to include time in line itself
+ 
+linestack_file:
+ - test
+ 
+repl_command:
+ - test
+ 
+admin:
+- CONNECT command could try to connect immediately to a network if it is currently waiting for reconnect delay to end for example....
+
+socket:
+- add gnutls support
 
 Ideas: (ideas for stuff you might want to work on, and is currently not 
 		planned to be implemented)
