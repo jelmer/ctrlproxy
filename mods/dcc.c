@@ -46,10 +46,10 @@ static xmlNodePtr xmlConf;
 
 gboolean dcc_allowed(struct line *l)
 {
-	/* FIXME: Try to find a allow element that matches this line */
 	xmlNodePtr cur = xmlConf->xmlChildrenNode;
 	while(cur) {
 		char *c;
+		
 		if(xmlIsBlankNode(cur) || !strcmp(cur->name, "comment")) {
 			cur = cur->next;
 			continue;
@@ -58,6 +58,7 @@ gboolean dcc_allowed(struct line *l)
 		if(strcmp(cur->name, "allow")) {
 			g_warning("Unknown element '%s'", cur->name);
 			cur = cur->next;
+			continue;
 		}
 
 		c = xmlNodeGetContent(cur);
@@ -319,6 +320,8 @@ static void dcc_start_receive(struct in_addr a, int port, char *fname, size_t si
 		return;
 	}
 
+	memset(&addr, 0, sizeof(addr));
+
 	addr.sin_addr = a;
 	addr.sin_port = port;
 
@@ -333,11 +336,12 @@ static void dcc_start_receive(struct in_addr a, int port, char *fname, size_t si
 	newpath = ctrlproxy_path(base);
 	free(base);
 	fd = fopen(newpath, "w+");
-	free(newpath);
 	if(!fd) {
-		g_warning(_("Can't open file for %s: %s"), fname, strerror(errno));
+		g_warning(_("Can't open file for %s: %s: %s"), fname, newpath, strerror(errno));
+		free(newpath);
 		return;
 	}
+	free(newpath);
 	g_io_add_watch(io, G_IO_IN | G_IO_ERR | G_IO_HUP, handle_dcc_receive, fd);
 }
 
@@ -388,6 +392,7 @@ gboolean fini_plugin(struct plugin *p)
 {
 	del_filter_ex("client", mhandle_data);
 	unregister_admin_command("DCC");
+	xmlConf = NULL;
 	return TRUE;
 }
 
