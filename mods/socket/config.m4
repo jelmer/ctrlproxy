@@ -1,0 +1,26 @@
+SOCKET_OBJS="socket.o"
+SSL_LIB=""
+
+AC_CHECK_HEADERS([arpa/inet.h netdb.h netinet/in.h sys/socket.h])
+AC_CHECK_FUNCS([dup2 socket])
+
+AC_CHECK_LIB(crypto, DES_set_key)
+
+dnl SSL Support
+dnl libssl
+AC_CHECK_HEADERS([openssl/ssl.h])
+AC_CHECK_LIB(ssl, SSL_connect, [ SOCKET_OBJS="$SOCKET_OBJS network-openssl.o"; SSL_LIB="-lssl" ] )
+
+dnl gnutls
+AC_PATH_PROG(gnutls_config, libgnutls-config, no)
+
+if test "$gnutls_config" != "no"; then
+	CFLAGS="$CFLAGS `$gnutls_config --cflags`"
+	#FIXME: gnutls support doesn't compile yet
+	#SOCKET_OBJS="$SOCKET_OBJS network-gnutls.o"
+	SSL_LIB="$SSL_LIB `$gnutls_config --libs`"
+	AC_CHECK_HEADERS([gnutls/openssl.h])
+fi
+
+AC_SUBST(SOCKET_OBJS)
+AC_SUBST(SSL_LIB)

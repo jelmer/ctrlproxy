@@ -7,6 +7,5 @@ autom4te.cache
 build
 ctrlproxy.pc
 ctrlproxy.spec
-printstats
 test-parser
 *.o

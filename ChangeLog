@@ -1,4 +1,5 @@
 Ctrlproxy 2.7:
+ * Put some modules in their own directory
  * Add report_time
  * Add linestack_file
  * Add repl_lastdisconnect.so
