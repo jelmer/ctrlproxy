@@ -5,7 +5,7 @@
 <!ATTLIST plugin file CDATA #REQUIRED>
 <!ATTLIST plugin autoload CDATA "1">
 
-<!ELEMENT network (servers?,channel*,autosend*)>
+<!ELEMENT network (listen?,servers?,channel*,autosend*)>
 <!ATTLIST network name CDATA #IMPLIED>
 <!ATTLIST network client_pass CDATA "">
 <!ATTLIST network password CDATA "">
@@ -14,6 +14,8 @@
 <!ATTLIST network fullname CDATA #IMPLIED>
 <!ATTLIST network autoconnect CDATA "0">
 <!ATTLIST network ignore_first_nick CDATA "0">
+
+<!ELEMENT listen (ipv4*,ipv6*)>
 
 <!ELEMENT autosend (#PCDATA)>
 <!ELEMENT channel EMPTY>
@@ -37,3 +39,17 @@
 <!ELEMENT nick EMPTY>
 <!ATTLIST nick password CDATA #REQUIRED>
 <!ATTLIST nick name CDATA #REQUIRED>
+
+<!ELEMENT match (#PCDATA)>
+
+<!ELEMENT message (#PCDATA)>
+<!ATTLIST message time CDATA #IMPLIED>
+
+<!ELEMENT script (file,argument*)>
+<!ELEMENT file (#PCDATA)>
+<!ELEMENT argument (#PCDATA)>
+<!ATTLIST argument name CDATA #REQUIRED>
+<!ATTLIST script autoload CDATA #IMPLIED>
+
+<!ELEMENT pattern (#PCDATA)>
+<!ATTLIST pattern type CDATA #REQUIRED>
