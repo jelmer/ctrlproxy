@@ -1,2 +1,3 @@
 - cascading support
 - replication of backlog(aka client_advanced)
+- fix PONG problem (don't report PONG's for server PING's to client)
