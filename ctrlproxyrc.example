@@ -1,23 +1,23 @@
 <?xml version="1.0"?>
 <ctrlproxy>
 	<plugins>
-		<plugin autoload="1" file="/home/jelmer/ctrlproxy/mods/libsocket">
+		<plugin autoload="1" file="libsocket">
 			<sslcertfile>./ctrlproxy.pem</sslcertfile>
 			<sslkeyfile>./ctrlproxy.pem</sslkeyfile>
 		</plugin>
-		<plugin autoload="1" file="/home/jelmer/ctrlproxy/mods/librepl_memory"/>
-		<plugin autoload="1" file="/home/jelmer/ctrlproxy/mods/libadmin"/>
-		<plugin autoload="1" file="/home/jelmer/ctrlproxy/mods/liblog_irssi">
+		<plugin autoload="1" file="librepl_memory"/>
+		<plugin autoload="1" file="libadmin"/>
+		<plugin autoload="1" file="liblog_irssi">
 			<logfile>/home/jelmer/tmp/ctrlproxy</logfile>
 		</plugin>
-		<plugin autoload="1" file="/home/jelmer/ctrlproxy/mods/libctcp"/>
-		<plugin autoload="1" file="/home/jelmer/ctrlproxy/mods/libstrip"/>
-		<plugin autoload="1" file="/home/jelmer/ctrlproxy/mods/libnickserv"/>
-		<plugin autoload="1" file="/home/jelmer/ctrlproxy/mods/libantiflood"/>
-		<plugin autoload="1" file="/home/jelmer/ctrlproxy/mods/libauto-away">
+		<plugin autoload="1" file="libctcp"/>
+		<plugin autoload="1" file="libstrip"/>
+		<plugin autoload="1" file="libnickserv"/>
+		<plugin autoload="1" file="libantiflood"/>
+		<plugin autoload="1" file="libauto-away">
 			<message time="300">"I'm currently away, sorry!</message>
 		</plugin>
-		<plugin file="/home/jelmer/ctrlproxy/mods/libstats">
+		<plugin file="libstats">
 			<tdbfile>/home/jelmer/.ctrlproxy-stats.tdb</tdbfile>
 			<pattern type="happy">[:;]([-]*)[\)D]</pattern>
 			<pattern type="unhappy">[:;]([-]*)[\/\(]</pattern>
@@ -40,7 +40,7 @@
 				</pipe>
 			</servers>
 		</network>
-		<network autoconnect="1" client_pass="secret" name="OFTC" nick="jelmer" username="jelmer" fullname="Jelmer Vernooij">
+		<network autoconnect="1" client_pass="secret" name="Freenode" nick="jelmer" username="jelmer" fullname="Jelmer Vernooij">
 			<listen>
 				<ipv4 port="6667"/>
 				<ipv4 port="7667" ssl="1"/>
