@@ -173,7 +173,7 @@ gexes",
 		},
 	},
     networks    => {
-        nickname    => {
+        nick    => {
             desc    => "is your nickname on IRC",
             type    => "text",
             needed  => 1,
