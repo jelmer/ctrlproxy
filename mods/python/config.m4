@@ -10,9 +10,9 @@ if test "_$pythonpath" = _ ; then
 else
 	AC_MSG_CHECKING(Python version)
 	changequote(<<, >>)dnl
-	PY_VER=`$pythonpath -c 'import distutils.sysconfig; print distutils.sysconfig.get_config_vars("VERSION")[0];'`
-	PY_LIB=`$pythonpath -c 'import distutils.sysconfig; print distutils.sysconfig.get_config_vars("LIBDEST")[0];'`
-	PY_INC=`$pythonpath -c 'import distutils.sysconfig; print distutils.sysconfig.get_config_vars("INCLUDEPY")[0];'`
+	PY_VER=`$pythonpath -c 'import distutils.sysconfig; print distutils.sysconfig.get_config_var("VERSION");'`
+	PY_LIB=`$pythonpath -c 'import distutils.sysconfig; print distutils.sysconfig.get_config_var("LIBDIR");'`
+	PY_INC=`$pythonpath -c 'import distutils.sysconfig; print distutils.sysconfig.get_config_var("INCLUDEPY");'`
 	$pythonpath -c "import sys; map(int,sys.version[:3].split('.')) >= [2,3] or sys.exit(1)"
 	changequote([, ])dnl
 	AC_MSG_RESULT($PY_VER)
@@ -21,8 +21,9 @@ else
 		PY_PREFIX=`$pythonpath -c 'import sys; print sys.prefix'`
 		PY_EXEC_PREFIX=`$pythonpath -c 'import sys; print sys.exec_prefix'`
 		if test -f $PY_INC/Python.h; then
-			PY_LIBS="-L$PY_LIB/config -lpython$PY_VER -lpthread -lutil"
-			PY_CFLAGS="-I$PY_INC"
+			PY_LIBS=`$pythonpath -c 'import distutils.sysconfig; print distutils.sysconfig.get_config_var("BLDLIBRARY"),distutils.sysconfig.get_config_var("LIBS");'`
+			PY_CFLAGS=`$pythonpath -c 'import distutils.sysconfig; print distutils.sysconfig.get_config_var("CFLAGS");'`
+			PY_CFLAGS="$PY_CFLAGS -I$PY_INC"
 			MODS_SUBDIRS="$MODS_SUBDIRS python"
 			AC_MSG_RESULT(ok)
 		else
@@ -36,3 +37,4 @@ fi
 AC_SUBST(PY_CFLAGS)
 AC_SUBST(PY_LIBS)
 AC_CONFIG_FILES([mods/python/Makefile])
+

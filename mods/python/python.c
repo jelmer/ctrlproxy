@@ -2695,7 +2695,8 @@ static void in_admin_command(char **args, struct line *l)
 
 // load python scripts
 
-static void init_finish() {
+static void init_finish(void)
+{
 	g_log(G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "Loading Python scripts");
 	in_load_from_config(NULL);
 	list_scripts(NULL);
