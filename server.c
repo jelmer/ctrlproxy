@@ -166,10 +166,8 @@ gboolean handle_server_receive (GIOChannel *c, GIOCondition cond, void *_server)
 		return reconnect(c, cond, _server);
 	}
 
-	if (cond & G_IO_OUT) {
-		if (!server->authenticated && !server->login_sent) {
-			server_send_login(server);
-		}
+	if (!server->authenticated && !server->login_sent) {
+		server_send_login(server);
 	}
 
 	if (cond & G_IO_IN) {
@@ -216,10 +214,6 @@ gboolean connect_next_tcp_server(struct network *s)
 gboolean network_send_line(struct network *s, struct line *l)
 {
 	l->network = s;
-
-	if (!strcmp(l->args[0], "USER") && l->network->authenticated) {
-		abort();
-	}
 
 	switch (s->type) {
 	case NETWORK_TCP:
@@ -343,7 +337,7 @@ gboolean connect_current_tcp_server(struct network *s)
 		}
 	}
 
-	s->connection.tcp.outgoing_id = g_io_add_watch(s->connection.tcp.outgoing, G_IO_IN | G_IO_HUP | G_IO_OUT, handle_server_receive, s);
+	s->connection.tcp.outgoing_id = g_io_add_watch(s->connection.tcp.outgoing, G_IO_IN | G_IO_HUP, handle_server_receive, s);
 
 	g_io_channel_unref(s->connection.tcp.outgoing);
 
