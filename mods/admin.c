@@ -14,6 +14,7 @@
 	 * LISTMODULES
 	 * DUMPCONFIG 
 	 * SAVECONFIG
+	 * DETACH
 	 * HELP
 	
 	(c) 2003 Jelmer Vernooij <jelmer@nl.linux.org>
@@ -37,7 +38,7 @@
 #include "ctrlproxy.h"
 #include <string.h>
 
-static gboolean with_privmsg = FALSE;
+static gboolean without_privmsg = FALSE;
 static GList *commands = NULL;
 
 struct admin_command {
@@ -57,7 +58,7 @@ void admin_out(struct line *l, char *fmt, ...)
 	nick = xmlGetProp(l->network->xmlConf, "nick");
 	server_name = xmlGetProp(l->network->xmlConf, "name");
 
-	asprintf(&tot, ":ctrlproxy!ctrlproxy@%s PRIVMSG %s :%s\r\n", server_name, nick, msg);
+	asprintf(&tot, ":ctrlproxy!ctrlproxy@%s NOTICE %s :%s\r\n", server_name, nick, msg);
 	free(msg);
 
 	transport_write(l->client->incoming, tot);
@@ -66,7 +67,7 @@ void admin_out(struct line *l, char *fmt, ...)
 	xmlFree(server_name);
 }
 
-xmlNodePtr find_network_xml(char *name)
+static xmlNodePtr find_network_xml(char *name)
 {
 	char *nname;
 	xmlNodePtr cur = xmlNode_networks->xmlChildrenNode;
@@ -80,7 +81,7 @@ xmlNodePtr find_network_xml(char *name)
 	return NULL;
 }
 
-struct network *find_network_struct(char *name)
+static struct network *find_network_struct(char *name)
 {
 	char *nname;
 	GList *g = networks;
@@ -228,6 +229,11 @@ static void connect_network (char **args, struct line *l)
 		return;
 	}
 
+	if(find_network_struct(args[1])) {
+		admin_out(l, "Already connected to %s", args[1]);
+		return;
+	}
+
 	g_message("Connecting to %s", args[1]);
 	
 	connect_to_server(n);
@@ -240,7 +246,7 @@ static void disconnect_network (char **args, struct line *l)
 	else {
 		n = find_network_struct(args[1]);
 		if(!n) {
-			admin_out(l, "Can't find network with that name");
+			admin_out(l, "Can't find active network with that name");
 			return;
 		}
 	}
@@ -340,6 +346,7 @@ static void help (char **args, struct line *l)
 {
 	int i;
 	GList *gl = commands;
+	admin_out(l, "The following commands are available:");
 	while(gl) {
 		struct admin_command *cmd = (struct admin_command *)gl->data;
 		admin_out(l, cmd->name);
@@ -360,12 +367,16 @@ static void list_networks(char **args, struct line *l)
 	}
 }
 
-static void handle_die(char **args, struct line *l) 
+static void detach_client(char **args, struct line *l)
 {
-	clean_exit();
-	exit(0);
+	disconnect_client(l->client);
+	l->client = NULL;
 }
 
+static void handle_die(char **args, struct line *l) 
+{
+	g_main_loop_quit(main_loop);
+}
 
 void register_admin_command(char *name, void (*handler) (char **args, struct line *l))
 {
@@ -390,7 +401,7 @@ void unregister_admin_command(char *name)
 	}
 }
 
-struct admin_command builtin_commands[] = {
+static struct admin_command builtin_commands[] = {
 	{ "ADDNETWORK", add_network },
 	{ "ADDSERVER", add_server },
 	{ "ADDLISTEN", add_listen },
@@ -404,6 +415,7 @@ struct admin_command builtin_commands[] = {
 	{ "LISTMODULES", list_modules },
 	{ "DUMPCONFIG", dump_config },
 	{ "SAVECONFIG", save_config },
+	{ "DETACH", detach_client },
 	{ "HELP", help },
 	{ NULL }
 };
@@ -415,15 +427,32 @@ static gboolean handle_data(struct line *l) {
 	int i;
 	GList *gl;
 	if(l->direction != TO_SERVER) return TRUE;
+
 	if(strcasecmp(l->args[0], "CTRLPROXY") == 0)cmdoffset = 1;
-	if(with_privmsg && strcasecmp(l->args[0], "PRIVMSG") == 0 && 
+
+	if(!without_privmsg && strcasecmp(l->args[0], "PRIVMSG") == 0 && 
 	   strcasecmp(l->args[1], "CTRLPROXY") == 0) cmdoffset = 2;
 
 	if(cmdoffset == 0) return TRUE;
 
+	if(!l->args[cmdoffset]) {
+		admin_out(l, "Please give a command. Use the 'help' command to get a list of available commands");
+		return TRUE;
+	}
+
 	args = malloc(sizeof(char *) * 2);
 	l->options |= LINE_DONT_SEND | LINE_IS_PRIVATE;
 	tmp = strdup(l->args[cmdoffset]);
+
+	if(l->args[cmdoffset+1]) {
+		/* Add everything after l->args[cmdoffset] to tmp */
+		for(i = cmdoffset+1; l->args[i]; i++) {
+			char *oldtmp = tmp;
+			asprintf(&tmp, "%s %s", oldtmp, l->args[i]);
+			free(oldtmp);
+		}
+	}
+
 	args[0] = tmp;
 	p = tmp;
 
@@ -445,6 +474,7 @@ static gboolean handle_data(struct line *l) {
 			free(tmp);
 			return TRUE;
 		}
+		gl = gl->next;
 	}
 
 	admin_out(l, "Can't find command '%s'", args[0]);
@@ -465,8 +495,8 @@ gboolean init_plugin(struct plugin *p) {
 	int i;
 
 	add_filter("admin", handle_data);
-	cur = xmlFindChildByElementName(p->xmlConf, "with_privmsg");
-	if(cur) with_privmsg = TRUE;
+	cur = xmlFindChildByElementName(p->xmlConf, "without_privmsg");
+	if(cur) without_privmsg = TRUE;
 
 	for(i = 0; builtin_commands[i].name; i++) {
 		register_admin_command(builtin_commands[i].name, builtin_commands[i].handler);

@@ -20,6 +20,7 @@
 #define MAX_LINE_ARGS 64
 
 #include "internals.h"
+#include "irc.h"
 
 extern FILE *debugfd;
 
@@ -126,8 +127,45 @@ char *irc_line_string_nl(struct line *l)
 	return raw;
 }
 
+int requires_colon(char *ch)
+{
+	int c = atoi(ch);
+	if(!strcasecmp(ch, "MODE"))return 0;
+	if(!strcasecmp(ch, "NICK"))return 0;
+
+	switch(c) {
+	case RPL_CHANNELMODEIS:
+	case RPL_INVITING:
+	case RPL_BANLIST:
+	case RPL_TRACELINK:
+	case RPL_TRACECONNECTING:
+	case RPL_TRACEUNKNOWN:
+	case RPL_TRACEOPERATOR:
+	case RPL_TRACEUSER:
+	case RPL_TRACESERVER:
+	case RPL_TRACENEWTYPE:
+	case RPL_TRACELOG:
+	case RPL_STATSLINKINFO:
+	case RPL_STATSCOMMANDS:
+	case RPL_STATSCLINE:
+	case RPL_STATSNLINE:
+	case RPL_STATSILINE:
+	case RPL_STATSKLINE:
+	case RPL_STATSYLINE:
+	case RPL_ENDOFSTATS:
+	case RPL_STATSLLINE:
+	case RPL_STATSUPTIME:
+	case RPL_STATSOLINE:
+	case RPL_STATSHLINE:
+	case RPL_UMODEIS:
+		return 0;
+
+	default: return 1;
+	}
+}
+
 char *irc_line_string(struct line *l) {
-	size_t len = 0; int i;
+	size_t len = 0; unsigned int i;
 	char *ret;
 	g_assert(l);
 
@@ -142,8 +180,8 @@ char *irc_line_string(struct line *l) {
 	if(l->origin) sprintf(ret, ":%s ", l->origin);
 
 	for(i = 0; i < l->argc; i++) {
-		/* FIXME: xchat _ALWAYS_expects a : before the last argument... */
-		if(strchr(l->args[i],' ') || l->args[i][0] == ':' /*|| (i > 0 && i == l->argc-1)*/)strcat(ret, ":");
+		if(i == l->argc-1 && requires_colon(l->args[0]) && i != 0)
+			strcat(ret, ":");
 		strcat(ret, l->args[i]);
 		if(i != l->argc-1)strcat(ret, " ");
 	}

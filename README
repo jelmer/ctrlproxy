@@ -2,6 +2,8 @@ ctrlproxy
 ==============
 Jelmer Vernooij <jelmer@nl.linux.org>
 
+For a quick start, see the bottom of this file.
+
 Why ctrlproxy?
 --------------
 CtrlProxy is a project I started because I got bored with running irssi in 
@@ -9,6 +11,9 @@ screen on my server. My server isn't very fast and that meant
 when it was on high load ircing was getting pretty hard. I could 
 of course run irssi on my workstation, but my workstation isn't on 
 24/7 and some people depend on the channel logs I generate.
+
+Running ctrlproxy requires much less bandwidth then running a 
+remote irssi inside screen.
 
 The structure of ctrlproxy is very modular and it is easily extendible.
 
@@ -63,6 +68,10 @@ The example ctrlproxyrc file might be of some use..
 After you've installed, configured and started ctrlproxy you can connect to 
 it on port 6668 and up.
 
+To build the documentation, run ./configure --enable-docs. Please not that 
+a pregenerated version of the documentation is available in the tarball. So, 
+in most cases, you shouldn't need to rebuild.
+
 Petnames
 --------
 During the time I have been using ctrlproxy, people have been giving it some 
@@ -70,4 +79,16 @@ weird nick names, you'd probably have to know dutch to understand them:
 
 - ctrlbraxy
 - ctrlprutsy
-- kont-rol proxy
+
+Quick start
+-----------
+1. Install ctrlproxy (either from debian, or from source, see above)
+
+2. Copy ctrlproxyrc.example to ~/.ctrlproxyrc and adapt it to your needs
+
+3. Run ctrlproxy --daemon
+
+4. Connect to ctrlproxy from your IRC client. By default, you can connect 
+to port 6670.
+
+5. Simply disconnect by typing /QUIT

@@ -127,6 +127,38 @@ static gboolean my_message_handler(struct line *l);
 
 	</sect2>
 
+	<sect2><title>Registering a new client or lose client handler</title>
+
+	<para>A module can also register a function that should be called when a new 
+		client connects or when a client disconnects. </para>
+
+	<programlisting>
+typedef gboolean (*new_client_hook) (struct client *);
+typedef void (*lose_client_hook) (struct client *);
+void add_new_client_hook(char *name, new_client_hook h);
+void del_new_client_hook(char *name);
+void add_lose_client_hook(char *name, lose_client_hook h);
+void del_lose_client_hook(char *name);
+	</programlisting>
+
+	<para>The prototypes of these functions pretty much speak for themselves. 
+	If a new_client_hook function returns FALSE, the client will be denied 
+	access.</para>
+
+	</sect2>
+
+	<sect2>
+		<title>Registering a MOTD function</title>
+
+		<para>MOTD functions are functions that add one or more lines to 
+			the MOTD that is sent to a client.</para>
+
+		<para>A module can register a MOTD function using the add_motd_hook() and del_motd_hook() functions, that work similar to the add_new_client_hook() and del_new_client_hook() functions documented above.</para>
+
+		<para>A motd function should return a dynamically allocated array containing dynamically allocated nul-terminated strings that should be added to the MOTD.</para>
+
+	</sect2>
+
 	</sect1>
 
 	<sect1><title>Log functionality</title>
@@ -135,22 +167,29 @@ static gboolean my_message_handler(struct line *l);
 
 	</sect1>
 
-	<sect1><title>Replication</title>
+	<sect1><title>Storing data</title>
 
-	<para>The default replication function (default_replicate_function) of ctrlproxy is very basic. 
-	It only makes sure the client knows on which channels the user is, but 
-	does not do any replication of the messages that have been received.</para>
+	<para>Paths to data should be configurable, but default to 
+	the file/directory name returned by <parameter>ctrlproxy_path()</parameter>. The argument to this function should be the name of the subsystem.</para>
+	
+	<para>All top level directories have been created when this function 
+	returns. </para>
 
-	<para>To use your own replicate function instead, set the function pointer
-	<command>replicate_function</command> to your replicate function.</para>
+	<para>If NULL was returned, one or more directories could not be created.</para>
 
-	<para>The prototype for a replicate function is:</para>
-
-	<programlisting>
-	void replicatef(struct network *s, struct transport_context *c);
-	</programlisting>
-
-	<para>The replication data should be sent to the specified transport_context.</para>
 	</sect1>
+
+	<sect1><title>Debugging</title>
+
+		<para>Two very useful utilities are <command>valgrind</command> 
+			and <command>gdb</command>. </para>
+
+		<para>If you're running from gdb, make sure you have set the following: </para>
+
+		<para><programlisting>
+		handle SIGPIPE nostop
+		handle SIGINT nostop
+		</programlisting></para>
+		</sect1>
 
 </chapter>

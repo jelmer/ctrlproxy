@@ -58,6 +58,10 @@
 
 			<listitem><para>Disconnect from the specified network.</para></listitem></varlistentry>
 
+			<varlistentry><term>DETACH</term>
+
+			<listitem><para>Detach client from the proxy.</para></listitem></varlistentry>
+
 			<varlistentry><term>LISTNETWORKS</term>
 			<listitem><para>Prints out a list of all networks 
 			ctrlproxy is connected to at the moment.</para></listitem></varlistentry>
@@ -102,8 +106,8 @@ CONNECT OFTC
 	</section>
 
 	<configuration>
-		<element name="with_privmsg">
-			<description>If this element is present, you can (next to using /CTRLPROXY) execute admin commands by sending them to the nick 'ctrlproxy'. This can be useful for IRC clients that don't allow unknown IRC commands to be executed.</description>
+		<element name="without_privmsg">
+			<description>If this element is present, you can not execute admin commands by sending them to the nick 'ctrlproxy'. This can be useful for IRC clients that don't allow unknown IRC commands to be executed.</description>
 		</element>
 	</configuration>
 

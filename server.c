@@ -18,8 +18,11 @@
 */
 
 #include "internals.h"
-#include "config.h"
 #include "irc.h"
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #define SERVER_SEND_LINE(s,l) {if(!irc_send_line((s)->outgoing, l))reconnect(NULL, s);}
 #define CLIENT_SEND_LINE(c,l) {if(!irc_send_line((c)->incoming, l))disconnect_client(c);}
@@ -30,14 +33,11 @@ extern FILE *debugfd;
 
 extern char *debugfile;
 
-void (*replicate_function) (struct network *, struct transport_context *client);
-
 static void reconnect(struct transport_context *c, void *_server);
 
 void handle_server_receive (struct transport_context *c, char *raw, void *_server)
 {
 	struct network *server = (struct network *)_server;
-	char *new_nick;
 	struct line *l;
 	
 	if(debugfd)fprintf(debugfd, "[From server] %s\n", raw);
@@ -66,11 +66,13 @@ void handle_server_receive (struct transport_context *c, char *raw, void *_serve
 		} else if(!strcasecmp(l->args[0], "PONG")){
 		} else if(!strcasecmp(l->args[0], "433") && !server->authenticated){
 			if(server->outgoing) {
+				char *new_nick;
 				char *nick = xmlGetProp(server->xmlConf, "nick");
 				asprintf(&new_nick, "%s_", nick);
 				xmlSetProp(server->xmlConf, "nick", new_nick);
 				irc_send_args(server->outgoing, "NICK", new_nick, NULL);
 				xmlFree(nick);
+				free(new_nick);
 			}
 		} else if(server->authenticated) {
 			if(!(l->options & LINE_DONT_SEND))clients_send(server, l, NULL);
@@ -192,15 +194,22 @@ void reconnect(struct transport_context *c, void *_server)
 }
 
 void disconnect_client(struct client *c) {
+	char *networkname;
 	if(!c->incoming)return;
 
 	transport_free(c->incoming);
 	c->incoming = NULL;
 
 	c->network->clients = g_list_remove(c->network->clients, c);
+	if(c->authenticated) lose_client_hook_execute(c);
 	c->authenticated = 2;
+
+	networkname = xmlGetProp(c->network->xmlConf, "name");
+	g_message("Removed client to %s", networkname);
+	g_free(networkname);
+	
 	free(c);
-	g_message("Removed client");
+
 }
 
 void clients_send(struct network *server, struct line *l, struct transport_context *exception) 
@@ -217,6 +226,31 @@ void handle_client_disconnect(struct transport_context *c, void *data)
 {
 	struct client *client = (struct client *)data;
 	disconnect_client(client);
+}
+
+void send_motd(struct network *n, struct transport_context *c)
+{
+	char **lines;
+	int i;
+	char *server_name = xmlGetProp(n->xmlConf, "name");
+	char *nick = xmlGetProp(n->xmlConf, "nick");
+
+	lines = get_motd_lines(n);
+
+	if(!lines) {
+		irc_sendf(c, ":%s %d %s :No MOTD file\r\n", server_name, ERR_NOMOTD, nick);
+		xmlFree(nick); xmlFree(server_name);
+		return;
+	}
+
+	irc_sendf(c, ":%s %d %s :Start of MOTD\r\n", server_name, RPL_MOTDSTART, nick);
+	for(i = 0; lines[i]; i++) {
+		irc_sendf(c, ":%s %d %s :%s\r\n", server_name, RPL_MOTD, nick, lines[i]);
+		free(lines[i]);
+	}
+	free(lines);
+	irc_sendf(c, ":%s %d %s :End of MOTD\r\n", server_name, RPL_ENDOFMOTD, nick);
+	xmlFree(nick); xmlFree(server_name);
 }
 
 void handle_client_receive(struct transport_context *c, char *raw, void *_client)
@@ -244,10 +278,6 @@ void handle_client_receive(struct transport_context *c, char *raw, void *_client
 	l->direction = TO_SERVER;
 	l->client = client;
 	l->network = client->network;
-
-	state_handle_data(client->network, l);
-	
-	filters_execute(l);
 
 	clientpass = xmlGetProp(client->network->xmlConf, "client_pass");
 	if(!l->args[0]){ 
@@ -285,13 +315,12 @@ void handle_client_receive(struct transport_context *c, char *raw, void *_client
 			irc_sendf(c, ":%s 005 %s %s :are supported on this server\r\n", server_name, nick, tmp);
 			free(tmp);
 		}
-		
-		irc_sendf(c, ":%s 422 %s :No MOTD file\r\n", 
-				server_name, nick);
+	
+		send_motd(client->network, c);
 		g_log(G_LOG_DOMAIN, G_LOG_LEVEL_MESSAGE, "Client @%s successfully authenticated", 
 			  server_name);
-
-		replicate_function(client->network, c);
+		if(!new_client_hook_execute(client)) 
+			disconnect_client(client);
 	} else if(!strcasecmp(l->args[0], "PASS")) {
 		if (!clientpass)
 			client->authenticated = 1;
@@ -320,6 +349,13 @@ void handle_client_receive(struct transport_context *c, char *raw, void *_client
 	} else if(!strcasecmp(l->args[0], "PING")) {
 		irc_sendf(c, ":%s PONG :%s\r\n", server_name, l->args[1]);
 	} else if(client->authenticated) {
+		state_handle_data(client->network, l);
+	
+		filters_execute(l);
+
+		client = l->client;
+		if (!client) return;
+
 		if(client->network->outgoing) {
 			const char *old_origin;
 			if(!(l->options & LINE_DONT_SEND)) {SERVER_SEND_LINE(client->network, l) }
@@ -459,21 +495,23 @@ int close_server(struct network *s)
 	GList *l = s->clients;
 	int i;
 	char *server_name = xmlGetProp(s->xmlConf, "name");
+	g_message("Closing connection to %s", server_name);
 	if(s->outgoing)irc_sendf(s->outgoing, "QUIT\r\n");
 	free(s->hostmask);
 	
 	while(l) {
 		struct client *c = l->data;
 		irc_sendf(c->incoming, ":%s QUIT :Server exiting\r\n", server_name);
-		transport_free(c->incoming);
 		l = l->next;
+		disconnect_client(c);
 	}
 	g_list_free(s->clients);s->clients = NULL;
 
-	/* Remove all incoming lines */
+	/* Remove all listening lines */
 	if(s->incoming) {
-		for(i = 0; s->incoming[i]; i++) 
+		for(i = 0; s->incoming[i]; i++)
 			transport_free(s->incoming[i]);
+		free(s->incoming);
 	}
 
 	transport_free(s->outgoing);
@@ -492,8 +530,9 @@ int close_server(struct network *s)
 	}
 
 	networks = g_list_remove(networks, s);
-	
 
+	free(s);
+	
 	xmlFree(server_name);
 	return 0;
 }
@@ -523,19 +562,6 @@ gboolean ping_loop(gpointer user_data) {
 		l = g_list_next(l);
 	}
 	return TRUE;
-}
-
-void default_replicate_function(struct network *s, struct transport_context *io) {
-	GSList *g = gen_replication(s);
-	while(g) {
-		struct line *rl = (struct line *)g->data;
-		if(rl) {
-			irc_send_line(io, rl);
-			free_line(rl);
-		}
-		g = g_slist_next(g);
-	}
-	g_slist_free(g);
 }
 
 int verify_client(struct network *s, struct client *c)

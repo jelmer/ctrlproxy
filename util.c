@@ -18,6 +18,7 @@
 */
 
 #include "internals.h"
+#include <errno.h>
 
 xmlNodePtr xmlFindChildByElementName(xmlNodePtr parent, const xmlChar *name)
 {
@@ -63,4 +64,19 @@ char *list_make_string(char **list)
 	}
 
 	return ret;
+}
+
+char *ctrlproxy_path(char *part)
+{
+	char *p, *p1;
+	asprintf(&p, "%s/.ctrlproxy", g_get_home_dir());
+	if(mkdir(p, 0700) != 0 && errno != EEXIST) {
+		g_warning("Couldn't create '%s'!\n", p);
+		free(p);
+		exit(1);
+	}
+
+	asprintf(&p1, "%s/%s", p, part);
+	free(p);
+	return p1;
 }

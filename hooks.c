@@ -69,3 +69,175 @@ gboolean filters_execute(struct line *l)
 
 	return TRUE;
 }
+
+/* Hooks that are called when a client is added or removed. 
+ * Very useful for replication backends */
+
+struct new_client_hook_data {
+	char *name;
+	new_client_hook hook;
+};
+
+GList *new_client_hooks = NULL;
+
+struct lose_client_hook_data {
+	char *name;
+	lose_client_hook hook;
+};
+
+GList *lose_client_hooks = NULL;
+
+void add_new_client_hook(char *name, new_client_hook h)
+{
+	struct new_client_hook_data *d;
+	
+	d = malloc(sizeof(struct new_client_hook_data));
+	d->name = strdup(name);
+	g_message("Adding new client hook '%s'", d->name);
+	d->hook = h;
+	new_client_hooks = g_list_append(new_client_hooks, d);
+}
+
+void del_new_client_hook(char *name)
+{
+	GList *l = new_client_hooks;
+	while(l) {
+		struct new_client_hook_data *d = (struct new_client_hook_data *)l->data;
+		if(!strcmp(d->name, name)) {
+			g_message("New client hook '%s' removed", d->name);
+			free(d->name);
+			new_client_hooks = g_list_remove(new_client_hooks, d);
+			return;
+		}
+		l = l->next;
+	}
+}
+
+gboolean new_client_hook_execute(struct client *c)
+{
+	GList *l = new_client_hooks;
+	while(l) {
+		struct new_client_hook_data *d = (struct new_client_hook_data *)l->data;
+		if(!d->hook(c)) {
+			g_message("New client hook '%s' refused new client", d->name);
+			return FALSE;
+		}
+
+		l = l->next;
+	}
+
+	return TRUE;
+}
+
+
+
+void add_lose_client_hook(char *name, lose_client_hook h)
+{
+	struct lose_client_hook_data *d;
+	g_message("Adding lose client hook '%s'", name);
+	
+	d = malloc(sizeof(struct lose_client_hook_data));
+	d->name = strdup(name);
+	d->hook = h;
+	lose_client_hooks = g_list_append(lose_client_hooks, d);
+}
+
+void del_lose_client_hook(char *name)
+{
+	GList *l = lose_client_hooks;
+	while(l) {
+		struct lose_client_hook_data *d = (struct lose_client_hook_data *)l->data;
+		if(!strcmp(d->name, name)) {
+			g_message("Lose client hook '%s' removed", d->name);
+			free(d->name);
+			lose_client_hooks = g_list_remove(lose_client_hooks, d);
+			return;
+		}
+		l = l->next;
+	}
+}
+
+void lose_client_hook_execute(struct client *c)
+{
+	GList *l = lose_client_hooks;
+	while(l) {
+		struct lose_client_hook_data *d = (struct lose_client_hook_data *)l->data;
+		d->hook(c);
+		l = l->next;
+	}
+}
+
+struct motd_hook_data {
+	char *name;
+	motd_hook hook;
+};
+
+GList *motd_hooks = NULL;
+
+void add_motd_hook(char *name, motd_hook h)
+{
+	struct motd_hook_data *d;
+	g_message("Adding MOTD hook '%s'", name);
+
+	d = malloc(sizeof(struct motd_hook_data));
+	d->name = strdup(name);
+	d->hook = h;
+
+	motd_hooks = g_list_append(motd_hooks, d);
+}
+
+void del_motd_hook(char *name)
+{
+	GList *l = motd_hooks;
+	while(l) {
+		struct motd_hook_data *d = (struct motd_hook_data *)l->data;
+		if(!strcmp(d->name, name)) {
+			g_message("MOTD hook '%s' removed", d->name);
+			free(d->name);
+			motd_hooks = g_list_remove(motd_hooks, d);
+			return;
+		}
+		l = l->next;
+	}
+}
+
+char ** get_motd_lines(struct network *n)
+{
+	char **l = malloc(sizeof(char *));
+	size_t curnum = 0;
+	GList *gl = motd_hooks;
+	while(gl) {
+		char **nl;
+		int i,j;
+		struct motd_hook_data *d = (struct motd_hook_data *)gl->data;
+
+		nl = d->hook(n);
+
+		if(!nl) { 
+			gl = gl->next;
+			continue;
+		}
+
+		/* Count number of added lines */
+		for(i = 0; nl[i]; i++);
+
+		l = realloc(l, (curnum+i+1) * sizeof(char *));
+
+		for(j = 0; j < i; j++) l[curnum+j] = nl[j];
+
+		free(nl);
+
+		curnum+=i;
+		
+		gl = gl->next;
+	}
+
+	l[curnum] = NULL;
+
+	if(!l[0]) { 
+		free(l);
+		return NULL;
+	}
+
+	return l;
+}

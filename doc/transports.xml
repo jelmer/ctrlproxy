@@ -10,7 +10,7 @@ only passed to the main process when a complete line is in, not parts of it.
 
 <para>Implementors of a certain transport backend should call 
 <command>register_transport()</command> with a pointer to 
-a <parameter>struct transport</parameter>. </para>
+a <parameter>struct transport_ops</parameter>. </para>
 
 <sect1><title>Transport contexts</title>
 
@@ -18,7 +18,7 @@ a <parameter>struct transport</parameter>. </para>
 
 <programlisting>
 struct transport_context {
-	struct transport *functions;
+	struct transport_ops *functions;
 	xmlNodePtr configuration;
 	void *data;
 	void *caller_data;

@@ -30,6 +30,7 @@
 #include <fcntl.h>
 #include <stdlib.h>
 #include <sys/un.h>
+#include <unistd.h>
 
 #undef G_LOG_DOMAIN
 #define G_LOG_DOMAIN "socket"
@@ -49,7 +50,7 @@ struct socket_data {
 	guint in_id;
 };
 
-pid_t piped_child(char* const command[], int *f_in)
+static pid_t piped_child(char* const command[], int *f_in)
 {
 	pid_t pid;
 	int sock[2];
@@ -78,7 +79,7 @@ pid_t piped_child(char* const command[], int *f_in)
 		dup2(sock[1], 0);
 		dup2(sock[1], 1);
 		execvp(command[0], command);
-		g_log(G_LOG_DOMAIN, G_LOG_LEVEL_WARNING, "Failed to exec %s : %s\n", command[0], strerror(errno));
+		g_log(G_LOG_DOMAIN, G_LOG_LEVEL_WARNING, "Failed to exec %s : %s", command[0], strerror(errno));
 		return -1;
 	}
 
@@ -87,7 +88,7 @@ pid_t piped_child(char* const command[], int *f_in)
 	return pid;
 }
 
-void socket_to_iochannel(int sock, struct transport_context *c, enum ssl_mode ssl_mode)
+static void socket_to_iochannel(int sock, struct transport_context *c, enum ssl_mode ssl_mode)
 {
 	GIOChannel *ioc;
 	struct socket_data *s = malloc(sizeof(struct socket_data));
@@ -114,7 +115,7 @@ void socket_to_iochannel(int sock, struct transport_context *c, enum ssl_mode ss
 	c->data = s;
 }
 
-int connect_pipe(struct transport_context *c) 
+static int connect_pipe(struct transport_context *c) 
 {
 	char *args[100];
 	int i;
@@ -133,7 +134,7 @@ int connect_pipe(struct transport_context *c)
 
 		if(!strcmp(cur->name, "path")) args[0] = xmlNodeGetContent(cur);
 		else if(!strcmp(cur->name, "arg")) args[++argc] = xmlNodeGetContent(cur);
-		else g_log(G_LOG_DOMAIN, G_LOG_LEVEL_WARNING, "Unknown element %s\n", cur->name);
+		else g_log(G_LOG_DOMAIN, G_LOG_LEVEL_WARNING, "Unknown element %s", cur->name);
 	
 		cur = cur->next;
 	}
@@ -159,6 +160,7 @@ static gboolean handle_new_client(GIOChannel *c, GIOCondition o, gpointer data)
 	struct transport_context *newcontext, *oldcontext = (struct transport_context *)data;
 	size_t size;
 	int sock;
+	char *ssl = NULL;
 
 	g_assert(o == G_IO_IN);
 
@@ -173,7 +175,9 @@ static gboolean handle_new_client(GIOChannel *c, GIOCondition o, gpointer data)
 	newcontext = malloc(sizeof(struct transport_context));
 	memset(newcontext, 0, sizeof(struct transport_context));
 	
-	socket_to_iochannel(sock, newcontext, xmlHasProp(oldcontext->configuration, "ssl")?SSL_MODE_SERVER:SSL_MODE_NONE);
+	ssl = xmlGetProp(oldcontext->configuration, "ssl");
+	socket_to_iochannel(sock, newcontext, (ssl && atoi(ssl))?SSL_MODE_SERVER:SSL_MODE_NONE);
+	xmlFree(ssl);
 	
 	newcontext->functions = oldcontext->functions;
 	newcontext->configuration = oldcontext->configuration;
@@ -233,7 +237,7 @@ static gboolean handle_in (GIOChannel *ioc, GIOCondition o, gpointer data)
 	return TRUE;
 }
 
-int connect_ip(struct transport_context *c) 
+static int connect_ip(struct transport_context *c) 
 {
 	struct sockaddr_in name4;
 	struct sockaddr_in6 name6;
@@ -244,6 +248,7 @@ int connect_ip(struct transport_context *c)
 	int ret;
 	int sock;
 	char *tempname;
+	char *ssl;
 	char ipv6 = 0;
 	int family = AF_INET;
 	int domain = PF_INET;
@@ -285,7 +290,7 @@ int connect_ip(struct transport_context *c)
 	hostinfo = gethostbyname2 (hostname, family);
 	if (hostinfo == NULL)
 	{
-		g_warning("Unknown host %s.\n", hostname);
+		g_warning("Unknown host %s.", hostname);
 		xmlFree(hostname);
 		free(tempname);
 		return -1;
@@ -307,14 +312,17 @@ int connect_ip(struct transport_context *c)
 	}
 	free(tempname);
 
-	socket_to_iochannel(sock, c, xmlHasProp(c->configuration, "ssl")?SSL_MODE_CLIENT:SSL_MODE_NONE);
+
+	ssl = xmlGetProp(c->configuration, "ssl");
+	socket_to_iochannel(sock, c, (ssl && atoi(ssl))?SSL_MODE_CLIENT:SSL_MODE_NONE);
+	xmlFree(ssl);
 
 	g_log(G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "Successfully connected to %s:%d", hostname, port);
 	xmlFree(hostname);
 	return 0;
 }
 
-int close_socket(struct transport_context *c)
+static int close_socket(struct transport_context *c)
 {
 	struct socket_data *s;
 	GError *error = NULL;
@@ -337,13 +345,13 @@ int close_socket(struct transport_context *c)
 	return 0;
 }
 
-int write_socket(struct transport_context *t, char *l)
+static int write_socket(struct transport_context *t, char *l)
 {
 	GError *error = NULL;
 	struct socket_data *s = (struct socket_data *)t->data;
 
 	if(!s->channel) {
-		g_message("Trying to send line '%s' to socket that is not connected!\n", l);
+		g_message("Trying to send line '%s' to socket that is not connected!", l);
 		return -1;
 	}
 
@@ -370,13 +378,16 @@ int write_socket(struct transport_context *t, char *l)
 	return 0;
 }
 
-int listen_ip(struct transport_context *c)
+static int listen_ip(struct transport_context *c)
 {
 	static int client_port = 6667;
 	char ipv6 = 0;
 	struct sockaddr_in6 name6;
 	struct sockaddr_in name4;
 	struct socket_data *s;
+	char *bind_addr = NULL;
+	struct hostent *bind_host = NULL;
+	const int on = 1;
 	int port, sock;
 	int domain = PF_INET, family = AF_INET;
 	int ret;
@@ -399,28 +410,42 @@ int listen_ip(struct transport_context *c)
 	sock = socket (domain, SOCK_STREAM, 0);
 	if (sock < 0)
 	{
-		g_log(G_LOG_DOMAIN, G_LOG_LEVEL_WARNING, "socket: %s\n", strerror(errno));
+		g_log(G_LOG_DOMAIN, G_LOG_LEVEL_WARNING, "socket: %s", strerror(errno));
 		return -1;
 	}
 
-	setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, NULL, 0);
+	setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
+
+	bind_addr = xmlGetProp(c->configuration, "bind");
+	if(bind_addr) bind_host = gethostbyname2(bind_addr, family);
+	xmlFree(bind_addr);
 
 	/* Give the socket a name. */
 	if(ipv6) {
+		memset(&name6, 0, sizeof(name6));
 		name6.sin6_family = AF_INET6;
 		name6.sin6_port = htons(port);
-		name6.sin6_addr = in6addr_any;
+		if(bind_host) {
+			memcpy((char *)&name6.sin6_addr, bind_host->h_addr, bind_host->h_length);
+		} else {
+			name6.sin6_addr = in6addr_any;
+		}
 		ret = bind (sock, (struct sockaddr *) &name6, sizeof (name6));
 	} else { 
+		memset(&name4, 0, sizeof(name4));
 		name4.sin_family = AF_INET;
 		name4.sin_port = htons (port);
-		name4.sin_addr.s_addr = htonl (INADDR_ANY);
+		if(bind_host) {
+			name4.sin_addr = *(struct in_addr *) bind_host->h_addr;
+		} else {
+			name4.sin_addr.s_addr = htonl (INADDR_ANY);
+		}
 		ret = bind (sock, (struct sockaddr *) &name4, sizeof (name4));
 	}
 	
 	if(ret < 0)
 	{
-		g_log(G_LOG_DOMAIN, G_LOG_LEVEL_WARNING, "bind: %s\n", strerror(errno));
+		g_log(G_LOG_DOMAIN, G_LOG_LEVEL_WARNING, "bind: %s", strerror(errno));
 		return -1;
 	}
 
@@ -447,7 +472,7 @@ int listen_ip(struct transport_context *c)
 	return 0;
 }
 
-int listen_pipe(struct transport_context *c)
+static int listen_pipe(struct transport_context *c)
 {
 	struct sockaddr_un name;
 	int sock;
@@ -468,7 +493,7 @@ int listen_pipe(struct transport_context *c)
 	sock = socket (AF_UNIX, SOCK_STREAM, 0);
 	if (sock < 0)
 	{
-		g_warning("socket(%s): %s\n", f, strerror(errno));
+		g_warning("socket(%s): %s", f, strerror(errno));
 		free(f);
 		return -1;
 	}
@@ -481,7 +506,7 @@ int listen_pipe(struct transport_context *c)
 	/* Give the socket a name. */
 	if(bind (sock, (struct sockaddr *) &name, sizeof (name)) < 0)
 	{
-		g_warning("bind(%s): %s\n", f, strerror(errno));
+		g_warning("bind(%s): %s", f, strerror(errno));
 		free(f);
 		return -1;
 	}
@@ -511,7 +536,7 @@ int listen_pipe(struct transport_context *c)
 	return 0;
 }
 
-struct transport ipv4 = {
+static struct transport_ops ipv4 = {
 	"ipv4",
 	connect_ip,
 	listen_ip,
@@ -519,7 +544,7 @@ struct transport ipv4 = {
 	close_socket
 };
 
-struct transport ipv6 = {
+static struct transport_ops ipv6 = {
 	"ipv6",
 	connect_ip,
 	listen_ip,
@@ -527,7 +552,7 @@ struct transport ipv6 = {
 	close_socket
 };
 
-struct transport pipe_transport = {
+static struct transport_ops pipe_transport = {
 	"pipe",
 	connect_pipe,
 	listen_pipe,
@@ -543,7 +568,7 @@ gboolean fini_plugin(struct plugin *p) {
 
 gboolean init_plugin(struct plugin *p) {
 	xmlNodePtr cur;
-	char *certf = NULL, *keyf = NULL;
+	char *certf = NULL, *keyf = NULL, *defaultssl = NULL;;
 	register_transport(&ipv4);
 	register_transport(&ipv6);
 	register_transport(&pipe_transport);
@@ -558,9 +583,19 @@ gboolean init_plugin(struct plugin *p) {
 	}
 
 #ifdef HAVE_OPENSSL_SSL_H
-	if(certf && keyf) irssi_ssl_set_files(certf, keyf);
+	if(!certf || !keyf) {
+		defaultssl = ctrlproxy_path("ctrlproxy.pem");
+		if(access(defaultssl, R_OK) == 0) {
+			if(!certf) certf = defaultssl;
+			if(!keyf) keyf = defaultssl;
+			irssi_ssl_set_files(certf, keyf);
+		}
+		free(defaultssl);
+
+	} else {
+		irssi_ssl_set_files(certf, keyf);
+	}
 #endif
 
-	xmlFree(certf); xmlFree(keyf);
 	return TRUE;
 }

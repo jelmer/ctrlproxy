@@ -1,13 +1,12 @@
-Summary: A flexible and modular IRC proxy
+Summary: ctrlproxy
 Name: ctrlproxy
-Version: @PACKAGE_VERSION@
-Release: 0
+Version: 2.5
+Release: 2
 License: GPL
 Group: Applications/Internet
 Source: http://nl.linux.org/~jelmer/ctrlproxy/ctrlproxy-%{version}.tar.gz
 Url: http://nl.linux.org/~jelmer/ctrlproxy
 Packager: Jelmer Vernooij <jelmer@nl.linux.org>
-Requires: lsb
 BuildRoot: /var/tmp/%{name}-buildroot
 
 %description
@@ -26,19 +25,27 @@ and ctcp (in case no clients are connected).
 %setup -q
 
 %build
-PREFIX=/usr make
+%configure
+make CC="gcc -I/usr/kerberos/include -I`pwd`"
 
 %install
-rm -rf $RPM_BUILD_ROOT
+[ -d "$RPM_BUILD_ROOT" -a "$RPM_BUILD_ROOT" != "/" ] && rm -rf $RPM_BUILD_ROOT
 mkdir $RPM_BUILD_ROOT
-DESTDIR=$RPM_BUILD_ROOT PREFIX=/usr make install
+%makeinstall \
+   mandir=$RPM_BUILD_ROOT/usr/share/man \
+   man1dir=$RPM_BUILD_ROOT/usr/share/man/man1 \
+   man5dir=$RPM_BUILD_ROOT/usr/share/man/man5 \
+   man7dir=$RPM_BUILD_ROOT/usr/share/man/man7 \
+   docdir=$RPM_BUILD_ROOT/usr/share/doc/ctrlproxy-%{version} \
+   modulesdir=$RPM_BUILD_ROOT/usr/lib/ctrlproxy \
+   moddir=$RPM_BUILD_ROOT/usr/lib/ctrlproxy
 
 %clean
-rm -rf $RPM_BUILD_ROOT
+[ -d "$RPM_BUILD_ROOT" -a "$RPM_BUILD_ROOT" != "/" ] && rm -rf $RPM_BUILD_ROOT
 
 %files
 %defattr(-,root,root)
-%doc AUTHORS ChangeLog COPYING TODO PLAN-2 PLAN-4 README
+%doc AUTHORS COPYING TODO README ChangeLog
 %dir /usr/bin
 /usr/bin/*
 %dir /usr/share/man
@@ -47,3 +54,9 @@ rm -rf $RPM_BUILD_ROOT
 /usr/lib/ctrlproxy/*
 %dir /usr/include
 /usr/include/*
+
+%changelog
+* Tue Nov 18 2003 Sean Reifschneider <jafo-rpms@tummy.com>
+[Release 2.5-1]
+- Updated for the 2.5 release.
+- Making the "clean" mechanisms safer in the .spec file.

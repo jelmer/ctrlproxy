@@ -22,7 +22,7 @@
 #include <string.h>
 #include "irc.h"
 
-xmlNodePtr nickserv_node(struct network *n)
+static xmlNodePtr nickserv_node(struct network *n)
 {
 	xmlNodePtr cur = n->xmlConf->xmlChildrenNode;
 	while(cur) {
@@ -33,7 +33,7 @@ xmlNodePtr nickserv_node(struct network *n)
 	return NULL;
 }
 
-int nickserv_find_nick(struct network *n, char *nick, char **pass)
+static int nickserv_find_nick(struct network *n, char *nick, char **pass)
 {
 	xmlNodePtr p = nickserv_node(n);
 	xmlNodePtr cur;
@@ -54,7 +54,7 @@ int nickserv_find_nick(struct network *n, char *nick, char **pass)
 	return 0;
 }
 
-char *nickserv_nick(struct network *n)
+static char *nickserv_nick(struct network *n)
 {
 	xmlNodePtr cur = nickserv_node(n);
 	if(!cur || !xmlHasProp(cur, "nick")) return strdup("NickServ");
@@ -65,10 +65,13 @@ char *nickserv_nick(struct network *n)
 static gboolean log_data(struct line *l) {
 	char *pass;
 	static char *nickattempt = NULL;
+	static gboolean last_line_was_user = FALSE;
 
-	
-	/* User has changed his/her nick. Check whether this nick needs to be identified */
-	if(l->direction == FROM_SERVER && !strcasecmp(l->args[0], "NICK")) {
+	if(
+		/* User has changed his/her nick. Check whether this nick needs to be identified */
+	   (l->direction == FROM_SERVER && !strcasecmp(l->args[0], "NICK")) ||
+		/* We're in a login sequence */
+	   (last_line_was_user && l->direction == TO_SERVER && !strcasecmp(l->args[0], "NICK"))) {
 		if(nickserv_find_nick(l->network, l->args[1], &pass)) {
 			char *nickserv_n = nickserv_nick(l->network), *raw;
 			asprintf(&raw, "IDENTIFY %s", pass);
@@ -77,6 +80,12 @@ static gboolean log_data(struct line *l) {
 			xmlFree(nickserv_n);
 		}
 	}
+
+	last_line_was_user = FALSE;
+	
+	/* Used in if-statement above */
+	if(l->direction == TO_SERVER && !strcasecmp(l->args[0], "USER")) 
+		last_line_was_user = TRUE;
 
 	/* Keep track of the last nick that the user tried to take */
 	if(l->direction == TO_SERVER && !strcasecmp(l->args[0], "NICK")) {

@@ -1,22 +1,65 @@
 <?xml version="1.0"?>
+<!--
+	Example RC file for ctrlproxy
+	(C) 2003 Jelmer Vernooij <jelmer@vernstok.nl>
+	Read the documentation for more information about certain plugins, 
+	elements or attributes.
+		
+	Please adapt to your needs!
+-->
 <ctrlproxy>
 	<plugins>
+		<!-- Support for interfacing to ctrlproxy 
+		using /MSG ctrlproxy or /CTRLPROXY -->
+		<plugin autoload="1" file="libadmin"/>
 		<plugin autoload="1" file="libsocket">
+			<!-- Generate SSL file with mksslcert.sh -->
 			<sslcertfile>./ctrlproxy.pem</sslcertfile>
 			<sslkeyfile>./ctrlproxy.pem</sslkeyfile>
 		</plugin>
-		<plugin autoload="1" file="librepl_memory"/>
-		<plugin autoload="1" file="libadmin"/>
+		<!-- Don't replicate any backlogs, just send channel info -->
+		<plugin autoload="1" file="librepl_none"/>
+		<!-- Backlog any data since last time user said something -->
+		<plugin autoload="0" file="librepl_simple"/>
+		<!-- Backlog lines matching certain patterns -->
+		<plugin autoload="0" file="librepl_highlight">
+			<!-- Replicate all lines containing 'ctrlproxy' or 'foobar' -->
+			<match>ctrlproxy</match>
+			<match>foobar</match>
+		</plugin>
+		<!-- Backlog lines when command /CTRLPROXY BACKLOG is given -->
+		<plugin autoload="0" file="librepl_command"/>
+
+		<!-- Irssi-style logging -->
 		<plugin autoload="1" file="liblog_irssi">
 			<logfile>/home/jelmer/tmp/ctrlproxy</logfile>
 		</plugin>
+
+		<!-- Send CTCP replies (like time, version, etc) -->
 		<plugin autoload="1" file="libctcp"/>
+
+		<!-- Only sent responses to the client the query came from. For 
+		example, if one client does a /WHOIS, only that client will get
+		the response -->
 		<plugin autoload="1" file="libstrip"/>
+
+		<!-- Support for automatic identify'ing with nickserv -->
 		<plugin autoload="1" file="libnickserv"/>
+
+		<!-- Make sure messages are not sent too fast after each other 
+		     (prevents being kicked by the server for 'Excess flooding' -->
 		<plugin autoload="1" file="libantiflood"/>
+
+		<!-- Automatically set AWAY after a certain period of time -->
 		<plugin autoload="1" file="libauto-away">
 			<message time="300">"I'm currently away, sorry!</message>
 		</plugin>
+
+		<!-- Use /usr/share/ctrlproxy/motd as motd -->
+		<plugin autoload="1" file="libmotd_file"/>
+
+		<!-- Generate a TDB file with statistics about how much 
+		certain patterns where used in a channel -->
 		<plugin file="libstats">
 			<tdbfile>/home/jelmer/.ctrlproxy-stats.tdb</tdbfile>
 			<pattern type="happy">[:;]([-]*)[\)D]</pattern>
@@ -28,6 +71,9 @@
 			<pattern type="caps">^([^a-z]+)$</pattern>
 			<pattern type="action">.ACTION .</pattern>
 		</plugin>
+
+		<plugin autoload="1" file="linestack_file"/>
+		<plugin autoload="1" file="linestack_memory"/>
 	</plugins>
 	<networks>
 		<network autoconnect="1" client_pass="secret" name="BEE" replication="memory">

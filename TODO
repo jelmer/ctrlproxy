@@ -1,16 +1,17 @@
-Next release:
-- Testing!
-- use db2latex for generating PDF?
-- document: 
-  * linestack_{file,memory}
-  * repl_{simple,highlight,command}
-  * report_time
+- test report_time
+- test repl_command
+- finish configuration utility (worked on by Kyoshiro)
 
 Later releases:
+- internatiolization (i18n)
+- automated testsuite
 - use namespaces and XML schemas instead of DTD
 - improve PHP script for stats
+- use information from capabilities sent by server
 
 Optional:
+- Net::IRC-like interface
 - more admin commands: DELNETWORK, NEXTSERVER, DELLISTEN, DELSERVER
 - automatically unload crashing modules?
 - linestack_mysql
+- be able to specify format of NICKSERV commands

@@ -6,7 +6,10 @@
 <!ENTITY log-irssi SYSTEM "log_irssi.xml">
 <!ENTITY nickserv SYSTEM "nickserv.xml">
 <!ENTITY log-custom SYSTEM "log_custom.xml">
-<!ENTITY repl-memory SYSTEM "repl_memory.xml">
+<!ENTITY repl-none SYSTEM "repl_none.xml">
+<!ENTITY repl-simple SYSTEM "repl_simple.xml">
+<!ENTITY repl-highlight SYSTEM "repl_highlight.xml">
+<!ENTITY repl-command SYSTEM "repl_command.xml">
 <!ENTITY socket SYSTEM "socket.xml">
 <!ENTITY stats SYSTEM "stats.xml">
 <!ENTITY strip SYSTEM "strip.xml">
@@ -19,6 +22,9 @@
 <!ENTITY antiflood SYSTEM "antiflood.xml">
 <!ENTITY linestack SYSTEM "linestack.xml">
 <!ENTITY functions SYSTEM "functions.xml">
+<!ENTITY report-time SYSTEM "report-time.xml">
+<!ENTITY motd-file SYSTEM "motd-file.xml">
+<!ENTITY faq SYSTEM "faq.xml">
 ]>
 
 <book id="ctrlproxy">
@@ -31,8 +37,8 @@
 			<address><email>jelmer@vernstok.nl</email></address>
 		</affiliation>
 	</author>
-	<releaseinfo>$Revision: 1.2 $</releaseinfo>
-	<pubdate>$Date: 2003/10/19 00:02:01 $</pubdate>
+	<releaseinfo>$Revision: 1.3 $</releaseinfo>
+	<pubdate>$Date: 2003/12/12 22:06:20 $</pubdate>
 
 	<abstract><para>This documentation is a draft. It is full of typo's and 
 			grammar errors. It might be unclear at some points.</para>
@@ -53,6 +59,7 @@
 <part id="configuration">
 	<title>Configuration</title>
 	&syntax;
+	&faq;
 </part>
 
 <part id="modules">
@@ -61,7 +68,10 @@
 &auto-away;
 &ctcp;
 &log-irssi;
-&repl-memory;
+&repl-none;
+&repl-simple;
+&repl-highlight;
+&repl-command;
 &socket;
 &noticelog;
 &stats;
@@ -69,6 +79,8 @@
 &log-custom;
 &nickserv;
 &antiflood;
+&report-time;
+&motd-file;
 </part>
 
 <part id="extending">

@@ -32,7 +32,7 @@ struct network_data {
 	guint timeout_id;
 };
 
-gboolean send_queue(gpointer user_data) {
+static gboolean send_queue(gpointer user_data) {
 	gpointer d;
 	struct network_data *sd = (struct network_data *)user_data;
 	struct line *l;
@@ -97,7 +97,7 @@ static gboolean log_data(struct line *l) {
 	return TRUE;
 }
 
-void free_antiflood_servers(gpointer key, gpointer value, gpointer user_data)
+static void free_antiflood_servers(gpointer key, gpointer value, gpointer user_data)
 {
 	struct network_data *sd = (struct network_data *)value;
 	g_queue_free(sd->message_queue);

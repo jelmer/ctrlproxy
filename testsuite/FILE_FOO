@@ -1,0 +1,23 @@
+--- CONFIGURATION
+<ctrlproxy>
+	<plugins>
+		<plugin file="socket" autoload="1"/>
+	</plugins>
+	<networks>
+		<network>
+			<servers>
+				<pipe>
+					<path>localserver</path>
+					<arg>server:1</arg>
+				</pipe>
+			</servers>
+		</network>
+	</networks>
+</ctrlproxy>
+--- SERVER:1
+Server configuration goes here and is written out to the file server:1
+--- TEST:1
+PRIVMSG me :data that is sent when connected to ctrlproxy
+--- EXPECTED:1
+PRIVMSG me :data send to the first client
+--- EXPECTED:2

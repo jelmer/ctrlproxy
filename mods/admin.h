@@ -3,5 +3,6 @@
 
 void register_admin_command(char *cmd, void (*handler) (char **, struct line *));
 void unregister_admin_command(char *cmd);
+void admin_out(struct line *l, char *fmt, ...);
 
 #endif

@@ -20,16 +20,12 @@
 #ifndef __CTRLPROXY_H__
 #define __CTRLPROXY_H__
 
-#include <unistd.h>
 #include <time.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
 #include <stdarg.h>
 #include <glib.h>
 #include <gmodule.h>
 #include <libxml/xmlmemory.h>
 #include <libxml/parser.h>
-#include <sys/select.h>
 
 struct network;
 struct client;
@@ -42,7 +38,7 @@ typedef void (*disconnect_handler) (struct transport_context *, void *data);
 typedef void (*receive_handler) (struct transport_context *, char *l, void *data);
 typedef void (*newclient_handler) (struct transport_context *, struct transport_context *, void *data);
 
-struct transport {
+struct transport_ops {
 	char *name;
 	/* The connect and listen functions should add something to the poll */
 	int (*connect) (struct transport_context *context);
@@ -53,7 +49,7 @@ struct transport {
 };
 
 struct transport_context {
-	struct transport *functions;
+	struct transport_ops *functions;
 	xmlNodePtr configuration;
 	void *data;
 	void *caller_data;
@@ -87,7 +83,7 @@ struct channel {
 	xmlNodePtr xmlConf;
 	char *topic;
 	char mode; /* Private, secret, etc */
-	char *modes[255];
+	char modes[255];
 	char introduced;
 	char namreply_started;
 	long limit;
@@ -104,7 +100,7 @@ struct client {
 
 struct network { 
 	xmlNodePtr xmlConf;
-	char modes[255];
+	char mymodes[255];
 	xmlNodePtr servers;
 	char *hostmask;
 	GList *channels;
@@ -112,7 +108,6 @@ struct network {
 	GList *clients;
 	xmlNodePtr current_server;
 	xmlNodePtr listen;
-	void  *replication_data;
 	char *supported_modes[2];
 	char **features;
 	struct transport_context *outgoing;
@@ -128,18 +123,17 @@ struct plugin {
 
 typedef gboolean (*plugin_init_function) (struct plugin *);
 typedef gboolean (*plugin_fini_function) (struct plugin *);
-extern void (*replicate_function) (struct network *, struct transport_context *);
 
 /* state.c */
 struct channel *find_channel(struct network *st, char *name);
 struct nick *find_nick(struct channel *c, char *name);
 struct linestack_context *linestack_new_by_network(struct network *);
 GSList *gen_replication(struct network *s);
+int is_channelname(char *name, struct network *s);
 
 /* server.c */
 struct network *connect_to_server(xmlNodePtr);
 int close_server(struct network *s);
-void default_replicate_function (struct network *, struct transport_context *);
 extern GList *networks;
 void clients_send(struct network *, struct line *, struct transport_context *exception);
 void network_add_listen(struct network *, xmlNodePtr);
@@ -159,6 +153,7 @@ struct line *irc_parse_linef( char *origin, ... );
 struct line *irc_parse_line_args( char *origin, ... );
 
 /* main.c */
+extern GMainLoop *main_loop;
 void clean_exit();
 void save_configuration();
 gboolean load_plugin(xmlNodePtr);
@@ -166,7 +161,7 @@ gboolean unload_plugin(struct plugin *);
 gboolean plugin_loaded(char *name);
 
 /* transport.c */
-void register_transport(struct transport *);
+void register_transport(struct transport_ops *);
 gboolean unregister_transport(char *name);
 struct transport_context *transport_connect(const char *name, xmlNodePtr p, receive_handler, disconnect_handler, void *data);
 struct transport_context *transport_listen(const char *name, xmlNodePtr p, newclient_handler, void *data);
@@ -179,7 +174,7 @@ void transport_set_data(struct transport_context *, void *);
 
 /* linestack.c */
 struct linestack_context;
-struct linestack {
+struct linestack_ops {
 	char *name;
 	gboolean (*init) (struct linestack_context *, char *args);
 	gboolean (*clear) (struct linestack_context *);
@@ -190,12 +185,12 @@ struct linestack {
 };
 
 struct linestack_context {
-	struct linestack *functions;
+	struct linestack_ops *functions;
 	void *data;
 };
 
-void register_linestack(struct linestack *);
-void unregister_linestack(struct linestack *);
+void register_linestack(struct linestack_ops *);
+void unregister_linestack(struct linestack_ops *);
 struct linestack_context *linestack_new(char *name, char *args);
 GSList *linestack_get_linked_list(struct linestack_context *);
 void linestack_send(struct linestack_context *, struct transport_context *);
@@ -206,20 +201,31 @@ gboolean linestack_add_line_list(struct linestack_context *, GSList *);
 
 /* util.c */
 char *list_make_string(char **);
-
 xmlNodePtr xmlFindChildByName(xmlNodePtr parent, const xmlChar *name);
 xmlNodePtr xmlFindChildByElementName(xmlNodePtr parent, const xmlChar *name);
 extern xmlNodePtr xmlNode_networks, xmlNode_plugins;
 extern GList *plugins;
 extern xmlDocPtr configuration;
-
 int verify_client(struct network *s, struct client *c);
+char *ctrlproxy_path(char *part);
 
-/* filter.c */
+/* hooks.c */
 /* Returns TRUE if filter should be continued, FALSE if it should be stopped. */
 typedef gboolean (*filter_function) (struct line *);
+typedef char ** (*motd_hook) (struct network *n);
 void add_filter(char *name, filter_function);
 void del_filter(filter_function);
 gboolean filters_execute(struct line *l);
+typedef gboolean (*new_client_hook) (struct client *);
+typedef void (*lose_client_hook) (struct client *);
+void add_new_client_hook(char *name, new_client_hook h);
+void del_new_client_hook(char *name);
+gboolean new_client_hook_execute(struct client *c);
+void add_lose_client_hook(char *name, lose_client_hook h);
+void del_lose_client_hook(char *name);
+void lose_client_hook_execute(struct client *c);
+void add_motd_hook(char *name, motd_hook);
+void del_motd_hook(char *name);
+char **get_motd_lines(struct network *n);
 
 #endif /* __CTRLPROXY_H__ */

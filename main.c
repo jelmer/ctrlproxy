@@ -18,10 +18,14 @@
 */
 
 #include "internals.h"
+#ifdef HAVE_CONFIG_H
 #include "config.h"
+#endif
 
 #include <libxml/xmlmemory.h>
 #include <libxml/parser.h>
+
+#include <unistd.h>
 
 #define BACKTRACE_STACK_SIZE 64
 
@@ -32,9 +36,9 @@
 #define add_log_domain(domain) g_log_set_handler (domain, G_LOG_LEVEL_MASK | G_LOG_FLAG_FATAL | G_LOG_FLAG_RECURSION, log_handler, NULL);
 
 /* globals */
+GMainLoop *main_loop;
 char my_hostname[MAXHOSTNAMELEN+2];
 xmlNodePtr xmlNode_networks, xmlNode_plugins;
-GHookList data_hook;
 xmlDocPtr configuration;
 char *configuration_file;
 FILE *debugfd = NULL;
@@ -49,14 +53,14 @@ void signal_crash(int sig)
 	size_t backtrace_size;
 	char **backtrace_strings;
 #endif
-	g_critical("Received SIGSEGV!\n");
+	g_critical("Received SIGSEGV!");
 
 #ifdef HAVE_BACKTRACE_SYMBOLS
 	/* get the backtrace (stack frames) */
 	backtrace_size = backtrace(backtrace_stack,BACKTRACE_STACK_SIZE);
 	backtrace_strings = backtrace_symbols(backtrace_stack, backtrace_size);
 
-	g_critical ("BACKTRACE: %d stack frames:\n", backtrace_size);
+	g_critical ("BACKTRACE: %d stack frames:", backtrace_size);
 	
 	if (backtrace_strings) {
 		int i;
@@ -69,7 +73,8 @@ void signal_crash(int sig)
 
 #endif
 	
-	g_error("Ctrlproxy core has segfaulted, exiting...\n");
+	g_error("Ctrlproxy core has segfaulted, exiting...");
+	abort();
 }
 
 void log_handler(const gchar *log_domain, GLogLevelFlags flags, const gchar *message, gpointer user_data) {
@@ -83,17 +88,18 @@ void clean_exit()
 	GList *gl = networks;
 	while(gl) {
 		struct network *n = (struct network *)gl->data;
-		close_server(n);
 		gl = gl->next;
+		if(n) close_server(n);
 	}
 	if(debugfd)fclose(debugfd);
 }
 
 void signal_quit(int sig)
 {
-	g_log(G_LOG_DOMAIN, G_LOG_LEVEL_MESSAGE, "Received signal %d, quitting...\n", sig);
-	clean_exit();
-	exit(0);
+	g_log(G_LOG_DOMAIN, G_LOG_LEVEL_MESSAGE, "Received signal %d, quitting...", sig);
+	signal(SIGINT, SIG_IGN);
+	g_log(G_LOG_DOMAIN, G_LOG_LEVEL_MESSAGE, "Closing connections...");
+	g_main_loop_quit(main_loop);
 }
 
 gboolean unload_plugin(struct plugin *p)
@@ -103,18 +109,18 @@ gboolean unload_plugin(struct plugin *p)
 	/* Run exit function if present */
 	if(g_module_symbol(p->module, "fini_plugin", (gpointer *)&f)) {
 		if(!f(p)) {
-			g_warning("Unable to unload plugin '%s': still in use?\n", p->name);
+			g_warning("Unable to unload plugin '%s': still in use?", p->name);
 			return FALSE;
 		}
 	} else {
-		g_warning("No symbol 'fini_plugin' in plugin '%s'. Module does not support unloading, so no unload will be attempted\n", p->name);
+		g_warning("No symbol 'fini_plugin' in plugin '%s'. Module does not support unloading, so no unload will be attempted", p->name);
 		return FALSE;
 	}
 
 	g_module_close(p->module);
 
 	/* Remove autoload from this plugins' element */
-	xmlUnsetProp(p->xmlConf, "autoload");
+	xmlSetProp(p->xmlConf, "autoload", "0");
 	return TRUE;
 }
 
@@ -154,13 +160,13 @@ gboolean load_plugin(xmlNodePtr cur)
 
 	m = g_module_open(path_name, 0);
 	if(!m) {
-		g_warning("Unable to open module %s(%s), ignoring\n", path_name, g_module_error()); 
+		g_warning("Unable to open module %s(%s), ignoring", path_name, g_module_error()); 
 		xmlFree(mod_name);
 		g_free(path_name);
 		return FALSE;
 	} else {
 		if(!g_module_symbol(m, "init_plugin", (gpointer *)&f)) {
-			g_warning("Can't find symbol 'init_plugin' in module %s\n", path_name);
+			g_warning("Can't find symbol 'init_plugin' in module %s", path_name);
 			g_free(path_name);
 			return FALSE;
 		}
@@ -174,7 +180,7 @@ gboolean load_plugin(xmlNodePtr cur)
 	p->xmlConf = cur;
 
 	if(!f(p)) {
-		g_warning("Running initialization function for plugin '%s' failed.\n", mod_name);
+		g_warning("Running initialization function for plugin '%s' failed.", mod_name);
 		free(p->name);
 		free(p);
 		return FALSE;
@@ -201,7 +207,10 @@ void readConfig(char *file) {
     xmlNodePtr cur;
 
 	configuration = xmlParseFile(file);
-	g_assert(configuration);
+	if(!configuration) {
+		g_error("Can't open configuration file '%s'", file);
+		exit(1);
+	}
 
 	cur = xmlDocGetRootElement(configuration);
 	g_assert(cur);
@@ -227,8 +236,7 @@ void readConfig(char *file) {
 
 int main(int argc, const char *argv[])
 {
-	GMainLoop *loop;
-	char isdaemon = 0;
+	int isdaemon = 0;
 	char *logfile = NULL, *rcfile = NULL;
 #ifdef HAVE_POPT_H
 	int c;
@@ -236,7 +244,7 @@ int main(int argc, const char *argv[])
 	struct poptOption options[] = {
 		POPT_AUTOHELP
 		{"debug", 'd', POPT_ARG_STRING, NULL, 'd', "Write irc traffic to specified file", "FILE" },
-		{"daemon", 'D', POPT_ARG_VAL, &isdaemon, 1, "Run in the background (as a daemon)"},
+		{"daemon", 'D', POPT_ARG_NONE, &isdaemon, 0, "Run in the background (as a daemon)"},
 		{"log", 'l', POPT_ARG_STRING, &logfile, 0, "Log messages to specified file", "FILE"},
 		{"rc-file", 'r', POPT_ARG_STRING, &rcfile, 0, "Use configuration file from specified location", "FILE"},
 		{"version", 'v', POPT_ARG_NONE, NULL, 'v', "Show version information"},
@@ -247,15 +255,20 @@ int main(int argc, const char *argv[])
 
 	signal(SIGINT, signal_quit);
 	signal(SIGTERM, signal_quit);
+#ifdef SIGPIPE
 	signal(SIGPIPE, SIG_IGN);
+#endif
+#ifdef SIGHUP
 	signal(SIGHUP, SIG_IGN);
+#endif
+#ifdef SIGSEGV
 	signal(SIGSEGV, signal_crash);
+#endif
+#ifdef SIGUSR1
 	signal(SIGUSR1, signal_save);
+#endif
 
-	replicate_function = default_replicate_function;
-	g_hook_list_init(&data_hook, sizeof(GHook));
-
-	loop = g_main_new(FALSE);
+	main_loop = g_main_loop_new(NULL, FALSE);
 
 #ifdef HAVE_POPT_H
 	pc = poptGetContext(argv[0], argc, argv, options, 0);
@@ -278,7 +291,7 @@ int main(int argc, const char *argv[])
 #endif
 
 	if(gethostname(my_hostname, MAXHOSTNAMELEN) != 0) {
-		g_log(G_LOG_DOMAIN, G_LOG_LEVEL_ERROR, "Can't figure out hostname of local host!\n");
+		g_log(G_LOG_DOMAIN, G_LOG_LEVEL_ERROR, "Can't figure out hostname of local host!");
 		return 1;
 	}
 
@@ -306,13 +319,18 @@ int main(int argc, const char *argv[])
 		signal(SIGTSTP, SIG_IGN);
 #endif
 		signal(SIGHUP, SIG_IGN);
-		daemon(0, 0);
+		daemon(1, 0);
 		isdaemon = 1;
 	} else if(!f_logfile)f_logfile = stdout;
 
 	if(rcfile) configuration_file = strdup(rcfile);
 	else { 
-		asprintf(&configuration_file, "%s/.ctrlproxyrc", g_get_home_dir());
+		const char *homedir = g_get_home_dir();
+#ifdef _WIN32
+		asprintf(&configuration_file, "%s/_ctrlproxyrc", homedir);
+#else
+		asprintf(&configuration_file, "%s/.ctrlproxyrc", homedir);
+#endif
 	}
 
 	readConfig(configuration_file);
@@ -322,12 +340,19 @@ int main(int argc, const char *argv[])
 	} else {
 		cur = xmlNode_plugins->xmlChildrenNode;
 		while(cur) {
+			char *enabled;
 
 			if(xmlIsBlankNode(cur) || !strcmp(cur->name, "comment")){ cur = cur->next; continue; }
 
 			g_assert(!strcmp(cur->name, "plugin"));
 
-			if(xmlHasProp(cur, "autoload"))load_plugin(cur);
+			enabled = xmlGetProp(cur, "autoload");
+			if((!enabled || atoi(enabled) == 1) && !load_plugin(cur)) {
+				g_error("Can't load plugin %s, aborting...", xmlGetProp(cur, "file"));
+				abort();
+			}
+
+			xmlFree(enabled);
 
 			cur = cur->next;
 		}
@@ -348,7 +373,8 @@ int main(int argc, const char *argv[])
 
 
 	g_timeout_add(1000 * 300, ping_loop, NULL);
-	g_main_run(loop);
+	g_main_loop_run(main_loop);
+	clean_exit();
 
 	return 0;
 }

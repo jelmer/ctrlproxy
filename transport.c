@@ -18,15 +18,18 @@
 */
 
 #include "internals.h"
+
+#ifdef HAVE_CONFIG_H
 #include "config.h"
+#endif
 
 static GList *transports = NULL;
 extern FILE *debugfd;
 
-void register_transport(struct transport *functions)
+void register_transport(struct transport_ops *functions)
 {
-	struct transport *functions1 = malloc(sizeof(struct transport));
-	memcpy(functions1, functions, sizeof(struct transport));
+	struct transport_ops *functions1 = malloc(sizeof(struct transport_ops));
+	memcpy(functions1, functions, sizeof(struct transport_ops));
 	functions1->reference_count = 0;
 	transports = g_list_append(transports, functions1);
 }
@@ -35,7 +38,7 @@ gboolean unregister_transport(char *name)
 {
 	GList *gl = transports;
 	while(gl) {
-		struct transport *t = (struct transport *)gl->data;
+		struct transport_ops *t = (struct transport_ops *)gl->data;
 		if(!strcmp(t->name, name)) {
 			if(t->reference_count == 0) {
 				transports = g_list_remove(transports, gl->data);
@@ -53,11 +56,11 @@ gboolean unregister_transport(char *name)
 struct transport_context *transport_connect(const char *name, xmlNodePtr p, receive_handler r_h, disconnect_handler d_h, void *d)
 {
 	struct transport_context *ret;
-	struct transport *t;
+	struct transport_ops *t;
 	GList *g = transports;
 
 	while(g) {
-		t = (struct transport *)g->data;
+		t = (struct transport_ops *)g->data;
 		if(!strcmp(t->name, name))break;
 		g = g->next;
 	}
@@ -87,11 +90,11 @@ struct transport_context *transport_connect(const char *name, xmlNodePtr p, rece
 struct transport_context *transport_listen(const char *name, xmlNodePtr p, newclient_handler n_h, void *d)
 {
 	struct transport_context *ret;
-	struct transport *t;
+	struct transport_ops *t;
 	GList *g = transports;
 
 	while(g) {
-		t = (struct transport *)g->data;
+		t = (struct transport_ops *)g->data;
 		if(!strcmp(t->name, name))break;
 		g = g->next;
 	}

@@ -23,7 +23,6 @@
 #define _GNU_SOURCE
 #include <popt.h>
 #include "ctrlproxy.h"
-#include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -31,7 +30,6 @@
 #include <string.h>
 #include <stdarg.h>
 #include <signal.h>
-#include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <dirent.h>

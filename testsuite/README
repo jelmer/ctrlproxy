@@ -1,0 +1,21 @@
+Testsuite
+--
+This directory contains a bunch of testfiles for ctrlproxy. 
+
+Each test: 
+ 1. writes out a ctrlproxyrc
+ 2. starts ctrlproxy
+ 3. does a certain number of connects/disconnects and communicates data
+
+Test server(s)+channel(s) can be specified that ctrlproxy should connect to. 
+Some tests will use their own (very simple) IRC server for testing ctrlproxy 
+behaviour in certain cases.
+
+Tests should only print the name of a test they're running followed by a 
+colon, a space and either "OK" or "FAILED".
+
+Plain text tests
+================
+These tests are very simple: you specify a configuration, the data to 
+send to ctrlproxy and the configuration of the simple server and the ctrlproxy 
+output is compared with the output you have specified.

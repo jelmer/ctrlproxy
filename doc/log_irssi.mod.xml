@@ -16,6 +16,8 @@
 		which is located in a directory with the name of the IRC 
 		network.</para>
 
+		<para>If no directory is specified, data will be logged to <parameter>$HOME/.ctrlproxy/log_irssi/$NETWORK/$CHANNEL</parameter>.</para>
+
 	</description>
 
 	<configuration>

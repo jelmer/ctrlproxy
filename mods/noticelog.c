@@ -23,7 +23,7 @@
 #include "ctrlproxy.h"
 #include <string.h>
 
-void admin_log(const gchar *log_domain, GLogLevelFlags log_level, const gchar *message, gpointer user_data) 
+static void admin_log(const gchar *log_domain, GLogLevelFlags log_level, const gchar *message, gpointer user_data) 
 {
 	struct network *n;
 	char *server_name, *nick;

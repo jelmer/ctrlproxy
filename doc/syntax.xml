@@ -187,4 +187,38 @@ a ctrlproxyrc file is supposed to look like.</para>
 
 </sect1>
 
+<sect1><title>Linestacks</title>
+
+	<para>Linestacks are a system used inside ctrlproxy for storing lines 
+		of IRC data. Since this data can be stored in various places, 
+		and everybody has different needs, it is possible to use a different 
+		linestack then the default one.
+	</para>
+
+	<para>Since some backends need additional information (such as a 
+		filename to store the data in, or a database name), you can 
+		specify an additional argument to the linestack backend.</para>
+
+	<para>If you specify the attribute <parameter>linestack</parameter> of the element network you can override the default linestack backend.</para>
+
+	<para>The attribute <parameter>linestack_location</parameter> can be used to override the setting of the argument to the linestack backend.</para>
+
+	<para>See the documentation on a specific backend for information 
+		on setting the default argument, if applicable.</para>
+
+	<para>By default, the linestack that is first loaded is used. </para>
+
+	<para>See the documentation about the various available linestack backends 
+		for more information.</para>
+
+</sect1>
+
+<sect1><title>Replication</title>
+
+	<para>Replication (short for 'backlog replication') is the system that 
+	stores certain IRC lines and then sends them to the user at a certain moment.
+</para>
+
+</sect1>
+
 </chapter>

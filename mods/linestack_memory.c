@@ -30,7 +30,7 @@ gboolean memory_clear(struct linestack_context *c)
 {
 	GSList *gl = (GSList *)c->data;
 	while(gl) {
-		struct line *l = (struct line *)c->data;
+		struct line *l = (struct line *)gl->data;
 		free_line(l);
 		gl = g_slist_next(gl);
 	}
@@ -39,18 +39,26 @@ gboolean memory_clear(struct linestack_context *c)
 
 GSList *memory_get_linked_list(struct linestack_context *c)
 {
-	return (GSList *)c->data;
+	GSList *b, *ret = NULL;
+	b = (GSList *)c->data;
+	while(b) {
+		struct line *l = linedup((struct line *)b->data);
+		ret = g_slist_append(ret, l);
+		b = b->next;
+	}
+	
+	return ret;
 }
 
 gboolean memory_add_line(struct linestack_context *b, struct line *l)
 {
 	GSList *gl = (GSList *)b->data;
-	gl = g_slist_append(gl, l);
+	gl = g_slist_append(gl, linedup(l));
 	b->data = gl;
 	return TRUE;
 }	
 
-struct linestack memory = {
+struct linestack_ops memory = {
 	"memory",
 	memory_init,
 	memory_clear,

@@ -28,6 +28,7 @@
 #include <glib.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <unistd.h>
 
 #define MAX_SUBST 256
 #undef G_LOG_DOMAIN
@@ -44,7 +45,7 @@ struct log_mapping {
 	char *(*callback) (struct line *l, gboolean case_sensitive);
 };
 
-char *get_hours(struct line *l, gboolean case_sensitive) { 
+static char *get_hours(struct line *l, gboolean case_sensitive) { 
 	char *ret;
 	time_t ti = time(NULL);
 	struct tm *t = localtime(&ti);
@@ -52,7 +53,7 @@ char *get_hours(struct line *l, gboolean case_sensitive) {
 	return ret;
 }
 
-char *get_minutes(struct line *l, gboolean case_sensitive) { 
+static char *get_minutes(struct line *l, gboolean case_sensitive) { 
 	char *ret;
 	time_t ti = time(NULL);
 	struct tm *t = localtime(&ti);
@@ -60,7 +61,7 @@ char *get_minutes(struct line *l, gboolean case_sensitive) {
 	return ret;
 }
 
-char *get_seconds(struct line *l, gboolean case_sensitive) { 
+static char *get_seconds(struct line *l, gboolean case_sensitive) { 
 	char *ret;
 	time_t ti = time(NULL);
 	struct tm *t = localtime(&ti);
@@ -68,7 +69,7 @@ char *get_seconds(struct line *l, gboolean case_sensitive) {
 	return ret;
 }
 
-char *get_nick(struct line *l, gboolean case_sensitive) {
+static char *get_nick(struct line *l, gboolean case_sensitive) {
 	if(line_get_nick(l)) {
 		if(case_sensitive) return g_ascii_strdown(line_get_nick(l), -1);
 		else return strdup(line_get_nick(l)); 
@@ -79,21 +80,21 @@ char *get_nick(struct line *l, gboolean case_sensitive) {
 	return strdup("");
 }
 
-char *get_network(struct line *l, gboolean case_sensitive) 
+static char *get_network(struct line *l, gboolean case_sensitive) 
 { return xmlGetProp(l->network->xmlConf, "name"); }
-char *get_server(struct line *l, gboolean case_sensitive)
+static char *get_server(struct line *l, gboolean case_sensitive)
 { return xmlGetProp(l->network->current_server, "name"); }
 
-char *get_percent(struct line *l, gboolean case_sensitive) { return strdup("%"); }
+static char *get_percent(struct line *l, gboolean case_sensitive) { return strdup("%"); }
 
 static char *identifier = NULL;
 
-char *get_identifier(struct line *l, gboolean case_sensitive) { 
+static char *get_identifier(struct line *l, gboolean case_sensitive) { 
 	if(case_sensitive) return g_ascii_strdown(identifier, -1); 
 	else return strdup(identifier); 
 }
 
-struct log_mapping mappings[] = {
+static struct log_mapping mappings[] = {
 	{NULL, '@', -1, get_identifier },
 	{NULL, 'h', -1, get_hours },
 	{NULL, 'M', -1, get_minutes },
@@ -147,7 +148,7 @@ static char *find_mapping(struct line *l, char c, gboolean case_sensitive)
 	return strdup("");
 }
 
-void custom_subst(char **_new, char *fmt, struct line *l, char *_identifier, gboolean case_sensitive)
+static void custom_subst(char **_new, char *fmt, struct line *l, char *_identifier, gboolean case_sensitive)
 {
 	char *subst[MAX_SUBST];
 	char *new;
@@ -377,7 +378,7 @@ static void file_write_channel_query(const char *n, struct line *l)
 	xmlFree(fmt);
 }
 
-gboolean log_custom_data(struct line *l)
+static gboolean log_custom_data(struct line *l)
 {
 	char *nick = NULL;
 	char *user = NULL;
@@ -418,7 +419,7 @@ gboolean log_custom_data(struct line *l)
 		}
 	} else if(!strcasecmp(l->args[0], "NOTICE")) {
 		file_write_target("notice", l);
-	} else if(!strcasecmp(l->args[0], "MODE") && l->args[1] && (l->args[1][0] == '#' || l->args[1][0] == '&') && l->direction == FROM_SERVER) {
+	} else if(!strcasecmp(l->args[0], "MODE") && l->args[1] && is_channelname(l->args[1], l->network) && l->direction == FROM_SERVER) {
 		file_write_target("mode", l);
 	} else if(!strcasecmp(l->args[0], "QUIT")) {
 		file_write_channel_query("quit", l);

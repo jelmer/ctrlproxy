@@ -1,13 +1,32 @@
 Ctrlproxy 2.6:
+ * Add bind to specific IP only support
+ * Fix some bugs in parsing line structs
+ * Fix MODE handling
+ * Lots of memory leaks fixed
+ * Added MOTD support
+ * Added quickstart
+ * Update example RC file
+ * Add repl_simple module
+ * Add DETACH command to admin module (Stephane Lacoin)
+ * Fix for immediately IDENTIFY'ing when connecting to server
+ * Add backwards compatibility module 'repl_memory'
+ * Fix for better RFC compliance
+ * Fixed bug when crashing on exit
+ * Fixed daemon mode
  * Add report_time module
  * Start FAQ
  * Several bugs in log_custom fixed (thanks, igla)
  * Fix build without libssl
+ * Add support for building PDF using db2latex
  * Add attribute only_noclient
- * Add linestack support
  * Split repl_memory into linestack_memory and repl_simple
+ * Add linestack support
  * Add linestack_file
+ * Add linestack_memory
  * Add repl_command
+ * Add repl_highlight
+ * Add repl_simple
+ * Add support for adding new admin commands
  * Added function plugin_loaded()
  * Admin commands can now be executed by /CTRLPROXY
  * Executing admin commands by sending them to the nick 'ctrlproxy' is now

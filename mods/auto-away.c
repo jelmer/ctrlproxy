@@ -33,14 +33,18 @@ struct auto_away_data {
 	guint timeout_id;
 };
 
-gboolean check_time(gpointer user_data) {
+static gboolean check_time(gpointer user_data) {
 	if(time(NULL) - last_message > max_idle_time && !is_away) { 
 		GList *sl = networks;
 		is_away = TRUE;
 		while(sl) {
 			struct network *s = (struct network *)sl->data;
-			if(!only_for_noclients || s->clients == NULL) 
-				irc_send_args(s->outgoing, "AWAY", message?message:"Auto Away", NULL);
+			if(!only_for_noclients || s->clients == NULL) {
+				char *new_msg;
+				asprintf(&new_msg, ":%s", message?message:"Auto Away");
+				irc_send_args(s->outgoing, "AWAY", new_msg, NULL);
+				free(new_msg);
+			}
 			sl = g_list_next(sl);
 		}
 	}

@@ -4,5 +4,8 @@ Thanks to the following people for patches and useful bugreports:
 Barnaba Marcello <vjt@users.sf.net>, original author of network-openssl.c
 Wilmer van der Gaast <lintux@debian.org> (debian package)
 Aron Griffis <agriffis@gentoo.org> (gentoo package, bug reports)
+Sean Reifschneider <jafo@tummy.com> (.spec file, bug reports, doc update)
 mibukyoshiro@altern.org (bug reports)
 'igla' at #ctrlproxy (bug reports)
+'poelzi' at #ctrlproxy (testing, bug reports)
+patch for DETACH command in the admin module by Stephane Lacoin <stephane@zoo-matic.homeip.net>

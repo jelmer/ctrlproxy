@@ -21,28 +21,29 @@
 #include "ctrlproxy.h"
 #include <string.h>
 
-void replicate_data(struct network *s, struct transport_context *io) {
-	if(!s->replication_data) { default_replicate_function(s, io); return; }
-	linestack_send(s->replication_data, io);
-}
+static GHashTable *simple_backlog = NULL;
 
 static gboolean log_data(struct line *l) {
-	struct linestack_context *co = (struct linestack_context *)l->network->replication_data;
+	struct linestack_context *co = (struct linestack_context *)g_hash_table_lookup(simple_backlog, l->network);
 	struct channel *c;
 
-	if(!co) co = linestack_new_by_network(l->network);
+	if(!co) {
+		co = linestack_new_by_network(l->network);
+		linestack_add_line_list( co, gen_replication(l->network));
+		g_hash_table_insert( simple_backlog, l->network, co);
+	}
 
 	if(l->argc < 1)return TRUE;
 
 	if(l->direction == TO_SERVER &&  
 	   (!strcasecmp(l->args[0], "PRIVMSG") || !strcasecmp(l->args[0], "NOTICE"))) {
 		linestack_clear(co);
+		g_hash_table_remove(simple_backlog, l->network);
 		return TRUE;
 	}
 
 	if(l->direction == TO_SERVER)return TRUE;
 
-	if(!co) linestack_add_line_list( co, gen_replication(l->network));
 
 	if(!strcasecmp(l->args[0], "PRIVMSG") ||
 	   !strcasecmp(l->args[0], "NOTICE") ||
@@ -53,7 +54,7 @@ static gboolean log_data(struct line *l) {
 	   !strcasecmp(l->args[0], "QUIT") ||
 	   !strcasecmp(l->args[0], "TOPIC") ||
 	   !strcasecmp(l->args[0], "NICK")) {
-		linestack_add_line(co, linedup(l));
+		linestack_add_line(co, l);
 	} else if(!strcasecmp(l->args[0], "353")) {
 		c = find_channel(l->network, l->args[3]);
 		if(c && !(c->introduced & 2)) {
@@ -78,14 +79,27 @@ static gboolean log_data(struct line *l) {
 	return TRUE;
 }
 
+static gboolean simple_replicate(struct client *c)
+{
+	struct linestack_context *replication_data = (struct linestack_context *)g_hash_table_lookup(simple_backlog, c->network);
+	if(!replication_data) {
+		replication_data = linestack_new_by_network(c->network);
+		linestack_add_line_list(replication_data, gen_replication(c->network));
+	}
+	linestack_send(replication_data, c->incoming);
+	return TRUE;
+}
+
 gboolean fini_plugin(struct plugin *p) {
 	del_filter(log_data);
-	replicate_function = default_replicate_function;
+	del_new_client_hook("repl_simple");
+	g_hash_table_destroy(simple_backlog); simple_backlog = NULL;
 	return TRUE;
 }
 
 gboolean init_plugin(struct plugin *p) {
-	replicate_function = replicate_data;
 	add_filter("repl_simple", log_data);
+	add_new_client_hook("repl_simple", simple_replicate);
+	simple_backlog = g_hash_table_new(NULL, NULL);
 	return TRUE;
 }

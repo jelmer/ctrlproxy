@@ -4,6 +4,7 @@ MOD_MANPAGES_HTML = $(patsubst %.mod.xml,%.7ctrlproxy.html,$(MOD_SOURCES))
 MODS = $(patsubst %.mod.xml,%.xml,$(MOD_SOURCES))
 DOCS = ctrlproxy.1 ctrlproxyrc.5 ctrlproxy.pdf ctrlproxy.html $(MOD_MANPAGES)
 XSLTPROC = @XSLTPROC@ --xinclude
+PDFLATEX = @PDFLATEX@
 XMLTO = @XMLTO@
 docdir = @prefix@/share/doc/ctrlproxy
 INSTALL = @INSTALL@
@@ -13,10 +14,12 @@ mandir = @mandir@
 man1dir = @mandir@/man1
 man5dir = @mandir@/man5
 man7dir = @mandir@/man7
+@NODB2LATEX@DB2LATEXPATH = @DB2LATEXPATH@
 DIA = @DIA@
+@DOCE@ENABLED_DOCS = 1
 EPSTOPDF = @EPSTOPDF@
 
-all: $(DOCS)
+all: @DOCE@$(DOCS)
 
 manpages: ctrlproxy.1 ctrlproxyrc.5 $(MOD_MANPAGES)
 htmlmanpages: $(MOD_MANPAGES_HTML)
@@ -27,9 +30,6 @@ htmlmanpages: $(MOD_MANPAGES_HTML)
 %.xml: %.mod.xml module.xsl
 	$(XSLTPROC) -o $@ module.xsl $<
 	
-%.pdf: %.xml $(MODS) overview.pdf overview2.pdf
-	$(XMLTO) pdf $<
-
 %.fo: %.xml $(MODS)
 	$(XMLTO) fo $<
 
@@ -46,6 +46,8 @@ lint: ctrlproxy.xml $(MODS)
 	$(XMLLINT) --xinclude ctrlproxy.xml
 
 install: all
+	-test -f ctrlproxy.1 && ENABLED_DOCS=1
+ifdef ENABLED_DOCS
 	$(INSTALL) -d $(DESTDIR)$(man1dir)
 	$(INSTALL) -d $(DESTDIR)$(man5dir)
 	$(INSTALL) -d $(DESTDIR)$(man7dir)
@@ -55,6 +57,14 @@ install: all
 	$(INSTALL) $(MOD_MANPAGES) $(DESTDIR)$(man7dir)
 	$(INSTALL) ctrlproxy.pdf $(DESTDIR)$(docdir)
 	$(INSTALL) ctrlproxy.html $(DESTDIR)$(docdir)
+else
+	@echo
+	@echo "---------------------------------------------------------------"
+	@echo "You are using ctrlproxy from CVS and have not enabled the docs"
+	@echo "(./configure --enable-docs). No documentation will be installed"
+	@echo "---------------------------------------------------------------"
+	@echo
+endif
 
 %.1: %.1.xml
 	$(XMLTO) man $<
@@ -64,6 +74,22 @@ install: all
 
 %.5: %.5.xml
 	$(XMLTO) man $<
+
+ifdef DB2LATEXPATH
+
+%.tex: %.xml $(MODS)
+	$(XSLTPROC) --stringparam l10n.gentext.default.language en --stringparam latex.documentclass.common english --stringparam latex.babel.language english $(DB2LATEXPATH) $< > $@
+
+%.pdf: %.tex overview.png overview2.png
+	$(PDFLATEX) $<
+	$(PDFLATEX) $<
+	$(PDFLATEX) $<
+
+else 
+
+%.pdf: %.xml $(MODS) overview.pdf overview2.pdf
+	$(XMLTO) pdf $<
+endif
 
 %.png: %.dia
 	$(DIA) -n -e $@ $<

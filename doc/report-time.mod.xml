@@ -1,0 +1,39 @@
+<ctrlproxy:module name="report-time"
+	xmlns:ctrlproxy="http://ctrlproxy.vernstok.nl/common">
+	<modulemeta>
+		<description>Time reporter</description>
+		<version>0.1</version>
+		<author>Jelmer Vernooij</author>
+		<email>jelmer@vernstok.nl</email>
+		<homepage>http://ctrlproxy.vernstok.nl/</homepage>
+	</modulemeta>
+
+	<description>
+		<para>Very simple module that prints a message every X seconds. Such 
+			messages are very useful for backlogs. That way, you can know at 
+			approximately which time something was said.</para>
+	</description>
+
+	<configuration>
+		<element name="interval">
+			<description>Interval (in seconds) at which a timestamp should be printed</description>
+		</element>
+		<element name="format">
+			<description>Format of the timestamp. See the manual page of the 
+				strftime() function for what is supported.</description>
+		</element>
+	</configuration>
+
+	<example>
+		<![CDATA[
+		<ctrlproxy>
+			<plugins>
+				<plugin autoload="1" file="report_time">
+					<format>%h:%m:%s</format>
+					<interval>300</interval>
+				</plugin>
+			</plugins>
+		</ctrlproxy>
+	]]>
+	</example>
+</ctrlproxy:module>

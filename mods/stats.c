@@ -48,8 +48,8 @@
 
 #define DO_INCREASE(n) increase_item(network, channel, nick, n, 1); 
 
-TDB_CONTEXT *tdb_context = NULL;
-GList *patterns = NULL;
+static TDB_CONTEXT *tdb_context = NULL;
+static GList *patterns = NULL;
 
 struct pattern {
 	char *string;
@@ -63,23 +63,23 @@ struct pattern {
 };
 
 #if !defined(HAVE_REGEX_H) && !defined(HAVE_PCRE_H)
-int match_pattern(char *str, struct pattern *p)
+static int match_pattern(char *str, struct pattern *p)
 	if(strstr(str, p->string) != NULL)return 1;
 	return 0;
 }
 
-int compile_pattern(struct pattern *p) { return 0; }
+static int compile_pattern(struct pattern *p) { return 0; }
 
 #elif !defined(HAVE_PCRE_H)
 
-void g_log_regex_error(int ret, regex_t *preg)
+static void g_log_regex_error(int ret, regex_t *preg)
 {
 	char errbuf[4096];
 	regerror(ret, preg, errbuf, sizeof(errbuf));
 	g_log(G_LOG_DOMAIN, G_LOG_LEVEL_WARNING, "Regex error: %s", errbuf);
 }
 
-int match_pattern(char *str, struct pattern *p)
+static int match_pattern(char *str, struct pattern *p)
 {
 	regmatch_t matches[MAX_REGEX_SUBMATCHES];
 	int i = 0, ret = 0, offset = 0;
@@ -95,7 +95,7 @@ int match_pattern(char *str, struct pattern *p)
 	return 0;
 }
 
-int compile_pattern(struct pattern *p)
+static int compile_pattern(struct pattern *p)
 {
 	int ret;
 	ret = regcomp(&p->preg, p->string, REG_EXTENDED);
@@ -107,7 +107,7 @@ int compile_pattern(struct pattern *p)
 
 #else
 	
-int match_pattern(char *str, struct pattern *p)
+static int match_pattern(char *str, struct pattern *p)
 {
 	int ovector[MAX_REGEX_SUBMATCHES];
 	int rc, i = 1;
@@ -136,7 +136,7 @@ int match_pattern(char *str, struct pattern *p)
 	return 0;
 }
 
-int compile_pattern(struct pattern *p)
+static int compile_pattern(struct pattern *p)
 {
 	const char *error;
 	int erroffset;
@@ -150,7 +150,7 @@ int compile_pattern(struct pattern *p)
 
 #endif
 
-void increase_item(const char *server, const char *channel, const char *nick, const char *value, long ch)
+static void increase_item(const char *server, const char *channel, const char *nick, const char *value, long ch)
 {
 	TDB_DATA d, r;
 	char *key;
@@ -182,7 +182,7 @@ static gboolean log_data(struct line *l)
 	if(!l->args || !l->args[0] || !l->args[1])return TRUE;
 	
 	/* Only log channels */
-	if(l->args[1][0] != '#' && l->args[1][0] != '&')return TRUE;
+	if(!is_channelname(l->args[1], l->network))return TRUE;
 
 	channel = l->args[1];
 

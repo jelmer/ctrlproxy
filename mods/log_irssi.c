@@ -28,6 +28,7 @@
 #include <glib.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <unistd.h>
 
 
 #undef G_LOG_DOMAIN
@@ -40,9 +41,12 @@ static FILE *find_add_channel_file(struct network *s, char *name) {
 	char *n = NULL;
 	FILE *f;
 	char *server_name, *hash_name;
+	char *lowercase;
 	server_name = xmlGetProp(s->xmlConf, "name");
 
-	asprintf(&hash_name, "%s/%s", server_name, g_ascii_strdown(name?name:"messages", -1));
+	lowercase = g_ascii_strdown(name?name:"messages", -1);
+	asprintf(&hash_name, "%s/%s", server_name, lowercase);
+	free(lowercase);
 
 	xmlFree(server_name);
 
@@ -85,10 +89,12 @@ static FILE *find_add_channel_file(struct network *s, char *name) {
 
 static FILE *find_channel_file(struct network *s, char *name) {
 	FILE *f;
-	char *server_name, *hash_name;
+	char *server_name, *hash_name, *lowercase;
 	server_name = xmlGetProp(s->xmlConf, "name");
 
-	asprintf(&hash_name, "%s/%s", server_name, g_ascii_strdown(name?name:"messages", -1));
+	lowercase = g_ascii_strdown(name?name:"messages", -1);
+	asprintf(&hash_name, "%s/%s", server_name, lowercase);
+	g_free(lowercase);
 
 	xmlFree(server_name);
 
@@ -136,7 +142,7 @@ static gboolean log_data(struct line *l)
 			f = find_add_channel_file(l->network, dest);
 			if(f)fprintf(f, "%02d:%02d < %s> %s\n", t->tm_hour, t->tm_min, nick, l->args[2]);
 		}
-	} else if(!strcasecmp(l->args[0], "MODE") && l->args[1] && (l->args[1][0] == '#' || l->args[1][0] == '&') && l->direction == FROM_SERVER) {
+	} else if(!strcasecmp(l->args[0], "MODE") && l->args[1] && is_channelname(l->args[1], l->network) && l->direction == FROM_SERVER) {
 		f = find_add_channel_file(l->network, l->args[1]);
 		if(f)fprintf(f, "%02d:%02d -!- mode/%s [%s %s] by %s\n", t->tm_hour, t->tm_min, l->args[1], l->args[2], l->args[3], nick);
 	} else if(!strcasecmp(l->args[0], "QUIT")) {
@@ -210,6 +216,7 @@ static gboolean log_data(struct line *l)
 
 gboolean fini_plugin(struct plugin *p)
 {
+	free(logfile);
 	del_filter(log_data);
 	return TRUE;
 }
@@ -218,10 +225,17 @@ gboolean init_plugin(struct plugin *p)
 {
 	xmlNodePtr cur = p->xmlConf->xmlChildrenNode;
 	while(cur) {
-		if(!xmlIsBlankNode(cur) && !strcmp(cur->name, "logfile")) logfile = xmlNodeGetContent(cur);
+		if(!xmlIsBlankNode(cur) && !strcmp(cur->name, "logfile")) logfile = strdup(xmlNodeGetContent(cur));
 		cur = cur->next;
 	}
-	if(!logfile) return FALSE;
+
+	if(!logfile) {
+		logfile = ctrlproxy_path("log_irssi");
+	}
+	
+	/* Create logfile directory if it doesn't exist yet */
+	mkdir(logfile, 0600);
+	
 	files = g_hash_table_new(g_str_hash, g_str_equal);
 	add_filter("log_irssi", log_data);
 	return TRUE;

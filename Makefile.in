@@ -2,7 +2,7 @@ LIBS = @LIBS@ @PKG_LIBS@ @PKG_CFLAGS@
 CC = @CC@
 prefix = @prefix@
 exec_prefix = @exec_prefix@
-CFLAGS = @CFLAGS@ @PKG_CFLAGS@
+CFLAGS = @CFLAGS@ @PKG_CFLAGS@ -DHAVE_CONFIG_H
 INSTALL = @INSTALL@
 bindir = @bindir@
 docdir = @prefix@/share/doc/ctrlproxy
@@ -10,6 +10,7 @@ modulesdir = @libdir@/ctrlproxy
 includedir = @includedir@
 man1dir = @mandir@/man1
 man5dir = @mandir@/man5
+datadir = @datadir@/ctrlproxy
 
 CFLAGS+=-ansi -Wall -DMODULESDIR=\"$(modulesdir)\"
 OBJS = server.o line.o main.o state.o util.o transport.o hooks.o linestack.o
@@ -17,7 +18,7 @@ BINS = @BINS@
 
 all: $(BINS)
 	$(MAKE) -C mods all
-	$(MAKE) -C doc all
+@DOCE@	$(MAKE) -C doc all
 
 ctrlproxy: $(OBJS)
 	$(CC) $(LIBS) -rdynamic -o $@ $(OBJS)
@@ -28,7 +29,7 @@ printstats: printstats.o
 %.o: %.c
 	$(CC) $(CFLAGS) -c $<
 
-install: all install-dirs install-doc install-bin install-mods
+install: all install-dirs install-doc install-bin install-mods install-data
 install-dirs:
 	$(INSTALL) -d $(DESTDIR)$(bindir)
 	$(INSTALL) -d $(DESTDIR)$(man1dir)
@@ -36,7 +37,8 @@ install-dirs:
 	$(INSTALL) -d $(DESTDIR)$(includedir)
 	$(INSTALL) -d $(DESTDIR)$(modulesdir)
 	$(INSTALL) -d $(DESTDIR)$(docdir)
-	$(MAKE) -C doc install
+	$(INSTALL) -d $(DESTDIR)$(datadir)
+	$(MAKE) -C doc install 
 	
 install-bin:
 	$(INSTALL) ctrlproxy $(DESTDIR)$(bindir)
@@ -47,16 +49,19 @@ install-doc:
 	$(INSTALL) COPYING $(DESTDIR)$(docdir)
 	$(INSTALL) TODO $(DESTDIR)$(docdir)
 
+install-data:
+	$(INSTALL) motd $(DESTDIR)$(datadir)
+
 install-mods:
 	$(MAKE) -C mods install
 
 clean:
 	rm -f *.o ctrlproxy printstats *~
 	$(MAKE) -C mods clean
-	$(MAKE) -C doc clean
+@DOCE@	$(MAKE) -C doc clean
 
 distclean: clean
 	rm -f Makefile build config.h ctrlproxy.pc ctrlproxy.spec *.log
 	rm -rf autom4te.cache/ config.log
 	$(MAKE) -C mods distclean
-	$(MAKE) -C doc distclean
+@DOCE@	$(MAKE) -C doc distclean

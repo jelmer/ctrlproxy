@@ -21,6 +21,12 @@
 
 enum mode_type { REMOVE = 0, ADD = 1};
 
+int is_channelname(char *name, struct network *n)
+{
+	if(name[0] == '#' || name[0] == '!' || name[0] == '&') return 1;
+	return 0;
+}
+
 char *mode2string(char modes[255])
 {
 	static char ret[255];
@@ -138,11 +144,11 @@ static void handle_join(struct network *s, struct line *l)
 
 			/* The user is joining a channel */
 			own_nick = xmlGetProp(s->xmlConf, "nick");
-
-			g_message("Joining channel %s", p);
 		
-			if(!strcasecmp(line_get_nick(l), own_nick))
+			if(!strcasecmp(line_get_nick(l), own_nick)) {
 				xmlSetProp(c->xmlConf, "autojoin", "1");
+				g_message("Joining channel %s", p);
+			}
 			
 			xmlFree(own_nick);
 		}
@@ -195,7 +201,7 @@ static void handle_part(struct network *s, struct line *l)
 				free(n);
 			} else g_log(G_LOG_DOMAIN, G_LOG_LEVEL_WARNING, "Can't remove nick %s from channel %s: nick not on channel\n", line_get_nick(l), p);
 	
-			return;
+			continue;
 		} 
 	
 		g_log(G_LOG_DOMAIN, G_LOG_LEVEL_WARNING, "Can't part or let other nick part %s(unknown channel)\n", p);
@@ -256,12 +262,24 @@ static void handle_topic(struct network *s, struct line *l) {
 
 static void handle_332(struct network *s, struct line *l) {
 	struct channel *c = find_channel(s, l->args[2]);
+	
+	if(!c) { 
+		g_warning("Can't set topic for unknown channel '%s'!", l->args[2]);
+		return;
+	}
+
 	if(c->topic)free(c->topic);
 	c->topic = strdup(l->args[3]);
 }
 
 static void handle_no_topic(struct network *s, struct line *l) {
 	struct channel *c = find_channel(s, l->args[1]);
+
+	if(!c) { 
+		g_warning("Can't unset topic for unknown channel '%s'!", l->args[2]);
+		return;
+	}
+	
 	if(c->topic)free(c->topic);
 	c->topic = NULL;
 }
@@ -317,21 +335,24 @@ static void handle_mode(struct network *s, struct line *l)
 	enum mode_type t = ADD;
 	int i;
 
+	if(l->direction == TO_SERVER)return;
+
 	/* We only care about channel modes and our own mode */
 	nick = xmlGetProp(s->xmlConf, "nick");
 	g_assert(nick);
+	/* Own nick is being changed */
 	if(!strcmp(l->args[1], nick)) {
 		for(i = 0; l->args[2][i]; i++) {
 			switch(l->args[2][i]) {
 				case '+': t = ADD;break;
 				case '-': t = REMOVE; break;
 				default:
-					  s->modes[(unsigned char)l->args[2][i]] = t;
+					  s->mymodes[(unsigned char)l->args[2][i]] = t;
 					  break;
 			}
 		}
 
-	} else if(l->args[1][0] == '#' || l->args[1][0] == '&') {
+	} else if(is_channelname(l->args[1], l->network)) {
 		struct channel *c = find_channel(s, l->args[1]);
 		struct nick *n;
 		int arg = 2;
@@ -365,7 +386,7 @@ static void handle_mode(struct network *s, struct line *l)
 						break;
 					}
 					c->limit = atol(l->args[arg]);
-					s->modes['l'] = t;
+					c->modes['l'] = t;
 					break;
 				case 'k':
 					if(!l->args[++arg]) {
@@ -375,10 +396,10 @@ static void handle_mode(struct network *s, struct line *l)
 
 					if(t) xmlSetProp(c->xmlConf, "key", l->args[arg]);
 					else xmlUnsetProp(c->xmlConf, "key");
-					s->modes['k'] = t;
+					c->modes['k'] = t;
 					break;
 				default:
-					  s->modes[(unsigned char)l->args[2][i]] = t;
+					  c->modes[(unsigned char)l->args[2][i]] = t;
 					  break;
 			}
 		}
@@ -501,7 +522,6 @@ GSList *gen_replication(struct network *s)
 	GSList *ret = NULL;
 	char *key;
 	char *nick, *server_name, *channel_name;
-	if(!s) return NULL;
 	cl = s->channels,
 	server_name = xmlGetProp(s->xmlConf, "name");
 	nick = xmlGetProp(s->xmlConf, "nick");
@@ -510,12 +530,12 @@ GSList *gen_replication(struct network *s)
 		c = (struct channel *)cl->data;
 		channel_name = xmlGetProp(c->xmlConf, "name");
 		key = xmlGetProp(c->xmlConf, "key");
-		if(channel_name[0] != '#' && channel_name[0] != '&') {
+		if(!is_channelname(channel_name, s)) {
 			cl = g_list_next(cl);
 			xmlFree(channel_name);
 			continue;
 		}
-		ret = g_slist_append(ret, irc_parse_linef(":%s JOIN %s%s%s\r\n", nick, channel_name, key?" ":"", key?key:""));
+		ret = g_slist_append(ret, irc_parse_linef(":%s JOIN %s\r\n", nick, channel_name));
 
 		xmlFree(key);
 
@@ -538,8 +558,8 @@ GSList *gen_replication(struct network *s)
 		xmlFree(channel_name);
 	}
 
-	if(strlen(mode2string(s->modes)))
-		ret = g_slist_append(ret, irc_parse_linef(":%s MODE %s +%s\r\n", server_name, nick, mode2string(s->modes)));
+	if(strlen(mode2string(s->mymodes)))
+		ret = g_slist_append(ret, irc_parse_linef(":%s MODE %s +%s\r\n", server_name, nick, mode2string(s->mymodes)));
 
 	xmlFree(server_name);
 	xmlFree(nick);

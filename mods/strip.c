@@ -31,7 +31,7 @@ struct query_stack {
 	struct query_stack *next;
 };
 
-struct query_stack *stack = NULL;
+static struct query_stack *stack = NULL;
 
 struct query {
 	char *name;
@@ -42,10 +42,10 @@ struct query {
 	int (*handle) (struct line *, struct query *);
 };
 
-int handle_default(struct line *, struct query *);
-int handle_topic(struct line *, struct query *);
+static int handle_default(struct line *, struct query *);
+static int handle_topic(struct line *, struct query *);
 
-struct query queries[] = {
+static struct query queries[] = {
 /* Commands that get a one-client reply: 
  * WHOIS [<server>] <nickmask>[,<nickmask>[,...]] */
 	{"WHOIS", 
@@ -175,7 +175,7 @@ struct query queries[] = {
 	{ NULL }
 };
 
-int is_reply(int *replies, int r)
+static int is_reply(int *replies, int r)
 {
 	int i;
 	for(i = 0; i < 20 && replies[i]; i++) {
@@ -184,7 +184,7 @@ int is_reply(int *replies, int r)
 	return 0;
 }
 
-int is_numeric(char *s)
+static int is_numeric(char *s)
 {
 	while(*s) {
 		if(*s < '0' || *s > '9')return 0;
@@ -193,7 +193,7 @@ int is_numeric(char *s)
 	return 1;
 }
 
-struct query *find_query(char *name)
+static struct query *find_query(char *name)
 {
 	int i;
 	for(i = 0; queries[i].name; i++) {
@@ -256,7 +256,7 @@ gboolean init_plugin(struct plugin *p) {
 	return TRUE;
 }
 
-int handle_default(struct line *l, struct query *q)
+static int handle_default(struct line *l, struct query *q)
 {
 	struct query_stack *s = malloc(sizeof(struct query_stack));
 	s->network = l->network;
@@ -267,7 +267,7 @@ int handle_default(struct line *l, struct query *q)
 	return 1;
 }
 
-int handle_topic(struct line *l, struct query *q)
+static int handle_topic(struct line *l, struct query *q)
 {
 	if(l->args[2])return 0;
 	return handle_default(l,q);

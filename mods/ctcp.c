@@ -76,7 +76,8 @@ static gboolean mhandle_data(struct line *l)
 	} else if(!strcasecmp(data, "PING")) {
 		irc_sendf(l->network->outgoing, "NOTICE %s :%s", dest, l->args[2]?l->args[2]:"");
 	} else if(!strcasecmp(data, "ACTION")) {
-	} else g_warning("Received unknown CTCP request '%s'!\n", data);
+	} else if(!strcasecmp(data, "DCC")) {
+	} else g_warning("Received unknown CTCP request '%s'!", data);
 
 	free(data);
 	if(dhostmask)free(dhostmask);
