@@ -80,7 +80,7 @@ static gboolean log_data(struct line *l) {
 
 	/* User has changed his/her nick. Check whether this nick needs to be identified */
 	if(l->direction == FROM_SERVER && !strcasecmp(l->args[0], "NICK")) {
-		identify_me(l->network, l->args[0]);
+		identify_me(l->network, l->args[1]);
 	}
 
 	/* Keep track of the last nick that the user tried to take */
