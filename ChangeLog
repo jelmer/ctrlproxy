@@ -1,4 +1,5 @@
 Ctrlproxy 2.6:
+ * Fix build without libssl
  * Add attribute only_noclient
  * Add linestack support
  * Split repl_memory into linestack_memory and repl_simple

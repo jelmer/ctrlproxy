@@ -30,6 +30,7 @@ AC_CHECK_HEADERS([arpa/inet.h fcntl.h malloc.h netdb.h netinet/in.h stdlib.h str
 SSL_LIB=""
 
 AC_CHECK_LIB(tdb, tdb_open, [ BINS="$BINS printstats"; MODS="$MODS libstats.so" ] )
+AC_CHECK_LIB(crypto, crypt)
 AC_CHECK_LIB(ssl, SSL_connect, [ SOCKET_OBJS="$SOCKET_OBJS network-openssl.o"; SSL_LIB="-lssl" ] )
 
 # Checks for typedefs, structures, and compiler characteristics.
@@ -59,7 +60,7 @@ AC_SUBST(DIA)
 AC_SUBST(EPSTOPDF)
 AC_CHECKING([which plugins to build])
 AC_MSG_RESULT(["$MODS"])
-AC_CHECK_FUNCS([gethostbyname gethostname memset mkdir socket strcasecmp strchr strdup strerror strncasecmp strstr uname dup2 backtrace_symbols gettimeofday strndup strrchr])
+AC_CHECK_FUNCS([gethostbyname gethostname memset mkdir socket strcasecmp strchr strdup strerror strncasecmp strstr uname dup2 backtrace_symbols gettimeofday strrchr])
 
 AC_CONFIG_FILES([Makefile mods/Makefile ctrlproxy.spec ctrlproxy.pc doc/Makefile])
 AC_OUTPUT

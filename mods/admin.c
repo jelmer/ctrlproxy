@@ -326,7 +326,7 @@ static void dump_config (char **args, struct line *l)
 		 * print the last line */
 		if(buffer[i] != '\n' && buffer[i] != '\0') continue;
 
-		tmp = strndup(buffer + lastend, i - lastend);
+		tmp = g_strndup(buffer + lastend, i - lastend);
 		admin_out(l, tmp);
 		free(tmp);
 		lastend = i+1;
