@@ -13,6 +13,7 @@
 - add gnutls support
 - new log system
 - generate data for configuration editor from XSL files
+- support for one process per network
 
 Optional:
 - Net::IRC-like interface
