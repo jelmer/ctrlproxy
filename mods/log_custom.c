@@ -481,7 +481,7 @@ static gboolean log_custom_data(struct line *l, void *userdata)
 
 gboolean fini_plugin(struct plugin *p)
 {
-	del_filter_ex("log", log_custom_data);
+	del_log_filter("log_custom");
 	return TRUE;
 }
 
@@ -509,6 +509,6 @@ gboolean init_plugin(struct plugin *p)
 {
 	files = g_hash_table_new(g_str_hash, g_str_equal);
 	fmts = g_hash_table_new(g_str_hash, g_str_equal);
-	add_filter_ex("log_custom", log_custom_data, NULL, "log", 1000);
+	add_log_filter("log_custom", log_custom_data, NULL, 1000);
 	return TRUE;
 }

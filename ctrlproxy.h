@@ -113,7 +113,7 @@ struct client {
 	char *username;
 };
 
-enum casemapping { CASEMAP_UNKNOWN = 0, CASEMAP_RFC1459 = 1, CASEMAP_ASCII = 2 };
+enum casemapping { CASEMAP_UNKNOWN = 0, CASEMAP_RFC1459, CASEMAP_ASCII, CASEMAP_STRICT_RFC1459 };
 enum network_type { NETWORK_TCP, NETWORK_PROGRAM, NETWORK_VIRTUAL };
 
 struct network {
@@ -128,17 +128,23 @@ struct network {
 	char mymodes[255];
 	GList *channels;
 	GList *nicks;
+	gboolean login_sent;
 	gboolean authenticated;
 	GList *clients;
 	GList *autosend_lines;
-	char *supported_modes[2];
-	GList *features;
+	GHashTable *server_features;
 	guint reconnect_id;
-	enum casemapping casemapping;
 	gboolean name_guessed;
 	guint reconnect_interval;
-
+	char *supported_modes[2];
 	enum network_type type;
+
+	struct {
+		enum casemapping casemapping;
+		int channellen;
+		int nicklen;
+		int topiclen;
+	} supports;
 
 	union { 
 		struct {
@@ -225,6 +231,7 @@ G_MODULE_EXPORT gboolean network_send_args(struct network *s, ...);
 G_MODULE_EXPORT void register_virtual_network(struct virtual_network_ops *);
 G_MODULE_EXPORT void unregister_virtual_network(struct virtual_network_ops *);
 G_MODULE_EXPORT struct network *find_network(const char *name);
+G_MODULE_EXPORT gboolean client_send_line(struct client *c, struct line *);
 
 /* line.c */
 G_MODULE_EXPORT struct line *linedup(struct line *l);
@@ -298,11 +305,17 @@ G_MODULE_EXPORT int strrfc1459cmp(const char *a, const char *b);
 /* hooks.c */
 /* Returns TRUE if filter should be continued, FALSE if it should be stopped. */
 typedef gboolean (*filter_function) (struct line *, void *userdata);
-G_MODULE_EXPORT void add_filter(char *name, filter_function, void *userdata);
-G_MODULE_EXPORT gboolean add_filter_ex(char *name, filter_function, void *userdata, char *classname, int priority);
-G_MODULE_EXPORT void del_filter(filter_function);
-G_MODULE_EXPORT gboolean del_filter_ex(char *classname, filter_function);
-G_MODULE_EXPORT void add_filter_class(char *name, int priority);
+G_MODULE_EXPORT void add_log_filter(const char *name, filter_function, void *userdata, int priority);
+G_MODULE_EXPORT void del_log_filter(const char *name);
+
+G_MODULE_EXPORT void add_replication_filter(const char *name, filter_function, void *userdata, int priority);
+G_MODULE_EXPORT void del_replication_filter(const char *name);
+
+G_MODULE_EXPORT void add_client_filter(const char *name, filter_function, void *userdata, int priority);
+G_MODULE_EXPORT void del_client_filter(const char *name);
+
+G_MODULE_EXPORT void add_server_filter(const char *name, filter_function, void *userdata, int priority);
+G_MODULE_EXPORT void del_server_filter(const char *name);
 
 typedef gboolean (*new_client_hook) (struct client *, void *userdata);
 G_MODULE_EXPORT void add_new_client_hook(char *name, new_client_hook h, void *userdata);

@@ -116,7 +116,7 @@ static void free_antiflood_servers(gpointer key, gpointer value, gpointer user_d
 }
 
 gboolean fini_plugin(struct plugin *p) {
-	del_filter_ex("client", log_data);
+	del_server_filter("antiflood");
 	
 	g_hash_table_foreach(antiflood_servers, free_antiflood_servers, NULL);
 	g_hash_table_destroy(antiflood_servers);
@@ -139,7 +139,7 @@ gboolean load_config(struct plugin *p, xmlNodePtr node)
 
 gboolean init_plugin(struct plugin *p) {
 	this_plugin = p;
-	add_filter_ex("antiflood", log_data, NULL, "client", 1);
+	add_server_filter("antiflood", log_data, NULL, 1);
 	antiflood_servers = g_hash_table_new(NULL, NULL);
 	
 	return TRUE;

@@ -128,4 +128,6 @@
 #define RPL_STATSQLINE 217
 #define RPL_TRACECLASS 209
 
+#define ALLMODES "aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPqQrRsStTuUvVwWxXyYzZ"
+
 #endif

@@ -14,7 +14,9 @@ all: $(MODS_SHARED_FILES)
 
 install: all
 	$(INSTALL) -d $(DESTDIR)$(modulesdir)
-	test -z "$(MODS_SHARED_FILES)" || $(INSTALL) $(MODS_SHARED_FILES) $(DESTDIR)$(modulesdir)
+ifneq "$(MODS_SHARED_FILES)" ""
+	$(INSTALL) $(MODS_SHARED_FILES) $(DESTDIR)$(modulesdir)
+endif
 	$(INSTALL) -m 644 $(INCLUDEFILES) $(DESTDIR)$(destincludedir)
 	for I in $(MODS_SHARED_SUBDIRS); do $(MAKE) -C $$I $@; done
 

@@ -54,7 +54,7 @@ static gboolean limited_replicate(struct client *c, void *userdata)
 }
 
 gboolean fini_plugin(struct plugin *p) {
-	del_filter(log_data);
+	del_replication_filter("repl_limited");
 	del_new_client_hook("repl_limited");
 	g_hash_table_destroy(limited_backlog); limited_backlog = NULL;
 	return TRUE;
@@ -63,7 +63,7 @@ gboolean fini_plugin(struct plugin *p) {
 const char name_plugin[] = "repl_limited";
 
 gboolean init_plugin(struct plugin *p) {
-	add_filter_ex("repl_limited", log_data, NULL, "replicate", 1000);
+	add_replication_filter("repl_limited", log_data, NULL, 1000);
 	add_new_client_hook("repl_limited", limited_replicate, NULL);
 	limited_backlog = g_hash_table_new(NULL, NULL);
 	return TRUE;

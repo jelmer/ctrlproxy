@@ -246,14 +246,14 @@ static gboolean handle_data(struct line *l, void *userdata) {
 }
 
 gboolean fini_plugin(struct plugin *p) {
-	del_filter_ex("client", handle_data);
+	del_server_filter("strip");
 	return TRUE;
 }
 
 const char name_plugin[] = "strip";
 
 gboolean init_plugin(struct plugin *p) {
-	add_filter_ex("strip", handle_data, NULL, "client", 1);
+	add_server_filter("strip", handle_data, NULL, 1);
 	return TRUE;
 }
 

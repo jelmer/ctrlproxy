@@ -28,49 +28,6 @@ struct started_join {
 
 static GList *started_join_list = NULL;
 
-int is_channelname(const char *name, struct network *n)
-{
-	const char *chantypes = get_network_feature(n, "CHANTYPES");
-	if(!chantypes) {
-		if(name[0] == '#' || name[0] == '&')return 1;
-		return 0;
-	} else if(strchr(chantypes, name[0])) return 1;
-	return 0;
-}
-
-int is_prefix(char p, struct network *n)
-{
-	const char *prefix = get_network_feature(n, "PREFIX");
-	const char *pref_end;
-	if(!prefix) {
-		if(p == '@' || p == '+') return 1;
-		return 0;
-	}
-	pref_end = strchr(prefix, ')');
-	if(!pref_end)pref_end = prefix;
-	else pref_end++;
-	if(strchr(pref_end, p)) return 1;
-	return 0;
-}
-
-char get_prefix_by_mode(char p, struct network *n)
-{
-	const char *prefix = get_network_feature(n, "PREFIX");
-	int i;
-	char *pref_end;
-	if(!prefix) return ' ';
-	
-	pref_end = strchr(prefix, ')');
-	if(!pref_end) return ' ';
-	pref_end++;
-	prefix++;
-
-	for(i = 0; pref_end[i]; i++) {
-		if(pref_end[i] == p) return prefix[i];
-	}
-	return ' ';
-}
-
 char *mode2string(char modes[255])
 {
 	static char ret[255];
@@ -537,36 +494,6 @@ static void handle_004(struct network *s, struct line *l)
 	s->supported_modes[1] = g_strdup(l->args[5]);
 }
 
-static void handle_005(struct network *s, struct line *l)
-{
-	unsigned int i;
-	if(l->direction == TO_SERVER)return;
-
-	for(i = 3; i < l->argc-1; i++) {
-		s->features = g_list_append(s->features, g_strdup(l->args[i]));
-
-		if(!g_ascii_strncasecmp(l->args[i], "CASEMAPPING", strlen("CASEMAPPING"))) {
-			if(strlen(l->args[i]) < strlen("CASEMAPPING=")) {
-				g_warning(_("CASEMAPPING variable sent by server invalid"));
-			} else {
-				if(!g_strcasecmp(l->args[i]+strlen("CASEMAPPING="), "rfc1459")) {
-					s->casemapping = CASEMAP_RFC1459;
-				} else if(!g_strcasecmp(l->args[i]+strlen("CASEMAPPING="), "ascii")) {
-					s->casemapping = CASEMAP_ASCII;
-				} else {
-					s->casemapping = CASEMAP_UNKNOWN;
-					g_warning(_("Unknown casemapping '%s'"), l->args[i]+strlen("CASEMAPPING="));
-				}
-			}
-		} else if(!g_ascii_strncasecmp(l->args[i], "NETWORK", strlen("NETWORK"))) {
-			if(strlen(l->args[i]) < strlen("NETWORK=")) {
-			   g_warning(_("NETWORK variable sent by server invalid"));
-			} else if(s->name_guessed) {
-				s->name = g_strdup(l->args[i]+strlen("NETWORK="));
-			}
-		}
-	}
-}
 
 static void handle_nick(struct network *s, struct line *l)
 {
@@ -586,6 +513,8 @@ static void handle_nick(struct network *s, struct line *l)
 
 	if(!irccmp(s, line_get_nick(l), s->nick)) network_change_nick(s, l->args[1]);
 }
+
+extern void handle_005(struct network *s, struct line *l);
 
 static struct irc_command {
 	char *command;
@@ -681,44 +610,7 @@ GSList *gen_replication_network(struct network *s)
 
 struct linestack_context *linestack_new_by_network(struct network *n)
 {
-	char *linestack, *linestack_location;
-	struct linestack_context *ret;
-
-	linestack = NULL /* FIXME: xmlGetProp(n->xmlConf, "linestack")*/;
-	linestack_location = NULL /* FIXME: xmlGetProp(n->xmlConf, "linestack_location")*/;
-
-	ret = linestack_new(linestack, linestack_location);
-
-	return ret;
-}
-
-const char *get_network_feature(struct network *n, const char *name)
-{
-	GList *gl;
-	if(!n) return NULL;
-	if(!n->features)return NULL;
-	for(gl = n->features; gl; gl = gl->next) {
-		if(!strncmp(gl->data, name, strlen(name))) {
-			char *eq = strchr(gl->data, '=');
-			if(eq) return eq+1;
-			return "";		
-		}
-	}
-	return NULL;
-}
-
-int irccmp(struct network *n, const char *a, const char *b)
-{
-	switch(n->casemapping) {
-	default:
-	case CASEMAP_UNKNOWN:
-	case CASEMAP_ASCII:
-		return g_strcasecmp(a,b);
-	case CASEMAP_RFC1459:
-		return strrfc1459cmp(a,b);
-	}
-	g_assert(_("Casemap invalid!"));
-	return 0;
+	return linestack_new(NULL, NULL);
 }
 
 struct network_nick *line_get_network_nick(struct line *l)

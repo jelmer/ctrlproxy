@@ -51,15 +51,18 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition condition, gpo
 	}
 
 	if(!g_strcasecmp(l->args[0], "PASS")) {
-		if (!listener->password || !strcmp(l->args[1], listener->password)) {
-			g_message("Client @%s successfully authenticated",
-			  listener->network->name);
-
-			new_client(listener->network, c);
-		} else {
+		if (listener->password && strcmp(l->args[1], listener->password)) {
 			g_warning("User tried to log in to %s with incorrect password!\n", listener->network->name);
 			irc_sendf(c, ":%s %d %s :Password mismatch\r\n", listener->network->name, ERR_PASSWDMISMATCH, listener->network->nick);
+
+			free_line(l);
+			return FALSE;
 		}
+
+		g_message("Client @%s successfully authenticated",
+		  listener->network->name);
+
+		new_client(listener->network, c);
 
 		free_line(l); 
 		return FALSE;
@@ -171,16 +174,16 @@ gboolean load_config(struct plugin *p, xmlNodePtr conf)
 		if (cur->type != XML_ELEMENT_NODE) continue;
 
 		tmp = xmlGetProp(cur, "port");
-
 		l = new_listener(atoi(tmp));
-		
 		xmlFree(tmp);
 
 		l->password = xmlGetProp(cur, "password");
 
-		tmp = xmlGetProp(cur, "network");
-		l->network = find_network(tmp);
-		xmlFree(tmp);
+		if (xmlHasProp(cur, "network")) {
+			tmp = xmlGetProp(cur, "network");
+			l->network = find_network(tmp);
+			xmlFree(tmp);
+		}
 			
 		start_listener(l);
 	}

@@ -50,9 +50,6 @@ gboolean unload_plugin(struct plugin *p)
 
 	p->loaded = FALSE;
 
-	g_free(p->name);
-	g_free(p->path);
-	g_free(p);
 	return TRUE;
 }
 

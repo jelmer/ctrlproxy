@@ -88,7 +88,7 @@ static gboolean lastdisconnect_replicate(struct client *c, void *userdata)
 }
 
 gboolean fini_plugin(struct plugin *p) {
-	del_filter_ex("replicate", log_data);
+	del_replication_filter("last_disconnect");
 	del_lose_client_hook("repl_lastdisconnect");
 	del_new_client_hook("repl_lastdisconnect");
 	g_hash_table_destroy(lastdisconnect_backlog); lastdisconnect_backlog = NULL;
@@ -98,7 +98,7 @@ gboolean fini_plugin(struct plugin *p) {
 const char name_plugin[] = "repl_lastdisconnect";
 
 gboolean init_plugin(struct plugin *p) {
-	add_filter_ex("repl_lastdisconnect", log_data, NULL, "replicate", 1000);
+	add_replication_filter("repl_lastdisconnect", log_data, NULL, 1000);
 	add_lose_client_hook("repl_lastdisconnect", lastdisconnect_clear, NULL);
 	add_new_client_hook("repl_lastdisconnect", lastdisconnect_replicate, NULL);
 	lastdisconnect_backlog = g_hash_table_new(NULL, NULL);

@@ -147,7 +147,7 @@ gboolean load_config(struct plugin *p, xmlNodePtr node)
 
 gboolean fini_plugin(struct plugin *p) {
 	del_server_connected_hook("nickserv");
-	del_filter(log_data);
+	del_server_filter("nickserv");
 	return TRUE;
 }
 
@@ -155,6 +155,6 @@ const char name_plugin[] = "nickserv";
 
 gboolean init_plugin(struct plugin *p) {
 	add_server_connected_hook("nickserv", conned_data, NULL);
-	add_filter("nickserv", log_data, NULL);
+	add_server_filter("nickserv", log_data, NULL, 1);
 	return TRUE;
 }

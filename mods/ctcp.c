@@ -102,7 +102,7 @@ static gboolean mhandle_data(struct line *l, void *userdata)
 
 gboolean fini_plugin(struct plugin *p)
 {
-	del_filter_ex("client", mhandle_data);
+	del_server_filter("ctcp");
 	return TRUE;
 }
 
@@ -110,6 +110,6 @@ const char name_plugin[] = "ctcp";
 
 gboolean init_plugin(struct plugin *p) 
 {
-	add_filter_ex("ctcp", mhandle_data, NULL, "client", 1000);
+	add_server_filter("ctcp", mhandle_data, NULL, 1000);
 	return TRUE;
 }

@@ -391,7 +391,7 @@ static gboolean handle_data(struct line *l, void *userdata) {
 }
 
 gboolean fini_plugin(struct plugin *p) {
-	del_filter(handle_data);
+	del_client_filter("admin");
 	return TRUE;
 }
 
@@ -434,7 +434,7 @@ gboolean init_plugin(struct plugin *p) {
 		{ NULL }
 	};
 
-	add_filter("admin", handle_data, NULL);
+	add_client_filter("admin", handle_data, NULL, 1);
 
 	for(i = 0; builtin_commands[i].name; i++) {
 		register_admin_command(builtin_commands[i].name, builtin_commands[i].handler, builtin_commands[i].help, builtin_commands[i].help_details, NULL);

@@ -209,10 +209,6 @@ int main(int argc, const char *argv[])
 
 	add_log_domain("GLib");
 	add_log_domain("ctrlproxy");
-	add_filter_class("", -1);
-	add_filter_class("client", 100);
-	add_filter_class("replicate", 50);
-	add_filter_class("log", 50);
 
 	g_message(_("Logfile opened"));
 

@@ -19,14 +19,6 @@
 
 #include "internals.h"
 
-GList *filter_classes = NULL;
-
-struct filter_class {
-	char *name;
-	int priority;
-	GList *filters;
-};
-
 struct filter_data {
 	char *name;
 	int priority;
@@ -43,100 +35,42 @@ static gint filter_cmp(gconstpointer _a, gconstpointer _b)
 	return a->priority - b->priority;
 }
 
-static gint filter_class_cmp(gconstpointer _a, gconstpointer _b)
-{
-	struct filter_class *a = (struct filter_class *)_a;
-	struct filter_class *b = (struct filter_class *)_b;
-
-	return a->priority - b->priority;
-}
-
-static struct filter_class *find_filter_class(char *name)
-{
-	GList *gl = filter_classes;
-	while(gl) {
-		struct filter_class *c = (struct filter_class *)gl->data;
-		if(!strcmp(c->name, name)) return c;
-		gl = gl->next;
-	}
-	return NULL;
-}
-
-void add_filter_class(char *name, int prio)
-{
-	struct filter_class *c;
-	
-	if(find_filter_class(name)) return;
-	
-	c = (struct filter_class *)g_malloc(sizeof(struct filter_class));
-	c->name = g_strdup(name);
-	
-	c->filters = NULL;
-
-	c->priority = prio;
-	
-	filter_classes = g_list_insert_sorted(filter_classes, c, filter_class_cmp);
-}
-
-gboolean add_filter_ex(char *name, filter_function f, void *userdata, char *class, int prio)
+static GList *add_filter_ex(GList *class, const char *name, filter_function f, void *userdata, int prio)
 {
 	struct filter_data *d = (struct filter_data *)g_malloc(sizeof(struct filter_data));
-	struct filter_class *c;
 
 	d->name = g_strdup(name);
-	g_message(_("Filter '%s' added"), d->name);
 	d->function = f;
 	d->priority = prio;
 	d->plugin = peek_plugin();
 	d->userdata = userdata;
 
-	c = find_filter_class(class);
-	if(!c) {
-		g_message(_("Unable to find filter class '%s'"), class);
-		return FALSE;
-	}
-	
-	c->filters = g_list_insert_sorted(c->filters, d, filter_cmp);
-	return TRUE;
+	return g_list_insert_sorted(class, d, filter_cmp);
 }
 
-G_MODULE_EXPORT void add_filter(char *name, filter_function f, void *userdata) 
+static GList *del_filter_ex(GList *list, const char *name)
 {
-	add_filter_ex(name, f, userdata, "", 500);
-}
+	GList *gl = list;
 
-void del_filter(filter_function f)
-{
-	del_filter_ex("", f);
-}
-
-gboolean del_filter_ex(char *class, filter_function f) 
-{
-	struct filter_class *c = find_filter_class(class);
-	GList *gl;
-	if(!c) return FALSE;
-	gl = c->filters;
 	while(gl) {
 		struct filter_data *d = (struct filter_data *)gl->data;
 
-		if(d->function == f) 
+		if(!g_strcasecmp(d->name, name)) 
 		{
-			g_message(_("Filter '%s' removed"), d->name);
-			c->filters = g_list_remove(c->filters, d);
 			g_free(d->name);
 			g_free(d);
-			return TRUE;
+			return g_list_remove(list, d);
 		}
 	
 		gl = gl->next;
 	}
-	return FALSE;
+
+	return list;
 }
 
 
-static gboolean filter_class_execute(struct filter_class *c, struct line *l) 
+static gboolean filter_class_execute(GList *gl, struct line *l) 
 {
-	GList *gl = c->filters;
 	while(gl) {
 		struct filter_data *d = (struct filter_data *)gl->data;
 		
@@ -154,35 +88,33 @@ static gboolean filter_class_execute(struct filter_class *c, struct line *l)
 	return TRUE;
 }
 
-gboolean filters_execute_class(char *name, struct line *l)
-{
-	struct filter_class *c = find_filter_class(name);
-	if(!c) return FALSE;
+static GList *log_filters = NULL, 
+			 *replication_filters = NULL, 
+			 *client_filters = NULL, 
+			 *server_filters = NULL;
 
-	return filter_class_execute(c, l);
+#define FILTER_FUNCTIONS(n,list) \
+void add_##n##_filter(const char *name, filter_function f, void *userdata, int priority)\
+{\
+	g_message(_(#n" filter '%s' added"), name); \
+	list = add_filter_ex(list, name, f, userdata, priority);\
+}\
+\
+void del_##n##_filter(const char *name)\
+{\
+	g_message(_(#n" filter '%s' removed"), name); \
+	list = del_filter_ex(list, name); \
+}\
+gboolean run_##n##_filter(struct line *l)\
+{\
+/*	g_message(_("running filter class '"#n"'")); */\
+	return filter_class_execute(list, l);\
 }
 
-gboolean filters_execute(struct line *l) 
-{
-	GList *cl = filter_classes;
-	struct filter_class *c;
-	c = find_filter_class("");
-	if(!filter_class_execute(c, l)) return FALSE;
-	
-	while(cl) {
-		c = (struct filter_class *)cl->data;
-		if(!strcmp(c->name, "client")) {
-			filter_class_execute(c, l);
-		} else if(strcmp(c->name,"")) {
-			struct line *tl = linedup(l);
-			filter_class_execute(c, tl);
-			free_line(tl);
-		}
-		cl = cl->next;
-	}
-
-	return TRUE;
-}
+FILTER_FUNCTIONS(log,log_filters)
+FILTER_FUNCTIONS(replication,replication_filters)
+FILTER_FUNCTIONS(client,client_filters)
+FILTER_FUNCTIONS(server,server_filters)
 
 /* Hooks that are called when a client is added or removed. 
  * Very useful for replication backends */

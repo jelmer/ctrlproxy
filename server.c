@@ -49,107 +49,133 @@ static GHashTable *virtual_network_ops = NULL;
 
 static gboolean reconnect(GIOChannel *c, GIOCondition cond, void *_server);
 
+static void server_send_login (struct network *s) 
+{
+	g_message(_("Successfully connected to %s"), s->name);
+
+	if(s->type == NETWORK_TCP && s->connection.tcp.current_server->password) { 
+		network_send_args(s, "PASS", s->connection.tcp.current_server->password, NULL);
+	} else if (s->password) {
+		network_send_args(s, "PASS", s->password, NULL);
+	}
+	network_send_args(s, "NICK", s->nick, NULL);
+	network_send_args(s, "USER", s->username, get_my_hostname(), s->name, s->fullname, NULL);
+
+	s->login_sent = TRUE;
+}
+
 gboolean handle_server_receive (GIOChannel *c, GIOCondition cond, void *_server)
 {
 	struct network *server = (struct network *)_server;
-	struct line *l;
+	struct line *l, *lc;
 
 	if (cond & G_IO_HUP) {
 		return reconnect(c, cond, _server);
 	}
 
-	l = irc_recv_line(c);
-	if(!l)return TRUE;
-
-	/* Silently drop empty messages, as allowed by RFC */
-	if(l->argc == 0) {
-		free_line(l);
-		return TRUE;
+	if (cond & G_IO_OUT) {
+		if (!server->authenticated && !server->login_sent) {
+			server_send_login(server);
+		}
 	}
 
-	printf("FROM SERVER: %s\n", l->args[0]);
+	if (cond & G_IO_IN) {
+		l = irc_recv_line(c);
+		if(!l)return TRUE;
 
-	l->direction = FROM_SERVER;
-	l->network = server;
-
-	filters_execute(l);
-	state_handle_data(server,l);
-
-	/* We need to handle pings.. we can't depend on a client
-	 * to do that for us*/
-	if(!g_strcasecmp(l->args[0], "PING")){
-		network_send_args(server, "PONG", l->args[1], NULL);
-	} else if(!g_strcasecmp(l->args[0], "PONG")){
-	} else if(!g_strcasecmp(l->args[0], "433") && !server->authenticated){
-		char *old_nick = server->nick;
-		server->nick = g_strdup_printf("%s_", server->nick);
-		network_send_args(server, "NICK", server->nick, NULL);
-		g_free(old_nick);
-	} else if(atoi(l->args[0]) == 4) {
-		GList *gl;
-
-		server_connected_hook_execute(server);
-		server->authenticated = TRUE;
-
-		for (gl = server->autosend_lines; gl; gl = gl->next) {
-			char *data = gl->data;
-			struct line *newl;
-
-			newl = irc_parse_line(data);
-
-			network_send_line(server, newl);
-
-			free_line(newl);
+		/* Silently drop empty messages, as allowed by RFC */
+		if(l->argc == 0) {
+			free_line(l);
+			return TRUE;
 		}
 
-		/* Rejoin channels */
-		for (gl = server->channels; gl; gl = gl->next) 
-		{
-			struct channel *c = gl->data;
-			if(c->autojoin) {
-				network_send_args(server, "JOIN", c->name, c->key, NULL);
-			} 
-		}
+		l->direction = FROM_SERVER;
+		l->network = server;
 
-		/* Make sure the current server is listed as a possible one for this network */
-		if (server->type == NETWORK_TCP && l->argc > 2) {
-			for (gl = server->connection.tcp.servers; gl; gl = gl->next) {
-				struct tcp_server *tcp = gl->data;
-				
-				if (!g_strcasecmp(tcp->host, l->args[1])) 
-					break;
+		run_log_filter(lc = linedup(l)); free_line(lc);
+		run_replication_filter(lc = linedup(l)); free_line(lc);
+
+		state_handle_data(server,l);
+
+		/* We need to handle pings.. we can't depend on a client
+		 * to do that for us*/
+		if(!g_strcasecmp(l->args[0], "PING")){
+			network_send_args(server, "PONG", l->args[1], NULL);
+		} else if(!g_strcasecmp(l->args[0], "PONG")){
+		} else if(!g_strcasecmp(l->args[0], "ERROR")) {
+			g_warning("%s error: %s", l->network->name, l->args[1]);
+		} else if(!g_strcasecmp(l->args[0], "433") && !server->authenticated){
+			char *old_nick = server->nick;
+			server->nick = g_strdup_printf("%s_", server->nick);
+			network_send_args(server, "NICK", server->nick, NULL);
+			g_free(old_nick);
+		} else if(atoi(l->args[0]) == 4) {
+			GList *gl;
+
+			server_connected_hook_execute(server);
+			server->authenticated = TRUE;
+
+			for (gl = server->autosend_lines; gl; gl = gl->next) {
+				char *data = gl->data;
+				struct line *newl;
+
+				newl = irc_parse_line(data);
+
+				network_send_line(server, newl);
+
+				free_line(newl);
 			}
 
-			/* Not found, add new one */
-			if (!gl) {
-				struct tcp_server *tcp = g_new0(struct tcp_server, 1);
-				int error;
-				struct addrinfo hints;
+			/* Rejoin channels */
+			for (gl = server->channels; gl; gl = gl->next) 
+			{
+				struct channel *c = gl->data;
+				if(c->autojoin) {
+					network_send_args(server, "JOIN", c->name, c->key, NULL);
+				} 
+			}
 
-				tcp->host = g_strdup(l->args[2]);
-				tcp->name = g_strdup(l->args[2]);
-				tcp->port = g_strdup(server->connection.tcp.current_server->port);
-				tcp->ssl = server->connection.tcp.current_server->ssl;
-				tcp->password = g_strdup(server->connection.tcp.current_server->password);
+			/* Make sure the current server is listed as a possible one for this network */
+			if (server->type == NETWORK_TCP && l->argc > 2) {
+				for (gl = server->connection.tcp.servers; gl; gl = gl->next) {
+					struct tcp_server *tcp = gl->data;
 
-				memset(&hints, 0, sizeof(hints));
-				hints.ai_family = PF_UNSPEC;
-				hints.ai_socktype = SOCK_STREAM;
-
-				error = getaddrinfo(tcp->host, tcp->port, &hints, &tcp->addrinfo);
-				if (error) {
-					g_warning("Unable to lookup %s: %s", tcp->host, gai_strerror(error));
-				} else {
-					server->connection.tcp.servers = g_list_append(server->connection.tcp.servers, tcp);
+					if (!g_strcasecmp(tcp->host, l->args[1])) 
+						break;
 				}
-			}
-			
-		}
-	} else if(server->authenticated) {
-		if(!(l->options & LINE_DONT_SEND))clients_send(server, l, NULL);
 
+				/* Not found, add new one */
+				if (!gl) {
+					struct tcp_server *tcp = g_new0(struct tcp_server, 1);
+					int error;
+					struct addrinfo hints;
+
+					tcp->host = g_strdup(l->args[2]);
+					tcp->name = g_strdup(l->args[2]);
+					tcp->port = g_strdup(server->connection.tcp.current_server->port);
+					tcp->ssl = server->connection.tcp.current_server->ssl;
+					tcp->password = g_strdup(server->connection.tcp.current_server->password);
+
+					memset(&hints, 0, sizeof(hints));
+					hints.ai_family = PF_UNSPEC;
+					hints.ai_socktype = SOCK_STREAM;
+
+					error = getaddrinfo(tcp->host, tcp->port, &hints, &tcp->addrinfo);
+					if (error) {
+						g_warning("Unable to lookup %s: %s", tcp->host, gai_strerror(error));
+					} else {
+						server->connection.tcp.servers = g_list_append(server->connection.tcp.servers, tcp);
+					}
+				}
+
+			}
+		} 
+
+		if(!(l->options & LINE_DONT_SEND) && run_server_filter(l))
+			clients_send(server, l, NULL);
+
+		free_line(l); l = NULL;
 	}
-	free_line(l); l = NULL;
 
 	return TRUE;
 }
@@ -172,19 +198,10 @@ gboolean connect_next_tcp_server(struct network *s)
 	return connect_current_tcp_server(s);
 }
 
-static void server_send_login (struct network *s) 
+gboolean client_send_line(struct client *c, struct line *l)
 {
-	g_message(_("Successfully connected to %s"), s->name);
-
-	g_assert(strlen(get_my_hostname()));
-
-	if(s->type == NETWORK_TCP && s->connection.tcp.current_server->password) { 
-		network_send_args(s, "PASS", s->connection.tcp.current_server->password, NULL);
-	} else if (s->password) {
-		network_send_args(s, "PASS", s->password, NULL);
-	}
-	network_send_args(s, "NICK", s->nick, NULL);
-	network_send_args(s, "USER", s->username, get_my_hostname(), s->name, s->fullname, NULL);
+	/* FIXME: Filter */
+	return irc_send_line(c->incoming, l);
 }
 
 gboolean network_send_line(struct network *s, struct line *l)
@@ -283,9 +300,7 @@ gboolean connect_current_tcp_server(struct network *s)
 		}
 	}
 
-	server_send_login(s);
-	
-	s->connection.tcp.outgoing_id = g_io_add_watch(s->connection.tcp.outgoing, G_IO_IN | G_IO_HUP, handle_server_receive, s);
+	s->connection.tcp.outgoing_id = g_io_add_watch(s->connection.tcp.outgoing, G_IO_IN | G_IO_HUP | G_IO_OUT, handle_server_receive, s);
 
 	g_io_channel_unref(s->connection.tcp.outgoing);
 
@@ -325,6 +340,7 @@ static gboolean reconnect(GIOChannel *c, GIOCondition cond, void *_server)
 	g_warning(_("Connection to network %s lost, trying to reconnect in %ds..."), server->name, server->reconnect_interval);
 
 	server->authenticated = FALSE;
+	server->login_sent = FALSE;
 	free_channels(server);
 	server->reconnect_id = g_timeout_add(1000 * server->reconnect_interval, (GSourceFunc) connect_next_tcp_server, server);
 
@@ -380,17 +396,11 @@ gboolean close_server(struct network *n) {
 			}
 		}
 
-		if(n->features){
-			GList *gl;
-			for (gl = n->features; gl; gl = gl->next) {
-				g_free(gl->data);
-			}
-
-			g_list_free(n->features);
-			n->features = NULL;
-		}
+		g_hash_table_destroy(n->server_features);
+		n->server_features = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_free);
 
 		n->authenticated = FALSE;
+		n->login_sent = FALSE;
 
 		return TRUE;
 	}
@@ -419,7 +429,7 @@ void clients_send(struct network *server, struct line *l, struct client *excepti
 	GList *g = server->clients;
 	while(g) {
 		struct client *c = (struct client *)g->data;
-		if(c != exception) irc_send_line(c->incoming, l);
+		if(c != exception && run_client_filter(l)) client_send_line(c, l);
 		g = g_list_next(g);
 	}
 }
@@ -447,7 +457,7 @@ void send_motd(struct network *n, GIOChannel *c)
 static gboolean handle_client_receive(GIOChannel *c, GIOCondition cond, void *_client)
 {
 	struct client *client = (struct client *)_client;
-	struct line *l;
+	struct line *l, *lc;
 
 	if (cond & G_IO_HUP) {
 		disconnect_client(client);
@@ -469,9 +479,14 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition cond, void *_c
 
 	state_handle_data(client->network, l);
 
-	printf("FROM CLIENT: %s\n", l->args[0]);
+	if (!run_client_filter(l)) 
+		return TRUE;
 
-	filters_execute(l);
+	if (!run_server_filter(l))
+		return TRUE;
+
+	run_log_filter(lc = linedup(l)); free_line(lc);
+	run_replication_filter(lc = linedup(l)); free_line(lc);
 
 	client = l->client;
 	if (!client) {
@@ -521,10 +536,48 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition cond, void *_c
 	return TRUE;
 }
 
+static char *network_generate_feature_string(struct network *n)
+{
+	GList *fs = NULL, *gl;
+	char *name, *casemap;
+	char *ret;
+	
+	name = g_strdup_printf("NETWORK=%s", n->name);
+	fs = g_list_append(fs, name);
+
+	switch (n->supports.casemapping) {
+	default:
+	case CASEMAP_RFC1459:
+		casemap = g_strdup("CASEMAPPING=rfc1459");
+		break;
+	case CASEMAP_STRICT_RFC1459:
+		casemap = g_strdup("CASEMAPPING=strict-rfc1459");
+		break;
+	case CASEMAP_ASCII:
+		casemap = g_strdup("CASEMAPPING=ascii");
+		break;
+	}
+
+	fs = g_list_append(fs, casemap);
+
+	fs = g_list_append(fs, g_strdup("FNC"));
+
+	ret = list_make_string(fs);
+
+	for (gl = fs; gl; gl = gl->next)
+	{
+		g_free(gl->data);
+	}
+
+	g_list_free(fs);
+
+	return ret;
+}
+
 struct client *new_client(struct network *n, GIOChannel *c)
 {
-	char allmodes[] = "aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPqQrRsStTuUvVwWxXyYzZ";
 	struct client *client = g_new0(struct client, 1);
+	char *features;
 
 	g_io_channel_set_flags(c, G_IO_FLAG_NONBLOCK, NULL);
 	client->connect_time = time(NULL);
@@ -535,14 +588,13 @@ struct client *new_client(struct network *n, GIOChannel *c)
 	irc_sendf(c, ":%s 002 %s :Host %s is running ctrlproxy\r\n", client->network->name, client->network->nick, get_my_hostname());
 	irc_sendf(c, ":%s 003 %s :Ctrlproxy (c) 2002-2004 Jelmer Vernooij <jelmer@vernstok.nl>\r\n", client->network->name, client->network->nick);
 	irc_sendf(c, ":%s 004 %s %s %s %s %s\r\n", 
-			  client->network->name, client->network->nick, client->network->name, ctrlproxy_version(), client->network->supported_modes[0]?client->network->supported_modes[0]:allmodes, client->network->supported_modes[1]?client->network->supported_modes[1]:allmodes);
+			  client->network->name, client->network->nick, client->network->name, ctrlproxy_version(), client->network->supported_modes[0]?client->network->supported_modes[0]:ALLMODES, client->network->supported_modes[1]?client->network->supported_modes[1]:ALLMODES);
 
-	if(client->network->features) {
-		char *tmp = list_make_string(client->network->features);
+	features = network_generate_feature_string(client->network);
 
-		irc_sendf(c, ":%s 005 %s %s :are supported on this server\r\n", client->network->name, client->network->nick, tmp);
-		g_free(tmp);
-	}
+	irc_sendf(c, ":%s 005 %s %s :are supported on this server\r\n", client->network->name, client->network->nick, features);
+
+	g_free(features);
 
 	send_motd(client->network, c);
 
@@ -570,6 +622,7 @@ struct network *new_network()
 	s->nick = g_strdup(g_get_user_name());
 	s->username = g_strdup(g_get_user_name());
 	s->fullname = g_strdup(g_get_real_name());
+	s->server_features = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_free);
 
 	s->reconnect_interval = DEFAULT_RECONNECT_INTERVAL;
 
@@ -697,6 +750,8 @@ int close_network(struct network *s)
 	g_free(s->password);
 	g_free(s->name);
 
+	g_hash_table_destroy(s->server_features);
+
 	free_channels(s);
 
 	if (s->type == NETWORK_TCP) {
@@ -722,7 +777,6 @@ int close_network(struct network *s)
 	}
 	g_list_free(s->autosend_lines);
 	
-
 	g_free(s);
 
 	return 0;

@@ -209,7 +209,7 @@ gboolean fini_plugin(struct plugin *p)
 {
 	g_hash_table_destroy(files);
 	g_free(logfile); logfile = NULL;
-	del_filter_ex("log", log_data);
+	del_log_filter("log_irssi");
 	return TRUE;
 }
 
@@ -239,6 +239,6 @@ gboolean load_config(struct plugin *p, xmlNodePtr node)
 gboolean init_plugin(struct plugin *p)
 {
 	files = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, fclose);
-	add_filter_ex("log_irssi", log_data, NULL, "log", 1000);
+	add_log_filter("log_irssi", log_data, NULL, 1000);
 	return TRUE;
 }

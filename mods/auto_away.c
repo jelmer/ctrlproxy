@@ -82,7 +82,7 @@ gboolean fini_plugin(struct plugin *p) {
 	struct auto_away_data *d = (struct auto_away_data *)p->data;
 
 	g_free(message);
-	del_filter(log_data);
+	del_server_filter("auto-away");
 	g_source_remove(d->timeout_id);
 
 	g_free(d);
@@ -123,7 +123,7 @@ gboolean init_plugin(struct plugin *p) {
 
 	d = g_new(struct auto_away_data,1);
 	
-	add_filter("auto-away", log_data, p);
+	add_server_filter("auto-away", log_data, p, -1);
 	
 	last_message = time(NULL);
 

@@ -46,7 +46,7 @@ static gboolean report_time(struct line *l, void *userdata)
 }
 
 gboolean fini_plugin(struct plugin *p) {
-	del_filter_ex("replicate", report_time);
+	del_replication_filter("report_time");
 	return TRUE;
 }
 
@@ -69,6 +69,6 @@ gboolean load_config(struct plugin *p, xmlNodePtr node)
 }
 
 gboolean init_plugin(struct plugin *p) {
-	add_filter_ex("report_time", report_time, NULL, "replicate", 50);
+	add_replication_filter("report_time", report_time, NULL, 50);
 	return TRUE;
 }
