@@ -1,7 +1,7 @@
 Summary: ctrlproxy
 Name: ctrlproxy
-Version: 2.5
-Release: 2
+Version: 2.7
+Release: 0
 License: GPL
 Group: Applications/Internet
 Source: http://ctrlproxy.vernstok.nl/ctrlproxy-%{version}.tar.gz
