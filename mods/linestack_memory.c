@@ -18,7 +18,7 @@
 */
 
 #define _GNU_SOURCE
-#include "ctrlproxy.h"
+#include <ctrlproxy.h>
 #include <string.h>
 
 gboolean memory_init(struct linestack_context *c, char *args)

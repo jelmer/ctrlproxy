@@ -18,7 +18,7 @@
 */
 
 #define _GNU_SOURCE
-#include "ctrlproxy.h"
+#include <ctrlproxy.h>
 #include <string.h>
 #include "gettext.h"
 #define _(s) gettext(s)

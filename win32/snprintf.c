@@ -98,6 +98,8 @@
 #ifdef HAVE_STRINGS_H
 #include <strings.h>
 #endif
+#include <glib.h>
+#include <gmodule.h>
 #include <ctype.h>
 #include <sys/types.h>
 #include <stdarg.h>
@@ -823,7 +825,7 @@ int smb_snprintf(char *str,size_t count,const char *fmt,...)
 #endif 
 
 #ifndef HAVE_VASPRINTF
- int vasprintf(char **ptr, const char *format, va_list ap)
+G_MODULE_EXPORT int vasprintf(char **ptr, const char *format, va_list ap)
 {
 	int ret;
 	va_list ap2;
@@ -846,7 +848,7 @@ int smb_snprintf(char *str,size_t count,const char *fmt,...)
 
 
 #ifndef HAVE_ASPRINTF
- int asprintf(char **ptr, const char *format, ...)
+G_MODULE_EXPORT int asprintf(char **ptr, const char *format, ...)
 {
 	va_list ap;
 	int ret;

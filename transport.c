@@ -26,7 +26,7 @@
 GList *transports = NULL;
 extern FILE *debugfd;
 
-void register_transport(struct transport_ops *functions)
+G_MODULE_EXPORT void register_transport(struct transport_ops *functions)
 {
 	struct transport_ops *functions1 = malloc(sizeof(struct transport_ops));
 	memcpy(functions1, functions, sizeof(struct transport_ops));
@@ -35,7 +35,7 @@ void register_transport(struct transport_ops *functions)
 	transports = g_list_append(transports, functions1);
 }
 
-gboolean unregister_transport(char *name)
+G_MODULE_EXPORT gboolean unregister_transport(char *name)
 {
 	GList *gl = transports;
 	while(gl) {
@@ -132,7 +132,7 @@ void transport_free(struct transport_context *t)
 	free(t);
 }
 
-int transport_write(struct transport_context *t, char *l)
+G_MODULE_EXPORT int transport_write(struct transport_context *t, char *l)
 {
 	if(debugfd)fprintf(debugfd, "[TO] %s\n", l);
 	if(!t->functions->write)return -1;

@@ -22,7 +22,16 @@
 #include <string.h>
 #include <fcntl.h>
 #include <stdio.h>
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
+#ifdef _WIN32
+#include <direct.h>
+#define mkdir(s,t) _mkdir(s)
+#endif
 
 struct file_information {
 	GIOChannel *channel;

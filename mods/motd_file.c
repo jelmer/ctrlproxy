@@ -21,7 +21,6 @@
 #include "ctrlproxy.h"
 #include <string.h>
 #include <errno.h>
-#include <unistd.h>
 #include "irc.h"
 #include "gettext.h"
 #define _(s) gettext(s)
@@ -64,7 +63,7 @@ gboolean init_plugin(struct plugin *p) {
 	xmlNodePtr cur = xmlFindChildByElementName(p->xmlConf, "file");
 	if(cur)motd_file = xmlNodeGetContent(cur);
 
-	if(access(motd_file, R_OK) != 0) {
+	if(g_file_test(motd_file, G_FILE_TEST_EXISTS)) {
 		g_warning(_("Can't open MOTD file '%s' for reading\n"), motd_file);
 		return FALSE;
 	}

@@ -39,22 +39,28 @@
 #define _GNU_SOURCE
 #include "ctrlproxy.h"
 #include <string.h>
+#include "admin.h"
 #include "gettext.h"
 #define _(s) gettext(s)
+#ifdef _WIN32
+int asprintf(char **dest, const char *fmt, ...);
+int vasprintf(char **dest, const char *fmt, va_list ap);
+#endif
+
 
 static gboolean without_privmsg = FALSE;
 static GList *commands = NULL;
-static uint longest_command = 0;
+static guint longest_command = 0;
 
 struct admin_command {
 	char *name;
 	void (*handler) (char **args, struct line *l);
-	char *help;
-	char *help_details;
+	const char *help;
+	const char *help_details;
 	struct plugin *plugin;
 };
 
-void admin_out(struct line *l, char *fmt, ...)
+void admin_out(struct line *l, const char *fmt, ...)
 {
 	va_list ap;
 	char *msg, *tot, *server_name;
@@ -416,7 +422,7 @@ static void help (char **args, struct line *l)
 	while(gl) {
 		struct admin_command *cmd = (struct admin_command *)gl->data;
 		if(args[1]) {
-			if(!strcasecmp(args[1], cmd->name)) {
+			if(!g_ascii_strcasecmp(args[1], cmd->name)) {
 				if(cmd->help_details != NULL) {
 					details = g_strsplit(cmd->help_details, "\n", 0);
 					for(i = 0; details[i] != NULL; i++) {
@@ -474,7 +480,7 @@ static void handle_die(char **args, struct line *l)
 	g_main_loop_quit(main_loop);
 }
 
-void register_admin_command(char *name, void (*handler) (char **args, struct line *l), char *help, char *help_details)
+void register_admin_command(char *name, void (*handler) (char **args, struct line *l), const char *help, const char *help_details)
 {
 	struct admin_command *cmd = malloc(sizeof(struct admin_command));
 	cmd->name = strdup(name);
@@ -492,7 +498,7 @@ void unregister_admin_command(char *name)
 	GList *gl = commands;
 	while(gl) {
 		struct admin_command *cmd = (struct admin_command *)gl->data;
-		if(!strcasecmp(cmd->name, name)) {
+		if(!g_ascii_strcasecmp(cmd->name, name)) {
 			free(cmd->name);
 			commands = g_list_remove(commands, cmd);
 			free(cmd);
@@ -510,10 +516,10 @@ static gboolean handle_data(struct line *l) {
 	struct plugin *old_plugin = current_plugin;
 	if(l->direction != TO_SERVER) return TRUE;
 
-	if(strcasecmp(l->args[0], "CTRLPROXY") == 0)cmdoffset = 1;
+	if(g_ascii_strcasecmp(l->args[0], "CTRLPROXY") == 0)cmdoffset = 1;
 
-	if(!without_privmsg && strcasecmp(l->args[0], "PRIVMSG") == 0 &&
-	   strcasecmp(l->args[1], "CTRLPROXY") == 0) cmdoffset = 2;
+	if(!without_privmsg && g_ascii_strcasecmp(l->args[0], "PRIVMSG") == 0 &&
+	   g_ascii_strcasecmp(l->args[1], "CTRLPROXY") == 0) cmdoffset = 2;
 
 	if(cmdoffset == 0) return TRUE;
 
@@ -540,7 +546,7 @@ static gboolean handle_data(struct line *l) {
 	gl = commands;
 	while(gl) {
 		struct admin_command *cmd = (struct admin_command *)gl->data;
-		if(!strcasecmp(cmd->name, args[0])) {
+		if(!g_ascii_strcasecmp(cmd->name, args[0])) {
 			current_plugin = cmd->plugin;
 			cmd->handler(args, l);
 			current_plugin = old_plugin;

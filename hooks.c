@@ -98,7 +98,7 @@ gboolean add_filter_ex(char *name, filter_function f, char *class, int prio)
 	return TRUE;
 }
 
-void add_filter(char *name, filter_function f) 
+G_MODULE_EXPORT void add_filter(char *name, filter_function f) 
 {
 	add_filter_ex(name, f, "", 500);
 }

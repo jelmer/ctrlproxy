@@ -20,17 +20,21 @@
 #define _GNU_SOURCE
 #include <time.h>
 #include "ctrlproxy.h"
+#ifdef HAVE_CONFIG_H
 #include "../config.h"
+#endif
 #include "admin.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/stat.h>
 #include <string.h>
+#ifdef HAVE_SYS_UTSNAME_H
 #include <sys/utsname.h>
-#include <dirent.h>
+#endif
 #include <errno.h>
+#ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
-#include <unistd.h>
+#endif
 #include "gettext.h"
 #define _(s) gettext(s)
 
@@ -86,8 +90,7 @@ static struct in_addr numeric_to_ip(unsigned long r)
 static void dcc_list(struct line *l)
 {
 	char *p = ctrlproxy_path("dcc");
-	DIR *d = opendir(p);	
-	struct dirent *e;
+	GDir *d = g_dir_open(p);	
 	free(p);
 
 	if(!d) {
@@ -96,11 +99,11 @@ static void dcc_list(struct line *l)
 		return;
 	}
 
-	while((e = readdir(d))) {
-		admin_out(l, "%s", e->d_name);
+	while((e = g_dir_read_name(d))) {
+		admin_out(l, "%s", e);
 	}
 
-	closedir(d);
+	g_dir_close(d);
 }
 
 static void dcc_del(struct line *l, const char *f)

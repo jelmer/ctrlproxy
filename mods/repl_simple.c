@@ -44,7 +44,7 @@ static gboolean log_data(struct line *l) {
 	if(l->argc < 1)return TRUE;
 
 	if(l->direction == TO_SERVER &&  
-	   (!strcasecmp(l->args[0], "PRIVMSG") || !strcasecmp(l->args[0], "NOTICE"))) {
+	   (!g_ascii_strcasecmp(l->args[0], "PRIVMSG") || !g_ascii_strcasecmp(l->args[0], "NOTICE"))) {
 		linestack_clear(co);
 		g_hash_table_replace( simple_initialnick, l->network, xmlGetProp(l->network->xmlConf, "nick"));
 		linestack_add_line_list( co, gen_replication_network(l->network));
@@ -54,30 +54,30 @@ static gboolean log_data(struct line *l) {
 	if(l->direction == TO_SERVER)return TRUE;
 
 
-	if(!strcasecmp(l->args[0], "PRIVMSG") ||
-	   !strcasecmp(l->args[0], "NOTICE") ||
-	   !strcasecmp(l->args[0], "MODE") || 
-	   !strcasecmp(l->args[0], "JOIN") || 
-	   !strcasecmp(l->args[0], "PART") || 
-	   !strcasecmp(l->args[0], "KICK") || 
-	   !strcasecmp(l->args[0], "QUIT") ||
-	   !strcasecmp(l->args[0], "TOPIC") ||
-	   !strcasecmp(l->args[0], "NICK")) {
+	if(!g_ascii_strcasecmp(l->args[0], "PRIVMSG") ||
+	   !g_ascii_strcasecmp(l->args[0], "NOTICE") ||
+	   !g_ascii_strcasecmp(l->args[0], "MODE") || 
+	   !g_ascii_strcasecmp(l->args[0], "JOIN") || 
+	   !g_ascii_strcasecmp(l->args[0], "PART") || 
+	   !g_ascii_strcasecmp(l->args[0], "KICK") || 
+	   !g_ascii_strcasecmp(l->args[0], "QUIT") ||
+	   !g_ascii_strcasecmp(l->args[0], "TOPIC") ||
+	   !g_ascii_strcasecmp(l->args[0], "NICK")) {
 		linestack_add_line(co, l);
-	} else if(!strcasecmp(l->args[0], "353")) {
+	} else if(!g_ascii_strcasecmp(l->args[0], "353")) {
 		c = find_channel(l->network, l->args[3]);
 		if(c && !(c->introduced & 2)) {
 			linestack_add_line(co, l);
 		}
 		/* Only do 366 if not & 2. Set | 2 */
-	} else if(!strcasecmp(l->args[0], "366")) {
+	} else if(!g_ascii_strcasecmp(l->args[0], "366")) {
 		c = find_channel(l->network, l->args[2]);
 		if(c && !(c->introduced & 2)) {
 			linestack_add_line(co, l);
 			c->introduced |= 2;
 		}
 		/* Only do 331 or 332 if not & 1. Set | 1 */
-	} else if(!strcasecmp(l->args[0], "331") || !strcasecmp(l->args[0], "332")) {
+	} else if(!g_ascii_strcasecmp(l->args[0], "331") || !g_ascii_strcasecmp(l->args[0], "332")) {
 		c = find_channel(l->network, l->args[2]);
 		if(c && !(c->introduced & 1)) {
 			linestack_add_line(co, l);

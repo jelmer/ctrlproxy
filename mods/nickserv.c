@@ -83,12 +83,12 @@ static gboolean log_data(struct line *l) {
 	static char *nickattempt = NULL;
 
 	/* User has changed his/her nick. Check whether this nick needs to be identified */
-	if(l->direction == FROM_SERVER && !strcasecmp(l->args[0], "NICK")) {
+	if(l->direction == FROM_SERVER && !g_ascii_strcasecmp(l->args[0], "NICK")) {
 		identify_me(l->network, l->args[1]);
 	}
 
 	/* Keep track of the last nick that the user tried to take */
-	if(l->direction == TO_SERVER && !strcasecmp(l->args[0], "NICK")) {
+	if(l->direction == TO_SERVER && !g_ascii_strcasecmp(l->args[0], "NICK")) {
 		if(nickattempt) free(nickattempt);
 		nickattempt = strdup(l->args[1]);
 	}

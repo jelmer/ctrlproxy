@@ -37,10 +37,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include "gettext.h"
-#ifdef _WIN32
-int asprintf(char **dest, const char *fmt, ...);
-int vasprintf(char **dest, const char *fmt, va_list ap);
-#endif
+
 
 #define _(s) gettext(s)
 

@@ -32,7 +32,7 @@ static gboolean log_data(struct line *l) {
 
 	if(l->argc < 1)return TRUE;
 
-	if(strcasecmp(l->args[0], "PRIVMSG") && strcasecmp(l->args[0], "NOTICE"))return TRUE;
+	if(g_ascii_strcasecmp(l->args[0], "PRIVMSG") && g_ascii_strcasecmp(l->args[0], "NOTICE"))return TRUE;
 
 	/* Lookup this channel */
 	networkname = xmlGetProp(l->network->xmlConf, "name");
@@ -64,7 +64,7 @@ static void replicate_channel(gpointer key, gpointer val, gpointer user)
 	struct line *l = (struct line *)user;
 	char *networkname = xmlGetProp(l->network->xmlConf, "name");
 
-	if(strncasecmp(networkname, key, strlen(networkname))) {
+	if(g_ascii_strncasecmp(networkname, key, strlen(networkname))) {
 		xmlFree(networkname);
 		return;
 	}

@@ -28,9 +28,14 @@
 #include <glib.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <unistd.h>
 #include "gettext.h"
 #define _(s) gettext(s)
+
+#ifdef _WIN32
+#include <direct.h>
+#define mkdir(s,t) _mkdir(s)
+#endif
+
 
 #define MAX_SUBST 256
 #undef G_LOG_DOMAIN
@@ -42,7 +47,7 @@ static xmlNodePtr xmlConf = NULL;
 struct log_mapping {
 	char *command;
 	char subst;
-	int index;
+	unsigned int index;
 	/* If index is -1 */
 	char *(*callback) (struct line *l, gboolean case_sensitive);
 };
@@ -201,7 +206,7 @@ static void custom_subst(char **_new, char *fmt, struct line *l, char *_identifi
 	char *subst[MAX_SUBST];
 	char *new;
 	size_t len, curpos = 0;
-	int i;
+	unsigned int i;
 
 	identifier = _identifier;
 
@@ -296,7 +301,7 @@ static FILE *find_add_channel_file(struct line *l, char *identifier) {
 		if(p) *p = '\0';
 
 		/* Check if directory needs to be created */
-		if(access(dn, F_OK) != 0 && mkdir(dn, 0700) == -1) {
+		if(!g_file_test(dn, G_FILE_TEST_IS_DIR) && mkdir(dn, 0700) == -1) {
 			g_warning(_("Couldn't create directory %s for logging!"), dn);
 			xmlFree(logfilename);
 			free(dn);
@@ -448,14 +453,14 @@ static gboolean log_custom_data(struct line *l)
 	 * - log to channel only (KICK, PART, JOIN, TOPIC) (channel_only)
 	 */
 
-	if(l->direction == FROM_SERVER && !strcasecmp(l->args[0], "JOIN")) {
+	if(l->direction == FROM_SERVER && !g_ascii_strcasecmp(l->args[0], "JOIN")) {
 		file_write_target("join", l); 
-	} else if(l->direction == FROM_SERVER && !strcasecmp(l->args[0], "PART")) {
+	} else if(l->direction == FROM_SERVER && !g_ascii_strcasecmp(l->args[0], "PART")) {
 		file_write_channel_only("part", l);
-	} else if(!strcasecmp(l->args[0], "PRIVMSG")) {
+	} else if(!g_ascii_strcasecmp(l->args[0], "PRIVMSG")) {
 		if(l->args[2][0] == '') { 
 			l->args[2][strlen(l->args[2])-1] = '\0';
-			if(!strncasecmp(l->args[2], "ACTION ", 8)) { 
+			if(!g_ascii_strncasecmp(l->args[2], "ACTION ", 8)) { 
 				l->args[2]+=8;
 				file_write_target("action", l);
 				l->args[2]-=8;
@@ -465,13 +470,13 @@ static gboolean log_custom_data(struct line *l)
 		} else {
 			file_write_target("msg", l);
 		}
-	} else if(!strcasecmp(l->args[0], "NOTICE")) {
+	} else if(!g_ascii_strcasecmp(l->args[0], "NOTICE")) {
 		file_write_target("notice", l);
-	} else if(!strcasecmp(l->args[0], "MODE") && l->args[1] && is_channelname(l->args[1], l->network) && l->direction == FROM_SERVER) {
+	} else if(!g_ascii_strcasecmp(l->args[0], "MODE") && l->args[1] && is_channelname(l->args[1], l->network) && l->direction == FROM_SERVER) {
 		file_write_target("mode", l);
-	} else if(!strcasecmp(l->args[0], "QUIT")) {
+	} else if(!g_ascii_strcasecmp(l->args[0], "QUIT")) {
 		file_write_channel_query("quit", l);
-	} else if(!strcasecmp(l->args[0], "KICK") && l->args[1] && l->args[2] && l->direction == FROM_SERVER) {
+	} else if(!g_ascii_strcasecmp(l->args[0], "KICK") && l->args[1] && l->args[2] && l->direction == FROM_SERVER) {
 		if(!strchr(l->args[1], ',')) {
 			file_write_channel_only("kick", l);
 		} else { 
@@ -499,10 +504,10 @@ static gboolean log_custom_data(struct line *l)
 			free(channels);
 			free(nicks);
 		}
-	} else if(!strcasecmp(l->args[0], "TOPIC") && l->direction == FROM_SERVER && l->args[1]) {
+	} else if(!g_ascii_strcasecmp(l->args[0], "TOPIC") && l->direction == FROM_SERVER && l->args[1]) {
 		if(l->args[2]) file_write_channel_only("topic", l);
 		else file_write_channel_only("notopic", l);
-	} else if(!strcasecmp(l->args[0], "NICK") && l->direction == FROM_SERVER && l->args[1]) {
+	} else if(!g_ascii_strcasecmp(l->args[0], "NICK") && l->direction == FROM_SERVER && l->args[1]) {
 		file_write_channel_query("nickchange", l);
 	}
 
