@@ -1,10 +1,12 @@
 2.7 
  - finish configuration utility (worked on by Kyoshiro, see list in ctrlproxy-setup)
  - update documentation
+  - upgrading from 2.6 SSL support to 2.7 SSL/GNUTLS support
+  - repl changes
+  - special doc/part for users that are upgrading
+  - synopsis integration?
  - test dcc module
- - test gnutls server support
  - apply poelzi's async patch
- - synopsis integration?
 
 2.8:
  - rewrite stats stuff to use MySQL
