@@ -19,6 +19,7 @@
 */
 
 #include <ctrlproxy.h>
+#include <string.h>
 
 static int autosave_id;
 
@@ -33,7 +34,7 @@ gboolean init_plugin(struct plugin *p)
 	int time = 0;
 	xmlNodePtr cur = p->xmlConf->xmlChildrenNode;
 	while(cur) {
-		if(!xmlIsBlankNode(cur) && !strcmp(cur->name, "intervall")) {
+		if(!xmlIsBlankNode(cur) && !strcmp(cur->name, "interval")) {
 			time = atoi(xmlNodeGetContent(cur));
 			break;
 		}
