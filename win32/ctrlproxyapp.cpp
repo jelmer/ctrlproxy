@@ -90,21 +90,25 @@ BOOL CCtrlproxyApp::InitInstance()
 	HKEY key;
 	unsigned char databuf[256];
 	DWORD len;
-	RegOpenKey(HKEY_LOCAL_MACHINE, "SOFTWARE\\CtrlProxy", &key);
-	
-	if(RegQueryValueEx(key, "configfile", NULL, NULL, databuf, &len) == ERROR_SUCCESS) configuration_file = g_strdup((char *)databuf);
-	else {
+	if(RegOpenKey(HKEY_LOCAL_MACHINE, "SOFTWARE\\CtrlProxy", &key) != ERROR_SUCCESS) {
 		MessageBox(NULL, "Unable to find registry key", "CtrlProxy", MB_OK | MB_ICONEXCLAMATION);
 		return FALSE;
 	}
-
+	
+	configuration_file = g_build_path(g_get_home_dir(), "ctrlproxyrc", NULL);
+	
 	if(RegQueryValueEx(key, "modulesdir", NULL, NULL, databuf, &len) == ERROR_SUCCESS) modules_path = g_strdup((char *)databuf);
 	else MessageBox(NULL, "Unable to find registry key for modules path", "CtrlProxy", MB_OK | MB_ICONEXCLAMATION);
 
 	if(RegQueryValueEx(key, "shareddir", NULL, NULL, databuf, &len) == ERROR_SUCCESS) shared_path = g_strdup((char *)databuf);
 	else MessageBox(NULL, "Unable to find registry key for shared path", "CtrlProxy", MB_OK | MB_ICONEXCLAMATION);
-	
-	readConfig(configuration_file);
+
+	if(g_file_test(configuration_file, G_FILE_TEST_EXISTS)) readConfig(configuration_file);
+	else {
+		char *tmp = g_build_path(get_shared_path(), "ctrlproxyrc.default", NULL);
+		readConfig(tmp);
+		free(tmp);
+	}
 	
 	init_plugins();
 	init_networks();

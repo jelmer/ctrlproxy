@@ -13,9 +13,12 @@ DefaultGroupName=CtrlProxy
 LicenseFile=C:\Documents and Settings\Jelmer Vernooij\Desktop\ctrlproxy-devel\COPYING
 InfoAfterFile=C:\Documents and Settings\Jelmer Vernooij\Desktop\ctrlproxy-devel\win32\README.txt
 
+[Tasks]
+Name: startupicon; Description: "&Automatically start when the computer boots"; GroupDescription: "Other tasks:"; Flags: unchecked
+
 [Dirs]
 Name: {app}\scripts
-Name: {app}\examples
+Name: {app}\example
 Name: {app}\modules; Components: modules
 
 [Components]
@@ -101,6 +104,7 @@ Source: C:\Documents and Settings\Jelmer Vernooij\Desktop\ctrlproxy-devel\AUTHOR
 
 [Icons]
 Name: {group}\CtrlProxy; Filename: {app}\ctrlproxy.exe
+Name: "{commonstartup}\CtrlProxy"; Filename: "{app}\ctrlproxy.exe"; Tasks: startupicon
 
 [Run]
 ; NOTE: The following entry contains an English phrase ("Launch"). You are free to translate it into another language if required.
@@ -108,5 +112,4 @@ Filename: {app}\ctrlproxy.exe; Description: Launch CtrlProxy; Flags: nowait post
 
 [Registry]
 Root: HKLM; Subkey: SOFTWARE\CtrlProxy; ValueType: string; ValueName: modulesdir; ValueData: {app}\modules
-Root: HKLM; Subkey: SOFTWARE\CtrlProxy; ValueType: string; ValueName: configfile; ValueData: {userappdata}\ctrlproxyrc
 Root: HKLM; Subkey: SOFTWARE\CtrlProxy; ValueType: string; ValueName: shareddir; ValueData: {app}
