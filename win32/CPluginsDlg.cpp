@@ -18,6 +18,7 @@ static char THIS_FILE[] = __FILE__;
 CPluginsDlg::CPluginsDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(CPluginsDlg::IDD, pParent)
 {
+	Create(IDD, pParent);
 	//{{AFX_DATA_INIT(CPluginsDlg)
 		// NOTE: the ClassWizard will add member initialization here
 	//}}AFX_DATA_INIT
@@ -36,6 +37,7 @@ void CPluginsDlg::DoDataExchange(CDataExchange* pDX)
 BEGIN_MESSAGE_MAP(CPluginsDlg, CDialog)
 	//{{AFX_MSG_MAP(CPluginsDlg)
 	ON_BN_CLICKED(IDC_ADD_PLUGIN, OnAddPlugin)
+	ON_WM_SHOWWINDOW()
 	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
@@ -45,5 +47,14 @@ END_MESSAGE_MAP()
 void CPluginsDlg::OnAddPlugin() 
 {
 	// TODO: Add your control notification handler code here
+	
+}
+
+
+void CPluginsDlg::OnShowWindow(BOOL bShow, UINT nStatus) 
+{
+	CDialog::OnShowWindow(bShow, nStatus);
+	m_list.InsertColumn(0, "Foobar");	
+	// TODO: Add your message handler code here
 	
 }

@@ -203,6 +203,10 @@ SOURCE=..\transport.c
 
 SOURCE=..\util.c
 # End Source File
+# Begin Source File
+
+SOURCE=.\winhelp.c
+# End Source File
 # End Group
 # Begin Group "Header Files"
 

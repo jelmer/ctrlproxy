@@ -26,6 +26,7 @@ public:
 // Overrides
 	// ClassWizard generated virtual function overrides
 	//{{AFX_VIRTUAL(CPluginsDlg)
+	public:
 	protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
 	//}}AFX_VIRTUAL
@@ -36,6 +37,7 @@ protected:
 	// Generated message map functions
 	//{{AFX_MSG(CPluginsDlg)
 	afx_msg void OnAddPlugin();
+	afx_msg void OnShowWindow(BOOL bShow, UINT nStatus);
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 };

@@ -21,6 +21,7 @@ static char THIS_FILE[] = __FILE__;
 CConfigurationDlg::CConfigurationDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(CConfigurationDlg::IDD, pParent)
 {
+	CDialog::Create(IDD, pParent);
 	//{{AFX_DATA_INIT(CConfigurationDlg)
 	//}}AFX_DATA_INIT
 }
@@ -61,21 +62,11 @@ void CConfigurationDlg::fillinchildren(HTREEITEM i, xmlNodePtr cur)
 	HTREEITEM t = m_Tree.InsertItem((char *)cur->name, i);
 	xmlNodePtr c = cur->xmlChildrenNode;
 	while(c) {
-		fillinchildren(t, c);
+		if(!xmlIsBlankNode(c))fillinchildren(t, c);
 		c = c->next;
 	}
 }
 
-BOOL CConfigurationDlg::OnInitDialog() 
-{
-	CDialog::OnInitDialog();
-	
-	m_Tree.m_hWnd = m_hWnd;
-	// TODO: Add extra initialization here
-	
-	return TRUE;  // return TRUE unless you set the focus to a control
-	              // EXCEPTION: OCX Property Pages should return FALSE
-}
 
 void CConfigurationDlg::UpdateTree()
 {

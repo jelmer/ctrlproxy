@@ -18,6 +18,7 @@ static char THIS_FILE[] = __FILE__;
 CStatusDlg::CStatusDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(CStatusDlg::IDD, pParent)
 {
+	CDialog::Create(IDD, pParent);
 	//{{AFX_DATA_INIT(CStatusDlg)
 		// NOTE: the ClassWizard will add member initialization here
 	//}}AFX_DATA_INIT

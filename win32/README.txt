@@ -30,9 +30,17 @@ repl_none
 repl_simple
 report_time
 strip
+socket
 
 Modules that need work:
 -----------------------
+python: compiles, but doesn't run yet.
 dcc: needs tcp update
-socket: doesn't compile yet, no ssl/tls support
 stats: will get rewrite in 2.8
+
+Other TODO stuff:
+-----------------
+- Finish network config dialog
+- Fix traybar popup menu
+- Finish plugin config dialog
+- FInish status bar

@@ -5,11 +5,18 @@
 #include "ctrlproxyapp.h"
 #include "CLogDlg.h"
 
+extern "C" {
+#include <glib.h>
+void log_handler(const gchar *log_domain, GLogLevelFlags flags, const gchar *message, gpointer user_data);
+}
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #undef THIS_FILE
 static char THIS_FILE[] = __FILE__;
 #endif
+
+CListBox *logbox = NULL;
 
 /////////////////////////////////////////////////////////////////////////////
 // CLogDlg dialog
@@ -18,7 +25,8 @@ static char THIS_FILE[] = __FILE__;
 CLogDlg::CLogDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(CLogDlg::IDD, pParent)
 {
-
+	Create(IDD, pParent);
+	logbox = &m_log;
 	//{{AFX_DATA_INIT(CLogDlg)
 		// NOTE: the ClassWizard will add member initialization here
 	//}}AFX_DATA_INIT
@@ -40,16 +48,7 @@ BEGIN_MESSAGE_MAP(CLogDlg, CDialog)
 	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
-/////////////////////////////////////////////////////////////////////////////
-// CLogDlg message handlers
 
-BOOL CLogDlg::PreCreateWindow(CREATESTRUCT& cs) 
-{
-	
-
-	/* FIXME: Register log */
-	
-	return CDialog::PreCreateWindow(cs);
+void log_handler(const gchar *log_domain, GLogLevelFlags flags, const gchar *message, gpointer user_data) {
+	if(logbox)logbox->AddString(message);
 }
-
-

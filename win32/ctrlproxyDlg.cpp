@@ -6,6 +6,10 @@
 #include "ctrlproxyDlg.h"
 #include "CPluginsDlg.h"
 
+extern "C" {
+#include "internals.h"
+}
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #undef THIS_FILE
@@ -68,18 +72,15 @@ BOOL CCtrlproxyDlg::OnInitDialog()
 	TabCtrlItem.pszText = "About";
 	m_Tab.InsertItem( TAB_ABOUT, &TabCtrlItem );
 	
+
+	tabs[TAB_STATUS] = new CStatusDlg(this);
+    tabs[TAB_NETWORKS] = new CNetworksDlg(this);
+	tabs[TAB_PLUGINS] = new CPluginsDlg(this);
+	tabs[TAB_LOG] = new CLogDlg(this);
+	tabs[TAB_CONFIGURATION] = new CConfigurationDlg(this);
+	tabs[TAB_ABOUT] = new CAboutDlg(this);
+
 	for(int i = 0; i < NUM_TABS; i++) {
-		tabs[i] = new CDialog();
-	}
-
-	VERIFY(tabs[TAB_STATUS]->Create(CStatusDlg::IDD, this));
-    VERIFY(tabs[TAB_NETWORKS]->Create(CNetworksDlg::IDD, this));
-	VERIFY(tabs[TAB_PLUGINS]->Create(CPluginsDlg::IDD, this));
-	VERIFY(tabs[TAB_LOG]->Create(CLogDlg::IDD, this));
-	VERIFY(tabs[TAB_CONFIGURATION]->Create(CConfigurationDlg::IDD, this));
-	VERIFY(tabs[TAB_ABOUT]->Create(CAboutDlg::IDD, this));
-
-	for(i = 0; i < NUM_TABS; i++) {
 		CRect rect;
 		m_Tab.GetClientRect(&rect);
 		VERIFY(tabs[i]->SetWindowPos(GetDlgItem(IDC_TAB1), rect.left + 20, rect.top + 35, rect.Width()-20, rect.Height()-35, SWP_SHOWWINDOW));
@@ -176,17 +177,15 @@ afx_msg LONG CCtrlproxyDlg::OnSysTrayIconClick (WPARAM wParam, LPARAM lParam)
 void CCtrlproxyDlg::ShowQuickMenu ()
 {
    POINT CurPos;
-   int mid = 0;
 
    CMenu qmenu;
    qmenu.LoadMenu(IDR_POPUP);
-   CMenu *popup = qmenu.GetSubMenu(mid);
    
    GetCursorPos (&CurPos);
 
    // Display the menu. This menu is a popup loaded elsewhere.
 
-   popup->TrackPopupMenu (TPM_RIGHTBUTTON | TPM_RIGHTALIGN,
+   qmenu.TrackPopupMenu (TPM_RIGHTBUTTON | TPM_RIGHTALIGN,
                    CurPos.x,
                    CurPos.y,this);
 
@@ -200,6 +199,5 @@ void CCtrlproxyDlg::OnClose()
 
 void CCtrlproxyDlg::OnExit() 
 {
-	// TODO: Add your command handler code here
-	
+	clean_exit();
 }

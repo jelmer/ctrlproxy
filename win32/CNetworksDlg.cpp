@@ -18,6 +18,7 @@ static char THIS_FILE[] = __FILE__;
 CNetworksDlg::CNetworksDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(CNetworksDlg::IDD, pParent)
 {
+	Create(IDD, pParent);
 	//{{AFX_DATA_INIT(CNetworksDlg)
 		// NOTE: the ClassWizard will add member initialization here
 	//}}AFX_DATA_INIT

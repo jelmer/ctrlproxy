@@ -19,7 +19,6 @@ public:
 // Dialog Data
 	//{{AFX_DATA(CAboutDlg)
 	enum { IDD = IDD_ABOUT };
-	CString	m_license;
 	//}}AFX_DATA
 
 
