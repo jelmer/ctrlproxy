@@ -19,13 +19,21 @@
 
 #include "internals.h"
 
+struct module_context *active_context = NULL;
+
 char my_hostname[MAXHOSTNAMELEN+2];
 char output_debug = 0;
 
 void signal_crash(int sig) 
 {
-	/* Just loop until someone runs gdb on us */
-	while(1)sleep(5);
+	if(active_context) 
+	{
+		/* If we crashed in the middle of a module, unload that module */
+		unload_module(active_context);
+	} else {
+		/* Bug in the core. Just loop until someone runs gdb on us */ 
+		while(1)sleep(5);
+	}
 }
 
 void signal_quit(int sig)
@@ -84,8 +92,15 @@ int main(int argc, const char *argv[])
 		return 1;
 	}
 
-	if(load_conf_file(rcfile) == -1)
-		return 0;
+	if(SLang_init_slang() == -1) {
+		fprintf(stderr, "Unable to initialize S-Lang\n");
+		return 1;
+	}
+
+	if(SLang_load_file(rcfile) == -1) {
+		fprintf(stderr, "Unable to load %s!\n", rcfile);
+		return 1;
+	}
 	
 	sections = enum_sections();
 
@@ -131,7 +146,6 @@ int main(int argc, const char *argv[])
 	}
 	
 	if(daemon) {
-		int fd;
 #ifdef SIGTTOU
 		signal(SIGTTOU, SIG_IGN);
 #endif

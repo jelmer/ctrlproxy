@@ -19,7 +19,7 @@
 
 #include "internals.h"
 
-struct module_context *load_module(struct server *s, char *name) 
+struct module_context *load_module(struct server *s, char *name, char *args) 
 {
 	void *handle;
 	struct module_functions *f;
@@ -63,13 +63,22 @@ struct module_context *load_module(struct server *s, char *name)
 	c->handle = handle;
 	c->functions = f;
 	c->parent = s;
-	if(c->functions->init)c->functions->init(c);
+	active_context = c;
+	if(c->functions->init)c->functions->init(c, args);
+	active_context = NULL;
 	return c;
 }
 
 int unload_module(struct module_context *c)
 {
-	if(c->functions->fini)c->functions->fini(c);
+	if(c->functions->fini && !c->closed) {
+		/* Don't call fini twice - if it crashes, 
+		 * we might have a deadlock in the SIGSEGV handler... */
+		c->closed = 1;
+		active_context = c;
+		c->functions->fini(c);
+		active_context = NULL;
+	}
 	dlclose(c->handle);
 	DLIST_REMOVE(c->parent->handlers, c);
 	free(c);

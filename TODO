@@ -1,4 +1,10 @@
 - cascading support
 - replication of backlog(aka client_advanced)
 - clean up the code
-- add / remove servers and modules while running
+- add / remove servers and modules while running 
+ - by communicating to some nick, $ctrlproxy for example, one can give commands 
+commands:
+ - load module (unload if necessary)
+ - unload module
+ - disconnect server
+ - connect server

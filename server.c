@@ -115,7 +115,6 @@ int loop(struct server *server) /* Checks server socket for input and calls loop
 	struct line l;
 	struct timeval tv;
 	int retval;
-	struct module_context *c;
 	char *ret;
 	static int timeout = -1, ping_interval = -1;
 	char *conf;
@@ -152,13 +151,16 @@ int loop(struct server *server) /* Checks server socket for input and calls loop
 	}
 
 	/* Call loop on all modules */
-	c = server->handlers;
+	active_context = server->handlers;
 
-	while(c) {
-		if(c->functions->loop)
-			c->functions->loop(c);
-		c = c->next;
+	while(active_context) {
+		if(active_context->functions->loop) {
+			active_context->functions->loop(active_context);
+		}
+		active_context = active_context->next;
 	}
+
+	active_context = NULL;
 
 	/* Now, check for activity from the servers we're connected to */ 
 	
@@ -183,12 +185,13 @@ int loop(struct server *server) /* Checks server socket for input and calls loop
 			server_send(server, NULL, "PONG", l.args[1], NULL);
 		} else if(!strcasecmp(l.args[0], "PONG")){
 		} else {
-			c = server->handlers;
-			while(c) {
-				if(c->functions->handle_incoming_data)
-					c->functions->handle_incoming_data(c, &l);
-				c = c->next;
+			active_context = server->handlers;
+			while(active_context) {
+				if(active_context->functions->handle_incoming_data)
+					active_context->functions->handle_incoming_data(active_context, &l);
+				active_context = active_context->next;
 			}
+			active_context = NULL;
 		}
 		free(ret);
 	}
@@ -198,15 +201,16 @@ int loop(struct server *server) /* Checks server socket for input and calls loop
 int server_send_raw(struct server *s, char *data)
 {
 	struct line l;
-	struct module_context *c = s->handlers;
 	irc_parse_line(data, &l);
 	l.origin = s->hostmask;
 	DEBUG("-> %s", data);
 
-	while(c) {
-		if(c->functions->handle_outgoing_data)
-			c->functions->handle_outgoing_data(c, &l);
-		c = c->next;
+	active_context = s->handlers;
+
+	while(active_context) {
+		if(active_context->functions->handle_outgoing_data)
+			active_context->functions->handle_outgoing_data(active_context, &l);
+		active_context = active_context->next;
 	}
 
 	return write(s->socket, data, strlen(data));

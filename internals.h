@@ -57,4 +57,6 @@ int close_server(struct server *s);
 struct module_context *load_module(struct server *s, char *name);
 int unload_module(struct module_context *); /* Removes specified module from server and unloads module if necessary */
 
+extern struct module_context *active_context;
+
 #endif /* __INTERNALS_H__ */

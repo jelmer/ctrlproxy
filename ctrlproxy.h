@@ -81,6 +81,7 @@ struct module_context {
 	struct module_context *prev, *next;
 	struct server *parent;
 	struct module_functions *functions;
+	char closed;
 	void *private_data;
 	void *handle;
 };
