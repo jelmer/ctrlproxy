@@ -88,54 +88,7 @@ on the number of servers it is connected to.
 
 <!--FIXME: Autogenerate ? -->
 <variablelist>
-	<varlistentry><term>repl_memory</term>
-	<listitem><para>Simple replication module. Replicates all data that has been said before you disconnected.</para></listitem>
-	</varlistentry>
-
-	<varlistentry><term>log_irssi</term>
-	<listitem><para>Log irc traffic to a specified file, using the same style as the irssi(1) IRC client does.</para></listitem>
-	</varlistentry>
-
-	<varlistentry><term>ctcp</term>
-	<listitem><para>CTCP replies CTCP messages when there is no 
-client connected to ctrlproxy. Currently supported:
-VERSION, FINGER, CLIENTINFO, TIME and SOURCE.</para></listitem>
-	</varlistentry>
-
-	<varlistentry><term>auto-away</term>
-	<listitem><para>Automatically sets /AWAY after specified 
-amount of time (defaults to 10 minutes).</para></listitem>
-	</varlistentry>
-
-	<varlistentry><term>stats</term>
-	<listitem><para>Keep track of the number of times a certain user 
-on a certain channel has used a certain pattern.</para></listitem>
-	</varlistentry>
-
-	<varlistentry><term>socket</term>
-	<listitem><para>Provides the ipv4, ipv6 and pipe transports. Required for connecting to a IRC server.</para></listitem>
-	</varlistentry>
-
-	<varlistentry><term>strip</term>
-	<listitem><para>Makes sure that responses to queries from a certain client don't go to the other clients.</para></listitem>
-	</varlistentry>
-
-	<varlistentry><term>admin</term>
-	<listitem><para>Provides remote administration support. Not implemented at the moment.</para></listitem>
-	</varlistentry>
-
-	<varlistentry><term>nickserv</term>
-		<listitem><para>Automatically authenticate yourself with the NickServ service.</para></listitem>
-	</varlistentry>
-
-	<varlistentry><term>antiflood</term>
-		<listitem><para>Makes sure you don't send too much lines in a short period of time, which might cause you to be kicked by the server with an "Excess flood" message.</para></listitem>
-	</varlistentry>
-
-	<varlistentry><term>log_custom</term>
-		<listitem><para>Allows custom logging in a user-specified format.</para></listitem>
-	</varlistentry>
-
+	<xi:include href="modules.list.xml" xmlns:xi="http://www.w3.org/2003/XInclude"/>
 </variablelist>
 
 <para>

@@ -30,7 +30,6 @@ all: @DOCBUILDE@$(DOCS)
 manpages: ctrlproxy.1 ctrlproxyrc.5 $(MOD_MANPAGES)
 htmlmanpages: $(MOD_MANPAGES_HTML)
 
-
 %.7ctrlproxy.xml: %.mod.xml module-man.xsl
 	$(XSLTPROC) -o $@ module-man.xsl $<
 
@@ -60,6 +59,11 @@ ctrlproxy-setup.conf:
 lint: ctrlproxy.xml $(MODS)
 	$(XMLLINT) --xinclude ctrlproxy.xml
 
+modules.list.xml: $(MOD_SOURCES)
+	echo "<variablelist>" > $@
+	for I in $(MOD_SOURCES); do echo "<xi:include href=\"$$I\" xmlns:xi=\"http://www.w3.org/2003/XInclude\"/>" >> $@; done
+	echo "</variablelist>" >> $@
+
 install-xml:
 	$(INSTALL) -d $(DESTDIR)$(share)/help
 	$(INSTALL) $(MOD_SOURCES) $(DESTDIR)$(share)/help
@@ -84,14 +88,14 @@ else
 	@echo
 endif
 
-%.1: %.1.xml
-	$(XMLTO) man $<
+ctrlproxy.1: ctrlproxy.1.xml modules.list.xml
+	$(XSLTPROC) modules.list.xsl $< | $(XSLTPROC) man.xsl -
 
 %.7ctrlproxy: %.7ctrlproxy.xml
-	$(XMLTO) man $<
+	$(XSLTPROC) man.xsl $< > $@
 
 %.5: %.5.xml
-	$(XMLTO) man $<
+	$(XSLTPROC) man.xsl $< > $@
 
 ifdef DB2LATEXPATH
 
