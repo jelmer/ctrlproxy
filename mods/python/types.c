@@ -6,7 +6,7 @@
  *
  * daniel@veillard.com
  */
-#include "python_libxml_wrap.h"
+#include "libxml_wrap.h"
 
 PyObject *
 libxml_intWrap(int val)

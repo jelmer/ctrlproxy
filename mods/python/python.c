@@ -31,7 +31,7 @@
 #include <string.h>
 #include "irc.h"
 #include "admin.h"
-#include "python_libxml_wrap.h"
+#include "libxml_wrap.h"
 
 xmlNodePtr xmlConf;
 

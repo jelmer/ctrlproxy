@@ -3,7 +3,7 @@ prefix = @prefix@
 exec_prefix = @exec_prefix@
 moddir = @libdir@/ctrlproxy
 INSTALL = @INSTALL@
-CFLAGS = @PY_CFLAGS@ -fPIC -I.. @CFLAGS@ @PKG_CFLAGS@  -DSHAREDIR=\"@datadir@\"
+CFLAGS = @PY_CFLAGS@ -fPIC -I../.. -I.. @CFLAGS@ @PKG_CFLAGS@  -DSHAREDIR=\"@datadir@\"
 LIBS = @PY_LIBS@
 
 .PHONY: all clean distclean install
@@ -16,8 +16,8 @@ install:
 %.o: %.c
 	$(CC) $(CFLAGS) -fPIC -c $<
 
-libpython.so: python.o python_types.o
-	$(CC) $(CFLAGS) -shared -o $@ $(LIBS) python_types.o python.o
+libpython.so: python.o types.o
+	$(CC) $(CFLAGS) -shared -o $@ $(LIBS) types.o python.o
 
 clean:
 	rm -f $(MODS) *.o
