@@ -3,5 +3,4 @@
  - repl changes
  - see FIXME's
 - test dcc module
-- finish webconfig (worked on by poelzi)
 - fix bug in linestack_file
