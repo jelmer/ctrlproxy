@@ -1,7 +1,6 @@
 - finish configuration utility (worked on by Kyoshiro, see list in ctrlproxy-setup)
 - update documentation
 - automated testsuite
- - test_filter utility
 - add member 'nick' to struct line
 - add more help data
 - internationalization (i18n)

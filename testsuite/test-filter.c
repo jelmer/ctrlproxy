@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include <glib/glib.h>
 #include "ctrlproxy.h"
 
 FILE *debugfd = NULL;
@@ -21,9 +20,16 @@ int main(int argc, char **argv)
 	struct line *l;
 	char buf[4096];
 	char *raw;
+	xmlNodePtr cur = xmlNewNode(NULL, "plugin");
 
-	/* FIXME: Load specified plugin */
+	if(argc < 2) {
+		fprintf(stderr, "Usage: %s plugin-path\n", argv[0]);
+		return 1;
+	}
 	
+	xmlSetProp(cur, "file", argv[1]);
+
+	load_plugin(cur);
 
 	if(!ff) {
 		fprintf(stderr, "Module doesn't provide filter\n");
