@@ -41,10 +41,10 @@ struct log_mapping {
 	char subst;
 	int index;
 	/* If index is -1 */
-	char *(*callback) (struct line *l);
+	char *(*callback) (struct line *l, gboolean case_sensitive);
 };
 
-char *get_hours(struct line *l) { 
+char *get_hours(struct line *l, gboolean case_sensitive) { 
 	char *ret;
 	time_t ti = time(NULL);
 	struct tm *t = localtime(&ti);
@@ -52,7 +52,7 @@ char *get_hours(struct line *l) {
 	return ret;
 }
 
-char *get_minutes(struct line *l) { 
+char *get_minutes(struct line *l, gboolean case_sensitive) { 
 	char *ret;
 	time_t ti = time(NULL);
 	struct tm *t = localtime(&ti);
@@ -60,7 +60,7 @@ char *get_minutes(struct line *l) {
 	return ret;
 }
 
-char *get_seconds(struct line *l) { 
+char *get_seconds(struct line *l, gboolean case_sensitive) { 
 	char *ret;
 	time_t ti = time(NULL);
 	struct tm *t = localtime(&ti);
@@ -68,21 +68,30 @@ char *get_seconds(struct line *l) {
 	return ret;
 }
 
-char *get_nick(struct line *l) {
-	if(line_get_nick(l)) return strdup(line_get_nick(l)); 
+char *get_nick(struct line *l, gboolean case_sensitive) {
+	if(line_get_nick(l)) {
+		if(case_sensitive) return g_ascii_strdown(line_get_nick(l), -1);
+		else return strdup(line_get_nick(l)); 
+	}
+	
+	if(l->direction == TO_SERVER) return xmlGetProp(l->network->xmlConf, "nick");
+	
 	return strdup("");
 }
 
-char *get_network(struct line *l) 
+char *get_network(struct line *l, gboolean case_sensitive) 
 { return xmlGetProp(l->network->xmlConf, "name"); }
-char *get_server(struct line *l)
+char *get_server(struct line *l, gboolean case_sensitive)
 { return xmlGetProp(l->network->current_server, "name"); }
 
-char *get_percent(struct line *l) { return strdup("%"); }
+char *get_percent(struct line *l, gboolean case_sensitive) { return strdup("%"); }
 
 static char *identifier = NULL;
 
-char *get_identifier(struct line *l) { return strdup(identifier); }
+char *get_identifier(struct line *l, gboolean case_sensitive) { 
+	if(case_sensitive) return g_ascii_strdown(identifier, -1); 
+	else return strdup(identifier); 
+}
 
 struct log_mapping mappings[] = {
 	{NULL, '@', -1, get_identifier },
@@ -122,20 +131,23 @@ struct log_mapping mappings[] = {
 	{ NULL }
 };
 
-static char *find_mapping(struct line *l, char c)
+static char *find_mapping(struct line *l, char c, gboolean case_sensitive)
 {
 	int i;
 	for(i = 0; mappings[i].subst; i++) {
 		if(mappings[i].command && 
 		   strcmp(mappings[i].command, l->args[0])) continue;
 		if(mappings[i].subst != c)continue;
-		if(mappings[i].index == -1) return mappings[i].callback(l);
-		if(mappings[i].index < l->argc) return strdup(l->args[mappings[i].index]);
+		if(mappings[i].index == -1) return mappings[i].callback(l, case_sensitive);
+		if(mappings[i].index < l->argc) {
+			if(case_sensitive) return g_ascii_strdown(l->args[mappings[i].index], -1);
+			else return strdup(l->args[mappings[i].index]);
+		}
 	}
 	return strdup("");
 }
 
-void custom_subst(char **_new, char *fmt, struct line *l, char *_identifier)
+void custom_subst(char **_new, char *fmt, struct line *l, char *_identifier, gboolean case_sensitive)
 {
 	char *subst[MAX_SUBST];
 	char *new;
@@ -148,7 +160,7 @@ void custom_subst(char **_new, char *fmt, struct line *l, char *_identifier)
 	memset(subst, 0, sizeof(char *) * MAX_SUBST);
 	for(i = 0; i < strlen(fmt); i++) {
 		if(fmt[i] == '%') {
-			subst[(int)fmt[i+1]] = find_mapping(l, fmt[i+1]);	
+			subst[(int)fmt[i+1]] = find_mapping(l, fmt[i+1], case_sensitive);	
 			len += strlen(subst[(int)fmt[i+1]]);
 		}
 	}
@@ -206,7 +218,7 @@ static FILE *find_channel_file(struct line *l, char *identifier) {
 	if(!cur) return NULL;
 	logfilename = xmlNodeGetContent(cur);
 	if(!logfilename)return NULL;
-	custom_subst(&n, logfilename, l, identifier);
+	custom_subst(&n, logfilename, l, identifier, TRUE);
 	free(logfilename);
 	f = g_hash_table_lookup(files, n);
 	free(n);
@@ -222,7 +234,7 @@ static FILE *find_add_channel_file(struct line *l, char *identifier) {
 
 	logfilename = xmlNodeGetContent(cur);
 	if(!logfilename) return NULL;
-	custom_subst(&n, logfilename, l, identifier);
+	custom_subst(&n, logfilename, l, identifier, TRUE);
 	f = g_hash_table_lookup(files, n);
 	if(!f) {
 		dn = strdup(n);
@@ -242,7 +254,7 @@ static FILE *find_add_channel_file(struct line *l, char *identifier) {
 		free(dn);
 		
 		/* Then open the correct filename */
-		custom_subst(&n, logfilename, l, identifier);
+		custom_subst(&n, logfilename, l, identifier, TRUE);
 		f = fopen(n, "a+");
 		if(!f) {
 			g_warning("Couldn't open file %s for logging!", n);
@@ -282,7 +294,7 @@ static void file_write_target(const char *n, struct line *l)
 	f = find_add_channel_file(l, t);
 	if(!f) { free(t); return; }
 	
-	custom_subst(&s, fmt, l, t);
+	custom_subst(&s, fmt, l, t, FALSE);
 	free(t);
 	xmlFree(fmt);
 
@@ -308,7 +320,7 @@ static void file_write_channel_only(const char *n, struct line *l)
 	f = find_add_channel_file(l, l->args[1]);
 	if(!f) return; 
 
-	custom_subst(&s, fmt, l, l->args[1]);
+	custom_subst(&s, fmt, l, l->args[1], FALSE);
 	xmlFree(fmt);
 
 	fputs(s, f); fputc('\n', f);
@@ -337,7 +349,7 @@ static void file_write_channel_query(const char *n, struct line *l)
 	f = find_channel_file(l, nick);
 
 	if(f) {
-		custom_subst(&s, fmt, l, nick);
+		custom_subst(&s, fmt, l, nick, FALSE);
 		fputs(s, f); fputc('\n', f);
 		fflush(f);
 		free(s);
@@ -351,7 +363,7 @@ static void file_write_channel_query(const char *n, struct line *l)
 			char *channame = xmlGetProp(c->xmlConf, "name");
 			f = find_add_channel_file(l, channame);
 			if(f) {
-				custom_subst(&s, fmt, l, channame);
+				custom_subst(&s, fmt, l, channame, FALSE);
 				fputs(s, f); fputc('\n', f);
 				fflush(f);
 				free(s);

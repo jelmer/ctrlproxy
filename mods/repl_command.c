@@ -30,11 +30,11 @@ static gboolean log_data(struct line *l) {
 
 	if(l->argc < 1)return TRUE;
 
-	if(strcasecmp(l->args[0], "PRIVMSG") && strcasecmp(l->args[0], "NOTICE"))return TRUE
+	if(strcasecmp(l->args[0], "PRIVMSG") && strcasecmp(l->args[0], "NOTICE"))return TRUE;
 
 	/* Add hash table if hasn't been added yet */
 	if(!h) {
-		h = g_hash_table_new(g_str_hash());
+		h = g_hash_table_new(g_str_hash);
 		l->network->replication_data = h;
 	}
 
@@ -64,7 +64,7 @@ static void repl_command(char **args, struct line *l)
 
 	} 
 	/* FIXME Args: [channel|nick [nroflines]] */
-	linestack_clear(co);
+	//linestack_clear(co);
 }
 
 gboolean init_plugin(struct plugin *p) {
