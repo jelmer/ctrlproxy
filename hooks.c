@@ -111,8 +111,9 @@ void del_filter(filter_function f)
 gboolean del_filter_ex(char *class, filter_function f) 
 {
 	struct filter_class *c = find_filter_class(class);
+	GList *gl;
 	if(!c) return FALSE;
-	GList *gl = c->filters;
+	gl = c->filters;
 	while(gl) {
 		struct filter_data *d = (struct filter_data *)gl->data;
 
