@@ -76,6 +76,13 @@ static char *get_seconds(struct line *l, gboolean case_sensitive) {
 	return ret;
 }
 
+static char *get_seconds_since_1970(struct line *l, gboolean case_sensitive) {
+	char *ret;
+	time_t ti = time(NULL);
+	asprintf(&ret, "%ld", ti);
+	return ret;
+}
+
 static char *get_day(struct line *l, gboolean case_sensitive) { 
 	char *ret;
 	time_t ti = time(NULL);
@@ -147,6 +154,7 @@ static struct log_mapping mappings[] = {
 	{NULL, 'M', -1, get_minutes },
 	{NULL, 's', -1, get_seconds },
 	{NULL, 'd', -1, get_day },
+    {NULL, 'e', -1, get_seconds_since_1970 },
 	{NULL, 'b', -1, get_monthname },
 	{NULL, 'n', -1, get_nick },
 	{NULL, 'u', -1, get_user },

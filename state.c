@@ -436,7 +436,7 @@ static void handle_whoreply(struct network *s, struct line *l) {
 
 	n = find_add_nick(c, l->args[6]);
 	if(n->global_nick->hostmask == NULL) {
-		asprintf(&hostmask, "%s!%s@%s", l->args[6], l->args[3], l->args[4]);
+		hostmask = g_strdup_printf("%s!%s@%s", l->args[6], l->args[3], l->args[4]);
 		n->global_nick->hostmask = hostmask;
 	}
 }

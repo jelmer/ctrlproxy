@@ -74,14 +74,14 @@ char *list_make_string(char **list)
 char *ctrlproxy_path(char *part)
 {
 	char *p, *p1;
-	asprintf(&p, "%s/.ctrlproxy", g_get_home_dir());
+	p = g_strdup_printf("%s/.ctrlproxy", g_get_home_dir());
 	if(mkdir(p, 0700) != 0 && errno != EEXIST) {
 		g_warning(_("Couldn't create '%s'!\n"), p);
 		g_free(p);
 		exit(1);
 	}
 
-	asprintf(&p1, "%s/%s", p, part);
+	p1 = g_strdup_printf("%s/%s", p, part);
 	g_free(p);
 	return p1;
 }

@@ -70,7 +70,7 @@ void handle_server_receive (struct transport_context *c, char *raw, void *_serve
 			if(server->outgoing) {
 				char *new_nick;
 				char *nick = xmlGetProp(server->xmlConf, "nick");
-				asprintf(&new_nick, "%s_", nick);
+				new_nick = g_strdup_printf("%s_", nick);
 				xmlSetProp(server->xmlConf, "nick", new_nick);
 				irc_send_args(server->outgoing, "NICK", new_nick, NULL);
 				xmlFree(nick);
@@ -518,7 +518,7 @@ struct network *connect_network(xmlNodePtr conf) {
 
    	nick = xmlGetProp(s->xmlConf, "nick");
 	user_name = xmlGetProp(s->xmlConf, "username");
-	asprintf(&s->hostmask, "%s!~%s@%s", nick, user_name, get_my_hostname());
+	s->hostmask = g_strdup_printf("%s!~%s@%s", nick, user_name, get_my_hostname());
 	xmlFree(nick); xmlFree(user_name);
 
 	/* Find <listen> tag */
@@ -648,12 +648,12 @@ gboolean network_change_nick(struct network *s, char *nick)
 	if (!s->hostmask) {
 		if(!xmlHasProp(s->xmlConf, "username"))	xmlSetProp(s->xmlConf, "username", g_get_user_name());
 		tmp = xmlGetProp(s->xmlConf, "username");
-		asprintf(&s->hostmask, "%s!~%s@%s", nick, tmp, get_my_hostname());
+		s->hostmask = g_strdup_printf("%s!~%s@%s", nick, tmp, get_my_hostname());
 		xmlFree(tmp);
 	} else { 
 		p = strchr(s->hostmask, '!');
 		if (!p) return FALSE;
-		asprintf(&tmp, "%s%s", nick, p);
+		tmp = g_strdup_printf("%s%s", nick, p);
 		g_free(s->hostmask);
 		s->hostmask = tmp;
 	}

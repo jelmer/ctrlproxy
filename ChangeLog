@@ -63,6 +63,7 @@ Ctrlproxy 2.7:
  * Add python plugin (Daniel Poelzleithner <ctrlproxy@poelzi.org>)
  * Add gnutls support
  * Fix problems with incorrectly added colons
+ * Add %e to log_custom (Korbinian Rosenegger)
 
 Ctrlproxy 2.6:
  * Configuration utility (Kyoshiro)

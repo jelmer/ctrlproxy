@@ -241,9 +241,9 @@ int main(int argc, const char *argv[])
 	} else { 
 		const char *homedir = g_get_home_dir();
 #ifdef _WIN32
-		asprintf(&configuration_file, "%s/_ctrlproxyrc", homedir);
+		configuration_file = g_strdup_printf("%s/_ctrlproxyrc", homedir);
 #else
-		asprintf(&configuration_file, "%s/.ctrlproxyrc", homedir);
+		configuration_file = g_strdup_printf("%s/.ctrlproxyrc", homedir);
 #endif
 		/* Copy configuration file from default location if none existed yet */
 		if(g_file_test(configuration_file, G_FILE_TEST_EXISTS)) {
