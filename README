@@ -76,7 +76,7 @@ Quick start
 -----------
 1. Install ctrlproxy (either from debian, or from source, see above)
 
-2. Copy ctrlproxyrc.example to ~/.ctrlproxyrc and adapt it to your needs
+2. Run ctrlproxy-setup
 
 3. Run ctrlproxy --daemon
 
