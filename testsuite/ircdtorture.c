@@ -27,7 +27,7 @@
 
 int main(int argc, const char *argv[])
 {
-	const char *inetd = NULL;
+	int inetd = 0;
 	const char *tcp = NULL;
 #ifdef HAVE_POPT_H
 	int c;
@@ -35,7 +35,7 @@ int main(int argc, const char *argv[])
 	struct poptOption options[] = {
 		POPT_AUTOHELP
 		{"tcp", 't', POPT_ARG_STRING, &tcp, 't', "Connection to specified host", "HOST"},
-		{"inetd", 'i', POPT_ARG_STRING, &inetd, 'i', "Test PROGRAM inetd-style", "PROGRAM"},
+		{"inetd", 'i', POPT_ARG_NONE, &inetd, 'i', "Interface using stdin/stdout", "PROGRAM"},
 		{"version", 'v', POPT_ARG_NONE, NULL, 'v', "Show version information"},
 		POPT_TABLEEND
 	};
@@ -43,6 +43,8 @@ int main(int argc, const char *argv[])
 
 #ifdef HAVE_POPT_H
 	pc = poptGetContext(argv[0], argc, argv, options, 0);
+
+	poptSetOtherOptionHelp(pc, "[ircdtorture options] -- /path/to/ircd [arguments...]");
 
 	while((c = poptGetNextOpt(pc)) >= 0) {
 		switch(c) {

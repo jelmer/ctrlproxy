@@ -4,7 +4,7 @@ CFLAGS+=-ansi -Wall -DMODULESDIR=\"$(modulesdir)\"
 
 .PHONY: all clean distclean install
 
-all: ircdtorture test-linestack test-parser
+all: ircdtorture
 
 ircdtorture: ircdtorture.o
 	$(CC) $(LIBS) -o $@ $^
@@ -43,7 +43,7 @@ test2: test-parser
 	@./test-parser < test1.data 2>/dev/null > test1.data.out
 	@echo OK
 
-TEST3_MODULES = ctcp log_custom log_irssi repl_command repl_highlight repl_lastdisconnect repl_limited repl_simple report_time debug auto-away antiflood admin
+# Linestack tests
 
 LINESTACK_MODULES = linestack_file linestack_memory
 
@@ -53,4 +53,4 @@ test-linestack_%: ../mods/liblinestack_%.so test-linestack
 	@cmp $@.tmp test4.data
 	@echo OK
 
-test4: test-linestack $(patsubst %,test-%,$(LINESTACK_MODULES))
+test3: $(patsubst %,test-%,$(LINESTACK_MODULES))

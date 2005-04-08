@@ -2,6 +2,7 @@
  	Jelmer Vernooij <jelmer@vernstok.nl>
 
 Ctrlproxy 2.7:
+ * Add inetd-style client support
  * Support CONNECT proxy command as used by irssi
  * Fix crash bug in log_custom (Korbinian Rosenegger)
  * admin module can now also work as a seperate ('virtual') network
