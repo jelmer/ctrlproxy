@@ -1,0 +1,4 @@
+- When trying to get nick X that is already in use the user gets 
+  the nick X_. When the channel that X is on is joined, X can not 
+  be seen. After a rejoin, X can be seen.
+

@@ -265,6 +265,14 @@ static gboolean handle_pending_client_receive(GIOChannel *c, GIOCondition cond, 
 
 			client->nick = g_strdup(l->args[1]); /* Save nick */
 
+			welcome_client(client);
+
+			client->incoming_id = g_io_add_watch(client->incoming, G_IO_IN | G_IO_HUP, handle_client_receive, client);
+
+			client->network->clients = g_list_append(client->network->clients, client);
+			free_line(l);
+
+			return FALSE;
 		} else if(!g_strcasecmp(l->args[0], "USER")) {
 			if (l->argc > 1) {
 				g_free(client->username);
@@ -275,21 +283,12 @@ static gboolean handle_pending_client_receive(GIOChannel *c, GIOCondition cond, 
 				g_free(client->fullname);
 				client->fullname = g_strdup(l->args[4]);
 			}
-			free_line(l);
 
 			if (!client->network) {
 				irc_sendf(client->incoming, "ERROR :Please select a network first, or specify one in your ctrlproxyrc\r\n");
 				disconnect_client(client);
 				return FALSE;
 			}
-
-			welcome_client(client);
-
-			client->incoming_id = g_io_add_watch(client->incoming, G_IO_IN | G_IO_HUP, handle_client_receive, client);
-
-			client->network->clients = g_list_append(client->network->clients, client);
-
-			return FALSE;
 		} else if(!g_strcasecmp(l->args[0], "CONNECT")) {
 			client->network = find_network_by_hostname(l->args[1], atoi(l->args[2]), TRUE);
 

@@ -212,9 +212,6 @@ int main(int argc, const char *argv[])
 #ifdef SIGTSTP
 		signal(SIGTSTP, SIG_IGN);
 #endif
-#ifdef SIGHUP
-		signal(SIGHUP, SIG_IGN);
-#endif
 		daemon(1, 0);
 		isdaemon = 1;
 #else
