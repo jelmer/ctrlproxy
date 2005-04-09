@@ -40,7 +40,7 @@
 GMainLoop *main_loop;
 FILE *debugfd = NULL;
 FILE *f_logfile = NULL;
-extern char my_hostname;
+extern char my_hostname[];
 
 void signal_crash(int sig) 
 {
