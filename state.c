@@ -514,6 +514,20 @@ static void handle_nick(struct network *s, struct line *l)
 	if(!irccmp(s, line_get_nick(l), s->nick)) network_change_nick(s, l->args[1]);
 }
 
+static void handle_302(struct network *s, struct line *l)
+{
+	/* We got a USERHOST response, split it into nick and user@host, and check the nick */
+	gchar** tmp302 = g_strsplit(g_strstrip(l->args[2]), "=+", 2);
+	if (g_strv_length(tmp302) > 1) {
+		if (!irccmp(l->network, l->network->nick, tmp302[0])) {
+			g_free(l->network->hostmask);
+			/* Set the hostmask if it is our nick */
+			l->network->hostmask = g_strdup_printf("%s!%s", tmp302[0], tmp302[1]);
+		}
+	}
+	g_strfreev(tmp302);
+}
+
 extern void handle_005(struct network *s, struct line *l);
 
 static struct irc_command {
@@ -528,6 +542,7 @@ static struct irc_command {
 	{ "TOPIC", 2, handle_topic },
 	{ "004", 5, handle_004 },
 	{ "005", 3, handle_005 },
+	{ "302", 2, handle_302 },
 	{ "332",  3, handle_332 },
 	{ "331", 1, handle_no_topic },
 	{ "353", 4, handle_namreply },
