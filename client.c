@@ -25,7 +25,6 @@
 #include <unistd.h>
 #endif
 
-#define __USE_POSIX
 #include <netinet/in.h>
 #include <errno.h>
 #include <sys/types.h>

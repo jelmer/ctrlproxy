@@ -20,7 +20,6 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-#define __USE_POSIX
 #include "internals.h"
 
 #define BACKTRACE_STACK_SIZE 64

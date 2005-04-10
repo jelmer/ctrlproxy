@@ -1,4 +1,11 @@
-Information for users upgrading from 2.6:
-=========================================
+Information for users upgrading from 2.6 or 2.7-preXX:
+======================================================
 - GNUTLS is now used by default when it is available instead of SSL. GNUTLS 
   needs a cafile next to the key and cert files. 
+- The "socket" module has been removed, it is now partially part of the core,
+  and part of it's functionality has been moved to the "listener" module
+- <listen> and client_pass are now below the "liblistener" <plugin> node 
+  rather then under a network. For example, to listen on port 6669 for
+  connections for network MyNetwork and password MyPass:
+
+  <listener port="6669" network="MyNetwork" password="MyPass"/>

@@ -12,7 +12,6 @@
 		<!-- Support for interfacing to ctrlproxy 
 		using /MSG ctrlproxy or /CTRLPROXY -->
 		<plugin autoload="1" file="libadmin"/>
-		<plugin autoload="1" file="libsocket"/>
 		<!-- Don't replicate any backlogs, just send channel info -->
 		<plugin autoload="0" file="librepl_none"/>
 		<!-- Backlog any data since last time user said something -->
@@ -80,9 +79,13 @@
 
 		<plugin autoload="1" file="linestack_file"/>
 		<plugin autoload="1" file="linestack_memory"/>
+		<plugin autoload="1" file="liblistener">
+			<listener port="9666" network="BEE"/>
+		</plugin>
 	</plugins>
+	
 	<networks>
-		<network autoconnect="1" client_pass="secret" name="BEE" replication="memory">
+		<network autoconnect="1" name="BEE" replication="memory">
 			<listen>
 				<ipv4 port="8003"/>
 			</listen>
@@ -92,7 +95,7 @@
 				</pipe>
 			</servers>
 		</network>
-		<network autoconnect="1" client_pass="secret" name="Freenode" fullname="CtrlProxy user">
+		<network autoconnect="1" name="Freenode" fullname="CtrlProxy user">
 			<listen>
 				<ipv4 port="6667"/>
 				<ipv4 port="7667" ssl="1"/>

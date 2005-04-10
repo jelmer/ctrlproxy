@@ -4,6 +4,9 @@ Jelmer Vernooij <jelmer@nl.linux.org>
 
 For a quick start, see the bottom of this file.
 
+If you are upgrading from an older version of ctrlproxy, please read the 
+file UPGRADING.
+
 Why ctrlproxy?
 --------------
 CtrlProxy is a project I started because I got bored with running irssi in 
@@ -41,7 +44,6 @@ Requirements
  * libxml2
  
  And for the stats module:
- * libtdb
  * libpcre (optional)
 
 Building
