@@ -382,7 +382,7 @@ gboolean load_configuration(const char *file)
 	}
 
 	if (!validate_config(configuration)) {
-		g_warning("Errors while parsing configuration file");
+		g_warning("Warnings while parsing configuration file");
 	}
 
 	root = xmlDocGetRootElement(configuration);
