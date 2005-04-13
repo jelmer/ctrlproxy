@@ -4,20 +4,17 @@ CFLAGS+=-ansi -Wall -DMODULESDIR=\"$(modulesdir)\"
 
 .PHONY: all clean distclean install
 
-all: 
+all: ircdtorture test-linestack test-parser
 
 ircdtorture: ircdtorture.o
 	$(CC) $(LIBS) -o $@ $^
 
-test-linestack: test-linestack.o ../line.o ../linestack.o ../plugins.o ../util.o
+test-linestack: test-linestack.o ../line.o ../linestack.o ../plugins.o ../config.o ../util.o ../server.o ../state.o ../isupport.c ../hooks.o ../client.o ../posix.o
 	$(CC) $(LIBS) -o $@ $^
 
 test-parser: test-parser.o ../line.o
 	$(CC) $(LIBS) -o $@ $^
 
-
-test-filter: test-filter.o ../line.o ../plugins.o ../linestack.o ../util.o ../state.o 
-	$(CC) $(LIBS) -o $@ $^
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $<
@@ -46,16 +43,7 @@ test2: test-parser
 	@./test-parser < test1.data 2>/dev/null > test1.data.out
 	@echo OK
 
-test3.data.%.out: ../mods/lib%.so test-filter
-	@echo -n Test3-$(patsubst test3.data.%.out,%:,$@)
-	@./test-filter `pwd`/$< < test3.data > $@.tmp
-	@echo OK
-	@mv $@.tmp $@
-
 TEST3_MODULES = ctcp log_custom log_irssi repl_command repl_highlight repl_lastdisconnect repl_limited repl_simple report_time debug auto-away antiflood admin
-
-test3: test-filter $(patsubst %,test3.data.%.out,$(TEST3_MODULES))
-	@# Run all modules for which this is possible thru the test data files
 
 LINESTACK_MODULES = linestack_file linestack_memory
 

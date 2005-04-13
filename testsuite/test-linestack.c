@@ -9,17 +9,16 @@ int main(int argc, char **argv)
 	struct line *l;
 	GSList *ll;
 	struct linestack_context *c;
+	struct plugin *p;
 	char buf[4096];
-	xmlNodePtr cur = xmlNewNode(NULL, "plugin");
 
 	if(argc < 2) {
 		fprintf(stderr, "Usage: %s plugin-path\n", argv[0]);
 		return 1;
 	}
 
-	xmlSetProp(cur, "file", argv[1]);
-
-	load_plugin(cur);
+	p = new_plugin(argv[1]);
+	load_plugin(p);
 
 	c = linestack_new(NULL, argv[2]);
 	
@@ -49,6 +48,8 @@ int main(int argc, char **argv)
 	}
 
 	linestack_destroy(c);
+
+	unload_plugin(p);
 	
 	return 0;
 }

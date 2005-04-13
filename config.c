@@ -403,7 +403,5 @@ gboolean load_configuration(const char *file)
 
 	xmlFreeDoc(configuration);
 
-	ret &= init_networks();
-
-	return ret;
+	return ret & init_networks();
 }
