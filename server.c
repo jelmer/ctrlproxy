@@ -211,21 +211,24 @@ gboolean connect_next_tcp_server(struct network *s)
 	return connect_current_tcp_server(s);
 }
 
-gboolean network_send_line(struct network *s, struct line *l)
+gboolean network_send_line(struct network *s, const struct line *ol)
 {
-	l->network = s;
+	struct line l = *ol;
+	
+	l.origin = NULL;		/* Never send origin to the server */
+	l.network = s;
 
 	switch (s->type) {
 	case NETWORK_TCP:
-		return irc_send_line(s->connection.tcp.outgoing, l);
+		return irc_send_line(s->connection.tcp.outgoing, &l);
 
 	case NETWORK_PROGRAM:
-		return irc_send_line(s->connection.program.outgoing, l);
+		return irc_send_line(s->connection.program.outgoing, &l);
 
 	case NETWORK_VIRTUAL:
 		if (!s->connection.virtual.ops) 
 			return FALSE;
-		return s->connection.virtual.ops->to_server(s, l);
+		return s->connection.virtual.ops->to_server(s, &l);
 
 	default:
 		return FALSE;
@@ -465,6 +468,7 @@ struct network *new_network()
 {
 	struct network *s = g_new0(struct network,1);
 
+	s->autoconnect = FALSE;
 	s->nick = g_strdup(g_get_user_name());
 	s->username = g_strdup(g_get_user_name());
 	s->fullname = g_strdup(g_get_real_name());

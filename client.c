@@ -81,6 +81,7 @@ static gboolean process_from_client(struct line *l)
 	struct line *lc;
 	
 	l->direction = TO_SERVER;
+	l->origin = g_strdup(l->client->network->hostmask);
 
 	if (!run_client_filter(l)) 
 		return TRUE;
@@ -123,7 +124,7 @@ static gboolean process_from_client(struct line *l)
 	return TRUE;
 }
 
-gboolean client_send_line(struct client *c, struct line *l)
+gboolean client_send_line(struct client *c, const struct line *l)
 {
 	/* FIXME: Filter */
 	return irc_send_line(c->incoming, l);

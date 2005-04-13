@@ -297,8 +297,7 @@ static void config_load_network(xmlNodePtr root)
 	struct network *n;
 	n = new_network();
 
-	if (xmlHasProp(root, "autoconnect")) {
-		tmp = xmlGetProp(root, "autoconnect");
+	if ((tmp = xmlGetProp(root, "autoconnect"))) {
 		if (atoi(tmp)) n->autoconnect = TRUE;
 		xmlFree(tmp);
 	}

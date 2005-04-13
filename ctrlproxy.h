@@ -226,12 +226,12 @@ G_MODULE_EXPORT void clients_send(struct network *, struct line *, struct client
 G_MODULE_EXPORT void disconnect_client(struct client *c);
 G_MODULE_EXPORT gboolean network_change_nick(struct network *s, const char *nick);
 G_MODULE_EXPORT struct client *new_client(struct network *, GIOChannel *);
-G_MODULE_EXPORT gboolean network_send_line(struct network *s, struct line *);
+G_MODULE_EXPORT gboolean network_send_line(struct network *s, const struct line *);
 G_MODULE_EXPORT gboolean network_send_args(struct network *s, ...);
 G_MODULE_EXPORT void register_virtual_network(struct virtual_network_ops *);
 G_MODULE_EXPORT void unregister_virtual_network(struct virtual_network_ops *);
 G_MODULE_EXPORT struct network *find_network(const char *name);
-G_MODULE_EXPORT gboolean client_send_line(struct client *c, struct line *);
+G_MODULE_EXPORT gboolean client_send_line(struct client *c, const struct line *);
 G_MODULE_EXPORT gboolean virtual_network_recv_line(struct network *l, struct line *);
 G_MODULE_EXPORT gboolean virtual_network_recv_args(struct network *l, const char *origin, ...); 
 
@@ -239,13 +239,13 @@ G_MODULE_EXPORT gboolean virtual_network_recv_args(struct network *l, const char
 G_MODULE_EXPORT struct line *linedup(struct line *l);
 G_MODULE_EXPORT struct line * irc_parse_line(const char *data);
 G_MODULE_EXPORT struct line * virc_parse_line(const char *origin, va_list ap);
-G_MODULE_EXPORT char *irc_line_string(struct line *l);
-G_MODULE_EXPORT char *irc_line_string_nl(struct line *l);
+G_MODULE_EXPORT char *irc_line_string(const struct line *l);
+G_MODULE_EXPORT char *irc_line_string_nl(const struct line *l);
 G_MODULE_EXPORT char *line_get_nick(struct line *l);
 G_MODULE_EXPORT void free_line(struct line *l);
 G_MODULE_EXPORT gboolean irc_send_args(GIOChannel *, ...);
 G_MODULE_EXPORT gboolean irc_sendf(GIOChannel *, char *fmt, ...);
-G_MODULE_EXPORT int irc_send_line(GIOChannel *, struct line *l);
+G_MODULE_EXPORT int irc_send_line(GIOChannel *, const struct line *l);
 G_MODULE_EXPORT struct line *irc_parse_linef( char *origin, ... );
 G_MODULE_EXPORT struct line *irc_parse_line_args( char *origin, ... );
 G_MODULE_EXPORT struct line *irc_recv_line(GIOChannel *c, GError **err);

@@ -124,7 +124,7 @@ struct line * irc_parse_line(const char *d)
 	return l;
 }
 
-gboolean irc_send_line(GIOChannel *c, struct line *l) {
+gboolean irc_send_line(GIOChannel *c, const struct line *l) {
 	char *raw;
 	GIOStatus ret;
 	gsize bytes_written;
@@ -142,7 +142,7 @@ gboolean irc_send_line(GIOChannel *c, struct line *l) {
 }
 
 
-char *irc_line_string_nl(struct line *l) 
+char *irc_line_string_nl(const struct line *l) 
 {
 	char *raw = irc_line_string(l);
 	raw = g_realloc(raw, strlen(raw)+10);
@@ -150,7 +150,7 @@ char *irc_line_string_nl(struct line *l)
 	return raw;
 }
 
-int requires_colon(struct line *l)
+static int requires_colon(const struct line *l)
 {
 	int c;
 
@@ -192,7 +192,7 @@ int requires_colon(struct line *l)
 	}
 }
 
-char *irc_line_string(struct line *l) {
+char *irc_line_string(const struct line *l) {
 	size_t len = 0; unsigned int i;
 	char *ret;
 
@@ -218,7 +218,7 @@ char *irc_line_string(struct line *l) {
 
 void free_line(struct line *l) {
 	int i;
-	if(l->origin)g_free((char *)l->origin);
+	if(l->origin)g_free(l->origin);
 	if(l->args) {
 		for(i = 0; l->args[i]; i++)g_free(l->args[i]);
 		g_free(l->args);
