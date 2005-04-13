@@ -758,8 +758,8 @@ struct network *find_network_by_hostname(const char *hostname, guint16 port, gbo
 	char *portname = g_strdup_printf("%d", port);
 	
 	for (gl = get_network_list(); gl; gl = gl->next) {
-		n = gl->data;
 		GList *sv;
+		n = gl->data;
 		
 		if (n->type != NETWORK_TCP) continue;
 		
