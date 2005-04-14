@@ -51,7 +51,7 @@ gboolean load_config(struct plugin *p, xmlNodePtr node)
 			const char *filename = xmlNodeGetContent(cur);
 			fd = fopen(filename, "r");
 			if (!fd) {
-				g_warning("Unable to open python script %s: %s", filename, strerror(errno));
+				log_global("python", "Unable to open python script %s: %s", filename, strerror(errno));
 			} else {
 				PyRun_SimpleFile(fd, filename);
 				fclose(fd);

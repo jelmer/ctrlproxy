@@ -29,6 +29,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <netinet/in.h>
+#include <sys/socket.h>
 
 #undef G_LOG_DOMAIN
 #define G_LOG_DOMAIN "listener"
@@ -58,14 +59,14 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition condition, gpo
 
 	if(!g_strcasecmp(l->args[0], "PASS")) {
 		if (listener->password && strcmp(l->args[1], listener->password)) {
-			g_warning("User tried to log in to %s with incorrect password!\n", listener->network->name);
+			log_network("listener", listener->network, "User tried to log in with incorrect password!");
 			irc_sendf(c, ":%s %d %s :Password mismatch\r\n", listener->network->name, ERR_PASSWDMISMATCH, listener->network->nick);
 
 			free_line(l);
 			return FALSE;
 		}
 
-		g_message("Client successfully authenticated");
+		log_network ("listener", listener->network, "Client successfully authenticated");
 
 		new_client(listener->network, c);
 
@@ -107,7 +108,7 @@ gboolean start_listener(struct listener *l)
 
 	sock = socket(PF_INET, SOCK_STREAM, 0);
 	if (sock < 0) {
-		g_warning( "error creating socket: %s", strerror(errno));
+		log_global( "listener", "error creating socket: %s", strerror(errno));
 		return FALSE;
 	}
 
@@ -118,33 +119,33 @@ gboolean start_listener(struct listener *l)
 	addr.sin_addr.s_addr = htonl(INADDR_ANY);
 
 	if (bind (sock, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
-		g_warning("Unable to bind to port %d: %s", l->port, strerror(errno));
+		log_global( "listener", "Unable to bind to port %d: %s", l->port, strerror(errno));
 		return FALSE;
 	}
 
 	if (listen(sock, 5) < 0) {
-		g_warning( "error listening on socket: %s", strerror(errno));
+		log_global( "listener", "error listening on socket: %s", strerror(errno));
 		return FALSE;
 	}
 
 	l->incoming = g_io_channel_unix_new(sock);
 
 	if (!l->incoming) {
-		g_warning("Unable to create GIOChannel for server socket");
+		log_global( "listener", "Unable to create GIOChannel for server socket");
 		return FALSE;
 	}
 
 	l->incoming_id = g_io_add_watch(l->incoming, G_IO_IN, handle_new_client, l);
 	g_io_channel_unref(l->incoming);
 
-	g_message("Listening for connections on port %d", l->port);
+	log_global( "listener", "Listening for connections on port %d", l->port);
 
 	return TRUE;
 }
 
 gboolean stop_listener(struct listener *l)
 {
-	g_message("Stopping listener at port %d", l->port);
+	log_global ( "listener", "Stopping listener at port %d", l->port);
 	g_source_remove(l->incoming_id);
 	return TRUE;
 }

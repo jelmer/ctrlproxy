@@ -347,4 +347,9 @@ G_MODULE_EXPORT const char name_plugin[];
 
 G_MODULE_EXPORT void set_sslize_function (GIOChannel *(*) (GIOChannel *));
 
+/* log.c */
+void log_network(const char *module, const struct network *, const char *fmt, ...);
+void log_client(const char *module, const struct client *, const char *fmt, ...);
+void log_global(const char *module, const char *fmt, ...);
+
 #endif /* __CTRLPROXY_H__ */

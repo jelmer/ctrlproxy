@@ -110,7 +110,7 @@ gboolean fini_plugin(struct plugin *p) {
 
 gboolean init_plugin(struct plugin *p) {
 	if(!plugin_loaded("admin")) {
-		g_warning(("admin module required for repl_command module. Please load it first"));
+		log_global("repl_command", "admin module required for repl_command module. Please load it first");
 		return FALSE;
 	}
 	add_replication_filter("repl_command", log_data, NULL, 1000);

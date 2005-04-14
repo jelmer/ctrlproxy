@@ -21,9 +21,6 @@
 #include <string.h>
 #include "irc.h"
 
-#undef G_LOG_DOMAIN
-#define G_LOG_DOMAIN "nickserv"
-
 struct nickserv_entry {
 	const char *network;
 	const char *nick;
@@ -69,7 +66,7 @@ static void identify_me(struct network *network, char *nick)
 		network_send_args(network, "PRIVMSG", nickserv_n, raw, NULL);
 		g_free(raw);
 	} else {
-		g_message("Not identifying for %s, network %s; no entries found", nick, network->name);
+		log_network("nickserv", network, "Not identifying for %s; no entries found", nick);
 	}
 }
 
@@ -111,7 +108,7 @@ static gboolean log_data(struct line *l, void *userdata) {
 
 			e->pass = g_strdup(l->args[2] + strlen("IDENTIFY "));
 			
-			g_message("Caching password for nick %s on network %s", e->nick, e->network);
+			log_network("nickserv", e->network, "Caching password for nick %s", e->nick);
 	}
 
 	/* If we receive a nick-already-in-use message, ghost the current user */
@@ -121,7 +118,7 @@ static gboolean log_data(struct line *l, void *userdata) {
 			const char *nickserv_n = nickserv_nick(l->network);
 			char *raw;
 			
-			g_message(("Ghosting current user using '%s' on %s"), nickattempt, l->network->name);
+			log_network("nickserv", l->network, "Ghosting current user using '%s'", nickattempt);
 
 			raw = g_strdup_printf("GHOST %s %s", nickattempt, pass);
 			network_send_args(l->network, "PRIVMSG", nickserv_n, raw, NULL);

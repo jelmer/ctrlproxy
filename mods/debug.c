@@ -70,7 +70,7 @@ const char name_plugin[] = "debug";
 
 gboolean init_plugin(struct plugin *p) {
 	if(!plugin_loaded("admin")) {
-		g_warning(("admin module required for repl_command module. Please load it first"));
+		log_global("debug", "admin module required for repl_command module. Please load it first");
 		return FALSE;
 	}
 	register_admin_command(&cmd_dumpjoined);

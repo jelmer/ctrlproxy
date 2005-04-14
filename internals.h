@@ -73,4 +73,8 @@ gboolean run_server_filter(struct line *l);
 gboolean run_log_filter(struct line *l);
 gboolean run_replication_filter(struct line *l);
 
+/* log.c */
+gboolean init_log(const char *file);
+void fini_log(void);
+
 #endif /* __INTERNALS_H__ */

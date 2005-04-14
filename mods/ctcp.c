@@ -91,7 +91,7 @@ static gboolean mhandle_data(struct line *l, void *userdata)
 		network_send_args(l->network, "NOTICE", dest, l->args[2]?l->args[2]:"", NULL);
 	} else if(!g_strcasecmp(data, "ACTION")) {
 	} else if(!g_strcasecmp(data, "DCC")) {
-	} else g_warning("Received unknown CTCP request '%s'!", data);
+	} else log_network("ctcp", l->network, "Received unknown CTCP request '%s'!", data);
 
 	g_free(data);
 	if(dhostmask)g_free(dhostmask);

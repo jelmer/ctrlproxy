@@ -180,7 +180,7 @@ void init_config()
 	dtd = xmlParseDTD(DTD_URL, DTD_FILE);
 
 	if (!dtd) {
-		g_error("Can't load DTD file from %s", DTD_FILE);
+		log_global(NULL, "Can't load DTD file from %s", DTD_FILE);
 	}
 }
 
@@ -273,7 +273,7 @@ static void config_load_servers(struct network *n, xmlNodePtr root)
 		s->name = xmlGetProp(cur, "name");
 		if (!s->name) s->name = xmlGetProp(cur, "host");
 		if (s->name && strchr(s->name, ' ')) {
-			g_warning("Network name \"%s\" contains spaces!", s->name);
+			log_global(NULL, "Network name \"%s\" contains spaces!", s->name);
 		}
 
     	memset(&hints, 0, sizeof(hints));
@@ -283,7 +283,7 @@ static void config_load_servers(struct network *n, xmlNodePtr root)
 		/* Lookup */
 	 	error = getaddrinfo(s->host, s->port, &hints, &s->addrinfo);
 	    if (error) {
-			g_warning("Unable to lookup %s: %s", s->host, gai_strerror(error));
+			log_global(NULL, "Unable to lookup %s: %s", s->host, gai_strerror(error));
 			continue;
 		}
 
@@ -378,12 +378,12 @@ gboolean load_configuration(const char *file)
 
 	configuration = xmlParseFile(file);
 	if(!configuration) {
-		g_error(("Can't open configuration file '%s'"), file);
+		log_global(NULL, "Can't open configuration file '%s'", file);
 		return FALSE;
 	}
 
 	if (!validate_config(configuration)) {
-		g_warning("Warnings while parsing configuration file");
+		log_global(NULL, "Warnings while parsing configuration file");
 	}
 
 	root = xmlDocGetRootElement(configuration);

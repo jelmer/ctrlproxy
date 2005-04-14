@@ -49,7 +49,7 @@ static void reconnect(struct network *server, gboolean rm_source);
 
 static void server_send_login (struct network *s) 
 {
-	g_message(("Successfully connected to %s"), s->name);
+	log_network(NULL, s, "Successfully connected");
 
 	if(s->type == NETWORK_TCP && s->connection.tcp.current_server->password) { 
 		network_send_args(s, "PASS", s->connection.tcp.current_server->password, NULL);
@@ -79,7 +79,7 @@ static gboolean process_from_server(struct line *l)
 		network_send_args(l->network, "PONG", l->args[1], NULL);
 	} else if(!g_strcasecmp(l->args[0], "PONG")){
 	} else if(!g_strcasecmp(l->args[0], "ERROR")) {
-		g_warning("%s error: %s", l->network->name, l->args[1]);
+		log_network(NULL, l->network, "error: %s", l->args[1]);
 	} else if(!g_strcasecmp(l->args[0], "433") && !l->network->authenticated){
 		char *old_nick = l->network->nick;
 		l->network->nick = g_strdup_printf("%s_", l->network->nick);
@@ -138,7 +138,7 @@ static gboolean process_from_server(struct line *l)
 
 				error = getaddrinfo(tcp->host, tcp->port, &hints, &tcp->addrinfo);
 				if (error) {
-					g_warning("Unable to lookup %s: %s", tcp->host, gai_strerror(error));
+					log_network(NULL, l->network, "Unable to lookup %s: %s", tcp->host, gai_strerror(error));
 				} else {
 					l->network->connection.tcp.servers = g_list_append(l->network->connection.tcp.servers, tcp);
 				}
@@ -296,13 +296,13 @@ gboolean connect_current_tcp_server(struct network *s)
 
 	if(!cs) {
 		s->autoconnect = FALSE;
-		g_warning(("No servers listed for network %s, not connecting\n"), s->name);
+		log_network(NULL, s, "No servers listed, not connecting");
 		return TRUE;
 	}
 
-	g_message(("Connecting with %s:%s for network %s"), 
+	log_network(NULL, s, "Connecting with %s:%s", 
 			  cs->host, 
-			  cs->port, s->name);
+			  cs->port);
 
 	/* Connect */
 
@@ -328,7 +328,7 @@ gboolean connect_current_tcp_server(struct network *s)
 	}
 
 	if (!ioc) {
-		g_warning("Unable to connect: %s", strerror(errno));
+		log_network(NULL, s, "Unable to connect: %s", strerror(errno));
 		return FALSE;
 	}
 
@@ -341,7 +341,7 @@ gboolean connect_current_tcp_server(struct network *s)
 
 	if (cs->ssl) {
 		if (!sslize_function) {
-			g_warning("SSL enabled for %s:%s, but no SSL support loaded", cs->host, cs->port);
+			log_network(NULL, s, "SSL enabled for %s:%s, but no SSL support loaded", cs->host, cs->port);
 		} else {
 			s->connection.tcp.outgoing = sslize_function(s->connection.tcp.outgoing);
 		}
@@ -357,7 +357,7 @@ gboolean connect_current_tcp_server(struct network *s)
 	}
 
 	if(!s->connection.tcp.outgoing) {
-		g_warning(("Couldn't connect with network %s via server %s:%s"), s->name, cs->host, cs->port);
+		log_network(NULL, s, "Couldn't connect via server %s:%s", cs->host, cs->port);
 		return TRUE;
 	}
 
@@ -387,7 +387,7 @@ static void reconnect(struct network *server, gboolean rm_source)
 	free_channels(server);
 
 	if (server->type == NETWORK_TCP) {
-		g_warning(("Connection to network %s lost, trying to reconnect in %ds..."), server->name, server->reconnect_interval);
+		log_network(NULL, server, "Connection lost, trying to reconnect in %ds...", server->reconnect_interval);
 		server->reconnect_id = g_timeout_add(1000 * server->reconnect_interval, (GSourceFunc) connect_next_tcp_server, server);
 	} else {
 		connect_network(server);	
@@ -491,7 +491,7 @@ static pid_t piped_child(char* const command[], int *f_in)
 	int sock[2];
 
 	if(socketpair(PF_UNIX, SOCK_STREAM, AF_LOCAL, sock) == -1) {
-		g_warning( "socketpair: %s", strerror(errno));
+		log_global(NULL, "socketpair: %s", strerror(errno));
 		return -1;
 	}
 
@@ -501,7 +501,7 @@ static pid_t piped_child(char* const command[], int *f_in)
 
 	pid = fork();
 	if (pid == -1) {
-		g_warning( "fork: %s", strerror(errno));
+		log_global(NULL, "fork: %s", strerror(errno));
 		return -1;
 	}
 
@@ -514,7 +514,7 @@ static pid_t piped_child(char* const command[], int *f_in)
 		dup2(sock[1], 0);
 		dup2(sock[1], 1);
 		execvp(command[0], command);
-		g_warning( ("Failed to exec %s : %s"), command[0], strerror(errno));
+		log_global(NULL, "Failed to exec %s : %s", command[0], strerror(errno));
 		return -1;
 	}
 
@@ -583,7 +583,7 @@ int close_network(struct network *s)
 {
 	GList *l = s->clients;
 	g_assert(s);
-	g_message(("Closing connection to %s"), s->name);
+	log_network(NULL, s, "Closing connection");
 
 	while(l) {
 		struct client *c = l->data;
@@ -803,7 +803,7 @@ struct network *find_network_by_hostname(const char *hostname, guint16 port, gbo
 		/* Lookup */
 		error = getaddrinfo(s->host, s->port, &hints, &s->addrinfo);
 		if (error) {
-			g_warning("Unable to lookup %s:%s %s", s->host, s->port, gai_strerror(error));
+			log_network(NULL, n, "Unable to lookup %s:%s %s", s->host, s->port, gai_strerror(error));
 			g_free(s->host);
 			g_free(portname);
 			g_free(s);

@@ -72,7 +72,7 @@ static GIOStatus g_io_gnutls_error(gint e)
 		case GNUTLS_E_AGAIN:
 			return G_IO_STATUS_AGAIN;
 		default:
-			g_warning("TLS Error: %s", gnutls_strerror(e));
+			log_global("gnutls", "TLS Error: %s", gnutls_strerror(e));
 			if(gnutls_error_is_fatal(e)) return G_IO_STATUS_EOF;
 			return G_IO_STATUS_ERROR;
 	}
@@ -97,7 +97,7 @@ static GIOStatus g_io_gnutls_read(GIOChannel *handle, gchar *buf, guint len, gui
 	if(!chan->secure) {
 		err = gnutls_handshake(chan->session);
 		if(err < 0) {
-			g_warning("TLS Handshake failed");
+			log_global("gnutls", "TLS Handshake failed");
 			return g_io_gnutls_error(err);
 		}
 		chan->secure = 1;
@@ -119,7 +119,7 @@ static GIOStatus g_io_gnutls_write(GIOChannel *handle, const gchar *buf, gsize l
 	{
 		err = gnutls_handshake(chan->session);
 		if(err < 0) {
-			g_warning("TLS Handshake failed");
+			log_global("gnutls", "TLS Handshake failed");
 			return g_io_gnutls_error(err);
 		}
 		chan->secure = 1;
@@ -239,7 +239,7 @@ cur = config_instance_get_setting(p->config, "keyfile");
 gboolean init_plugin(struct plugin *p)
 {
 	if(gnutls_global_init() < 0) {
-		g_warning("gnutls global state initialization error");
+		log_global("gnutls", "gnutls global state initialization error");
 		return FALSE;
 	}
 
@@ -247,7 +247,7 @@ gboolean init_plugin(struct plugin *p)
 
 	/* X509 stuff */
 	if (gnutls_certificate_allocate_credentials(&xcred) < 0) {	/* space for 2 certificates */
-		g_warning("gnutls memory error");
+		log_global("gnutls", "gnutls memory error");
 		return FALSE;
 	}
 
@@ -263,13 +263,13 @@ gboolean g_io_gnutls_set_files(char *certf, char *keyf, char *caf)
 	gint err;
 	err = gnutls_certificate_set_x509_trust_file(xcred, caf, GNUTLS_X509_FMT_PEM);
 	if(err < 0) {
-		g_warning(("Error setting x509 trust file: %s (file = %s)"), gnutls_strerror(err), caf);	
+		log_global("gnutls", "Error setting x509 trust file: %s (file = %s)", gnutls_strerror(err), caf);	
 		return FALSE;
 	}
 	
 	err = gnutls_certificate_set_x509_key_file(xcred, certf, keyf, GNUTLS_X509_FMT_PEM);
 	if(err < 0) {
-		g_warning(("Error setting x509 key+cert files: %s (key = %s, cert = %s)"), gnutls_strerror(err), keyf, certf);	
+		log_global("gnutls", "Error setting x509 key+cert files: %s (key = %s, cert = %s)", gnutls_strerror(err), keyf, certf);	
 		return FALSE;
 	}
 

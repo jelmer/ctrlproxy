@@ -133,7 +133,7 @@ static void com_connect_network (char **args, struct line *l, void *userdata)
 		close_server(s);
 		connect_current_tcp_server(s);
 	} else {
-		g_message("Connecting to %s", args[1]);
+		admin_out(l, "Connecting to %s", args[1]);
 		connect_network(s);
 	}
 }

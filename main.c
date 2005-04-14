@@ -34,12 +34,9 @@
 
 #include <netdb.h>
 
-#define add_log_domain(domain) g_log_set_handler (domain, G_LOG_LEVEL_MASK | G_LOG_FLAG_FATAL | G_LOG_FLAG_RECURSION, log_handler, NULL);
-
 /* globals */
 GMainLoop *main_loop;
 FILE *debugfd = NULL;
-FILE *f_logfile = NULL;
 extern char my_hostname[];
 
 void signal_crash(int sig) 
@@ -68,14 +65,8 @@ void signal_crash(int sig)
 	}
 
 #endif
-	g_error(("Ctrlproxy core has segfaulted, exiting..."));
+	log_global(NULL, "Ctrlproxy core has segfaulted, exiting...");
 	abort();
-}
-
-void log_handler(const gchar *log_domain, GLogLevelFlags flags, const gchar *message, gpointer user_data) {
-	if(!f_logfile)return;
-	fprintf(f_logfile, "%s\n", message);
-	fflush(f_logfile);
 }
 
 static void clean_exit()
@@ -98,12 +89,13 @@ static void clean_exit()
 	g_main_loop_quit(main_loop);
 
 	g_main_loop_unref(main_loop);
+	fini_log();
 }
 
 void signal_quit(int sig)
 {
 	static int state = 0;
-	g_message(("Received signal %d, quitting..."), sig);
+	log_global(NULL, "Received signal %d, quitting...", sig);
 	if(state == 1) { 
 		signal(SIGINT, SIG_IGN); 
 		exit(0);
@@ -116,7 +108,7 @@ void signal_quit(int sig)
 
 void signal_save(int sig)
 {
-	g_message("Received USR1 signal, saving configuration...");
+	log_global(NULL, "Received USR1 signal, saving configuration...");
 	save_configuration(NULL);
 }
 
@@ -158,7 +150,6 @@ int main(int argc, const char *argv[])
 	signal(SIGUSR1, signal_save);
 #endif
 
-
 	main_loop = g_main_loop_new(NULL, FALSE);
 
 #ifdef HAVE_POPT_H
@@ -181,20 +172,16 @@ int main(int argc, const char *argv[])
 	}
 #endif
 
+	if(isdaemon && !logfile) {
+		logfile = ctrlproxy_path("log");
+	}
+
+	init_log(logfile);
+
 	if(gethostname(my_hostname, MAXHOSTNAMELEN) != 0) {
-		g_error(("Can't figure out hostname of local host!"));
+		log_global(NULL, "Can't figure out hostname of local host!");
 		return 1;
 	}
-
-	if(logfile) {
-		f_logfile = fopen(logfile, "a+");
-		if(!f_logfile) g_warning(("Can't open logfile %s!"), logfile);
-	}
-
-	add_log_domain("GLib");
-	add_log_domain("ctrlproxy");
-
-	g_message("Logfile opened");
 
 	if(isdaemon) {
 
@@ -213,10 +200,9 @@ int main(int argc, const char *argv[])
 		daemon(1, 0);
 		isdaemon = 1;
 #else
-		g_warning("Daemon mode not compiled in");
+		log_global(NULL, "Daemon mode not compiled in");
 #endif
-	} else 
-		if(!f_logfile)f_logfile = stdout;
+	} 
 
 	init_config();
 

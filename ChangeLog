@@ -2,6 +2,8 @@
  	Jelmer Vernooij <jelmer@vernstok.nl>
 
 Ctrlproxy 2.7:
+ * Use new CtrlProxy-specific logging system. Logs go 
+ to ~/.ctrlproxy/log by default now when in daemon mode.
  * Fixed 100% CPU memory usage bug
  * Add inetd-style client support
  * Support CONNECT proxy command as used by irssi

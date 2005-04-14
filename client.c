@@ -145,7 +145,7 @@ void disconnect_client(struct client *c) {
 
 	lose_client_hook_execute(c);
 
-	g_message(("Removed client to %s"), c->network->name);
+	log_client(NULL, c, "Removed client");
 
 	g_free(c->username);
 	g_free(c->fullname);
@@ -306,7 +306,7 @@ static gboolean handle_pending_client_receive(GIOChannel *c, GIOCondition cond, 
 			client->network = find_network_by_hostname(l->args[1], atoi(l->args[2]), TRUE);
 
             if (client->network && !network_is_connected(client->network) && !connect_network(client->network)) {
-				g_warning("Unable to connect to network %s", client->network->name);
+				log_network(NULL, client->network, "Unable to connect");
 			}
 		} else {
 			irc_sendf(client->incoming, ":%s 451 * :Register first\r\n"	, client->network?client->network->name:get_my_hostname());

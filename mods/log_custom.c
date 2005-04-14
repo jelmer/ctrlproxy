@@ -287,7 +287,7 @@ static FILE *find_add_channel_file(struct line *l, const char *identifier) {
 
 		/* Check if directory needs to be created */
 		if(!g_file_test(dn, G_FILE_TEST_IS_DIR) && mkdir(dn, 0700) == -1) {
-			g_warning(("Couldn't create directory %s for logging!"), dn);
+			log_network("log_custom", l->network, "Couldn't create directory %s for logging!", dn);
 			g_free(dn);
 			g_free(n);
 			return NULL;
@@ -298,7 +298,7 @@ static FILE *find_add_channel_file(struct line *l, const char *identifier) {
 		custom_subst(&n, logfilename, l, identifier, TRUE);
 		f = fopen(n, "a+");
 		if(!f) {
-			g_warning(("Couldn't open file %s for logging!"), n);
+			log_network("log_custom", l->network, "Couldn't open file %s for logging!", n);
 			g_free(n);
 			return NULL;
 		}
