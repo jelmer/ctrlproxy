@@ -6,15 +6,15 @@ CFLAGS+=-ansi -Wall -DMODULESDIR=\"$(modulesdir)\"
 
 all: 
 
-test-linestack: test-linestack.o ../line.o ../linestack.o ../transport.o ../plugins.o ../util.o
-	$(CC) $(LIBS) -o $@ test-linestack.o ../line.o ../linestack.o ../transport.o ../plugins.o ../util.o
+test-linestack: test-linestack.o ../line.o ../linestack.o ../plugins.o ../util.o
+	$(CC) $(LIBS) -o $@ $^
 
-test-parser: test-parser.o ../line.o ../transport.o
-	$(CC) $(LIBS) -o $@ test-parser.o ../line.o ../transport.o
+test-parser: test-parser.o ../line.o
+	$(CC) $(LIBS) -o $@ $^
 
 
-test-filter: test-filter.o ../line.o ../transport.o ../plugins.o ../linestack.o ../util.o ../state.o 
-	$(CC) $(LIBS) -o $@ test-filter.o ../line.o ../transport.o ../plugins.o ../linestack.o ../util.o ../state.o 
+test-filter: test-filter.o ../line.o ../plugins.o ../linestack.o ../util.o ../state.o 
+	$(CC) $(LIBS) -o $@ $^
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $<
