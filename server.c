@@ -45,7 +45,7 @@ extern char *debugfile;
 
 static GHashTable *virtual_network_ops = NULL;
 
-static gboolean reconnect(GIOChannel *c, GIOCondition cond, void *_server);
+static void reconnect(struct network *server, gboolean rm_source);
 
 static void server_send_login (struct network *s) 
 {
@@ -163,7 +163,8 @@ gboolean handle_server_receive (GIOChannel *c, GIOCondition cond, void *_server)
 	gboolean ret;
 
 	if (cond & G_IO_HUP || cond & G_IO_ERR) {
-		return reconnect(c, cond, _server);
+		reconnect(server, FALSE);
+		return FALSE;
 	}
 
 	if (!server->authenticated && !server->login_sent) {
@@ -175,7 +176,8 @@ gboolean handle_server_receive (GIOChannel *c, GIOCondition cond, void *_server)
 		GIOStatus status = irc_recv_line(c, &err, &l);
 
 		if (status != G_IO_STATUS_NORMAL) {
-			return reconnect(c, cond, _server);
+			reconnect(server, FALSE);
+			return FALSE;
 		}
 		
 		if(!l) return TRUE;
@@ -362,21 +364,19 @@ gboolean connect_current_tcp_server(struct network *s)
 	return FALSE;
 }
 
-static gboolean reconnect(GIOChannel *c, GIOCondition cond, void *_server)
+static void reconnect(struct network *server, gboolean rm_source)
 {
-	struct network *server = (struct network *)_server;
-
 	/* Don't report disconnections twice */
 
 	server_disconnected_hook_execute(server);
 
 	switch (server->type) {
 	case NETWORK_TCP: 
-		g_source_remove(server->connection.tcp.outgoing_id); 
+		if (rm_source) g_source_remove(server->connection.tcp.outgoing_id); 
 		server->connection.tcp.outgoing = 0; 
 		break;
 	case NETWORK_PROGRAM: 
-		g_source_remove(server->connection.program.outgoing_id); 
+		if (rm_source) g_source_remove(server->connection.program.outgoing_id); 
 		server->connection.program.outgoing = 0; 
 		break;
 	default: break;
@@ -392,8 +392,6 @@ static gboolean reconnect(GIOChannel *c, GIOCondition cond, void *_server)
 	} else {
 		connect_network(server);	
 	}
-
-	return FALSE;
 }
 
 gboolean network_is_connected(struct network *n)
@@ -646,7 +644,7 @@ gboolean ping_loop(gpointer user_data) {
 		struct network *s = (struct network *)l->data;
 
 		if(network_is_connected(s))network_send_args(s, "PING", s->name, NULL);
-		else reconnect(NULL, G_IO_HUP, s);
+		else reconnect(s, TRUE);
 
 		l = g_list_next(l);
 	}
