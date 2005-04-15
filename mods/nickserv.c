@@ -21,6 +21,9 @@
 #include <string.h>
 #include "irc.h"
 
+#undef G_LOG_DOMAIN
+#define G_LOG_DOMAIN "nickserv"
+
 struct nickserv_entry {
 	const char *network;
 	const char *nick;

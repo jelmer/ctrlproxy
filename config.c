@@ -28,6 +28,7 @@
 
 #define __USE_POSIX
 #include <netdb.h>
+#include <sys/socket.h>
 
 #define DTD_URL "http://ctrlproxy.vernstok.nl/2.7/ctrlproxyrc.dtd"
 
