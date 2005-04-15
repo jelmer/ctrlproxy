@@ -25,17 +25,69 @@
 #include <popt.h>
 #endif
 
+#include <fcntl.h>
+#include <unistd.h>
+#include <errno.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#define __USE_POSIX
+#include <netdb.h>
+
+static pid_t piped_child(char* const command[], int *f_in)
+{
+	pid_t pid;
+	int sock[2];
+
+	if(socketpair(PF_UNIX, SOCK_STREAM, AF_LOCAL, sock) == -1) {
+		perror( "socketpair:");
+		return -1;
+	}
+
+	*f_in = sock[0];
+
+	fcntl(sock[0], F_SETFL, O_NONBLOCK);
+
+	pid = fork();
+	if (pid == -1) {
+		perror("fork");
+		return -1;
+	}
+
+	if (pid == 0) {
+		close(0);
+		close(1);
+		close(2);
+		close(sock[0]);
+
+		dup2(sock[1], 0);
+		dup2(sock[1], 1);
+		execvp(command[0], command);
+		fprintf(stderr, "Failed to exec %s : %s", command[0], strerror(errno));
+		return -1;
+	}
+
+	close(sock[1]);
+
+	return pid;
+}
+
+
 int main(int argc, const char *argv[])
 {
-	int inetd = 0;
-	const char *tcp = NULL;
+	const char *ip = NULL;
+	int fd;
+	const char *port = "6667";
+	int std_fd;
+	pid_t child_pid;
+
 #ifdef HAVE_POPT_H
 	int c;
 	poptContext pc;
 	struct poptOption options[] = {
 		POPT_AUTOHELP
-		{"tcp", 't', POPT_ARG_STRING, &tcp, 't', "Connection to specified host", "HOST"},
-		{"inetd", 'i', POPT_ARG_NONE, &inetd, 'i', "Interface using stdin/stdout", "PROGRAM"},
+		{"ip", 'I', POPT_ARG_STRING, &ip, 't', "Connect to specified host rather then using stdout/stdin", "HOST"},
+		{"tcp-port", 'p', POPT_ARG_STRING, &port, 'p', "Connect to specified TCP port (implies -I)", "PORT" },
 		{"version", 'v', POPT_ARG_NONE, NULL, 'v', "Show version information"},
 		POPT_TABLEEND
 	};
@@ -55,6 +107,47 @@ int main(int argc, const char *argv[])
 		}
 	}
 #endif
+	
+	if (!poptPeekArg(pc)) {
+		poptPrintUsage(pc, stderr, 0);
+		return -1;
+	}
+
+	/* Start the program in question */
+	child_pid = piped_child(poptGetArgs(pc), &std_fd);
+	
+	if (!ip) {
+		fd = std_fd;
+	} else {
+		struct addrinfo hints;
+		struct addrinfo *real;
+		int error;
+		memset(&hints, 0, sizeof(hints));
+		hints.ai_family = PF_INET;
+		hints.ai_socktype = SOCK_STREAM;
+
+		error = getaddrinfo(ip, port, &hints, &real);
+		if (error) {
+			fprintf(stderr, "Error during getaddrinfo: %s", gai_strerror(errno));
+
+			return -1;
+		} 
+		
+		fd = socket(real->ai_family, real->ai_socktype, real->ai_protocol);
+		if (!fd) {
+			perror("socket");
+			return -1;
+		}
+
+		if (connect(fd, real->ai_addr, real->ai_addrlen) == -1) {
+			perror("connect");
+			return -1;
+		}
+	}
+
+	sleep(200);
+
+	close(fd);
 
 	return 0;
 }
