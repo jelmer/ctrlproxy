@@ -1,5 +1,5 @@
 -include ../Makefile.settings
-SUBDIRS = web
+SUBDIRS = 
 SCRIPTS = 
 
 .PHONY: all install clean distclean $(SUBDIRS)
