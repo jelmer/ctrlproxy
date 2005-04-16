@@ -59,8 +59,8 @@
 		<!-- Use /usr/share/ctrlproxy/motd as motd -->
 		<plugin autoload="1" file="libmotd_file"/>
 
-
-		<plugin autoload="1" file="libpython2">
+		<!-- Experimental python support -->
+		<plugin autoload="0" file="libpython2">
 			<!--			<script>scripts/web/server.py</script> -->
 		</plugin>
 		
