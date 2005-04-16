@@ -111,8 +111,6 @@ void signal_quit(int sig)
 
 	state = 1;
 
-	g_message(("Closing connections..."));
-
 	exit(0);
 }
 

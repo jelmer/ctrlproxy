@@ -193,7 +193,7 @@ static void handle_join(struct network *s, struct line *l)
 
 			if(!irccmp(s, line_get_nick(l), s->nick)) {
 				c->joined = TRUE;
-				g_message(("Joining channel %s"), p);
+				g_message(("Joining channel %s on %s"), p, s->name);
 				
 				/* send WHO command for updating hostmasks */
 				sj = g_new(struct started_join,1);

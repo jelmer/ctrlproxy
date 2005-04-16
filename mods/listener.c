@@ -100,8 +100,6 @@ gboolean start_listener(struct listener *l)
 	const int on = 1;
 	struct sockaddr_in addr;
 
-	g_message("Starting listener at port %d", l->port);
-
 	sock = socket(PF_INET, SOCK_STREAM, 0);
 	if (sock < 0) {
 		g_warning( "error creating socket: %s", strerror(errno));

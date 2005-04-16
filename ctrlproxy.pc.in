@@ -6,5 +6,5 @@ includedir=@DESTINCLUDEDIR@
 Name: ctrlproxy
 Description: Flexible IRC proxy
 Version: @PACKAGE_VERSION@
-Libs: @LIBS@ @PKG_LIBS@
-Cflags: -I${includedir} @PKG_CFLAGS@
+Libs: @LIBS@ @COMMON_LIBS@
+Cflags: -I${includedir} @COMMON_CFLAGS@

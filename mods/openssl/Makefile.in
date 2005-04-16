@@ -2,7 +2,7 @@ CC = @CC@
 prefix = @prefix@
 exec_prefix = @exec_prefix@
 INSTALL = @INSTALL@
-CFLAGS = -Wall -fPIC -I../.. -I.. @CFLAGS@ @PKG_CFLAGS@ @OPENSSL_CFLAGS@ -DSHAREDIR=\"@datadir@\" -DHAVE_CONFIG_H
+CFLAGS = -Wall -fPIC -I../.. -I.. @CFLAGS@ @COMMON_CFLAGS@ @OPENSSL_CFLAGS@ -DSHAREDIR=\"@datadir@\" -DHAVE_CONFIG_H
 moddir = @libdir@/ctrlproxy
 MODS = libopenssl.so
 LDFLAGS = @OPENSSL_LIBS@
