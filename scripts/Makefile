@@ -2,18 +2,23 @@
 SUBDIRS = web
 SCRIPTS = 
 
-.PHONY: all install clean distclean
+.PHONY: all install clean distclean $(SUBDIRS)
 
-all: 
-	for I in $(SUBDIRS); do $(MAKE) -C $$I $@; done
+all: $(SUBDIRS)
 
-install: all
+$(SUBDIRS):
+	$(MAKE) -C $@
+
+clean-%:
+	$(MAKE) -C $* clean
+
+install-%:
+	$(MAKE) -C $* install
+
+install: all $(addprefix install-,$(SUBDIRS))
 	$(INSTALL) -d $(DESTDIR)$(scriptdir)
 	test -z "$(SCRIPTS)" || $(INSTALL) $(SCRIPTS) $(DESTDIR)$(scriptdir)
-	for I in $(SUBDIRS); do $(MAKE) -C $$I $@; done
 
-clean:
-	for I in $(SUBDIRS); do $(MAKE) -C $$I $@; done
+clean: $(addprefix clean-,$(SUBDIRS))
 
 distclean: clean
-	rm -f Makefile

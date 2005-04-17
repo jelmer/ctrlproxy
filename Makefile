@@ -75,7 +75,7 @@ clean:
 	$(MAKE) -C testsuite clean
 
 distclean: clean
-	rm -f Makefile build config.h ctrlproxy.pc ctrlproxy.spec *.log
+	rm -f build config.h ctrlproxy.pc ctrlproxy.spec *.log
 	rm -rf autom4te.cache/ config.log config.status
 	$(MAKE) -C mods distclean
 	$(MAKE) -C testsuite distclean

@@ -9,16 +9,26 @@ INCLUDEFILES = $(wildcard *.h)
 
 .PHONY: all install clean distclean
 
-all: $(MODS_SHARED_FILES) 
-	for I in $(MODS_SHARED_SUBDIRS); do $(MAKE) -C $$I $@; done
+all: $(MODS_SHARED_FILES) $(MODS_SHARED_SUBDIRS)
 
-install: all
+$(MODS_SHARED_SUBDIRS):
+	$(MAKE) -C $@
+
+install-%:
+	$(MAKE) -C $* install
+
+clean-%:
+	$(MAKE) -C $* clean
+
+distclean-%:
+	$(MAKE) -C $* distclean
+
+install: all $(addprefix install-,$(MODS_SHARED_SUBDIRS))
 	$(INSTALL) -d $(DESTDIR)$(modulesdir)
 ifneq "$(MODS_SHARED_FILES)" ""
 	$(INSTALL) $(MODS_SHARED_FILES) $(DESTDIR)$(modulesdir)
 endif
 	$(INSTALL) -m 644 $(INCLUDEFILES) $(DESTDIR)$(destincludedir)
-	for I in $(MODS_SHARED_SUBDIRS); do $(MAKE) -C $$I $@; done
 
 $(MODS_STATIC_SUBDIRS_FILES):
 	$(MAKE) -C $(@D) $(@F)
@@ -32,10 +42,7 @@ static.o: $(MODS_STATIC_FILES)
 lib%.so: %.c
 	$(CC) $(CFLAGS) -fPIC -shared -o $@ $<
 
-clean:
-	for I in $(MODS_SHARED_SUBDIRS) $(MODS_STATIC_SUBDIRS); do $(MAKE) -C $$I $@; done
+clean: $(addprefix clean-,$(MODS_SHARED_SUBDIRS) $(MODS_STATIC_SUBDIRS))
 	rm -f $(MODS_SHARED_FILES) $(MODS_STATIC_FILES) *.o *.so
 
-distclean: clean
-	for I in $(MODS_SHARED_SUBDIRS) $(MODS_STATIC_SUBDIRS); do $(MAKE) -C $$I $@; done
-	rm -f Makefile
+distclean: clean $(addprefix distclean-,$(MODS_SHARED_SUBDIRS) $(MODS_STATIC_SUBDIRS))
