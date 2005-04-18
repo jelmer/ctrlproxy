@@ -37,9 +37,14 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition condition, gpo
 	struct line *l;
 	struct listener *listener = data;
 	GError *error = NULL;
+	GIOStatus status;
 
-	l = irc_recv_line(c, &error);
+	status = irc_recv_line(c, &error, &l);
 
+	if (status != G_IO_STATUS_NORMAL) {
+		return FALSE;
+	}
+	
 	if (!l) return TRUE;
 
 	if (!l->args[0]){ 

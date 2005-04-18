@@ -162,7 +162,7 @@ gboolean handle_server_receive (GIOChannel *c, GIOCondition cond, void *_server)
 	struct line *l;
 	gboolean ret;
 
-	if (cond & G_IO_HUP) {
+	if (cond & G_IO_HUP || cond & G_IO_ERR) {
 		return reconnect(c, cond, _server);
 	}
 
@@ -172,7 +172,12 @@ gboolean handle_server_receive (GIOChannel *c, GIOCondition cond, void *_server)
 
 	if (cond & G_IO_IN) {
 		GError *err = NULL;
-		l = irc_recv_line(c, &err);
+		GIOStatus status = irc_recv_line(c, &err, &l);
+
+		if (status != G_IO_STATUS_NORMAL) {
+			return reconnect(c, cond, _server);
+		}
+		
 		if(!l) return TRUE;
 
 		/* Silently drop empty messages, as allowed by RFC */
@@ -340,7 +345,7 @@ gboolean connect_current_tcp_server(struct network *s)
 		}
 	}
 
-	s->connection.tcp.outgoing_id = g_io_add_watch(s->connection.tcp.outgoing, G_IO_IN | G_IO_HUP, handle_server_receive, s);
+	s->connection.tcp.outgoing_id = g_io_add_watch(s->connection.tcp.outgoing, G_IO_IN | G_IO_HUP | G_IO_ERR, handle_server_receive, s);
 
 	g_io_channel_unref(s->connection.tcp.outgoing);
 
@@ -532,7 +537,7 @@ static gboolean connect_program(struct network *s)
 
 	server_send_login(s);
 	
-	s->connection.program.outgoing_id = g_io_add_watch(s->connection.program.outgoing, G_IO_IN, handle_server_receive, s);
+	s->connection.program.outgoing_id = g_io_add_watch(s->connection.program.outgoing, G_IO_IN | G_IO_ERR, handle_server_receive, s);
 
 	g_io_channel_unref(s->connection.program.outgoing);
 

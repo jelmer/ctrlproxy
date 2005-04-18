@@ -186,7 +186,13 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition cond, void *_c
 
 	if (cond & G_IO_IN) {
 		GError *error= NULL;
-		l = irc_recv_line(c, &error);
+		GIOStatus status = irc_recv_line(c, &error, &l);
+
+		if (status != G_IO_STATUS_NORMAL) {
+			disconnect_client(client);
+			return FALSE;
+		}
+
 		if(!l) return TRUE;
 
 		/* Silently drop empty messages */
@@ -250,7 +256,13 @@ static gboolean handle_pending_client_receive(GIOChannel *c, GIOCondition cond, 
 
 	if (cond & G_IO_IN) {
 		GError *error = NULL;
-		l = irc_recv_line(c, &error);
+		GIOStatus status = irc_recv_line(c, &error, &l);
+		
+		if (status != G_IO_STATUS_NORMAL) {
+			disconnect_client(client);
+			return FALSE;
+		}
+
 		if(!l) return TRUE;
 
 		/* Silently drop empty messages */
