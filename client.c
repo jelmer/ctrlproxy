@@ -118,7 +118,8 @@ static gboolean process_from_client(struct line *l)
 			l->origin = old_origin;
 		}
 	} else {
-		irc_sendf(l->client->incoming, ":%s NOTICE %s :Currently not connected to server, ignoring\r\n", (l->client->network->name?l->client->network->name:"ctrlproxy"), l->client->network->nick);
+		irc_sendf(l->client->incoming, ":%s NOTICE %s :Currently not connected to server, connecting...", (l->client->network->name?l->client->network->name:"ctrlproxy"), l->client->network->nick);
+		connect_network(l->client->network);
 	}
 
 	return TRUE;

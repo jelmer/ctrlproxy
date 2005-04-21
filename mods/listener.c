@@ -42,7 +42,7 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition condition, gpo
 
 	if (!l) return TRUE;
 
-	if(!l->args[0]){ 
+	if (!l->args[0]){ 
 		free_line(l);
 		return TRUE;
 	}
