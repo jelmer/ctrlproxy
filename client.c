@@ -29,6 +29,7 @@
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#define __USE_POSIX
 #include <netdb.h>
 
 #include "internals.h"
@@ -283,6 +284,7 @@ static gboolean handle_pending_client_receive(GIOChannel *c, GIOCondition cond, 
 			client->incoming_id = g_io_add_watch(client->incoming, G_IO_IN | G_IO_HUP, handle_client_receive, client);
 
 			client->network->clients = g_list_append(client->network->clients, client);
+			log_client(NULL, client, "New client");
 			free_line(l);
 
 			return FALSE;
@@ -321,7 +323,7 @@ static gboolean handle_pending_client_receive(GIOChannel *c, GIOCondition cond, 
 
 }
 
-struct client *new_client(struct network *n, GIOChannel *c)
+struct client *new_client(struct network *n, GIOChannel *c, const char *desc)
 {
 	struct client *client = g_new0(struct client, 1);
 
@@ -330,6 +332,22 @@ struct client *new_client(struct network *n, GIOChannel *c)
 	client->connect_time = time(NULL);
 	client->incoming = c;
 	client->network = n;
+	client->description = g_strdup(desc);
+
+	if (!desc) {
+		socklen_t len = sizeof(struct sockaddr_in6);
+		struct sockaddr *sa = g_malloc(len);
+		char hostname[NI_MAXHOST];
+		char service[NI_MAXSERV];
+		int fd = g_io_channel_unix_get_fd(c);
+
+		if (getpeername (fd, sa, &len) == 0 &&
+			getnameinfo(sa, len, hostname, sizeof(hostname),
+						service, sizeof(service), NI_NOFQDN | NI_NUMERICSERV) == 0) {
+
+			client->description = g_strdup_printf("%s:%s", hostname, service);
+		}
+	}
 
 	client->incoming_id = g_io_add_watch(client->incoming, G_IO_IN | G_IO_HUP, handle_pending_client_receive, client);
 

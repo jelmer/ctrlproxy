@@ -87,6 +87,8 @@ struct socks_client
 	struct socks_method *method;
 	enum socks_state state;
 	void *method_data;
+	struct sockaddr *clientname;
+	socklen_t clientname_len;
 };
 
 static gboolean socks_reply(GIOChannel *ioc, guint8 err, guint8 atyp, guint8 data_len, guint8 *data, guint16 port)
@@ -225,6 +227,7 @@ static gboolean handle_client_data (GIOChannel *ioc, GIOCondition o, gpointer da
 
 	if (o == G_IO_HUP) {
 		pending_clients = g_list_remove(pending_clients, cl);
+		g_free(cl->clientname);
 		g_free(cl);
 		return FALSE;
 	}
@@ -369,25 +372,21 @@ static gboolean handle_client_data (GIOChannel *ioc, GIOCondition o, gpointer da
 							
 						socks_reply(ioc, REP_OK, atyp, len, data, port); 
 						
-						new_client(result, ioc);
-
-						pending_clients = g_list_remove(pending_clients, cl);
-						g_free(cl);
-
-						return FALSE;
 					} else {
 						char *data = g_strdup("xlocalhost");
 						data[0] = strlen(data+1);
 						
 						socks_reply(ioc, REP_OK, ATYP_FQDN, data[0]+1, data, 1025);
-
-						new_client(result, ioc);
-
-						pending_clients = g_list_remove(pending_clients, cl);
-						g_free(cl);
-
-						return FALSE;
 					}
+
+					new_client(result, ioc, NULL);
+
+					pending_clients = g_list_remove(pending_clients, cl);
+
+					g_free(cl->clientname);
+					g_free(cl);
+
+					return FALSE;
 				}
 			default:
 				return socks_error(ioc, REP_ATYP_NOT_SUPPORTED);
@@ -403,17 +402,19 @@ static gboolean handle_new_client (GIOChannel *ioc, GIOCondition o, gpointer dat
 	/* Spawn off new client */
 	struct socks_client *cl;
 	int ns;
-	struct sockaddr clientname;
-	size_t size;
 	
-	size = sizeof(clientname);
-	ns = accept(g_io_channel_unix_get_fd(ioc), &clientname, &size);
+	cl = g_new0(struct socks_client, 1);
+	cl->clientname_len = sizeof(struct sockaddr_in6);
+	cl->clientname = g_malloc(cl->clientname_len);
+	
+	ns = accept(g_io_channel_unix_get_fd(ioc), cl->clientname, &cl->clientname_len);
 	if (!ns) {
+		g_free(cl->clientname);
+		g_free(cl);
 		log_global("socks", "Unable to accept connection");
 		return TRUE;
 	}
 	
-	cl = g_new0(struct socks_client, 1);
 	cl->connection = g_io_channel_unix_new(ns);
 	cl->state = STATE_NEW;
 	g_io_channel_set_encoding(cl->connection, NULL, NULL);
@@ -434,6 +435,7 @@ gboolean fini_plugin(struct plugin *p)
 
 		g_source_remove(sc->watch_id);
 
+		g_free(sc->clientname);
 		g_free(sc);
 	}
 

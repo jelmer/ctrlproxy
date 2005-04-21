@@ -108,7 +108,7 @@ static gboolean log_data(struct line *l, void *userdata) {
 
 			e->pass = g_strdup(l->args[2] + strlen("IDENTIFY "));
 			
-			log_network("nickserv", e->network, "Caching password for nick %s", e->nick);
+			log_network("nickserv", l->network, "Caching password for nick %s", e->nick);
 	}
 
 	/* If we receive a nick-already-in-use message, ghost the current user */

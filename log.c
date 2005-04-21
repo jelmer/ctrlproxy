@@ -37,7 +37,7 @@ FILE *logf;
 static void log_entry(const char *module, const struct network *n, const struct client *c, const char *data)
 {
 	fprintf(logf, "[%s] [%s] %s%s%s%s%s%s\n", get_date(), 
-			module?module:"CORE", data, n?" (":"", n?n->name:"", c?"/":"", c?c->description:"", n?")":"");
+			module?module:"core", data, n?" (":"", n?n->name:"", c?"/":"", c?c->description:"", n?")":"");
 	fflush(logf);
 }
 

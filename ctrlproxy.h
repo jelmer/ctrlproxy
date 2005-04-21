@@ -225,7 +225,7 @@ G_MODULE_EXPORT GList *get_network_list(void);
 G_MODULE_EXPORT void clients_send(struct network *, struct line *, struct client *exception);
 G_MODULE_EXPORT void disconnect_client(struct client *c);
 G_MODULE_EXPORT gboolean network_change_nick(struct network *s, const char *nick);
-G_MODULE_EXPORT struct client *new_client(struct network *, GIOChannel *);
+G_MODULE_EXPORT struct client *new_client(struct network *, GIOChannel *, const char *desc);
 G_MODULE_EXPORT gboolean network_send_line(struct network *s, const struct line *);
 G_MODULE_EXPORT gboolean network_send_args(struct network *s, ...);
 G_MODULE_EXPORT void register_virtual_network(struct virtual_network_ops *);

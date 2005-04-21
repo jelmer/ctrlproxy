@@ -583,7 +583,9 @@ int close_network(struct network *s)
 {
 	GList *l = s->clients;
 	g_assert(s);
-	log_network(NULL, s, "Closing connection");
+	if (network_is_connected(s)) {
+		log_network(NULL, s, "Closing connection");
+	}
 
 	while(l) {
 		struct client *c = l->data;

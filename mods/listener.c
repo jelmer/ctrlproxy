@@ -68,7 +68,7 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition condition, gpo
 
 		log_network ("listener", listener->network, "Client successfully authenticated");
 
-		new_client(listener->network, c);
+		new_client(listener->network, c, NULL);
 
 		free_line(l); 
 		return FALSE;

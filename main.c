@@ -240,7 +240,7 @@ int main(int argc, const char *argv[])
 			fprintf(stderr, "Unable to find network named '%s'\n", inetd_client);
 		} else {
 			/* Find clients network by name */
-			new_client(n, io);
+			new_client(n, io, "Standard I/O");
 		}
 	}
 
