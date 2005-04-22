@@ -140,10 +140,10 @@ gboolean save_config(struct plugin *p, xmlNodePtr node)
 	GList *gl;
 
 	for (gl = nicks; gl; gl = gl->next) {
-		xmlNodePtr p = xmlNewNode(NULL, "nick");	
+		xmlNodePtr p = xmlNewNode(NULL, "name");	
 		struct nickserv_entry *n = gl->data;
 
-		xmlSetProp(p, "nick", n->nick);
+		xmlSetProp(p, "name", n->nick);
 		if (n->network) xmlSetProp(p, "network", n->network);
 		xmlSetProp(p, "password", n->pass);
 
@@ -162,9 +162,9 @@ gboolean load_config(struct plugin *p, xmlNodePtr node)
 		struct nickserv_entry *e;
 		if (cur->type != XML_ELEMENT_NODE) continue;
 
-		if (!strcmp(cur->name, "nick")) {
+		if (!strcmp(cur->name, "name")) {
 			e = g_new0(struct nickserv_entry, 1);
-			e->nick = xmlGetProp(cur, "nick");
+			e->nick = xmlGetProp(cur, "name");
 			e->pass = xmlGetProp(cur, "password");
 			e->network = xmlGetProp(cur, "network");
 		

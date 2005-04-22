@@ -33,6 +33,7 @@
 
 <!ELEMENT nickserv (nick*)>
 <!ELEMENT nick EMPTY>
+<!ATTLIST nick network CDATA #IMPLIED>
 <!ATTLIST nick password CDATA #REQUIRED>
 <!ATTLIST nick name CDATA #REQUIRED>
 
@@ -57,3 +58,8 @@
 <!ELEMENT allow EMPTY>
 <!ATTLIST allow password CDATA #IMPLIED>
 <!ATTLIST allow username CDATA #IMPLIED>
+
+<!ELEMENT listen EMPTY>
+<!ATTLIST listen port CDATA #IMPLIED>
+<!ATTLIST listen password CDATA #IMPLIED>
+<!ATTLIST listen network CDATA #IMPLIED>
