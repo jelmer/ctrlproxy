@@ -178,6 +178,8 @@ int main(int argc, const char *argv[])
 
 	init_log(logfile);
 
+	log_global(NULL, "CtrlProxy %s starting", PACKAGE_VERSION);
+
 	if(gethostname(my_hostname, MAXHOSTNAMELEN) != 0) {
 		log_global(NULL, "Can't figure out hostname of local host!");
 		return 1;

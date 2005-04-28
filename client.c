@@ -238,8 +238,9 @@ static gboolean welcome_client(struct client *client)
 		/* Initialization was successful. Now we can almost safely try to change to the nick, which
 		 * was requested by the client earlier */
 		if (!client->network->ignore_first_nick && client->nick)
-			if (strcmp(client->nick, client->network->nick)) 
+			if (g_strcasecmp(client->nick, client->network->nick)) {
 				network_send_args(client->network, "NICK", client->nick, NULL);
+			}
 	}
 
 	return TRUE;

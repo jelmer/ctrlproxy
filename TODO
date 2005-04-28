@@ -1,11 +1,9 @@
-- update documentation
- - repl changes
- - see FIXME's
-
-- finish python module 
- - hooks. 
-   - typemap for each kind of callback
-    - callback for every kind of function
+2.7 showstoppers:
+- update documentation (see FIXME's)
+- test and fix SSL support
+- fix nick name handling
+- finish python module hooks
+- versioning for modules
 
 typedef gboolean (*filter_function) (struct line *);
 typedef gboolean (*new_client_hook) (struct client *);
@@ -14,9 +12,9 @@ typedef char ** (*motd_hook) (struct network *n);
 typedef void (*server_connected_hook) (struct network *);
 typedef void (*server_disconnected_hook) (struct network *);
 
-- rewrite web script
-- test and fix SSL support
 
-next release:
+next release (2.7.1 ?):
  - <allow/> rules in socks and listener based on ip addresses/ranges
- - cascading filters, remove client, network and options from line struct
+ - some sort of cascading filters, remove client, network and options from 
+   line struct
+ - more advanced repl backends
