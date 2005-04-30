@@ -21,6 +21,9 @@
 #include "config.h"
 #endif
 
+#define _GNU_SOURCE
+#include "ircdtorture.h"
+
 #ifdef HAVE_POPT_H
 #include <popt.h>
 #endif
@@ -29,12 +32,56 @@
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
+#include <stdarg.h>
+#include <stdlib.h>
 #include <sys/types.h>
 #include <sys/socket.h>
-#define __USE_POSIX
 #include <netdb.h>
 
-static pid_t piped_child(char* const command[], int *f_in)
+int fdprintf(int fd, const char *fmt, ...)
+{
+	char *tmp;
+	int ret;
+	va_list ap;
+	va_start(ap, fmt);
+	vasprintf(&tmp, fmt, ap);
+	ret = write(fd, tmp, strlen(tmp));
+	va_end(ap);
+	free(tmp);
+	return ret;
+}
+
+static int test_connect(void)
+{
+	int fd = new_conn();
+	close(fd);
+	if (fd >= 0) return 0; else return -1;
+}
+
+int new_conn_loggedin(void)
+{
+	int fd = new_conn();
+	fdprintf(fd, "USER a a a a\r\n");
+	fdprintf(fd, "NICK bla\r\n");
+	return fd;
+}
+
+static int test_login(void)
+{
+	int fd = new_conn();
+	fdprintf(fd, "USER a a a a\r\n");
+	fdprintf(fd, "NICK bla\r\n");
+	close(fd);
+	return 0;
+}
+
+struct torture_test tests[] = {
+	{ "IRC-CONNECT", test_connect },
+	{ "IRC-LOGIN", test_login },
+	{ NULL, NULL }
+};
+
+static pid_t piped_child(char *const command[], int *f_in)
 {
 	pid_t pid;
 	int sock[2];
@@ -72,14 +119,64 @@ static pid_t piped_child(char* const command[], int *f_in)
 	return pid;
 }
 
+static const char *ip = NULL;
+static const char **args = NULL;
+static const char *port = "6667";
+
+int new_conn(void)
+{
+	pid_t child_pid;
+	int std_fd;
+	int fd;
+
+	/* Start the program in question */
+	child_pid = piped_child(args, &std_fd);
+	
+	if (!ip) {
+		fd = std_fd;
+	} else {
+		struct addrinfo hints;
+		struct addrinfo *real;
+		int error;
+		memset(&hints, 0, sizeof(hints));
+		hints.ai_family = PF_INET;
+		hints.ai_socktype = SOCK_STREAM;
+
+		error = getaddrinfo(ip, port, &hints, &real);
+		if (error) {
+			fprintf(stderr, "Error during getaddrinfo: %s", gai_strerror(errno));
+
+			return -1;
+		} 
+		
+		fd = socket(real->ai_family, real->ai_socktype, real->ai_protocol);
+		if (!fd) {
+			perror("socket");
+			return -1;
+		}
+
+		if (connect(fd, real->ai_addr, real->ai_addrlen) == -1) {
+			perror("connect");
+			return -1;
+		}
+	}
+
+	return fd;
+}
+
+int run_test(struct torture_test *test)
+{
+	int ret;
+	printf("Running %s... ", test->name);
+	fflush(stdout);
+	ret = test->test();
+	if (ret) printf("failed!\n"); else printf("ok\n");
+	return ret;
+}
 
 int main(int argc, const char *argv[])
 {
-	const char *ip = NULL;
-	int fd;
-	const char *port = "6667";
-	int std_fd;
-	pid_t child_pid;
+	int i;
 
 #ifdef HAVE_POPT_H
 	int c;
@@ -113,41 +210,12 @@ int main(int argc, const char *argv[])
 		return -1;
 	}
 
-	/* Start the program in question */
-	child_pid = piped_child(poptGetArgs(pc), &std_fd);
-	
-	if (!ip) {
-		fd = std_fd;
-	} else {
-		struct addrinfo hints;
-		struct addrinfo *real;
-		int error;
-		memset(&hints, 0, sizeof(hints));
-		hints.ai_family = PF_INET;
-		hints.ai_socktype = SOCK_STREAM;
+	args = poptGetArgs(pc);
 
-		error = getaddrinfo(ip, port, &hints, &real);
-		if (error) {
-			fprintf(stderr, "Error during getaddrinfo: %s", gai_strerror(errno));
-
+	for (i = 0; tests[i].name; i++) {
+		if (run_test(&tests[i])) 
 			return -1;
-		} 
-		
-		fd = socket(real->ai_family, real->ai_socktype, real->ai_protocol);
-		if (!fd) {
-			perror("socket");
-			return -1;
-		}
-
-		if (connect(fd, real->ai_addr, real->ai_addrlen) == -1) {
-			perror("connect");
-			return -1;
-		}
 	}
-
-	sleep(200);
-
-	close(fd);
 
 	return 0;
 }

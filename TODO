@@ -11,9 +11,8 @@ typedef char ** (*motd_hook) (struct network *n);
 typedef void (*server_connected_hook) (struct network *);
 typedef void (*server_disconnected_hook) (struct network *);
 
-
 next release (2.7.1 ?):
  - <allow/> rules in socks and listener based on ip addresses/ranges
  - some sort of cascading filters, remove client, network and options from 
    line struct
- - more advanced repl backends
+ - more advanced repl backends, rules-based perhaps?
