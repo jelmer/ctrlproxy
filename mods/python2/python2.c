@@ -27,18 +27,13 @@
 #include <time.h>
 #include <glib.h>
 
-#undef G_LOG_DOMAIN
-#define G_LOG_DOMAIN "python2"
-
-const char name_plugin[] = "python2";
-
-gboolean fini_plugin(struct plugin *p)
+static gboolean fini_plugin(struct plugin *p)
 {
 	Py_Finalize();
 	return TRUE;
 }
 
-gboolean load_config(struct plugin *p, xmlNodePtr node)
+static gboolean load_config(struct plugin *p, xmlNodePtr node)
 {
 	FILE *fd;
 	xmlNodePtr cur;
@@ -62,7 +57,15 @@ gboolean load_config(struct plugin *p, xmlNodePtr node)
 	return TRUE;
 }
 
-gboolean init_plugin(struct plugin *p)
+static gboolean init_plugin(struct plugin *p)
 {
 	return TRUE;
 }
+
+struct plugin_ops plugin = {
+	.name = "python2",
+	.version = 0,
+	.init = init_plugin,
+	.fini = fini_plugin,
+	.load_config = load_config
+};

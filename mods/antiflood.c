@@ -104,7 +104,7 @@ static void free_antiflood_server(gpointer user_data)
 	g_free(sd);
 }
 
-gboolean fini_plugin(struct plugin *p) {
+static gboolean fini_plugin(struct plugin *p) {
 	del_server_filter("antiflood");
 	
 	g_hash_table_destroy(antiflood_servers);
@@ -112,9 +112,7 @@ gboolean fini_plugin(struct plugin *p) {
 	return TRUE;
 }
 
-const char name_plugin[] = "antiflood";
-
-gboolean save_config(struct plugin *p, xmlNodePtr node)
+static gboolean save_config(struct plugin *p, xmlNodePtr node)
 {
 	char *tmp = g_strdup_printf("%d", default_queue_speed);
 	xmlSetProp(node, "queue-speed", tmp);
@@ -122,7 +120,7 @@ gboolean save_config(struct plugin *p, xmlNodePtr node)
 	return TRUE;
 }
 
-gboolean load_config(struct plugin *p, xmlNodePtr node)
+static gboolean load_config(struct plugin *p, xmlNodePtr node)
 {
 	char *qs = xmlGetProp(node, "queue-speed");
 	
@@ -133,10 +131,19 @@ gboolean load_config(struct plugin *p, xmlNodePtr node)
 	return TRUE;
 }
 
-gboolean init_plugin(struct plugin *p) {
+static gboolean init_plugin(struct plugin *p) {
 	this_plugin = p;
 	add_server_filter("antiflood", log_data, NULL, 2000);
 	antiflood_servers = g_hash_table_new_full(NULL, NULL, NULL, free_antiflood_server);
 	
 	return TRUE;
 }
+
+struct plugin_ops plugin = {
+	.name = "antiflood",
+	.version = 0,
+	.init = init_plugin,
+	.fini = fini_plugin,
+	.load_config = load_config,
+	.save_config = save_config
+};

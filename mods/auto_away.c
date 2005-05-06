@@ -73,7 +73,7 @@ static gboolean log_data(struct line *l, void *userdata) {
 	return TRUE;
 }
 
-gboolean fini_plugin(struct plugin *p) {
+static gboolean fini_plugin(struct plugin *p) {
 	struct auto_away_data *d = (struct auto_away_data *)p->data;
 
 	g_free(message);
@@ -84,9 +84,7 @@ gboolean fini_plugin(struct plugin *p) {
 	return TRUE;
 }
 
-const char name_plugin[] = "auto-away";
-
-gboolean save_config(struct plugin *p, xmlNodePtr node)
+static gboolean save_config(struct plugin *p, xmlNodePtr node)
 {
 	if (only_for_noclients) {
 		xmlAddChild(node, xmlNewNode(NULL, "only_noclients"));
@@ -110,7 +108,7 @@ gboolean save_config(struct plugin *p, xmlNodePtr node)
 	return TRUE;
 }
 
-gboolean load_config(struct plugin *p, xmlNodePtr node)
+static gboolean load_config(struct plugin *p, xmlNodePtr node)
 {
 	struct auto_away_data *d = (struct auto_away_data *)p->data;
 	xmlNodePtr cur;
@@ -137,7 +135,7 @@ gboolean load_config(struct plugin *p, xmlNodePtr node)
 	return TRUE;
 }
 
-gboolean init_plugin(struct plugin *p) {
+static gboolean init_plugin(struct plugin *p) {
 	struct auto_away_data *d;
 
 	d = g_new(struct auto_away_data,1);
@@ -150,3 +148,11 @@ gboolean init_plugin(struct plugin *p) {
 	return TRUE;
 }
 
+struct plugin_ops plugin = {
+	.name = "auto_away",
+	.version = 0,
+	.init = init_plugin,
+	.fini = fini_plugin,
+	.load_config = load_config,
+	.save_config = save_config
+};

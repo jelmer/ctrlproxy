@@ -20,13 +20,13 @@
 #include <ctrlproxy.h>
 #include <string.h>
 
-gboolean memory_init(struct linestack_context *c, const char *args)
+static gboolean memory_init(struct linestack_context *c, const char *args)
 {
 	c->data = NULL;
 	return TRUE;
 }
 
-gboolean memory_clear(struct linestack_context *c)
+static gboolean memory_clear(struct linestack_context *c)
 {
 	GSList *gl = (GSList *)c->data;
 	while(gl) {
@@ -38,7 +38,7 @@ gboolean memory_clear(struct linestack_context *c)
 	return TRUE;
 }
 
-GSList *memory_get_linked_list(struct linestack_context *c)
+static GSList *memory_get_linked_list(struct linestack_context *c)
 {
 	GSList *b, *ret = NULL;
 	b = (GSList *)c->data;
@@ -51,7 +51,7 @@ GSList *memory_get_linked_list(struct linestack_context *c)
 	return ret;
 }
 
-gboolean memory_add_line(struct linestack_context *b, struct line *l)
+static gboolean memory_add_line(struct linestack_context *b, struct line *l)
 {
 	GSList *gl = (GSList *)b->data;
 	gl = g_slist_append(gl, linedup(l));
@@ -59,7 +59,7 @@ gboolean memory_add_line(struct linestack_context *b, struct line *l)
 	return TRUE;
 }	
 
-struct linestack_ops memory = {
+static struct linestack_ops memory = {
 	"memory",
 	memory_init,
 	memory_clear,
@@ -70,14 +70,19 @@ struct linestack_ops memory = {
 	memory_clear
 };
 
-gboolean fini_plugin(struct plugin *p) {
+static gboolean fini_plugin(struct plugin *p) {
 	unregister_linestack(&memory);
 	return TRUE;
 }
 
-const char name_plugin[] = "linestack_memory";
-
-gboolean init_plugin(struct plugin *p) {
+static gboolean init_plugin(struct plugin *p) {
 	register_linestack(&memory);
 	return TRUE;
 }
+
+struct plugin_ops plugin = {
+	.name = "linestack_memory",
+	.version = 0,
+	.init = init_plugin,
+	.fini = fini_plugin
+};

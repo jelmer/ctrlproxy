@@ -30,15 +30,13 @@ static gboolean loop_save_config(gpointer user_data)
 	return TRUE;
 }
 
-const char name_plugin[] = "autosave";
-
-gboolean save_config(struct plugin *p, xmlNodePtr node)
+static gboolean save_config(struct plugin *p, xmlNodePtr node)
 {
 	/*FIXME */
 	return TRUE;
 }
 
-gboolean load_config(struct plugin *p, xmlNodePtr node)
+static gboolean load_config(struct plugin *p, xmlNodePtr node)
 {
 	int time = 0;
 	xmlNodePtr cur;
@@ -60,14 +58,23 @@ gboolean load_config(struct plugin *p, xmlNodePtr node)
 	return TRUE;
 }
 
-gboolean init_plugin(struct plugin *p)
+static gboolean init_plugin(struct plugin *p)
 {
 	this_plugin = p;
 	
 	return TRUE;
 }
 
-gboolean fini_plugin(struct plugin *p)
+static gboolean fini_plugin(struct plugin *p)
 {
 	return g_source_remove(autosave_id);
 }
+
+struct plugin_ops plugin = {
+	.name = "autosave",
+	.version = 0,
+	.init = init_plugin,
+	.fini = fini_plugin,
+	.load_config = load_config,
+	.save_config = save_config
+};

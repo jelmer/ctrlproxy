@@ -3,7 +3,6 @@
 - test and fix SSL support
 - fix nick name handling
 - finish python module hooks
-- versioning for modules
 
 typedef gboolean (*filter_function) (struct line *);
 typedef gboolean (*new_client_hook) (struct client *);

@@ -51,7 +51,7 @@ char ** motd_file_handler(struct network *n, void *userdata)
 	return lines;
 }
 
-gboolean fini_plugin(struct plugin *p) {
+static gboolean fini_plugin(struct plugin *p) {
 	
 	del_motd_hook("motd_file");
 	g_free(motd_file);
@@ -59,15 +59,13 @@ gboolean fini_plugin(struct plugin *p) {
 	return TRUE;
 }
 
-const char name_plugin[] = "motd_file";
-
-gboolean save_config(struct plugin *p, xmlNodePtr node)
+static gboolean save_config(struct plugin *p, xmlNodePtr node)
 {
 	xmlNewTextChild(node, NULL, "motd_file", motd_file);
 	return TRUE;
 }
 
-gboolean load_config(struct plugin *p, xmlNodePtr node) 
+static gboolean load_config(struct plugin *p, xmlNodePtr node) 
 {
 	xmlNodePtr cur;
 
@@ -90,7 +88,16 @@ gboolean load_config(struct plugin *p, xmlNodePtr node)
 	return TRUE;
 }
 
-gboolean init_plugin(struct plugin *p) {
+static gboolean init_plugin(struct plugin *p) {
 	add_motd_hook("motd_file", motd_file_handler, NULL);
 	return TRUE;
 }
+
+struct plugin_ops plugin = {
+	.name = "motd_file",
+	.version = 0,
+	.init = init_plugin,
+	.fini = fini_plugin,
+	.load_config = load_config,
+	.save_config = save_config
+};

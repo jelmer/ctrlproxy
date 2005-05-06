@@ -167,7 +167,7 @@ struct listener *new_listener(guint16 port)
 	return l;
 }
 
-gboolean save_config(struct plugin *p, xmlNodePtr conf)
+static gboolean save_config(struct plugin *p, xmlNodePtr conf)
 {
 	GList *gl;
 	char *tmp;
@@ -191,7 +191,7 @@ gboolean save_config(struct plugin *p, xmlNodePtr conf)
 	return TRUE;
 }
 
-gboolean load_config(struct plugin *p, xmlNodePtr conf)
+static gboolean load_config(struct plugin *p, xmlNodePtr conf)
 {
 	xmlNodePtr cur;
 
@@ -219,12 +219,12 @@ gboolean load_config(struct plugin *p, xmlNodePtr conf)
 	return TRUE;
 }
 
-gboolean init_plugin(struct plugin *p) 
+static gboolean init_plugin(struct plugin *p) 
 {
 	return TRUE;
 }
 
-gboolean fini_plugin(struct plugin *p)
+static gboolean fini_plugin(struct plugin *p)
 {
 	while(listeners) {
 		struct listener *l = listeners->data;
@@ -234,3 +234,12 @@ gboolean fini_plugin(struct plugin *p)
 
 	return TRUE; 
 }
+
+struct plugin_ops plugin = {
+	.name = "listener",
+	.version = 0,
+	.init = init_plugin,
+	.fini = fini_plugin,
+	.load_config = load_config,
+	.save_config = save_config
+};

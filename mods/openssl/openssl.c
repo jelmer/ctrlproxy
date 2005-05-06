@@ -193,13 +193,11 @@ GIOChannel *irssi_ssl_get_iochannel(GIOChannel *handle, gboolean server);
 static gboolean irssi_ssl_set_files(const char *certf, const char *keyf);
 static SSL_CTX *ssl_ctx = NULL;
 
-const char name_plugin[] = "openssl";
-
-gboolean fini_plugin(struct plugin *p) {
+static gboolean fini_plugin(struct plugin *p) {
 	return TRUE;
 }
 
-gboolean load_config(struct plugin *p, xmlNodePtr node)
+static gboolean load_config(struct plugin *p, xmlNodePtr node)
 {
 	const char *keyf = NULL, *certf = NULL;
 	xmlNodePtr cur;
@@ -234,7 +232,7 @@ gboolean load_config(struct plugin *p, xmlNodePtr node)
 	return TRUE;
 }
 
-gboolean init_plugin(struct plugin *p)
+static gboolean init_plugin(struct plugin *p)
 {
 	SSL_library_init();
 	SSL_load_error_strings();
@@ -348,3 +346,10 @@ GIOChannel *irssi_ssl_get_iochannel(GIOChannel *handle, gboolean server)
 	
 	return gchan;
 }
+
+struct plugin_ops plugin = {
+	.name = "openssl",
+	.version = 0,
+	.init = init_plugin,
+	.fini = fini_plugin,
+};

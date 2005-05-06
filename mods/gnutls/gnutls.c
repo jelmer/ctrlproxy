@@ -182,9 +182,7 @@ static GIOFuncs g_io_gnutls_channel_funcs = {
     g_io_gnutls_get_flags
 };
 
-const char name_plugin[] = "gnutls";
-
-gboolean fini_plugin(struct plugin *p)
+static gboolean fini_plugin(struct plugin *p)
 {
 	return TRUE;
 }
@@ -236,7 +234,7 @@ cur = config_instance_get_setting(p->config, "keyfile");
 
 #endif
 
-gboolean init_plugin(struct plugin *p)
+static gboolean init_plugin(struct plugin *p)
 {
 	if(gnutls_global_init() < 0) {
 		log_global("gnutls", "gnutls global state initialization error");
@@ -318,3 +316,10 @@ GIOChannel *g_io_gnutls_get_iochannel(GIOChannel *handle, gboolean server)
 	
 	return gchan;
 }
+
+struct plugin_ops plugin = {
+	.name = "gnutls",
+	.version = 0,
+	.init = init_plugin,
+	.fini = fini_plugin,
+};

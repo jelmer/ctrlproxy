@@ -48,8 +48,8 @@ static xmlNodePtr config_save_plugins()
 		xmlSetProp(n, "autoload", p->autoload?"1":"0");
 		xmlSetProp(n, "file", p->path);
 		
-		if (p->save_config) {
-			p->save_config(p, n);
+		if (p->ops->save_config) {
+			p->ops->save_config(p, n);
 		}
 
 		xmlAddChild(ret, n);
@@ -169,10 +169,10 @@ gboolean plugin_load_config(struct plugin *p)
 	if (!p) 
 		return FALSE;
 
-	if (!p->load_config) 
+	if (!p->ops->load_config) 
 		return TRUE;
 
-	return p->load_config(p, cur);
+	return p->ops->load_config(p, cur);
 }
 
 void init_config()

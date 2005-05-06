@@ -427,7 +427,7 @@ static gboolean handle_new_client (GIOChannel *ioc, GIOCondition o, gpointer dat
 }
 
 /* Configure port number to listen on */
-gboolean fini_plugin(struct plugin *p)
+static gboolean fini_plugin(struct plugin *p)
 {
 	GList *gl;
 	for (gl = pending_clients; gl; gl = gl->next) {
@@ -446,9 +446,7 @@ gboolean fini_plugin(struct plugin *p)
 	return TRUE;
 }
 
-const char name_plugin[] = "socks";
-
-gboolean save_config(struct plugin *p, xmlNodePtr node)
+static gboolean save_config(struct plugin *p, xmlNodePtr node)
 {
 	GList *gl;
 	
@@ -466,7 +464,7 @@ gboolean save_config(struct plugin *p, xmlNodePtr node)
 	return TRUE;
 }
 
-gboolean load_config(struct plugin *p, xmlNodePtr conf)
+static gboolean load_config(struct plugin *p, xmlNodePtr conf)
 {
 	int sock;
 	const int on = 1;
@@ -534,7 +532,16 @@ gboolean load_config(struct plugin *p, xmlNodePtr conf)
 	return TRUE;
 }
 
-gboolean init_plugin(struct plugin *p)
+static gboolean init_plugin(struct plugin *p)
 {
 		return TRUE;
 }
+
+struct plugin_ops plugin = {
+	.name = "socks",
+	.version = 0,
+	.init = init_plugin,
+	.fini = fini_plugin,
+	.load_config = load_config,
+	.save_config = save_config
+};

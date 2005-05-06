@@ -28,19 +28,12 @@ GList *plugins = NULL;
 
 gboolean unload_plugin(struct plugin *p)
 {
-	plugin_fini_function f;
-
 	if (!p->loaded) 
 		return FALSE;
 
 	/* Run exit function if present */
-	if(g_module_symbol(p->module, "fini_plugin", (gpointer)&f)) {
-		if(!f(p)) {
-			log_global(NULL, "Unable to unload plugin '%s': still in use?", p->name);
-			return FALSE;
-		}
-	} else {
-		log_global(NULL, "No symbol 'fini_plugin' in plugin '%s'. Module does not support unloading, so no unload will be attempted", p->name);
+	if(!p->ops->fini(p)) {
+		log_global(NULL, "Unable to unload plugin '%s': still in use?", p->ops->name);
 		return FALSE;
 	}
 
@@ -64,12 +57,12 @@ struct plugin *new_plugin(const char *name)
 	return p;
 }
 
-gboolean plugin_loaded(char *name)
+gboolean plugin_loaded(const char *name)
 {
 	GList *gl = plugins;
 	while(gl) {
 		struct plugin *p = (struct plugin *)gl->data;
-		if(p->name && !strcmp(p->name, name)) return TRUE;
+		if(p && p->ops && p->ops->name && !strcmp(p->ops->name, name)) return TRUE;
 		gl = gl->next;
 	}
 	return FALSE;
@@ -79,10 +72,9 @@ gboolean load_plugin(struct plugin *p)
 {
 	GModule *m;
 	const char *modulesdir;
-	char *selfname = NULL;
+	struct plugin_ops *ops = NULL;
 	extern gboolean plugin_load_config(struct plugin *);
 	gchar *path_name;
-	plugin_init_function f = NULL;
 
 	/* Determine correct modules directory */
 	if(getenv("MODULESDIR"))modulesdir = getenv("MODULESDIR");
@@ -99,30 +91,24 @@ gboolean load_plugin(struct plugin *p)
 		return FALSE;
 	}
 
-	if(!g_module_symbol(m, "name_plugin", (gpointer)&selfname)) {
-		selfname = p->path;
+	if(!g_module_symbol(m, "plugin", (gpointer)&ops)) {
+		log_global(NULL, "No valid plugin information found");
+		g_free(path_name);
+		return FALSE;
 	}
 
-	if(plugin_loaded(selfname)) {
+	if(plugin_loaded(ops->name)) {
 		log_global(NULL, "Plugin already loaded");
 		g_free(path_name);
 		return FALSE;
 	}
 
-	if(!g_module_symbol(m, "init_plugin", (gpointer)&f)) {
-		log_global(NULL, "Can't find symbol 'init_plugin' in module %s: %s", path_name, g_module_error());
-		g_free(path_name);
-		return FALSE;
-	}
 	g_free(path_name);
 
-	p->name = g_strdup(selfname);
 	p->module = m;
+	p->ops = ops;
 
-	g_module_symbol(m, "load_config", (gpointer)&p->load_config);
-	g_module_symbol(m, "save_config", (gpointer)&p->save_config);
-
-	if(!f(p)) {
+	if(!p->ops->init(p)) {
 		log_global(NULL, "Running initialization function for plugin '%s' failed.", p->path);
 		return FALSE;
 	}
@@ -138,7 +124,6 @@ gboolean load_plugin(struct plugin *p)
 void free_plugin(struct plugin *p)
 {
 	g_free(p->path);
-	g_free(p->name);
 	g_free(p);
 
 	plugins = g_list_remove(plugins, p);
@@ -168,7 +153,7 @@ gboolean init_plugins() {
 			struct plugin *p = gl->data;
 
 			if(!p->loaded && p->autoload && !load_plugin(p)) {
-				log_global(NULL, "Can't load plugin %s, aborting...", p->name);
+				log_global(NULL, "Can't load plugin %s, ignoring...", p->ops?p->ops->name:p->path);
 				ret = FALSE;
 			}
 

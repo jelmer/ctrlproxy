@@ -68,19 +68,23 @@ static gboolean highlight_replicate(struct client *c, void *userdata)
 	return TRUE;
 }
 
-gboolean fini_plugin(struct plugin *p) {
+static gboolean fini_plugin(struct plugin *p) {
 	del_replication_filter("repl_highlight");
 	del_new_client_hook("repl_highlight");
 	g_hash_table_destroy(highlight_backlog); highlight_backlog = NULL;
 	return TRUE;
 }
 
-const char name_plugin[] = "repl_highlight";
-
-gboolean init_plugin(struct plugin *p) {
+static gboolean init_plugin(struct plugin *p) {
 	add_replication_filter("repl_highlight", log_data, NULL, 1000);
 	add_new_client_hook("repl_highlight", highlight_replicate, NULL);
 	highlight_backlog = g_hash_table_new(NULL, NULL);
 	return TRUE;
 }
 
+struct plugin_ops plugin = {
+	.name = "repl_highlight",
+	.version = 0,
+	.init = init_plugin,
+	.fini = fini_plugin
+};

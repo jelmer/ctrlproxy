@@ -135,7 +135,7 @@ static void conned_data(struct network *n, void *userdata)
 	identify_me(n, n->nick);
 }
 
-gboolean save_config(struct plugin *p, xmlNodePtr node)
+static gboolean save_config(struct plugin *p, xmlNodePtr node)
 {
 	GList *gl;
 
@@ -153,7 +153,7 @@ gboolean save_config(struct plugin *p, xmlNodePtr node)
 	return TRUE;	
 }
 
-gboolean load_config(struct plugin *p, xmlNodePtr node)
+static gboolean load_config(struct plugin *p, xmlNodePtr node)
 {
 	xmlNodePtr cur;
 
@@ -175,16 +175,23 @@ gboolean load_config(struct plugin *p, xmlNodePtr node)
 	return TRUE;
 }
 
-gboolean fini_plugin(struct plugin *p) {
+static gboolean fini_plugin(struct plugin *p) {
 	del_server_connected_hook("nickserv");
 	del_server_filter("nickserv");
 	return TRUE;
 }
 
-const char name_plugin[] = "nickserv";
-
-gboolean init_plugin(struct plugin *p) {
+static gboolean init_plugin(struct plugin *p) {
 	add_server_connected_hook("nickserv", conned_data, NULL);
 	add_server_filter("nickserv", log_data, NULL, 1);
 	return TRUE;
 }
+
+struct plugin_ops plugin = {
+	.name = "nickserv",
+	.version = 0,
+	.init = init_plugin,
+	.fini = fini_plugin,
+	.load_config = load_config,
+	.save_config = save_config
+};

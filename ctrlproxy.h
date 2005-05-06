@@ -183,20 +183,22 @@ struct network {
 	} connection;
 };
 
-typedef gboolean (*plugin_init_function) (struct plugin *);
-typedef gboolean (*plugin_fini_function) (struct plugin *);
-typedef gboolean (*plugin_save_function) (struct plugin *, xmlNodePtr);
-typedef gboolean (*plugin_load_function) (struct plugin *, xmlNodePtr configuration);
+struct plugin_ops {
+	int version;
+	const char *name;
+	gboolean (*init) (struct plugin *);
+	gboolean (*fini) (struct plugin *);
+	gboolean (*save_config) (struct plugin *, xmlNodePtr);
+	gboolean (*load_config) (struct plugin *, xmlNodePtr configuration);
+};
 
 struct plugin {
-	char *name;
 	char *path;
 	GModule *module;
 	void *data;
 	gboolean autoload;
 	gboolean loaded;
-	plugin_save_function save_config;
-	plugin_load_function load_config;
+	struct plugin_ops *ops;
 };
 
 /* state.c */
@@ -264,7 +266,7 @@ G_MODULE_EXPORT gboolean load_configuration(const char *name);
 G_MODULE_EXPORT struct plugin *new_plugin(const char *name);
 G_MODULE_EXPORT gboolean load_plugin(struct plugin *);
 G_MODULE_EXPORT gboolean unload_plugin(struct plugin *);
-G_MODULE_EXPORT gboolean plugin_loaded(char *name);
+G_MODULE_EXPORT gboolean plugin_loaded(const char *name);
 G_MODULE_EXPORT GList *get_plugin_list(void);
 
 /* linestack.c */

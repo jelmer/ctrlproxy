@@ -158,14 +158,19 @@ static struct linestack_ops file = {
 	file_close
 };
 
-gboolean fini_plugin(struct plugin *p) {
+static gboolean fini_plugin(struct plugin *p) {
 	unregister_linestack(&file);
 	return TRUE;
 }
 
-const char name_plugin[] = "linestack_file";
-
-gboolean init_plugin(struct plugin *p) {
+static gboolean init_plugin(struct plugin *p) {
 	register_linestack(&file);
 	return TRUE;
 }
+
+struct plugin_ops plugin = {
+	.name = "linestack_file",
+	.version = 0,
+	.init = init_plugin,
+	.fini = fini_plugin
+};

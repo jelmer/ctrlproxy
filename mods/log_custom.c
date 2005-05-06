@@ -478,13 +478,11 @@ static gboolean log_custom_data(struct line *l, void *userdata)
 	return TRUE;
 }
 
-gboolean fini_plugin(struct plugin *p)
+static gboolean fini_plugin(struct plugin *p)
 {
 	del_log_filter("log_custom");
 	return TRUE;
 }
-
-const char name_plugin[] = "log_custom";
 
 static void savefmt(gpointer key, gpointer value, gpointer udata)
 {
@@ -493,7 +491,7 @@ static void savefmt(gpointer key, gpointer value, gpointer udata)
 	xmlNewTextChild(node, NULL, key, value);
 }
 
-gboolean save_config(struct plugin *p, xmlNodePtr node)
+static gboolean save_config(struct plugin *p, xmlNodePtr node)
 {
 	xmlNewTextChild(node, NULL, "logfilename", logfilename);
 
@@ -502,7 +500,7 @@ gboolean save_config(struct plugin *p, xmlNodePtr node)
 	return TRUE;
 }
 
-gboolean load_config(struct plugin *p, xmlNodePtr node)
+static gboolean load_config(struct plugin *p, xmlNodePtr node)
 {
 	xmlNodePtr cur;
 	
@@ -520,10 +518,19 @@ gboolean load_config(struct plugin *p, xmlNodePtr node)
 	return TRUE;
 }
 
-gboolean init_plugin(struct plugin *p)
+static gboolean init_plugin(struct plugin *p)
 {
 	files = g_hash_table_new(g_str_hash, g_str_equal);
 	fmts = g_hash_table_new(g_str_hash, g_str_equal);
 	add_log_filter("log_custom", log_custom_data, NULL, 1000);
 	return TRUE;
 }
+
+struct plugin_ops plugin = {
+	.name = "log_custom",
+	.version = 0,
+	.init = init_plugin,
+	.fini = fini_plugin,
+	.load_config = load_config,
+	.save_config = save_config
+};

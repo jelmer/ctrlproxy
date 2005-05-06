@@ -178,7 +178,7 @@ static void list_modules (char **args, struct line *l, void *userdata)
 	GList *g = get_plugin_list();
 	while(g) {
 		struct plugin *p = (struct plugin *)g->data;
-		admin_out(l, "%s", p->name);
+		admin_out(l, "%s", p->ops->name);
 		g = g->next;
 	}
 }
@@ -200,7 +200,7 @@ static void unload_module (char **args, struct line *l, void *userdata)
 	/* Find specified plugins' GModule and xmlNodePtr */
 	while(g) {
 		struct plugin *p = (struct plugin *)g->data;
-		if(!strcmp(p->name, args[1])) {
+		if(!strcmp(p->ops->name, args[1])) {
 			unload_plugin(p);
 			return;
 		}
@@ -378,9 +378,7 @@ static gboolean handle_data(struct line *l, void *userdata) {
 	return TRUE;
 }
 
-const char name_plugin[] = "admin";
-
-gboolean save_config(struct plugin *p, xmlNodePtr node)
+static gboolean save_config(struct plugin *p, xmlNodePtr node)
 {
 	if (without_privmsg) {
 		xmlAddChild(node,xmlNewNode(NULL, "without_privmsg"));
@@ -389,7 +387,7 @@ gboolean save_config(struct plugin *p, xmlNodePtr node)
 	return TRUE;
 }
 
-gboolean load_config(struct plugin *p, xmlNodePtr node)
+static gboolean load_config(struct plugin *p, xmlNodePtr node)
 {
 	xmlNodePtr cur;
 
@@ -435,13 +433,13 @@ struct virtual_network_ops admin_network = {
 	NULL
 };
 
-gboolean fini_plugin(struct plugin *p) {
+static gboolean fini_plugin(struct plugin *p) {
 	unregister_virtual_network(&admin_network);
 	del_client_filter("admin");
 	return TRUE;
 }
 
-gboolean init_plugin(struct plugin *p) {
+static gboolean init_plugin(struct plugin *p) {
 	int i;
 	const static struct admin_command builtin_commands[] = {
 		{ "ADDNETWORK", add_network, ("<name>"), ("Add new network with specified name") },
@@ -472,3 +470,12 @@ gboolean init_plugin(struct plugin *p) {
 
 	return TRUE;
 }
+
+struct plugin_ops plugin = {
+	.name = "admin",
+	.version = 0,
+	.init = init_plugin,
+	.fini = fini_plugin,
+	.load_config = load_config,
+	.save_config = save_config
+};

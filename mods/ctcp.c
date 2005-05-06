@@ -98,16 +98,21 @@ static gboolean mhandle_data(struct line *l, void *userdata)
 	return TRUE;
 }
 
-gboolean fini_plugin(struct plugin *p)
+static gboolean fini_plugin(struct plugin *p)
 {
 	del_server_filter("ctcp");
 	return TRUE;
 }
 
-const char name_plugin[] = "ctcp";
-
-gboolean init_plugin(struct plugin *p) 
+static gboolean init_plugin(struct plugin *p) 
 {
 	add_server_filter("ctcp", mhandle_data, NULL, 1000);
 	return TRUE;
 }
+
+struct plugin_ops plugin = {
+	.name = "ctcp",
+	.version = 0,
+	.init = init_plugin,
+	.fini = fini_plugin,
+};

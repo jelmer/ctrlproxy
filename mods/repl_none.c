@@ -34,14 +34,19 @@ static gboolean none_replicate(struct client *c, void *userdata)
 	return TRUE;
 }
 
-gboolean fini_plugin(struct plugin *p) {
+static gboolean fini_plugin(struct plugin *p) {
 	del_new_client_hook("repl_none");
 	return TRUE;
 }
 
-const char name_plugin[] = "repl_none";
-
-gboolean init_plugin(struct plugin *p) {
+static gboolean init_plugin(struct plugin *p) {
 	add_new_client_hook("repl_none", none_replicate, NULL);
 	return TRUE;
 }
+
+struct plugin_ops plugin = {
+	.name = "repl_none",
+	.version = 0,
+	.init = init_plugin,
+	.fini = fini_plugin
+};

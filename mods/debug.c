@@ -60,15 +60,13 @@ static const struct admin_command cmd_crash = {
 	"CRASH", do_crash, "", NULL, NULL
 };
 
-gboolean fini_plugin(struct plugin *p) {
+static gboolean fini_plugin(struct plugin *p) {
 	unregister_admin_command(&cmd_dumpjoined);
 	unregister_admin_command(&cmd_crash);
 	return TRUE;
 }
 
-const char name_plugin[] = "debug";
-
-gboolean init_plugin(struct plugin *p) {
+static gboolean init_plugin(struct plugin *p) {
 	if(!plugin_loaded("admin")) {
 		log_global("debug", "admin module required for repl_command module. Please load it first");
 		return FALSE;
@@ -77,3 +75,10 @@ gboolean init_plugin(struct plugin *p) {
 	register_admin_command(&cmd_crash);
 	return TRUE;
 }
+
+struct plugin_ops plugin = {
+	.name = "debug",
+	.version = 0,
+	.init = init_plugin,
+	.fini = fini_plugin,
+};

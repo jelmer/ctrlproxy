@@ -99,16 +99,14 @@ static const struct admin_command cmd_backlog = {
 	"Send backlogs for this network or a channel, if specified"
 };
 
-const char name_plugin[] = "repl_command";
-
-gboolean fini_plugin(struct plugin *p) {
+static gboolean fini_plugin(struct plugin *p) {
 	del_replication_filter("repl_command");
 	unregister_admin_command(&cmd_backlog);
 	g_hash_table_destroy(command_backlog); command_backlog = NULL;
 	return TRUE;
 }
 
-gboolean init_plugin(struct plugin *p) {
+static gboolean init_plugin(struct plugin *p) {
 	if(!plugin_loaded("admin")) {
 		log_global("repl_command", "admin module required for repl_command module. Please load it first");
 		return FALSE;
@@ -118,3 +116,10 @@ gboolean init_plugin(struct plugin *p) {
 	command_backlog = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, linestack_destroy);
 	return TRUE;
 }
+
+struct plugin_ops plugin = {
+	.name = "repl_command",
+	.version = 0,
+	.init = init_plugin,
+	.fini = fini_plugin,
+};

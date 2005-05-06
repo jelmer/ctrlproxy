@@ -245,14 +245,12 @@ static gboolean handle_data(struct line *l, void *userdata) {
 	return TRUE;
 }
 
-gboolean fini_plugin(struct plugin *p) {
+static gboolean fini_plugin(struct plugin *p) {
 	del_server_filter("strip");
 	return TRUE;
 }
 
-const char name_plugin[] = "strip";
-
-gboolean init_plugin(struct plugin *p) {
+static gboolean init_plugin(struct plugin *p) {
 	add_server_filter("strip", handle_data, NULL, 1);
 	return TRUE;
 }
@@ -273,3 +271,10 @@ static int handle_topic(struct line *l, struct query *q)
 	if(l->args[2])return 0;
 	return handle_default(l,q);
 }
+
+struct plugin_ops plugin = {
+	.name = "strip",
+	.version = 0,
+	.init = init_plugin,
+	.fini = fini_plugin,
+};

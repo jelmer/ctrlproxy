@@ -33,18 +33,23 @@ static void admin_log(const gchar *log_domain, GLogLevelFlags log_level, const g
 	free_line(l);
 }
 
-gboolean fini_plugin(struct plugin *p) {
+static gboolean fini_plugin(struct plugin *p) {
 	guint *id = p->data;
 	g_log_remove_handler(NULL, *id);
 	g_free(id);
 	return TRUE;
 }
 
-const char name_plugin[] = "noticelog";
-
-gboolean init_plugin(struct plugin *p) {
+static gboolean init_plugin(struct plugin *p) {
 	guint id = g_log_set_handler(NULL, G_LOG_LEVEL_MASK | G_LOG_FLAG_RECURSION, admin_log, NULL);
 	p->data = g_new(guint,1);
 	memcpy(p->data, &id, sizeof(guint));
 	return TRUE;
 }
+
+struct plugin_ops plugin = {
+	.name = "noticelog",
+	.version = 0,
+	.init = init_plugin,
+	.fini = fini_plugin,
+};

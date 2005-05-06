@@ -203,7 +203,7 @@ static gboolean log_data(struct line *l, void *userdata)
 	return TRUE;
 }
 
-gboolean fini_plugin(struct plugin *p)
+static gboolean fini_plugin(struct plugin *p)
 {
 	g_hash_table_destroy(files);
 	g_free(logfile); logfile = NULL;
@@ -211,15 +211,13 @@ gboolean fini_plugin(struct plugin *p)
 	return TRUE;
 }
 
-const char name_plugin[] = "log_irssi";
-
-gboolean save_config(struct plugin *p, xmlNodePtr node)
+static gboolean save_config(struct plugin *p, xmlNodePtr node)
 {
 	xmlNewTextChild(node, NULL, "logfile", logfile);
 	return TRUE;
 }
 
-gboolean load_config(struct plugin *p, xmlNodePtr node) 
+static gboolean load_config(struct plugin *p, xmlNodePtr node) 
 {
 	xmlNodePtr cur;
 
@@ -240,9 +238,18 @@ gboolean load_config(struct plugin *p, xmlNodePtr node)
 	return TRUE;
 }
 
-gboolean init_plugin(struct plugin *p)
+static gboolean init_plugin(struct plugin *p)
 {
 	files = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, fclose);
 	add_log_filter("log_irssi", log_data, NULL, 1000);
 	return TRUE;
 }
+
+struct plugin_ops plugin = {
+	.name = "log_irssi",
+	.version = 0,
+	.init = init_plugin,
+	.fini = fini_plugin,
+	.load_config = load_config,
+	.save_config = save_config,
+};

@@ -45,20 +45,18 @@ static gboolean report_time(struct line *l, void *userdata)
 	return TRUE;
 }
 
-gboolean fini_plugin(struct plugin *p) {
+static gboolean fini_plugin(struct plugin *p) {
 	del_replication_filter("report_time");
 	return TRUE;
 }
 
-const char name_plugin[] = "report_time";
-
-gboolean save_config(struct plugin *p, xmlNodePtr node)
+static gboolean save_config(struct plugin *p, xmlNodePtr node)
 {
 	xmlNewTextChild(node, NULL, "format", format);
 	return TRUE;
 }
 
-gboolean load_config(struct plugin *p, xmlNodePtr node)
+static gboolean load_config(struct plugin *p, xmlNodePtr node)
 {
 	xmlNodePtr cur;
 
@@ -74,7 +72,16 @@ gboolean load_config(struct plugin *p, xmlNodePtr node)
 	return TRUE;
 }
 
-gboolean init_plugin(struct plugin *p) {
+static gboolean init_plugin(struct plugin *p) {
 	add_replication_filter("report_time", report_time, NULL, 50);
 	return TRUE;
 }
+
+struct plugin_ops plugin = {
+	.name = "report_time",
+	.version = 0,
+	.init = init_plugin,
+	.fini = fini_plugin,
+	.load_config = load_config,
+	.save_config = save_config
+};
