@@ -83,37 +83,65 @@ static struct network *find_network_struct(char *name)
 
 static void add_network (char **args, struct line *l, void *userdata)
 {
+	struct network *n;
 	if(!args[1]) {
 		admin_out(l, "No name specified");
 		return;
 	}
 
-	/* FIXME */
+	n = new_network();
+	g_free(n->name); n->name = g_strdup(args[1]);
 }
 
 static void del_network (char **args, struct line *l, void *userdata)
 {
+	struct network *n;
+
 	if(!args[1]) {
 		admin_out(l, "Not enough parameters");
 		return;
 	}
 
-	if(find_network_struct(args[1])) {
-		admin_out(l, "Can't remove active network");
+	n = find_network_struct(args[1]);
+	if (!n) {
+		admin_out(l, "No such network %s", args[1]);
 		return;
 	}
 
-	/* FIXME */
+	close_network(n);
 }
 
 static void add_server (char **args, struct line *l, void *userdata)
 {
+	struct network *n;
+	struct tcp_server *s;
+
 	if(!args[1] || !args[2]) {
 		admin_out(l, "Not enough parameters");
 		return;
 	}
 
-	/* FIXME */
+	n = find_network_struct(args[1]);
+
+	if (!n) {
+		admin_out(l, "No such network '%s'", args[1]);
+		return;
+	}
+
+	if (n->type != NETWORK_TCP) {
+		admin_out(l, "Not a TCP/IP network!");
+		return;
+	}
+
+	s = g_new0(struct tcp_server, 1);
+
+	s->name = g_strdup(args[2]);
+	s->host = g_strdup(args[2]);
+	s->port = g_strdup(args[3]?args[3]:"6667");
+	s->ssl = FALSE;
+	s->password = (args[3] && args[4])?g_strdup(args[4]):NULL;
+
+	n->connection.tcp.servers = g_list_append(n->connection.tcp.servers, s);
 }
 
 static void com_connect_network (char **args, struct line *l, void *userdata)
@@ -212,19 +240,26 @@ static void unload_module (char **args, struct line *l, void *userdata)
 
 static void load_module (char **args, struct line *l, void *userdata)
 { 
+	struct plugin *p;
+	
 	if(!args[1]) { 
 		admin_out(l, "No file specified");
 		return;
 	}
 
-    if(plugin_loaded(args[1])) {
+    	if(plugin_loaded(args[1])) {
 		admin_out(l, "Module already loaded");
 		return;
 	}
 
-	/* FIXME */
-}
+	p = new_plugin(args[1]);
 
+	if (load_plugin(p)) {
+		admin_out(l, "Load successful");
+	} else {
+		admin_out(l, "Load failed");
+	}
+}
 
 static void reload_module (char **args, struct line *l, void *userdata)
 {
@@ -443,7 +478,7 @@ static gboolean init_plugin(struct plugin *p) {
 	int i;
 	const static struct admin_command builtin_commands[] = {
 		{ "ADDNETWORK", add_network, ("<name>"), ("Add new network with specified name") },
-		{ "ADDSERVER", add_server, ("<network> <type> [property1=value1] ..."), ("Add server with specified properties to the specified network") },
+		{ "ADDSERVER", add_server, ("<network> <host> [<port> [<password>]]"), ("Add server to network") },
 		{ "CONNECT", com_connect_network, ("<network>"), ("Connect to specified network. Forces reconnect when waiting.") },
 		{ "DELNETWORK", del_network, ("<network>"), ("Remove specified network") },
 		{ "NEXTSERVER", com_next_server, ("[network]"), ("Disconnect and use to the next server in the list") },

@@ -154,20 +154,20 @@ void disconnect_client(struct client *c) {
 	g_free(c);
 }
 
-void send_motd(struct network *n, GIOChannel *c)
+void send_motd(struct client *c)
 {
 	char **lines;
 	int i;
-	lines = get_motd_lines(n);
+	lines = get_motd_lines(c->network);
 
 	if(!lines) {
-		irc_sendf(c, ":%s %d %s :No MOTD file\r\n", n->name, ERR_NOMOTD, n->nick);
+		irc_sendf(c, ":%s %d %s :No MOTD file\r\n", c->network->name, ERR_NOMOTD, c->network->nick);
 		return;
 	}
 
-	irc_sendf(c, ":%s %d %s :Start of MOTD\r\n", n->name, RPL_MOTDSTART, n->nick);
+	irc_sendf(c->incoming, ":%s %d %s :Start of MOTD\r\n", n->name, RPL_MOTDSTART, n->nick);
 	for(i = 0; lines[i]; i++) {
-		irc_sendf(c, ":%s %d %s :%s\r\n", n->name, RPL_MOTD, n->nick, lines[i]);
+		irc_sendf(c->incoming, ":%s %d %s :%s\r\n", n->name, RPL_MOTD, n->nick, lines[i]);
 		g_free(lines[i]);
 	}
 	g_free(lines);
@@ -217,15 +217,15 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition cond, void *_c
 static gboolean welcome_client(struct client *client)
 {
 	char *features;
-	irc_sendf(client->incoming, ":%s 001 %s :Welcome to the ctrlproxy\r\n", client->network->name, client->network->nick);
-	irc_sendf(client->incoming, ":%s 002 %s :Host %s is running ctrlproxy\r\n", client->network->name, client->network->nick, get_my_hostname());
-	irc_sendf(client->incoming, ":%s 003 %s :Ctrlproxy (c) 2002-2005 Jelmer Vernooij <jelmer@vernstok.nl>\r\n", client->network->name, client->network->nick);
+	irc_sendf(client->incoming, ":%s 001 %s :Welcome to the ctrlproxy\r\n", client->network->name, client->nick);
+	irc_sendf(client->incoming, ":%s 002 %s :Host %s is running ctrlproxy\r\n", client->network->name, client->nick, get_my_hostname());
+	irc_sendf(client->incoming, ":%s 003 %s :Ctrlproxy (c) 2002-2005 Jelmer Vernooij <jelmer@vernstok.nl>\r\n", client->network->name, client->nick);
 	irc_sendf(client->incoming, ":%s 004 %s %s %s %s %s\r\n", 
-	  client->network->name, client->network->nick, client->network->name, ctrlproxy_version(), client->network->supported_modes[0]?client->network->supported_modes[0]:ALLMODES, client->network->supported_modes[1]?client->network->supported_modes[1]:ALLMODES);
+	  client->network->name, client->nick, client->network->name, ctrlproxy_version(), client->network->supported_modes[0]?client->network->supported_modes[0]:ALLMODES, client->network->supported_modes[1]?client->network->supported_modes[1]:ALLMODES);
 
 	features = network_generate_feature_string(client->network);
 
-	irc_sendf(client->incoming, ":%s 005 %s %s :are supported on this server\r\n", client->network->name, client->network->nick, features);
+	irc_sendf(client->incoming, ":%s 005 %s %s :are supported on this server\r\n", client->network->name, client->nick, features);
 
 	g_free(features);
 

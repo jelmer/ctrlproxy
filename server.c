@@ -551,8 +551,8 @@ static gboolean connect_program(struct network *s)
 	return TRUE;
 }
 
-gboolean connect_network(struct network *s) {
-
+gboolean connect_network(struct network *s) 
+{
 	switch (s->type) {
 	case NETWORK_TCP:
 		s->connection.tcp.current_server = NULL;

@@ -75,7 +75,7 @@ static gboolean file_clear(struct linestack_context *c)
 #ifndef _WIN32
 	unlink(d->filename);
 #else 
-	/*FIXME*/
+	delete(d->filename);
 #endif
 	d->channel = g_io_channel_new_file(d->filename, "w+", &error);
 	g_io_channel_set_encoding(d->channel, NULL, &error);

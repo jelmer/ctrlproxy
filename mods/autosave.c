@@ -21,6 +21,7 @@
 #include <ctrlproxy.h>
 #include <string.h>
 
+static int interval_time = 0;
 static int autosave_id;
 static struct plugin *this_plugin = NULL;
 
@@ -32,28 +33,31 @@ static gboolean loop_save_config(gpointer user_data)
 
 static gboolean save_config(struct plugin *p, xmlNodePtr node)
 {
-	/*FIXME */
+	char *tmp;
+	xmlNodePtr n = xmlNewTextChild(node, NULL, "interval", NULL);
+	tmp = g_strdup_printf("%d", interval_time);
+	xmlSetProp(n, "time", tmp);
+	g_free(tmp);
 	return TRUE;
 }
 
 static gboolean load_config(struct plugin *p, xmlNodePtr node)
 {
-	int time = 0;
 	xmlNodePtr cur;
 
 	for (cur = node->children; cur; cur = cur->next) {
 		if(!strcmp(cur->name, "interval")) {
 			char *buf = xmlGetProp(cur, "time");
 			if(buf)
-				time = atoi(buf);
+				interval_time = atoi(buf);
 			xmlFree(buf);
 		}
 	}
 
-	if(time > 0)
-		autosave_id = g_timeout_add(1000 * 60 * time, loop_save_config, NULL);
+	if(interval_time > 0)
+		autosave_id = g_timeout_add(1000 * 60 * interval_time, loop_save_config, NULL);
 	else
-		log_global("autosave", "Interval of %i minutes is too short", time);
+		log_global("autosave", "Interval of %i minutes is too short", interval_time);
 
 	return TRUE;
 }

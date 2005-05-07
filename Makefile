@@ -4,11 +4,15 @@ CFLAGS+=-DHAVE_CONFIG_H -DSHAREDIR=\"$(cdatadir)\" -DDTD_FILE=\"$(cdatadir)/ctrl
 
 CFLAGS+=-ansi -Wall -DMODULESDIR=\"$(modulesdir)\"
 
-.PHONY: all clean distclean install install-bin install-dirs install-doc install-data install-mods install-pkgconfig
+SUBDIRS = mods scripts
 
-all: $(BINS)
-	$(MAKE) -C mods all
-	$(MAKE) -C scripts all
+.PHONY: all clean distclean install install-bin install-dirs install-doc install-data install-mods install-pkgconfig $(SUBDIRS)
+
+all: $(BINS) $(SUBDIRS)
+
+$(SUBDIRS):
+	$(MAKE) -C $@ all
+
 
 mods/static.o: Makefile.settings
 	$(MAKE) -C mods static.o
@@ -69,7 +73,7 @@ install-scripts:
 install-pkgconfig:
 	$(INSTALL) ctrlproxy.pc $(DESTDIR)$(libdir)/pkgconfig
 
-clean:
+clean: 
 	rm -f *.$(OBJEXT) ctrlproxy$(EXEEXT) printstats *~
 	$(MAKE) -C mods clean
 	$(MAKE) -C testsuite clean

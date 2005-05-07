@@ -7,7 +7,6 @@
 
 <!ELEMENT network ((servers|program|virtual),channel*,nickserv?,autosend*)>
 <!ATTLIST network name CDATA #IMPLIED>
-<!ATTLIST network client_pass CDATA "">
 <!ATTLIST network password CDATA "">
 <!ATTLIST network nick CDATA #IMPLIED>
 <!ATTLIST network username CDATA #IMPLIED>
