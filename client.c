@@ -79,8 +79,6 @@ static char *network_generate_feature_string(struct network *n)
 
 static gboolean process_from_client(struct line *l)
 {
-	struct line *lc;
-	
 	l->direction = TO_SERVER;
 	l->origin = g_strdup(l->client->network->hostmask);
 
@@ -90,36 +88,20 @@ static gboolean process_from_client(struct line *l)
 	if(!g_strcasecmp(l->args[0], "QUIT")) {
 		disconnect_client(l->client);
 		return FALSE;
-	} else	if(!g_strcasecmp(l->args[0], "PING")) {
+	} else if(!g_strcasecmp(l->args[0], "PING")) {
 		client_send_args(l->client, "PONG", l->args[1], NULL);
-	} else if(network_is_connected(l->client->network)) {
-		char *old_origin;
-
-		/* FIXME: Check for validity of input ? */
-
-		state_handle_data(l->client->network, l);
-
-		if (!run_server_filter(l))
+	} else if(!g_strcasecmp(l->args[0], "PONG")) {
+		if (l->argc < 2) {
+			client_send_args(l->client, "461", l->args[0], "Not enough parameters", NULL);
 			return TRUE;
-
-		run_log_filter(lc = linedup(l)); free_line(lc);
-		run_replication_filter(lc = linedup(l)); free_line(lc);
-
-		if (!l->client) {
-			return FALSE;
 		}
-
-		if(!(l->options & LINE_DONT_SEND)) {
-			network_send_line(l->client->network, l);
-		}
-
-		/* Also write this message to all other clients currently connected */
-		if(!(l->options & LINE_IS_PRIVATE) && l->args[0] &&
-		   (!strcmp(l->args[0], "PRIVMSG") || !strcmp(l->args[0], "NOTICE"))) {
-			old_origin = l->origin; l->origin = l->client->network->nick;
-			clients_send(l->client->network, l, l->client);
-			l->origin = old_origin;
-		}
+	} else if(!g_strcasecmp(l->args[0], "USER")) {
+		client_send_args(l->client, "462", l->client->nick, 
+						 "Please register only once per session", NULL);
+	} else if(!g_strcasecmp(l->args[0], "WHO")) {
+	} else if(network_is_connected(l->client->network)) {
+		/* FIXME: Check for validity of input ? */
+		network_send_line(l->client->network, l);
 	} else {
 		client_send_args(l->client, "NOTICE", l->client->nick, "Currently not connected to server, connecting...", NULL);
 		/* FIXME: Already reconnect if not connected yet */
@@ -262,12 +244,12 @@ static gboolean welcome_client(struct client *client)
 	send_motd(client);
 
 	if (g_strcasecmp(client->nick, client->network->nick)) {
-		/* Either try to get the nick the client specified */
+		/* Or tell the client our his/her real nick */
+		irc_sendf(client->incoming, ":%s NICK %s", client->nick, client->network->nick);
+
+		/* Try to get the nick the client specified */
 		if (!client->network->ignore_first_nick) {
 			network_send_args(client->network, "NICK", client->nick, NULL);
-		} else {
-		/* Or tell the client our his/her real nick */
-			irc_sendf(client->incoming, ":%s NICK %s", client->nick, client->network->nick);
 		}
 	}
 
@@ -314,7 +296,6 @@ static gboolean handle_pending_client_receive(GIOChannel *c, GIOCondition cond, 
 			}
 
 			client->nick = g_strdup(l->args[1]); /* Save nick */
-
 		} else if(!g_strcasecmp(l->args[0], "USER")) {
 
 			if (l->argc < 5) {

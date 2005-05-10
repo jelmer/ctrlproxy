@@ -125,8 +125,16 @@ static int test_nick_needmoreparams(void)
 	return 0;
 }
 
-
-
+static int test_dupregister(void)
+{
+	GIOChannel *fd = new_conn_loggedin("bla");
+	if (!fd) return -1;
+	irc_send_args(fd, "USER", "a", "a", "a", "a", NULL);
+	if (!wait_response(fd, "462")) 
+		return -1;
+	g_io_channel_unref(fd);
+	return 0;
+}
 
 static int test_motd(void)
 {
@@ -217,4 +225,5 @@ void simple_init(void)
 	register_test("WHO-SIMPLE", test_who_simple);
 	register_test("NICK-ERRONEUS", test_nick_erroneous);
 	register_test("NICK-NEEDMOREPARAMS", test_nick_needmoreparams);
+	register_test("USER-REGISTERONCE", test_dupregister);
 }

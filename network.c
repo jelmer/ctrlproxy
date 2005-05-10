@@ -235,9 +235,27 @@ gboolean connect_next_tcp_server(struct network *s)
 gboolean network_send_line(struct network *s, const struct line *ol)
 {
 	struct line l = *ol;
-	
+	struct line *lc;
+
 	l.origin = NULL;		/* Never send origin to the server */
 	l.network = s;
+
+	state_handle_data(s, &l);
+
+	if (!run_server_filter(&l))
+		return TRUE;
+
+	run_log_filter(lc = linedup(&l)); free_line(lc);
+	run_replication_filter(lc = linedup(&l)); free_line(lc);
+
+	/* Also write this message to all other clients currently connected */
+	if(!(l.options & LINE_IS_PRIVATE) && l.args[0] &&
+	   (!strcmp(l.args[0], "PRIVMSG") || !strcmp(l.args[0], "NOTICE"))) {
+		char *old_origin;
+		old_origin = l.origin; l.origin = s->nick;
+		clients_send(s, &l, l.client);
+		l.origin = old_origin;
+	}
 
 	switch (s->type) {
 	case NETWORK_TCP:

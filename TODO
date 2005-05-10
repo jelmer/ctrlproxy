@@ -2,7 +2,9 @@
 - update documentation (see FIXME's)
 - bugs in BUGS file
 - test and fix SSL support
+- persistent storage for linestack
 - warn about erroneus nicks
+- answer WHO queries from own data if possible
 - finish python module hooks
 
 typedef gboolean (*filter_function) (struct line *);

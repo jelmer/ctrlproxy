@@ -511,7 +511,8 @@ static void handle_nick(struct network *s, struct line *l)
 		g = g_list_next(g);
 	}
 
-	if(!irccmp(s, line_get_nick(l), s->nick)) network_change_nick(s, l->args[1]);
+	if(!irccmp(s, line_get_nick(l), s->nick)) 
+		network_change_nick(s, l->args[1]);
 }
 
 static void handle_302(struct network *s, struct line *l)
