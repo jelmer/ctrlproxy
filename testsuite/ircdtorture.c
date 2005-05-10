@@ -212,6 +212,7 @@ void simple_init(void);
 int main(int argc, const char *argv[])
 {
 	GList *gl;
+	int ret = 0;
 
 #ifdef HAVE_POPT_H
 	int c;
@@ -251,8 +252,8 @@ int main(int argc, const char *argv[])
 
 	for (gl = tests; gl; gl = gl->next) {
 		if (run_test(gl->data)) 
-			return -1;
+			ret = -1;
 	}
 
-	return 0;
+	return ret;
 }
