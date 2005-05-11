@@ -131,6 +131,7 @@ struct network {
 	GList *nicks;
 	gboolean login_sent;
 	gboolean authenticated;
+	gboolean motd_recvd;
 	GList *clients;
 	GList *autosend_lines;
 	GHashTable *server_features;

@@ -85,6 +85,9 @@ static gboolean process_from_server(struct line *l)
 		l->network->nick = g_strdup_printf("%s_", l->network->nick);
 		network_send_args(l->network, "NICK", l->network->nick, NULL);
 		g_free(old_nick);
+	} else if(!g_strcasecmp(l->args[0], "422") ||
+			  !g_strcasecmp(l->args[0], "376")) {
+		l->network->motd_recvd = TRUE;
 	} else if(atoi(l->args[0]) == 4) {
 		GList *gl;
 
@@ -147,7 +150,8 @@ static gboolean process_from_server(struct line *l)
 		}
 	} 
 
-	if(!(l->options & LINE_DONT_SEND)) {
+	if(!(l->options & LINE_DONT_SEND) && 
+		l->network->motd_recvd) {
 		if( run_server_filter(l)) {
 			clients_send(l->network, l, NULL);
 		} 
