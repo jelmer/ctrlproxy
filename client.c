@@ -161,17 +161,17 @@ void send_motd(struct client *c)
 	lines = get_motd_lines(c->network);
 
 	if(!lines) {
-		irc_sendf(c, ":%s %d %s :No MOTD file\r\n", c->network->name, ERR_NOMOTD, c->network->nick);
+		irc_sendf(c->incoming, ":%s %d %s :No MOTD file\r\n", c->network->name, ERR_NOMOTD, c->network->nick);
 		return;
 	}
 
-	irc_sendf(c->incoming, ":%s %d %s :Start of MOTD\r\n", n->name, RPL_MOTDSTART, n->nick);
+	irc_sendf(c->incoming, ":%s %d %s :Start of MOTD\r\n", c->network->name, RPL_MOTDSTART, c->network->nick);
 	for(i = 0; lines[i]; i++) {
-		irc_sendf(c->incoming, ":%s %d %s :%s\r\n", n->name, RPL_MOTD, n->nick, lines[i]);
+		irc_sendf(c->incoming, ":%s %d %s :%s\r\n", c->network->name, RPL_MOTD, c->network->nick, lines[i]);
 		g_free(lines[i]);
 	}
 	g_free(lines);
-	irc_sendf(c, ":%s %d %s :End of MOTD\r\n", n->name, RPL_ENDOFMOTD, n->nick);
+	irc_sendf(c->incoming, ":%s %d %s :End of MOTD\r\n", c->network->name, RPL_ENDOFMOTD, c->network->nick);
 }
 
 static gboolean handle_client_receive(GIOChannel *c, GIOCondition cond, void *_client)
@@ -229,7 +229,7 @@ static gboolean welcome_client(struct client *client)
 
 	g_free(features);
 
-	send_motd(client->network, client->incoming);
+	send_motd(client);
 
 	if(!new_client_hook_execute(client)) {
 		disconnect_client(client);

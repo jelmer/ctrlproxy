@@ -63,7 +63,7 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition condition, gpo
 			irc_sendf(c, ":%s %d %s :Password mismatch\r\n", listener->network->name, ERR_PASSWDMISMATCH, listener->network->nick);
 
 			free_line(l);
-			return FALSE;
+			return TRUE;
 		}
 
 		log_network ("listener", listener->network, "Client successfully authenticated");
