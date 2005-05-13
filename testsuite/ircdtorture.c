@@ -28,6 +28,9 @@
 #include <popt.h>
 #endif
 
+#include <glib.h>
+#include "../ctrlproxy.h"
+
 #include <fcntl.h>
 #include <unistd.h>
 #include <errno.h>
@@ -37,6 +40,11 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>
+
+struct torture_test {
+	const char *name;
+	int (*test) (void);
+};
 
 int fdprintf(int fd, const char *fmt, ...)
 {
@@ -51,35 +59,15 @@ int fdprintf(int fd, const char *fmt, ...)
 	return ret;
 }
 
-static int test_connect(void)
-{
-	int fd = new_conn();
-	close(fd);
-	if (fd >= 0) return 0; else return -1;
-}
+GList *tests = NULL;
 
-int new_conn_loggedin(void)
+void register_test(const char *name, int (*data) (void)) 
 {
-	int fd = new_conn();
-	fdprintf(fd, "USER a a a a\r\n");
-	fdprintf(fd, "NICK bla\r\n");
-	return fd;
+	struct torture_test *test = g_new0(struct torture_test, 1);
+	test->name = g_strdup(name);
+	test->test = data;
+	tests = g_list_append(tests, test);
 }
-
-static int test_login(void)
-{
-	int fd = new_conn();
-	fdprintf(fd, "USER a a a a\r\n");
-	fdprintf(fd, "NICK bla\r\n");
-	close(fd);
-	return 0;
-}
-
-struct torture_test tests[] = {
-	{ "IRC-CONNECT", test_connect },
-	{ "IRC-LOGIN", test_login },
-	{ NULL, NULL }
-};
 
 static pid_t piped_child(char *const command[], int *f_in)
 {
@@ -164,6 +152,14 @@ int new_conn(void)
 	return fd;
 }
 
+int new_conn_loggedin(void)
+{
+	int fd = new_conn();
+	fdprintf(fd, "USER a a a a\r\n");
+	fdprintf(fd, "NICK bla\r\n");
+	return fd;
+}
+
 int run_test(struct torture_test *test)
 {
 	int ret;
@@ -176,7 +172,7 @@ int run_test(struct torture_test *test)
 
 int main(int argc, const char *argv[])
 {
-	int i;
+	GList *gl;
 
 #ifdef HAVE_POPT_H
 	int c;
@@ -212,8 +208,10 @@ int main(int argc, const char *argv[])
 
 	args = poptGetArgs(pc);
 
-	for (i = 0; tests[i].name; i++) {
-		if (run_test(&tests[i])) 
+	simple_init();
+
+	for (gl = tests; gl; gl = gl->next) {
+		if (run_test(gl->data)) 
 			return -1;
 	}
 
