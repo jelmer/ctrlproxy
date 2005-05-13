@@ -92,7 +92,8 @@ gboolean load_plugin(struct plugin *p)
 	}
 
 	if(!g_module_symbol(m, "plugin", (gpointer)&ops)) {
-		log_global(NULL, "No valid plugin information found");
+		log_global(strchr(path_name, '/')?(strrchr(path_name, '/')+1):NULL, 
+				   "No valid plugin information found");
 		g_free(path_name);
 		return FALSE;
 	}
