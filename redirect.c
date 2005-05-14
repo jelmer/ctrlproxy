@@ -362,6 +362,9 @@ static struct query queries[] = {
 	{ NULL }
 };
 
+/* List of responses that should be sent to all clients */
+static int response_all[] = { RPL_NOWAWAY, RPL_UNAWAY, 0 };
+
 static int is_reply(int *replies, int r)
 {
 	int i;
@@ -384,16 +387,20 @@ static struct query *find_query(char *name)
 void redirect_response(struct network *network, struct line *l)
 {
 	struct query_stack *s = stack, *p = NULL;
+	struct client *c = NULL;
 	int n;
+	int i;
 
 	n = atoi(l->args[0]);
-	
-	/* Loop thru the stack until we find something that's matching */
+
+	/* Find a request that this response is a reply to */
 	while(s) {
 		if(is_reply(s->query->replies, n) && s->network == l->network) {
 			/* Send to client that queried, if that client still exists */
-			if(verify_client(s->network, s->client)) 
+			if(verify_client(s->network, s->client)) {
+				c = s->client;
 				client_send_line(s->client, l);
+			}
 
 			if(is_reply(s->query->end_replies, n)) {
 				/* Remove from stack */
@@ -405,6 +412,14 @@ void redirect_response(struct network *network, struct line *l)
 			return;
 		}
 		p = s; s = s->next;
+	}
+
+	/* See if this is a response that should be sent to all clients */
+	for (i = 0; response_all[i]; i++) {
+		if (response_all[i] == n) {
+			clients_send(network, l, c);
+			return;
+		}
 	}
 
 	log_network(NULL, network, "Unable to redirect response %s", l->args[0]);
