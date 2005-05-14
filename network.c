@@ -229,7 +229,6 @@ struct tcp_server *network_get_next_tcp_server(struct network *n)
 gboolean connect_next_tcp_server(struct network *s) 
 {
 	s->connection.tcp.current_server = network_get_next_tcp_server(s);
-	log_network(NULL, s, "Reconnecting...");
 	return connect_current_tcp_server(s);
 }
 

@@ -235,6 +235,7 @@ G_MODULE_EXPORT gboolean network_send_args(struct network *s, ...);
 G_MODULE_EXPORT void register_virtual_network(struct virtual_network_ops *);
 G_MODULE_EXPORT void unregister_virtual_network(struct virtual_network_ops *);
 G_MODULE_EXPORT struct network *find_network(const char *name);
+G_MODULE_EXPORT gboolean client_send_args(struct client *c, ...);
 G_MODULE_EXPORT gboolean client_send_line(struct client *c, const struct line *);
 G_MODULE_EXPORT gboolean virtual_network_recv_line(struct network *l, struct line *);
 G_MODULE_EXPORT gboolean virtual_network_recv_args(struct network *l, const char *origin, ...); 

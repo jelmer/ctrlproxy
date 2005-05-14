@@ -86,7 +86,7 @@ static gboolean log_data(struct line *l, void *userdata) {
 		sd->tv_last_message = now;
 	
 	if (sd->tv_last_message - now > 10) {
-		log_network("antiflood", l->network, "Queueing message");
+		log_network("antiflood", l->network, "Queueing message (%s)", l->args[0]);
 		/* Push it up the stack! */
 		g_queue_push_head(sd->message_queue, linedup(l));
 		l->options |= LINE_DONT_SEND;

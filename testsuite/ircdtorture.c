@@ -42,7 +42,7 @@
 #include <sys/poll.h>
 #include <netdb.h>
 
-#define DEFAULT_TIMEOUT 3000
+#define DEFAULT_TIMEOUT 1000
 
 struct torture_test {
 	const char *name;

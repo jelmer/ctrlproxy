@@ -91,7 +91,7 @@ static gboolean process_from_client(struct line *l)
 		disconnect_client(l->client);
 		return FALSE;
 	} else	if(!g_strcasecmp(l->args[0], "PING")) {
-		irc_sendf(l->client->incoming, ":%s PONG :%s\r\n", l->client->network->name, l->args[1]);
+		client_send_args(l->client, "PONG", l->args[1], NULL);
 	} else if(network_is_connected(l->client->network)) {
 		char *old_origin;
 
@@ -121,16 +121,35 @@ static gboolean process_from_client(struct line *l)
 			l->origin = old_origin;
 		}
 	} else {
-		irc_sendf(l->client->incoming, ":%s NOTICE %s :Currently not connected to server, connecting...", (l->client->network->name?l->client->network->name:"ctrlproxy"), l->client->network->nick);
+		client_send_args(l->client, "NOTICE", l->client->nick, "Currently not connected to server, connecting...", NULL);
+		/* FIXME: Already reconnect if not connected yet */
 		connect_network(l->client->network);
 	}
 
 	return TRUE;
 }
 
+gboolean client_send_args(struct client *c, ...)
+{
+	struct line *l;
+	gboolean ret;
+	va_list ap;
+
+	if(!c) return FALSE;
+	
+	va_start(ap, c);
+	l = virc_parse_line(c->network?c->network->name:"ctrlproxy", ap);
+	va_end(ap);
+
+	ret = client_send_line(c, l);
+
+	free_line(l); l = NULL;
+
+	return ret;
+}
+
 gboolean client_send_line(struct client *c, const struct line *l)
 {
-	/* FIXME: Filter */
 	return irc_send_line(c->incoming, l);
 }
 
@@ -167,17 +186,17 @@ void send_motd(struct client *c)
 	lines = get_motd_lines(c->network);
 
 	if(!lines) {
-		irc_sendf(c->incoming, ":%s %d %s :No MOTD file\r\n", c->network->name, ERR_NOMOTD, c->nick);
+		client_send_args(c, "422", c->nick, "No MOTD file", NULL);
 		return;
 	}
 
-	irc_sendf(c->incoming, ":%s %d %s :Start of MOTD\r\n", c->network->name, RPL_MOTDSTART, c->nick);
+	client_send_args(c, "375", c->nick, "Start of MOTD", NULL);
 	for(i = 0; lines[i]; i++) {
-		irc_sendf(c->incoming, ":%s %d %s :%s\r\n", c->network->name, RPL_MOTD, c->nick, lines[i]);
+		client_send_args(c, "372", c->nick, lines[i], NULL);
 		g_free(lines[i]);
 	}
 	g_free(lines);
-	irc_sendf(c->incoming, ":%s %d %s :End of MOTD\r\n", c->network->name, RPL_ENDOFMOTD, c->nick);
+	client_send_args(c, "376", c->nick, "End of MOTD", NULL);
 }
 
 static gboolean handle_client_receive(GIOChannel *c, GIOCondition cond, void *_client)
@@ -223,15 +242,20 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition cond, void *_c
 static gboolean welcome_client(struct client *client)
 {
 	char *features;
-	irc_sendf(client->incoming, ":%s 001 %s :Welcome to the ctrlproxy\r\n", client->network->name, client->nick);
+	client_send_args(client, "001", client->nick, "Welcome to the ctrlproxy", NULL);
 	irc_sendf(client->incoming, ":%s 002 %s :Host %s is running ctrlproxy\r\n", client->network->name, client->nick, get_my_hostname());
-	irc_sendf(client->incoming, ":%s 003 %s :Ctrlproxy (c) 2002-2005 Jelmer Vernooij <jelmer@vernstok.nl>\r\n", client->network->name, client->nick);
-	irc_sendf(client->incoming, ":%s 004 %s %s %s %s %s\r\n", 
-	  client->network->name, client->nick, client->network->name, ctrlproxy_version(), client->network->supported_modes[0]?client->network->supported_modes[0]:ALLMODES, client->network->supported_modes[1]?client->network->supported_modes[1]:ALLMODES);
+	client_send_args(client, "003", client->nick, "Ctrlproxy (c) 2002-2005 Jelmer Vernooij <jelmer@vernstok.nl>", NULL);
+	client_send_args(client, "004", 
+		 client->nick, 
+		 client->network->name, 
+		 ctrlproxy_version(), 
+		 client->network->supported_modes[0]?client->network->supported_modes[0]:ALLMODES, 
+		 client->network->supported_modes[1]?client->network->supported_modes[1]:ALLMODES,
+		 NULL);
 
 	features = network_generate_feature_string(client->network);
 
-	irc_sendf(client->incoming, ":%s 005 %s %s :are supported on this server\r\n", client->network->name, client->nick, features);
+	client_send_args(client, "005", client->nick, features, "are supported on this server", NULL);
 
 	g_free(features);
 
@@ -239,7 +263,7 @@ static gboolean welcome_client(struct client *client)
 
 	if (g_strcasecmp(client->nick, client->network->nick)) {
 		/* Either try to get the nick the client specified */
-		if (!client->network->ignore_first_nick && client->nick) {
+		if (!client->network->ignore_first_nick) {
 			network_send_args(client->network, "NICK", client->nick, NULL);
 		} else {
 		/* Or tell the client our his/her real nick */
@@ -282,12 +306,20 @@ static gboolean handle_pending_client_receive(GIOChannel *c, GIOCondition cond, 
 			return TRUE;
 		}
 
-		if(!g_strcasecmp(l->args[0], "NICK") && l->args[1] && !client->nick) {
+		if(!g_strcasecmp(l->args[0], "NICK")) {
+			if (l->argc < 2) {
+				client_send_args(client, "461", l->args[0], 
+							  "Not enough parameters", NULL);
+				return TRUE;
+			}
+
 			client->nick = g_strdup(l->args[1]); /* Save nick */
 
 		} else if(!g_strcasecmp(l->args[0], "USER")) {
+
 			if (l->argc < 5) {
-				irc_send_args(client->incoming, "461", l->args[0], "Not enough parameters", NULL);
+				client_send_args(client, "461", l->args[0], 
+							  "Not enough parameters", NULL);
 				return TRUE;
 			}
 			
@@ -298,13 +330,19 @@ static gboolean handle_pending_client_receive(GIOChannel *c, GIOCondition cond, 
 			client->fullname = g_strdup(l->args[4]);
 
 		} else if(!g_strcasecmp(l->args[0], "CONNECT")) {
+			if (l->argc < 3) {
+				client_send_args(client, "461", l->args[0], 
+							  "Not enough parameters", NULL);
+				return TRUE;
+			}
+
 			client->network = find_network_by_hostname(l->args[1], atoi(l->args[2]), TRUE);
 
             if (client->network && !network_is_connected(client->network) && !connect_network(client->network)) {
 				log_network(NULL, client->network, "Unable to connect");
 			}
 		} else {
-			irc_sendf(client->incoming, ":%s 451 * :Register first\r\n"	, client->network?client->network->name:get_my_hostname());
+			client_send_args(client, "451", "*", "Register first", client->network?client->network->name:get_my_hostname(), NULL);
 		}
 
 		free_line(l);

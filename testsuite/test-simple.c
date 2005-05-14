@@ -114,6 +114,18 @@ static int test_whois_needmoreparams(void)
 	return 0;
 }
 
+static int test_nick_needmoreparams(void)
+{
+	GIOChannel *fd = new_conn();
+	if (!fd) return -1;
+	irc_send_args(fd, "NICK", NULL);
+	if (!wait_response(fd, "461")) 
+		return -1;
+	g_io_channel_unref(fd);
+	return 0;
+}
+
+
 
 
 static int test_motd(void)
@@ -204,4 +216,5 @@ void simple_init(void)
 	register_test("WHOIS-NEEDMOREPARAMS", test_whois_needmoreparams);
 	register_test("WHO-SIMPLE", test_who_simple);
 	register_test("NICK-ERRONEUS", test_nick_erroneous);
+	register_test("NICK-NEEDMOREPARAMS", test_nick_needmoreparams);
 }

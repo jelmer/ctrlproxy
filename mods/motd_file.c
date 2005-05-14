@@ -38,10 +38,12 @@ char ** motd_file_handler(struct network *n, void *userdata)
 	}
 
 	while(!feof(fd)) {
-		char buf[512];
+		char buf[512]; char *eol;
 		if(!fgets(buf, sizeof(buf), fd))break;
 		lines = g_realloc(lines, (nrlines+2) * sizeof(char *));
 		lines[nrlines] = g_strdup(buf);
+		if ((eol = strchr(lines[nrlines], '\n'))) *eol = '\0';
+		if ((eol = strchr(lines[nrlines], '\r'))) *eol = '\0';
 		nrlines++;
 		lines[nrlines] = NULL;
 	}
