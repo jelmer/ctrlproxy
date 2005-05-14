@@ -104,9 +104,13 @@ struct channel {
 	char introduced;
 	gboolean namreply_started;
 	gboolean banlist_started;
+	gboolean invitelist_started;
+	gboolean exceptlist_started;
 	long limit;
 	GList *nicks;
 	GList *banlist;
+	GList *invitelist;
+	GList *exceptlist;
 	struct network *network;
 };
 

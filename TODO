@@ -2,26 +2,25 @@
 - update documentation (see FIXME's)
 - test and fix SSL support
 - answer WHO queries from own data if possible
-- finish python module hooks
 - handle some currently unhandled responses (especially wrt JOIN's)
 - new linestack:
  - persistent storage for linestack
  - always log everything, let repl backends query
  - saved per nick/channel per network
  - adding data always happens one line at a time
-  - Store: NICK, JOIN, QUIT, PART, PRIVMSG, NOTICE, KICK, BAN, TOPIC
+  - Store: NICK, JOIN, QUIT, PART, PRIVMSG, NOTICE, KICK, MODE, TOPIC
  - data can't be updated
  - querying: 
   - need ways to figure out state before log started (i.e. nickname, 
 	names of users in channel)
   - start querying where? number of lines?
-
-typedef gboolean (*filter_function) (struct line *);
-typedef gboolean (*new_client_hook) (struct client *);
-typedef void (*lose_client_hook) (struct client *);
-typedef char ** (*motd_hook) (struct network *n);
-typedef void (*server_connected_hook) (struct network *);
-typedef void (*server_disconnected_hook) (struct network *);
+- finish python module hooks:
+	typedef gboolean (*filter_function) (struct line *);
+	typedef gboolean (*new_client_hook) (struct client *);
+	typedef void (*lose_client_hook) (struct client *);
+	typedef char ** (*motd_hook) (struct network *n);
+	typedef void (*server_connected_hook) (struct network *);
+	typedef void (*server_disconnected_hook) (struct network *);
 
 next release (2.7.1 ?):
  - <allow/> rules in socks and listener based on ip addresses/ranges

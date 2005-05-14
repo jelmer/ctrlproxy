@@ -54,6 +54,26 @@ static void free_nick(struct channel_nick *n)
 }
 
 
+static void free_invitelist(struct channel *c)
+{
+	GList *g = c->invitelist;
+	while(g) {
+		g_free(g->data);
+		g = g_list_remove(g, g->data);
+	}
+	c->invitelist = NULL;
+}
+
+static void free_exceptlist(struct channel *c)
+{
+	GList *g = c->exceptlist;
+	while(g) {
+		g_free(g->data);
+		g = g_list_remove(g, g->data);
+	}
+	c->exceptlist = NULL;
+}
+
 static void free_banlist(struct channel *c)
 {
 	GList *g = c->banlist;
@@ -371,6 +391,56 @@ static void handle_end_names(struct network *s, struct line *l) {
 	else log_network(NULL, s, "Can't end /NAMES command for %s: channel not found\n", l->args[2]);
 }
 
+static void handle_invitelist_entry(struct network *s, struct line *l) 
+{
+	struct channel *c = find_channel(s, l->args[2]);
+	
+	if(!c) {
+		log_network(NULL, s, "Can't add invitelist entries to %s: channel not found", l->args[2]);
+		return;
+	}
+
+	if (!c->invitelist_started) {
+		free_invitelist(c);
+		c->invitelist_started = TRUE;
+	}
+
+	c->invitelist = g_list_append(c->invitelist, g_strdup(l->args[3]));
+}
+
+static void handle_end_invitelist(struct network *s, struct line *l) 
+{
+	struct channel *c = find_channel(s, l->args[2]);
+	if(c)c->invitelist_started = FALSE;
+	else log_network(NULL, s, "Can't end invitelist for %s: channel not found\n", l->args[2]);
+}
+
+static void handle_exceptlist_entry(struct network *s, struct line *l) 
+{
+	struct channel *c = find_channel(s, l->args[2]);
+	
+	if(!c) {
+		log_network(NULL, s, "Can't add exceptlist entries to %s: channel not found", l->args[2]);
+		return;
+	}
+
+	if (!c->exceptlist_started) {
+		free_exceptlist(c);
+		c->exceptlist_started = TRUE;
+	}
+
+	c->exceptlist = g_list_append(c->exceptlist, g_strdup(l->args[3]));
+}
+
+static void handle_end_exceptlist(struct network *s, struct line *l) 
+{
+	struct channel *c = find_channel(s, l->args[2]);
+	if(c)c->exceptlist_started = FALSE;
+	else log_network(NULL, s, "Can't end exceptlist for %s: channel not found\n", l->args[2]);
+}
+
+
+
 static void handle_banlist_entry(struct network *s, struct line *l) 
 {
 	struct channel *c = find_channel(s, l->args[2]);
@@ -666,6 +736,10 @@ static struct irc_command {
 	{ "366", 2, handle_end_names },
 	{ "367", 2, handle_banlist_entry },
 	{ "368", 2, handle_end_banlist },
+	{ "346", 2, handle_invitelist_entry },
+	{ "347", 2, handle_end_invitelist },
+	{ "348", 2, handle_exceptlist_entry },
+	{ "349", 2, handle_end_exceptlist },
 	{ "352", 7, handle_whoreply },
 	{ "315", 1, handle_end_who },
 	{ "451", 1, handle_451 },
