@@ -32,13 +32,13 @@ static const char *get_date(void)
 	return ret;
 }
 
-FILE *logf;
+FILE *flog;
 
 static void log_entry(const char *module, const struct network *n, const struct client *c, const char *data)
 {
-	fprintf(logf, "[%s] [%s] %s%s%s%s%s%s\n", get_date(), 
+	fprintf(flog, "[%s] [%s] %s%s%s%s%s%s\n", get_date(), 
 			module?module:"core", data, n?" (":"", n?n->name:"", c?"/":"", c?c->description:"", n?")":"");
-	fflush(logf);
+	fflush(flog);
 }
 
 void log_network(const char *module, const struct network *n, const char *fmt, ...)
@@ -83,12 +83,12 @@ gboolean init_log(const char *lf)
 	g_log_set_handler ("GLib", G_LOG_LEVEL_MASK | G_LOG_FLAG_FATAL | G_LOG_FLAG_RECURSION, log_handler, NULL);
 
 	if (!lf) {
-		logf = stdout;
+		flog = stdout;
 		return TRUE;
 	}
 
-	logf = fopen(lf, "a+");
-	if (!logf) {
+	flog = fopen(lf, "a+");
+	if (!flog) {
 		perror("Opening log file");
 		return FALSE;
 	}
@@ -100,7 +100,7 @@ gboolean init_log(const char *lf)
 void fini_log(void)
 {
 	log_global(NULL, "Closing log file");
-	if (logf != stdout) {
-		fclose(logf);
+	if (flog != stdout) {
+		fclose(flog);
 	}
 }
