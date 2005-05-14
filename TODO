@@ -6,6 +6,16 @@
 - warn about erroneus nicks
 - answer WHO queries from own data if possible
 - finish python module hooks
+- new linestack:
+ - always log everything, let repl backends query
+ - saved per nick/channel per network
+ - adding data always happens one line at a time
+  - Store: NICK, JOIN, QUIT, PART, PRIVMSG, NOTICE, KICK, BAN, TOPIC
+ - data can't be updated
+ - querying: 
+  - need ways to figure out state before log started (i.e. nickname, 
+	names of users in channel)
+  - start querying where? number of lines?
 
 typedef gboolean (*filter_function) (struct line *);
 typedef gboolean (*new_client_hook) (struct client *);

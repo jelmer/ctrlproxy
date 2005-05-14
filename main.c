@@ -71,7 +71,6 @@ void signal_crash(int sig)
 
 static void clean_exit()
 {
-	extern gint ping_loop_id;
 	GList *gl;
 
 	kill_pending_clients();
@@ -85,7 +84,6 @@ static void clean_exit()
 	fini_config();
 	fini_plugins();
 
-	g_source_remove(ping_loop_id);
 	g_main_loop_quit(main_loop);
 
 	g_main_loop_unref(main_loop);

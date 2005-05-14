@@ -107,6 +107,9 @@ struct client {
 	char *description;
 	GIOChannel *incoming;
 	gint incoming_id;
+	gint ping_id;
+	time_t last_ping;
+	time_t last_pong;
 	time_t connect_time;
 	char *nick;
 	char *fullname;

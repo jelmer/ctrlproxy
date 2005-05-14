@@ -89,17 +89,17 @@ static gboolean process_from_client(struct line *l)
 		disconnect_client(l->client);
 		return FALSE;
 	} else if(!g_strcasecmp(l->args[0], "PING")) {
-		client_send_args(l->client, "PONG", l->args[1], NULL);
+		client_send_args(l->client, "PONG", l->network->name, l->args[1], NULL);
 	} else if(!g_strcasecmp(l->args[0], "PONG")) {
 		if (l->argc < 2) {
 			client_send_args(l->client, "461", l->args[0], "Not enough parameters", NULL);
 			return TRUE;
 		}
+		l->client->last_pong = time(NULL);
 	} else if(!g_strcasecmp(l->args[0], "USER") ||
 			  !g_strcasecmp(l->args[0], "PASS")) {
 		client_send_args(l->client, "462", l->client->nick, 
 						 "Please register only once per session", NULL);
-	} else if(!g_strcasecmp(l->args[0], "WHO")) {
 	} else if(network_is_connected(l->client->network)) {
 		/* FIXME: Check for validity of input ? */
 		network_send_line(l->client->network, l);
@@ -142,6 +142,8 @@ void disconnect_client(struct client *c)
 
 	g_source_remove(c->incoming_id);
 	c->incoming = NULL;
+
+	g_source_remove(c->ping_id);
 
 	if (c->network) {
 		c->network->clients = g_list_remove(c->network->clients, c);
@@ -361,6 +363,16 @@ static gboolean handle_pending_client_receive(GIOChannel *c, GIOCondition cond, 
 
 }
 
+static gboolean client_ping(gpointer user_data) {
+	struct client *client = user_data;
+
+	client->last_ping = time(NULL);
+	client_send_args(client, "PING", client->network->name, NULL);
+
+	return TRUE;
+}
+
+
 struct client *new_client(struct network *n, GIOChannel *c, const char *desc)
 {
 	struct client *client = g_new0(struct client, 1);
@@ -368,6 +380,7 @@ struct client *new_client(struct network *n, GIOChannel *c, const char *desc)
 	g_io_channel_set_encoding(c, NULL, NULL);
 	g_io_channel_set_flags(c, G_IO_FLAG_NONBLOCK, NULL);
 	client->connect_time = time(NULL);
+	client->ping_id = g_timeout_add(1000 * 300, client_ping, client);
 	client->incoming = c;
 	client->network = n;
 	client->description = g_strdup(desc);

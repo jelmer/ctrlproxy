@@ -668,22 +668,6 @@ int close_network(struct network *s)
 	return 0;
 }
 
-
-gboolean ping_loop(gpointer user_data) {
-	GList *l = networks;
-	while(l) {
-		struct network *s = (struct network *)l->data;
-
-		if(network_is_connected(s)) {
-			network_send_args(s, "PING", s->name, NULL);
-			/* FIXME: Check if we actually receive a PONG in answer to this */
-		}
-
-		l = g_list_next(l);
-	}
-	return TRUE;
-}
-
 int verify_client(struct network *s, struct client *c)
 {
 	GList *gl = s->clients;
@@ -734,14 +718,8 @@ void unregister_virtual_network(struct virtual_network_ops *ops)
 	g_hash_table_remove(virtual_network_ops, ops->name);
 }
 
-gint ping_loop_id = -1;
-
 gboolean init_networks() {
 	GList *gl;
-
-	if (ping_loop_id == -1) {
-		ping_loop_id = g_timeout_add(1000 * 300, ping_loop, NULL);
-	}
 
 	for (gl = networks; gl; gl = gl->next)
 	{

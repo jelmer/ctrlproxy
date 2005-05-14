@@ -22,8 +22,6 @@
 #include "internals.h"
 #include "irc.h"
 
-extern FILE *debugfd;
-
 struct line *irc_parse_line_args( char *origin, ... ) {
 	va_list ap;
 	struct line *l;
