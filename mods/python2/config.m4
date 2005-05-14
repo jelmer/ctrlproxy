@@ -1,7 +1,4 @@
-AC_ARG_ENABLE(python, 
-[  --enable-python         Enable experimental python scripting support ], 
-[
-	AM_PATH_PYTHON([2.3])
+if test ${enable_python+set} = set; then
 	AC_PATH_PROG(SWIG,swig)
 
 	if test "_$SWIG" = _; then
@@ -18,4 +15,4 @@ AC_ARG_ENABLE(python,
 	fi
 
 	AC_CONFIG_FILES([mods/python2/Makefile])
-])
+fi
