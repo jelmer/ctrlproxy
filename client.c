@@ -138,7 +138,7 @@ gboolean client_send_line(struct client *c, const struct line *l)
 
 void disconnect_client(struct client *c, const char *reason) 
 {
-	if(!c->incoming)return;
+	g_assert(c->incoming);
 
 	irc_send_args(c->incoming, "ERROR", reason, NULL);
 
@@ -382,6 +382,7 @@ struct client *new_client(struct network *n, GIOChannel *c, const char *desc)
 {
 	struct client *client = g_new0(struct client, 1);
 
+	g_io_channel_set_close_on_unref(c, TRUE);
 	g_io_channel_set_encoding(c, NULL, NULL);
 	g_io_channel_set_flags(c, G_IO_FLAG_NONBLOCK, NULL);
 	client->connect_time = time(NULL);

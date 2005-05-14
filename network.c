@@ -302,6 +302,7 @@ gboolean connect_current_tcp_server(struct network *s)
 		}
 
 		ioc = g_io_channel_unix_new(sock);
+		g_io_channel_set_close_on_unref(ioc, TRUE);
 
 		g_io_channel_set_flags(ioc, G_IO_FLAG_NONBLOCK, NULL);
 		g_io_channel_set_encoding(ioc, NULL, NULL);
@@ -528,6 +529,7 @@ static gboolean connect_program(struct network *s)
 	if (pid == -1) return FALSE;
 
 	s->connection.program.outgoing = g_io_channel_unix_new(sock);
+	g_io_channel_set_close_on_unref(s->connection.program.outgoing, TRUE);
 	s->state = NETWORK_STATE_CONNECTED;
 
 	server_send_login(s);

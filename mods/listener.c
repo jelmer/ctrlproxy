@@ -89,6 +89,7 @@ static gboolean handle_new_client(GIOChannel *c_server, GIOCondition condition, 
 
 	c = g_io_channel_unix_new(accept(g_io_channel_unix_get_fd(c_server), NULL, 0));
 
+	g_io_channel_set_close_on_unref(c, TRUE);
 	g_io_add_watch(c, G_IO_IN, handle_client_receive, listener);
 
 	g_io_channel_unref(c);
@@ -135,6 +136,7 @@ gboolean start_listener(struct listener *l)
 		return FALSE;
 	}
 
+	g_io_channel_set_close_on_unref(l->incoming, TRUE);
 	l->incoming_id = g_io_add_watch(l->incoming, G_IO_IN, handle_new_client, l);
 	g_io_channel_unref(l->incoming);
 

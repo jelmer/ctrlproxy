@@ -416,6 +416,7 @@ static gboolean handle_new_client (GIOChannel *ioc, GIOCondition o, gpointer dat
 	}
 	
 	cl->connection = g_io_channel_unix_new(ns);
+	g_io_channel_set_close_on_unref(cl->connection, TRUE);
 	cl->state = STATE_NEW;
 	g_io_channel_set_encoding(cl->connection, NULL, NULL);
 	cl->watch_id = g_io_add_watch(cl->connection, G_IO_IN | G_IO_HUP, handle_client_data, cl);
@@ -518,6 +519,7 @@ static gboolean load_config(struct plugin *p, xmlNodePtr conf)
 	}
 
 	server_channel = g_io_channel_unix_new(sock);
+	g_io_channel_set_close_on_unref(server_channel, TRUE);
 
 	if (!server_channel) {
 		log_global("socks", "Unable to create GIOChannel for server socket");

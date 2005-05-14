@@ -1,12 +1,11 @@
 2.7 showstoppers:
 - update documentation (see FIXME's)
 - test and fix SSL support
-- persistent storage for linestack
 - answer WHO queries from own data if possible
-- handle replies individually
- - reply multiplexer 
 - finish python module hooks
+- handle some currently unhandled responses (especially wrt JOIN's)
 - new linestack:
+ - persistent storage for linestack
  - always log everything, let repl backends query
  - saved per nick/channel per network
  - adding data always happens one line at a time
