@@ -165,17 +165,17 @@ void send_motd(struct client *c)
 	lines = get_motd_lines(c->network);
 
 	if(!lines) {
-		irc_sendf(c->incoming, ":%s %d %s :No MOTD file\r\n", c->network->name, ERR_NOMOTD, c->network->nick);
+		irc_sendf(c->incoming, ":%s %d %s :No MOTD file\r\n", c->network->name, ERR_NOMOTD, c->nick);
 		return;
 	}
 
-	irc_sendf(c->incoming, ":%s %d %s :Start of MOTD\r\n", c->network->name, RPL_MOTDSTART, c->network->nick);
+	irc_sendf(c->incoming, ":%s %d %s :Start of MOTD\r\n", c->network->name, RPL_MOTDSTART, c->nick);
 	for(i = 0; lines[i]; i++) {
-		irc_sendf(c->incoming, ":%s %d %s :%s\r\n", c->network->name, RPL_MOTD, c->network->nick, lines[i]);
+		irc_sendf(c->incoming, ":%s %d %s :%s\r\n", c->network->name, RPL_MOTD, c->nick, lines[i]);
 		g_free(lines[i]);
 	}
 	g_free(lines);
-	irc_sendf(c->incoming, ":%s %d %s :End of MOTD\r\n", c->network->name, RPL_ENDOFMOTD, c->network->nick);
+	irc_sendf(c->incoming, ":%s %d %s :End of MOTD\r\n", c->network->name, RPL_ENDOFMOTD, c->nick);
 }
 
 static gboolean handle_client_receive(GIOChannel *c, GIOCondition cond, void *_client)
@@ -235,16 +235,19 @@ static gboolean welcome_client(struct client *client)
 
 	send_motd(client);
 
+	if (g_strcasecmp(client->nick, client->network->nick)) {
+		/* Either try to get the nick the client specified */
+		if (!client->network->ignore_first_nick && client->nick) {
+			network_send_args(client->network, "NICK", client->nick, NULL);
+		} else {
+		/* Or tell the client our his/her real nick */
+			irc_sendf(client->incoming, ":%s NICK %s", client->nick, client->network->nick);
+		}
+	}
+
 	if(!new_client_hook_execute(client)) {
 		disconnect_client(client);
 		return FALSE;
-	} else {
-		/* Initialization was successful. Now we can almost safely try to change to the nick, which
-		 * was requested by the client earlier */
-		if (!client->network->ignore_first_nick && client->nick)
-			if (g_strcasecmp(client->nick, client->network->nick)) {
-				network_send_args(client->network, "NICK", client->nick, NULL);
-			}
 	}
 
 	return TRUE;
@@ -278,10 +281,6 @@ static gboolean handle_pending_client_receive(GIOChannel *c, GIOCondition cond, 
 		}
 
 		if(!g_strcasecmp(l->args[0], "NICK") && l->args[1] && !client->nick) {
-			/* Don't allow the client to change the nick now. We would change it after initialization */
-			if (strcmp(l->args[1], client->network->nick)) 
-				irc_sendf(client->incoming, ":%s NICK %s", l->args[1], client->network->nick);
-
 			client->nick = g_strdup(l->args[1]); /* Save nick */
 
 			welcome_client(client);
