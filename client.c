@@ -95,7 +95,8 @@ static gboolean process_from_client(struct line *l)
 			client_send_args(l->client, "461", l->args[0], "Not enough parameters", NULL);
 			return TRUE;
 		}
-	} else if(!g_strcasecmp(l->args[0], "USER")) {
+	} else if(!g_strcasecmp(l->args[0], "USER") ||
+			  !g_strcasecmp(l->args[0], "PASS")) {
 		client_send_args(l->client, "462", l->client->nick, 
 						 "Please register only once per session", NULL);
 	} else if(!g_strcasecmp(l->args[0], "WHO")) {
@@ -292,6 +293,7 @@ static gboolean handle_pending_client_receive(GIOChannel *c, GIOCondition cond, 
 			if (l->argc < 2) {
 				client_send_args(client, "461", l->args[0], 
 							  "Not enough parameters", NULL);
+				free_line(l);
 				return TRUE;
 			}
 
@@ -301,6 +303,7 @@ static gboolean handle_pending_client_receive(GIOChannel *c, GIOCondition cond, 
 			if (l->argc < 5) {
 				client_send_args(client, "461", l->args[0], 
 							  "Not enough parameters", NULL);
+				free_line(l);
 				return TRUE;
 			}
 			
@@ -310,10 +313,13 @@ static gboolean handle_pending_client_receive(GIOChannel *c, GIOCondition cond, 
 			g_free(client->fullname);
 			client->fullname = g_strdup(l->args[4]);
 
+		} else if(!g_strcasecmp(l->args[0], "PASS")) {
+			/* Silently drop... */
 		} else if(!g_strcasecmp(l->args[0], "CONNECT")) {
 			if (l->argc < 3) {
 				client_send_args(client, "461", l->args[0], 
 							  "Not enough parameters", NULL);
+				free_line(l);
 				return TRUE;
 			}
 
