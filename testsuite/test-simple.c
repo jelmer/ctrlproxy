@@ -33,6 +33,31 @@ static int test_login(void)
 	GIOChannel *fd = new_conn();
 	irc_send_args(fd, "USER", "a", "a", "a", "a", NULL);
 	irc_send_args(fd, "NICK", "bla", NULL);
+	if (!wait_response(fd, "001")) 
+		return -1;
+	g_io_channel_unref(fd);
+	return 0;
+}
+
+
+static int test_needmoreparams(void)
+{
+	GIOChannel *fd = new_conn();
+	irc_send_args(fd, "USER", "a", "a", NULL);
+	if (!wait_response(fd, "461")) 
+		return -1;
+	g_io_channel_unref(fd);
+	return 0;
+}
+
+static int test_motd(void)
+{
+	GIOChannel *fd = new_conn();
+	const char *resp[] = { "375", "422", NULL };
+	irc_send_args(fd, "USER", "a", "a", "a", "a", NULL);
+	irc_send_args(fd, "NICK", "bla", NULL);
+	if (!wait_responses(fd, resp)) 
+		return -1;
 	g_io_channel_unref(fd);
 	return 0;
 }
@@ -41,4 +66,6 @@ void simple_init(void)
 {
 	register_test("IRC-CONNECT", test_connect);
 	register_test("IRC-LOGIN", test_login);
+	register_test("IRC-MOTD", test_motd);
+	register_test("IRC-NEEDMOREPARAMS", test_needmoreparams);
 }

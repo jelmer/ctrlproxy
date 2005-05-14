@@ -46,17 +46,32 @@ struct torture_test {
 	int (*test) (void);
 };
 
-int fdprintf(int fd, const char *fmt, ...)
+struct line *wait_response(GIOChannel *ch, const char *cmd)
 {
-	char *tmp;
-	int ret;
-	va_list ap;
-	va_start(ap, fmt);
-	vasprintf(&tmp, fmt, ap);
-	ret = write(fd, tmp, strlen(tmp));
-	va_end(ap);
-	free(tmp);
-	return ret;
+	const char *cmds[] = { cmd, NULL };
+	return wait_responses(ch, cmds);
+}
+
+struct line *wait_responses(GIOChannel *ch, const char *cmd[])
+{
+	GError *error = NULL;
+	GIOStatus status;
+	struct line *l = NULL;
+
+	/* FIXME: Timeout */
+	do { 
+		int i;
+		status = irc_recv_line(ch, &error, &l);
+
+		if (status == G_IO_STATUS_NORMAL) {
+			for (i = 0; cmd[i]; i++) {
+				if (!strcmp(l->args[0], cmd[i])) 
+					return l;
+			}
+		}
+	} while(status != G_IO_STATUS_ERROR);
+	
+	return l;
 }
 
 GList *tests = NULL;
