@@ -132,7 +132,8 @@ gboolean client_send_line(struct client *c, const struct line *l)
 	return irc_send_line(c->incoming, l);
 }
 
-void disconnect_client(struct client *c) {
+void disconnect_client(struct client *c) 
+{
 	if(!c->incoming)return;
 
 	g_source_remove(c->incoming_id);
@@ -147,6 +148,9 @@ void disconnect_client(struct client *c) {
 	lose_client_hook_execute(c);
 
 	log_client(NULL, c, "Removed client");
+
+	if (c->exit_on_close) 
+		exit(0);
 
 	g_free(c->username);
 	g_free(c->fullname);
@@ -334,6 +338,7 @@ struct client *new_client(struct network *n, GIOChannel *c, const char *desc)
 	client->incoming = c;
 	client->network = n;
 	client->description = g_strdup(desc);
+	client->exit_on_close = FALSE;
 
 	if (!desc) {
 		socklen_t len = sizeof(struct sockaddr_in6);

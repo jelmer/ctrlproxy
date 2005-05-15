@@ -124,7 +124,7 @@ int main(int argc, const char *argv[])
 	poptContext pc;
 	struct poptOption options[] = {
 		POPT_AUTOHELP
-		{"inetd-client", 'i', POPT_ARG_STRING, &inetd_client, 0, "Communicate with client to NETWORK via stdin/stdout", "NETWORK" },
+		{"inetd-client", 'i', POPT_ARG_STRING, &inetd_client, 0, "Communicate with client to NETWORK via stdio", "NETWORK" },
 		{"debug", 'd', POPT_ARG_STRING, NULL, 'd', ("Write irc traffic to specified file"), "FILE" },
 		{"daemon", 'D', POPT_ARG_NONE, &isdaemon, 0, ("Run in the background (as a daemon)")},
 		{"log", 'l', POPT_ARG_STRING, &logfile, 0, ("Log messages to specified file"), ("FILE")},
@@ -242,7 +242,8 @@ int main(int argc, const char *argv[])
 			fprintf(stderr, "Unable to find network named '%s'\n", inetd_client);
 		} else {
 			/* Find clients network by name */
-			new_client(n, io, "Standard I/O");
+			struct client *client = new_client(n, io, "Standard I/O");
+			client->exit_on_close = TRUE;
 		}
 	}
 

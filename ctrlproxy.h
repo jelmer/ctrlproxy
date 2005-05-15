@@ -111,6 +111,7 @@ struct client {
 	char* nick;
 	char *fullname;
 	char *username;
+	gboolean exit_on_close;
 };
 
 enum casemapping { CASEMAP_UNKNOWN = 0, CASEMAP_RFC1459, CASEMAP_ASCII, CASEMAP_STRICT_RFC1459 };
