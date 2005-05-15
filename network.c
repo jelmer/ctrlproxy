@@ -166,7 +166,8 @@ gboolean handle_server_receive (GIOChannel *c, GIOCondition cond, void *_server)
 	struct line *l;
 	gboolean ret;
 
-	if (cond & G_IO_HUP || cond & G_IO_ERR) {
+	if ((cond & G_IO_HUP) || (cond & G_IO_ERR)) {
+		log_network(NULL, server, "Hangup from server, scheduling reconnect in %ds...", server->reconnect_interval);
 		reconnect(server, FALSE);
 		return FALSE;
 	}
@@ -180,6 +181,15 @@ gboolean handle_server_receive (GIOChannel *c, GIOCondition cond, void *_server)
 		GIOStatus status = irc_recv_line(c, &err, &l);
 
 		if (status != G_IO_STATUS_NORMAL) {
+			if (status == G_IO_STATUS_EOF) {
+				log_network(NULL, server, 
+					"Server hangup, reconnecting in %ds...", 
+					server->reconnect_interval);
+			} else {
+				log_network(NULL, server, 
+					"Error \"%s\" reading from server, reconnecting in %ds...",
+					err?err->message:"UNKNOWN", server->reconnect_interval);
+			}
 			reconnect(server, FALSE);
 			return FALSE;
 		}
@@ -219,6 +229,7 @@ struct tcp_server *network_get_next_tcp_server(struct network *n)
 gboolean connect_next_tcp_server(struct network *s) 
 {
 	s->connection.tcp.current_server = network_get_next_tcp_server(s);
+	log_network(NULL, s, "Reconnecting...");
 	return connect_current_tcp_server(s);
 }
 
@@ -370,8 +381,6 @@ gboolean connect_current_tcp_server(struct network *s)
 
 static void reconnect(struct network *server, gboolean rm_source)
 {
-	/* Don't report disconnections twice */
-
 	server_disconnected_hook_execute(server);
 
 	switch (server->type) {
@@ -391,7 +400,6 @@ static void reconnect(struct network *server, gboolean rm_source)
 	free_channels(server);
 
 	if (server->type == NETWORK_TCP) {
-		log_network(NULL, server, "Connection lost, trying to reconnect in %ds...", server->reconnect_interval);
 		server->reconnect_id = g_timeout_add(1000 * server->reconnect_interval, (GSourceFunc) connect_next_tcp_server, server);
 	} else {
 		connect_network(server);	
@@ -649,8 +657,10 @@ gboolean ping_loop(gpointer user_data) {
 	while(l) {
 		struct network *s = (struct network *)l->data;
 
-		if(network_is_connected(s))network_send_args(s, "PING", s->name, NULL);
-		else reconnect(s, TRUE);
+		if(network_is_connected(s)) {
+			network_send_args(s, "PING", s->name, NULL);
+			/* FIXME: Check if we actually receive a PONG in answer to this */
+		}
 
 		l = g_list_next(l);
 	}

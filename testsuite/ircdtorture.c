@@ -241,7 +241,7 @@ int main(int argc, const char *argv[])
 	}
 #endif
 	
-	if (!poptPeekArg(pc) || ip) {
+	if (!poptPeekArg(pc) && !ip) {
 		poptPrintUsage(pc, stderr, 0);
 		return -1;
 	}
