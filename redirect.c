@@ -409,7 +409,7 @@ void redirect_response(struct network *network, struct line *l)
 				g_free(s);
 			}
 
-			return;
+			break;
 		}
 		p = s; s = s->next;
 	}
@@ -422,8 +422,10 @@ void redirect_response(struct network *network, struct line *l)
 		}
 	}
 
-	log_network(NULL, network, "Unable to redirect response %s", l->args[0]);
-	clients_send(network, l, NULL);
+	if (!c) {
+		log_network(NULL, network, "Unable to redirect response %s", l->args[0]);
+		clients_send(network, l, NULL);
+	}
 }
 
 void redirect_record(struct client *c, struct line *l)
