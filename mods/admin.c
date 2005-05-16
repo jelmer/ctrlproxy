@@ -197,7 +197,8 @@ static void com_next_server (char **args, struct line *l, void *userdata) {
 		admin_out(l, "%s: Reconnecting", name);
 		close_server(n);
 		g_log(G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "Cycle server in %s", name);
-		connect_next_tcp_server(n);
+		n->connection.tcp.current_server = network_get_next_tcp_server(n);
+		connect_network(n);
 	}
 }
 
@@ -328,7 +329,7 @@ static void list_networks(char **args, struct line *l, void *userdata)
 
 static void detach_client(char **args, struct line *l, void *userdata)
 {
-	disconnect_client(l->client);
+	disconnect_client(l->client, "Client exiting");
 	l->client = NULL;
 }
 
@@ -440,7 +441,7 @@ static gboolean load_config(struct plugin *p, xmlNodePtr node)
 
 static gboolean admin_net_init(struct network *n)
 {
-	n->authenticated = TRUE;
+	n->state = NETWORK_STATE_MOTD_RECVD;
 	virtual_network_recv_args(n, n->hostmask, "JOIN", ADMIN_CHANNEL, NULL);
 	virtual_network_recv_args(n, n->name, "332", n->nick, ADMIN_CHANNEL, "CtrlProxy administration channel", NULL);
 	virtual_network_recv_args(n, n->name, "353", n->nick, "=", ADMIN_CHANNEL, n->nick, NULL);

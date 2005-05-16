@@ -54,6 +54,19 @@ static void free_nick(struct channel_nick *n)
 }
 
 
+static void free_banlist(struct channel *c)
+{
+	GList *g = c->banlist;
+	while(g) {
+		struct banlist_entry *be = g->data;
+		g_free(be->hostmask);
+		g_free(be->by);
+		g = g_list_remove(g, be);
+		g_free(be);
+	}
+	c->banlist = NULL;
+}
+
 static void free_names(struct channel *c)
 {
 	GList *g = c->nicks;
@@ -358,6 +371,39 @@ static void handle_end_names(struct network *s, struct line *l) {
 	else log_network(NULL, s, "Can't end /NAMES command for %s: channel not found\n", l->args[2]);
 }
 
+static void handle_banlist_entry(struct network *s, struct line *l) 
+{
+	struct channel *c = find_channel(s, l->args[2]);
+	struct banlist_entry *be;
+	
+	if(!c) {
+		log_network(NULL, s, "Can't add banlist entries to %s: channel not found", l->args[2]);
+		return;
+	}
+
+	if (!c->banlist_started) {
+		free_banlist(c);
+		c->banlist_started = TRUE;
+	}
+
+	be = g_new0(struct banlist_entry, 1);
+	be->hostmask = g_strdup(l->args[3]);
+	if (l->args[4]) {
+		be->by = g_strdup(l->args[4]);
+		if (l->args[5]) 
+			be->time_set = atol(l->args[5]);
+	}
+
+	c->banlist = g_list_append(c->banlist, be);
+}
+
+static void handle_end_banlist(struct network *s, struct line *l) 
+{
+	struct channel *c = find_channel(s, l->args[2]);
+	if(c)c->banlist_started = FALSE;
+	else log_network(NULL, s, "Can't end banlist for %s: channel not found\n", l->args[2]);
+}
+
 static void handle_whoreply(struct network *s, struct line *l) {
 	char *hostmask;
 	struct channel_nick *n; struct channel *c;
@@ -444,8 +490,15 @@ static void handle_mode(struct network *s, struct line *l)
 			switch(l->args[2][i]) {
 				case '+': t = ADD; break;
 				case '-': t = REMOVE; break;
-				case 'b': /* Don't do anything (like store, etc) with ban
-							 for now */
+				case 'b': /* Ban */
+						  {
+							  struct banlist_entry *be = g_new0(struct banlist_entry, 1);
+							  be->time_set = time(NULL);
+							  be->hostmask = g_strdup(l->args[arg]);
+							  be->by = g_strdup(line_get_nick(l));
+							  c->banlist = g_list_append(c->banlist, be);
+						  }
+												
 						  arg++;
 						  break;
 				case 'l':
@@ -515,6 +568,31 @@ static void handle_nick(struct network *s, struct line *l)
 		network_change_nick(s, l->args[1]);
 }
 
+static void handle_465(struct network *s, struct line *l)
+{
+	log_network(NULL, l->network, "Banned from server: %s", l->args[1]);
+}
+
+static void handle_451(struct network *s, struct line *l)
+{
+	log_network(NULL, l->network, "Not registered error, this is probably a bug...");
+}
+
+static void handle_462(struct network *s, struct line *l)
+{
+	log_network(NULL, l->network, "Double registration error, this is probably a bug...");
+}
+
+static void handle_463(struct network *s, struct line *l)
+{
+	log_network(NULL, l->network, "Host not privileged to connect");
+}
+
+static void handle_464(struct network *s, struct line *l)
+{
+	log_network(NULL, l->network, "Password mismatch");
+}
+
 static void handle_302(struct network *s, struct line *l)
 {
 	/* We got a USERHOST response, split it into nick and user@host, and check the nick */
@@ -541,17 +619,24 @@ static struct irc_command {
 	{ "KICK", 2, handle_kick },
 	{ "QUIT", 0, handle_quit },
 	{ "TOPIC", 2, handle_topic },
+	{ "NICK", 1, handle_nick },
+	{ "MODE", 2, handle_mode },
 	{ "004", 5, handle_004 },
 	{ "005", 3, handle_005 },
 	{ "302", 2, handle_302 },
-	{ "332",  3, handle_332 },
+	{ "332", 3, handle_332 },
 	{ "331", 1, handle_no_topic },
 	{ "353", 4, handle_namreply },
 	{ "366", 2, handle_end_names },
+	{ "367", 2, handle_banlist_entry },
+	{ "368", 2, handle_end_banlist },
 	{ "352", 7, handle_whoreply },
 	{ "315", 1, handle_end_who },
-	{ "NICK", 1, handle_nick },
-	{ "MODE", 2, handle_mode },
+	{ "451", 1, handle_451 },
+	{ "462", 1, handle_462 },
+	{ "463", 1, handle_463 },
+	{ "464", 1, handle_464 },
+	{ "465", 1, handle_465 },
 	{ NULL }
 };
 

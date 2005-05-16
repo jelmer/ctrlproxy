@@ -7,11 +7,11 @@ MODS_STATIC_SUBDIRS_FILES = $(foreach mod, $(MODS_STATIC_SUBDIRS), $(mod)/$(mod)
 MODS_STATIC_FILES = $(foreach mod, $(MODS_STATIC), $(shell test -f $(mod).c && echo $(mod).o)) $(MODS_STATIC_SUBDIRS_FILES)
 INCLUDEFILES = $(wildcard *.h)
 
-.PHONY: all install clean distclean
+.PHONY: all install clean distclean $(MODS_SHARED_SUBDIRS)
 
 all: $(MODS_SHARED_FILES) $(MODS_SHARED_SUBDIRS)
 
-$(MODS_SHARED_SUBDIRS):
+$(MODS_SHARED_SUBDIRS): 
 	$(MAKE) -C $@
 
 install-%:

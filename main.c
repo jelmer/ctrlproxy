@@ -73,7 +73,7 @@ static void clean_exit()
 {
 	GList *gl;
 
-	kill_pending_clients();
+	kill_pending_clients("Server exiting");
 
 	while((gl = get_network_list())) {
 		struct network *n = (struct network *)gl->data;

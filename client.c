@@ -86,7 +86,7 @@ static gboolean process_from_client(struct line *l)
 		return TRUE;
 
 	if(!g_strcasecmp(l->args[0], "QUIT")) {
-		disconnect_client(l->client);
+		disconnect_client(l->client, "Client exiting");
 		return FALSE;
 	} else if(!g_strcasecmp(l->args[0], "PING")) {
 		client_send_args(l->client, "PONG", l->network->name, l->args[1], NULL);
@@ -100,10 +100,10 @@ static gboolean process_from_client(struct line *l)
 			  !g_strcasecmp(l->args[0], "PASS")) {
 		client_send_args(l->client, "462", l->client->nick, 
 						 "Please register only once per session", NULL);
-	} else if(network_is_connected(l->client->network)) {
+	} else if(l->client->network->state == NETWORK_STATE_MOTD_RECVD) {
 		/* FIXME: Check for validity of input ? */
 		network_send_line(l->client->network, l);
-	} else {
+	} else if(l->client->network->state == NETWORK_STATE_NOT_CONNECTED) {
 		client_send_args(l->client, "NOTICE", l->client->nick, "Currently not connected to server, connecting...", NULL);
 		connect_network(l->client->network);
 	}
@@ -135,9 +135,11 @@ gboolean client_send_line(struct client *c, const struct line *l)
 	return irc_send_line(c->incoming, l);
 }
 
-void disconnect_client(struct client *c) 
+void disconnect_client(struct client *c, const char *reason) 
 {
 	if(!c->incoming)return;
+
+	irc_send_args(c->incoming, "ERROR", reason, NULL);
 
 	g_source_remove(c->incoming_id);
 	c->incoming = NULL;
@@ -190,7 +192,7 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition cond, void *_c
 	struct line *l;
 
 	if (cond & G_IO_HUP) {
-		disconnect_client(client);
+		disconnect_client(client, "Hangup from client");
 		return FALSE;
 	}
 
@@ -199,7 +201,7 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition cond, void *_c
 		GIOStatus status = irc_recv_line(c, &error, &l);
 
 		if (status == G_IO_STATUS_ERROR) {
-			disconnect_client(client);
+			disconnect_client(client, error?error->message:"Unknown error");
 			return FALSE;
 		}
 
@@ -258,7 +260,7 @@ static gboolean welcome_client(struct client *client)
 	}
 
 	if(!new_client_hook_execute(client)) {
-		disconnect_client(client);
+		disconnect_client(client, "Refused by client connect hook");
 		return FALSE;
 	}
 
@@ -271,7 +273,7 @@ static gboolean handle_pending_client_receive(GIOChannel *c, GIOCondition cond, 
 	struct line *l;
 
 	if (cond & G_IO_HUP) {
-		disconnect_client(client);
+		disconnect_client(client, "Hangup from client");
 		return FALSE;
 	}
 
@@ -280,7 +282,7 @@ static gboolean handle_pending_client_receive(GIOChannel *c, GIOCondition cond, 
 		GIOStatus status = irc_recv_line(c, &error, &l);
 		
 		if (status != G_IO_STATUS_NORMAL) {
-			disconnect_client(client);
+			disconnect_client(client, "Error receiving line from client");
 			return FALSE;
 		}
 
@@ -331,7 +333,9 @@ static gboolean handle_pending_client_receive(GIOChannel *c, GIOCondition cond, 
 
 			client->network = find_network_by_hostname(l->args[1], atoi(l->args[2]), TRUE);
 
-            if (client->network && !network_is_connected(client->network) && !connect_network(client->network)) {
+            if (client->network && 
+				client->network->state == NETWORK_STATE_NOT_CONNECTED && 
+				!connect_network(client->network)) {
 				log_network(NULL, client->network, "Unable to connect");
 			}
 		} else {
@@ -342,8 +346,7 @@ static gboolean handle_pending_client_receive(GIOChannel *c, GIOCondition cond, 
 
 		if (client->fullname && client->nick) {
 			if (!client->network) {
-				irc_sendf(client->incoming, "ERROR :Please select a network first, or specify one in your ctrlproxyrc\r\n");
-				disconnect_client(client);
+				disconnect_client(client, "Please select a network first, or specify one in your ctrlproxyrc");
 				return FALSE;
 			}
 
@@ -408,7 +411,7 @@ struct client *new_client(struct network *n, GIOChannel *c, const char *desc)
 	return client;
 }
 
-void kill_pending_clients()
+void kill_pending_clients(const char *reason)
 {
-	while(pending_clients) disconnect_client(pending_clients->data);
+	while(pending_clients) disconnect_client(pending_clients->data, reason);
 }

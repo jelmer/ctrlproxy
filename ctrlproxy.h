@@ -87,6 +87,12 @@ struct network_nick {
 	GList *channels;
 };
 
+struct banlist_entry {
+	char *hostmask;
+	char *by;
+	time_t time_set;
+};
+
 struct channel {
 	char *name;
 	char *key;
@@ -97,8 +103,10 @@ struct channel {
 	char modes[255];
 	char introduced;
 	gboolean namreply_started;
+	gboolean banlist_started;
 	long limit;
 	GList *nicks;
+	GList *banlist;
 	struct network *network;
 };
 
@@ -120,6 +128,13 @@ struct client {
 
 enum casemapping { CASEMAP_UNKNOWN = 0, CASEMAP_RFC1459, CASEMAP_ASCII, CASEMAP_STRICT_RFC1459 };
 enum network_type { NETWORK_TCP, NETWORK_PROGRAM, NETWORK_VIRTUAL };
+enum network_state { 
+	NETWORK_STATE_NOT_CONNECTED = 0, 
+	NETWORK_STATE_RECONNECT_PENDING,
+	NETWORK_STATE_CONNECTED,
+	NETWORK_STATE_LOGIN_SENT, 
+	NETWORK_STATE_MOTD_RECVD,
+};
 
 struct network {
 	char *name;
@@ -133,9 +148,6 @@ struct network {
 	char mymodes[255];
 	GList *channels;
 	GList *nicks;
-	gboolean login_sent;
-	gboolean authenticated;
-	gboolean motd_recvd;
 	GList *clients;
 	GList *autosend_lines;
 	GHashTable *server_features;
@@ -144,6 +156,7 @@ struct network {
 	guint reconnect_interval;
 	char *supported_modes[2];
 	enum network_type type;
+	enum network_state state;
 
 	struct {
 		enum casemapping casemapping;
@@ -221,16 +234,16 @@ G_MODULE_EXPORT int irccmp(struct network *n, const char *a, const char *b);
 G_MODULE_EXPORT struct network_nick *line_get_network_nick(struct line *l);
 
 /* server.c */
-G_MODULE_EXPORT gboolean network_is_connected(struct network *);
 G_MODULE_EXPORT struct network *find_network_by_hostname(const char *host, guint16 port, gboolean create);
 G_MODULE_EXPORT struct network *new_network(void);
 G_MODULE_EXPORT gboolean connect_network(struct network *);
+G_MODULE_EXPORT struct tcp_server *network_get_next_tcp_server(struct network *);
 G_MODULE_EXPORT gboolean connect_current_tcp_server (struct network *);
 G_MODULE_EXPORT int close_network(struct network *s);
 G_MODULE_EXPORT gboolean close_server(struct network *n);
 G_MODULE_EXPORT GList *get_network_list(void);
 G_MODULE_EXPORT void clients_send(struct network *, struct line *, struct client *exception);
-G_MODULE_EXPORT void disconnect_client(struct client *c);
+G_MODULE_EXPORT void disconnect_client(struct client *c, const char *reason);
 G_MODULE_EXPORT gboolean network_change_nick(struct network *s, const char *nick);
 G_MODULE_EXPORT struct client *new_client(struct network *, GIOChannel *, const char *desc);
 G_MODULE_EXPORT gboolean network_send_line(struct network *s, const struct line *);
