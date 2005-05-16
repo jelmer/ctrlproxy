@@ -23,17 +23,17 @@
 
 static int test_connect(void)
 {
-	int fd = new_conn();
-	close(fd);
+	GIOChannel *fd = new_conn();
+	g_io_channel_unref(fd);
 	if (fd >= 0) return 0; else return -1;
 }
 
 static int test_login(void)
 {
-	int fd = new_conn();
-	fdprintf(fd, "USER a a a a\r\n");
-	fdprintf(fd, "NICK bla\r\n");
-	close(fd);
+	GIOChannel *fd = new_conn();
+	irc_send_args(fd, "USER", "a", "a", "a", "a", NULL);
+	irc_send_args(fd, "NICK", "bla", NULL);
+	g_io_channel_unref(fd);
 	return 0;
 }
 

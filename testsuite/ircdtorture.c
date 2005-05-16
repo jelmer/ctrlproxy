@@ -111,7 +111,7 @@ static const char *ip = NULL;
 static const char **args = NULL;
 static const char *port = "6667";
 
-int new_conn(void)
+GIOChannel *new_conn(void)
 {
 	pid_t child_pid;
 	int std_fd;
@@ -134,29 +134,30 @@ int new_conn(void)
 		if (error) {
 			fprintf(stderr, "Error during getaddrinfo: %s", gai_strerror(errno));
 
-			return -1;
+			return NULL;
 		} 
 		
 		fd = socket(real->ai_family, real->ai_socktype, real->ai_protocol);
 		if (!fd) {
 			perror("socket");
-			return -1;
+			return NULL;
 		}
 
 		if (connect(fd, real->ai_addr, real->ai_addrlen) == -1) {
 			perror("connect");
-			return -1;
+			return NULL;
 		}
 	}
 
-	return fd;
+	return g_io_channel_unix_new(fd);
 }
 
-int new_conn_loggedin(void)
+GIOChannel *new_conn_loggedin(void)
 {
-	int fd = new_conn();
-	fdprintf(fd, "USER a a a a\r\n");
-	fdprintf(fd, "NICK bla\r\n");
+	GIOChannel *fd = new_conn();
+	
+	irc_send_args(fd, "USER", "a", "a", "a", "a", NULL);
+	irc_send_args(fd, "NICK", "bla", NULL);
 	return fd;
 }
 
@@ -169,6 +170,8 @@ int run_test(struct torture_test *test)
 	if (ret) printf("failed!\n"); else printf("ok\n");
 	return ret;
 }
+
+void simple_init(void);
 
 int main(int argc, const char *argv[])
 {

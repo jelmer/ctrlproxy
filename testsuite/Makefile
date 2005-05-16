@@ -6,8 +6,11 @@ CFLAGS+=-ansi -Wall -DMODULESDIR=\"$(modulesdir)\"
 
 all: ircdtorture
 
-ircdtorture: ircdtorture.o test-simple.o
-	$(CC) $(LIBS) -o $@ $^
+ircdtorture: ircdtorture.o test-simple.o ../line.o
+	$(CC) $(LIBS) -o $@ $^ 
+
+torture: ircdtorture
+	./ircdtorture -- ../ctrlproxy -i Freenode
 
 test-linestack: test-linestack.o ../line.o ../linestack.o ../plugins.o ../config.o ../util.o ../server.o ../state.o ../isupport.c ../hooks.o ../client.o ../posix.o
 	$(CC) $(LIBS) -o $@ $^
