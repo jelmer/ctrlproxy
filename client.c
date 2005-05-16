@@ -294,6 +294,12 @@ static gboolean handle_pending_client_receive(GIOChannel *c, GIOCondition cond, 
 
 			return FALSE;
 		} else if(!g_strcasecmp(l->args[0], "USER")) {
+
+			if (l->argc < 4) {
+				irc_send_args(client->incoming, "461", l->args[0], "Not enough parameters", NULL);
+				return TRUE;
+			}
+			
 			if (l->argc > 1) {
 				g_free(client->username);
 				client->username = g_strdup(l->args[1]);
