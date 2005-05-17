@@ -105,7 +105,6 @@ static gboolean process_from_client(struct line *l)
 		network_send_line(l->client->network, l);
 	} else {
 		client_send_args(l->client, "NOTICE", l->client->nick, "Currently not connected to server, connecting...", NULL);
-		/* FIXME: Already reconnect if not connected yet */
 		connect_network(l->client->network);
 	}
 
