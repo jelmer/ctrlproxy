@@ -108,8 +108,9 @@ struct client {
 	GIOChannel *incoming;
 	gint incoming_id;
 	time_t connect_time;
-	char* nick;
+	char *nick;
 	char *fullname;
+	char *hostname;
 	char *username;
 	gboolean exit_on_close;
 };

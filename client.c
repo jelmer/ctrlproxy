@@ -246,7 +246,7 @@ static gboolean welcome_client(struct client *client)
 
 	if (g_strcasecmp(client->nick, client->network->nick)) {
 		/* Or tell the client our his/her real nick */
-		irc_sendf(client->incoming, ":%s NICK %s", client->nick, client->network->nick);
+		irc_sendf(client->incoming, ":%s!%s@%s NICK %s", client->nick, client->username, client->hostname, client->network->nick);
 
 		/* Try to get the nick the client specified */
 		if (!client->network->ignore_first_nick) {
@@ -309,6 +309,9 @@ static gboolean handle_pending_client_receive(GIOChannel *c, GIOCondition cond, 
 			
 			g_free(client->username);
 			client->username = g_strdup(l->args[1]);
+
+			g_free(client->hostname);
+			client->hostname = g_strdup(l->args[2]);
 
 			g_free(client->fullname);
 			client->fullname = g_strdup(l->args[4]);
