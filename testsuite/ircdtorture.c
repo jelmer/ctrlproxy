@@ -181,7 +181,7 @@ GIOChannel *new_conn(void)
 	return g_io_channel_unix_new(fd);
 }
 
-GIOChannel *new_conn_loggedin(void)
+GIOChannel *new_conn_loggedin(const char *nick)
 {
 	GIOChannel *fd = new_conn();
 
@@ -189,7 +189,7 @@ GIOChannel *new_conn_loggedin(void)
 		return NULL;
 	
 	irc_send_args(fd, "USER", "a", "a", "a", "a", NULL);
-	irc_send_args(fd, "NICK", "bla", NULL);
+	irc_send_args(fd, "NICK", nick, NULL);
 
 	if (!wait_response(fd, "001")) 
 		return NULL;

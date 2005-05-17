@@ -1,6 +1,8 @@
 2.7 showstoppers:
 - update documentation (see FIXME's)
+- bugs in BUGS file
 - test and fix SSL support
+- warn about erroneus nicks
 - finish python module hooks
 
 typedef gboolean (*filter_function) (struct line *);

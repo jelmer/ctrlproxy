@@ -80,7 +80,7 @@ static int test_user_needmoreparams(void)
 
 static int test_userhost_needmoreparams(void)
 {
-	GIOChannel *fd = new_conn_loggedin();
+	GIOChannel *fd = new_conn_loggedin("bla");
 	if (!fd) return -1;
 	irc_send_args(fd, "USERHOST", NULL);
 	if (!wait_response(fd, "461")) 
@@ -103,7 +103,7 @@ static int test_motd(void)
 
 static int test_userhost(void)
 {
-	GIOChannel *fd = new_conn_loggedin();
+	GIOChannel *fd = new_conn_loggedin("bla");
 	if (!fd) return -1;
 	irc_send_args(fd, "USERHOST", "bla", NULL);
 	if (!wait_response(fd, "302")) {
@@ -114,9 +114,20 @@ static int test_userhost(void)
 	return 0;
 }
 
+static int test_nick_erroneous(void)
+{
+	GIOChannel *fd = new_conn();
+	irc_send_args(fd, "USER", "a", "a", "a", "a", NULL);
+	irc_send_args(fd, "NICK", "!bla", NULL);
+	if (!wait_response(fd, "432")) 
+		return -1;
+	g_io_channel_unref(fd);
+	return 0;
+}
+
 static int test_who_simple(void)
 {
-	GIOChannel *fd = new_conn_loggedin();
+	GIOChannel *fd = new_conn_loggedin("bla");
 	if (!fd) return -1;
 	irc_send_args(fd, "WHO", "bla", NULL);
 	if (!wait_response(fd, "315")) {
@@ -131,7 +142,7 @@ static int test_who_simple(void)
 
 static int test_selfmessage(void)
 {
-	GIOChannel *fd = new_conn_loggedin();
+	GIOChannel *fd = new_conn_loggedin("bla");
 	irc_send_args(fd, "PRIVMSG", "bla", "MyMessage", NULL);
 	do { 
 		struct line *l = wait_response(fd, "PRIVMSG");
@@ -163,4 +174,5 @@ void simple_init(void)
 	register_test("USER-NEEDMOREPARAMS", test_user_needmoreparams);
 	register_test("USERHOST-NEEDMOREPARAMS", test_userhost_needmoreparams);
 	register_test("WHO-SIMPLE", test_who_simple);
+	register_test("NICK-ERRONEUS", test_nick_erroneous);
 }
