@@ -21,3 +21,4 @@ MODS_SHARED = @MODS_SHARED@
 LDFLAGS = @LDFLAGS@
 BINS = @BINS@
 scriptdir = @datadir@/ctrlproxy/scripts
+PACKAGE_VERSION = @PACKAGE_VERSION@

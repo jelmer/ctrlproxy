@@ -23,8 +23,11 @@ ctrlproxy$(EXEEXT): network.o posix.o client.o line.o main.o state.o util.o hook
 %.$(OBJEXT): %.c
 	$(CC) $(CFLAGS) -c $<
 
-Makefile.settings:
-	@echo Please run ./configure first, then rerun make
+configure: autogen.sh configure.in aclocal.m4 $(wildcard mods/*/*.m4)
+	./$<
+
+ctrlproxy.pc Makefile.settings: configure Makefile.settings.in ctrlproxy.pc.in
+	./$<
 
 install: all install-dirs install-doc install-bin install-mods install-data install-pkgconfig install-scripts
 install-dirs:
@@ -49,15 +52,7 @@ install-doc:
 	$(INSTALL) COPYING $(DESTDIR)$(docdir)
 	$(INSTALL) TODO $(DESTDIR)$(docdir)
 	$(INSTALL) UPGRADING $(DESTDIR)$(docdir)
-ifeq ($(shell test -d doc && echo _),_)
-	$(MAKE) -C doc install 
-else
-	@echo "--------------------------------------------------------------------"
-	@echo " It looks like you are compiling ctrlproxy from Subversion"
-	@echo " Documentation will not be installed, but is available from "
-	@echo " a seperate SVN repository (http://ctrlproxy.vernstok.nl/doc/svn/)."
-	@echo "--------------------------------------------------------------------"
-endif
+	$(MAKE) -C doc install PACKAGE_VERSION=$(PACKAGE_VERSION)
 
 install-data:
 	$(INSTALL) motd $(DESTDIR)$(cdatadir)

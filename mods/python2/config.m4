@@ -1,4 +1,4 @@
-if test ${enable_python+set} = set; then
+if test "${enable_python+set}" = set; then
 	AC_PATH_PROG(SWIG,swig)
 
 	if test "_$SWIG" = _; then
