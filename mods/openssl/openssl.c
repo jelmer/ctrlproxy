@@ -351,5 +351,6 @@ struct plugin_ops plugin = {
 	.name = "openssl",
 	.version = 0,
 	.init = init_plugin,
+	.load_config = load_config,
 	.fini = fini_plugin,
 };

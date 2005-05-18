@@ -138,7 +138,7 @@ gboolean start_listener(struct listener *l)
 	l->incoming_id = g_io_add_watch(l->incoming, G_IO_IN, handle_new_client, l);
 	g_io_channel_unref(l->incoming);
 
-	log_global( "listener", "Listening for connections on port %d", l->port);
+	log_network( "listener", l->network, "Listening on port %d", l->port);
 
 	return TRUE;
 }

@@ -34,22 +34,22 @@ static int test_login(void)
 	irc_send_args(fd, "USER", "a", "a", "a", "a", NULL);
 	irc_send_args(fd, "NICK", "bla", NULL);
 	if (!wait_response(fd, "001")) {
-		fprintf(stderr, "No 001 sent after login\n");
+		fprintf(stderr, "No 001 sent after login -> ");
 		return -1;
 	}
 	
 	if (!wait_response(fd, "002")) {
-		fprintf(stderr, "No 002 sent after login\n");
+		fprintf(stderr, "No 002 sent after login -> ");
 		return -1;
 	}
 	
 	if (!wait_response(fd, "003")) {
-		fprintf(stderr, "No 003 sent after login\n");
+		fprintf(stderr, "No 003 sent after login -> ");
 		return -1;
 	}
 	
 	if (!wait_response(fd, "004")) {
-		fprintf(stderr, "No 004 sent after login\n");
+		fprintf(stderr, "No 004 sent after login -> ");
 		return -1;
 	}
 	g_io_channel_unref(fd);
@@ -88,6 +88,33 @@ static int test_userhost_needmoreparams(void)
 	g_io_channel_unref(fd);
 	return 0;
 }
+
+static int test_privmsg_needmoreparams(void)
+{
+	GIOChannel *fd = new_conn_loggedin("bla");
+	if (!fd) return -1;
+	irc_send_args(fd, "PRIVMSG", NULL);
+	if (!wait_response(fd, "461")) 
+		return -1;
+	irc_send_args(fd, "PRIVMSG", "help", NULL);
+	if (!wait_response(fd, "412")) 
+		return -1;
+	g_io_channel_unref(fd);
+	return 0;
+}
+
+static int test_whois_needmoreparams(void)
+{
+	GIOChannel *fd = new_conn_loggedin("bla");
+	if (!fd) return -1;
+	irc_send_args(fd, "WHOIS", NULL);
+	if (!wait_response(fd, "461")) 
+		return -1;
+	g_io_channel_unref(fd);
+	return 0;
+}
+
+
 
 static int test_motd(void)
 {
@@ -173,6 +200,8 @@ void simple_init(void)
 	register_test("SELFMESSAGE", test_selfmessage);
 	register_test("USER-NEEDMOREPARAMS", test_user_needmoreparams);
 	register_test("USERHOST-NEEDMOREPARAMS", test_userhost_needmoreparams);
+	register_test("PRIVMSG-NEEDMOREPARAMS", test_privmsg_needmoreparams);
+	register_test("WHOIS-NEEDMOREPARAMS", test_whois_needmoreparams);
 	register_test("WHO-SIMPLE", test_who_simple);
 	register_test("NICK-ERRONEUS", test_nick_erroneous);
 }

@@ -120,7 +120,7 @@ static gboolean log_data(struct line *l, void *userdata)
 	} else if(l->direction == FROM_SERVER && !g_strcasecmp(l->args[0], "PART")) {
 		f = find_add_channel_file(l->network, l->args[1]);
 		if(f)fprintf(f, "%02d:%02d -!- %s [%s] has left %s [%s]\n", t->tm_hour, t->tm_min, nick, user, l->args[1], l->args[2]?l->args[2]:"");
-	} else if(!g_strcasecmp(l->args[0], "PRIVMSG")) {
+	} else if(!g_strcasecmp(l->args[0], "PRIVMSG") && l->argc > 2) {
 		dest = l->args[1];
 		if(!irccmp(l->network, dest, l->network->nick))dest = nick;
 		if(l->args[2][0] == '\001') { 

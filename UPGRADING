@@ -9,3 +9,9 @@ Information for users upgrading from 2.6 or 2.7-preXX:
   connections for network MyNetwork and password MyPass:
 
   <listener port="6669" network="MyNetwork" password="MyPass"/>
+- <nickserv> is now below the "nickserv" <plugin> node as 
+  <nick> rather then under a network. For example:
+
+  <nick nick="mynick" password="mypass"/>
+
+  The network attribute for this element is optional.

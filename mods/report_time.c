@@ -30,8 +30,10 @@ static gboolean report_time(struct line *l, void *userdata)
 	char *tmp;
 	time_t cur = time(NULL);
 
-	if(g_strcasecmp(l->args[0], "PRIVMSG") && g_strcasecmp(l->args[0], "NOTICE")) 
+	if (g_strcasecmp(l->args[0], "PRIVMSG") && g_strcasecmp(l->args[0], "NOTICE")) 
 		return TRUE;
+
+	if (l->argc < 3) return TRUE;
 
 	/* Don't add time in CTCP requests */
 	if(l->args[2][0] == '\001') return TRUE;

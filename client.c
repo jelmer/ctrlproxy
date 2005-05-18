@@ -95,6 +95,8 @@ static gboolean process_from_client(struct line *l)
 	} else if(network_is_connected(l->client->network)) {
 		char *old_origin;
 
+		/* FIXME: Check for validity of input ? */
+
 		state_handle_data(l->client->network, l);
 
 		if (!run_server_filter(l))
