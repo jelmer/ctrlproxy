@@ -56,6 +56,17 @@ static int test_login(void)
 	return 0;
 }
 
+static int test_registerfirst(void)
+{
+	GIOChannel *fd = new_conn();
+	irc_send_args(fd, "PRIVMSG", "a", "a", NULL);
+	if (!wait_response(fd, "451")) 
+		return -1;
+	g_io_channel_unref(fd);
+	return 0;
+}
+
+
 
 static int test_user_needmoreparams(void)
 {
@@ -69,7 +80,8 @@ static int test_user_needmoreparams(void)
 
 static int test_userhost_needmoreparams(void)
 {
-	GIOChannel *fd = new_conn();
+	GIOChannel *fd = new_conn_loggedin();
+	if (!fd) return -1;
 	irc_send_args(fd, "USERHOST", NULL);
 	if (!wait_response(fd, "461")) 
 		return -1;
@@ -92,6 +104,7 @@ static int test_motd(void)
 static int test_userhost(void)
 {
 	GIOChannel *fd = new_conn_loggedin();
+	if (!fd) return -1;
 	irc_send_args(fd, "USERHOST", "bla", NULL);
 	if (!wait_response(fd, "302")) {
 			g_io_channel_unref(fd);
@@ -104,6 +117,7 @@ static int test_userhost(void)
 static int test_who_simple(void)
 {
 	GIOChannel *fd = new_conn_loggedin();
+	if (!fd) return -1;
 	irc_send_args(fd, "WHO", "bla", NULL);
 	if (!wait_response(fd, "315")) {
 			g_io_channel_unref(fd);
@@ -143,6 +157,7 @@ void simple_init(void)
 	register_test("CONNECT", test_connect);
 	register_test("LOGIN", test_login);
 	register_test("MOTD", test_motd);
+	register_test("ERR-REGISTERFIRST", test_registerfirst);
 	register_test("USERHOST", test_userhost);
 	register_test("SELFMESSAGE", test_selfmessage);
 	register_test("USER-NEEDMOREPARAMS", test_user_needmoreparams);
