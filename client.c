@@ -285,37 +285,18 @@ static gboolean handle_pending_client_receive(GIOChannel *c, GIOCondition cond, 
 		if(!g_strcasecmp(l->args[0], "NICK") && l->args[1] && !client->nick) {
 			client->nick = g_strdup(l->args[1]); /* Save nick */
 
-			welcome_client(client);
-
-			client->incoming_id = g_io_add_watch(client->incoming, G_IO_IN | G_IO_HUP, handle_client_receive, client);
-
-			client->network->clients = g_list_append(client->network->clients, client);
-			log_client(NULL, client, "New client");
-			free_line(l);
-
-			return FALSE;
 		} else if(!g_strcasecmp(l->args[0], "USER")) {
-
-			if (l->argc < 4) {
+			if (l->argc < 5) {
 				irc_send_args(client->incoming, "461", l->args[0], "Not enough parameters", NULL);
 				return TRUE;
 			}
 			
-			if (l->argc > 1) {
-				g_free(client->username);
-				client->username = g_strdup(l->args[1]);
-			}
+			g_free(client->username);
+			client->username = g_strdup(l->args[1]);
 
-			if (l->argc > 4) {
-				g_free(client->fullname);
-				client->fullname = g_strdup(l->args[4]);
-			}
+			g_free(client->fullname);
+			client->fullname = g_strdup(l->args[4]);
 
-			if (!client->network) {
-				irc_sendf(client->incoming, "ERROR :Please select a network first, or specify one in your ctrlproxyrc\r\n");
-				disconnect_client(client);
-				return FALSE;
-			}
 		} else if(!g_strcasecmp(l->args[0], "CONNECT")) {
 			client->network = find_network_by_hostname(l->args[1], atoi(l->args[2]), TRUE);
 
@@ -327,6 +308,23 @@ static gboolean handle_pending_client_receive(GIOChannel *c, GIOCondition cond, 
 		}
 
 		free_line(l);
+
+		if (client->fullname && client->nick) {
+			if (!client->network) {
+				irc_sendf(client->incoming, "ERROR :Please select a network first, or specify one in your ctrlproxyrc\r\n");
+				disconnect_client(client);
+				return FALSE;
+			}
+
+			welcome_client(client);
+
+			client->incoming_id = g_io_add_watch(client->incoming, G_IO_IN | G_IO_HUP, handle_client_receive, client);
+
+			client->network->clients = g_list_append(client->network->clients, client);
+			log_client(NULL, client, "New client");
+
+			return FALSE;
+		}
 
 		return TRUE;
 	}
