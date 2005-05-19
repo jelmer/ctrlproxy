@@ -39,7 +39,10 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/poll.h>
 #include <netdb.h>
+
+#define DEFAULT_TIMEOUT 3000
 
 struct torture_test {
 	const char *name;
@@ -61,6 +64,17 @@ struct line *wait_responses(GIOChannel *ch, const char *cmd[])
 	/* FIXME: Timeout */
 	do { 
 		int i;
+		struct pollfd pl;
+
+		pl.fd = g_io_channel_unix_get_fd(ch);
+		pl.events = POLLIN | POLLERR | POLLHUP;
+	
+		if (!poll(&pl, 1, DEFAULT_TIMEOUT)) 
+			return NULL;
+
+		if (!(pl.revents & POLLIN)) 
+			return NULL;
+
 		status = irc_recv_line(ch, &error, &l);
 
 		if (status == G_IO_STATUS_NORMAL) {
@@ -170,9 +184,16 @@ GIOChannel *new_conn(void)
 GIOChannel *new_conn_loggedin(void)
 {
 	GIOChannel *fd = new_conn();
+
+	if (!fd) 
+		return NULL;
 	
 	irc_send_args(fd, "USER", "a", "a", "a", "a", NULL);
 	irc_send_args(fd, "NICK", "bla", NULL);
+
+	if (!wait_response(fd, "001")) 
+		return NULL;
+
 	return fd;
 }
 

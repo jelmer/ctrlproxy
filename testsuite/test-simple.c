@@ -33,8 +33,25 @@ static int test_login(void)
 	GIOChannel *fd = new_conn();
 	irc_send_args(fd, "USER", "a", "a", "a", "a", NULL);
 	irc_send_args(fd, "NICK", "bla", NULL);
-	if (!wait_response(fd, "001")) 
+	if (!wait_response(fd, "001")) {
+		fprintf(stderr, "No 001 sent after login\n");
 		return -1;
+	}
+	
+	if (!wait_response(fd, "002")) {
+		fprintf(stderr, "No 002 sent after login\n");
+		return -1;
+	}
+	
+	if (!wait_response(fd, "003")) {
+		fprintf(stderr, "No 003 sent after login\n");
+		return -1;
+	}
+	
+	if (!wait_response(fd, "004")) {
+		fprintf(stderr, "No 004 sent after login\n");
+		return -1;
+	}
 	g_io_channel_unref(fd);
 	return 0;
 }
@@ -62,10 +79,47 @@ static int test_motd(void)
 	return 0;
 }
 
+static int test_userhost(void)
+{
+	GIOChannel *fd = new_conn_loggedin();
+	irc_send_args(fd, "USERHOST", "bla", NULL);
+	if (!wait_response(fd, "302")) {
+			g_io_channel_unref(fd);
+			return -1;
+	}
+	g_io_channel_unref(fd);
+	return 0;
+}
+
+static int test_selfmessage(void)
+{
+	GIOChannel *fd = new_conn_loggedin();
+	irc_send_args(fd, "PRIVMSG", "bla", "MyMessage", NULL);
+	do { 
+		struct line *l = wait_response(fd, "PRIVMSG");
+		
+		if (!l) {
+			g_io_channel_unref(fd);
+			return -1;
+		}
+		
+		if (!g_strcasecmp(l->args[1], "bla") && 
+			!strcmp(l->args[2], "MyMessage")) {
+			g_io_channel_unref(fd);
+			return 0;
+		}
+		
+	} while(1);
+
+	return -1;
+}
+
 void simple_init(void)
 {
 	register_test("IRC-CONNECT", test_connect);
 	register_test("IRC-LOGIN", test_login);
 	register_test("IRC-MOTD", test_motd);
 	register_test("IRC-NEEDMOREPARAMS", test_needmoreparams);
+	register_test("IRC-USERHOST", test_userhost);
+	register_test("IRC-SELFMESSAGE", test_selfmessage);
 }

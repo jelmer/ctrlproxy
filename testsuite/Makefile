@@ -10,7 +10,7 @@ ircdtorture: ircdtorture.o test-simple.o ../line.o
 	$(CC) $(LIBS) -o $@ $^ 
 
 torture: ircdtorture
-	./ircdtorture -- ../ctrlproxy -i Freenode
+	./ircdtorture -- ../ctrlproxy -i Freenode -r ../ctrlproxyrc.default
 
 test-linestack: test-linestack.o ../line.o ../linestack.o ../plugins.o ../config.o ../util.o ../server.o ../state.o ../isupport.c ../hooks.o ../client.o ../posix.o
 	$(CC) $(LIBS) -o $@ $^
