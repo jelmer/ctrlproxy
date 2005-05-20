@@ -1,0 +1,7 @@
+Please read the documentation (ctrlproxy(1), /usr/share/doc/ctrlproxy/*)
+for more information about setting up ctrlproxy. You can find an example
+configuration file in the examples directory. Please don't forget to
+remove the spyware. (See line 53) ;-)
+
+If you want to use the libstats module, you have to install the suggested
+packages, libpcre3 (>= 4.0) and libtdb1.

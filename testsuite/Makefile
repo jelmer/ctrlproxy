@@ -28,7 +28,6 @@ clean:
 	rm -f *.o test-parser *.out *.tmp
 
 distclean: clean
-	rm -f Makefile 
 
 tests: test1 test2 test3
 

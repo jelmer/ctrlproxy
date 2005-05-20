@@ -1,3 +1,4 @@
+Makefile.settings
 aclocal.m4
 autom4te.cache
 config.h
@@ -18,6 +19,7 @@ mods/openssl/*.so
 mods/openssl/Makefile
 mods/python/*.so
 mods/python/Makefile
+mods/python2/Makefile
 mods/socket/*.so
 mods/socket/Makefile
 po/*.gmo
