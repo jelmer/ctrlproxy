@@ -198,12 +198,14 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition cond, void *_c
 		GError *error= NULL;
 		GIOStatus status = irc_recv_line(c, &error, &l);
 
-		if (status != G_IO_STATUS_NORMAL) {
+		if (status == G_IO_STATUS_ERROR) {
 			disconnect_client(client);
 			return FALSE;
 		}
 
-		if(!l) return TRUE;
+		if(status == G_IO_STATUS_EOF ||
+		   status == G_IO_STATUS_AGAIN || 
+		   !l) return TRUE;
 
 		/* Silently drop empty messages */
 		if (l->argc == 0) {

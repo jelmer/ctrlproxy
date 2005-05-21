@@ -166,8 +166,14 @@ gboolean handle_server_receive (GIOChannel *c, GIOCondition cond, void *_server)
 	struct line *l;
 	gboolean ret;
 
-	if ((cond & G_IO_HUP) || (cond & G_IO_ERR)) {
-		log_network(NULL, server, "Hangup from server, scheduling reconnect in %ds...", server->reconnect_interval);
+	if ((cond & G_IO_HUP)) {
+		log_network(NULL, server, "Hangup from server, scheduling reconnect");
+		reconnect(server, FALSE);
+		return FALSE;
+	}
+
+	if ((cond & G_IO_ERR)) {
+		log_network(NULL, server, "Error from server, scheduling reconnect...");
 		reconnect(server, FALSE);
 		return FALSE;
 	}
@@ -180,21 +186,16 @@ gboolean handle_server_receive (GIOChannel *c, GIOCondition cond, void *_server)
 		GError *err = NULL;
 		GIOStatus status = irc_recv_line(c, &err, &l);
 
-		if (status != G_IO_STATUS_NORMAL) {
-			if (status == G_IO_STATUS_EOF) {
-				log_network(NULL, server, 
-					"Server hangup, reconnecting in %ds...", 
-					server->reconnect_interval);
-			} else {
-				log_network(NULL, server, 
+		if (status == G_IO_STATUS_ERROR) {
+			log_network(NULL, server, 
 					"Error \"%s\" reading from server, reconnecting in %ds...",
 					err?err->message:"UNKNOWN", server->reconnect_interval);
-			}
 			reconnect(server, FALSE);
 			return FALSE;
 		}
 		
-		if(!l) return TRUE;
+		if(status == G_IO_STATUS_AGAIN || 
+		   status == G_IO_STATUS_EOF || !l) return TRUE;
 
 		/* Silently drop empty messages, as allowed by RFC */
 		if(l->argc == 0) {
