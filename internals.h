@@ -80,4 +80,8 @@ gboolean run_replication_filter(struct line *l);
 gboolean init_log(const char *file);
 void fini_log(void);
 
+/* redirect.c */
+void redirect_record(struct client *c, struct line *l);
+void redirect_response(struct network *n, struct line *l);
+
 #endif /* __INTERNALS_H__ */

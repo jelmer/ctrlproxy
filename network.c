@@ -64,7 +64,9 @@ static gboolean process_from_server(struct line *l)
 	 * to do that for us*/
 	if(!g_strcasecmp(l->args[0], "PING")){
 		network_send_args(l->network, "PONG", l->args[1], NULL);
+		return TRUE;
 	} else if(!g_strcasecmp(l->args[0], "PONG")){
+		return TRUE;
 	} else if(!g_strcasecmp(l->args[0], "ERROR")) {
 		log_network(NULL, l->network, "error: %s", l->args[1]);
 	} else if(!g_strcasecmp(l->args[0], "433") && 
@@ -103,7 +105,9 @@ static gboolean process_from_server(struct line *l)
 
 	if(!(l->options & LINE_DONT_SEND) && 
 		l->network->state == NETWORK_STATE_MOTD_RECVD) {
-		if( run_server_filter(l)) {
+		if (atoi(l->args[0])) {
+			redirect_response(l->network, l);
+		} else if (run_server_filter(l)) {
 			clients_send(l->network, l, NULL);
 		} 
 	} 
@@ -216,6 +220,7 @@ gboolean network_send_line(struct network *s, const struct line *ol)
 		return s->connection.virtual.ops->to_server(s, &l);
 
 	default:
+		g_assert(0);
 		return FALSE;
 	}
 }
@@ -424,7 +429,7 @@ gboolean close_server(struct network *n)
 			n->connection.virtual.ops->fini(n);
 		}
 		break;
-	default: abort();
+	default: g_assert(0);
 	}
 
 	g_free(n->hostmask);
@@ -572,7 +577,7 @@ gboolean connect_network(struct network *s)
 		/* FIXME: Set s->connection.virtual.ops->send */
 
 		return TRUE;
-	default: abort();
+	default: g_assert(0);
 	}
 
 	return TRUE;

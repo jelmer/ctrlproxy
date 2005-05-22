@@ -34,14 +34,6 @@
 		<!-- Send CTCP replies (like time, version, etc) -->
 		<plugin autoload="1" file="libctcp"/>
 
-		<!-- Only sent responses to the client the query came from. For 
-		example, if one client does a /WHOIS, only that client will get
-		the response -->
-		<plugin autoload="1" file="libstrip"/>
-
-		<!-- Support for automatic identify'ing with nickserv -->
-		<plugin autoload="1" file="libnickserv"/>
-
 		<!-- Make sure messages are not sent too fast after each other 
 		     (prevents being kicked by the server for 'Excess flooding' -->
 		<plugin autoload="1" file="libantiflood"/>

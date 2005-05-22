@@ -101,6 +101,7 @@ static gboolean process_from_client(struct line *l)
 		client_send_args(l->client, "462", l->client->nick, 
 						 "Please register only once per session", NULL);
 	} else if(l->client->network->state == NETWORK_STATE_MOTD_RECVD) {
+		redirect_record(l->client, l);
 		/* FIXME: Check for validity of input ? */
 		network_send_line(l->client->network, l);
 	} else if(l->client->network->state == NETWORK_STATE_NOT_CONNECTED) {
