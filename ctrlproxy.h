@@ -202,22 +202,20 @@ struct network {
 	} connection;
 };
 
-struct plugin_ops {
-	int version;
-	const char *name;
-	gboolean (*init) (struct plugin *);
-	gboolean (*fini) (struct plugin *);
-	gboolean (*save_config) (struct plugin *, xmlNodePtr);
-	gboolean (*load_config) (struct plugin *, xmlNodePtr configuration);
-};
-
 struct plugin {
 	char *path;
 	GModule *module;
 	void *data;
 	gboolean autoload;
 	gboolean loaded;
-	struct plugin_ops *ops;
+	struct plugin_ops {
+		int version;
+		const char *name;
+		gboolean (*init) (struct plugin *);
+		gboolean (*fini) (struct plugin *);
+		gboolean (*save_config) (struct plugin *, xmlNodePtr);
+		gboolean (*load_config) (struct plugin *, xmlNodePtr configuration);
+	} *ops;
 };
 
 /* state.c */

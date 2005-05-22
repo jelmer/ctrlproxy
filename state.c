@@ -545,6 +545,42 @@ static void handle_004(struct network *s, struct line *l)
 
 	s->supported_modes[0] = g_strdup(l->args[4]);
 	s->supported_modes[1] = g_strdup(l->args[5]);
+
+	/* Make sure the current server is listed as a possible 
+	 * one for this network */
+	if (l->network->type == NETWORK_TCP) {
+		GList *gl;
+		for (gl = l->network->connection.tcp.servers; gl; gl = gl->next) {
+			struct tcp_server *tcp = gl->data;
+
+			if (!g_strcasecmp(tcp->host, l->args[1])) 
+				break;
+		}
+
+		/* Not found, add new one */
+		if (!gl) {
+			struct tcp_server *tcp = g_new0(struct tcp_server, 1);
+			int error;
+			struct addrinfo hints;
+
+			tcp->host = g_strdup(l->args[2]);
+			tcp->name = g_strdup(l->args[2]);
+			tcp->port = g_strdup(l->network->connection.tcp.current_server->port);
+			tcp->ssl = l->network->connection.tcp.current_server->ssl;
+			tcp->password = g_strdup(l->network->connection.tcp.current_server->password);
+
+			memset(&hints, 0, sizeof(hints));
+			hints.ai_family = PF_UNSPEC;
+			hints.ai_socktype = SOCK_STREAM;
+
+			error = getaddrinfo(tcp->host, tcp->port, &hints, &tcp->addrinfo);
+			if (error) {
+				log_network(NULL, l->network, "Unable to lookup %s: %s", tcp->host, gai_strerror(error));
+			} else {
+				l->network->connection.tcp.servers = g_list_append(l->network->connection.tcp.servers, tcp);
+			}
+		}
+	}
 }
 
 

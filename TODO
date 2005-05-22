@@ -3,6 +3,8 @@
 - test and fix SSL support
 - persistent storage for linestack
 - answer WHO queries from own data if possible
+- handle replies individually
+ - reply multiplexer 
 - finish python module hooks
 - new linestack:
  - always log everything, let repl backends query

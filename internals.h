@@ -28,7 +28,14 @@
 #ifdef HAVE_POPT_H
 #  include <popt.h>
 #endif
-#include "ctrlproxy.h"
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
+#define __USE_POSIX
+#include <netdb.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -37,16 +44,12 @@
 #include <signal.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-
-#undef  G_LOG_DOMAIN
-#define G_LOG_DOMAIN "ctrlproxy"
+#include "ctrlproxy.h"
 
 #define DEFAULT_RECONNECT_INTERVAL 60
-
 #define MAXHOSTNAMELEN 4096
 
 /* server.c */
-int loop(struct network *server); /* Checks server socket for input and calls loop() on all of it's modules */
 gboolean init_networks(void);
 void kill_pending_clients(const char *reason);
 

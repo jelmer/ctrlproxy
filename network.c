@@ -17,21 +17,6 @@
 	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
-
-#define __USE_POSIX
-#include <netinet/in.h>
-#include <errno.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netdb.h>
-
 #include "internals.h"
 #include "irc.h"
 
@@ -113,41 +98,6 @@ static gboolean process_from_server(struct line *l)
 			if(c->autojoin) {
 				network_send_args(l->network, "JOIN", c->name, c->key, NULL);
 			} 
-		}
-
-		/* Make sure the current server is listed as a possible one for this network */
-		if (l->network->type == NETWORK_TCP && l->argc > 2) {
-			for (gl = l->network->connection.tcp.servers; gl; gl = gl->next) {
-				struct tcp_server *tcp = gl->data;
-
-				if (!g_strcasecmp(tcp->host, l->args[1])) 
-					break;
-			}
-
-			/* Not found, add new one */
-			if (!gl) {
-				struct tcp_server *tcp = g_new0(struct tcp_server, 1);
-				int error;
-				struct addrinfo hints;
-
-				tcp->host = g_strdup(l->args[2]);
-				tcp->name = g_strdup(l->args[2]);
-				tcp->port = g_strdup(l->network->connection.tcp.current_server->port);
-				tcp->ssl = l->network->connection.tcp.current_server->ssl;
-				tcp->password = g_strdup(l->network->connection.tcp.current_server->password);
-
-				memset(&hints, 0, sizeof(hints));
-				hints.ai_family = PF_UNSPEC;
-				hints.ai_socktype = SOCK_STREAM;
-
-				error = getaddrinfo(tcp->host, tcp->port, &hints, &tcp->addrinfo);
-				if (error) {
-					log_network(NULL, l->network, "Unable to lookup %s: %s", tcp->host, gai_strerror(error));
-				} else {
-					l->network->connection.tcp.servers = g_list_append(l->network->connection.tcp.servers, tcp);
-				}
-			}
-
 		}
 	} 
 
@@ -414,18 +364,18 @@ static void reconnect(struct network *server, gboolean rm_source)
 		server_disconnected_hook_execute(server);
 	}
 
-	switch (server->type) {
-	case NETWORK_TCP: 
-		if (rm_source) g_source_remove(server->connection.tcp.outgoing_id); 
-		server->connection.tcp.outgoing_id = 0; 
-		server->connection.tcp.outgoing = NULL; 
-		break;
-	case NETWORK_PROGRAM: 
-		if (rm_source) g_source_remove(server->connection.program.outgoing_id); 
-		server->connection.program.outgoing_id = 0; 
-		server->connection.program.outgoing = NULL; 
-		break;
-	default: break;
+	if (server->state != NETWORK_STATE_NOT_CONNECTED) {
+		switch (server->type) {
+		case NETWORK_TCP: 
+			if (rm_source) g_source_remove(server->connection.tcp.outgoing_id); 
+			server->connection.tcp.outgoing = NULL; 
+			break;
+		case NETWORK_PROGRAM: 
+			if (rm_source) g_source_remove(server->connection.program.outgoing_id); 
+			server->connection.program.outgoing = NULL; 
+			break;
+		default:break;
+		}
 	}
 
 	server->state = NETWORK_STATE_NOT_CONNECTED;
@@ -450,6 +400,7 @@ gboolean close_server(struct network *n)
 
 	if(n->state == NETWORK_STATE_RECONNECT_PENDING) {
 		g_source_remove(n->reconnect_id);
+		n->state = NETWORK_STATE_NOT_CONNECTED;
 	}
 
 	if(n->state == NETWORK_STATE_NOT_CONNECTED) {
@@ -460,14 +411,13 @@ gboolean close_server(struct network *n)
 	if (n->state == NETWORK_STATE_MOTD_RECVD) {
 		server_disconnected_hook_execute(n);
 	}
+
 	switch (n->type) {
 	case NETWORK_TCP: 
 		g_source_remove(n->connection.tcp.outgoing_id); 
-		n->connection.tcp.outgoing_id = 0; 
 		break;
 	case NETWORK_PROGRAM: 
 		g_source_remove(n->connection.program.outgoing_id); 
-		n->connection.program.outgoing_id = 0; 
 		break;
 	case NETWORK_VIRTUAL:
 		if (n->connection.virtual.ops && n->connection.virtual.ops->fini) {

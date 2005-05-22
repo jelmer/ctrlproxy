@@ -15,3 +15,4 @@ Information for users upgrading from 2.6 or 2.7-preXX:
   <nick nick="mynick" password="mypass"/>
 
   The network attribute for this element is optional.
+- the "strip" module has been merged into the main program

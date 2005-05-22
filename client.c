@@ -92,7 +92,7 @@ static gboolean process_from_client(struct line *l)
 		client_send_args(l->client, "PONG", l->network->name, l->args[1], NULL);
 	} else if(!g_strcasecmp(l->args[0], "PONG")) {
 		if (l->argc < 2) {
-			client_send_args(l->client, "461", l->args[0], "Not enough parameters", NULL);
+			client_send_args(l->client, "461", l->client->nick, l->args[0], "Not enough parameters", NULL);
 			return TRUE;
 		}
 		l->client->last_pong = time(NULL);
@@ -296,8 +296,8 @@ static gboolean handle_pending_client_receive(GIOChannel *c, GIOCondition cond, 
 
 		if(!g_strcasecmp(l->args[0], "NICK")) {
 			if (l->argc < 2) {
-				client_send_args(client, "461", l->args[0], 
-							  "Not enough parameters", NULL);
+				client_send_args(client, "461", client->nick?client->nick:"*",
+								 l->args[0], "Not enough parameters", NULL);
 				free_line(l);
 				return TRUE;
 			}
@@ -306,8 +306,8 @@ static gboolean handle_pending_client_receive(GIOChannel *c, GIOCondition cond, 
 		} else if(!g_strcasecmp(l->args[0], "USER")) {
 
 			if (l->argc < 5) {
-				client_send_args(client, "461", l->args[0], 
-							  "Not enough parameters", NULL);
+				client_send_args(client, "461", client->nick?client->nick:"*", 
+								 l->args[0], "Not enough parameters", NULL);
 				free_line(l);
 				return TRUE;
 			}
@@ -325,8 +325,8 @@ static gboolean handle_pending_client_receive(GIOChannel *c, GIOCondition cond, 
 			/* Silently drop... */
 		} else if(!g_strcasecmp(l->args[0], "CONNECT")) {
 			if (l->argc < 3) {
-				client_send_args(client, "461", l->args[0], 
-							  "Not enough parameters", NULL);
+				client_send_args(client, "461", client->nick?client->nick:"*",
+								 l->args[0], "Not enough parameters", NULL);
 				free_line(l);
 				return TRUE;
 			}
