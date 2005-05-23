@@ -68,9 +68,6 @@ struct line {
 	char *origin;
 	char **args; /* NULL terminated */
 	size_t argc;
-	/* Don't use the following properties. Use line_get_network_nick() 
-	 * instead. */
-	struct network_nick *network_nick; 
 	enum has_colon has_endcolon;
 };
 
@@ -254,6 +251,7 @@ G_MODULE_EXPORT void register_virtual_network(struct virtual_network_ops *);
 G_MODULE_EXPORT void unregister_virtual_network(struct virtual_network_ops *);
 G_MODULE_EXPORT struct network *find_network(const char *name);
 G_MODULE_EXPORT gboolean client_send_args(struct client *c, ...);
+G_MODULE_EXPORT gboolean client_send_response(struct client *c, int response, ...);
 G_MODULE_EXPORT gboolean client_send_line(struct client *c, const struct line *);
 G_MODULE_EXPORT gboolean virtual_network_recv_line(struct network *l, struct line *);
 G_MODULE_EXPORT gboolean virtual_network_recv_args(struct network *l, const char *origin, ...); 

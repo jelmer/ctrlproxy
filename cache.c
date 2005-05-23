@@ -30,10 +30,10 @@ static void client_send_banlist(struct client *client, struct channel *channel)
 	for (gl = channel->banlist; gl; gl = gl->next)
 	{
 		struct banlist_entry *be = gl->data;
-		client_send_args(client, "367", channel->name, be->hostmask, NULL);
+		client_send_response(client, RPL_BANLIST, channel->name, be->hostmask, NULL);
 	}
 
-	client_send_args(client, "368", "End of channel ban list", NULL);
+	client_send_response(client, RPL_ENDOFBANLIST, "End of channel ban list", NULL);
 }
 
 static gboolean client_try_cache_join(struct line *l)
@@ -72,6 +72,21 @@ static gboolean client_try_cache_mode(struct line *l)
 	return TRUE;
 }
 
+static gboolean client_try_cache_who(struct line *l)
+{
+	struct channel *c;
+	
+	/* Only optimize easy queries... */
+	if (strchr(l->args[1], ',')) return FALSE;
+
+	if (l->argc != 2) return FALSE;
+
+	c = find_channel(l->client->network, l->args[1]);
+	if (!c) return FALSE;
+
+	return FALSE; /* FIXME */
+}
+
 /* Try to answer a client query from cache */
 gboolean client_try_cache(struct line *l)
 {
@@ -83,6 +98,10 @@ gboolean client_try_cache(struct line *l)
 	
 	if (!g_strcasecmp(l->args[0], "MODE")) {
 		return client_try_cache_mode(l);
+	}
+
+	if (!g_strcasecmp(l->args[0], "WHO")) {
+		return client_try_cache_who(l);
 	}
 
 	return FALSE;
