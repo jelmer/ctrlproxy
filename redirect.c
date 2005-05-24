@@ -213,10 +213,31 @@ static struct query queries[] = {
 	
  /* MODE <nick> <mode> */
 	{ "MODE", 
-		/* FIXME: Channel modes */
-		{ 0 },
-		{ RPL_UMODEIS, 0 },
-		{ ERR_NEEDMOREPARAMS, ERR_UMODEUNKNOWNFLAG, ERR_USERSDONTMATCH, 0 },
+		{  /* Replies to channel mode queries */
+			RPL_BANLIST, RPL_EXCEPTLIST, RPL_INVITELIST, 
+			
+			0 },
+		{ 
+			/* Replies to user mode queries */
+			RPL_UMODEIS, 
+
+			/* Replies to channel mode queries */
+			RPL_CHANNELMODEIS, RPL_ENDOFBANLIST, RPL_ENDOFEXCEPTLIST,
+			RPL_ENDOFINVITELIST, RPL_UNIQOPIS,
+			
+			0 },
+		{ 
+			/* Common replies */
+			ERR_NEEDMOREPARAMS, 
+
+			/* Replies to user mode queries */
+			ERR_UMODEUNKNOWNFLAG, ERR_USERSDONTMATCH, 
+			
+			/* Replies to channel mode queries */
+			ERR_USERNOTINCHANNEL, ERR_KEYSET, ERR_CHANOPPRIVSNEEDED,
+			ERR_UNKNOWNMODE, ERR_NOCHANMODES, 
+			
+			0 },
 		handle_default
 	},
 	
