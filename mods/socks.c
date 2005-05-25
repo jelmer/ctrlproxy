@@ -341,7 +341,8 @@ static gboolean handle_client_data (GIOChannel *ioc, GIOCondition o, gpointer da
 						return socks_error(ioc, REP_NET_UNREACHABLE);
 					} 
 
-					if (!network_is_connected(result) && !connect_network(result)) {
+					if (result->state == NETWORK_STATE_NOT_CONNECTED && 
+						!connect_network(result)) {
 						log_network("socks", result, "Unable to connect");
 						return socks_error(ioc, REP_NET_UNREACHABLE);
 					}
