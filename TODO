@@ -3,7 +3,6 @@
 - test and fix SSL support
 - handle some currently unhandled responses (especially wrt JOIN's)
 - answer WHO queries from own data if possible
-- check JOINs on ctrlproxy side
 - new linestack:
  - persistent storage for linestack
  - always log everything, let repl backends query

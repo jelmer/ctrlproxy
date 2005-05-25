@@ -70,22 +70,22 @@ static void identify_me(struct network *network, char *nick)
 	}
 }
 
-static gboolean log_data(struct line *l, void *userdata) {
+static gboolean log_data(struct line *l, enum data_direction dir, void *userdata) {
 	static char *nickattempt = NULL;
 
 	/* User has changed his/her nick. Check whether this nick needs to be identified */
-	if(l->direction == FROM_SERVER && !g_strcasecmp(l->args[0], "NICK") &&
+	if(dir == FROM_SERVER && !g_strcasecmp(l->args[0], "NICK") &&
 	   nickattempt && !g_strcasecmp(nickattempt, l->args[1])) {
 		identify_me(l->network, l->args[1]);
 	}
 
 	/* Keep track of the last nick that the user tried to take */
-	if(l->direction == TO_SERVER && !g_strcasecmp(l->args[0], "NICK")) {
+	if(dir == TO_SERVER && !g_strcasecmp(l->args[0], "NICK")) {
 		if(nickattempt) g_free(nickattempt);
 		nickattempt = g_strdup(l->args[1]);
 	}
 
-	if (l->direction == TO_SERVER && 
+	if (dir == TO_SERVER && 
 		(!g_strcasecmp(l->args[0], "PRIVMSG") || !g_strcasecmp(l->args[0], "NOTICE")) &&
 		(!g_strcasecmp(l->args[1], nickserv_nick(l->network)) && !g_strncasecmp(l->args[2], "IDENTIFY ", strlen("IDENTIFY ")))) {
 			struct nickserv_entry *e = NULL;
@@ -112,7 +112,7 @@ static gboolean log_data(struct line *l, void *userdata) {
 	}
 
 	/* If we receive a nick-already-in-use message, ghost the current user */
-	if(l->direction == FROM_SERVER && atol(l->args[0]) == ERR_NICKNAMEINUSE) {
+	if(dir == FROM_SERVER && atol(l->args[0]) == ERR_NICKNAMEINUSE) {
 		const char *pass = nickserv_find_nick(l->network, nickattempt);
 		if(nickattempt && pass) {
 			const char *nickserv_n = nickserv_nick(l->network);

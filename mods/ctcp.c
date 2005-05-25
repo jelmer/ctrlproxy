@@ -32,18 +32,18 @@
 #undef G_LOG_DOMAIN
 #define G_LOG_DOMAIN "ctcp"
 
-static gboolean mhandle_data(struct line *l, void *userdata)
+static gboolean mhandle_data(struct line *l, enum data_direction dir, void *userdata)
 {
 	char *data, *t, *msg, *dest, *dhostmask = NULL;
 	time_t ti;
 
 	/* Don't answer our own CTCP requests */
-	if(l->direction == TO_SERVER && l->argc > 2 && l->args[2][0] == '\001') {
+	if(dir == TO_SERVER && l->argc > 2 && l->args[2][0] == '\001') {
 		l->options|=LINE_IS_PRIVATE;
 		return TRUE;
 	}
 
-	if(l->direction == TO_SERVER) return TRUE;
+	if(dir == TO_SERVER) return TRUE;
 
 	if(g_strcasecmp(l->args[0], "PRIVMSG") || l->args[2][0] != '\001')return TRUE;
 

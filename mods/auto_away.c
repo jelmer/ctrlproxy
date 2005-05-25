@@ -51,13 +51,13 @@ static gboolean check_time(gpointer user_data) {
 	return TRUE;
 }
 
-static gboolean log_data(struct line *l, void *userdata) {
-	if(l->direction == TO_SERVER && !g_strcasecmp(l->args[0], "AWAY")) {
+static gboolean log_data(struct line *l, enum data_direction dir, void *userdata) {
+	if(dir == TO_SERVER && !g_strcasecmp(l->args[0], "AWAY")) {
 		if(l->args[1])is_away = TRUE;
 		else is_away = FALSE;
 	}
 
-	if(l->direction == TO_SERVER &&  
+	if(dir == TO_SERVER &&  
 	   (!g_strcasecmp(l->args[0], "PRIVMSG") || !g_strcasecmp(l->args[0], "NOTICE"))) {
 		last_message = time(NULL);
 		if(is_away) {

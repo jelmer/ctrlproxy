@@ -22,7 +22,7 @@
 
 static GHashTable *limited_backlog = NULL;
 
-static gboolean log_data(struct line *l, void *userdata) {
+static gboolean log_data(struct line *l, enum data_direction dir, void *userdata) {
 	struct linestack_context *co = (struct linestack_context *)g_hash_table_lookup(limited_backlog, l->network);
 
 	if(!co) {
@@ -32,14 +32,14 @@ static gboolean log_data(struct line *l, void *userdata) {
 
 	if(l->argc < 1)return TRUE;
 
-	if(l->direction == TO_SERVER &&  
+	if(dir == TO_SERVER &&  
 	   (!g_strcasecmp(l->args[0], "PRIVMSG") || !g_strcasecmp(l->args[0], "NOTICE"))) {
 		linestack_clear(co);
 		linestack_add_line_list( co, gen_replication_network(l->network));
 		return TRUE;
 	}
 
-	if(l->direction == FROM_SERVER && 
+	if(dir == FROM_SERVER && 
 	   (!g_strcasecmp(l->args[0], "PRIVMSG") || !g_strcasecmp(l->args[0], "NOTICE"))) 
 		linestack_add_line(co, l);
 

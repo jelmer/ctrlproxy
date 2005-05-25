@@ -30,7 +30,7 @@ static void change_nick(struct client *c, char *newnick)
 	free_line(l);
 }
 
-static gboolean log_data(struct line *l, void *userdata) {
+static gboolean log_data(struct line *l, enum data_direction dir, void *userdata) {
 	struct linestack_context *co = (struct linestack_context *)g_hash_table_lookup(simple_backlog, l->network);
 	struct channel *c;
 
@@ -42,7 +42,7 @@ static gboolean log_data(struct line *l, void *userdata) {
 
 	if(l->argc < 1)return TRUE;
 
-	if(l->direction == TO_SERVER &&  
+	if(dir == TO_SERVER &&  
 	   (!g_strcasecmp(l->args[0], "PRIVMSG") || !g_strcasecmp(l->args[0], "NOTICE"))) {
 		linestack_clear(co);
 		g_hash_table_replace( simple_initialnick, l->network, g_strdup(l->network->nick));
@@ -50,7 +50,7 @@ static gboolean log_data(struct line *l, void *userdata) {
 		return TRUE;
 	}
 
-	if(l->direction == TO_SERVER)return TRUE;
+	if(dir == TO_SERVER)return TRUE;
 
 
 	if(!g_strcasecmp(l->args[0], "PRIVMSG") ||

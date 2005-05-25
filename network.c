@@ -53,10 +53,8 @@ static gboolean process_from_server(struct line *l)
 {
 	struct line *lc;
 
-	l->direction = FROM_SERVER;
-
-	run_log_filter(lc = linedup(l)); free_line(lc);
-	run_replication_filter(lc = linedup(l)); free_line(lc);
+	run_log_filter(lc = linedup(l), FROM_SERVER); free_line(lc);
+	run_replication_filter(lc = linedup(l), FROM_SERVER); free_line(lc);
 
 	state_handle_data(l->network,l);
 
@@ -107,7 +105,7 @@ static gboolean process_from_server(struct line *l)
 		l->network->state == NETWORK_STATE_MOTD_RECVD) {
 		if (atoi(l->args[0])) {
 			redirect_response(l->network, l);
-		} else if (run_server_filter(l)) {
+		} else if (run_server_filter(l, FROM_SERVER)) {
 			clients_send(l->network, l, NULL);
 		} 
 	} 
@@ -190,11 +188,11 @@ gboolean network_send_line(struct network *s, const struct line *ol)
 	l.origin = NULL;		/* Never send origin to the server */
 	l.network = s;
 
-	if (!run_server_filter(&l))
+	if (!run_server_filter(&l, TO_SERVER))
 		return TRUE;
 
-	run_log_filter(lc = linedup(&l)); free_line(lc);
-	run_replication_filter(lc = linedup(&l)); free_line(lc);
+	run_log_filter(lc = linedup(&l), TO_SERVER); free_line(lc);
+	run_replication_filter(lc = linedup(&l), TO_SERVER); free_line(lc);
 
 	/* Also write this message to all other clients currently connected */
 	if(!(l.options & LINE_IS_PRIVATE) && l.args[0] &&
@@ -455,7 +453,7 @@ void clients_send(struct network *server, struct line *l, struct client *excepti
 	for (g = server->clients; g; g = g->next) {
 		struct client *c = (struct client *)g->data;
 		if(c != exception) {
-			if(run_client_filter(l)) { 
+			if(run_client_filter(l, FROM_SERVER)) { 
 				client_send_line(c, l);
 			}
 		}

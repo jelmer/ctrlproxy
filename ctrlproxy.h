@@ -49,7 +49,7 @@ struct channel_nick;
 struct network_nick;
 struct plugin;
 
-enum data_direction { UNKNOWN = 0, TO_SERVER = 1, FROM_SERVER = 2 };
+enum data_direction { TO_SERVER = 1, FROM_SERVER = 2 };
 enum has_colon { COLON_UNKNOWN = 0, WITH_COLON = 1, WITHOUT_COLON = 2 };
 
 /* for the options fields */
@@ -61,7 +61,6 @@ enum line_options {
 };
 
 struct line {
-	enum data_direction direction;
 	enum line_options options;
 	struct network *network;
 	struct client *client;
@@ -324,7 +323,7 @@ G_MODULE_EXPORT int strrfc1459cmp(const char *a, const char *b);
 
 /* hooks.c */
 /* Returns TRUE if filter should be continued, FALSE if it should be stopped. */
-typedef gboolean (*filter_function) (struct line *, void *userdata);
+typedef gboolean (*filter_function) (struct line *, enum data_direction, void *userdata);
 G_MODULE_EXPORT void add_log_filter(const char *name, filter_function, void *userdata, int priority);
 G_MODULE_EXPORT void del_log_filter(const char *name);
 

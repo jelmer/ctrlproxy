@@ -56,11 +56,11 @@ static gboolean send_queue(gpointer user_data) {
 	return TRUE;
 }
 
-static gboolean log_data(struct line *l, void *userdata) {
+static gboolean log_data(struct line *l, enum data_direction dir, void *userdata) {
 	struct network_data *sd;
 	time_t now;
 	
-	if (l->direction != TO_SERVER) return TRUE;
+	if (dir != TO_SERVER) return TRUE;
 
 	/* Assume local networks don't do flood protection */
 	if (l->network->type != NETWORK_TCP) return TRUE;

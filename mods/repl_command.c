@@ -23,7 +23,7 @@
 
 static GHashTable *command_backlog = NULL;
 
-static gboolean log_data(struct line *l, void *userdata) {
+static gboolean log_data(struct line *l, enum data_direction dir, void *userdata) {
 	struct linestack_context *co;
 	char *desc;
 

@@ -67,12 +67,12 @@ static GList *del_filter_ex(GList *list, const char *name)
 }
 
 
-static gboolean filter_class_execute(GList *gl, struct line *l) 
+static gboolean filter_class_execute(GList *gl, enum data_direction dir, struct line *l) 
 {
 	while(gl) {
 		struct filter_data *d = (struct filter_data *)gl->data;
 		
-		if(!d->function(l, d->userdata)) {
+		if(!d->function(l, dir, d->userdata)) {
 			return FALSE;
 		}
 
@@ -97,9 +97,9 @@ void del_##n##_filter(const char *name)\
 {\
 	list = del_filter_ex(list, name); \
 }\
-gboolean run_##n##_filter(struct line *l)\
+gboolean run_##n##_filter(struct line *l, enum data_direction dir)\
 {\
-	return filter_class_execute(list, l);\
+	return filter_class_execute(list, dir, l);\
 }
 
 FILTER_FUNCTIONS(log,log_filters)

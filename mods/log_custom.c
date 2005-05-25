@@ -104,9 +104,7 @@ static char *get_nick(struct line *l, gboolean case_sensitive) {
 		else return g_strdup(line_get_nick(l)); 
 	}
 	
-	if(l->direction == TO_SERVER) return l->network->nick;
-	
-	return g_strdup("");
+	return g_strdup(l->network->nick);
 }
 
 static char *get_network(struct line *l, gboolean case_sensitive) 
@@ -395,7 +393,7 @@ static void file_write_channel_query(const char *n, struct line *l)
 	}
 }
 
-static gboolean log_custom_data(struct line *l, void *userdata)
+static gboolean log_custom_data(struct line *l, enum data_direction dir, void *userdata)
 {
 	const char *nick = NULL;
 	char *user = NULL;
@@ -415,9 +413,9 @@ static gboolean log_custom_data(struct line *l, void *userdata)
 	 * - log to channel only (KICK, PART, JOIN, TOPIC) (channel_only)
 	 */
 
-	if(l->direction == FROM_SERVER && !g_strcasecmp(l->args[0], "JOIN")) {
+	if(dir == FROM_SERVER && !g_strcasecmp(l->args[0], "JOIN")) {
 		file_write_target("join", l); 
-	} else if(l->direction == FROM_SERVER && !g_strcasecmp(l->args[0], "PART")) {
+	} else if(dir == FROM_SERVER && !g_strcasecmp(l->args[0], "PART")) {
 		file_write_channel_only("part", l);
 	} else if(!g_strcasecmp(l->args[0], "PRIVMSG")) {
 		if(l->args[2][0] == '') { 
@@ -434,11 +432,11 @@ static gboolean log_custom_data(struct line *l, void *userdata)
 		}
 	} else if(!g_strcasecmp(l->args[0], "NOTICE")) {
 		file_write_target("notice", l);
-	} else if(!g_strcasecmp(l->args[0], "MODE") && l->args[1] && is_channelname(l->args[1], l->network) && l->direction == FROM_SERVER) {
+	} else if(!g_strcasecmp(l->args[0], "MODE") && l->args[1] && is_channelname(l->args[1], l->network) && dir == FROM_SERVER) {
 		file_write_target("mode", l);
 	} else if(!g_strcasecmp(l->args[0], "QUIT")) {
 		file_write_channel_query("quit", l);
-	} else if(!g_strcasecmp(l->args[0], "KICK") && l->args[1] && l->args[2] && l->direction == FROM_SERVER) {
+	} else if(!g_strcasecmp(l->args[0], "KICK") && l->args[1] && l->args[2] && dir == FROM_SERVER) {
 		if(!strchr(l->args[1], ',')) {
 			file_write_channel_only("kick", l);
 		} else { 
@@ -466,10 +464,10 @@ static gboolean log_custom_data(struct line *l, void *userdata)
 			g_free(channels);
 			g_free(nicks);
 		}
-	} else if(!g_strcasecmp(l->args[0], "TOPIC") && l->direction == FROM_SERVER && l->args[1]) {
+	} else if(!g_strcasecmp(l->args[0], "TOPIC") && dir == FROM_SERVER && l->args[1]) {
 		if(l->args[2]) file_write_channel_only("topic", l);
 		else file_write_channel_only("notopic", l);
-	} else if(!g_strcasecmp(l->args[0], "NICK") && l->direction == FROM_SERVER && l->args[1]) {
+	} else if(!g_strcasecmp(l->args[0], "NICK") && dir == FROM_SERVER && l->args[1]) {
 		file_write_channel_query("nickchange", l);
 	}
 

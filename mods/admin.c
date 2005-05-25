@@ -395,10 +395,10 @@ static gboolean process_command(struct line *l, int cmdoffset)
 	return TRUE;
 }
 
-static gboolean handle_data(struct line *l, void *userdata) {
+static gboolean handle_data(struct line *l, enum data_direction dir, void *userdata) {
 	int cmdoffset = 0;
 
-	if(l->direction != TO_SERVER) 
+	if(dir != TO_SERVER) 
 		return TRUE;
 
 	if(g_strcasecmp(l->args[0], "CTRLPROXY") == 0)cmdoffset = 1;

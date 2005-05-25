@@ -79,10 +79,9 @@ static char *network_generate_feature_string(struct network *n)
 
 static gboolean process_from_client(struct line *l)
 {
-	l->direction = TO_SERVER;
 	l->origin = g_strdup(l->client->network->hostmask);
 
-	if (!run_client_filter(l)) 
+	if (!run_client_filter(l, TO_SERVER)) 
 		return TRUE;
 
 	if(!g_strcasecmp(l->args[0], "QUIT")) {
