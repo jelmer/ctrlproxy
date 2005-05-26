@@ -479,7 +479,10 @@ void redirect_record(struct client *c, struct line *l)
 	struct query *q;
 
 	q = find_query(l->args[0]);
-	if(!q) return;
+	if(!q) {
+		log_client(NULL, c, "Unknown command from client: %s", l->args[0]);
+		return;
+	}
 
 	/* Push it up the stack! */
 	q->handle(l, q);

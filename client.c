@@ -77,6 +77,60 @@ static char *network_generate_feature_string(struct network *n)
 	return ret;
 }
 
+static void client_send_banlist(struct client *client, struct channel *channel)
+{
+	GList *gl;
+	for (gl = channel->banlist; gl; gl = gl->next)
+	{
+		struct banlist_entry *be = gl->data;
+		client_send_args(client, "367", channel->name, be->hostmask, NULL);
+	}
+
+	client_send_args(client, "368", "End of channel ban list", NULL);
+}
+
+/* Try to answer a client query from cache */
+static gboolean client_try_cache(struct line *l)
+{
+	if (l->argc == 0) return TRUE;
+
+	if (!g_strcasecmp(l->args[0], "JOIN")) {
+		struct channel *c;
+
+		/* Only optimize easy queries :-) */
+		if (strchr(l->args[1], ',')) return FALSE;
+		
+		c = find_channel(l->client->network, l->args[1]);
+		return (c && c->joined);
+	}
+	
+	if (!g_strcasecmp(l->args[0], "MODE")) {
+		int i;
+		char m;
+		struct channel *c;
+
+		/* Only optimize easy queries... */
+		if (strchr(l->args[1], ',')) return FALSE;
+		
+		/* Only queries in the form of MODE #channel mode */
+		if (l->argc != 3) return FALSE; 
+
+		c = find_channel(l->client->network, l->args[1]);
+		if (!c) return FALSE;
+
+		for (i = 0; (m = l->args[2][i]); i++) {
+			switch (m) {
+			case 'b': client_send_banlist(l->client, c); break;
+			default: return FALSE;
+			}
+		}
+
+		return TRUE;
+	}
+
+	return FALSE;
+}
+
 static gboolean process_from_client(struct line *l)
 {
 	l->direction = TO_SERVER;
@@ -101,9 +155,13 @@ static gboolean process_from_client(struct line *l)
 		client_send_args(l->client, "462", l->client->nick, 
 						 "Please register only once per session", NULL);
 	} else if(l->client->network->state == NETWORK_STATE_MOTD_RECVD) {
-		redirect_record(l->client, l);
-		/* FIXME: Check for validity of input ? */
-		network_send_line(l->client->network, l);
+		gboolean from_cache = client_try_cache(l);
+
+		if (!from_cache) {
+			redirect_record(l->client, l);
+			/* FIXME: Check for validity of input ? */
+			network_send_line(l->client->network, l);
+		}
 	} else if(l->client->network->state == NETWORK_STATE_NOT_CONNECTED) {
 		client_send_args(l->client, "NOTICE", l->client->nick, "Currently not connected to server, connecting...", NULL);
 		connect_network(l->client->network);
