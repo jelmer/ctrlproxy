@@ -364,6 +364,7 @@ static struct query queries[] = {
 
 /* List of responses that should be sent to all clients */
 static int response_all[] = { RPL_NOWAWAY, RPL_UNAWAY, 0 };
+static int response_none[] = { ERR_NOMOTD, RPL_ENDOFMOTD, 0 };
 
 static int is_reply(int *replies, int r)
 {
@@ -418,6 +419,13 @@ void redirect_response(struct network *network, struct line *l)
 	for (i = 0; response_all[i]; i++) {
 		if (response_all[i] == n) {
 			clients_send(network, l, c);
+			return;
+		}
+	}
+
+	/* See if this is a response that shouldn't be sent to clients at all */
+	for (i = 0; response_none[i]; i++) {
+		if (response_none[i] == n) {
 			return;
 		}
 	}
