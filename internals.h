@@ -84,4 +84,7 @@ void fini_log(void);
 void redirect_record(struct client *c, struct line *l);
 void redirect_response(struct network *n, struct line *l);
 
+/* cache.c */
+gboolean client_try_cache(struct line *l);
+
 #endif /* __INTERNALS_H__ */

@@ -2,7 +2,7 @@
 - update documentation (see FIXME's)
 - test and fix SSL support
 - handle some currently unhandled responses (especially wrt JOIN's)
-- answer WHO and MODE queries from own data if possible
+- answer WHO queries from own data if possible
 - check JOINs on ctrlproxy side
 - new linestack:
  - persistent storage for linestack
