@@ -190,8 +190,6 @@ gboolean network_send_line(struct network *s, const struct line *ol)
 	l.origin = NULL;		/* Never send origin to the server */
 	l.network = s;
 
-	state_handle_data(s, &l);
-
 	if (!run_server_filter(&l))
 		return TRUE;
 

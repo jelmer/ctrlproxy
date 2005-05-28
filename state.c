@@ -215,7 +215,7 @@ static void handle_join(struct network *s, struct line *l)
 		else *n = '\0';
 
 		/* Someone is joining a channel the user is on */
-		if(l->direction == FROM_SERVER && line_get_nick(l)) {
+		if(line_get_nick(l)) {
 			c = find_add_channel(s, p);
 			ni = find_add_nick(c, line_get_nick(l));
 			if(ni->global_nick->hostmask)
@@ -535,8 +535,6 @@ static void handle_mode(struct network *s, struct line *l)
 	enum mode_type t = ADD;
 	int i;
 
-	if(l->direction == TO_SERVER)return;
-
 	/* We only care about channel modes and our own mode */
 
 	/* Own nick is being changed */
@@ -611,8 +609,6 @@ static void handle_mode(struct network *s, struct line *l)
 
 static void handle_004(struct network *s, struct line *l)
 {
-	if(l->direction == TO_SERVER)return;
-
 	s->supported_modes[0] = g_strdup(l->args[4]);
 	s->supported_modes[1] = g_strdup(l->args[5]);
 
@@ -659,7 +655,7 @@ static void handle_nick(struct network *s, struct line *l)
 	GList *g = s->channels;
 
 	/* Server confirms messages client sends, so let's only handle those */
-	if(l->direction != FROM_SERVER || !l->args[1] || !line_get_nick(l)) return;
+	if(!l->args[1] || !line_get_nick(l)) return;
 	while(g) {
 		struct channel *c = (struct channel *)g->data;
 		struct channel_nick *n = find_nick(c, line_get_nick(l));

@@ -22,7 +22,6 @@
 void handle_005(struct network *s, struct line *l)
 {
 	unsigned int i;
-	if(l->direction == TO_SERVER)return;
 
 	for(i = 3; i < l->argc-1; i++) {
 		char *sep = strchr(l->args[i], '=');
