@@ -1,0 +1,7 @@
+-include ../../Makefile.settings
+PYTHON = @PYTHON@
+PYTHON_PREFIX = @PYTHON_PREFIX@
+SWIG = @SWIG@
+PYCFLAGS = @PY_CFLAGS@
+PYLDFLAGS = @PY_LIBS@
+CFLAGS += -I../.. -I..

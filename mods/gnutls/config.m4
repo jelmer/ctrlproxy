@@ -12,4 +12,4 @@ fi
 
 AC_SUBST(GNUTLS_CFLAGS)
 AC_SUBST(GNUTLS_LIBS)
-AC_CONFIG_FILES([mods/gnutls/Makefile])
+AC_CONFIG_FILES([mods/gnutls/Makefile.settings])

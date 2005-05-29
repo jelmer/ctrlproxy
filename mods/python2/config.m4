@@ -14,5 +14,5 @@ if test "${enable_python+set}" = set; then
 		AC_SUBST(PY_CFLAGS)
 	fi
 
-	AC_CONFIG_FILES([mods/python2/Makefile])
+	AC_CONFIG_FILES([mods/python2/Makefile.settings])
 fi

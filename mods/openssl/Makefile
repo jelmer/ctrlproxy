@@ -1,19 +1,13 @@
-CC = @CC@
-prefix = @prefix@
-exec_prefix = @exec_prefix@
-INSTALL = @INSTALL@
-CFLAGS = -Wall -fPIC -I../.. -I.. @CFLAGS@ @COMMON_CFLAGS@ @OPENSSL_CFLAGS@ -DSHAREDIR=\"@datadir@\" -DHAVE_CONFIG_H
-moddir = @libdir@/ctrlproxy
+include Makefile.settings
 MODS = libopenssl.so
-LDFLAGS = @OPENSSL_LIBS@
 
 .PHONY: all install clean distclean
 
 all: $(MODS)
 
 install: all
-	$(INSTALL) -d $(DESTDIR)$(moddir)
-	$(INSTALL) $(MODS) $(DESTDIR)$(moddir)
+	$(INSTALL) -d $(DESTDIR)$(modulesdir)
+	$(INSTALL) $(MODS) $(DESTDIR)$(modulesdir)
 
 %.o: %.c
 	$(CC) $(CFLAGS) -Dinit_plugin=$*_init -Dfini_plugin=$*_fini -Dname_plugin=$*_name -Dload_config=$*_load_config -Dsave_config=$*_save_config -c $<
@@ -25,4 +19,4 @@ clean:
 	rm -f $(MODS) *.o
 
 distclean: clean
-	rm -f Makefile
+	rm -f Makefile.settings

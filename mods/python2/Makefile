@@ -1,11 +1,4 @@
--include ../../Makefile.settings
-PYTHON = @PYTHON@
-PYTHON_PREFIX = @PYTHON_PREFIX@
-SWIG = @SWIG@
-PYCFLAGS = @PY_CFLAGS@
-PYLDFLAGS = @PY_LIBS@
-CFLAGS += -I../.. -I..
-LDFLAGS += 
+-include Makefile.settings
 
 all: build libpython2.so
 
@@ -27,6 +20,9 @@ clean:
 	rm -f ctrlproxy.py admin.py listener.py
 	$(PYTHON) setup.py clean
 	rm -rf build/
+
+distclean: clean
+	rm -f Makefile.settings
 
 %_wrap.c: ../swig/%.i
 	$(SWIG) -I../swig -python $*.i

@@ -1,6 +1,4 @@
--include ../../Makefile.settings
-CFLAGS += -I../.. -I.. @NSS_CFLAGS@ -DHAVE_CONFIG_H
-LDFLAGS += @NSS_LIBS@
+-include Makefile.settings
 MODS = libnss.so
 
 .PHONY: all install clean distclean
@@ -21,4 +19,4 @@ clean:
 	rm -f $(MODS) *.o
 
 distclean: clean
-	rm -f Makefile
+	rm -f Makefile.settings

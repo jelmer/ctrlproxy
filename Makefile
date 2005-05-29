@@ -73,6 +73,9 @@ clean:
 	$(MAKE) -C mods clean
 	$(MAKE) -C testsuite clean
 
+dist: distclean
+	$(MAKE) -C doc dist
+
 distclean: clean
 	rm -f build config.h ctrlproxy.pc *.log
 	rm -rf autom4te.cache/ config.log config.status

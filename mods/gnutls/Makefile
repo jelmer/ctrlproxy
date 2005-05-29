@@ -1,6 +1,4 @@
--include ../../Makefile.settings
-CFLAGS += -I../.. -I.. @GNUTLS_CFLAGS@ -DHAVE_CONFIG_H
-LDFLAGS += @GNUTLS_LIBS@
+-include Makefile.settings
 MODS = libgnutls.so
 
 .PHONY: all install clean distclean
@@ -21,4 +19,4 @@ clean:
 	rm -f $(MODS) *.o
 
 distclean: clean
-	rm -f Makefile
+	rm -f Makefile.settings
