@@ -125,6 +125,28 @@ static int test_nick_needmoreparams(void)
 	return 0;
 }
 
+static int test_join_needmoreparams(void)
+{
+	GIOChannel *fd = new_conn();
+	if (!fd) return -1;
+	irc_send_args(fd, "JOIN", NULL);
+	if (!wait_response(fd, "461")) 
+		return -1;
+	g_io_channel_unref(fd);
+	return 0;
+}
+
+static int test_part_needmoreparams(void)
+{
+	GIOChannel *fd = new_conn();
+	if (!fd) return -1;
+	irc_send_args(fd, "PART", NULL);
+	if (!wait_response(fd, "461")) 
+		return -1;
+	g_io_channel_unref(fd);
+	return 0;
+}
+
 static int test_dupregister(void)
 {
 	GIOChannel *fd = new_conn_loggedin("bla");
@@ -185,7 +207,18 @@ static int test_who_simple(void)
 	return 0;
 }
 
-
+static int test_quit_error(void)
+{
+	GIOChannel *fd = new_conn_loggedin("bla");
+	if (!fd) return -1;
+	irc_send_args(fd, "QUIT", NULL);
+	if (!wait_response(fd, "ERROR")) {
+		g_io_channel_unref(fd);
+		return -1;
+	}
+	g_io_channel_unref(fd);
+	return 0;
+}
 
 static int test_selfmessage(void)
 {
@@ -222,8 +255,11 @@ void simple_init(void)
 	register_test("USERHOST-NEEDMOREPARAMS", test_userhost_needmoreparams);
 	register_test("PRIVMSG-NEEDMOREPARAMS", test_privmsg_needmoreparams);
 	register_test("WHOIS-NEEDMOREPARAMS", test_whois_needmoreparams);
+	register_test("NICK-NEEDMOREPARAMS", test_nick_needmoreparams);
+	register_test("JOIN-NEEDMOREPARAMS", test_join_needmoreparams);
+	register_test("PART-NEEDMOREPARAMS", test_part_needmoreparams);
+	register_test("QUIT-ERROR", test_quit_error);
 	register_test("WHO-SIMPLE", test_who_simple);
 	register_test("NICK-ERRONEUS", test_nick_erroneous);
-	register_test("NICK-NEEDMOREPARAMS", test_nick_needmoreparams);
 	register_test("USER-REGISTERONCE", test_dupregister);
 }

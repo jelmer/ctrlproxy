@@ -1,6 +1,6 @@
 /*
     ircdtorture: an IRC RFC compliancy tester
-	(c) 2005 Jelmer Vernooij <jelmer@nl.linux.org>
+    (c) 2005 Jelmer Vernooij <jelmer@nl.linux.org>
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -77,13 +77,14 @@ struct line *wait_responses(GIOChannel *ch, const char *cmd[])
 
 		status = irc_recv_line(ch, &error, &l);
 
-		if (status == G_IO_STATUS_NORMAL) {
+		if (status == G_IO_STATUS_NORMAL && l->argc > 0) {
 			for (i = 0; cmd[i]; i++) {
 				if (!strcmp(l->args[0], cmd[i])) 
 					return l;
 			}
 		}
-	} while(status != G_IO_STATUS_ERROR);
+	} while(status != G_IO_STATUS_ERROR && 
+		status != G_IO_STATUS_EOF);
 	
 	return l;
 }
