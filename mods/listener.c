@@ -54,7 +54,7 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition condition, gpo
 	}
 
 	if(!listener->password) {
-		g_log(G_LOG_DOMAIN, G_LOG_LEVEL_WARNING, "No password set for %s, allowing client _without_ authentication!", listener->network->name);
+		log_network("listener", listener->network, "No password set, allowing client _without_ authentication!");
 	}
 
 	if(!g_strcasecmp(l->args[0], "PASS")) {
