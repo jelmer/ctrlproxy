@@ -66,8 +66,6 @@ static int test_registerfirst(void)
 	return 0;
 }
 
-
-
 static int test_user_needmoreparams(void)
 {
 	GIOChannel *fd = new_conn();
@@ -119,26 +117,30 @@ static int test_nick_needmoreparams(void)
 	GIOChannel *fd = new_conn();
 	if (!fd) return -1;
 	irc_send_args(fd, "NICK", NULL);
-	if (!wait_response(fd, "461")) 
+	if (!wait_response(fd, "461")) {
+		g_io_channel_unref(fd);
 		return -1;
+	}
 	g_io_channel_unref(fd);
 	return 0;
 }
 
 static int test_join_needmoreparams(void)
 {
-	GIOChannel *fd = new_conn();
+	GIOChannel *fd = new_conn_loggedin("bla");
 	if (!fd) return -1;
 	irc_send_args(fd, "JOIN", NULL);
-	if (!wait_response(fd, "461")) 
+	if (!wait_response(fd, "461"))  {
+		g_io_channel_unref(fd);
 		return -1;
+	}
 	g_io_channel_unref(fd);
 	return 0;
 }
 
 static int test_part_needmoreparams(void)
 {
-	GIOChannel *fd = new_conn();
+	GIOChannel *fd = new_conn_loggedin("bla");
 	if (!fd) return -1;
 	irc_send_args(fd, "PART", NULL);
 	if (!wait_response(fd, "461")) 
