@@ -57,8 +57,8 @@ void admin_out(struct line *l, const char *fmt, ...)
 	va_end(ap);
 
 	hostmask = g_strdup_printf(":ctrlproxy!ctrlproxy@%s", l->network->name);
-	if (l->network->type == NETWORK_VIRTUAL && 
-		!strcmp(l->network->connection.virtual.ops->name, "admin") &&
+	if (l->network->connection.type == NETWORK_VIRTUAL && 
+		!strcmp(l->network->connection.data.virtual.ops->name, "admin") &&
 		!strcmp(l->args[1], ADMIN_CHANNEL)) {
 		virtual_network_recv_args(l->network, hostmask+1, "PRIVMSG", ADMIN_CHANNEL, msg, NULL);
 	} else {
@@ -128,7 +128,7 @@ static void add_server (char **args, struct line *l, void *userdata)
 		return;
 	}
 
-	if (n->type != NETWORK_TCP) {
+	if (n->connection.type != NETWORK_TCP) {
 		admin_out(l, "Not a TCP/IP network!");
 		return;
 	}
@@ -141,7 +141,7 @@ static void add_server (char **args, struct line *l, void *userdata)
 	s->ssl = FALSE;
 	s->password = (args[3] && args[4])?g_strdup(args[4]):NULL;
 
-	n->connection.tcp.servers = g_list_append(n->connection.tcp.servers, s);
+	n->connection.data.tcp.servers = g_list_append(n->connection.data.tcp.servers, s);
 }
 
 static void com_connect_network (char **args, struct line *l, void *userdata)
@@ -197,7 +197,7 @@ static void com_next_server (char **args, struct line *l, void *userdata) {
 		admin_out(l, "%s: Reconnecting", name);
 		close_server(n);
 		g_log(G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "Cycle server in %s", name);
-		n->connection.tcp.current_server = network_get_next_tcp_server(n);
+		n->connection.data.tcp.current_server = network_get_next_tcp_server(n);
 		connect_network(n);
 	}
 }
@@ -441,7 +441,7 @@ static gboolean load_config(struct plugin *p, xmlNodePtr node)
 
 static gboolean admin_net_init(struct network *n)
 {
-	n->connection_state = NETWORK_CONNECTION_STATE_MOTD_RECVD;
+	n->connection.state = NETWORK_CONNECTION_STATE_MOTD_RECVD;
 	virtual_network_recv_args(n, n->me.hostmask, "JOIN", ADMIN_CHANNEL, NULL);
 	virtual_network_recv_args(n, n->name, "332", n->me.nick, ADMIN_CHANNEL, "CtrlProxy administration channel", NULL);
 	virtual_network_recv_args(n, n->name, "353", n->me.nick, "=", ADMIN_CHANNEL, n->me.nick, NULL);

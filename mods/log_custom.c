@@ -110,7 +110,7 @@ static char *get_nick(struct line *l, gboolean case_sensitive) {
 static char *get_network(struct line *l, gboolean case_sensitive) 
 { return g_strdup(l->network->name); }
 static char *get_server(struct line *l, gboolean case_sensitive)
-{ return g_strdup(l->network->connection.tcp.current_server->name); }
+{ return g_strdup(l->network->connection.data.tcp.current_server->name); }
 
 static char *get_percent(struct line *l, gboolean case_sensitive) { return g_strdup("%"); }
 

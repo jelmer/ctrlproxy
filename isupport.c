@@ -35,7 +35,7 @@ void handle_005(struct network *s, struct line *l)
 			val = g_strdup(sep+1);
 		}
 		
-		g_hash_table_replace(s->server_features, key, val);
+		g_hash_table_replace(s->supports.features, key, val);
 
 		if(!strcmp(key, "supports.casemapping")) {
 			if(!strcmp(val, "rfc1459")) {
@@ -59,13 +59,13 @@ void handle_005(struct network *s, struct line *l)
 gboolean network_supports(struct network *n, const char *fe)
 {
 	gpointer k, v;
-	return g_hash_table_lookup_extended (n->server_features, fe, &k, &v);
+	return g_hash_table_lookup_extended (n->supports.features, fe, &k, &v);
 }
 
 const char *get_network_feature(struct network *n, const char *name)
 {
 	if(!n) return NULL;
-	return g_hash_table_lookup(n->server_features, name);
+	return g_hash_table_lookup(n->supports.features, name);
 }
 
 int irccmp(struct network *n, const char *a, const char *b)

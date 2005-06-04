@@ -99,7 +99,7 @@ static gboolean process_from_client(struct line *l)
 			  !g_strcasecmp(l->args[0], "PASS")) {
 		client_send_response(l->client, ERR_ALREADYREGISTERED,  
 						 "Please register only once per session", NULL);
-	} else if(l->client->network->connection_state == NETWORK_CONNECTION_STATE_MOTD_RECVD) {
+	} else if(l->client->network->connection.state == NETWORK_CONNECTION_STATE_MOTD_RECVD) {
 		gboolean from_cache = client_try_cache(l);
 
 		if (!from_cache) {
@@ -107,7 +107,7 @@ static gboolean process_from_client(struct line *l)
 			/* FIXME: Check for validity of input ? */
 			network_send_line(l->client->network, l);
 		}
-	} else if(l->client->network->connection_state == NETWORK_CONNECTION_STATE_NOT_CONNECTED) {
+	} else if(l->client->network->connection.state == NETWORK_CONNECTION_STATE_NOT_CONNECTED) {
 		client_send_args(l->client, "NOTICE", l->client->nick?l->client->nick:l->client->network->me.nick, "Currently not connected to server, connecting...", NULL);
 		connect_network(l->client->network);
 	}
@@ -271,8 +271,8 @@ static gboolean welcome_client(struct client *client)
 	client_send_response(client, RPL_MYINFO, 
 		 client->network->name, 
 		 ctrlproxy_version(), 
-		 client->network->supported_modes[0]?client->network->supported_modes[0]:ALLMODES, 
-		 client->network->supported_modes[1]?client->network->supported_modes[1]:ALLMODES,
+		 client->network->supports.modes[0]?client->network->supports.modes[0]:ALLMODES, 
+		 client->network->supports.modes[1]?client->network->supports.modes[1]:ALLMODES,
 		 NULL);
 
 	features = network_generate_feature_string(client->network);
@@ -371,7 +371,7 @@ static gboolean handle_pending_client_receive(GIOChannel *c, GIOCondition cond, 
 			client->network = find_network_by_hostname(l->args[1], atoi(l->args[2]), TRUE);
 
             if (client->network && 
-				client->network->connection_state == NETWORK_CONNECTION_STATE_NOT_CONNECTED && 
+				client->network->connection.state == NETWORK_CONNECTION_STATE_NOT_CONNECTED && 
 				!connect_network(client->network)) {
 				log_network(NULL, client->network, "Unable to connect");
 			}

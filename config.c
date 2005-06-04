@@ -62,7 +62,7 @@ static xmlNodePtr config_save_tcp_servers(struct network *n)
 {
 	GList *gl;
 	xmlNodePtr s = xmlNewNode(NULL, "servers");
-	for (gl = n->connection.tcp.servers; gl; gl = gl->next) {
+	for (gl = n->connection.data.tcp.servers; gl; gl = gl->next) {
 		struct tcp_server *ts = gl->data;
 		xmlNodePtr x = xmlNewNode(NULL, "server");
 		if (ts->name) xmlSetProp(x, "name", ts->name);
@@ -94,13 +94,13 @@ static xmlNodePtr config_save_networks()
 		xmlSetProp(p, "nick", n->me.nick);
 		xmlSetProp(p, "username", n->me.username);
 
-		switch(n->type) {
+		switch(n->connection.type) {
 		case NETWORK_VIRTUAL:
 			p1 = xmlNewChild(p, NULL, "virtual", NULL);
-			xmlSetProp(p1, "type", n->connection.virtual.ops->name);
+			xmlSetProp(p1, "type", n->connection.data.virtual.ops->name);
 			break;
 		case NETWORK_PROGRAM:
-			p1 = xmlNewChild(p, NULL, "program", n->connection.program.location);
+			p1 = xmlNewChild(p, NULL, "program", n->connection.data.program.location);
 			break;
 		case NETWORK_TCP:
 			xmlAddChild(p, config_save_tcp_servers(n));
@@ -243,7 +243,7 @@ static void config_load_channel(struct network *n, xmlNodePtr root)
 static void config_load_servers(struct network *n, xmlNodePtr root)
 {
 	xmlNodePtr cur;
-	n->type = NETWORK_TCP;
+	n->connection.type = NETWORK_TCP;
 
 	for (cur = root->children; cur; cur = cur->next) 
 	{
@@ -287,7 +287,7 @@ static void config_load_servers(struct network *n, xmlNodePtr root)
 			continue;
 		}
 
-		n->connection.tcp.servers = g_list_append(n->connection.tcp.servers, s);
+		n->connection.data.tcp.servers = g_list_append(n->connection.data.tcp.servers, s);
 	}
 }
 
@@ -345,11 +345,11 @@ static void config_load_network(xmlNodePtr root)
 		} else if (!strcmp(cur->name, "autosend")) {
 			n->autosend_lines = g_list_append(n->autosend_lines, xmlNodeGetContent(cur));
 		} else if (!strcmp(cur->name, "program")) {
-			n->type = NETWORK_PROGRAM;
-			n->connection.program.location = xmlNodeGetContent(cur);
+			n->connection.type = NETWORK_PROGRAM;
+			n->connection.data.program.location = xmlNodeGetContent(cur);
 		} else if (!strcmp(cur->name, "virtual")) {
-			n->type = NETWORK_VIRTUAL;
-			n->connection.virtual.type = xmlGetProp(cur, "type");
+			n->connection.type = NETWORK_VIRTUAL;
+			n->connection.data.virtual.type = xmlGetProp(cur, "type");
 		}
 	}
 

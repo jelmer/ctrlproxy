@@ -83,6 +83,7 @@ struct network_nick {
 	char *username;
 	char *hostname;
 	char *hostmask;
+	char modes[255];
 	GList *channels;
 };
 
@@ -130,40 +131,21 @@ struct client {
 };
 
 enum casemapping { CASEMAP_UNKNOWN = 0, CASEMAP_RFC1459, CASEMAP_ASCII, CASEMAP_STRICT_RFC1459 };
-enum network_type { NETWORK_TCP, NETWORK_PROGRAM, NETWORK_VIRTUAL };
-enum network_connection_state { 
-	NETWORK_CONNECTION_STATE_NOT_CONNECTED = 0, 
-	NETWORK_CONNECTION_STATE_RECONNECT_PENDING,
-	NETWORK_CONNECTION_STATE_CONNECTED,
-	NETWORK_CONNECTION_STATE_LOGIN_SENT, 
-	NETWORK_CONNECTION_STATE_MOTD_RECVD,
-};
 
-struct network {
-	char *name;
-	struct network_nick me;
-	char *password;
-	gboolean autoconnect;
-	gboolean ignore_first_nick;
-	char mymodes[255];
-	GList *channels;
-	GList *nicks;
-	GList *clients;
-	GList *autosend_lines;
-	GHashTable *server_features;
-	guint reconnect_id;
-	gboolean name_guessed;
-	guint reconnect_interval;
-	char *supported_modes[2];
-	enum network_type type;
-	enum network_connection_state connection_state;
+struct network_connection {
+	enum { 
+		NETWORK_TCP, 
+		NETWORK_PROGRAM, 
+		NETWORK_VIRTUAL 
+	} type;
 
-	struct {
-		enum casemapping casemapping;
-		int channellen;
-		int nicklen;
-		int topiclen;
-	} supports;
+	enum { 
+		NETWORK_CONNECTION_STATE_NOT_CONNECTED = 0, 
+		NETWORK_CONNECTION_STATE_RECONNECT_PENDING,
+		NETWORK_CONNECTION_STATE_CONNECTED,
+		NETWORK_CONNECTION_STATE_LOGIN_SENT, 
+		NETWORK_CONNECTION_STATE_MOTD_RECVD,
+	} state;
 
 	union { 
 		struct {
@@ -199,7 +181,34 @@ struct network {
 				gboolean (*fini) (struct network *);
 			} *ops;
 		} virtual;
-	} connection;
+	} data;
+};
+
+
+struct network {
+	char *name;
+	struct network_nick me;
+	char *password;
+	gboolean autoconnect;
+	gboolean ignore_first_nick;
+	GList *channels;
+	GList *nicks;
+	GList *clients;
+	GList *autosend_lines;
+	guint reconnect_id;
+	gboolean name_guessed;
+	guint reconnect_interval;
+
+	struct {
+		GHashTable *features;
+		char *modes[2];
+		enum casemapping casemapping;
+		int channellen;
+		int nicklen;
+		int topiclen;
+	} supports;
+
+	struct network_connection connection;
 };
 
 struct plugin {

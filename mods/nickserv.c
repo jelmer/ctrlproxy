@@ -55,7 +55,7 @@ static void identify_me(struct network *network, char *nick)
 	const char *pass;
 
 	/* Don't try to identify if we're already identified */
-	if (network->mymodes['R']) return;
+	if (network->me.modes['R']) return;
 	
 	pass = nickserv_find_nick(network, nick);
 	

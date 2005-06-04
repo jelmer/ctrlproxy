@@ -341,20 +341,20 @@ static gboolean handle_client_data (GIOChannel *ioc, GIOCondition o, gpointer da
 						return socks_error(ioc, REP_NET_UNREACHABLE);
 					} 
 
-					if (result->connection_state == NETWORK_CONNECTION_STATE_NOT_CONNECTED && 
+					if (result->connection.state == NETWORK_CONNECTION_STATE_NOT_CONNECTED && 
 						!connect_network(result)) {
 						log_network("socks", result, "Unable to connect");
 						return socks_error(ioc, REP_NET_UNREACHABLE);
 					}
 
-					if (result->type == NETWORK_TCP) {
+					if (result->connection.type == NETWORK_TCP) {
 						struct sockaddr_in6 *name6; 
 						struct sockaddr_in *name4; 
 						int atyp, len, port;
 						guint8 *data;
 
-						name6 = (struct sockaddr_in6 *)result->connection.tcp.local_name;
-						name4 = (struct sockaddr_in *)result->connection.tcp.local_name;
+						name6 = (struct sockaddr_in6 *)result->connection.data.tcp.local_name;
+						name4 = (struct sockaddr_in *)result->connection.data.tcp.local_name;
 
 						if (name4->sin_family == AF_INET) {
 							atyp = ATYP_IPV4;
