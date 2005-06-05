@@ -242,7 +242,7 @@ struct plugin {
 G_MODULE_EXPORT struct channel_state *find_channel(struct network_state *st, const char *name);
 G_MODULE_EXPORT struct channel_nick *find_nick(struct channel_state *c, const char *name);
 G_MODULE_EXPORT struct linestack_context *linestack_new_by_network(struct network *);
-G_MODULE_EXPORT GSList *gen_replication_network(struct network *s);
+G_MODULE_EXPORT GSList *gen_replication_network(struct network_state *s);
 G_MODULE_EXPORT GSList *gen_replication_channel(struct channel_state *c, const char *hostmask, const char *nick);
 G_MODULE_EXPORT int is_channelname(const char *name, struct network_info *s);
 G_MODULE_EXPORT int is_prefix(char p, struct network_info *n);

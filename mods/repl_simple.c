@@ -46,7 +46,7 @@ static gboolean log_data(struct line *l, enum data_direction dir, void *userdata
 	   (!g_strcasecmp(l->args[0], "PRIVMSG") || !g_strcasecmp(l->args[0], "NOTICE"))) {
 		linestack_clear(co);
 		g_hash_table_replace( simple_initialnick, l->network, g_strdup(l->network->state.me->nick));
-		linestack_add_line_list( co, gen_replication_network(l->network));
+		linestack_add_line_list( co, gen_replication_network(&l->network->state));
 		return TRUE;
 	}
 
@@ -64,20 +64,20 @@ static gboolean log_data(struct line *l, enum data_direction dir, void *userdata
 	   !g_strcasecmp(l->args[0], "NICK")) {
 		linestack_add_line(co, l);
 	} else if(!g_strcasecmp(l->args[0], "353")) {
-		c = find_channel(l->network, l->args[3]);
+		c = find_channel(&l->network->state, l->args[3]);
 		if(c && !(c->introduced & 2)) {
 			linestack_add_line(co, l);
 		}
 		/* Only do 366 if not & 2. Set | 2 */
 	} else if(!g_strcasecmp(l->args[0], "366")) {
-		c = find_channel(l->network, l->args[2]);
+		c = find_channel(&l->network->state, l->args[2]);
 		if(c && !(c->introduced & 2)) {
 			linestack_add_line(co, l);
 			c->introduced |= 2;
 		}
 		/* Only do 331 or 332 if not & 1. Set | 1 */
 	} else if(!g_strcasecmp(l->args[0], "331") || !g_strcasecmp(l->args[0], "332")) {
-		c = find_channel(l->network, l->args[2]);
+		c = find_channel(&l->network->state, l->args[2]);
 		if(c && !(c->introduced & 1)) {
 			linestack_add_line(co, l);
 			c->introduced |= 1;
@@ -109,7 +109,7 @@ static gboolean fini_plugin(struct plugin *p) {
 static gboolean init_plugin(struct plugin *p) {
 	add_replication_filter("repl_simple", log_data, NULL, 1000);
 	add_new_client_hook("repl_simple", simple_replicate, NULL);
-	simple_backlog = g_hash_table_new_full(NULL, NULL, NULL, linestack_destroy);
+	simple_backlog = g_hash_table_new_full(NULL, NULL, NULL, (GDestroyNotify)linestack_destroy);
 	simple_initialnick = g_hash_table_new_full(NULL, NULL, NULL, g_free);
 	return TRUE;
 }

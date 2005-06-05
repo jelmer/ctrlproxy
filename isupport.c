@@ -19,7 +19,7 @@
 
 #include "internals.h"
 
-void handle_005(struct network *s, struct line *l)
+void handle_005(struct network_state *s, struct line *l)
 {
 	unsigned int i;
 
@@ -35,23 +35,22 @@ void handle_005(struct network *s, struct line *l)
 			val = g_strdup(sep+1);
 		}
 		
-		g_hash_table_replace(s->state.info.features, key, val);
+		g_hash_table_replace(s->info.features, key, val);
 
 		if(!strcmp(key, "supports.casemapping")) {
 			if(!strcmp(val, "rfc1459")) {
-				s->state.info.casemapping = CASEMAP_RFC1459;
+				s->info.casemapping = CASEMAP_RFC1459;
 			} else if(!strcmp(val, "strict-rfc1459")) {
-				s->state.info.casemapping = CASEMAP_STRICT_RFC1459;
+				s->info.casemapping = CASEMAP_STRICT_RFC1459;
 			} else if(!strcmp(val, "ascii")) {
-				s->state.info.casemapping = CASEMAP_ASCII;
+				s->info.casemapping = CASEMAP_ASCII;
 			} else {
-				s->state.info.casemapping = CASEMAP_UNKNOWN;
+				s->info.casemapping = CASEMAP_UNKNOWN;
 				log_network(NULL, s, "Unknown supports.casemapping '%s'", l->args[i]+strlen("supports.casemapping="));
 			}
 		} else if(!strcmp(key, "NETWORK")) {
-			if(s->name_guessed) {
-				s->name = g_strdup(val);
-			}
+			g_free(s->info.name);
+			s->info.name = g_strdup(val);
 		} 
 	}
 }

@@ -43,7 +43,7 @@ static gboolean client_try_cache_join(struct line *l)
 	/* Only optimize easy queries :-) */
 	if (strchr(l->args[1], ',')) return FALSE;
 		
-	c = find_channel(l->client->network, l->args[1]);
+	c = find_channel(&l->client->network->state, l->args[1]);
 	return (c && c->joined);
 }
 
@@ -59,7 +59,7 @@ static gboolean client_try_cache_mode(struct line *l)
 	/* Only queries in the form of MODE #channel mode */
 	if (l->argc != 3) return FALSE; 
 
-	c = find_channel(l->client->network, l->args[1]);
+	c = find_channel(&l->client->network->state, l->args[1]);
 	if (!c) return FALSE;
 
 	for (i = 0; (m = l->args[2][i]); i++) {
@@ -81,7 +81,7 @@ static gboolean client_try_cache_who(struct line *l)
 
 	if (l->argc != 2) return FALSE;
 
-	c = find_channel(l->client->network, l->args[1]);
+	c = find_channel(&l->client->network->state, l->args[1]);
 	if (!c) return FALSE;
 
 	return FALSE; /* FIXME */

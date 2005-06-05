@@ -761,27 +761,27 @@ GSList *gen_replication_channel(struct channel_state *c, const char *hostmask, c
 	return ret;
 }
 
-GSList *gen_replication_network(struct network *s)
+GSList *gen_replication_network(struct network_state *s)
 {
 	GList *cl;
 	struct channel_state *c;
 	GSList *ret = NULL;
-	cl = s->state.channels;
+	cl = s->channels;
 
 	while(cl) {
 		c = (struct channel_state *)cl->data;
-		if(!is_channelname(c->name, &s->state.info)) {
+		if(!is_channelname(c->name, &s->info)) {
 			cl = g_list_next(cl);
 			continue;
 		}
 
-		ret = g_slist_concat(ret, gen_replication_channel(c, s->name, s->state.me->nick));
+		ret = g_slist_concat(ret, gen_replication_channel(c, s->me->hostmask, s->me->nick));
 
 		cl = g_list_next(cl);
 	}
 
-	if(strlen(mode2string(s->state.me->modes)))
-		ret = g_slist_append(ret, irc_parse_linef(":%s MODE %s +%s\r\n", s->name, s->state.me->nick, mode2string(s->state.me->modes)));
+	if(strlen(mode2string(s->me->modes)))
+		ret = g_slist_append(ret, irc_parse_linef(":%s MODE %s +%s\r\n", s->me->hostmask, s->me->nick, mode2string(s->me->modes)));
 
 	return ret;
 }
