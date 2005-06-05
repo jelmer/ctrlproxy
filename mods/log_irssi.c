@@ -107,7 +107,9 @@ static gboolean log_data(struct line *l, enum data_direction dir, void *userdata
 	struct tm *t = localtime(&ti);
 	FILE *f = NULL;
 	if(!l->args || !l->args[0] || l->options & LINE_NO_LOGGING)return TRUE;
+
 	nick = line_get_nick(l);
+
 	if(user){ *user = '\0';user++; }
 
 	g_assert(l->args[0]);

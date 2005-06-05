@@ -191,8 +191,8 @@ gboolean network_send_line(struct network *s, const struct line *ol)
 
 	if (!run_server_filter(&l, TO_SERVER))
 		return TRUE;
-
-	run_log_filter(lc = linedup(&l), TO_SERVER); free_line(lc);
+	lc = linedup(&l); lc->origin = g_strdup(s->state.me->hostmask);
+	run_log_filter(lc, TO_SERVER); free_line(lc);
 	run_replication_filter(lc = linedup(&l), TO_SERVER); free_line(lc);
 
 	/* Also write this message to all other clients currently connected */
@@ -596,10 +596,6 @@ int close_network(struct network *s)
 	g_free(s->nick);
 	g_free(s->password);
 	g_free(s->name);
-
-	g_hash_table_destroy(s->state.info.features);
-
-	free_channels(s);
 
 	switch (s->connection.type) {
 	case NETWORK_TCP:

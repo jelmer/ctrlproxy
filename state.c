@@ -59,7 +59,25 @@ void network_nick_set_data(struct network_nick *n, const char *nick, const char 
 
 void network_nick_set_hostmask(struct network_nick *n, const char *hm)
 {
-	/* FIXME */
+	char *t, *u;
+	if (n->hostmask && !strcmp(n->hostmask, hm))
+		return;
+
+	g_free(n->hostmask);
+	g_free(n->nick); n->nick = NULL;
+	g_free(n->username); n->username = NULL;
+	g_free(n->hostname); n->hostname = NULL;
+	n->hostmask = g_strdup(hm);
+
+	t = strchr(hm, '!');
+	if (!t) return;
+	n->nick = g_strndup(hm, t-hm);
+	
+	u = strchr(t, '@');
+	if (!u) return;
+	n->username = g_strndup(t+1, u-t+1);
+
+	n->hostname = g_strdup(u+1);
 }
 
 static void free_nick(struct channel_nick *n)
@@ -129,14 +147,6 @@ static void free_channel(struct channel *c)
 	g_free(c->key);
 	c->network->state.channels = g_list_remove(c->network->state.channels, c);
 	g_free(c);
-}
-
-void free_channels(struct network *s)
-{
-	while(s->state.channels)
-	{
-		free_channel((struct channel *)s->state.channels->data);
-	}
 }
 
 struct channel *find_channel(struct network *st, const char *name)
@@ -240,12 +250,9 @@ static void handle_join(struct network *s, struct line *l)
 		if(line_get_nick(l)) {
 			c = find_add_channel(s, p);
 			ni = find_add_nick(c, line_get_nick(l));
-			if(ni->global_nick->hostmask)
-				g_free(ni->global_nick->hostmask);
-			ni->global_nick->hostmask = g_strdup(l->origin);
+			network_nick_set_hostmask(ni->global_nick, l->origin);
 
 			/* The user is joining a channel */
-
 			if(!irccmp(s, line_get_nick(l), s->state.me->nick)) {
 				c->joined = TRUE;
 				log_network(NULL, s, "Joining channel %s", c->name);
@@ -818,6 +825,11 @@ void init_state(struct network_state *state, const char *nick, const char *usern
 
 void free_state(struct network_state *state)
 {
+	while(state->channels)
+	{
+		free_channel((struct channel *)state->channels->data);
+	}
+
 	g_free(state->me->hostmask);
 	state->me->hostmask = NULL;
 
@@ -829,5 +841,4 @@ void free_state(struct network_state *state)
 
 	g_hash_table_destroy(state->info.features);
 	state->info.features = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_free);
-
 }
