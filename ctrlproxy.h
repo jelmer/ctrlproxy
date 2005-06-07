@@ -78,7 +78,10 @@ struct channel_nick {
 
 struct network_nick {
 	guint refcount;
-	char *name;
+	char *nick;
+	char *fullname;
+	char *username;
+	char *hostname;
 	char *hostmask;
 	GList *channels;
 };
@@ -128,20 +131,17 @@ struct client {
 
 enum casemapping { CASEMAP_UNKNOWN = 0, CASEMAP_RFC1459, CASEMAP_ASCII, CASEMAP_STRICT_RFC1459 };
 enum network_type { NETWORK_TCP, NETWORK_PROGRAM, NETWORK_VIRTUAL };
-enum network_state { 
-	NETWORK_STATE_NOT_CONNECTED = 0, 
-	NETWORK_STATE_RECONNECT_PENDING,
-	NETWORK_STATE_CONNECTED,
-	NETWORK_STATE_LOGIN_SENT, 
-	NETWORK_STATE_MOTD_RECVD,
+enum network_connection_state { 
+	NETWORK_CONNECTION_STATE_NOT_CONNECTED = 0, 
+	NETWORK_CONNECTION_STATE_RECONNECT_PENDING,
+	NETWORK_CONNECTION_STATE_CONNECTED,
+	NETWORK_CONNECTION_STATE_LOGIN_SENT, 
+	NETWORK_CONNECTION_STATE_MOTD_RECVD,
 };
 
 struct network {
 	char *name;
-	char *username;
-	char *fullname;
-	char *nick;
-	char *hostmask;
+	struct network_nick me;
 	char *password;
 	gboolean autoconnect;
 	gboolean ignore_first_nick;
@@ -156,7 +156,7 @@ struct network {
 	guint reconnect_interval;
 	char *supported_modes[2];
 	enum network_type type;
-	enum network_state state;
+	enum network_connection_state connection_state;
 
 	struct {
 		enum casemapping casemapping;

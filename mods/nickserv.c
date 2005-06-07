@@ -94,14 +94,14 @@ static gboolean log_data(struct line *l, enum data_direction dir, void *userdata
 			for (gl = nicks; gl; gl = gl->next) {
 				e = gl->data;
 
-				if (e->network && !strcasecmp(e->network, l->network->name) && !strcasecmp(e->nick, l->network->nick)) {
+				if (e->network && !strcasecmp(e->network, l->network->name) && !strcasecmp(e->nick, l->network->me.nick)) {
 					break;		
 				}
 			}
 
 			if (!gl) {
 				e = g_new0(struct nickserv_entry, 1);
-				e->nick = g_strdup(l->network->nick);
+				e->nick = g_strdup(l->network->me.nick);
 				e->network = g_strdup(l->network->name);
 				nicks = g_list_prepend(nicks, e);
 			}
@@ -132,7 +132,7 @@ static gboolean log_data(struct line *l, enum data_direction dir, void *userdata
 
 static void conned_data(struct network *n, void *userdata)
 {
-	identify_me(n, n->nick);
+	identify_me(n, n->me.nick);
 }
 
 static gboolean save_config(struct plugin *p, xmlNodePtr node)

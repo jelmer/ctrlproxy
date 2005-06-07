@@ -25,7 +25,7 @@ static GHashTable *simple_initialnick = NULL;
 
 static void change_nick(struct client *c, char *newnick) 
 {
-	struct line *l = irc_parse_line_args(c->network->hostmask, "NICK", newnick, NULL);
+	struct line *l = irc_parse_line_args(c->network->me.hostmask, "NICK", newnick, NULL);
 	irc_send_line(c->incoming, l);
 	free_line(l);
 }
@@ -37,7 +37,7 @@ static gboolean log_data(struct line *l, enum data_direction dir, void *userdata
 	if(!co) {
 		co = linestack_new_by_network(l->network);
 		g_hash_table_insert( simple_backlog, l->network, co);
-		g_hash_table_insert( simple_initialnick, l->network, g_strdup(l->network->nick));
+		g_hash_table_insert( simple_initialnick, l->network, g_strdup(l->network->me.nick));
 	}
 
 	if(l->argc < 1)return TRUE;
@@ -45,7 +45,7 @@ static gboolean log_data(struct line *l, enum data_direction dir, void *userdata
 	if(dir == TO_SERVER &&  
 	   (!g_strcasecmp(l->args[0], "PRIVMSG") || !g_strcasecmp(l->args[0], "NOTICE"))) {
 		linestack_clear(co);
-		g_hash_table_replace( simple_initialnick, l->network, g_strdup(l->network->nick));
+		g_hash_table_replace( simple_initialnick, l->network, g_strdup(l->network->me.nick));
 		linestack_add_line_list( co, gen_replication_network(l->network));
 		return TRUE;
 	}

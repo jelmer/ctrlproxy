@@ -46,7 +46,7 @@ static void free_nick(struct channel_nick *n)
 	if(n->global_nick->refcount == 0) {
 		if(n->global_nick->hostmask != NULL)
 			g_free(n->global_nick->hostmask);
-		g_free(n->global_nick->name);
+		g_free(n->global_nick->nick);
 		n->channel->network->nicks = g_list_remove(n->channel->network->nicks, n->global_nick);
 		g_free(n->global_nick);
 	}
@@ -147,7 +147,7 @@ struct channel_nick *find_nick(struct channel *c, const char *name) {
 
 	while(l) {
 		n = (struct channel_nick *)l->data;
-		if(!irccmp(c->network, n->global_nick->name, realname))return n;
+		if(!irccmp(c->network, n->global_nick->nick, realname))return n;
 		l = g_list_next(l);
 	}
 
@@ -162,7 +162,7 @@ static struct network_nick *find_add_network_nick(struct network *n, char *name)
 	/* search for a existing global object*/
 	while(gl) {
 		struct network_nick *ndd = (struct network_nick*)gl->data;
-		if(!irccmp(n, ndd->name, name)) {
+		if(!irccmp(n, ndd->nick, name)) {
 			ndd->refcount++;
 			return ndd;
 		}
@@ -172,7 +172,7 @@ static struct network_nick *find_add_network_nick(struct network *n, char *name)
 	/* create one, if it doesn't exist */
 	nd = g_new0(struct network_nick,1);
 	nd->refcount = 1;
-	nd->name = g_strdup(name);
+	nd->nick = g_strdup(name);
 	nd->hostmask = NULL;
 	nd->channels = NULL;
 	
@@ -224,7 +224,7 @@ static void handle_join(struct network *s, struct line *l)
 
 			/* The user is joining a channel */
 
-			if(!irccmp(s, line_get_nick(l), s->nick)) {
+			if(!irccmp(s, line_get_nick(l), s->me.nick)) {
 				c->joined = TRUE;
 				log_network(NULL, s, "Joining channel %s", c->name);
 				
@@ -260,7 +260,7 @@ static void handle_part(struct network *s, struct line *l)
 		c = find_channel(s, p);
 
 		/* The user is joining a channel */
-		if(!irccmp(s, line_get_nick(l), s->nick) && c) {
+		if(!irccmp(s, line_get_nick(l), s->me.nick) && c) {
 			log_network(NULL, s, "Leaving %s", p);
 			c->joined = FALSE;
 			free_channel(c);
@@ -324,7 +324,7 @@ static void handle_kick(struct network *s, struct line *l) {
 			continue;
 		}
 
-		if(!g_strcasecmp(n->global_nick->name, s->nick))
+		if(!g_strcasecmp(n->global_nick->nick, s->me.nick))
 			c->joined = FALSE;
 
 		c->nicks = g_list_remove(c->nicks, n);
@@ -538,7 +538,7 @@ static void handle_mode(struct network *s, struct line *l)
 	/* We only care about channel modes and our own mode */
 
 	/* Own nick is being changed */
-	if(!strcmp(l->args[1], s->nick)) {
+	if(!strcmp(l->args[1], s->me.nick)) {
 		for(i = 0; l->args[2][i]; i++) {
 			switch(l->args[2][i]) {
 				case '+': t = ADD;break;
@@ -660,13 +660,13 @@ static void handle_nick(struct network *s, struct line *l)
 		struct channel *c = (struct channel *)g->data;
 		struct channel_nick *n = find_nick(c, line_get_nick(l));
 		if(n) {
-			g_free(n->global_nick->name);
-			n->global_nick->name = g_strdup(l->args[1]);
+			g_free(n->global_nick->nick);
+			n->global_nick->nick = g_strdup(l->args[1]);
 		}
 		g = g_list_next(g);
 	}
 
-	if(!irccmp(s, line_get_nick(l), s->nick)) 
+	if(!irccmp(s, line_get_nick(l), s->me.nick)) 
 		network_change_nick(s, l->args[1]);
 }
 
@@ -700,10 +700,10 @@ static void handle_302(struct network *s, struct line *l)
 	/* We got a USERHOST response, split it into nick and user@host, and check the nick */
 	gchar** tmp302 = g_strsplit(g_strstrip(l->args[2]), "=+", 2);
 	if (g_strv_length(tmp302) > 1) {
-		if (!irccmp(l->network, l->network->nick, tmp302[0])) {
-			g_free(l->network->hostmask);
+		if (!irccmp(l->network, l->network->me.nick, tmp302[0])) {
+			g_free(l->network->me.hostmask);
 			/* Set the hostmask if it is our nick */
-			l->network->hostmask = g_strdup_printf("%s!%s", tmp302[0], tmp302[1]);
+			l->network->me.hostmask = g_strdup_printf("%s!%s", tmp302[0], tmp302[1]);
 		}
 	}
 	g_strfreev(tmp302);
@@ -781,8 +781,8 @@ GSList *gen_replication_channel(struct channel *c, const char *hostmask, const c
 	nl = c->nicks;
 	while(nl) {
 		n = (struct channel_nick *)nl->data;
-		if(n->mode && n->mode != ' ') { ret = g_slist_append(ret, irc_parse_linef(":%s 353 %s %c %s :%c%s\r\n", hostmask, nick, c->mode, c->name, n->mode, n->global_nick->name)); }
-		else { ret = g_slist_append(ret, irc_parse_linef(":%s 353 %s %c %s :%s\r\n", hostmask, nick, c->mode, c->name, n->global_nick->name)); }
+		if(n->mode && n->mode != ' ') { ret = g_slist_append(ret, irc_parse_linef(":%s 353 %s %c %s :%c%s\r\n", hostmask, nick, c->mode, c->name, n->mode, n->global_nick->nick)); }
+		else { ret = g_slist_append(ret, irc_parse_linef(":%s 353 %s %c %s :%s\r\n", hostmask, nick, c->mode, c->name, n->global_nick->nick)); }
 		nl = g_list_next(nl);
 	}
 	ret = g_slist_append(ret, irc_parse_linef(":%s 366 %s %s :End of /names list\r\n", hostmask, nick, c->name));
@@ -804,13 +804,13 @@ GSList *gen_replication_network(struct network *s)
 			continue;
 		}
 
-		ret = g_slist_concat(ret, gen_replication_channel(c, s->name, s->nick));
+		ret = g_slist_concat(ret, gen_replication_channel(c, s->name, s->me.nick));
 
 		cl = g_list_next(cl);
 	}
 
 	if(strlen(mode2string(s->mymodes)))
-		ret = g_slist_append(ret, irc_parse_linef(":%s MODE %s +%s\r\n", s->name, s->nick, mode2string(s->mymodes)));
+		ret = g_slist_append(ret, irc_parse_linef(":%s MODE %s +%s\r\n", s->name, s->me.nick, mode2string(s->mymodes)));
 
 	return ret;
 }

@@ -34,7 +34,7 @@ static void reconnect(struct network *server, gboolean rm_source);
 
 static void server_send_login (struct network *s) 
 {
-	g_assert(s->state == NETWORK_STATE_CONNECTED);
+	g_assert(s->connection_state == NETWORK_CONNECTION_STATE_CONNECTED);
 
 	log_network(NULL, s, "Successfully connected");
 
@@ -43,10 +43,10 @@ static void server_send_login (struct network *s)
 	} else if (s->password) {
 		network_send_args(s, "PASS", s->password, NULL);
 	}
-	network_send_args(s, "NICK", s->nick, NULL);
-	network_send_args(s, "USER", s->username, get_my_hostname(), s->name, s->fullname, NULL);
+	network_send_args(s, "NICK", s->me.nick, NULL);
+	network_send_args(s, "USER", s->me.username, get_my_hostname(), s->name, s->me.fullname, NULL);
 
-	s->state = NETWORK_STATE_LOGIN_SENT;
+	s->connection_state = NETWORK_CONNECTION_STATE_LOGIN_SENT;
 }
 
 static gboolean process_from_server(struct line *l)
@@ -68,15 +68,15 @@ static gboolean process_from_server(struct line *l)
 	} else if(!g_strcasecmp(l->args[0], "ERROR")) {
 		log_network(NULL, l->network, "error: %s", l->args[1]);
 	} else if(!g_strcasecmp(l->args[0], "433") && 
-			  l->network->state == NETWORK_STATE_LOGIN_SENT){
-		char *old_nick = l->network->nick;
-		l->network->nick = g_strdup_printf("%s_", l->network->nick);
-		network_send_args(l->network, "NICK", l->network->nick, NULL);
+			  l->network->connection_state == NETWORK_CONNECTION_STATE_LOGIN_SENT){
+		char *old_nick = l->network->me.nick;
+		l->network->me.nick = g_strdup_printf("%s_", l->network->me.nick);
+		network_send_args(l->network, "NICK", l->network->me.nick, NULL);
 		g_free(old_nick);
 	} else if(!g_strcasecmp(l->args[0], "422") ||
 			  !g_strcasecmp(l->args[0], "376")) {
 		GList *gl;
-		l->network->state = NETWORK_STATE_MOTD_RECVD;
+		l->network->connection_state = NETWORK_CONNECTION_STATE_MOTD_RECVD;
 
 		server_connected_hook_execute(l->network);
 
@@ -102,7 +102,7 @@ static gboolean process_from_server(struct line *l)
 	} 
 
 	if(!(l->options & LINE_DONT_SEND) && 
-		l->network->state == NETWORK_STATE_MOTD_RECVD) {
+		l->network->connection_state == NETWORK_CONNECTION_STATE_MOTD_RECVD) {
 		if (atoi(l->args[0])) {
 			redirect_response(l->network, l);
 		} else if (run_server_filter(l, FROM_SERVER)) {
@@ -131,7 +131,7 @@ gboolean handle_server_receive (GIOChannel *c, GIOCondition cond, void *_server)
 		return FALSE;
 	}
 
-	if (server->state == NETWORK_STATE_CONNECTED) {
+	if (server->connection_state == NETWORK_CONNECTION_STATE_CONNECTED) {
 		server_send_login(server);
 	}
 
@@ -198,7 +198,7 @@ gboolean network_send_line(struct network *s, const struct line *ol)
 	if(!(l.options & LINE_IS_PRIVATE) && l.args[0] &&
 	   (!strcmp(l.args[0], "PRIVMSG") || !strcmp(l.args[0], "NOTICE"))) {
 		char *old_origin;
-		old_origin = l.origin; l.origin = s->nick;
+		old_origin = l.origin; l.origin = s->me.nick;
 		clients_send(s, &l, l.client);
 		l.origin = old_origin;
 	}
@@ -317,7 +317,7 @@ gboolean connect_current_tcp_server(struct network *s)
 		return FALSE;
 	}
 
-	s->state = NETWORK_STATE_CONNECTED;
+	s->connection_state = NETWORK_CONNECTION_STATE_CONNECTED;
 
 	size = sizeof(struct sockaddr_in6);
 	g_free(s->connection.tcp.local_name);
@@ -354,19 +354,19 @@ gboolean connect_current_tcp_server(struct network *s)
 static gboolean delayed_connect_network(struct network *s)
 {
 	connect_network(s);
-	return (s->state == NETWORK_STATE_RECONNECT_PENDING);
+	return (s->connection_state == NETWORK_CONNECTION_STATE_RECONNECT_PENDING);
 }
 
 static void reconnect(struct network *server, gboolean rm_source)
 {
 	GList *gl;
-	g_assert(server->state != NETWORK_STATE_RECONNECT_PENDING);
+	g_assert(server->connection_state != NETWORK_CONNECTION_STATE_RECONNECT_PENDING);
 
-	if (server->state == NETWORK_STATE_MOTD_RECVD) {
+	if (server->connection_state == NETWORK_CONNECTION_STATE_MOTD_RECVD) {
 		server_disconnected_hook_execute(server);
 	}
 
-	if (server->state != NETWORK_STATE_NOT_CONNECTED) {
+	if (server->connection_state != NETWORK_CONNECTION_STATE_NOT_CONNECTED) {
 		switch (server->type) {
 		case NETWORK_TCP: 
 			if (rm_source) g_source_remove(server->connection.tcp.outgoing_id); 
@@ -380,7 +380,7 @@ static void reconnect(struct network *server, gboolean rm_source)
 		}
 	}
 
-	server->state = NETWORK_STATE_NOT_CONNECTED;
+	server->connection_state = NETWORK_CONNECTION_STATE_NOT_CONNECTED;
 	
 	for (gl = server->channels; gl; gl = gl->next) {
 		struct channel *c = gl->data;
@@ -388,7 +388,7 @@ static void reconnect(struct network *server, gboolean rm_source)
 	}
 
 	if (server->type == NETWORK_TCP) {
-		server->state = NETWORK_STATE_RECONNECT_PENDING;
+		server->connection_state = NETWORK_CONNECTION_STATE_RECONNECT_PENDING;
 		server->connection.tcp.current_server = network_get_next_tcp_server(server);
 		server->reconnect_id = g_timeout_add(1000 * server->reconnect_interval, (GSourceFunc) delayed_connect_network, server);
 	} else {
@@ -400,17 +400,17 @@ gboolean close_server(struct network *n)
 {
 	int i;
 
-	if(n->state == NETWORK_STATE_RECONNECT_PENDING) {
+	if(n->connection_state == NETWORK_CONNECTION_STATE_RECONNECT_PENDING) {
 		g_source_remove(n->reconnect_id);
-		n->state = NETWORK_STATE_NOT_CONNECTED;
+		n->connection_state = NETWORK_CONNECTION_STATE_NOT_CONNECTED;
 	}
 
-	if(n->state == NETWORK_STATE_NOT_CONNECTED) {
+	if(n->connection_state == NETWORK_CONNECTION_STATE_NOT_CONNECTED) {
 		return FALSE;
 	} 
 
 	network_send_args(n, "QUIT", NULL);
-	if (n->state == NETWORK_STATE_MOTD_RECVD) {
+	if (n->connection_state == NETWORK_CONNECTION_STATE_MOTD_RECVD) {
 		server_disconnected_hook_execute(n);
 	}
 
@@ -429,8 +429,8 @@ gboolean close_server(struct network *n)
 	default: g_assert(0);
 	}
 
-	g_free(n->hostmask);
-	n->hostmask = NULL;
+	g_free(n->me.hostmask);
+	n->me.hostmask = NULL;
 
 	for(i = 0; i < 2; i++) {
 		if(n->supported_modes[i]) {
@@ -442,7 +442,7 @@ gboolean close_server(struct network *n)
 	g_hash_table_destroy(n->server_features);
 	n->server_features = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_free);
 
-	n->state = NETWORK_STATE_NOT_CONNECTED;
+	n->connection_state = NETWORK_CONNECTION_STATE_NOT_CONNECTED;
 
 	return TRUE;
 }
@@ -465,14 +465,14 @@ struct network *new_network()
 	struct network *s = g_new0(struct network, 1);
 
 	s->autoconnect = FALSE;
-	s->nick = g_strdup(g_get_user_name());
-	s->username = g_strdup(g_get_user_name());
-	s->fullname = g_strdup(g_get_real_name());
+	s->me.nick = g_strdup(g_get_user_name());
+	s->me.username = g_strdup(g_get_user_name());
+	s->me.fullname = g_strdup(g_get_real_name());
 	s->server_features = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_free);
 
 	s->reconnect_interval = DEFAULT_RECONNECT_INTERVAL;
 
-	s->hostmask = g_strdup_printf("%s!~%s@%s", s->nick, s->username, get_my_hostname());
+	s->me.hostmask = g_strdup_printf("%s!~%s@%s", s->me.nick, s->me.username, get_my_hostname());
 
 	networks = g_list_append(networks, s);
 	return s;
@@ -526,7 +526,7 @@ static gboolean connect_program(struct network *s)
 
 	s->connection.program.outgoing = g_io_channel_unix_new(sock);
 	g_io_channel_set_close_on_unref(s->connection.program.outgoing, TRUE);
-	s->state = NETWORK_STATE_CONNECTED;
+	s->connection_state = NETWORK_CONNECTION_STATE_CONNECTED;
 
 	server_send_login(s);
 	
@@ -550,13 +550,13 @@ static gboolean connect_program(struct network *s)
  * (or startup of connection was successful) */
 gboolean connect_network(struct network *s) 
 {
-	if (s->state == NETWORK_STATE_RECONNECT_PENDING) 
+	if (s->connection_state == NETWORK_CONNECTION_STATE_RECONNECT_PENDING) 
 	{
 		g_source_remove(s->reconnect_id);
-		s->state = NETWORK_STATE_NOT_CONNECTED;
+		s->connection_state = NETWORK_CONNECTION_STATE_NOT_CONNECTED;
 	}
 
-	g_assert(s->state == NETWORK_STATE_NOT_CONNECTED);
+	g_assert(s->connection_state == NETWORK_CONNECTION_STATE_NOT_CONNECTED);
 	
 	switch (s->type) {
 	case NETWORK_TCP:
@@ -585,7 +585,7 @@ int close_network(struct network *s)
 {
 	GList *l = s->clients;
 	g_assert(s);
-	if (s->state == NETWORK_STATE_MOTD_RECVD) {
+	if (s->connection_state == NETWORK_CONNECTION_STATE_MOTD_RECVD) {
 		log_network(NULL, s, "Closing connection");
 	}
 
@@ -601,13 +601,13 @@ int close_network(struct network *s)
 
 	networks = g_list_remove(networks, s);
 
-	if (s->state == NETWORK_STATE_RECONNECT_PENDING) {
+	if (s->connection_state == NETWORK_CONNECTION_STATE_RECONNECT_PENDING) {
 		g_source_remove(s->reconnect_id);
 	}
 
-	g_free(s->fullname);
-	g_free(s->username);
-	g_free(s->nick);
+	g_free(s->me.fullname);
+	g_free(s->me.username);
+	g_free(s->me.nick);
 	g_free(s->password);
 	g_free(s->name);
 
@@ -664,18 +664,18 @@ gboolean network_change_nick(struct network *s, const char *nick)
 	/* Change nick */
 	if (!nick) nick = g_get_user_name();
 
-	g_free(s->nick);
-	s->nick = g_strdup(nick);
+	g_free(s->me.nick);
+	s->me.nick = g_strdup(nick);
 
 	/* Change hostmask */
-	if (!s->hostmask) {
-		s->hostmask = g_strdup_printf("%s!~%s@%s", nick, s->username, get_my_hostname());
+	if (!s->me.hostmask) {
+		s->me.hostmask = g_strdup_printf("%s!~%s@%s", nick, s->me.username, get_my_hostname());
 	} else { 
-		p = strchr(s->hostmask, '!');
+		p = strchr(s->me.hostmask, '!');
 		if (!p) return FALSE;
 		tmp = g_strdup_printf("%s%s", nick, p);
-		g_free(s->hostmask);
-		s->hostmask = tmp;
+		g_free(s->me.hostmask);
+		s->me.hostmask = tmp;
 	}
 	return TRUE;
 }
@@ -700,7 +700,7 @@ gboolean init_networks() {
 	{
 		struct network *n = gl->data;
 
-		if (n->state == NETWORK_STATE_NOT_CONNECTED && n->autoconnect) {
+		if (n->connection_state == NETWORK_CONNECTION_STATE_NOT_CONNECTED && n->autoconnect) {
 #ifdef fork
 			if(seperate_processes) { 
 				if(fork() == 0) {  

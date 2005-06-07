@@ -104,7 +104,7 @@ static char *get_nick(struct line *l, gboolean case_sensitive) {
 		else return g_strdup(line_get_nick(l)); 
 	}
 	
-	return g_strdup(l->network->nick);
+	return g_strdup(l->network->me.nick);
 }
 
 static char *get_network(struct line *l, gboolean case_sensitive) 
@@ -314,7 +314,7 @@ static void file_write_target(const char *n, struct line *l)
 	fmt = g_hash_table_lookup(fmts, n);
 	if(!fmt) return;
 
-	if(!irccmp(l->network, l->network->nick, l->args[1])) {
+	if(!irccmp(l->network, l->network->me.nick, l->args[1])) {
 		if(line_get_nick(l)) { t = g_strdup(line_get_nick(l)); }
 		else { t = g_strdup("_messages_"); }
 	} else {
@@ -402,7 +402,7 @@ static gboolean log_custom_data(struct line *l, enum data_direction dir, void *u
 	if(l->origin)nick = g_strdup(l->origin);
 	if(nick)user = strchr(nick, '!');
 	if(user){ *user = '\0';user++; }
-	if(!nick && l->network->nick)nick = l->network->nick;
+	if(!nick && l->network->me.nick)nick = l->network->me.nick;
 
 	/* Loop thru possible values for %@ */
 
