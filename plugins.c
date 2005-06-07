@@ -26,6 +26,9 @@
 struct plugin *current_plugin = NULL;
 GList *plugins = NULL;
 
+STATIC_MODULE_DECLARES
+static struct plugin *builtin_modules[] = { STATIC_MODULES NULL };
+
 gboolean unload_plugin(struct plugin *p)
 {
 	/* Run exit function if present */

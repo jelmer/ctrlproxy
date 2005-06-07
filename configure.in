@@ -73,6 +73,9 @@ sinclude(mods/python2/config.m4)
 sinclude(doc/config.m4)
 AC_CONFIG_FILES(doc/Makefile.settings)
 
+AC_DEFINE_UNQUOTED(STATIC_MODULES,[$STATIC_MODULES_LIST],[List of statically built modules])
+AC_DEFINE_UNQUOTED(STATIC_MODULE_DECLARES,[$STATIC_MODULE_DECLARES],[Declarations for the static modules])
+
 AC_SUBST(EXTRA_INSTALL_TARGETS)
 test -f doc/most && EXTRA_INSTALL_TARGETS="install-doc"
 

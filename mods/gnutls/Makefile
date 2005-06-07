@@ -10,7 +10,7 @@ install: all
 	$(INSTALL) $(MODS) $(DESTDIR)$(modulesdir)
 
 %.o: %.c
-	$(CC) $(CFLAGS) -Dinit_plugin=_$*_init -Dfini_plugin=$*_fini -Dname_plugin=$*_name -Dload_config=$*_load_config -Dsave_config=$*_save_config -c $<
+	$(CC) $(CFLAGS) -Dplugin=plugin_$* -c $<
 
 lib%.so: %.c
 	$(CC) $(CFLAGS) -fPIC $(LDFLAGS) -shared -o $@ $<
