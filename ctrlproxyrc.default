@@ -42,6 +42,10 @@
 			<nick network="FreeNode" nick="me" password="alsosecret"/>
 		</plugin>
 
+		<plugin autoload="1" file="autosend">
+			<autosend network="Freenode">PRIVMSG #ctrlproxy-test :Hi There, I'm using ctrlproxy!</autosend>
+		</plugin>
+
 		<!-- Make sure messages are not sent too fast after each other 
 		     (prevents being kicked by the server for 'Excess flooding' -->
 		<plugin autoload="1" file="libantiflood"/>
@@ -73,7 +77,6 @@
 				<server host="irc.freenode.net"/>
 			</servers>
 			<channel name="#ctrlproxy-test" autojoin="1"/>
-			<autosend>PRIVMSG #ctrlproxy-test :Hi There, I'm using ctrlproxy!</autosend>
 		</network>
 
 		<network name="BitlBee">

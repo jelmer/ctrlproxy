@@ -73,9 +73,8 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition condition, gpo
 		free_line(l); 
 		return FALSE;
 	} else {
-		irc_sendf(c, ":%s 451 %s :You are not registered\r\n", 
-				  listener->network->name,
-				  listener->network->state->me.nick);
+		irc_sendf(c, ":%s 451 * :You are not registered\r\n", 
+				  get_my_hostname());
 	}
 
 	free_line(l);
