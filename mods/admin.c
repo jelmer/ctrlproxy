@@ -347,7 +347,7 @@ static gboolean process_command(const struct client *c, struct line *l, int cmdo
 		return TRUE;
 	}
 
-	l->LINE_DONT_SEND = l->LINE_IS_PRIVATE = 1;
+	l->dont_send = l->is_private = 1;
 	tmp = g_strdup(l->args[cmdoffset]);
 
 	if(l->args[cmdoffset+1]) {
@@ -428,11 +428,18 @@ static gboolean load_config(struct plugin *p, xmlNodePtr node)
 
 static gboolean admin_net_init(struct network *n)
 {
-	n->connection.state = NETWORK_CONNECTION_STATE_MOTD_RECVD;
-	virtual_network_recv_args(n, n->state->me.hostmask, "JOIN", ADMIN_CHANNEL, NULL);
-	virtual_network_recv_args(n, n->name, "332", n->state->me.nick, ADMIN_CHANNEL, "CtrlProxy administration channel", NULL);
-	virtual_network_recv_args(n, n->name, "353", n->state->me.nick, "=", ADMIN_CHANNEL, n->state->me.nick, NULL);
-	virtual_network_recv_args(n, n->name, "366", n->state->me.nick, ADMIN_CHANNEL, "End of /names list", NULL);
+	struct channel_state *cs = g_new0(struct channel_state, 1);
+	struct channel_nick *cn = g_new0(struct channel_nick, 1);
+	
+	cs->name = g_strdup(ADMIN_CHANNEL);
+	cs->topic = g_strdup("CtrlProxy administration channel");
+	cn->global_nick = &n->state->me;
+	cn->channel = cs;
+	cs->network = n->state;
+	cn->mode = '@';
+	cs->nicks = g_list_append(cs->nicks, cn);
+	n->state->me.channel_nicks = g_list_append(n->state->me.channel_nicks, cn);
+	n->state->channels = g_list_append(n->state->channels, cs);
 
 	return TRUE;
 }

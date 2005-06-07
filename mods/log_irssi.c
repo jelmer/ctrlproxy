@@ -140,14 +140,14 @@ static gboolean log_data(struct network *n, struct line *l, enum data_direction 
 		if(f)fprintf(f, "%02d:%02d -!- mode/%s [%s %s] by %s\n", t->tm_hour, t->tm_min, l->args[1], l->args[2], l->args[3], nick);
 	} else if(!g_strcasecmp(l->args[0], "QUIT")) {
 		/* Loop thru the channels this user is on */
-		GList *gl = n->state->channels;
-		while(gl) {
-			struct channel_state *c = (struct channel_state *)gl->data;
-			if(find_nick(c, nick)) {
-				f = find_channel_file(n, c->name);
+		GList *gl;
+		struct network_nick *nn = find_network_nick(n->state, nick);
+		if (nn) {
+			for (gl = nn->channel_nicks; gl; gl = gl ->next) {
+				struct channel_nick *cn = (struct channel_nick *)gl->data;
+				f = find_channel_file(n, cn->channel->name);
 				if(f)fprintf(f, "%02d:%02d -!- %s [%s] has quit [%s]\n", t->tm_hour, t->tm_min, nick, user, l->args[1]?l->args[1]:"");
 			}
-			gl = gl->next;
 		}
 	} else if(!g_strcasecmp(l->args[0], "KICK") && l->args[1] && l->args[2] && dir == FROM_SERVER) {
 		if(!strchr(l->args[1], ',')) {
@@ -186,15 +186,14 @@ static gboolean log_data(struct network *n, struct line *l, enum data_direction 
 			else fprintf(f, "%02d:%02d -!- %s has removed the topic\n", t->tm_hour, t->tm_min, nick);
 		}
 	} else if(!g_strcasecmp(l->args[0], "NICK") && dir == FROM_SERVER && l->args[1]) {
-		/* Loop thru the channels this user is on */
-		GList *gl = n->state->channels;
-		while(gl) {
-			struct channel_state *c = (struct channel_state *)gl->data;
-			if(find_nick(c, nick)) {
-				f = find_channel_file(n, nick);
-				if(f)fprintf(f, "%02d:%02d -!- %s is now known as %s\n", t->tm_hour, t->tm_min, nick, l->args[1]);
-			}
-			gl = gl->next;
+		struct network_nick *nn = find_network_nick(n->state, nick);
+		GList *gl;
+
+		for (gl = nn->channel_nicks; gl; gl = gl->next) {
+			struct channel_nick *cn = gl->data;
+
+			f = find_channel_file(n, cn->channel->name);
+			if(f)fprintf(f, "%02d:%02d -!- %s is now known as %s\n", t->tm_hour, t->tm_min, nick, l->args[1]);
 		}
 	}
 

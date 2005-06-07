@@ -119,7 +119,7 @@ gboolean start_listener(struct listener *l)
 	addr.sin_addr.s_addr = htonl(INADDR_ANY);
 
 	if (bind (sock, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
-		log_global( "listener", "Unable to bind to port %d: %s", l->port, strerror(errno));
+		log_global( "listener", "bind to port %d failed: %s", l->port, strerror(errno));
 		return FALSE;
 	}
 
@@ -140,6 +140,8 @@ gboolean start_listener(struct listener *l)
 	g_io_channel_unref(l->incoming);
 
 	log_network( "listener", l->network, "Listening on port %d", l->port);
+
+	l->active = TRUE;
 
 	return TRUE;
 }
@@ -229,7 +231,8 @@ static gboolean fini_plugin(struct plugin *p)
 {
 	while(listeners) {
 		struct listener *l = listeners->data;
-		stop_listener(l);
+		if (l->active) 
+			stop_listener(l);
 		free_listener(l);
 	}
 

@@ -107,7 +107,7 @@ struct plugin *load_plugin(struct plugin_config *pc)
 	}
 
 	if(plugin_loaded(ops->name)) {
-		log_global(NULL, "Plugin already loaded");
+		log_global(ops->name, "Plugin already loaded");
 		g_free(path_name);
 		g_free(p);
 		return NULL;
@@ -119,14 +119,14 @@ struct plugin *load_plugin(struct plugin_config *pc)
 	p->ops = ops;
 
 	if(!p->ops->init(p)) {
-		log_global(NULL, "Running initialization function for plugin '%s' failed.", pc->path);
+		log_global(p->ops->name, "Error during initialization.");
 		g_free(p);
 		return NULL;
 	}
 
 	if (p->ops->load_config && p->config->node) {
 		if (!p->ops->load_config(p, p->config->node)) {
-			log_global(NULL, "Error loading configuration for plugin '%s'", pc->path);
+			log_global(p->ops->name, "Error loading configuration");
 			g_free(p);
 			return NULL;
 		}
@@ -160,7 +160,6 @@ gboolean init_plugins(struct ctrlproxy_config *cfg)
 			struct plugin_config *p = gl->data;
 
 			if(p->autoload && !load_plugin(p)) {
-				log_global(NULL, "Can't load plugin %s, ignoring...", p->path);
 				ret = FALSE;
 			}
 

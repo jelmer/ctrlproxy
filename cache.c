@@ -44,7 +44,7 @@ static gboolean client_try_cache_join(struct client *c, struct line *l)
 	if (strchr(l->args[1], ',')) return FALSE;
 		
 	ch = find_channel(c->network->state, l->args[1]);
-	return (ch && ch->joined);
+	return (ch != NULL);
 }
 
 static gboolean client_try_cache_mode(struct client *c, struct line *l)

@@ -27,14 +27,15 @@ struct channel_nick {
 };
 
 struct network_nick {
-	guint refcount;
+	/* Whether notifications are received for this nick */
+	gboolean query;
 	char *nick;
 	char *fullname;
 	char *username;
 	char *hostname;
 	char *hostmask;
 	char modes[255];
-	GList *channels;
+	GList *channel_nicks;
 };
 
 struct banlist_entry {
@@ -49,7 +50,6 @@ struct channel_state {
 	char *topic;
 	char mode; /* Private, secret, etc */
 	char modes[255];
-	int joined:1;
 	int namreply_started:1;
 	int banlist_started:1;
 	int invitelist_started:1;
@@ -95,13 +95,13 @@ G_MODULE_EXPORT struct network_state *new_network_state(const char *nick, const 
 G_MODULE_EXPORT void free_network_state(struct network_state *);
 
 G_MODULE_EXPORT struct channel_state *find_channel(struct network_state *st, const char *name);
-G_MODULE_EXPORT struct channel_nick *find_nick(struct channel_state *c, const char *name);
+G_MODULE_EXPORT struct channel_nick *find_channel_nick(struct channel_state *c, const char *name);
+G_MODULE_EXPORT struct network_nick *find_network_nick(struct network_state *c, const char *name);
 G_MODULE_EXPORT struct linestack_context *linestack_new_by_network(struct network *);
 G_MODULE_EXPORT void client_send_state(struct client *, struct network_state *);
 G_MODULE_EXPORT int is_channelname(const char *name, struct network_info *s);
 G_MODULE_EXPORT int is_prefix(char p, struct network_info *n);
 G_MODULE_EXPORT char get_prefix_by_mode(char p, struct network_info *n);
-G_MODULE_EXPORT const char *get_network_feature(struct network_info *n, const char *name);
 G_MODULE_EXPORT int irccmp(struct network_info *n, const char *a, const char *b);
 G_MODULE_EXPORT struct network_nick *line_get_network_nick(struct line *l);
 

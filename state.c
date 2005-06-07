@@ -20,6 +20,9 @@
 #include "internals.h"
 #include "irc.h"
 
+static void free_network_nick(struct network_state *, struct network_nick *);
+static void free_channel(struct channel_state *c);
+
 void log_network_state(struct network_state *st, const char *fmt, ...)
 {
 	/* FIXME */
@@ -63,6 +66,17 @@ void network_nick_set_data(struct network_nick *n, const char *nick, const char 
 	}
 }
 
+void network_nick_set_nick(struct network_nick *n, const char *nick)
+{
+	if (!strcmp(nick, n->nick)) return;
+
+	g_free(n->nick);
+	n->nick = g_strdup(nick);
+	
+	g_free(n->hostmask);
+	n->hostmask = g_strdup_printf("%s!~%s@%s", nick, n->username, n->hostname);
+}
+
 void network_nick_set_hostmask(struct network_nick *n, const char *hm)
 {
 	char *t, *u;
@@ -81,25 +95,23 @@ void network_nick_set_hostmask(struct network_nick *n, const char *hm)
 	
 	u = strchr(t, '@');
 	if (!u) return;
-	n->username = g_strndup(t+1, u-t+1);
+	n->username = g_strndup(t+1, u-t-1);
 
 	n->hostname = g_strdup(u+1);
 }
 
-static void free_nick(struct channel_nick *n)
+static void free_channel_nick(struct channel_nick *n)
 {
-	n->global_nick->channels = g_list_remove(n->global_nick->channels, n->channel);
-	n->global_nick->refcount--;
-	if(n->global_nick->refcount == 0) {
-		if(n->global_nick->hostmask != NULL)
-			g_free(n->global_nick->hostmask);
-		g_free(n->global_nick->nick);
-		n->channel->network->nicks = g_list_remove(n->channel->network->nicks, n->global_nick);
-		g_free(n->global_nick);
-	}
+	g_assert(n);
+
+	n->channel->nicks = g_list_remove(n->channel->nicks, n);
+	n->global_nick->channel_nicks = g_list_remove(n->global_nick->channel_nicks, n);
+
+	if (g_list_length(n->global_nick->channel_nicks) == 0 && n->global_nick->query == 0) 
+		free_network_nick(n->channel->network, n->global_nick);
+
 	g_free(n);
 }
-
 
 static void free_invitelist(struct channel_state *c)
 {
@@ -136,12 +148,9 @@ static void free_banlist(struct channel_state *c)
 
 static void free_names(struct channel_state *c)
 {
-	GList *g = c->nicks;
-	while(g) {
-		free_nick((struct channel_nick *)g->data);
-		g = g_list_next(g);
+	while(c->nicks) {
+		free_channel_nick((struct channel_nick *)c->nicks->data);
 	}
-	g_list_free(c->nicks);
 	c->nicks = NULL;
 }
 
@@ -177,52 +186,66 @@ struct channel_state  *find_add_channel(struct network_state *st, char *name) {
 	return c;
 }
 
-struct channel_nick *find_nick(struct channel_state *c, const char *name) {
-	GList *l = c->nicks;
-	struct channel_nick *n;
+struct channel_nick *find_channel_nick(struct channel_state *c, const char *name) {
+	GList *l;
 	const char *realname = name;
+	g_assert(name);
+
 	if(is_prefix(realname[0], &c->network->info))realname++;
 
-	while(l) {
-		n = (struct channel_nick *)l->data;
-		if(!irccmp(&c->network->info, n->global_nick->nick, realname))return n;
-		l = g_list_next(l);
+	for (l = c->nicks; l; l = l->next) {
+		struct channel_nick *n = (struct channel_nick *)l->data;
+		if(!irccmp(&c->network->info, n->global_nick->nick, realname))
+			return n;
 	}
 
 	return NULL;
 }
 
-static struct network_nick *find_add_network_nick(struct network_state *n, char *name)
+struct network_nick *find_network_nick(struct network_state *n, const char *name)
 {
-	GList *gl = n->nicks;
-	struct network_nick *nd;
+	GList *gl;
 
-	/* search for a existing global object*/
-	while(gl) {
+	g_assert(name);
+
+	for (gl = n->nicks; gl; gl = gl->next) {
 		struct network_nick *ndd = (struct network_nick*)gl->data;
 		if(!irccmp(&n->info, ndd->nick, name)) {
-			ndd->refcount++;
 			return ndd;
 		}
-		gl = gl->next;
 	}
+
+	return NULL;
+}
+
+static struct network_nick *find_add_network_nick(struct network_state *n, const char *name)
+{
+	struct network_nick *nd;
+
+	g_assert(name);
+
+	nd = find_network_nick(n, name);
+	if (nd) return nd;
 
 	/* create one, if it doesn't exist */
 	nd = g_new0(struct network_nick,1);
-	nd->refcount = 1;
 	nd->nick = g_strdup(name);
-	nd->hostmask = NULL;
-	nd->channels = NULL;
 	
 	n->nicks = g_list_append(n->nicks, nd);
 	return nd;
 }
 
-struct channel_nick *find_add_nick(struct channel_state *c, char *name) {
-	struct channel_nick *n = find_nick(c, name);
-	char *realname = name;
+struct channel_nick *find_add_channel_nick(struct channel_state *c, const char *name) 
+{
+	struct channel_nick *n;
+	const char *realname = name;
+
+	g_assert(name);
+
+	n = find_channel_nick(c, name);
 	if(n) return n;
-	if(strlen(name) == 0)return NULL;
+
+	g_assert(strlen(name) > 0);
 
 	n = g_new0(struct channel_nick,1);
 	if(is_prefix(realname[0], &c->network->info)) {
@@ -232,7 +255,7 @@ struct channel_nick *find_add_nick(struct channel_state *c, char *name) {
 	n->channel = c;
 	n->global_nick = find_add_network_nick(c->network, realname);
 	c->nicks = g_list_append(c->nicks, n);
-	n->global_nick->channels = g_list_append(n->global_nick->channels, c);
+	n->global_nick->channel_nicks = g_list_append(n->global_nick->channel_nicks, n);
 	return n;
 }
 
@@ -254,12 +277,11 @@ static void handle_join(struct network_state *s, struct line *l)
 		/* Someone is joining a channel the user is on */
 		if(line_get_nick(l)) {
 			c = find_add_channel(s, p);
-			ni = find_add_nick(c, line_get_nick(l));
+			ni = find_add_channel_nick(c, line_get_nick(l));
 			network_nick_set_hostmask(ni->global_nick, l->origin);
 
 			/* The user is joining a channel */
 			if(!irccmp(&s->info, line_get_nick(l), s->me.nick)) {
-				c->joined = TRUE;
 				log_network_state(s, "Joining channel %s", c->name);
 			}
 		}
@@ -279,35 +301,29 @@ static void handle_part(struct network_state *s, struct line *l)
 	p = name;
 	if(!line_get_nick(l))return;
 
-	while(cont) {
+	for(cont = 1; cont; p = m + 1) {
 		m = strchr(p, ',');
 		if(!m) cont = 0;
 		else *m = '\0';
 
 		c = find_channel(s, p);
 
-		/* The user is joining a channel */
+		if(!c){
+			log_network_state(s, "Can't part or let other nick part %s(unknown channel)", p);
+			continue;
+		}
+
+		n = find_channel_nick(c, line_get_nick(l));
+		if(n) {
+			free_channel_nick(n);
+		} else {
+			log_network_state(s, "Can't remove nick %s from channel %s: nick not on channel", line_get_nick(l), p);
+		}
+
 		if(!irccmp(&s->info, line_get_nick(l), s->me.nick) && c) {
 			log_network_state(s, "Leaving %s", p);
-			c->joined = FALSE;
 			free_channel(c);
-			c = NULL;
-			p = m + 1;
-			continue;
 		}
-
-		if(c){
-			n = find_nick(c, line_get_nick(l));
-			if(n) {
-				c->nicks = g_list_remove(c->nicks, n);
-				free_nick(n);
-			} else log_network_state(s, "Can't remove nick %s from channel %s: nick not on channel", line_get_nick(l), p);
-
-			continue;
-		}
-
-		log_network_state(s, "Can't part or let other nick part %s(unknown channel)", p);
-		p = m + 1;
 	}
 	g_free(name);
 }
@@ -345,18 +361,19 @@ static void handle_kick(struct network_state *s, struct line *l)
 			continue;
 		}
 
-		n = find_nick(c, curnick);
+		n = find_channel_nick(c, curnick);
 		if(!n) {
 			log_network_state(s, "Can't kick nick %s from channel %s: nick not on channel", curnick, curchan);
 			curchan = nextchan; curnick = nextnick;
 			continue;
 		}
 
-		if(!g_strcasecmp(n->global_nick->nick, s->me.nick))
-			c->joined = FALSE;
+		free_channel_nick(n);
 
-		c->nicks = g_list_remove(c->nicks, n);
-		free_nick(n);
+		if(!irccmp(&s->info, line_get_nick(l), s->me.nick) && c) {
+			log_network_state(s, "Kicked off %s", c->name);
+			free_channel(c);
+		}
 		curchan = nextchan; curnick = nextnick;
 	}
 }
@@ -410,10 +427,10 @@ static void handle_namreply(struct network_state *s, struct line *l)
 	tmp = names = g_strdup(l->args[4]);
 	while((t = strchr(tmp, ' '))) {
 		*t = '\0';
-		if(tmp[0])find_add_nick(c, tmp);
+		if(tmp[0])find_add_channel_nick(c, tmp);
 		tmp = t+1;
 	}
-	if(tmp[0])find_add_nick(c, tmp);
+	if(tmp[0])find_add_channel_nick(c, tmp);
 	g_free(names);
 }
 
@@ -515,7 +532,7 @@ static void handle_whoreply(struct network_state *s, struct line *l)
 	if(!c) 
 		return;
 
-	n = find_add_nick(c, l->args[6]);
+	n = find_add_channel_nick(c, l->args[6]);
 	network_nick_set_data(n->global_nick, l->args[6], l->args[3], l->args[4]);
 }
 
@@ -525,17 +542,12 @@ static void handle_end_who(struct network_state *s, struct line *l)
 
 static void handle_quit(struct network_state *s, struct line *l) 
 {
-	GList *g = s->channels;
-	if(!line_get_nick(l))return;
-	while(g) {
-		struct channel_state *c = (struct channel_state *)g->data;
-		struct channel_nick *n = find_nick(c, line_get_nick(l));
-		if(n) {
-			c->nicks = g_list_remove(c->nicks, n);
-			free_nick(n);
-		}
-		g = g_list_next(g);
-	}
+	struct network_nick *nn = find_network_nick(s, line_get_nick(l));
+
+	g_assert(nn != &s->me);
+
+	if (nn) 
+		free_network_nick(s, nn);
 }
 
 static void handle_mode(struct network_state *s, struct line *l)
@@ -591,7 +603,7 @@ static void handle_mode(struct network_state *s, struct line *l)
 					  if(p == ' ') {
 						  c->modes[(unsigned char)l->args[2][i]] = t;
 					  } else {
-							n = find_nick(c, l->args[++arg]);
+							n = find_channel_nick(c, l->args[++arg]);
 							if(!n) {
 								log_network_state(s, "Can't set mode %c%c on nick %s on channel %s, because nick does not exist!", t == ADD?'+':'-', l->args[2][i], l->args[arg], l->args[1]);
 								break;
@@ -624,22 +636,20 @@ static void handle_004(struct network_state *s, struct line *l)
 	s->info.server = g_strdup(l->args[2]);
 }
 
+static void handle_privmsg(struct network_state *s, struct line *l)
+{
+	struct network_nick *nn;
+	if (strcmp(l->args[1], s->me.nick) != 0) return;
+
+	nn = find_add_network_nick(s, line_get_nick(l));
+	nn->query = 1;
+}
 
 static void handle_nick(struct network_state *s, struct line *l)
 {
-	GList *g = s->channels;
-
-	/* Server confirms messages client sends, so let's only handle those */
-	if(!l->args[1] || !line_get_nick(l)) return;
-	while(g) {
-		struct channel_state *c = (struct channel_state *)g->data;
-		struct channel_nick *n = find_nick(c, line_get_nick(l));
-		if(n) {
-			g_free(n->global_nick->nick);
-			n->global_nick->nick = g_strdup(l->args[1]);
-		}
-		g = g_list_next(g);
-	}
+	struct network_nick *nn;
+	nn = find_add_network_nick(s, line_get_nick(l));
+	network_nick_set_nick(nn, l->args[1]);
 }
 
 static void handle_302(struct network_state *s, struct line *l)
@@ -670,6 +680,7 @@ static struct irc_command {
 	{ "QUIT", 0, handle_quit },
 	{ "TOPIC", 2, handle_topic },
 	{ "NICK", 1, handle_nick },
+	{ "PRIVMSG", 2, handle_privmsg },
 	{ "MODE", 2, handle_mode },
 	{ "004", 5, handle_004 },
 	{ "005", 3, handle_005 },
@@ -710,7 +721,7 @@ struct network_state *new_network_state(const char *nick, const char *username, 
 {
 	struct network_state *state = g_new0(struct network_state, 1);
 	state->info.features = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_free);
-	state->me.refcount = 1;
+	state->me.query = 1;
 	network_nick_set_data(&state->me, nick, username, hostname);
 
 	state->nicks = g_list_append(state->nicks, &state->me);
@@ -718,11 +729,40 @@ struct network_state *new_network_state(const char *nick, const char *username, 
 	return state;
 }
 
+void free_network_nick(struct network_state *st, struct network_nick *nn)
+{
+	g_assert(&st->me != nn);
+	g_assert(nn);
+
+	/* No recursion please... */
+	nn->query = 1;
+
+	while(nn->channel_nicks) {
+		struct channel_nick *n = nn->channel_nicks->data;
+		free_channel_nick(n);
+	}
+
+	g_free(nn->hostmask);
+	g_free(nn->username);
+	g_free(nn->hostname);
+	g_free(nn->nick);
+	st->nicks = g_list_remove(st->nicks, nn);
+	g_free(nn);
+}
+
 void free_network_state(struct network_state *state)
 {
 	while(state->channels)
 	{
 		free_channel((struct channel_state *)state->channels->data);
+	}
+
+	state->nicks = g_list_remove(state->nicks, &state->me);
+
+	while(state->nicks) 
+	{
+		struct network_nick *nn = state->nicks->data;
+		free_network_nick(state, nn);
 	}
 
 	g_free(state->me.hostmask);
@@ -735,7 +775,7 @@ void free_network_state(struct network_state *state)
 	state->info.supported_channel_modes = NULL;
 
 	g_hash_table_destroy(state->info.features);
-	state->info.features = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_free);
+	state->info.features = NULL;
 }
 
 static void gen_replication_channel(struct client *c, struct channel_state *ch)

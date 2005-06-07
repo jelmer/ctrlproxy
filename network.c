@@ -41,6 +41,8 @@ static void server_send_login (struct network *s)
 
 	log_network(NULL, s, "Successfully connected");
 
+	s->state = new_network_state(s->config->nick, s->config->username, get_my_hostname());
+
 	if(s->config->type == NETWORK_TCP && 
 	   s->connection.data.tcp.current_server->password) { 
 		network_send_args(s, "PASS", s->connection.data.tcp.current_server->password, NULL);
@@ -72,9 +74,10 @@ static gboolean process_from_server(struct network *n, struct line *l)
 		log_network(NULL, n, "error: %s", l->args[1]);
 	} else if(!g_strcasecmp(l->args[0], "433") && 
 			  n->connection.state == NETWORK_CONNECTION_STATE_LOGIN_SENT){
-		char *old_nick = n->config->nick;
-		n->config->nick = g_strdup_printf("%s_", n->config->nick);
-		network_send_args(n, "NICK", n->config->nick, NULL);
+		char *old_nick = n->state->me.nick;
+		n->state->me.nick = g_strdup_printf("%s_", n->state->me.nick);
+		network_send_args(n, "NICK", n->state->me.nick, NULL);
+		log_network(NULL, n, "%s was already in use, trying %s", old_nick, n->state->me.nick);
 		g_free(old_nick);
 	} else if(!g_strcasecmp(l->args[0], "422") ||
 			  !g_strcasecmp(l->args[0], "376")) {
@@ -93,7 +96,7 @@ static gboolean process_from_server(struct network *n, struct line *l)
 		}
 	} 
 
-	if(!l->LINE_DONT_SEND && 
+	if(!l->dont_send && 
 		n->connection.state == NETWORK_CONNECTION_STATE_MOTD_RECVD) {
 		if (atoi(l->args[0])) {
 			redirect_response(n, l);
@@ -183,7 +186,7 @@ gboolean network_send_line(struct network *s, const struct client *c, const stru
 	linestack_insert_line(s, ol, TO_SERVER);
 
 	/* Also write this message to all other clients currently connected */
-	if(!l.LINE_IS_PRIVATE && l.args[0] &&
+	if(!l.is_private && l.args[0] &&
 	   (!strcmp(l.args[0], "PRIVMSG") || !strcmp(l.args[0], "NOTICE"))) {
 		clients_send(s, &l, c);
 	}
@@ -253,7 +256,7 @@ gboolean network_send_args(struct network *s, ...)
 static gboolean connect_current_tcp_server(struct network *s) 
 {
 	struct addrinfo *res;
-	int sock;
+	int sock = -1;
 	size_t size;
 	struct tcp_server_config *cs;
 	GIOChannel *ioc = NULL;
@@ -310,6 +313,8 @@ static gboolean connect_current_tcp_server(struct network *s)
 
 		break; 
 	}
+
+	freeaddrinfo(addrinfo);
 
 	if (!ioc) {
 		log_network(NULL, s, "Unable to connect: %s", strerror(errno));
@@ -372,6 +377,7 @@ static void reconnect(struct network *server, gboolean rm_source)
 
 static gboolean close_server(struct network *n) 
 {
+
 	if(n->connection.state == NETWORK_CONNECTION_STATE_RECONNECT_PENDING) {
 		g_source_remove(n->reconnect_id);
 		n->connection.state = NETWORK_CONNECTION_STATE_NOT_CONNECTED;
@@ -382,8 +388,14 @@ static gboolean close_server(struct network *n)
 	} 
 
 	network_send_args(n, "QUIT", NULL);
+
 	if (n->connection.state == NETWORK_CONNECTION_STATE_MOTD_RECVD) {
 		server_disconnected_hook_execute(n);
+	}
+
+	if (n->state) {
+		free_network_state(n->state); 
+		n->state = NULL;
 	}
 
 	switch (n->config->type) {
@@ -400,8 +412,6 @@ static gboolean close_server(struct network *n)
 		break;
 	default: g_assert(0);
 	}
-
-	free_network_state(n->state); n->state = NULL;
 
 	n->connection.state = NETWORK_CONNECTION_STATE_NOT_CONNECTED;
 
@@ -492,8 +502,6 @@ static gboolean connect_program(struct network *s)
 
 static gboolean connect_server(struct network *s)
 {
-	s->state = new_network_state(s->config->nick, s->config->username, get_my_hostname());
-	
 	switch (s->config->type) {
 	case NETWORK_TCP:
 		return connect_current_tcp_server(s);
@@ -505,7 +513,10 @@ static gboolean connect_server(struct network *s)
 		s->connection.data.virtual.ops = g_hash_table_lookup(virtual_network_ops, s->config->type_settings.virtual_type);
 		if (!s->connection.data.virtual.ops) return FALSE;
 
-		if (s->connection.data.virtual.ops->init) 
+		s->state = new_network_state(s->config->nick, s->config->username, get_my_hostname());
+    	s->connection.state = NETWORK_CONNECTION_STATE_MOTD_RECVD;
+
+		if (s->connection.data.virtual.ops->init)
 			return s->connection.data.virtual.ops->init(s);
 
 		/* FIXME: Set s->connection.virtual.ops->send */

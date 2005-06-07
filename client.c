@@ -279,7 +279,7 @@ static gboolean welcome_client(struct client *client)
 
 	if (g_strcasecmp(client->nick, client->network->state->me.nick)) {
 		/* Tell the client our his/her real nick */
-		irc_sendf(client->incoming, ":%s!%s@%s NICK %s", client->nick, client->username, client->hostname, client->network->state->me.nick);
+		irc_sendf(client->incoming, ":%s!~%s@%s NICK %s", client->nick, client->username, client->hostname, client->network->state->me.nick);
 
 		/* Try to get the nick the client specified */
 		if (!client->network->config->ignore_first_nick) {

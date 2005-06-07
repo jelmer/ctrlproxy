@@ -29,8 +29,8 @@
 enum has_endcolon { COLON_UNKNOWN = 0, WITH_COLON = 1, WITHOUT_COLON = 2 } ;
 
 struct line {
-	int	LINE_IS_PRIVATE:1;
-	int LINE_DONT_SEND:1;
+	int	is_private:1;
+	int dont_send:1;
 	char *origin;
 	char **args; /* NULL terminated */
 	size_t argc;

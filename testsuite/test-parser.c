@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "ctrlproxy.h"
+#include "line.h"
 
 FILE *debugfd = NULL;
 

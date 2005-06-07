@@ -39,7 +39,7 @@ static gboolean mhandle_data(struct network *n, struct line *l, enum data_direct
 
 	/* Don't answer our own CTCP requests */
 	if(dir == TO_SERVER && l->argc > 2 && l->args[2][0] == '\001') {
-		l->LINE_IS_PRIVATE = 1;
+		l->is_private = 1;
 		return TRUE;
 	}
 

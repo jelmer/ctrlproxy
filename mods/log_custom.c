@@ -360,6 +360,7 @@ static void file_write_channel_query(struct network *network, const char *n, str
 	char *nick;
 	FILE *f;
 	GList *gl;
+	struct network_nick *nn;
 
 	nick = line_get_nick(l);
 	if(!nick)return;
@@ -377,20 +378,18 @@ static void file_write_channel_query(struct network *network, const char *n, str
 		g_free(s);
 	}
 	
-	/* now, loop thru the channels and check if the user is there */
-	gl = network->state->channels;
-	while(gl) {
-		struct channel_state *c = (struct channel_state *)gl->data;
-		if(find_nick(c, nick)) {
-			f = find_add_channel_file(network, l, c->name);
-			if(f) {
-				custom_subst(network, &s, fmt, l, c->name, FALSE);
-				fputs(s, f); fputc('\n', f);
-				fflush(f);
-				g_free(s);
-			}
+	nn = find_network_nick(network->state, nick);
+
+	/* now, loop thru the users' channels */
+	for (gl = nn->channel_nicks; gl; gl = gl->next) {
+		struct channel_nick *cn = gl->data;
+		f = find_add_channel_file(network, l, cn->channel->name);
+		if(f) {
+			custom_subst(network, &s, fmt, l, cn->channel->name, FALSE);
+			fputs(s, f); fputc('\n', f);
+			fflush(f);
+			g_free(s);
 		}
-		gl = gl->next;
 	}
 }
 

@@ -61,12 +61,6 @@ gboolean network_supports(struct network *n, const char *fe)
 	return g_hash_table_lookup_extended (n->state->info.features, fe, &k, &v);
 }
 
-const char *get_network_feature(struct network_info *n, const char *name)
-{
-	if(!n) return NULL;
-	return g_hash_table_lookup(n->features, name);
-}
-
 int irccmp(struct network_info *n, const char *a, const char *b)
 {
 	switch(n->casemapping) {
@@ -86,7 +80,7 @@ int irccmp(struct network_info *n, const char *a, const char *b)
 
 int is_channelname(const char *name, struct network_info *n)
 {
-	const char *chantypes = get_network_feature(n, "CHANTYPES");
+	const char *chantypes = g_hash_table_lookup(n->features, "CHANTYPES");
 	if(!chantypes) {
 		if(name[0] == '#' || name[0] == '&')return 1;
 		return 0;
@@ -96,7 +90,7 @@ int is_channelname(const char *name, struct network_info *n)
 
 int is_prefix(char p, struct network_info *n)
 {
-	const char *prefix = get_network_feature(n, "PREFIX");
+	const char *prefix = g_hash_table_lookup(n->features, "PREFIX");
 	const char *pref_end;
 	if(!prefix) {
 		if(p == '@' || p == '+') return 1;
@@ -111,7 +105,7 @@ int is_prefix(char p, struct network_info *n)
 
 char get_prefix_by_mode(char p, struct network_info *n)
 {
-	const char *prefix = get_network_feature(n, "PREFIX");
+	const char *prefix = g_hash_table_lookup(n->features, "PREFIX");
 	int i;
 	char *pref_end;
 	if(!prefix) return ' ';
