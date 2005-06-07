@@ -12,11 +12,11 @@ ctrlproxy.pc
 doc/Makefile
 mods/*.so
 mods/gnutls/*.so
-mods/gnutls/Makefile
+mods/gnutls/Makefile.settings
 mods/nss/*.so
-mods/nss/Makefile
+mods/nss/Makefile.settings
 mods/openssl/*.so
-mods/openssl/Makefile
+mods/openssl/Makefile.settings
 mods/python/*.so
 mods/python/Makefile
 mods/python2/Makefile
