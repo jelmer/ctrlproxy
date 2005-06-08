@@ -4,7 +4,6 @@
 - handle some currently unhandled responses (especially wrt JOIN's)
 - answer WHO queries from own data if possible
 - support saving current state back to configuration
-- finish linestack
 - finish python module hooks:
 	typedef gboolean (*filter_function) (struct line *);
 	typedef gboolean (*new_client_hook) (struct client *);

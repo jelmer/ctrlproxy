@@ -27,7 +27,7 @@ struct plugin *current_plugin = NULL;
 GList *plugins = NULL;
 
 STATIC_MODULE_DECLARES
-static struct plugin *builtin_modules[] = { STATIC_MODULES NULL };
+static struct plugin_ops *builtin_modules[] = { STATIC_MODULES NULL };
 
 gboolean unload_plugin(struct plugin *p)
 {
@@ -38,7 +38,8 @@ gboolean unload_plugin(struct plugin *p)
 	}
 
 #ifndef VALGRIND
-	g_module_close(p->module);
+	if (p->module)
+		g_module_close(p->module);
 #endif
 
 	plugins = g_list_remove(plugins, p);
@@ -61,37 +62,49 @@ gboolean plugin_loaded(const char *name)
 
 struct plugin *load_plugin(struct plugin_config *pc)
 {
-	GModule *m;
+	GModule *m = NULL;
 	const char *modulesdir;
 	struct plugin_ops *ops = NULL;
 	struct plugin *p = g_new0(struct plugin, 1);
 	extern gboolean plugin_load_config(struct plugin *);
-	gchar *path_name;
+	gchar *path_name = NULL;
+	int i;
 
 	p->config = pc;
 
-	/* Determine correct modules directory */
-	if(getenv("MODULESDIR"))modulesdir = getenv("MODULESDIR");
-	else modulesdir = get_current_config()->modules_path;
-
-	if(g_file_test(pc->path, G_FILE_TEST_EXISTS))path_name = g_strdup(pc->path);
-	else path_name = g_module_build_path(modulesdir, pc->path);
-	
-	m = g_module_open(path_name, G_MODULE_BIND_LAZY);
-
-	if(!m) {
-		log_global(NULL, "Unable to open module %s(%s), ignoring", path_name, g_module_error());
-		g_free(path_name);
-		g_free(p);
-		return NULL;
+	/* See if this plugin is built-in */
+	for (i = 0; builtin_modules[i]; i++) {
+		if (!strcmp(builtin_modules[i]->name, pc->path)) {
+			ops = builtin_modules[i];	
+			break;
+		}
 	}
 
-	if(!g_module_symbol(m, "plugin", (gpointer)&ops)) {
-		log_global(strchr(path_name, '/')?(strrchr(path_name, '/')+1):NULL, 
-				   "No valid plugin information found");
-		g_free(path_name);
-		g_free(p);
-		return NULL;
+	/* Try to load from .so file */
+	if (!ops) {
+		/* Determine correct modules directory */
+		if(getenv("MODULESDIR"))modulesdir = getenv("MODULESDIR");
+		else modulesdir = get_current_config()->modules_path;
+
+		if(g_file_test(pc->path, G_FILE_TEST_EXISTS))path_name = g_strdup(pc->path);
+		else path_name = g_module_build_path(modulesdir, pc->path);
+	
+		m = g_module_open(path_name, G_MODULE_BIND_LAZY);
+
+		if(!m) {
+			log_global(NULL, "Unable to open module %s(%s), ignoring", path_name, g_module_error());
+			g_free(path_name);
+			g_free(p);
+			return NULL;
+		}
+
+		if(!g_module_symbol(m, "plugin", (gpointer)&ops)) {
+			log_global(strchr(path_name, '/')?(strrchr(path_name, '/')+1):NULL, 
+					   "No valid plugin information found");
+			g_free(path_name);
+			g_free(p);
+			return NULL;
+		}
 	}
 
 	if(plugin_loaded(ops->name)) {

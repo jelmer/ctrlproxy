@@ -136,8 +136,15 @@
 	struct channel_state *getChannel(const char *name) {
 		return find_channel(self, name);
 	}
-
 };
+
+%extend client
+{
+	void sendState(struct network_state *s)
+	{
+		client_send_state(self, s);
+	}
+}
 
 %extend network_info 
 {
