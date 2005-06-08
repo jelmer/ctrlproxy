@@ -102,15 +102,16 @@ static gboolean log_data(struct network *n, struct line *l, enum data_direction 
 {
 	const char *nick = NULL;
 	const char *dest = NULL;
-	char *user = NULL;
 	time_t ti = time(NULL);
+	char *user = NULL;
 	struct tm *t = localtime(&ti);
 	FILE *f = NULL;
 	if(!l->args || !l->args[0])return TRUE;
 
 	nick = line_get_nick(l);
 
-	if(user){ *user = '\0';user++; }
+	if (l->origin) user = strchr(l->origin, '!');
+	if(user) user++;
 
 	g_assert(l->args[0]);
 

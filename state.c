@@ -629,6 +629,12 @@ static void handle_mode(struct network_state *s, struct line *l)
 	}
 }
 
+static void handle_001(struct network_state *s, struct line *l)
+{
+	g_free(s->me.nick);
+	s->me.nick = g_strdup(l->args[1]);
+}
+
 static void handle_004(struct network_state *s, struct line *l)
 {
 	s->info.supported_user_modes = g_strdup(l->args[4]);
@@ -682,6 +688,7 @@ static struct irc_command {
 	{ "NICK", 1, handle_nick },
 	{ "PRIVMSG", 2, handle_privmsg },
 	{ "MODE", 2, handle_mode },
+	{ "001", 1, handle_001 },
 	{ "004", 5, handle_004 },
 	{ "005", 3, handle_005 },
 	{ "302", 2, handle_302 },

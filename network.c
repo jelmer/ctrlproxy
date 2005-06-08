@@ -74,17 +74,18 @@ static gboolean process_from_server(struct network *n, struct line *l)
 		log_network(NULL, n, "error: %s", l->args[1]);
 	} else if(!g_strcasecmp(l->args[0], "433") && 
 			  n->connection.state == NETWORK_CONNECTION_STATE_LOGIN_SENT){
-		char *old_nick = n->state->me.nick;
-		n->state->me.nick = g_strdup_printf("%s_", n->state->me.nick);
-		network_send_args(n, "NICK", n->state->me.nick, NULL);
-		log_network(NULL, n, "%s was already in use, trying %s", old_nick, n->state->me.nick);
-		g_free(old_nick);
+		char *tmp = g_strdup_printf("%s_", l->args[2]);
+		network_send_args(n, "NICK", tmp, NULL);
+		log_network(NULL, n, "%s was already in use, trying %s", l->args[2], tmp);
+		g_free(tmp);
 	} else if(!g_strcasecmp(l->args[0], "422") ||
 			  !g_strcasecmp(l->args[0], "376")) {
 		GList *gl;
 		n->connection.state = NETWORK_CONNECTION_STATE_MOTD_RECVD;
 
 		server_connected_hook_execute(n);
+
+		network_send_args(n, "USERHOST", n->state->me.nick, NULL);
 
 		/* Rejoin channels */
 		for (gl = n->config->channels; gl; gl = gl->next) 
