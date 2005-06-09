@@ -57,7 +57,7 @@ static gboolean process_from_server(struct line *l)
 	run_log_filter(lc = linedup(l), FROM_SERVER); free_line(lc);
 	run_replication_filter(lc = linedup(l), FROM_SERVER); free_line(lc);
 
-	state_handle_data(l->network,l);
+	state_handle_data(&l->network->state,l);
 
 	/* We need to handle pings.. we can't depend on a client
 	 * to do that for us*/

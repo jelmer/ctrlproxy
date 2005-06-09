@@ -397,9 +397,46 @@ static struct query queries[] = {
 	{ NULL }
 };
 
+static void handle_465(struct line *l)
+{
+	log_network(NULL, l->network, "Banned from server: %s", l->args[1]);
+}
+
+static void handle_451(struct line *l)
+{
+	log_network(NULL, l->network, "Not registered error, this is probably a bug...");
+}
+
+static void handle_462(struct line *l)
+{
+	log_network(NULL, l->network, "Double registration error, this is probably a bug...");
+}
+
+static void handle_463(struct line *l)
+{
+	log_network(NULL, l->network, "Host not privileged to connect");
+}
+
+static void handle_464(struct line *l)
+{
+	log_network(NULL, l->network, "Password mismatch");
+}
+
+
 /* List of responses that should be sent to all clients */
 static int response_all[] = { RPL_NOWAWAY, RPL_UNAWAY, 0 };
 static int response_none[] = { ERR_NOMOTD, RPL_ENDOFMOTD, 0 };
+static struct {
+	int response;
+	void (*handler) (struct line *);
+} response_handler[] = {
+	{ ERR_PASSWDMISMATCH, handle_464 },
+	{ ERR_ALREADYREGISTERED, handle_462 },
+	{ ERR_NOPERMFORHOST, handle_463 },
+	{ ERR_NOTREGISTERED, handle_451 },
+	{ ERR_YOUREBANNEDCREEP, handle_465 },
+	{ 0, NULL }
+};
 
 static int is_reply(int *replies, int r)
 {
@@ -464,6 +501,13 @@ void redirect_response(struct network *network, struct line *l)
 	/* See if this is a response that shouldn't be sent to clients at all */
 	for (i = 0; response_none[i]; i++) {
 		if (response_none[i] == n) {
+			return;
+		}
+	}
+
+	for (i = 0; response_handler[i].handler; i++) {
+		if (response_handler[i].response == n) {
+			response_handler[i].handler(l);
 			return;
 		}
 	}

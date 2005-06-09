@@ -54,7 +54,7 @@ gboolean init_networks(void);
 void kill_pending_clients(const char *reason);
 
 /* state.c */
-void state_handle_data(struct network *s, struct line *l);
+void state_handle_data(struct network_state *s, struct line *l);
 void free_channels(struct network *s);
 void init_state(struct network_state *, const char *n, const char *u, const char *h);
 void free_state(struct network_state *);
