@@ -207,7 +207,13 @@ static char *find_mapping(struct network *network, struct line *l, char c, gbool
 	return g_strdup("");
 }
 
-static void custom_subst(struct network *network, char **_new, const char *fmt, struct line *l, const char *_identifier, gboolean case_sensitive)
+static void convertslashes(char *a)
+{
+	int j;
+	for (j = 0; a[j]; j++) if (a[j] == '/') a[j] = '_';
+}
+
+static void custom_subst(struct network *network, char **_new, const char *fmt, struct line *l, const char *_identifier, gboolean case_sensitive, gboolean noslash)
 {
 	char *subst[MAX_SUBST];
 	char *new;
@@ -216,12 +222,14 @@ static void custom_subst(struct network *network, char **_new, const char *fmt, 
 
 	identifier = _identifier;
 
+	/* First, find all the mappings */
 	len = strlen(fmt);
 	memset(subst, 0, sizeof(char *) * MAX_SUBST);
 	for(i = 0; i < strlen(fmt); i++) {
 		if(fmt[i] == '%') {
 			subst[(int)fmt[i+1]] = find_mapping(network, l, fmt[i+1], case_sensitive);	
 			if (subst[(int)fmt[i+1]] == NULL) subst[(int)fmt[i+1]] = g_strdup("");
+			if (noslash) convertslashes(subst[(int)fmt[i+1]]);
 			len += strlen(subst[(int)fmt[i+1]]);
 		}
 	}
@@ -282,7 +290,7 @@ static FILE *find_channel_file(struct network *network, struct line *l, char *id
 	char *n = NULL;
 	FILE *f;
 	if(!logfilename)return NULL;
-	custom_subst(network, &n, logfilename, l, identifier, TRUE);
+	custom_subst(network, &n, logfilename, l, identifier, TRUE, TRUE);
 	f = g_hash_table_lookup(files, n);
 	g_free(n);
 	return f;
@@ -293,7 +301,7 @@ static FILE *find_add_channel_file(struct network *network, struct line *l, cons
 	char *n = NULL, *dn, *p;
 	FILE *f;
 	if(!logfilename) return NULL;
-	custom_subst(network, &n, logfilename, l, identifier, TRUE);
+	custom_subst(network, &n, logfilename, l, identifier, TRUE, TRUE);
 	f = g_hash_table_lookup(files, n);
 	if(!f) {
 		dn = g_strdup(n);
@@ -312,7 +320,7 @@ static FILE *find_add_channel_file(struct network *network, struct line *l, cons
 		g_free(dn);
 		
 		/* Then open the correct filename */
-		custom_subst(network, &n, logfilename, l, identifier, TRUE);
+		custom_subst(network, &n, logfilename, l, identifier, TRUE, TRUE);
 		f = fopen(n, "a+");
 		if(!f) {
 			log_network("log_custom", network, "Couldn't open file %s for logging!", n);
@@ -343,7 +351,7 @@ static void file_write_target(struct network *network, const char *n, struct lin
 	f = find_add_channel_file(network, l, t);
 	if(!f) { g_free(t); return; }
 	
-	custom_subst(network, &s, fmt, l, t, FALSE);
+	custom_subst(network, &s, fmt, l, t, FALSE, FALSE);
 	g_free(t);
 
     fputs(s, f);
@@ -364,7 +372,7 @@ static void file_write_channel_only(struct network *network, const char *n, stru
 	f = find_add_channel_file(network, l, l->args[1]);
 	if(!f) return; 
 
-	custom_subst(network, &s, fmt, l, l->args[1], FALSE);
+	custom_subst(network, &s, fmt, l, l->args[1], FALSE, FALSE);
 
 	fputs(s, f); fputc('\n', f);
 	fflush(f);
@@ -390,7 +398,7 @@ static void file_write_channel_query(struct network *network, const char *n, str
 	f = find_channel_file(network, l, nick);
 
 	if(f) {
-		custom_subst(network, &s, fmt, l, nick, FALSE);
+		custom_subst(network, &s, fmt, l, nick, FALSE, FALSE);
 		fputs(s, f); fputc('\n', f);
 		fflush(f);
 		g_free(s);
@@ -403,7 +411,7 @@ static void file_write_channel_query(struct network *network, const char *n, str
 		struct channel_nick *cn = gl->data;
 		f = find_add_channel_file(network, l, cn->channel->name);
 		if(f) {
-			custom_subst(network, &s, fmt, l, cn->channel->name, FALSE);
+			custom_subst(network, &s, fmt, l, cn->channel->name, FALSE, FALSE);
 			fputs(s, f); fputc('\n', f);
 			fflush(f);
 			g_free(s);

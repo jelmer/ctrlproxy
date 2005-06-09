@@ -15,6 +15,7 @@
 	typedef void (*server_disconnected_hook) (struct network *);
 
 next release (2.7.1 ?):
+- properly expand second argument of PRIVMSG in log_irssi and log_custom
 - <allow/> rules in socks and listener based on ip addresses/ranges
 - support passwords in listener for selecting between networks
 - some sort of cascading filters, remove client, network and options from 
