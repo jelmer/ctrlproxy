@@ -35,6 +35,7 @@
 #define mkdir(s,t) _mkdir(s)
 #endif
 
+static char *data_path = NULL;
 static GHashTable *networks = NULL;
 
 static FILE *get_fd(const struct network *n)
@@ -44,7 +45,7 @@ static FILE *get_fd(const struct network *n)
 	ch = g_hash_table_lookup(networks, n);
 
 	if (!ch) {
-		char *path = g_strdup_printf("linestack_file/%s", n->name);
+		char *path = g_strdup_printf("%s/%s", data_path, n->name);
 		ch = fopen(path, "a+");
 		if (!ch) {
 			log_network("linestack_file", n, "Unable to open linestack file %s", path);
@@ -60,15 +61,15 @@ static FILE *get_fd(const struct network *n)
 
 static gboolean file_init(void)
 {
-	char *p = ctrlproxy_path("linestack_file");
-	mkdir(p, 0700);
-	g_free(p);
+	data_path = ctrlproxy_path("linestack_file");
+	mkdir(data_path, 0700);
 	networks = g_hash_table_new_full(NULL, NULL, NULL, (GDestroyNotify)fclose);
 	return TRUE;
 }
 
 static gboolean file_fini(void)
 {
+	g_free(data_path); data_path = NULL;
 	g_hash_table_destroy(networks);
 	return TRUE;
 }
@@ -81,7 +82,7 @@ static gboolean file_insert_line(const struct network *n, const struct line *l)
 	time_t t = time(NULL);
 	if (!ch) return FALSE;
 
-	if (fwrite(&t, sizeof(t), 1, ch) != sizeof(t))
+	if (fwrite(&t, sizeof(t), 1, ch) != 1)
 		return FALSE;
 
 	raw = irc_line_string_nl(l);

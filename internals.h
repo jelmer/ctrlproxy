@@ -50,7 +50,7 @@
 #define MAXHOSTNAMELEN 4096
 
 /* server.c */
-gboolean init_networks(struct ctrlproxy_config *cfg);
+gboolean init_networks();
 void fini_networks(void);
 void kill_pending_clients(const char *reason);
 
@@ -90,5 +90,10 @@ void redirect_response(struct network *n, struct line *l);
 
 /* cache.c */
 gboolean client_try_cache(struct client *c, struct line *l);
+
+/* linestack.c */
+void init_linestack(struct ctrlproxy_config *);
+void fini_linestack(void);
+gboolean linestack_insert_line(const struct network *n, const struct line *l, enum data_direction dir);
 
 #endif /* __INTERNALS_H__ */

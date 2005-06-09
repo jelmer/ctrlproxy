@@ -36,6 +36,37 @@ void unregister_linestack(struct linestack_ops *b)
 	linestack_backends = g_slist_remove(linestack_backends, b);
 }
 
+void init_linestack(struct ctrlproxy_config *cfg)
+{
+	if (cfg->linestack_backend) {
+		GSList *gl;
+		for (gl = linestack_backends; gl ; gl = gl->next) {
+			struct linestack_ops *ops = gl->data;
+			if (!strcmp(ops->name, cfg->linestack_backend)) {
+				current_backend = ops;
+				break;
+			}
+		}
+
+		if (!current_backend) 
+			log_global(NULL, "Unable to find linestack backend %s: falling back to default", cfg->linestack_backend);
+	}
+
+	if (!linestack_backends) return;
+
+	if (!current_backend) {
+		current_backend = linestack_backends->data;
+	}
+
+	current_backend->init();
+}
+
+void fini_linestack()
+{
+	if (current_backend)
+		current_backend->fini();
+}
+
 linestack_marker *linestack_get_marker_numlines (struct network *n, int lines)
 {
 	if (!current_backend) return NULL;

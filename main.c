@@ -80,6 +80,7 @@ static void clean_exit()
 
 	if(debugfd)fclose(debugfd);
 	fini_config();
+	fini_linestack();
 	fini_plugins();
 
 	g_main_loop_quit(main_loop);
@@ -231,8 +232,11 @@ int main(int argc, const char *argv[])
 
 	current_config->separate_processes = seperate_processes;
 
-	init_networks(current_config);
+	init_networks();
+	load_networks(current_config);
 	init_plugins(current_config);
+	init_linestack(current_config);
+	autoconnect_networks();
 
 #ifdef HAVE_POPT_H
 	poptFreeContext(pc);

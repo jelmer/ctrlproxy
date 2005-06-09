@@ -73,6 +73,7 @@ struct ctrlproxy_config {
 	int separate_processes:1;
 	char *modules_path;
 	char *shared_path;
+	char *linestack_backend;
 };
 
 /* config.c */

@@ -61,6 +61,7 @@ static gboolean process_from_server(struct network *n, struct line *l)
 	run_replication_filter(n, lc = linedup(l), FROM_SERVER); free_line(lc);
 
 	state_handle_data(n->state,l);
+	linestack_insert_line(n, l, FROM_SERVER);
 
 	if(!g_strcasecmp(l->args[0], "PING")){
 		network_send_args(n, "PONG", l->args[1], NULL);
@@ -179,6 +180,7 @@ gboolean network_send_line(struct network *s, const struct client *c, const stru
 
 	run_log_filter(s, lc = linedup(&l), TO_SERVER); free_line(lc);
 	run_replication_filter(s, lc = linedup(&l), TO_SERVER); free_line(lc);
+	linestack_insert_line(s, ol, TO_SERVER);
 
 	/* Also write this message to all other clients currently connected */
 	if(!l.LINE_IS_PRIVATE && l.args[0] &&
@@ -591,9 +593,6 @@ int verify_client(struct network *s, struct client *c)
 
 void register_virtual_network(struct virtual_network_ops *ops)
 {
-	if (!virtual_network_ops) {
-		virtual_network_ops = g_hash_table_new(g_str_hash, g_str_equal);
-	}
 	g_hash_table_insert(virtual_network_ops, ops->name, ops);
 }
 
@@ -602,20 +601,21 @@ void unregister_virtual_network(struct virtual_network_ops *ops)
 	g_hash_table_remove(virtual_network_ops, ops->name);
 }
 
-gboolean init_networks(struct ctrlproxy_config *cfg)
+gboolean init_networks(void)
+{
+	virtual_network_ops = g_hash_table_new(g_str_hash, g_str_equal);
+	return TRUE;
+}
+
+gboolean autoconnect_networks(void)
 {
 	GList *gl;
-
-	for (gl = cfg->networks; gl; gl = gl->next)
+	for (gl = networks; gl; gl = gl->next)
 	{
-		struct network_config *nc = gl->data;
-		struct network *n;
-
-		n = load_network(nc);
-
-		if (nc->autoconnect) {
+		struct network *n = gl->data;
+		if (n->config->autoconnect) {
 #ifdef HAVE_FORK
-			if(cfg->separate_processes) { 
+			if(get_current_config()->separate_processes) { 
 				if(fork() == 0) {  
 					connect_network(n); 
 					break; 
@@ -626,6 +626,18 @@ gboolean init_networks(struct ctrlproxy_config *cfg)
 				connect_network(n);
 			}
 		}
+	}
+
+	return TRUE;
+}
+
+gboolean load_networks(struct ctrlproxy_config *cfg)
+{
+	GList *gl;
+	for (gl = cfg->networks; gl; gl = gl->next)
+	{
+		struct network_config *nc = gl->data;
+		load_network(nc);
 	}
 
 	return TRUE;

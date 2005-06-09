@@ -9,19 +9,19 @@
 	<plugins>
 		<!-- Support for interfacing to ctrlproxy 
 		using /MSG ctrlproxy or /CTRLPROXY -->
-		<plugin autoload="1" file="libadmin"/>
+		<plugin autoload="1" file="admin"/>
 		<!-- Don't replicate any backlogs, just send channel info -->
-		<plugin autoload="0" file="librepl_none"/>
+		<plugin autoload="0" file="repl_none"/>
 		<!-- Backlog any data since last time user said something -->
-		<plugin autoload="1" file="librepl_simple"/>
+		<plugin autoload="1" file="repl_simple"/>
 		<!-- Backlog lines matching certain patterns -->
-		<plugin autoload="0" file="librepl_highlight">
+		<plugin autoload="0" file="repl_highlight">
 			<!-- Replicate all lines containing 'ctrlproxy' or 'foobar' -->
 			<match>ctrlproxy</match>
 			<match>foobar</match>
 		</plugin>
 		<!-- Backlog lines when command /CTRLPROXY BACKLOG is given -->
-		<plugin autoload="1" file="librepl_command"/>
+		<plugin autoload="1" file="repl_command"/>
 		<plugin autoload="1" file="report_time"/>
 
 		<plugin autoload="1" file="socks">
@@ -29,15 +29,15 @@
 		</plugin>
 
 		<!-- Irssi-style logging -->
-		<plugin autoload="1" file="liblog_irssi">
+		<plugin autoload="1" file="log_irssi">
 			<!-- <logfile>/home/jelmer/tmp/ctrlproxy</logfile> -->
 		</plugin>
 
 		<!-- Send CTCP replies (like time, version, etc) -->
-		<plugin autoload="1" file="libctcp"/>
+		<plugin autoload="1" file="ctcp"/>
 
 		<!-- Support for automatic identify'ing with nickserv -->
-		<plugin autoload="1" file="libnickserv">
+		<plugin autoload="1" file="nickserv">
 			<nick network="OFTC" nick="me" password="secret"/>
 			<nick network="FreeNode" nick="me" password="alsosecret"/>
 		</plugin>
@@ -48,25 +48,25 @@
 
 		<!-- Make sure messages are not sent too fast after each other 
 		     (prevents being kicked by the server for 'Excess flooding' -->
-		<plugin autoload="1" file="libantiflood"/>
+		<plugin autoload="1" file="antiflood"/>
 
 		<!-- Automatically set AWAY after a certain period of time -->
-		<plugin autoload="1" file="libauto_away">
+		<plugin autoload="1" file="auto_away">
 			<message time="300">"I'm currently away, sorry!</message>
 		</plugin>
 
 		<!-- Use /usr/share/ctrlproxy/motd as motd -->
-		<plugin autoload="1" file="libmotd_file"/>
+		<plugin autoload="1" file="motd_file"/>
 
 		<!-- Experimental python support -->
-		<plugin autoload="0" file="libpython2">
+		<plugin autoload="0" file="python2">
 			<!--			<script>scripts/web/server.py</script> -->
 		</plugin>
 		
 		<plugin autoload="1" file="linestack_file"/>
 		<plugin autoload="0" file="linestack_memory"/>
 
-		<plugin autoload="1" file="liblistener">
+		<plugin autoload="1" file="listener">
 			<listen port="7667" network="Freenode" password="secret"/>
 		</plugin>
 	</plugins>
