@@ -26,12 +26,15 @@
 #define G_MODULE_EXPORT
 #endif
 
+enum has_endcolon { COLON_UNKNOWN = 0, WITH_COLON = 1, WITHOUT_COLON = 2 } ;
+
 struct line {
-	enum { LINE_IS_PRIVATE = 1, LINE_DONT_SEND = 2 } options;
+	int	LINE_IS_PRIVATE:1;
+	int LINE_DONT_SEND:1;
 	char *origin;
 	char **args; /* NULL terminated */
 	size_t argc;
-	enum { COLON_UNKNOWN = 0, WITH_COLON = 1, WITHOUT_COLON = 2 } has_endcolon;
+	enum has_endcolon has_endcolon;
 };
 
 G_MODULE_EXPORT struct line *linedup(const struct line *l);

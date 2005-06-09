@@ -359,7 +359,7 @@ static gboolean process_command(const struct client *c, struct line *l, int cmdo
 		return TRUE;
 	}
 
-	l->options |= LINE_DONT_SEND | LINE_IS_PRIVATE;
+	l->LINE_DONT_SEND = l->LINE_IS_PRIVATE = 1;
 	tmp = g_strdup(l->args[cmdoffset]);
 
 	if(l->args[cmdoffset+1]) {

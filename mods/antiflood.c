@@ -92,7 +92,7 @@ static gboolean log_data(struct network *network, struct line *l, enum data_dire
 		log_network("antiflood", network, "Queueing message (%s)", l->args[0]);
 		/* Push it up the stack! */
 		g_queue_push_head(sd->message_queue, linedup(l));
-		l->options |= LINE_DONT_SEND;
+		l->LINE_DONT_SEND = 1;
 		return TRUE;
 	} else {
 		sd->tv_last_message += sd->queue_speed;

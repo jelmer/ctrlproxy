@@ -92,7 +92,7 @@ static gboolean process_from_server(struct network *n, struct line *l)
 		}
 	} 
 
-	if(!(l->options & LINE_DONT_SEND) && 
+	if(!l->LINE_DONT_SEND && 
 		n->connection.state == NETWORK_CONNECTION_STATE_MOTD_RECVD) {
 		if (atoi(l->args[0])) {
 			redirect_response(n, l);
@@ -181,7 +181,7 @@ gboolean network_send_line(struct network *s, const struct client *c, const stru
 	run_replication_filter(s, lc = linedup(&l), TO_SERVER); free_line(lc);
 
 	/* Also write this message to all other clients currently connected */
-	if(!(l.options & LINE_IS_PRIVATE) && l.args[0] &&
+	if(!l.LINE_IS_PRIVATE && l.args[0] &&
 	   (!strcmp(l.args[0], "PRIVMSG") || !strcmp(l.args[0], "NOTICE"))) {
 		clients_send(s, &l, c);
 	}
@@ -399,7 +399,7 @@ static gboolean close_server(struct network *n)
 	default: g_assert(0);
 	}
 
-	free_state(n->state); n->state = NULL;
+	free_network_state(n->state); n->state = NULL;
 
 	n->connection.state = NETWORK_CONNECTION_STATE_NOT_CONNECTED;
 
@@ -490,7 +490,7 @@ static gboolean connect_program(struct network *s)
 
 static gboolean connect_server(struct network *s)
 {
-	s->state = init_state(s->config->nick, s->config->username, get_my_hostname());
+	s->state = new_network_state(s->config->nick, s->config->username, get_my_hostname());
 	
 	switch (s->config->type) {
 	case NETWORK_TCP:

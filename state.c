@@ -706,7 +706,7 @@ void state_handle_data(struct network_state *s, struct line *l)
 	}
 }
 
-struct network_state *init_state(const char *nick, const char *username, const char *hostname)
+struct network_state *new_network_state(const char *nick, const char *username, const char *hostname)
 {
 	struct network_state *state = g_new0(struct network_state, 1);
 	state->info.features = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_free);
@@ -718,7 +718,7 @@ struct network_state *init_state(const char *nick, const char *username, const c
 	return state;
 }
 
-void free_state(struct network_state *state)
+void free_network_state(struct network_state *state)
 {
 	while(state->channels)
 	{

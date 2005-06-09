@@ -28,14 +28,16 @@ struct network;
 struct client;
 struct line;
 
-struct network_connection {
-	enum { 
+enum network_connection_state { 
 		NETWORK_CONNECTION_STATE_NOT_CONNECTED = 0, 
 		NETWORK_CONNECTION_STATE_RECONNECT_PENDING,
 		NETWORK_CONNECTION_STATE_CONNECTED,
 		NETWORK_CONNECTION_STATE_LOGIN_SENT, 
 		NETWORK_CONNECTION_STATE_MOTD_RECVD,
-	} state;
+};
+
+struct network_connection {
+ 	enum network_connection_state state;
 
 	union { 
 		struct {

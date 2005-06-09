@@ -283,8 +283,6 @@ struct line *linedup(const struct line *l)
 	int i;
 	struct line *ret = g_memdup(l, sizeof(struct line));
 	if(l->origin)ret->origin = g_strdup(l->origin);
-	ret->has_endcolon = l->has_endcolon;
-	ret->options = l->options;
 	ret->args = g_new(char *, ret->argc+MAX_LINE_ARGS);
 	for(i = 0; l->args[i]; i++) {
 		ret->args[i] = g_strdup(l->args[i]);

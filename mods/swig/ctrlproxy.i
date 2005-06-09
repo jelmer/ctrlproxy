@@ -35,10 +35,14 @@
 %immutable client::description;
 %immutable client::connect_time;
 %immutable client::nick;
+%immutable NetworkState;
+%immutable NetworkInfo;
 %rename(get_version) ctrlproxy_version;
 %rename(Line) line;
 %rename(Plugin) plugin;
 %rename(Network) network;
+%rename(NetworkState) network_state;
+%rename(NetworkInfo) network_info;
 %rename(Channel) channel;
 %rename(LineStack) linestack_context;
 
@@ -120,6 +124,15 @@
 
 %extend network_state
 {
+	network_state(const char *nick, const char *username, const char *hostname) 
+	{
+		return new_network_state(nick, username, hostname);
+	}
+
+	~network_state() {
+		free_network_state(self);
+	}
+	
 	struct channel_state *getChannel(const char *name) {
 		return find_channel(self, name);
 	}

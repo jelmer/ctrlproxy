@@ -62,6 +62,12 @@ struct channel_state {
 	struct network_state *network;
 };
 
+enum casemapping { 
+		CASEMAP_UNKNOWN = 0, 
+		CASEMAP_RFC1459, 
+		CASEMAP_ASCII, 
+		CASEMAP_STRICT_RFC1459 
+	};
 
 struct network_info
 {
@@ -70,12 +76,7 @@ struct network_info
 	GHashTable *features;
 	char *supported_user_modes;
 	char *supported_channel_modes;
-	enum { 
-		CASEMAP_UNKNOWN = 0, 
-		CASEMAP_RFC1459, 
-		CASEMAP_ASCII, 
-		CASEMAP_STRICT_RFC1459 
-	} casemapping;
+	enum casemapping casemapping;
 	int channellen;
 	int nicklen;
 	int topiclen;
@@ -90,6 +91,9 @@ struct network_state
 };
 
 /* state.c */
+G_MODULE_EXPORT struct network_state *new_network_state(const char *nick, const char *username, const char *hostname);
+G_MODULE_EXPORT void free_network_state(struct network_state *);
+
 G_MODULE_EXPORT struct channel_state *find_channel(struct network_state *st, const char *name);
 G_MODULE_EXPORT struct channel_nick *find_nick(struct channel_state *c, const char *name);
 G_MODULE_EXPORT struct linestack_context *linestack_new_by_network(struct network *);
