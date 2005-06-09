@@ -191,6 +191,7 @@ void disconnect_client(struct client *c, const char *reason)
 	if (c->exit_on_close) 
 		exit(0);
 
+	g_free(c->description);
 	g_free(c->username);
 	g_free(c->fullname);
 	g_free(c->nick);

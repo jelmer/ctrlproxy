@@ -169,7 +169,7 @@ int main(int argc, const char *argv[])
 			}
 			break;
 		case 'v':
-			printf("ctrlproxy %s\n", PACKAGE_VERSION);
+			printf("ctrlproxy %s\n", VERSION);
 			printf(("(c) 2002-2004 Jelmer Vernooij et al. <jelmer@nl.linux.org>\n"));
 			return 0;
 		}
@@ -182,7 +182,7 @@ int main(int argc, const char *argv[])
 
 	init_log(logfile);
 
-	log_global(NULL, "CtrlProxy %s starting", PACKAGE_VERSION);
+	log_global(NULL, "CtrlProxy %s starting", VERSION);
 
 	if(gethostname(my_hostname, MAXHOSTNAMELEN) != 0) {
 		log_global(NULL, "Can't figure out hostname of local host!");
@@ -215,6 +215,7 @@ int main(int argc, const char *argv[])
 	if(rcfile) {
 		configuration_file = g_strdup(rcfile);
 		current_config = load_configuration(configuration_file);
+		g_free(configuration_file);
 	} else { 
 		const char *homedir = g_get_home_dir();
 #ifdef _WIN32

@@ -5,6 +5,8 @@
  - Special handler for join stuff
 - support saving current state back to configuration
  - Autorejoin on disconnect
+- support storing state information
+- mention SVN revision in SVN snapshots
 - finish python module hooks:
 	typedef gboolean (*filter_function) (struct line *);
 	typedef gboolean (*new_client_hook) (struct client *);

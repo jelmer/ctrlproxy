@@ -262,7 +262,7 @@ static gboolean connect_current_tcp_server(struct network *s)
 	struct tcp_server_config *cs;
 	GIOChannel *ioc = NULL;
 	struct addrinfo hints;
-	struct addrinfo *addrinfo;
+	struct addrinfo *addrinfo = NULL;
 	int error;
 
 	if (!s->connection.data.tcp.current_server) {
@@ -288,6 +288,7 @@ static gboolean connect_current_tcp_server(struct network *s)
 	error = getaddrinfo(cs->host, cs->port, &hints, &addrinfo);
 	if (error) {
 		log_network(NULL, s, "Unable to lookup %s:%s %s", cs->host, cs->port, gai_strerror(error));
+		freeaddrinfo(addrinfo);
 		return FALSE;
 	}
 
