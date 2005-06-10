@@ -408,7 +408,7 @@ static gboolean client_ping(gpointer user_data) {
 	struct client *client = user_data;
 
 	client->last_ping = time(NULL);
-	client_send_args(client, "PING", client->network->name, NULL);
+	irc_send_args(client->incoming, "PING", client->network->name, NULL);
 
 	return TRUE;
 }
