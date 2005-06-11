@@ -79,6 +79,18 @@ static char *get_day(struct network *n, struct line *l, gboolean case_sensitive)
 	return g_strdup_printf("%02d", t->tm_mday);
 }
 
+static char *get_month(struct network *n, struct line *l, gboolean case_sensitive) { 
+	time_t ti = time(NULL);
+	struct tm *t = localtime(&ti);
+	return g_strdup_printf("%02d", t->tm_mon + 1);
+}
+
+static char *get_year(struct network *n, struct line *l, gboolean case_sensitive) { 
+	time_t ti = time(NULL);
+	struct tm *t = localtime(&ti);
+	return g_strdup_printf("%04d", t->tm_year + 1900);
+}
+
 static char *get_user(struct network *n, struct line *l, gboolean case_sensitive) {
 	char *nick = NULL;
 	char *user = NULL;
@@ -138,7 +150,9 @@ static struct log_mapping mappings[] = {
 	{NULL, 'M', -1, get_minutes },
 	{NULL, 's', -1, get_seconds },
 	{NULL, 'd', -1, get_day },
-    {NULL, 'e', -1, get_seconds_since_1970 },
+	{NULL, 'B', -1, get_month },
+	{NULL, 'Y', -1, get_year },
+	{NULL, 'e', -1, get_seconds_since_1970 },
 	{NULL, 'b', -1, get_monthname },
 	{NULL, 'n', -1, get_nick },
 	{NULL, 'u', -1, get_user },
@@ -234,10 +248,14 @@ static void custom_subst(struct network *network, char **_new, const char *fmt, 
 
 /* Syntax:
 Always:
+ * %@ -> identifier
  * %h -> hours
- * %m -> minutes
+ * %M -> minutes
  * %s -> seconds
  * %d -> day
+ * %B -> month
+ * %Y -> year
+ * %e -> seconds since 1970
  * %b -> locale month name
  * %n -> initiating nick
  * %u -> initiating user

@@ -2,6 +2,7 @@
  	Jelmer Vernooij <jelmer@vernstok.nl>
 
 Ctrlproxy 2.7:
+ * Add support for %B and %Y (Korbinian Rosenegger)
  * Use separate include files
  * Move <autosend> to a seperate module
  * No longer depend on specific order of USER and NICK commands
