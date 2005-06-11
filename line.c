@@ -131,10 +131,10 @@ gboolean irc_send_line(GIOChannel *c, const struct line *l) {
 
 	raw = irc_line_string_nl(l);
 	ret = g_io_channel_write_chars(c, raw, -1, &bytes_written, NULL);
-
 	g_free(raw);
 
-	g_io_channel_flush(c, NULL);
+	if (ret == G_IO_STATUS_NORMAL || ret == G_IO_STATUS_AGAIN) 
+		g_io_channel_flush(c, NULL);
 
 	return (ret == G_IO_STATUS_NORMAL);
 }
