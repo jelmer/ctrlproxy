@@ -1,5 +1,5 @@
 /*
-    ircdtorture: an IRC RFC compliancy tester
+    	ircdtorture: an IRC RFC compliancy tester
 	(c) 2005 Jelmer Vernooij <jelmer@nl.linux.org>
 
 	This program is free software; you can redistribute it and/or modify
@@ -70,7 +70,7 @@ static int test_user_needmoreparams(void)
 {
 	GIOChannel *fd = new_conn();
 	irc_send_args(fd, "USER", "a", "a", NULL);
-	if (!wait_response(fd, "461")) 
+	if (!wait_response(fd, "462")) 
 		return -1;
 	g_io_channel_unref(fd);
 	return 0;
@@ -199,11 +199,12 @@ static int test_nick_erroneous(void)
 static int test_who_simple(void)
 {
 	GIOChannel *fd = new_conn_loggedin("bla");
+	const char *resp[] = { "352", "315", NULL };
 	if (!fd) return -1;
-	irc_send_args(fd, "WHO", "bla", NULL);
-	if (!wait_response(fd, "315")) {
-			g_io_channel_unref(fd);
-			return -1;
+	irc_send_args(fd, "WHO", NULL);
+	if (!wait_responses(fd, resp)) {
+		g_io_channel_unref(fd);
+		return -1;
 	}
 	g_io_channel_unref(fd);
 	return 0;
