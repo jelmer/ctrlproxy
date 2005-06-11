@@ -43,6 +43,7 @@ struct network_config
 	char *password;
 	int autoconnect:1;
 	int ignore_first_nick:1;
+	int disable_cache:1;
 	guint reconnect_interval;
 
 	GList *channels;
@@ -69,7 +70,7 @@ struct plugin_config {
 struct ctrlproxy_config {
 	GList *plugins;
 	GList *networks;
-	gboolean separate_processes;
+	int separate_processes:1;
 	char *modules_path;
 	char *shared_path;
 };

@@ -100,9 +100,7 @@ static gboolean process_from_client(struct client *c, struct line *l)
 		client_send_response(c, ERR_ALREADYREGISTERED,  
 						 "Please register only once per session", NULL);
 	} else if(c->network->connection.state == NETWORK_CONNECTION_STATE_MOTD_RECVD) {
-		gboolean from_cache = client_try_cache(c, l);
-
-		if (!from_cache) {
+		if (c->network->config->disable_cache || !client_try_cache(c, l)) {
 			redirect_record(c, l);
 			/* FIXME: Check for validity of input ? */
 			network_send_line(c->network, c, l);
