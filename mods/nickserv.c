@@ -55,7 +55,7 @@ static void identify_me(struct network *network, char *nick)
 	const char *pass;
 
 	/* Don't try to identify if we're already identified */
-	if (network->state.me->modes['R']) return;
+	if (network->state->me.modes['R']) return;
 	
 	pass = nickserv_find_nick(network, nick);
 	
@@ -94,14 +94,14 @@ static gboolean log_data(struct network *n, struct line *l, enum data_direction 
 			for (gl = nicks; gl; gl = gl->next) {
 				e = gl->data;
 
-				if (e->network && !strcasecmp(e->network, n->name) && !strcasecmp(e->nick, n->state.me->nick)) {
+				if (e->network && !strcasecmp(e->network, n->name) && !strcasecmp(e->nick, n->state->me.nick)) {
 					break;		
 				}
 			}
 
 			if (!gl) {
 				e = g_new0(struct nickserv_entry, 1);
-				e->nick = g_strdup(n->state.me->nick);
+				e->nick = g_strdup(n->state->me.nick);
 				e->network = g_strdup(n->name);
 				nicks = g_list_prepend(nicks, e);
 			}
@@ -132,7 +132,7 @@ static gboolean log_data(struct network *n, struct line *l, enum data_direction 
 
 static void conned_data(struct network *n, void *userdata)
 {
-	identify_me(n, n->state.me->nick);
+	identify_me(n, n->state->me.nick);
 }
 
 static gboolean save_config(struct plugin *p, xmlNodePtr node)

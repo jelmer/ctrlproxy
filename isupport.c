@@ -58,7 +58,7 @@ void handle_005(struct network_state *s, struct line *l)
 gboolean network_supports(struct network *n, const char *fe)
 {
 	gpointer k, v;
-	return g_hash_table_lookup_extended (n->state.info.features, fe, &k, &v);
+	return g_hash_table_lookup_extended (n->state->info.features, fe, &k, &v);
 }
 
 const char *get_network_feature(struct network_info *n, const char *name)

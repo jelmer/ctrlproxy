@@ -48,7 +48,7 @@ static char *network_generate_feature_string(struct network *n)
 	name = g_strdup_printf("NETWORK=%s", n->name);
 	fs = g_list_append(fs, name);
 
-	switch (n->state.info.casemapping) {
+	switch (n->state->info.casemapping) {
 	default:
 	case CASEMAP_RFC1459:
 		casemap = g_strdup("CASEMAPPING=rfc1459");
@@ -79,7 +79,7 @@ static char *network_generate_feature_string(struct network *n)
 
 static gboolean process_from_client(struct client *c, struct line *l)
 {
-	l->origin = g_strdup(c->network->state.me->hostmask);
+	l->origin = g_strdup(c->network->state->me.hostmask);
 
 	if (!run_client_filter(c, l, TO_SERVER)) 
 		return TRUE;
@@ -108,8 +108,7 @@ static gboolean process_from_client(struct client *c, struct line *l)
 			network_send_line(c->network, c, l);
 		}
 	} else if(c->network->connection.state == NETWORK_CONNECTION_STATE_NOT_CONNECTED) {
-		client_send_args(c, "NOTICE", c->nick?c->nick:c->network->state.me->nick, "Currently not connected to server, connecting...", NULL);
-		connect_network(c->network);
+		client_send_args(c, "NOTICE", c->nick?c->nick:c->network->state->me.nick, "Currently not connected to server...", NULL);
 	}
 
 	return TRUE;
@@ -133,7 +132,7 @@ gboolean client_send_response(struct client *c, int response, ...)
 	l->args[0] = g_strdup_printf("%03d", response);
 
 	if (c->nick) l->args[1] = g_strdup(c->nick);
-	else if (c->network && c->network->state.me->nick) l->args[1] = g_strdup(c->network->state.me->nick);
+	else if (c->network && c->network->state->me.nick) l->args[1] = g_strdup(c->network->state->me.nick);
 	else l->args[1] = g_strdup("*");
 
 	l->argc+=2;
@@ -268,8 +267,8 @@ static gboolean welcome_client(struct client *client)
 	client_send_response(client, RPL_MYINFO, 
 		 client->network->name, 
 		 ctrlproxy_version(), 
-		 client->network->state.info.supported_user_modes?client->network->state.info.supported_user_modes:ALLMODES, 
-		 client->network->state.info.supported_channel_modes?client->network->state.info.supported_channel_modes:ALLMODES,
+		 client->network->state->info.supported_user_modes?client->network->state->info.supported_user_modes:ALLMODES, 
+		 client->network->state->info.supported_channel_modes?client->network->state->info.supported_channel_modes:ALLMODES,
 		 NULL);
 
 	features = network_generate_feature_string(client->network);
@@ -280,12 +279,12 @@ static gboolean welcome_client(struct client *client)
 
 	send_motd(client);
 
-	if (g_strcasecmp(client->nick, client->network->state.me->nick)) {
+	if (g_strcasecmp(client->nick, client->network->state->me.nick)) {
 		/* Tell the client our his/her real nick */
-		irc_sendf(client->incoming, ":%s!%s@%s NICK %s", client->nick, client->username, client->hostname, client->network->state.me->nick);
+		irc_sendf(client->incoming, ":%s!%s@%s NICK %s", client->nick, client->username, client->hostname, client->network->state->me.nick);
 
 		/* Try to get the nick the client specified */
-		if (!client->network->ignore_first_nick) {
+		if (!client->network->config->ignore_first_nick) {
 			network_send_args(client->network, "NICK", client->nick, NULL);
 		}
 	}
@@ -367,10 +366,8 @@ static gboolean handle_pending_client_receive(GIOChannel *c, GIOCondition cond, 
 
 			client->network = find_network_by_hostname(l->args[1], atoi(l->args[2]), TRUE);
 
-            if (client->network && 
-				client->network->connection.state == NETWORK_CONNECTION_STATE_NOT_CONNECTED && 
-				!connect_network(client->network)) {
-				log_network(NULL, client->network, "Unable to connect");
+			if (!client->network || !connect_network(client->network)) {
+				log_client(NULL, client, "Unable to connect to network with name %s", l->args[1]);
 			}
 		} else {
 			client_send_response(client, ERR_NOTREGISTERED, "Register first", client->network?client->network->name:get_my_hostname(), NULL);

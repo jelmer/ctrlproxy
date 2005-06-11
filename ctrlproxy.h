@@ -42,6 +42,60 @@
 #define G_MODULE_EXPORT 
 #endif
 
+struct channel_config {
+	char *name;
+	char *key;
+	int autojoin:1;
+};
+
+struct tcp_server_config {
+	char *name;
+	char *host;
+	char *port;
+	int ssl:1;
+	char *password;
+};
+
+struct network_config 
+{
+	char *name;
+	char *nick;
+	char *fullname;
+	char *username;
+	char *password;
+	int autoconnect:1;
+	int ignore_first_nick:1;
+	guint reconnect_interval;
+
+	GList *channels;
+
+	enum { 
+		NETWORK_TCP, 
+		NETWORK_PROGRAM, 
+		NETWORK_VIRTUAL 
+	} type;
+
+	union {
+		char *virtual_type;
+		char *program_location;
+		GList *tcp_servers;
+	} type_settings; 
+};
+
+struct plugin_config {
+	char *path;
+	int autoload:1;
+	xmlNodePtr node;
+};
+
+struct ctrlproxy_config {
+	GList *plugins;
+	GList *networks;
+	gboolean separate_processes;
+	char *modules_path;
+	char *shared_path;
+};
+
 struct network;
 struct client;
 struct line;
@@ -95,15 +149,14 @@ struct channel_state {
 	char *name;
 	char *key;
 	char *topic;
-	gboolean autojoin;
-	gboolean joined;
+	int joined:1;
 	char mode; /* Private, secret, etc */
 	char modes[255];
 	char introduced;
-	gboolean namreply_started;
-	gboolean banlist_started;
-	gboolean invitelist_started;
-	gboolean exceptlist_started;
+	int namreply_started:1;
+	int banlist_started:1;
+	int invitelist_started:1;
+	int exceptlist_started:1;
 	long limit;
 	GList *nicks;
 	GList *banlist;
@@ -125,18 +178,12 @@ struct client {
 	char *fullname;
 	char *hostname;
 	char *username;
-	gboolean exit_on_close;
+	int exit_on_close:1;
 };
 
 enum casemapping { CASEMAP_UNKNOWN = 0, CASEMAP_RFC1459, CASEMAP_ASCII, CASEMAP_STRICT_RFC1459 };
 
 struct network_connection {
-	enum { 
-		NETWORK_TCP, 
-		NETWORK_PROGRAM, 
-		NETWORK_VIRTUAL 
-	} type;
-
 	enum { 
 		NETWORK_CONNECTION_STATE_NOT_CONNECTED = 0, 
 		NETWORK_CONNECTION_STATE_RECONNECT_PENDING,
@@ -147,16 +194,8 @@ struct network_connection {
 
 	union { 
 		struct {
-			GList *servers;
-			struct tcp_server {
-				char *name;
-				char *host;
-				char *port;
-				gboolean ssl;
-				char *password;
-				struct addrinfo *addrinfo;
-			} *current_server;
-
+			struct tcp_server_config *current_server;
+			struct sockaddr *remote_name;
 			struct sockaddr *local_name;
 			size_t namelen;
 			GIOChannel *outgoing;
@@ -164,13 +203,11 @@ struct network_connection {
 		} tcp;
 		
 		struct {
-			char *location;
 			GIOChannel *outgoing;
 			gint outgoing_id;
 		} program;
 
 		struct {
-			char *type;
 			void *private_data;
 			struct virtual_network_ops {
 				char *name;
@@ -199,33 +236,25 @@ struct network_state
 {
 	GList *channels;
 	GList *nicks;
-	struct network_nick *me;
+	struct network_nick me;
 	struct network_info info;
 };
 
 struct network {
 	char *name;
-	char *nick;
-	char *fullname;
-	char *username;
-	char *password;
-	gboolean autoconnect;
-	gboolean ignore_first_nick;
+	struct network_config *config;
+
 	GList *clients;
 	guint reconnect_id;
-	gboolean name_guessed;
-	guint reconnect_interval;
 
-	struct network_state state;
+	struct network_state *state;
 	struct network_connection connection;
 };
 
 struct plugin {
-	char *path;
+	struct plugin_config *config;
 	GModule *module;
 	void *data;
-	gboolean autoload;
-	gboolean loaded;
 	struct plugin_ops {
 		int version;
 		const char *name;
@@ -251,12 +280,11 @@ G_MODULE_EXPORT struct network_nick *line_get_network_nick(struct line *l);
 
 /* server.c */
 G_MODULE_EXPORT struct network *find_network_by_hostname(const char *host, guint16 port, gboolean create);
-G_MODULE_EXPORT struct network *new_network(void);
+G_MODULE_EXPORT struct network *load_network(struct network_config *);
+G_MODULE_EXPORT void unload_network(struct network *);
 G_MODULE_EXPORT gboolean connect_network(struct network *);
-G_MODULE_EXPORT struct tcp_server *network_get_next_tcp_server(struct network *);
-G_MODULE_EXPORT gboolean connect_current_tcp_server (struct network *);
-G_MODULE_EXPORT int close_network(struct network *s);
-G_MODULE_EXPORT gboolean close_server(struct network *n);
+G_MODULE_EXPORT void network_select_next_server(struct network *n);
+G_MODULE_EXPORT gboolean disconnect_network(struct network *s);
 G_MODULE_EXPORT GList *get_network_list(void);
 G_MODULE_EXPORT void clients_send(struct network *, struct line *, const struct client *exception);
 G_MODULE_EXPORT void disconnect_client(struct client *c, const char *reason);
@@ -266,12 +294,14 @@ G_MODULE_EXPORT gboolean network_send_line(struct network *s, const struct clien
 G_MODULE_EXPORT gboolean network_send_args(struct network *s, ...);
 G_MODULE_EXPORT void register_virtual_network(struct virtual_network_ops *);
 G_MODULE_EXPORT void unregister_virtual_network(struct virtual_network_ops *);
-G_MODULE_EXPORT struct network *find_network(const char *name);
+G_MODULE_EXPORT struct network *find_network(const char *);
 G_MODULE_EXPORT gboolean client_send_args(struct client *c, ...);
 G_MODULE_EXPORT gboolean client_send_response(struct client *c, int response, ...);
 G_MODULE_EXPORT gboolean client_send_line(struct client *c, const struct line *);
 G_MODULE_EXPORT gboolean virtual_network_recv_line(struct network *l, struct line *);
 G_MODULE_EXPORT gboolean virtual_network_recv_args(struct network *l, const char *origin, ...); 
+
+/* client.c */
 
 /* line.c */
 G_MODULE_EXPORT struct line *linedup(struct line *l);
@@ -291,16 +321,16 @@ G_MODULE_EXPORT GIOStatus irc_recv_line(GIOChannel *c, GError **err, struct line
 /* main.c */
 G_MODULE_EXPORT const char *ctrlproxy_version(void);
 G_MODULE_EXPORT const char *get_my_hostname(void);
-G_MODULE_EXPORT const char *get_modules_path(void);
-G_MODULE_EXPORT const char *get_shared_path(void);
+G_MODULE_EXPORT struct ctrlproxy_config *get_current_config(void);
 
 /* config.c */
-G_MODULE_EXPORT void save_configuration(const char *name);
-G_MODULE_EXPORT gboolean load_configuration(const char *name);
+G_MODULE_EXPORT struct plugin_config *new_plugin_config(struct ctrlproxy_config *cfg, const char *name);
+G_MODULE_EXPORT struct network_config *new_network_config(struct ctrlproxy_config *cfg);
+G_MODULE_EXPORT void save_configuration(struct ctrlproxy_config *cfg, const char *name);
+G_MODULE_EXPORT struct ctrlproxy_config *load_configuration(const char *name);
 
 /* plugins.c */
-G_MODULE_EXPORT struct plugin *new_plugin(const char *name);
-G_MODULE_EXPORT gboolean load_plugin(struct plugin *);
+G_MODULE_EXPORT struct plugin *load_plugin(struct plugin_config *);
 G_MODULE_EXPORT gboolean unload_plugin(struct plugin *);
 G_MODULE_EXPORT gboolean plugin_loaded(const char *name);
 G_MODULE_EXPORT GList *get_plugin_list(void);

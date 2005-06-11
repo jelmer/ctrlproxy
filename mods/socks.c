@@ -347,7 +347,7 @@ static gboolean handle_client_data (GIOChannel *ioc, GIOCondition o, gpointer da
 						return socks_error(ioc, REP_NET_UNREACHABLE);
 					}
 
-					if (result->connection.type == NETWORK_TCP) {
+					if (result->config->type == NETWORK_TCP) {
 						struct sockaddr_in6 *name6; 
 						struct sockaddr_in *name4; 
 						int atyp, len, port;

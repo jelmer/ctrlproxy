@@ -80,7 +80,7 @@ static gboolean load_config(struct plugin *p, xmlNodePtr node)
 		}
 	}
 
-	if (!motd_file) motd_file = g_build_filename(get_shared_path(), "motd", NULL);
+	if (!motd_file) motd_file = g_build_filename(get_current_config()->shared_path, "motd", NULL);
 
 	if(!g_file_test(motd_file, G_FILE_TEST_EXISTS)) {
 		log_global("motd_file", "Can't open MOTD file '%s' for reading", motd_file);

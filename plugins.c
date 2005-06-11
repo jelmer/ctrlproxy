@@ -28,9 +28,6 @@ GList *plugins = NULL;
 
 gboolean unload_plugin(struct plugin *p)
 {
-	if (!p->loaded) 
-		return FALSE;
-
 	/* Run exit function if present */
 	if(!p->ops->fini(p)) {
 		log_global(NULL, "Unable to unload plugin '%s': still in use?", p->ops->name);
@@ -41,20 +38,11 @@ gboolean unload_plugin(struct plugin *p)
 	g_module_close(p->module);
 #endif
 
-	p->loaded = FALSE;
+	plugins = g_list_remove(plugins, p);
+
+	g_free(p);
 
 	return TRUE;
-}
-
-struct plugin *new_plugin(const char *name)
-{
-	struct plugin *p = g_new0(struct plugin, 1);
-
-	p->path = g_strdup(name);
-
-	plugins = g_list_append(plugins, p);
-
-	return p;
 }
 
 gboolean plugin_loaded(const char *name)
@@ -68,40 +56,46 @@ gboolean plugin_loaded(const char *name)
 	return FALSE;
 }
 
-gboolean load_plugin(struct plugin *p)
+struct plugin *load_plugin(struct plugin_config *pc)
 {
 	GModule *m;
 	const char *modulesdir;
 	struct plugin_ops *ops = NULL;
+	struct plugin *p = g_new0(struct plugin, 1);
 	extern gboolean plugin_load_config(struct plugin *);
 	gchar *path_name;
 
+	p->config = pc;
+
 	/* Determine correct modules directory */
 	if(getenv("MODULESDIR"))modulesdir = getenv("MODULESDIR");
-	else modulesdir = get_modules_path();
+	else modulesdir = get_current_config()->modules_path;
 
-	if(g_file_test(p->path, G_FILE_TEST_EXISTS))path_name = g_strdup(p->path);
-	else path_name = g_module_build_path(modulesdir, p->path);
+	if(g_file_test(pc->path, G_FILE_TEST_EXISTS))path_name = g_strdup(pc->path);
+	else path_name = g_module_build_path(modulesdir, pc->path);
 	
 	m = g_module_open(path_name, G_MODULE_BIND_LAZY);
 
 	if(!m) {
 		log_global(NULL, "Unable to open module %s(%s), ignoring", path_name, g_module_error());
 		g_free(path_name);
-		return FALSE;
+		g_free(p);
+		return NULL;
 	}
 
 	if(!g_module_symbol(m, "plugin", (gpointer)&ops)) {
 		log_global(strchr(path_name, '/')?(strrchr(path_name, '/')+1):NULL, 
 				   "No valid plugin information found");
 		g_free(path_name);
-		return FALSE;
+		g_free(p);
+		return NULL;
 	}
 
 	if(plugin_loaded(ops->name)) {
 		log_global(NULL, "Plugin already loaded");
 		g_free(path_name);
-		return FALSE;
+		g_free(p);
+		return NULL;
 	}
 
 	g_free(path_name);
@@ -110,24 +104,18 @@ gboolean load_plugin(struct plugin *p)
 	p->ops = ops;
 
 	if(!p->ops->init(p)) {
-		log_global(NULL, "Running initialization function for plugin '%s' failed.", p->path);
-		return FALSE;
+		log_global(NULL, "Running initialization function for plugin '%s' failed.", pc->path);
+		g_free(p);
+		return NULL;
 	}
 
 	if(!plugin_load_config(p)) {
-		log_global(NULL, "Error loading configuration for plugin '%s'", p->path);
+		log_global(NULL, "Error loading configuration for plugin '%s'", pc->path);
 	}
 
-	p->loaded = TRUE;
-	return TRUE;
-}
+	plugins = g_list_append(plugins, p);
 
-void free_plugin(struct plugin *p)
-{
-	g_free(p->path);
-	g_free(p);
-
-	plugins = g_list_remove(plugins, p);
+	return p;
 }
 
 void fini_plugins() {
@@ -136,25 +124,24 @@ void fini_plugins() {
 		struct plugin *p = plugins->data;
 
 		unload_plugin(p);
-
-		free_plugin(p);
 	}
 }
 
-gboolean init_plugins() {
+gboolean init_plugins(struct ctrlproxy_config *cfg)
+{
 	gboolean ret = TRUE;
 
 	if(!g_module_supported()) {
 		log_global(NULL, "DSO's not supported on this platform. Not loading any modules");
-	} else if(!plugins) {
+	} else if(!cfg->plugins) {
 		log_global(NULL, "No modules set to be loaded");	
 	} else {
-		GList *gl = plugins;
+		GList *gl = cfg->plugins;
 		while(gl) {
-			struct plugin *p = gl->data;
+			struct plugin_config *p = gl->data;
 
-			if(!p->loaded && p->autoload && !load_plugin(p)) {
-				log_global(NULL, "Can't load plugin %s, ignoring...", p->ops?p->ops->name:p->path);
+			if(p->autoload && !load_plugin(p)) {
+				log_global(NULL, "Can't load plugin %s, ignoring...", p->path);
 				ret = FALSE;
 			}
 

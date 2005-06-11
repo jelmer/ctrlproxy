@@ -25,7 +25,7 @@ static GHashTable *simple_initialnick = NULL;
 
 static void change_nick(struct client *c, char *newnick) 
 {
-	struct line *l = irc_parse_line_args(c->network->state.me->hostmask, "NICK", newnick, NULL);
+	struct line *l = irc_parse_line_args(c->network->state->me.hostmask, "NICK", newnick, NULL);
 	irc_send_line(c->incoming, l);
 	free_line(l);
 }
@@ -37,7 +37,7 @@ static gboolean log_data(struct network *network, struct line *l, enum data_dire
 	if(!co) {
 		co = linestack_new_by_network(network);
 		g_hash_table_insert( simple_backlog, network, co);
-		g_hash_table_insert( simple_initialnick, network, g_strdup(network->state.me->nick));
+		g_hash_table_insert( simple_initialnick, network, g_strdup(network->state->me.nick));
 	}
 
 	if(l->argc < 1)return TRUE;
@@ -45,8 +45,8 @@ static gboolean log_data(struct network *network, struct line *l, enum data_dire
 	if(dir == TO_SERVER &&  
 	   (!g_strcasecmp(l->args[0], "PRIVMSG") || !g_strcasecmp(l->args[0], "NOTICE"))) {
 		linestack_clear(co);
-		g_hash_table_replace( simple_initialnick, network, g_strdup(network->state.me->nick));
-		linestack_add_line_list( co, gen_replication_network(&network->state));
+		g_hash_table_replace( simple_initialnick, network, g_strdup(network->state->me.nick));
+		linestack_add_line_list( co, gen_replication_network(network->state));
 		return TRUE;
 	}
 
@@ -64,20 +64,20 @@ static gboolean log_data(struct network *network, struct line *l, enum data_dire
 	   !g_strcasecmp(l->args[0], "NICK")) {
 		linestack_add_line(co, l);
 	} else if(!g_strcasecmp(l->args[0], "353")) {
-		c = find_channel(&network->state, l->args[3]);
+		c = find_channel(network->state, l->args[3]);
 		if(c && !(c->introduced & 2)) {
 			linestack_add_line(co, l);
 		}
 		/* Only do 366 if not & 2. Set | 2 */
 	} else if(!g_strcasecmp(l->args[0], "366")) {
-		c = find_channel(&network->state, l->args[2]);
+		c = find_channel(network->state, l->args[2]);
 		if(c && !(c->introduced & 2)) {
 			linestack_add_line(co, l);
 			c->introduced |= 2;
 		}
 		/* Only do 331 or 332 if not & 1. Set | 1 */
 	} else if(!g_strcasecmp(l->args[0], "331") || !g_strcasecmp(l->args[0], "332")) {
-		c = find_channel(&network->state, l->args[2]);
+		c = find_channel(network->state, l->args[2]);
 		if(c && !(c->introduced & 1)) {
 			linestack_add_line(co, l);
 			c->introduced |= 1;

@@ -36,21 +36,21 @@ static xmlDtdPtr dtd;
 
 static char *last_config_file = NULL;
 
-static xmlNodePtr config_save_plugins()
+static xmlNodePtr config_save_plugins(GList *plugins)
 {
 	GList *gl;
 	xmlNodePtr ret = xmlNewNode(NULL, "plugins");
 
-	for (gl = get_plugin_list(); gl; gl = gl->next) {
-		struct plugin *p = gl->data;
+	for (gl = plugins; gl; gl = gl->next) {
+		struct plugin_config *p = gl->data;
 		xmlNodePtr n = xmlNewNode(NULL, "plugin");
 
 		xmlSetProp(n, "autoload", p->autoload?"1":"0");
 		xmlSetProp(n, "file", p->path);
 		
-		if (p->ops->save_config) {
+/*FIXME		if (p->ops->save_config) {
 			p->ops->save_config(p, n);
-		}
+		}*/
 
 		xmlAddChild(ret, n);
 	}
@@ -58,12 +58,12 @@ static xmlNodePtr config_save_plugins()
 	return ret;
 }
 
-static xmlNodePtr config_save_tcp_servers(struct network *n)
+static xmlNodePtr config_save_tcp_servers(struct network_config *n)
 {
 	GList *gl;
 	xmlNodePtr s = xmlNewNode(NULL, "servers");
-	for (gl = n->connection.data.tcp.servers; gl; gl = gl->next) {
-		struct tcp_server *ts = gl->data;
+	for (gl = n->type_settings.tcp_servers; gl; gl = gl->next) {
+		struct tcp_server_config *ts = gl->data;
 		xmlNodePtr x = xmlNewNode(NULL, "server");
 		if (ts->name) xmlSetProp(x, "name", ts->name);
 		if (ts->host) xmlSetProp(x, "host", ts->host);
@@ -77,30 +77,30 @@ static xmlNodePtr config_save_tcp_servers(struct network *n)
 	return s;
 }
 
-static xmlNodePtr config_save_networks()
+static xmlNodePtr config_save_networks(GList *networks)
 {
 	xmlNodePtr ret = xmlNewNode(NULL, "networks");
 	GList *gl;
 
-	for (gl = get_network_list(); gl; gl = gl->next) {
+	for (gl = networks; gl; gl = gl->next) {
 		GList *gl1;
-		struct network *n = gl->data;		
+		struct network_config *n = gl->data;		
 		xmlNodePtr p = xmlNewNode(NULL, "network"), p1;
 
 		xmlSetProp(p, "autoconnect", n->autoconnect?"1":"0");
-		if (!n->name_guessed)
+		if (n->name) 
 			xmlSetProp(p, "name", n->name);
 		xmlSetProp(p, "fullname", n->fullname);
 		xmlSetProp(p, "nick", n->nick);
 		xmlSetProp(p, "username", n->username);
 
-		switch(n->connection.type) {
+		switch(n->type) {
 		case NETWORK_VIRTUAL:
 			p1 = xmlNewChild(p, NULL, "virtual", NULL);
-			xmlSetProp(p1, "type", n->connection.data.virtual.ops->name);
+			xmlSetProp(p1, "type", n->type_settings.virtual_type);
 			break;
 		case NETWORK_PROGRAM:
-			p1 = xmlNewChild(p, NULL, "program", n->connection.data.program.location);
+			p1 = xmlNewChild(p, NULL, "program", n->type_settings.program_location);
 			break;
 		case NETWORK_TCP:
 			xmlAddChild(p, config_save_tcp_servers(n));
@@ -108,8 +108,8 @@ static xmlNodePtr config_save_networks()
 		default:break;
 		}
 		
-		for (gl1 = n->state.channels; gl1; gl1 = gl1->next) {
-			struct channel_state *c = gl1->data;
+		for (gl1 = n->channels; gl1; gl1 = gl1->next) {
+			struct channel_config *c = gl1->data;
 			xmlNodePtr x = xmlNewNode(NULL, "channel");
 			xmlSetProp(x, "name", c->name);
 			if (c->key) xmlSetProp(x, "key", c->key);
@@ -124,7 +124,7 @@ static xmlNodePtr config_save_networks()
 	return ret;
 }
 
-void save_configuration(const char *configuration_file)
+void save_configuration(struct ctrlproxy_config *cfg, const char *configuration_file)
 {
 	xmlNodePtr root;
 	xmlDocPtr configuration = xmlNewDoc("1.0");
@@ -133,8 +133,8 @@ void save_configuration(const char *configuration_file)
 
 	xmlDocSetRootElement(configuration, root);
 
-	xmlAddChild(root, config_save_plugins());
-	xmlAddChild(root, config_save_networks());
+	xmlAddChild(root, config_save_plugins(cfg->plugins));
+	xmlAddChild(root, config_save_networks(cfg->networks));
 
 	xmlSaveFile(configuration_file?configuration_file:last_config_file, configuration);
 
@@ -154,21 +154,12 @@ static gboolean validate_config(xmlDocPtr configuration)
 	return ret;
 }
 
-static GHashTable *plugin_nodes = NULL;
-
 gboolean plugin_load_config(struct plugin *p) 
 {
-	xmlNodePtr cur;
-	
-	cur = g_hash_table_lookup(plugin_nodes, p);
-
-	if (!p) 
-		return FALSE;
-
 	if (!p->ops->load_config) 
 		return TRUE;
 
-	return p->ops->load_config(p, cur);
+	return p->ops->load_config(p, p->config->node);
 }
 
 void init_config()
@@ -186,13 +177,13 @@ void fini_config()
 	xmlFreeDtd(dtd);
 }
 
-static void config_load_plugin(xmlNodePtr root)
+static void config_load_plugin(struct ctrlproxy_config *cfg, xmlNodePtr root)
 {
 	char *tmp;
-	struct plugin *p;
+	struct plugin_config *p;
 	
 	tmp = xmlGetProp(root, "file");
-	p = new_plugin(tmp);
+	p = new_plugin_config(cfg, tmp);
 	xmlFree(tmp);
 
 	if (xmlHasProp(root, "autoload")) {
@@ -201,10 +192,10 @@ static void config_load_plugin(xmlNodePtr root)
 		xmlFree(tmp);
 	}
 
-	g_hash_table_insert(plugin_nodes, p, root);
+	p->node = xmlCopyNode(root, 1);
 }
 
-static void config_load_plugins(xmlNodePtr root)
+static void config_load_plugins(struct ctrlproxy_config *cfg, xmlNodePtr root)
 {
 	xmlNodePtr cur;
 	
@@ -213,13 +204,13 @@ static void config_load_plugins(xmlNodePtr root)
 		if (cur->type != XML_ELEMENT_NODE) continue;		
 
 		g_assert(!strcmp(cur->name, "plugin"));
-		config_load_plugin(cur);
+		config_load_plugin(cfg, cur);
 	}
 }
 
-static void config_load_channel(struct network *n, xmlNodePtr root)
+static void config_load_channel(struct network_config *n, xmlNodePtr root)
 {
-	struct channel_state *ch = g_new0(struct channel_state, 1);
+	struct channel_config *ch = g_new0(struct channel_config, 1);
 	char *tmp;
 
 	ch->name = xmlGetProp(root, "name");
@@ -231,25 +222,21 @@ static void config_load_channel(struct network *n, xmlNodePtr root)
 		xmlFree(tmp);
 	}
 	
-	ch->network = &n->state;
-
-	n->state.channels = g_list_append(n->state.channels, ch);
+	n->channels = g_list_append(n->channels, ch);
 }
 
-static void config_load_servers(struct network *n, xmlNodePtr root)
+static void config_load_servers(struct network_config *n, xmlNodePtr root)
 {
 	xmlNodePtr cur;
-	n->connection.type = NETWORK_TCP;
+	n->type = NETWORK_TCP;
 
 	for (cur = root->children; cur; cur = cur->next) 
 	{
-		struct tcp_server *s;
-		int error;
-		struct addrinfo hints;
+		struct tcp_server_config *s;
 
 		if (cur->type != XML_ELEMENT_NODE) continue;
 		
-		s = g_new0(struct tcp_server, 1);
+		s = g_new0(struct tcp_server_config, 1);
 		
 		s->host = xmlGetProp(cur, "host");
 		s->password = xmlGetProp(cur, "password");
@@ -272,27 +259,16 @@ static void config_load_servers(struct network *n, xmlNodePtr root)
 			log_global(NULL, "Network name \"%s\" contains spaces!", s->name);
 		}
 
-    	memset(&hints, 0, sizeof(hints));
-	    hints.ai_family = PF_UNSPEC;
-		hints.ai_socktype = SOCK_STREAM;
-		
-		/* Lookup */
-	 	error = getaddrinfo(s->host, s->port, &hints, &s->addrinfo);
-	    if (error) {
-			log_global(NULL, "Unable to lookup %s: %s", s->host, gai_strerror(error));
-			continue;
-		}
-
-		n->connection.data.tcp.servers = g_list_append(n->connection.data.tcp.servers, s);
+		n->type_settings.tcp_servers = g_list_append(n->type_settings.tcp_servers, s);
 	}
 }
 
-static void config_load_network(xmlNodePtr root)
+static struct network_config *config_load_network(struct ctrlproxy_config *cfg, xmlNodePtr root)
 {
 	xmlNodePtr cur;
 	char *tmp;
-	struct network *n;
-	n = new_network();
+	struct network_config *n;
+	n = new_network_config(cfg);
 
 	if ((tmp = xmlGetProp(root, "autoconnect"))) {
 		if (atoi(tmp)) n->autoconnect = TRUE;
@@ -339,17 +315,18 @@ static void config_load_network(xmlNodePtr root)
 		} else if (!strcmp(cur->name, "channel")) {
 			config_load_channel(n, cur);
 		} else if (!strcmp(cur->name, "program")) {
-			n->connection.type = NETWORK_PROGRAM;
-			n->connection.data.program.location = xmlNodeGetContent(cur);
+			n->type = NETWORK_PROGRAM;
+			n->type_settings.program_location = xmlNodeGetContent(cur);
 		} else if (!strcmp(cur->name, "virtual")) {
-			n->connection.type = NETWORK_VIRTUAL;
-			n->connection.data.virtual.type = xmlGetProp(cur, "type");
+			n->type = NETWORK_VIRTUAL;
+			n->type_settings.virtual_type = xmlGetProp(cur, "type");
 		}
 	}
 
+	return n;
 }
 
-static void config_load_networks(xmlNodePtr root)
+static void config_load_networks(struct ctrlproxy_config *cfg, xmlNodePtr root)
 {
 	xmlNodePtr cur;
 	
@@ -357,23 +334,26 @@ static void config_load_networks(xmlNodePtr root)
 	{
 		if (cur->type != XML_ELEMENT_NODE) continue;		
 
-		config_load_network(cur);
+		config_load_network(cfg, cur);
 	}
-
 }
 
-gboolean load_configuration(const char *file) 
+struct ctrlproxy_config *load_configuration(const char *file) 
 {
 	xmlDocPtr configuration;
     xmlNodePtr root, cur;
-	gboolean ret;
+	struct ctrlproxy_config *cfg = g_new0(struct ctrlproxy_config, 1);
+
+	cfg->modules_path = g_strdup(MODULESDIR);
+	cfg->shared_path = g_strdup(SHAREDIR);
 
 	g_free(last_config_file); last_config_file = g_strdup(file);
 
 	configuration = xmlParseFile(file);
 	if(!configuration) {
 		log_global(NULL, "Can't open configuration file '%s'", file);
-		return FALSE;
+		g_free(cfg);
+		return NULL;
 	}
 
 	if (!validate_config(configuration)) {
@@ -382,21 +362,44 @@ gboolean load_configuration(const char *file)
 
 	root = xmlDocGetRootElement(configuration);
 
-	plugin_nodes = g_hash_table_new(NULL, NULL);
 	for (cur = root->children; cur; cur = cur->next) {
 		if (cur->type != XML_ELEMENT_NODE) continue;
 
 		if (!strcmp(cur->name, "plugins")) {
-			config_load_plugins(cur);
+			config_load_plugins(cfg, cur);
 		} else if (!strcmp(cur->name, "networks")) {
-			config_load_networks(cur);
+			config_load_networks(cfg, cur);
 		}
 	}
 
-	ret = init_plugins();
-	g_hash_table_destroy(plugin_nodes); plugin_nodes = NULL;
-
 	xmlFreeDoc(configuration);
 
-	return ret & init_networks();
+	return cfg;
+}
+
+struct network_config *new_network_config(struct ctrlproxy_config *cfg) 
+{
+	struct network_config *s = g_new0(struct network_config, 1);
+
+	s->autoconnect = FALSE;
+	s->nick = g_strdup(g_get_user_name());
+	s->username = g_strdup(g_get_user_name());
+	s->fullname = g_strdup(g_get_real_name());
+	s->reconnect_interval = DEFAULT_RECONNECT_INTERVAL;
+
+	if (cfg) 
+		cfg->networks = g_list_append(cfg->networks, s);
+	return s;
+}
+
+struct plugin_config *new_plugin_config(struct ctrlproxy_config *cfg, const char *name)
+{
+	struct plugin_config *p = g_new0(struct plugin_config, 1);
+
+	p->path = g_strdup(name);
+
+	if (cfg) 
+		cfg->plugins = g_list_append(cfg->plugins, p);
+
+	return p;
 }

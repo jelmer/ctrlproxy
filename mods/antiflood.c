@@ -65,7 +65,7 @@ static gboolean log_data(struct network *network, struct line *l, enum data_dire
 	if (dir != TO_SERVER) return TRUE;
 
 	/* Assume local networks don't do flood protection */
-	if (network->connection.type != NETWORK_TCP) return TRUE;
+	if (network->config->type != NETWORK_TCP) return TRUE;
 
 	/* Get data for this server from the hash */
 	sd = g_hash_table_lookup(antiflood_servers, network);

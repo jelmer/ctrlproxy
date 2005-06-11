@@ -38,6 +38,9 @@
 GMainLoop *main_loop;
 FILE *debugfd = NULL;
 extern char my_hostname[];
+struct ctrlproxy_config *current_config = NULL;
+
+struct ctrlproxy_config *get_current_config(void) { return current_config; }
 
 void signal_crash(int sig) 
 {
@@ -71,14 +74,9 @@ void signal_crash(int sig)
 
 static void clean_exit()
 {
-	GList *gl;
-
 	kill_pending_clients("Server exiting");
 
-	while((gl = get_network_list())) {
-		struct network *n = (struct network *)gl->data;
-		close_network(n);
-	}
+	fini_networks();
 
 	if(debugfd)fclose(debugfd);
 	fini_config();
@@ -107,7 +105,7 @@ void signal_quit(int sig)
 void signal_save(int sig)
 {
 	log_global(NULL, "Received USR1 signal, saving configuration...");
-	save_configuration(NULL);
+	save_configuration(current_config, NULL);
 }
 
 void signal_save_current(int sig)
@@ -213,7 +211,7 @@ int main(int argc, const char *argv[])
 
 	if(rcfile) {
 		configuration_file = g_strdup(rcfile);
-		load_configuration(configuration_file);
+		current_config = load_configuration(configuration_file);
 	} else { 
 		const char *homedir = g_get_home_dir();
 #ifdef _WIN32
@@ -223,13 +221,18 @@ int main(int argc, const char *argv[])
 #endif
 		/* Copy configuration file from default location if none existed yet */
 		if(g_file_test(configuration_file, G_FILE_TEST_EXISTS)) {
-			load_configuration(configuration_file);
+			current_config = load_configuration(configuration_file);
 		} else {
-			load_configuration(SHAREDIR"/ctrlproxyrc.default");
+			current_config = load_configuration(SHAREDIR"/ctrlproxyrc.default");
 		}
 
 		g_free(configuration_file);
 	}
+
+	current_config->separate_processes = seperate_processes;
+
+	init_plugins(current_config);
+	init_networks(current_config);
 
 #ifdef HAVE_POPT_H
 	poptFreeContext(pc);

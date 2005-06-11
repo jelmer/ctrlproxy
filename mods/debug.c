@@ -39,7 +39,7 @@ static void dump_joined_channels(const struct client *c, char **args, void *user
 		}
 	}
 
-	gl = n->state.channels;
+	gl = n->state->channels;
 	while(gl) {
 		struct channel_state *ch = (struct channel_state *)gl->data;
 		admin_out(c, "%s", ch->name);

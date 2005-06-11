@@ -257,7 +257,7 @@ static void handle_join(struct network_state *s, struct line *l)
 			network_nick_set_hostmask(ni->global_nick, l->origin);
 
 			/* The user is joining a channel */
-			if(!irccmp(&s->info, line_get_nick(l), s->me->nick)) {
+			if(!irccmp(&s->info, line_get_nick(l), s->me.nick)) {
 				c->joined = TRUE;
 				log_network_state(s, "Joining channel %s", c->name);
 			}
@@ -286,7 +286,7 @@ static void handle_part(struct network_state *s, struct line *l)
 		c = find_channel(s, p);
 
 		/* The user is joining a channel */
-		if(!irccmp(&s->info, line_get_nick(l), s->me->nick) && c) {
+		if(!irccmp(&s->info, line_get_nick(l), s->me.nick) && c) {
 			log_network_state(s, "Leaving %s", p);
 			c->joined = FALSE;
 			free_channel(c);
@@ -351,7 +351,7 @@ static void handle_kick(struct network_state *s, struct line *l)
 			continue;
 		}
 
-		if(!g_strcasecmp(n->global_nick->nick, s->me->nick))
+		if(!g_strcasecmp(n->global_nick->nick, s->me.nick))
 			c->joined = FALSE;
 
 		c->nicks = g_list_remove(c->nicks, n);
@@ -744,13 +744,13 @@ GSList *gen_replication_network(struct network_state *s)
 			continue;
 		}
 
-		ret = g_slist_concat(ret, gen_replication_channel(c, s->me->hostmask, s->me->nick));
+		ret = g_slist_concat(ret, gen_replication_channel(c, s->me.hostmask, s->me.nick));
 
 		cl = g_list_next(cl);
 	}
 
-	if(strlen(mode2string(s->me->modes)))
-		ret = g_slist_append(ret, irc_parse_linef(":%s MODE %s +%s\r\n", s->me->hostmask, s->me->nick, mode2string(s->me->modes)));
+	if(strlen(mode2string(s->me.modes)))
+		ret = g_slist_append(ret, irc_parse_linef(":%s MODE %s +%s\r\n", s->me.hostmask, s->me.nick, mode2string(s->me.modes)));
 
 	return ret;
 }
@@ -760,14 +760,16 @@ struct linestack_context *linestack_new_by_network(struct network *n)
 	return linestack_new(NULL, NULL);
 }
 
-void init_state(struct network_state *state, const char *nick, const char *username, const char *hostname)
+struct network_state *init_state(const char *nick, const char *username, const char *hostname)
 {
+	struct network_state *state = g_new0(struct network_state, 1);
 	state->info.features = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_free);
-	state->me = g_new0(struct network_nick, 1);
-	state->me->refcount = 1;
-	network_nick_set_data(state->me, nick, username, hostname);
+	state->me.refcount = 1;
+	network_nick_set_data(&state->me, nick, username, hostname);
 
-	state->nicks = g_list_append(state->nicks, state->me);
+	state->nicks = g_list_append(state->nicks, &state->me);
+
+	return state;
 }
 
 void free_state(struct network_state *state)
@@ -777,8 +779,8 @@ void free_state(struct network_state *state)
 		free_channel((struct channel_state *)state->channels->data);
 	}
 
-	g_free(state->me->hostmask);
-	state->me->hostmask = NULL;
+	g_free(state->me.hostmask);
+	state->me.hostmask = NULL;
 
 	g_free(state->info.supported_user_modes);
 	state->info.supported_user_modes = NULL;

@@ -50,13 +50,14 @@
 #define MAXHOSTNAMELEN 4096
 
 /* server.c */
-gboolean init_networks(void);
+gboolean init_networks(struct ctrlproxy_config *cfg);
+void fini_networks(void);
 void kill_pending_clients(const char *reason);
 
 /* state.c */
 void state_handle_data(struct network_state *s, struct line *l);
 void free_channels(struct network *s);
-void init_state(struct network_state *, const char *n, const char *u, const char *h);
+struct network_state *init_state(const char *n, const char *u, const char *h);
 void free_state(struct network_state *);
 void network_nick_set_data(struct network_nick *n, const char *nick, const char *username, const char *host);
 void network_nick_set_hostmask(struct network_nick *n, const char *hm);
@@ -67,7 +68,7 @@ void init_config(void);
 void fini_config(void);
 
 /* plugins.c */
-gboolean init_plugins(void);
+gboolean init_plugins(struct ctrlproxy_config *);
 void fini_plugins(void);
 
 /* hooks.c */

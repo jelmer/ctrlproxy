@@ -122,7 +122,7 @@ static gboolean log_data(struct network *n, struct line *l, enum data_direction 
 		if(f)fprintf(f, "%02d:%02d -!- %s [%s] has left %s [%s]\n", t->tm_hour, t->tm_min, nick, user, l->args[1], l->args[2]?l->args[2]:"");
 	} else if(!g_strcasecmp(l->args[0], "PRIVMSG") && l->argc > 2) {
 		dest = l->args[1];
-		if(!irccmp(&n->state.info, dest, n->state.me->nick))dest = nick;
+		if(!irccmp(&n->state->info, dest, n->state->me.nick))dest = nick;
 		if(l->args[2][0] == '\001') { 
 			l->args[2][strlen(l->args[2])-1] = '\0';
 			if(!g_ascii_strncasecmp(l->args[2], "\001ACTION ", 8)) { 
@@ -135,12 +135,12 @@ static gboolean log_data(struct network *n, struct line *l, enum data_direction 
 			f = find_add_channel_file(n, dest);
 			if(f)fprintf(f, "%02d:%02d < %s> %s\n", t->tm_hour, t->tm_min, nick, l->args[2]);
 		}
-	} else if(!g_strcasecmp(l->args[0], "MODE") && l->args[1] && is_channelname(l->args[1], &n->state.info) && dir == FROM_SERVER) {
+	} else if(!g_strcasecmp(l->args[0], "MODE") && l->args[1] && is_channelname(l->args[1], &n->state->info) && dir == FROM_SERVER) {
 		f = find_add_channel_file(n, l->args[1]);
 		if(f)fprintf(f, "%02d:%02d -!- mode/%s [%s %s] by %s\n", t->tm_hour, t->tm_min, l->args[1], l->args[2], l->args[3], nick);
 	} else if(!g_strcasecmp(l->args[0], "QUIT")) {
 		/* Loop thru the channels this user is on */
-		GList *gl = n->state.channels;
+		GList *gl = n->state->channels;
 		while(gl) {
 			struct channel_state *c = (struct channel_state *)gl->data;
 			if(find_nick(c, nick)) {
@@ -187,7 +187,7 @@ static gboolean log_data(struct network *n, struct line *l, enum data_direction 
 		}
 	} else if(!g_strcasecmp(l->args[0], "NICK") && dir == FROM_SERVER && l->args[1]) {
 		/* Loop thru the channels this user is on */
-		GList *gl = n->state.channels;
+		GList *gl = n->state->channels;
 		while(gl) {
 			struct channel_state *c = (struct channel_state *)gl->data;
 			if(find_nick(c, nick)) {

@@ -28,7 +28,7 @@ static void admin_log(const gchar *log_domain, GLogLevelFlags log_level, const g
 	struct line *l;
 	if(!get_network_list())return;
 	n = (struct network *)get_network_list()->data;
-	l = irc_parse_linef(":ctrlproxy!ctrlproxy@%s NOTICE %s :%s", n->name, n->state.me->nick, message);
+	l = irc_parse_linef(":ctrlproxy!ctrlproxy@%s NOTICE %s :%s", n->name, n->state->me.nick, message);
 	clients_send(n, l, NULL);
 	free_line(l);
 }

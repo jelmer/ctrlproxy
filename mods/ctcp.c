@@ -80,7 +80,7 @@ static gboolean mhandle_data(struct network *n, struct line *l, enum data_direct
 		network_send_args(n, "NOTICE", dest, msg, NULL);
 		g_free(msg);
 	} else if(!g_strcasecmp(data, "FINGER")) {
-		msg = g_strdup_printf("\001FINGER %s\001", n->state.me->fullname);
+		msg = g_strdup_printf("\001FINGER %s\001", n->state->me.fullname);
 		network_send_args(n, "NOTICE", dest, msg, NULL);
 		g_free(msg);
 	} else if(!g_strcasecmp(data, "SOURCE")) {

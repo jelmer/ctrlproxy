@@ -36,7 +36,7 @@ static gboolean log_data(struct network *network, struct line *l, enum data_dire
 	if(dir == TO_SERVER &&  
 	   (!g_strcasecmp(l->args[0], "PRIVMSG") || !g_strcasecmp(l->args[0], "NOTICE"))) {
 		linestack_clear(co);
-		linestack_add_line_list( co, gen_replication_network(&network->state));
+		linestack_add_line_list( co, gen_replication_network(network->state));
 		return TRUE;
 	}
 

@@ -31,7 +31,5 @@
 /* globals */
 char my_hostname[MAXHOSTNAMELEN+2];
 
-const char *get_modules_path() { return MODULESDIR; }
-const char *get_shared_path() { return SHAREDIR; }
 const char *get_my_hostname() { return my_hostname; }
 const char *ctrlproxy_version() { return PACKAGE_VERSION; }

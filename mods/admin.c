@@ -57,11 +57,11 @@ void admin_out(const struct client *c, const char *fmt, ...)
 	va_end(ap);
 
 	hostmask = g_strdup_printf(":ctrlproxy!ctrlproxy@%s", c->network->name);
-	if (c->network->connection.type == NETWORK_VIRTUAL && 
+	if (c->network->config->type == NETWORK_VIRTUAL && 
 		!strcmp(c->network->connection.data.virtual.ops->name, "admin")) {
 		virtual_network_recv_args(c->network, hostmask+1, "PRIVMSG", ADMIN_CHANNEL, msg, NULL);
 	} else {
-		irc_send_args(c->incoming, hostmask, "NOTICE", c->network->state.me->nick, msg, NULL);
+		irc_send_args(c->incoming, hostmask, "NOTICE", c->network->state->me.nick, msg, NULL);
 	}
 	g_free(hostmask);
 
@@ -82,14 +82,15 @@ static struct network *find_network_struct(char *name)
 
 static void add_network (const struct client *c, char **args, void *userdata)
 {
-	struct network *n;
+	struct network_config *nc;
 	if(!args[1]) {
 		admin_out(c, "No name specified");
 		return;
 	}
 
-	n = new_network();
-	g_free(n->name); n->name = g_strdup(args[1]);
+	nc = new_network_config(get_current_config());
+	g_free(nc->name); nc->name = g_strdup(args[1]);
+	load_network(nc);
 }
 
 static void del_network (const struct client *c, char **args, void *userdata)
@@ -107,13 +108,13 @@ static void del_network (const struct client *c, char **args, void *userdata)
 		return;
 	}
 
-	close_network(n);
+	disconnect_network(n);
 }
 
 static void add_server (const struct client *c, char **args, void *userdata)
 {
 	struct network *n;
-	struct tcp_server *s;
+	struct tcp_server_config *s;
 
 	if(!args[1] || !args[2]) {
 		admin_out(c, "Not enough parameters");
@@ -127,12 +128,12 @@ static void add_server (const struct client *c, char **args, void *userdata)
 		return;
 	}
 
-	if (n->connection.type != NETWORK_TCP) {
+	if (n->config->type != NETWORK_TCP) {
 		admin_out(c, "Not a TCP/IP network!");
 		return;
 	}
 
-	s = g_new0(struct tcp_server, 1);
+	s = g_new0(struct tcp_server_config, 1);
 
 	s->name = g_strdup(args[2]);
 	s->host = g_strdup(args[2]);
@@ -140,7 +141,7 @@ static void add_server (const struct client *c, char **args, void *userdata)
 	s->ssl = FALSE;
 	s->password = (args[3] && args[4])?g_strdup(args[4]):NULL;
 
-	n->connection.data.tcp.servers = g_list_append(n->connection.data.tcp.servers, s);
+	n->config->type_settings.tcp_servers = g_list_append(n->config->type_settings.tcp_servers, s);
 }
 
 static void com_connect_network (const struct client *c, char **args, void *userdata)
@@ -157,15 +158,16 @@ static void com_connect_network (const struct client *c, char **args, void *user
 		admin_out(c, "Already connected to %s", args[1]);
 	} else if(s) {
 		admin_out(c, "Forcing reconnect to %s", args[1]);
-		close_server(s);
-		connect_current_tcp_server(s);
+		disconnect_network(s);
+		network_select_next_server(s);
+		connect_network(s);
 	} else {
 		admin_out(c, "Connecting to %s", args[1]);
 		connect_network(s);
 	}
 }
 
-static void disconnect_network (const struct client *c, char **args, void *userdata)
+static void com_disconnect_network (const struct client *c, char **args, void *userdata)
 {
 	struct network *n;
 	if(!args[1])n = c->network;
@@ -177,7 +179,7 @@ static void disconnect_network (const struct client *c, char **args, void *userd
 		}
 	}
 
-	close_network(n);
+	disconnect_network(n);
 }
 
 static void com_next_server (const struct client *c, char **args, void *userdata) {
@@ -194,9 +196,8 @@ static void com_next_server (const struct client *c, char **args, void *userdata
 		admin_out(c, "%s: Not connected", name);
 	} else {
 		admin_out(c, "%s: Reconnecting", name);
-		close_server(n);
-		g_log(G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "Cycle server in %s", name);
-		n->connection.data.tcp.current_server = network_get_next_tcp_server(n);
+		disconnect_network(n);
+		network_select_next_server(n);
 		connect_network(n);
 	}
 }
@@ -240,7 +241,7 @@ static void unload_module (const struct client *c, char **args, void *userdata)
 
 static void load_module (const struct client *c, char **args, void *userdata)
 { 
-	struct plugin *p;
+	struct plugin_config *p;
 	
 	if(!args[1]) { 
 		admin_out(c, "No file specified");
@@ -252,7 +253,7 @@ static void load_module (const struct client *c, char **args, void *userdata)
 		return;
 	}
 
-	p = new_plugin(args[1]);
+	p = new_plugin_config(get_current_config(), args[1]);
 
 	if (load_plugin(p)) {
 		admin_out(c, "Load successful");
@@ -268,7 +269,7 @@ static void reload_module (const struct client *c, char **args, void *userdata)
 }
 
 static void com_save_config (const struct client *c, char **args, void *userdata)
-{ save_configuration(args[1]); }
+{ save_configuration(get_current_config(), args[1]); }
 
 static void help (const struct client *c, char **args, void *userdata)
 {
@@ -440,10 +441,10 @@ static gboolean load_config(struct plugin *p, xmlNodePtr node)
 static gboolean admin_net_init(struct network *n)
 {
 	n->connection.state = NETWORK_CONNECTION_STATE_MOTD_RECVD;
-	virtual_network_recv_args(n, n->state.me->hostmask, "JOIN", ADMIN_CHANNEL, NULL);
-	virtual_network_recv_args(n, n->name, "332", n->state.me->nick, ADMIN_CHANNEL, "CtrlProxy administration channel", NULL);
-	virtual_network_recv_args(n, n->name, "353", n->state.me->nick, "=", ADMIN_CHANNEL, n->state.me->nick, NULL);
-	virtual_network_recv_args(n, n->name, "366", n->state.me->nick, ADMIN_CHANNEL, "End of /names list", NULL);
+	virtual_network_recv_args(n, n->state->me.hostmask, "JOIN", ADMIN_CHANNEL, NULL);
+	virtual_network_recv_args(n, n->name, "332", n->state->me.nick, ADMIN_CHANNEL, "CtrlProxy administration channel", NULL);
+	virtual_network_recv_args(n, n->name, "353", n->state->me.nick, "=", ADMIN_CHANNEL, n->state->me.nick, NULL);
+	virtual_network_recv_args(n, n->name, "366", n->state->me.nick, ADMIN_CHANNEL, "End of /names list", NULL);
 
 	return TRUE;
 }
@@ -482,7 +483,7 @@ static gboolean init_plugin(struct plugin *p) {
 		{ "DELNETWORK", del_network, ("<network>"), ("Remove specified network") },
 		{ "NEXTSERVER", com_next_server, ("[network]"), ("Disconnect and use to the next server in the list") },
 		{ "DIE", handle_die, "", ("Exit ctrlproxy") },
-		{ "DISCONNECT", disconnect_network, ("<network>"), ("Disconnect specified network") },
+		{ "DISCONNECT", com_disconnect_network, ("<network>"), ("Disconnect specified network") },
 		{ "LISTNETWORKS", list_networks, "", ("List current networks and their status") },
 		{ "LOADMODULE", load_module, "<name>", ("Load specified module") },
 		{ "UNLOADMODULE", unload_module, ("<name>"), ("Unload specified module") },
