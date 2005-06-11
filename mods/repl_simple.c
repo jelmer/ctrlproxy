@@ -46,7 +46,7 @@ static gboolean simple_replicate(struct client *c, void *userdata)
 {
 	linestack_marker *m = g_hash_table_lookup(simple_backlog, c->network);
 	char *initialnick = (char *)g_hash_table_lookup(simple_initialnick, c->network);
-	struct network_state *ns = linestack_get_state(c->network, lm);
+	struct network_state *ns = linestack_get_state(c->network, m);
 	client_send_state(c, ns);
 	free_network_state(ns);
 	change_nick(c, initialnick);
