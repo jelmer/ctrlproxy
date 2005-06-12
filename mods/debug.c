@@ -21,29 +21,28 @@
 #include <string.h>
 #include "admin.h"
 
-static void do_crash(char **args, struct line *l, void *userdata)
+static void do_abort(const struct client *c, char **args, void *userdata)
 {
-	char *foo = NULL;
-	*foo='a';
+	abort();
 }
 
-static void dump_joined_channels(char **args, struct line *l, void *userdata)
+static void dump_joined_channels(const struct client *c, char **args, void *userdata)
 {
-	struct network *n = l->network;
+	struct network *n = c->network;
 	GList *gl;
 
 	if(args[1]) {
 		n = find_network(args[1]);
 		if(!n) {
-			admin_out(l, ("Can't find network '%s'"), args[1]);
+			admin_out(c, "Can't find network '%s'", args[1]);
 			return;
 		}
 	}
 
 	gl = n->state.channels;
 	while(gl) {
-		struct channel_state *c = (struct channel_state *)gl->data;
-		admin_out(l, "%s", c->name);
+		struct channel_state *ch = (struct channel_state *)gl->data;
+		admin_out(c, "%s", ch->name);
 		gl = gl->next;
 	}
 }
@@ -57,7 +56,7 @@ static const struct admin_command cmd_dumpjoined = {
 };
 
 static const struct admin_command cmd_crash = {
-	"CRASH", do_crash, "", NULL, NULL
+	"ABORT", do_abort, "", NULL, NULL
 };
 
 static gboolean fini_plugin(struct plugin *p) {

@@ -26,6 +26,13 @@ struct filter_data {
 	void *userdata;
 };
 
+struct client_filter_data {
+	char *name;
+	int priority;
+	client_filter_function function;
+	void *userdata;
+};
+
 static gint filter_cmp(gconstpointer _a, gconstpointer _b)
 {
 	struct filter_data *a = (struct filter_data *)_a;
@@ -104,8 +111,34 @@ gboolean run_##n##_filter(struct line *l, enum data_direction dir)\
 
 FILTER_FUNCTIONS(log,log_filters)
 FILTER_FUNCTIONS(replication,replication_filters)
-FILTER_FUNCTIONS(client,client_filters)
 FILTER_FUNCTIONS(server,server_filters)
+
+void add_client_filter(const char *name, client_filter_function f, void *userdata, int priority)
+{
+	client_filters = add_filter_ex(client_filters, name, f, userdata, priority);
+}
+
+void del_client_filter(const char *name)
+{
+	client_filters = del_filter_ex(client_filters, name); 
+}
+
+gboolean run_client_filter(struct client *c, struct line *l, enum data_direction dir)
+{
+	GList *gl = client_filters;
+
+	while(gl) {
+		struct client_filter_data *d = (struct client_filter_data *)gl->data;
+		
+		if(!d->function(c, l, dir, d->userdata)) {
+			return FALSE;
+		}
+
+		gl = gl->next;
+	}
+	
+	return TRUE;
+}
 
 /* Hooks that are called when a client is added or removed. 
  * Very useful for replication backends */

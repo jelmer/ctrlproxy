@@ -45,50 +45,47 @@ static gboolean log_data(struct line *l, enum data_direction dir, void *userdata
 	return TRUE;
 }
 
-
 static void replicate_channel(gpointer key, gpointer val, gpointer user)
 {
 	struct linestack_context *co = (struct linestack_context *)val;
-	struct line *l = (struct line *)user;
+	struct client *c = (struct client *)user;
 
-	if(g_ascii_strncasecmp(l->network->name, key, strlen(l->network->name)))
+	if(g_ascii_strncasecmp(c->network->name, key, strlen(c->network->name)))
 		return;
 
-	linestack_send(co, l->client->incoming);
+	linestack_send(co, c->incoming);
 	linestack_clear(co);
 }
 
-;
-
-static void repl_command(char **args, struct line *l, void *userdata)
+static void repl_command(const struct client *c, char **args, void *userdata)
 {
 	struct linestack_context *co;
 	char *desc;
 
 	if(!command_backlog) { 
-		admin_out(l, ("No backlogs saved yet"));
+		admin_out(c, ("No backlogs saved yet"));
 		return;
 	}
 	
 	if(!args[1]) {
-		admin_out(l, ("Sending backlog for network '%s'"), l->network->name);
+		admin_out(c, ("Sending backlog for network '%s'"), c->network->name);
 
 		/* Backlog everything for this network */
-		g_hash_table_foreach(command_backlog, replicate_channel, l);
+		g_hash_table_foreach(command_backlog, replicate_channel, c);
 		return;
 	} 
 
 	/* Backlog for specific nick/channel */
-	admin_out(l, ("Sending backlog for channel %s@%s"), args[1], l->network->name);
-	desc = g_strdup_printf("%s/%s", l->network->name, args[1]);
+	admin_out(c, ("Sending backlog for channel %s@%s"), args[1], c->network->name);
+	desc = g_strdup_printf("%s/%s", c->network->name, args[1]);
 	co = g_hash_table_lookup(command_backlog, desc);
 	g_free(desc);
 
 	if(co)  {
-		linestack_send(co, l->client->incoming);
+		linestack_send(co, c->incoming);
 		linestack_clear(co);
 	} else {
-		admin_out(l, ("No backlog for %s"), args[1]);
+		admin_out(c, ("No backlog for %s"), args[1]);
 	}
 }
 
@@ -113,7 +110,7 @@ static gboolean init_plugin(struct plugin *p) {
 	}
 	add_replication_filter("repl_command", log_data, NULL, 1000);
 	register_admin_command(&cmd_backlog);
-	command_backlog = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, linestack_destroy);
+	command_backlog = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, (GDestroyNotify)linestack_destroy);
 	return TRUE;
 }
 

@@ -38,11 +38,11 @@ struct query {
 	int errors[20];
 	/* Should add this query to the stack. return TRUE if this has 
 	 * been done successfully, FALSE otherwise */
-	int (*handle) (struct line *, struct query *);
+	int (*handle) (struct line *, struct client *c, struct query *);
 };
 
-static int handle_default(struct line *, struct query *);
-static int handle_topic(struct line *, struct query *);
+static int handle_default(struct line *, struct client *c, struct query *);
+static int handle_topic(struct line *, struct client *c, struct query *);
 
 static struct query queries[] = {
 /* Commands that get a one-client reply: 
@@ -529,22 +529,22 @@ void redirect_record(struct client *c, struct line *l)
 	}
 
 	/* Push it up the stack! */
-	q->handle(l, q);
+	q->handle(l, c, q);
 }
 
-static int handle_default(struct line *l, struct query *q)
+static int handle_default(struct line *l, struct client *c, struct query *q)
 {
 	struct query_stack *s = g_new(struct query_stack,1);
 	s->network = l->network;
-	s->client = l->client;
+	s->client = c;
 	s->query = q;
 	s->next = stack;
 	stack = s;
 	return 1;
 }
 
-static int handle_topic(struct line *l, struct query *q)
+static int handle_topic(struct line *l, struct client *c, struct query *q)
 {
 	if(l->args[2])return 0;
-	return handle_default(l,q);
+	return handle_default(l,c,q);
 }

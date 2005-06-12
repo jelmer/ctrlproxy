@@ -7,7 +7,7 @@
 #define G_MODULE_EXPORT
 #endif
 
-typedef void (*admin_command_handler) (char **, struct line *, void *userdata);
+typedef void (*admin_command_handler) (const struct client *c, char **, void *userdata);
 struct admin_command {
 	char *name;
 	admin_command_handler handler;
@@ -18,7 +18,7 @@ struct admin_command {
 
 G_MODULE_EXPORT void register_admin_command(const struct admin_command *cmd);
 G_MODULE_EXPORT void unregister_admin_command(const struct admin_command *cmd);
-G_MODULE_EXPORT void admin_out(struct line *l, const char *fmt, ...);
+G_MODULE_EXPORT void admin_out(const struct client *c, const char *fmt, ...);
 
 #if defined(_WIN32) && !defined(ADMIN_CORE_BUILD)
 #pragma comment(lib,"libadmin.lib")

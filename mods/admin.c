@@ -47,7 +47,7 @@ static gboolean without_privmsg = FALSE;
 static GList *commands = NULL;
 static guint longest_command = 0;
 
-void admin_out(struct line *l, const char *fmt, ...)
+void admin_out(const struct client *c, const char *fmt, ...)
 {
 	va_list ap;
 	char *msg;
@@ -56,13 +56,12 @@ void admin_out(struct line *l, const char *fmt, ...)
 	msg = g_strdup_vprintf(fmt, ap);
 	va_end(ap);
 
-	hostmask = g_strdup_printf(":ctrlproxy!ctrlproxy@%s", l->network->name);
-	if (l->network->connection.type == NETWORK_VIRTUAL && 
-		!strcmp(l->network->connection.data.virtual.ops->name, "admin") &&
-		!strcmp(l->args[1], ADMIN_CHANNEL)) {
-		virtual_network_recv_args(l->network, hostmask+1, "PRIVMSG", ADMIN_CHANNEL, msg, NULL);
+	hostmask = g_strdup_printf(":ctrlproxy!ctrlproxy@%s", c->network->name);
+	if (c->network->connection.type == NETWORK_VIRTUAL && 
+		!strcmp(c->network->connection.data.virtual.ops->name, "admin")) {
+		virtual_network_recv_args(c->network, hostmask+1, "PRIVMSG", ADMIN_CHANNEL, msg, NULL);
 	} else {
-		irc_send_args(l->client->incoming, hostmask, "NOTICE", l->network->state.me->nick, msg, NULL);
+		irc_send_args(c->incoming, hostmask, "NOTICE", c->network->state.me->nick, msg, NULL);
 	}
 	g_free(hostmask);
 
@@ -81,11 +80,11 @@ static struct network *find_network_struct(char *name)
 	return NULL;
 }
 
-static void add_network (char **args, struct line *l, void *userdata)
+static void add_network (const struct client *c, char **args, void *userdata)
 {
 	struct network *n;
 	if(!args[1]) {
-		admin_out(l, "No name specified");
+		admin_out(c, "No name specified");
 		return;
 	}
 
@@ -93,43 +92,43 @@ static void add_network (char **args, struct line *l, void *userdata)
 	g_free(n->name); n->name = g_strdup(args[1]);
 }
 
-static void del_network (char **args, struct line *l, void *userdata)
+static void del_network (const struct client *c, char **args, void *userdata)
 {
 	struct network *n;
 
 	if(!args[1]) {
-		admin_out(l, "Not enough parameters");
+		admin_out(c, "Not enough parameters");
 		return;
 	}
 
 	n = find_network_struct(args[1]);
 	if (!n) {
-		admin_out(l, "No such network %s", args[1]);
+		admin_out(c, "No such network %s", args[1]);
 		return;
 	}
 
 	close_network(n);
 }
 
-static void add_server (char **args, struct line *l, void *userdata)
+static void add_server (const struct client *c, char **args, void *userdata)
 {
 	struct network *n;
 	struct tcp_server *s;
 
 	if(!args[1] || !args[2]) {
-		admin_out(l, "Not enough parameters");
+		admin_out(c, "Not enough parameters");
 		return;
 	}
 
 	n = find_network_struct(args[1]);
 
 	if (!n) {
-		admin_out(l, "No such network '%s'", args[1]);
+		admin_out(c, "No such network '%s'", args[1]);
 		return;
 	}
 
 	if (n->connection.type != NETWORK_TCP) {
-		admin_out(l, "Not a TCP/IP network!");
+		admin_out(c, "Not a TCP/IP network!");
 		return;
 	}
 
@@ -144,36 +143,36 @@ static void add_server (char **args, struct line *l, void *userdata)
 	n->connection.data.tcp.servers = g_list_append(n->connection.data.tcp.servers, s);
 }
 
-static void com_connect_network (char **args, struct line *l, void *userdata)
+static void com_connect_network (const struct client *c, char **args, void *userdata)
 {
 	struct network *s;
 	if(!args[1]) {
-		 admin_out(l, "No network specified");
+		 admin_out(c, "No network specified");
 		 return;
 	}
 
 	s = find_network_struct(args[1]);
 
 	if(s && s->reconnect_id == 0) {
-		admin_out(l, "Already connected to %s", args[1]);
+		admin_out(c, "Already connected to %s", args[1]);
 	} else if(s) {
-		admin_out(l, "Forcing reconnect to %s", args[1]);
+		admin_out(c, "Forcing reconnect to %s", args[1]);
 		close_server(s);
 		connect_current_tcp_server(s);
 	} else {
-		admin_out(l, "Connecting to %s", args[1]);
+		admin_out(c, "Connecting to %s", args[1]);
 		connect_network(s);
 	}
 }
 
-static void disconnect_network (char **args, struct line *l, void *userdata)
+static void disconnect_network (const struct client *c, char **args, void *userdata)
 {
 	struct network *n;
-	if(!args[1])n = l->network;
+	if(!args[1])n = c->network;
 	else {
 		n = find_network_struct(args[1]);
 		if(!n) {
-			admin_out(l, "Can't find active network with that name");
+			admin_out(c, "Can't find active network with that name");
 			return;
 		}
 	}
@@ -181,20 +180,20 @@ static void disconnect_network (char **args, struct line *l, void *userdata)
 	close_network(n);
 }
 
-static void com_next_server (char **args, struct line *l, void *userdata) {
+static void com_next_server (const struct client *c, char **args, void *userdata) {
 	struct network *n;
 	const char *name;
 	if(args[1] != NULL) {
 		name = args[1];
 		n = find_network_struct(args[1]);
 	} else {
-		n = l->network;
+		n = c->network;
 		name = n->name;
 	}
 	if(!n) {
-		admin_out(l, "%s: Not connected", name);
+		admin_out(c, "%s: Not connected", name);
 	} else {
-		admin_out(l, "%s: Reconnecting", name);
+		admin_out(c, "%s: Reconnecting", name);
 		close_server(n);
 		g_log(G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "Cycle server in %s", name);
 		n->connection.data.tcp.current_server = network_get_next_tcp_server(n);
@@ -202,27 +201,27 @@ static void com_next_server (char **args, struct line *l, void *userdata) {
 	}
 }
 
-static void list_modules (char **args, struct line *l, void *userdata)
+static void list_modules (const struct client *c, char **args, void *userdata)
 {
 	GList *g = get_plugin_list();
 	while(g) {
 		struct plugin *p = (struct plugin *)g->data;
-		admin_out(l, "%s", p->ops->name);
+		admin_out(c, "%s", p->ops->name);
 		g = g->next;
 	}
 }
 
-static void unload_module (char **args, struct line *l, void *userdata)
+static void unload_module (const struct client *c, char **args, void *userdata)
 {
 	GList *g = get_plugin_list();
 
 	if(!args[1]) {
-		admin_out(l, "Not enough arguments");
+		admin_out(c, "Not enough arguments");
 		return;
 	}
 
 	if(!strcmp(args[1], "admin")) {
-		admin_out(l, "Can't unload /this/ module");
+		admin_out(c, "Can't unload /this/ module");
 		return;
 	}
 
@@ -236,42 +235,42 @@ static void unload_module (char **args, struct line *l, void *userdata)
 		g = g->next;
 	}
 
-	admin_out(l, "No such plugin loaded");
+	admin_out(c, "No such plugin loaded");
 }
 
-static void load_module (char **args, struct line *l, void *userdata)
+static void load_module (const struct client *c, char **args, void *userdata)
 { 
 	struct plugin *p;
 	
 	if(!args[1]) { 
-		admin_out(l, "No file specified");
+		admin_out(c, "No file specified");
 		return;
 	}
 
-    	if(plugin_loaded(args[1])) {
-		admin_out(l, "Module already loaded");
+   	if(plugin_loaded(args[1])) {
+		admin_out(c, "Module already loaded");
 		return;
 	}
 
 	p = new_plugin(args[1]);
 
 	if (load_plugin(p)) {
-		admin_out(l, "Load successful");
+		admin_out(c, "Load successful");
 	} else {
-		admin_out(l, "Load failed");
+		admin_out(c, "Load failed");
 	}
 }
 
-static void reload_module (char **args, struct line *l, void *userdata)
+static void reload_module (const struct client *c, char **args, void *userdata)
 {
-	unload_module(args, l, NULL);
-	load_module(args, l, NULL);
+	unload_module(c, args, NULL);
+	load_module(c, args, NULL);
 }
 
-static void com_save_config (char **args, struct line *l, void *userdata)
+static void com_save_config (const struct client *c, char **args, void *userdata)
 { save_configuration(args[1]); }
 
-static void help (char **args, struct line *l, void *userdata)
+static void help (const struct client *c, char **args, void *userdata)
 {
 	GList *gl = commands;
 	char *tmp;
@@ -279,9 +278,9 @@ static void help (char **args, struct line *l, void *userdata)
 	int i;
 
 	if(args[1]) {
-		admin_out(l, "Details for command %s:", args[1]);
+		admin_out(c, "Details for command %s:", args[1]);
 	} else {
-		admin_out(l, ("The following commands are available:"));
+		admin_out(c, ("The following commands are available:"));
 	}
 	while(gl) {
 		struct admin_command *cmd = (struct admin_command *)gl->data;
@@ -290,50 +289,49 @@ static void help (char **args, struct line *l, void *userdata)
 				if(cmd->help_details != NULL) {
 					details = g_strsplit(cmd->help_details, "\n", 0);
 					for(i = 0; details[i] != NULL; i++) {
-						admin_out(l, details[i]);
+						admin_out(c, details[i]);
 					}
 					return;
 				} else {
-					admin_out(l, ("Sorry, no help for %s available"), args[1]);
+					admin_out(c, "Sorry, no help for %s available", args[1]);
 				}
 			}
 		} else {
 			if(cmd->help != NULL) {
 				tmp = g_strdup_printf("%s%s     %s",cmd->name,g_strnfill(longest_command - strlen(cmd->name),' '),cmd->help);
-				admin_out(l, tmp);
+				admin_out(c, tmp);
 				g_free(tmp);
 			} else {
-				admin_out(l, cmd->name);
+				admin_out(c, cmd->name);
 			}
 		}
 		gl = gl->next;
 	}
 	if(args[1]) {
-		admin_out(l, ("Unknown command"));
+		admin_out(c, "Unknown command");
 	}
 }
 
-static void list_networks(char **args, struct line *l, void *userdata)
+static void list_networks(const struct client *c, char **args, void *userdata)
 {
 	GList *gl = get_network_list();
 	while(gl) {
 		struct network *n = gl->data;
 
-		if(!n) admin_out(l, ("%s: Not connected"), n->name);
-		else if(n->reconnect_id) admin_out(l, ("%s: Reconnecting"), n->name);
-		else admin_out(l, ("%s: connected"), n->name);
+		if(!n) admin_out(c, ("%s: Not connected"), n->name);
+		else if(n->reconnect_id) admin_out(c, ("%s: Reconnecting"), n->name);
+		else admin_out(c, ("%s: connected"), n->name);
 
 		gl = gl->next;
 	}
 }
 
-static void detach_client(char **args, struct line *l, void *userdata)
+static void detach_client(const struct client *c, char **args, void *userdata)
 {
-	disconnect_client(l->client, "Client exiting");
-	l->client = NULL;
+	disconnect_client(c, "Client exiting");
 }
 
-static void handle_die(char **args, struct line *l, void *userdata)
+static void handle_die(const struct client *c, char **args, void *userdata)
 {
 	exit(0);
 }
@@ -349,14 +347,14 @@ void unregister_admin_command(const struct admin_command *cmd)
 	commands = g_list_remove(commands, cmd);
 }
 
-static gboolean process_command(struct line *l, int cmdoffset)
+static gboolean process_command(const struct client *c, struct line *l, int cmdoffset)
 {
 	char *tmp, **args = NULL;
 	int i;
 	GList *gl;
 
 	if(!l->args[cmdoffset]) {
-		admin_out(l, ("Please give a command. Use the 'help' command to get a list of available commands"));
+		admin_out(c, "Please give a command. Use the 'help' command to get a list of available commands");
 		return TRUE;
 	}
 
@@ -379,7 +377,7 @@ static gboolean process_command(struct line *l, int cmdoffset)
 	while(gl) {
 		struct admin_command *cmd = (struct admin_command *)gl->data;
 		if(!g_strcasecmp(cmd->name, args[0])) {
-			cmd->handler(args, l, cmd->userdata);
+			cmd->handler(c, args, cmd->userdata);
 			g_strfreev(args);
 			g_free(tmp);
 			return TRUE;
@@ -387,7 +385,7 @@ static gboolean process_command(struct line *l, int cmdoffset)
 		gl = gl->next;
 	}
 
-	admin_out(l, ("Can't find command '%s'. Type 'help' for a list of available commands. "), args[0]);
+	admin_out(c, ("Can't find command '%s'. Type 'help' for a list of available commands. "), args[0]);
 
 	g_strfreev(args);
 	g_free(tmp);
@@ -395,7 +393,7 @@ static gboolean process_command(struct line *l, int cmdoffset)
 	return TRUE;
 }
 
-static gboolean handle_data(struct line *l, enum data_direction dir, void *userdata) {
+static gboolean handle_data(struct client *c, struct line *l, enum data_direction dir, void *userdata) {
 	int cmdoffset = 0;
 
 	if(dir != TO_SERVER) 
@@ -409,7 +407,7 @@ static gboolean handle_data(struct line *l, enum data_direction dir, void *userd
 	if(cmdoffset == 0) 
 		return TRUE;
 
-	process_command(l, cmdoffset);
+	process_command(c, l, cmdoffset);
 
 	return TRUE;
 }
@@ -450,7 +448,7 @@ static gboolean admin_net_init(struct network *n)
 	return TRUE;
 }
 
-static gboolean admin_to_server (struct network *n, struct line *l)
+static gboolean admin_to_server (struct network *n, const struct client *c, struct line *l)
 {
 	if (strcmp(l->args[0], "PRIVMSG"))
 		return TRUE;
@@ -459,7 +457,7 @@ static gboolean admin_to_server (struct network *n, struct line *l)
 		return TRUE;
 	}
 
-	return process_command(l, 2);
+	return process_command(c, l, 2);
 }
 
 struct virtual_network_ops admin_network = {

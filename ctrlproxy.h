@@ -63,7 +63,6 @@ enum line_options {
 struct line {
 	enum line_options options;
 	struct network *network;
-	struct client *client;
 	char *origin;
 	char **args; /* NULL terminated */
 	size_t argc;
@@ -177,7 +176,7 @@ struct network_connection {
 			struct virtual_network_ops {
 				char *name;
 				gboolean (*init) (struct network *);
-				gboolean (*to_server) (struct network *, struct line *);
+				gboolean (*to_server) (struct network *, const struct client *c, struct line *);
 				gboolean (*fini) (struct network *);
 			} *ops;
 		} virtual;
@@ -260,11 +259,11 @@ G_MODULE_EXPORT gboolean connect_current_tcp_server (struct network *);
 G_MODULE_EXPORT int close_network(struct network *s);
 G_MODULE_EXPORT gboolean close_server(struct network *n);
 G_MODULE_EXPORT GList *get_network_list(void);
-G_MODULE_EXPORT void clients_send(struct network *, struct line *, struct client *exception);
+G_MODULE_EXPORT void clients_send(struct network *, struct line *, const struct client *exception);
 G_MODULE_EXPORT void disconnect_client(struct client *c, const char *reason);
 G_MODULE_EXPORT gboolean network_change_nick(struct network *s, const char *nick);
 G_MODULE_EXPORT struct client *new_client(struct network *, GIOChannel *, const char *desc);
-G_MODULE_EXPORT gboolean network_send_line(struct network *s, const struct line *);
+G_MODULE_EXPORT gboolean network_send_line(struct network *s, const struct client *c, const struct line *);
 G_MODULE_EXPORT gboolean network_send_args(struct network *s, ...);
 G_MODULE_EXPORT void register_virtual_network(struct virtual_network_ops *);
 G_MODULE_EXPORT void unregister_virtual_network(struct virtual_network_ops *);
@@ -350,7 +349,8 @@ G_MODULE_EXPORT void del_log_filter(const char *name);
 G_MODULE_EXPORT void add_replication_filter(const char *name, filter_function, void *userdata, int priority);
 G_MODULE_EXPORT void del_replication_filter(const char *name);
 
-G_MODULE_EXPORT void add_client_filter(const char *name, filter_function, void *userdata, int priority);
+typedef gboolean (*client_filter_function) (struct client *c, struct line *, enum data_direction, void *userdata);
+G_MODULE_EXPORT void add_client_filter(const char *name, client_filter_function, void *userdata, int priority);
 G_MODULE_EXPORT void del_client_filter(const char *name);
 
 G_MODULE_EXPORT void add_server_filter(const char *name, filter_function, void *userdata, int priority);

@@ -36,22 +36,22 @@ static void client_send_banlist(struct client *client, struct channel_state *cha
 	client_send_response(client, RPL_ENDOFBANLIST, "End of channel ban list", NULL);
 }
 
-static gboolean client_try_cache_join(struct line *l)
+static gboolean client_try_cache_join(struct client *c, struct line *l)
 {
-	struct channel_state *c;
+	struct channel_state *ch;
 
 	/* Only optimize easy queries :-) */
 	if (strchr(l->args[1], ',')) return FALSE;
 		
-	c = find_channel(&l->client->network->state, l->args[1]);
-	return (c && c->joined);
+	ch = find_channel(&c->network->state, l->args[1]);
+	return (ch && ch->joined);
 }
 
-static gboolean client_try_cache_mode(struct line *l)
+static gboolean client_try_cache_mode(struct client *c, struct line *l)
 {
 	int i;
 	char m;
-	struct channel_state *c;
+	struct channel_state *ch;
 
 	/* Only optimize easy queries... */
 	if (strchr(l->args[1], ',')) return FALSE;
@@ -59,12 +59,12 @@ static gboolean client_try_cache_mode(struct line *l)
 	/* Only queries in the form of MODE #channel mode */
 	if (l->argc != 3) return FALSE; 
 
-	c = find_channel(&l->client->network->state, l->args[1]);
-	if (!c) return FALSE;
+	ch = find_channel(&c->network->state, l->args[1]);
+	if (!ch) return FALSE;
 
 	for (i = 0; (m = l->args[2][i]); i++) {
 		switch (m) {
-		case 'b': client_send_banlist(l->client, c); break;
+		case 'b': client_send_banlist(c, ch); break;
 		default: return FALSE;
 		}
 	}
@@ -72,36 +72,36 @@ static gboolean client_try_cache_mode(struct line *l)
 	return TRUE;
 }
 
-static gboolean client_try_cache_who(struct line *l)
+static gboolean client_try_cache_who(struct client *c, struct line *l)
 {
-	struct channel_state *c;
+	struct channel_state *ch;
 	
 	/* Only optimize easy queries... */
 	if (strchr(l->args[1], ',')) return FALSE;
 
 	if (l->argc != 2) return FALSE;
 
-	c = find_channel(&l->client->network->state, l->args[1]);
-	if (!c) return FALSE;
+	ch = find_channel(&c->network->state, l->args[1]);
+	if (!ch) return FALSE;
 
 	return FALSE; /* FIXME */
 }
 
 /* Try to answer a client query from cache */
-gboolean client_try_cache(struct line *l)
+gboolean client_try_cache(struct client *c, struct line *l)
 {
 	if (l->argc == 0) return TRUE;
 
 	if (!g_strcasecmp(l->args[0], "JOIN")) {
-		return client_try_cache_join(l);
+		return client_try_cache_join(c, l);
 	}
 	
 	if (!g_strcasecmp(l->args[0], "MODE")) {
-		return client_try_cache_mode(l);
+		return client_try_cache_mode(c, l);
 	}
 
 	if (!g_strcasecmp(l->args[0], "WHO")) {
-		return client_try_cache_who(l);
+		return client_try_cache_who(c, l);
 	}
 
 	return FALSE;

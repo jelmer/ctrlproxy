@@ -539,21 +539,8 @@ static void handle_mode(struct network_state *s, struct line *l)
 	enum mode_type t = ADD;
 	int i;
 
-	/* We only care about channel modes and our own mode */
-
-	/* Own nick is being changed */
-	if(!strcmp(l->args[1], s->me->nick)) {
-		for(i = 0; l->args[2][i]; i++) {
-			switch(l->args[2][i]) {
-				case '+': t = ADD;break;
-				case '-': t = REMOVE; break;
-				default:
-					  s->me->modes[(unsigned char)l->args[2][i]] = t;
-					  break;
-			}
-		}
-
-	} else if(is_channelname(l->args[1], &l->network->state.info)) {
+	/* Channel modes */
+	if(is_channelname(l->args[1], &l->network->state.info)) {
 		struct channel_state *c = find_channel(s, l->args[1]);
 		struct channel_nick *n;
 		char p;
@@ -605,6 +592,19 @@ static void handle_mode(struct network_state *s, struct line *l)
 							}
 							n->mode = (t == ADD?p:' ');
 					  }
+					  break;
+			}
+		}
+		/* User modes */
+	} else {
+		struct network_nick *nn = find_add_network_nick(s, l->args[1]);
+
+		for(i = 0; l->args[2][i]; i++) {
+			switch(l->args[2][i]) {
+				case '+': t = ADD;break;
+				case '-': t = REMOVE; break;
+				default:
+					  nn->modes[(unsigned char)l->args[2][i]] = t;
 					  break;
 			}
 		}
@@ -732,9 +732,7 @@ void state_handle_data(struct network_state *s, struct line *l)
 			return;
 		}
 	}
-	return;
 }
-
 
 GSList *gen_replication_channel(struct channel_state *c, const char *hostmask, const char *nick)
 {

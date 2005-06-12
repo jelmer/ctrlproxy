@@ -240,7 +240,7 @@ static gboolean load_config(struct plugin *p, xmlNodePtr node)
 
 static gboolean init_plugin(struct plugin *p)
 {
-	files = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, fclose);
+	files = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, (GDestroyNotify)fclose);
 	add_log_filter("log_irssi", log_data, NULL, 1000);
 	return TRUE;
 }

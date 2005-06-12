@@ -75,7 +75,7 @@ void server_connected_hook_execute(struct network *);
 char **get_motd_lines(struct network *n);
 gboolean new_client_hook_execute(struct client *c);
 void lose_client_hook_execute(struct client *c);
-gboolean run_client_filter(struct line *l, enum data_direction dir);
+gboolean run_client_filter(struct client *c, struct line *l, enum data_direction dir);
 gboolean run_server_filter(struct line *l, enum data_direction dir);
 gboolean run_log_filter(struct line *l, enum data_direction dir);
 gboolean run_replication_filter(struct line *l, enum data_direction dir);
@@ -89,6 +89,6 @@ void redirect_record(struct client *c, struct line *l);
 void redirect_response(struct network *n, struct line *l);
 
 /* cache.c */
-gboolean client_try_cache(struct line *l);
+gboolean client_try_cache(struct client *c, struct line *l);
 
 #endif /* __INTERNALS_H__ */

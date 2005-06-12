@@ -23,7 +23,7 @@
 
 static char *format = NULL;
 
-static gboolean report_time(struct line *l, void *userdata)
+static gboolean report_time(struct line *l, enum data_direction d, void *userdata)
 {
 	/* Loop thru all channels on all servers */
 	char stime[512];

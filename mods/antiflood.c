@@ -46,7 +46,7 @@ static gboolean send_queue(gpointer user_data) {
 	while (sd->tv_last_message < now && (d = g_queue_pop_tail(sd->message_queue))) {
 		struct line *l = (struct line *)d;
 
-		network_send_line(l->network, l);
+		network_send_line(l->network, NULL, l);
 
 		free_line(l);
 		

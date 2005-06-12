@@ -77,39 +77,39 @@ static char *network_generate_feature_string(struct network *n)
 	return ret;
 }
 
-static gboolean process_from_client(struct line *l)
+static gboolean process_from_client(struct client *c, struct line *l)
 {
-	l->origin = g_strdup(l->client->network->state.me->hostmask);
+	l->origin = g_strdup(c->network->state.me->hostmask);
 
-	if (!run_client_filter(l, TO_SERVER)) 
+	if (!run_client_filter(c, l, TO_SERVER)) 
 		return TRUE;
 
 	if(!g_strcasecmp(l->args[0], "QUIT")) {
-		disconnect_client(l->client, "Client exiting");
+		disconnect_client(c, "Client exiting");
 		return FALSE;
 	} else if(!g_strcasecmp(l->args[0], "PING")) {
-		client_send_args(l->client, "PONG", l->network->name, l->args[1], NULL);
+		client_send_args(c, "PONG", l->network->name, l->args[1], NULL);
 	} else if(!g_strcasecmp(l->args[0], "PONG")) {
 		if (l->argc < 2) {
-			client_send_response(l->client, ERR_NEEDMOREPARAMS, l->args[0], "Not enough parameters", NULL);
+			client_send_response(c, ERR_NEEDMOREPARAMS, l->args[0], "Not enough parameters", NULL);
 			return TRUE;
 		}
-		l->client->last_pong = time(NULL);
+		c->last_pong = time(NULL);
 	} else if(!g_strcasecmp(l->args[0], "USER") ||
 			  !g_strcasecmp(l->args[0], "PASS")) {
-		client_send_response(l->client, ERR_ALREADYREGISTERED,  
+		client_send_response(c, ERR_ALREADYREGISTERED,  
 						 "Please register only once per session", NULL);
-	} else if(l->client->network->connection.state == NETWORK_CONNECTION_STATE_MOTD_RECVD) {
-		gboolean from_cache = client_try_cache(l);
+	} else if(c->network->connection.state == NETWORK_CONNECTION_STATE_MOTD_RECVD) {
+		gboolean from_cache = client_try_cache(c, l);
 
 		if (!from_cache) {
-			redirect_record(l->client, l);
+			redirect_record(c, l);
 			/* FIXME: Check for validity of input ? */
-			network_send_line(l->client->network, l);
+			network_send_line(c->network, c, l);
 		}
-	} else if(l->client->network->connection.state == NETWORK_CONNECTION_STATE_NOT_CONNECTED) {
-		client_send_args(l->client, "NOTICE", l->client->nick?l->client->nick:l->client->network->state.me->nick, "Currently not connected to server, connecting...", NULL);
-		connect_network(l->client->network);
+	} else if(c->network->connection.state == NETWORK_CONNECTION_STATE_NOT_CONNECTED) {
+		client_send_args(c, "NOTICE", c->nick?c->nick:c->network->state.me->nick, "Currently not connected to server, connecting...", NULL);
+		connect_network(c->network);
 	}
 
 	return TRUE;
@@ -250,10 +250,9 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition cond, void *_c
 			return TRUE;
 		}
 
-		l->client = client;
 		l->network = client->network;
 
-		ret = process_from_client(l);
+		ret = process_from_client(client, l);
 
 		free_line(l);
 

@@ -87,7 +87,7 @@ static gboolean process_from_server(struct line *l)
 
 			newl = irc_parse_line(data);
 
-			network_send_line(l->network, newl);
+			network_send_line(l->network, NULL, newl);
 
 			free_line(newl);
 		}
@@ -181,28 +181,26 @@ struct tcp_server *network_get_next_tcp_server(struct network *n)
 	return NULL;
 }
 
-gboolean network_send_line(struct network *s, const struct line *ol)
+gboolean network_send_line(struct network *s, const struct client *c, const struct line *ol)
 {
 	struct line l = *ol;
 	struct line *lc;
 
-	l.origin = NULL;		/* Never send origin to the server */
 	l.network = s;
 
 	if (!run_server_filter(&l, TO_SERVER))
 		return TRUE;
-	lc = linedup(&l); lc->origin = g_strdup(s->state.me->hostmask);
-	run_log_filter(lc, TO_SERVER); free_line(lc);
+
+	run_log_filter(lc = linedup(&l), TO_SERVER); free_line(lc);
 	run_replication_filter(lc = linedup(&l), TO_SERVER); free_line(lc);
 
 	/* Also write this message to all other clients currently connected */
 	if(!(l.options & LINE_IS_PRIVATE) && l.args[0] &&
 	   (!strcmp(l.args[0], "PRIVMSG") || !strcmp(l.args[0], "NOTICE"))) {
-		char *old_origin;
-		old_origin = l.origin; l.origin = s->nick;
-		clients_send(s, &l, l.client);
-		l.origin = old_origin;
+		clients_send(s, &l, c);
 	}
+
+	l.origin = NULL;		/* Never send origin to the server */
 
 	switch (s->connection.type) {
 	case NETWORK_TCP:
@@ -214,7 +212,7 @@ gboolean network_send_line(struct network *s, const struct line *ol)
 	case NETWORK_VIRTUAL:
 		if (!s->connection.data.virtual.ops) 
 			return FALSE;
-		return s->connection.data.virtual.ops->to_server(s, &l);
+		return s->connection.data.virtual.ops->to_server(s, c, &l);
 
 	default:
 		g_assert(0);
@@ -258,7 +256,7 @@ gboolean network_send_args(struct network *s, ...)
 	l = virc_parse_line(NULL, ap);
 	va_end(ap);
 
-	ret = network_send_line(s, l);
+	ret = network_send_line(s, NULL, l);
 
 	free_line(l);
 
@@ -435,13 +433,13 @@ gboolean close_server(struct network *n)
 	return TRUE;
 }
 
-void clients_send(struct network *server, struct line *l, struct client *exception) 
+void clients_send(struct network *server, struct line *l, const struct client *exception) 
 {
 	GList *g;
 	for (g = server->clients; g; g = g->next) {
 		struct client *c = (struct client *)g->data;
 		if(c != exception) {
-			if(run_client_filter(l, FROM_SERVER)) { 
+			if(run_client_filter(c, l, FROM_SERVER)) { 
 				client_send_line(c, l);
 			}
 		}

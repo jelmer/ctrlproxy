@@ -110,6 +110,11 @@ void signal_save(int sig)
 	save_configuration(NULL);
 }
 
+void signal_save_current(int sig)
+{
+	log_global(NULL, "Received USR2 signal, saving current configuration...");
+}
+
 int main(int argc, const char *argv[])
 {
 	int isdaemon = 0;
