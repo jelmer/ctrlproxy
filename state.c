@@ -47,7 +47,7 @@ static void free_nick(struct channel_nick *n)
 		if(n->global_nick->hostmask != NULL)
 			g_free(n->global_nick->hostmask);
 		g_free(n->global_nick->nick);
-		n->channel->network->nicks = g_list_remove(n->channel->network->nicks, n->global_nick);
+		n->channel->network->state.nicks = g_list_remove(n->channel->network->state.nicks, n->global_nick);
 		g_free(n->global_nick);
 	}
 	g_free(n);
@@ -104,21 +104,21 @@ static void free_channel(struct channel *c)
 	g_free(c->name);
 	g_free(c->topic);
 	g_free(c->key);
-	c->network->channels = g_list_remove(c->network->channels, c);
+	c->network->state.channels = g_list_remove(c->network->state.channels, c);
 	g_free(c);
 }
 
 void free_channels(struct network *s)
 {
-	while(s->channels)
+	while(s->state.channels)
 	{
-		free_channel((struct channel *)s->channels->data);
+		free_channel((struct channel *)s->state.channels->data);
 	}
 }
 
 struct channel *find_channel(struct network *st, const char *name)
 {
-	GList *cl = st->channels;
+	GList *cl = st->state.channels;
 	while(cl) {
 		struct channel *c = (struct channel *)cl->data;
 		if(!irccmp(st, c->name, name)) return c;
@@ -133,7 +133,7 @@ struct channel *find_add_channel(struct network *st, char *name) {
 	c = g_new(struct channel,1);
 	memset(c, 0, sizeof(struct channel));
 	c->network = st;
-	st->channels = g_list_append(st->channels, c);
+	st->state.channels = g_list_append(st->state.channels, c);
 	c->name = g_strdup(name);
 
 	return c;
@@ -156,7 +156,7 @@ struct channel_nick *find_nick(struct channel *c, const char *name) {
 
 static struct network_nick *find_add_network_nick(struct network *n, char *name)
 {
-	GList *gl = n->nicks;
+	GList *gl = n->state.nicks;
 	struct network_nick *nd;
 
 	/* search for a existing global object*/
@@ -176,7 +176,7 @@ static struct network_nick *find_add_network_nick(struct network *n, char *name)
 	nd->hostmask = NULL;
 	nd->channels = NULL;
 	
-	n->nicks = g_list_append(n->nicks, nd);
+	n->state.nicks = g_list_append(n->state.nicks, nd);
 	return nd;
 }
 
@@ -515,7 +515,7 @@ static void handle_end_who(struct network *s, struct line *l) {
 }
 
 static void handle_quit(struct network *s, struct line *l) {
-	GList *g = s->channels;
+	GList *g = s->state.channels;
 	if(!line_get_nick(l))return;
 	while(g) {
 		struct channel *c = (struct channel *)g->data;
@@ -609,8 +609,8 @@ static void handle_mode(struct network *s, struct line *l)
 
 static void handle_004(struct network *s, struct line *l)
 {
-	s->supports.modes[0] = g_strdup(l->args[4]);
-	s->supports.modes[1] = g_strdup(l->args[5]);
+	s->state.info.supported_user_modes = g_strdup(l->args[4]);
+	s->state.info.supported_channel_modes = g_strdup(l->args[5]);
 
 	/* Make sure the current server is listed as a possible 
 	 * one for this network */
@@ -652,7 +652,7 @@ static void handle_004(struct network *s, struct line *l)
 
 static void handle_nick(struct network *s, struct line *l)
 {
-	GList *g = s->channels;
+	GList *g = s->state.channels;
 
 	/* Server confirms messages client sends, so let's only handle those */
 	if(!l->args[1] || !line_get_nick(l)) return;
@@ -795,7 +795,7 @@ GSList *gen_replication_network(struct network *s)
 	GList *cl;
 	struct channel *c;
 	GSList *ret = NULL;
-	cl = s->channels;
+	cl = s->state.channels;
 
 	while(cl) {
 		c = (struct channel *)cl->data;

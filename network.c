@@ -93,7 +93,7 @@ static gboolean process_from_server(struct line *l)
 		}
 
 		/* Rejoin channels */
-		for (gl = l->network->channels; gl; gl = gl->next) 
+		for (gl = l->network->state.channels; gl; gl = gl->next) 
 		{
 			struct channel *c = gl->data;
 			if(c->autojoin) {
@@ -383,7 +383,7 @@ static void reconnect(struct network *server, gboolean rm_source)
 
 	server->connection.state = NETWORK_CONNECTION_STATE_NOT_CONNECTED;
 	
-	for (gl = server->channels; gl; gl = gl->next) {
+	for (gl = server->state.channels; gl; gl = gl->next) {
 		struct channel *c = gl->data;
 		c->joined = FALSE;
 	}
@@ -399,8 +399,6 @@ static void reconnect(struct network *server, gboolean rm_source)
 
 gboolean close_server(struct network *n) 
 {
-	int i;
-
 	if(n->connection.state == NETWORK_CONNECTION_STATE_RECONNECT_PENDING) {
 		g_source_remove(n->reconnect_id);
 		n->connection.state = NETWORK_CONNECTION_STATE_NOT_CONNECTED;
@@ -433,15 +431,14 @@ gboolean close_server(struct network *n)
 	g_free(n->me.hostmask);
 	n->me.hostmask = NULL;
 
-	for(i = 0; i < 2; i++) {
-		if(n->supports.modes[i]) {
-			g_free(n->supports.modes[i]);
-			n->supports.modes[i] = NULL;
-		}
-	}
+	g_free(n->state.info.supported_user_modes);
+	n->state.info.supported_user_modes = NULL;
 
-	g_hash_table_destroy(n->supports.features);
-	n->supports.features = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_free);
+	g_free(n->state.info.supported_channel_modes);
+	n->state.info.supported_channel_modes = NULL;
+
+	g_hash_table_destroy(n->state.info.features);
+	n->state.info.features = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_free);
 
 	n->connection.state = NETWORK_CONNECTION_STATE_NOT_CONNECTED;
 
@@ -469,7 +466,7 @@ struct network *new_network()
 	s->me.nick = g_strdup(g_get_user_name());
 	s->me.username = g_strdup(g_get_user_name());
 	s->me.fullname = g_strdup(g_get_real_name());
-	s->supports.features = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_free);
+	s->state.info.features = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_free);
 
 	s->reconnect_interval = DEFAULT_RECONNECT_INTERVAL;
 
@@ -612,7 +609,7 @@ int close_network(struct network *s)
 	g_free(s->password);
 	g_free(s->name);
 
-	g_hash_table_destroy(s->supports.features);
+	g_hash_table_destroy(s->state.info.features);
 
 	free_channels(s);
 

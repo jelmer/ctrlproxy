@@ -108,7 +108,7 @@ static xmlNodePtr config_save_networks()
 		default:break;
 		}
 		
-		for (gl1 = n->channels; gl1; gl1 = gl1->next) {
+		for (gl1 = n->state.channels; gl1; gl1 = gl1->next) {
 			struct channel *c = gl1->data;
 			xmlNodePtr x = xmlNewNode(NULL, "channel");
 			xmlSetProp(x, "name", c->name);
@@ -237,7 +237,7 @@ static void config_load_channel(struct network *n, xmlNodePtr root)
 	
 	ch->network = n;
 
-	n->channels = g_list_append(n->channels, ch);
+	n->state.channels = g_list_append(n->state.channels, ch);
 }
 
 static void config_load_servers(struct network *n, xmlNodePtr root)

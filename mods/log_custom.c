@@ -377,7 +377,7 @@ static void file_write_channel_query(const char *n, struct line *l)
 	}
 	
 	/* now, loop thru the channels and check if the user is there */
-	gl = l->network->channels;
+	gl = l->network->state.channels;
 	while(gl) {
 		struct channel *c = (struct channel *)gl->data;
 		if(find_nick(c, nick)) {

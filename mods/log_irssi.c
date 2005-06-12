@@ -140,7 +140,7 @@ static gboolean log_data(struct line *l, enum data_direction dir, void *userdata
 		if(f)fprintf(f, "%02d:%02d -!- mode/%s [%s %s] by %s\n", t->tm_hour, t->tm_min, l->args[1], l->args[2], l->args[3], nick);
 	} else if(!g_strcasecmp(l->args[0], "QUIT")) {
 		/* Loop thru the channels this user is on */
-		GList *gl = l->network->channels;
+		GList *gl = l->network->state.channels;
 		while(gl) {
 			struct channel *c = (struct channel *)gl->data;
 			if(find_nick(c, nick)) {
@@ -187,7 +187,7 @@ static gboolean log_data(struct line *l, enum data_direction dir, void *userdata
 		}
 	} else if(!g_strcasecmp(l->args[0], "NICK") && dir == FROM_SERVER && l->args[1]) {
 		/* Loop thru the channels this user is on */
-		GList *gl = l->network->channels;
+		GList *gl = l->network->state.channels;
 		while(gl) {
 			struct channel *c = (struct channel *)gl->data;
 			if(find_nick(c, nick)) {

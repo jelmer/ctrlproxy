@@ -184,6 +184,25 @@ struct network_connection {
 	} data;
 };
 
+struct network_info
+{
+	char *name;
+	GHashTable *features;
+	char *supported_user_modes;
+	char *supported_channel_modes;
+	enum casemapping casemapping;
+	int channellen;
+	int nicklen;
+	int topiclen;
+};
+
+struct network_state 
+{
+	GList *channels;
+	GList *nicks;
+	struct network_nick *me;
+	struct network_info info;
+};
 
 struct network {
 	char *name;
@@ -191,23 +210,13 @@ struct network {
 	char *password;
 	gboolean autoconnect;
 	gboolean ignore_first_nick;
-	GList *channels;
-	GList *nicks;
 	GList *clients;
 	GList *autosend_lines;
 	guint reconnect_id;
 	gboolean name_guessed;
 	guint reconnect_interval;
 
-	struct {
-		GHashTable *features;
-		char *modes[2];
-		enum casemapping casemapping;
-		int channellen;
-		int nicklen;
-		int topiclen;
-	} supports;
-
+	struct network_state state;
 	struct network_connection connection;
 };
 
