@@ -57,6 +57,8 @@ sinclude(mods/nss/config.m4)
 sinclude(mods/openssl/config.m4)
 sinclude(mods/gnutls/config.m4)
 sinclude(mods/python2/config.m4)
+sinclude(doc/config.m4)
+AC_CONFIG_FILES(doc/Makefile.settings)
 
 # Checks for header files.
 AC_HEADER_DIRENT
