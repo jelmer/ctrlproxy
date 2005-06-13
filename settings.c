@@ -43,16 +43,9 @@ static xmlNodePtr config_save_plugins(GList *plugins)
 
 	for (gl = plugins; gl; gl = gl->next) {
 		struct plugin_config *p = gl->data;
-		xmlNodePtr n = xmlNewNode(NULL, "plugin");
 
-		xmlSetProp(n, "autoload", p->autoload?"1":"0");
-		xmlSetProp(n, "file", p->path);
-		
-/*FIXME		if (p->ops->save_config) {
-			p->ops->save_config(p, n);
-		}*/
 
-		xmlAddChild(ret, n);
+		xmlAddChild(ret, p->node);
 	}
 
 	return ret;
@@ -394,4 +387,55 @@ struct plugin_config *new_plugin_config(struct ctrlproxy_config *cfg, const char
 		cfg->plugins = g_list_append(cfg->plugins, p);
 
 	return p;
+}
+
+void free_config(struct ctrlproxy_config *cfg)
+{
+	while (cfg->plugins) {
+		struct plugin_config *pc = cfg->plugins->data;		
+		g_free(pc->path);
+		xmlFreeNode(pc->node);
+		cfg->plugins = g_list_remove(cfg->plugins, pc);
+		g_free(pc);
+	}
+
+	while (cfg->networks) {
+		struct network_config *nc = cfg->networks->data;
+		g_free(nc->name);
+		g_free(nc->nick);
+		g_free(nc->fullname);
+		g_free(nc->username);
+		g_free(nc->password);
+		while (nc->channels) {
+			struct channel_config *cc = nc->channels->data;
+			g_free(cc->name);
+			g_free(cc->key);
+			nc->channels = g_list_remove(nc->channels, cc);	
+			g_free(cc);
+		}
+		switch (nc->type) {
+		case NETWORK_TCP: 
+			while (nc->type_settings.tcp_servers) {
+				struct tcp_server_config *tc = nc->type_settings.tcp_servers->data;
+				g_free(tc->name);
+				g_free(tc->host);
+				g_free(tc->port);
+				g_free(tc->password);
+				nc->type_settings.tcp_servers = g_list_remove(nc->type_settings.tcp_servers, tc);
+				g_free(tc);
+			}
+			break;
+		case NETWORK_VIRTUAL:
+			g_free(nc->type_settings.virtual_type);
+			break;
+		case NETWORK_PROGRAM:
+			g_free(nc->type_settings.program_location);
+			break;
+		}
+		cfg->networks = g_list_remove(cfg->networks, nc);
+		g_free(nc);
+	}
+	g_free(cfg->modules_path);
+	g_free(cfg->shared_path);
+	g_free(cfg);
 }

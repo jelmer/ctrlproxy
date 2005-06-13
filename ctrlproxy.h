@@ -61,7 +61,8 @@ G_MODULE_EXPORT int verify_client(struct network *s, struct client *c);
 G_MODULE_EXPORT char *ctrlproxy_path(char *part);
 G_MODULE_EXPORT int strrfc1459cmp(const char *a, const char *b);
 
-G_MODULE_EXPORT void set_sslize_function (GIOChannel *(*) (GIOChannel *));
+G_MODULE_EXPORT void set_sslize_function (GIOChannel *(*) (GIOChannel *, gboolean));
+G_MODULE_EXPORT GIOChannel *sslize (GIOChannel *orig, gboolean server);
 
 /* log.c */
 void log_network(const char *module, const struct network *, const char *fmt, ...);

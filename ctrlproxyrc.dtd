@@ -61,3 +61,4 @@
 <!ATTLIST listen port CDATA #IMPLIED>
 <!ATTLIST listen password CDATA #IMPLIED>
 <!ATTLIST listen network CDATA #IMPLIED>
+<!ATTLIST listen ssl CDATA #IMPLIED>

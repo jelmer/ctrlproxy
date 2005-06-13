@@ -20,7 +20,7 @@
 #include "internals.h"
 #include "irc.h"
 
-static GIOChannel * (*sslize_function) (GIOChannel *);
+static GIOChannel * (*sslize_function) (GIOChannel *, gboolean);
 
 static GList *networks = NULL;
 
@@ -300,11 +300,6 @@ static gboolean connect_current_tcp_server(struct network *s)
 		}
 
 		ioc = g_io_channel_unix_new(sock);
-		g_io_channel_set_close_on_unref(ioc, TRUE);
-
-		g_io_channel_set_flags(ioc, G_IO_FLAG_NONBLOCK, NULL);
-		g_io_channel_set_encoding(ioc, NULL, NULL);
-
 		if (connect(sock, res->ai_addr, res->ai_addrlen) < 0 && errno != EINPROGRESS) {
 			g_io_channel_unref(ioc);
 			ioc = NULL;
@@ -330,16 +325,23 @@ static gboolean connect_current_tcp_server(struct network *s)
 	s->connection.data.tcp.namelen = getsockname(sock, s->connection.data.tcp.local_name, &size);
 	getpeername(sock, s->connection.data.tcp.remote_name, &size);
 
-	s->connection.data.tcp.outgoing = ioc;
-
 	if (cs->ssl) {
-		if (!sslize_function) {
+		GIOChannel *nio = sslize(ioc, FALSE);
+
+		if (!nio) {
 			log_network(NULL, s, "SSL enabled for %s:%s, but no SSL support loaded", cs->host, cs->port);
 		} else {
-			s->connection.data.tcp.outgoing = sslize_function(s->connection.data.tcp.outgoing);
+			ioc = nio;
 		}
 	}
 
+	g_io_channel_set_close_on_unref(ioc, TRUE);
+
+	g_io_channel_set_flags(ioc, G_IO_FLAG_NONBLOCK, NULL);
+	g_io_channel_set_encoding(ioc, NULL, NULL);
+
+	s->connection.data.tcp.outgoing = ioc;
+	
 	s->connection.data.tcp.outgoing_id = g_io_add_watch(s->connection.data.tcp.outgoing, G_IO_IN | G_IO_HUP | G_IO_ERR, handle_server_receive, s);
 
 	g_io_channel_unref(s->connection.data.tcp.outgoing);
@@ -656,9 +658,20 @@ gboolean load_networks(struct ctrlproxy_config *cfg)
 
 GList *get_network_list() { return networks; }
 
-void set_sslize_function (GIOChannel * (*f) (GIOChannel *)) 
+void set_sslize_function (GIOChannel * (*f) (GIOChannel *, gboolean)) 
 {
 	sslize_function = f;
+}
+
+GIOChannel *sslize (GIOChannel *orig, gboolean server)
+{
+	if (!sslize_function)
+		return NULL;
+
+	g_io_channel_set_close_on_unref(orig, TRUE);
+	g_io_channel_set_encoding(orig, NULL, NULL);
+
+	return sslize_function(orig, server);
 }
 
 struct network *find_network(const char *name)

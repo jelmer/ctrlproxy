@@ -24,6 +24,27 @@
 #include "internals.h"
 #include "irc.h"
 
+static void client_send_nameslist(struct client *client, struct channel_state *channel)
+{
+	GList *gl;
+	char cmode[2] = { channel->mode, 0 };
+	for (gl = channel->nicks; gl; gl = gl->next)
+	{
+		struct channel_nick *cn = gl->data;
+		char *tmp;
+		if (cn->mode) {
+			tmp = g_strdup_printf("%c%s", cn->mode, cn->global_nick->nick);
+		} else {
+			tmp = g_strdup(cn->global_nick->nick);
+		}
+		client_send_response(client, RPL_NAMREPLY, cmode, channel->name, tmp, NULL);
+		g_free(tmp);
+	}
+
+	client_send_response(client, RPL_ENDOFNAMES, "End of /NAMES list", NULL);
+}
+
+
 static void client_send_banlist(struct client *client, struct channel_state *channel)
 {
 	GList *gl;
@@ -40,6 +61,8 @@ static gboolean client_try_cache_join(struct client *c, struct line *l)
 {
 	struct channel_state *ch;
 
+	if (l->argc < 2) return FALSE;
+
 	/* Only optimize easy queries :-) */
 	if (strchr(l->args[1], ',')) return FALSE;
 		
@@ -53,6 +76,8 @@ static gboolean client_try_cache_mode(struct client *c, struct line *l)
 	char m;
 	struct channel_state *ch;
 
+	if (l->argc < 2) return FALSE;
+	
 	/* Only optimize easy queries... */
 	if (strchr(l->args[1], ',')) return FALSE;
 		
@@ -72,9 +97,11 @@ static gboolean client_try_cache_mode(struct client *c, struct line *l)
 	return TRUE;
 }
 
-static gboolean client_try_cache_who(struct client *c, struct line *l)
+static gboolean client_try_cache_names(struct client *c, struct line *l)
 {
 	struct channel_state *ch;
+
+	if (l->argc < 2) return FALSE;
 	
 	/* Only optimize easy queries... */
 	if (strchr(l->args[1], ',')) return FALSE;
@@ -84,7 +111,9 @@ static gboolean client_try_cache_who(struct client *c, struct line *l)
 	ch = find_channel(c->network->state, l->args[1]);
 	if (!ch) return FALSE;
 
-	return FALSE; /* FIXME */
+	client_send_nameslist(c, ch);
+
+	return TRUE;
 }
 
 /* Try to answer a client query from cache */
@@ -100,8 +129,8 @@ gboolean client_try_cache(struct client *c, struct line *l)
 		return client_try_cache_mode(c, l);
 	}
 
-	if (!g_strcasecmp(l->args[0], "WHO")) {
-		return client_try_cache_who(c, l);
+	if (!g_strcasecmp(l->args[0], "NAMES")) {
+		return client_try_cache_names(c, l);
 	}
 
 	return FALSE;

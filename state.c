@@ -759,6 +759,11 @@ void free_network_state(struct network_state *state)
 
 	state->nicks = g_list_remove(state->nicks, &state->me);
 
+	g_free(state->me.nick);
+	g_free(state->me.username);
+	g_free(state->me.hostname);
+	g_free(state->me.hostmask);
+
 	while(state->nicks) 
 	{
 		struct network_nick *nn = state->nicks->data;

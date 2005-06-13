@@ -79,11 +79,13 @@ static void clean_exit()
 	fini_networks();
 
 	if(debugfd)fclose(debugfd);
+	g_main_loop_quit(main_loop);
+
 	fini_config();
 	fini_linestack();
 	fini_plugins();
 
-	g_main_loop_quit(main_loop);
+	free_config(current_config);
 
 	g_main_loop_unref(main_loop);
 	fini_log();

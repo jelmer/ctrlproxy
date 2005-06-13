@@ -8,7 +8,8 @@
 #endif
 
 struct listener {
-	gboolean active;
+	int active:1;
+	int ssl:1;
 	guint16 port;
 	GIOChannel *incoming;
 	gint incoming_id;

@@ -422,7 +422,6 @@ static void handle_464(struct network *n, struct line *l)
 	log_network(NULL, n, "Password mismatch");
 }
 
-
 /* List of responses that should be sent to all clients */
 static int response_all[] = { RPL_NOWAWAY, RPL_UNAWAY, 0 };
 static int response_none[] = { ERR_NOMOTD, RPL_ENDOFMOTD, 0 };

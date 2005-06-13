@@ -88,6 +88,15 @@ static gboolean handle_new_client(GIOChannel *c_server, GIOCondition condition, 
 
 	c = g_io_channel_unix_new(accept(g_io_channel_unix_get_fd(c_server), NULL, 0));
 
+	if (listener->ssl) {
+		GIOChannel *nio = sslize(c, TRUE);
+		if (!nio) {
+			log_global("listener", "SSL support not available, not listening for SSL connection");
+		} else {
+			c = nio;
+		}
+	}
+
 	g_io_channel_set_close_on_unref(c, TRUE);
 	g_io_add_watch(c, G_IO_IN, handle_client_receive, listener);
 
@@ -136,6 +145,8 @@ gboolean start_listener(struct listener *l)
 	}
 
 	g_io_channel_set_close_on_unref(l->incoming, TRUE);
+
+	g_io_channel_set_encoding(l->incoming, NULL, NULL);
 	l->incoming_id = g_io_add_watch(l->incoming, G_IO_IN, handle_new_client, l);
 	g_io_channel_unref(l->incoming);
 
@@ -188,6 +199,9 @@ static gboolean save_config(struct plugin *p, xmlNodePtr conf)
 		if (l->network) 
 			xmlSetProp(n, "network", l->network->name);
 
+		if (l->ssl) 
+			xmlSetProp(n, "ssl", "1");
+
 		xmlAddChild(conf, n);
 	}
 
@@ -209,6 +223,8 @@ static gboolean load_config(struct plugin *p, xmlNodePtr conf)
 		xmlFree(tmp);
 
 		l->password = xmlGetProp(cur, "password");
+		if (xmlHasProp(cur, "ssl")) 
+			l->ssl = 1;
 
 		if (xmlHasProp(cur, "network")) {
 			tmp = xmlGetProp(cur, "network");

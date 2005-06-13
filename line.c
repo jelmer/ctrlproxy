@@ -294,7 +294,7 @@ struct line *linedup(const struct line *l)
 
 GIOStatus irc_recv_line(GIOChannel *c, GError **error, struct line **l)
 {
-	gchar *raw;
+	gchar *raw = NULL;
 	GIOStatus status;
 	*l = NULL;
 
