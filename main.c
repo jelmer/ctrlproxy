@@ -231,8 +231,8 @@ int main(int argc, const char *argv[])
 
 	current_config->separate_processes = seperate_processes;
 
-	init_plugins(current_config);
 	init_networks(current_config);
+	init_plugins(current_config);
 
 #ifdef HAVE_POPT_H
 	poptFreeContext(pc);

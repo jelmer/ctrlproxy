@@ -154,14 +154,6 @@ static gboolean validate_config(xmlDocPtr configuration)
 	return ret;
 }
 
-gboolean plugin_load_config(struct plugin *p) 
-{
-	if (!p->ops->load_config) 
-		return TRUE;
-
-	return p->ops->load_config(p, p->config->node);
-}
-
 void init_config()
 {
 	dtd = xmlParseDTD(DTD_URL, DTD_FILE);

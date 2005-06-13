@@ -68,18 +68,6 @@ void admin_out(const struct client *c, const char *fmt, ...)
 	g_free(msg);
 }
 
-static struct network *find_network_struct(char *name)
-{
-	GList *g = get_network_list();
-	while(g) {
-		struct network *n = (struct network *)g->data;
-		if(n->name && !strcmp(n->name, name)) 
-			return n;
-		g = g->next;
-	}
-	return NULL;
-}
-
 static void add_network (const struct client *c, char **args, void *userdata)
 {
 	struct network_config *nc;
@@ -102,7 +90,7 @@ static void del_network (const struct client *c, char **args, void *userdata)
 		return;
 	}
 
-	n = find_network_struct(args[1]);
+	n = find_network(args[1]);
 	if (!n) {
 		admin_out(c, "No such network %s", args[1]);
 		return;
@@ -121,7 +109,7 @@ static void add_server (const struct client *c, char **args, void *userdata)
 		return;
 	}
 
-	n = find_network_struct(args[1]);
+	n = find_network(args[1]);
 
 	if (!n) {
 		admin_out(c, "No such network '%s'", args[1]);
@@ -152,7 +140,7 @@ static void com_connect_network (const struct client *c, char **args, void *user
 		 return;
 	}
 
-	s = find_network_struct(args[1]);
+	s = find_network(args[1]);
 
 	if(s && s->reconnect_id == 0) {
 		admin_out(c, "Already connected to %s", args[1]);
@@ -172,7 +160,7 @@ static void com_disconnect_network (const struct client *c, char **args, void *u
 	struct network *n;
 	if(!args[1])n = c->network;
 	else {
-		n = find_network_struct(args[1]);
+		n = find_network(args[1]);
 		if(!n) {
 			admin_out(c, "Can't find active network with that name");
 			return;
@@ -187,7 +175,7 @@ static void com_next_server (const struct client *c, char **args, void *userdata
 	const char *name;
 	if(args[1] != NULL) {
 		name = args[1];
-		n = find_network_struct(args[1]);
+		n = find_network(args[1]);
 	} else {
 		n = c->network;
 		name = n->name;

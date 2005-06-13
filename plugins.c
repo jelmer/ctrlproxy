@@ -66,7 +66,6 @@ struct plugin *load_plugin(struct plugin_config *pc)
 	const char *modulesdir;
 	struct plugin_ops *ops = NULL;
 	struct plugin *p = g_new0(struct plugin, 1);
-	extern gboolean plugin_load_config(struct plugin *);
 	gchar *path_name = NULL;
 	int i;
 
@@ -125,8 +124,12 @@ struct plugin *load_plugin(struct plugin_config *pc)
 		return NULL;
 	}
 
-	if(!plugin_load_config(p)) {
-		log_global(NULL, "Error loading configuration for plugin '%s'", pc->path);
+	if (p->ops->load_config && p->config->node) {
+		if (!p->ops->load_config(p, p->config->node)) {
+			log_global(NULL, "Error loading configuration for plugin '%s'", pc->path);
+			g_free(p);
+			return NULL;
+		}
 	}
 
 	plugins = g_list_append(plugins, p);

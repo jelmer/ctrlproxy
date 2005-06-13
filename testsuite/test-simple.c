@@ -227,6 +227,7 @@ static int test_quit_error(void)
 static int test_ping(void)
 {
 	GIOChannel *fd = new_conn_loggedin("bla");
+	if (!fd) return -1;
 	irc_send_args(fd, "PING", "bla", NULL);
 	if (!wait_response(fd, "PONG")) {
 		g_io_channel_unref(fd);
@@ -239,15 +240,16 @@ static int test_ping(void)
 static int test_selfmessage(void)
 {
 	GIOChannel *fd = new_conn_loggedin("bla");
+	if (!fd) return -1;
 	irc_send_args(fd, "PRIVMSG", "bla", "MyMessage", NULL);
 	do { 
 		struct line *l = wait_response(fd, "PRIVMSG");
 		
-		if (!l) {
+		if (!l || l->argc < 3) {
 			g_io_channel_unref(fd);
 			return -1;
 		}
-		
+
 		if (!g_strcasecmp(l->args[1], "bla") && 
 			!strcmp(l->args[2], "MyMessage")) {
 			g_io_channel_unref(fd);
