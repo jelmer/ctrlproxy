@@ -209,6 +209,7 @@ int run_test(struct torture_test *test)
 }
 
 void simple_init(void);
+void random_init(void);
 
 int main(int argc, const char *argv[])
 {
@@ -250,6 +251,7 @@ int main(int argc, const char *argv[])
 	args = poptGetArgs(pc);
 
 	simple_init();
+	random_init();
 
 	for (gl = tests; gl; gl = gl->next) {
 		if (run_test(gl->data)) 

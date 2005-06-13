@@ -6,7 +6,7 @@ CFLAGS+=-ansi -Wall -DMODULESDIR=\"$(modulesdir)\"
 
 all: ircdtorture
 
-ircdtorture: ircdtorture.o test-simple.o ../line.o
+ircdtorture: ircdtorture.o test-simple.o ../line.o test-random.o
 	$(CC) $(LIBS) -o $@ $^ 
 
 torture: ircdtorture
