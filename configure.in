@@ -60,6 +60,9 @@ sinclude(mods/python2/config.m4)
 sinclude(doc/config.m4)
 AC_CONFIG_FILES(doc/Makefile.settings)
 
+AC_SUBST(EXTRA_INSTALL_TARGETS)
+test -f doc/most && EXTRA_INSTALL_TARGETS="install-doc"
+
 # Checks for header files.
 AC_HEADER_DIRENT
 AC_HEADER_STDC

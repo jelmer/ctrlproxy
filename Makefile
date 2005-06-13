@@ -11,8 +11,7 @@ SUBDIRS = mods scripts
 all: $(BINS) $(SUBDIRS)
 
 $(SUBDIRS):
-	$(MAKE) -C $@ all
-
+	$(MAKE) -C $@
 
 mods/static.o: Makefile.settings
 	$(MAKE) -C mods static.o
@@ -29,7 +28,7 @@ configure: autogen.sh configure.in acinclude.m4 $(wildcard mods/*/*.m4)
 ctrlproxy.pc Makefile.settings: configure Makefile.settings.in ctrlproxy.pc.in
 	./$<
 
-install: all install-dirs install-doc install-bin install-mods install-data install-pkgconfig install-scripts
+install: all install-dirs install-bin install-mods install-data install-pkgconfig install-scripts $(EXTRA_INSTALL_TARGETS)
 install-dirs:
 	$(INSTALL) -d $(DESTDIR)$(bindir)
 	$(INSTALL) -d $(DESTDIR)$(man1dir)
