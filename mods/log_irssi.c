@@ -122,7 +122,7 @@ static gboolean log_data(struct line *l, enum data_direction dir, void *userdata
 		if(f)fprintf(f, "%02d:%02d -!- %s [%s] has left %s [%s]\n", t->tm_hour, t->tm_min, nick, user, l->args[1], l->args[2]?l->args[2]:"");
 	} else if(!g_strcasecmp(l->args[0], "PRIVMSG") && l->argc > 2) {
 		dest = l->args[1];
-		if(!irccmp(l->network, dest, l->network->state.me->nick))dest = nick;
+		if(!irccmp(&l->network->state.info, dest, l->network->state.me->nick))dest = nick;
 		if(l->args[2][0] == '\001') { 
 			l->args[2][strlen(l->args[2])-1] = '\0';
 			if(!g_ascii_strncasecmp(l->args[2], "\001ACTION ", 8)) { 
@@ -135,14 +135,14 @@ static gboolean log_data(struct line *l, enum data_direction dir, void *userdata
 			f = find_add_channel_file(l->network, dest);
 			if(f)fprintf(f, "%02d:%02d < %s> %s\n", t->tm_hour, t->tm_min, nick, l->args[2]);
 		}
-	} else if(!g_strcasecmp(l->args[0], "MODE") && l->args[1] && is_channelname(l->args[1], l->network) && dir == FROM_SERVER) {
+	} else if(!g_strcasecmp(l->args[0], "MODE") && l->args[1] && is_channelname(l->args[1], &l->network->state.info) && dir == FROM_SERVER) {
 		f = find_add_channel_file(l->network, l->args[1]);
 		if(f)fprintf(f, "%02d:%02d -!- mode/%s [%s %s] by %s\n", t->tm_hour, t->tm_min, l->args[1], l->args[2], l->args[3], nick);
 	} else if(!g_strcasecmp(l->args[0], "QUIT")) {
 		/* Loop thru the channels this user is on */
 		GList *gl = l->network->state.channels;
 		while(gl) {
-			struct channel *c = (struct channel *)gl->data;
+			struct channel_state *c = (struct channel_state *)gl->data;
 			if(find_nick(c, nick)) {
 				f = find_channel_file(l->network, c->name);
 				if(f)fprintf(f, "%02d:%02d -!- %s [%s] has quit [%s]\n", t->tm_hour, t->tm_min, nick, user, l->args[1]?l->args[1]:"");
@@ -189,7 +189,7 @@ static gboolean log_data(struct line *l, enum data_direction dir, void *userdata
 		/* Loop thru the channels this user is on */
 		GList *gl = l->network->state.channels;
 		while(gl) {
-			struct channel *c = (struct channel *)gl->data;
+			struct channel_state *c = (struct channel_state *)gl->data;
 			if(find_nick(c, nick)) {
 				f = find_channel_file(l->network, nick);
 				if(f)fprintf(f, "%02d:%02d -!- %s is now known as %s\n", t->tm_hour, t->tm_min, nick, l->args[1]);

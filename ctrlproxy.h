@@ -72,7 +72,7 @@ struct line {
 
 struct channel_nick {
 	char mode;
-	struct channel *channel;
+	struct channel_state *channel;
 	struct network_nick *global_nick;
 };
 
@@ -93,7 +93,7 @@ struct banlist_entry {
 	time_t time_set;
 };
 
-struct channel {
+struct channel_state {
 	char *name;
 	char *key;
 	char *topic;
@@ -111,7 +111,7 @@ struct channel {
 	GList *banlist;
 	GList *invitelist;
 	GList *exceptlist;
-	struct network *network;
+	struct network_state *network;
 };
 
 struct client {
@@ -239,16 +239,16 @@ struct plugin {
 };
 
 /* state.c */
-G_MODULE_EXPORT struct channel *find_channel(struct network *st, const char *name);
-G_MODULE_EXPORT struct channel_nick *find_nick(struct channel *c, const char *name);
+G_MODULE_EXPORT struct channel_state *find_channel(struct network *st, const char *name);
+G_MODULE_EXPORT struct channel_nick *find_nick(struct channel_state *c, const char *name);
 G_MODULE_EXPORT struct linestack_context *linestack_new_by_network(struct network *);
 G_MODULE_EXPORT GSList *gen_replication_network(struct network *s);
-G_MODULE_EXPORT GSList *gen_replication_channel(struct channel *c, const char *hostmask, const char *nick);
-G_MODULE_EXPORT int is_channelname(const char *name, struct network *s);
-G_MODULE_EXPORT int is_prefix(char p, struct network *n);
-G_MODULE_EXPORT char get_prefix_by_mode(char p, struct network *n);
-G_MODULE_EXPORT const char *get_network_feature(struct network *n, const char *name);
-G_MODULE_EXPORT int irccmp(struct network *n, const char *a, const char *b);
+G_MODULE_EXPORT GSList *gen_replication_channel(struct channel_state *c, const char *hostmask, const char *nick);
+G_MODULE_EXPORT int is_channelname(const char *name, struct network_info *s);
+G_MODULE_EXPORT int is_prefix(char p, struct network_info *n);
+G_MODULE_EXPORT char get_prefix_by_mode(char p, struct network_info *n);
+G_MODULE_EXPORT const char *get_network_feature(struct network_info *n, const char *name);
+G_MODULE_EXPORT int irccmp(struct network_info *n, const char *a, const char *b);
 G_MODULE_EXPORT struct network_nick *line_get_network_nick(struct line *l);
 
 /* server.c */

@@ -24,7 +24,7 @@
 #include "internals.h"
 #include "irc.h"
 
-static void client_send_banlist(struct client *client, struct channel *channel)
+static void client_send_banlist(struct client *client, struct channel_state *channel)
 {
 	GList *gl;
 	for (gl = channel->banlist; gl; gl = gl->next)
@@ -38,7 +38,7 @@ static void client_send_banlist(struct client *client, struct channel *channel)
 
 static gboolean client_try_cache_join(struct line *l)
 {
-	struct channel *c;
+	struct channel_state *c;
 
 	/* Only optimize easy queries :-) */
 	if (strchr(l->args[1], ',')) return FALSE;
@@ -51,7 +51,7 @@ static gboolean client_try_cache_mode(struct line *l)
 {
 	int i;
 	char m;
-	struct channel *c;
+	struct channel_state *c;
 
 	/* Only optimize easy queries... */
 	if (strchr(l->args[1], ',')) return FALSE;
@@ -74,7 +74,7 @@ static gboolean client_try_cache_mode(struct line *l)
 
 static gboolean client_try_cache_who(struct line *l)
 {
-	struct channel *c;
+	struct channel_state *c;
 	
 	/* Only optimize easy queries... */
 	if (strchr(l->args[1], ',')) return FALSE;

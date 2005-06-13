@@ -95,7 +95,7 @@ static gboolean process_from_server(struct line *l)
 		/* Rejoin channels */
 		for (gl = l->network->state.channels; gl; gl = gl->next) 
 		{
-			struct channel *c = gl->data;
+			struct channel_state *c = gl->data;
 			if(c->autojoin) {
 				network_send_args(l->network, "JOIN", c->name, c->key, NULL);
 			} 
@@ -384,7 +384,7 @@ static void reconnect(struct network *server, gboolean rm_source)
 	server->connection.state = NETWORK_CONNECTION_STATE_NOT_CONNECTED;
 	
 	for (gl = server->state.channels; gl; gl = gl->next) {
-		struct channel *c = gl->data;
+		struct channel_state *c = gl->data;
 		c->joined = FALSE;
 	}
 

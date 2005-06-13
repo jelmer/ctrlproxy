@@ -314,7 +314,7 @@ static void file_write_target(const char *n, struct line *l)
 	fmt = g_hash_table_lookup(fmts, n);
 	if(!fmt) return;
 
-	if(!irccmp(l->network, l->network->state.me->nick, l->args[1])) {
+	if(!irccmp(&l->network->state.info, l->network->state.me->nick, l->args[1])) {
 		if(line_get_nick(l)) { t = g_strdup(line_get_nick(l)); }
 		else { t = g_strdup("_messages_"); }
 	} else {
@@ -379,7 +379,7 @@ static void file_write_channel_query(const char *n, struct line *l)
 	/* now, loop thru the channels and check if the user is there */
 	gl = l->network->state.channels;
 	while(gl) {
-		struct channel *c = (struct channel *)gl->data;
+		struct channel_state *c = (struct channel_state *)gl->data;
 		if(find_nick(c, nick)) {
 			f = find_add_channel_file(l, c->name);
 			if(f) {
@@ -430,7 +430,8 @@ static gboolean log_custom_data(struct line *l, enum data_direction dir, void *u
 		}
 	} else if(!g_strcasecmp(l->args[0], "NOTICE")) {
 		file_write_target("notice", l);
-	} else if(!g_strcasecmp(l->args[0], "MODE") && l->args[1] && is_channelname(l->args[1], l->network) && dir == FROM_SERVER) {
+	} else if(!g_strcasecmp(l->args[0], "MODE") && l->args[1] && 
+			  is_channelname(l->args[1], &l->network->state.info) && dir == FROM_SERVER) {
 		file_write_target("mode", l);
 	} else if(!g_strcasecmp(l->args[0], "QUIT")) {
 		file_write_channel_query("quit", l);

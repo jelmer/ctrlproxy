@@ -62,15 +62,15 @@ gboolean network_supports(struct network *n, const char *fe)
 	return g_hash_table_lookup_extended (n->state.info.features, fe, &k, &v);
 }
 
-const char *get_network_feature(struct network *n, const char *name)
+const char *get_network_feature(struct network_info *n, const char *name)
 {
 	if(!n) return NULL;
-	return g_hash_table_lookup(n->state.info.features, name);
+	return g_hash_table_lookup(n->features, name);
 }
 
-int irccmp(struct network *n, const char *a, const char *b)
+int irccmp(struct network_info *n, const char *a, const char *b)
 {
-	switch(n->state.info.casemapping) {
+	switch(n->casemapping) {
 	default:
 	case CASEMAP_UNKNOWN:
 	case CASEMAP_RFC1459:
@@ -85,7 +85,7 @@ int irccmp(struct network *n, const char *a, const char *b)
 	return 0;
 }
 
-int is_channelname(const char *name, struct network *n)
+int is_channelname(const char *name, struct network_info *n)
 {
 	const char *chantypes = get_network_feature(n, "CHANTYPES");
 	if(!chantypes) {
@@ -95,7 +95,7 @@ int is_channelname(const char *name, struct network *n)
 	return 0;
 }
 
-int is_prefix(char p, struct network *n)
+int is_prefix(char p, struct network_info *n)
 {
 	const char *prefix = get_network_feature(n, "PREFIX");
 	const char *pref_end;
@@ -110,7 +110,7 @@ int is_prefix(char p, struct network *n)
 	return 0;
 }
 
-char get_prefix_by_mode(char p, struct network *n)
+char get_prefix_by_mode(char p, struct network_info *n)
 {
 	const char *prefix = get_network_feature(n, "PREFIX");
 	int i;

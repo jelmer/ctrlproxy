@@ -32,7 +32,7 @@ static void change_nick(struct client *c, char *newnick)
 
 static gboolean log_data(struct line *l, enum data_direction dir, void *userdata) {
 	struct linestack_context *co = (struct linestack_context *)g_hash_table_lookup(simple_backlog, l->network);
-	struct channel *c;
+	struct channel_state *c;
 
 	if(!co) {
 		co = linestack_new_by_network(l->network);
