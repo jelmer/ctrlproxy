@@ -31,8 +31,6 @@ ctrlproxy.pc Makefile.settings: configure Makefile.settings.in ctrlproxy.pc.in
 install: all install-dirs install-bin install-mods install-data install-pkgconfig install-scripts $(EXTRA_INSTALL_TARGETS)
 install-dirs:
 	$(INSTALL) -d $(DESTDIR)$(bindir)
-	$(INSTALL) -d $(DESTDIR)$(man1dir)
-	$(INSTALL) -d $(DESTDIR)$(man5dir)
 	$(INSTALL) -d $(DESTDIR)$(destincludedir)
 	$(INSTALL) -d $(DESTDIR)$(modulesdir)
 	$(INSTALL) -d $(DESTDIR)$(docdir)
