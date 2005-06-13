@@ -131,6 +131,7 @@ void linestack_send(struct linestack_context *b, GIOChannel *t)
 
 gboolean linestack_destroy(struct linestack_context *b) 
 {
+	if (!b) return TRUE;
 	if(b->functions->destroy)b->functions->destroy(b);
 	g_free(b);
 	return TRUE;
