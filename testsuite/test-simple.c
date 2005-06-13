@@ -223,6 +223,18 @@ static int test_quit_error(void)
 	return 0;
 }
 
+static int test_ping(void)
+{
+	GIOChannel *fd = new_conn_loggedin("bla");
+	irc_send_args(fd, "PING", "bla", NULL);
+	if (!wait_response(fd, "PONG")) {
+		g_io_channel_unref(fd);
+		return -1;
+	}
+	g_io_channel_unref(fd);
+	return 0;
+}
+
 static int test_selfmessage(void)
 {
 	GIOChannel *fd = new_conn_loggedin("bla");
@@ -265,4 +277,5 @@ void simple_init(void)
 	register_test("WHO-SIMPLE", test_who_simple);
 	register_test("NICK-ERRONEUS", test_nick_erroneous);
 	register_test("USER-REGISTERONCE", test_dupregister);
+	register_test("PING", test_ping);
 }

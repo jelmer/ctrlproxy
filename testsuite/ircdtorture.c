@@ -148,6 +148,7 @@ GIOChannel *new_conn(void)
 	int fd;
 
 	/* Start the program in question */
+	
 	child_pid = piped_child(args, &std_fd);
 	
 	if (!ip) {
