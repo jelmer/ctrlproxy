@@ -17,3 +17,6 @@ Information for users upgrading from 2.6 or 2.7-preXX:
   The network attribute for this element is optional.
 - the "strip" module has been merged into the main program and should no 
   longer be included in any configuration files
+- the <autosend> element is now handled by the new "autosend" module. Move 
+  any elements from <network> to the configuration of this module, 
+  with an option attribute for the network name.

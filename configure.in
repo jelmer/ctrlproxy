@@ -47,6 +47,7 @@ DEFMODULE(autosave)
 DEFMODULE(debug)
 DEFMODULE(socks)
 DEFMODULE(listener)
+DEFMODULE(autosend)
 
 # Checks for libraries.
 AC_CHECK_LIB([popt], [poptGetArg], , AC_MSG_WARN([Popt is strongly advised]))

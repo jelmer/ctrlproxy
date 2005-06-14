@@ -212,7 +212,6 @@ struct network {
 	gboolean autoconnect;
 	gboolean ignore_first_nick;
 	GList *clients;
-	GList *autosend_lines;
 	guint reconnect_id;
 	gboolean name_guessed;
 	guint reconnect_interval;

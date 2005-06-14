@@ -81,17 +81,6 @@ static gboolean process_from_server(struct network *n, struct line *l)
 
 		server_connected_hook_execute(n);
 
-		for (gl = n->autosend_lines; gl; gl = gl->next) {
-			char *data = gl->data;
-			struct line *newl;
-
-			newl = irc_parse_line(data);
-
-			network_send_line(n, NULL, newl);
-
-			free_line(newl);
-		}
-
 		/* Rejoin channels */
 		for (gl = n->state.channels; gl; gl = gl->next) 
 		{
@@ -614,11 +603,6 @@ int close_network(struct network *s)
 		break;
 	}
 
-	for (l = s->autosend_lines; l; l = l->next) {
-		g_free(l->data);
-	}
-	g_list_free(s->autosend_lines);
-	
 	g_free(s);
 
 	return 0;

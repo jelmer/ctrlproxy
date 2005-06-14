@@ -118,10 +118,6 @@ static xmlNodePtr config_save_networks()
 			xmlAddChild(p, x);
 		}
 
-		for (gl1 = n->autosend_lines; gl1; gl1 = gl1->next) {
-			xmlNewTextChild(p, NULL, "autosend", (char *)gl1->data);
-		}
-		
 		xmlAddChild(ret, p);
 	}
 
@@ -342,8 +338,6 @@ static void config_load_network(xmlNodePtr root)
 			config_load_servers(n, cur);
 		} else if (!strcmp(cur->name, "channel")) {
 			config_load_channel(n, cur);
-		} else if (!strcmp(cur->name, "autosend")) {
-			n->autosend_lines = g_list_append(n->autosend_lines, xmlNodeGetContent(cur));
 		} else if (!strcmp(cur->name, "program")) {
 			n->connection.type = NETWORK_PROGRAM;
 			n->connection.data.program.location = xmlNodeGetContent(cur);
