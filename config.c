@@ -90,9 +90,9 @@ static xmlNodePtr config_save_networks()
 		xmlSetProp(p, "autoconnect", n->autoconnect?"1":"0");
 		if (!n->name_guessed)
 			xmlSetProp(p, "name", n->name);
-		xmlSetProp(p, "fullname", n->me.fullname);
-		xmlSetProp(p, "nick", n->me.nick);
-		xmlSetProp(p, "username", n->me.username);
+		xmlSetProp(p, "fullname", n->fullname);
+		xmlSetProp(p, "nick", n->nick);
+		xmlSetProp(p, "username", n->username);
 
 		switch(n->connection.type) {
 		case NETWORK_VIRTUAL:
@@ -304,18 +304,18 @@ static void config_load_network(xmlNodePtr root)
 	}
 
 	if (xmlHasProp(root, "fullname")) {
-		g_free(n->me.fullname);
-		n->me.fullname = xmlGetProp(root, "fullname");
+		g_free(n->fullname);
+		n->fullname = xmlGetProp(root, "fullname");
 	}
 
 	if (xmlHasProp(root, "nick")) {
-		g_free(n->me.nick);
-		n->me.nick = xmlGetProp(root, "nick");
+		g_free(n->nick);
+		n->nick = xmlGetProp(root, "nick");
 	}
 
 	if (xmlHasProp(root, "username")) {
-		g_free(n->me.username);
-		n->me.username = xmlGetProp(root, "username");
+		g_free(n->username);
+		n->username = xmlGetProp(root, "username");
 	}
 
 	if (xmlHasProp(root, "ignore_first_nick")) {

@@ -79,7 +79,7 @@ static char *network_generate_feature_string(struct network *n)
 
 static gboolean process_from_client(struct line *l)
 {
-	l->origin = g_strdup(l->client->network->me.hostmask);
+	l->origin = g_strdup(l->client->network->state.me->hostmask);
 
 	if (!run_client_filter(l, TO_SERVER)) 
 		return TRUE;
@@ -108,7 +108,7 @@ static gboolean process_from_client(struct line *l)
 			network_send_line(l->client->network, l);
 		}
 	} else if(l->client->network->connection.state == NETWORK_CONNECTION_STATE_NOT_CONNECTED) {
-		client_send_args(l->client, "NOTICE", l->client->nick?l->client->nick:l->client->network->me.nick, "Currently not connected to server, connecting...", NULL);
+		client_send_args(l->client, "NOTICE", l->client->nick?l->client->nick:l->client->network->state.me->nick, "Currently not connected to server, connecting...", NULL);
 		connect_network(l->client->network);
 	}
 
@@ -133,7 +133,7 @@ gboolean client_send_response(struct client *c, int response, ...)
 	l->args[0] = g_strdup_printf("%03d", response);
 
 	if (c->nick) l->args[1] = g_strdup(c->nick);
-	else if (c->network && c->network->me.nick) l->args[1] = g_strdup(c->network->me.nick);
+	else if (c->network && c->network->state.me->nick) l->args[1] = g_strdup(c->network->state.me->nick);
 	else l->args[1] = g_strdup("*");
 
 	l->argc+=2;
@@ -283,9 +283,9 @@ static gboolean welcome_client(struct client *client)
 
 	send_motd(client);
 
-	if (g_strcasecmp(client->nick, client->network->me.nick)) {
+	if (g_strcasecmp(client->nick, client->network->state.me->nick)) {
 		/* Tell the client our his/her real nick */
-		irc_sendf(client->incoming, ":%s!%s@%s NICK %s", client->nick, client->username, client->hostname, client->network->me.nick);
+		irc_sendf(client->incoming, ":%s!%s@%s NICK %s", client->nick, client->username, client->hostname, client->network->state.me->nick);
 
 		/* Try to get the nick the client specified */
 		if (!client->network->ignore_first_nick) {

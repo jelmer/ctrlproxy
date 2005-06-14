@@ -206,7 +206,9 @@ struct network_state
 
 struct network {
 	char *name;
-	struct network_nick me;
+	char *nick;
+	char *fullname;
+	char *username;
 	char *password;
 	gboolean autoconnect;
 	gboolean ignore_first_nick;

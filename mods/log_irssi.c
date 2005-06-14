@@ -107,10 +107,8 @@ static gboolean log_data(struct line *l, enum data_direction dir, void *userdata
 	struct tm *t = localtime(&ti);
 	FILE *f = NULL;
 	if(!l->args || !l->args[0] || l->options & LINE_NO_LOGGING)return TRUE;
-	if(l->origin)nick = l->origin;
-	if(nick)user = strchr(nick, '!');
+	nick = line_get_nick(l);
 	if(user){ *user = '\0';user++; }
-	if(!nick && l->network->me.nick)nick = l->network->me.nick;
 
 	g_assert(l->args[0]);
 
@@ -122,7 +120,7 @@ static gboolean log_data(struct line *l, enum data_direction dir, void *userdata
 		if(f)fprintf(f, "%02d:%02d -!- %s [%s] has left %s [%s]\n", t->tm_hour, t->tm_min, nick, user, l->args[1], l->args[2]?l->args[2]:"");
 	} else if(!g_strcasecmp(l->args[0], "PRIVMSG") && l->argc > 2) {
 		dest = l->args[1];
-		if(!irccmp(l->network, dest, l->network->me.nick))dest = nick;
+		if(!irccmp(l->network, dest, l->network->state.me->nick))dest = nick;
 		if(l->args[2][0] == '\001') { 
 			l->args[2][strlen(l->args[2])-1] = '\0';
 			if(!g_ascii_strncasecmp(l->args[2], "\001ACTION ", 8)) { 

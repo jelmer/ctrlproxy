@@ -44,8 +44,8 @@ static void server_send_login (struct network *s)
 	} else if (s->password) {
 		network_send_args(s, "PASS", s->password, NULL);
 	}
-	network_send_args(s, "NICK", s->me.nick, NULL);
-	network_send_args(s, "USER", s->me.username, get_my_hostname(), s->name, s->me.fullname, NULL);
+	network_send_args(s, "NICK", s->nick, NULL);
+	network_send_args(s, "USER", s->username, get_my_hostname(), s->name, s->fullname, NULL);
 
 	s->connection.state = NETWORK_CONNECTION_STATE_LOGIN_SENT;
 }
@@ -70,9 +70,9 @@ static gboolean process_from_server(struct line *l)
 		log_network(NULL, l->network, "error: %s", l->args[1]);
 	} else if(!g_strcasecmp(l->args[0], "433") && 
 			  l->network->connection.state == NETWORK_CONNECTION_STATE_LOGIN_SENT){
-		char *old_nick = l->network->me.nick;
-		l->network->me.nick = g_strdup_printf("%s_", l->network->me.nick);
-		network_send_args(l->network, "NICK", l->network->me.nick, NULL);
+		char *old_nick = l->network->nick;
+		l->network->nick = g_strdup_printf("%s_", l->network->nick);
+		network_send_args(l->network, "NICK", l->network->nick, NULL);
 		g_free(old_nick);
 	} else if(!g_strcasecmp(l->args[0], "422") ||
 			  !g_strcasecmp(l->args[0], "376")) {
@@ -199,7 +199,7 @@ gboolean network_send_line(struct network *s, const struct line *ol)
 	if(!(l.options & LINE_IS_PRIVATE) && l.args[0] &&
 	   (!strcmp(l.args[0], "PRIVMSG") || !strcmp(l.args[0], "NOTICE"))) {
 		char *old_origin;
-		old_origin = l.origin; l.origin = s->me.nick;
+		old_origin = l.origin; l.origin = s->nick;
 		clients_send(s, &l, l.client);
 		l.origin = old_origin;
 	}
@@ -428,17 +428,7 @@ gboolean close_server(struct network *n)
 	default: g_assert(0);
 	}
 
-	g_free(n->me.hostmask);
-	n->me.hostmask = NULL;
-
-	g_free(n->state.info.supported_user_modes);
-	n->state.info.supported_user_modes = NULL;
-
-	g_free(n->state.info.supported_channel_modes);
-	n->state.info.supported_channel_modes = NULL;
-
-	g_hash_table_destroy(n->state.info.features);
-	n->state.info.features = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_free);
+	free_state(&n->state);
 
 	n->connection.state = NETWORK_CONNECTION_STATE_NOT_CONNECTED;
 
@@ -463,14 +453,12 @@ struct network *new_network()
 	struct network *s = g_new0(struct network, 1);
 
 	s->autoconnect = FALSE;
-	s->me.nick = g_strdup(g_get_user_name());
-	s->me.username = g_strdup(g_get_user_name());
-	s->me.fullname = g_strdup(g_get_real_name());
-	s->state.info.features = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_free);
-
+	s->nick = g_strdup(g_get_user_name());
+	s->username = g_strdup(g_get_user_name());
+	s->fullname = g_strdup(g_get_real_name());
 	s->reconnect_interval = DEFAULT_RECONNECT_INTERVAL;
 
-	s->me.hostmask = g_strdup_printf("%s!~%s@%s", s->me.nick, s->me.username, get_my_hostname());
+	init_state(&s->state, s->nick, s->username, get_my_hostname());
 
 	networks = g_list_append(networks, s);
 	return s;
@@ -603,9 +591,9 @@ int close_network(struct network *s)
 		g_source_remove(s->reconnect_id);
 	}
 
-	g_free(s->me.fullname);
-	g_free(s->me.username);
-	g_free(s->me.nick);
+	g_free(s->fullname);
+	g_free(s->username);
+	g_free(s->nick);
 	g_free(s->password);
 	g_free(s->name);
 
@@ -657,31 +645,6 @@ int verify_client(struct network *s, struct client *c)
 	}
 
 	return 0;
-}
-
-gboolean network_change_nick(struct network *s, const char *nick)
-{
-	char *tmp, *p = NULL;
-
-	if (!s) return FALSE;
-
-	/* Change nick */
-	if (!nick) nick = g_get_user_name();
-
-	g_free(s->me.nick);
-	s->me.nick = g_strdup(nick);
-
-	/* Change hostmask */
-	if (!s->me.hostmask) {
-		s->me.hostmask = g_strdup_printf("%s!~%s@%s", nick, s->me.username, get_my_hostname());
-	} else { 
-		p = strchr(s->me.hostmask, '!');
-		if (!p) return FALSE;
-		tmp = g_strdup_printf("%s%s", nick, p);
-		g_free(s->me.hostmask);
-		s->me.hostmask = tmp;
-	}
-	return TRUE;
 }
 
 void register_virtual_network(struct virtual_network_ops *ops)

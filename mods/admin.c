@@ -62,7 +62,7 @@ void admin_out(struct line *l, const char *fmt, ...)
 		!strcmp(l->args[1], ADMIN_CHANNEL)) {
 		virtual_network_recv_args(l->network, hostmask+1, "PRIVMSG", ADMIN_CHANNEL, msg, NULL);
 	} else {
-		irc_send_args(l->client->incoming, hostmask, "NOTICE", l->network->me.nick, msg, NULL);
+		irc_send_args(l->client->incoming, hostmask, "NOTICE", l->network->state.me->nick, msg, NULL);
 	}
 	g_free(hostmask);
 
@@ -442,10 +442,10 @@ static gboolean load_config(struct plugin *p, xmlNodePtr node)
 static gboolean admin_net_init(struct network *n)
 {
 	n->connection.state = NETWORK_CONNECTION_STATE_MOTD_RECVD;
-	virtual_network_recv_args(n, n->me.hostmask, "JOIN", ADMIN_CHANNEL, NULL);
-	virtual_network_recv_args(n, n->name, "332", n->me.nick, ADMIN_CHANNEL, "CtrlProxy administration channel", NULL);
-	virtual_network_recv_args(n, n->name, "353", n->me.nick, "=", ADMIN_CHANNEL, n->me.nick, NULL);
-	virtual_network_recv_args(n, n->name, "366", n->me.nick, ADMIN_CHANNEL, "End of /names list", NULL);
+	virtual_network_recv_args(n, n->state.me->hostmask, "JOIN", ADMIN_CHANNEL, NULL);
+	virtual_network_recv_args(n, n->name, "332", n->state.me->nick, ADMIN_CHANNEL, "CtrlProxy administration channel", NULL);
+	virtual_network_recv_args(n, n->name, "353", n->state.me->nick, "=", ADMIN_CHANNEL, n->state.me->nick, NULL);
+	virtual_network_recv_args(n, n->name, "366", n->state.me->nick, ADMIN_CHANNEL, "End of /names list", NULL);
 
 	return TRUE;
 }

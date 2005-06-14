@@ -21,13 +21,6 @@
 
 enum mode_type { REMOVE = 0, ADD = 1};
 
-struct started_join {
-	char *channel;
-	void *network;
-};
-
-static GList *started_join_list = NULL;
-
 char *mode2string(char modes[255])
 {
 	static char ret[255];
@@ -37,6 +30,36 @@ char *mode2string(char modes[255])
 		if(modes[i]) { ret[pos] = (char)i; pos++; }
 	}
 	return ret;
+}
+
+void network_nick_set_data(struct network_nick *n, const char *nick, const char *username, const char *host)
+{
+	gboolean changed = FALSE;
+	
+	if (!n->nick || strcmp(nick, n->nick)) {
+		g_free(n->nick); n->nick = g_strdup(nick);
+		changed = TRUE;
+	}
+
+	if (!n->username || strcmp(username, n->username)) {
+		g_free(n->username); n->username = g_strdup(username);
+		changed = TRUE;
+	}
+	
+	if (!n->hostname || strcmp(host, n->hostname)) {
+		g_free(n->hostname); n->hostname = g_strdup(host);
+		changed = TRUE;
+	}
+	
+	if (changed) {
+		g_free(n->hostmask);
+		n->hostmask = g_strdup_printf("%s!~%s@%s", nick, username, host);
+	}
+}
+
+void network_nick_set_hostmask(struct network_nick *n, const char *hm)
+{
+	/* FIXME */
 }
 
 static void free_nick(struct channel_nick *n)
@@ -202,7 +225,6 @@ static void handle_join(struct network *s, struct line *l)
 {
 	struct channel *c;
 	struct channel_nick *ni;
-	struct started_join *sj;
 	int cont = 1;
 	char *name = g_strdup(l->args[1]), *p, *n;
 
@@ -224,16 +246,9 @@ static void handle_join(struct network *s, struct line *l)
 
 			/* The user is joining a channel */
 
-			if(!irccmp(s, line_get_nick(l), s->me.nick)) {
+			if(!irccmp(s, line_get_nick(l), s->state.me->nick)) {
 				c->joined = TRUE;
 				log_network(NULL, s, "Joining channel %s", c->name);
-				
-				/* send WHO command for updating hostmasks */
-				sj = g_new(struct started_join,1);
-				sj->channel = g_strdup(p);
-				sj->network = s;
-				started_join_list = g_list_append(started_join_list, sj);
-				network_send_args(s, "WHO", p, NULL);
 			}
 		}
 		p = n+1;
@@ -260,7 +275,7 @@ static void handle_part(struct network *s, struct line *l)
 		c = find_channel(s, p);
 
 		/* The user is joining a channel */
-		if(!irccmp(s, line_get_nick(l), s->me.nick) && c) {
+		if(!irccmp(s, line_get_nick(l), s->state.me->nick) && c) {
 			log_network(NULL, s, "Leaving %s", p);
 			c->joined = FALSE;
 			free_channel(c);
@@ -324,7 +339,7 @@ static void handle_kick(struct network *s, struct line *l) {
 			continue;
 		}
 
-		if(!g_strcasecmp(n->global_nick->nick, s->me.nick))
+		if(!g_strcasecmp(n->global_nick->nick, s->state.me->nick))
 			c->joined = FALSE;
 
 		c->nicks = g_list_remove(c->nicks, n);
@@ -475,43 +490,17 @@ static void handle_end_banlist(struct network *s, struct line *l)
 }
 
 static void handle_whoreply(struct network *s, struct line *l) {
-	char *hostmask;
 	struct channel_nick *n; struct channel *c;
-	GList *gl = started_join_list;
-	/* don't send the who replay when caused by a join */
-	while(gl) {
-		struct started_join *sj = (struct started_join *)gl->data;
-		if((s == sj->network) && (!strcmp(sj->channel, l->args[2]))) {
-			l->options = l->options | LINE_DONT_SEND;
-			break;
-		}
-		gl = gl->next;
-	}
+
 	c = find_channel(s, l->args[2]);
 	if(!c) 
 		return;
 
 	n = find_add_nick(c, l->args[6]);
-	if(n->global_nick->hostmask == NULL) {
-		hostmask = g_strdup_printf("%s!%s@%s", l->args[6], l->args[3], l->args[4]);
-		n->global_nick->hostmask = hostmask;
-	}
+	network_nick_set_data(n->global_nick, l->args[6], l->args[3], l->args[4]);
 }
 
 static void handle_end_who(struct network *s, struct line *l) {
-	GList *gl = started_join_list;
-	/* remove entry added by join and don't send line */
-	while(gl) {
-		struct started_join *sj = (struct started_join *)gl->data;
-		if((s == sj->network) && (!strcmp(sj->channel, l->args[2]))) {
-   			l->options |= LINE_DONT_SEND;
-			started_join_list = g_list_remove(started_join_list, sj);
-			g_free(sj->channel);
-			g_free(sj);
-			break;
-		}
-		gl = gl->next;
-	}
 }
 
 static void handle_quit(struct network *s, struct line *l) {
@@ -538,13 +527,13 @@ static void handle_mode(struct network *s, struct line *l)
 	/* We only care about channel modes and our own mode */
 
 	/* Own nick is being changed */
-	if(!strcmp(l->args[1], s->me.nick)) {
+	if(!strcmp(l->args[1], s->state.me->nick)) {
 		for(i = 0; l->args[2][i]; i++) {
 			switch(l->args[2][i]) {
 				case '+': t = ADD;break;
 				case '-': t = REMOVE; break;
 				default:
-					  s->me.modes[(unsigned char)l->args[2][i]] = t;
+					  s->state.me->modes[(unsigned char)l->args[2][i]] = t;
 					  break;
 			}
 		}
@@ -665,9 +654,6 @@ static void handle_nick(struct network *s, struct line *l)
 		}
 		g = g_list_next(g);
 	}
-
-	if(!irccmp(s, line_get_nick(l), s->me.nick)) 
-		network_change_nick(s, l->args[1]);
 }
 
 static void handle_465(struct network *s, struct line *l)
@@ -700,10 +686,10 @@ static void handle_302(struct network *s, struct line *l)
 	/* We got a USERHOST response, split it into nick and user@host, and check the nick */
 	gchar** tmp302 = g_strsplit(g_strstrip(l->args[2]), "=+", 2);
 	if (g_strv_length(tmp302) > 1) {
-		if (!irccmp(l->network, l->network->me.nick, tmp302[0])) {
-			g_free(l->network->me.hostmask);
+		if (!irccmp(l->network, l->network->state.me->nick, tmp302[0])) {
+			g_free(l->network->state.me->hostmask);
 			/* Set the hostmask if it is our nick */
-			l->network->me.hostmask = g_strdup_printf("%s!%s", tmp302[0], tmp302[1]);
+			l->network->state.me->hostmask = g_strdup_printf("%s!%s", tmp302[0], tmp302[1]);
 		}
 	}
 	g_strfreev(tmp302);
@@ -804,13 +790,13 @@ GSList *gen_replication_network(struct network *s)
 			continue;
 		}
 
-		ret = g_slist_concat(ret, gen_replication_channel(c, s->name, s->me.nick));
+		ret = g_slist_concat(ret, gen_replication_channel(c, s->name, s->state.me->nick));
 
 		cl = g_list_next(cl);
 	}
 
-	if(strlen(mode2string(s->me.modes)))
-		ret = g_slist_append(ret, irc_parse_linef(":%s MODE %s +%s\r\n", s->name, s->me.nick, mode2string(s->me.modes)));
+	if(strlen(mode2string(s->state.me->modes)))
+		ret = g_slist_append(ret, irc_parse_linef(":%s MODE %s +%s\r\n", s->name, s->state.me->nick, mode2string(s->state.me->modes)));
 
 	return ret;
 }
@@ -818,4 +804,30 @@ GSList *gen_replication_network(struct network *s)
 struct linestack_context *linestack_new_by_network(struct network *n)
 {
 	return linestack_new(NULL, NULL);
+}
+
+void init_state(struct network_state *state, const char *nick, const char *username, const char *hostname)
+{
+	state->info.features = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_free);
+	state->me = g_new0(struct network_nick, 1);
+	state->me->refcount = 1;
+	network_nick_set_data(state->me, nick, username, hostname);
+
+	state->nicks = g_list_append(state->nicks, state->me);
+}
+
+void free_state(struct network_state *state)
+{
+	g_free(state->me->hostmask);
+	state->me->hostmask = NULL;
+
+	g_free(state->info.supported_user_modes);
+	state->info.supported_user_modes = NULL;
+
+	g_free(state->info.supported_channel_modes);
+	state->info.supported_channel_modes = NULL;
+
+	g_hash_table_destroy(state->info.features);
+	state->info.features = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_free);
+
 }
