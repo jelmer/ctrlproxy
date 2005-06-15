@@ -20,6 +20,10 @@
 #ifndef __CTRLPROXY_NETWORK_H__
 #define __CTRLPROXY_NETWORK_H__
 
+#ifndef G_MODULE_EXPORT
+#define G_MODULE_EXPORT 
+#endif
+
 struct network;
 struct client;
 struct line;

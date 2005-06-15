@@ -18,6 +18,7 @@
 */
 
 #include "internals.h"
+#include "irc.h"
 
 void log_network_state(struct network_state *st, const char *fmt, ...)
 {
@@ -705,61 +706,6 @@ void state_handle_data(struct network_state *s, struct line *l)
 	}
 }
 
-GSList *gen_replication_channel(struct channel_state *c, const char *hostmask, const char *nick)
-{
-	GSList *ret = NULL;
-	struct channel_nick *n;
-	GList *nl;
-	ret = g_slist_append(ret, irc_parse_linef(":%s JOIN %s\r\n", nick, c->name));
-
-	if(c->topic) {
-		ret = g_slist_append(ret, irc_parse_linef(":%s 332 %s %s :%s\r\n", hostmask, nick, c->name, c->topic));
-	} else {
-		ret = g_slist_append(ret, irc_parse_linef(":%s 331 %s %s :No topic set\r\n", hostmask, nick, c->name));
-	}
-
-	nl = c->nicks;
-	while(nl) {
-		n = (struct channel_nick *)nl->data;
-		if(n->mode && n->mode != ' ') { ret = g_slist_append(ret, irc_parse_linef(":%s 353 %s %c %s :%c%s\r\n", hostmask, nick, c->mode, c->name, n->mode, n->global_nick->nick)); }
-		else { ret = g_slist_append(ret, irc_parse_linef(":%s 353 %s %c %s :%s\r\n", hostmask, nick, c->mode, c->name, n->global_nick->nick)); }
-		nl = g_list_next(nl);
-	}
-	ret = g_slist_append(ret, irc_parse_linef(":%s 366 %s %s :End of /names list\r\n", hostmask, nick, c->name));
-	c->introduced = 3;
-	return ret;
-}
-
-GSList *gen_replication_network(struct network_state *s)
-{
-	GList *cl;
-	struct channel_state *c;
-	GSList *ret = NULL;
-	cl = s->channels;
-
-	while(cl) {
-		c = (struct channel_state *)cl->data;
-		if(!is_channelname(c->name, &s->info)) {
-			cl = g_list_next(cl);
-			continue;
-		}
-
-		ret = g_slist_concat(ret, gen_replication_channel(c, s->me.hostmask, s->me.nick));
-
-		cl = g_list_next(cl);
-	}
-
-	if(strlen(mode2string(s->me.modes)))
-		ret = g_slist_append(ret, irc_parse_linef(":%s MODE %s +%s\r\n", s->me.hostmask, s->me.nick, mode2string(s->me.modes)));
-
-	return ret;
-}
-
-struct linestack_context *linestack_new_by_network(struct network *n)
-{
-	return linestack_new(NULL, NULL);
-}
-
 struct network_state *init_state(const char *nick, const char *username, const char *hostname)
 {
 	struct network_state *state = g_new0(struct network_state, 1);
@@ -790,4 +736,45 @@ void free_state(struct network_state *state)
 
 	g_hash_table_destroy(state->info.features);
 	state->info.features = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_free);
+}
+
+static void gen_replication_channel(struct client *c, struct channel_state *ch)
+{
+	struct channel_nick *n;
+	GList *nl;
+	irc_sendf(c->incoming, ":%s JOIN %s\r\n", c->network->state->me.hostmask, ch->name);
+
+	if(ch->topic) {
+		client_send_response(c, RPL_TOPIC, ch->name, ch->topic, NULL);
+	} else {
+		client_send_response(c, RPL_NOTOPIC, ch->name, "No topic set", NULL);
+	}
+
+	for (nl = ch->nicks; nl; nl = nl->next) {
+		char mode[2] = { ch->mode, 0 };
+		char *tmp;
+		n = (struct channel_nick *)nl->data;
+		if(n->mode && n->mode != ' ') {
+			tmp = g_strdup_printf("%c%s", n->mode, n->global_nick->nick);
+		} else 	{ 
+			tmp = g_strdup(n->global_nick->nick);
+		}
+		client_send_response(c, RPL_NAMREPLY, mode, ch->name, tmp, NULL);
+		g_free(tmp);
+	}
+	client_send_response(c, RPL_ENDOFNAMES, ch->name, "End of /names list", NULL);
+}
+
+void client_send_state(struct client *c, struct network_state *state)
+{
+	GList *cl;
+	struct channel_state *ch;
+	for (cl = state->channels; cl; cl = cl->next) {
+		ch = (struct channel_state *)cl->data;
+
+		gen_replication_channel(c, ch);
+	}
+
+	if(strlen(mode2string(state->me.modes)))
+		irc_sendf(c->incoming, ":%s MODE %s +%s\r\n", c->network->state->me.hostmask, state->me.nick, mode2string(state->me.modes));
 }

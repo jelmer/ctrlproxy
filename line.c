@@ -278,7 +278,8 @@ gboolean irc_send_args(GIOChannel *c, ...)
 	return ret;
 }
 
-struct line *linedup(struct line *l) {
+struct line *linedup(const struct line *l) 
+{
 	int i;
 	struct line *ret = g_memdup(l, sizeof(struct line));
 	if(l->origin)ret->origin = g_strdup(l->origin);

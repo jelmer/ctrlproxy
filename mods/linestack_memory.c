@@ -20,54 +20,53 @@
 #include <ctrlproxy.h>
 #include <string.h>
 
-static gboolean memory_init(struct linestack_context *c, const char *args)
+static GHashTable *networks = NULL;
+
+struct memory_data {
+	struct line *line;
+	time_t time;
+};
+
+static gboolean memory_init(void)
 {
-	c->data = NULL;
+	networks = g_hash_table_new(NULL, NULL);
 	return TRUE;
 }
 
-static gboolean memory_clear(struct linestack_context *c)
+static gboolean memory_add_line(const struct network *n, const struct line *l)
 {
-	GSList *gl = (GSList *)c->data;
-	while(gl) {
-		struct line *l = (struct line *)gl->data;
-		free_line(l);
-		gl = g_slist_next(gl);
+	GList *gl = g_hash_table_lookup(networks, n);
+	struct memory_data *md = g_new0(struct memory_data, 1);
+	md->line = linedup(l);
+	md->time = time(NULL);
+	gl = g_list_append(gl, md);
+	g_hash_table_replace(networks, n, gl);
+	return TRUE;
+}
+
+static linestack_marker *memory_get_marker (struct network *n)
+{
+	return g_hash_table_lookup(networks, n);
+}
+
+static gboolean memory_traverse (struct network *n, linestack_marker *lm, linestack_traverse_fn tf, void *userdata)
+{
+	GList *gl;
+
+	for (gl = lm; gl; gl = gl->next) {
+		struct memory_data *md = gl->data;
+		tf(md->line, md->time, userdata);
 	}
-	g_slist_free(c->data); c->data = NULL;
+
 	return TRUE;
 }
-
-static GSList *memory_get_linked_list(struct linestack_context *c)
-{
-	GSList *b, *ret = NULL;
-	b = (GSList *)c->data;
-	while(b) {
-		struct line *l = linedup((struct line *)b->data);
-		ret = g_slist_append(ret, l);
-		b = b->next;
-	}
-	
-	return ret;
-}
-
-static gboolean memory_add_line(struct linestack_context *b, struct line *l)
-{
-	GSList *gl = (GSList *)b->data;
-	gl = g_slist_append(gl, linedup(l));
-	b->data = gl;
-	return TRUE;
-}	
 
 static struct linestack_ops memory = {
-	"memory",
-	memory_init,
-	memory_clear,
-	memory_add_line,
-	memory_get_linked_list,
-	NULL, 
-	NULL,
-	memory_clear
+	.name = "memory",
+	.init = memory_init,
+	.insert_line = memory_add_line,
+	.get_marker = memory_get_marker,
+	.traverse = memory_traverse,
 };
 
 static gboolean fini_plugin(struct plugin *p) {

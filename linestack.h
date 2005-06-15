@@ -21,31 +21,83 @@
 #define __CTRLPROXY_LINESTACK_H__
 
 /* linestack.c */
-struct linestack_context;
+typedef void linestack_marker;
+typedef void (*linestack_traverse_fn) (struct line *, time_t, void *);
 struct linestack_ops {
 	char *name;
-	gboolean (*init) (struct linestack_context *, const char *args);
-	gboolean (*clear) (struct linestack_context *);
-	gboolean (*add_line) (struct linestack_context *, struct line *);
-	GSList *(*get_linked_list) (struct linestack_context *);
-	void (*send) (struct linestack_context *, GIOChannel *);
-	void (*send_limited) (struct linestack_context *, GIOChannel *, size_t);
-	gboolean (*destroy) (struct linestack_context *);
-};
+	gboolean (*init) (void);
+	gboolean (*fini) (void);
 
-struct linestack_context {
-	struct linestack_ops *functions;
-	void *data;
+	/* Add a line */
+	gboolean (*insert_line) (
+		const struct network *, 
+		const struct line *);
+	
+	/* Get marker for current position in stream */
+	linestack_marker *(*get_marker) 
+		(struct network *);
+
+	/* Optional */
+	linestack_marker *(*get_marker_numlines) 
+		(struct network *, int numlines);
+
+	void (*free_marker) (linestack_marker *);
+	
+	gboolean (*traverse) (
+		struct network *, 
+		linestack_marker *,
+		linestack_traverse_fn, 
+		void *userdata);
+
+	/* Optional */
+	struct network_state *(*get_state) (
+		struct network *, 
+		linestack_marker *);
+
+	/* Perhaps add other (optional) functions here such as searching for 
+	 * a specific keyword ? */
 };
 
 G_MODULE_EXPORT void register_linestack(struct linestack_ops *);
 G_MODULE_EXPORT void unregister_linestack(struct linestack_ops *);
-G_MODULE_EXPORT struct linestack_context *linestack_new(const char *name, const char *args);
-G_MODULE_EXPORT GSList *linestack_get_linked_list(struct linestack_context *);
-G_MODULE_EXPORT void linestack_send(struct linestack_context *, GIOChannel *);
-G_MODULE_EXPORT gboolean linestack_destroy(struct linestack_context *);
-G_MODULE_EXPORT gboolean linestack_clear(struct linestack_context *);
-G_MODULE_EXPORT gboolean linestack_add_line(struct linestack_context *, struct line *);
-G_MODULE_EXPORT gboolean linestack_add_line_list(struct linestack_context *, GSList *);
+G_MODULE_EXPORT linestack_marker *linestack_get_marker_numlines (
+		struct network *, 
+		int lines);
+
+G_MODULE_EXPORT struct network_state *linestack_get_state (
+		struct network *, 
+		linestack_marker *);
+
+G_MODULE_EXPORT gboolean linestack_traverse (
+		struct network *, 
+		linestack_marker *,
+		linestack_traverse_fn, 
+		void *userdata);
+
+G_MODULE_EXPORT gboolean linestack_traverse_object (
+		struct network *,
+		const char *object,
+		linestack_marker *,
+		linestack_traverse_fn,
+		void *userdata);
+
+G_MODULE_EXPORT gboolean linestack_send (
+		struct network *,
+		linestack_marker *,
+		const struct client *);
+
+G_MODULE_EXPORT gboolean linestack_send_object (
+		struct network *,
+		const char *object,
+		linestack_marker *,
+		const struct client *);
+
+G_MODULE_EXPORT gboolean linestack_replay (
+		struct network *,
+		linestack_marker *,
+		struct network_state *st);
+
+G_MODULE_EXPORT void linestack_free_marker(linestack_marker *);
+G_MODULE_EXPORT linestack_marker *linestack_get_marker(struct network *n);
 
 #endif /* __CTRLPROXY_LINESTACK_H__ */

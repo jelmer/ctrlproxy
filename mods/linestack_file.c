@@ -35,127 +35,114 @@
 #define mkdir(s,t) _mkdir(s)
 #endif
 
-struct file_information {
-	GIOChannel *channel;
-	char *filename;
-};
+static GHashTable *networks = NULL;
 
-static gboolean file_init(struct linestack_context *c, const char *args)
+static FILE *get_fd(const struct network *n)
 {
-	struct file_information *d = g_new(struct file_information,1);
-	GError *error = NULL;
-	if(args) {
-		d->channel = g_io_channel_new_file(args, "a+", NULL);
-		d->filename = g_strdup(args);
-	} else  {
-		int tmpfd;
-		char *p = ctrlproxy_path("linestack_file");
-		mkdir(p, 0700);
-		d->filename = g_strdup_printf("%s/XXXXXX", p);
-		g_free(p);
-		tmpfd = g_mkstemp(d->filename);
-		if(tmpfd < 0) return FALSE;
+	FILE *ch;
 
-		d->channel = g_io_channel_unix_new(tmpfd);
+	ch = g_hash_table_lookup(networks, n);
+
+	if (!ch) {
+		char *path = g_strdup_printf("linestack_file/%s", n->name);
+		ch = fopen(path, "a+");
+		if (!ch) {
+			log_network("linestack_file", n, "Unable to open linestack file %s", path);
+			g_free(path);
+			return NULL;
+		}
+		g_free(path);
+		g_hash_table_insert(networks, n, ch);
 	}
 
-	g_io_channel_set_encoding(d->channel, NULL, &error);
+	return ch;
+}
 
-	c->data = d;
-
-	if(!c->data || !d->channel) return FALSE;
+static gboolean file_init(void)
+{
+	char *p = ctrlproxy_path("linestack_file");
+	mkdir(p, 0700);
+	g_free(p);
+	networks = g_hash_table_new_full(NULL, NULL, NULL, (GDestroyNotify)fclose);
 	return TRUE;
 }
 
-static gboolean file_clear(struct linestack_context *c)
+static gboolean file_fini(void)
 {
-	struct file_information *d = (struct file_information *)c->data;
-	GError *error = NULL;
-	g_io_channel_unref(d->channel);
-#ifndef _WIN32
-	unlink(d->filename);
-#else 
-	delete(d->filename);
-#endif
-	d->channel = g_io_channel_new_file(d->filename, "w+", &error);
-	g_io_channel_set_encoding(d->channel, NULL, &error);
-
+	g_hash_table_destroy(networks);
 	return TRUE;
 }
 
-static gboolean file_close(struct linestack_context *c)
+static gboolean file_insert_line(const struct network *n, const struct line *l)
 {
-	struct file_information *d = (struct file_information *)c->data;
-	g_io_channel_unref(d->channel);
-	unlink(d->filename);
-	g_free(d->filename);
-	g_free(d);
-	c->data = NULL;
-	return TRUE;
-}
-
-static GSList *file_get_linked_list(struct linestack_context *c)
-{
-	struct file_information *d = (struct file_information *)c->data;
-	GError *error = NULL;
-	GSList *ret = NULL;
+	FILE *ch = get_fd(n);
 	char *raw;
-	
-	/* Flush channel before reading otherwise data corruption may occur */
-	g_io_channel_flush(d->channel, &error);
-	/* Go back to begin of file */
-	g_io_channel_seek(d->channel, 0, G_SEEK_SET);
-	
-	while(g_io_channel_read_line(d->channel, &raw, NULL, NULL, &error) == G_IO_STATUS_NORMAL) {
-		struct line *l;
-		l = irc_parse_line(raw);
-		g_free(raw);
+	int ret;
+	time_t t = time(NULL);
+	if (!ch) return FALSE;
 
-		ret = g_slist_append(ret, l);
-	}
+	if (fwrite(&t, sizeof(t), 1, ch) != sizeof(t))
+		return FALSE;
 
-	return ret;
-}
-
-static gboolean file_add_line(struct linestack_context *b, struct line *l)
-{
-	struct file_information *d = (struct file_information *)b->data;
-	GError *error = NULL;
-	char *raw = irc_line_string_nl(l);
-	g_assert(d->channel);
-	g_io_channel_write_chars(d->channel, raw, -1, NULL, &error);
+	raw = irc_line_string_nl(l);
+	ret = fputs(raw, ch);
 	g_free(raw);
-	return TRUE;
-}	
 
-static void file_send_file(struct linestack_context *b, GIOChannel *t) 
+	return (ret != EOF);
+}
+
+static linestack_marker *file_get_marker(struct network *n)
 {
-	gsize written;
-	struct file_information *d = (struct file_information *)b->data;
-	char *raw;
-	
-	GError *error = NULL;
-	
+	long *pos;
+	FILE *ch = get_fd(n);
+	if (!ch) return NULL;
+
+	pos = g_new0(long, 1);
+	*pos = ftell(ch);
+
+	return pos;
+}
+
+static gboolean file_traverse(struct network *n, 
+		linestack_marker *m,
+		linestack_traverse_fn tf, 
+		void *userdata)
+{
+	char raw[512];
+	long *offset;
+	FILE *ch = get_fd(n);
+	if (!ch) return FALSE;
+
 	/* Flush channel before reading otherwise data corruption may occur */
-	g_io_channel_flush(d->channel, &error);
-	/* Go back to begin of file */
-	g_io_channel_seek(d->channel, 0, G_SEEK_SET);
+	fflush(ch);
 	
-	while(g_io_channel_read_line(d->channel, &raw, NULL, NULL, &error) == G_IO_STATUS_NORMAL)  {
-		g_io_channel_write_chars(t, raw, -1, &written, NULL);
-		g_free(raw);
+	offset = m;
+
+	/* Go back to begin of file */
+	fseek(ch, *offset, SEEK_SET);
+	
+	while(!feof(ch)) 
+	{
+		time_t t;
+		struct line *l;
+		fread(&t, sizeof(t), 1, ch);
+		fgets(raw, sizeof(raw), ch);
+		l = irc_parse_line(raw);
+		tf(l, t, userdata);
+		free_line(l);
 	}
+
+	return TRUE;
 }
 
 static struct linestack_ops file = {
-	"file",
-	file_init,
-	file_clear,
-	file_add_line,
-	file_get_linked_list,
-	file_send_file, 
-	NULL,
-	file_close
+	.name = "file",
+	.init = file_init,
+	.fini = file_fini,
+	.insert_line = file_insert_line,
+	.get_marker = file_get_marker,
+	.free_marker = g_free,
+	.traverse = file_traverse
 };
 
 static gboolean fini_plugin(struct plugin *p) {

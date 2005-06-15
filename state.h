@@ -47,10 +47,9 @@ struct channel_state {
 	char *name;
 	char *key;
 	char *topic;
-	int joined:1;
 	char mode; /* Private, secret, etc */
 	char modes[255];
-	char introduced;
+	int joined:1;
 	int namreply_started:1;
 	int banlist_started:1;
 	int invitelist_started:1;
@@ -94,8 +93,7 @@ struct network_state
 G_MODULE_EXPORT struct channel_state *find_channel(struct network_state *st, const char *name);
 G_MODULE_EXPORT struct channel_nick *find_nick(struct channel_state *c, const char *name);
 G_MODULE_EXPORT struct linestack_context *linestack_new_by_network(struct network *);
-G_MODULE_EXPORT GSList *gen_replication_network(struct network_state *s);
-G_MODULE_EXPORT GSList *gen_replication_channel(struct channel_state *c, const char *hostmask, const char *nick);
+G_MODULE_EXPORT void client_send_state(struct client *, struct network_state *);
 G_MODULE_EXPORT int is_channelname(const char *name, struct network_info *s);
 G_MODULE_EXPORT int is_prefix(char p, struct network_info *n);
 G_MODULE_EXPORT char get_prefix_by_mode(char p, struct network_info *n);

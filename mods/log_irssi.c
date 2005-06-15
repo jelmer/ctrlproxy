@@ -106,7 +106,7 @@ static gboolean log_data(struct network *n, struct line *l, enum data_direction 
 	time_t ti = time(NULL);
 	struct tm *t = localtime(&ti);
 	FILE *f = NULL;
-	if(!l->args || !l->args[0] || l->options & LINE_NO_LOGGING)return TRUE;
+	if(!l->args || !l->args[0])return TRUE;
 
 	nick = line_get_nick(l);
 

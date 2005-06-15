@@ -399,7 +399,7 @@ static gboolean log_custom_data(struct network *network, struct line *l, enum da
 	const char *nick = NULL;
 	char *user = NULL;
 	FILE *f = NULL;
-	if(!l->args || !l->args[0] || l->options & LINE_NO_LOGGING)return TRUE;
+	if(!l->args || !l->args[0])return TRUE;
 	nick = line_get_nick(l);
 	if(user){ *user = '\0';user++; }
 

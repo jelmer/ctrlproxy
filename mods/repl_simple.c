@@ -30,76 +30,32 @@ static void change_nick(struct client *c, char *newnick)
 	free_line(l);
 }
 
-static gboolean log_data(struct network *network, struct line *l, enum data_direction dir, void *userdata) {
-	struct linestack_context *co = (struct linestack_context *)g_hash_table_lookup(simple_backlog, network);
-	struct channel_state *c;
+static gboolean log_data(struct network *n, struct line *l, enum data_direction dir, void *userdata) 
+{
+	if(dir != TO_SERVER) return TRUE;
 
-	if(!co) {
-		co = linestack_new_by_network(network);
-		g_hash_table_insert( simple_backlog, network, co);
-		g_hash_table_insert( simple_initialnick, network, g_strdup(network->state->me.nick));
-	}
+	if (g_strcasecmp(l->args[0], "PRIVMSG") && 
+		g_strcasecmp(l->args[0], "NOTICE")) return TRUE;
 
-	if(l->argc < 1)return TRUE;
-
-	if(dir == TO_SERVER &&  
-	   (!g_strcasecmp(l->args[0], "PRIVMSG") || !g_strcasecmp(l->args[0], "NOTICE"))) {
-		linestack_clear(co);
-		g_hash_table_replace( simple_initialnick, network, g_strdup(network->state->me.nick));
-		linestack_add_line_list( co, gen_replication_network(network->state));
-		return TRUE;
-	}
-
-	if(dir == TO_SERVER)return TRUE;
-
-
-	if(!g_strcasecmp(l->args[0], "PRIVMSG") ||
-	   !g_strcasecmp(l->args[0], "NOTICE") ||
-	   !g_strcasecmp(l->args[0], "MODE") || 
-	   !g_strcasecmp(l->args[0], "JOIN") || 
-	   !g_strcasecmp(l->args[0], "PART") || 
-	   !g_strcasecmp(l->args[0], "KICK") || 
-	   !g_strcasecmp(l->args[0], "QUIT") ||
-	   !g_strcasecmp(l->args[0], "TOPIC") ||
-	   !g_strcasecmp(l->args[0], "NICK")) {
-		linestack_add_line(co, l);
-	} else if(!g_strcasecmp(l->args[0], "353")) {
-		c = find_channel(network->state, l->args[3]);
-		if(c && !(c->introduced & 2)) {
-			linestack_add_line(co, l);
-		}
-		/* Only do 366 if not & 2. Set | 2 */
-	} else if(!g_strcasecmp(l->args[0], "366")) {
-		c = find_channel(network->state, l->args[2]);
-		if(c && !(c->introduced & 2)) {
-			linestack_add_line(co, l);
-			c->introduced |= 2;
-		}
-		/* Only do 331 or 332 if not & 1. Set | 1 */
-	} else if(!g_strcasecmp(l->args[0], "331") || !g_strcasecmp(l->args[0], "332")) {
-		c = find_channel(network->state, l->args[2]);
-		if(c && !(c->introduced & 1)) {
-			linestack_add_line(co, l);
-			c->introduced |= 1;
-		}
-	}
+	g_hash_table_replace(simple_backlog, n, linestack_get_marker(n));
 
 	return TRUE;
 }
 
 static gboolean simple_replicate(struct client *c, void *userdata)
 {
-	struct linestack_context *replication_data = (struct linestack_context *)g_hash_table_lookup(simple_backlog, c->network);
-	if(replication_data) {
+	linestack_marker *m = g_hash_table_lookup(simple_backlog, c->network);
+	if(m) {
 		char *initialnick = (char *)g_hash_table_lookup(simple_initialnick, c->network);
 		change_nick(c, initialnick);
-		linestack_send(replication_data, c->incoming);
+		client_send_state(c, c->network->state);
+		linestack_send(c->network, m, c);
 	}
 	return TRUE;
 }
 
 static gboolean fini_plugin(struct plugin *p) {
-	del_replication_filter("repl_simple");
+	del_server_filter("repl_simple");
 	del_new_client_hook("repl_simple");
 	g_hash_table_destroy(simple_backlog); simple_backlog = NULL;
 	g_hash_table_destroy(simple_initialnick); simple_initialnick = NULL;
@@ -107,9 +63,9 @@ static gboolean fini_plugin(struct plugin *p) {
 }
 
 static gboolean init_plugin(struct plugin *p) {
-	add_replication_filter("repl_simple", log_data, NULL, 1000);
+	add_server_filter("repl_simple", log_data, NULL, 200);
 	add_new_client_hook("repl_simple", simple_replicate, NULL);
-	simple_backlog = g_hash_table_new_full(NULL, NULL, NULL, (GDestroyNotify)linestack_destroy);
+	simple_backlog = g_hash_table_new_full(NULL, NULL, NULL, linestack_free_marker);
 	simple_initialnick = g_hash_table_new_full(NULL, NULL, NULL, g_free);
 	return TRUE;
 }

@@ -22,15 +22,7 @@
 
 static gboolean none_replicate(struct client *c, void *userdata)
 {
-	GSList *d, *orig = gen_replication_network(c->network->state);
-	d = orig;
-	while(d) {
-		struct line *l = (struct line *)d->data;
-		irc_send_line(c->incoming, l);
-		free_line(l);
-		d = d->next;
-	}
-	g_slist_free(orig);
+	client_send_state(c->network->state, c);
 	return TRUE;
 }
 

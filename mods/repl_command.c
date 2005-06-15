@@ -21,72 +21,26 @@
 #include <string.h>
 #include "admin.h"
 
-static GHashTable *command_backlog = NULL;
-
-static gboolean log_data(struct network *network, struct line *l, enum data_direction dir, void *userdata) {
-	struct linestack_context *co;
-	char *desc;
-
-	if(l->argc < 1)return TRUE;
-
-	if(g_strcasecmp(l->args[0], "PRIVMSG") && g_strcasecmp(l->args[0], "NOTICE"))return TRUE;
-
-	/* Lookup this channel */
-	desc = g_strdup_printf("%s/%s", network->name, l->args[1]);
-	
-	co = g_hash_table_lookup(command_backlog, desc);
-	
-	if(!co) {
-		co = linestack_new_by_network(network);
-		g_hash_table_insert(command_backlog, desc, co);
-	} else g_free(desc);
-	linestack_add_line(co, l);
-
-	return TRUE;
-}
-
-static void replicate_channel(gpointer key, gpointer val, gpointer user)
-{
-	struct linestack_context *co = (struct linestack_context *)val;
-	struct client *c = (struct client *)user;
-
-	if(g_ascii_strncasecmp(c->network->name, key, strlen(c->network->name)))
-		return;
-
-	linestack_send(co, c->incoming);
-	linestack_clear(co);
-}
+static GHashTable *markers = NULL;
 
 static void repl_command(const struct client *c, char **args, void *userdata)
 {
-	struct linestack_context *co;
-	char *desc;
+	linestack_marker *lm = g_hash_table_lookup(markers, c->network);
 
-	if(!command_backlog) { 
-		admin_out(c, ("No backlogs saved yet"));
-		return;
-	}
-	
 	if(!args[1]) {
-		admin_out(c, ("Sending backlog for network '%s'"), c->network->name);
+		admin_out(c, "Sending backlog for network '%s'", c->network->name);
 
-		/* Backlog everything for this network */
-		g_hash_table_foreach(command_backlog, replicate_channel, c);
+		linestack_send(c->network, lm, c);
+
+		g_hash_table_replace(markers, c->network, linestack_get_marker(c->network));
+
 		return;
 	} 
 
 	/* Backlog for specific nick/channel */
-	admin_out(c, ("Sending backlog for channel %s@%s"), args[1], c->network->name);
-	desc = g_strdup_printf("%s/%s", c->network->name, args[1]);
-	co = g_hash_table_lookup(command_backlog, desc);
-	g_free(desc);
-
-	if(co)  {
-		linestack_send(co, c->incoming);
-		linestack_clear(co);
-	} else {
-		admin_out(c, ("No backlog for %s"), args[1]);
-	}
+	admin_out(c, "Sending backlog for channel %s", args[1]);
+	linestack_send_object(c->network, args[1], lm, c);
+	g_hash_table_replace(markers, c->network, linestack_get_marker(c->network));
 }
 
 static const struct admin_command cmd_backlog = {
@@ -97,20 +51,19 @@ static const struct admin_command cmd_backlog = {
 };
 
 static gboolean fini_plugin(struct plugin *p) {
-	del_replication_filter("repl_command");
+	g_hash_table_destroy(markers);
 	unregister_admin_command(&cmd_backlog);
-	g_hash_table_destroy(command_backlog); command_backlog = NULL;
 	return TRUE;
 }
 
-static gboolean init_plugin(struct plugin *p) {
+static gboolean init_plugin(struct plugin *p) 
+{
 	if(!plugin_loaded("admin")) {
 		log_global("repl_command", "admin module required for repl_command module. Please load it first");
 		return FALSE;
 	}
-	add_replication_filter("repl_command", log_data, NULL, 1000);
 	register_admin_command(&cmd_backlog);
-	command_backlog = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, (GDestroyNotify)linestack_destroy);
+	markers = g_hash_table_new_full(NULL, NULL, NULL, (GDestroyNotify)linestack_free_marker);
 	return TRUE;
 }
 

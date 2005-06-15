@@ -22,20 +22,19 @@
 
 #include <gmodule.h>
 
+#ifndef G_MODULE_EXPORT
+#define G_MODULE_EXPORT
+#endif
+
 struct line {
-	enum {
-		LINE_IS_PRIVATE = 1,
-		LINE_DONT_SEND = 2,
-		LINE_STOP_PROCESSING = 4,
-		LINE_NO_LOGGING = 8
-	} options;
+	enum { LINE_IS_PRIVATE = 1, LINE_DONT_SEND = 2 } options;
 	char *origin;
 	char **args; /* NULL terminated */
 	size_t argc;
 	enum { COLON_UNKNOWN = 0, WITH_COLON = 1, WITHOUT_COLON = 2 } has_endcolon;
 };
 
-G_MODULE_EXPORT struct line *linedup(struct line *l);
+G_MODULE_EXPORT struct line *linedup(const struct line *l);
 G_MODULE_EXPORT struct line * irc_parse_line(const char *data);
 G_MODULE_EXPORT struct line * virc_parse_line(const char *origin, va_list ap);
 G_MODULE_EXPORT char *irc_line_string(const struct line *l);

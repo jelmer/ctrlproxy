@@ -2,6 +2,7 @@
  	Jelmer Vernooij <jelmer@vernstok.nl>
 
 Ctrlproxy 2.7:
+ * Use separate include files
  * Move <autosend> to a seperate module
  * No longer depend on specific order of USER and NICK commands
  * Use new CtrlProxy-specific logging system. Logs go 
@@ -29,7 +30,6 @@ Ctrlproxy 2.7:
  * Add webconfig python script (Daniel Poelzleithner <ctrlproxy@poelzi.org>)
  * Add some tests to the testsuite
  * Extend linestack interface
- * Add repl_limited module
  * Add test-filter utility
  * Fix bug in unloading modules
  * Fix dependency system for modules

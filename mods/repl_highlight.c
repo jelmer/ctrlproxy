@@ -20,65 +20,45 @@
 #include "ctrlproxy.h"
 #include <string.h>
 
-static GHashTable *highlight_backlog = NULL;
-static GList *matches = NULL;
+static GList *matches = NULL; /* FIXME: Initialize from config! */
+static GHashTable *markers = NULL;
 
-static gboolean log_data(struct network *network, struct line *l, enum data_direction dir, void *userdata) {
-	struct linestack_context *co = (struct linestack_context *)g_hash_table_lookup(highlight_backlog, network);
+static void check_highlight(struct line *l, time_t t, void *userdata)
+{
+	struct client *c = userdata;
 	GList *gl;
 
-	if(!co) {
-		co = linestack_new_by_network(network);
-		g_hash_table_insert(highlight_backlog, network, co);
-	}
-
-	if(l->argc < 1)return TRUE;
-
-	if(dir == TO_SERVER &&  
-	   (!strcasecmp(l->args[0], "PRIVMSG") || !strcasecmp(l->args[0], "NOTICE"))) {
-		linestack_clear(co);
-		linestack_add_line_list( co, gen_replication_network(network->state));
-		return TRUE;
-	}
-
-	if(dir == TO_SERVER)return TRUE;
-
-
-	if(strcasecmp(l->args[0], "PRIVMSG") && strcasecmp(l->args[0], "NOTICE")) 
-		return TRUE;
-
-	gl = matches;
-	while(gl) {
-		const char *m = gl->data;
-		if(strstr(l->args[1], m) || strstr(l->args[2], m)) {
-			linestack_add_line(co, l);
-			return TRUE;
+	if (strcasecmp(l->args[0], "PRIVMSG") != 0 &&
+		strcasecmp(l->args[0], "NOTICE") != 0) 
+		return;
+	
+	for (gl = matches; gl; gl = gl->next) {
+		if (strstr(l->args[2], gl->data)) {
+			client_send_line(c, l);
+			return;
 		}
-
-		gl = gl->next;
 	}
-
-	return TRUE;
 }
 
 static gboolean highlight_replicate(struct client *c, void *userdata)
 {
-	struct linestack_context *replication_data = (struct linestack_context *)g_hash_table_lookup(highlight_backlog, c->network);
-	linestack_send(replication_data, c->incoming);
+	linestack_marker *lm = g_hash_table_lookup(markers, c->network);
+	linestack_traverse(c->network, lm, check_highlight, c);
+	g_hash_table_replace(markers, c->network, linestack_get_marker(c->network));
 	return TRUE;
 }
 
-static gboolean fini_plugin(struct plugin *p) {
-	del_replication_filter("repl_highlight");
+static gboolean fini_plugin(struct plugin *p) 
+{
+	g_hash_table_destroy(markers);	
 	del_new_client_hook("repl_highlight");
-	g_hash_table_destroy(highlight_backlog); highlight_backlog = NULL;
 	return TRUE;
 }
 
-static gboolean init_plugin(struct plugin *p) {
-	add_replication_filter("repl_highlight", log_data, NULL, 1000);
+static gboolean init_plugin(struct plugin *p) 
+{
+	markers = g_hash_table_new_full(NULL, NULL, NULL, (GDestroyNotify)linestack_free_marker);
 	add_new_client_hook("repl_highlight", highlight_replicate, NULL);
-	highlight_backlog = g_hash_table_new(NULL, NULL);
 	return TRUE;
 }
 

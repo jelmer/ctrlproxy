@@ -23,12 +23,11 @@
 %immutable network_nick::name;
 %immutable network_nick::hostmask;
 %immutable network_nick::channels;
-%immutable channel::topic;
-%immutable channel::mode;
-%immutable channel::modes;
-%immutable channel::limit;
-%ignore channel::namreply_started;
-%ignore channel::introduced;
+%immutable channel_state::topic;
+%immutable channel_state::mode;
+%immutable channel_state::modes;
+%immutable channel_state::limit;
+%ignore channel_state::namreply_started;
 %ignore client::incoming_id;
 %ignore client::incoming;
 %ignore client::hangup_id;
@@ -43,10 +42,13 @@
 %rename(Channel) channel;
 %rename(LineStack) linestack_context;
 
+%include "../../line.h";
+%include "../../network.h";
+%include "../../state.h";
 %include "../../ctrlproxy.h";
 
 %extend line {
-	line(struct line *l) {
+	line(const struct line *l) {
 		return linedup(l);
 	}
 
@@ -81,53 +83,33 @@
 };
 
 %extend network {
-	const char *getFeature(const char *feature)  {
-		return get_network_feature(self, feature);
+	network(struct network_config *nc) {
+		return load_network(nc);
 	}
-
-	char getPrefixByMode(char mode) {
-		return get_prefix_by_mode(mode, self);
-	}
-
-	struct channel *getChannel(const char *name) {
-		return find_channel(self, name);
-	}
-
+	
 	~network() {
-		close_network(self);
+		unload_network(self);
 	}
 
-	int disconnect() {
-		return close_server(self);
+	gboolean connect() {
+		return connect_network(self);
 	}
 
-	gboolean changeNick(const char *new_nick) {
-		return network_change_nick(self, new_nick);
+	gboolean disconnect() {
+		return disconnect_network(self);
+	}
+
+	void selectNextServer() {
+		network_select_next_server(self);
 	}
 
 	int contains(struct client *c) {
 		return verify_client(self, c);
 	}
 
-	int compareNicks(const char *n1, const char *n2) {
-		return irccmp(self, n1, n2);
-	}
-
-	GSList *replicate() {
-		return gen_replication_network(self);
-	}
-
-	int isChannel(const char *name) {
-		return is_channelname(name, self);
-	}
-
-	int isPrefix(char prefix) {
-		return is_prefix(prefix, self);
-	}
-
-	void sendToServer(struct line *l)
+	void sendToServer(struct client *from, struct line *l)
 	{
-		network_send_line(self, l);
+		network_send_line(self, from, l);
 	}
 
 	void sendToClients(struct line *l, struct client *exception = NULL) 
@@ -136,40 +118,34 @@
 	}
 };
 
-%extend linestack_context {
-	linestack_context(struct network *n) {
-		return linestack_new_by_network(n);
+%extend network_state
+{
+	struct channel_state *getChannel(const char *name) {
+		return find_channel(self, name);
 	}
 
-	linestack_context(const char *backend_name, const char *data = NULL) {
-		return linestack_new(backend_name, data);
-	}
-
-	void clear() {
-		linestack_clear(self);
-	}
-
-	void addLine(struct line *l) {
-		linestack_add_line(self, l);
-	}
-
-	void addLineList(GSList *l) {
-		/* FIXME */
-	}
-
-	GSList *getLineList() {
-		/* FIXME */
-		return NULL;
-	}
-
-	~linestack() {
-		linestack_destroy(self);
-	}
 };
 
-%extend channel {
-	GSList *replicate(const char *hostmask, const char *nick) {
-		return gen_replication_channel(self, hostmask, nick);
+%extend network_info 
+{
+	const char *getFeature(const char *feature)  {
+		return get_network_feature(self, feature);
+	}
+
+	char getPrefixByMode(char mode) {
+		return get_prefix_by_mode(mode, self);
+	}
+
+	int compareNicks(const char *n1, const char *n2) {
+		return irccmp(self, n1, n2);
+	}
+
+	int isChannel(const char *name) {
+		return is_channelname(name, self);
+	}
+
+	int isPrefix(char prefix) {
+		return is_prefix(prefix, self);
 	}
 };
 
