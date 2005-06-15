@@ -22,7 +22,7 @@
 struct filter_data {
 	char *name;
 	int priority;
-	filter_function function;
+	server_filter_function function;
 	void *userdata;
 };
 
@@ -41,7 +41,7 @@ static gint filter_cmp(gconstpointer _a, gconstpointer _b)
 	return a->priority - b->priority;
 }
 
-static GList *add_filter_ex(GList *class, const char *name, filter_function f, void *userdata, int prio)
+static GList *add_filter_ex(GList *class, const char *name, server_filter_function f, void *userdata, int prio)
 {
 	struct filter_data *d = (struct filter_data *)g_malloc(sizeof(struct filter_data));
 
@@ -74,12 +74,12 @@ static GList *del_filter_ex(GList *list, const char *name)
 }
 
 
-static gboolean filter_class_execute(GList *gl, enum data_direction dir, struct line *l) 
+static gboolean filter_class_execute(GList *gl, struct network *s, enum data_direction dir, struct line *l) 
 {
 	while(gl) {
 		struct filter_data *d = (struct filter_data *)gl->data;
 		
-		if(!d->function(l, dir, d->userdata)) {
+		if(!d->function(s, l, dir, d->userdata)) {
 			return FALSE;
 		}
 
@@ -95,7 +95,7 @@ static GList *log_filters = NULL,
 			 *server_filters = NULL;
 
 #define FILTER_FUNCTIONS(n,list) \
-void add_##n##_filter(const char *name, filter_function f, void *userdata, int priority)\
+void add_##n##_filter(const char *name, server_filter_function f, void *userdata, int priority)\
 {\
 	list = add_filter_ex(list, name, f, userdata, priority);\
 }\
@@ -104,9 +104,9 @@ void del_##n##_filter(const char *name)\
 {\
 	list = del_filter_ex(list, name); \
 }\
-gboolean run_##n##_filter(struct line *l, enum data_direction dir)\
+gboolean run_##n##_filter(struct network *s, struct line *l, enum data_direction dir)\
 {\
-	return filter_class_execute(list, dir, l);\
+	return filter_class_execute(list, s, dir, l);\
 }
 
 FILTER_FUNCTIONS(log,log_filters)

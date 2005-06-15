@@ -397,29 +397,29 @@ static struct query queries[] = {
 	{ NULL }
 };
 
-static void handle_465(struct line *l)
+static void handle_465(struct network *n, struct line *l)
 {
-	log_network(NULL, l->network, "Banned from server: %s", l->args[1]);
+	log_network(NULL, n, "Banned from server: %s", l->args[1]);
 }
 
-static void handle_451(struct line *l)
+static void handle_451(struct network *n, struct line *l)
 {
-	log_network(NULL, l->network, "Not registered error, this is probably a bug...");
+	log_network(NULL, n, "Not registered error, this is probably a bug...");
 }
 
-static void handle_462(struct line *l)
+static void handle_462(struct network *n, struct line *l)
 {
-	log_network(NULL, l->network, "Double registration error, this is probably a bug...");
+	log_network(NULL, n, "Double registration error, this is probably a bug...");
 }
 
-static void handle_463(struct line *l)
+static void handle_463(struct network *n, struct line *l)
 {
-	log_network(NULL, l->network, "Host not privileged to connect");
+	log_network(NULL, n, "Host not privileged to connect");
 }
 
-static void handle_464(struct line *l)
+static void handle_464(struct network *n, struct line *l)
 {
-	log_network(NULL, l->network, "Password mismatch");
+	log_network(NULL, n, "Password mismatch");
 }
 
 
@@ -428,7 +428,7 @@ static int response_all[] = { RPL_NOWAWAY, RPL_UNAWAY, 0 };
 static int response_none[] = { ERR_NOMOTD, RPL_ENDOFMOTD, 0 };
 static struct {
 	int response;
-	void (*handler) (struct line *);
+	void (*handler) (struct network *n, struct line *);
 } response_handler[] = {
 	{ ERR_PASSWDMISMATCH, handle_464 },
 	{ ERR_ALREADYREGISTERED, handle_462 },
@@ -468,7 +468,7 @@ void redirect_response(struct network *network, struct line *l)
 
 	/* Find a request that this response is a reply to */
 	while(s) {
-		if(s->network == l->network && 
+		if(s->network == network && 
 		   (is_reply(s->query->replies, n) || 
 			is_reply(s->query->errors, n) ||
 			is_reply(s->query->end_replies, n))) {
@@ -507,7 +507,7 @@ void redirect_response(struct network *network, struct line *l)
 
 	for (i = 0; response_handler[i].handler; i++) {
 		if (response_handler[i].response == n) {
-			response_handler[i].handler(l);
+			response_handler[i].handler(network, l);
 			return;
 		}
 	}
@@ -535,7 +535,7 @@ void redirect_record(struct client *c, struct line *l)
 static int handle_default(struct line *l, struct client *c, struct query *q)
 {
 	struct query_stack *s = g_new(struct query_stack,1);
-	s->network = l->network;
+	s->network = c->network;
 	s->client = c;
 	s->query = q;
 	s->next = stack;

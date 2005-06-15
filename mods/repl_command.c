@@ -23,7 +23,7 @@
 
 static GHashTable *command_backlog = NULL;
 
-static gboolean log_data(struct line *l, enum data_direction dir, void *userdata) {
+static gboolean log_data(struct network *network, struct line *l, enum data_direction dir, void *userdata) {
 	struct linestack_context *co;
 	char *desc;
 
@@ -32,12 +32,12 @@ static gboolean log_data(struct line *l, enum data_direction dir, void *userdata
 	if(g_strcasecmp(l->args[0], "PRIVMSG") && g_strcasecmp(l->args[0], "NOTICE"))return TRUE;
 
 	/* Lookup this channel */
-	desc = g_strdup_printf("%s/%s", l->network->name, l->args[1]);
+	desc = g_strdup_printf("%s/%s", network->name, l->args[1]);
 	
 	co = g_hash_table_lookup(command_backlog, desc);
 	
 	if(!co) {
-		co = linestack_new_by_network(l->network);
+		co = linestack_new_by_network(network);
 		g_hash_table_insert(command_backlog, desc, co);
 	} else g_free(desc);
 	linestack_add_line(co, l);

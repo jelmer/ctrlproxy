@@ -51,7 +51,7 @@ static gboolean check_time(gpointer user_data) {
 	return TRUE;
 }
 
-static gboolean log_data(struct line *l, enum data_direction dir, void *userdata) {
+static gboolean log_data(struct network *n, struct line *l, enum data_direction dir, void *userdata) {
 	if(dir == TO_SERVER && !g_strcasecmp(l->args[0], "AWAY")) {
 		if(l->args[1])is_away = TRUE;
 		else is_away = FALSE;

@@ -47,39 +47,39 @@ struct log_mapping {
 	char subst;
 	unsigned int index;
 	/* If index is -1 */
-	char *(*callback) (struct line *l, gboolean case_sensitive);
+	char *(*callback) (struct network *, struct line *l, gboolean case_sensitive);
 };
 
-static char *get_hours(struct line *l, gboolean case_sensitive) { 
+static char *get_hours(struct network *n, struct line *l, gboolean case_sensitive) { 
 	time_t ti = time(NULL);
 	struct tm *t = localtime(&ti);
 	return g_strdup_printf("%02d", t->tm_hour);
 }
 
-static char *get_minutes(struct line *l, gboolean case_sensitive) { 
+static char *get_minutes(struct network *n, struct line *l, gboolean case_sensitive) { 
 	time_t ti = time(NULL);
 	struct tm *t = localtime(&ti);
 	return g_strdup_printf("%02d", t->tm_min);
 }
 
-static char *get_seconds(struct line *l, gboolean case_sensitive) { 
+static char *get_seconds(struct network *n, struct line *l, gboolean case_sensitive) { 
 	time_t ti = time(NULL);
 	struct tm *t = localtime(&ti);
 	return g_strdup_printf("%02d", t->tm_sec);
 }
 
-static char *get_seconds_since_1970(struct line *l, gboolean case_sensitive) {
+static char *get_seconds_since_1970(struct network *n, struct line *l, gboolean case_sensitive) {
 	time_t ti = time(NULL);
 	return g_strdup_printf("%ld", ti);
 }
 
-static char *get_day(struct line *l, gboolean case_sensitive) { 
+static char *get_day(struct network *n, struct line *l, gboolean case_sensitive) { 
 	time_t ti = time(NULL);
 	struct tm *t = localtime(&ti);
 	return g_strdup_printf("%02d", t->tm_mday);
 }
 
-static char *get_user(struct line *l, gboolean case_sensitive) {
+static char *get_user(struct network *n, struct line *l, gboolean case_sensitive) {
 	char *nick = NULL;
 	char *user = NULL;
 
@@ -91,37 +91,37 @@ static char *get_user(struct line *l, gboolean case_sensitive) {
 	else return g_strdup(user);
 }
 
-static char *get_monthname(struct line *l, gboolean case_sensitive) { 
+static char *get_monthname(struct network *n, struct line *l, gboolean case_sensitive) { 
 	char stime[512];
 	time_t ti = time(NULL);
 	strftime(stime, sizeof(stime), "%b", localtime(&ti));
 	return g_strdup_printf("%s", stime);
 }
 
-static char *get_nick(struct line *l, gboolean case_sensitive) {
+static char *get_nick(struct network *n, struct line *l, gboolean case_sensitive) {
 	if(line_get_nick(l)) {
 		if(case_sensitive) return g_ascii_strdown(line_get_nick(l), -1);
 		else return g_strdup(line_get_nick(l)); 
 	}
 	
-	return g_strdup(l->network->state.me->nick);
+	return g_strdup("");
 }
 
-static char *get_network(struct line *l, gboolean case_sensitive) 
-{ return g_strdup(l->network->name); }
-static char *get_server(struct line *l, gboolean case_sensitive)
-{ return g_strdup(l->network->connection.data.tcp.current_server->name); }
+static char *get_network(struct network *n, struct line *l, gboolean case_sensitive) 
+{ return g_strdup(n->name); }
+static char *get_server(struct network *n, struct line *l, gboolean case_sensitive)
+{ return g_strdup(n->connection.data.tcp.current_server->name); }
 
-static char *get_percent(struct line *l, gboolean case_sensitive) { return g_strdup("%"); }
+static char *get_percent(struct network *n, struct line *l, gboolean case_sensitive) { return g_strdup("%"); }
 
 static const char *identifier = NULL;
 
-static char *get_identifier(struct line *l, gboolean case_sensitive) { 
+static char *get_identifier(struct network *n, struct line *l, gboolean case_sensitive) { 
 	if(case_sensitive) return g_ascii_strdown(identifier, -1); 
 	else return g_strdup(identifier); 
 }
 
-static char *get_modechanges(struct line *l, gboolean case_sensitive) {
+static char *get_modechanges(struct network *n, struct line *l, gboolean case_sensitive) {
 	char buf[512] = "";
 	int i;
 
@@ -177,14 +177,14 @@ static struct log_mapping mappings[] = {
 	{ NULL }
 };
 
-static char *find_mapping(struct line *l, char c, gboolean case_sensitive)
+static char *find_mapping(struct network *network, struct line *l, char c, gboolean case_sensitive)
 {
 	int i;
 	for(i = 0; mappings[i].subst; i++) {
 		if(mappings[i].command && 
 		   strcmp(mappings[i].command, l->args[0])) continue;
 		if(mappings[i].subst != c)continue;
-		if(mappings[i].index == -1) return mappings[i].callback(l, case_sensitive);
+		if(mappings[i].index == -1) return mappings[i].callback(network, l, case_sensitive);
 		if(mappings[i].index < l->argc) {
 			if(case_sensitive) return g_ascii_strdown(l->args[mappings[i].index], -1);
 			else return g_strdup(l->args[mappings[i].index]);
@@ -193,7 +193,7 @@ static char *find_mapping(struct line *l, char c, gboolean case_sensitive)
 	return g_strdup("");
 }
 
-static void custom_subst(char **_new, const char *fmt, struct line *l, const char *_identifier, gboolean case_sensitive)
+static void custom_subst(struct network *network, char **_new, const char *fmt, struct line *l, const char *_identifier, gboolean case_sensitive)
 {
 	char *subst[MAX_SUBST];
 	char *new;
@@ -206,7 +206,7 @@ static void custom_subst(char **_new, const char *fmt, struct line *l, const cha
 	memset(subst, 0, sizeof(char *) * MAX_SUBST);
 	for(i = 0; i < strlen(fmt); i++) {
 		if(fmt[i] == '%') {
-			subst[(int)fmt[i+1]] = find_mapping(l, fmt[i+1], case_sensitive);	
+			subst[(int)fmt[i+1]] = find_mapping(network, l, fmt[i+1], case_sensitive);	
 			if (subst[(int)fmt[i+1]] == NULL) subst[(int)fmt[i+1]] = g_strdup("");
 			len += strlen(subst[(int)fmt[i+1]]);
 		}
@@ -260,21 +260,22 @@ If appropriate:
 
 static GHashTable *files = NULL;
 
-static FILE *find_channel_file(struct line *l, char *identifier) {
+static FILE *find_channel_file(struct network *network, struct line *l, char *identifier) {
 	char *n = NULL;
 	FILE *f;
 	if(!logfilename)return NULL;
-	custom_subst(&n, logfilename, l, identifier, TRUE);
+	custom_subst(network, &n, logfilename, l, identifier, TRUE);
 	f = g_hash_table_lookup(files, n);
 	g_free(n);
 	return f;
 }
 
-static FILE *find_add_channel_file(struct line *l, const char *identifier) {
+static FILE *find_add_channel_file(struct network *network, struct line *l, const char *identifier) 
+{
 	char *n = NULL, *dn, *p;
 	FILE *f;
 	if(!logfilename) return NULL;
-	custom_subst(&n, logfilename, l, identifier, TRUE);
+	custom_subst(network, &n, logfilename, l, identifier, TRUE);
 	f = g_hash_table_lookup(files, n);
 	if(!f) {
 		dn = g_strdup(n);
@@ -285,7 +286,7 @@ static FILE *find_add_channel_file(struct line *l, const char *identifier) {
 
 		/* Check if directory needs to be created */
 		if(!g_file_test(dn, G_FILE_TEST_IS_DIR) && mkdir(dn, 0700) == -1) {
-			log_network("log_custom", l->network, "Couldn't create directory %s for logging!", dn);
+			log_network("log_custom", network, "Couldn't create directory %s for logging!", dn);
 			g_free(dn);
 			g_free(n);
 			return NULL;
@@ -293,10 +294,10 @@ static FILE *find_add_channel_file(struct line *l, const char *identifier) {
 		g_free(dn);
 		
 		/* Then open the correct filename */
-		custom_subst(&n, logfilename, l, identifier, TRUE);
+		custom_subst(network, &n, logfilename, l, identifier, TRUE);
 		f = fopen(n, "a+");
 		if(!f) {
-			log_network("log_custom", l->network, "Couldn't open file %s for logging!", n);
+			log_network("log_custom", network, "Couldn't open file %s for logging!", n);
 			g_free(n);
 			return NULL;
 		}
@@ -306,7 +307,7 @@ static FILE *find_add_channel_file(struct line *l, const char *identifier) {
 	return f;
 }
 
-static void file_write_target(const char *n, struct line *l) 
+static void file_write_target(struct network *network, const char *n, struct line *l) 
 {
 	char *t, *s, *fmt;
 	FILE *f;
@@ -314,17 +315,17 @@ static void file_write_target(const char *n, struct line *l)
 	fmt = g_hash_table_lookup(fmts, n);
 	if(!fmt) return;
 
-	if(!irccmp(&l->network->state.info, l->network->state.me->nick, l->args[1])) {
+	if(!irccmp(&network->state.info, network->state.me->nick, l->args[1])) {
 		if(line_get_nick(l)) { t = g_strdup(line_get_nick(l)); }
 		else { t = g_strdup("_messages_"); }
 	} else {
 		t = g_strdup(l->args[1]);
 	}
 
-	f = find_add_channel_file(l, t);
+	f = find_add_channel_file(network, l, t);
 	if(!f) { g_free(t); return; }
 	
-	custom_subst(&s, fmt, l, t, FALSE);
+	custom_subst(network, &s, fmt, l, t, FALSE);
 	g_free(t);
 
     fputs(s, f);
@@ -334,7 +335,7 @@ static void file_write_target(const char *n, struct line *l)
 	g_free(s);
 }
 
-static void file_write_channel_only(const char *n, struct line *l)
+static void file_write_channel_only(struct network *network, const char *n, struct line *l)
 {
 	char *s, *fmt;
 	FILE *f;
@@ -342,10 +343,10 @@ static void file_write_channel_only(const char *n, struct line *l)
 	fmt = g_hash_table_lookup(fmts, n);
 	if(!fmt) return;
 
-	f = find_add_channel_file(l, l->args[1]);
+	f = find_add_channel_file(network, l, l->args[1]);
 	if(!f) return; 
 
-	custom_subst(&s, fmt, l, l->args[1], FALSE);
+	custom_subst(network, &s, fmt, l, l->args[1], FALSE);
 
 	fputs(s, f); fputc('\n', f);
 	fflush(f);
@@ -353,7 +354,7 @@ static void file_write_channel_only(const char *n, struct line *l)
 	g_free(s);
 }
 
-static void file_write_channel_query(const char *n, struct line *l)
+static void file_write_channel_query(struct network *network, const char *n, struct line *l)
 {
 	char *s, *fmt;
 	char *nick;
@@ -367,23 +368,23 @@ static void file_write_channel_query(const char *n, struct line *l)
 	if(!fmt) return;
 
 	/* check for the query first */
-	f = find_channel_file(l, nick);
+	f = find_channel_file(network, l, nick);
 
 	if(f) {
-		custom_subst(&s, fmt, l, nick, FALSE);
+		custom_subst(network, &s, fmt, l, nick, FALSE);
 		fputs(s, f); fputc('\n', f);
 		fflush(f);
 		g_free(s);
 	}
 	
 	/* now, loop thru the channels and check if the user is there */
-	gl = l->network->state.channels;
+	gl = network->state.channels;
 	while(gl) {
 		struct channel_state *c = (struct channel_state *)gl->data;
 		if(find_nick(c, nick)) {
-			f = find_add_channel_file(l, c->name);
+			f = find_add_channel_file(network, l, c->name);
 			if(f) {
-				custom_subst(&s, fmt, l, c->name, FALSE);
+				custom_subst(network, &s, fmt, l, c->name, FALSE);
 				fputs(s, f); fputc('\n', f);
 				fflush(f);
 				g_free(s);
@@ -393,7 +394,7 @@ static void file_write_channel_query(const char *n, struct line *l)
 	}
 }
 
-static gboolean log_custom_data(struct line *l, enum data_direction dir, void *userdata)
+static gboolean log_custom_data(struct network *network, struct line *l, enum data_direction dir, void *userdata)
 {
 	const char *nick = NULL;
 	char *user = NULL;
@@ -412,32 +413,32 @@ static gboolean log_custom_data(struct line *l, enum data_direction dir, void *u
 	 */
 
 	if(dir == FROM_SERVER && !g_strcasecmp(l->args[0], "JOIN")) {
-		file_write_target("join", l); 
+		file_write_target(network, "join", l); 
 	} else if(dir == FROM_SERVER && !g_strcasecmp(l->args[0], "PART")) {
-		file_write_channel_only("part", l);
+		file_write_channel_only(network, "part", l);
 	} else if(!g_strcasecmp(l->args[0], "PRIVMSG")) {
 		if(l->args[2][0] == '') { 
 			l->args[2][strlen(l->args[2])-1] = '\0';
 			if(!g_ascii_strncasecmp(l->args[2], "ACTION ", 8)) { 
 				l->args[2]+=8;
-				file_write_target("action", l);
+				file_write_target(network, "action", l);
 				l->args[2]-=8;
 			}
 			l->args[2][strlen(l->args[2])] = '';
 			/* Ignore all other ctcp messages */
 		} else {
-			file_write_target("msg", l);
+			file_write_target(network, "msg", l);
 		}
 	} else if(!g_strcasecmp(l->args[0], "NOTICE")) {
-		file_write_target("notice", l);
+		file_write_target(network, "notice", l);
 	} else if(!g_strcasecmp(l->args[0], "MODE") && l->args[1] && 
-			  is_channelname(l->args[1], &l->network->state.info) && dir == FROM_SERVER) {
-		file_write_target("mode", l);
+			  is_channelname(l->args[1], &network->state.info) && dir == FROM_SERVER) {
+		file_write_target(network, "mode", l);
 	} else if(!g_strcasecmp(l->args[0], "QUIT")) {
-		file_write_channel_query("quit", l);
+		file_write_channel_query(network, "quit", l);
 	} else if(!g_strcasecmp(l->args[0], "KICK") && l->args[1] && l->args[2] && dir == FROM_SERVER) {
 		if(!strchr(l->args[1], ',')) {
-			file_write_channel_only("kick", l);
+			file_write_channel_only(network, "kick", l);
 		} else { 
 			char *channels = g_strdup(l->args[1]);
 			char *nicks = g_strdup(l->args[1]);
@@ -452,7 +453,7 @@ static gboolean log_custom_data(struct line *l, enum data_direction dir, void *u
 				if(!n) cont = 0;
 				else *n = '\0';
 
-				file_write_channel_only("kick", l);
+				file_write_channel_only(network, "kick", l);
 
 				p = n+1;
 				_nick = strchr(_nick, ',');
@@ -464,10 +465,10 @@ static gboolean log_custom_data(struct line *l, enum data_direction dir, void *u
 			g_free(nicks);
 		}
 	} else if(!g_strcasecmp(l->args[0], "TOPIC") && dir == FROM_SERVER && l->args[1]) {
-		if(l->args[2]) file_write_channel_only("topic", l);
-		else file_write_channel_only("notopic", l);
+		if(l->args[2]) file_write_channel_only(network, "topic", l);
+		else file_write_channel_only(network, "notopic", l);
 	} else if(!g_strcasecmp(l->args[0], "NICK") && dir == FROM_SERVER && l->args[1]) {
-		file_write_channel_query("nickchange", l);
+		file_write_channel_query(network, "nickchange", l);
 	}
 
 	if(f) fflush(f);

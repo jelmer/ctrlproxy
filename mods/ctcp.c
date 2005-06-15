@@ -32,7 +32,7 @@
 #undef G_LOG_DOMAIN
 #define G_LOG_DOMAIN "ctcp"
 
-static gboolean mhandle_data(struct line *l, enum data_direction dir, void *userdata)
+static gboolean mhandle_data(struct network *n, struct line *l, enum data_direction dir, void *userdata)
 {
 	char *data, *t, *msg, *dest, *dhostmask = NULL;
 	time_t ti;
@@ -70,28 +70,28 @@ static gboolean mhandle_data(struct line *l, enum data_direction dir, void *user
 #else
 		msg = g_strdup_printf("\001VERSION ctrlproxy:%s:Windows %d.%d\001", ctrlproxy_version(), _winmajor, _winminor);
 #endif
-		network_send_args(l->network, "NOTICE", dest, msg, NULL);
+		network_send_args(n, "NOTICE", dest, msg, NULL);
 		g_free(msg);
 	} else if(!g_strcasecmp(data, "TIME")) {
 		ti = time(NULL);
 		msg = g_strdup_printf("\001TIME %s\001", ctime(&ti));
 		t = strchr(msg, '\n');
 		if(t)*t = '\0';
-		network_send_args(l->network, "NOTICE", dest, msg, NULL);
+		network_send_args(n, "NOTICE", dest, msg, NULL);
 		g_free(msg);
 	} else if(!g_strcasecmp(data, "FINGER")) {
-		msg = g_strdup_printf("\001FINGER %s\001", l->network->state.me->fullname);
-		network_send_args(l->network, "NOTICE", dest, msg, NULL);
+		msg = g_strdup_printf("\001FINGER %s\001", n->state.me->fullname);
+		network_send_args(n, "NOTICE", dest, msg, NULL);
 		g_free(msg);
 	} else if(!g_strcasecmp(data, "SOURCE")) {
-		network_send_args(l->network, "NOTICE", dest, "\001SOURCE http://nl.linux.org/~jelmer/ctrlproxy/\001", NULL);
+		network_send_args(n, "NOTICE", dest, "\001SOURCE http://nl.linux.org/~jelmer/ctrlproxy/\001", NULL);
 	} else if(!g_strcasecmp(data, "CLIENTINFO")) {
-		network_send_args(l->network, "NOTICE", dest, "\001ACTION CLIENTINFO VERSION TIME FINGER SOURCE CLIENTINFO PING\001", NULL);
+		network_send_args(n, "NOTICE", dest, "\001ACTION CLIENTINFO VERSION TIME FINGER SOURCE CLIENTINFO PING\001", NULL);
 	} else if(!g_strcasecmp(data, "PING")) {
-		network_send_args(l->network, "NOTICE", dest, l->args[2]?l->args[2]:"", NULL);
+		network_send_args(n, "NOTICE", dest, l->args[2]?l->args[2]:"", NULL);
 	} else if(!g_strcasecmp(data, "ACTION")) {
 	} else if(!g_strcasecmp(data, "DCC")) {
-	} else log_network("ctcp", l->network, "Received unknown CTCP request '%s'!", data);
+	} else log_network("ctcp", n, "Received unknown CTCP request '%s'!", data);
 
 	g_free(data);
 	if(dhostmask)g_free(dhostmask);

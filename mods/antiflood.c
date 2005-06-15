@@ -29,13 +29,15 @@ static int default_queue_speed = 2;
 static struct plugin *this_plugin = NULL;
 
 struct network_data {
+	struct network *network;
 	time_t tv_last_message;
 	GQueue *message_queue;
 	guint timeout_id;
 	unsigned long queue_speed;
 };
 
-static gboolean send_queue(gpointer user_data) {
+static gboolean send_queue(gpointer user_data) 
+{
 	gpointer d;
 	time_t now = time(NULL);
 	struct network_data *sd = (struct network_data *)user_data;
@@ -46,7 +48,7 @@ static gboolean send_queue(gpointer user_data) {
 	while (sd->tv_last_message < now && (d = g_queue_pop_tail(sd->message_queue))) {
 		struct line *l = (struct line *)d;
 
-		network_send_line(l->network, NULL, l);
+		network_send_line(sd->network, NULL, l);
 
 		free_line(l);
 		
@@ -56,17 +58,17 @@ static gboolean send_queue(gpointer user_data) {
 	return TRUE;
 }
 
-static gboolean log_data(struct line *l, enum data_direction dir, void *userdata) {
+static gboolean log_data(struct network *network, struct line *l, enum data_direction dir, void *userdata) {
 	struct network_data *sd;
 	time_t now;
 	
 	if (dir != TO_SERVER) return TRUE;
 
 	/* Assume local networks don't do flood protection */
-	if (l->network->connection.type != NETWORK_TCP) return TRUE;
+	if (network->connection.type != NETWORK_TCP) return TRUE;
 
 	/* Get data for this server from the hash */
-	sd = g_hash_table_lookup(antiflood_servers, l->network);
+	sd = g_hash_table_lookup(antiflood_servers, network);
 
 	now = time(NULL);
 	
@@ -78,15 +80,16 @@ static gboolean log_data(struct line *l, enum data_direction dir, void *userdata
 		sd->timeout_id = g_timeout_add(1000, send_queue , sd);
 
 		sd->message_queue = g_queue_new();
+		sd->network = network;
 
-		g_hash_table_insert(antiflood_servers, l->network, sd);
+		g_hash_table_insert(antiflood_servers, network, sd);
 	}
 
 	if (sd->tv_last_message < now) 
 		sd->tv_last_message = now;
 	
 	if (sd->tv_last_message - now > 10) {
-		log_network("antiflood", l->network, "Queueing message (%s)", l->args[0]);
+		log_network("antiflood", network, "Queueing message (%s)", l->args[0]);
 		/* Push it up the stack! */
 		g_queue_push_head(sd->message_queue, linedup(l));
 		l->options |= LINE_DONT_SEND;

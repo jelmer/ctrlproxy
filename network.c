@@ -50,64 +50,64 @@ static void server_send_login (struct network *s)
 	s->connection.state = NETWORK_CONNECTION_STATE_LOGIN_SENT;
 }
 
-static gboolean process_from_server(struct line *l)
+static gboolean process_from_server(struct network *n, struct line *l)
 {
 	struct line *lc;
 
-	run_log_filter(lc = linedup(l), FROM_SERVER); free_line(lc);
-	run_replication_filter(lc = linedup(l), FROM_SERVER); free_line(lc);
+	run_log_filter(n, lc = linedup(l), FROM_SERVER); free_line(lc);
+	run_replication_filter(n, lc = linedup(l), FROM_SERVER); free_line(lc);
 
-	state_handle_data(&l->network->state,l);
+	state_handle_data(&n->state,l);
 
 	/* We need to handle pings.. we can't depend on a client
 	 * to do that for us*/
 	if(!g_strcasecmp(l->args[0], "PING")){
-		network_send_args(l->network, "PONG", l->args[1], NULL);
+		network_send_args(n, "PONG", l->args[1], NULL);
 		return TRUE;
 	} else if(!g_strcasecmp(l->args[0], "PONG")){
 		return TRUE;
 	} else if(!g_strcasecmp(l->args[0], "ERROR")) {
-		log_network(NULL, l->network, "error: %s", l->args[1]);
+		log_network(NULL, n, "error: %s", l->args[1]);
 	} else if(!g_strcasecmp(l->args[0], "433") && 
-			  l->network->connection.state == NETWORK_CONNECTION_STATE_LOGIN_SENT){
-		char *old_nick = l->network->nick;
-		l->network->nick = g_strdup_printf("%s_", l->network->nick);
-		network_send_args(l->network, "NICK", l->network->nick, NULL);
+			  n->connection.state == NETWORK_CONNECTION_STATE_LOGIN_SENT){
+		char *old_nick = n->nick;
+		n->nick = g_strdup_printf("%s_", n->nick);
+		network_send_args(n, "NICK", n->nick, NULL);
 		g_free(old_nick);
 	} else if(!g_strcasecmp(l->args[0], "422") ||
 			  !g_strcasecmp(l->args[0], "376")) {
 		GList *gl;
-		l->network->connection.state = NETWORK_CONNECTION_STATE_MOTD_RECVD;
+		n->connection.state = NETWORK_CONNECTION_STATE_MOTD_RECVD;
 
-		server_connected_hook_execute(l->network);
+		server_connected_hook_execute(n);
 
-		for (gl = l->network->autosend_lines; gl; gl = gl->next) {
+		for (gl = n->autosend_lines; gl; gl = gl->next) {
 			char *data = gl->data;
 			struct line *newl;
 
 			newl = irc_parse_line(data);
 
-			network_send_line(l->network, NULL, newl);
+			network_send_line(n, NULL, newl);
 
 			free_line(newl);
 		}
 
 		/* Rejoin channels */
-		for (gl = l->network->state.channels; gl; gl = gl->next) 
+		for (gl = n->state.channels; gl; gl = gl->next) 
 		{
 			struct channel_state *c = gl->data;
 			if(c->autojoin) {
-				network_send_args(l->network, "JOIN", c->name, c->key, NULL);
+				network_send_args(n, "JOIN", c->name, c->key, NULL);
 			} 
 		}
 	} 
 
 	if(!(l->options & LINE_DONT_SEND) && 
-		l->network->connection.state == NETWORK_CONNECTION_STATE_MOTD_RECVD) {
+		n->connection.state == NETWORK_CONNECTION_STATE_MOTD_RECVD) {
 		if (atoi(l->args[0])) {
-			redirect_response(l->network, l);
-		} else if (run_server_filter(l, FROM_SERVER)) {
-			clients_send(l->network, l, NULL);
+			redirect_response(n, l);
+		} else if (run_server_filter(n, l, FROM_SERVER)) {
+			clients_send(n, l, NULL);
 		} 
 	} 
 
@@ -157,9 +157,7 @@ gboolean handle_server_receive (GIOChannel *c, GIOCondition cond, void *_server)
 			return TRUE;
 		}
 
-		l->network = server;
-
-		ret = process_from_server(l);
+		ret = process_from_server(server, l);
 
 		free_line(l);
 
@@ -186,13 +184,11 @@ gboolean network_send_line(struct network *s, const struct client *c, const stru
 	struct line l = *ol;
 	struct line *lc;
 
-	l.network = s;
-
-	if (!run_server_filter(&l, TO_SERVER))
+	if (!run_server_filter(s, &l, TO_SERVER))
 		return TRUE;
 
-	run_log_filter(lc = linedup(&l), TO_SERVER); free_line(lc);
-	run_replication_filter(lc = linedup(&l), TO_SERVER); free_line(lc);
+	run_log_filter(s, lc = linedup(&l), TO_SERVER); free_line(lc);
+	run_replication_filter(s, lc = linedup(&l), TO_SERVER); free_line(lc);
 
 	/* Also write this message to all other clients currently connected */
 	if(!(l.options & LINE_IS_PRIVATE) && l.args[0] &&
@@ -222,12 +218,10 @@ gboolean network_send_line(struct network *s, const struct client *c, const stru
 
 gboolean virtual_network_recv_line(struct network *s, struct line *l)
 {
-	l->network = s;
-
 	if (!l->origin) 
 		l->origin = g_strdup(s->name);
 
-	return process_from_server(l);
+	return process_from_server(s, l);
 }
 
 gboolean virtual_network_recv_args(struct network *s, const char *origin, ...)
@@ -254,6 +248,7 @@ gboolean network_send_args(struct network *s, ...)
 	gboolean ret;
 	va_start(ap, s);
 	l = virc_parse_line(NULL, ap);
+	l->origin = g_strdup(s->state.me->nick);
 	va_end(ap);
 
 	ret = network_send_line(s, NULL, l);

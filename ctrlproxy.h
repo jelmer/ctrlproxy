@@ -62,7 +62,6 @@ enum line_options {
 
 struct line {
 	enum line_options options;
-	struct network *network;
 	char *origin;
 	char **args; /* NULL terminated */
 	size_t argc;
@@ -186,6 +185,7 @@ struct network_connection {
 struct network_info
 {
 	char *name;
+	char *server;
 	GHashTable *features;
 	char *supported_user_modes;
 	char *supported_channel_modes;
@@ -342,18 +342,18 @@ G_MODULE_EXPORT int strrfc1459cmp(const char *a, const char *b);
 
 /* hooks.c */
 /* Returns TRUE if filter should be continued, FALSE if it should be stopped. */
-typedef gboolean (*filter_function) (struct line *, enum data_direction, void *userdata);
-G_MODULE_EXPORT void add_log_filter(const char *name, filter_function, void *userdata, int priority);
+typedef gboolean (*server_filter_function) (struct network *n, struct line *, enum data_direction, void *userdata);
+G_MODULE_EXPORT void add_log_filter(const char *name, server_filter_function, void *userdata, int priority);
 G_MODULE_EXPORT void del_log_filter(const char *name);
 
-G_MODULE_EXPORT void add_replication_filter(const char *name, filter_function, void *userdata, int priority);
+G_MODULE_EXPORT void add_replication_filter(const char *name, server_filter_function, void *userdata, int priority);
 G_MODULE_EXPORT void del_replication_filter(const char *name);
 
 typedef gboolean (*client_filter_function) (struct client *c, struct line *, enum data_direction, void *userdata);
 G_MODULE_EXPORT void add_client_filter(const char *name, client_filter_function, void *userdata, int priority);
 G_MODULE_EXPORT void del_client_filter(const char *name);
 
-G_MODULE_EXPORT void add_server_filter(const char *name, filter_function, void *userdata, int priority);
+G_MODULE_EXPORT void add_server_filter(const char *name, server_filter_function, void *userdata, int priority);
 G_MODULE_EXPORT void del_server_filter(const char *name);
 
 typedef gboolean (*new_client_hook) (struct client *, void *userdata);

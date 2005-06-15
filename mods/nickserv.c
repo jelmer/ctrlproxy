@@ -70,13 +70,13 @@ static void identify_me(struct network *network, char *nick)
 	}
 }
 
-static gboolean log_data(struct line *l, enum data_direction dir, void *userdata) {
+static gboolean log_data(struct network *n, struct line *l, enum data_direction dir, void *userdata) {
 	static char *nickattempt = NULL;
 
 	/* User has changed his/her nick. Check whether this nick needs to be identified */
 	if(dir == FROM_SERVER && !g_strcasecmp(l->args[0], "NICK") &&
 	   nickattempt && !g_strcasecmp(nickattempt, l->args[1])) {
-		identify_me(l->network, l->args[1]);
+		identify_me(n, l->args[1]);
 	}
 
 	/* Keep track of the last nick that the user tried to take */
@@ -87,43 +87,43 @@ static gboolean log_data(struct line *l, enum data_direction dir, void *userdata
 
 	if (dir == TO_SERVER && 
 		(!g_strcasecmp(l->args[0], "PRIVMSG") || !g_strcasecmp(l->args[0], "NOTICE")) &&
-		(!g_strcasecmp(l->args[1], nickserv_nick(l->network)) && !g_strncasecmp(l->args[2], "IDENTIFY ", strlen("IDENTIFY ")))) {
+		(!g_strcasecmp(l->args[1], nickserv_nick(n)) && !g_strncasecmp(l->args[2], "IDENTIFY ", strlen("IDENTIFY ")))) {
 			struct nickserv_entry *e = NULL;
 			GList *gl;
 		
 			for (gl = nicks; gl; gl = gl->next) {
 				e = gl->data;
 
-				if (e->network && !strcasecmp(e->network, l->network->name) && !strcasecmp(e->nick, l->network->state.me->nick)) {
+				if (e->network && !strcasecmp(e->network, n->name) && !strcasecmp(e->nick, n->state.me->nick)) {
 					break;		
 				}
 			}
 
 			if (!gl) {
 				e = g_new0(struct nickserv_entry, 1);
-				e->nick = g_strdup(l->network->state.me->nick);
-				e->network = g_strdup(l->network->name);
+				e->nick = g_strdup(n->state.me->nick);
+				e->network = g_strdup(n->name);
 				nicks = g_list_prepend(nicks, e);
 			}
 
 			e->pass = g_strdup(l->args[2] + strlen("IDENTIFY "));
 			
-			log_network("nickserv", l->network, "Caching password for nick %s", e->nick);
+			log_network("nickserv", n, "Caching password for nick %s", e->nick);
 	}
 
 	/* If we receive a nick-already-in-use message, ghost the current user */
 	if(dir == FROM_SERVER && atol(l->args[0]) == ERR_NICKNAMEINUSE) {
-		const char *pass = nickserv_find_nick(l->network, nickattempt);
+		const char *pass = nickserv_find_nick(n, nickattempt);
 		if(nickattempt && pass) {
-			const char *nickserv_n = nickserv_nick(l->network);
+			const char *nickserv_n = nickserv_nick(n);
 			char *raw;
 			
-			log_network("nickserv", l->network, "Ghosting current user using '%s'", nickattempt);
+			log_network("nickserv", n, "Ghosting current user using '%s'", nickattempt);
 
 			raw = g_strdup_printf("GHOST %s %s", nickattempt, pass);
-			network_send_args(l->network, "PRIVMSG", nickserv_n, raw, NULL);
+			network_send_args(n, "PRIVMSG", nickserv_n, raw, NULL);
 			g_free(raw);
-			network_send_args(l->network, "NICK", nickattempt, NULL);
+			network_send_args(n, "NICK", nickattempt, NULL);
 		}
 	}
 

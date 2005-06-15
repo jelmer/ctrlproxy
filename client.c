@@ -88,7 +88,7 @@ static gboolean process_from_client(struct client *c, struct line *l)
 		disconnect_client(c, "Client exiting");
 		return FALSE;
 	} else if(!g_strcasecmp(l->args[0], "PING")) {
-		client_send_args(c, "PONG", l->network->name, l->args[1], NULL);
+		client_send_args(c, "PONG", c->network->name, l->args[1], NULL);
 	} else if(!g_strcasecmp(l->args[0], "PONG")) {
 		if (l->argc < 2) {
 			client_send_response(c, ERR_NEEDMOREPARAMS, l->args[0], "Not enough parameters", NULL);
@@ -249,8 +249,6 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition cond, void *_c
 			free_line(l);
 			return TRUE;
 		}
-
-		l->network = client->network;
 
 		ret = process_from_client(client, l);
 

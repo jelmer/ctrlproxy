@@ -60,6 +60,7 @@ void init_state(struct network_state *, const char *n, const char *u, const char
 void free_state(struct network_state *);
 void network_nick_set_data(struct network_nick *n, const char *nick, const char *username, const char *host);
 void network_nick_set_hostmask(struct network_nick *n, const char *hm);
+void log_network_state(struct network_state *st, const char *, ...);
 
 /* config.c */
 void init_config(void);
@@ -76,9 +77,9 @@ char **get_motd_lines(struct network *n);
 gboolean new_client_hook_execute(struct client *c);
 void lose_client_hook_execute(struct client *c);
 gboolean run_client_filter(struct client *c, struct line *l, enum data_direction dir);
-gboolean run_server_filter(struct line *l, enum data_direction dir);
-gboolean run_log_filter(struct line *l, enum data_direction dir);
-gboolean run_replication_filter(struct line *l, enum data_direction dir);
+gboolean run_server_filter(struct network *s, struct line *l, enum data_direction dir);
+gboolean run_log_filter(struct network *s, struct line *l, enum data_direction dir);
+gboolean run_replication_filter(struct network *s, struct line *l, enum data_direction dir);
 
 /* log.c */
 gboolean init_log(const char *file);
