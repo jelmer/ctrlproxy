@@ -35,28 +35,13 @@
 
 static gnutls_certificate_credentials xcred;
 
-static gnutls_dh_params dh_params;
 gboolean g_io_gnutls_set_files(char *certf, char *keyf, char *caf);
 GIOChannel *g_io_gnutls_get_iochannel(GIOChannel *handle, gboolean server);
-
-static int generate_dh_params(void) {
-
-	/* Generate Diffie Hellman parameters - for use with DHE
-	 * kx algorithms. These should be discarded and regenerated
-	 * once a day, once a week or once a month. Depending on the
-	 * security requirements.
-	 */
-	gnutls_dh_params_init( &dh_params);
-	gnutls_dh_params_generate2( dh_params, DH_BITS);
-
-	return 0;
-}
 
 /* gnutls i/o channel object */
 typedef struct
 {
 	GIOChannel pad;
-	gint fd;
 	GIOChannel *giochan;
 	gnutls_session session;
 	gboolean isserver;
@@ -88,6 +73,38 @@ static void g_io_gnutls_free(GIOChannel *handle)
 	g_free(chan);
 }
 
+static ssize_t tls_pull(gnutls_transport_ptr ptr, void *buf, size_t size)
+{
+	GIOChannel *parent = ptr;
+	GIOStatus status;
+	gint nr;
+	status = g_io_channel_read_chars(parent, buf, size, &nr, NULL);
+	
+	switch (status) {
+	case G_IO_STATUS_ERROR:
+	case G_IO_STATUS_EOF:
+		return -1;
+	default:
+		return nr;
+	}
+}
+
+
+static ssize_t tls_push(gnutls_transport_ptr ptr, const void *buf, size_t size)
+{
+	GIOChannel *parent = ptr;
+	GIOStatus status;
+	gint nr;
+	status = g_io_channel_write_chars(parent, buf, size, &nr, NULL);
+	
+	switch (status) {
+	case G_IO_STATUS_ERROR:
+	case G_IO_STATUS_EOF:
+		return -1;
+	default:
+		return nr;
+	}
+}
 static GIOStatus g_io_gnutls_read(GIOChannel *handle, gchar *buf, guint len, guint *ret, GError **gerr)
 {
 	GIOTLSChannel *chan = (GIOTLSChannel *)handle;
@@ -236,12 +253,14 @@ cur = config_instance_get_setting(p->config, "keyfile");
 
 static gboolean init_plugin(struct plugin *p)
 {
+	gnutls_dh_params dh_params;
 	if(gnutls_global_init() < 0) {
 		log_global("gnutls", "gnutls global state initialization error");
 		return FALSE;
 	}
 
-	generate_dh_params();
+	gnutls_dh_params_init( &dh_params);
+	gnutls_dh_params_generate2( dh_params, DH_BITS);
 
 	/* X509 stuff */
 	if (gnutls_certificate_allocate_credentials(&xcred) < 0) {	/* space for 2 certificates */
@@ -278,33 +297,22 @@ GIOChannel *g_io_gnutls_get_iochannel(GIOChannel *handle, gboolean server)
 {
 	GIOTLSChannel *chan;
 	GIOChannel *gchan;
-	static const int cert_type_priority[3] = { GNUTLS_CRT_X509, GNUTLS_CRT_OPENPGP, 0 };
-	static const int cipher_priority[5] =
-    { GNUTLS_CIPHER_AES_128_CBC, GNUTLS_CIPHER_3DES_CBC,
-   GNUTLS_CIPHER_ARCFOUR_128, GNUTLS_CIPHER_ARCFOUR_40, 0 };
-	int fd;
 
 	g_return_val_if_fail(handle != NULL, NULL);
 	
-	if(!(fd = g_io_channel_unix_get_fd(handle)))
-		return NULL;
-
 	chan = g_new0(GIOTLSChannel, 1);
 
 	gnutls_init(&chan->session, server?GNUTLS_SERVER:GNUTLS_CLIENT);
 
 	gnutls_set_default_priority(chan->session);
-
-	gnutls_cipher_set_priority(chan->session, cipher_priority);
-	gnutls_certificate_type_set_priority(chan->session, cert_type_priority);
-	gnutls_handshake_set_private_extensions(chan->session, 1);
     gnutls_credentials_set(chan->session, GNUTLS_CRD_CERTIFICATE, xcred);
-	gnutls_transport_set_ptr(chan->session, (gnutls_transport_ptr)fd);
+	gnutls_transport_set_ptr(chan->session, (gnutls_transport_ptr)handle);
+	gnutls_transport_set_pull_function(chan->session, tls_pull);
+	gnutls_transport_set_push_function(chan->session, tls_push);
 
 	gnutls_certificate_server_set_request(chan->session, GNUTLS_CERT_REQUEST);
 	gnutls_dh_set_prime_bits( chan->session, DH_BITS);
 						   
-	chan->fd = fd;
 	chan->secure = 0;
 	chan->giochan = handle;
 	chan->isserver = server;
