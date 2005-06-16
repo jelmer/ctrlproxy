@@ -63,7 +63,9 @@ char *ctrlproxy_path(char *part)
 int strrfc1459cmp(const char *a, const char *b)
 {
 	int i;
-	for(i = 0; a[i] && b[i]; i++) {
+
+	for(i = 0; i; i++) {
+		if(a[i] == 0 && b[i] == 0) break;
 		if(a[i] - b[i] == 0) continue; 
 		switch(a[i]) {
 				case '{':
