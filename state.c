@@ -239,20 +239,24 @@ struct channel_nick *find_add_channel_nick(struct channel_state *c, const char *
 {
 	struct channel_nick *n;
 	const char *realname = name;
+	char mymode = 0;
 
 	g_assert(name);
 
-	n = find_channel_nick(c, name);
-	if(n) return n;
-
 	g_assert(strlen(name) > 0);
 
-	n = g_new0(struct channel_nick,1);
 	if(is_prefix(realname[0], &c->network->info)) {
-		n->mode = realname[0];
+		mymode = realname[0];
 		realname++;
 	}
+
+	n = find_channel_nick(c, realname);
+	if(n) return n;
+
+	n = g_new0(struct channel_nick,1);
+	
 	n->channel = c;
+	n->mode = mymode;
 	n->global_nick = find_add_network_nick(c->network, realname);
 	c->nicks = g_list_append(c->nicks, n);
 	n->global_nick->channel_nicks = g_list_append(n->global_nick->channel_nicks, n);
