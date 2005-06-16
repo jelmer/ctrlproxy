@@ -11,10 +11,6 @@
 %immutable channel::name;
 %immutable network::connection;
 %immutable channel::joined;
-%immutable line::direction;
-%immutable line::network;
-%immutable line::client;
-%immutable line::network_nick;
 %ignore line::has_endcolon;
 %immutable channel_nick::mode;
 %immutable channel_nick::channel;
@@ -28,6 +24,9 @@
 %immutable channel_state::modes;
 %immutable channel_state::limit;
 %ignore channel_state::namreply_started;
+%ignore channel_state::banlist_started;
+%ignore channel_state::ignorelist_started;
+%ignore channel_state::exceptlist_started;
 %ignore client::incoming_id;
 %ignore client::incoming;
 %ignore client::hangup_id;
@@ -44,10 +43,10 @@
 %rename(NetworkState) network_state;
 %rename(NetworkInfo) network_info;
 %rename(Channel) channel;
-%rename(LineStack) linestack_context;
 
 %include "../../line.h";
 %include "../../network.h";
+%include "../../client.h";
 %include "../../state.h";
 %include "../../ctrlproxy.h";
 
@@ -149,7 +148,7 @@
 %extend network_info 
 {
 	const char *getFeature(const char *feature)  {
-		return get_network_feature(self, feature);
+		return g_hash_table_lookup(self->features, feature);
 	}
 
 	char getPrefixByMode(char mode) {
@@ -166,6 +165,64 @@
 
 	int isPrefix(char prefix) {
 		return is_prefix(prefix, self);
+	}
+};
+
+struct linestack
+{
+	struct network *n;
+	linestack_marker *m;
+};
+
+%extend linestack
+{
+	linestack(struct network *n, int lines)
+	{
+		struct linestack *ls = g_new0(struct linestack, 1);
+		ls->n = n;
+		ls->m = linestack_get_marker_numlines(n, lines);
+		return ls;
+	}
+
+	linestack(struct network *n) 
+	{
+		return linestack_get_marker(n);
+	}
+
+	struct network_state *getState()
+	{
+		return linestack_get_state(self->n, self->m);
+	}
+
+	gboolean traverse()
+	{
+		return linestack_traverse(self->n, self->m, NULL, NULL); /* FIXME */
+	}
+
+	gboolean traverse(const char *obj)
+	{
+		return linestack_traverse_object(self->n, obj, self->m, NULL, NULL); /* FIXME */
+	}
+
+	gboolean send(const struct client *c)
+	{
+		return linestack_send(self->n, self->m, c);
+	}
+	
+	gboolean send(const struct client *c, const char *obj)
+	{
+		return linestack_send_object(self->n, obj, self->m, c);
+	}
+
+	gboolean replay(struct network_state *st)
+	{
+		return linestack_replay(self->n, self->m, st);
+	}
+
+	~linestack()
+	{
+		linestack_free_marker(self->m);
+		g_free(self);
 	}
 };
 
