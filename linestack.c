@@ -122,6 +122,7 @@ gboolean linestack_traverse_object(struct network *n,
 
 void linestack_free_marker(linestack_marker *lm)
 {
+	if (!lm) return;
 	g_assert(current_backend);
 	if (!current_backend->free_marker) return;
 	current_backend->free_marker(lm);

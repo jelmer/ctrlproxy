@@ -45,12 +45,12 @@ static gboolean log_data(struct network *n, struct line *l, enum data_direction 
 static gboolean simple_replicate(struct client *c, void *userdata)
 {
 	linestack_marker *m = g_hash_table_lookup(simple_backlog, c->network);
-	if(m) {
-		char *initialnick = (char *)g_hash_table_lookup(simple_initialnick, c->network);
-		change_nick(c, initialnick);
-		client_send_state(c, c->network->state);
-		linestack_send(c->network, m, c);
-	}
+	char *initialnick = (char *)g_hash_table_lookup(simple_initialnick, c->network);
+	struct network_state *ns = linestack_get_state(c->network, lm);
+	client_send_state(c, ns);
+	free_network_state(ns);
+	change_nick(c, initialnick);
+	linestack_send(c->network, m, c);
 	return TRUE;
 }
 

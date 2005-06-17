@@ -777,9 +777,6 @@ void free_network_state(struct network_state *state)
 		free_network_nick(state, nn);
 	}
 
-	g_free(state->me.hostmask);
-	state->me.hostmask = NULL;
-
 	g_free(state->info.supported_user_modes);
 	state->info.supported_user_modes = NULL;
 

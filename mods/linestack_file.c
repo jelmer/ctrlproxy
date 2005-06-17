@@ -46,7 +46,7 @@ static FILE *get_fd(const struct network *n)
 
 	if (!ch) {
 		char *path = g_strdup_printf("%s/%s", data_path, n->name);
-		ch = fopen(path, "a+");
+		ch = fopen(path, "w+");
 		if (!ch) {
 			log_network("linestack_file", n, "Unable to open linestack file %s", path);
 			g_free(path);
@@ -120,14 +120,16 @@ static gboolean file_traverse(struct network *n,
 	offset = m;
 
 	/* Go back to begin of file */
-	fseek(ch, *offset, SEEK_SET);
+	fseek(ch, offset?*offset:0, SEEK_SET);
 	
 	while(!feof(ch)) 
 	{
 		time_t t;
 		struct line *l;
-		fread(&t, sizeof(t), 1, ch);
-		fgets(raw, sizeof(raw), ch);
+		if (fread(&t, sizeof(t), 1, ch) != 1)
+			return FALSE;
+		if (fgets(raw, sizeof(raw), ch) == NULL)
+			return FALSE;
 		l = irc_parse_line(raw);
 		tf(l, t, userdata);
 		free_line(l);
