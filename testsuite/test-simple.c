@@ -20,6 +20,7 @@
 #include "ircdtorture.h"
 #include <stdio.h>
 #include <unistd.h>
+#include <string.h>
 
 static int test_connect(void)
 {
