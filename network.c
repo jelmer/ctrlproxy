@@ -23,11 +23,6 @@
 static GIOChannel * (*sslize_function) (GIOChannel *, gboolean);
 
 static GList *networks = NULL;
-
-extern FILE *debugfd;
-
-extern char *debugfile;
-
 static GHashTable *virtual_network_ops = NULL;
 
 static gboolean delayed_connect_server(struct network *s);
@@ -398,6 +393,7 @@ static gboolean close_server(struct network *n)
 	}
 
 	if (n->state) {
+		network_update_config(n->state, n->config);
 		free_network_state(n->state); 
 		n->state = NULL;
 	}

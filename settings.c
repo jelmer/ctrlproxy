@@ -44,7 +44,6 @@ static xmlNodePtr config_save_plugins(GList *plugins)
 	for (gl = plugins; gl; gl = gl->next) {
 		struct plugin_config *p = gl->data;
 
-
 		xmlAddChild(ret, p->node);
 	}
 

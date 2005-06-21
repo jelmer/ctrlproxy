@@ -96,4 +96,9 @@ void init_linestack(struct ctrlproxy_config *);
 void fini_linestack(void);
 gboolean linestack_insert_line(const struct network *n, const struct line *l, enum data_direction dir);
 
+/* gen_config.c */
+void network_update_config(struct network_state *ns, struct network_config *nc);
+void channel_update_config(struct channel_state *ns, struct channel_config *nc);
+void plugin_update_config(struct plugin *ps, struct plugin_config *pc);
+
 #endif /* __INTERNALS_H__ */

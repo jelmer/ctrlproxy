@@ -3,8 +3,6 @@
 - test and fix SSL support
 - handle some currently unhandled responses (especially wrt JOIN's)
  - Special handler for join stuff
-- support saving current state back to configuration
- - Autorejoin on disconnect
 - support storing state information
 - finish python module hooks:
 	typedef gboolean (*filter_function) (struct line *);

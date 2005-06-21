@@ -72,7 +72,7 @@ static FILE *find_add_channel_file(struct network *s, const char *name) {
 		
 		/* Then open the correct filename */
 		cn = g_ascii_strdown(name?name:"messages", -1);
-		for (i = 0; cn; i++) if (cn[i] == '/') cn[i] = '_';
+		for (i = 0; cn[i]; i++) if (cn[i] == '/') cn[i] = '_';
 		n = g_strdup_printf("%s/%s/%s", logfile, server_name, cn);
 		g_free(cn);
 		f = fopen(n, "a+");
