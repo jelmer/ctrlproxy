@@ -446,10 +446,10 @@ static gboolean admin_net_init(struct network *n)
 
 static gboolean admin_to_server (struct network *n, const struct client *c, struct line *l)
 {
-	if (strcmp(l->args[0], "PRIVMSG"))
+	if (g_strcasecmp(l->args[0], "PRIVMSG"))
 		return TRUE;
 
-	if (strcmp(l->args[1], ADMIN_CHANNEL)) {
+	if (g_strcasecmp(l->args[1], ADMIN_CHANNEL)) {
 		return TRUE;
 	}
 

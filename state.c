@@ -649,7 +649,7 @@ static void handle_004(struct network_state *s, struct line *l)
 static void handle_privmsg(struct network_state *s, struct line *l)
 {
 	struct network_nick *nn;
-	if (strcmp(l->args[1], s->me.nick) != 0) return;
+	if (irccmp(&s->info, l->args[1], s->me.nick) != 0) return;
 
 	nn = find_add_network_nick(s, line_get_nick(l));
 	nn->query = 1;

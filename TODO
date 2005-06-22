@@ -1,5 +1,5 @@
 2.7 showstoppers:
-- update documentation (see FIXME's)
+- update documentation
 - test and fix SSL support
 - handle some currently unhandled responses (especially wrt JOIN's)
  - Special handler for join stuff

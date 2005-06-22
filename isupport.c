@@ -37,18 +37,18 @@ void handle_005(struct network_state *s, struct line *l)
 		
 		g_hash_table_replace(s->info.features, key, val);
 
-		if(!strcmp(key, "supports.casemapping")) {
-			if(!strcmp(val, "rfc1459")) {
+		if(!g_strcasecmp(key, "CASEMAPPING")) {
+			if(!g_strcasecmp(val, "rfc1459")) {
 				s->info.casemapping = CASEMAP_RFC1459;
-			} else if(!strcmp(val, "strict-rfc1459")) {
+			} else if(!g_strcasecmp(val, "strict-rfc1459")) {
 				s->info.casemapping = CASEMAP_STRICT_RFC1459;
-			} else if(!strcmp(val, "ascii")) {
+			} else if(!g_strcasecmp(val, "ascii")) {
 				s->info.casemapping = CASEMAP_ASCII;
 			} else {
 				s->info.casemapping = CASEMAP_UNKNOWN;
 				log_network_state(s, "Unknown supports.casemapping '%s'", l->args[i]+strlen("supports.casemapping="));
 			}
-		} else if(!strcmp(key, "NETWORK")) {
+		} else if(!g_strcasecmp(key, "NETWORK")) {
 			g_free(s->info.name);
 			s->info.name = g_strdup(val);
 		} 

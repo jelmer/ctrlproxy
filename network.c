@@ -183,7 +183,7 @@ gboolean network_send_line(struct network *s, const struct client *c, const stru
 
 	/* Also write this message to all other clients currently connected */
 	if(!l.is_private && l.args[0] &&
-	   (!strcmp(l.args[0], "PRIVMSG") || !strcmp(l.args[0], "NOTICE"))) {
+	   (!g_strcasecmp(l.args[0], "PRIVMSG") || !g_strcasecmp(l.args[0], "NOTICE"))) {
 		clients_send(s, &l, c);
 	}
 
@@ -694,7 +694,7 @@ struct network *find_network_by_hostname(const char *hostname, guint16 port, gbo
 		GList *sv;
 		n = gl->data;
 
-		if (n->name && !strcmp(n->name, hostname)) {
+		if (n->name && !g_strcasecmp(n->name, hostname)) {
 			g_free(portname);
 			return n;
 		}
