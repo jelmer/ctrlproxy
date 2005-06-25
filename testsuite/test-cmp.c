@@ -24,7 +24,11 @@
 
 int test_rfccmp(void)
 {
-	if (strrfc1459cmp("abcde", "ABCDE") != 0) return -1;
+	if (str_rfc1459cmp("abcde", "ABCDE") != 0) return -1;
+	if (str_rfc1459cmp("abcde~{}", "ABCDE^[]") != 0) return -2;
+	if (str_asciicmp("abcde", "ABCDE") != 0) return -3;
+	if (str_strictrfc1459cmp("abcde{}", "ABCDE[]") != 0) return -4;
+	if (str_strictrfc1459cmp("abcde{}^", "ABCDE[]~") == 0) return -4;
 
 	return 0;
 }

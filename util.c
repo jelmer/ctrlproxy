@@ -59,30 +59,37 @@ char *ctrlproxy_path(char *part)
 	return p1;
 }
 
-int strrfc1459cmp(const char *a, const char *b)
+inline int str_cmphelper(const char *a, const char *b, char sh, char sl, char eh, char el)
 {
 	int i;
+	char h,l;
+	for (i = 0; a[i] && b[i]; i++) {
+		if (a[i] == b[i]) continue;
+		l = (a[i]>b[i]?b[i]:a[i]);
+		h = (a[i]>b[i]?a[i]:b[i]);
 
-	for(i = 0; ; i++) {
-		if(a[i] == 0 && b[i] == 0) break;
-		if(a[i] - b[i] == 0) continue; 
-		switch(a[i]) {
-				case '{':
-					if(b[i] != '[') return a[i] - b[i];
-					break;
-				case '}':
-					if(b[i] != ']') return a[i] - b[i];
-					break;
-				case '^':
-					if(b[i] != '~') return a[i] - b[i];
-					break;
-				case '|':
-					if(b[i] != '\\') return a[i] - b[i];
-				default:
-					if(a[i] >= 'a' && a[i] <= 'z' && tolower(a[i]) - tolower(b[i]))	
-						return tolower(a[i]) - tolower(b[i]);
-					return a[i] - b[i];
-		}
+		if (h < sh || h > eh || l < sl || l > el) 
+			break;
+
+		if (h-sh != l-sl)
+			break;
 	}
-	return 0;
+
+	return a[i]-b[i];
+}
+
+int str_asciicmp(const char *a, const char *b)
+{
+	return str_cmphelper(a, b, 97, 65, 122, 90);
+}
+
+int str_strictrfc1459cmp(const char *a, const char *b)
+{
+	return str_cmphelper(a, b, 97, 65, 125, 93);
+}
+
+
+int str_rfc1459cmp(const char *a, const char *b)
+{
+	return str_cmphelper(a, b, 97, 65, 126, 94);
 }

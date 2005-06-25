@@ -67,12 +67,11 @@ int irccmp(struct network_info *n, const char *a, const char *b)
 	default:
 	case CASEMAP_UNKNOWN:
 	case CASEMAP_RFC1459:
-		return strrfc1459cmp(a,b);
+		return str_rfc1459cmp(a,b);
 	case CASEMAP_ASCII:
-		return g_strcasecmp(a,b);
+		return str_asciicmp(a,b);
 	case CASEMAP_STRICT_RFC1459:
-		/* FIXME: Make sure ^ and ~ are not considered equiv ! */
-		return strrfc1459cmp(a,b);
+		return str_strictrfc1459cmp(a,b);
 	}
 
 	return 0;

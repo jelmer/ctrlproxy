@@ -59,7 +59,9 @@ G_MODULE_EXPORT struct ctrlproxy_config *get_current_config(void);
 G_MODULE_EXPORT char *list_make_string(GList *);
 G_MODULE_EXPORT int verify_client(struct network *s, struct client *c);
 G_MODULE_EXPORT char *ctrlproxy_path(char *part);
-G_MODULE_EXPORT int strrfc1459cmp(const char *a, const char *b);
+G_MODULE_EXPORT int str_rfc1459cmp(const char *a, const char *b);
+G_MODULE_EXPORT int str_strictrfc1459cmp(const char *a, const char *b);
+G_MODULE_EXPORT int str_asciicmp(const char *a, const char *b);
 
 G_MODULE_EXPORT void set_sslize_function (GIOChannel *(*) (GIOChannel *, gboolean));
 G_MODULE_EXPORT GIOChannel *sslize (GIOChannel *orig, gboolean server);

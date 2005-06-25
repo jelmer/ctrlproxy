@@ -42,6 +42,7 @@
 #include <sys/socket.h>
 #include <sys/poll.h>
 #include <netdb.h>
+#include <signal.h>
 
 #define DEFAULT_TIMEOUT 1000
 
@@ -214,7 +215,6 @@ gboolean load_module(const char *name)
 {
 	GModule *m;
 	void (*init_func) (void);
-	char *path_name;
 
 	m = g_module_open(name, G_MODULE_BIND_LAZY);
 
@@ -268,6 +268,8 @@ int main(int argc, const char *argv[])
 		}
 	}
 #endif
+
+	signal(SIGPIPE, SIG_IGN);
 	
 	if (!poptPeekArg(pc) && !ip) {
 		poptPrintUsage(pc, stderr, 0);
