@@ -50,7 +50,6 @@ char *ctrlproxy_path(char *part)
 	char *p, *p1;
 	p = g_strdup_printf("%s/.ctrlproxy", g_get_home_dir());
 	if(mkdir(p, 0700) != 0 && errno != EEXIST) {
-		log_global(NULL, "Couldn't create '%s'!", p);
 		g_free(p);
 		exit(1);
 	}

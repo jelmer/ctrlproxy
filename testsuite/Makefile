@@ -6,11 +6,17 @@ CFLAGS+=-ansi -Wall -DMODULESDIR=\"$(modulesdir)\"
 
 all: ircdtorture
 
-ircdtorture: ircdtorture.o test-simple.o ../line.o test-random.o
+ircdtorture: ircdtorture.o ../line.o 
 	$(CC) $(LIBS) -o $@ $^ 
 
-torture: ircdtorture
-	./ircdtorture -- ../ctrlproxy -i Freenode -r ../ctrlproxyrc.default
+%.so: %.o
+test-cmp.so: test-cmp.o ../util.o
+
+%.so: 
+	$(CC) $(CFLAGS) -shared -o $@ $^
+
+torture: ircdtorture test-simple.so test-random.so test-cmp.so
+	./ircdtorture $(foreach I,$(filter-out $<,$^),-m $(shell pwd)/$(I)) -- ../ctrlproxy -i Freenode -r ../ctrlproxyrc.default
 
 test-parser: test-parser.o ../line.o
 	$(CC) $(LIBS) -o $@ $^

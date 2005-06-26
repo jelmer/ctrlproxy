@@ -68,7 +68,7 @@ int test_random_msg(void)
 	return 0;
 }
 
-void random_init(void)
+void ircdtorture_init(void)
 {
 	register_test("RANDOM-DATA", test_random_data);
 	register_test("RANDOM-MSG", test_random_msg);

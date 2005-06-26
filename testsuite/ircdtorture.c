@@ -29,6 +29,7 @@
 #endif
 
 #include <glib.h>
+#include <gmodule.h>
 #include "../ctrlproxy.h"
 
 #include <fcntl.h>
@@ -209,8 +210,27 @@ int run_test(struct torture_test *test)
 	return ret;
 }
 
-void simple_init(void);
-void random_init(void);
+gboolean load_module(const char *name)
+{
+	GModule *m;
+	void (*init_func) (void);
+	char *path_name;
+
+	m = g_module_open(name, G_MODULE_BIND_LAZY);
+
+	if(!m) {
+		fprintf(stderr, "Can't open module %s: %s\n", name, g_module_error());
+		return FALSE;
+	}
+
+	if(!g_module_symbol(m, "ircdtorture_init", (gpointer)&init_func)) {
+		fprintf(stderr, "Can't find symbol \"ircdtorture_init\" in %s: %s\n", name, g_module_error());
+		return FALSE;
+	}
+
+	init_func();
+	return TRUE;
+}
 
 int main(int argc, const char *argv[])
 {
@@ -224,6 +244,7 @@ int main(int argc, const char *argv[])
 		POPT_AUTOHELP
 		{"ip", 'I', POPT_ARG_STRING, &ip, 't', "Connect to specified host rather then using stdout/stdin", "HOST"},
 		{"tcp-port", 'p', POPT_ARG_STRING, &port, 'p', "Connect to specified TCP port (implies -I)", "PORT" },
+		{"module", 'm', POPT_ARG_STRING, NULL, 'm', "Test module to load", "MODULE.so" },
 		{"version", 'v', POPT_ARG_NONE, NULL, 'v', "Show version information"},
 		POPT_TABLEEND
 	};
@@ -240,6 +261,10 @@ int main(int argc, const char *argv[])
 			printf("ircdtorture %s\n", PACKAGE_VERSION);
 			printf(("(c) 2005 Jelmer Vernooij et al. <jelmer@nl.linux.org>\n"));
 			return 0;
+		case 'm':
+			load_module(poptGetOptArg(pc));
+	
+			break;
 		}
 	}
 #endif
@@ -250,9 +275,6 @@ int main(int argc, const char *argv[])
 	}
 
 	args = poptGetArgs(pc);
-
-	simple_init();
-	random_init();
 
 	for (gl = tests; gl; gl = gl->next) {
 		if (run_test(gl->data)) 
