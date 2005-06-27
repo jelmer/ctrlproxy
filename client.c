@@ -79,7 +79,10 @@ static char *network_generate_feature_string(struct network *n)
 
 static gboolean process_from_client(struct client *c, struct line *l)
 {
-	l->origin = g_strdup(c->network->state->me.hostmask);
+	if (c->network && c->network->state) 
+		l->origin = g_strdup(c->network->state->me.hostmask);
+	else
+		l->origin = g_strdup_printf("%s!~%s@%s", c->nick, c->username, c->hostname);
 
 	if (!run_client_filter(c, l, TO_SERVER)) 
 		return TRUE;
