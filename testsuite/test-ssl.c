@@ -1,5 +1,6 @@
+
 /*
-    ircdtorture: an IRC RFC compliancy tester
+    	ircdtorture: an IRC RFC compliancy tester
 	(c) 2005 Jelmer Vernooij <jelmer@nl.linux.org>
 
 	This program is free software; you can redistribute it and/or modify
@@ -22,21 +23,8 @@
 #include <unistd.h>
 #include <string.h>
 
-int test_rfccmp(void)
-{
-	if (str_rfc1459cmp("abcde", "ABCDE") != 0) return -1;
-	if (str_rfc1459cmp("abcde~{}", "ABCDE^[]") != 0) return -2;
-	if (str_asciicmp("abcde", "ABCDE") != 0) return -3;
-	if (str_strictrfc1459cmp("abcde{}", "ABCDE[]") != 0) return -4;
-	if (str_strictrfc1459cmp("abcde{}^", "ABCDE[]~") == 0) return -5;
-	if (str_strictrfc1459cmp("abcde{}", "abcde{}") != 0) return -6;
-	if (str_strictrfc1459cmp("abcde{}^", "abcde{}") == 0) return -7;
-
-	return 0;
-}
-
+int test;
 
 void ircdtorture_init(void)
 {
-	register_test("TEST-IRCCMP1459", test_rfccmp);
 }

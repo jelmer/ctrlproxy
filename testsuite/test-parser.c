@@ -1,25 +1,61 @@
 #include <stdio.h>
+#include <malloc.h>
+#include "ircdtorture.h"
 #include "line.h"
 
-FILE *debugfd = NULL;
+char *malformed[] = {
+	"PRIVMSG :foo :bar",
+	":bar :bar PRIVMSG foo",
+	"",
+	": ",
+	" ",
+	NULL
+};
 
-int main(int argc, char **argv)
+int parser_malformed(void)
 {
 	struct line *l;
-	char buf[4096];
 	char *raw;
-	
-	while(!feof(stdin)) {
-		fgets(buf, sizeof(buf), stdin);
-		l = irc_parse_line(buf);
-		if(l) {
-			raw = irc_line_string(l);
-			puts(raw);
-			free(raw);
-			free_line(l);
-		} else { 
-			fprintf(stderr, "Unparseable\n");
-		}
+	int i;
+	for (i = 0; malformed[i]; i++) {
+		l = irc_parse_line(malformed[i]);
+		raw = irc_line_string(l);
+		free(raw);
+		free_line(l);
 	}
+
 	return 0;
+}
+
+#define NUM_RUNS 200
+
+int parser_random(void)
+{
+	struct line *l;
+	char *raw;
+	char buf[4096];
+	FILE *f = fopen("/dev/urandom", "r");
+	int i;
+
+	if (!f) {
+		fprintf(stderr, "Couldn't open /dev/urandom");
+		return -1;
+	}
+
+	for (i = 0; i < 200; i++) {
+		fgets(buf, sizeof(buf)-1, f);
+	
+		l = irc_parse_line(buf);
+		raw = irc_line_string(l);
+		free(raw);
+		free_line(l);
+	}
+
+	return 0;
+}
+
+void ircdtorture_init(void)
+{
+	register_test("PARSER-MALFORMED", parser_malformed);
+	register_test("PARSER-RANDOM", parser_random);
 }
