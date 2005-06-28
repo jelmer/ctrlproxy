@@ -87,13 +87,15 @@ struct network_state *linestack_get_state(struct network *n,
 }
 
 gboolean linestack_traverse(struct network *n, 
-		linestack_marker *lm, linestack_traverse_fn handler, 
+		linestack_marker *lm_from,
+		linestack_marker *lm_to,
+		linestack_traverse_fn handler, 
 		void *userdata)
 {
 	if (!current_backend) return FALSE;
 	g_assert(current_backend->traverse);
 
-	return current_backend->traverse(n, lm, handler, userdata);
+	return current_backend->traverse(n, lm_from, lm_to, handler, userdata);
 }
 
 struct traverse_object_data {
@@ -108,7 +110,8 @@ static void traverse_object_handler(struct line *l, time_t t, void *state)
 }
 
 gboolean linestack_traverse_object(struct network *n,
-			const char *obj, linestack_marker *lm, linestack_traverse_fn hl,
+			const char *obj, 
+			linestack_marker *lm_from, linestack_marker *lm_to, linestack_traverse_fn hl,
 			void *userdata)
 {
 	struct traverse_object_data d;
@@ -117,7 +120,7 @@ gboolean linestack_traverse_object(struct network *n,
 	d.userdata = userdata;
 	d.handler = hl;
 	
-	return linestack_traverse(n, lm, traverse_object_handler, &d);
+	return linestack_traverse(n, lm_from, lm_to, traverse_object_handler, &d);
 }
 
 void linestack_free_marker(linestack_marker *lm)
@@ -169,14 +172,14 @@ static void send_line(struct line *l, time_t t, void *_client)
 	client_send_line(c, l);
 }
 
-gboolean linestack_send(struct network *n, linestack_marker *m, const struct client *c)
+gboolean linestack_send(struct network *n, linestack_marker *mf, linestack_marker *mt, const struct client *c)
 {
-	return linestack_traverse(n, m, send_line, c);
+	return linestack_traverse(n, mf, mt, send_line, c);
 }
 
-gboolean linestack_send_object(struct network *n, const char *obj, linestack_marker *m, const struct client *c)
+gboolean linestack_send_object(struct network *n, const char *obj, linestack_marker *mf, linestack_marker *mt, const struct client *c)
 {
-	return linestack_traverse_object(n, obj, m, send_line, c);
+	return linestack_traverse_object(n, obj, mf, mt, send_line, c);
 }
 
 static void replay_line(struct line *l, time_t t, void *state)
@@ -185,7 +188,7 @@ static void replay_line(struct line *l, time_t t, void *state)
 	state_handle_data(st, l);
 }
 
-gboolean linestack_replay(struct network *n, linestack_marker *m, struct network_state *st)
+gboolean linestack_replay(struct network *n, linestack_marker *mf, linestack_marker *mt, struct network_state *st)
 {
-	return linestack_traverse(n, m, replay_line, st);
+	return linestack_traverse(n, mf, mt, replay_line, st);
 }

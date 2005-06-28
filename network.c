@@ -519,8 +519,6 @@ static gboolean connect_server(struct network *s)
 		if (s->connection.data.virtual.ops->init)
 			return s->connection.data.virtual.ops->init(s);
 
-		/* FIXME: Set s->connection.virtual.ops->send */
-
 		return TRUE;
 	default: g_assert(0);
 	}

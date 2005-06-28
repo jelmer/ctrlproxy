@@ -30,7 +30,7 @@ static void lastdisconnect_mark(struct client *c, void *userdata)
 static gboolean lastdisconnect_replicate(struct client *c, void *userdata)
 {
 	linestack_marker *lm = g_hash_table_lookup(lastdisconnect_backlog, c->network);
-	linestack_send(c->network, lm, c);
+	linestack_send(c->network, lm, NULL, c);
 	return TRUE;
 }
 

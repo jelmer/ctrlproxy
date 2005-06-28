@@ -43,7 +43,7 @@ static void check_highlight(struct line *l, time_t t, void *userdata)
 static gboolean highlight_replicate(struct client *c, void *userdata)
 {
 	linestack_marker *lm = g_hash_table_lookup(markers, c->network);
-	linestack_traverse(c->network, lm, check_highlight, c);
+	linestack_traverse(c->network, lm, NULL, check_highlight, c);
 	g_hash_table_replace(markers, c->network, linestack_get_marker(c->network));
 	return TRUE;
 }
@@ -62,9 +62,36 @@ static gboolean init_plugin(struct plugin *p)
 	return TRUE;
 }
 
+static gboolean load_config(struct plugin *p, xmlNodePtr node)
+{
+	xmlNodePtr cur;
+	g_list_free(matches);
+	
+	for (cur = node->xmlChildrenNode; cur; cur = cur->next) {
+		if (!strcmp(cur->name, "match")) {
+			matches = g_list_append(matches, xmlNodeGetContent(cur));
+		}
+	}
+
+	return TRUE;
+}
+
+static gboolean save_config(struct plugin *p, xmlNodePtr node)
+{
+	GList *gl;
+	
+	for (gl = matches; gl; gl = gl->next) {
+		xmlNewTextChild(node, NULL, "match", gl->data);
+	}
+
+	return TRUE;
+}
+
 struct plugin_ops plugin = {
 	.name = "repl_highlight",
 	.version = 0,
 	.init = init_plugin,
-	.fini = fini_plugin
+	.fini = fini_plugin,
+	.load_config = load_config,
+	.save_config = save_config
 };

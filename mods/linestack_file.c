@@ -104,8 +104,17 @@ static linestack_marker *file_get_marker(struct network *n)
 	return pos;
 }
 
+static 	struct network_state * file_get_state (
+		struct network *n, 
+		linestack_marker *m)
+{
+	return NULL; /* FIXME */
+}
+
+
 static gboolean file_traverse(struct network *n, 
-		linestack_marker *m,
+		linestack_marker *mf,
+		linestack_marker *mt,
 		linestack_traverse_fn tf, 
 		void *userdata)
 {
@@ -117,7 +126,9 @@ static gboolean file_traverse(struct network *n,
 	/* Flush channel before reading otherwise data corruption may occur */
 	fflush(ch);
 	
-	offset = m;
+	offset = mf;
+
+	/* FIXME: obey mt */
 
 	/* Go back to begin of file */
 	fseek(ch, offset?*offset:0, SEEK_SET);
@@ -144,6 +155,7 @@ static struct linestack_ops file = {
 	.fini = file_fini,
 	.insert_line = file_insert_line,
 	.get_marker = file_get_marker,
+	.get_state = file_get_state, 
 	.free_marker = g_free,
 	.traverse = file_traverse
 };

@@ -50,7 +50,7 @@ static gboolean simple_replicate(struct client *c, void *userdata)
 	client_send_state(c, ns);
 	free_network_state(ns);
 	change_nick(c, initialnick);
-	linestack_send(c->network, m, c);
+	linestack_send(c->network, m, NULL, c);
 	return TRUE;
 }
 

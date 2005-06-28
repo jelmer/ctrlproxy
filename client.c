@@ -102,7 +102,8 @@ static gboolean process_from_client(struct client *c, struct line *l)
 	} else if(c->network->connection.state == NETWORK_CONNECTION_STATE_MOTD_RECVD) {
 		if (c->network->config->disable_cache || !client_try_cache(c, l)) {
 			redirect_record(c, l);
-			/* FIXME: Check for validity of input ? */
+			/* Perhaps check for validity of input here ? It could save us some bandwidth 
+			 * to the server, though very unlikely to occur often */
 			network_send_line(c->network, c, l);
 		}
 	} else if(c->network->connection.state == NETWORK_CONNECTION_STATE_NOT_CONNECTED) {

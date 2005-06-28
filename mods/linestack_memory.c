@@ -49,11 +49,11 @@ static linestack_marker *memory_get_marker (struct network *n)
 	return g_hash_table_lookup(networks, n);
 }
 
-static gboolean memory_traverse (struct network *n, linestack_marker *lm, linestack_traverse_fn tf, void *userdata)
+static gboolean memory_traverse (struct network *n, linestack_marker *mf, linestack_marker *mt, linestack_traverse_fn tf, void *userdata)
 {
 	GList *gl;
 
-	for (gl = lm; gl; gl = gl->next) {
+	for (gl = mf; gl != mt; gl = gl->next) {
 		struct memory_data *md = gl->data;
 		tf(md->line, md->time, userdata);
 	}

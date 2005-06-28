@@ -45,7 +45,8 @@ struct linestack_ops {
 	
 	gboolean (*traverse) (
 		struct network *, 
-		linestack_marker *,
+		linestack_marker *from,
+		linestack_marker *to,
 		linestack_traverse_fn, 
 		void *userdata);
 
@@ -70,31 +71,36 @@ G_MODULE_EXPORT struct network_state *linestack_get_state (
 
 G_MODULE_EXPORT gboolean linestack_traverse (
 		struct network *, 
-		linestack_marker *,
+		linestack_marker *from,
+		linestack_marker *to, /* Can be NULL for 'now' */
 		linestack_traverse_fn, 
 		void *userdata);
 
 G_MODULE_EXPORT gboolean linestack_traverse_object (
 		struct network *,
 		const char *object,
-		linestack_marker *,
+		linestack_marker *from,
+		linestack_marker *to, /* Can be NULL for 'now' */
 		linestack_traverse_fn,
 		void *userdata);
 
 G_MODULE_EXPORT gboolean linestack_send (
 		struct network *,
-		linestack_marker *,
+		linestack_marker *from,
+		linestack_marker *to, /* Can be NULL for 'now' */
 		const struct client *);
 
 G_MODULE_EXPORT gboolean linestack_send_object (
 		struct network *,
 		const char *object,
-		linestack_marker *,
+		linestack_marker *from,
+		linestack_marker *to, /* Can be NULL for 'now' */
 		const struct client *);
 
 G_MODULE_EXPORT gboolean linestack_replay (
 		struct network *,
-		linestack_marker *,
+		linestack_marker *from,
+		linestack_marker *to,/* Can be NULL for 'now' */
 		struct network_state *st);
 
 G_MODULE_EXPORT void linestack_free_marker(linestack_marker *);
