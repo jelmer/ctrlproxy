@@ -19,6 +19,7 @@ int parser_malformed(void)
 	int i;
 	for (i = 0; malformed[i]; i++) {
 		l = irc_parse_line(malformed[i]);
+		if (!l) continue;
 		raw = irc_line_string(l);
 		free(raw);
 		free_line(l);
@@ -38,18 +39,24 @@ int parser_random(void)
 	int i;
 
 	if (!f) {
-		fprintf(stderr, "Couldn't open /dev/urandom");
+		perror("Couldn't open /dev/urandom");
 		return -1;
 	}
 
 	for (i = 0; i < 200; i++) {
-		fgets(buf, sizeof(buf)-1, f);
+		if (!fgets(buf, sizeof(buf)-2, f)) {
+			perror("error reading random data");
+			return -1;
+		}
 	
 		l = irc_parse_line(buf);
+		if (!l) continue;
 		raw = irc_line_string(l);
 		free(raw);
 		free_line(l);
 	}
+
+	fclose(f);
 
 	return 0;
 }

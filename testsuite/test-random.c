@@ -32,16 +32,21 @@
 int test_random_data(void)
 {
 	GIOChannel *g = new_conn_loggedin("bla");
-	int fd = g_io_channel_unix_get_fd(g);
+	int fd1;
 	int fd2 = open(RANDOMDEVICE, O_RDONLY);
 	off_t off = 0;
+
+	if (!g) 
+		return -1;
+
+	fd1 = g_io_channel_unix_get_fd(g);
 
 	if (fd2 == -1) {
 		fprintf(stderr, "Can't open %s: %s\n", RANDOMDEVICE, strerror(errno));
 		return -1;
 	}
 
-	if (sendfile(fd, fd2, &off, REPEAT_COUNT * 0x4000) == -1)
+	if (sendfile(fd1, fd2, &off, REPEAT_COUNT * 0x1000) == -1)
 		return -1;
 	
 	close(fd2);

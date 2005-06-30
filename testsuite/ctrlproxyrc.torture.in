@@ -1,0 +1,89 @@
+<?xml version="1.0"?>
+<!--
+	TestRC file for ctrlproxy
+	(C) 2003-2004 Jelmer Vernooij <jelmer@vernstok.nl>
+	Read the documentation for more information about certain plugins, 
+	elements or attributes.
+-->
+<ctrlproxy>
+	<plugins>
+		<!-- Support for interfacing to ctrlproxy 
+		using /MSG ctrlproxy or /CTRLPROXY -->
+		<plugin autoload="1" file="admin"/>
+		<!-- Don't replicate any backlogs, just send channel info -->
+		<plugin autoload="0" file="repl_none"/>
+		<!-- Backlog any data since last time user said something -->
+		<plugin autoload="1" file="repl_simple"/>
+		<!-- Backlog lines matching certain patterns -->
+		<plugin autoload="0" file="repl_highlight">
+			<!-- Replicate all lines containing 'ctrlproxy' or 'foobar' -->
+			<match>ctrlproxy</match>
+			<match>foobar</match>
+		</plugin>
+		<!-- Backlog lines when command /CTRLPROXY BACKLOG is given -->
+		<plugin autoload="1" file="repl_command"/>
+		<plugin autoload="1" file="report_time"/>
+
+		<plugin autoload="1" file="socks">
+			<allow username="me" password="geheim"/>
+		</plugin>
+
+		<!-- Irssi-style logging -->
+		<plugin autoload="1" file="log_irssi">
+			<!-- <logfile>/home/jelmer/tmp/ctrlproxy</logfile> -->
+		</plugin>
+
+		<!-- Send CTCP replies (like time, version, etc) -->
+		<plugin autoload="1" file="ctcp"/>
+
+		<!-- Support for automatic identify'ing with nickserv -->
+		<plugin autoload="1" file="nickserv">
+			<nick network="TEST" nick="me" password="alsosecret"/>
+		</plugin>
+
+		<plugin autoload="1" file="autosend">
+			<autosend network="TEST">PRIVMSG #ctrlproxy-test :Hi There, I'm using ctrlproxy!</autosend>
+		</plugin>
+
+		<!-- Make sure messages are not sent too fast after each other 
+		     (prevents being kicked by the server for 'Excess flooding' -->
+		<plugin autoload="1" file="antiflood"/>
+
+		<!-- Automatically set AWAY after a certain period of time -->
+		<plugin autoload="1" file="auto_away">
+			<message time="300">"I'm currently away, sorry!</message>
+		</plugin>
+
+		<!-- Use /usr/share/ctrlproxy/motd as motd -->
+		<plugin autoload="1" file="motd_file"/>
+
+		<!-- Experimental python support -->
+		<plugin autoload="0" file="python2">
+			<!--			<script>scripts/web/server.py</script> -->
+		</plugin>
+		
+		<plugin autoload="1" file="linestack_file"/>
+		<plugin autoload="0" file="linestack_memory"/>
+
+		<plugin autoload="1" file="listener">
+			<listen port="7667" network="TEST" password="secret"/>
+		</plugin>
+	</plugins>
+
+	<networks>
+		<network autoconnect="1" name="TEST" fullname="CtrlProxy user">
+			<servers>
+				<server host="@SERVER@" port="@PORT@"/>
+			</servers>
+			<channel name="#ctrlproxy-test" autojoin="1"/>
+		</network>
+
+		<network name="BitlBee">
+			<program>/usr/sbin/bitlbee</program>
+		</network>
+
+		<network autoconnect="1" name="Admin">
+			<virtual type="admin"/>
+		</network>
+	</networks>
+</ctrlproxy>
