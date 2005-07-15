@@ -286,24 +286,14 @@ If appropriate:
 
 static GHashTable *files = NULL;
 
-static FILE *find_channel_file(struct network *network, struct line *l, char *identifier) {
-	char *n = NULL;
-	FILE *f;
-	if(!logfilename)return NULL;
-	custom_subst(network, &n, logfilename, l, identifier, TRUE, TRUE);
-	f = g_hash_table_lookup(files, n);
-	g_free(n);
-	return f;
-}
-
-static FILE *find_add_channel_file(struct network *network, struct line *l, const char *identifier) 
+static FILE *find_add_channel_file(struct network *network, struct line *l, const char *identifier, gboolean create_file) 
 {
 	char *n = NULL, *dn, *p;
 	FILE *f;
 	if(!logfilename) return NULL;
 	custom_subst(network, &n, logfilename, l, identifier, TRUE, TRUE);
 	f = g_hash_table_lookup(files, n);
-	if(!f) {
+	if(!f && create_file) {
 		dn = g_strdup(n);
 		
 		/* Only include directory-part */
@@ -320,7 +310,6 @@ static FILE *find_add_channel_file(struct network *network, struct line *l, cons
 		g_free(dn);
 		
 		/* Then open the correct filename */
-		custom_subst(network, &n, logfilename, l, identifier, TRUE, TRUE);
 		f = fopen(n, "a+");
 		if(!f) {
 			log_network("log_custom", network, "Couldn't open file %s for logging!", n);
@@ -328,7 +317,6 @@ static FILE *find_add_channel_file(struct network *network, struct line *l, cons
 			return NULL;
 		}
 		g_hash_table_insert(files, n, f);
-		g_free(n);
 	} else g_free(n);
 	return f;
 }
@@ -348,13 +336,13 @@ static void file_write_target(struct network *network, const char *n, struct lin
 		t = g_strdup(l->args[1]);
 	}
 
-	f = find_add_channel_file(network, l, t);
+	f = find_add_channel_file(network, l, t, TRUE);
 	if(!f) { g_free(t); return; }
 	
 	custom_subst(network, &s, fmt, l, t, FALSE, FALSE);
 	g_free(t);
 
-    fputs(s, f);
+	fputs(s, f);
 	fputc('\n', f);
 	fflush(f);
 
@@ -369,7 +357,7 @@ static void file_write_channel_only(struct network *network, const char *n, stru
 	fmt = g_hash_table_lookup(fmts, n);
 	if(!fmt) return;
 
-	f = find_add_channel_file(network, l, l->args[1]);
+	f = find_add_channel_file(network, l, l->args[1], TRUE);
 	if(!f) return; 
 
 	custom_subst(network, &s, fmt, l, l->args[1], FALSE, FALSE);
@@ -395,7 +383,7 @@ static void file_write_channel_query(struct network *network, const char *n, str
 	if(!fmt) return;
 
 	/* check for the query first */
-	f = find_channel_file(network, l, nick);
+	f = find_add_channel_file(network, l, nick, FALSE);
 
 	if(f) {
 		custom_subst(network, &s, fmt, l, nick, FALSE, FALSE);
@@ -409,7 +397,7 @@ static void file_write_channel_query(struct network *network, const char *n, str
 	/* now, loop thru the users' channels */
 	for (gl = nn->channel_nicks; gl; gl = gl->next) {
 		struct channel_nick *cn = gl->data;
-		f = find_add_channel_file(network, l, cn->channel->name);
+		f = find_add_channel_file(network, l, cn->channel->name, TRUE);
 		if(f) {
 			custom_subst(network, &s, fmt, l, cn->channel->name, FALSE, FALSE);
 			fputs(s, f); fputc('\n', f);
@@ -423,7 +411,6 @@ static gboolean log_custom_data(struct network *network, struct line *l, enum da
 {
 	const char *nick = NULL;
 	char *user = NULL;
-	FILE *f = NULL;
 	if(!l->args || !l->args[0])return TRUE;
 	nick = line_get_nick(l);
 	if(user){ *user = '\0';user++; }
@@ -495,8 +482,6 @@ static gboolean log_custom_data(struct network *network, struct line *l, enum da
 	} else if(!g_strcasecmp(l->args[0], "NICK") && dir == FROM_SERVER && l->args[1]) {
 		file_write_channel_query(network, "nickchange", l);
 	}
-
-	if(f) fflush(f);
 
 	return TRUE;
 }
