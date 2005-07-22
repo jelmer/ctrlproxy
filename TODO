@@ -4,6 +4,8 @@
 - handle some currently unhandled responses (especially wrt JOIN's)
  - Special handler for join stuff
 - support storing state information
+ - support for pack/unpack state
+ - support for cloning state
  - store state data every X lines
  - to recover state at a certain point: 
   - scroll back until latest state cache
