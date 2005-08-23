@@ -56,7 +56,7 @@ void signal_crash(int sig)
 	backtrace_size = backtrace(backtrace_stack,BACKTRACE_STACK_SIZE);
 	backtrace_strings = backtrace_symbols(backtrace_stack, backtrace_size);
 
-	g_critical (("BACKTRACE: %d stack frames:"), backtrace_size);
+	g_critical ("BACKTRACE: %d stack frames:", backtrace_size);
 	
 	if (backtrace_strings) {
 		int i;
@@ -67,6 +67,8 @@ void signal_crash(int sig)
 		g_free(backtrace_strings);
 	}
 
+	g_critical ("Please send a bug report to jelmer@vernstok.nl.");
+	g_critical ("A gdb backtrace is appreciated if you can reproduce this bug.");
 #endif
 	log_global(NULL, "Ctrlproxy core has segfaulted, exiting...");
 	abort();
