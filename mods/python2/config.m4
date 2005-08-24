@@ -1,11 +1,10 @@
-sinclude(ac_python_devel.m4)
+sinclude(mods/python2/ac_python_devel.m4)
 
-AC_PYTHON_DEVEL
-AC_PATH_PROG(SWIG,swig)
+AC_PYTHON_DEVEL()
 
-if test "_$SWIG" = _; then
+if test -z "$SWIG"; then
 	AC_MSG_WARN([SWIG not found, not building python module])
-elif test _$PYTHON_VERSION = _; then
+elif test -z "$PYTHON_VERSION"; then
 	AC_MSG_WARN([Python not found, not building python module])
 else
 	DEFMODULE(python2, $PY_LIBS)

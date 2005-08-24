@@ -1,4 +1,5 @@
 2.7 showstoppers:
+- add bind support back into mods/listener.c and network.c
 - update documentation
 - test and fix SSL support
 - handle some currently unhandled responses (especially wrt JOIN's)

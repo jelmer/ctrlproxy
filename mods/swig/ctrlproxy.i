@@ -196,27 +196,27 @@ struct linestack
 
 	gboolean traverse()
 	{
-		return linestack_traverse(self->n, self->m, NULL, NULL); /* FIXME */
+		return linestack_traverse(self->n, self->m, NULL, NULL, NULL); /* FIXME */
 	}
 
 	gboolean traverse(const char *obj)
 	{
-		return linestack_traverse_object(self->n, obj, self->m, NULL, NULL); /* FIXME */
+		return linestack_traverse_object(self->n, obj, self->m, NULL, NULL, NULL); /* FIXME */
 	}
 
 	gboolean send(const struct client *c)
 	{
-		return linestack_send(self->n, self->m, c);
+		return linestack_send(self->n, self->m, NULL, c);
 	}
 	
 	gboolean send(const struct client *c, const char *obj)
 	{
-		return linestack_send_object(self->n, obj, self->m, c);
+		return linestack_send_object(self->n, obj, self->m, NULL, c);
 	}
 
 	gboolean replay(struct network_state *st)
 	{
-		return linestack_replay(self->n, self->m, st);
+		return linestack_replay(self->n, self->m, NULL, st);
 	}
 
 	~linestack()

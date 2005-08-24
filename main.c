@@ -67,9 +67,9 @@ void signal_crash(int sig)
 		g_free(backtrace_strings);
 	}
 
+#endif
 	g_critical ("Please send a bug report to jelmer@vernstok.nl.");
 	g_critical ("A gdb backtrace is appreciated if you can reproduce this bug.");
-#endif
 	log_global(NULL, "Ctrlproxy core has segfaulted, exiting...");
 	abort();
 }

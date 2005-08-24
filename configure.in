@@ -76,6 +76,7 @@ PKG_CHECK_MODULES(COMMON, libxml-2.0 glib-2.0 gmodule-2.0, , AC_MSG_ERROR([libxm
 sinclude(mods/nss/config.m4)
 sinclude(mods/openssl/config.m4)
 sinclude(mods/gnutls/config.m4)
+sinclude(mods/swig/config.m4)
 sinclude(mods/python2/config.m4)
 sinclude(doc/config.m4)
 AC_CONFIG_FILES(doc/Makefile.settings)
