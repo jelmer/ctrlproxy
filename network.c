@@ -237,6 +237,9 @@ gboolean network_send_args(struct network *s, ...)
 	va_list ap;
 	struct line *l;
 	gboolean ret;
+
+	if (!s->state) return FALSE;
+
 	va_start(ap, s);
 	l = virc_parse_line(NULL, ap);
 	l->origin = g_strdup(s->state->me.nick);

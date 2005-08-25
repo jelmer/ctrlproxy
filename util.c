@@ -80,16 +80,22 @@ inline int str_cmphelper(const char *a, const char *b, char sh, char sl, char eh
 
 int str_asciicmp(const char *a, const char *b)
 {
+	g_assert(a != NULL);
+	g_assert(b != NULL);
 	return str_cmphelper(a, b, 97, 65, 122, 90);
 }
 
 int str_strictrfc1459cmp(const char *a, const char *b)
 {
+	g_assert(a != NULL);
+	g_assert(b != NULL);
 	return str_cmphelper(a, b, 97, 65, 125, 93);
 }
 
 
 int str_rfc1459cmp(const char *a, const char *b)
 {
+	g_assert(a != NULL);
+	g_assert(b != NULL);
 	return str_cmphelper(a, b, 97, 65, 126, 94);
 }

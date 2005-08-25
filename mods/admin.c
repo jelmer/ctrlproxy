@@ -61,7 +61,9 @@ void admin_out(const struct client *c, const char *fmt, ...)
 		!strcmp(c->network->connection.data.virtual.ops->name, "admin")) {
 		virtual_network_recv_args(c->network, hostmask+1, "PRIVMSG", ADMIN_CHANNEL, msg, NULL);
 	} else {
-		irc_send_args(c->incoming, hostmask, "NOTICE", c->network->state->me.nick, msg, NULL);
+		char *nick = c->nick;
+		if (c->network->state) nick = c->network->state->me.nick;
+		irc_send_args(c->incoming, hostmask, "NOTICE", nick, msg, NULL);
 	}
 	g_free(hostmask);
 

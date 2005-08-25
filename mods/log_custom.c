@@ -393,17 +393,18 @@ static void file_write_channel_query(struct network *network, const char *n, str
 	}
 	
 	nn = find_network_nick(network->state, nick);
+	g_assert(nn);
 
 	/* now, loop thru the users' channels */
 	for (gl = nn->channel_nicks; gl; gl = gl->next) {
 		struct channel_nick *cn = gl->data;
 		f = find_add_channel_file(network, l, cn->channel->name, TRUE);
-		if(f) {
-			custom_subst(network, &s, fmt, l, cn->channel->name, FALSE, FALSE);
-			fputs(s, f); fputc('\n', f);
-			fflush(f);
-			g_free(s);
-		}
+		if(!f) continue;
+
+		custom_subst(network, &s, fmt, l, cn->channel->name, FALSE, FALSE);
+		fputs(s, f); fputc('\n', f);
+		fflush(f);
+		g_free(s);
 	}
 }
 
