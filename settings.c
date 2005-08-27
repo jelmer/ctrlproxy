@@ -23,6 +23,10 @@
 #include "config.h"
 #endif
 
+#ifdef HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
+#endif
+
 #include <libxml/xmlmemory.h>
 #include <libxml/parser.h>
 

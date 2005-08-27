@@ -31,6 +31,10 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 
+#ifdef HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
+#endif
+
 #undef G_LOG_DOMAIN
 #define G_LOG_DOMAIN "listener"
 

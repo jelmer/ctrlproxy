@@ -36,6 +36,10 @@
 #include <sys/socket.h>
 #include <netdb.h>
 
+#ifdef HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
+#endif
+
 #undef G_LOG_DOMAIN
 #define G_LOG_DOMAIN "socks"
 
