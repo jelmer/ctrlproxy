@@ -66,7 +66,7 @@ static void identify_me(struct network *network, char *nick)
 		network_send_args(network, "PRIVMSG", nickserv_n, raw, NULL);
 		g_free(raw);
 	} else {
-		log_network("nickserv", network, "Not identifying for %s; no entries found", nick);
+		log_network("nickserv", LOG_INFO, network, "Not identifying for %s; no entries found", nick);
 	}
 }
 
@@ -108,7 +108,7 @@ static gboolean log_data(struct network *n, struct line *l, enum data_direction 
 
 			e->pass = g_strdup(l->args[2] + strlen("IDENTIFY "));
 			
-			log_network("nickserv", n, "Caching password for nick %s", e->nick);
+			log_network("nickserv", LOG_INFO, n, "Caching password for nick %s", e->nick);
 	}
 
 	/* If we receive a nick-already-in-use message, ghost the current user */
@@ -118,7 +118,7 @@ static gboolean log_data(struct network *n, struct line *l, enum data_direction 
 			const char *nickserv_n = nickserv_nick(n);
 			char *raw;
 			
-			log_network("nickserv", n, "Ghosting current user using '%s'", nickattempt);
+			log_network("nickserv", LOG_INFO, n, "Ghosting current user using '%s'", nickattempt);
 
 			raw = g_strdup_printf("GHOST %s %s", nickattempt, pass);
 			network_send_args(n, "PRIVMSG", nickserv_n, raw, NULL);

@@ -302,7 +302,7 @@ static FILE *find_add_channel_file(struct network *network, struct line *l, cons
 
 		/* Check if directory needs to be created */
 		if(!g_file_test(dn, G_FILE_TEST_IS_DIR) && mkdir(dn, 0700) == -1) {
-			log_network("log_custom", network, "Couldn't create directory %s for logging!", dn);
+			log_network("log_custom", LOG_ERROR, network, "Couldn't create directory %s for logging!", dn);
 			g_free(dn);
 			g_free(n);
 			return NULL;
@@ -312,7 +312,7 @@ static FILE *find_add_channel_file(struct network *network, struct line *l, cons
 		/* Then open the correct filename */
 		f = fopen(n, "a+");
 		if(!f) {
-			log_network("log_custom", network, "Couldn't open file %s for logging!", n);
+			log_network("log_custom", LOG_ERROR, network, "Couldn't open file %s for logging!", n);
 			g_free(n);
 			return NULL;
 		}

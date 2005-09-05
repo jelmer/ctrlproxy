@@ -155,7 +155,7 @@ void init_config()
 	dtd = xmlParseDTD(DTD_URL, DTD_FILE);
 
 	if (!dtd) {
-		log_global(NULL, "Can't load DTD file from %s", DTD_FILE);
+		log_global(NULL, LOG_WARNING, "Can't load DTD file from %s", DTD_FILE);
 	}
 }
 
@@ -244,7 +244,7 @@ static void config_load_servers(struct network_config *n, xmlNodePtr root)
 		s->name = xmlGetProp(cur, "name");
 		if (!s->name) s->name = xmlGetProp(cur, "host");
 		if (s->name && strchr(s->name, ' ')) {
-			log_global(NULL, "Network name \"%s\" contains spaces!", s->name);
+			log_global(NULL, LOG_WARNING, "Network name \"%s\" contains spaces!", s->name);
 		}
 
 		n->type_settings.tcp_servers = g_list_append(n->type_settings.tcp_servers, s);
@@ -339,13 +339,13 @@ struct ctrlproxy_config *load_configuration(const char *file)
 
 	configuration = xmlParseFile(file);
 	if(!configuration) {
-		log_global(NULL, "Can't open configuration file '%s'", file);
+		log_global(NULL, LOG_ERROR, "Can't open configuration file '%s'", file);
 		g_free(cfg);
 		return NULL;
 	}
 
 	if (!validate_config(configuration)) {
-		log_global(NULL, "Warnings while parsing configuration file");
+		log_global(NULL, LOG_ERROR, "Warnings while parsing configuration file");
 	}
 
 	root = xmlDocGetRootElement(configuration);

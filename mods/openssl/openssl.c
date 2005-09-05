@@ -71,7 +71,7 @@ static GIOStatus irssi_ssl_cert_step(GIOSSLChannel *chan)
 		case 1:
 			if(!(chan->cert = SSL_get_peer_certificate(chan->ssl)))
 			{
-				log_global("openssl", "SSL server supplied no certificate");
+				log_global("openssl", LOG_ERROR, "SSL server supplied no certificate");
 				return G_IO_STATUS_ERROR;
 			}
 			return G_IO_STATUS_NORMAL;
@@ -225,7 +225,7 @@ static gboolean load_config(struct plugin *p, xmlNodePtr node)
 	}
 
 	if(!irssi_ssl_set_files(certf, keyf)) {
-		log_global("openssl", "Unable to set appropriate files");
+		log_global("openssl", LOG_ERROR, "Unable to set appropriate files");
 		return FALSE;
 	}
 	
@@ -240,7 +240,7 @@ static gboolean init_plugin(struct plugin *p)
 	ssl_ctx = SSL_CTX_new(SSLv23_method());
 	if(!ssl_ctx)
 	{
-		log_global("openssl", "Initialization of the SSL library failed");
+		log_global("openssl", LOG_ERROR, "Initialization of the SSL library failed");
 		return FALSE;
 	}
 
@@ -256,21 +256,21 @@ static gboolean irssi_ssl_set_files(const char *certf, const char *keyf)
 		return FALSE;
 
 	if(SSL_CTX_use_certificate_file(ssl_ctx, certf, SSL_FILETYPE_PEM) <= 0) {
-		log_global("openssl", "Can't set SSL certificate file %s!", certf);
+		log_global("openssl", LOG_ERROR, "Can't set SSL certificate file %s!", certf);
 		return FALSE;
 	}
 
 	if(SSL_CTX_use_PrivateKey_file(ssl_ctx, keyf, SSL_FILETYPE_PEM) <= 0) {
-		log_global("openssl", "Can't set SSL private key file %s!", keyf);
+		log_global("openssl", LOG_ERROR, "Can't set SSL private key file %s!", keyf);
 		return FALSE;
 	}
 
 	if(!SSL_CTX_check_private_key(ssl_ctx)) {
-		log_global("openssl", "Private key does not match the certificate public key!");
+		log_global("openssl", LOG_ERROR, "Private key does not match the certificate public key!");
 		return FALSE;
 	}
 
-	log_global("openssl", "Using SSL certificate from %s and SSL key from %s", certf, keyf);
+	log_global("openssl", LOG_INFO, "Using SSL certificate from %s and SSL key from %s", certf, keyf);
 
 	return TRUE;
 }
@@ -284,29 +284,29 @@ GIOChannel *irssi_ssl_get_iochannel(GIOChannel *handle, gboolean server)
 	X509 *cert = NULL;
 
 	if(!handle) {
-		log_global("openssl", "Invalid handle");
+		log_global("openssl", LOG_ERROR, "Invalid handle");
 		return NULL;
 	}
 	
 	if(!ssl_ctx) {
-		log_global("openssl", "No valid openssl context available");
+		log_global("openssl", LOG_ERROR, "No valid openssl context available");
 		return NULL;
 	}
 
 	if(!(fd = g_io_channel_unix_get_fd(handle))) {
-		log_global("openssl", "Unable to get file descriptor");
+		log_global("openssl", LOG_ERROR, "Unable to get file descriptor");
 		return NULL;
 	}
 
 	if((ssl = SSL_new(ssl_ctx)) == 0)
 	{
-		log_global("openssl", "Failed to allocate SSL structure");
+		log_global("openssl", LOG_ERROR, "Failed to allocate SSL structure");
 		return NULL;
 	}
 
 	if(SSL_set_fd(ssl, fd) == 0)
 	{
-		log_global("openssl", "Failed to associate socket to SSL stream");
+		log_global("openssl", LOG_ERROR, "Failed to associate socket to SSL stream");
 		return NULL;
 	}
 	
@@ -318,14 +318,14 @@ GIOChannel *irssi_ssl_get_iochannel(GIOChannel *handle, gboolean server)
 	{
 		char buf[120];
 		ERR_error_string(SSL_get_error(ssl, err), buf);
-		log_global("openssl", "%s", buf);
+		log_global("openssl", LOG_ERROR, "%s", buf);
 		return NULL;
 	}
 	else if(!(cert = SSL_get_peer_certificate(ssl)))
 	{
 		if(!server)
 		{
-			log_global("openssl", "SSL %s supplied no certificate", server?"client":"server");
+			log_global("openssl", LOG_ERROR, "SSL %s supplied no certificate", server?"client":"server");
 			return NULL;
 		}
 	}

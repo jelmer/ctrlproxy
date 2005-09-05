@@ -2,6 +2,7 @@
  	Jelmer Vernooij <jelmer@vernstok.nl>
 
 Ctrlproxy 2.7:
+ * Add log levels (-d switch)
  * NetBSD portability fixes (Adrian Portelli)
  * Properly support strict-rfc1459 comparisons
  * Show SVN revision in version for SVN checkouts

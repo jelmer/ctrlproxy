@@ -49,7 +49,7 @@ void init_linestack(struct ctrlproxy_config *cfg)
 		}
 
 		if (!current_backend) 
-			log_global(NULL, "Unable to find linestack backend %s: falling back to default", cfg->linestack_backend);
+			log_global(NULL, LOG_WARNING, "Unable to find linestack backend %s: falling back to default", cfg->linestack_backend);
 	}
 
 	if (!linestack_backends) return;

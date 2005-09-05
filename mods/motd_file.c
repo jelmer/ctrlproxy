@@ -33,7 +33,7 @@ char ** motd_file_handler(struct network *n, void *userdata)
 
 	fd = fopen(motd_file, "r");
 	if(!fd) {
-		log_global("motd_file", "Can't open '%s'", motd_file);
+		log_global("motd_file", LOG_ERROR, "Can't open '%s'", motd_file);
 		return NULL;
 	}
 
@@ -83,7 +83,7 @@ static gboolean load_config(struct plugin *p, xmlNodePtr node)
 	if (!motd_file) motd_file = g_build_filename(get_current_config()->shared_path, "motd", NULL);
 
 	if(!g_file_test(motd_file, G_FILE_TEST_EXISTS)) {
-		log_global("motd_file", "Can't open MOTD file '%s' for reading", motd_file);
+		log_global("motd_file", LOG_ERROR, "Can't open MOTD file '%s' for reading", motd_file);
 		return FALSE;
 	}
 

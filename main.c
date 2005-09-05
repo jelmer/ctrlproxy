@@ -36,7 +36,6 @@
 
 /* globals */
 static GMainLoop *main_loop;
-FILE *debugfd = NULL;
 extern char my_hostname[];
 struct ctrlproxy_config *current_config = NULL;
 
@@ -70,7 +69,7 @@ static void signal_crash(int sig)
 #endif
 	g_critical ("Please send a bug report to jelmer@vernstok.nl.");
 	g_critical ("A gdb backtrace is appreciated if you can reproduce this bug.");
-	log_global(NULL, "Ctrlproxy core has segfaulted, exiting...");
+	log_global(NULL, LOG_ERROR, "Ctrlproxy core has segfaulted, exiting...");
 	abort();
 }
 
@@ -80,7 +79,6 @@ static void clean_exit()
 
 	fini_networks();
 
-	if(debugfd)fclose(debugfd);
 	g_main_loop_quit(main_loop);
 
 	fini_config();
@@ -96,7 +94,7 @@ static void clean_exit()
 static void signal_quit(int sig)
 {
 	static int state = 0;
-	log_global(NULL, "Received signal %d, quitting...", sig);
+	log_global(NULL, LOG_WARNING, "Received signal %d, quitting...", sig);
 	if(state == 1) { 
 		signal(SIGINT, SIG_IGN); 
 		exit(0);
@@ -109,13 +107,8 @@ static void signal_quit(int sig)
 
 static void signal_save(int sig)
 {
-	log_global(NULL, "Received USR1 signal, saving configuration...");
+	log_global(NULL, LOG_INFO, "Received USR1 signal, saving configuration...");
 	save_configuration(current_config, NULL);
-}
-
-static void signal_save_current(int sig)
-{
-	log_global(NULL, "Received USR2 signal, saving current configuration...");
 }
 
 int main(int argc, const char *argv[])
@@ -124,6 +117,7 @@ int main(int argc, const char *argv[])
 	int seperate_processes = 0;
 	char *logfile = NULL, *rcfile = NULL;
 	char *configuration_file;
+	extern enum log_level current_log_level;
 	const char *inetd_client = NULL;
 #ifdef HAVE_POPT_H
 	int c;
@@ -131,7 +125,7 @@ int main(int argc, const char *argv[])
 	struct poptOption options[] = {
 		POPT_AUTOHELP
 		{"inetd-client", 'i', POPT_ARG_STRING, &inetd_client, 0, "Communicate with client to NETWORK via stdio", "NETWORK" },
-		{"debug", 'd', POPT_ARG_STRING, NULL, 'd', ("Write irc traffic to specified file"), "FILE" },
+		{"debug-level", 'd', POPT_ARG_INT, &current_log_level, 'd', ("Debug level [0-5]"), "LEVEL" },
 		{"daemon", 'D', POPT_ARG_NONE, &isdaemon, 0, ("Run in the background (as a daemon)")},
 		{"log", 'l', POPT_ARG_STRING, &logfile, 0, ("Log messages to specified file"), ("FILE")},
 		{"rc-file", 'r', POPT_ARG_STRING, &rcfile, 0, ("Use configuration file from specified location"), ("FILE")},
@@ -163,13 +157,6 @@ int main(int argc, const char *argv[])
 
 	while((c = poptGetNextOpt(pc)) >= 0) {
 		switch(c) {
-		case 'd': 
-			{
-				const char *fname = poptGetOptArg(pc);
-				if(!strcmp(fname, "-")) { debugfd = stdout; break; }
-				debugfd = fopen(fname, "w+"); 
-			}
-			break;
 		case 'v':
 			printf("ctrlproxy %s\n", VERSION);
 			printf(("(c) 2002-2004 Jelmer Vernooij et al. <jelmer@nl.linux.org>\n"));
@@ -184,10 +171,10 @@ int main(int argc, const char *argv[])
 
 	init_log(logfile);
 
-	log_global(NULL, "CtrlProxy %s starting", VERSION);
+	log_global(NULL, LOG_INFO, "CtrlProxy %s starting", VERSION);
 
 	if(gethostname(my_hostname, MAXHOSTNAMELEN) != 0) {
-		log_global(NULL, "Can't figure out hostname of local host!");
+		log_global(NULL, LOG_WARNING, "Can't figure out hostname of local host!");
 		return 1;
 	}
 
@@ -208,7 +195,8 @@ int main(int argc, const char *argv[])
 		daemon(1, 0);
 		isdaemon = 1;
 #else
-		log_global(NULL, "Daemon mode not compiled in");
+		log_global(NULL, LOG_ERROR, "Daemon mode not compiled in");
+		return -1;
 #endif
 	} 
 

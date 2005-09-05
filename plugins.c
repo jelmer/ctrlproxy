@@ -33,7 +33,7 @@ gboolean unload_plugin(struct plugin *p)
 {
 	/* Run exit function if present */
 	if(!p->ops->fini(p)) {
-		log_global(NULL, "Unable to unload plugin '%s': still in use?", p->ops->name);
+		log_global(NULL, LOG_ERROR, "Unable to unload plugin '%s': still in use?", p->ops->name);
 		return FALSE;
 	}
 
@@ -91,7 +91,7 @@ struct plugin *load_plugin(struct plugin_config *pc)
 		m = g_module_open(path_name, G_MODULE_BIND_LAZY);
 
 		if(!m) {
-			log_global(NULL, "Unable to open module %s(%s), ignoring", path_name, g_module_error());
+			log_global(NULL, LOG_ERROR, "Unable to open module %s(%s), ignoring", path_name, g_module_error());
 			g_free(path_name);
 			g_free(p);
 			return NULL;
@@ -99,7 +99,7 @@ struct plugin *load_plugin(struct plugin_config *pc)
 
 		if(!g_module_symbol(m, "plugin", (gpointer)&ops)) {
 			log_global(strchr(path_name, '/')?(strrchr(path_name, '/')+1):NULL, 
-					   "No valid plugin information found");
+					   LOG_ERROR, "No valid plugin information found");
 			g_free(path_name);
 			g_free(p);
 			return NULL;
@@ -107,7 +107,7 @@ struct plugin *load_plugin(struct plugin_config *pc)
 	}
 
 	if(plugin_loaded(ops->name)) {
-		log_global(ops->name, "Plugin already loaded");
+		log_global(ops->name, LOG_WARNING, "Plugin already loaded");
 		g_free(path_name);
 		g_free(p);
 		return NULL;
@@ -119,14 +119,14 @@ struct plugin *load_plugin(struct plugin_config *pc)
 	p->ops = ops;
 
 	if(!p->ops->init(p)) {
-		log_global(p->ops->name, "Error during initialization.");
+		log_global(p->ops->name, LOG_ERROR, "Error during initialization.");
 		g_free(p);
 		return NULL;
 	}
 
 	if (p->ops->load_config && p->config->node) {
 		if (!p->ops->load_config(p, p->config->node)) {
-			log_global(p->ops->name, "Error loading configuration");
+			log_global(p->ops->name, LOG_ERROR, "Error loading configuration");
 			g_free(p);
 			return NULL;
 		}
@@ -151,9 +151,9 @@ gboolean init_plugins(struct ctrlproxy_config *cfg)
 	gboolean ret = TRUE;
 
 	if(!g_module_supported()) {
-		log_global(NULL, "DSO's not supported on this platform. Not loading any modules");
+		log_global(NULL, LOG_WARNING, "DSO's not supported on this platform. Not loading any modules");
 	} else if(!cfg->plugins) {
-		log_global(NULL, "No modules set to be loaded");	
+		log_global(NULL, LOG_WARNING, "No modules set to be loaded");	
 	} else {
 		GList *gl = cfg->plugins;
 		while(gl) {

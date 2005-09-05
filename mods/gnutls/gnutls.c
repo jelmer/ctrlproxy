@@ -56,7 +56,7 @@ static GIOStatus g_io_gnutls_error(gint e)
 		case GNUTLS_E_AGAIN:
 			return G_IO_STATUS_AGAIN;
 		default:
-			log_global("gnutls", "TLS Error: %s", gnutls_strerror(e));
+			log_global("gnutls", LOG_ERROR, "TLS Error: %s", gnutls_strerror(e));
 			if(gnutls_error_is_fatal(e)) return G_IO_STATUS_EOF;
 			return G_IO_STATUS_ERROR;
 	}
@@ -112,7 +112,7 @@ static GIOStatus g_io_gnutls_read(GIOChannel *handle, gchar *buf, guint len, gui
 	if(!chan->secure) {
 		err = gnutls_handshake(chan->session);
 		if(err < 0) {
-			log_global("gnutls", "TLS Handshake failed");
+			log_global("gnutls", LOG_ERROR, "TLS Handshake failed");
 			return g_io_gnutls_error(err);
 		}
 		chan->secure = 1;
@@ -134,7 +134,7 @@ static GIOStatus g_io_gnutls_write(GIOChannel *handle, const gchar *buf, gsize l
 	{
 		err = gnutls_handshake(chan->session);
 		if(err < 0) {
-			log_global("gnutls", "TLS Handshake failed");
+			log_global("gnutls", LOG_ERROR, "TLS Handshake failed");
 			return g_io_gnutls_error(err);
 		}
 		chan->secure = 1;
@@ -222,7 +222,7 @@ static gboolean load_config(struct plugin *p, xmlNodePtr node)
 		certf = ctrlproxy_path("cert.pem");
 		if(!g_file_test(certf, G_FILE_TEST_EXISTS)) {
 			free(certf);
-			log_global("gnutls", "No valid certificate set");
+			log_global("gnutls", LOG_ERROR, "No valid certificate set");
 			return FALSE;
 		}
 	}
@@ -231,7 +231,7 @@ static gboolean load_config(struct plugin *p, xmlNodePtr node)
 		keyf = ctrlproxy_path("key.pem");
 		if(!g_file_test(keyf, G_FILE_TEST_EXISTS)) {
 			free(keyf);
-			log_global("gnutls", "No valid key set");
+			log_global("gnutls", LOG_ERROR, "No valid key set");
 			return FALSE;
 		}
 	}
@@ -247,18 +247,18 @@ static gboolean load_config(struct plugin *p, xmlNodePtr node)
 	if (cafile) {
 		err = gnutls_certificate_set_x509_trust_file(xcred, cafile, GNUTLS_X509_FMT_PEM);
 		if(err < 0) {
-			log_global("gnutls", "Error setting x509 trust file: %s (file = %s)", gnutls_strerror(err), cafile);	
+			log_global("gnutls", LOG_ERROR, "Error setting x509 trust file: %s (file = %s)", gnutls_strerror(err), cafile);	
 		}
 	}
 
 	if (!certf || !keyf) {
-		log_global("gnutls", "No certificate or key set!");
+		log_global("gnutls", LOG_ERROR, "No certificate or key set!");
 		return FALSE;
 	}
 
 	err = gnutls_certificate_set_x509_key_file(xcred, certf, keyf, GNUTLS_X509_FMT_PEM);
 	if(err < 0) {
-		log_global("gnutls", "Error setting x509 key+cert files: %s (key = %s, cert = %s)", gnutls_strerror(err), keyf, certf);	
+		log_global("gnutls", LOG_ERROR, "Error setting x509 key+cert files: %s (key = %s, cert = %s)", gnutls_strerror(err), keyf, certf);	
 		return FALSE;
 	}
 
@@ -269,7 +269,7 @@ static gboolean init_plugin(struct plugin *p)
 {
 	gnutls_dh_params dh_params;
 	if(gnutls_global_init() < 0) {
-		log_global("gnutls", "gnutls global state initialization error");
+		log_global("gnutls", LOG_ERROR, "gnutls global state initialization error");
 		return FALSE;
 	}
 
@@ -278,7 +278,7 @@ static gboolean init_plugin(struct plugin *p)
 
 	/* X509 stuff */
 	if (gnutls_certificate_allocate_credentials(&xcred) < 0) {	/* space for 2 certificates */
-		log_global("gnutls", "gnutls memory error");
+		log_global("gnutls", LOG_ERROR, "gnutls memory error");
 		return FALSE;
 	}
 

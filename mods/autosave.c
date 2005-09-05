@@ -57,7 +57,7 @@ static gboolean load_config(struct plugin *p, xmlNodePtr node)
 	if(interval_time > 0)
 		autosave_id = g_timeout_add(1000 * 60 * interval_time, loop_save_config, NULL);
 	else
-		log_global("autosave", "Interval of %i minutes is too short", interval_time);
+		log_global("autosave", LOG_ERROR, "Interval of %i minutes is too short", interval_time);
 
 	return TRUE;
 }

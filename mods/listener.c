@@ -60,19 +60,19 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition condition, gpo
 	}
 
 	if(!listener->password) {
-		log_network("listener", listener->network, "No password set, allowing client _without_ authentication!");
+		log_network("listener", LOG_WARNING, listener->network, "No password set, allowing client _without_ authentication!");
 	}
 
 	if(!g_strcasecmp(l->args[0], "PASS")) {
 		if (listener->password && strcmp(l->args[1], listener->password)) {
-			log_network("listener", listener->network, "User tried to log in with incorrect password!");
+			log_network("listener", LOG_WARNING, listener->network, "User tried to log in with incorrect password!");
 			irc_sendf(c, ":%s %d %s :Password mismatch\r\n", listener->network->name, ERR_PASSWDMISMATCH, listener->network->state->me.nick);
 
 			free_line(l);
 			return TRUE;
 		}
 
-		log_network ("listener", listener->network, "Client successfully authenticated");
+		log_network ("listener", LOG_INFO, listener->network, "Client successfully authenticated");
 
 		new_client(listener->network, c, NULL);
 
@@ -97,7 +97,7 @@ static gboolean handle_new_client(GIOChannel *c_server, GIOCondition condition, 
 	if (listener->ssl) {
 		GIOChannel *nio = sslize(c, TRUE);
 		if (!nio) {
-			log_global("listener", "SSL support not available, not listening for SSL connection");
+			log_global("listener", LOG_WARNING, "SSL support not available, not listening for SSL connection");
 		} else {
 			c = nio;
 		}
@@ -130,14 +130,14 @@ gboolean start_listener(struct listener *l)
 
 	error = getaddrinfo(l->address, l->port, &hints, &all_res);
 	if (error) {
-		log_global("listener", "Can't get address for %s:%s", l->address?l->address:"", l->port);
+		log_global("listener", LOG_ERROR, "Can't get address for %s:%s", l->address?l->address:"", l->port);
 		return FALSE;
 	}
 
 	for (res = all_res; res; res = res->ai_next) {
 		sock = socket(PF_INET, SOCK_STREAM, 0);
 		if (sock < 0) {
-			log_global( "listener", "error creating socket: %s", strerror(errno));
+			log_global( "listener", LOG_ERROR, "error creating socket: %s", strerror(errno));
 			freeaddrinfo(all_res);
 			return FALSE;
 		}
@@ -145,14 +145,14 @@ gboolean start_listener(struct listener *l)
 		setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
 	
 		if (bind(sock, res->ai_addr, res->ai_addrlen) < 0) {
-			log_global( "listener", "bind to port %s failed: %s", l->port, strerror(errno));
+			log_global( "listener", LOG_ERROR, "bind to port %s failed: %s", l->port, strerror(errno));
 			freeaddrinfo(all_res);
 			return FALSE;
 		}
 	}
 
 	if (sock == -1) {
-		log_global( "listener", "Unable to connect");
+		log_global( "listener", LOG_ERROR, "Unable to connect");
 		freeaddrinfo(all_res);
 		return FALSE;
 	}
@@ -160,14 +160,14 @@ gboolean start_listener(struct listener *l)
 	freeaddrinfo(all_res);
 	
 	if (listen(sock, 5) < 0) {
-		log_global( "listener", "error listening on socket: %s", strerror(errno));
+		log_global( "listener", LOG_ERROR, "error listening on socket: %s", strerror(errno));
 		return FALSE;
 	}
 
 	l->incoming = g_io_channel_unix_new(sock);
 
 	if (!l->incoming) {
-		log_global( "listener", "Unable to create GIOChannel for server socket");
+		log_global( "listener", LOG_ERROR, "Unable to create GIOChannel for server socket");
 		return FALSE;
 	}
 
@@ -177,7 +177,7 @@ gboolean start_listener(struct listener *l)
 	l->incoming_id = g_io_add_watch(l->incoming, G_IO_IN, handle_new_client, l);
 	g_io_channel_unref(l->incoming);
 
-	log_network( "listener", l->network, "Listening on %s:%s", l->address?l->address:"", l->port);
+	log_network( "listener", LOG_INFO, l->network, "Listening on %s:%s", l->address?l->address:"", l->port);
 
 	l->active = TRUE;
 
@@ -186,7 +186,7 @@ gboolean start_listener(struct listener *l)
 
 gboolean stop_listener(struct listener *l)
 {
-	log_global ( "listener", "Stopping listener at %s:%s", l->address?l->address:"", l->port);
+	log_global ( "listener", LOG_INFO, "Stopping listener at %s:%s", l->address?l->address:"", l->port);
 	g_source_remove(l->incoming_id);
 	return TRUE;
 }
@@ -270,7 +270,7 @@ static gboolean load_config(struct plugin *p, xmlNodePtr conf)
 			tmp = xmlGetProp(cur, "network");
 			l->network = find_network(tmp);
 			if (!l->network) {
-				log_global("listener", "Unable to find network named \"%s\"", tmp);
+				log_global("listener", LOG_ERROR, "Unable to find network named \"%s\"", tmp);
 			}
 			xmlFree(tmp);
 		}

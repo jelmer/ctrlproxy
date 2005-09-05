@@ -83,6 +83,8 @@ gboolean run_replication_filter(struct network *s, struct line *l, enum data_dir
 /* log.c */
 gboolean init_log(const char *file);
 void fini_log(void);
+void log_network_line(const struct network *n, const struct line *l, gboolean incoming);
+void log_client_line(const struct client *c, const struct line *l, gboolean incoming);
 
 /* redirect.c */
 void redirect_record(struct client *c, struct line *l);

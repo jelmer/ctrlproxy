@@ -34,7 +34,7 @@ static void server_send_login (struct network *s)
 {
 	g_assert(s->connection.state == NETWORK_CONNECTION_STATE_CONNECTED);
 
-	log_network(NULL, s, "Successfully connected");
+	log_network(NULL, LOG_INFO, s, "Successfully connected");
 
 	s->state = new_network_state(s->config->nick, s->config->username, get_my_hostname());
 
@@ -66,12 +66,12 @@ static gboolean process_from_server(struct network *n, struct line *l)
 	} else if(!g_strcasecmp(l->args[0], "PONG")){
 		return TRUE;
 	} else if(!g_strcasecmp(l->args[0], "ERROR")) {
-		log_network(NULL, n, "error: %s", l->args[1]);
+		log_network(NULL, LOG_ERROR, n, "error: %s", l->args[1]);
 	} else if(!g_strcasecmp(l->args[0], "433") && 
 			  n->connection.state == NETWORK_CONNECTION_STATE_LOGIN_SENT){
 		char *tmp = g_strdup_printf("%s_", l->args[2]);
 		network_send_args(n, "NICK", tmp, NULL);
-		log_network(NULL, n, "%s was already in use, trying %s", l->args[2], tmp);
+		log_network(NULL, LOG_WARNING, n, "%s was already in use, trying %s", l->args[2], tmp);
 		g_free(tmp);
 	} else if(!g_strcasecmp(l->args[0], "422") ||
 			  !g_strcasecmp(l->args[0], "376")) {
@@ -111,13 +111,13 @@ gboolean handle_server_receive (GIOChannel *c, GIOCondition cond, void *_server)
 	gboolean ret;
 
 	if ((cond & G_IO_HUP)) {
-		log_network(NULL, server, "Hangup from server, scheduling reconnect");
+		log_network(NULL, LOG_WARNING, server, "Hangup from server, scheduling reconnect");
 		reconnect(server, FALSE);
 		return FALSE;
 	}
 
 	if ((cond & G_IO_ERR)) {
-		log_network(NULL, server, "Error from server, scheduling reconnect");
+		log_network(NULL, LOG_WARNING, server, "Error from server, scheduling reconnect");
 		reconnect(server, FALSE);
 		return FALSE;
 	}
@@ -130,8 +130,10 @@ gboolean handle_server_receive (GIOChannel *c, GIOCondition cond, void *_server)
 		GError *err = NULL;
 		GIOStatus status = irc_recv_line(c, &err, &l);
 
+		log_network_line(server, l, TRUE);
+
 		if (status == G_IO_STATUS_ERROR) {
-			log_network(NULL, server, 
+			log_network(NULL, LOG_WARNING, server, 
 					"Error \"%s\" reading from server, reconnecting in %ds...",
 					err?err->message:"UNKNOWN", server->config->reconnect_interval);
 			reconnect(server, FALSE);
@@ -189,6 +191,7 @@ gboolean network_send_line(struct network *s, const struct client *c, const stru
 
 	l.origin = NULL;		/* Never send origin to the server */
 
+	log_network_line(s, &l, FALSE);
 	switch (s->config->type) {
 	case NETWORK_TCP:
 		return irc_send_line(s->connection.data.tcp.outgoing, &l);
@@ -270,11 +273,11 @@ static gboolean connect_current_tcp_server(struct network *s)
 	cs = s->connection.data.tcp.current_server;
 	if(!cs) {
 		s->config->autoconnect = FALSE;
-		log_network(NULL, s, "No servers listed, not connecting");
+		log_network(NULL, LOG_WARNING, s, "No servers listed, not connecting");
 		return FALSE;
 	}
 
-	log_network(NULL, s, "Connecting with %s:%s", 
+	log_network(NULL, LOG_INFO, s, "Connecting with %s:%s", 
 			  cs->host, 
 			  cs->port);
 
@@ -285,7 +288,7 @@ static gboolean connect_current_tcp_server(struct network *s)
 	/* Lookup */
 	error = getaddrinfo(cs->host, cs->port, &hints, &addrinfo);
 	if (error) {
-		log_network(NULL, s, "Unable to lookup %s:%s %s", cs->host, cs->port, gai_strerror(error));
+		log_network(NULL, LOG_ERROR, s, "Unable to lookup %s:%s %s", cs->host, cs->port, gai_strerror(error));
 		freeaddrinfo(addrinfo);
 		return FALSE;
 	}
@@ -312,7 +315,7 @@ static gboolean connect_current_tcp_server(struct network *s)
 	freeaddrinfo(addrinfo);
 
 	if (!ioc) {
-		log_network(NULL, s, "Unable to connect: %s", strerror(errno));
+		log_network(NULL, LOG_ERROR, s, "Unable to connect: %s", strerror(errno));
 		return FALSE;
 	}
 
@@ -329,7 +332,7 @@ static gboolean connect_current_tcp_server(struct network *s)
 		GIOChannel *nio = sslize(ioc, FALSE);
 
 		if (!nio) {
-			log_network(NULL, s, "SSL enabled for %s:%s, but no SSL support loaded", cs->host, cs->port);
+			log_network(NULL, LOG_WARNING, s, "SSL enabled for %s:%s, but no SSL support loaded", cs->host, cs->port);
 		} else {
 			ioc = nio;
 		}
@@ -351,7 +354,7 @@ static gboolean connect_current_tcp_server(struct network *s)
 	}
 
 	if(!s->connection.data.tcp.outgoing) {
-		log_network(NULL, s, "Couldn't connect via server %s:%s", cs->host, cs->port);
+		log_network(NULL, LOG_ERROR, s, "Couldn't connect via server %s:%s", cs->host, cs->port);
 		return FALSE;
 	}
 
@@ -442,7 +445,7 @@ static pid_t piped_child(char* const command[], int *f_in)
 	int sock[2];
 
 	if(socketpair(PF_UNIX, SOCK_STREAM, AF_LOCAL, sock) == -1) {
-		log_global(NULL, "socketpair: %s", strerror(errno));
+		log_global(NULL, LOG_ERROR, "socketpair: %s", strerror(errno));
 		return -1;
 	}
 
@@ -452,7 +455,7 @@ static pid_t piped_child(char* const command[], int *f_in)
 
 	pid = fork();
 	if (pid == -1) {
-		log_global(NULL, "fork: %s", strerror(errno));
+		log_global(NULL, LOG_ERROR, "fork: %s", strerror(errno));
 		return -1;
 	}
 
@@ -465,7 +468,7 @@ static pid_t piped_child(char* const command[], int *f_in)
 		dup2(sock[1], 0);
 		dup2(sock[1], 1);
 		execvp(command[0], command);
-		log_global(NULL, "Failed to exec %s : %s", command[0], strerror(errno));
+		log_global(NULL, LOG_ERROR, "Failed to exec %s : %s", command[0], strerror(errno));
 		return -1;
 	}
 
@@ -565,7 +568,7 @@ void unload_network(struct network *s)
 	GList *l = s->clients;
 	g_assert(s);
 	if (s->connection.state == NETWORK_CONNECTION_STATE_MOTD_RECVD) {
-		log_network(NULL, s, "Closing connection");
+		log_network(NULL, LOG_INFO, s, "Closing connection");
 	}
 
 	while(l) {
@@ -749,6 +752,6 @@ void fini_networks()
 void network_select_next_server(struct network *n)
 {
 	if (n->config->type != NETWORK_TCP) return;
-	log_network(NULL, n, "Trying next server");
+	log_network(NULL, LOG_INFO, n, "Trying next server");
 	n->connection.data.tcp.current_server = network_get_next_tcp_server(n);
 }

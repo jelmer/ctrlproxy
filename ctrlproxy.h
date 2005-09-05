@@ -67,8 +67,9 @@ G_MODULE_EXPORT void set_sslize_function (GIOChannel *(*) (GIOChannel *, gboolea
 G_MODULE_EXPORT GIOChannel *sslize (GIOChannel *orig, gboolean server);
 
 /* log.c */
-void log_network(const char *module, const struct network *, const char *fmt, ...);
-void log_client(const char *module, const struct client *, const char *fmt, ...);
-void log_global(const char *module, const char *fmt, ...);
+enum log_level { LOG_DATA=5, LOG_TRACE=4, LOG_INFO=3, LOG_WARNING=2, LOG_ERROR=1 };
+void log_network(const char *module, enum log_level, const struct network *, const char *fmt, ...);
+void log_client(const char *module, enum log_level, const struct client *, const char *fmt, ...);
+void log_global(const char *module, enum log_level, const char *fmt, ...);
 
 #endif /* __CTRLPROXY_H__ */

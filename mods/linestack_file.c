@@ -54,7 +54,7 @@ static FILE *get_fd(const struct network *n)
 		char *path = g_strdup_printf("%s/%s", data_path, n->name);
 		ch = fopen(path, "w+");
 		if (!ch) {
-			log_network("linestack_file", n, "Unable to open linestack file %s", path);
+			log_network("linestack_file", LOG_ERROR, n, "Unable to open linestack file %s", path);
 			g_free(path);
 			return NULL;
 		}

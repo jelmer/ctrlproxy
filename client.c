@@ -168,6 +168,7 @@ gboolean client_send_args(struct client *c, ...)
 
 gboolean client_send_line(struct client *c, const struct line *l)
 {
+	log_client_line(c, l, FALSE);
 	return irc_send_line(c->incoming, l);
 }
 
@@ -190,7 +191,7 @@ void disconnect_client(struct client *c, const char *reason)
 
 	lose_client_hook_execute(c);
 
-	log_client(NULL, c, "Removed client");
+	log_client(NULL, LOG_INFO, c, "Removed client");
 
 	if (c->exit_on_close) 
 		exit(0);
@@ -236,6 +237,8 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition cond, void *_c
 	if (cond & G_IO_IN) {
 		GError *error= NULL;
 		GIOStatus status = irc_recv_line(c, &error, &l);
+
+		log_client_line(client, l, TRUE);
 
 		if (status == G_IO_STATUS_ERROR) {
 			disconnect_client(client, error?error->message:"Unknown error");
@@ -370,7 +373,7 @@ static gboolean handle_pending_client_receive(GIOChannel *c, GIOCondition cond, 
 			client->network = find_network_by_hostname(l->args[1], atoi(l->args[2]), TRUE);
 
 			if (!client->network || !connect_network(client->network)) {
-				log_client(NULL, client, "Unable to connect to network with name %s", l->args[1]);
+				log_client(NULL, LOG_ERROR, client, "Unable to connect to network with name %s", l->args[1]);
 			}
 		} else {
 			client_send_response(client, ERR_NOTREGISTERED, "Register first", client->network?client->network->name:get_my_hostname(), NULL);
@@ -389,7 +392,7 @@ static gboolean handle_pending_client_receive(GIOChannel *c, GIOCondition cond, 
 			client->incoming_id = g_io_add_watch(client->incoming, G_IO_IN | G_IO_HUP, handle_client_receive, client);
 
 			client->network->clients = g_list_append(client->network->clients, client);
-			log_client(NULL, client, "New client");
+			log_client(NULL, LOG_INFO, client, "New client");
 
 			return FALSE;
 		}

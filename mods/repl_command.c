@@ -59,7 +59,7 @@ static gboolean fini_plugin(struct plugin *p) {
 static gboolean init_plugin(struct plugin *p) 
 {
 	if(!plugin_loaded("admin")) {
-		log_global("repl_command", "admin module required for repl_command module. Please load it first");
+		log_global("repl_command", LOG_ERROR, "admin module required for repl_command module. Please load it first");
 		return FALSE;
 	}
 	register_admin_command(&cmd_backlog);
