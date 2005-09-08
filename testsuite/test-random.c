@@ -29,7 +29,7 @@
 #define RANDOMDEVICE "/dev/urandom"
 #define REPEAT_COUNT 20
 
-int test_random_data(void)
+static int test_random_data(void)
 {
 	GIOChannel *g = new_conn_loggedin("bla");
 	int fd1;
@@ -55,7 +55,7 @@ int test_random_data(void)
 	return 1;
 }
 
-int test_random_msg(void)
+static int test_random_msg(void)
 {
 	GIOChannel *g = new_conn_loggedin("bla");
 	const char *cmds[] = { "PRIVMSG", "NICK", NULL };

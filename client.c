@@ -270,8 +270,8 @@ static gboolean welcome_client(struct client *client)
 	client_send_response(client, RPL_MYINFO, 
 		 client->network->name, 
 		 ctrlproxy_version(), 
-		 client->network->state->info.supported_user_modes?client->network->state->info.supported_user_modes:ALLMODES, 
-		 client->network->state->info.supported_channel_modes?client->network->state->info.supported_channel_modes:ALLMODES,
+		 (client->network->state && client->network->state->info.supported_user_modes)?client->network->state->info.supported_user_modes:ALLMODES, 
+		 (client->network->state && client->network->state->info.supported_channel_modes)?client->network->state->info.supported_channel_modes:ALLMODES,
 		 NULL);
 
 	features = network_generate_feature_string(client->network);

@@ -35,14 +35,14 @@
 #include <netdb.h>
 
 /* globals */
-GMainLoop *main_loop;
+static GMainLoop *main_loop;
 FILE *debugfd = NULL;
 extern char my_hostname[];
 struct ctrlproxy_config *current_config = NULL;
 
 struct ctrlproxy_config *get_current_config(void) { return current_config; }
 
-void signal_crash(int sig) 
+static void signal_crash(int sig) 
 {
 #ifdef HAVE_BACKTRACE_SYMBOLS
 	void *backtrace_stack[BACKTRACE_STACK_SIZE];
@@ -93,7 +93,7 @@ static void clean_exit()
 	fini_log();
 }
 
-void signal_quit(int sig)
+static void signal_quit(int sig)
 {
 	static int state = 0;
 	log_global(NULL, "Received signal %d, quitting...", sig);
@@ -107,13 +107,13 @@ void signal_quit(int sig)
 	exit(0);
 }
 
-void signal_save(int sig)
+static void signal_save(int sig)
 {
 	log_global(NULL, "Received USR1 signal, saving configuration...");
 	save_configuration(current_config, NULL);
 }
 
-void signal_save_current(int sig)
+static void signal_save_current(int sig)
 {
 	log_global(NULL, "Received USR2 signal, saving current configuration...");
 }

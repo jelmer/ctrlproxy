@@ -3,7 +3,7 @@
 #include "ircdtorture.h"
 #include "line.h"
 
-char *malformed[] = {
+static const char *malformed[] = {
 	"PRIVMSG :foo :bar",
 	":bar :bar PRIVMSG foo",
 	"",
@@ -12,7 +12,7 @@ char *malformed[] = {
 	NULL
 };
 
-int parser_malformed(void)
+stratic int parser_malformed(void)
 {
 	struct line *l;
 	char *raw;
@@ -30,7 +30,7 @@ int parser_malformed(void)
 
 #define NUM_RUNS 200
 
-int parser_random(void)
+static int parser_random(void)
 {
 	struct line *l;
 	char *raw;
