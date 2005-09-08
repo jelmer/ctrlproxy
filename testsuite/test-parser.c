@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <malloc.h>
-#include "ircdtorture.h"
-#include "line.h"
+#include "torture.h"
+#include "../line.h"
 
 static const char *malformed[] = {
 	"PRIVMSG :foo :bar",
@@ -61,7 +61,7 @@ static int parser_random(void)
 	return 0;
 }
 
-void ircdtorture_init(void)
+void torture_init(void)
 {
 	register_test("PARSER-MALFORMED", parser_malformed);
 	register_test("PARSER-RANDOM", parser_random);

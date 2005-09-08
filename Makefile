@@ -3,7 +3,7 @@
 CFLAGS+=-DHAVE_CONFIG_H -DSHAREDIR=\"$(cdatadir)\" -DDTD_FILE=\"$(cdatadir)/ctrlproxyrc.dtd\"
 CFLAGS+=-ansi -Wall -DMODULESDIR=\"$(modulesdir)\" -DSTRICT_MEMORY_ALLOCS=
 
-SUBDIRS = mods scripts
+SUBDIRS = mods scripts testsuite rfctester
 
 .PHONY: all clean distclean install install-bin install-dirs install-doc install-data install-mods install-pkgconfig $(SUBDIRS)
 
@@ -68,6 +68,7 @@ clean:
 	rm -f *.$(OBJEXT) ctrlproxy$(EXEEXT) printstats *~
 	$(MAKE) -C mods clean
 	$(MAKE) -C testsuite clean
+	$(MAKE) -C rfctester clean
 
 dist: distclean
 	$(MAKE) -C doc dist
@@ -77,9 +78,13 @@ distclean: clean
 	rm -rf autom4te.cache/ config.log config.status
 	$(MAKE) -C mods distclean
 	$(MAKE) -C testsuite distclean
+	$(MAKE) -C rfctester distclean
 
 test: all
-	$(MAKE) -C testsuite torture
+	$(MAKE) -C testsuite test
+
+rfctest: all
+	$(MAKE) -C testsuite rfctest
 
 ctags:
 	ctags -R .

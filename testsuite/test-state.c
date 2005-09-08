@@ -18,7 +18,7 @@
 	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 */
 
-#include "ircdtorture.h"
+#include "torture.h"
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
@@ -37,7 +37,7 @@ int state_join(void)
 	return 0;
 }
 
-void ircdtorture_init(void)
+void torture_init(void)
 {
 	register_test("STATE-JOIN", state_join);
 }

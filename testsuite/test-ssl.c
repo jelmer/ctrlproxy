@@ -18,13 +18,13 @@
 	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 */
 
-#include "ircdtorture.h"
+#include "torture.h"
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
 
 int test;
 
-void ircdtorture_init(void)
+void torture_init(void)
 {
 }

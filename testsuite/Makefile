@@ -6,23 +6,27 @@ TEST_PORT := 6667
 
 .PHONY: all clean distclean install ctrlproxyrc.torture
 
-all: ircdtorture
+all: torture $(patsubst %.c,lib%.so,$(wildcard test-*.c))
 
-ircdtorture: ircdtorture.o ../line.o 
+torture: torture.o 
 	$(CC) $(LIBS) -o $@ $^ 
 
-$(patsubst %.c,%.so,$(wildcard test-*.c)): %.so: %.o
-test-cmp.so: test-cmp.o ../util.o
-test-state.so: test-state.o ../state.o ../util.o ../isupport.o
+$(patsubst %.c,lib%.so,$(wildcard test-*.c)): lib%.so: %.o
+libtest-cmp.so: test-cmp.o ../util.o
+libtest-state.so: test-state.o ../state.o ../util.o ../isupport.o ../line.o
+libtest-parser.so: test-parser.o ../line.o
 
-%.so: 
+lib%.so: 
 	$(CC) $(LIBS) $(CFLAGS) -shared -o $@ $^
 
 ctrlproxyrc.torture: ctrlproxyrc.torture.in
 	sed -e 's/@SERVER@/$(TEST_SERVER)/;s/@PORT@/$(TEST_PORT)/;' < $< > $@
 
-torture: ircdtorture $(patsubst %.c,%.so,$(wildcard test-*.c)) ctrlproxyrc.torture
-	./ircdtorture $(foreach I,$(filter test-%.so,$^),-m $(shell pwd)/$(I)) -- ../ctrlproxy -i TEST -r ctrlproxyrc.torture
+test: torture $(patsubst %.c,lib%.so,$(wildcard test-*.c)) 
+	./$< $(patsubst lib%.so,%,$(filter libtest-%.so,$^))
+
+rfctest: ../rfctester/ircdtorture $(patsubst %.c,%.so,$(wildcard ../rfctester/test-*.c)) ctrlproxyrc.torture
+	$< $(foreach I,$(filter test-%.so,$^),-m $(shell pwd)/../rfctester/$(I)) -- ../ctrlproxy -i TEST -r ctrlproxyrc.torture
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $<
@@ -30,6 +34,6 @@ torture: ircdtorture $(patsubst %.c,%.so,$(wildcard test-*.c)) ctrlproxyrc.tortu
 install: 
 
 clean:
-	rm -f *.o *.out *.tmp
+	rm -f *.o *.out *.tmp *.so
 
 distclean: clean
