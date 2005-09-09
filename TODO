@@ -21,3 +21,5 @@ next release (2.7.1 ?):
 - some sort of cascading filters, remove client, network and options from 
   line struct
 - more advanced repl backends, rules-based perhaps?
+- use more GLib functions (e.g. g_spawn() rather then fork(), 
+   g_swap_async_with_pipes() instead of piped_child(), etc)

@@ -33,8 +33,9 @@ static void reconnect(struct network *server, gboolean rm_source);
 static void server_send_login (struct network *s) 
 {
 	g_assert(s->connection.state == NETWORK_CONNECTION_STATE_CONNECTED);
+	s->connection.state = NETWORK_CONNECTION_STATE_LOGIN_SENT;
 
-	log_network(NULL, LOG_INFO, s, "Successfully connected");
+	log_network(NULL, LOG_TRACE, s, "Sending login details");
 
 	s->state = new_network_state(&s->info, s->config->nick, s->config->username, get_my_hostname());
 
@@ -46,8 +47,6 @@ static void server_send_login (struct network *s)
 	}
 	network_send_args(s, "NICK", s->config->nick, NULL);
 	network_send_args(s, "USER", s->config->username, get_my_hostname(), s->config->name, s->config->fullname, NULL);
-
-	s->connection.state = NETWORK_CONNECTION_STATE_LOGIN_SENT;
 }
 
 static gboolean process_from_server(struct network *n, struct line *l)
@@ -78,6 +77,7 @@ static gboolean process_from_server(struct network *n, struct line *l)
 		GList *gl;
 		n->connection.state = NETWORK_CONNECTION_STATE_MOTD_RECVD;
 
+		log_network(NULL, LOG_INFO, n, "Successfully logged in");
 		server_connected_hook_execute(n);
 
 		network_send_args(n, "USERHOST", n->state->me.nick, NULL);
@@ -104,7 +104,15 @@ static gboolean process_from_server(struct network *n, struct line *l)
 	return TRUE;
 }
 
-gboolean handle_server_receive (GIOChannel *c, GIOCondition cond, void *_server)
+static gboolean handle_server_connected (GIOChannel *c, GIOCondition cond, void *_server)
+{
+	struct network *server = (struct network *)_server;
+	server->connection.state = NETWORK_CONNECTION_STATE_CONNECTED;
+	server_send_login(server);
+	return FALSE;
+}
+
+static gboolean handle_server_receive (GIOChannel *c, GIOCondition cond, void *_server)
 {
 	struct network *server = (struct network *)_server;
 	struct line *l;
@@ -122,9 +130,6 @@ gboolean handle_server_receive (GIOChannel *c, GIOCondition cond, void *_server)
 		return FALSE;
 	}
 
-	if (server->connection.state == NETWORK_CONNECTION_STATE_CONNECTED) {
-		server_send_login(server);
-	}
 
 	if (cond & G_IO_IN) {
 		GError *err = NULL;
@@ -319,8 +324,6 @@ static gboolean connect_current_tcp_server(struct network *s)
 		return FALSE;
 	}
 
-	s->connection.state = NETWORK_CONNECTION_STATE_CONNECTED;
-
 	size = sizeof(struct sockaddr_in6);
 	g_free(s->connection.data.tcp.local_name);
 	s->connection.data.tcp.remote_name = g_malloc(size);
@@ -346,6 +349,7 @@ static gboolean connect_current_tcp_server(struct network *s)
 	s->connection.data.tcp.outgoing = ioc;
 	
 	s->connection.data.tcp.outgoing_id = g_io_add_watch(s->connection.data.tcp.outgoing, G_IO_IN | G_IO_HUP | G_IO_ERR, handle_server_receive, s);
+	s->connection.data.tcp.connect_id = g_io_add_watch(s->connection.data.tcp.outgoing, G_IO_OUT, handle_server_connected, s);
 
 	g_io_channel_unref(s->connection.data.tcp.outgoing);
 
@@ -407,6 +411,7 @@ static gboolean close_server(struct network *n)
 	switch (n->config->type) {
 	case NETWORK_TCP: 
 		g_source_remove(n->connection.data.tcp.outgoing_id); 
+		g_source_remove(n->connection.data.tcp.connect_id); 
 		break;
 	case NETWORK_PROGRAM: 
 		g_source_remove(n->connection.data.program.outgoing_id); 
@@ -491,7 +496,7 @@ static gboolean connect_program(struct network *s)
 
 	server_send_login(s);
 	
-	s->connection.data.program.outgoing_id = g_io_add_watch(s->connection.data.program.outgoing, G_IO_IN | G_IO_ERR, handle_server_receive, s);
+	s->connection.data.program.outgoing_id = g_io_add_watch(s->connection.data.program.outgoing, G_IO_IN | G_IO_ERR | G_IO_HUP, handle_server_receive, s);
 
 	g_io_channel_unref(s->connection.data.program.outgoing);
 
