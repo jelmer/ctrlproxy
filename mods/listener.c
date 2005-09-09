@@ -126,10 +126,11 @@ gboolean start_listener(struct listener *l)
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = PF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_flags = AI_PASSIVE;
 
 	error = getaddrinfo(l->address, l->port, &hints, &all_res);
 	if (error) {
-		log_global("listener", "Can't get address for %s:%s", l->address, l->port);
+		log_global("listener", "Can't get address for %s:%s", l->address?l->address:"", l->port);
 		return FALSE;
 	}
 
@@ -144,7 +145,7 @@ gboolean start_listener(struct listener *l)
 		setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
 	
 		if (bind(sock, res->ai_addr, res->ai_addrlen) < 0) {
-			log_global( "listener", "bind to port %d failed: %s", l->port, strerror(errno));
+			log_global( "listener", "bind to port %s failed: %s", l->port, strerror(errno));
 			freeaddrinfo(all_res);
 			return FALSE;
 		}
@@ -176,7 +177,7 @@ gboolean start_listener(struct listener *l)
 	l->incoming_id = g_io_add_watch(l->incoming, G_IO_IN, handle_new_client, l);
 	g_io_channel_unref(l->incoming);
 
-	log_network( "listener", l->network, "Listening on port %d", l->port);
+	log_network( "listener", l->network, "Listening on %s:%s", l->address?l->address:"", l->port);
 
 	l->active = TRUE;
 
@@ -185,7 +186,7 @@ gboolean start_listener(struct listener *l)
 
 gboolean stop_listener(struct listener *l)
 {
-	log_global ( "listener", "Stopping listener at port %d", l->port);
+	log_global ( "listener", "Stopping listener at %s:%s", l->address?l->address:"", l->port);
 	g_source_remove(l->incoming_id);
 	return TRUE;
 }
@@ -204,9 +205,6 @@ struct listener *new_listener(const char *address, const char *port)
 	struct listener *l = g_new0(struct listener, 1);
 	l->address = g_strdup(address);
 	l->port = g_strdup(port);
-
-	if (l->address == NULL)
-		l->address = g_strdup("0.0.0.0");
 
 	if (l->port == NULL) 
 		l->port = g_strdup("6667");

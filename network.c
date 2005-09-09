@@ -678,7 +678,7 @@ struct network *find_network(const char *name)
 	GList *gl;
 	for (gl = networks; gl; gl = gl->next) {
 		struct network *n = gl->data;
-		if (n->name && !strcmp(n->name, name)) return n;
+		if (n->name && !g_strcasecmp(n->name, name)) return n;
 	}
 
 	return NULL;
