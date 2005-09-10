@@ -1,6 +1,6 @@
 /*
 	ctrlproxy: A modular IRC proxy
-	(c) 2002-2004 Jelmer Vernooij <jelmer@nl.linux.org>
+	(c) 2002-2005 Jelmer Vernooij <jelmer@nl.linux.org>
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -117,7 +117,7 @@ gboolean handle_server_receive (GIOChannel *c, GIOCondition cond, void *_server)
 	}
 
 	if ((cond & G_IO_ERR)) {
-		log_network(NULL, server, "Error from server, scheduling reconnect...");
+		log_network(NULL, server, "Error from server, scheduling reconnect");
 		reconnect(server, FALSE);
 		return FALSE;
 	}
@@ -619,7 +619,7 @@ gboolean init_networks(void)
 	return TRUE;
 }
 
-gboolean autoconnect_networks()
+gboolean autoconnect_networks(gboolean separate_processes)
 {
 	GList *gl;
 	for (gl = networks; gl; gl = gl->next)
@@ -627,7 +627,7 @@ gboolean autoconnect_networks()
 		struct network *n = gl->data;
 		if (n->config->autoconnect) {
 #ifdef HAVE_FORK
-			if(get_current_config()->separate_processes) { 
+			if(separate_processes) { 
 				if(fork() == 0) {  
 					connect_network(n); 
 					break; 

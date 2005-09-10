@@ -235,13 +235,11 @@ int main(int argc, const char *argv[])
 		g_free(configuration_file);
 	}
 
-	current_config->separate_processes = seperate_processes;
-
 	init_networks();
 	load_networks(current_config);
 	init_plugins(current_config);
 	init_linestack(current_config);
-	autoconnect_networks();
+	autoconnect_networks(seperate_processes);
 
 #ifdef HAVE_POPT_H
 	poptFreeContext(pc);
