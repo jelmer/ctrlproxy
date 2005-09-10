@@ -282,31 +282,30 @@ static void handle_join(struct network_state *s, struct line *l)
 {
 	struct channel_state *c;
 	struct channel_nick *ni;
-	int cont = 1;
-	char *name = g_strdup(l->args[1]), *p, *n;
+	int i;
+	char **channels;
 
-	p = name;
-
-	while(cont) {
-		n = strchr(p, ',');
-
-		if(!n) cont = 0;
-		else *n = '\0';
-
-		/* Someone is joining a channel the user is on */
-		if(line_get_nick(l)) {
-			c = find_add_channel(s, p);
-			ni = find_add_channel_nick(c, line_get_nick(l));
-			network_nick_set_hostmask(ni->global_nick, l->origin);
-
-			/* The user is joining a channel */
-			if(!irccmp(&s->info, line_get_nick(l), s->me.nick)) {
-				log_network_state(s, LOG_INFO, "Joining channel %s", c->name);
-			}
-		}
-		p = n+1;
+	if (line_get_nick(l) == NULL) {
+		log_network_state(s, LOG_WARNING, "No hostmask for JOIN line received from server");
+		return;
 	}
-	g_free(name);
+	
+	channels = g_strsplit(l->args[1], ",", 0);
+
+	for (i = 0; channels[i]; i++) {
+		/* Someone is joining a channel the user is on */
+		c = find_add_channel(s, channels[i]);
+		ni = find_add_channel_nick(c, line_get_nick(l));
+		network_nick_set_hostmask(ni->global_nick, l->origin);
+
+		/* The user is joining a channel */
+		if(!irccmp(&s->info, line_get_nick(l), s->me.nick)) {
+			log_network_state(s, LOG_INFO, "Joining channel %s", c->name);
+		} else {
+			log_network_state(s, LOG_TRACE, "%s joins channel %s", line_get_nick(l), c->name);
+		}
+	}
+	g_strfreev(channels);
 }
 
 
@@ -314,21 +313,18 @@ static void handle_part(struct network_state *s, struct line *l)
 {
 	struct channel_state *c;
 	struct channel_nick *n;
-	int cont = 1;
-	char *name = g_strdup(l->args[1]), *p, *m;
+	char **channels;
+	int i;
 
-	p = name;
 	if(!line_get_nick(l))return;
 
-	for(cont = 1; cont; p = m + 1) {
-		m = strchr(p, ',');
-		if(!m) cont = 0;
-		else *m = '\0';
+	channels = g_strsplit(l->args[1], ",", 0);
 
-		c = find_channel(s, p);
+	for(i = 0; channels[i]; i++) {
+		c = find_channel(s, channels[i]);
 
 		if(!c){
-			log_network_state(s, LOG_WARNING, "Can't part or let other nick part %s(unknown channel)", p);
+			log_network_state(s, LOG_WARNING, "Can't part or let other nick part %s(unknown channel)", channels[i]);
 			continue;
 		}
 
@@ -336,65 +332,59 @@ static void handle_part(struct network_state *s, struct line *l)
 		if(n) {
 			free_channel_nick(n);
 		} else {
-			log_network_state(s, LOG_WARNING, "Can't remove nick %s from channel %s: nick not on channel", line_get_nick(l), p);
+			log_network_state(s, LOG_WARNING, "Can't remove nick %s from channel %s: nick not on channel", line_get_nick(l), channels[i]);
 		}
 
 		if(!irccmp(&s->info, line_get_nick(l), s->me.nick) && c) {
-			log_network_state(s, LOG_INFO, "Leaving %s", p);
+			log_network_state(s, LOG_INFO, "Leaving %s", channels[i]);
 			free_channel(c);
+		} else {
+			log_network_state(s, LOG_TRACE, "%s leaves %s", line_get_nick(l), channels[i]);
 		}
 	}
-	g_free(name);
+	g_strfreev(channels);
 }
 
 static void handle_kick(struct network_state *s, struct line *l) 
 {
 	struct channel_state *c;
 	struct channel_nick *n;
-	char *nicks = g_strdup(l->args[2]);
-	char *channels = g_strdup(l->args[1]);
-	char *curnick, *curchan, *nextchan, *nextnick;
-	char cont = 1;
+	char **channels, **nicks;
+	int i;
 
-	curchan = channels; curnick = nicks;
+	channels = g_strsplit(l->args[1], ",", 0);
+	nicks = g_strsplit(l->args[2], ",", 0);
 
-	while(cont) {
-		nextnick = strchr(curnick, ',');
-		if(nextnick){ *nextnick = '\0'; nextnick++; }
-
-		nextchan = strchr(curchan, ',');
-		if(nextchan){ *nextchan = '\0'; nextchan++; }
-
-		if((!nextnick && nextchan) || (nextnick && !nextchan)) {
-			log_network_state(s, LOG_WARNING, "KICK command has unequal number of channels and nicks");
-		}
-
-		if(nextnick && nextchan) cont = 1;
-		else cont = 0;
-
-		c = find_channel(s, curchan);
+	for (i = 0; channels[i] && nicks[i]; i++) {
+		c = find_channel(s, channels[i]);
 
 		if(!c){
-			log_network_state(s, LOG_WARNING, "Can't kick nick %s from %s", curnick, curchan);
-			curchan = nextchan; curnick = nextnick;
+			log_network_state(s, LOG_WARNING, "Can't kick nick %s from %s", nicks[i], channels[i]);
 			continue;
 		}
 
-		n = find_channel_nick(c, curnick);
+		n = find_channel_nick(c, nicks[i]);
 		if(!n) {
-			log_network_state(s, LOG_WARNING, "Can't kick nick %s from channel %s: nick not on channel", curnick, curchan);
-			curchan = nextchan; curnick = nextnick;
+			log_network_state(s, LOG_WARNING, "Can't kick nick %s from channel %s: nick not on channel", nicks[i], channels[i]);
 			continue;
 		}
 
 		free_channel_nick(n);
 
 		if(!irccmp(&s->info, line_get_nick(l), s->me.nick) && c) {
-			log_network_state(s, LOG_INFO, "Kicked off %s", c->name);
+			log_network_state(s, LOG_INFO, "Kicked off %s by %s", c->name, line_get_nick(l));
 			free_channel(c);
+		} else {
+			log_network_state(s, LOG_TRACE, "%s kicked off %s by %s", nicks[i], channels[i], line_get_nick(l));
 		}
-		curchan = nextchan; curnick = nextnick;
 	}
+
+	if(channels[i] || nicks[i]) {
+		log_network_state(s, LOG_WARNING, "KICK command has unequal number of channels and nicks");
+	}
+
+	g_strfreev(nicks);
+	g_strfreev(channels);
 }
 
 static void handle_topic(struct network_state *s, struct line *l) 
@@ -1108,7 +1098,7 @@ struct network_state *network_state_decode(char *blob, size_t len)
 	return ret;
 }
 
-char *network_state_encode(struct network_state *st, size_t *len)
+char *network_state_encode(const struct network_state *st, size_t *len)
 {
 	struct data_blob db;
 	db.data = NULL;

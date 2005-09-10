@@ -48,27 +48,27 @@ static void signal_crash(int sig)
 	size_t backtrace_size;
 	char **backtrace_strings;
 #endif
-	g_critical(("Received SIGSEGV!"));
+	log_global(NULL, LOG_ERROR, "Received SIGSEGV!");
 
 #ifdef HAVE_BACKTRACE_SYMBOLS
 	/* get the backtrace (stack frames) */
 	backtrace_size = backtrace(backtrace_stack,BACKTRACE_STACK_SIZE);
 	backtrace_strings = backtrace_symbols(backtrace_stack, backtrace_size);
 
-	g_critical ("BACKTRACE: %d stack frames:", backtrace_size);
+	log_global(NULL, LOG_ERROR, "BACKTRACE: %d stack frames:", backtrace_size);
 	
 	if (backtrace_strings) {
 		int i;
 
 		for (i = 0; i < backtrace_size; i++)
-			g_critical(" #%u %s", i, backtrace_strings[i]);
+			log_global(NULL, LOG_ERROR, " #%u %s", i, backtrace_strings[i]);
 
 		g_free(backtrace_strings);
 	}
 
 #endif
-	g_critical ("Please send a bug report to jelmer@vernstok.nl.");
-	g_critical ("A gdb backtrace is appreciated if you can reproduce this bug.");
+	log_global(NULL, LOG_ERROR, "Please send a bug report to jelmer@vernstok.nl.");
+	log_global(NULL, LOG_ERROR, "A gdb backtrace is appreciated if you can reproduce this bug.");
 	log_global(NULL, LOG_ERROR, "Ctrlproxy core has segfaulted, exiting...");
 	abort();
 }

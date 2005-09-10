@@ -35,41 +35,36 @@
 #define mkdir(s,t) _mkdir(s)
 #endif
 
+#define STATE_DUMP_INTERVAL 1000
+
 struct record_header {
 	guint32 offset;
 	time_t time;
 	guint32 length;
 };
 
+struct lf_network_data {
+	FILE *file;
+	long last_state_offset;
+	int lines_since_last_state;
+};
+
 static char *data_path = NULL;
 static GHashTable *networks = NULL;
 
-static FILE *get_fd(const struct network *n)
+static void free_lf_network_data(void *data)
 {
-	FILE *ch;
+	struct lf_network_data *nd = data;
 
-	ch = g_hash_table_lookup(networks, n);
-
-	if (!ch) {
-		char *path = g_strdup_printf("%s/%s", data_path, n->name);
-		ch = fopen(path, "w+");
-		if (!ch) {
-			log_network("linestack_file", LOG_ERROR, n, "Unable to open linestack file %s", path);
-			g_free(path);
-			return NULL;
-		}
-		g_free(path);
-		g_hash_table_insert(networks, n, ch);
-	}
-
-	return ch;
+	fclose(nd->file);
+	g_free(nd);
 }
 
 static gboolean file_init(void)
 {
 	data_path = ctrlproxy_path("linestack_file");
 	mkdir(data_path, 0700);
-	networks = g_hash_table_new_full(NULL, NULL, NULL, (GDestroyNotify)fclose);
+	networks = g_hash_table_new_full(NULL, NULL, NULL, free_lf_network_data);
 	return TRUE;
 }
 
@@ -80,46 +75,82 @@ static gboolean file_fini(void)
 	return TRUE;
 }
 
-static gboolean file_insert_state(FILE *ch, const struct network_state *state)
+static gboolean file_insert_state(struct lf_network_data *nd, const struct network *network)
 {
 	size_t length;
+	struct network_state *state = network->state;
 	char *raw = network_state_encode(state, &length);
 	struct record_header rh;
+
+	log_network("linestack_file", LOG_TRACE, network, "Inserting state");
 	
 	rh.time = time(NULL);
 	rh.length = length;
 	rh.offset = 0;
 
-	if (fwrite(&rh, sizeof(rh), 1, ch) != 1)
+	nd->last_state_offset = ftell(nd->file);
+	nd->lines_since_last_state = 0;
+
+	if (fwrite(&rh, sizeof(rh), 1, nd->file) != 1)
 		return FALSE;
 
-	fprintf(ch, "%s\n", raw);
+	if (fwrite(raw, length, 1, nd->file) != 1)
+		return FALSE;
 
 	g_free(raw);
 
 	return TRUE;
 }
 
+static struct lf_network_data *get_data(const struct network *n)
+{
+	struct lf_network_data *nd;
+
+	nd = g_hash_table_lookup(networks, n);
+
+	if (!nd) {
+		char *path = g_strdup_printf("%s/%s", data_path, n->name);
+		FILE *file;
+		file = fopen(path, "w+");
+		if (!file) {
+			log_network("linestack_file", LOG_ERROR, n, "Unable to open linestack file %s", path);
+			g_free(path);
+			return NULL;
+		}
+		nd = g_new0(struct lf_network_data, 1);
+		nd->file = file;
+		log_network("linestack_file", LOG_TRACE, n, "Creating new linestack file '%s'", path);
+		file_insert_state(nd, n);
+		g_free(path);
+		g_hash_table_insert(networks, n, nd);
+	}
+
+	return nd;
+}
+
 static gboolean file_insert_line(const struct network *n, const struct line *l)
 {
-	FILE *ch = get_fd(n);
+	struct lf_network_data *nd = get_data(n);
 	char *raw;
 	int ret;
 	struct record_header rh;
 	
-	if (!ch) return FALSE;
+	if (nd == NULL) 
+		return FALSE;
 
-	/* FIXME: decide whether file_insert_state should be called */
+	nd->lines_since_last_state++;
+	if (nd->lines_since_last_state == STATE_DUMP_INTERVAL) 
+		file_insert_state(nd, n);
 
 	rh.time = time(NULL);
-	rh.offset = 0; /* FIXME: Get offset */
+	rh.offset = nd->last_state_offset;
 	raw = irc_line_string_nl(l);
 	rh.length = strlen(raw);
 	
-	if (fwrite(&rh, sizeof(rh), 1, ch) != 1)
+	if (fwrite(&rh, sizeof(rh), 1, nd->file) != 1)
 		return FALSE;
 
-	ret = fputs(raw, ch);
+	ret = fputs(raw, nd->file);
 	g_free(raw);
 
 	return (ret != EOF);
@@ -128,11 +159,11 @@ static gboolean file_insert_line(const struct network *n, const struct line *l)
 static linestack_marker *file_get_marker(struct network *n)
 {
 	long *pos;
-	FILE *ch = get_fd(n);
-	if (!ch) return NULL;
+	struct lf_network_data *nd = get_data(n);
+	if (!nd) return NULL;
 
 	pos = g_new0(long, 1);
-	*pos = ftell(ch);
+	*pos = ftell(nd->file);
 
 	return pos;
 }
@@ -141,28 +172,43 @@ static 	struct network_state * file_get_state (
 		struct network *n, 
 		linestack_marker *m)
 {
-	FILE *ch = get_fd(n);
+	struct lf_network_data *nd = get_data(n);
 	struct record_header rh;
 	struct network_state *ret;
 	char *raw;
-	long from_offset, to_offset = ftell(ch);
-		
-	/* Read offset at marker position */
-	if (fread(&rh, sizeof(rh), 1, ch) != 1)
+	long from_offset, *to_offset = m;
+	long save_offset = ftell(nd->file);
+
+	if (!nd) 
 		return NULL;
 
-	from_offset = rh.offset;
+	/* Flush channel before reading otherwise data corruption may occur */
+	fflush(nd->file);
+
+	if (to_offset) {
+		fseek(nd->file, *to_offset, SEEK_SET);
+		
+		/* Read offset at marker position */
+		if (fread(&rh, sizeof(rh), 1, nd->file) != 1)
+			return NULL;
+
+		from_offset = rh.offset;
+	} else {
+		from_offset = nd->last_state_offset;
+	}
+
+	log_network("linestack_file", LOG_TRACE, n, "Reading state at 0x%04x (for 0x%04x)", from_offset, to_offset?*to_offset:-1);
 
 	/* fseek to state dump */
-	fseek(ch, SEEK_CUR, -1*from_offset);
+	fseek(nd->file, from_offset, SEEK_SET);
 	
-	if (fread(&rh, sizeof(rh), 1, ch) != 1)
+	if (fread(&rh, sizeof(rh), 1, nd->file) != 1)
 		return NULL;
 
 	g_assert(rh.offset == 0);
 	raw = g_malloc(rh.length+1);
 
-	if (fgets(raw, rh.length, ch) == NULL)
+	if (fread(raw, rh.length, 1, nd->file) != 1)
 		return FALSE;
 
 	raw[rh.length] = '\0';
@@ -171,7 +217,10 @@ static 	struct network_state * file_get_state (
 
 	g_free(raw);
 
-	linestack_replay(n, &from_offset, &to_offset, ret);
+	linestack_replay(n, &from_offset, to_offset, ret);
+
+	/* Go back to original position */
+	fseek(nd->file, save_offset, SEEK_SET);
 	
 	return ret;
 }
@@ -182,36 +231,40 @@ static gboolean file_traverse(struct network *n,
 		linestack_traverse_fn tf, 
 		void *userdata)
 {
-	long *start_offset, *end_offset;
-	FILE *ch = get_fd(n);
-	if (!ch) return FALSE;
+	long *start_offset, *end_offset, save_offset;
+	struct lf_network_data *nd = get_data(n);
+
+	if (nd == NULL) 
+		return FALSE;
+
+	save_offset = ftell(nd->file);
 
 	/* Flush channel before reading otherwise data corruption may occur */
-	fflush(ch);
+	fflush(nd->file);
 	
 	start_offset = mf;
 	end_offset = mt;
 
 	/* Go back to begin of file */
-	fseek(ch, start_offset?*start_offset:0, SEEK_SET);
+	fseek(nd->file, start_offset?*start_offset:0, SEEK_SET);
 	
-	while(!feof(ch) && (!end_offset || ftell(ch) < *end_offset)) 
+	while(!feof(nd->file) && (!end_offset || ftell(nd->file) < *end_offset)) 
 	{
 		struct record_header rh;
 		char *raw;
 		struct line *l;
 		
-		if (fread(&rh, sizeof(rh), 1, ch) != 1)
+		if (fread(&rh, sizeof(rh), 1, nd->file) != 1)
 			return FALSE;
 
-		if (rh.offset == 0) {
-			fseek(ch, rh.length, SEEK_CUR);
+		if (rh.offset == 0) { /* Skip state records */
+			fseek(nd->file, rh.length, SEEK_CUR);
 			continue;
 		}
 
 		raw = g_malloc(rh.length+1);
 		
-		if (fgets(raw, rh.length, ch) == NULL)
+		if (fgets(raw, rh.length, nd->file) == NULL)
 			return FALSE;
 
 		raw[rh.length] = '\0';
@@ -220,6 +273,8 @@ static gboolean file_traverse(struct network *n,
 		tf(l, rh.time, userdata);
 		free_line(l);
 	}
+
+	fseek(nd->file, save_offset, SEEK_SET);
 
 	return TRUE;
 }

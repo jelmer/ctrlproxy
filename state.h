@@ -110,7 +110,7 @@ G_MODULE_EXPORT struct network_nick *line_get_network_nick(struct line *l);
 
 /* Push / pull */
 G_MODULE_EXPORT struct network_state *network_state_decode(char *, size_t);
-G_MODULE_EXPORT char *network_state_encode(struct network_state *st, size_t *);
+G_MODULE_EXPORT char *network_state_encode(const struct network_state *st, size_t *);
 G_MODULE_EXPORT struct network_state *network_state_dup(struct network_state *st);
 
 #endif /* __CTRLPROXY_STATE_H__ */
