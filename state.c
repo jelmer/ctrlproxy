@@ -223,6 +223,9 @@ struct network_nick *find_network_nick(struct network_state *n, const char *name
 
 	g_assert(name);
 
+	if (!irccmp(n->info, n->me.nick, name))
+		return &n->me;
+
 	for (gl = n->nicks; gl; gl = gl->next) {
 		struct network_nick *ndd = (struct network_nick*)gl->data;
 		if(!irccmp(n->info, ndd->nick, name)) {
@@ -746,14 +749,12 @@ struct network_state *new_network_state(struct network_info *info, const char *n
 	state->me.query = 1;
 	network_nick_set_data(&state->me, nick, username, hostname);
 
-	state->nicks = g_list_append(state->nicks, &state->me);
-
 	return state;
 }
 
 void free_network_nick(struct network_state *st, struct network_nick *nn)
 {
-	g_assert(&st->me != nn);
+	g_assert(nn != &st->me);
 	g_assert(nn);
 
 	/* No recursion please... */
@@ -778,8 +779,6 @@ void free_network_state(struct network_state *state)
 	{
 		free_channel((struct channel_state *)state->channels->data);
 	}
-
-	state->nicks = g_list_remove(state->nicks, &state->me);
 
 	g_free(state->me.nick);
 	g_free(state->me.username);
@@ -858,9 +857,11 @@ static gboolean marshall_string (struct network_state *nst, enum marshall_mode m
 	if (length == -1) {
 		*d = NULL;
 		return TRUE;
+	} else if (m == MARSHALL_PULL) {
+		*d = g_new0(char, length+1);
 	}
 	
-	return marshall_bytes(nst, m, t, (void **)d, length);
+	return marshall_bytes(nst, m, t, *d, length);
 }
 
 
@@ -1047,14 +1048,6 @@ static gboolean marshall_network_state (struct network_state *nst, enum marshall
 	ret &= marshall_GList(n, m, t, &n->nicks, (marshall_fn_t)marshall_network_nick_p);
 	ret &= marshall_GList(n, m, t, &n->channels, (marshall_fn_t)marshall_channel_state);
 	ret &= marshall_network_nick(n, m, t, &n->me);
-	if (m == MARSHALL_PULL) {
-		struct network_nick *nn;
-		g_assert(n->me.nick);
-		nn = find_network_nick(n, n->me.nick);
-		g_assert(nn);
-		free_network_nick(n, nn);
-		n->nicks = g_list_append(n->nicks, &n->me);
-	}
 
 	return ret;
 }

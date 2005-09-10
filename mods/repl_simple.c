@@ -49,8 +49,8 @@ static gboolean simple_replicate(struct client *c, void *userdata)
 	m = g_hash_table_lookup(simple_backlog, c->network);
 	ns = linestack_get_state(c->network, m);
 	client_send_state(c, ns);
-	free_network_state(ns);
 	change_nick(c, ns->me.nick);
+	free_network_state(ns);
 	linestack_send(c->network, m, NULL, c);
 	return TRUE;
 }
