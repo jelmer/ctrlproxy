@@ -30,6 +30,7 @@ char *list_make_string(GList *list)
 	size_t len = 20;
 	char *ret;
 	GList *gl;
+
 	/* First, calculate the length */
 	for(gl = list; gl; gl = gl->next) len+=strlen(gl->data)+1;
 
@@ -39,7 +40,7 @@ char *list_make_string(GList *list)
 	for(gl = list; gl; gl = gl->next) 
 	{ 
 		strncat(ret, gl->data, len);
-		strncat(ret, " ", len); 
+		if (gl->next) strncat(ret, " ", len); 
 	}
 
 	return ret;

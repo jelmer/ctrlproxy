@@ -1,6 +1,14 @@
 -include ../Makefile.settings
+
+GCOV_CFLAGS = -ftest-coverage -fprofile-arcs
+GCOV_LIBS = -lgcov
+
+ifeq ($(WITH_GCOV),1)
+LIBS += $(GCOV_LIBS) $(GCOV_CFLAGS)
+endif
+
 CFLAGS += -I.. -DHAVE_CONFIG_H
-CFLAGS+=-ansi -Wall -DMODULESDIR=\"$(modulesdir)\"
+CFLAGS +=-ansi -Wall -DMODULESDIR=\"$(modulesdir)\"
 TEST_SERVER := localhost
 TEST_PORT := 6667
 

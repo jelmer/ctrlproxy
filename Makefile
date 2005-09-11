@@ -1,5 +1,13 @@
 -include Makefile.settings
 
+GCOV = gcov
+
+ifeq ($(WITH_GCOV),1)
+GCOV_CFLAGS = -ftest-coverage -fprofile-arcs
+GCOV_LIBS = -lgcov
+LIBS += $(GCOV_LIBS) $(GCOV_CFLAGS)
+endif
+
 CFLAGS+=-DHAVE_CONFIG_H -DSHAREDIR=\"$(cdatadir)\" -DDTD_FILE=\"$(cdatadir)/ctrlproxyrc.dtd\"
 CFLAGS+=-ansi -Wall -DMODULESDIR=\"$(modulesdir)\" -DSTRICT_MEMORY_ALLOCS=
 
@@ -19,7 +27,7 @@ ctrlproxy$(EXEEXT): network.o posix.o client.o cache.o line.o main.o state.o uti
 	$(CC) $(LIBS) -rdynamic -o $@ $^
 
 %.$(OBJEXT): %.c
-	$(CC) $(CFLAGS) -c $<
+	$(CC) $(CFLAGS) $(GCOV_CFLAGS) -c $<
 
 configure: autogen.sh configure.in acinclude.m4 $(wildcard mods/*/*.m4)
 	./$<
@@ -64,8 +72,12 @@ install-scripts:
 install-pkgconfig:
 	$(INSTALL) ctrlproxy.pc $(DESTDIR)$(libdir)/pkgconfig
 
+gcov:
+	$(GCOV) -po . *.c 
+
 clean: 
 	rm -f *.$(OBJEXT) ctrlproxy$(EXEEXT) printstats *~
+	rm -f *.gcov *.gcno *.gcda
 	$(MAKE) -C mods clean
 	$(MAKE) -C testsuite clean
 	$(MAKE) -C rfctester clean
