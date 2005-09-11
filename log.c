@@ -31,15 +31,34 @@ static const char *get_date(void)
 	return ret;
 }
 
+gboolean log_timestamp = TRUE;
 enum log_level current_log_level = LOG_INFO;
 FILE *flog;
 
 static void log_entry(const char *module, enum log_level level, const struct network *n, const struct client *c, const char *data)
 {
+	
 	if (level > current_log_level)
 		return;
-	fprintf(flog, "[%s] [%s] %s%s%s%s%s%s\n", get_date(), 
-			module?module:"core", data, n?" (":"", n?n->name:"", c?"/":"", c?c->description:"", n?")":"");
+	
+	if (log_timestamp)
+		fprintf(flog, "[%s] ", get_date());
+	
+	if (module) 
+		fprintf(flog, "[%s] ", module);
+
+	fprintf(flog, "%s", data);
+
+	if (n) {
+		fprintf(flog, " (%s", n->name);
+
+		if (c)
+			fprintf(flog, "/%s", c->description);
+
+		fprintf(flog, ")");
+	}
+
+	fprintf(flog, "\n");
 	fflush(flog);
 }
 

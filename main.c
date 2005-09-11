@@ -118,6 +118,7 @@ int main(int argc, const char *argv[])
 	char *logfile = NULL, *rcfile = NULL;
 	char *configuration_file;
 	extern enum log_level current_log_level;
+	extern gboolean log_timestamp;
 	const char *inetd_client = NULL;
 #ifdef HAVE_POPT_H
 	int c;
@@ -126,6 +127,7 @@ int main(int argc, const char *argv[])
 		POPT_AUTOHELP
 		{"inetd-client", 'i', POPT_ARG_STRING, &inetd_client, 0, "Communicate with client to NETWORK via stdio", "NETWORK" },
 		{"debug-level", 'd', POPT_ARG_INT, &current_log_level, 'd', ("Debug level [0-5]"), "LEVEL" },
+		{"no-timestamp", 'n', POPT_ARG_VAL, &log_timestamp, FALSE, "No timestamps in logs" },
 		{"daemon", 'D', POPT_ARG_NONE, &isdaemon, 0, ("Run in the background (as a daemon)")},
 		{"log", 'l', POPT_ARG_STRING, &logfile, 0, ("Log messages to specified file"), ("FILE")},
 		{"rc-file", 'r', POPT_ARG_STRING, &rcfile, 0, ("Use configuration file from specified location"), ("FILE")},
