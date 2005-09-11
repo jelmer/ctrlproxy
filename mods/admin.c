@@ -63,7 +63,7 @@ void admin_out(const struct client *c, const char *fmt, ...)
 	} else {
 		char *nick = c->nick;
 		if (c->network->state) nick = c->network->state->me.nick;
-		irc_send_args(c->incoming, hostmask, "NOTICE", nick, msg, NULL);
+		client_send_args_ex(c, hostmask, "NOTICE", nick, msg, NULL);
 	}
 	g_free(hostmask);
 

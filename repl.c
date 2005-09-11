@@ -22,12 +22,14 @@
 
 static char *mode2string(char modes[255])
 {
-	static char ret[255];
+	static char ret[256];
 	unsigned char i;
-	int pos = 0;
+	int pos = 1;
+	ret[0] = '+';
 	for(i = 0; i < 255; i++) {
 		if(modes[i]) { ret[pos] = (char)i; pos++; }
 	}
+	ret[pos] = '\0';
 	return ret;
 }
 
@@ -37,7 +39,7 @@ static void gen_replication_channel(struct client *c, struct channel_state *ch)
 {
 	struct channel_nick *n;
 	GList *nl;
-	irc_sendf(c->incoming, ":%s JOIN %s\r\n", c->network->state->me.hostmask, ch->name);
+	client_send_args_ex(c, c->network->state->me.hostmask, "JOIN", ch->name, NULL);
 
 	if(ch->topic) {
 		client_send_response(c, RPL_TOPIC, ch->name, ch->topic, NULL);
@@ -71,5 +73,5 @@ void client_send_state(struct client *c, struct network_state *state)
 	}
 
 	if(strlen(mode2string(state->me.modes)))
-		irc_sendf(c->incoming, ":%s MODE %s +%s\r\n", c->network->state->me.hostmask, state->me.nick, mode2string(state->me.modes));
+		client_send_args_ex(c, c->network->state->me.hostmask, "MODE", state->me.nick, mode2string(state->me.modes), NULL);
 }

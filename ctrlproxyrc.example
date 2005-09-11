@@ -40,7 +40,7 @@
 
 		<!-- Automatically set AWAY after a certain period of time -->
 		<plugin autoload="1" file="auto-away">
-			<message time="300">"I'm currently away, sorry!</message>
+			<message time="300">I'm currently away, sorry!</message>
 		</plugin>
 
 		<!-- Use /usr/share/ctrlproxy/motd as motd -->

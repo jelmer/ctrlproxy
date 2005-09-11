@@ -26,7 +26,7 @@ static GHashTable *simple_initialnick = NULL;
 static void change_nick(struct client *c, char *newnick) 
 {
 	struct line *l = irc_parse_line_args(c->network->state->me.hostmask, "NICK", newnick, NULL);
-	irc_send_line(c->incoming, l);
+	client_send_line(c, l);
 	free_line(l);
 }
 

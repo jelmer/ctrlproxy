@@ -43,13 +43,13 @@ struct line *irc_parse_linef( char *fmt, ... ) {
 	return l;
 }
 
-struct line *virc_parse_line( const char *origin, va_list ap)
+struct line *virc_parse_line( const char *hostmask, va_list ap)
 {
 	char *arg;
 	struct line *l;
 	l = g_new0(struct line, 1);
 	l->argc = 0;
-	if(origin)l->origin = g_strdup(origin);
+	if(hostmask)l->origin = g_strdup(hostmask);
 	else l->origin = NULL;
 	
 	l->args = g_new(char *, MAX_LINE_ARGS+2);

@@ -147,6 +147,25 @@ gboolean client_send_response(struct client *c, int response, ...)
 	return ret;
 }
 
+gboolean client_send_args_ex(struct client *c, const char *hm, ...)
+{
+	struct line *l;
+	gboolean ret;
+	va_list ap;
+
+	if(!c) return FALSE;
+	
+	va_start(ap, hm);
+	l = virc_parse_line(hm, ap);
+	va_end(ap);
+
+	ret = client_send_line(c, l);
+
+	free_line(l); l = NULL;
+
+	return ret;
+}
+
 gboolean client_send_args(struct client *c, ...)
 {
 	struct line *l;
@@ -176,7 +195,7 @@ void disconnect_client(struct client *c, const char *reason)
 {
 	g_assert(c->incoming);
 
-	irc_send_args(c->incoming, "ERROR", reason, NULL);
+	client_send_args_ex(c, NULL, "ERROR", reason, NULL);
 
 	g_source_remove(c->incoming_id);
 	c->incoming = NULL;
@@ -266,9 +285,9 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition cond, void *_c
 
 static gboolean welcome_client(struct client *client)
 {
-	char *features;
+	char *features, *tmp;
 	client_send_response(client, RPL_WELCOME, "Welcome to the ctrlproxy", NULL);
-	irc_sendf(client->incoming, ":%s 002 %s :Host %s is running ctrlproxy\r\n", client->network->name, client->nick, get_my_hostname());
+	client_send_response(client, RPL_YOURHOST, tmp = g_strdup_printf("Host %s is running ctrlproxy", get_my_hostname()), NULL); g_free(tmp);
 	client_send_response(client, RPL_CREATED, "Ctrlproxy (c) 2002-2005 Jelmer Vernooij <jelmer@vernstok.nl>", NULL);
 	client_send_response(client, RPL_MYINFO, 
 		 client->network->name, 
@@ -287,7 +306,12 @@ static gboolean welcome_client(struct client *client)
 
 	if (g_strcasecmp(client->nick, client->network->state->me.nick)) {
 		/* Tell the client our his/her real nick */
-		irc_sendf(client->incoming, ":%s!~%s@%s NICK %s", client->nick, client->username, client->hostname, client->network->state->me.nick);
+		char *tmp = g_strdup_printf("%s!~%s@%s", 
+									client->nick, 
+									client->username, 
+									client->hostname);
+		client_send_args_ex(client, tmp, "NICK", client->network->state->me.nick, NULL); 
+		g_free(tmp);
 
 		/* Try to get the nick the client specified */
 		if (!client->network->config->ignore_first_nick) {
@@ -408,7 +432,7 @@ static gboolean client_ping(gpointer user_data) {
 	struct client *client = user_data;
 
 	client->last_ping = time(NULL);
-	irc_send_args(client->incoming, "PING", client->network->name, NULL);
+	client_send_args_ex(client, NULL, "PING", client->network->name, NULL);
 
 	return TRUE;
 }
