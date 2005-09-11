@@ -35,6 +35,8 @@
 #include <sys/socket.h>
 #endif
 
+#include <netdb.h>
+
 #undef G_LOG_DOMAIN
 #define G_LOG_DOMAIN "listener"
 
@@ -115,27 +117,47 @@ static GList *listeners = NULL;
 
 gboolean start_listener(struct listener *l)
 {
-	int sock;
+	int sock = -1;
 	const int on = 1;
-	struct sockaddr_in addr;
+	struct addrinfo *res, *all_res;
+	int error;
+	struct addrinfo hints;
 
-	sock = socket(PF_INET, SOCK_STREAM, 0);
-	if (sock < 0) {
-		log_global( "listener", "error creating socket: %s", strerror(errno));
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = PF_UNSPEC;
+	hints.ai_socktype = SOCK_STREAM;
+
+	error = getaddrinfo(l->address, l->port, &hints, &all_res);
+	if (error) {
+		log_global("listener", "Can't get address for %s:%s", l->address, l->port);
 		return FALSE;
 	}
 
-	setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
+	for (res = all_res; res; res = res->ai_next) {
+		sock = socket(PF_INET, SOCK_STREAM, 0);
+		if (sock < 0) {
+			log_global( "listener", "error creating socket: %s", strerror(errno));
+			freeaddrinfo(all_res);
+			return FALSE;
+		}
 
-	addr.sin_family = AF_INET;
-	addr.sin_port = htons(l->port);
-	addr.sin_addr.s_addr = htonl(INADDR_ANY);
+		setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
+	
+		if (bind(sock, res->ai_addr, res->ai_addrlen) < 0) {
+			log_global( "listener", "bind to port %d failed: %s", l->port, strerror(errno));
+			freeaddrinfo(all_res);
+			return FALSE;
+		}
+	}
 
-	if (bind (sock, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
-		log_global( "listener", "bind to port %d failed: %s", l->port, strerror(errno));
+	if (sock == -1) {
+		log_global( "listener", "Unable to connect");
+		freeaddrinfo(all_res);
 		return FALSE;
 	}
 
+	freeaddrinfo(all_res);
+	
 	if (listen(sock, 5) < 0) {
 		log_global( "listener", "error listening on socket: %s", strerror(errno));
 		return FALSE;
@@ -171,14 +193,23 @@ gboolean stop_listener(struct listener *l)
 void free_listener(struct listener *l)
 {
 	g_free(l->password);
+	g_free(l->port);
+	g_free(l->address);
 	listeners = g_list_remove(listeners, l);
 	g_free(l);
 }
 
-struct listener *new_listener(guint16 port)
+struct listener *new_listener(const char *address, const char *port)
 {
 	struct listener *l = g_new0(struct listener, 1);
-	l->port = port;
+	l->address = g_strdup(address);
+	l->port = g_strdup(port);
+
+	if (l->address == NULL)
+		l->address = g_strdup("0.0.0.0");
+
+	if (l->port == NULL) 
+		l->port = g_strdup("6667");
 
 	listeners = g_list_append(listeners, l);
 
@@ -188,14 +219,15 @@ struct listener *new_listener(guint16 port)
 static gboolean save_config(struct plugin *p, xmlNodePtr conf)
 {
 	GList *gl;
-	char *tmp;
 	
 	for (gl = listeners; gl; gl = gl->next) {
 		struct listener *l = gl->data;
 		xmlNodePtr n = xmlNewNode(NULL, "listen");
 	
-		xmlSetProp(n, "port", tmp = g_strdup_printf("%d", l->port));
-		g_free(tmp);
+		if (l->address)
+			xmlSetProp(n, "address", l->address);
+
+		xmlSetProp(n, "port", l->port);
 
 		if (l->password) 
 			xmlSetProp(n, "password", l->password);
@@ -219,12 +251,18 @@ static gboolean load_config(struct plugin *p, xmlNodePtr conf)
 	for (cur = conf->children; cur; cur = cur->next)
 	{
 		struct listener *l;
-		char *tmp;
+		char *port, *address, *tmp;
+		
 		if (cur->type != XML_ELEMENT_NODE) continue;
 
-		tmp = xmlGetProp(cur, "port");
-		l = new_listener(atoi(tmp));
-		xmlFree(tmp);
+		port = xmlGetProp(cur, "port");
+
+		address = xmlGetProp(cur, "address");
+
+		l = new_listener(address, port);
+
+		xmlFree(address);
+		xmlFree(port);
 
 		l->password = xmlGetProp(cur, "password");
 		if (xmlHasProp(cur, "ssl")) 

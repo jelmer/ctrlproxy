@@ -78,5 +78,8 @@ distclean: clean
 	$(MAKE) -C mods distclean
 	$(MAKE) -C testsuite distclean
 
+test: all
+	$(MAKE) -C testsuite torture
+
 ctags:
-	ctags `find -name "*.c"` `find -name "*.h"`
+	ctags -R .

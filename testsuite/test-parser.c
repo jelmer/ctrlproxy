@@ -12,7 +12,7 @@ static const char *malformed[] = {
 	NULL
 };
 
-stratic int parser_malformed(void)
+static int parser_malformed(void)
 {
 	struct line *l;
 	char *raw;

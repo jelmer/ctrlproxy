@@ -82,11 +82,12 @@ static gboolean file_fini(void)
 
 static gboolean file_insert_state(FILE *ch, const struct network_state *state)
 {
-	char *raw = network_state_encode(state);
+	size_t length;
+	char *raw = network_state_encode(state, &length);
 	struct record_header rh;
 	
 	rh.time = time(NULL);
-	rh.length = strlen(raw);
+	rh.length = length;
 	rh.offset = 0;
 
 	if (fwrite(&rh, sizeof(rh), 1, ch) != 1)
@@ -166,7 +167,7 @@ static 	struct network_state * file_get_state (
 
 	raw[rh.length] = '\0';
 
-	ret = network_state_decode(raw);
+	ret = network_state_decode(raw, rh.length);
 
 	g_free(raw);
 

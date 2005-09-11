@@ -10,15 +10,16 @@
 struct listener {
 	int active:1;
 	int ssl:1;
-	guint16 port;
 	GIOChannel *incoming;
 	gint incoming_id;
 	GList *pending;
 	char *password;
+	char *address;
+	char *port;
 	struct network *network;
 };
 
-G_MODULE_EXPORT struct listener *new_listener(guint16 port);
+G_MODULE_EXPORT struct listener *new_listener(const char *addr, const char *port);
 G_MODULE_EXPORT gboolean start_listener(struct listener *);
 G_MODULE_EXPORT gboolean stop_listener(struct listener *);
 

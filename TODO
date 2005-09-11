@@ -1,16 +1,16 @@
 2.7 showstoppers:
-- add bind support back into mods/listener.c and network.c
-- update documentation
-- test and fix SSL support
 - handle some currently unhandled responses (especially wrt JOIN's)
  - Special handler for join stuff
 - support storing state information
- - support for pack/unpack state
  - support for cloning state
  - store state data every X lines
  - to recover state at a certain point: 
   - scroll back until latest state cache
   - replay lines since then.
+- fix testsuite
+- test and fix SSL support
+- update documentation
+
 - fix SWIG build
 - finish python module hooks:
 	typedef gboolean (*filter_function) (struct line *);

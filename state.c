@@ -779,3 +779,309 @@ void free_network_state(struct network_state *state)
 	g_hash_table_destroy(state->info.features);
 	state->info.features = NULL;
 }
+
+/*
+ * Marshall/unmarshall functions
+ */
+
+enum marshall_mode { MARSHALL_PULL = 0, MARSHALL_PUSH = 1 };
+
+struct data_blob {
+	char *data;
+	size_t offset;
+	size_t length;
+};
+
+typedef gboolean (*marshall_fn_t) (struct network_state *, enum marshall_mode, struct data_blob *db, void **data);
+
+static void blob_increase_size (struct data_blob *db, size_t size)
+{
+	if (db->offset + size > db->length) {
+		db->length += 1000;
+		db->data = g_realloc(db->data, db->length);
+	}
+}
+
+static gboolean marshall_bytes (struct network_state *nst, enum marshall_mode m, struct data_blob *t, void **d, size_t length)
+{
+	if (m == MARSHALL_PULL) {
+		if (t->offset + sizeof(size_t) > t->length)
+			return FALSE;
+
+		memcpy(&length, t->data+t->offset, sizeof(size_t));
+		t->offset += sizeof(size_t);
+
+		*d = g_malloc(length);
+
+		memcpy(*d, t->data+t->offset, length);
+
+		t->offset += length;
+	} else {
+		blob_increase_size(t, sizeof(size_t) + length);
+
+		memcpy(t->data+t->offset, &length, sizeof(size_t));
+		t->offset += sizeof(size_t);
+
+		memcpy(t->data+t->offset, *d, length);
+
+		t->offset += length;
+	}
+
+	return TRUE;
+}
+
+static gboolean marshall_string (struct network_state *nst, enum marshall_mode m, struct data_blob *t, char **d)
+{
+	if (*d == NULL)
+		return TRUE;
+
+	if (m == MARSHALL_PULL)
+		return marshall_bytes(nst, m, t, (void **)d, -1);
+	else
+		return marshall_bytes(nst, m, t, (void **)d, strlen(*d)+1);
+}
+
+static gboolean marshall_network_nick (struct network_state *nst, enum marshall_mode m, struct data_blob *t, struct network_nick **n)
+{
+	gboolean ret = marshall_bytes(nst, m, t, (void **)n, sizeof(struct network_nick));
+	ret &= marshall_string(nst, m, t, &(*n)->nick);
+	ret &= marshall_string(nst, m, t, &(*n)->fullname);
+	ret &= marshall_string(nst, m, t, &(*n)->username);
+	ret &= marshall_string(nst, m, t, &(*n)->hostname);
+	ret &= marshall_string(nst, m, t, &(*n)->hostmask);
+	if (m == MARSHALL_PULL)
+		(*n)->channel_nicks = NULL;
+	return ret;
+}
+
+struct ht_traverse_data 
+{
+	marshall_fn_t key_fn;
+	marshall_fn_t val_fn;
+	struct data_blob *data;
+	struct network_state *nst;
+};
+
+static void marshall_GHashTable_helper (gpointer key, gpointer value, gpointer user_data)
+{
+	struct ht_traverse_data *td = user_data;
+	td->key_fn(td->nst, MARSHALL_PUSH, td->data, &key);
+	td->val_fn(td->nst, MARSHALL_PUSH, td->data, &value);
+}
+
+static gboolean marshall_GHashTable (struct network_state *nst, enum marshall_mode m, struct data_blob *t, GHashTable **gh, marshall_fn_t key_fn, marshall_fn_t val_fn)
+{
+	if (m == MARSHALL_PULL) {
+		uint32_t count;
+		int i;
+
+		if (t->offset + sizeof(size_t) > t->length)
+			return FALSE;
+
+		memcpy(&count, t->data+t->offset, sizeof(size_t));
+		
+		t->offset += sizeof(size_t);
+
+		*gh = NULL;
+
+		for (i = 0; i < count; i++) {
+			void *k, *v;
+			if (!key_fn(nst, m, t, &k))
+				return FALSE;
+			if (!val_fn(nst, m, t, &v))
+				return FALSE;
+			g_hash_table_insert(*gh, k, v);
+		}
+	} else {
+		uint32_t count = g_hash_table_size(*gh);
+		struct ht_traverse_data td;
+		blob_increase_size(t, sizeof(size_t));
+
+		memcpy(t->data+t->offset, &count, sizeof(size_t));
+
+		t->offset += sizeof(size_t);
+
+		td.key_fn = key_fn;
+		td.val_fn = val_fn;
+		td.data = t;
+		td.nst = nst;
+
+		g_hash_table_foreach(*gh, marshall_GHashTable_helper, &td);
+	}
+
+	return TRUE;
+}
+
+static gboolean marshall_GList (struct network_state *nst, enum marshall_mode m, struct data_blob *t, GList **gl, marshall_fn_t marshall_fn)
+{
+	if (m == MARSHALL_PULL) {
+		uint32_t count;
+		int i;
+
+		if (t->offset + sizeof(size_t) > t->length)
+			return FALSE;
+
+		memcpy(&count, t->data+t->offset, sizeof(size_t));
+		
+		t->offset += sizeof(size_t);
+
+		*gl = NULL;
+
+		for (i = 0; i < count; i++) {
+			void *v;
+			if (!marshall_fn(nst, m, t, &v))
+				return FALSE;
+			*gl = g_list_append(*gl, v);
+		}
+	} else {
+		uint32_t count = g_list_length(*gl);
+		GList *l;
+		blob_increase_size(t, sizeof(size_t));
+
+		memcpy(t->data+t->offset, &count, sizeof(size_t));
+
+		t->offset += sizeof(size_t);
+
+		for (l = *gl; l; l = l->next) {
+			if (!marshall_fn(nst, m, t, &l->data))
+				return FALSE;
+		}
+	}
+
+	return TRUE;
+}
+
+static gboolean marshall_banlist_entry (struct network_state *nst, enum marshall_mode m, struct data_blob *t, struct banlist_entry **d)
+{
+	gboolean ret = marshall_bytes(nst, m, t, (void **)d, sizeof(struct banlist_entry));
+	ret &= marshall_string(nst, m, t, &(*d)->hostmask);
+	ret &= marshall_string(nst, m, t, &(*d)->by);
+	return ret;
+}
+
+static gboolean marshall_channel_state (struct network_state *nst, enum marshall_mode m, struct data_blob *t, struct channel_state **c)
+{
+	gboolean ret = marshall_bytes(nst, m, t, (void **)c, sizeof(struct channel_state));
+	ret &= marshall_string(nst, m, t, &(*c)->name);
+	ret &= marshall_string(nst, m, t, &(*c)->key);
+	ret &= marshall_string(nst, m, t, &(*c)->topic);
+	ret &= marshall_GList(nst, m, t, &(*c)->banlist, (marshall_fn_t)marshall_banlist_entry);
+	ret &= marshall_GList(nst, m, t, &(*c)->invitelist, (marshall_fn_t)marshall_string);
+	ret &= marshall_GList(nst, m, t, &(*c)->exceptlist, (marshall_fn_t)marshall_string);
+	(*c)->network = nst;
+
+	/* Nicks  */
+	if (m == MARSHALL_PULL) {
+		size_t count;
+		int i;
+
+		if (t->offset + sizeof(size_t) > t->length)
+			return FALSE;
+
+		memcpy(&count, t->data+t->offset, sizeof(size_t));
+		
+		t->offset += sizeof(size_t);
+
+		for (i = 0; i < count; i++) {
+			char *mode;
+			struct channel_nick *cn;
+			char *nick;
+			
+			if (!marshall_bytes(nst, m, t, (void **)&mode, 1))
+				return FALSE;
+
+			if (!marshall_string(nst, m, t, &nick))
+				return FALSE;
+			
+			cn = find_add_channel_nick(*c, nick);
+			g_assert(cn);
+			cn->mode = mode[0];
+
+			g_free(nick);
+			g_free(mode);
+		}
+	} else {
+		uint32_t count = g_list_length((*c)->nicks);
+		GList *l;
+		blob_increase_size(t, sizeof(size_t));
+
+		memcpy(t->data+t->offset, &count, sizeof(size_t));
+
+		t->offset += sizeof(size_t);
+
+		for (l = (*c)->nicks; l; l = l->next) {
+			struct channel_nick *cn = l->data;
+			if (!marshall_bytes(nst, m, t, (void **)&cn->mode, 1))
+				return FALSE;
+
+			if (!marshall_string(nst, m, t, &cn->global_nick->nick))
+				return FALSE;
+		}
+	}
+
+	return ret;
+}
+
+static gboolean marshall_network_info (struct network_state *nst, enum marshall_mode m, struct data_blob *t, struct network_info **n)
+{
+	gboolean ret = TRUE;
+	ret &= marshall_bytes(nst, m, t, (void **)n, sizeof(struct network_info));
+	ret &= marshall_string(nst, m, t, &(*n)->name);
+	ret &= marshall_string(nst, m, t, &(*n)->server);
+	ret &= marshall_string(nst, m, t, &(*n)->supported_user_modes);
+	ret &= marshall_string(nst, m, t, &(*n)->supported_channel_modes);
+	marshall_GHashTable(nst, m, t, &(*n)->features, (marshall_fn_t)marshall_string, (marshall_fn_t)marshall_string);
+	return ret;
+}
+
+
+
+static gboolean marshall_network_state (struct network_state *nst, enum marshall_mode m, struct data_blob *t, struct network_state **n)
+{
+	struct network_nick *me_p;
+	struct network_info *info_p;
+	gboolean ret = TRUE;
+	ret &= marshall_bytes(NULL, m, t, (void **)n, sizeof(struct network_state));
+	ret &= marshall_GList(*n, m, t, &(*n)->nicks, (marshall_fn_t)marshall_network_nick);
+	ret &= marshall_GList(*n, m, t, &(*n)->channels, (marshall_fn_t)marshall_channel_state);
+	me_p = &(*n)->me;
+	info_p = &(*n)->info;
+	ret &= marshall_network_nick(*n, m, t, &me_p);
+	ret &= marshall_network_info(*n, m, t, &info_p);
+
+	if (m == MARSHALL_PULL) {
+		memcpy(&(*n)->me, me_p, sizeof(*me_p));
+		memcpy(&(*n)->info, info_p, sizeof(*info_p));
+	}
+	return ret;
+}
+
+
+struct network_state *network_state_decode(char *blob, size_t len)
+{
+	struct network_state *ret;
+	struct data_blob db;
+	db.data = blob;
+	db.offset = 0;
+	db.length = len;
+
+	if (!marshall_network_state(NULL, MARSHALL_PULL, &db, &ret)) 
+		return NULL;
+
+	return ret;
+}
+
+char *network_state_encode(struct network_state *st, size_t *len)
+{
+	struct data_blob db;
+	db.data = NULL;
+	db.offset = 0;
+	db.length = 0;
+	*len = 0;
+	
+	if (!marshall_network_state(st, MARSHALL_PUSH, &db, &st))
+		return NULL;
+	
+	*len = db.offset;
+	return db.data;
+}

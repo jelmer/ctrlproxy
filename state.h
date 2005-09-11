@@ -20,10 +20,13 @@
 #ifndef __CTRLPROXY_STATE_H__
 #define __CTRLPROXY_STATE_H__
 
+/* When changing one of these structs, also change the marshalling
+ * function for that struct in state.c */
+
 struct channel_nick {
 	char mode;
-	struct channel_state *channel;
 	struct network_nick *global_nick;
+	struct channel_state *channel;
 };
 
 struct network_nick {
@@ -104,5 +107,9 @@ G_MODULE_EXPORT int is_prefix(char p, struct network_info *n);
 G_MODULE_EXPORT char get_prefix_by_mode(char p, struct network_info *n);
 G_MODULE_EXPORT int irccmp(struct network_info *n, const char *a, const char *b);
 G_MODULE_EXPORT struct network_nick *line_get_network_nick(struct line *l);
+
+/* Push / pull */
+G_MODULE_EXPORT struct network_state *network_state_decode(char *, size_t);
+G_MODULE_EXPORT char *network_state_encode(struct network_state *st, size_t *);
 
 #endif /* __CTRLPROXY_STATE_H__ */
