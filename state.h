@@ -101,7 +101,7 @@ G_MODULE_EXPORT struct channel_state *find_channel(struct network_state *st, con
 G_MODULE_EXPORT struct channel_nick *find_channel_nick(struct channel_state *c, const char *name);
 G_MODULE_EXPORT struct network_nick *find_network_nick(struct network_state *c, const char *name);
 G_MODULE_EXPORT struct linestack_context *linestack_new_by_network(struct network *);
-G_MODULE_EXPORT void client_send_state(struct client *, struct network_state *);
+G_MODULE_EXPORT gboolean client_send_state(struct client *, struct network_state *);
 G_MODULE_EXPORT int is_channelname(const char *name, struct network_info *s);
 G_MODULE_EXPORT int is_prefix(char p, struct network_info *n);
 G_MODULE_EXPORT char get_prefix_by_mode(char p, struct network_info *n);
@@ -111,5 +111,6 @@ G_MODULE_EXPORT struct network_nick *line_get_network_nick(struct line *l);
 /* Push / pull */
 G_MODULE_EXPORT struct network_state *network_state_decode(char *, size_t);
 G_MODULE_EXPORT char *network_state_encode(struct network_state *st, size_t *);
+G_MODULE_EXPORT struct network_state *network_state_dup(struct network_state *st);
 
 #endif /* __CTRLPROXY_STATE_H__ */

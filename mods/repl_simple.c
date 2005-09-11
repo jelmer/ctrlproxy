@@ -21,9 +21,8 @@
 #include <string.h>
 
 static GHashTable *simple_backlog = NULL;
-static GHashTable *simple_initialnick = NULL;
 
-static void change_nick(struct client *c, char *newnick) 
+static void change_nick(struct client *c, const char *newnick) 
 {
 	struct line *l = irc_parse_line_args(c->network->state->me.hostmask, "NICK", newnick, NULL);
 	client_send_line(c, l);
@@ -44,29 +43,31 @@ static gboolean log_data(struct network *n, struct line *l, enum data_direction 
 
 static gboolean simple_replicate(struct client *c, void *userdata)
 {
-	linestack_marker *m = g_hash_table_lookup(simple_backlog, c->network);
-	char *initialnick = (char *)g_hash_table_lookup(simple_initialnick, c->network);
-	struct network_state *ns = linestack_get_state(c->network, m);
+	linestack_marker *m;
+	struct network_state *ns;
+
+	m = g_hash_table_lookup(simple_backlog, c->network);
+	ns = linestack_get_state(c->network, m);
 	client_send_state(c, ns);
 	free_network_state(ns);
-	change_nick(c, initialnick);
+	change_nick(c, ns->me.nick);
 	linestack_send(c->network, m, NULL, c);
 	return TRUE;
 }
 
-static gboolean fini_plugin(struct plugin *p) {
+static gboolean fini_plugin(struct plugin *p) 
+{
 	del_server_filter("repl_simple");
 	del_new_client_hook("repl_simple");
 	g_hash_table_destroy(simple_backlog); simple_backlog = NULL;
-	g_hash_table_destroy(simple_initialnick); simple_initialnick = NULL;
 	return TRUE;
 }
 
-static gboolean init_plugin(struct plugin *p) {
+static gboolean init_plugin(struct plugin *p) 
+{
 	add_server_filter("repl_simple", log_data, NULL, 200);
 	add_new_client_hook("repl_simple", simple_replicate, NULL);
 	simple_backlog = g_hash_table_new_full(NULL, NULL, NULL, linestack_free_marker);
-	simple_initialnick = g_hash_table_new_full(NULL, NULL, NULL, g_free);
 	return TRUE;
 }
 

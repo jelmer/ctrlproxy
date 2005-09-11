@@ -125,7 +125,7 @@ gboolean client_send_response(struct client *c, int response, ...)
 	if(!c) return FALSE;
 	
 	va_start(ap, response);
-	l = virc_parse_line(c->network?c->network->name:"ctrlproxy", ap);
+	l = virc_parse_line(c->network?c->network->name:get_my_hostname(), ap);
 	va_end(ap);
 
 	l->args = g_realloc(l->args, sizeof(char *) * (l->argc+4));

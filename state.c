@@ -582,6 +582,12 @@ static void handle_mode(struct network_state *s, struct line *l)
 		struct channel_nick *n;
 		char p;
 		int arg = 2;
+
+		if (c == NULL) {
+			log_network_state(s, LOG_WARNING, "Unable to change mode for unknown channel '%s'\n", l->args[1]);
+			return;
+		}
+		
 		for(i = 0; l->args[2][i]; i++) {
 			switch(l->args[2][i]) {
 				case '+': t = ADD; break;
@@ -1113,4 +1119,20 @@ char *network_state_encode(struct network_state *st, size_t *len)
 	
 	*len = db.offset;
 	return db.data;
+}
+
+struct network_state *network_state_dup(struct network_state *orig)
+{
+	size_t len;
+	struct network_state *ret;
+	char *data = network_state_encode(orig, &len);
+
+	if (data == NULL)
+		return NULL;
+
+	ret = network_state_decode(data, len);
+
+	g_free(data);
+
+	return ret;
 }

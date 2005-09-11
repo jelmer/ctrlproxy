@@ -40,7 +40,8 @@
 #undef G_LOG_DOMAIN
 #define G_LOG_DOMAIN "listener"
 
-static gboolean handle_client_receive(GIOChannel *c, GIOCondition condition, gpointer data) {
+static gboolean handle_client_receive(GIOChannel *c, GIOCondition condition, gpointer data) 
+{
 	struct line *l;
 	struct listener *listener = data;
 	GError *error = NULL;
@@ -48,11 +49,11 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition condition, gpo
 
 	status = irc_recv_line(c, &error, &l);
 
-	if (status != G_IO_STATUS_NORMAL) {
+	if (status != G_IO_STATUS_NORMAL)
 		return FALSE;
-	}
 	
-	if (!l) return TRUE;
+	if (l == NULL) 
+		return TRUE;
 
 	if (!l->args[0]){ 
 		free_line(l);
@@ -66,7 +67,7 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition condition, gpo
 	if(!g_strcasecmp(l->args[0], "PASS")) {
 		if (listener->password && strcmp(l->args[1], listener->password)) {
 			log_network("listener", LOG_WARNING, listener->network, "User tried to log in with incorrect password!");
-			client_send_response(c, ERR_PASSWDMISMATCH, "Password mismatch", NULL);
+			irc_sendf(c, ":%s %d %s :Password mismatch", get_my_hostname(), ERR_PASSWDMISMATCH, "*");
 
 			free_line(l);
 			return TRUE;
@@ -79,7 +80,7 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition condition, gpo
 		free_line(l); 
 		return FALSE;
 	} else {
-		client_send_response(c, ERR_NOTREGISTERED, "You are not registered", NULL);
+		irc_sendf(c, ":%s %d %s :You are not registered", get_my_hostname(), ERR_NOTREGISTERED, "*");
 	}
 
 	free_line(l);

@@ -62,10 +62,17 @@ static void gen_replication_channel(struct client *c, struct channel_state *ch)
 	client_send_response(c, RPL_ENDOFNAMES, ch->name, "End of /names list", NULL);
 }
 
-void client_send_state(struct client *c, struct network_state *state)
+gboolean client_send_state(struct client *c, struct network_state *state)
 {
 	GList *cl;
 	struct channel_state *ch;
+
+	if (c == NULL)
+		return FALSE;
+
+	if (state == NULL)
+		return FALSE;
+	
 	for (cl = state->channels; cl; cl = cl->next) {
 		ch = (struct channel_state *)cl->data;
 
@@ -74,4 +81,6 @@ void client_send_state(struct client *c, struct network_state *state)
 
 	if(strlen(mode2string(state->me.modes)))
 		client_send_args_ex(c, c->network->state->me.hostmask, "MODE", state->me.nick, mode2string(state->me.modes), NULL);
+
+	return TRUE;
 }
