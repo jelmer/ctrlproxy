@@ -871,6 +871,7 @@ static gboolean marshall_network_nick (struct network_state *nst, enum marshall_
 	ret &= marshall_type(nst, m, t, &n->query);
 	ret &= marshall_type(nst, m, t, n->modes);
 	ret &= marshall_string(nst, m, t, &n->nick);
+	g_assert(n->nick);
 	ret &= marshall_string(nst, m, t, &n->fullname);
 	ret &= marshall_string(nst, m, t, &n->username);
 	ret &= marshall_string(nst, m, t, &n->hostname);
@@ -1039,15 +1040,21 @@ static gboolean marshall_channel_state (struct network_state *nst, enum marshall
 	return ret;
 }
 
-static gboolean marshall_network_state (struct network_state *nst, enum marshall_mode m, struct data_blob *t, struct network_state **n)
+static gboolean marshall_network_state (struct network_state *nst, enum marshall_mode m, struct data_blob *t, struct network_state *n)
 {
 	gboolean ret = TRUE;
-	
-	marshall_new(m, n);
 
-	ret &= marshall_GList(*n, m, t, &(*n)->nicks, (marshall_fn_t)marshall_network_nick_p);
-	ret &= marshall_GList(*n, m, t, &(*n)->channels, (marshall_fn_t)marshall_channel_state);
-	ret &= marshall_network_nick(*n, m, t, &(*n)->me);
+	ret &= marshall_GList(n, m, t, &n->nicks, (marshall_fn_t)marshall_network_nick_p);
+	ret &= marshall_GList(n, m, t, &n->channels, (marshall_fn_t)marshall_channel_state);
+	ret &= marshall_network_nick(n, m, t, &n->me);
+	if (m == MARSHALL_PULL) {
+		struct network_nick *nn;
+		g_assert(n->me.nick);
+		nn = find_network_nick(n, n->me.nick);
+		g_assert(nn);
+		free_network_nick(n, nn);
+		n->nicks = g_list_append(n->nicks, &n->me);
+	}
 
 	return ret;
 }
@@ -1065,10 +1072,10 @@ struct network_state *network_state_decode(char *blob, size_t len, struct networ
 	db.offset = 0;
 	db.length = len;
 
-	if (!marshall_network_state(NULL, MARSHALL_PULL, &db, &ret)) 
-		return NULL;
-
+	ret = g_new0(struct network_state, 1);
 	ret->info = info;
+	if (!marshall_network_state(NULL, MARSHALL_PULL, &db, ret)) 
+		return NULL;
 
 	return ret;
 }
@@ -1084,7 +1091,7 @@ char *network_state_encode(const struct network_state *st, size_t *len)
 	if (st == NULL)
 		return NULL;
 	
-	if (!marshall_network_state(st, MARSHALL_PUSH, &db, &st))
+	if (!marshall_network_state(st, MARSHALL_PUSH, &db, st))
 		return NULL;
 	
 	*len = db.offset;

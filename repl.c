@@ -20,17 +20,22 @@
 #include "internals.h"
 #include "irc.h"
 
-static char *mode2string(char modes[255])
+char *mode2string(char modes[255])
 {
-	static char ret[256];
+	char ret[256];
 	unsigned char i;
-	int pos = 1;
-	ret[0] = '+';
+	int pos = 0;
+	ret[0] = '\0';
 	for(i = 0; i < 255; i++) {
 		if(modes[i]) { ret[pos] = (char)i; pos++; }
 	}
 	ret[pos] = '\0';
-	return ret;
+
+	if (strlen(ret) == 0) {
+		return NULL;
+	} else {
+		return g_strdup_printf("+%s", ret);
+	}
 }
 
 
@@ -66,6 +71,7 @@ gboolean client_send_state(struct client *c, struct network_state *state)
 {
 	GList *cl;
 	struct channel_state *ch;
+	char *mode;
 
 	if (c == NULL)
 		return FALSE;
@@ -79,8 +85,9 @@ gboolean client_send_state(struct client *c, struct network_state *state)
 		gen_replication_channel(c, ch);
 	}
 
-	if(strlen(mode2string(state->me.modes)))
-		client_send_args_ex(c, c->network->state->me.hostmask, "MODE", state->me.nick, mode2string(state->me.modes), NULL);
+	mode = mode2string(state->me.modes);
+	if (mode) 
+		client_send_args(c, "MODE", state->me.nick, mode, NULL);
 
 	return TRUE;
 }
