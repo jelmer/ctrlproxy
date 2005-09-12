@@ -329,7 +329,7 @@ static void file_write_target(struct network *network, const char *n, struct lin
 	fmt = g_hash_table_lookup(fmts, n);
 	if(!fmt) return;
 
-	if(!irccmp(&network->state->info, network->state->me.nick, l->args[1])) {
+	if(!irccmp(network->state->info, network->state->me.nick, l->args[1])) {
 		if(line_get_nick(l)) { t = g_strdup(line_get_nick(l)); }
 		else { t = g_strdup("_messages_"); }
 	} else {
@@ -445,7 +445,7 @@ static gboolean log_custom_data(struct network *network, struct line *l, enum da
 	} else if(!g_strcasecmp(l->args[0], "NOTICE")) {
 		file_write_target(network, "notice", l);
 	} else if(!g_strcasecmp(l->args[0], "MODE") && l->args[1] && 
-			  is_channelname(l->args[1], &network->state->info) && dir == FROM_SERVER) {
+			  is_channelname(l->args[1], network->state->info) && dir == FROM_SERVER) {
 		file_write_target(network, "mode", l);
 	} else if(!g_strcasecmp(l->args[0], "QUIT")) {
 		file_write_channel_query(network, "quit", l);
