@@ -74,9 +74,32 @@ static int state_set_hostmask(void)
 	return 0;
 }
 
+static int state_marshall_simple(void)
+{
+	struct network_state *s, *t;
+	size_t len1, len2;
+	char *data1, *data2;
+
+	s = new_network_state("nick", "uname", "uhost");
+	data1 = network_state_encode(s, &len1);
+	t = network_state_decode(data1, len1);
+	data2 = network_state_encode(s, &len2);
+
+	if (len1 != len2) return -1;
+
+	if (memcmp(data1, data2, len1) != 0) return -2;
+
+	if (strcmp(s->me.nick, t->me.nick) != 0) return -3;
+	if (strcmp(s->me.username, t->me.username) != 0) return -3;
+	if (strcmp(s->me.hostname, t->me.hostname) != 0) return -4;
+
+	return 0;
+}
+
 void torture_init(void)
 {
 	register_test("STATE-JOIN", state_join);
 	register_test("STATE-SETNICK", state_set_nick);
 	register_test("STATE-SETHOSTMASK", state_set_hostmask);
+	register_test("MARSHALL-SIMPLE", state_marshall_simple);
 }

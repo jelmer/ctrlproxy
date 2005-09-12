@@ -53,10 +53,10 @@ struct channel_state {
 	char *topic;
 	char mode; /* Private, secret, etc */
 	char modes[255];
-	int namreply_started:1;
-	int banlist_started:1;
-	int invitelist_started:1;
-	int exceptlist_started:1;
+	gboolean namreply_started;
+	gboolean banlist_started;
+	gboolean invitelist_started;
+	gboolean exceptlist_started;
 	long limit;
 	GList *nicks;
 	GList *banlist;
