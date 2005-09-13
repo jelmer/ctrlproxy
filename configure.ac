@@ -52,7 +52,6 @@ AC_ARG_WITH(module-default,
 BINS="ctrlproxy$ac_cv_exeext"
 DEFMODULE(log_irssi)
 DEFMODULE(ctcp)
-DEFMODULE(linestack_memory)
 DEFMODULE(auto_away)
 DEFMODULE(admin)
 DEFMODULE(noticelog)
