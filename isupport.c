@@ -35,22 +35,22 @@ void handle_005(struct network_state *s, struct line *l)
 			val = g_strdup(sep+1);
 		}
 		
-		g_hash_table_replace(s->info.features, key, val);
+		g_hash_table_replace(s->info->features, key, val);
 
 		if(!g_strcasecmp(key, "CASEMAPPING")) {
 			if(!g_strcasecmp(val, "rfc1459")) {
-				s->info.casemapping = CASEMAP_RFC1459;
+				s->info->casemapping = CASEMAP_RFC1459;
 			} else if(!g_strcasecmp(val, "strict-rfc1459")) {
-				s->info.casemapping = CASEMAP_STRICT_RFC1459;
+				s->info->casemapping = CASEMAP_STRICT_RFC1459;
 			} else if(!g_strcasecmp(val, "ascii")) {
-				s->info.casemapping = CASEMAP_ASCII;
+				s->info->casemapping = CASEMAP_ASCII;
 			} else {
-				s->info.casemapping = CASEMAP_UNKNOWN;
+				s->info->casemapping = CASEMAP_UNKNOWN;
 				log_network_state(s, LOG_WARNING, "Unknown supports.casemapping '%s'", l->args[i]+strlen("supports.casemapping="));
 			}
 		} else if(!g_strcasecmp(key, "NETWORK")) {
-			g_free(s->info.name);
-			s->info.name = g_strdup(val);
+			g_free(s->info->name);
+			s->info->name = g_strdup(val);
 		} 
 	}
 }
@@ -58,7 +58,7 @@ void handle_005(struct network_state *s, struct line *l)
 gboolean network_supports(struct network *n, const char *fe)
 {
 	gpointer k, v;
-	return g_hash_table_lookup_extended (n->state->info.features, fe, &k, &v);
+	return g_hash_table_lookup_extended (n->info.features, fe, &k, &v);
 }
 
 int irccmp(struct network_info *n, const char *a, const char *b)

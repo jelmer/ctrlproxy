@@ -36,7 +36,7 @@ static void server_send_login (struct network *s)
 
 	log_network(NULL, LOG_INFO, s, "Successfully connected");
 
-	s->state = new_network_state(s->config->nick, s->config->username, get_my_hostname());
+	s->state = new_network_state(&s->info, s->config->nick, s->config->username, get_my_hostname());
 
 	if(s->config->type == NETWORK_TCP && 
 	   s->connection.data.tcp.current_server->password) { 
@@ -519,7 +519,7 @@ static gboolean connect_server(struct network *s)
 		s->connection.data.virtual.ops = g_hash_table_lookup(virtual_network_ops, s->config->type_settings.virtual_type);
 		if (!s->connection.data.virtual.ops) return FALSE;
 
-		s->state = new_network_state(s->config->nick, s->config->username, get_my_hostname());
+		s->state = new_network_state(&s->info, s->config->nick, s->config->username, get_my_hostname());
     	s->connection.state = NETWORK_CONNECTION_STATE_MOTD_RECVD;
 
 		if (s->connection.data.virtual.ops->init)
@@ -550,6 +550,7 @@ struct network *load_network(struct network_config *sc)
 
 	s = g_new0(struct network, 1);
 	s->config = sc;
+	s->info.features = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_free);
 	s->name = g_strdup(s->config->name);
 
 	networks = g_list_append(networks, s);
@@ -586,6 +587,10 @@ void unload_network(struct network *s)
 		g_free(s->connection.data.tcp.remote_name);
 	}
 
+	g_free(s->info.supported_user_modes);
+	g_free(s->info.supported_channel_modes);
+
+	g_hash_table_destroy(s->info.features);
 	g_free(s);
 }
 

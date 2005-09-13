@@ -37,9 +37,9 @@ void network_update_config(struct network_state *ns, struct network_config *nc)
 	GList *gl;
 	
 	/* Network name */
-	if (ns->info.name && strcmp(ns->info.name, nc->name)) {
+	if (ns->info->name && strcmp(ns->info->name, nc->name)) {
 		g_free(nc->name);
-		nc->name = g_strdup(ns->info.name);
+		nc->name = g_strdup(ns->info->name);
 	}
 	
 	/* nick */
@@ -53,7 +53,7 @@ void network_update_config(struct network_state *ns, struct network_config *nc)
 		struct channel_config *cc = gl->data;
 
 		/* Find channel */
-		cc = config_find_channel(&ns->info, nc, cs->name);
+		cc = config_find_channel(ns->info, nc, cs->name);
 		if (!cc) {
 			cc = g_new0(struct channel_config, 1);
 			nc->channels = g_list_append(nc->channels, cc);

@@ -48,7 +48,7 @@ static char *network_generate_feature_string(struct network *n)
 	name = g_strdup_printf("NETWORK=%s", n->name);
 	fs = g_list_append(fs, name);
 
-	switch (n->state->info.casemapping) {
+	switch (n->info.casemapping) {
 	default:
 	case CASEMAP_RFC1459:
 		casemap = g_strdup("CASEMAPPING=rfc1459");
@@ -292,8 +292,8 @@ static gboolean welcome_client(struct client *client)
 	client_send_response(client, RPL_MYINFO, 
 		 client->network->name, 
 		 ctrlproxy_version(), 
-		 (client->network->state && client->network->state->info.supported_user_modes)?client->network->state->info.supported_user_modes:ALLMODES, 
-		 (client->network->state && client->network->state->info.supported_channel_modes)?client->network->state->info.supported_channel_modes:ALLMODES,
+		 (client->network->state && client->network->info.supported_user_modes)?client->network->info.supported_user_modes:ALLMODES, 
+		 (client->network->state && client->network->info.supported_channel_modes)?client->network->info.supported_channel_modes:ALLMODES,
 		 NULL);
 
 	features = network_generate_feature_string(client->network);

@@ -184,7 +184,7 @@ struct channel_state *find_channel(struct network_state *st, const char *name)
 	GList *cl = st->channels;
 	while(cl) {
 		struct channel_state *c = (struct channel_state *)cl->data;
-		if(!irccmp(&st->info, c->name, name)) return c;
+		if(!irccmp(st->info, c->name, name)) return c;
 		cl = g_list_next(cl);
 	}
 	return NULL;
@@ -206,11 +206,11 @@ struct channel_nick *find_channel_nick(struct channel_state *c, const char *name
 	const char *realname = name;
 	g_assert(name);
 
-	if(is_prefix(realname[0], &c->network->info))realname++;
+	if(is_prefix(realname[0], c->network->info))realname++;
 
 	for (l = c->nicks; l; l = l->next) {
 		struct channel_nick *n = (struct channel_nick *)l->data;
-		if(!irccmp(&c->network->info, n->global_nick->nick, realname))
+		if(!irccmp(c->network->info, n->global_nick->nick, realname))
 			return n;
 	}
 
@@ -225,7 +225,7 @@ struct network_nick *find_network_nick(struct network_state *n, const char *name
 
 	for (gl = n->nicks; gl; gl = gl->next) {
 		struct network_nick *ndd = (struct network_nick*)gl->data;
-		if(!irccmp(&n->info, ndd->nick, name)) {
+		if(!irccmp(n->info, ndd->nick, name)) {
 			return ndd;
 		}
 	}
@@ -260,7 +260,7 @@ struct channel_nick *find_add_channel_nick(struct channel_state *c, const char *
 
 	g_assert(strlen(name) > 0);
 
-	if(is_prefix(realname[0], &c->network->info)) {
+	if(is_prefix(realname[0], c->network->info)) {
 		mymode = realname[0];
 		realname++;
 	}
@@ -299,7 +299,7 @@ static void handle_join(struct network_state *s, struct line *l)
 		network_nick_set_hostmask(ni->global_nick, l->origin);
 
 		/* The user is joining a channel */
-		if(!irccmp(&s->info, line_get_nick(l), s->me.nick)) {
+		if(!irccmp(s->info, line_get_nick(l), s->me.nick)) {
 			log_network_state(s, LOG_INFO, "Joining channel %s", c->name);
 		} else {
 			log_network_state(s, LOG_TRACE, "%s joins channel %s", line_get_nick(l), c->name);
@@ -335,7 +335,7 @@ static void handle_part(struct network_state *s, struct line *l)
 			log_network_state(s, LOG_WARNING, "Can't remove nick %s from channel %s: nick not on channel", line_get_nick(l), channels[i]);
 		}
 
-		if(!irccmp(&s->info, line_get_nick(l), s->me.nick) && c) {
+		if(!irccmp(s->info, line_get_nick(l), s->me.nick) && c) {
 			log_network_state(s, LOG_INFO, "Leaving %s", channels[i]);
 			free_channel(c);
 		} else {
@@ -371,7 +371,7 @@ static void handle_kick(struct network_state *s, struct line *l)
 
 		free_channel_nick(n);
 
-		if(!irccmp(&s->info, line_get_nick(l), s->me.nick) && c) {
+		if(!irccmp(s->info, line_get_nick(l), s->me.nick) && c) {
 			log_network_state(s, LOG_INFO, "Kicked off %s by %s", c->name, line_get_nick(l));
 			free_channel(c);
 		} else {
@@ -567,7 +567,7 @@ static void handle_mode(struct network_state *s, struct line *l)
 	int i;
 
 	/* Channel modes */
-	if(is_channelname(l->args[1], &s->info)) {
+	if(is_channelname(l->args[1], s->info)) {
 		struct channel_state *c = find_channel(s, l->args[1]);
 		struct channel_nick *n;
 		char p;
@@ -614,7 +614,7 @@ static void handle_mode(struct network_state *s, struct line *l)
 					c->modes['k'] = t;
 					break;
 				default:
-					  p = get_prefix_by_mode(l->args[2][i], &s->info);
+					  p = get_prefix_by_mode(l->args[2][i], s->info);
 					  if(p == ' ') {
 						  c->modes[(unsigned char)l->args[2][i]] = t;
 					  } else {
@@ -652,15 +652,15 @@ static void handle_001(struct network_state *s, struct line *l)
 
 static void handle_004(struct network_state *s, struct line *l)
 {
-	s->info.supported_user_modes = g_strdup(l->args[4]);
-	s->info.supported_channel_modes = g_strdup(l->args[5]);
-	s->info.server = g_strdup(l->args[2]);
+	s->info->supported_user_modes = g_strdup(l->args[4]);
+	s->info->supported_channel_modes = g_strdup(l->args[5]);
+	s->info->server = g_strdup(l->args[2]);
 }
 
 static void handle_privmsg(struct network_state *s, struct line *l)
 {
 	struct network_nick *nn;
-	if (irccmp(&s->info, l->args[1], s->me.nick) != 0) return;
+	if (irccmp(s->info, l->args[1], s->me.nick) != 0) return;
 
 	nn = find_add_network_nick(s, line_get_nick(l));
 	nn->query = 1;
@@ -739,10 +739,10 @@ void state_handle_data(struct network_state *s, struct line *l)
 	}
 }
 
-struct network_state *new_network_state(const char *nick, const char *username, const char *hostname)
+struct network_state *new_network_state(struct network_info *info, const char *nick, const char *username, const char *hostname)
 {
 	struct network_state *state = g_new0(struct network_state, 1);
-	state->info.features = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_free);
+	state->info = info;
 	state->me.query = 1;
 	network_nick_set_data(&state->me, nick, username, hostname);
 
@@ -791,15 +791,6 @@ void free_network_state(struct network_state *state)
 		struct network_nick *nn = state->nicks->data;
 		free_network_nick(state, nn);
 	}
-
-	g_free(state->info.supported_user_modes);
-	state->info.supported_user_modes = NULL;
-
-	g_free(state->info.supported_channel_modes);
-	state->info.supported_channel_modes = NULL;
-
-	g_hash_table_destroy(state->info.features);
-	state->info.features = NULL;
 
 	g_free(state);
 }
@@ -1048,52 +1039,36 @@ static gboolean marshall_channel_state (struct network_state *nst, enum marshall
 	return ret;
 }
 
-static gboolean marshall_network_info (struct network_state *nst, enum marshall_mode m, struct data_blob *t, struct network_info *n)
-{
-	gboolean ret = TRUE;
-	ret &= marshall_type(nst, m, t, &n->casemapping);
-	ret &= marshall_type(nst, m, t, &n->channellen);
-	ret &= marshall_type(nst, m, t, &n->nicklen);
-	ret &= marshall_type(nst, m, t, &n->topiclen);
-	ret &= marshall_string(nst, m, t, &n->name);
-	ret &= marshall_string(nst, m, t, &n->server);
-	ret &= marshall_string(nst, m, t, &n->supported_user_modes);
-	ret &= marshall_string(nst, m, t, &n->supported_channel_modes);
-	marshall_GHashTable(nst, m, t, &n->features, (marshall_fn_t)marshall_string, (marshall_fn_t)marshall_string);
-	return ret;
-}
-
-
-
 static gboolean marshall_network_state (struct network_state *nst, enum marshall_mode m, struct data_blob *t, struct network_state **n)
 {
 	gboolean ret = TRUE;
 	
 	marshall_new(m, n);
 
-	if (m == MARSHALL_PULL) {
-		(*n)->info.features = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_free);
-	}
-	
 	ret &= marshall_GList(*n, m, t, &(*n)->nicks, (marshall_fn_t)marshall_network_nick_p);
 	ret &= marshall_GList(*n, m, t, &(*n)->channels, (marshall_fn_t)marshall_channel_state);
 	ret &= marshall_network_nick(*n, m, t, &(*n)->me);
-	ret &= marshall_network_info(*n, m, t, &(*n)->info);
 
 	return ret;
 }
 
 
-struct network_state *network_state_decode(char *blob, size_t len)
+struct network_state *network_state_decode(char *blob, size_t len, struct network_info *info)
 {
 	struct network_state *ret;
 	struct data_blob db;
+
+	if (len == 0)
+		return NULL;
+	
 	db.data = blob;
 	db.offset = 0;
 	db.length = len;
 
 	if (!marshall_network_state(NULL, MARSHALL_PULL, &db, &ret)) 
 		return NULL;
+
+	ret->info = info;
 
 	return ret;
 }
@@ -1105,6 +1080,9 @@ char *network_state_encode(const struct network_state *st, size_t *len)
 	db.offset = 0;
 	db.length = 0;
 	*len = 0;
+
+	if (st == NULL)
+		return NULL;
 	
 	if (!marshall_network_state(st, MARSHALL_PUSH, &db, &st))
 		return NULL;
@@ -1122,7 +1100,7 @@ struct network_state *network_state_dup(struct network_state *orig)
 	if (data == NULL)
 		return NULL;
 
-	ret = network_state_decode(data, len);
+	ret = network_state_decode(data, len, orig->info);
 
 	g_free(data);
 

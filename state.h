@@ -20,6 +20,10 @@
 #ifndef __CTRLPROXY_STATE_H__
 #define __CTRLPROXY_STATE_H__
 
+struct network;
+struct client;
+struct line;
+
 /* When changing one of these structs, also change the marshalling
  * function for that struct in state.c */
 
@@ -90,11 +94,11 @@ struct network_state
 	GList *channels;
 	GList *nicks;
 	struct network_nick me;
-	struct network_info info;
+	struct network_info *info;
 };
 
 /* state.c */
-G_MODULE_EXPORT struct network_state *new_network_state(const char *nick, const char *username, const char *hostname);
+G_MODULE_EXPORT struct network_state *new_network_state(struct network_info *info, const char *nick, const char *username, const char *hostname);
 G_MODULE_EXPORT void free_network_state(struct network_state *);
 
 G_MODULE_EXPORT struct channel_state *find_channel(struct network_state *st, const char *name);
@@ -109,7 +113,7 @@ G_MODULE_EXPORT int irccmp(struct network_info *n, const char *a, const char *b)
 G_MODULE_EXPORT struct network_nick *line_get_network_nick(struct line *l);
 
 /* Push / pull */
-G_MODULE_EXPORT struct network_state *network_state_decode(char *, size_t);
+G_MODULE_EXPORT struct network_state *network_state_decode(char *, size_t, struct network_info *);
 G_MODULE_EXPORT char *network_state_encode(const struct network_state *st, size_t *);
 G_MODULE_EXPORT struct network_state *network_state_dup(struct network_state *st);
 

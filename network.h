@@ -24,6 +24,8 @@
 #define G_MODULE_EXPORT 
 #endif
 
+#include "state.h"
+
 struct network;
 struct client;
 struct line;
@@ -74,6 +76,7 @@ struct network {
 	guint reconnect_id;
 
 	struct network_state *state;
+	struct network_info info;
 	struct network_connection connection;
 };
 

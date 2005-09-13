@@ -59,7 +59,7 @@ static void gen_replication_channel(struct client *c, struct channel_state *ch)
 		client_send_response(c, RPL_NAMREPLY, mode, ch->name, tmp, NULL);
 		g_free(tmp);
 	}
-	client_send_response(c, RPL_ENDOFNAMES, ch->name, "End of /names list", NULL);
+	client_send_response(c, RPL_ENDOFNAMES, ch->name, "End of /NAMES list", NULL);
 }
 
 gboolean client_send_state(struct client *c, struct network_state *state)

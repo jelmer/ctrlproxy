@@ -213,7 +213,7 @@ static 	struct network_state * file_get_state (
 
 	raw[rh.length] = '\0';
 
-	ret = network_state_decode(raw, rh.length);
+	ret = network_state_decode(raw, rh.length, &n->info);
 
 	g_free(raw);
 
