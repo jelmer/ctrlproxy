@@ -1,5 +1,4 @@
 2.7 showstoppers:
-- fix SWIG build
 - add bind support back into mods/listener.c and network.c
 - update documentation
 - test and fix SSL support
@@ -12,6 +11,7 @@
  - to recover state at a certain point: 
   - scroll back until latest state cache
   - replay lines since then.
+- fix SWIG build
 - finish python module hooks:
 	typedef gboolean (*filter_function) (struct line *);
 	typedef gboolean (*new_client_hook) (struct client *);

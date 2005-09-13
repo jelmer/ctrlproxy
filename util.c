@@ -59,7 +59,7 @@ char *ctrlproxy_path(char *part)
 	return p1;
 }
 
-inline int str_cmphelper(const char *a, const char *b, char sh, char sl, char eh, char el)
+static inline int str_cmphelper(const char *a, const char *b, char sh, char sl, char eh, char el)
 {
 	int i;
 	char h,l;
