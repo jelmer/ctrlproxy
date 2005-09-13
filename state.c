@@ -810,6 +810,8 @@ void free_network_state(struct network_state *state)
 
 	g_hash_table_destroy(state->info.features);
 	state->info.features = NULL;
+
+	g_free(state);
 }
 
 /*
