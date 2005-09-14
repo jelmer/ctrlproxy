@@ -15,6 +15,7 @@ $(patsubst %.c,lib%.so,$(wildcard test-*.c)): lib%.so: %.o
 libtest-cmp.so: test-cmp.o ../util.o
 libtest-state.so: test-state.o ../state.o ../util.o ../isupport.o ../line.o
 libtest-parser.so: test-parser.o ../line.o
+libtest-client.so: test-client.o ../client.o ../line.o ../hooks.o ../log.o ../cache.o ../redirect.o ../network.o ../posix.o ../util.o ../state.o ../linestack.o ../gen_config.o ../settings.o ../isupport.o
 
 lib%.so: 
 	$(CC) $(LIBS) $(CFLAGS) -shared -o $@ $^
@@ -23,10 +24,10 @@ ctrlproxyrc.torture: ctrlproxyrc.torture.in
 	sed -e 's/@SERVER@/$(TEST_SERVER)/;s/@PORT@/$(TEST_PORT)/;' < $< > $@
 
 test: torture $(patsubst %.c,lib%.so,$(wildcard test-*.c)) 
-	./$< $(patsubst lib%.so,%,$(filter libtest-%.so,$^))
+	$(VALGRIND) ./$< $(patsubst lib%.so,%,$(filter libtest-%.so,$^))
 
 rfctest: ../rfctester/ircdtorture $(patsubst %.c,%.so,$(wildcard ../rfctester/test-*.c)) ctrlproxyrc.torture
-	$< $(foreach I,$(filter test-%.so,$^),-m $(shell pwd)/../rfctester/$(I)) -- ../ctrlproxy -i TEST -r ctrlproxyrc.torture
+	$< $(foreach I,$(filter ../rfctester/test-%.so,$^),-m $(shell pwd)/../rfctester/$(I)) -- ../ctrlproxy -i TEST -r ctrlproxyrc.torture
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $<

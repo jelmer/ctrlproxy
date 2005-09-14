@@ -1,6 +1,4 @@
-
 /*
-    ircdtorture: an IRC RFC compliancy tester
 	(c) 2005 Jelmer Vernooij <jelmer@nl.linux.org>
 
 	This program is free software; you can redistribute it and/or modify
@@ -22,22 +20,14 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
-#include "ctrlproxy.h"
+#include "../linestack.h"
 
-int state_join(void)
+static int test_linestack_simple(void)
 {
-	struct network_state *ns = new_network_state("bla", "Gebruikersnaam", "Computernaam");
-
-	if (!ns) return -1;
-
-	if (strcmp(ns->me.nick, "bla") != 0) return -2;
-	if (strcmp(ns->me.username, "Gebruikersnaam") != 0) return -3;
-	if (strcmp(ns->me.hostname, "Computernaam") != 0) return -4;
-
 	return 0;
 }
 
 void torture_init(void)
 {
-	register_test("STATE-JOIN", state_join);
+	register_test("LINESTACK_SIMPLE", test_linestack_simple);
 }

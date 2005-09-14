@@ -413,7 +413,12 @@ static gboolean client_ping(gpointer user_data) {
 
 struct client *new_client(struct network *n, GIOChannel *c, const char *desc)
 {
-	struct client *client = g_new0(struct client, 1);
+	struct client *client;
+
+	if (n == NULL || c == NULL)
+		return NULL;
+
+	client = g_new0(struct client, 1);
 
 	g_io_channel_set_close_on_unref(c, TRUE);
 	g_io_channel_set_encoding(c, NULL, NULL);

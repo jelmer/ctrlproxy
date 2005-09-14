@@ -51,7 +51,7 @@ int run_test(struct torture_test *test)
 	printf("Running %s... ", test->name);
 	fflush(stdout);
 	ret = test->test();
-	if (ret) printf("failed!\n"); else printf("ok\n");
+	if (ret) printf("failed (%d)!\n", ret); else printf("ok\n");
 	return ret;
 }
 
@@ -92,7 +92,8 @@ int main(int argc, const char *argv[])
 	}
 
 	for (i = 1; i < argc; i++) {
-		load_module(argv[i]);
+		if (!load_module(argv[i]))
+			ret = -1;
 	}
 	
 	for (gl = tests; gl; gl = gl->next) {

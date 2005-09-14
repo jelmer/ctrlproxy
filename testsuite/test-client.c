@@ -1,6 +1,4 @@
-
 /*
-    ircdtorture: an IRC RFC compliancy tester
 	(c) 2005 Jelmer Vernooij <jelmer@nl.linux.org>
 
 	This program is free software; you can redistribute it and/or modify
@@ -22,22 +20,20 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
-#include "ctrlproxy.h"
+#include "../client.h"
 
-int state_join(void)
+/* FIXME: Hack */
+void * get_current_config() { return NULL; }
+
+static int test_client_simple(void)
 {
-	struct network_state *ns = new_network_state("bla", "Gebruikersnaam", "Computernaam");
-
-	if (!ns) return -1;
-
-	if (strcmp(ns->me.nick, "bla") != 0) return -2;
-	if (strcmp(ns->me.username, "Gebruikersnaam") != 0) return -3;
-	if (strcmp(ns->me.hostname, "Computernaam") != 0) return -4;
+	if (new_client(NULL, NULL, NULL) != NULL)
+		return -1;
 
 	return 0;
 }
 
 void torture_init(void)
 {
-	register_test("STATE-JOIN", state_join);
+	register_test("CLIENT-SIMPLE", test_client_simple);
 }

@@ -20,6 +20,12 @@
 #ifndef __CTRLPROXY_LINESTACK_H__
 #define __CTRLPROXY_LINESTACK_H__
 
+struct line;
+struct network;
+struct client;
+#include <sys/time.h>
+#include <gmodule.h>
+
 /* linestack.c */
 typedef void linestack_marker;
 typedef void (*linestack_traverse_fn) (struct line *, time_t, void *);

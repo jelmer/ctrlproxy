@@ -34,17 +34,17 @@ void network_nick_set_data(struct network_nick *n, const char *nick, const char 
 {
 	gboolean changed = FALSE;
 	
-	if (!n->nick || strcmp(nick, n->nick)) {
+	if (!n->nick || strcmp(nick, n->nick) != 0) {
 		g_free(n->nick); n->nick = g_strdup(nick);
 		changed = TRUE;
 	}
 
-	if (!n->username || strcmp(username, n->username)) {
+	if (!n->username || strcmp(username, n->username) != 0) {
 		g_free(n->username); n->username = g_strdup(username);
 		changed = TRUE;
 	}
 	
-	if (!n->hostname || strcmp(host, n->hostname)) {
+	if (!n->hostname || strcmp(host, n->hostname) != 0) {
 		g_free(n->hostname); n->hostname = g_strdup(host);
 		changed = TRUE;
 	}

@@ -619,7 +619,7 @@ gboolean init_networks(void)
 	return TRUE;
 }
 
-gboolean autoconnect_networks(void)
+gboolean autoconnect_networks()
 {
 	GList *gl;
 	for (gl = networks; gl; gl = gl->next)

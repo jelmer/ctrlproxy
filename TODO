@@ -7,7 +7,6 @@
  - to recover state at a certain point: 
   - scroll back until latest state cache
   - replay lines since then.
-- fix testsuite
 - test and fix SSL support
 - update documentation
 

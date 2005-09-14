@@ -22,6 +22,7 @@
 
 #include "line.h"
 
+#include <sys/time.h>
 #include <glib.h>
 #include <gmodule.h>
 
