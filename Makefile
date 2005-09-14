@@ -29,7 +29,7 @@ ctrlproxy$(EXEEXT): network.o posix.o client.o cache.o line.o main.o state.o uti
 %.$(OBJEXT): %.c
 	$(CC) $(CFLAGS) $(GCOV_CFLAGS) -c $<
 
-configure: autogen.sh configure.in acinclude.m4 $(wildcard mods/*/*.m4)
+configure: autogen.sh configure.ac acinclude.m4 $(wildcard mods/*/*.m4)
 	./$<
 
 ctrlproxy.pc Makefile.settings: configure Makefile.settings.in ctrlproxy.pc.in
