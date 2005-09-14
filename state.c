@@ -55,22 +55,35 @@ void network_nick_set_data(struct network_nick *n, const char *nick, const char 
 	}
 }
 
-void network_nick_set_nick(struct network_nick *n, const char *nick)
+gboolean network_nick_set_nick(struct network_nick *n, const char *nick)
 {
-	if (!strcmp(nick, n->nick)) return;
+	if (n == NULL)
+		return FALSE;
+
+	if (n->nick != NULL && !strcmp(nick, n->nick)) 
+		return TRUE;
 
 	g_free(n->nick);
 	n->nick = g_strdup(nick);
 	
 	g_free(n->hostmask);
 	n->hostmask = g_strdup_printf("%s!~%s@%s", nick, n->username, n->hostname);
+
+	return TRUE;
 }
 
-void network_nick_set_hostmask(struct network_nick *n, const char *hm)
+gboolean network_nick_set_hostmask(struct network_nick *n, const char *hm)
 {
 	char *t, *u;
+
+	if (n == NULL)
+		return FALSE;
+
+	if (hm == NULL)
+		return FALSE;
+
 	if (n->hostmask && !strcmp(n->hostmask, hm))
-		return;
+		return TRUE;
 
 	g_free(n->hostmask);
 	g_free(n->nick); n->nick = NULL;
@@ -79,14 +92,18 @@ void network_nick_set_hostmask(struct network_nick *n, const char *hm)
 	n->hostmask = g_strdup(hm);
 
 	t = strchr(hm, '!');
-	if (!t) return;
+	if (!t) 
+		return FALSE;
 	n->nick = g_strndup(hm, t-hm);
 	
 	u = strchr(t, '@');
-	if (!u) return;
+	if (!u) 
+		return FALSE;
 	n->username = g_strndup(t+1, u-t-1);
 
 	n->hostname = g_strdup(u+1);
+
+	return TRUE;
 }
 
 static void free_channel_nick(struct channel_nick *n)
