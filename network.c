@@ -274,6 +274,8 @@ static gboolean connect_current_tcp_server(struct network *s)
 	if (!s->connection.data.tcp.current_server) {
 		s->connection.data.tcp.current_server = network_get_next_tcp_server(s);
 	}
+
+	log_network(NULL, LOG_TRACE, s, "connect_current_tcp_server");
 	
 	cs = s->connection.data.tcp.current_server;
 	if(!cs) {
@@ -632,24 +634,14 @@ gboolean init_networks(void)
 	return TRUE;
 }
 
-gboolean autoconnect_networks(gboolean separate_processes)
+gboolean autoconnect_networks()
 {
 	GList *gl;
 	for (gl = networks; gl; gl = gl->next)
 	{
 		struct network *n = gl->data;
 		if (n->config->autoconnect) {
-#ifdef HAVE_FORK
-			if(separate_processes) { 
-				if(fork() == 0) {  
-					connect_network(n); 
-					break; 
-				}
-			} else 
-#endif
-			{
-				connect_network(n);
-			}
+			connect_network(n);
 		}
 	}
 

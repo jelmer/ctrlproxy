@@ -84,7 +84,7 @@ struct network {
 /* server.c */
 G_MODULE_EXPORT struct network *find_network_by_hostname(const char *host, guint16 port, gboolean create);
 G_MODULE_EXPORT gboolean load_networks(struct ctrlproxy_config *cfg);
-G_MODULE_EXPORT gboolean autoconnect_networks(gboolean separate_processes);
+G_MODULE_EXPORT gboolean autoconnect_networks(void);
 G_MODULE_EXPORT struct network *load_network(struct network_config *);
 G_MODULE_EXPORT void unload_network(struct network *);
 G_MODULE_EXPORT gboolean connect_network(struct network *);

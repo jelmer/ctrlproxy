@@ -114,7 +114,6 @@ static void signal_save(int sig)
 int main(int argc, const char *argv[])
 {
 	int isdaemon = 0;
-	int seperate_processes = 0;
 	char *logfile = NULL, *rcfile = NULL;
 	char *configuration_file;
 	extern enum log_level current_log_level;
@@ -131,7 +130,6 @@ int main(int argc, const char *argv[])
 		{"daemon", 'D', POPT_ARG_NONE, &isdaemon, 0, ("Run in the background (as a daemon)")},
 		{"log", 'l', POPT_ARG_STRING, &logfile, 0, ("Log messages to specified file"), ("FILE")},
 		{"rc-file", 'r', POPT_ARG_STRING, &rcfile, 0, ("Use configuration file from specified location"), ("FILE")},
-		{"seperate-processes", 's', POPT_ARG_NONE, &seperate_processes, 0, ("Use one process per network") },
 		{"version", 'v', POPT_ARG_NONE, NULL, 'v', ("Show version information")},
 		POPT_TABLEEND
 	};
@@ -229,7 +227,7 @@ int main(int argc, const char *argv[])
 	load_networks(current_config);
 	init_plugins(current_config);
 	init_linestack(current_config);
-	autoconnect_networks(seperate_processes);
+	autoconnect_networks();
 
 #ifdef HAVE_POPT_H
 	poptFreeContext(pc);
