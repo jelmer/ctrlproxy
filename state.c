@@ -828,7 +828,7 @@ static void blob_increase_size (struct data_blob *db, size_t size)
 	}
 }
 
-#define marshall_new(m,t) if ((m) == MARSHALL_PULL) *(t) = g_malloc(sizeof(*t));
+#define marshall_new(m,t) if ((m) == MARSHALL_PULL) *(t) = g_malloc(sizeof(**t));
 #define marshall_type(nst,m,db,n) marshall_bytes(nst,m,db,(void *)(n),sizeof(*(n)))
 
 static gboolean marshall_bytes (struct network_state *nst, enum marshall_mode m, struct data_blob *t, void *d, size_t length)

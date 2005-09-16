@@ -30,6 +30,11 @@ AC_PROG_CC
 AC_PROG_INSTALL
 AC_PATH_PROG(LD,ld)
 
+AC_ARG_ENABLE(gcov,
+[ --enable-gcov		Enable GCOV support ],
+[ WITH_GCOV=1 ], [ WITH_GCOV=0 ])
+AC_SUBST(WITH_GCOV)
+
 AC_ARG_WITH(module-default,
 [ --with-module-default={shared,static,not} Default module output type ],
 [ 
@@ -73,11 +78,56 @@ AC_CHECK_LIB([popt], [poptGetArg], , AC_MSG_WARN([Popt is strongly advised]))
 
 PKG_CHECK_MODULES(COMMON, libxml-2.0 glib-2.0 gmodule-2.0, , AC_MSG_ERROR([libxml and glib are required]))
 
-sinclude(mods/nss/config.m4)
-sinclude(mods/openssl/config.m4)
-sinclude(mods/gnutls/config.m4)
-sinclude(mods/swig/config.m4)
-sinclude(mods/python2/config.m4)
+###############################################################################
+# NSS support
+###############################################################################
+PKG_CHECK_MODULES(NSS, mozilla-nss, 
+	[ DEFMODULE(nss, $NSS_LIBS) ], [ echo "Not using mozilla-nss"; ] )
+AC_CONFIG_FILES([mods/nss/Makefile.settings])
+
+###############################################################################
+# OpenSSL support
+###############################################################################
+PKG_CHECK_MODULES(OPENSSL, openssl, [ DEFMODULE(openssl, $OPENSSL_LIBS) ], [ echo "Not building openssl module" ])
+AC_CONFIG_FILES([mods/openssl/Makefile.settings])
+
+###############################################################################
+# GNUTLS support
+###############################################################################
+AC_PATH_PROG(gnutls_config, libgnutls-config, no)
+
+GNUTLS_LIBS=""
+
+if test "$gnutls_config" != "no" && test "`libgnutls-config --version | cut -f 1 -d .`" = "1"; then
+	GNUTLS_CFLAGS="`$gnutls_config --cflags`"
+	GNUTLS_LIBS="`$gnutls_config --libs`"
+	DEFMODULE(gnutls, $GNUTLS_LIBS)
+	AC_CHECK_HEADERS([gnutls/gnutls.h])
+fi
+
+AC_SUBST(GNUTLS_CFLAGS)
+AC_SUBST(GNUTLS_LIBS)
+AC_CONFIG_FILES([mods/gnutls/Makefile.settings])
+
+###############################################################################
+# SWIG support
+###############################################################################
+AC_PATH_PROG(SWIG,[swig])
+
+###############################################################################
+# Python support
+###############################################################################
+AC_PYTHON_DEVEL()
+
+if test -z "$SWIG"; then
+	AC_MSG_WARN([SWIG not found, not building python module])
+elif test -z "$PYTHON_VERSION"; then
+	AC_MSG_WARN([Python not found, not building python module])
+else
+	DEFMODULE(python2, $PY_LIBS)
+	AC_CONFIG_FILES([mods/python2/Makefile.settings])
+fi
+
 sinclude(doc/config.m4)
 AC_CONFIG_FILES(doc/Makefile.settings)
 

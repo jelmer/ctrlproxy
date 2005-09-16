@@ -93,6 +93,8 @@ static int state_marshall_simple(void)
 	if (strcmp(s->me.username, t->me.username) != 0) return -3;
 	if (strcmp(s->me.hostname, t->me.hostname) != 0) return -4;
 
+	free_network_state(t);
+
 	return 0;
 }
 
