@@ -34,8 +34,11 @@ ctrlproxyrc.torture: ctrlproxyrc.torture.in
 test: torture $(patsubst %.c,lib%.so,$(wildcard test-*.c)) 
 	$(VALGRIND) ./$< $(patsubst lib%.so,%,$(filter libtest-%.so,$^))
 
+../rfctester/%:
+	$(MAKE) -C ../rfctester $*
+
 rfctest: ../rfctester/ircdtorture $(patsubst %.c,%.so,$(wildcard ../rfctester/test-*.c)) ctrlproxyrc.torture
-	$< $(foreach I,$(filter ../rfctester/test-%.so,$^),-m $(shell pwd)/../rfctester/$(I)) -- ../ctrlproxy -i TEST -r ctrlproxyrc.torture
+	$< $(foreach I,$(filter ../rfctester/test-%.so,$^),-m $(shell pwd)/../rfctester/$(I)) -- ../ctrlproxy -d 0 -i TEST -r ctrlproxyrc.torture
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $<

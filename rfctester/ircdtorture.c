@@ -44,7 +44,10 @@
 #include <netdb.h>
 #include <signal.h>
 
-#define DEFAULT_TIMEOUT 1000
+#define DEFAULT_TIMEOUT 3000
+
+static gboolean dump = FALSE;
+static gboolean debug = FALSE;
 
 struct torture_test {
 	const char *name;
@@ -65,33 +68,50 @@ struct line *wait_responses(GIOChannel *ch, const char *cmd[])
 
 	/* FIXME: Timeout */
 	do { 
-		int i;
+		int i, ret;
 		struct pollfd pl;
 
 		pl.fd = g_io_channel_unix_get_fd(ch);
 		pl.events = POLLIN | POLLERR | POLLHUP;
-	
-		if (!poll(&pl, 1, DEFAULT_TIMEOUT)) 
+
+		ret = poll(&pl, 1, DEFAULT_TIMEOUT);
+
+		if (ret == -1) {
+			fprintf(stderr, "poll failed: %s ", strerror(errno));
 			return NULL;
-
-		if (!(pl.revents & POLLIN)) 
-			return NULL;
-
-		status = irc_recv_line(ch, &error, &l);
-
-		if (status == G_IO_STATUS_NORMAL && l->argc > 0) {
-			for (i = 0; cmd[i]; i++) {
-				if (!strcmp(l->args[0], cmd[i])) 
-					return l;
-			}
 		}
+
+		if (ret == 0) {
+			fprintf(stderr, "poll timed out ");
+			return NULL;
+		}
+
+		if (pl.revents & POLLIN)  {
+			status = irc_recv_line(ch, &error, &l);
+
+			if (status == G_IO_STATUS_NORMAL && l->argc > 0) {
+				if (debug) printf("%s ", l->args[0]);
+				if (dump) printf("%s\n", irc_line_string(l));
+				for (i = 0; cmd[i]; i++) {
+					if (!strcmp(l->args[0], cmd[i])) 
+						return l;
+				}
+			} 
+		} else if (pl.revents & POLLHUP) {
+			fprintf(stderr, "remote hup ");
+			return NULL;
+		} else if (pl.revents & POLLERR) {
+			fprintf(stderr, "remote err ");
+			return NULL;
+		}
+
 	} while(status != G_IO_STATUS_ERROR && 
 		status != G_IO_STATUS_EOF);
 	
 	return l;
 }
 
-GList *tests = NULL;
+static GList *tests = NULL;
 
 void register_test(const char *name, int (*data) (void)) 
 {
@@ -112,8 +132,6 @@ static pid_t piped_child(char *const command[], int *f_in)
 	}
 
 	*f_in = sock[0];
-
-	fcntl(sock[0], F_SETFL, O_NONBLOCK);
 
 	pid = fork();
 	if (pid == -1) {
@@ -237,7 +255,6 @@ int main(int argc, const char *argv[])
 	GList *gl;
 	int ret = 0;
 
-#ifdef HAVE_POPT_H
 	int c;
 	poptContext pc;
 	struct poptOption options[] = {
@@ -246,11 +263,11 @@ int main(int argc, const char *argv[])
 		{"tcp-port", 'p', POPT_ARG_STRING, &port, 'p', "Connect to specified TCP port (implies -I)", "PORT" },
 		{"module", 'm', POPT_ARG_STRING, NULL, 'm', "Test module to load", "MODULE.so" },
 		{"version", 'v', POPT_ARG_NONE, NULL, 'v', "Show version information"},
+		{"debug", 'd', POPT_ARG_VAL, &debug, TRUE, "Turn on debugging"},
+		{"dump", 'D', POPT_ARG_VAL, &dump, TRUE, "Print incoming traffic to stdout"},
 		POPT_TABLEEND
 	};
-#endif
-
-#ifdef HAVE_POPT_H
+	
 	pc = poptGetContext(argv[0], argc, argv, options, 0);
 
 	poptSetOtherOptionHelp(pc, "[ircdtorture options] -- /path/to/ircd [arguments...]");
@@ -267,7 +284,6 @@ int main(int argc, const char *argv[])
 			break;
 		}
 	}
-#endif
 
 	signal(SIGPIPE, SIG_IGN);
 	

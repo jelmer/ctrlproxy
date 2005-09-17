@@ -4,6 +4,10 @@ CFLAGS+=-ansi -Wall -DMODULESDIR=\"$(modulesdir)\"
 
 .PHONY: all clean distclean install 
 
+ifeq ($(WITH_GCOV),1)
+LIBS += -lgcov -ftest-coverage -fprofile-arcs
+endif
+
 all: ircdtorture $(patsubst %.c,%.so,$(wildcard test-*.c))
 
 ircdtorture: ircdtorture.o ../line.o 

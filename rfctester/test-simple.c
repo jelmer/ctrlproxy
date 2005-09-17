@@ -32,26 +32,26 @@ static int test_connect(void)
 static int test_login(void)
 {
 	GIOChannel *fd = new_conn();
-	irc_send_args(fd, "USER", "a", "a", "a", "a", NULL);
-	irc_send_args(fd, "NICK", "bla", NULL);
+	if (!irc_send_args(fd, "USER", "a", "a", "a", "a", NULL))return -1;
+	if (!irc_send_args(fd, "NICK", "bla", NULL)) return -2;
 	if (!wait_response(fd, "001")) {
 		fprintf(stderr, "No 001 sent after login -> ");
-		return -1;
+		return -3;
 	}
 	
 	if (!wait_response(fd, "002")) {
 		fprintf(stderr, "No 002 sent after login -> ");
-		return -1;
+		return -4;
 	}
 	
 	if (!wait_response(fd, "003")) {
 		fprintf(stderr, "No 003 sent after login -> ");
-		return -1;
+		return -5;
 	}
 	
 	if (!wait_response(fd, "004")) {
 		fprintf(stderr, "No 004 sent after login -> ");
-		return -1;
+		return -6;
 	}
 	g_io_channel_unref(fd);
 	return 0;
@@ -71,7 +71,7 @@ static int test_user_needmoreparams(void)
 {
 	GIOChannel *fd = new_conn();
 	irc_send_args(fd, "USER", "a", "a", NULL);
-	if (!wait_response(fd, "462")) 
+	if (!wait_response(fd, "461")) 
 		return -1;
 	g_io_channel_unref(fd);
 	return 0;

@@ -22,7 +22,8 @@
 #include "internals.h"
 #include "irc.h"
 
-struct line *irc_parse_line_args( char *origin, ... ) {
+struct line *irc_parse_line_args( char *origin, ... )
+{
 	va_list ap;
 	struct line *l;
 	va_start(ap, origin);
@@ -31,7 +32,8 @@ struct line *irc_parse_line_args( char *origin, ... ) {
 	return l;
 }
 
-struct line *irc_parse_linef( char *fmt, ... ) {
+struct line *irc_parse_linef( char *fmt, ... )
+{
 	va_list ap;
 	char *ret;
 	struct line *l;
@@ -122,7 +124,8 @@ struct line * irc_parse_line(const char *d)
 	return l;
 }
 
-gboolean irc_send_line(GIOChannel *c, const struct line *l) {
+gboolean irc_send_line(GIOChannel *c, const struct line *l) 
+{
 	char *raw;
 	GIOStatus ret;
 	gsize bytes_written;
@@ -190,7 +193,8 @@ static int requires_colon(const struct line *l)
 	}
 }
 
-char *irc_line_string(const struct line *l) {
+char *irc_line_string(const struct line *l)
+{
 	size_t len = 0; unsigned int i;
 	char *ret;
 
