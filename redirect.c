@@ -23,7 +23,7 @@
 #include "irc.h"
 
 struct query_stack {
-	struct query *query;
+	const struct query *query;
 	const struct network *network;
 	const struct client *client;	
 	struct query_stack *next;
@@ -208,6 +208,14 @@ static struct query queries[] = {
 		{ 0 },
 		{ 0 },
 		{ ERR_NEEDMOREPARAMS, ERR_ALREADYREGISTERED, 0 },
+		handle_default
+	},
+
+ /* QUIT [<quit message>] */
+	{ "QUIT", 
+		{ 0 },
+		{ 0 },
+		{ 0 },
 		handle_default
 	},
 
@@ -446,7 +454,7 @@ static struct {
 	{ 0, NULL }
 };
 
-static int is_reply(int *replies, int r)
+static int is_reply(const int *replies, int r)
 {
 	int i;
 	for(i = 0; i < 20 && replies[i]; i++) {
@@ -524,6 +532,23 @@ void redirect_response(struct network *network, struct line *l)
 	if (!c) {
 		log_network(NULL, LOG_WARNING, network, "Unable to redirect response %s", l->args[0]);
 		clients_send(network, l, NULL);
+	}
+}
+
+void redirect_clear(const struct network *n)
+{
+	struct query_stack *q, *p = NULL;
+
+	for (q = stack; q; q = q->next) {
+		if (q->network != n) {
+			p = q;
+			continue;
+		}
+
+		/* Remove from stack */
+		if(!p)stack = q->next;	
+		else p->next = q->next;
+		g_free(q);
 	}
 }
 

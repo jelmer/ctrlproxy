@@ -430,6 +430,7 @@ static gboolean close_server(struct network *n)
 	}
 
 	n->connection.state = NETWORK_CONNECTION_STATE_NOT_CONNECTED;
+	redirect_clear(n);
 
 	return TRUE;
 }
