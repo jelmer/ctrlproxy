@@ -22,6 +22,13 @@
 static struct channel_config *config_find_channel(struct network_info *ni, struct network_config *nc, const char *name)
 {
 	GList *gl;
+
+	if (nc == NULL)
+		return NULL;
+
+	if (name == NULL)
+		return NULL;
+	
 	for (gl = nc->channels; gl; gl = gl->next) {
 		struct channel_config *cc = gl->data;
 
