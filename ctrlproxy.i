@@ -110,9 +110,9 @@
 		return verify_client(self, c);
 	}
 
-	void sendToServer(struct client *from, struct line *l)
+	gboolean send(struct line *l)
 	{
-		network_send_line(self, from, l);
+		return network_send_line(self, NULL, l);
 	}
 
 	void sendToClients(struct line *l, struct client *exception = NULL) 
@@ -120,6 +120,8 @@
 		clients_send(self, l, exception);
 	}
 };
+
+%rename(_new_network_state) new_network_state;
 
 %extend network_state
 {
@@ -142,6 +144,11 @@
 	void sendState(struct network_state *s)
 	{
 		client_send_state(self, s);
+	}
+
+	gboolean send(const struct line *l) 
+	{
+		return client_send_line(self, l);
 	}
 }
 
@@ -168,11 +175,13 @@
 	}
 };
 
+%{
 struct linestack
 {
 	struct network *n;
 	linestack_marker *m;
 };
+%}
 
 %extend linestack
 {

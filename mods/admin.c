@@ -78,7 +78,7 @@ static void add_network (const struct client *c, char **args, void *userdata)
 		return;
 	}
 
-	nc = new_network_config(get_current_config());
+	nc = network_config_init(get_current_config());
 	g_free(nc->name); nc->name = g_strdup(args[1]);
 	load_network(nc);
 }
@@ -243,7 +243,7 @@ static void load_module (const struct client *c, char **args, void *userdata)
 		return;
 	}
 
-	p = new_plugin_config(get_current_config(), args[1]);
+	p = plugin_config_init(get_current_config(), args[1]);
 
 	if (load_plugin(p)) {
 		admin_out(c, "Load successful");

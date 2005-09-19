@@ -43,7 +43,7 @@ struct client {
 };
 
 /* client.c */
-G_MODULE_EXPORT struct client *new_client(struct network *, GIOChannel *, const char *desc);
+G_MODULE_EXPORT struct client *client_init(struct network *, GIOChannel *, const char *desc);
 G_MODULE_EXPORT void disconnect_client(struct client *c, const char *reason);
 G_MODULE_EXPORT gboolean client_send_args(struct client *c, ...);
 G_MODULE_EXPORT gboolean client_send_args_ex(struct client *c, const char *hm, ...);

@@ -437,7 +437,7 @@ static gboolean client_ping(gpointer user_data) {
 }
 
 
-struct client *new_client(struct network *n, GIOChannel *c, const char *desc)
+struct client *client_init(struct network *n, GIOChannel *c, const char *desc)
 {
 	struct client *client;
 

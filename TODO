@@ -2,7 +2,6 @@
 - test and fix SSL support
 - update documentation
 
-- fix SWIG build
 - finish python module hooks:
 	typedef gboolean (*filter_function) (struct line *);
 	typedef gboolean (*new_client_hook) (struct client *);

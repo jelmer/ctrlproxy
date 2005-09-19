@@ -384,7 +384,7 @@ static gboolean handle_client_data (GIOChannel *ioc, GIOCondition o, gpointer da
 						socks_reply(ioc, REP_OK, ATYP_FQDN, data[0]+1, data, 1025);
 					}
 
-					new_client(result, ioc, NULL);
+					client_init(result, ioc, NULL);
 
 					pending_clients = g_list_remove(pending_clients, cl);
 

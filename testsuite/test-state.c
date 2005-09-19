@@ -29,7 +29,7 @@ gboolean network_nick_set_hostmask(struct network_nick *, const char *);
 
 static int state_join(void)
 {
-	struct network_state *ns = new_network_state(NULL, "bla", "Gebruikersnaam", "Computernaam");
+	struct network_state *ns = network_state_init(NULL, "bla", "Gebruikersnaam", "Computernaam");
 
 	if (!ns) return -1;
 
@@ -81,7 +81,7 @@ static int state_marshall_simple(void)
 	size_t len1, len2;
 	char *data1, *data2;
 
-	s = new_network_state(NULL, "nick", "uname", "uhost");
+	s = network_state_init(NULL, "nick", "uname", "uhost");
 	data1 = network_state_encode(s, &len1);
 	t = network_state_decode(data1, len1, NULL);
 	data2 = network_state_encode(s, &len2);

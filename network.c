@@ -37,7 +37,7 @@ static void server_send_login (struct network *s)
 
 	log_network(NULL, LOG_TRACE, s, "Sending login details");
 
-	s->state = new_network_state(&s->info, s->config->nick, s->config->username, get_my_hostname());
+	s->state = network_state_init(&s->info, s->config->nick, s->config->username, get_my_hostname());
 
 	if(s->config->type == NETWORK_TCP && 
 	   s->connection.data.tcp.current_server->password) { 
@@ -530,7 +530,7 @@ static gboolean connect_server(struct network *s)
 		s->connection.data.virtual.ops = g_hash_table_lookup(virtual_network_ops, s->config->type_settings.virtual_type);
 		if (!s->connection.data.virtual.ops) return FALSE;
 
-		s->state = new_network_state(&s->info, s->config->nick, s->config->username, get_my_hostname());
+		s->state = network_state_init(&s->info, s->config->nick, s->config->username, get_my_hostname());
     	s->connection.state = NETWORK_CONNECTION_STATE_MOTD_RECVD;
 
 		if (s->connection.data.virtual.ops->init)
@@ -730,7 +730,7 @@ struct network *find_network_by_hostname(const char *hostname, guint16 port, gbo
 	{
 		struct tcp_server_config *s = g_new0(struct tcp_server_config, 1);
 		struct network_config *nc;
-		nc = new_network_config(get_current_config());
+		nc = network_config_init(get_current_config());
 
 		nc->name = g_strdup(hostname);
 		nc->type = NETWORK_TCP;

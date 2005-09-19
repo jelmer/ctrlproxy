@@ -77,8 +77,8 @@ struct ctrlproxy_config {
 };
 
 /* config.c */
-G_MODULE_EXPORT struct plugin_config *new_plugin_config(struct ctrlproxy_config *cfg, const char *name);
-G_MODULE_EXPORT struct network_config *new_network_config(struct ctrlproxy_config *cfg);
+G_MODULE_EXPORT struct plugin_config *plugin_config_init(struct ctrlproxy_config *cfg, const char *name);
+G_MODULE_EXPORT struct network_config *network_config_init(struct ctrlproxy_config *cfg);
 G_MODULE_EXPORT void save_configuration(struct ctrlproxy_config *cfg, const char *name);
 G_MODULE_EXPORT struct ctrlproxy_config *load_configuration(const char *name);
 G_MODULE_EXPORT void free_config(struct ctrlproxy_config *);

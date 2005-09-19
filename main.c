@@ -243,7 +243,7 @@ int main(int argc, const char *argv[])
 			fprintf(stderr, "Unable to find network named '%s'\n", inetd_client);
 		} else {
 			/* Find clients network by name */
-			struct client *client = new_client(n, io, "Standard I/O");
+			struct client *client = client_init(n, io, "Standard I/O");
 			client->exit_on_close = TRUE;
 		}
 	}

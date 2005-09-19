@@ -1,5 +1,7 @@
 -include Makefile.settings
 
+.PHONY: all build install clean distclean
+
 all: build libpython2.so
 
 lib%.so: %.c
@@ -24,5 +26,8 @@ clean:
 distclean: clean
 	rm -f Makefile.settings
 
-%_wrap.c: ../swig/%.i
-	$(SWIG) -I../swig -python $*.i
+%_wrap.c: ../%.i
+	$(SWIG) -I.. -I../.. -python $*.i
+
+%_wrap.c: ../../%.i
+	$(SWIG) -I../.. -python $*.i

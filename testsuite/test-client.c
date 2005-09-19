@@ -27,7 +27,7 @@ void * get_current_config() { return NULL; }
 
 static int test_client_simple(void)
 {
-	if (new_client(NULL, NULL, NULL) != NULL)
+	if (client_init(NULL, NULL, NULL) != NULL)
 		return -1;
 
 	return 0;

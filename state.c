@@ -742,7 +742,7 @@ void state_handle_data(struct network_state *s, struct line *l)
 	}
 }
 
-struct network_state *new_network_state(struct network_info *info, const char *nick, const char *username, const char *hostname)
+struct network_state *network_state_init(struct network_info *info, const char *nick, const char *username, const char *hostname)
 {
 	struct network_state *state = g_new0(struct network_state, 1);
 	state->info = info;

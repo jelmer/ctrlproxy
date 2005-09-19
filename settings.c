@@ -171,7 +171,7 @@ static void config_load_plugin(struct ctrlproxy_config *cfg, xmlNodePtr root)
 	struct plugin_config *p;
 	
 	tmp = xmlGetProp(root, "file");
-	p = new_plugin_config(cfg, tmp);
+	p = plugin_config_init(cfg, tmp);
 	xmlFree(tmp);
 
 	if (xmlHasProp(root, "autoload")) {
@@ -256,7 +256,7 @@ static struct network_config *config_load_network(struct ctrlproxy_config *cfg, 
 	xmlNodePtr cur;
 	char *tmp;
 	struct network_config *n;
-	n = new_network_config(cfg);
+	n = network_config_init(cfg);
 
 	if ((tmp = xmlGetProp(root, "autoconnect"))) {
 		if (atoi(tmp)) n->autoconnect = TRUE;
@@ -365,7 +365,7 @@ struct ctrlproxy_config *load_configuration(const char *file)
 	return cfg;
 }
 
-struct network_config *new_network_config(struct ctrlproxy_config *cfg) 
+struct network_config *network_config_init(struct ctrlproxy_config *cfg) 
 {
 	struct network_config *s = g_new0(struct network_config, 1);
 
@@ -380,7 +380,7 @@ struct network_config *new_network_config(struct ctrlproxy_config *cfg)
 	return s;
 }
 
-struct plugin_config *new_plugin_config(struct ctrlproxy_config *cfg, const char *name)
+struct plugin_config *plugin_config_init(struct ctrlproxy_config *cfg, const char *name)
 {
 	struct plugin_config *p = g_new0(struct plugin_config, 1);
 

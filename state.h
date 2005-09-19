@@ -98,13 +98,12 @@ struct network_state
 };
 
 /* state.c */
-G_MODULE_EXPORT struct network_state *new_network_state(struct network_info *info, const char *nick, const char *username, const char *hostname);
+G_MODULE_EXPORT struct network_state *network_state_init(struct network_info *info, const char *nick, const char *username, const char *hostname);
 G_MODULE_EXPORT void free_network_state(struct network_state *);
 
 G_MODULE_EXPORT struct channel_state *find_channel(struct network_state *st, const char *name);
 G_MODULE_EXPORT struct channel_nick *find_channel_nick(struct channel_state *c, const char *name);
 G_MODULE_EXPORT struct network_nick *find_network_nick(struct network_state *c, const char *name);
-G_MODULE_EXPORT struct linestack_context *linestack_new_by_network(struct network *);
 G_MODULE_EXPORT gboolean client_send_state(struct client *, struct network_state *);
 G_MODULE_EXPORT int is_channelname(const char *name, struct network_info *s);
 G_MODULE_EXPORT int is_prefix(char p, struct network_info *n);

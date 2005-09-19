@@ -75,7 +75,7 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition condition, gpo
 
 		log_network ("listener", LOG_INFO, listener->network, "Client successfully authenticated");
 
-		new_client(listener->network, c, NULL);
+		client_init(listener->network, c, NULL);
 
 		free_line(l); 
 		return FALSE;
@@ -200,7 +200,7 @@ void free_listener(struct listener *l)
 	g_free(l);
 }
 
-struct listener *new_listener(const char *address, const char *port)
+struct listener *listener_init(const char *address, const char *port)
 {
 	struct listener *l = g_new0(struct listener, 1);
 	l->address = g_strdup(address);
@@ -257,7 +257,7 @@ static gboolean load_config(struct plugin *p, xmlNodePtr conf)
 
 		address = xmlGetProp(cur, "address");
 
-		l = new_listener(address, port);
+		l = listener_init(address, port);
 
 		xmlFree(address);
 		xmlFree(port);
