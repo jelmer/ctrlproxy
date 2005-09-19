@@ -24,8 +24,8 @@
 
 struct query_stack {
 	struct query *query;
-	struct network *network;
-	struct client *client;	
+	const struct network *network;
+	const struct client *client;	
 	struct query_stack *next;
 };
 
@@ -38,11 +38,11 @@ struct query {
 	int errors[20];
 	/* Should add this query to the stack. return TRUE if this has 
 	 * been done successfully, FALSE otherwise */
-	int (*handle) (struct line *, struct client *c, struct query *);
+	int (*handle) (const struct line *, const struct network *n, const struct client *c, struct query *);
 };
 
-static int handle_default(struct line *, struct client *c, struct query *);
-static int handle_topic(struct line *, struct client *c, struct query *);
+static int handle_default(const struct line *, const struct network *n, const struct client *c, struct query *);
+static int handle_topic(const struct line *, const struct network *n, const struct client *c, struct query *);
 
 static struct query queries[] = {
 /* Commands that get a one-client reply: 
@@ -200,6 +200,14 @@ static struct query queries[] = {
 		{ 0 },
 		{ ERR_NONICKNAMEGIVEN, ERR_ERRONEUSNICKNAME, ERR_NICKNAMEINUSE,
 	      ERR_UNAVAILRESOURCE, ERR_RESTRICTED, ERR_NICKCOLLISION, 0 },
+		handle_default
+	},
+
+ /* USER <username> <hostname> <servername> <realname> */
+	{ "USER",
+		{ 0 },
+		{ 0 },
+		{ ERR_NEEDMOREPARAMS, ERR_ALREADYREGISTERED, 0 },
 		handle_default
 	},
 
@@ -423,7 +431,8 @@ static void handle_464(struct network *n, struct line *l)
 }
 
 /* List of responses that should be sent to all clients */
-static int response_all[] = { RPL_NOWAWAY, RPL_UNAWAY, 0 };
+static int response_all[] = { RPL_NOWAWAY, RPL_UNAWAY, RPL_NAMREPLY, 
+	RPL_ENDOFNAMES, 0 };
 static int response_none[] = { ERR_NOMOTD, RPL_ENDOFMOTD, 0 };
 static struct {
 	int response;
@@ -458,15 +467,15 @@ static struct query *find_query(char *name)
 
 void redirect_response(struct network *network, struct line *l)
 {
-	struct query_stack *s = stack, *p = NULL;
-	struct client *c = NULL;
+	struct query_stack *s, *p = NULL;
+	const struct client *c = NULL;
 	int n;
 	int i;
 
 	n = atoi(l->args[0]);
 
 	/* Find a request that this response is a reply to */
-	while(s) {
+	for (s = stack; s; s = s->next) {
 		if(s->network == network && 
 		   (is_reply(s->query->replies, n) || 
 			is_reply(s->query->errors, n) ||
@@ -484,9 +493,9 @@ void redirect_response(struct network *network, struct line *l)
 				g_free(s);
 			}
 
-			break;
+			return;
 		}
-		p = s; s = s->next;
+		p = s; 
 	}
 
 	/* See if this is a response that should be sent to all clients */
@@ -504,6 +513,7 @@ void redirect_response(struct network *network, struct line *l)
 		}
 	}
 
+	/* Handle response using custom function */
 	for (i = 0; response_handler[i].handler; i++) {
 		if (response_handler[i].response == n) {
 			response_handler[i].handler(network, l);
@@ -517,24 +527,29 @@ void redirect_response(struct network *network, struct line *l)
 	}
 }
 
-void redirect_record(struct client *c, struct line *l)
+void redirect_record(const struct network *n, const struct client *c, const struct line *l)
 {
 	struct query *q;
 
 	q = find_query(l->args[0]);
 	if(!q) {
-		log_client(NULL, LOG_WARNING, c, "Unknown command from client: %s", l->args[0]);
+		if (c) {
+			log_client(NULL, LOG_WARNING, c, "Unknown command from client: %s", l->args[0]);
+		} else {
+			log_network(NULL, LOG_WARNING, n, "Sending unknown command '%s'", l->args[0]);
+		}
 		return;
 	}
 
+
 	/* Push it up the stack! */
-	q->handle(l, c, q);
+	q->handle(l, n, c, q);
 }
 
-static int handle_default(struct line *l, struct client *c, struct query *q)
+static int handle_default(const struct line *l, const struct network *n, const struct client *c, struct query *q)
 {
 	struct query_stack *s = g_new(struct query_stack,1);
-	s->network = c->network;
+	s->network = n;
 	s->client = c;
 	s->query = q;
 	s->next = stack;
@@ -542,8 +557,8 @@ static int handle_default(struct line *l, struct client *c, struct query *q)
 	return 1;
 }
 
-static int handle_topic(struct line *l, struct client *c, struct query *q)
+static int handle_topic(const struct line *l, const struct network *n, const struct client *c, struct query *q)
 {
 	if(l->args[2])return 0;
-	return handle_default(l,c,q);
+	return handle_default(l,n,c,q);
 }

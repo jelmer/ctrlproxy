@@ -1,6 +1,4 @@
 2.7 showstoppers:
-- handle some currently unhandled responses (especially wrt JOIN's)
- - Special handler for join stuff
 - test and fix SSL support
 - update documentation
 

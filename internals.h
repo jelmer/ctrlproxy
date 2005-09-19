@@ -87,7 +87,7 @@ void log_network_line(const struct network *n, const struct line *l, gboolean in
 void log_client_line(const struct client *c, const struct line *l, gboolean incoming);
 
 /* redirect.c */
-void redirect_record(struct client *c, struct line *l);
+void redirect_record(const struct network *n, const struct client *c, const struct line *l);
 void redirect_response(struct network *n, struct line *l);
 
 /* cache.c */

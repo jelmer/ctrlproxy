@@ -66,7 +66,7 @@ static void identify_me(struct network *network, char *nick)
 		network_send_args(network, "PRIVMSG", nickserv_n, raw, NULL);
 		g_free(raw);
 	} else {
-		log_network("nickserv", LOG_INFO, network, "Not identifying for %s; no entries found", nick);
+		log_network("nickserv", LOG_INFO, network, "No password known for `%s'", nick);
 	}
 }
 

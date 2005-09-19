@@ -46,7 +46,7 @@ char *list_make_string(GList *list)
 	return ret;
 }
 
-char *ctrlproxy_path(char *part)
+char *ctrlproxy_path(const char *part)
 {
 	char *p, *p1;
 	p = g_strdup_printf("%s/.ctrlproxy", g_get_home_dir());

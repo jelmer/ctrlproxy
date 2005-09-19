@@ -25,6 +25,7 @@
 #include "ctrlproxy.h"
 
 gboolean network_nick_set_nick(struct network_nick *, const char *);
+gboolean network_nick_set_hostmask(struct network_nick *, const char *);
 
 static int state_join(void)
 {

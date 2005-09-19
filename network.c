@@ -197,6 +197,9 @@ gboolean network_send_line(struct network *s, const struct client *c, const stru
 	l.origin = NULL;		/* Never send origin to the server */
 
 	log_network_line(s, &l, FALSE);
+
+	redirect_record(s, c, &l);
+
 	switch (s->config->type) {
 	case NETWORK_TCP:
 		return irc_send_line(s->connection.data.tcp.outgoing, &l);
@@ -606,7 +609,7 @@ gboolean disconnect_network(struct network *s)
 	return close_server(s);
 }
 
-int verify_client(struct network *s, struct client *c)
+int verify_client(const struct network *s, const struct client *c)
 {
 	GList *gl = s->clients;
 	while(gl) {
