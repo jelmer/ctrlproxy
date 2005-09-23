@@ -121,13 +121,11 @@
 	}
 };
 
-%rename(_new_network_state) new_network_state;
-
 %extend network_state
 {
-	network_state(const char *nick, const char *username, const char *hostname) 
+	network_state(struct network_info *info, const char *nick, const char *username, const char *hostname) 
 	{
-		return new_network_state(nick, username, hostname);
+		return network_state_init(info, nick, username, hostname);
 	}
 
 	~network_state() {

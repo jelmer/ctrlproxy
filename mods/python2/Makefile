@@ -14,7 +14,7 @@ build: ctrlproxy_wrap.c admin_wrap.c listener_wrap.c
 	LDFLAGS="$(LDFLAGS)" CFLAGS="$(CFLAGS)" $(PYTHON) setup.py build
 
 install: all
-	$(PYTHON) setup.py install
+	$(PYTHON) setup.py install --root="$(DESTDIR)"
 	$(INSTALL) libpython2.so $(DESTDIR)$(modulesdir)
 
 clean:

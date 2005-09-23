@@ -7,10 +7,11 @@
 %immutable listener::port;
 %nodefault;
 %rename(Listener) listener;
-%ignore new_listener;
 %include "../listener.h";
 %extend listener {
-	listener(int port);
+	listener(int port, const char *address = NULL) { 
+		return listener_init(address, port);
+	}
 	
 	gboolean start() {
 		return start_listener(self);

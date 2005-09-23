@@ -535,20 +535,24 @@ void redirect_response(struct network *network, struct line *l)
 	}
 }
 
-void redirect_clear(const struct network *n)
+void redirect_clear(const struct network *net)
 {
-	struct query_stack *q, *p = NULL;
+	struct query_stack *q, *p = NULL, *n;
 
-	for (q = stack; q; q = q->next) {
-		if (q->network != n) {
+	q = stack;
+	while (q) {
+		if (q->network != net) {
 			p = q;
+			q = q->next;
 			continue;
 		}
 
 		/* Remove from stack */
 		if(!p)stack = q->next;	
 		else p->next = q->next;
+		n = q->next;
 		g_free(q);
+		q = n;
 	}
 }
 
