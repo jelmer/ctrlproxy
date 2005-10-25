@@ -1,8 +1,11 @@
-- 		Welcome to the ControlProxy! 
-- URL: http://ctrlproxy.vernstok.nl/
+-      Welcome to a ctrlproxy server! 
 - 
+- This is a placeholder motd.
+- 
+- This is a proxy IRC server running ctrlproxy. 
 - (C) 2002-2005 by Jelmer Vernooij <jelmer@vernstok.nl> and others.
 - For a list of contributions, see AUTHORS.
+- More information is available at http://ctrlproxy.vernstok.nl/
 - 
 - Use /CTRLPROXY HELP or /MSG CTRLPROXY HELP to get 
 - a list of available commands.
