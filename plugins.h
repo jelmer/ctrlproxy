@@ -39,6 +39,7 @@ G_MODULE_EXPORT struct plugin *load_plugin(struct plugin_config *);
 G_MODULE_EXPORT gboolean unload_plugin(struct plugin *);
 G_MODULE_EXPORT gboolean plugin_loaded(const char *name);
 G_MODULE_EXPORT GList *get_plugin_list(void);
+G_MODULE_EXPORT struct plugin *plugin_by_config(struct plugin_config *pc);
 
 #if defined(_WIN32) && !defined(CTRLPROXY_CORE_BUILD)
 G_MODULE_EXPORT gboolean fini_plugin(struct plugin *p);

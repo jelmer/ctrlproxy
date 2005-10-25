@@ -29,6 +29,22 @@ GList *plugins = NULL;
 STATIC_MODULE_DECLARES
 static struct plugin_ops *builtin_modules[] = { STATIC_MODULES NULL };
 
+struct plugin *plugin_by_config(struct plugin_config *pc)
+{
+	GList *gl;
+	for (gl = plugins; gl; gl = gl->next) {
+		struct plugin *p = (struct plugin *)gl->data;
+		g_assert(p);
+		g_assert(p->ops);
+		g_assert(p->ops->name);
+		if (!strcmp(p->ops->name, pc->path)) 
+			return p;
+	}
+
+	return NULL;
+}
+
+
 gboolean unload_plugin(struct plugin *p)
 {
 	/* Run exit function if present */
@@ -139,7 +155,8 @@ struct plugin *load_plugin(struct plugin_config *pc)
 	return p;
 }
 
-void fini_plugins() {
+void fini_plugins() 
+{
 	while (plugins) 
 	{
 		struct plugin *p = plugins->data;
