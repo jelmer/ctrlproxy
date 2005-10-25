@@ -38,8 +38,6 @@ char *mode2string(char modes[255])
 	}
 }
 
-
-
 static void gen_replication_channel(struct client *c, struct channel_state *ch)
 {
 	struct channel_nick *n;
@@ -55,8 +53,6 @@ static void gen_replication_channel(struct client *c, struct channel_state *ch)
 
 	if(ch->topic) {
 		client_send_response(c, RPL_TOPIC, ch->name, ch->topic, NULL);
-	} else {
-		client_send_response(c, RPL_NOTOPIC, ch->name, "No topic set", NULL);
 	}
 
 	for (nl = ch->nicks; nl; nl = nl->next) {

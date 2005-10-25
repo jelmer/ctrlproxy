@@ -123,6 +123,30 @@ static gboolean client_try_cache_mode(struct client *c, struct line *l)
 	return TRUE;
 }
 
+static gboolean client_try_cache_topic(struct client *c, struct line *l)
+{
+	struct channel_state *ch;
+
+	if (l->argc < 2) return FALSE;
+	
+	/* Only optimize easy queries... */
+	if (strchr(l->args[1], ',')) return FALSE;
+
+	/* No set requests */
+	if (l->args[2]) return FALSE;
+	
+	ch = find_channel(c->network->state, l->args[1]);
+	if (!ch) return FALSE;
+
+	if(ch->topic) {
+		client_send_response(c, RPL_TOPIC, ch->name, ch->topic, NULL);
+	} else {
+		client_send_response(c, RPL_NOTOPIC, ch->name, "No topic set", NULL);
+	}
+
+	return TRUE;
+}
+
 static gboolean client_try_cache_names(struct client *c, struct line *l)
 {
 	struct channel_state *ch;
@@ -166,6 +190,10 @@ gboolean client_try_cache(struct client *c, struct line *l)
 
 	if (!g_strcasecmp(l->args[0], "NAMES")) {
 		return client_try_cache_names(c, l);
+	}
+
+	if (!g_strcasecmp(l->args[0], "TOPIC")) {
+		return client_try_cache_topic(c, l);
 	}
 
 	return FALSE;
