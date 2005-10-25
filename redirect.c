@@ -457,6 +457,8 @@ static struct {
 static int is_reply(const int *replies, int r)
 {
 	int i;
+	g_assert(replies);
+
 	for(i = 0; i < 20 && replies[i]; i++) {
 		if(replies[i] == r) return 1;
 	}
@@ -479,6 +481,9 @@ void redirect_response(struct network *network, struct line *l)
 	const struct client *c = NULL;
 	int n;
 	int i;
+	
+	g_assert(network);
+	g_assert(l->args[0]);
 
 	n = atoi(l->args[0]);
 
@@ -540,6 +545,8 @@ void redirect_clear(const struct network *net)
 {
 	struct query_stack *q, *p = NULL, *n;
 
+	g_assert(net);
+
 	q = stack;
 	while (q) {
 		if (q->network != net) {
@@ -560,6 +567,10 @@ void redirect_clear(const struct network *net)
 void redirect_record(const struct network *n, const struct client *c, const struct line *l)
 {
 	struct query *q;
+
+	g_assert(n);
+	g_assert(l);
+	g_assert(l->args[0]);
 
 	q = find_query(l->args[0]);
 	if(!q) {

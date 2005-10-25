@@ -9,7 +9,10 @@ config.status
 configure
 ctrlproxy
 ctrlproxy.pc
-doc/Makefile
+doc/*.1
+doc/*.5
+doc/Makefile.settings
+doc/modules.list.xml
 mods/*.so
 mods/gnutls/*.so
 mods/gnutls/Makefile.settings
@@ -19,7 +22,14 @@ mods/openssl/*.so
 mods/openssl/Makefile.settings
 mods/python/*.so
 mods/python/Makefile
-mods/python2/Makefile
+mods/python2/*_wrap.c
+mods/python2/Makefile.settings
+mods/python2/admin.py
+mods/python2/build
+mods/python2/ctrlproxy.py
+mods/python2/libpython2.so
+mods/python2/listener.py
+mods/python2/usr
 mods/socket/*.so
 mods/socket/Makefile
 po/*.gmo
@@ -31,3 +41,5 @@ po/ctrlproxy.pot
 po/stamp-po
 rfctester/ircdtorture
 rfctester/test-*.so
+testsuite/*.so
+testsuite/ctrlproxyrc.torture
