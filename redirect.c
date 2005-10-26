@@ -410,6 +410,14 @@ static struct query queries[] = {
 		handle_default
 	},
 
+/* PONG */
+	{ "PONG",
+		{ 0 },
+		{ 0 },
+		{ ERR_NOORIGIN, ERR_NOSUCHSERVER, 0 },
+		handle_default
+	},
+
 	{ NULL }
 };
 
