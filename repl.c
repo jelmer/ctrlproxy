@@ -83,6 +83,8 @@ gboolean client_send_state(struct client *c, struct network_state *state)
 	g_assert(c);
 	g_assert(state);
 
+    log_client(NULL, LOG_TRACE, c, "Sending state (%d channels)", g_list_length(state->channels));
+
 	for (cl = state->channels; cl; cl = cl->next) {
 		ch = (struct channel_state *)cl->data;
 

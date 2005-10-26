@@ -24,6 +24,7 @@ static gboolean none_replicate(struct client *c, void *userdata)
 {
 	if (c->network->state)
 		client_send_state(c, c->network->state);
+
 	return TRUE;
 }
 

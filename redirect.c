@@ -413,6 +413,14 @@ static struct query queries[] = {
 	{ NULL }
 };
 
+static struct query unknown_query = { 
+	NULL,
+	{ 0 },
+	{ 0 },
+	{ ERR_UNKNOWNCOMMAND, 0 },
+	handle_default
+};
+
 static void handle_465(struct network *n, struct line *l)
 {
 	log_network(NULL, LOG_ERROR, n, "Banned from server: %s", l->args[1]);
@@ -579,9 +587,9 @@ void redirect_record(const struct network *n, const struct client *c, const stru
 		} else {
 			log_network(NULL, LOG_WARNING, n, "Sending unknown command '%s'", l->args[0]);
 		}
-		return;
-	}
 
+		q = &unknown_query;
+	}
 
 	/* Push it up the stack! */
 	q->handle(l, n, c, q);

@@ -212,23 +212,24 @@ struct channel_state *find_channel(struct network_state *st, const char *name)
 	GList *cl;
 	g_assert(st);
 	g_assert(name);
-	cl = st->channels;
-	while(cl) {
+	for (cl = st->channels; cl; cl = cl->next) {
 		struct channel_state *c = (struct channel_state *)cl->data;
-		if(!irccmp(st->info, c->name, name)) return c;
-		cl = g_list_next(cl);
+
+		if(!irccmp(st->info, c->name, name)) 
+			return c;
 	}
 	return NULL;
 }
 
-struct channel_state  *find_add_channel(struct network_state *st, char *name) 
+struct channel_state *find_add_channel(struct network_state *st, char *name) 
 {
 	struct channel_state *c;
 	g_assert(st);
 	g_assert(name);
 	
 	c = find_channel(st, name);
-	if(c)return c;
+	if(c)
+		return c;
 	c = g_new0(struct channel_state ,1);
 	c->network = st;
 	st->channels = g_list_append(st->channels, c);
@@ -343,6 +344,7 @@ static void handle_join(struct network_state *s, struct line *l)
 	for (i = 0; channels[i]; i++) {
 		/* Someone is joining a channel the user is on */
 		c = find_add_channel(s, channels[i]);
+		g_assert(s->channels);
 		ni = find_add_channel_nick(c, line_get_nick(l));
 		network_nick_set_hostmask(ni->global_nick, l->origin);
 
@@ -470,7 +472,8 @@ static void handle_no_topic(struct network_state *s, struct line *l)
 
 static void handle_namreply(struct network_state *s, struct line *l) 
 {
-	char *names, *tmp, *t;
+	gchar **names;
+	int i;
 	struct channel_state *c = find_channel(s, l->args[3]);
 	if(!c) {
 		log_network_state(s, LOG_WARNING, "Can't add names to %s: channel not found", l->args[3]);
@@ -481,14 +484,12 @@ static void handle_namreply(struct network_state *s, struct line *l)
 		free_names(c);
 		c->namreply_started = TRUE;
 	}
-	tmp = names = g_strdup(l->args[4]);
-	while((t = strchr(tmp, ' '))) {
-		*t = '\0';
-		if(tmp[0])find_add_channel_nick(c, tmp);
-		tmp = t+1;
+	names = g_strsplit(l->args[4], " ", -1);
+	for (i = 0; names[i]; i++) {
+		if (strlen(names[i]) == 0) continue;
+		find_add_channel_nick(c, names[i]);
 	}
-	if(tmp[0])find_add_channel_nick(c, tmp);
-	g_free(names);
+	g_strfreev(names);
 }
 
 static void handle_end_names(struct network_state *s, struct line *l) 
