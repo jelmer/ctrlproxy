@@ -6,6 +6,7 @@
  - examples
 - testing
 - fix issue with loading state from linestack_file
+- fix autosave for plugins
 
 next minor release (2.7.1):
 - properly expand second argument of PRIVMSG in log_irssi and log_custom

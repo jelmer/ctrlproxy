@@ -418,6 +418,14 @@ static struct query queries[] = {
 		handle_default
 	},
 
+/* NOTICE */
+	{ "NOTICE",
+		{ 0 },
+		{ 0 },
+		{ 0 },
+		handle_default
+	},
+
 	{ NULL }
 };
 
