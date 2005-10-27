@@ -111,7 +111,7 @@ static char *get_monthname(struct network *n, struct line *l, gboolean case_sens
 }
 
 static char *get_nick(struct network *n, struct line *l, gboolean case_sensitive) {
-	if(line_get_nick(l)) {
+	if (l->origin) {
 		if(case_sensitive) return g_ascii_strdown(line_get_nick(l), -1);
 		else return g_strdup(line_get_nick(l)); 
 	}
@@ -330,8 +330,8 @@ static void file_write_target(struct network *network, const char *n, struct lin
 	if(!fmt) return;
 
 	if(!irccmp(network->state->info, network->state->me.nick, l->args[1])) {
-		if(line_get_nick(l)) { t = g_strdup(line_get_nick(l)); }
-		else { t = g_strdup("_messages_"); }
+		if (l->origin) t = g_strdup(line_get_nick(l));
+		else t = g_strdup("_messages_");
 	} else {
 		t = g_strdup(l->args[1]);
 	}
@@ -376,8 +376,8 @@ static void file_write_channel_query(struct network *network, const char *n, str
 	GList *gl;
 	struct network_nick *nn;
 
+	if (!l->origin) return;
 	nick = line_get_nick(l);
-	if(!nick)return;
 
 	fmt = g_hash_table_lookup(fmts, n);
 	if(!fmt) return;
@@ -413,7 +413,8 @@ static gboolean log_custom_data(struct network *network, struct line *l, enum da
 	const char *nick = NULL;
 	char *user = NULL;
 	if(!l->args || !l->args[0])return TRUE;
-	nick = line_get_nick(l);
+
+	if (l->origin) nick = line_get_nick(l);
 	if(user){ *user = '\0';user++; }
 
 	/* Loop thru possible values for %@ */

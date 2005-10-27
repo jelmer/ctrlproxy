@@ -23,14 +23,14 @@ static struct channel_config *config_find_channel(struct network_info *ni, struc
 {
 	GList *gl;
 
-	if (nc == NULL)
-		return NULL;
-
-	if (name == NULL)
-		return NULL;
+	g_assert(ni);
+	g_assert(nc);
+	g_assert(name);
 	
 	for (gl = nc->channels; gl; gl = gl->next) {
 		struct channel_config *cc = gl->data;
+
+		g_assert(cc->name);
 
 		if (!irccmp(ni, cc->name, name))
 			return cc;
