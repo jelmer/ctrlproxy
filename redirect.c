@@ -177,7 +177,7 @@ static struct query queries[] = {
 
 /* JOIN <channel>{,<channel>} [<key>{,<key>}] */
 	{"JOIN",
-		{ 0 },
+		{ RPL_CREATIONTIME, 0 },
 		{ RPL_TOPIC, 0 },
 		{ ERR_NEEDMOREPARAMS, ERR_BANNEDFROMCHAN,
 		  ERR_INVITEONLYCHAN, ERR_BADCHANNELKEY,

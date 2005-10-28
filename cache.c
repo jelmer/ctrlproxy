@@ -53,7 +53,7 @@ static void client_send_nameslist(struct client *client, struct channel_state *c
 		g_free(tmp);
 	}
 
-	client_send_response(client, RPL_ENDOFNAMES, "End of /NAMES list", NULL);
+	client_send_response(client, RPL_ENDOFNAMES, channel->name, "End of /NAMES list", NULL);
 }
 
 
@@ -71,7 +71,7 @@ static void client_send_banlist(struct client *client, struct channel_state *cha
 		client_send_response(client, RPL_BANLIST, channel->name, be->hostmask, NULL);
 	}
 
-	client_send_response(client, RPL_ENDOFBANLIST, "End of channel ban list", NULL);
+	client_send_response(client, RPL_ENDOFBANLIST, channel->name, "End of channel ban list", NULL);
 }
 
 static gboolean client_try_cache_join(struct client *c, struct line *l)
