@@ -3,7 +3,11 @@ Written by Jelmer Vernooij, 2003
 
 General
 -------
+The core of ctrlproxy is in the top source directory, standard module
+are in mods/.
 
+Writing Modules
+---------------
 As has been said in the introduction, ctrlproxy 
 is easily extendible. At the time of writing, there 
 are nine modules available.

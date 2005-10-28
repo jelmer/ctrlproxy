@@ -323,25 +323,23 @@ static gboolean welcome_client(struct client *client)
 
 	g_assert(client->nick);
 	g_assert(client->network);
-	g_assert(client->network->state);
 
-	if (g_strcasecmp(client->nick, client->network->state->me.nick)) {
-		/* Tell the client our his/her real nick */
-		char *tmp = g_strdup_printf("%s!~%s@%s", 
-									client->nick, 
-									client->username, 
-									client->hostname);
-		client_send_args_ex(client, tmp, "NICK", client->network->state->me.nick, NULL); 
-		g_free(tmp);
+	if (client->network->state) {
+		if (g_strcasecmp(client->nick, client->network->state->me.nick)) {
+			/* Tell the client our his/her real nick */
+			char *tmp = g_strdup_printf("%s!~%s@%s", 
+										client->nick, 
+										client->username, 
+										client->hostname);
+			client_send_args_ex(client, tmp, "NICK", client->network->state->me.nick, NULL); 
+			g_free(tmp);
 
-		/* Try to get the nick the client specified */
-		if (!client->network->config->ignore_first_nick) {
-			network_send_args(client->network, "NICK", client->nick, NULL);
+			/* Try to get the nick the client specified */
+			if (!client->network->config->ignore_first_nick) {
+				network_send_args(client->network, "NICK", client->nick, NULL);
+			}
 		}
 	}
-
-	g_free(client->nick);
-	client->nick = NULL;
 
 	if(!new_client_hook_execute(client)) {
 		disconnect_client(client, "Refused by client connect hook");

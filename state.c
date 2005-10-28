@@ -820,6 +820,9 @@ void free_network_nick(struct network_state *st, struct network_nick *nn)
 
 void free_network_state(struct network_state *state)
 {
+	if (state == NULL)
+		return;
+
 	while(state->channels)
 	{
 		free_channel((struct channel_state *)state->channels->data);

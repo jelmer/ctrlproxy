@@ -43,3 +43,4 @@ rfctester/ircdtorture
 rfctester/test-*.so
 testsuite/*.so
 testsuite/ctrlproxyrc.torture
+testsuite/torture

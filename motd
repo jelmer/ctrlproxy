@@ -1,7 +1,8 @@
-Welcome to the ControlProxy!
+Welcome to the ControlProxy! 
+URL: http://ctrlproxy.vernstok.nl/
 
-(C) 2002-2005 by Jelmer Vernooij <jelmer@vernstok.nl> and others
-  for a list of contributions, see AUTHORS
+(C) 2002-2005 by Jelmer Vernooij <jelmer@vernstok.nl> and others.
+For a list of contributions, see AUTHORS.
 
 Use /CTRLPROXY HELP or /MSG CTRLPROXY HELP to get 
 a list of available commands.

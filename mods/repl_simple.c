@@ -24,7 +24,13 @@ static GHashTable *simple_backlog = NULL;
 
 static void change_nick(struct client *c, const char *newnick) 
 {
-	struct line *l = irc_parse_line_args(c->network->state->me.hostmask, "NICK", newnick, NULL);
+	struct line *l;
+	g_assert(c);
+	g_assert(newnick);
+
+	g_assert(c->network->state);
+	
+	l = irc_parse_line_args(c->network->state->me.hostmask, "NICK", newnick, NULL);
 	client_send_line(c, l);
 	free_line(l);
 }
@@ -48,8 +54,10 @@ static gboolean simple_replicate(struct client *c, void *userdata)
 
 	m = g_hash_table_lookup(simple_backlog, c->network);
 	ns = linestack_get_state(c->network, m);
-	client_send_state(c, ns);
-	change_nick(c, ns->me.nick);
+	if (ns) {
+		client_send_state(c, ns);
+		change_nick(c, ns->me.nick);
+	}
 	free_network_state(ns);
 	linestack_send(c->network, m, NULL, c);
 	return TRUE;

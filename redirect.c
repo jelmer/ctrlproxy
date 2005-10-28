@@ -1,6 +1,6 @@
 /* 
 	ctrlproxy: A modular IRC proxy
-	mux: Send numerics to the right places
+	Send numerics to the right places
 	(c) 2002-2005 Jelmer Vernooij <jelmer@nl.linux.org>
 
 	This program is free software; you can redistribute it and/or modify
