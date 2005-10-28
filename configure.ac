@@ -25,6 +25,21 @@ AC_SUBST(VERSION)
 AC_CONFIG_SRCDIR([line.c])
 AC_CONFIG_HEADER([config.h])
 
+AC_ARG_WITH(module-default,
+[ --with-module-default={shared,static,not} Default module output type ],
+[ 
+ 	case "$withval" in
+		shared|static|not) module_default="$withval" ;;
+		*)
+		AC_MSG_ERROR([Unknown module output type $withval])
+		;;
+	esac
+],
+[ module_default="shared" ]
+)
+
+
+
 # Checks for programs.
 AC_PROG_CC
 AC_PROG_INSTALL
@@ -114,24 +129,8 @@ fi
 sinclude(doc/config.m4)
 AC_CONFIG_FILES(doc/Makefile.settings)
 
-AC_DEFINE_UNQUOTED(STATIC_MODULES,[$STATIC_MODULES_LIST],[List of statically built modules])
-AC_DEFINE_UNQUOTED(STATIC_MODULE_DECLARES,[$STATIC_MODULE_DECLARES],[Declarations for the static modules])
-
 AC_SUBST(EXTRA_INSTALL_TARGETS)
 test -f doc/most && EXTRA_INSTALL_TARGETS="install-doc"
-
-AC_ARG_WITH(module-default,
-[ --with-module-default={shared,static,not} Default module output type ],
-[ 
- 	case "$withval" in
-		shared|static|not) module_default="$withval" ;;
-		*)
-		AC_MSG_ERROR([Unknown module output type $withval])
-		;;
-	esac
-],
-[ module_default="shared" ]
-)
 
 BINS="ctrlproxy$ac_cv_exeext"
 DEFMODULE(log_irssi)
@@ -155,6 +154,9 @@ DEFMODULE(debug)
 DEFMODULE(socks)
 DEFMODULE(listener)
 DEFMODULE(autosend)
+
+AC_DEFINE_UNQUOTED(STATIC_MODULES,[$STATIC_MODULES_LIST],[List of statically built modules])
+AC_DEFINE_UNQUOTED(STATIC_MODULE_DECLARES,[$STATIC_MODULE_DECLARES],[Declarations for the static modules])
 
 AC_SUBST(BINS)
 AC_SUBST(MODS_STATIC)
