@@ -35,42 +35,26 @@ AC_ARG_ENABLE(gcov,
 [ WITH_GCOV=1 ], [ WITH_GCOV=0 ])
 AC_SUBST(WITH_GCOV)
 
-AC_ARG_WITH(module-default,
-[ --with-module-default={shared,static,not} Default module output type ],
-[ 
- 	case "$withval" in
-		shared|static|not) module_default="$withval" ;;
-		*)
-		AC_MSG_ERROR([Unknown module output type $withval])
-		;;
-	esac
-],
-[ module_default="shared" ]
-)
+# Checks for header files.
+AC_HEADER_DIRENT
+AC_HEADER_STDC
+AC_HEADER_TIME
+AC_CHECK_HEADERS(
+[stdlib.h string.h unistd.h popt.h execinfo.h sys/time.h sys/socket.h])
 
+# Checks for typedefs, structures, and compiler characteristics.
+AC_C_CONST
+AC_TYPE_SIZE_T
+AC_STRUCT_TM
+AC_TYPE_UID_T
 
-BINS="ctrlproxy$ac_cv_exeext"
-DEFMODULE(log_irssi)
-DEFMODULE(ctcp)
-DEFMODULE(auto_away)
-DEFMODULE(admin)
-DEFMODULE(noticelog)
-DEFMODULE(nickserv)
-DEFMODULE(log_custom)
-DEFMODULE(antiflood)
-DEFMODULE(repl_simple)
-DEFMODULE(repl_command)
-DEFMODULE(repl_highlight)
-DEFMODULE(linestack_file)
-DEFMODULE(report_time)
-DEFMODULE(repl_none)
-DEFMODULE(motd_file)
-DEFMODULE(repl_lastdisconnect)
-DEFMODULE(autosave)
-DEFMODULE(debug)
-DEFMODULE(socks)
-DEFMODULE(listener)
-DEFMODULE(autosend)
+# Checks for library functions.
+AC_FUNC_FORK
+AC_FUNC_MALLOC
+AC_FUNC_REALLOC
+AC_TYPE_SIGNAL
+
+AC_CHECK_FUNCS([gethostbyname gethostname memset mkdir strcasecmp strchr strdup strerror strncasecmp strstr uname backtrace_symbols gettimeofday strrchr daemon])
 
 # Checks for libraries.
 AC_CHECK_LIB([popt], [poptGetArg], , AC_MSG_WARN([Popt is strongly advised]))
@@ -136,30 +120,45 @@ AC_DEFINE_UNQUOTED(STATIC_MODULE_DECLARES,[$STATIC_MODULE_DECLARES],[Declaration
 AC_SUBST(EXTRA_INSTALL_TARGETS)
 test -f doc/most && EXTRA_INSTALL_TARGETS="install-doc"
 
-# Checks for header files.
-AC_HEADER_DIRENT
-AC_HEADER_STDC
-AC_HEADER_TIME
-AC_CHECK_HEADERS(
-[stdlib.h string.h unistd.h popt.h execinfo.h sys/time.h sys/socket.h])
+AC_ARG_WITH(module-default,
+[ --with-module-default={shared,static,not} Default module output type ],
+[ 
+ 	case "$withval" in
+		shared|static|not) module_default="$withval" ;;
+		*)
+		AC_MSG_ERROR([Unknown module output type $withval])
+		;;
+	esac
+],
+[ module_default="shared" ]
+)
 
-# Checks for typedefs, structures, and compiler characteristics.
-AC_C_CONST
-AC_TYPE_SIZE_T
-AC_STRUCT_TM
-AC_TYPE_UID_T
-
-# Checks for library functions.
-AC_FUNC_FORK
-AC_FUNC_MALLOC
-AC_FUNC_REALLOC
-AC_TYPE_SIGNAL
+BINS="ctrlproxy$ac_cv_exeext"
+DEFMODULE(log_irssi)
+DEFMODULE(ctcp)
+DEFMODULE(auto_away)
+DEFMODULE(admin)
+DEFMODULE(noticelog)
+DEFMODULE(nickserv)
+DEFMODULE(log_custom)
+DEFMODULE(antiflood)
+DEFMODULE(repl_simple)
+DEFMODULE(repl_command)
+DEFMODULE(repl_highlight)
+DEFMODULE(linestack_file)
+DEFMODULE(report_time)
+DEFMODULE(repl_none)
+DEFMODULE(motd_file)
+DEFMODULE(repl_lastdisconnect)
+DEFMODULE(autosave)
+DEFMODULE(debug)
+DEFMODULE(socks)
+DEFMODULE(listener)
+DEFMODULE(autosend)
 
 AC_SUBST(BINS)
 AC_SUBST(MODS_STATIC)
 AC_SUBST(MODS_SHARED)
-AC_CHECK_FUNCS([gethostbyname gethostname memset mkdir strcasecmp strchr strdup strerror strncasecmp strstr uname backtrace_symbols gettimeofday strrchr daemon])
-
 DESTINCLUDEDIR="$includedir/ctrlproxy-2"
 AC_SUBST(DESTINCLUDEDIR)
 
