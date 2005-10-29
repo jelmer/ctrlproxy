@@ -1,4 +1,4 @@
-%module(directors="1") ctrlproxy
+%module(package="ctrlproxy") __init__
 %{
 #include "ctrlproxy.h"
 %}

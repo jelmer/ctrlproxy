@@ -9,7 +9,7 @@ setup (name = 'ctrlproxy',
 	   license = 'GPL',
 	   package_dir = {"ctrlproxy":""},
 	   ext_modules = [
-	   		Extension('_ctrlproxy', 
+	   		Extension('ctrlproxy.___init__', 
 		         	  sources = ['ctrlproxy_wrap.c']
 					 ),
 			Extension('ctrlproxy._admin',
@@ -19,5 +19,5 @@ setup (name = 'ctrlproxy',
 					  sources = ['listener_wrap.c']
 					  )
 			],
-		py_modules = [ 'ctrlproxy', 'ctrlproxy.admin', 'ctrlproxy.listener' ]
+		py_modules = [ 'ctrlproxy.__init__', 'ctrlproxy.admin', 'ctrlproxy.listener' ]
 		)

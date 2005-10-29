@@ -109,7 +109,6 @@ G_MODULE_EXPORT int is_channelname(const char *name, struct network_info *s);
 G_MODULE_EXPORT int is_prefix(char p, struct network_info *n);
 G_MODULE_EXPORT char get_prefix_by_mode(char p, struct network_info *n);
 G_MODULE_EXPORT int irccmp(struct network_info *n, const char *a, const char *b);
-G_MODULE_EXPORT struct network_nick *line_get_network_nick(struct line *l);
 
 /* Push / pull */
 G_MODULE_EXPORT struct network_state *network_state_decode(char *, size_t, struct network_info *);

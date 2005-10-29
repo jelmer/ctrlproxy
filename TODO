@@ -2,7 +2,6 @@
 - test and fix SSL support
 - update documentation
 - linestack tests
-
 - python module examples
 - finish python module hooks:
  - pass client / network / line arguments correctly

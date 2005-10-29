@@ -22,6 +22,7 @@ mods/openssl/*.so
 mods/openssl/Makefile.settings
 mods/python/*.so
 mods/python/Makefile
+mods/python2/*.pyc
 mods/python2/*_wrap.c
 mods/python2/Makefile.settings
 mods/python2/admin.py
