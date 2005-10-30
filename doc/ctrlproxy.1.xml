@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+<refentry id="ctrlproxy.1">
+	
+<refmeta>
+	<refentrytitle>ctrlproxy</refentrytitle>
+	<manvolnum>1</manvolnum>
+</refmeta>
+
+<refnamediv>
+	<refname>ctrlproxy</refname>
+	<refpurpose>a modular IRC proxy with multi-server support</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+	<cmdsynopsis>
+		<command>ctrlproxy</command>
+		<arg choice="opt">-d file</arg>
+		<arg choice="opt">-l file</arg>
+		<arg choice="opt">-D</arg>
+		<arg choice="opt">-r file</arg>
+		<arg choice="opt">-v</arg>
+	</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsect1>
+	<title>DESCRIPTION</title>
+
+<para>
+<command>ctrlproxy</command> is a modular IRC proxy. It connects 
+to a number of IRC servers and then passes data it receives on 
+to the modules that have been loaded into it. Current 
+modules are client_simple (for proxy support) and 
+log (for irssi-style log file generation).
+</para>
+
+<para>
+By default, ctrlproxy listens for client connections 
+on port 6668 and any ports after that one, depending 
+on the number of servers it is connected to.
+</para>
+
+</refsect1>
+
+<refsect1>
+	<title>OPTIONS</title>
+	
+<para><command>ctrlproxy</command> recognizes the following command-line options</para>
+
+<variablelist>
+	<varlistentry><term>-i, --inetd-client=NETWORK</term>
+	<listitem><para>Add incoming client on stdin/stdout, connected
+	to the specified network. This can be used for inetd-like communication 
+	and testing.
+	</para></listitem>
+	</varlistentry>
+		
+	<varlistentry><term>-d, --debugfile=FILE</term>
+	<listitem><para>Dump IRC traffic to specified file. 
+	Only useful for debugging purposes.</para></listitem>
+	</varlistentry>
+
+	<varlistentry><term>-D, --daemon</term>
+	<listitem><para>Go to the background after the program has been started (daemon mode).</para></listitem>
+	</varlistentry>
+
+	<varlistentry><term>-r, --rc-file=RCFILE</term>
+	<listitem><para>Read configuration file from specified location <option>RCFILE</option> instead of from <filename>.ctrlproxyrc</filename> in the users' homedirectory.</para></listitem>
+	</varlistentry>
+
+	<varlistentry><term>-v, --version</term>
+	<listitem><para>Show copyright and version information</para></listitem>
+	</varlistentry>
+
+	<varlistentry><term>-?, --help</term>
+	<listitem><para>Show help message with short argument information</para></listitem>
+	</varlistentry>
+
+	<varlistentry><term>-l, --log=FILE</term>
+	<listitem><para>Log ctrlproxy messages to specified file.</para></listitem>
+	</varlistentry>
+
+	<varlistentry><term>--usage</term>
+	<listitem><para>Display brief usage message</para></listitem>
+	</varlistentry>
+
+</variablelist>
+
+</refsect1>
+
+<refsect1>
+<title>PLUGINS</title>
+
+<para>Current included plugins with ctrlproxy are:</para>
+
+<!--FIXME: Autogenerate ? -->
+<variablelist>
+	<xi:include href="modules.list.xml" xmlns:xi="http://www.w3.org/2003/XInclude"/>
+</variablelist>
+
+<para>
+Read the relevant manpages for more info about these plugins.
+</para>
+
+</refsect1>
+
+<refsect1>
+	<title>SIGNALS</title>
+
+<para>
+	When ctrlproxy receives a <constant>USR1</constant> signal, it will save it's current state
+to the configuration file (usually ~/.ctrlproxyrc).
+</para>
+
+</refsect1>
+
+<refsect1>
+	<title>SEE ALSO</title>
+
+<para>irssi (1), ctrlproxyrc (5), http://www.nl.linux.org/~jelmer/ctrlproxy/, ctrlproxyrc.example</para>
+
+</refsect1>
+
+<refsect1>
+	<title>BUGS</title>
+
+<para>
+Probably many, but none are known at the moment. Please send 
+any you find to jelmer@nl.linux.org
+</para>
+</refsect1>
+
+<refsect1>
+	<title>LICENSE</title>
+
+<para>
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+</para>
+
+<para> 
+This program is distributed in the hope that it will be useful, but
+\fBWITHOUT ANY WARRANTY\fR; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
+General Public License for more details.
+</para>
+
+<para>
+You should have received a copy of the GNU General Public License 
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple PLace, Suite 330, Boston, MA  02111-1307  USA
+</para>
+
+</refsect1>
+
+<refsect1>
+	<title>AUTHORS</title>
+<para>
+<ulink url="mailto:jelmer@nl.linux.org">Jelmer Vernooij</ulink> (main developer)
+</para>
+<para>
+	<ulink url="mailto:ctrlproxy@poelzi.org">Daniel Poelzleithner</ulink> (several major patches)
+</para>
+
+<para>See the file AUTHORS for a full list of contributors.</para>
+</refsect1>
+</refentry>

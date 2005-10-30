@@ -1,0 +1,47 @@
+<ctrlproxy:module name="auto-away"
+	xmlns:ctrlproxy="http://ctrlproxy.vernstok.nl/common">
+	<modulemeta>
+		<description>Automagic away</description>
+		<version>0.1</version>
+		<author>Jelmer Vernooij</author>
+		<email>jelmer@vernstok.nl</email>
+		<homepage>http://ctrlproxy.vernstok.nl/</homepage>
+	</modulemeta>
+
+	<description>
+		<para>This module sets your IRC status to 'away' after 
+		you have been inactive('idle') for a certain period of 
+		time.</para>
+	</description>
+
+	<configuration>
+		<element name="message">
+			<description>Message to set AWAY mode to when idle for too long.</description>
+			<attribute name="time">
+				<description>Number of seconds you have to be idle before setting AWAY.</description>
+			</attribute>
+			<attribute name="only_noclient" type="bool">
+				<description>If set, auto-away will only set AWAY when there are no clients connected to ctrlproxy.</description>
+			</attribute>
+		</element>
+	</configuration>
+
+	<example>
+		<![CDATA[
+		<ctrlproxy>
+			<plugins>
+				<plugin autoload="1" file="auto-away">
+					<message time="600">I've been idle for 10 minutes, so I'm probably away. Please leave me a message. Thanks!</message>
+				</plugin>
+			</plugins>
+
+			<networks>
+				<network name="OFTC">
+					<servers><ipv4 host="irc.oftc.net"/></servers>
+					<channel name="#flood.nl" autojoin="1"/>
+				</network>
+			</networks>
+		</ctrlproxy>
+	]]>
+	</example>
+</ctrlproxy:module>

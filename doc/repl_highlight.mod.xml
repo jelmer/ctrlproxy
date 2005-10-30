@@ -1,0 +1,36 @@
+<ctrlproxy:module name="repl_highlight"
+	xmlns:ctrlproxy="http://ctrlproxy.vernstok.nl/common">
+	<modulemeta>
+		<description>Replicate lines matching certain patterns</description>
+		<version>0.1</version>
+		<author>Jelmer Vernooij</author>
+		<email>jelmer@vernstok.nl</email>
+		<homepage>http://ctrlproxy.vernstok.nl/</homepage>
+	</modulemeta>
+
+	<description>
+		<para>Rather simple replication module that works similar 
+			to the repl_simple module, but
+			only replicates the lines matching certain patterns.
+		</para>
+	</description>
+
+	<configuration>
+		<element name="match" multiple="1">
+			<description>Log all lines that contain the string this element contains.</description>
+		</element>
+	</configuration>
+
+	<example>
+		<![CDATA[
+			<ctrlproxy>
+				<plugins>
+					<plugin autoload="1" file="repl_highlight">
+						<match>jelmer</match>
+						<match>ctrlproxy</match>
+					</plugin>
+				</plugins>
+			</ctrlproxy>
+		]]>
+	</example>
+</ctrlproxy:module>

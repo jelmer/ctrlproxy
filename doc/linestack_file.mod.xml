@@ -1,0 +1,18 @@
+<ctrlproxy:module name="linestack_file"
+	xmlns:ctrlproxy="http://ctrlproxy.vernstok.nl/common">
+	<modulemeta>
+		<description>Linestack file backend</description>
+		<version>0.1</version>
+		<author>Jelmer Vernooij</author>
+		<email>jelmer@vernstok.nl</email>
+		<homepage>http://ctrlproxy.vernstok.nl/</homepage>
+	</modulemeta>
+
+	<description>
+		<para>Linestack backend that stores the data in a plain text 
+			file. If an argument is specified, the data will be specifiedat 
+			the specified location. Otherwise, a temporary file is used.
+		</para>
+	</description>
+
+</ctrlproxy:module>

@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd" [
+<!ENTITY admin SYSTEM "admin.xml">
+<!ENTITY auto-away SYSTEM "auto-away.xml">
+<!ENTITY ctcp SYSTEM "ctcp.xml">
+<!ENTITY log-irssi SYSTEM "log_irssi.xml">
+<!ENTITY nickserv SYSTEM "nickserv.xml">
+<!ENTITY log-custom SYSTEM "log_custom.xml">
+<!ENTITY repl-none SYSTEM "repl_none.xml">
+<!ENTITY repl-simple SYSTEM "repl_simple.xml">
+<!ENTITY repl-highlight SYSTEM "repl_highlight.xml">
+<!ENTITY repl-command SYSTEM "repl_command.xml">
+<!ENTITY repl-lastdisconnect SYSTEM "repl_lastdisconnect.xml">
+<!ENTITY stats SYSTEM "stats.xml">
+<!ENTITY noticelog SYSTEM "noticelog.xml">
+<!ENTITY install SYSTEM "install.xml">
+<!ENTITY syntax SYSTEM "syntax.xml">
+<!ENTITY clients SYSTEM "clients.xml">
+<!ENTITY introduction SYSTEM "introduction.xml">
+<!ENTITY antiflood SYSTEM "antiflood.xml">
+<!ENTITY linestack SYSTEM "linestack.xml">
+<!ENTITY functions SYSTEM "functions.xml">
+<!ENTITY report-time SYSTEM "report-time.xml">
+<!ENTITY motd-file SYSTEM "motd-file.xml">
+<!ENTITY python SYSTEM "python.xml">
+]>
+
+<book id="ctrlproxy">
+	<title>The ControlProxy Manual</title>
+
+<bookinfo>
+	<author>
+		<firstname>Jelmer</firstname><surname>Vernooij</surname>
+		<affiliation>
+			<address><email>jelmer@vernstok.nl</email></address>
+		</affiliation>
+	</author>
+	<pubdate>$Date: 2005-09-04 21:39:37 +0200 (Sun, 04 Sep 2005) $</pubdate>
+
+	<abstract>
+	<para>This document is still a work-in-progress. We're doing our best to 
+		keep it up-to-date and understandable, but please don't hesitate to 
+		contact us if you have comments or questions.</para>
+
+		<para>All comments, questions and updates are welcome at <ulink url="mailto:jelmer@vernstok.nl">jelmer@vernstok.nl</ulink>.</para>
+	</abstract>
+</bookinfo>
+
+&introduction;
+
+<part id="installation">
+	<title>Installation</title>
+	&install;
+</part>
+
+<part id="configuration">
+	<title>Configuration</title>
+	&syntax;
+	&clients;
+</part>
+
+<part id="modules">
+	<title>Modules</title>
+&admin;
+&auto-away;
+&ctcp;
+&log-irssi;
+&repl-none;
+&repl-simple;
+&repl-highlight;
+&repl-command;
+&repl-lastdisconnect;
+&noticelog;
+&log-custom;
+&nickserv;
+&antiflood;
+&report-time;
+&motd-file;
+&python;
+</part>
+
+<part id="extending">
+	<title>Writing your own modules</title>
+
+	&functions;
+	&linestack;
+
+</part>
+</book>

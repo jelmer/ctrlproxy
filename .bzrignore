@@ -29,3 +29,5 @@ po/Makefile.in
 po/POTFILES
 po/ctrlproxy.pot
 po/stamp-po
+rfctester/ircdtorture
+rfctester/test-*.so

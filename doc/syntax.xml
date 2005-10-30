@@ -1,0 +1,173 @@
+<chapter id="syntax">
+	<title>Configuration file syntax</title>
+
+<!-- Introduction -->
+<para>Ctrlproxy uses XML as the format of it's RC file. The syntax of XML 
+files is described much better in other documents on the web and 
+is beyond the scope of this document. </para>
+
+<para>Take a look at the <filename>ctrlproxyrc.example</filename> file that 
+is distributed with ctrlproxy. It should give you a good impression of what 
+a ctrlproxyrc file is supposed to look like.</para>
+
+<para>The root element contains 2 elements: plugins and networks. These are discussed below.</para>
+
+<sect1><title>Plugins</title>
+
+	<para>Contains various &lt;plugin&gt; elements, which 
+	each represent a plugin that can be loaded. When the 
+	autoload attribute is set, the plugin will be loaded 
+	when ctrlproxy starts. </para>
+
+	<para>The <constant>file</constant> attribute is required and 
+	should specify either an absolute path to a plugin or the name of a 
+	plugin in the default modules dir (usually something like 
+	<filename>/usr/lib/ctrlproxy</filename>).</para>
+
+	<para>The &lt;plugin&gt; element should contain plugin-specific elements. See the documentation for the individual plugins for details.</para>
+</sect1>
+
+<sect1><title>Networks</title>
+
+	<para>The &lt;networks&gt; element contains several &lt;network&gt; 
+		elements, each representing an IRC network that CtrlProxy 
+		can connect to.</para>
+
+	<para>Attributes that can be specified on a network element are:</para>
+
+	<variablelist>
+	<varlistentry><term>name</term>
+	<listitem><para>Name of the network. Something like <quote>OPN</quote>,  <quote>OFTC</quote> or <quote>IRCNet</quote>. The name of the first 
+	server is used if this is not specified.</para></listitem>
+	</varlistentry>
+
+	<varlistentry><term>nick</term>
+	<listitem><para>Initial nick name to use on this network. Defaults to UNIX user name.</para></listitem>
+	</varlistentry>
+
+	<varlistentry><term>username</term>
+	<listitem><para>User name to report in hostmask. Defaults to UNIX user name.</para></listitem>
+	</varlistentry>
+
+	<varlistentry><term>ignore_first_nickchange</term>
+		<listitem><para>IRC clients always send a NICK command to the IRC server 
+				after they have connected. Ctrlproxy happily passes this 
+				new nick name on to the real server. If you want ctrlproxy 
+				to ignore the first nick change that a client sends, 
+				add this attribute.</para></listitem>
+	</varlistentry>
+
+	<varlistentry><term>fullname</term>
+	<listitem><para>Full name to report (for example in <command>/WHOIS</command> information). Defaults to the full name specified in the gecos field of your NSS passwd backend (usually the file <filename>/etc/passwd</filename>.</para></listitem>
+	</varlistentry>
+
+	<varlistentry><term>autoconnect</term>
+		<listitem><para>Specifies whether to connect to this network at start-up. 
+				If this parameter is set to 0 ctrlproxy might, for example, 
+				connect to the network when a client tries to use the network.
+		</para></listitem>
+	</varlistentry>
+
+	</variablelist>
+	
+	<sect2><title>Channels</title>
+	
+		<para>A &lt;network&gt; element can also contain 
+		several &lt;channel&gt; elements. Each channel 
+		should have a <quote>name</quote> attribute which 
+		should contain the name of the channel.</para>
+
+		<para>The <quote>autojoin</quote> attribute is optional
+		and specifies whether the channel should be joined automatically
+		when ctrlproxy connects to the network. </para>
+
+		<para>Example:</para>
+
+		<programlisting>
+		<![CDATA[
+		<ctrlproxy>
+			<networks>
+				<network name="Freenode">
+					<channel name="#samba"/>
+					<channel name="#samba-technical" autojoin="1"/>
+				</network>
+			</networks>
+		</ctrlproxy>
+		]]>
+		</programlisting>
+	</sect2>
+	
+	<sect2><title>Servers</title>
+	
+	<para>CtrlProxy can connect to networks via TCP/IP, 
+		it can connect to program (such as BitlBee) or it can 
+		&quot;simulate&quot; a server (such as the Admin network 
+		that allows you to change CtrlProxy settings on the fly).</para>
+
+		<para>Note that ctrlproxy always connects to exactly <emphasis>one</emphasis> server at a time. </para>
+
+	<sect3>
+		<title>TCP/IP Connection to a server</title>
+
+		<para>
+			TCP/IP is the main transport for IRC traffic. You can specify 
+			a list of servers that to connect to, in case one of them goes down.
+			CtrlProxy will automatically connect to the next server in the 
+			list if the current one goes down.
+		</para>
+
+	<para>Example:</para>
+
+	<programlisting>
+	<![CDATA[
+	<ctrlproxy>
+		<plugins>
+		</plugins>
+		<networks>
+			<network name="Freenode" autoconnect="1">
+				<servers>
+					<server host="irc.freenode.net"/>
+					<server host="irc.ipv6.freenode.net"/>
+				</servers>
+			</network>
+		</networks>
+	</ctrlproxy>
+	]]>
+	</programlisting>
+
+	</sect3>
+
+	<sect3>
+		<title>Virtual servers</title>
+
+		<para>Virtual servers are provided by plugins to CtrlProxy. A 
+			good example is the <constant>admin</constant> module that 
+			provides a virtual network with exactly one channel you can 
+			use for administrating CtrlProxy.
+		</para>
+	</sect3>
+
+	<sect3>
+		<title>Programs</title>
+
+		<para>This type of network is used for connecting to 
+			local IRC-servers that support inetd-style communication. One 
+			of the examples of such a program is 
+			<ulink url="http://www.bitlbee.org/">BitlBee</ulink>
+		</para>
+	</sect3>
+
+	</sect2>
+
+</sect1>
+
+<sect1><title>Replication</title>
+
+	<para>Replication (short for 'backlog replication') is the system that 
+	stores certain IRC lines and then sends them to the user at a certain moment.</para>
+
+<!--FIXME-->
+
+</sect1>
+
+</chapter>
