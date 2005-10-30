@@ -5,13 +5,7 @@
 
 - python module examples
 - finish python module hooks:
-	typedef gboolean (*new_client_hook) (struct client *);
-	typedef void (*lose_client_hook) (struct client *);
-	typedef char ** (*motd_hook) (struct network *n);
-	typedef void (*server_connected_hook) (struct network *);
-	typedef void (*server_disconnected_hook) (struct network *);
-	filter (object)
-	example script
+ - pass client / network / line arguments correctly
 
 next release (2.7.1):
 - properly expand second argument of PRIVMSG in log_irssi and log_custom

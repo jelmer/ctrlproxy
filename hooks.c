@@ -159,7 +159,7 @@ struct lose_client_hook_data {
 
 GList *lose_client_hooks = NULL;
 
-void add_new_client_hook(char *name, new_client_hook h, void *userdata)
+void add_new_client_hook(const char *name, new_client_hook h, void *userdata)
 {
 	struct new_client_hook_data *d;
 	
@@ -170,7 +170,7 @@ void add_new_client_hook(char *name, new_client_hook h, void *userdata)
 	new_client_hooks = g_list_append(new_client_hooks, d);
 }
 
-void del_new_client_hook(char *name)
+void del_new_client_hook(const char *name)
 {
 	GList *l = new_client_hooks;
 	while(l) {
@@ -202,7 +202,7 @@ gboolean new_client_hook_execute(struct client *c)
 	return TRUE;
 }
 
-void add_lose_client_hook(char *name, lose_client_hook h, void *userdata)
+void add_lose_client_hook(const char *name, lose_client_hook h, void *userdata)
 {
 	struct lose_client_hook_data *d;
 	
@@ -213,7 +213,7 @@ void add_lose_client_hook(char *name, lose_client_hook h, void *userdata)
 	lose_client_hooks = g_list_append(lose_client_hooks, d);
 }
 
-void del_lose_client_hook(char *name)
+void del_lose_client_hook(const char *name)
 {
 	GList *l = lose_client_hooks;
 	while(l) {
@@ -245,7 +245,7 @@ struct motd_hook_data {
 
 GList *motd_hooks = NULL;
 
-void add_motd_hook(char *name, motd_hook h, void *userdata)
+void add_motd_hook(const char *name, motd_hook h, void *userdata)
 {
 	struct motd_hook_data *d;
 
@@ -257,7 +257,7 @@ void add_motd_hook(char *name, motd_hook h, void *userdata)
 	motd_hooks = g_list_append(motd_hooks, d);
 }
 
-void del_motd_hook(char *name)
+void del_motd_hook(const char *name)
 {
 	GList *l = motd_hooks;
 	while(l) {
@@ -321,7 +321,7 @@ struct server_connected_hook_data {
 
 GList *server_connected_hooks = NULL;
 
-void add_server_connected_hook(char *name, server_connected_hook h, void *userdata)
+void add_server_connected_hook(const char *name, server_connected_hook h, void *userdata)
 {
 	struct server_connected_hook_data *d;
 	
@@ -332,7 +332,7 @@ void add_server_connected_hook(char *name, server_connected_hook h, void *userda
 	server_connected_hooks = g_list_append(server_connected_hooks, d);
 }
 
-void del_server_connected_hook(char *name)
+void del_server_connected_hook(const char *name)
 {
 	GList *l = server_connected_hooks;
 	while(l) {
@@ -365,7 +365,7 @@ struct server_disconnected_hook_data {
 
 GList *server_disconnected_hooks = NULL;
 
-void add_server_disconnected_hook(char *name, server_disconnected_hook h, void *userdata)
+void add_server_disconnected_hook(const char *name, server_disconnected_hook h, void *userdata)
 {
 	struct server_disconnected_hook_data *d;
 	
@@ -376,7 +376,7 @@ void add_server_disconnected_hook(char *name, server_disconnected_hook h, void *
 	server_disconnected_hooks = g_list_append(server_disconnected_hooks, d);
 }
 
-void del_server_disconnected_hook(char *name)
+void del_server_disconnected_hook(const char *name)
 {
 	GList *l = server_disconnected_hooks;
 	while(l) {

@@ -11,14 +11,6 @@
 
 #ifdef SWIGPYTHON
 
-%typemap(python, in) PyObject *pyfunc {
-	    if (!PyCallable_Check($input)) {
-			        PyErr_SetString(PyExc_TypeError, "Need a callable object!");
-				        return NULL;
-		    }
-		    $1 = $input;
-}
-
 %inline %{
 
 static void pyadmin_cmd_handler (const struct client *c, char **args, void *userdata)
