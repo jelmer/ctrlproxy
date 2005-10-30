@@ -44,6 +44,8 @@ static char *network_generate_feature_string(struct network *n)
 	GList *fs = NULL, *gl;
 	char *name, *casemap;
 	char *ret;
+
+	g_assert(n);
 	
 	name = g_strdup_printf("NETWORK=%s", n->name);
 	fs = g_list_append(fs, name);
@@ -79,6 +81,9 @@ static char *network_generate_feature_string(struct network *n)
 
 static gboolean process_from_client(struct client *c, struct line *l)
 {
+	g_assert(c);
+	g_assert(l);
+
 	if (c->network && c->network->state) 
 		l->origin = g_strdup(c->network->state->me.hostmask);
 	else
@@ -86,6 +91,8 @@ static gboolean process_from_client(struct client *c, struct line *l)
 
 	if (!run_client_filter(c, l, TO_SERVER)) 
 		return TRUE;
+
+	g_assert(l->args[0]);
 
 	if(!g_strcasecmp(l->args[0], "QUIT")) {
 		disconnect_client(c, "Client exiting");
@@ -121,7 +128,8 @@ gboolean client_send_response(struct client *c, int response, ...)
 	gboolean ret;
 	va_list ap;
 
-	if(!c) return FALSE;
+	g_assert(c);
+	g_assert(response);
 	
 	va_start(ap, response);
 	l = virc_parse_line(c->network?c->network->name:get_my_hostname(), ap);
@@ -152,8 +160,8 @@ gboolean client_send_args_ex(struct client *c, const char *hm, ...)
 	gboolean ret;
 	va_list ap;
 
-	if(!c) return FALSE;
-	
+	g_assert(c);
+
 	va_start(ap, hm);
 	l = virc_parse_line(hm, ap);
 	va_end(ap);
@@ -171,7 +179,7 @@ gboolean client_send_args(struct client *c, ...)
 	gboolean ret;
 	va_list ap;
 
-	if(!c) return FALSE;
+	g_assert(c);
 	
 	va_start(ap, c);
 	l = virc_parse_line(c->network?c->network->name:"ctrlproxy", ap);
@@ -186,12 +194,15 @@ gboolean client_send_args(struct client *c, ...)
 
 gboolean client_send_line(const struct client *c, const struct line *l)
 {
+	g_assert(c);
+	g_assert(l);
 	log_client_line(c, l, FALSE);
 	return irc_send_line(c->incoming, l);
 }
 
 void disconnect_client(struct client *c, const char *reason) 
 {
+	g_assert(c);
 	g_assert(c->incoming);
 
 	client_send_args_ex(c, NULL, "ERROR", reason, NULL);
@@ -225,6 +236,8 @@ void send_motd(struct client *c)
 {
 	char **lines;
 	int i;
+	g_assert(c);
+
 	lines = get_motd_lines(c->network);
 
 	if(!lines) {
@@ -246,6 +259,8 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition cond, void *_c
 	gboolean ret;
 	struct client *client = (struct client *)_client;
 	struct line *l;
+
+	g_assert(client);
 
 	if (cond & G_IO_HUP) {
 		disconnect_client(client, "Hangup from client");
@@ -285,6 +300,9 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition cond, void *_c
 static gboolean welcome_client(struct client *client)
 {
 	char *features, *tmp;
+
+	g_assert(client);
+
 	client_send_response(client, RPL_WELCOME, "Welcome to the ctrlproxy", NULL);
 	client_send_response(client, RPL_YOURHOST, tmp = g_strdup_printf("Host %s is running ctrlproxy", get_my_hostname()), NULL); g_free(tmp);
 	client_send_response(client, RPL_CREATED, "Ctrlproxy (c) 2002-2005 Jelmer Vernooij <jelmer@vernstok.nl>", NULL);
@@ -302,6 +320,10 @@ static gboolean welcome_client(struct client *client)
 	g_free(features);
 
 	send_motd(client);
+
+	g_assert(client->nick);
+	g_assert(client->network);
+	g_assert(client->network->state);
 
 	if (g_strcasecmp(client->nick, client->network->state->me.nick)) {
 		/* Tell the client our his/her real nick */
@@ -334,6 +356,9 @@ static gboolean handle_pending_client_receive(GIOChannel *c, GIOCondition cond, 
 	struct client *client = (struct client *)_client;
 	struct line *l;
 
+	g_assert(client);
+	g_assert(c);
+
 	if (cond & G_IO_HUP) {
 		disconnect_client(client, "Hangup from client");
 		return FALSE;
@@ -342,19 +367,22 @@ static gboolean handle_pending_client_receive(GIOChannel *c, GIOCondition cond, 
 	if (cond & G_IO_IN) {
 		GError *error = NULL;
 		GIOStatus status = irc_recv_line(c, &error, &l);
-		
+
 		if (status != G_IO_STATUS_NORMAL) {
 			disconnect_client(client, "Error receiving line from client");
 			return FALSE;
 		}
 
-		if(!l) return TRUE;
+		if(!l) 
+			return TRUE;
 
 		/* Silently drop empty messages */
 		if (l->argc == 0) {
 			free_line(l);
 			return TRUE;
 		}
+
+		g_assert(l->args[0]);
 
 		if(!g_strcasecmp(l->args[0], "NICK")) {
 			if (l->argc < 2) {
@@ -430,6 +458,8 @@ static gboolean handle_pending_client_receive(GIOChannel *c, GIOCondition cond, 
 static gboolean client_ping(gpointer user_data) {
 	struct client *client = user_data;
 
+	g_assert(client);
+
 	client->last_ping = time(NULL);
 	client_send_args_ex(client, NULL, "PING", client->network->name, NULL);
 
@@ -445,6 +475,7 @@ struct client *client_init(struct network *n, GIOChannel *c, const char *desc)
 		return NULL;
 
 	client = g_new0(struct client, 1);
+	g_assert(client);
 
 	g_io_channel_set_close_on_unref(c, TRUE);
 	g_io_channel_set_encoding(c, NULL, NULL);

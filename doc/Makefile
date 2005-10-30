@@ -1,4 +1,4 @@
--include Makefile.settings
+include Makefile.settings
 MOD_SOURCES = $(shell echo *.mod.xml)
 MOD_MANPAGES = $(patsubst %.mod.xml,%.7ctrlproxy,$(MOD_SOURCES))
 MOD_MANPAGES_INTER = $(patsubst %.mod.xml,%.xml,$(MOD_SOURCES))
@@ -14,12 +14,6 @@ all: $(DOCS) ctrlproxy.pdf ctrlproxy.ps
 everything: $(DOCS) htmlmanpages
 dist: most
 	rm -rf autom4te.cache
-
-configure: configure.in
-	autoconf
-
-Makefile.settings: configure
-	./configure
 
 manpages: ctrlproxy.1 ctrlproxyrc.5 $(MOD_MANPAGES)
 htmlmanpages: $(MOD_MANPAGES_HTML)

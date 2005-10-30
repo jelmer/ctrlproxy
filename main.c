@@ -1,6 +1,6 @@
 /*
 	ctrlproxy: A modular IRC proxy
-	(c) 2002-2003 Jelmer Vernooij <jelmer@nl.linux.org>
+	(c) 2002-2005 Jelmer Vernooij <jelmer@nl.linux.org>
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -159,7 +159,7 @@ int main(int argc, const char *argv[])
 		switch(c) {
 		case 'v':
 			printf("ctrlproxy %s\n", VERSION);
-			printf(("(c) 2002-2004 Jelmer Vernooij et al. <jelmer@nl.linux.org>\n"));
+			printf("(c) 2002-2005 Jelmer Vernooij et al. <jelmer@nl.linux.org>\n");
 			return 0;
 		}
 	}

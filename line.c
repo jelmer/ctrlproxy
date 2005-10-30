@@ -49,7 +49,9 @@ struct line *virc_parse_line( const char *hostmask, va_list ap)
 {
 	char *arg;
 	struct line *l;
+
 	l = g_new0(struct line, 1);
+	g_assert(l);
 	l->argc = 0;
 	if(hostmask)l->origin = g_strdup(hostmask);
 	else l->origin = NULL;
@@ -80,6 +82,7 @@ struct line * irc_parse_line(const char *d)
 	struct line *l;
 
 	l = g_new0(struct line, 1);
+	g_assert(l);
 	l->has_endcolon = WITHOUT_COLON;
 	p = data;
 
@@ -130,7 +133,7 @@ gboolean irc_send_line(GIOChannel *c, const struct line *l)
 	GIOStatus ret;
 	gsize bytes_written;
 
-	if(!c) return FALSE;
+	g_assert(c);
 
 	raw = irc_line_string_nl(l);
 	ret = g_io_channel_write_chars(c, raw, -1, &bytes_written, NULL);
@@ -145,7 +148,12 @@ gboolean irc_send_line(GIOChannel *c, const struct line *l)
 
 char *irc_line_string_nl(const struct line *l) 
 {
-	char *raw = irc_line_string(l);
+	char *raw;
+
+	g_assert(l);
+	raw = irc_line_string(l);
+	g_assert(raw);
+
 	raw = g_realloc(raw, strlen(raw)+10);
 	strcat(raw, "\r\n");
 	return raw;
@@ -155,8 +163,12 @@ static int requires_colon(const struct line *l)
 {
 	int c;
 
+	g_assert(l);
+
 	if(l->has_endcolon == WITH_COLON) return 1;
 	else if(l->has_endcolon == WITHOUT_COLON) return 0;
+
+	g_assert(l->args[0]);
 
 	c = atoi(l->args[0]);
 	if(!g_strcasecmp(l->args[0], "MODE"))return 0;
@@ -198,6 +210,8 @@ char *irc_line_string(const struct line *l)
 	size_t len = 0; unsigned int i;
 	char *ret;
 
+	g_assert(l);
+
 	/* Silently ignore empty messages */
 	if(l->argc == 0) return g_strdup("");
 
@@ -220,6 +234,9 @@ char *irc_line_string(const struct line *l)
 
 void free_line(struct line *l) {
 	int i;
+	if (l == NULL)
+		return;
+
 	if(l->origin)g_free(l->origin);
 	if(l->args) {
 		for(i = 0; l->args[i]; i++)g_free(l->args[i]);
@@ -234,7 +251,9 @@ char *line_get_nick(struct line *l)
 {
 	static char *nick = NULL;
 	char *t;
-	if(!l || !l->origin)return NULL;
+	g_assert(l);
+	g_assert(l->origin);
+
 	if(nick)g_free(nick);
 	nick = g_strdup(l->origin);
 	t = strchr(nick, '!');
@@ -250,7 +269,8 @@ gboolean irc_sendf(GIOChannel *c, char *fmt, ...)
 	struct line *l;
 	gboolean ret;
 
-	if(!c) return FALSE;
+	g_assert(c);
+	g_assert(fmt);
 
 	va_start(ap, fmt);
 	r = g_strdup_vprintf(fmt, ap);
@@ -269,8 +289,8 @@ gboolean irc_send_args(GIOChannel *c, ...)
 	gboolean ret;
 	va_list ap;
 
-	if(!c) return FALSE;
-	
+	g_assert(c);
+
 	va_start(ap, c);
 	l = virc_parse_line(NULL, ap);
 	va_end(ap);
@@ -285,7 +305,11 @@ gboolean irc_send_args(GIOChannel *c, ...)
 struct line *linedup(const struct line *l) 
 {
 	int i;
-	struct line *ret = g_memdup(l, sizeof(struct line));
+	struct line *ret;
+	g_assert(l);
+
+	ret = g_memdup(l, sizeof(struct line));
+
 	if(l->origin)ret->origin = g_strdup(l->origin);
 	ret->args = g_new(char *, ret->argc+MAX_LINE_ARGS);
 	for(i = 0; l->args[i]; i++) {
@@ -302,6 +326,8 @@ GIOStatus irc_recv_line(GIOChannel *c, GError **error, struct line **l)
 	GIOStatus status;
 	*l = NULL;
 
+	g_assert(c);
+
 	status = g_io_channel_read_line(c, &raw, NULL, NULL, error);
 
 	if (status == G_IO_STATUS_NORMAL) {
@@ -312,4 +338,3 @@ GIOStatus irc_recv_line(GIOChannel *c, GError **error, struct line **l)
 
 	return status;
 }
-

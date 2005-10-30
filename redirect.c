@@ -488,8 +488,9 @@ void redirect_response(struct network *network, struct line *l)
 		   (is_reply(s->query->replies, n) || 
 			is_reply(s->query->errors, n) ||
 			is_reply(s->query->end_replies, n))) {
+			
 			/* Send to client that queried, if that client still exists */
-			if(verify_client(s->network, s->client)) {
+			if(s->client && verify_client(s->network, s->client)) {
 				c = s->client;
 				client_send_line(s->client, l);
 			}
@@ -578,6 +579,9 @@ void redirect_record(const struct network *n, const struct client *c, const stru
 static int handle_default(const struct line *l, const struct network *n, const struct client *c, struct query *q)
 {
 	struct query_stack *s = g_new(struct query_stack,1);
+	g_assert(l);
+	g_assert(n);
+	g_assert(q);
 	s->network = n;
 	s->client = c;
 	s->query = q;

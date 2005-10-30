@@ -51,11 +51,11 @@ gboolean unload_plugin(struct plugin *p)
 
 gboolean plugin_loaded(const char *name)
 {
-	GList *gl = plugins;
-	while(gl) {
+	GList *gl;
+	for (gl = plugins; gl; gl = gl->next) {
 		struct plugin *p = (struct plugin *)gl->data;
-		if(p && p->ops && p->ops->name && !strcmp(p->ops->name, name)) return TRUE;
-		gl = gl->next;
+		if(p && p->ops && p->ops->name && !strcmp(p->ops->name, name)) 
+			return TRUE;
 	}
 	return FALSE;
 }
@@ -68,6 +68,8 @@ struct plugin *load_plugin(struct plugin_config *pc)
 	struct plugin *p = g_new0(struct plugin, 1);
 	gchar *path_name = NULL;
 	int i;
+
+	g_assert(pc);
 
 	p->config = pc;
 
@@ -149,6 +151,8 @@ void fini_plugins() {
 gboolean init_plugins(struct ctrlproxy_config *cfg)
 {
 	gboolean ret = TRUE;
+
+	g_assert(cfg);
 
 	if(!g_module_supported()) {
 		log_global(NULL, LOG_WARNING, "DSO's not supported on this platform. Not loading any modules");

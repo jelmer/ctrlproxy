@@ -44,6 +44,13 @@ static void gen_replication_channel(struct client *c, struct channel_state *ch)
 {
 	struct channel_nick *n;
 	GList *nl;
+
+	g_assert(c);
+	g_assert(ch);
+	g_assert(c->network);
+	g_assert(c->network->state);
+	g_assert(ch->name);
+
 	client_send_args_ex(c, c->network->state->me.hostmask, "JOIN", ch->name, NULL);
 
 	if(ch->topic) {
@@ -73,12 +80,9 @@ gboolean client_send_state(struct client *c, struct network_state *state)
 	struct channel_state *ch;
 	char *mode;
 
-	if (c == NULL)
-		return FALSE;
+	g_assert(c);
+	g_assert(state);
 
-	if (state == NULL)
-		return FALSE;
-	
 	for (cl = state->channels; cl; cl = cl->next) {
 		ch = (struct channel_state *)cl->data;
 

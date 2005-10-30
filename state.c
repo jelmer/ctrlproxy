@@ -28,6 +28,9 @@ void log_network_state(struct network_state *st, enum log_level l, const char *f
 	char *ret;
 	va_list ap;
 
+	g_assert(st);
+	g_assert(fmt);
+
 	va_start(ap, fmt);
 	ret = g_strdup_vprintf(fmt, ap);
 	va_end(ap);
@@ -42,17 +45,22 @@ enum mode_type { REMOVE = 0, ADD = 1};
 void network_nick_set_data(struct network_nick *n, const char *nick, const char *username, const char *host)
 {
 	gboolean changed = FALSE;
+
+	g_assert(n);
+	g_assert(nick);
 	
 	if (!n->nick || strcmp(nick, n->nick) != 0) {
 		g_free(n->nick); n->nick = g_strdup(nick);
 		changed = TRUE;
 	}
 
+	g_assert(username);
 	if (!n->username || strcmp(username, n->username) != 0) {
 		g_free(n->username); n->username = g_strdup(username);
 		changed = TRUE;
 	}
 	
+	g_assert(host);
 	if (!n->hostname || strcmp(host, n->hostname) != 0) {
 		g_free(n->hostname); n->hostname = g_strdup(host);
 		changed = TRUE;
@@ -66,6 +74,8 @@ void network_nick_set_data(struct network_nick *n, const char *nick, const char 
 
 gboolean network_nick_set_nick(struct network_nick *n, const char *nick)
 {
+	g_assert(n);
+
 	if (n == NULL)
 		return FALSE;
 
@@ -85,8 +95,12 @@ gboolean network_nick_set_hostmask(struct network_nick *n, const char *hm)
 {
 	char *t, *u;
 
+	g_assert(n);
+
 	if (n == NULL)
 		return FALSE;
+
+	g_assert(hm);
 
 	if (hm == NULL)
 		return FALSE;
@@ -119,6 +133,9 @@ static void free_channel_nick(struct channel_nick *n)
 {
 	g_assert(n);
 
+	g_assert(n->channel);
+	g_assert(n->global_nick);
+
 	n->channel->nicks = g_list_remove(n->channel->nicks, n);
 	n->global_nick->channel_nicks = g_list_remove(n->global_nick->channel_nicks, n);
 
@@ -130,7 +147,10 @@ static void free_channel_nick(struct channel_nick *n)
 
 static void free_invitelist(struct channel_state *c)
 {
-	GList *g = c->invitelist;
+	GList *g;
+	g_assert(c);
+
+	g = c->invitelist;
 	while(g) {
 		g_free(g->data);
 		g = g_list_remove(g, g->data);
@@ -140,7 +160,10 @@ static void free_invitelist(struct channel_state *c)
 
 static void free_exceptlist(struct channel_state *c)
 {
-	GList *g = c->exceptlist;
+	GList *g;
+	g_assert(c);
+
+	g = c->exceptlist;
 	while(g) {
 		g_free(g->data);
 		g = g_list_remove(g, g->data);
@@ -150,7 +173,10 @@ static void free_exceptlist(struct channel_state *c)
 
 static void free_banlist(struct channel_state *c)
 {
-	GList *g = c->banlist;
+	GList *g;
+	
+	g_assert(c);
+	g = c->banlist;
 	while(g) {
 		struct banlist_entry *be = g->data;
 		g_free(be->hostmask);
@@ -171,6 +197,8 @@ static void free_names(struct channel_state *c)
 
 static void free_channel(struct channel_state *c)
 {
+	if (c == NULL)
+		return;
 	free_names(c);
 	g_free(c->name);
 	g_free(c->topic);
@@ -181,7 +209,10 @@ static void free_channel(struct channel_state *c)
 
 struct channel_state *find_channel(struct network_state *st, const char *name)
 {
-	GList *cl = st->channels;
+	GList *cl;
+	g_assert(st);
+	g_assert(name);
+	cl = st->channels;
 	while(cl) {
 		struct channel_state *c = (struct channel_state *)cl->data;
 		if(!irccmp(st->info, c->name, name)) return c;
@@ -190,8 +221,13 @@ struct channel_state *find_channel(struct network_state *st, const char *name)
 	return NULL;
 }
 
-struct channel_state  *find_add_channel(struct network_state *st, char *name) {
-	struct channel_state *c = find_channel(st, name);
+struct channel_state  *find_add_channel(struct network_state *st, char *name) 
+{
+	struct channel_state *c;
+	g_assert(st);
+	g_assert(name);
+	
+	c = find_channel(st, name);
 	if(c)return c;
 	c = g_new0(struct channel_state ,1);
 	c->network = st;
@@ -201,11 +237,15 @@ struct channel_state  *find_add_channel(struct network_state *st, char *name) {
 	return c;
 }
 
-struct channel_nick *find_channel_nick(struct channel_state *c, const char *name) {
+struct channel_nick *find_channel_nick(struct channel_state *c, const char *name) 
+{
 	GList *l;
 	const char *realname = name;
 	g_assert(name);
+	g_assert(c);
 
+	g_assert(c->network);
+	g_assert(c->network->info);
 	if(is_prefix(realname[0], c->network->info))realname++;
 
 	for (l = c->nicks; l; l = l->next) {
@@ -222,6 +262,8 @@ struct network_nick *find_network_nick(struct network_state *n, const char *name
 	GList *gl;
 
 	g_assert(name);
+	g_assert(n);
+	g_assert(n->info);
 
 	if (!irccmp(n->info, n->me.nick, name))
 		return &n->me;
@@ -241,9 +283,11 @@ static struct network_nick *find_add_network_nick(struct network_state *n, const
 	struct network_nick *nd;
 
 	g_assert(name);
+	g_assert(n);
 
 	nd = find_network_nick(n, name);
-	if (nd) return nd;
+	if (nd) 
+		return nd;
 
 	/* create one, if it doesn't exist */
 	nd = g_new0(struct network_nick,1);
@@ -259,8 +303,8 @@ struct channel_nick *find_add_channel_nick(struct channel_state *c, const char *
 	const char *realname = name;
 	char mymode = 0;
 
+	g_assert(c);
 	g_assert(name);
-
 	g_assert(strlen(name) > 0);
 
 	if(is_prefix(realname[0], c->network->info)) {
@@ -269,7 +313,8 @@ struct channel_nick *find_add_channel_nick(struct channel_state *c, const char *
 	}
 
 	n = find_channel_nick(c, realname);
-	if(n) return n;
+	if(n) 
+		return n;
 
 	n = g_new0(struct channel_nick,1);
 	

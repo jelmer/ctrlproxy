@@ -22,10 +22,20 @@
 void handle_005(struct network_state *s, struct line *l)
 {
 	unsigned int i;
+	
+	g_assert(s);
+	g_assert(s->info);
+	g_assert(l);
+
+	g_assert(l->argc >= 1);
 
 	for(i = 3; i < l->argc-1; i++) {
-		char *sep = strchr(l->args[i], '=');
+		char *sep;
 		char *key, *val;
+
+		g_assert(l->args[i]);
+
+		sep = strchr(l->args[i], '=');
 
 		if (!sep) { 
 			key = g_strdup(l->args[i]); 
@@ -58,11 +68,15 @@ void handle_005(struct network_state *s, struct line *l)
 gboolean network_supports(struct network *n, const char *fe)
 {
 	gpointer k, v;
+	g_assert(n);
+	g_assert(n->info.features);
 	return g_hash_table_lookup_extended (n->info.features, fe, &k, &v);
 }
 
 int irccmp(struct network_info *n, const char *a, const char *b)
 {
+	g_assert(n);
+
 	switch(n->casemapping) {
 	default:
 	case CASEMAP_UNKNOWN:
@@ -79,22 +93,36 @@ int irccmp(struct network_info *n, const char *a, const char *b)
 
 int is_channelname(const char *name, struct network_info *n)
 {
-	const char *chantypes = g_hash_table_lookup(n->features, "CHANTYPES");
+	const char *chantypes;
+
+	g_assert(name);
+	g_assert(n);
+	g_assert(n->features);
+	
+	chantypes = g_hash_table_lookup(n->features, "CHANTYPES");
+
 	if(!chantypes) {
 		if(name[0] == '#' || name[0] == '&')return 1;
 		return 0;
 	} else if(strchr(chantypes, name[0])) return 1;
+
 	return 0;
 }
 
 int is_prefix(char p, struct network_info *n)
 {
-	const char *prefix = g_hash_table_lookup(n->features, "PREFIX");
+	const char *prefix;
 	const char *pref_end;
+	
+	g_assert(n);
+	g_assert(n->features);
+	prefix = g_hash_table_lookup(n->features, "PREFIX");
+	
 	if(!prefix) {
 		if(p == '@' || p == '+') return 1;
 		return 0;
 	}
+
 	pref_end = strchr(prefix, ')');
 	if(!pref_end)pref_end = prefix;
 	else pref_end++;
@@ -104,9 +132,14 @@ int is_prefix(char p, struct network_info *n)
 
 char get_prefix_by_mode(char p, struct network_info *n)
 {
-	const char *prefix = g_hash_table_lookup(n->features, "PREFIX");
+	const char *prefix;
 	int i;
 	char *pref_end;
+
+	g_assert(n);
+	g_assert(n->features);
+
+	prefix = g_hash_table_lookup(n->features, "PREFIX");
 	if(!prefix) return ' ';
 	
 	pref_end = strchr(prefix, ')');
@@ -119,4 +152,3 @@ char get_prefix_by_mode(char p, struct network_info *n)
 	}
 	return ' ';
 }
-
