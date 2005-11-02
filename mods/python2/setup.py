@@ -17,7 +17,7 @@ setup (name = 'ctrlproxy',
 					  ),
 			Extension('ctrlproxy._listener',
 					  sources = ['listener_wrap.c']
-					  ),
+					  )
 			],
 		py_modules = [ 'ctrlproxy', 'ctrlproxy.admin', 'ctrlproxy.listener' ]
 		)

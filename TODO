@@ -1,16 +1,15 @@
 2.7 showstoppers:
 - test and fix SSL support
 - update documentation
-
-- python module testsuite
 - linestack tests
+
+- python module examples
 - finish python module hooks:
 	typedef gboolean (*new_client_hook) (struct client *);
 	typedef void (*lose_client_hook) (struct client *);
 	typedef char ** (*motd_hook) (struct network *n);
 	typedef void (*server_connected_hook) (struct network *);
 	typedef void (*server_disconnected_hook) (struct network *);
-	admin_command (object)
 	filter (object)
 	example script
 
@@ -23,3 +22,4 @@ next release (2.7.1):
 - more advanced repl backends, rules-based perhaps?
 - use more GLib functions (e.g. g_spawn() rather then fork(), 
    g_swap_async_with_pipes() instead of piped_child(), etc)
+

@@ -38,18 +38,14 @@ static gboolean load_config(struct plugin *p, xmlNodePtr node)
 	FILE *fd;
 	xmlNodePtr cur;
 
-	Py_Initialize();
-	
 	for (cur = node->xmlChildrenNode; cur; cur = cur->next)
 	{
 		if(!xmlIsBlankNode(cur) && !strcmp(cur->name, "script")) {
 			const char *filename = xmlNodeGetContent(cur);
-			fd = fopen(filename, "r");
-			if (!fd) {
-				log_global("python", LOG_ERROR, "Unable to open python script %s: %s", filename, strerror(errno));
-			} else {
-				PyRun_SimpleFile(fd, filename);
-				fclose(fd);
+
+			if (PyImport_ImportModule(filename) == NULL) {
+				PyErr_Print();
+				PyErr_Clear();
 			}
 		}
 	}
@@ -59,6 +55,18 @@ static gboolean load_config(struct plugin *p, xmlNodePtr node)
 
 static gboolean init_plugin(struct plugin *p)
 {
+	char *mypath = ctrlproxy_path("scripts/python");
+	char *oldpath, *newpath;
+	Py_Initialize();
+
+	oldpath = Py_GetPath();
+
+	newpath = g_strdup_printf("%s:%s", mypath, oldpath);
+	g_free(mypath);
+
+	PySys_SetPath(newpath);
+
+	g_free(newpath);
 	return TRUE;
 }
 

@@ -56,7 +56,7 @@ void admin_out(const struct client *c, const char *fmt, ...)
 	msg = g_strdup_vprintf(fmt, ap);
 	va_end(ap);
 
-	hostmask = g_strdup_printf(":ctrlproxy!ctrlproxy@%s", c->network->name);
+	hostmask = g_strdup_printf("ctrlproxy!ctrlproxy@%s", c->network->name);
 	if (c->network->config->type == NETWORK_VIRTUAL && 
 		!strcmp(c->network->connection.data.virtual.ops->name, "admin")) {
 		virtual_network_recv_args(c->network, hostmask+1, "PRIVMSG", ADMIN_CHANNEL, msg, NULL);

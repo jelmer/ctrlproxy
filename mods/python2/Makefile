@@ -10,7 +10,7 @@ lib%.so: %.c
 %.o: %.c
 	$(CC) $(CFLAGS) $(PYCFLAGS) -Dplugin=plugin_$* -c $<
 
-build: ctrlproxy_wrap.c admin_wrap.c listener_wrap.c
+build: ctrlproxy_wrap.c admin_wrap.c listener_wrap.c 
 	LDFLAGS="$(LDFLAGS)" CFLAGS="$(CFLAGS)" $(PYTHON) setup.py build
 
 install: all
@@ -31,3 +31,6 @@ distclean: clean
 
 %_wrap.c: ../../%.i
 	$(SWIG) -I../.. -python $*.i
+
+%_wrap.c: %.i
+	$(SWIG) -python $*.i
