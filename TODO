@@ -1,18 +1,19 @@
 2.7 showstoppers:
 - test and fix SSL support
 - update documentation
-- linestack tests
-- python module examples
-- finish python module hooks:
+- finish python module:
  - pass client / network / line arguments correctly
+ - examples
+- testing
 
-next release (2.7.1):
+next minor release (2.7.1):
 - properly expand second argument of PRIVMSG in log_irssi and log_custom
 - <allow/> rules in socks and listener based on ip addresses/ranges
 - support passwords in listener for selecting between networks
-- some sort of cascading filters, remove client, network and options from 
-  line struct
+- some sort of cascading filters, remove options from line struct
 - more advanced repl backends, rules-based perhaps?
 - use more GLib functions (e.g. g_spawn() rather then fork(), 
    g_swap_async_with_pipes() instead of piped_child(), etc)
 
+next major release (3.0.0):
+- new config file format

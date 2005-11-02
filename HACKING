@@ -1,10 +1,31 @@
 				==== CtrlProxy developer documentation ==== 
 Written by Jelmer Vernooij, 2003
+Updated October 2005
 
 General
 -------
 The core of ctrlproxy is in the top source directory, standard module
 are in mods/.
+
+Here's what the core files do:
+
+cache.c - Caches and sends cached network state info
+client.c - Maintains connections to clients
+gen_config.c - Generates configuration file from current network state
+hooks.c - Handles calling hooks for various things (connect/disconnect/message)
+isupport.c - Maintains information about capabilities of server
+line.c - Parse / generate IRC messages
+linestack.c - Store lines / network state for later retrieval
+log.c - Logging
+main.c - main()
+network.c - Maintains connection to network
+plugins.c - Handles loading/unloading of plugins
+posix.c - POSIX support functions
+redirect.c - Send message received from server to the right clients
+repl.c - Replication support (sends JOIN/TOPIC messages to client from server state)
+settings.c - Configuration
+state.c - Maintains network state information (what users on which channel, etc)
+util.c - Random utility functions
 
 Writing Modules
 ---------------

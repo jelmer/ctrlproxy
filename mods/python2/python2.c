@@ -40,8 +40,13 @@ static gboolean load_config(struct plugin *p, xmlNodePtr node)
 
 	for (cur = node->xmlChildrenNode; cur; cur = cur->next)
 	{
-		if(!xmlIsBlankNode(cur) && !strcmp(cur->name, "script")) {
+		if(xmlIsBlankNode(cur))
+			continue;
+		
+		if (!strcmp(cur->name, "script")) {
 			const char *filename = xmlNodeGetContent(cur);
+
+			log_global("python2", LOG_INFO, "Loading `%s'", filename);
 
 			if (PyImport_ImportModule(filename) == NULL) {
 				PyErr_Print();
