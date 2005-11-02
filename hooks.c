@@ -55,9 +55,10 @@ static GList *add_filter_ex(GList *class, const char *name, server_filter_functi
 
 static GList *del_filter_ex(GList *list, const char *name)
 {
-	GList *gl = list;
-
-	while(gl) {
+	GList *gl;
+	
+	for (gl = list; gl; gl = gl->next)
+	{
 		struct filter_data *d = (struct filter_data *)gl->data;
 
 		if(!g_strcasecmp(d->name, name)) 
@@ -66,8 +67,6 @@ static GList *del_filter_ex(GList *list, const char *name)
 			g_free(d);
 			return g_list_remove(list, d);
 		}
-	
-		gl = gl->next;
 	}
 
 	return list;
@@ -125,16 +124,15 @@ void del_client_filter(const char *name)
 
 gboolean run_client_filter(struct client *c, struct line *l, enum data_direction dir)
 {
-	GList *gl = client_filters;
-
-	while(gl) {
+	GList *gl;
+	
+	for (gl = client_filters; gl; gl = gl->next)
+	{
 		struct client_filter_data *d = (struct client_filter_data *)gl->data;
 		
 		if(!d->function(c, l, dir, d->userdata)) {
 			return FALSE;
 		}
-
-		gl = gl->next;
 	}
 	
 	return TRUE;
@@ -172,8 +170,10 @@ void add_new_client_hook(const char *name, new_client_hook h, void *userdata)
 
 void del_new_client_hook(const char *name)
 {
-	GList *l = new_client_hooks;
-	while(l) {
+	GList *l;
+	
+	for (l = new_client_hooks; l; l = l->next)
+	{
 		struct new_client_hook_data *d = (struct new_client_hook_data *)l->data;
 		if(!strcmp(d->name, name)) {
 			g_free(d->name);
@@ -181,22 +181,21 @@ void del_new_client_hook(const char *name)
 			new_client_hooks = g_list_remove(new_client_hooks, d);
 			return;
 		}
-		l = l->next;
 	}
 }
 
 gboolean new_client_hook_execute(struct client *c)
 {
-	GList *l = new_client_hooks;
-	while(l) {
+	GList *l;
+	
+	for (l = new_client_hooks; l; l = l->next)
+	{
 		struct new_client_hook_data *d = (struct new_client_hook_data *)l->data;
 	
 		if(!d->hook(c, d->userdata)) {
 			g_debug(("New client hook '%s' refused new client"), d->name);
 			return FALSE;
 		}
-
-		l = l->next;
 	}
 
 	return TRUE;
@@ -215,25 +214,26 @@ void add_lose_client_hook(const char *name, lose_client_hook h, void *userdata)
 
 void del_lose_client_hook(const char *name)
 {
-	GList *l = lose_client_hooks;
-	while(l) {
+	GList *l;
+	for (l = lose_client_hooks; l; l = l->next)
+	{
 		struct lose_client_hook_data *d = (struct lose_client_hook_data *)l->data;
 		if(!strcmp(d->name, name)) {
 			g_free(d->name);
 			lose_client_hooks = g_list_remove(lose_client_hooks, d);
 			return;
 		}
-		l = l->next;
 	}
 }
 
 void lose_client_hook_execute(struct client *c)
 {
-	GList *l = lose_client_hooks;
-	while(l) {
+	GList *l;
+	
+	for (l = lose_client_hooks; l; l = l->next)
+	{
 		struct lose_client_hook_data *d = (struct lose_client_hook_data *)l->data;
 		d->hook(c, d->userdata);
-		l = l->next;
 	}
 }
 
@@ -259,8 +259,10 @@ void add_motd_hook(const char *name, motd_hook h, void *userdata)
 
 void del_motd_hook(const char *name)
 {
-	GList *l = motd_hooks;
-	while(l) {
+	GList *l;
+	
+	for (l = motd_hooks; l; l = l->next) 
+	{
 		struct motd_hook_data *d = (struct motd_hook_data *)l->data;
 		if(!strcmp(d->name, name)) {
 			g_free(d->name);
@@ -268,7 +270,6 @@ void del_motd_hook(const char *name)
 			motd_hooks = g_list_remove(motd_hooks, d);
 			return;
 		}
-		l = l->next;
 	}
 }
 
@@ -276,18 +277,18 @@ char ** get_motd_lines(struct network *n)
 {
 	char **l = g_malloc(sizeof(char *));
 	size_t curnum = 0;
-	GList *gl = motd_hooks;
-	while(gl) {
+	GList *gl;
+	
+	for (gl = motd_hooks; gl; gl = gl->next) 
+	{
 		char **nl;
 		int i,j;
 		struct motd_hook_data *d = (struct motd_hook_data *)gl->data;
 
 		nl = d->hook(n, d->userdata);
 
-		if(!nl) { 
-			gl = gl->next;
+		if(!nl) 
 			continue;
-		}
 
 		/* Count number of added lines */
 		for(i = 0; nl[i]; i++);
@@ -299,8 +300,6 @@ char ** get_motd_lines(struct network *n)
 		g_free(nl);
 
 		curnum+=i;
-		
-		gl = gl->next;
 	}
 
 	l[curnum] = NULL;
@@ -334,8 +333,9 @@ void add_server_connected_hook(const char *name, server_connected_hook h, void *
 
 void del_server_connected_hook(const char *name)
 {
-	GList *l = server_connected_hooks;
-	while(l) {
+	GList *l;
+	for (l = server_connected_hooks; l; l = l->next) 
+	{
 		struct server_connected_hook_data *d = (struct server_connected_hook_data *)l->data;
 		if(!strcmp(d->name, name)) {
 			g_free(d->name);
@@ -343,17 +343,17 @@ void del_server_connected_hook(const char *name)
 			server_connected_hooks = g_list_remove(server_connected_hooks, d);
 			return;
 		}
-		l = l->next;
 	}
 }
 
 void server_connected_hook_execute(struct network *c)
 {
-	GList *l = server_connected_hooks;
-	while(l) {
+	GList *l;
+	
+	for (l = server_connected_hooks; l; l = l->next)
+	{
 		struct server_connected_hook_data *d = (struct server_connected_hook_data *)l->data;
 		d->hook(c, d->userdata);
-		l = l->next;
 	}
 }
 
@@ -378,8 +378,9 @@ void add_server_disconnected_hook(const char *name, server_disconnected_hook h, 
 
 void del_server_disconnected_hook(const char *name)
 {
-	GList *l = server_disconnected_hooks;
-	while(l) {
+	GList *l;
+	for (l = server_disconnected_hooks; l; l = l->next) 
+	{
 		struct server_disconnected_hook_data *d = (struct server_disconnected_hook_data *)l->data;
 		if(!strcmp(d->name, name)) {
 			g_free(d->name);
@@ -387,16 +388,15 @@ void del_server_disconnected_hook(const char *name)
 			server_disconnected_hooks = g_list_remove(server_disconnected_hooks, d);
 			return;
 		}
-		l = l->next;
 	}
 }
 
 void server_disconnected_hook_execute(struct network *c)
 {
-	GList *l = server_disconnected_hooks;
-	while(l) {
+	GList *l;
+	for (l = server_disconnected_hooks; l; l = l->next) 
+	{
 		struct server_disconnected_hook_data *d = (struct server_disconnected_hook_data *)l->data;
 		d->hook(c, d->userdata);
-		l = l->next;
 	}
 }
