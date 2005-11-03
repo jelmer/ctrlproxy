@@ -84,30 +84,6 @@ static gboolean fini_plugin(struct plugin *p) {
 	return TRUE;
 }
 
-static gboolean save_config(struct plugin *p, xmlNodePtr node)
-{
-	if (only_for_noclients) {
-		xmlAddChild(node, xmlNewNode(NULL, "only_noclients"));
-	}
-
-	if (nick) {
-		xmlNodePtr n = xmlNewNode(NULL, "nick");
-		xmlNodeSetContent(n, nick);
-		xmlAddChild(node, n);
-	}
-
-	if (message) {
-		char *tmp;
-		xmlNodePtr n = xmlNewNode(NULL, "message");
-		xmlNodeSetContent(n, message);
-		xmlSetProp(n, "time", tmp = g_strdup_printf("%ld", max_idle_time));
-		g_free(tmp);
-		xmlAddChild(node, n);
-	}
-
-	return TRUE;
-}
-
 static gboolean load_config(struct plugin *p, xmlNodePtr node)
 {
 	struct auto_away_data *d = (struct auto_away_data *)p->data;
@@ -153,6 +129,5 @@ struct plugin_ops plugin = {
 	.version = 0,
 	.init = init_plugin,
 	.fini = fini_plugin,
-	.load_config = load_config,
-	.save_config = save_config
+	.load_config = load_config
 };

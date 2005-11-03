@@ -29,7 +29,7 @@ struct plugin {
 		const char *name;
 		gboolean (*init) (struct plugin *);
 		gboolean (*fini) (struct plugin *);
-		gboolean (*save_config) (struct plugin *, xmlNodePtr);
+		gboolean (*update_config) (struct plugin *, xmlNodePtr);
 		gboolean (*load_config) (struct plugin *, xmlNodePtr configuration);
 	} *ops;
 };

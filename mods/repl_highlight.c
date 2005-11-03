@@ -76,22 +76,10 @@ static gboolean load_config(struct plugin *p, xmlNodePtr node)
 	return TRUE;
 }
 
-static gboolean save_config(struct plugin *p, xmlNodePtr node)
-{
-	GList *gl;
-	
-	for (gl = matches; gl; gl = gl->next) {
-		xmlNewTextChild(node, NULL, "match", gl->data);
-	}
-
-	return TRUE;
-}
-
 struct plugin_ops plugin = {
 	.name = "repl_highlight",
 	.version = 0,
 	.init = init_plugin,
 	.fini = fini_plugin,
 	.load_config = load_config,
-	.save_config = save_config
 };

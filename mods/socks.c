@@ -452,24 +452,6 @@ static gboolean fini_plugin(struct plugin *p)
 	return TRUE;
 }
 
-static gboolean save_config(struct plugin *p, xmlNodePtr node)
-{
-	GList *gl;
-	
-	for (gl = allow_rules; gl ; gl = gl->next) {
-		struct allow_rule *r = gl->data;
-		xmlNodePtr n = xmlNewNode(NULL, "allow");
-		if (r->username) xmlSetProp(n, "username", r->username);
-		if (r->password) xmlSetProp(n, "password", r->password);
-
-		xmlAddChild(node, n);
-	}
-
-	/* FIXME: Set port */
-
-	return TRUE;
-}
-
 static gboolean load_config(struct plugin *p, xmlNodePtr conf)
 {
 	int sock;
@@ -550,5 +532,4 @@ struct plugin_ops plugin = {
 	.init = init_plugin,
 	.fini = fini_plugin,
 	.load_config = load_config,
-	.save_config = save_config
 };

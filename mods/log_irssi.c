@@ -215,12 +215,6 @@ static gboolean fini_plugin(struct plugin *p)
 	return TRUE;
 }
 
-static gboolean save_config(struct plugin *p, xmlNodePtr node)
-{
-	xmlNewTextChild(node, NULL, "logfile", logfile);
-	return TRUE;
-}
-
 static gboolean load_config(struct plugin *p, xmlNodePtr node) 
 {
 	xmlNodePtr cur;
@@ -255,5 +249,4 @@ struct plugin_ops plugin = {
 	.init = init_plugin,
 	.fini = fini_plugin,
 	.load_config = load_config,
-	.save_config = save_config,
 };

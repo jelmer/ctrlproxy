@@ -48,22 +48,18 @@ static xmlNodePtr config_save_plugins(GList *plugins)
 	for (gl = plugins; gl; gl = gl->next) {
 		struct plugin_config *pc = gl->data;
 		struct plugin *p;
-		xmlNodePtr s = xmlNewNode(NULL, "plugin");
-
-		xmlSetProp(s, "file", pc->path);
 		
+		g_assert(!strcmp(pc->node->name, "plugin"));
+		xmlSetProp(pc->node, "file", pc->path);
+
 		p = plugin_by_config(pc);
-		xmlSetProp(s, "autoload", p?"1":"0");
 
-		if (p && p->ops->save_config) {
-			if (!p->ops->save_config(p, s)) {
-				log_global(p->ops->name, LOG_ERROR, "Error saving configuration");
-				g_free(p);
-				continue;
-			}
-		}
+		if (p)
+			plugin_update_config(p, pc);
 		
-		xmlAddChild(ret, s);
+		xmlSetProp(pc->node, "autoload", pc->autoload?"1":"0");
+				
+		xmlAddChild(ret, pc->node);
 	}
 
 	return ret;

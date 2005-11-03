@@ -135,12 +135,22 @@ static void conned_data(struct network *n, void *userdata)
 	identify_me(n, n->state->me.nick);
 }
 
-static gboolean save_config(struct plugin *p, xmlNodePtr node)
+static gboolean update_config(struct plugin *p, xmlNodePtr node)
 {
 	GList *gl;
+	xmlNodePtr cur, next;
+
+	/* First, remove old nodes */
+	for (cur = node->children; cur; cur = next)
+	{
+		next = cur->next;
+
+		if (!strcmp(cur->name, "nick"))
+			xmlUnlinkNode(cur);
+	}
 
 	for (gl = nicks; gl; gl = gl->next) {
-		xmlNodePtr p = xmlNewNode(NULL, "name");	
+		xmlNodePtr p = xmlNewNode(NULL, "nick");	
 		struct nickserv_entry *n = gl->data;
 
 		xmlSetProp(p, "name", n->nick);
@@ -162,7 +172,7 @@ static gboolean load_config(struct plugin *p, xmlNodePtr node)
 		struct nickserv_entry *e;
 		if (cur->type != XML_ELEMENT_NODE) continue;
 
-		if (!strcmp(cur->name, "name")) {
+		if (!strcmp(cur->name, "nick")) {
 			e = g_new0(struct nickserv_entry, 1);
 			e->nick = xmlGetProp(cur, "name");
 			e->pass = xmlGetProp(cur, "password");
@@ -193,5 +203,5 @@ struct plugin_ops plugin = {
 	.init = init_plugin,
 	.fini = fini_plugin,
 	.load_config = load_config,
-	.save_config = save_config
+	.update_config = update_config
 };

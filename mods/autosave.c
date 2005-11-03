@@ -31,16 +31,6 @@ static gboolean loop_save_config(gpointer user_data)
 	return TRUE;
 }
 
-static gboolean save_config(struct plugin *p, xmlNodePtr node)
-{
-	char *tmp;
-	xmlNodePtr n = xmlNewTextChild(node, NULL, "interval", NULL);
-	tmp = g_strdup_printf("%d", interval_time);
-	xmlSetProp(n, "time", tmp);
-	g_free(tmp);
-	return TRUE;
-}
-
 static gboolean load_config(struct plugin *p, xmlNodePtr node)
 {
 	xmlNodePtr cur;
@@ -80,5 +70,4 @@ struct plugin_ops plugin = {
 	.init = init_plugin,
 	.fini = fini_plugin,
 	.load_config = load_config,
-	.save_config = save_config
 };

@@ -44,26 +44,6 @@ static gboolean fini_plugin(struct plugin *p)
 	return TRUE;
 }
 
-static gboolean save_config(struct plugin *p, xmlNodePtr node)
-{
-	GList *gl;
-
-	for (gl = autosend_lines; gl; gl = gl->next) {
-		struct autosend_line *al = gl->data;
-		xmlNodePtr n;
-		char *tmp = irc_line_string(al->line);
-		
-		n = xmlNewTextChild(node, NULL, "autosend", tmp);
-
-		if (al->network)
-			xmlSetProp(n, "network", al->network);
-
-		g_free(tmp);
-	}
-
-	return TRUE;
-}
-
 static gboolean load_config(struct plugin *p, xmlNodePtr node)
 {
 	struct autosend_line *al;
@@ -94,5 +74,4 @@ struct plugin_ops plugin = {
 	.init = init_plugin,
 	.fini = fini_plugin,
 	.load_config = load_config,
-	.save_config = save_config
 };

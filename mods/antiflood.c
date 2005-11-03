@@ -117,14 +117,6 @@ static gboolean fini_plugin(struct plugin *p) {
 	return TRUE;
 }
 
-static gboolean save_config(struct plugin *p, xmlNodePtr node)
-{
-	char *tmp = g_strdup_printf("%d", default_queue_speed);
-	xmlSetProp(node, "queue-speed", tmp);
-	g_free(tmp);
-	return TRUE;
-}
-
 static gboolean load_config(struct plugin *p, xmlNodePtr node)
 {
 	char *qs = xmlGetProp(node, "queue-speed");
@@ -150,5 +142,4 @@ struct plugin_ops plugin = {
 	.init = init_plugin,
 	.fini = fini_plugin,
 	.load_config = load_config,
-	.save_config = save_config
 };

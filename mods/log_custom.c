@@ -494,22 +494,6 @@ static gboolean fini_plugin(struct plugin *p)
 	return TRUE;
 }
 
-static void savefmt(gpointer key, gpointer value, gpointer udata)
-{
-	xmlNodePtr node = udata;
-
-	xmlNewTextChild(node, NULL, key, value);
-}
-
-static gboolean save_config(struct plugin *p, xmlNodePtr node)
-{
-	xmlNewTextChild(node, NULL, "logfilename", logfilename);
-
-	g_hash_table_foreach(fmts, savefmt, node);
-
-	return TRUE;
-}
-
 static gboolean load_config(struct plugin *p, xmlNodePtr node)
 {
 	xmlNodePtr cur;
@@ -542,5 +526,4 @@ struct plugin_ops plugin = {
 	.init = init_plugin,
 	.fini = fini_plugin,
 	.load_config = load_config,
-	.save_config = save_config
 };

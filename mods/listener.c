@@ -214,9 +214,19 @@ struct listener *listener_init(const char *address, const char *port)
 	return l;
 }
 
-static gboolean save_config(struct plugin *p, xmlNodePtr conf)
+static gboolean update_config(struct plugin *p, xmlNodePtr conf)
 {
 	GList *gl;
+	xmlNodePtr cur, next;
+
+	/* Remove old nodes */
+	for (cur = conf->children; cur; cur = next)
+	{
+		next = cur->next;
+
+		if (!strcmp(cur->name, "listen"))
+			xmlUnlinkNode(cur);
+	}
 	
 	for (gl = listeners; gl; gl = gl->next) {
 		struct listener *l = gl->data;
@@ -304,5 +314,5 @@ struct plugin_ops plugin = {
 	.init = init_plugin,
 	.fini = fini_plugin,
 	.load_config = load_config,
-	.save_config = save_config
+	.update_config = update_config
 };
