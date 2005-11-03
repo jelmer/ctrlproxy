@@ -367,7 +367,7 @@ static gboolean process_command(const struct client *c, struct line *l, int cmdo
 		return TRUE;
 	}
 
-	l->dont_send = l->is_private = 1;
+	l->is_private = 1;
 	tmp = g_strdup(l->args[cmdoffset]);
 
 	if(l->args[cmdoffset+1]) {
@@ -402,7 +402,8 @@ static gboolean process_command(const struct client *c, struct line *l, int cmdo
 	return TRUE;
 }
 
-static gboolean handle_data(struct client *c, struct line *l, enum data_direction dir, void *userdata) {
+static gboolean handle_data(struct client *c, struct line *l, enum data_direction dir, void *userdata) 
+{
 	int cmdoffset = 0;
 
 	if(dir != TO_SERVER) 
@@ -418,7 +419,7 @@ static gboolean handle_data(struct client *c, struct line *l, enum data_directio
 
 	process_command(c, l, cmdoffset);
 
-	return TRUE;
+	return FALSE;
 }
 
 static gboolean load_config(struct plugin *p, xmlNodePtr node)

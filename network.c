@@ -101,8 +101,7 @@ static gboolean process_from_server(struct network *n, struct line *l)
 		}
 	} 
 
-	if(!l->dont_send && 
-		n->connection.state == NETWORK_CONNECTION_STATE_MOTD_RECVD) {
+	if( n->connection.state == NETWORK_CONNECTION_STATE_MOTD_RECVD) {
 		if (atoi(l->args[0])) {
 			redirect_response(n, l);
 		} else if (run_server_filter(n, l, FROM_SERVER)) {

@@ -111,7 +111,6 @@ static int parser_dup(void)
 	struct line l, *m;
 	char *args[] = { "x", "y", "z", NULL };
 	l.is_private = 1;
-	l.dont_send = 1;
 	l.origin = "bla";
 	l.argc = 3;
 	l.args = args;
@@ -120,7 +119,6 @@ static int parser_dup(void)
 	m = linedup(&l);
 
 	if (l.is_private != m->is_private) return -1;
-	if (l.dont_send != m->dont_send) return -2;
 	if (strcmp(l.origin, m->origin)) return -3;
 	if (l.argc != m->argc) return -4;
 	if (strcmp(l.args[0], m->args[0])) return -5;
