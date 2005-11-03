@@ -26,6 +26,11 @@
 		<plugin autoload="1" file="repl_command"/>
 		<plugin autoload="1" file="report_time"/>
 
+		<plugin autoload="0" file="openssl">
+			<keyfile>key.pem</keyfile>
+			<certfile>cert.pem</keyfile>
+		</plugin>
+
 		<!-- Irssi-style logging -->
 		<plugin autoload="1" file="log_irssi">
 			<!-- <logfile>/home/jelmer/tmp/ctrlproxy</logfile> -->
