@@ -147,7 +147,7 @@ void save_configuration(struct ctrlproxy_config *cfg, const char *configuration_
 	xmlAddChild(root, config_save_plugins(cfg->plugins));
 	xmlAddChild(root, config_save_networks(cfg->networks));
 
-	xmlSaveFile(configuration_file?configuration_file:last_config_file, configuration);
+	xmlSaveFormatFile(configuration_file?configuration_file:last_config_file, configuration, 1);
 
 	xmlFreeDoc(configuration);
 }
