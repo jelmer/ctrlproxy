@@ -18,8 +18,6 @@
 <!ENTITY clients SYSTEM "clients.xml">
 <!ENTITY introduction SYSTEM "introduction.xml">
 <!ENTITY antiflood SYSTEM "antiflood.xml">
-<!ENTITY linestack SYSTEM "linestack.xml">
-<!ENTITY functions SYSTEM "functions.xml">
 <!ENTITY report-time SYSTEM "report-time.xml">
 <!ENTITY motd-file SYSTEM "motd-file.xml">
 <!ENTITY python SYSTEM "python.xml">
@@ -77,13 +75,5 @@
 &report-time;
 &motd-file;
 &python;
-</part>
-
-<part id="extending">
-	<title>Writing your own modules</title>
-
-	&functions;
-	&linestack;
-
 </part>
 </book>

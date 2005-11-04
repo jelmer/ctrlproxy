@@ -56,8 +56,6 @@ Each &lt;network&gt; element contains a &lt;servers&gt; element which contains
 several transport-specific elements. 
 </para>
 
-<!--FIXME:Listeners-->
-
 </refsect2>
 
 </refsect1>
@@ -92,6 +90,17 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple PLace, Suite 330, Boston, MA  02111-1307  USA
 </para>
 
+</refsect1>
+
+<refsect1>
+	<title>BUGS</title>
+
+	<para>XML isn't really the most suitable format for configuration files that
+		are supposed to be edited by hand. The current configuration file 
+		format also forces the user to know more about the ctrlproxy internals
+		then (s)he has to. For example, it should not matter whether something
+		is loaded from a plugin or part of the ctrlproxy core.
+	</para>
 </refsect1>
 
 <refsect1>

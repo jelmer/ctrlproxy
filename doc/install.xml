@@ -25,7 +25,7 @@
 	</sect1>
 
 	<sect1>
-		<title>Getting the source code</title>
+		<title>Obtaining the source code</title>
 
 		<para>The source of ctrlproxy can be downloaded from <ulink url="http://ctrlproxy.vernstok.nl/">the ctrlproxy homepage</ulink>. The 
 			source files available there can be unpacked using tar and gzip:</para>
@@ -53,7 +53,7 @@ ctrlproxy-trunk/README
 </screen>
 			</para>
 
-			<para>Make sure you run autogen.sh in the source directory (<filename>ctrlproxy/</filename>) so that the <filename>configure</filename> script is generated correctly.
+			<para>Make sure you run the <filename>autogen.sh</filename> in the source directory so that the <filename>configure</filename> script is generated correctly.
 			</para>
 		</sect2>
 	</sect1>
