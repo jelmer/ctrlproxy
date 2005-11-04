@@ -182,7 +182,12 @@ static void com_disconnect_network (const struct client *c, char **args, void *u
 		}
 	}
 
-	disconnect_network(n);
+	if (n->connection.state == NETWORK_CONNECTION_STATE_NOT_CONNECTED) {
+		admin_out(c, "Already disconnected from `%s'", args[1]);
+	} else {
+		admin_out(c, "Disconnecting from `%s'", args[1]);
+		disconnect_network(n);
+	}
 }
 
 static void com_next_server (const struct client *c, char **args, void *userdata) {
