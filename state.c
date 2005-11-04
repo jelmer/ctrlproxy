@@ -643,24 +643,32 @@ static void handle_mode(struct network_state *s, struct line *l)
 						  arg++;
 						  break;
 				case 'l':
-					if(!l->args[++arg]) {
-						log_network_state(s, LOG_WARNING, "Mode l requires argument, but no argument found");
-						break;
-					}
-					c->limit = atol(l->args[arg]);
 					c->modes['l'] = t;
+				    if (t) {
+						if(!l->args[++arg]) {
+							log_network_state(s, LOG_WARNING, "Mode +l requires argument, but no argument found");
+							break;
+						}
+						c->limit = atol(l->args[arg]);
+					} else {
+						c->limit = 0;
+					}
 					break;
 				case 'k':
-					if(!l->args[++arg]) {
-						log_network_state(s, LOG_WARNING, "Mode k requires argument, but no argument found");
-						break;
+					c->modes['k'] = t;
+					if (t) {
+						if(!l->args[++arg]) {
+							log_network_state(s, LOG_WARNING, "Mode k requires argument, but no argument found");
+							break;
+						}
+
+						g_free(c->key);
+						c->key = g_strdup(l->args[arg]);
+					} else {
+						g_free(c->key);
+						c->key = NULL;
 					}
 
-					g_free(c->key);
-					if(t) { c->key = g_strdup(l->args[arg]); }
-					else c->key = NULL;
-
-					c->modes['k'] = t;
 					break;
 				default:
 					  p = get_prefix_by_mode(l->args[2][i], s->info);
