@@ -27,7 +27,7 @@
 gboolean network_nick_set_nick(struct network_nick *, const char *);
 gboolean network_nick_set_hostmask(struct network_nick *, const char *);
 
-static int state_join(void)
+static int state_init(void)
 {
 	struct network_state *ns = network_state_init(NULL, "bla", "Gebruikersnaam", "Computernaam");
 
@@ -36,6 +36,63 @@ static int state_join(void)
 	if (strcmp(ns->me.nick, "bla") != 0) return -2;
 	if (strcmp(ns->me.username, "Gebruikersnaam") != 0) return -3;
 	if (strcmp(ns->me.hostname, "Computernaam") != 0) return -4;
+
+	if (g_list_length(ns->channels) != 0)
+		return -5;
+
+	return 0;
+}
+
+static void state_process(struct network_state *ns, const char *line)
+{
+	struct line *l;
+	l = irc_parse_line(line);
+	g_assert(l);
+	g_assert(state_handle_data(ns, l));
+	free_line(l);
+}
+
+static int state_join(void)
+{
+	struct network_state *ns = network_state_init(NULL, "bla", "Gebruikersnaam", "Computernaam");
+	struct channel_state *cs;
+
+	if (!ns) return -1;
+
+	state_process(ns, ":bla!user@host JOIN #examplechannel");
+
+	if (g_list_length(ns->channels) != 1)
+		return -1;
+	
+	cs = ns->channels->data;
+
+	if (strcmp(cs->name, "#examplechannel") != 0)
+		return -2;
+
+	return 0;
+}
+
+static int state_part(void)
+{
+	struct network_state *ns = network_state_init(NULL, "bla", "Gebruikersnaam", "Computernaam");
+	struct channel_state *cs;
+
+	if (!ns) return -1;
+
+	state_process(ns, ":bla!user@host JOIN #examplechannel");
+
+	if (g_list_length(ns->channels) != 1)
+		return -1;
+	
+	cs = ns->channels->data;
+
+	if (strcmp(cs->name, "#examplechannel") != 0)
+		return -2;
+	
+	state_process(ns, ":bla!user@host PART #examplechannel");
+
+	if (g_list_length(ns->channels) != 0)
+		return -3;
 
 	return 0;
 }
@@ -97,7 +154,10 @@ static int state_marshall_simple(void)
 
 void torture_init(void)
 {
+	init_log("test-state");
+	register_test("STATE-INIT", state_init);
 	register_test("STATE-JOIN", state_join);
+	register_test("STATE-PART", state_part);
 	register_test("STATE-SETNICK", state_set_nick);
 	register_test("STATE-SETHOSTMASK", state_set_hostmask);
 	register_test("MARSHALL-SIMPLE", state_marshall_simple);

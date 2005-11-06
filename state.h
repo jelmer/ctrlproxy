@@ -100,15 +100,17 @@ struct network_state
 /* state.c */
 G_MODULE_EXPORT struct network_state *network_state_init(struct network_info *info, const char *nick, const char *username, const char *hostname);
 G_MODULE_EXPORT void free_network_state(struct network_state *);
+G_MODULE_EXPORT gboolean state_handle_data(struct network_state *s, struct line *l);
 
 G_MODULE_EXPORT struct channel_state *find_channel(struct network_state *st, const char *name);
 G_MODULE_EXPORT struct channel_nick *find_channel_nick(struct channel_state *c, const char *name);
 G_MODULE_EXPORT struct network_nick *find_network_nick(struct network_state *c, const char *name);
 G_MODULE_EXPORT gboolean client_send_state(struct client *, struct network_state *);
-G_MODULE_EXPORT int is_channelname(const char *name, struct network_info *s);
-G_MODULE_EXPORT int is_prefix(char p, struct network_info *n);
-G_MODULE_EXPORT char get_prefix_by_mode(char p, struct network_info *n);
-G_MODULE_EXPORT int irccmp(struct network_info *n, const char *a, const char *b);
+G_MODULE_EXPORT gboolean is_channelname(const char *name, const struct network_info *s);
+G_MODULE_EXPORT gboolean is_prefix(char p, const struct network_info *n);
+G_MODULE_EXPORT char get_prefix_by_mode(char p, const struct network_info *n);
+G_MODULE_EXPORT int irccmp(const struct network_info *n, const char *a, const char *b);
+G_MODULE_EXPORT gboolean network_supports(const struct network_info *n, const char *fe);
 
 /* Push / pull */
 G_MODULE_EXPORT struct network_state *network_state_decode(char *, size_t, struct network_info *);

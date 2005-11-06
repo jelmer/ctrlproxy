@@ -19,6 +19,9 @@
 
 #include "internals.h"
 
+#define DEFAULT_PREFIX		"(ov)@+"
+#define DEFAULT_CHANTYPES 	"#&"
+
 void handle_005(struct network_state *s, struct line *l)
 {
 	unsigned int i;
@@ -56,7 +59,7 @@ void handle_005(struct network_state *s, struct line *l)
 				s->info->casemapping = CASEMAP_ASCII;
 			} else {
 				s->info->casemapping = CASEMAP_UNKNOWN;
-				log_network_state(s, LOG_WARNING, "Unknown supports.casemapping '%s'", l->args[i]+strlen("supports.casemapping="));
+				log_network_state(s, LOG_WARNING, "Unknown CASEMAPPING value '%s'", val);
 			}
 		} else if(!g_strcasecmp(key, "NETWORK")) {
 			g_free(s->info->name);
@@ -65,19 +68,17 @@ void handle_005(struct network_state *s, struct line *l)
 	}
 }
 
-gboolean network_supports(struct network *n, const char *fe)
+gboolean network_supports(const struct network_info *n, const char *fe)
 {
 	gpointer k, v;
 	g_assert(n);
-	g_assert(n->info.features);
-	return g_hash_table_lookup_extended (n->info.features, fe, &k, &v);
+	g_assert(n->features);
+	return g_hash_table_lookup_extended (n->features, fe, &k, &v);
 }
 
-int irccmp(struct network_info *n, const char *a, const char *b)
+int irccmp(const struct network_info *n, const char *a, const char *b)
 {
-	g_assert(n);
-
-	switch(n->casemapping) {
+	switch(n?n->casemapping:CASEMAP_UNKNOWN) {
 	default:
 	case CASEMAP_UNKNOWN:
 	case CASEMAP_RFC1459:
@@ -91,56 +92,60 @@ int irccmp(struct network_info *n, const char *a, const char *b)
 	return 0;
 }
 
-int is_channelname(const char *name, struct network_info *n)
+gboolean is_channelname(const char *name, const struct network_info *n)
 {
-	const char *chantypes;
+	const char *chantypes = NULL;
 
 	g_assert(name);
-	g_assert(n);
-	g_assert(n->features);
-	
-	chantypes = g_hash_table_lookup(n->features, "CHANTYPES");
 
-	if(!chantypes) {
-		if(name[0] == '#' || name[0] == '&')return 1;
-		return 0;
-	} else if(strchr(chantypes, name[0])) return 1;
-
-	return 0;
-}
-
-int is_prefix(char p, struct network_info *n)
-{
-	const char *prefix;
-	const char *pref_end;
+	if (n != NULL) {
+		g_assert(n->features);
 	
-	g_assert(n);
-	g_assert(n->features);
-	prefix = g_hash_table_lookup(n->features, "PREFIX");
-	
-	if(!prefix) {
-		if(p == '@' || p == '+') return 1;
-		return 0;
+		chantypes = g_hash_table_lookup(n->features, "CHANTYPES");
 	}
 
-	pref_end = strchr(prefix, ')');
-	if(!pref_end)pref_end = prefix;
-	else pref_end++;
-	if(strchr(pref_end, p)) return 1;
-	return 0;
+	if(chantypes == NULL) 
+		chantypes = DEFAULT_CHANTYPES;
+	
+	if(strchr(chantypes, name[0])) 
+		return TRUE;
+
+	return FALSE;
 }
 
-char get_prefix_by_mode(char mode, struct network_info *n)
+gboolean is_prefix(char p, const struct network_info *n)
 {
-	const char *prefix;
+	const char *prefix = NULL;
+	const char *pref_end;
+	
+	if (n != NULL) {
+		g_assert(n->features);
+		prefix = g_hash_table_lookup(n->features, "PREFIX");
+	}
+	
+	if (prefix == NULL) 
+		prefix = DEFAULT_PREFIX;
+
+	pref_end = strchr(prefix, ')');
+	if (!pref_end)pref_end = prefix; else pref_end++;
+
+	if(strchr(pref_end, p)) return TRUE;
+	return FALSE;
+}
+
+char get_prefix_by_mode(char mode, const struct network_info *n)
+{
+	const char *prefix = NULL;
 	int i;
 	char *pref_end;
 
-	g_assert(n);
-	g_assert(n->features);
+	if (n == NULL) {
+		g_assert(n->features);
 
-	prefix = g_hash_table_lookup(n->features, "PREFIX");
-	if(!prefix) prefix = "(ov)@+";
+		prefix = g_hash_table_lookup(n->features, "PREFIX");
+	}
+
+	if (prefix == NULL) prefix = DEFAULT_PREFIX;
 	
 	pref_end = strchr(prefix, ')');
 	if(prefix[0] != '(' || !pref_end) {

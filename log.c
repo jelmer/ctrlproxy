@@ -22,6 +22,7 @@
 #include "config.h"
 #endif
 #include <stdarg.h>
+#include <stdio.h>
 
 static const char *get_date(void)
 {
@@ -33,11 +34,12 @@ static const char *get_date(void)
 
 gboolean log_timestamp = TRUE;
 enum log_level current_log_level = LOG_INFO;
-FILE *flog;
+FILE *flog = NULL;
 
 static void log_entry(const char *module, enum log_level level, const struct network *n, const struct client *c, const char *data)
 {
-	
+	g_assert(flog);
+
 	if (level > current_log_level)
 		return;
 	
@@ -126,7 +128,7 @@ gboolean init_log(const char *lf)
 	g_log_set_handler ("GLib", G_LOG_LEVEL_MASK | G_LOG_FLAG_FATAL | G_LOG_FLAG_RECURSION, log_handler, NULL);
 
 	if (!lf) {
-		flog = stdout;
+		flog = stderr;
 		return TRUE;
 	}
 
@@ -143,7 +145,8 @@ gboolean init_log(const char *lf)
 void fini_log(void)
 {
 	log_global(NULL, LOG_INFO, "Closing log file");
-	if (flog != stdout) {
+	if (flog != stderr) {
 		fclose(flog);
 	}
+	flog = NULL;
 }

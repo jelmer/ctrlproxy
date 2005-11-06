@@ -246,8 +246,8 @@ struct channel_nick *find_channel_nick(struct channel_state *c, const char *name
 	g_assert(c);
 
 	g_assert(c->network);
-	g_assert(c->network->info);
-	if(is_prefix(realname[0], c->network->info))realname++;
+	if(is_prefix(realname[0], c->network->info))
+		realname++;
 
 	for (l = c->nicks; l; l = l->next) {
 		struct channel_nick *n = (struct channel_nick *)l->data;
@@ -264,7 +264,6 @@ struct network_nick *find_network_nick(struct network_state *n, const char *name
 
 	g_assert(name);
 	g_assert(n);
-	g_assert(n->info);
 
 	if (!irccmp(n->info, n->me.nick, name))
 		return &n->me;
@@ -307,6 +306,7 @@ struct channel_nick *find_add_channel_nick(struct channel_state *c, const char *
 	g_assert(c);
 	g_assert(name);
 	g_assert(strlen(name) > 0);
+	g_assert(c->network);
 
 	if(is_prefix(realname[0], c->network->info)) {
 		mymode = realname[0];
@@ -789,21 +789,25 @@ static struct irc_command {
 	{ NULL }
 };
 
-void state_handle_data(struct network_state *s, struct line *l)
+gboolean state_handle_data(struct network_state *s, struct line *l)
 {
 	int i,j;
 
-	if(!s || !l->args || !l->args[0])return;
+	if(!s || !l->args || !l->args[0])
+		return FALSE;
 
 	for(i = 0; irc_commands[i].command; i++) {
 		if(!g_strcasecmp(irc_commands[i].command, l->args[0])) {
 			for(j = 0; j <= irc_commands[i].min_args; j++) {
-				if(!l->args[j])return;
+				if(!l->args[j])
+					return FALSE;
 			}
 			irc_commands[i].handler(s,l);
-			return;
+			return TRUE;
 		}
 	}
+
+	return FALSE;
 }
 
 struct network_state *network_state_init(struct network_info *info, const char *nick, const char *username, const char *hostname)
