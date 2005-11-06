@@ -177,8 +177,8 @@ static struct query queries[] = {
 
 /* JOIN <channel>{,<channel>} [<key>{,<key>}] */
 	{"JOIN",
-		{ RPL_CREATIONTIME, 0 },
-		{ RPL_TOPIC, 0 },
+		{ RPL_TOPIC, RPL_TOPICWHOTIME, RPL_CREATIONTIME, 0 },
+		{ 0 },
 		{ ERR_NEEDMOREPARAMS, ERR_BANNEDFROMCHAN,
 		  ERR_INVITEONLYCHAN, ERR_BADCHANNELKEY,
 		  ERR_CHANNELISFULL, ERR_BADCHANMASK,
@@ -464,7 +464,7 @@ static void handle_464(struct network *n, struct line *l)
 
 /* List of responses that should be sent to all clients */
 static int response_all[] = { RPL_NOWAWAY, RPL_UNAWAY, RPL_NAMREPLY, 
-	RPL_ENDOFNAMES, 0 };
+	RPL_ENDOFNAMES, ERR_NEEDREGGEDNICK, 0 };
 static int response_none[] = { ERR_NOMOTD, RPL_ENDOFMOTD, 0 };
 static struct {
 	int response;
