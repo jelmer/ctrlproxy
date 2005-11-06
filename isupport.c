@@ -130,7 +130,7 @@ int is_prefix(char p, struct network_info *n)
 	return 0;
 }
 
-char get_prefix_by_mode(char p, struct network_info *n)
+char get_prefix_by_mode(char mode, struct network_info *n)
 {
 	const char *prefix;
 	int i;
@@ -140,15 +140,18 @@ char get_prefix_by_mode(char p, struct network_info *n)
 	g_assert(n->features);
 
 	prefix = g_hash_table_lookup(n->features, "PREFIX");
-	if(!prefix) return ' ';
+	if(!prefix) prefix = "(ov)@+";
 	
 	pref_end = strchr(prefix, ')');
-	if(!pref_end) return ' ';
+	if(prefix[0] != '(' || !pref_end) {
+		log_global(NULL, LOG_WARNING, "Malformed PREFIX data `%s'", prefix);
+		return ' ';
+	}
 	pref_end++;
 	prefix++;
 
 	for(i = 0; pref_end[i]; i++) {
-		if(pref_end[i] == p) return prefix[i];
+		if(prefix[i] == mode) return pref_end[i];
 	}
 	return ' ';
 }
