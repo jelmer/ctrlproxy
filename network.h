@@ -49,7 +49,6 @@ struct network_connection {
 			size_t namelen;
 			GIOChannel *outgoing;
 			gint outgoing_id;
-			gint connect_id;
 		} tcp;
 		
 		struct {

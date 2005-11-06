@@ -173,6 +173,11 @@ static gboolean load_config(struct plugin *p, xmlNodePtr node)
 		if (cur->type != XML_ELEMENT_NODE) continue;
 
 		if (!strcmp(cur->name, "nick")) {
+			if (!xmlHasProp(cur, "name")) {
+				log_global("nickserv", LOG_WARNING, "Malformed nick name entry");
+				continue;
+			} 
+
 			e = g_new0(struct nickserv_entry, 1);
 			e->nick = xmlGetProp(cur, "name");
 			e->pass = xmlGetProp(cur, "password");

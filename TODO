@@ -6,7 +6,7 @@
  - examples
 - testing
 - fix issue with loading state from linestack_file
-- fix slowdowns when connecting
+- fix double frees
 - sometimes connects twice after server closed connection
 
 next minor release (2.7.1):

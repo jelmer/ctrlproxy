@@ -113,17 +113,6 @@ static gboolean process_from_server(struct network *n, struct line *l)
 	return TRUE;
 }
 
-static gboolean handle_server_connected (GIOChannel *c, GIOCondition cond, void *_server)
-{
-	struct network *server = (struct network *)_server;
-
-	g_assert(server);
-
-	server->connection.state = NETWORK_CONNECTION_STATE_CONNECTED;
-	server_send_login(server);
-	return FALSE;
-}
-
 static gboolean handle_server_receive (GIOChannel *c, GIOCondition cond, void *_server)
 {
 	struct network *server = (struct network *)_server;
@@ -178,6 +167,22 @@ static gboolean handle_server_receive (GIOChannel *c, GIOCondition cond, void *_
 
 	return TRUE;
 }
+
+static gboolean handle_server_connected (GIOChannel *c, GIOCondition cond, void *_server)
+{
+	struct network *server = (struct network *)_server;
+
+	g_assert(server);
+
+	server->connection.state = NETWORK_CONNECTION_STATE_CONNECTED;
+	server_send_login(server);
+
+	server->connection.data.tcp.outgoing_id = g_io_add_watch(server->connection.data.tcp.outgoing, G_IO_IN | G_IO_HUP | G_IO_ERR, handle_server_receive, server);
+	
+	return FALSE;
+}
+
+
 
 static struct tcp_server_config *network_get_next_tcp_server(struct network *n)
 {
@@ -384,6 +389,11 @@ static gboolean connect_current_tcp_server(struct network *s)
 		}
 	}
 
+	if(!ioc) {
+		log_network(NULL, LOG_ERROR, s, "Couldn't connect via server %s:%s", cs->host, cs->port);
+		return FALSE;
+	}
+
 	g_io_channel_set_close_on_unref(ioc, TRUE);
 
 	g_io_channel_set_flags(ioc, G_IO_FLAG_NONBLOCK, NULL);
@@ -391,18 +401,12 @@ static gboolean connect_current_tcp_server(struct network *s)
 
 	s->connection.data.tcp.outgoing = ioc;
 	
-	s->connection.data.tcp.outgoing_id = g_io_add_watch(s->connection.data.tcp.outgoing, G_IO_IN | G_IO_HUP | G_IO_ERR, handle_server_receive, s);
-	s->connection.data.tcp.connect_id = g_io_add_watch(s->connection.data.tcp.outgoing, G_IO_OUT, handle_server_connected, s);
+	s->connection.data.tcp.outgoing_id = g_io_add_watch(s->connection.data.tcp.outgoing, G_IO_OUT, handle_server_connected, s);
 
 	g_io_channel_unref(s->connection.data.tcp.outgoing);
 
 	if(!s->name && cs->name) {
 		s->name = g_strdup(cs->name);
-	}
-
-	if(!s->connection.data.tcp.outgoing) {
-		log_network(NULL, LOG_ERROR, s, "Couldn't connect via server %s:%s", cs->host, cs->port);
-		return FALSE;
 	}
 
 	return TRUE;
@@ -461,7 +465,6 @@ static gboolean close_server(struct network *n)
 	switch (n->config->type) {
 	case NETWORK_TCP: 
 		g_source_remove(n->connection.data.tcp.outgoing_id); 
-		g_source_remove(n->connection.data.tcp.connect_id); 
 		break;
 	case NETWORK_PROGRAM: 
 		g_source_remove(n->connection.data.program.outgoing_id); 
@@ -558,7 +561,7 @@ static gboolean connect_program(struct network *s)
 
 	server_send_login(s);
 	
-	s->connection.data.program.outgoing_id = g_io_add_watch(s->connection.data.program.outgoing, G_IO_IN | G_IO_ERR | G_IO_HUP, handle_server_receive, s);
+	s->connection.data.program.outgoing_id = g_io_add_watch(s->connection.data.program.outgoing, G_IO_IN | G_IO_HUP | G_IO_ERR, handle_server_receive, s);
 
 	g_io_channel_unref(s->connection.data.program.outgoing);
 

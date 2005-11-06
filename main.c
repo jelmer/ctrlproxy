@@ -75,6 +75,7 @@ static void signal_crash(int sig)
 
 static void clean_exit()
 {
+	char *path;
 	kill_pending_clients("Server exiting");
 
 	fini_networks();
@@ -85,6 +86,9 @@ static void clean_exit()
 	fini_linestack();
 	fini_plugins();
 
+	path = ctrlproxy_path("autosave");
+	save_configuration(current_config, path);
+	g_free(path);
 	free_config(current_config);
 
 	g_main_loop_unref(main_loop);
@@ -94,7 +98,6 @@ static void clean_exit()
 static void signal_quit(int sig)
 {
 	static int state = 0;
-	char *path;
 	log_global(NULL, LOG_WARNING, "Received signal %d, quitting...", sig);
 	if(state == 1) { 
 		signal(SIGINT, SIG_IGN); 
@@ -102,9 +105,6 @@ static void signal_quit(int sig)
 	}
 
 	state = 1;
-	path = ctrlproxy_path("autosave");
-	save_configuration(current_config, path);
-	g_free(path);
 
 	exit(0);
 }

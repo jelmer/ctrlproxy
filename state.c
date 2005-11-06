@@ -643,7 +643,7 @@ static void handle_mode(struct network_state *s, struct line *l)
 						  arg++;
 						  break;
 				case 'l':
-					c->modes['l'] = t;
+					c->modes[(unsigned char)'l'] = t;
 				    if (t) {
 						if(!l->args[++arg]) {
 							log_network_state(s, LOG_WARNING, "Mode +l requires argument, but no argument found");
@@ -655,7 +655,7 @@ static void handle_mode(struct network_state *s, struct line *l)
 					}
 					break;
 				case 'k':
-					c->modes['k'] = t;
+					c->modes[(unsigned char)'k'] = t;
 					if (t) {
 						if(!l->args[++arg]) {
 							log_network_state(s, LOG_WARNING, "Mode k requires argument, but no argument found");
@@ -730,6 +730,15 @@ static void handle_nick(struct network_state *s, struct line *l)
 	network_nick_set_nick(nn, l->args[1]);
 }
 
+static void handle_umodeis(struct network_state *s, struct line *l)
+{
+	int i;
+	memset(s->me.modes, 0, sizeof(s->me.modes));
+	for (i = 0; i < strlen(l->args[1]); i++) {
+		s->me.modes[(unsigned char)l->args[1][i]] = 1;
+	}
+}
+
 static void handle_302(struct network_state *s, struct line *l)
 {
 	/* We got a USERHOST response, split it into nick and user@host, and check the nick */
@@ -763,6 +772,7 @@ static struct irc_command {
 	{ "001", 1, handle_001 },
 	{ "004", 5, handle_004 },
 	{ "005", 3, handle_005 },
+	{ "221", 1, handle_umodeis },
 	{ "302", 2, handle_302 },
 	{ "332", 3, handle_332 },
 	{ "331", 1, handle_no_topic },
