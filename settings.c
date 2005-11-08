@@ -59,7 +59,7 @@ static xmlNodePtr config_save_plugins(GList *plugins)
 		
 		xmlSetProp(pc->node, "autoload", pc->autoload?"1":"0");
 				
-		xmlAddChild(ret, pc->node);
+		xmlAddChild(ret, xmlCopyNode(pc->node, 1));
 	}
 
 	return ret;
@@ -408,7 +408,7 @@ void free_config(struct ctrlproxy_config *cfg)
 	while (cfg->plugins) {
 		struct plugin_config *pc = cfg->plugins->data;		
 		g_free(pc->path);
-		xmlFreeNode(pc->node);
+		xmlUnlinkNode(pc->node);
 		cfg->plugins = g_list_remove(cfg->plugins, pc);
 		g_free(pc);
 	}
