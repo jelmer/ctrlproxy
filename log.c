@@ -119,6 +119,25 @@ void log_global(const char *module, enum log_level level, const char *fmt, ...)
 	g_free(tmp);
 }
 
+void log_network_state(const char *module, enum log_level l, const struct network_state *st, const char *fmt, ...)
+{
+	char *ret;
+	va_list ap;
+
+	g_assert(st);
+	g_assert(fmt);
+
+	va_start(ap, fmt);
+	ret = g_strdup_vprintf(fmt, ap);
+	va_end(ap);
+
+	log_global(module, l, "%s", ret);
+
+	g_free(ret);
+}
+
+
+
 static void log_handler(const gchar *log_domain, GLogLevelFlags flags, const gchar *message, gpointer user_data) {
 	log_global(log_domain, LOG_ERROR, message);
 }
@@ -150,3 +169,5 @@ void fini_log(void)
 	}
 	flog = NULL;
 }
+
+

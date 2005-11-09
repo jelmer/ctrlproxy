@@ -20,14 +20,24 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
-#include "../linestack.h"
+#include "../internals.h"
 
 static int test_linestack_simple(void)
 {
+	init_linestack(NULL);
+	fini_linestack();
 	return 0;
+}
+
+static int test_linestack_dataident(void)
+{
+	init_linestack(NULL);
+	/* FIXME */
+	fini_linestack();
 }
 
 void torture_init(void)
 {
-	register_test("LINESTACK_SIMPLE", test_linestack_simple);
+	register_test("LINESTACK-SIMPLE", test_linestack_simple);
+	register_test("LINESTACK-DATAIDENT", test_linestack_dataident);
 }

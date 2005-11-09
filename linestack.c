@@ -38,7 +38,7 @@ void unregister_linestack(struct linestack_ops *b)
 
 void init_linestack(struct ctrlproxy_config *cfg)
 {
-	if (cfg->linestack_backend) {
+	if (cfg && cfg->linestack_backend) {
 		GSList *gl;
 		for (gl = linestack_backends; gl ; gl = gl->next) {
 			struct linestack_ops *ops = gl->data;
@@ -65,6 +65,7 @@ void fini_linestack()
 {
 	if (current_backend)
 		current_backend->fini();
+	current_backend = NULL;
 }
 
 linestack_marker *linestack_get_marker_numlines (struct network *n, int lines)

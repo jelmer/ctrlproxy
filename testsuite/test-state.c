@@ -97,6 +97,17 @@ static int state_part(void)
 	return 0;
 }
 
+static int state_nick_change(void)
+{
+	struct network_state *ns = network_state_init(NULL, "bla", "Gebruikersnaam", "Computernaam");
+
+	if (!ns) return -1;
+
+	state_process(ns, ":bla!user@host NICK blie");
+
+	return strcmp(ns->me.nick, "blie");
+}
+
 static int state_set_nick(void)
 {
 	struct network_nick nn;
@@ -160,5 +171,6 @@ void torture_init(void)
 	register_test("STATE-PART", state_part);
 	register_test("STATE-SETNICK", state_set_nick);
 	register_test("STATE-SETHOSTMASK", state_set_hostmask);
+	register_test("STATE-NICK-CHANGE", state_nick_change);
 	register_test("MARSHALL-SIMPLE", state_marshall_simple);
 }

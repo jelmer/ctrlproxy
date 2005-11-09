@@ -59,7 +59,7 @@ void handle_005(struct network_state *s, struct line *l)
 				s->info->casemapping = CASEMAP_ASCII;
 			} else {
 				s->info->casemapping = CASEMAP_UNKNOWN;
-				log_network_state(s, LOG_WARNING, "Unknown CASEMAPPING value '%s'", val);
+				log_network_state(NULL, LOG_WARNING, s, "Unknown CASEMAPPING value '%s'", val);
 			}
 		} else if(!g_strcasecmp(key, "NETWORK")) {
 			g_free(s->info->name);

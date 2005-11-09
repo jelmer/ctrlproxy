@@ -58,7 +58,6 @@ void kill_pending_clients(const char *reason);
 void free_channels(struct network *s);
 void network_nick_set_data(struct network_nick *n, const char *nick, const char *username, const char *host);
 gboolean network_nick_set_hostmask(struct network_nick *n, const char *hm);
-void log_network_state(struct network_state *st, enum log_level, const char *, ...);
 
 /* config.c */
 void init_config(void);
