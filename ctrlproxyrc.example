@@ -28,7 +28,7 @@
 
 		<plugin autoload="0" file="openssl">
 			<keyfile>key.pem</keyfile>
-			<certfile>cert.pem</keyfile>
+			<certfile>cert.pem</certfile>
 		</plugin>
 
 		<!-- Irssi-style logging -->
@@ -38,6 +38,8 @@
 
 		<!-- Send CTCP replies (like time, version, etc) -->
 		<plugin autoload="1" file="ctcp"/>
+
+		<plugin autoload="0" file="socks"/>
 
 		<!-- Make sure messages are not sent too fast after each other 
 		     (prevents being kicked by the server for 'Excess flooding' -->
@@ -51,7 +53,6 @@
 		<!-- Use /usr/share/ctrlproxy/motd as motd -->
 		<plugin autoload="1" file="motd_file"/>
 
-
 		<plugin autoload="1" file="python">
 			<script autoload="0">
 				<file>example/example.py</file>
@@ -59,30 +60,16 @@
 			</script>
 		</plugin>
 		
-
-		<!-- Generate a TDB file with statistics about how much 
-		certain patterns where used in a channel -->
-		<plugin file="stats" autoload="0">
-			<tdbfile>/home/jelmer/.ctrlproxy-stats.tdb</tdbfile>
-			<pattern type="happy">[:;]([-]*)[\)D]</pattern>
-			<pattern type="unhappy">[:;]([-]*)[\/\(]</pattern>
-			<pattern type="question">\?([^ ]*)$</pattern>
-			<pattern type="exclamation">!([^ ]*)$</pattern>
-			<pattern type="lines">(.*)</pattern>
-			<pattern type="word">([^ ]+)</pattern>
-			<pattern type="caps">^([^a-z]+)$</pattern>
-			<pattern type="action">.ACTION .</pattern>
-		</plugin>
-
 		<plugin autoload="1" file="linestack_file"/>
 		<plugin autoload="1" file="linestack_memory"/>
 		<plugin autoload="1" file="listener">
-			<listener port="9666" network="BEE"/>
+			<listen port="9666" network="BEE" password="mypass"/>
 		</plugin>
 
 		<plugin autoload="1" file="nickserv">
 			<!-- Automatically send IDENTIFY and GHOST messages when necessary -->
 			<nick name="jelmer" password="foobar"/>
+			<nick name="foobar" password="bar" network="Freenode"/>
 		</plugin>
 
 		<plugin autoload="1" file="autosend">
