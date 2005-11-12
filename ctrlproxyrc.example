@@ -78,10 +78,7 @@
 	</plugins>
 	
 	<networks>
-		<network autoconnect="1" name="BEE" replication="memory">
-			<listen>
-				<ipv4 port="8003"/>
-			</listen>
+		<network autoconnect="1" name="BEE">
 			<servers>
 				<pipe>
 					<path>/usr/sbin/bitlbee</path>
@@ -89,11 +86,6 @@
 			</servers>
 		</network>
 		<network autoconnect="1" name="Freenode" fullname="CtrlProxy user">
-			<listen>
-				<ipv4 port="6667"/>
-				<ipv4 port="7667" ssl="1"/>
-			</listen>
-
 			<servers>
 				<ipv4 host="irc.freenode.net"/>
 			</servers>
