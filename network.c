@@ -677,6 +677,7 @@ void unload_network(struct network *s)
 gboolean disconnect_network(struct network *s)
 {
 	g_assert(s);
+	log_network(NULL, LOG_INFO, s, "Disconnecting");
 	return close_server(s);
 }
 
