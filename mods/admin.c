@@ -144,16 +144,29 @@ static void com_connect_network (const struct client *c, char **args, void *user
 
 	s = find_network(args[1]);
 
-	if(s && s->reconnect_id == 0) {
-		admin_out(c, "Already connected to %s", args[1]);
-	} else if(s) {
-		admin_out(c, "Forcing reconnect to %s", args[1]);
-		disconnect_network(s);
-		network_select_next_server(s);
-		connect_network(s);
-	} else {
-		admin_out(c, "Connecting to %s", args[1]);
-		connect_network(s);
+	if (!s) {
+		admin_out(c, "No such network `%s'", args[1]);
+		return;
+	}
+
+	switch (s->connection.state) {
+		case NETWORK_CONNECTION_STATE_NOT_CONNECTED:
+			admin_out(c, "Connecting to `%s'", args[1]);
+			connect_network(s);
+			break;
+		case NETWORK_CONNECTION_STATE_RECONNECT_PENDING:
+			admin_out(c, "Forcing reconnect to `%s'", args[1]);
+			disconnect_network(s);
+			network_select_next_server(s);
+			connect_network(s);
+			break;
+		case NETWORK_CONNECTION_STATE_CONNECTED:
+			admin_out(c, "Already connected to `%s'", args[1]);
+			break;
+		case NETWORK_CONNECTION_STATE_LOGIN_SENT:
+		case NETWORK_CONNECTION_STATE_MOTD_RECVD:
+			admin_out(c, "Connect to `%s' already in progress", args[1]);
+			break;
 	}
 }
 
