@@ -20,3 +20,4 @@ next minor release (2.7.1):
 next major release (3.0.0):
 - new config file format
 - merge report_time into the repl_ modules
+- switch to bzr?
