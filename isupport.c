@@ -139,13 +139,14 @@ char get_prefix_by_mode(char mode, const struct network_info *n)
 	int i;
 	char *pref_end;
 
-	if (n == NULL) {
+	if (n != NULL) {
 		g_assert(n->features);
 
 		prefix = g_hash_table_lookup(n->features, "PREFIX");
 	}
 
-	if (prefix == NULL) prefix = DEFAULT_PREFIX;
+	if (prefix == NULL) 
+		prefix = DEFAULT_PREFIX;
 	
 	pref_end = strchr(prefix, ')');
 	if(prefix[0] != '(' || !pref_end) {
