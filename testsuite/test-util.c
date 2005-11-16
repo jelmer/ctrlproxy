@@ -46,14 +46,14 @@ static int test_ctrlproxy_path (void)
 {
 	char *expected = g_strdup_printf("%s/.ctrlproxy/%s", g_get_home_dir(), "bloe");
 	char *result = ctrlproxy_path("bloe");
+	int matches;
 
-	if (strcmp(expected, result) != 0)
-		return -1;
+	matches = strcmp(expected, result);
 
 	g_free(expected);
 	g_free(result);
 
-	return 0;
+	return matches;
 }
 
 void torture_init(void)

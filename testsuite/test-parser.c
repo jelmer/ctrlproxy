@@ -95,10 +95,7 @@ static int parser_stringnl(void)
 static int parser_get_nick(void)
 {
 	struct line l;
-	l.origin = NULL;
 
-	if (line_get_nick(NULL) != NULL) return -1;
-	if (line_get_nick(&l) != NULL) return -2;
 	l.origin = "foobar";
 	if (strcmp(line_get_nick(&l), "foobar") != 0) return -3;
 	l.origin = "foobar!~username@userhost";

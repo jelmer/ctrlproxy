@@ -45,8 +45,6 @@ static int state_set_nick(void)
 	struct network_nick nn;
 	memset(&nn, 0, sizeof(nn));
 	
-	if (network_nick_set_nick(NULL, "mynick")) return -6;
-	
 	if (!network_nick_set_nick(&nn, "mynick")) return -5;
 	if (strcmp(nn.nick, "mynick") != 0) return -1;
 	if (strcmp(nn.hostmask, "mynick!~(null)@(null)") != 0) return -2;
@@ -62,8 +60,6 @@ static int state_set_hostmask(void)
 	struct network_nick nn;
 	memset(&nn, 0, sizeof(nn));
 
-	if (network_nick_set_hostmask(NULL, "")) return -1;
-	if (network_nick_set_hostmask(&nn, NULL)) return -2;
 	if (!network_nick_set_hostmask(&nn, "ikke!~uname@uhost")) return -3;
 	if (!nn.nick || strcmp(nn.nick, "ikke") != 0) return -4;
 	if (!nn.username || strcmp(nn.username, "~uname") != 0) return -5;
