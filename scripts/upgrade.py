@@ -24,6 +24,9 @@ class Network:
 
 class Plugin:
     def __init__(self, name=None, autoload=True, config=None):
+        if name.startswith('lib'):
+            name = name[3:]
+
         self.name = name
         self.config = config
         self.autoload = autoload
@@ -39,17 +42,14 @@ class Config:
 
     def upgrade(self):
         # Throw out obsolete modules
-        for pl in ['socket','libsocket','strip','libstrip','repl_memory',
-                   'librepl_memory']:
+        for pl in ['socket','strip','repl_memory']:
             if self.plugins.has_key(pl):
                 self.plugins.pop(pl)
-        
-        # Drop lib prefix
-        for n in self.plugins:
-            pl = self.plugins.pop(n)
-            if pl.name.startswith('lib'):
-                pl.name = pl.name[3:]
-            self.plugins[pl.name] = pl
+
+        if 'linestack_memory' in self.plugins:
+            self.plugins.pop('linestack_memory')
+            self.plugins['linestack_memory'] = Plugin(name='linestack_file')
+
 
 class OldConfigFile(Config):
     def _parsePlugin(self,node):
@@ -57,6 +57,20 @@ class OldConfigFile(Config):
         if node.attributes.has_key('autoload') and \
                 node.attributes['autoload'].value == "1":
             plugin.autoload = True
+
+        if plugin.name == 'nickserv':
+            for cn in node.childNodes:
+                if cn.nodeName == 'nick':
+                    self.nickserv_nicks.append(cn.attributes)
+            plugin.config = None
+
+        if plugin.name == 'autosend':
+            for cn in node.childNodes:
+                if cn.nodeName == 'nick':
+                    self.autosend_lines.append({
+                            'network': cn.attributes['network'].name,
+                            'data': cn.toxml()})
+        
         self.plugins[plugin.name] = plugin
         
     def _parsePlugins(self,node):
@@ -73,7 +87,7 @@ class OldConfigFile(Config):
         servers = []
         for cn in node.childNodes:
             if cn.nodeName == 'ipv4' or cn.nodeName == 'ipv6'  \
-                or cn.nodeName == 'pipe':
+                or cn.nodeName == 'pipe' or cn.nodeName == 'server':
                 servers.append(self._parseServer(cn,serverpass))
             elif cn.nodeType == Node.ELEMENT_NODE:
                 raise UnknownTagError(cn)
@@ -157,6 +171,10 @@ class OldConfigFile(Config):
             elif cn.nodeName == 'channel':
                 channel = self._parseChannel(cn)
                 network.channels[channel.name] = channel
+            elif cn.nodeName == 'program':
+                network.program_path = cn.toxml()
+            elif cn.nodeName == 'virtual':
+                network.virtual_type = cn.attributes['type'].value
             elif cn.nodeName == 'listen':
                 self._parseListeners(network.name, client_pass, cn)
             elif cn.nodeName == 'autosend':
@@ -199,3 +217,5 @@ else:
     oldfile = OldConfigFile("%s/.ctrlproxyrc" % os.getenv('HOME'))
 
 oldfile.upgrade()
+
+print oldfile.__dict__
