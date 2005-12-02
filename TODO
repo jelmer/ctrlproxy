@@ -11,6 +11,9 @@ current release (3.0.0):
 - remove irc_send_linef
 - new config file format (yacc!)
  - finish upgrade script
+ - make editing config file optional
+- make 'repl_none' builtin and the default
+- make 'linestack_file' builtin and the default
 
 next minor release (3.0.1):
 - switch to bzr?

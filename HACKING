@@ -197,3 +197,16 @@ If you're running from gdb, make sure you have set the following:
 
 handle SIGPIPE nostop
 handle SIGINT nostop
+
+Debug module
+-------------
+The debug module, if compiled adds support for the following two admin commands,
+that might be useful when debugging:
+
+DUMPJOINEDCHANNELS
+	Makes ctrlproxy print a list of the channels it 
+	thinks it has joined on the current network.
+
+CRASH
+	Makes the current plugin crash. This is useful 
+	for testing the auto-unload-on-crash functionality.

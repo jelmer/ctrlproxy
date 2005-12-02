@@ -161,13 +161,4 @@ a ctrlproxyrc file is supposed to look like.</para>
 
 </sect1>
 
-<sect1><title>Replication</title>
-
-	<para>Replication (short for 'backlog replication') is the system that 
-	stores certain IRC lines and then sends them to the user at a certain moment.</para>
-
-<!--FIXME-->
-
-</sect1>
-
 </chapter>

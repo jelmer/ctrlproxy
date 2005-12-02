@@ -1,13 +1,48 @@
-<ctrlproxy:module name="log_custom" xmlns:ctrlproxy="http://ctrlproxy.vernstok.nl/common">
-	<title>Custom logging module</title>
-	<modulemeta>
-		<description>Logging in a predefined format</description>
-		<version>0.1</version>
-		<author>Jelmer Vernooij</author>
-		<homepage>http://jelmer.vernstok.nl/ctrlproxy/</homepage>
-	</modulemeta>
+<chapter id="logging">
+	<title>Logging</title>
 
-	<description>
+
+<para>
+	CtrlProxy has various means for supporting logging. 
+</para>
+
+<sect1>
+	<title>Logging in irssi-style format</title>
+
+	<para>By setting <parameter>log_irssi_path</parameter> to a directory, 
+		ctrlproxy will write log files to that directory in the same format 
+		as is default in irssi.</para>
+	
+	<para>Each channel or nick gets it's own seperate log file, 
+	which is located in a directory with the name of the IRC 
+	network.</para>
+
+	<para>If no directory is specified, data will be logged to <filename>$HOME/.ctrlproxy/log_irssi/$NETWORK/$CHANNEL</filename>.</para>
+
+	<example>
+		<![CDATA[
+		<ctrlproxy>
+			<plugins>
+				<plugin autoload="1" file="log_irssi">
+					<logfile>/home/jelmer/log/ctrlproxy</logfile>
+				</plugin>
+			</plugins>
+
+			<networks>
+				<network name="OFTC">
+					<servers><ipv4 host="irc.oftc.net"/></servers>
+					<channel name="#flood"/>
+				</network>
+			</networks>
+		</ctrlproxy>
+		]]>
+	</example>
+</sect1>
+
+<sect1>
+	<title>Logging in a custom format</title>
+
+	<para>
 		<para>Module that writes logs to one or more files using a
 			defined format.</para>
 
@@ -16,7 +51,7 @@
 
 	</description>
 
-	<section>
+	<sect2>
 		<title>Substitutes</title>
 
 		<para>The configuration values define the syntax that is used to
@@ -80,7 +115,7 @@
 
 		<para>Each type of line also has some variables of it's own that it substitutes.</para>
 
-		<subsection><title>join</title>
+		<sect3><title>join</title>
 
 			<para>
 				<variablelist>
@@ -89,9 +124,9 @@
 					</varlistentry>
 				</variablelist>
 			</para>
-		</subsection>
+		</sect3>
 
-		<subsection><title>part</title>
+		<sect3><title>part</title>
 			<para>
 				<variablelist>
 					<varlistentry><term>%c</term>
@@ -102,9 +137,9 @@
 					</varlistentry>
 				</variablelist>
 			</para>
-		</subsection>
+		</sect3>
 
-		<subsection><title>kick</title>
+		<sect3><title>kick</title>
 			<para>
 				<variablelist>
 					<varlistentry><term>%t</term>
@@ -120,9 +155,9 @@
 					</varlistentry>
 				</variablelist>
 			</para>
-		</subsection>
+		</sect3>
 
-		<subsection><title>quit</title>
+		<sect3><title>quit</title>
 			<para>
 				<variablelist>
 					<varlistentry><term>%m</term>
@@ -130,9 +165,9 @@
 					</varlistentry>
 				</variablelist>
 			</para>
-		</subsection>
+		</sect3>
 
-		<subsection><title>topic/notopic</title>
+		<sect3><title>topic/notopic</title>
 			<para>
 				<variablelist>
 					<varlistentry><term>%c</term>
@@ -145,9 +180,9 @@
 					</varlistentry>
 				</variablelist>
 			</para>
-		</subsection>
+		</sect3>
 
-		<subsection><title>mode</title>
+		<sect3><title>mode</title>
 			<para>
 				<variablelist>
 					<varlistentry><term>%c</term>
@@ -166,9 +201,9 @@
 
 			<para>To retrieve any additional arguments for a MODE command, 
 				use <parameter>%1</parameter>, <parameter>%2</parameter>, etc.</para>
-		</subsection>
+		</sect3>
 
-		<subsection><title>notice/privmsg/action</title>
+		<sect3><title>notice/privmsg/action</title>
 
 			<para>
 				<variablelist>
@@ -181,9 +216,9 @@
 					</varlistentry>
 				</variablelist>
 			</para>
-		</subsection>
+		</sect3>
 
-		<subsection><title>nick</title>
+		<sect3><title>nick</title>
 			<para>
 				<variablelist>
 					<varlistentry><term>%r</term>
@@ -191,49 +226,11 @@
 					</varlistentry>
 				</variablelist>
 			</para>
-		</subsection>
+		</sect3>
+	</sect2>
 
-	</section>
-
-	<configuration>
-		<element name="logfile">
-			<description>Path to the logfile that will be written. Supports 
-				substitution depending on the type of line that is being parsed.</description>
-		</element>
-		<element name="join">
-			<description>Format to use for lines where a user joins a channel.</description>
-		</element>
-		<element name="part">
-			<description>Format to use for lines where a user leaves a channel.</description>
-		</element>
-		<element name="msg">
-			<description>Format to use for 'regular' messages - when a user says something.</description>
-		</element>
-		<element name="notice">
-			<description>Format to use for notices.</description>
-		</element>
-		<element name="action">
-			<description>Format to use for CTCP actions (e.g. /me ...) </description>
-		</element>
-		<element name="mode">
-			<description>Format to use for MODE changes (including bans)</description>
-		</element>
-		<element name="quit">
-			<description>Format to use for quit lines.</description>
-		</element>
-		<element name="kick">
-			<description>Format to use for kicks.</description>
-		</element>
-		<element name="topic">
-			<description>Format to use for topic changes to a valid topic</description>
-		</element>
-		<element name="notopic">
-			<description>Format to use when the topic is unset.</description>
-		</element>
-		<element name="nickchange">
-			<description>Format to use when a user changes his/her nick name.</description>
-		</element>
-	</configuration>
+	<sect2>
+		<title>Example</title>
 
 	<example>
 		<![CDATA[
@@ -257,4 +254,7 @@
 		</ctrlproxy>
 		]]>
 	</example>
-</ctrlproxy:module>
+</sect2>
+</sect1>
+
+</chapter>

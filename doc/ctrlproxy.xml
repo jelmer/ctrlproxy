@@ -3,15 +3,9 @@
 <!ENTITY admin SYSTEM "admin.xml">
 <!ENTITY auto-away SYSTEM "auto-away.xml">
 <!ENTITY ctcp SYSTEM "ctcp.xml">
-<!ENTITY log-irssi SYSTEM "log_irssi.xml">
+<!ENTITY logging SYSTEM "logging.xml">
 <!ENTITY nickserv SYSTEM "nickserv.xml">
-<!ENTITY log-custom SYSTEM "log_custom.xml">
-<!ENTITY repl-none SYSTEM "repl_none.xml">
-<!ENTITY repl-simple SYSTEM "repl_simple.xml">
-<!ENTITY repl-highlight SYSTEM "repl_highlight.xml">
-<!ENTITY repl-command SYSTEM "repl_command.xml">
-<!ENTITY repl-lastdisconnect SYSTEM "repl_lastdisconnect.xml">
-<!ENTITY stats SYSTEM "stats.xml">
+<!ENTITY replication SYSTEM "replication.xml">
 <!ENTITY noticelog SYSTEM "noticelog.xml">
 <!ENTITY install SYSTEM "install.xml">
 <!ENTITY syntax SYSTEM "syntax.xml">
@@ -62,14 +56,9 @@
 &admin;
 &auto-away;
 &ctcp;
-&log-irssi;
-&repl-none;
-&repl-simple;
-&repl-highlight;
-&repl-command;
-&repl-lastdisconnect;
+&logging;
+&replication;
 &noticelog;
-&log-custom;
 &nickserv;
 &antiflood;
 &report-time;
