@@ -11,9 +11,5 @@
 	<description>
 		<para>This module sends all ctrlproxy log files to all 
 		connected clients using IRC NOTICE's.</para>
-
-		<para>Currently only messages from the main ctrlproxy process 
-			will be send as NOTICE's. Messages from plugins will be 
-			ignored.</para>
 	</description>
 </ctrlproxy:module>

@@ -1,9 +1,4 @@
 include Makefile.settings
-MOD_SOURCES = $(shell echo *.mod.xml)
-MOD_MANPAGES = $(patsubst %.mod.xml,%.7ctrlproxy,$(MOD_SOURCES))
-MOD_MANPAGES_INTER = $(patsubst %.mod.xml,%.xml,$(MOD_SOURCES))
-MOD_MANPAGES_HTML = $(patsubst %.mod.xml,%.7ctrlproxy.html,$(MOD_SOURCES))
-MODS = $(patsubst %.mod.xml,%.xml,$(MOD_SOURCES))
 DOCS = ctrlproxy.1 ctrlproxyrc.5 ctrlproxy.pdf ctrlproxy.html $(MOD_MANPAGES)
 
 .PHONY: all most manpages htmlmanpages lint clean distclean
@@ -36,15 +31,7 @@ htmlmanpages: $(MOD_MANPAGES_HTML)
 lint: ctrlproxy.xml $(MODS)
 	$(XMLLINT) --valid --noout --xinclude $<
 
-modules.list.xml: $(MOD_SOURCES)
-	echo "<variablelist>" > $@
-	for I in $(MOD_SOURCES); do echo "<xi:include href=\"$$I\" xmlns:xi=\"http://www.w3.org/2003/XInclude\"/>" >> $@; done
-	echo "</variablelist>" >> $@
-
-ctrlproxy.1: ctrlproxy.1.xml modules.list.xml
-	$(XSLTPROC) modules.list.xsl $< | $(XSLTPROC) http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl -
-
-%.7ctrlproxy: %.7ctrlproxy.xml
+%.1: %.1.xml 
 	$(XSLTPROC) http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $< > $@
 
 %.5: %.5.xml

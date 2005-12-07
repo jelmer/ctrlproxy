@@ -42,6 +42,7 @@ po/ctrlproxy.pot
 po/stamp-po
 rfctester/ircdtorture
 rfctester/test-*.so
+tags
 testsuite/*.so
 testsuite/ctrlproxyrc.torture
 testsuite/torture
