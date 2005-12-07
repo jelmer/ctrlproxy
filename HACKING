@@ -86,17 +86,7 @@ this function should have would be a line struct.
 
 Flags can be set on the line (the field in the struct 
 to use is called 'options') to influence the handling 
-of the packet by the rest of ctrlproxy. At the time of writing, 
-the following two flags are available:
-
-LINE_DONT_SEND
-	Continue processing, but do not send this line.
-
-LINE_STOP_PROCESSING
-	Immediately stop processing the line (passing it to other message handlers). Implemented as of version 2.5.
-
-LINE_NO_LOGGING
-	Modules that do logging should ignore this line. This may be used for PRIVMSG's that are not interesting for logs, such as timestamps that are being printed. 
+of the packet by the rest of ctrlproxy. 
 
 There is one other option that can be specified, but is only 
 useful when sending your own messages:
