@@ -7,7 +7,7 @@ For a quick start, see the bottom of this file.
 If you are upgrading from an older version of ctrlproxy, please read the 
 file UPGRADING.
 
-Why ctrlproxy?
+Why CtrlProxy?
 --------------
 CtrlProxy is a project I started because I got bored with running irssi in 
 screen on my server. My server isn't very fast and that meant 
