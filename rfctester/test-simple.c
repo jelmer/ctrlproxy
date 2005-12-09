@@ -261,7 +261,7 @@ static int test_selfmessage(void)
 	return -1;
 }
 
-void ircdtorture_init(void)
+void __attribute__((constructor)) simple_init(void)
 {
 	register_test("CONNECT", test_connect);
 	register_test("LOGIN", test_login);

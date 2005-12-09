@@ -73,7 +73,7 @@ static int test_random_msg(void)
 	return 0;
 }
 
-void ircdtorture_init(void)
+void __attribute__((constructor)) random_init(void) 
 {
 	register_test("RANDOM-DATA", test_random_data);
 	register_test("RANDOM-MSG", test_random_msg);

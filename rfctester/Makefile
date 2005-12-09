@@ -8,15 +8,10 @@ ifeq ($(WITH_GCOV),1)
 LIBS += -lgcov -ftest-coverage -fprofile-arcs
 endif
 
-all: ircdtorture $(patsubst %.c,%.so,$(wildcard test-*.c))
+all: ircdtorture 
 
-ircdtorture: ircdtorture.o ../line.o 
+ircdtorture: ircdtorture.o ../line.o $(patsubst %.c,%.o,$(wildcard test-*.c)) 
 	$(CC) $(LIBS) -o $@ $^ 
-
-$(patsubst %.c,%.so,$(wildcard test-*.c)): %.so: %.o
-
-%.so: 
-	$(CC) $(LIBS) $(CFLAGS) -shared -o $@ $^
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $<
