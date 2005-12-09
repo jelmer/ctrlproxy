@@ -1,0 +1,24 @@
+#!/usr/bin/env perl
+# Simple irssi-log to raw-irc converter
+# (C) 2004 Jelmer Vernooij <jelmer@vernstok.nl>
+# Published under the GPL
+
+$target = shift or die("No channel/nick name specified");
+
+while(<STDIN>) {
+	$l = $_;
+	if($l =~ /^(.{2}):(.{2}) -!- ([^ ]+) \[([^\]]+)\] has quit \[([^\]]+)\]/) {
+		print ":$3!$4 QUIT :$5\r\n";
+	} elsif($l =~ /^(.{2}):(.{2}) -!- ([^ ]+) \[([^\]]+)\] has joined ([^ ]+)/) {
+		print ":$3!$4 JOIN $5\r\n";
+		$hostmask{$3} = $4;
+	} elsif($l =~ /^(.{2}):(.{2})  \* ([^ ]+) (.*)/) {
+		$hostmask{$3} = "unknown" if !$hostmask{$3};
+		print ":$3!" . $hostmask{$3} . " PRIVMSG $target :$4\r\n";
+	} elsif($l =~ /^(.{2}):(.{2}) -!- ([^ ]+) \[([^\]]+)\] has left ([^ ]+) \[([^\]]*)\]/) {
+		print ":$3!$4 PART $5 :$6\r\n";
+	} elsif($l =~ /^(.{2}):(.{2}) <(.)([^>]+)> (.*)/) {
+		$hostmask{$4} = "unknown" if !$hostmask{$4};
+		print ":$4!" . $hostmask{$4} . " PRIVMSG $target :$5\r\n";
+	}
+}

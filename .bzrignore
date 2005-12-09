@@ -43,6 +43,7 @@ po/stamp-po
 rfctester/ircdtorture
 rfctester/test-*.so
 tags
+testlinestack
 testsuite/*.so
 testsuite/ctrlproxyrc.torture
 testsuite/torture

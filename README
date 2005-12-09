@@ -18,7 +18,7 @@ of course run irssi on my workstation, but my workstation isn't on
 Running ctrlproxy requires much less bandwidth then running a 
 remote irssi inside screen.
 
-The structure of ctrlproxy is very modular and it is easily extendible.
+The structure of CtrlProxy is very modular and it is easily extendible.
 
 Features
 --------
