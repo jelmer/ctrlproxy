@@ -70,6 +70,13 @@ class OldConfigFile(Config):
                     self.autosend_lines.append({
                             'network': cn.attributes['network'].name,
                             'data': cn.toxml()})
+            plugin.config = None
+
+        if plugin.name == 'listener':
+            for cn in node.childNodes:
+                if cn.nodeName == 'listen':
+                    self.listeners.append(cn.attributes)
+            plugin.config = None
         
         self.plugins[plugin.name] = plugin
         
@@ -150,7 +157,11 @@ class OldConfigFile(Config):
         client_pass = None
         serverpass = None
 
-        network.name = node.attributes['name'].value
+        if node.attributes.has_key('name'):
+            network.name = node.attributes['name'].value
+        else:
+            self.nameless_index += 1
+            network.name = "nameless%d" % self.nameless_index
         if node.attributes.has_key('client_pass'):
             client_pass = node.attributes['client_pass'].value
         if node.attributes.has_key('nick'):
@@ -200,6 +211,7 @@ class OldConfigFile(Config):
         Config.__init__(self)
         self.doc = minidom.parse(filename)
         node = self.doc.documentElement
+        self.nameless_index = 0
         if node.nodeName != 'ctrlproxy':
             raise UnknownTagError(cn)
 
