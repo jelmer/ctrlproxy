@@ -10,73 +10,186 @@ class UnknownTagError(StandardError):
     def __init__(self,tag):
         StandardError.__init__(self, 'Unknown tag: %s' % tag.nodeName)
 
-class OldConfigFile:
-    def parsePlugins(self,node):
+class Channel:
+    def __init__(self, name=None):
+        self.name = name
+        self.autojoin = False
+        self.key = None
+
+class Network:
+    def __init__(self, name=None):
+        self.name = name
+        self.channels = {}
+        self.servers = []
+
+class Plugin:
+    def __init__(self, name=None, autoload=True, config=None):
+        self.name = name
+        self.config = config
+        self.autoload = autoload
+
+class Config:
+    def __init__(self):
+        self.plugins = {}
+        self.networks = {}
+        self.listeners = []
+        self.autosend_lines = []
+        self.nickserv_nicks = []
+        self.required_plugins = []
+
+    def upgrade(self):
+        # Throw out obsolete modules
+        for pl in ['socket','libsocket','strip','libstrip','repl_memory',
+                   'librepl_memory']:
+            if self.plugins.has_key(pl):
+                self.plugins.pop(pl)
+        
+        # Drop lib prefix
+        for n in self.plugins:
+            pl = self.plugins.pop(n)
+            if pl.name.startswith('lib'):
+                pl.name = pl.name[3:]
+            self.plugins[pl.name] = pl
+
+class OldConfigFile(Config):
+    def _parsePlugin(self,node):
+        plugin = Plugin(name=node.attributes['file'].value, config=node.childNodes)
+        if node.attributes.has_key('autoload') and \
+                node.attributes['autoload'].value == "1":
+            plugin.autoload = True
+        self.plugins[plugin.name] = plugin
+        
+    def _parsePlugins(self,node):
         for cn in node.childNodes:
             if cn.nodeName == 'plugin':
-                self.plugins[cn.nodeName] = cn
+                self._parsePlugin(cn)
             elif cn.nodeType == Node.ELEMENT_NODE:
                 raise UnknownTagError(cn)
 
-    def parseServer(self,node):
-        return node.attributes
+    def _parseServer(self,node,serverpass):
+        return node.attributes #FIXME
 
-    def parseServers(self,node):
+    def _parseServers(self,node,serverpass):
         servers = []
         for cn in node.childNodes:
-            if cn.nodeName == 'server':
-                servers.add(self.parseServer(cn))
+            if cn.nodeName == 'ipv4' or cn.nodeName == 'ipv6'  \
+                or cn.nodeName == 'pipe':
+                servers.append(self._parseServer(cn,serverpass))
             elif cn.nodeType == Node.ELEMENT_NODE:
                 raise UnknownTagError(cn)
 
-    def parseChannel(self,node):
-        return node.attributes
+    def _parseChannel(self,node):
+        channel = Channel()
+        channel.name = node.attributes['name'].value
+        if node.attributes.has_key('autojoin') or \
+                node.attributes['autojoin'].value == '1':
+            channel.autojoin = True
+        if node.attributes.has_key('key'):
+            channel.key = node.attributes['key'].value
+        return channel
 
-    def parseListeners(self,name,node):
+    def _parseNickserv(self,name,node):
+        for cn in node.childNodes:
+            if cn.nodeName == 'nick' or cn.nodeName == 'nickserv':
+                nick = {
+                        'network': name,
+                        'password': cn.attributes['password'].value
+                        }
+
+                if cn.attributes.has_key('nick'):
+                    nick['nick'] = cn.attributes['nick'].value
+                elif cn.attributes.has_key('name'):
+                    nick['nick'] = cn.attributes['name'].value
+
+                self.nickserv_nicks.append(nick)
+            elif cn.nodeType == Node.ELEMENT_NODE:
+                raise UnknownTagError(cn)
+
+    def _parseListeners(self,name,clientpass,node):
         for cn in node.childNodes:
             if cn.nodeName == 'ipv4' or cn.nodeName == 'ipv6':
-                listener = {'network': name, 'port': cn.attributes['port'] }
-                network.listeners.add(listener)
+                listener = {'network': name }
+                if not clientpass is None:
+                    listener['password'] = clientpass
+                if cn.attributes.has_key('port'):
+                    listener['port'] = cn.attributes['port'].value
+                if cn.attributes.has_key('password'):
+                    listener['password'] = cn.attributes['password'].value
+                if cn.attributes.has_key('bind'):
+                    listener['bind'] = cn.attributes['bind'].value
+                self.required_plugins.append('listener')
+                self.listeners.append(listener)
+            elif cn.nodeName == 'pipe':
+                self.required_plugins.append('pipe')
+                listener = {'network': name }
+                if not clientpass is None:
+                    listener['password'] = clientpass
+                listener['path'] = cn.attributes['path'].value
+                if cn.attributes.has_key('password'):
+                    listener['password'] = cn.attributes['password'].value
+                self.listeners.append(listener)
             elif cn.nodeType == Node.ELEMENT_NODE:
                 raise UnknownTagError(cn)
 
-    def parseNetwork(self,node):
-        network = {'servers':[],'channels':[]}
+    def _parseNetwork(self,node):
+        network = Network()
+        client_pass = None
+        serverpass = None
 
-        print node.attributes['name']
+        network.name = node.attributes['name'].value
+        if node.attributes.has_key('client_pass'):
+            client_pass = node.attributes['client_pass'].value
+        if node.attributes.has_key('nick'):
+            network.nick = node.attributes['nick'].value
+        if node.attributes.has_key('fullname'):
+            network.fullname = node.attributes['fullname'].value
+        if node.attributes.has_key('password'):
+            serverpass = node.attributes['password'].value
+        if node.attributes.has_key('autoconnect') and \
+                node.attributes['autoconnect'].value == "1":
+            network.autoconnect = True
+        if node.attributes.has_key('username'):
+            network.username = node.attributes['username'].value
 
         for cn in node.childNodes:
             if cn.nodeName == 'servers':
-                network.servers.add(self.parseServers(cn))
+                network.servers.append(self._parseServers(cn,serverpass))
             elif cn.nodeName == 'channel':
-                network.channels.add(self.parseChannel(cn))
+                channel = self._parseChannel(cn)
+                network.channels[channel.name] = channel
             elif cn.nodeName == 'listen':
-                self.parseListeners(network.name, cn)
+                self._parseListeners(network.name, client_pass, cn)
+            elif cn.nodeName == 'autosend':
+                self.required_plugins.append('autosend')
+                self.autosend_lines = {'network': network.name, 
+                                       'data': cn.toxml()}
+            elif cn.nodeName == 'nickserv':
+                self.required_plugins.append('nickserv')
+                self._parseNickserv(network.name, cn) 
             elif cn.nodeType == Node.ELEMENT_NODE:
                 raise UnknownTagError(cn)
 
         self.networks[network.name] = network
 
-    def parseNetworks(self,node):
+    def _parseNetworks(self,node):
         for cn in node.childNodes:
             if cn.nodeName == 'network':
-                self.parseNetwork(cn) 
+                self._parseNetwork(cn) 
             elif cn.nodeType == Node.ELEMENT_NODE:
                 raise UnknownTagError(cn)
 
     def __init__(self,filename):
+        Config.__init__(self)
         self.doc = minidom.parse(filename)
-        self.plugins = {}
-        self.networks = {}
         node = self.doc.documentElement
         if node.nodeName != 'ctrlproxy':
             raise UnknownTagError(cn)
 
         for cn in node.childNodes:
             if cn.nodeName == 'networks':
-                self.parseNetworks(cn)
+                self._parseNetworks(cn)
             elif cn.nodeName == 'plugins':
-                self.parsePlugins(cn)
+                self._parsePlugins(cn)
             elif cn.nodeType == Node.ELEMENT_NODE:
                 raise UnknownTagError(cn)
 
@@ -85,4 +198,4 @@ if len(sys.argv) > 1:
 else:
     oldfile = OldConfigFile("%s/.ctrlproxyrc" % os.getenv('HOME'))
 
-
+oldfile.upgrade()
