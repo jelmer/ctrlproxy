@@ -1,6 +1,6 @@
 /* 
 	ctrlproxy: A modular IRC proxy
-	(c) 2002-2003 Jelmer Vernooij <jelmer@nl.linux.org>
+	(c) 2002-2006 Jelmer Vernooij <jelmer@nl.linux.org>
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -21,9 +21,6 @@
 #include <string.h>
 #include <fcntl.h>
 #include <stdio.h>
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -279,7 +276,7 @@ static gboolean file_traverse(struct network *n,
 	return TRUE;
 }
 
-static struct linestack_ops file = {
+const struct linestack_ops linestack_file = {
 	.name = "file",
 	.init = file_init,
 	.fini = file_fini,
@@ -288,21 +285,4 @@ static struct linestack_ops file = {
 	.get_state = file_get_state, 
 	.free_marker = g_free,
 	.traverse = file_traverse
-};
-
-static gboolean fini_plugin(struct plugin *p) {
-	unregister_linestack(&file);
-	return TRUE;
-}
-
-static gboolean init_plugin(struct plugin *p) {
-	register_linestack(&file);
-	return TRUE;
-}
-
-struct plugin_ops plugin = {
-	.name = "linestack_file",
-	.version = 0,
-	.init = init_plugin,
-	.fini = fini_plugin
 };

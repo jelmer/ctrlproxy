@@ -20,10 +20,7 @@ all: $(BINS) $(SUBDIRS)
 $(SUBDIRS):
 	$(MAKE) -C $@
 
-mods/static.o:: 
-	$(MAKE) -C mods static.o
-
-ctrlproxy$(EXEEXT): network.o posix.o client.o cache.o line.o main.o state.o util.o hooks.o linestack.o plugins.o settings.o isupport.o log.o redirect.o gen_config.o repl.o $(shell test -n "$(MODS_STATIC)" && echo mods/static.o)
+ctrlproxy$(EXEEXT): network.o posix.o client.o cache.o line.o main.o state.o util.o hooks.o linestack.o plugins.o settings.o isupport.o log.o redirect.o gen_config.o repl.o linestack_file.o 
 	$(CC) $(LIBS) -rdynamic -o $@ $^
 
 %.$(OBJEXT): %.c

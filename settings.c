@@ -19,9 +19,6 @@
 
 
 #include "internals.h"
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
 
 #ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>

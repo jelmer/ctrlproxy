@@ -25,21 +25,6 @@ AC_SUBST(VERSION)
 AC_CONFIG_SRCDIR([line.c])
 AC_CONFIG_HEADER([config.h])
 
-AC_ARG_WITH(module-default,
-[ --with-module-default={shared,static,not} Default module output type ],
-[ 
- 	case "$withval" in
-		shared|static|not) module_default="$withval" ;;
-		*)
-		AC_MSG_ERROR([Unknown module output type $withval])
-		;;
-	esac
-],
-[ module_default="shared" ]
-)
-
-
-
 # Checks for programs.
 AC_PROG_CC
 AC_PROG_INSTALL
@@ -144,7 +129,6 @@ DEFMODULE(antiflood)
 DEFMODULE(repl_simple)
 DEFMODULE(repl_command)
 DEFMODULE(repl_highlight)
-DEFMODULE(linestack_file)
 DEFMODULE(report_time)
 DEFMODULE(repl_none)
 DEFMODULE(motd_file)

@@ -2,9 +2,6 @@
 CFLAGS += -Wall -I.. -DHAVE_CONFIG_H
 MODS_SHARED_SUBDIRS = $(foreach mod, $(MODS_SHARED), $(shell test -d $(mod) && echo $(mod)))
 MODS_SHARED_FILES = $(foreach mod, $(MODS_SHARED), $(shell test -f $(mod).c && echo lib$(mod).so))
-MODS_STATIC_SUBDIRS = $(foreach mod, $(MODS_STATIC), $(shell test -d $(mod) && echo $(mod)))
-MODS_STATIC_SUBDIRS_FILES = $(foreach mod, $(MODS_STATIC_SUBDIRS), $(mod)/$(mod).o)
-MODS_STATIC_FILES = $(foreach mod, $(MODS_STATIC), $(shell test -f $(mod).c && echo $(mod).o)) $(MODS_STATIC_SUBDIRS_FILES)
 INCLUDEFILES = $(wildcard *.h)
 
 .PHONY: all install clean distclean $(MODS_SHARED_SUBDIRS)
@@ -30,19 +27,13 @@ ifneq "$(MODS_SHARED_FILES)" ""
 endif
 	$(INSTALL) -m 644 $(INCLUDEFILES) $(DESTDIR)$(destincludedir)
 
-$(MODS_STATIC_SUBDIRS_FILES):
-	$(MAKE) -C $(@D) $(@F)
-
-static.o: $(MODS_STATIC_FILES) 
-	$(LD) -r -o $@ $^
-
 %.o: %.c
 	$(CC) $(CFLAGS) -Dplugin=plugin_$* -c $<
 
 lib%.so: %.c
 	$(CC) $(CFLAGS) -fPIC -shared -o $@ $<
 
-clean: $(addprefix clean-,$(MODS_SHARED_SUBDIRS) $(MODS_STATIC_SUBDIRS))
-	rm -f $(MODS_SHARED_FILES) $(MODS_STATIC_FILES) *.o *.so
+clean: $(addprefix clean-,$(MODS_SHARED_SUBDIRS))
+	rm -f $(MODS_SHARED_FILES) *.o *.so
 
-distclean: clean $(addprefix distclean-,$(MODS_SHARED_SUBDIRS) $(MODS_STATIC_SUBDIRS))
+distclean: clean $(addprefix distclean-,$(MODS_SHARED_SUBDIRS))

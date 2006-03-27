@@ -26,18 +26,22 @@
 static GSList *linestack_backends = NULL;
 static struct linestack_ops *current_backend = NULL;
 
-void register_linestack(struct linestack_ops *b)
+void register_linestack(const struct linestack_ops *b)
 {
 	linestack_backends = g_slist_append(linestack_backends, b);
 }
 
-void unregister_linestack(struct linestack_ops *b)
+void unregister_linestack(const struct linestack_ops *b)
 {
 	linestack_backends = g_slist_remove(linestack_backends, b);
 }
 
 void init_linestack(struct ctrlproxy_config *cfg)
 {
+	extern const struct linestack_ops linestack_file;
+
+	register_linestack(&linestack_file);
+
 	if (cfg && cfg->linestack_backend) {
 		GSList *gl;
 		for (gl = linestack_backends; gl ; gl = gl->next) {

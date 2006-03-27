@@ -84,16 +84,6 @@ A message handling function is a function that is called
 whenever ctrlproxy receives an IRC message. The only argument 
 this function should have would be a line struct. 
 
-Flags can be set on the line (the field in the struct 
-to use is called 'options') to influence the handling 
-of the packet by the rest of ctrlproxy. 
-
-There is one other option that can be specified, but is only 
-useful when sending your own messages:
-
-LINE_IS_PRIVATE
-	Do not send this line to other clients currently connected.
-
 Registering a message handler
 -----------------------------
 

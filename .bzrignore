@@ -47,3 +47,4 @@ testlinestack
 testsuite/*.so
 testsuite/ctrlproxyrc.torture
 testsuite/torture
+mods/python2/__init__.py

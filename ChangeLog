@@ -2,6 +2,8 @@
  	Jelmer Vernooij <jelmer@vernstok.nl>
 
 Ctrlproxy 2.7:
+ * Move to bzr
+ * Make linestack_file the default
  * Remove linestack_memory
  * Add log levels (-d switch)
  * NetBSD portability fixes (Adrian Portelli)

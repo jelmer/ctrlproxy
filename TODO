@@ -13,10 +13,8 @@ current release (3.0.0):
  - finish upgrade script
  - make editing config file optional
 - make 'repl_none' builtin and the default
-- make 'linestack_file' builtin and the default
 
 next minor release (3.0.1):
-- switch to bzr?
 - properly expand second argument of PRIVMSG in log_irssi and log_custom
 - <allow/> rules in socks and listener based on ip addresses/ranges
 - support passwords in listener for selecting between networks
