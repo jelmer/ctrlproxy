@@ -26,30 +26,41 @@ struct client;
 #include <sys/time.h>
 #include <gmodule.h>
 
+
+struct linestack_ops;
+struct linestack_context
+{
+	void *backend_data;
+	const struct linestack_ops *ops;
+};
+
 /* linestack.c */
 typedef void linestack_marker;
 typedef void (*linestack_traverse_fn) (struct line *, time_t, void *);
 struct linestack_ops {
 	char *name;
-	gboolean (*init) (void);
-	gboolean (*fini) (void);
+	gboolean (*init) (struct linestack_context *, struct ctrlproxy_config *);
+	gboolean (*fini) (struct linestack_context *);
 
 	/* Add a line */
 	gboolean (*insert_line) (
+		struct linestack_context *,
 		const struct network *, 
 		const struct line *);
 	
 	/* Get marker for current position in stream */
 	linestack_marker *(*get_marker) 
-		(struct network *);
+		(struct linestack_context *,
+		 struct network *);
 
 	/* Optional */
 	linestack_marker *(*get_marker_numlines) 
-		(struct network *, int numlines);
+		(struct linestack_context *, struct network *, int numlines);
 
 	void (*free_marker) (linestack_marker *);
 	
 	gboolean (*traverse) (
+		struct linestack_context *,
 		struct network *, 
 		linestack_marker *from,
 		linestack_marker *to,
@@ -58,6 +69,7 @@ struct linestack_ops {
 
 	/* Optional */
 	struct network_state *(*get_state) (
+		struct linestack_context *,
 		struct network *, 
 		linestack_marker *);
 
@@ -68,14 +80,17 @@ struct linestack_ops {
 G_MODULE_EXPORT void register_linestack(const struct linestack_ops *);
 G_MODULE_EXPORT void unregister_linestack(const struct linestack_ops *);
 G_MODULE_EXPORT linestack_marker *linestack_get_marker_numlines (
+		struct linestack_context *,
 		struct network *, 
 		int lines);
 
 G_MODULE_EXPORT struct network_state *linestack_get_state (
+		struct linestack_context *,
 		struct network *, 
 		linestack_marker *);
 
 G_MODULE_EXPORT gboolean linestack_traverse (
+		struct linestack_context *,
 		struct network *, 
 		linestack_marker *from,
 		linestack_marker *to, /* Can be NULL for 'now' */
@@ -83,6 +98,7 @@ G_MODULE_EXPORT gboolean linestack_traverse (
 		void *userdata);
 
 G_MODULE_EXPORT gboolean linestack_traverse_object (
+		struct linestack_context *,
 		struct network *,
 		const char *object,
 		linestack_marker *from,
@@ -91,12 +107,14 @@ G_MODULE_EXPORT gboolean linestack_traverse_object (
 		void *userdata);
 
 G_MODULE_EXPORT gboolean linestack_send (
+		struct linestack_context *,
 		struct network *,
 		linestack_marker *from,
 		linestack_marker *to, /* Can be NULL for 'now' */
 		const struct client *);
 
 G_MODULE_EXPORT gboolean linestack_send_object (
+		struct linestack_context *,
 		struct network *,
 		const char *object,
 		linestack_marker *from,
@@ -104,12 +122,15 @@ G_MODULE_EXPORT gboolean linestack_send_object (
 		const struct client *);
 
 G_MODULE_EXPORT gboolean linestack_replay (
+		struct linestack_context *,
 		struct network *,
 		linestack_marker *from,
 		linestack_marker *to,/* Can be NULL for 'now' */
 		struct network_state *st);
 
-G_MODULE_EXPORT void linestack_free_marker(linestack_marker *);
-G_MODULE_EXPORT linestack_marker *linestack_get_marker(struct network *n);
+G_MODULE_EXPORT void linestack_free_marker(struct linestack_context *, linestack_marker *);
+G_MODULE_EXPORT linestack_marker *linestack_get_marker(struct linestack_context *, struct network *n);
+G_MODULE_EXPORT struct linestack_context *new_linestack(struct ctrlproxy_config *);
+G_MODULE_EXPORT void free_linestack_context(struct linestack_context *);
 
 #endif /* __CTRLPROXY_LINESTACK_H__ */

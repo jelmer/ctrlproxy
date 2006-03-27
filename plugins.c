@@ -76,7 +76,7 @@ gboolean plugin_loaded(const char *name)
 	return FALSE;
 }
 
-struct plugin *load_plugin(struct plugin_config *pc)
+struct plugin *load_plugin(const char *dir, struct plugin_config *pc)
 {
 	GModule *m = NULL;
 	const char *modulesdir;
@@ -101,7 +101,7 @@ struct plugin *load_plugin(struct plugin_config *pc)
 	if (!ops) {
 		/* Determine correct modules directory */
 		if(getenv("MODULESDIR"))modulesdir = getenv("MODULESDIR");
-		else modulesdir = get_current_config()->modules_path;
+		else modulesdir = dir;
 
 		if(g_file_test(pc->path, G_FILE_TEST_EXISTS))path_name = g_strdup(pc->path);
 		else path_name = g_module_build_path(modulesdir, pc->path);
@@ -180,7 +180,7 @@ gboolean init_plugins(struct ctrlproxy_config *cfg)
 		while(gl) {
 			struct plugin_config *p = gl->data;
 
-			if(p->autoload && !load_plugin(p)) {
+			if(p->autoload && !load_plugin(cfg->modules_path, p)) {
 				ret = FALSE;
 			}
 

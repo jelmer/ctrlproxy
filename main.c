@@ -37,9 +37,8 @@
 /* globals */
 static GMainLoop *main_loop;
 extern char my_hostname[];
-struct ctrlproxy_config *current_config = NULL;
 
-struct ctrlproxy_config *get_current_config(void) { return current_config; }
+struct global *_global;
 
 static void signal_crash(int sig) 
 {
@@ -78,18 +77,19 @@ static void clean_exit()
 	char *path;
 	kill_pending_clients("Server exiting");
 
-	fini_networks();
+	fini_networks(_global);
 
 	g_main_loop_quit(main_loop);
 
 	fini_config();
-	fini_linestack();
 	fini_plugins();
 
-	path = ctrlproxy_path("autosave");
-	save_configuration(current_config, path);
+	path = g_build_filename(_global->config->config_dir, "autosave", NULL);
+	save_configuration(_global->config, path);
 	g_free(path);
-	free_config(current_config);
+	free_config(_global->config);
+
+	free_global(_global);
 
 	g_main_loop_unref(main_loop);
 	fini_log();
@@ -112,7 +112,27 @@ static void signal_quit(int sig)
 static void signal_save(int sig)
 {
 	log_global(NULL, LOG_INFO, "Received USR1 signal, saving configuration...");
-	save_configuration(current_config, NULL);
+	save_configuration(_global->config, NULL);
+}
+
+struct global *new_global()
+{
+	struct global *global = g_new0(struct global, 1);
+
+	global->config->config_dir = g_build_filename(g_get_home_dir(), ".ctrlproxy", NULL);
+	if(mkdir(global->config->config_dir, 0700) != 0 && errno != EEXIST) {
+		log_global(NULL, LOG_ERROR, "Unable to open configuration directory '%s'\n", global->config->config_dir);
+		g_free(global->config->config_dir);
+		global->config->config_dir = NULL;
+	}
+
+	return global;
+}
+
+void free_global(struct global *global)
+{
+	free_linestack_context(global->linestack); global->linestack = NULL;
+	fini_networks(global);
 }
 
 int main(int argc, const char *argv[])
@@ -170,7 +190,7 @@ int main(int argc, const char *argv[])
 #endif
 
 	if(isdaemon && !logfile) {
-		logfile = ctrlproxy_path("log");
+		logfile = g_build_filename(_global->config->config_dir, "log", NULL);
 	}
 
 	init_log(logfile);
@@ -206,9 +226,11 @@ int main(int argc, const char *argv[])
 
 	init_config();
 
+	_global = new_global();	
+
 	if(rcfile) {
 		configuration_file = g_strdup(rcfile);
-		current_config = load_configuration(configuration_file);
+		_global->config = load_configuration(configuration_file);
 		g_free(configuration_file);
 	} else { 
 		const char *homedir = g_get_home_dir();
@@ -219,19 +241,20 @@ int main(int argc, const char *argv[])
 #endif
 		/* Copy configuration file from default location if none existed yet */
 		if(g_file_test(configuration_file, G_FILE_TEST_EXISTS)) {
-			current_config = load_configuration(configuration_file);
+			_global->config = load_configuration(configuration_file);
 		} else {
-			current_config = load_configuration(SHAREDIR"/ctrlproxyrc.default");
+			_global->config = load_configuration(SHAREDIR"/ctrlproxyrc.default");
 		}
 
 		g_free(configuration_file);
 	}
 
 	init_networks();
-	load_networks(current_config);
-	init_plugins(current_config);
-	init_linestack(current_config);
-	autoconnect_networks();
+	load_networks(_global, _global->config);
+
+	init_plugins(_global->config);
+	_global->linestack = new_linestack(_global->config);
+	autoconnect_networks(_global);
 
 #ifdef HAVE_POPT_H
 	poptFreeContext(pc);
@@ -241,7 +264,7 @@ int main(int argc, const char *argv[])
 
 	if (inetd_client) {
 		GIOChannel *io = g_io_channel_unix_new(0);
-		struct network *n = find_network(inetd_client);
+		struct network *n = find_network(_global, inetd_client);
 
 		if (!n) {
 			fprintf(stderr, "Unable to find network named '%s'\n", inetd_client);

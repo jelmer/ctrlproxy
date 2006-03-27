@@ -80,7 +80,7 @@ static void add_network (const struct client *c, char **args, void *userdata)
 
 	nc = network_config_init(get_current_config());
 	g_free(nc->name); nc->name = g_strdup(args[1]);
-	load_network(nc);
+	load_network(c->network->global, nc);
 }
 
 static void del_network (const struct client *c, char **args, void *userdata)
@@ -92,7 +92,7 @@ static void del_network (const struct client *c, char **args, void *userdata)
 		return;
 	}
 
-	n = find_network(args[1]);
+	n = find_network(c->network->global, args[1]);
 	if (!n) {
 		admin_out(c, "No such network %s", args[1]);
 		return;
@@ -111,7 +111,7 @@ static void add_server (const struct client *c, char **args, void *userdata)
 		return;
 	}
 
-	n = find_network(args[1]);
+	n = find_network(c->network->global, args[1]);
 
 	if (!n) {
 		admin_out(c, "No such network '%s'", args[1]);
@@ -142,7 +142,7 @@ static void com_connect_network (const struct client *c, char **args, void *user
 		 return;
 	}
 
-	s = find_network(args[1]);
+	s = find_network(c->network->global, args[1]);
 
 	if (!s) {
 		admin_out(c, "No such network `%s'", args[1]);
@@ -175,7 +175,7 @@ static void com_disconnect_network (const struct client *c, char **args, void *u
 	struct network *n;
 	if(!args[1])n = c->network;
 	else {
-		n = find_network(args[1]);
+		n = find_network(c->network->global, args[1]);
 		if(!n) {
 			admin_out(c, "Can't find active network with that name");
 			return;
@@ -195,7 +195,7 @@ static void com_next_server (const struct client *c, char **args, void *userdata
 	const char *name;
 	if(args[1] != NULL) {
 		name = args[1];
-		n = find_network(args[1]);
+		n = find_network(c->network->global, args[1]);
 	} else {
 		n = c->network;
 		name = n->name;
@@ -263,7 +263,7 @@ static void load_module (const struct client *c, char **args, void *userdata)
 
 	p = plugin_config_init(get_current_config(), args[1]);
 
-	if (load_plugin(p)) {
+	if (load_plugin(c->network->global->config->modules_path, p)) {
 		admin_out(c, "Load successful");
 	} else {
 		admin_out(c, "Load failed");

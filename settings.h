@@ -68,9 +68,11 @@ struct plugin_config {
 };
 
 struct ctrlproxy_config {
+	char *config_dir;
 	GList *plugins;
 	GList *networks;
 	int separate_processes:1;
+	char *replication;
 	char *modules_path;
 	char *shared_path;
 	char *linestack_backend;

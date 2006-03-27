@@ -63,7 +63,7 @@ struct line *wait_response(GIOChannel *ch, const char *cmd)
 struct line *wait_responses(GIOChannel *ch, const char *cmd[])
 {
 	GError *error = NULL;
-	GIOStatus status;
+	GIOStatus status = G_IO_STATUS_AGAIN;
 	struct line *l = NULL;
 
 	/* FIXME: Timeout */
@@ -164,7 +164,7 @@ static const char *port = "6667";
 GIOChannel *new_conn(void)
 {
 	pid_t child_pid;
-	int std_fd;
+	int std_fd = -1;
 	int fd;
 
 	/* Start the program in question */

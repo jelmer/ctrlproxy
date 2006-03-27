@@ -73,6 +73,8 @@ static GIOChannel *server_channel = NULL;
 static int server_channel_in = 0;
 enum socks_state { STATE_NEW = 0, STATE_AUTH, STATE_NORMAL };
 
+extern struct global *_global; /* FIXME: EVIL HACK ! */
+
 struct allow_rule {
 	const char *username;
 	const char *password;
@@ -206,9 +208,9 @@ static gboolean pass_handle_data(struct socks_client *cl)
 	}
 }
 
-static struct network *socks_map_network_fqdn(const char *hostname, guint16 port)
+static struct network *socks_map_network_fqdn(struct global *global, const char *hostname, guint16 port)
 {
-	return find_network_by_hostname(hostname, port, TRUE);
+	return find_network_by_hostname(global, hostname, port, TRUE);
 }
 
 struct socks_method {
@@ -338,7 +340,7 @@ static gboolean handle_client_data (GIOChannel *ioc, GIOCondition o, gpointer da
 
 					log_global("socks", LOG_INFO, "Request to connect to %s:%d", hostname, port);
 
-					result = socks_map_network_fqdn(hostname, port);
+					result = socks_map_network_fqdn(_global, hostname, port);
 
 					if (!result) {
 						log_global("socks", LOG_WARNING, "Unable to return network matching %s:%d", hostname, port);

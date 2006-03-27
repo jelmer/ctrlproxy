@@ -51,7 +51,7 @@
 
 /* server.c */
 gboolean init_networks();
-void fini_networks(void);
+void fini_networks(struct global *);
 void kill_pending_clients(const char *reason);
 
 /* state.c */
@@ -94,12 +94,17 @@ gboolean client_try_cache(struct client *c, struct line *l);
 
 /* linestack.c */
 void init_linestack(struct ctrlproxy_config *);
-void fini_linestack(void);
-gboolean linestack_insert_line(const struct network *n, const struct line *l, enum data_direction dir);
+gboolean linestack_insert_line(struct linestack_context *, const struct network *n, const struct line *l, enum data_direction dir);
 
 /* gen_config.c */
 void network_update_config(struct network_state *ns, struct network_config *nc);
 void channel_update_config(struct channel_state *ns, struct channel_config *nc);
 void plugin_update_config(struct plugin *ps, struct plugin_config *pc);
+
+/* repl.c */
+void client_replicate(struct client *);
+
+/* main.c */
+void free_global(struct global *);
 
 #endif /* __INTERNALS_H__ */

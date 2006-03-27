@@ -22,7 +22,6 @@
 
 static GIOChannel * (*sslize_function) (GIOChannel *, gboolean);
 
-static GList *networks = NULL;
 static GHashTable *virtual_network_ops = NULL;
 
 static gboolean delayed_connect_server(struct network *s);
@@ -64,7 +63,7 @@ static gboolean process_from_server(struct network *n, struct line *l)
 	g_assert(n->state);
 
 	state_handle_data(n->state,l);
-	linestack_insert_line(n, l, FROM_SERVER);
+	linestack_insert_line(n->global->linestack, n, l, FROM_SERVER);
 
 	g_assert(l->args[0]);
 
@@ -216,7 +215,7 @@ gboolean network_send_line(struct network *s, const struct client *c, const stru
 
 	run_log_filter(s, lc = linedup(&l), TO_SERVER); free_line(lc);
 	run_replication_filter(s, lc = linedup(&l), TO_SERVER); free_line(lc);
-	linestack_insert_line(s, ol, TO_SERVER);
+	linestack_insert_line(s->global->linestack, s, ol, TO_SERVER);
 
 	g_assert(l.args[0]);
 	/* Also write this message to all other clients currently connected */
@@ -612,14 +611,14 @@ static gboolean delayed_connect_server(struct network *s)
 }
 
 
-struct network *load_network(struct network_config *sc)
+struct network *load_network(struct global *global, struct network_config *sc)
 {
 	struct network *s;
 
 	g_assert(sc);
 
 	/* Don't connect to the same network twice */
-	s = find_network(sc->name);
+	s = find_network(global, sc->name);
 	if (s) 
 		return s;
 
@@ -628,7 +627,7 @@ struct network *load_network(struct network_config *sc)
 	s->info.features = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_free);
 	s->name = g_strdup(s->config->name);
 
-	networks = g_list_append(networks, s);
+	global->networks = g_list_append(global->networks, s);
 	return s;
 }
 
@@ -657,7 +656,7 @@ void unload_network(struct network *s)
 		disconnect_client(c, "Server exiting");
 	}
 
-	networks = g_list_remove(networks, s);
+	s->global->networks = g_list_remove(s->global->networks, s);
 
 	g_free(s->name);
 
@@ -718,10 +717,10 @@ gboolean init_networks(void)
 	return TRUE;
 }
 
-gboolean autoconnect_networks()
+gboolean autoconnect_networks(struct global *global)
 {
 	GList *gl;
-	for (gl = networks; gl; gl = gl->next)
+	for (gl = global->networks; gl; gl = gl->next)
 	{
 		struct network *n = gl->data;
 		g_assert(n);
@@ -734,20 +733,18 @@ gboolean autoconnect_networks()
 	return TRUE;
 }
 
-gboolean load_networks(struct ctrlproxy_config *cfg)
+gboolean load_networks(struct global *global, struct ctrlproxy_config *cfg)
 {
 	GList *gl;
 	g_assert(cfg);
 	for (gl = cfg->networks; gl; gl = gl->next)
 	{
 		struct network_config *nc = gl->data;
-		load_network(nc);
+		load_network(global, nc);
 	}
 
 	return TRUE;
 }
-
-GList *get_network_list() { return networks; }
 
 void set_sslize_function (GIOChannel * (*f) (GIOChannel *, gboolean)) 
 {
@@ -765,10 +762,10 @@ GIOChannel *sslize (GIOChannel *orig, gboolean server)
 	return sslize_function(orig, server);
 }
 
-struct network *find_network(const char *name)
+struct network *find_network(struct global *global, const char *name)
 {
 	GList *gl;
-	for (gl = networks; gl; gl = gl->next) {
+	for (gl = global->networks; gl; gl = gl->next) {
 		struct network *n = gl->data;
 		if (n->name && !g_strcasecmp(n->name, name)) return n;
 	}
@@ -776,7 +773,7 @@ struct network *find_network(const char *name)
 	return NULL;
 }
 
-struct network *find_network_by_hostname(const char *hostname, guint16 port, gboolean create)
+struct network *find_network_by_hostname(struct global *global, const char *hostname, guint16 port, gboolean create)
 {
 	GList *gl;
 	struct network *n;
@@ -784,7 +781,7 @@ struct network *find_network_by_hostname(const char *hostname, guint16 port, gbo
 	g_assert(portname);
 	g_assert(hostname);
 	
-	for (gl = networks; gl; gl = gl->next) {
+	for (gl = global->networks; gl; gl = gl->next) {
 		GList *sv;
 		n = gl->data;
 		g_assert(n);
@@ -816,7 +813,7 @@ struct network *find_network_by_hostname(const char *hostname, guint16 port, gbo
 	{
 		struct tcp_server_config *s = g_new0(struct tcp_server_config, 1);
 		struct network_config *nc;
-		nc = network_config_init(get_current_config());
+		nc = network_config_init(global->config);
 
 		nc->name = g_strdup(hostname);
 		nc->type = NETWORK_TCP;
@@ -825,16 +822,16 @@ struct network *find_network_by_hostname(const char *hostname, guint16 port, gbo
 
 		nc->type_settings.tcp_servers = g_list_append(nc->type_settings.tcp_servers, s);
 
-		return load_network(nc);
+		return load_network(global, nc);
 	}
 
 	return NULL;
 }
 
-void fini_networks()
+void fini_networks(struct global *global)
 {
 	GList *gl;
-	while((gl = get_network_list())) {
+	while((gl = global->networks)) {
 		struct network *n = (struct network *)gl->data;
 		disconnect_network(n);
 		unload_network(n);

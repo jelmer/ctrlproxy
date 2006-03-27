@@ -419,7 +419,7 @@ static gboolean handle_pending_client_receive(GIOChannel *c, GIOCondition cond, 
 				return TRUE;
 			}
 
-			client->network = find_network_by_hostname(l->args[1], atoi(l->args[2]), TRUE);
+			client->network = find_network_by_hostname(client->network->global, l->args[1], atoi(l->args[2]), TRUE);
 
 			if (!client->network || !connect_network(client->network)) {
 				log_client(NULL, LOG_ERROR, client, "Unable to connect to network with name %s", l->args[1]);

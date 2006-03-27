@@ -1,5 +1,6 @@
 /*
-	(c) 2005 Jelmer Vernooij <jelmer@nl.linux.org>
+	ctrlproxy: A modular IRC proxy
+	(c) 2002-2005 Jelmer Vernooij <jelmer@nl.linux.org>
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -16,20 +17,15 @@
 	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 */
 
-#include "torture.h"
-#include <stdio.h>
-#include <unistd.h>
-#include <string.h>
-#include "../internals.h"
+#ifndef __CTRLPROXY_REPL_H__
+#define __CTRLPROXY_REPL_H__
 
-static int test_linestack_simple(void)
-{
-	struct linestack_context *ctx = new_linestack(NULL);
-	free_linestack_context(ctx);
-	return 0;
-}
 
-void torture_init(void)
-{
-	register_test("LINESTACK-SIMPLE", test_linestack_simple);
-}
+struct replication_backend {
+	const char *name;
+	void (*replication_fn) (struct client *);
+};
+
+void register_replication_backend(const struct replication_backend *);
+
+#endif /* __CTRLPROXY_REPL_H__ */

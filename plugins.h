@@ -35,7 +35,7 @@ struct plugin {
 };
 
 /* plugins.c */
-G_MODULE_EXPORT struct plugin *load_plugin(struct plugin_config *);
+G_MODULE_EXPORT struct plugin *load_plugin(const char *dir, struct plugin_config *);
 G_MODULE_EXPORT gboolean unload_plugin(struct plugin *);
 G_MODULE_EXPORT gboolean plugin_loaded(const char *name);
 G_MODULE_EXPORT GList *get_plugin_list(void);

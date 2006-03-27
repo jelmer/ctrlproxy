@@ -163,6 +163,8 @@ static int state_marshall_simple(void)
 	return 0;
 }
 
+gboolean init_log(const char *lf);
+
 void torture_init(void)
 {
 	init_log("test-state");

@@ -49,6 +49,13 @@
 #include "state.h"
 #include "linestack.h"
 #include "hooks.h"
+#include "repl.h"
+
+struct global {
+	struct ctrlproxy_config *config;
+	struct linestack_context *linestack;
+	GList *networks;
+};
 
 /* main.c */
 G_MODULE_EXPORT const char *ctrlproxy_version(void);
@@ -58,7 +65,6 @@ G_MODULE_EXPORT struct ctrlproxy_config *get_current_config(void);
 /* util.c */
 G_MODULE_EXPORT char *list_make_string(GList *);
 G_MODULE_EXPORT int verify_client(const struct network *s, const struct client *c);
-G_MODULE_EXPORT char *ctrlproxy_path(const char *part);
 G_MODULE_EXPORT int str_rfc1459cmp(const char *a, const char *b);
 G_MODULE_EXPORT int str_strictrfc1459cmp(const char *a, const char *b);
 G_MODULE_EXPORT int str_asciicmp(const char *a, const char *b);

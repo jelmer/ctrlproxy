@@ -40,25 +40,28 @@ static void check_highlight(struct line *l, time_t t, void *userdata)
 	}
 }
 
-static gboolean highlight_replicate(struct client *c, void *userdata)
+static void highlight_replicate(struct client *c)
 {
 	linestack_marker *lm = g_hash_table_lookup(markers, c->network);
-	linestack_traverse(c->network, lm, NULL, check_highlight, c);
-	g_hash_table_replace(markers, c->network, linestack_get_marker(c->network));
-	return TRUE;
+	linestack_traverse(c->network->global->linestack, c->network, lm, NULL, check_highlight, c);
+	g_hash_table_replace(markers, c->network, linestack_get_marker(c->network->global->linestack, c->network));
 }
 
 static gboolean fini_plugin(struct plugin *p) 
 {
 	g_hash_table_destroy(markers);	
-	del_new_client_hook("repl_highlight");
 	return TRUE;
 }
+
+static const struct replication_backend highlight = {
+	.name = "highlight",
+	.replication_fn = highlight_replicate
+};
 
 static gboolean init_plugin(struct plugin *p) 
 {
 	markers = g_hash_table_new_full(NULL, NULL, NULL, (GDestroyNotify)linestack_free_marker);
-	add_new_client_hook("repl_highlight", highlight_replicate, NULL);
+	register_replication_backend(&highlight);
 	return TRUE;
 }
 

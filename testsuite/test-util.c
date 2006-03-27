@@ -42,22 +42,7 @@ static int test_list_make_string(void)
 	return 0;
 }
 
-static int test_ctrlproxy_path (void)
-{
-	char *expected = g_strdup_printf("%s/.ctrlproxy/%s", g_get_home_dir(), "bloe");
-	char *result = ctrlproxy_path("bloe");
-	int matches;
-
-	matches = strcmp(expected, result);
-
-	g_free(expected);
-	g_free(result);
-
-	return matches;
-}
-
 void torture_init(void)
 {
 	register_test("UTIL-LIST-STRING", test_list_make_string);
-	register_test("UTIL-CTRLPROXY-PATH", test_ctrlproxy_path);
 }

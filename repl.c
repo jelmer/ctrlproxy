@@ -19,6 +19,7 @@
 
 #include "internals.h"
 #include "irc.h"
+#include "repl.h"
 
 char *mode2string(char modes[255])
 {
@@ -93,4 +94,43 @@ gboolean client_send_state(struct client *c, struct network_state *state)
 	g_free(mode);
 
 	return TRUE;
+}
+
+static void none_replicate(struct client *c)
+{
+	if (c->network->state)
+		client_send_state(c, c->network->state);
+}
+
+static GList *backends = NULL;
+
+void register_replication_backend(const struct replication_backend *backend)
+{
+	backends = g_list_append(backends, backend);
+}
+
+void client_replicate(struct client *client)
+{
+	void (*fn) (struct client *);
+	const char *bn = client->network->global->config->replication;
+	
+	if (bn == NULL || !strcmp(bn, "none")) 
+		fn = none_replicate;
+	else {
+		GList *gl;
+		fn = NULL;
+
+		for (gl = backends; gl; gl = gl->next) {
+			struct replication_backend *backend = gl->data;
+			if (!strcmp(backend->name, bn))
+				fn = backend->replication_fn;
+		}
+
+		if (!fn) {
+			log_client(NULL, LOG_WARNING, client, "Unable to find replication backend '%s'\n", bn);
+			fn = none_replicate;
+		}
+	}
+
+	fn(client);
 }

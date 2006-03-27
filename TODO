@@ -8,11 +8,9 @@ current release (3.0.0):
 - fix issue with loading state from linestack_file
 - better handling of log_network_state()
 - merge noticelog into admin
-- remove irc_send_linef
 - new config file format (yacc!)
  - finish upgrade script
  - make editing config file optional
-- make 'repl_none' builtin and the default
 
 next minor release (3.0.1):
 - properly expand second argument of PRIVMSG in log_irssi and log_custom

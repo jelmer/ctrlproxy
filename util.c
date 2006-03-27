@@ -46,20 +46,6 @@ char *list_make_string(GList *list)
 	return ret;
 }
 
-char *ctrlproxy_path(const char *part)
-{
-	char *p, *p1;
-	p = g_strdup_printf("%s/.ctrlproxy", g_get_home_dir());
-	if(mkdir(p, 0700) != 0 && errno != EEXIST) {
-		g_free(p);
-		exit(1);
-	}
-
-	p1 = g_strdup_printf("%s/%s", p, part);
-	g_free(p);
-	return p1;
-}
-
 static inline int str_cmphelper(const char *a, const char *b, char sh, char sl, char eh, char el)
 {
 	int i;

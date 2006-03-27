@@ -67,6 +67,7 @@ static gboolean init_plugin(struct plugin *p)
 	oldpath = Py_GetPath();
 
 	newpath = g_strdup_printf("%s:%s", mypath, oldpath);
+
 	g_free(mypath);
 
 	PySys_SetPath(newpath);

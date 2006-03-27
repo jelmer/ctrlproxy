@@ -32,7 +32,7 @@ static void dump_joined_channels(const struct client *c, char **args, void *user
 	GList *gl;
 
 	if(args[1]) {
-		n = find_network(args[1]);
+		n = find_network(c->network->global, args[1]);
 		if(!n) {
 			admin_out(c, "Can't find network '%s'", args[1]);
 			return;

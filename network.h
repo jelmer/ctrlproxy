@@ -26,6 +26,7 @@
 
 #include "state.h"
 
+struct global;
 struct network;
 struct client;
 struct line;
@@ -70,6 +71,7 @@ struct network_connection {
 
 struct network {
 	char *name;
+	struct global *global;
 	struct network_config *config;
 
 	GList *clients;
@@ -81,10 +83,10 @@ struct network {
 };
 
 /* server.c */
-G_MODULE_EXPORT struct network *find_network_by_hostname(const char *host, guint16 port, gboolean create);
-G_MODULE_EXPORT gboolean load_networks(struct ctrlproxy_config *cfg);
-G_MODULE_EXPORT gboolean autoconnect_networks(void);
-G_MODULE_EXPORT struct network *load_network(struct network_config *);
+G_MODULE_EXPORT struct network *find_network_by_hostname(struct global *global, const char *host, guint16 port, gboolean create);
+G_MODULE_EXPORT gboolean load_networks(struct global *, struct ctrlproxy_config *cfg);
+G_MODULE_EXPORT gboolean autoconnect_networks(struct global *);
+G_MODULE_EXPORT struct network *load_network(struct global *, struct network_config *);
 G_MODULE_EXPORT void unload_network(struct network *);
 G_MODULE_EXPORT gboolean connect_network(struct network *);
 G_MODULE_EXPORT void network_select_next_server(struct network *n);
@@ -95,7 +97,7 @@ G_MODULE_EXPORT gboolean network_send_line(struct network *s, const struct clien
 G_MODULE_EXPORT gboolean network_send_args(struct network *s, ...);
 G_MODULE_EXPORT void register_virtual_network(struct virtual_network_ops *);
 G_MODULE_EXPORT void unregister_virtual_network(struct virtual_network_ops *);
-G_MODULE_EXPORT struct network *find_network(const char *);
+G_MODULE_EXPORT struct network *find_network(struct global *, const char *);
 G_MODULE_EXPORT gboolean virtual_network_recv_line(struct network *l, struct line *);
 G_MODULE_EXPORT gboolean virtual_network_recv_args(struct network *l, const char *origin, ...); 
 

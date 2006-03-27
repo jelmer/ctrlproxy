@@ -278,7 +278,7 @@ static gboolean load_config(struct plugin *p, xmlNodePtr conf)
 
 		if (xmlHasProp(cur, "network")) {
 			tmp = xmlGetProp(cur, "network");
-			l->network = find_network(tmp);
+			l->network = find_network(l->network->global, tmp);
 			if (!l->network) {
 				log_global("listener", LOG_ERROR, "Unable to find network named \"%s\"", tmp);
 			}

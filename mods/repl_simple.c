@@ -42,39 +42,43 @@ static gboolean log_data(struct network *n, struct line *l, enum data_direction 
 	if (g_strcasecmp(l->args[0], "PRIVMSG") && 
 		g_strcasecmp(l->args[0], "NOTICE")) return TRUE;
 
-	g_hash_table_replace(simple_backlog, n, linestack_get_marker(n));
+	g_hash_table_replace(simple_backlog, n, linestack_get_marker(n->global->linestack, n));
 
 	return TRUE;
 }
 
-static gboolean simple_replicate(struct client *c, void *userdata)
+static void simple_replicate(struct client *c)
 {
 	linestack_marker *m;
 	struct network_state *ns;
 
 	m = g_hash_table_lookup(simple_backlog, c->network);
-	ns = linestack_get_state(c->network, m);
+	ns = linestack_get_state(c->network->global->linestack, c->network, m);
 	if (ns) {
 		client_send_state(c, ns);
 		change_nick(c, ns->me.nick);
 	}
 	free_network_state(ns);
-	linestack_send(c->network, m, NULL, c);
-	return TRUE;
+	linestack_send(c->network->global->linestack, c->network, m, NULL, c);
 }
 
 static gboolean fini_plugin(struct plugin *p) 
 {
 	del_server_filter("repl_simple");
-	del_new_client_hook("repl_simple");
 	g_hash_table_destroy(simple_backlog); simple_backlog = NULL;
 	return TRUE;
 }
 
+static const struct replication_backend simple = 
+{
+	.name = "simple",
+	.replication_fn = simple_replicate
+};
+
 static gboolean init_plugin(struct plugin *p) 
 {
 	add_server_filter("repl_simple", log_data, NULL, 200);
-	add_new_client_hook("repl_simple", simple_replicate, NULL);
+	register_replication_backend(&simple);
 	simple_backlog = g_hash_table_new_full(NULL, NULL, NULL, linestack_free_marker);
 	return TRUE;
 }
