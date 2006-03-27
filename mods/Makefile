@@ -27,9 +27,6 @@ ifneq "$(MODS_SHARED_FILES)" ""
 endif
 	$(INSTALL) -m 644 $(INCLUDEFILES) $(DESTDIR)$(destincludedir)
 
-%.o: %.c
-	$(CC) $(CFLAGS) -Dplugin=plugin_$* -c $<
-
 lib%.so: %.c
 	$(CC) $(CFLAGS) -fPIC -shared -o $@ $<
 

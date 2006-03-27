@@ -9,9 +9,6 @@ install: all
 	$(INSTALL) -d $(DESTDIR)$(modulesdir)
 	$(INSTALL) $(MODS) $(DESTDIR)$(modulesdir)
 
-%.o: %.c
-	$(CC) $(CFLAGS) -Dplugin=plugin_$* -c $<
-
 lib%.so: %.c
 	$(CC) -fPIC $(CFLAGS) $(LDFLAGS) -shared -o $@ $<
 

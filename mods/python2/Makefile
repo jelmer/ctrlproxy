@@ -7,9 +7,6 @@ all: build libpython2.so
 lib%.so: %.c
 	$(CC) $(CFLAGS) $(PYCFLAGS) $(LDFLAGS) $(PYLDFLAGS) -shared -o $@ $<
 
-%.o: %.c
-	$(CC) $(CFLAGS) $(PYCFLAGS) -Dplugin=plugin_$* -c $<
-
 build: ctrlproxy_wrap.c admin_wrap.c listener_wrap.c 
 	LDFLAGS="$(LDFLAGS)" CFLAGS="$(CFLAGS)" $(PYTHON) setup.py build
 
