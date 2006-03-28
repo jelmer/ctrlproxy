@@ -35,8 +35,6 @@
 
 static xmlDtdPtr dtd;
 
-static char *last_config_file = NULL;
-
 static xmlNodePtr config_save_plugins(GList *plugins)
 {
 	GList *gl;
@@ -132,6 +130,8 @@ void save_configuration(struct ctrlproxy_config *cfg, const char *configuration_
 {
 	xmlNodePtr root;
 	xmlDocPtr configuration = xmlNewDoc("1.0");
+
+	g_assert(configuration_file);
 	
 	root = xmlNewNode(NULL, "ctrlproxy");
 
@@ -140,7 +140,7 @@ void save_configuration(struct ctrlproxy_config *cfg, const char *configuration_
 	xmlAddChild(root, config_save_plugins(cfg->plugins));
 	xmlAddChild(root, config_save_networks(cfg->networks));
 
-	xmlSaveFormatFile(configuration_file?configuration_file:last_config_file, configuration, 1);
+	xmlSaveFormatFile(configuration_file, configuration, 1);
 
 	xmlFreeDoc(configuration);
 }
@@ -169,7 +169,6 @@ void init_config()
 
 void fini_config()
 {
-	g_free(last_config_file);
 	xmlFreeDtd(dtd);
 }
 
@@ -342,8 +341,6 @@ struct ctrlproxy_config *load_configuration(const char *file)
 
 	cfg->modules_path = g_strdup(MODULESDIR);
 	cfg->shared_path = g_strdup(SHAREDIR);
-
-	g_free(last_config_file); last_config_file = g_strdup(file);
 
 	configuration = xmlParseFile(file);
 	if(!configuration) {

@@ -112,7 +112,7 @@ static void signal_quit(int sig)
 static void signal_save(int sig)
 {
 	log_global(NULL, LOG_INFO, "Received USR1 signal, saving configuration...");
-	save_configuration(_global->config, NULL);
+	save_configuration(_global->config, _global->last_config_file);
 }
 
 struct global *new_global()
@@ -220,7 +220,7 @@ int main(int argc, char **argv)
 	if(rcfile) {
 		configuration_file = g_strdup(rcfile);
 		_global->config = load_configuration(configuration_file);
-		g_free(configuration_file);
+		_global->last_config_file = configuration_file;
 	} else { 
 		const char *homedir = g_get_home_dir();
 #ifdef _WIN32
@@ -231,11 +231,13 @@ int main(int argc, char **argv)
 		/* Copy configuration file from default location if none existed yet */
 		if(g_file_test(configuration_file, G_FILE_TEST_EXISTS)) {
 			_global->config = load_configuration(configuration_file);
+			_global->last_config_file = configuration_file;
 		} else {
-			_global->config = load_configuration(SHAREDIR"/ctrlproxyrc.default");
+			g_free(configuration_file);
+			configuration_file = g_strdup(SHAREDIR"/ctrlproxyrc.default");
+			_global->config = load_configuration(configuration_file);
+			_global->last_config_file = configuration_file;
 		}
-
-		g_free(configuration_file);
 	}
 
 	_global->config->config_dir = g_build_filename(g_get_home_dir(), ".ctrlproxy", NULL);
