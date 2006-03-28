@@ -60,7 +60,8 @@ static gboolean load_config(struct plugin *p, xmlNodePtr node)
 
 static gboolean init_plugin(struct plugin *p)
 {
-	char *mypath = ctrlproxy_path("scripts/python");
+	extern struct global *_global;
+	char *mypath = g_build_filename(_global->config->config_dir, "scripts/python", NULL);
 	char *oldpath, *newpath;
 	Py_Initialize();
 

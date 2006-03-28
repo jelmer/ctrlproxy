@@ -42,7 +42,7 @@ class Config:
 
     def upgrade(self):
         # Throw out obsolete modules
-        for pl in ['socket','strip','repl_memory']:
+        for pl in ['socket','strip','repl_memory','linestack_file','repl_none']:
             if self.plugins.has_key(pl):
                 self.plugins.pop(pl)
 

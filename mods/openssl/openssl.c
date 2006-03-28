@@ -199,6 +199,7 @@ static gboolean fini_plugin(struct plugin *p) {
 
 static gboolean load_config(struct plugin *p, xmlNodePtr node)
 {
+	extern struct global *_global;
 	const char *keyf = NULL, *certf = NULL;
 	xmlNodePtr cur;
 
@@ -211,14 +212,14 @@ static gboolean load_config(struct plugin *p, xmlNodePtr node)
 	}
 
 	if(!certf) {
-		certf = ctrlproxy_path("cert.pem");
+		certf = g_build_filename(_global->config->config_dir, "cert.pem", NULL);
 		if(!g_file_test(certf, G_FILE_TEST_EXISTS)) {
 			certf = NULL; 
 		}
 	}
 
 	if(!keyf) {
-		keyf = ctrlproxy_path("key.pem");
+		keyf = g_build_filename(_global->config->config_dir, "key.pem", NULL);
 		if(!g_file_test(keyf, G_FILE_TEST_EXISTS)) { 
 			keyf = NULL; 
 		}

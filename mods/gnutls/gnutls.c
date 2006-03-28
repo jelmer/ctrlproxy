@@ -204,6 +204,7 @@ static gboolean fini_plugin(struct plugin *p)
 
 static gboolean load_config(struct plugin *p, xmlNodePtr node) 
 {
+	extern struct global *_global;
 	xmlNodePtr cur;
 	char *cafile = NULL, *certf = NULL, *keyf = NULL;
 	int err;
@@ -219,7 +220,7 @@ static gboolean load_config(struct plugin *p, xmlNodePtr node)
 	}
 
 	if(!certf) {
-		certf = ctrlproxy_path("cert.pem");
+		certf = g_build_filename(_global->config->config_dir, "cert.pem", NULL);
 		if(!g_file_test(certf, G_FILE_TEST_EXISTS)) {
 			free(certf);
 			log_global("gnutls", LOG_ERROR, "No valid certificate set");
@@ -228,7 +229,7 @@ static gboolean load_config(struct plugin *p, xmlNodePtr node)
 	}
 
 	if(!keyf) {
-		keyf = ctrlproxy_path("key.pem");
+		keyf = g_build_filename(_global->config->config_dir, "key.pem", NULL);
 		if(!g_file_test(keyf, G_FILE_TEST_EXISTS)) {
 			free(keyf);
 			log_global("gnutls", LOG_ERROR, "No valid key set");
@@ -237,7 +238,7 @@ static gboolean load_config(struct plugin *p, xmlNodePtr node)
 	}
 
 	if(!cafile) {
-		cafile = ctrlproxy_path("ca.pem");
+		cafile = g_build_filename(_global->config->config_dir, "ca.pem", NULL);
 		if(!g_file_test(cafile, G_FILE_TEST_EXISTS)) {
 			free(cafile);
 			cafile = NULL;

@@ -365,6 +365,8 @@ struct ctrlproxy_config *load_configuration(const char *file)
 			config_load_plugins(cfg, cur);
 		} else if (!strcmp(cur->name, "networks")) {
 			config_load_networks(cfg, cur);
+		} else if (!strcmp(cur->name, "replication")) {
+			cfg->replication = xmlNodeGetContent(cur);
 		}
 	}
 

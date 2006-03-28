@@ -86,8 +86,8 @@
 };
 
 %extend network {
-	network(struct network_config *nc) {
-		return load_network(nc);
+	network(struct global *gl, struct network_config *nc) {
+		return load_network(gl, nc);
 	}
 	
 	~network() {

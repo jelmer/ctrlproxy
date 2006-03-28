@@ -1,10 +1,8 @@
 current release (3.0.0):
 - test and fix SSL support
-- ability to choose replication backend
 - remove evil 'extern struct global *_global' hacks
 - update documentation
 - finish python module:
- - fix compilation
  - pass client / network / line arguments correctly
  - examples
 - testing
