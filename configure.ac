@@ -40,7 +40,7 @@ AC_HEADER_DIRENT
 AC_HEADER_STDC
 AC_HEADER_TIME
 AC_CHECK_HEADERS(
-[stdlib.h string.h unistd.h popt.h execinfo.h sys/time.h sys/socket.h])
+[stdlib.h string.h unistd.h execinfo.h sys/time.h sys/socket.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
@@ -55,9 +55,6 @@ AC_FUNC_REALLOC
 AC_TYPE_SIGNAL
 
 AC_CHECK_FUNCS([gethostbyname gethostname memset mkdir strcasecmp strchr strdup strerror strncasecmp strstr uname backtrace_symbols gettimeofday strrchr daemon])
-
-# Checks for libraries.
-AC_CHECK_LIB([popt], [poptGetArg], , AC_MSG_WARN([Popt is strongly advised]))
 
 PKG_CHECK_MODULES(COMMON, libxml-2.0 glib-2.0 gmodule-2.0, , AC_MSG_ERROR([libxml and glib are required]))
 

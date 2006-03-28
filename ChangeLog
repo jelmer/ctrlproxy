@@ -2,6 +2,7 @@
  	Jelmer Vernooij <jelmer@vernstok.nl>
 
 Ctrlproxy 2.7:
+ * Removed dependency on popt
  * Move to bzr
  * Make linestack_file the default
  * Remove linestack_memory

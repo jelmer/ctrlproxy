@@ -39,13 +39,9 @@ Features
 
 Requirements
 ------------
- * libpopt
  * GNU glib
  * libxml2
  
- And for the stats module:
- * libpcre (optional)
-
 Building
 --------
 

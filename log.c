@@ -32,7 +32,7 @@ static const char *get_date(void)
 	return ret;
 }
 
-gboolean log_timestamp = TRUE;
+gboolean no_log_timestamp = FALSE;
 enum log_level current_log_level = LOG_INFO;
 FILE *flog = NULL;
 
@@ -43,7 +43,7 @@ static void log_entry(const char *module, enum log_level level, const struct net
 	if (level > current_log_level)
 		return;
 	
-	if (log_timestamp)
+	if (!no_log_timestamp)
 		fprintf(flog, "[%s] ", get_date());
 	
 	if (module) 

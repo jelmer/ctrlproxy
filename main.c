@@ -134,23 +134,20 @@ int main(int argc, const char *argv[])
 	char *logfile = NULL, *rcfile = NULL;
 	char *configuration_file;
 	extern enum log_level current_log_level;
-	extern gboolean log_timestamp;
+	extern gboolean no_log_timestamp;
 	const char *inetd_client = NULL;
-#ifdef HAVE_POPT_H
-	int c;
-	poptContext pc;
-	struct poptOption options[] = {
-		POPT_AUTOHELP
-		{"inetd-client", 'i', POPT_ARG_STRING, &inetd_client, 0, "Communicate with client to NETWORK via stdio", "NETWORK" },
-		{"debug-level", 'd', POPT_ARG_INT, &current_log_level, 'd', ("Debug level [0-5]"), "LEVEL" },
-		{"no-timestamp", 'n', POPT_ARG_VAL, &log_timestamp, FALSE, "No timestamps in logs" },
-		{"daemon", 'D', POPT_ARG_NONE, &isdaemon, 0, ("Run in the background (as a daemon)")},
-		{"log", 'l', POPT_ARG_STRING, &logfile, 0, ("Log messages to specified file"), ("FILE")},
-		{"rc-file", 'r', POPT_ARG_STRING, &rcfile, 0, ("Use configuration file from specified location"), ("FILE")},
-		{"version", 'v', POPT_ARG_NONE, NULL, 'v', ("Show version information")},
-		POPT_TABLEEND
+	gboolean version = FALSE;
+	GOptionContext *pc;
+	GOptionEntry options[] = {
+		{"inetd-client", 'i', 0, G_OPTION_ARG_STRING, &inetd_client, "Communicate with client to NETWORK via stdio", "NETWORK" },
+		{"debug-level", 'd', 'd', G_OPTION_ARG_INT, &current_log_level, ("Debug level [0-5]"), "LEVEL" },
+		{"no-timestamp", 'n', FALSE, G_OPTION_ARG_NONE, &no_log_timestamp, "No timestamps in logs" },
+		{"daemon", 'D', 0, G_OPTION_ARG_NONE, &isdaemon, ("Run in the background (as a daemon)")},
+		{"log", 'l', 0, G_OPTION_ARG_STRING, &logfile, ("Log messages to specified file"), ("FILE")},
+		{"rc-file", 'r', 0, G_OPTION_ARG_STRING, &rcfile, ("Use configuration file from specified location"), ("FILE")},
+		{"version", 'v', 'v', G_OPTION_ARG_NONE, &version, ("Show version information")},
+		{ NULL }
 	};
-#endif
 
 	signal(SIGINT, signal_quit);
 	signal(SIGTERM, signal_quit);
@@ -169,18 +166,17 @@ int main(int argc, const char *argv[])
 
 	main_loop = g_main_loop_new(NULL, FALSE);
 
-#ifdef HAVE_POPT_H
-	pc = poptGetContext(argv[0], argc, argv, options, 0);
+	pc = g_option_context_new("");
+	g_option_context_add_main_entries(pc, options, NULL);
 
-	while((c = poptGetNextOpt(pc)) >= 0) {
-		switch(c) {
-		case 'v':
-			printf("ctrlproxy %s\n", VERSION);
-			printf("(c) 2002-2005 Jelmer Vernooij et al. <jelmer@nl.linux.org>\n");
-			return 0;
-		}
+	if(!g_option_context_parse(pc, &argc, &argv, NULL))
+		return 1;
+
+	if (version) {
+		printf("ctrlproxy %s\n", VERSION);
+		printf("(c) 2002-2005 Jelmer Vernooij et al. <jelmer@nl.linux.org>\n");
+		return 0;
 	}
-#endif
 
 	if(isdaemon && !logfile) {
 		logfile = g_build_filename(_global->config->config_dir, "log", NULL);
@@ -256,9 +252,7 @@ int main(int argc, const char *argv[])
 	_global->linestack = new_linestack(_global->config);
 	autoconnect_networks(_global);
 
-#ifdef HAVE_POPT_H
-	poptFreeContext(pc);
-#endif
+	g_option_context_free(pc);
 
 	atexit(clean_exit);
 
