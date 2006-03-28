@@ -128,7 +128,7 @@ void free_global(struct global *global)
 	fini_networks(global);
 }
 
-int main(int argc, const char *argv[])
+int main(int argc, char **argv)
 {
 	int isdaemon = 0;
 	char *logfile = NULL, *rcfile = NULL;

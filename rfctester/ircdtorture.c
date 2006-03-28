@@ -24,10 +24,6 @@
 #define _GNU_SOURCE
 #include "ircdtorture.h"
 
-#ifdef HAVE_POPT_H
-#include <popt.h>
-#endif
-
 #include <glib.h>
 #include <gmodule.h>
 #include "../ctrlproxy.h"
@@ -250,49 +246,48 @@ gboolean load_module(const char *name)
 	return TRUE;
 }
 
-int main(int argc, const char *argv[])
+int main(int argc, char **argv)
 {
 	GList *gl;
-	int ret = 0;
+	int ret = 0, i;
+	gboolean version = FALSE;
 
-	int c;
-	poptContext pc;
-	struct poptOption options[] = {
-		POPT_AUTOHELP
-		{"ip", 'I', POPT_ARG_STRING, &ip, 't', "Connect to specified host rather then using stdout/stdin", "HOST"},
-		{"tcp-port", 'p', POPT_ARG_STRING, &port, 'p', "Connect to specified TCP port (implies -I)", "PORT" },
-		{"module", 'm', POPT_ARG_STRING, NULL, 'm', "Test module to load", "MODULE.so" },
-		{"version", 'v', POPT_ARG_NONE, NULL, 'v', "Show version information"},
-		{"debug", 'd', POPT_ARG_VAL, &debug, TRUE, "Turn on debugging"},
-		{"dump", 'D', POPT_ARG_VAL, &dump, TRUE, "Print incoming traffic to stdout"},
-		POPT_TABLEEND
+	char **modules = NULL;
+	GOptionContext *pc;
+	const GOptionEntry options[] = {
+		{"ip", 'I', 't', G_OPTION_ARG_STRING, &ip, "Connect to specified host rather then using stdout/stdin", "HOST"},
+		{"tcp-port", 'p', 'p', G_OPTION_ARG_STRING, &port, "Connect to specified TCP port (implies -I)", "PORT" },
+		{"module", 'm', 'm', G_OPTION_ARG_STRING_ARRAY, &modules, "Test module to load", "MODULE.so" },
+		{"version", 'v', 'v', G_OPTION_ARG_NONE, &version, "Show version information"},
+		{"debug", 'd', TRUE, G_OPTION_ARG_NONE, &debug, "Turn on debugging"},
+		{"dump", 'D', TRUE, G_OPTION_ARG_NONE, &dump, "Print incoming traffic to stdout"},
+		{ NULL }
 	};
 	
-	pc = poptGetContext(argv[0], argc, argv, options, 0);
+	pc = g_option_context_new("[ircdtorture options] -- /path/to/ircd [arguments...]");
+	g_option_context_add_main_entries(pc, options, NULL);
 
-	poptSetOtherOptionHelp(pc, "[ircdtorture options] -- /path/to/ircd [arguments...]");
+	if(!g_option_context_parse(pc, &argc, &argv, NULL))
+		return 1;
 
-	while((c = poptGetNextOpt(pc)) >= 0) {
-		switch(c) {
-		case 'v':
-			printf("ircdtorture %s\n", PACKAGE_VERSION);
-			printf(("(c) 2005 Jelmer Vernooij et al. <jelmer@nl.linux.org>\n"));
-			return 0;
-		case 'm':
-			load_module(poptGetOptArg(pc));
-	
-			break;
-		}
+	if (version) {
+		printf("ircdtorture %s\n", PACKAGE_VERSION);
+		printf("(c) 2005 Jelmer Vernooij et al. <jelmer@nl.linux.org>\n");
+		return 0;
+	}
+
+	for (i = 0; modules && modules[i];i++) {
+		load_module(modules[i]);
 	}
 
 	signal(SIGPIPE, SIG_IGN);
 	
-	if (!poptPeekArg(pc) && !ip) {
-		poptPrintUsage(pc, stderr, 0);
+	if (!argv[1] && !ip) {
+		printf("No argument specified\n");
 		return -1;
 	}
 
-	args = poptGetArgs(pc);
+	args = argv;
 
 	for (gl = tests; gl; gl = gl->next) {
 		if (run_test(gl->data)) 
