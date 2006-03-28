@@ -9,6 +9,7 @@ current release (3.0.0):
 - fix issue with loading state from linestack_file
 - better handling of log_network_state()
 - merge noticelog into admin
+- load all plugins
 - new config file format (yacc!)
  - finish upgrade script
  - make editing config file optional

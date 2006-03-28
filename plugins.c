@@ -26,9 +26,6 @@
 struct plugin *current_plugin = NULL;
 GList *plugins = NULL;
 
-STATIC_MODULE_DECLARES
-static struct plugin_ops *builtin_modules[] = { STATIC_MODULES NULL };
-
 struct plugin *plugin_by_config(struct plugin_config *pc)
 {
 	GList *gl;
@@ -88,14 +85,6 @@ struct plugin *load_plugin(const char *dir, struct plugin_config *pc)
 	g_assert(pc);
 
 	p->config = pc;
-
-	/* See if this plugin is built-in */
-	for (i = 0; builtin_modules[i]; i++) {
-		if (!strcmp(builtin_modules[i]->name, pc->path)) {
-			ops = builtin_modules[i];	
-			break;
-		}
-	}
 
 	/* Try to load from .so file */
 	if (!ops) {
