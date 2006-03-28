@@ -227,7 +227,8 @@ static gboolean load_config(struct plugin *p, xmlNodePtr node)
 	}
 
 	if(!logfile) {
-		logfile = ctrlproxy_path("log_irssi");
+		extern struct global *_global; /* FIXME: Evil hack */
+		logfile = g_build_filename(_global->config->config_dir, "log_irssi", NULL);
 	}
 	
 	/* Create logfile directory if it doesn't exist yet */

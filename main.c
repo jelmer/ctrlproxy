@@ -119,13 +119,6 @@ struct global *new_global()
 {
 	struct global *global = g_new0(struct global, 1);
 
-	global->config->config_dir = g_build_filename(g_get_home_dir(), ".ctrlproxy", NULL);
-	if(mkdir(global->config->config_dir, 0700) != 0 && errno != EEXIST) {
-		log_global(NULL, LOG_ERROR, "Unable to open configuration directory '%s'\n", global->config->config_dir);
-		g_free(global->config->config_dir);
-		global->config->config_dir = NULL;
-	}
-
 	return global;
 }
 
@@ -247,6 +240,13 @@ int main(int argc, const char *argv[])
 		}
 
 		g_free(configuration_file);
+	}
+
+	_global->config->config_dir = g_build_filename(g_get_home_dir(), ".ctrlproxy", NULL);
+	if(mkdir(_global->config->config_dir, 0700) != 0 && errno != EEXIST) {
+		log_global(NULL, LOG_ERROR, "Unable to open configuration directory '%s'\n", _global->config->config_dir);
+		g_free(_global->config->config_dir);
+		_global->config->config_dir = NULL;
 	}
 
 	init_networks();
