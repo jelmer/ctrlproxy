@@ -28,7 +28,8 @@ endif
 	$(INSTALL) -m 644 $(INCLUDEFILES) $(DESTDIR)$(destincludedir)
 
 lib%.so: %.c
-	$(CC) $(CFLAGS) -fPIC -shared -o $@ $<
+	@echo Compiling $<
+	@$(CC) $(CFLAGS) -fPIC -shared -o $@ $<
 
 clean: $(addprefix clean-,$(MODS_SHARED_SUBDIRS))
 	rm -f $(MODS_SHARED_FILES) *.o *.so

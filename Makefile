@@ -24,7 +24,8 @@ ctrlproxy$(EXEEXT): network.o posix.o client.o cache.o line.o main.o state.o uti
 	$(CC) $(LIBS) -rdynamic -o $@ $^
 
 %.$(OBJEXT): %.c
-	$(CC) $(CFLAGS) $(GCOV_CFLAGS) -c $<
+	@echo Compiling $<
+	@$(CC) $(CFLAGS) $(GCOV_CFLAGS) -c $<
 
 configure: autogen.sh configure.ac acinclude.m4 $(wildcard mods/*/*.m4)
 	./$<
