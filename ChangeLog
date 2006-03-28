@@ -82,7 +82,6 @@ Ctrlproxy 2.7:
  * Add cisg utility
  * Update items kept track of by stats by default
  * Put some modules in their own directory
- * Add report_time
  * Add linestack_file
  * Add repl_lastdisconnect.so
  * Add server_connect, server_disconnect and initialized hooks

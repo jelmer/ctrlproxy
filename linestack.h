@@ -105,6 +105,14 @@ G_MODULE_EXPORT gboolean linestack_traverse_object (
 		linestack_traverse_fn,
 		void *userdata);
 
+/* Same as linestack_send, but prepend all lines with [HH:MM:SS] */
+G_MODULE_EXPORT gboolean linestack_send_timed (
+		struct linestack_context *,
+		struct network *,
+		linestack_marker *from,
+		linestack_marker *to, /* Can be NULL for 'now' */
+		const struct client *);
+
 G_MODULE_EXPORT gboolean linestack_send (
 		struct linestack_context *,
 		struct network *,

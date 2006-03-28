@@ -10,6 +10,7 @@ current release (3.0.0):
 - better handling of log_network_state()
 - merge noticelog into admin
 - load all plugins
+- allow the use of report_time like capabilities again
 - new config file format (yacc!)
  - finish upgrade script
  - make editing config file optional
@@ -32,3 +33,4 @@ next major release (3.1.0):
 - re-add merge support
 - import anti-idle
 - import authenticators
+- support for multiple users at the same time (same process)?

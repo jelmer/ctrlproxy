@@ -81,6 +81,5 @@ struct plugin_ops plugin = {
 	.name = "python2",
 	.version = 0,
 	.init = init_plugin,
-	.fini = fini_plugin,
 	.load_config = load_config
 };
