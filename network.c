@@ -407,10 +407,6 @@ static gboolean connect_current_tcp_server(struct network *s)
 
 	g_io_channel_unref(s->connection.data.tcp.outgoing);
 
-	if(!s->name && cs->name) {
-		s->name = g_strdup(cs->name);
-	}
-
 	return TRUE;
 }
 

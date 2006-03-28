@@ -24,7 +24,6 @@
 #include <sys/socket.h>
 #endif
 
-#define __USE_POSIX
 #include <netdb.h>
 #include <sys/socket.h>
 

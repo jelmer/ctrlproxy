@@ -28,7 +28,6 @@
 #ifdef HAVE_UNISTD_H
 #  include <unistd.h>
 #endif
-#define __USE_POSIX
 #include <netdb.h>
 #include <sys/socket.h>
 #include <sys/types.h>

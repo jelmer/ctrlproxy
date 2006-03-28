@@ -137,5 +137,7 @@ AC_SUBST(MODS_SHARED)
 DESTINCLUDEDIR="$includedir/ctrlproxy-2"
 AC_SUBST(DESTINCLUDEDIR)
 
+AC_DEFINE(_GNU_SOURCE, 1, [Use GNU extensions])
+
 AC_CONFIG_FILES([Makefile.settings ctrlproxy.pc])
 AC_OUTPUT

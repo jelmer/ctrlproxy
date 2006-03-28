@@ -32,7 +32,9 @@
 #define malloc(a) __ERROR_USE_G_MALLOC_OR_G_NEW__
 #define realloc(a,b) __ERROR_USE_G_REALLOC_OR_G_RE_NEW__
 #define free(a) __ERROR_USE_G_FREE__
+#undef strdup
 #define strdup(a) __ERROR_USE_G_STRDUP__
+#undef strndup
 #define strndup(a) __ERROR_USE_G_STRNDUP__
 #endif
 
