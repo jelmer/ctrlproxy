@@ -103,6 +103,8 @@ static gboolean process_from_server(struct network *n, struct line *l)
 	if( n->connection.state == NETWORK_CONNECTION_STATE_MOTD_RECVD) {
 		if (atoi(l->args[0])) {
 			redirect_response(n, l);
+		} else if(!g_strcasecmp(l->args[0], "PRIVMSG") && l->args[2][0] == '\001') {
+			ctcp_process(n, l);
 		} else if (run_server_filter(n, l, FROM_SERVER)) {
 			clients_send(n, l, NULL);
 		} 
@@ -220,7 +222,9 @@ gboolean network_send_line(struct network *s, const struct client *c, const stru
 	g_assert(l.args[0]);
 	/* Also write this message to all other clients currently connected */
 	if(!l.is_private && l.args[0] &&
-	   (!g_strcasecmp(l.args[0], "PRIVMSG") || !g_strcasecmp(l.args[0], "NOTICE"))) {
+	   (!g_strcasecmp(l.args[0], "PRIVMSG") || 
+		!g_strcasecmp(l.args[0], "NOTICE")) && 
+	   (l.argc <= 2 || l.args[2][0] != '\001')) {
 		clients_send(s, &l, c);
 	}
 

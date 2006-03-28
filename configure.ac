@@ -119,7 +119,6 @@ test -f doc/most && EXTRA_INSTALL_TARGETS="install-doc"
 
 BINS="ctrlproxy$ac_cv_exeext"
 DEFMODULE(log_irssi)
-DEFMODULE(ctcp)
 DEFMODULE(auto_away)
 DEFMODULE(admin)
 DEFMODULE(noticelog)

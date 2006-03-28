@@ -50,6 +50,7 @@
 #include "linestack.h"
 #include "hooks.h"
 #include "repl.h"
+#include "ctcp.h"
 
 struct global {
 	struct ctrlproxy_config *config;

@@ -20,7 +20,7 @@ all: $(BINS) $(SUBDIRS)
 $(SUBDIRS):
 	$(MAKE) -C $@
 
-ctrlproxy$(EXEEXT): network.o posix.o client.o cache.o line.o main.o state.o util.o hooks.o linestack.o plugins.o settings.o isupport.o log.o redirect.o gen_config.o repl.o linestack_file.o 
+ctrlproxy$(EXEEXT): network.o posix.o client.o cache.o line.o main.o state.o util.o hooks.o linestack.o plugins.o settings.o isupport.o log.o redirect.o gen_config.o repl.o linestack_file.o ctcp.o
 	$(CC) $(LIBS) -rdynamic -o $@ $^
 
 %.$(OBJEXT): %.c
