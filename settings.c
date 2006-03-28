@@ -37,31 +37,6 @@ static xmlDtdPtr dtd;
 
 static char *last_config_file = NULL;
 
-static xmlNodePtr config_save_plugins(GList *plugins)
-{
-	GList *gl;
-	xmlNodePtr ret = xmlNewNode(NULL, "plugins");
-
-	for (gl = plugins; gl; gl = gl->next) {
-		struct plugin_config *pc = gl->data;
-		struct plugin *p;
-		
-		g_assert(!strcmp(pc->node->name, "plugin"));
-		xmlSetProp(pc->node, "file", pc->path);
-
-		p = plugin_by_config(pc);
-
-		if (p)
-			plugin_update_config(p, pc);
-		
-		xmlSetProp(pc->node, "autoload", pc->autoload?"1":"0");
-				
-		xmlAddChild(ret, xmlCopyNode(pc->node, 1));
-	}
-
-	return ret;
-}
-
 static xmlNodePtr config_save_tcp_servers(struct network_config *n)
 {
 	GList *gl;
@@ -137,7 +112,6 @@ void save_configuration(struct ctrlproxy_config *cfg, const char *configuration_
 
 	xmlDocSetRootElement(configuration, root);
 
-	xmlAddChild(root, config_save_plugins(cfg->plugins));
 	xmlAddChild(root, config_save_networks(cfg->networks));
 
 	xmlSaveFormatFile(configuration_file?configuration_file:last_config_file, configuration, 1);
@@ -171,37 +145,6 @@ void fini_config()
 {
 	g_free(last_config_file);
 	xmlFreeDtd(dtd);
-}
-
-static void config_load_plugin(struct ctrlproxy_config *cfg, xmlNodePtr root)
-{
-	char *tmp;
-	struct plugin_config *p;
-	
-	tmp = xmlGetProp(root, "file");
-	p = plugin_config_init(cfg, tmp);
-	xmlFree(tmp);
-
-	if (xmlHasProp(root, "autoload")) {
-		tmp = xmlGetProp(root, "autoload");
-		if (atoi(tmp)) p->autoload = TRUE;
-		xmlFree(tmp);
-	}
-
-	p->node = xmlCopyNode(root, 1);
-}
-
-static void config_load_plugins(struct ctrlproxy_config *cfg, xmlNodePtr root)
-{
-	xmlNodePtr cur;
-	
-	for (cur = root->children; cur; cur = cur->next) 
-	{
-		if (cur->type != XML_ELEMENT_NODE) continue;		
-
-		g_assert(!strcmp(cur->name, "plugin"));
-		config_load_plugin(cfg, cur);
-	}
 }
 
 static void config_load_channel(struct network_config *n, xmlNodePtr root)
@@ -361,9 +304,7 @@ struct ctrlproxy_config *load_configuration(const char *file)
 	for (cur = root->children; cur; cur = cur->next) {
 		if (cur->type != XML_ELEMENT_NODE) continue;
 
-		if (!strcmp(cur->name, "plugins")) {
-			config_load_plugins(cfg, cur);
-		} else if (!strcmp(cur->name, "networks")) {
+		if (!strcmp(cur->name, "networks")) {
 			config_load_networks(cfg, cur);
 		} else if (!strcmp(cur->name, "replication")) {
 			cfg->replication = xmlNodeGetContent(cur);
@@ -390,28 +331,8 @@ struct network_config *network_config_init(struct ctrlproxy_config *cfg)
 	return s;
 }
 
-struct plugin_config *plugin_config_init(struct ctrlproxy_config *cfg, const char *name)
-{
-	struct plugin_config *p = g_new0(struct plugin_config, 1);
-
-	p->path = g_strdup(name);
-
-	if (cfg) 
-		cfg->plugins = g_list_append(cfg->plugins, p);
-
-	return p;
-}
-
 void free_config(struct ctrlproxy_config *cfg)
 {
-	while (cfg->plugins) {
-		struct plugin_config *pc = cfg->plugins->data;		
-		g_free(pc->path);
-		xmlUnlinkNode(pc->node);
-		cfg->plugins = g_list_remove(cfg->plugins, pc);
-		g_free(pc);
-	}
-
 	while (cfg->networks) {
 		struct network_config *nc = cfg->networks->data;
 		g_free(nc->name);

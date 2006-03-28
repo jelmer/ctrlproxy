@@ -248,7 +248,7 @@ int main(int argc, const char *argv[])
 	init_networks();
 	load_networks(_global, _global->config);
 
-	init_plugins(_global->config);
+	init_plugins(_global->config->modules_path);
 	_global->linestack = new_linestack(_global->config);
 	autoconnect_networks(_global);
 

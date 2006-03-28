@@ -61,7 +61,7 @@ void init_config(void);
 void fini_config(void);
 
 /* plugins.c */
-gboolean init_plugins(struct ctrlproxy_config *);
+gboolean init_plugins(const char *dir);
 void fini_plugins(void);
 
 /* hooks.c */

@@ -26,22 +26,6 @@
 struct plugin *current_plugin = NULL;
 GList *plugins = NULL;
 
-struct plugin *plugin_by_config(struct plugin_config *pc)
-{
-	GList *gl;
-	for (gl = plugins; gl; gl = gl->next) {
-		struct plugin *p = (struct plugin *)gl->data;
-		g_assert(p);
-		g_assert(p->ops);
-		g_assert(p->ops->name);
-		if (!strcmp(p->ops->name, pc->path)) 
-			return p;
-	}
-
-	return NULL;
-}
-
-
 gboolean unload_plugin(struct plugin *p)
 {
 	/* Run exit function if present */
@@ -73,18 +57,13 @@ gboolean plugin_loaded(const char *name)
 	return FALSE;
 }
 
-struct plugin *load_plugin(const char *dir, struct plugin_config *pc)
+struct plugin *load_plugin(const char *dir, const char *name)
 {
 	GModule *m = NULL;
 	const char *modulesdir;
 	struct plugin_ops *ops = NULL;
 	struct plugin *p = g_new0(struct plugin, 1);
 	gchar *path_name = NULL;
-	int i;
-
-	g_assert(pc);
-
-	p->config = pc;
 
 	/* Try to load from .so file */
 	if (!ops) {
@@ -92,8 +71,8 @@ struct plugin *load_plugin(const char *dir, struct plugin_config *pc)
 		if(getenv("MODULESDIR"))modulesdir = getenv("MODULESDIR");
 		else modulesdir = dir;
 
-		if(g_file_test(pc->path, G_FILE_TEST_EXISTS))path_name = g_strdup(pc->path);
-		else path_name = g_module_build_path(modulesdir, pc->path);
+		if(g_file_test(name, G_FILE_TEST_EXISTS))path_name = g_strdup(name);
+		else path_name = g_module_build_path(modulesdir, name);
 	
 		m = g_module_open(path_name, G_MODULE_BIND_LAZY);
 
@@ -131,14 +110,6 @@ struct plugin *load_plugin(const char *dir, struct plugin_config *pc)
 		return NULL;
 	}
 
-	if (p->ops->load_config && p->config->node) {
-		if (!p->ops->load_config(p, p->config->node)) {
-			log_global(p->ops->name, LOG_ERROR, "Error loading configuration");
-			g_free(p);
-			return NULL;
-		}
-	}
-
 	plugins = g_list_append(plugins, p);
 
 	return p;
@@ -154,27 +125,26 @@ void fini_plugins()
 	}
 }
 
-gboolean init_plugins(struct ctrlproxy_config *cfg)
+gboolean init_plugins(const char *plugin_dir)
 {
 	gboolean ret = TRUE;
 
-	g_assert(cfg);
-
 	if(!g_module_supported()) {
-		log_global(NULL, LOG_WARNING, "DSO's not supported on this platform. Not loading any modules");
-	} else if(!cfg->plugins) {
-		log_global(NULL, LOG_WARNING, "No modules set to be loaded");	
+		log_global(NULL, LOG_WARNING, "DSO's not supported on this platform. Not loading any plugins");
 	} else {
-		GList *gl = cfg->plugins;
-		while(gl) {
-			struct plugin_config *p = gl->data;
-
-			if(p->autoload && !load_plugin(cfg->modules_path, p)) {
-				ret = FALSE;
-			}
-
-			gl = gl->next;
+		const char *name;
+		GDir *dir = g_dir_open(plugin_dir, 0, NULL);
+		if (!dir) {
+			log_global(NULL, LOG_WARNING, "Plugin dir does not exist, not loading plugins");
+			return FALSE;
 		}
+
+		while ((name = g_dir_read_name(dir))) {
+			if (!load_plugin(plugin_dir, name))
+				ret = FALSE;
+		}
+
+		g_dir_close(dir);
 	}
 
 	return ret;

@@ -61,15 +61,8 @@ struct network_config
 	} type_settings; 
 };
 
-struct plugin_config {
-	char *path;
-	int autoload:1;
-	xmlNodePtr node;
-};
-
 struct ctrlproxy_config {
 	char *config_dir;
-	GList *plugins;
 	GList *networks;
 	int separate_processes:1;
 	char *replication;

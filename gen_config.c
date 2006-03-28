@@ -76,16 +76,3 @@ void channel_update_config(struct channel_state *ns, struct channel_config *nc)
 		nc->key = g_strdup(ns->key);
 	nc->autojoin = 1;
 }
-
-void plugin_update_config(struct plugin *ps, struct plugin_config *pc)
-{
-	pc->autoload = 1;
-	
-	if (!ps->ops->update_config) 
-		return;
-
-	if (!ps->ops->update_config(ps, pc->node)) {
-		log_global(ps->ops->name, LOG_ERROR, "Error saving configuration");
-		return;
-	}
-}
