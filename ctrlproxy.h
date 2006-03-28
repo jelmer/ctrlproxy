@@ -27,8 +27,6 @@
 #include <glib.h>
 #include <gmodule.h>
 
-#include <libxml/tree.h>
-
 #ifdef STRICT_MEMORY_ALLOCS
 #define calloc(a,b) __ERROR_USE_G_NEW0__
 #define malloc(a) __ERROR_USE_G_MALLOC_OR_G_NEW__

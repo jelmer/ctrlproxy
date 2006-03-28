@@ -247,9 +247,7 @@ int main(int argc, char **argv)
 	init_networks();
 	load_networks(_global, _global->config);
 
-
 	/* Determine correct modules directory */
-
 
 	init_plugins(getenv("MODULESDIR")?getenv("MODULESDIR"):MODULESDIR);
 	_global->linestack = new_linestack(_global->config);

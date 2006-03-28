@@ -56,7 +56,7 @@ AC_TYPE_SIGNAL
 
 AC_CHECK_FUNCS([gethostbyname gethostname memset mkdir strcasecmp strchr strdup strerror strncasecmp strstr uname backtrace_symbols gettimeofday strrchr daemon])
 
-PKG_CHECK_MODULES(COMMON, libxml-2.0 glib-2.0 gmodule-2.0, , AC_MSG_ERROR([libxml and glib are required]))
+PKG_CHECK_MODULES(COMMON, glib-2.0 gmodule-2.0, , AC_MSG_ERROR([glib is required]))
 
 ###############################################################################
 # NSS support

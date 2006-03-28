@@ -14,6 +14,9 @@ current release (3.0.0):
  - finish upgrade script
  - make editing config file optional
 
+ register_config_group();
+ register_config_setting();
+
 next minor release (3.0.1):
 - properly expand second argument of PRIVMSG in log_irssi and log_custom
 - <allow/> rules in socks and listener based on ip addresses/ranges

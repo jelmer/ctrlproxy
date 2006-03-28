@@ -62,7 +62,6 @@ void fini_config(void);
 
 /* plugins.c */
 gboolean init_plugins(const char *dir);
-void fini_plugins(void);
 
 /* hooks.c */
 void server_disconnected_hook_execute(struct network *);
@@ -96,7 +95,6 @@ gboolean linestack_insert_line(struct linestack_context *, const struct network 
 /* gen_config.c */
 void network_update_config(struct network_state *ns, struct network_config *nc);
 void channel_update_config(struct channel_state *ns, struct channel_config *nc);
-void plugin_update_config(struct plugin *ps, struct plugin_config *pc);
 
 /* repl.c */
 void client_replicate(struct client *);
