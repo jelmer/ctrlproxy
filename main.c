@@ -81,8 +81,6 @@ static void clean_exit()
 
 	g_main_loop_quit(main_loop);
 
-	fini_config();
-
 	path = g_build_filename(_global->config->config_dir, "autosave", NULL);
 	save_configuration(_global->config, path);
 	g_free(path);
@@ -211,8 +209,6 @@ int main(int argc, char **argv)
 		return -1;
 #endif
 	} 
-
-	init_config();
 
 	_global = new_global();	
 

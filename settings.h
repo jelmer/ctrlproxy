@@ -27,7 +27,6 @@ struct channel_config {
 };
 
 struct tcp_server_config {
-	char *name;
 	char *host;
 	char *port;
 	int ssl:1;
@@ -36,6 +35,7 @@ struct tcp_server_config {
 
 struct network_config 
 {
+	GKeyFile *keyfile;
 	char *name;
 	char *nick;
 	char *fullname;
@@ -66,8 +66,8 @@ struct ctrlproxy_config {
 	GList *networks;
 	int separate_processes:1;
 	char *replication;
-	char *shared_path;
 	char *linestack_backend;
+	GKeyFile *keyfile;
 };
 
 /* config.c */
