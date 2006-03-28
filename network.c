@@ -630,6 +630,7 @@ struct network *load_network(struct global *global, struct network_config *sc)
 	s->config = sc;
 	s->info.features = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_free);
 	s->name = g_strdup(s->config->name);
+	s->global = global;
 
 	global->networks = g_list_append(global->networks, s);
 	return s;

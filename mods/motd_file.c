@@ -64,6 +64,7 @@ static gboolean fini_plugin(struct plugin *p) {
 static gboolean load_config(struct plugin *p, xmlNodePtr node) 
 {
 	xmlNodePtr cur;
+	extern struct global *_global;
 
 	for (cur = node->children; cur; cur = cur->next)
 	{
@@ -74,7 +75,7 @@ static gboolean load_config(struct plugin *p, xmlNodePtr node)
 		}
 	}
 
-	if (!motd_file) motd_file = g_build_filename(get_current_config()->shared_path, "motd", NULL);
+	if (!motd_file) motd_file = g_build_filename(_global->config->shared_path, "motd", NULL);
 
 	if(!g_file_test(motd_file, G_FILE_TEST_EXISTS)) {
 		log_global("motd_file", LOG_ERROR, "Can't open MOTD file '%s' for reading", motd_file);

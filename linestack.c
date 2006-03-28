@@ -63,7 +63,7 @@ struct linestack_context *new_linestack(struct ctrlproxy_config *cfg)
 
 	ctx = g_new0(struct linestack_context, 1);
 	ctx->ops = current_backend;
-	current_backend->init(ctx, NULL); /* FIXME */
+	current_backend->init(ctx, cfg);
 
 	return ctx;
 }
