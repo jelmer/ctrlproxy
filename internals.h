@@ -66,7 +66,7 @@ gboolean init_plugins(const char *dir);
 /* hooks.c */
 void server_disconnected_hook_execute(struct network *);
 void server_connected_hook_execute(struct network *);
-char **get_motd_lines(struct network *n);
+char **get_motd_lines(struct client *);
 gboolean new_client_hook_execute(struct client *c);
 void lose_client_hook_execute(struct client *c);
 gboolean run_client_filter(struct client *c, struct line *l, enum data_direction dir);

@@ -273,7 +273,7 @@ void del_motd_hook(const char *name)
 	}
 }
 
-char ** get_motd_lines(struct network *n)
+char ** get_motd_lines(struct client *c)
 {
 	char **l = g_malloc(sizeof(char *));
 	size_t curnum = 0;
@@ -285,7 +285,7 @@ char ** get_motd_lines(struct network *n)
 		int i,j;
 		struct motd_hook_data *d = (struct motd_hook_data *)gl->data;
 
-		nl = d->hook(n, d->userdata);
+		nl = d->hook(c, d->userdata);
 
 		if(!nl) 
 			continue;

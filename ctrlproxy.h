@@ -51,6 +51,7 @@
 #include "ctcp.h"
 
 struct global {
+	char *last_config_file;
 	struct ctrlproxy_config *config;
 	struct linestack_context *linestack;
 	GList *networks;
