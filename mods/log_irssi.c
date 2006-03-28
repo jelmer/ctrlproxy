@@ -207,38 +207,35 @@ static gboolean log_data(struct network *n, struct line *l, enum data_direction 
 	return TRUE;
 }
 
-static gboolean load_config(struct plugin *p, xmlNodePtr node) 
+static void load_config(struct global *global)
 {
-	xmlNodePtr cur;
-
-	for (cur = node->children; cur; cur = cur->next)
-	{
-		if (cur->type != XML_ELEMENT_NODE) continue;
-
-		if(!strcmp(cur->name, "logfile")) logfile = xmlNodeGetContent(cur);
+	GKeyFile *kf = global->config->keyfile;
+	if (!g_key_file_has_group(kf, "log-irssi")) {
+		del_log_filter("log_irssi");
+		return;
 	}
 
-	if(!logfile) {
-		extern struct global *_global; /* FIXME: Evil hack */
-		logfile = g_build_filename(_global->config->config_dir, "log_irssi", NULL);
+	if(!g_key_file_has_key(kf, "log-irssi", "logfile", NULL)) {
+		logfile = g_build_filename(global->config->config_dir, "log_irssi", NULL);
+	} else {
+		logfile = g_key_file_get_string(kf, "log-irssi", "logfile", NULL);
 	}
 	
 	/* Create logfile directory if it doesn't exist yet */
 	mkdir(logfile, 0700);
 
-	return TRUE;
+	add_log_filter("log_irssi", log_data, NULL, 1000);
 }
 
-static gboolean init_plugin(struct plugin *p)
+static gboolean init_plugin()
 {
 	files = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, (GDestroyNotify)fclose);
-	add_log_filter("log_irssi", log_data, NULL, 1000);
+	register_config_notify(load_config);
 	return TRUE;
 }
 
 struct plugin_ops plugin = {
 	.name = "log_irssi",
 	.version = 0,
-	.init = init_plugin,
-	.load_config = load_config,
+	.init = init_plugin
 };

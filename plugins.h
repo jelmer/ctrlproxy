@@ -26,7 +26,7 @@ struct plugin {
 	struct plugin_ops {
 		int version;
 		const char *name;
-		gboolean (*init) (struct plugin *);
+		gboolean (*init) (void);
 	} *ops;
 };
 

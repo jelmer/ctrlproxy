@@ -53,40 +53,24 @@ char ** motd_file_handler(struct client *c, void *userdata)
 	return lines;
 }
 
-static gboolean fini_plugin(struct plugin *p) {
-	
-	del_motd_hook("motd_file");
-	g_free(motd_file);
-	motd_file = NULL;
-	return TRUE;
-}
-
-static gboolean load_config(struct plugin *p, xmlNodePtr node) 
+static void load_config(struct global *global)
 {
-	xmlNodePtr cur;
-	extern struct global *_global;
+    GKeyFile *kf = global->config->keyfile;
 
-	for (cur = node->children; cur; cur = cur->next)
-	{
-		if (cur->type != XML_ELEMENT_NODE) continue;
-		
-		if (!strcmp(cur->name, "motd_file")) {
-			motd_file = xmlNodeGetContent(cur);
-		}
-	}
-
-	if (!motd_file) motd_file = g_build_filename(SHAREDIR, "motd", NULL);
+    if (g_key_file_has_key(kf, NULL, "motd-file", NULL))
+		motd_file = g_key_file_get_string(kf, NULL, "motd-file", NULL);
+    else 
+	    motd_file = g_build_filename(SHAREDIR, "motd", NULL);
 
 	if(!g_file_test(motd_file, G_FILE_TEST_EXISTS)) {
 		log_global("motd_file", LOG_ERROR, "Can't open MOTD file '%s' for reading", motd_file);
-		return FALSE;
 	}
-
-	return TRUE;
 }
 
-static gboolean init_plugin(struct plugin *p) {
+static gboolean init_plugin(void)
+{
 	add_motd_hook("motd_file", motd_file_handler, NULL);
+    register_config_notify(load_config);
 	return TRUE;
 }
 
@@ -94,5 +78,4 @@ struct plugin_ops plugin = {
 	.name = "motd_file",
 	.version = 0,
 	.init = init_plugin,
-	.load_config = load_config,
 };

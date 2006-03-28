@@ -125,6 +125,23 @@ void free_global(struct global *global)
 	fini_networks(global);
 }
 
+static GList *notifies = NULL;
+
+void register_config_notify(config_notify_fn fn)
+{
+	notifies = g_list_append(notifies, fn);
+}
+
+void config_notify(struct global *global)
+{
+	GList *gl;
+	for (gl = notifies; gl; gl = gl->next) {
+		config_notify_fn fn = gl->data;
+
+		fn(global);
+	}
+}
+
 int main(int argc, char **argv)
 {
 	int isdaemon = 0;
@@ -241,6 +258,8 @@ int main(int argc, char **argv)
 		g_free(_global->config->config_dir);
 		_global->config->config_dir = NULL;
 	}
+
+	config_notify(_global);
 
 	init_networks();
 	load_networks(_global, _global->config);

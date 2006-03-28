@@ -21,9 +21,9 @@
 #include "config.h"
 #endif
 
-#define _GNU_SOURCE
 #include "torture.h"
 
+#include <stdio.h>
 #include <glib.h>
 #include <gmodule.h>
 #include "../ctrlproxy.h"

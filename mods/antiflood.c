@@ -23,10 +23,12 @@
 
 #include <sys/time.h>
 
-static GHashTable *antiflood_servers = NULL;
+#define DEFAULT_QUEUE_SPEED 2
 
-static int default_queue_speed = 2;
-static struct plugin *this_plugin = NULL;
+struct antiflood_data {
+    GHashTable *antiflood_servers;
+    int queue_speed;
+};
 
 struct network_data {
 	struct network *network;
@@ -58,7 +60,9 @@ static gboolean send_queue(gpointer user_data)
 	return TRUE;
 }
 
-static gboolean log_data(struct network *network, struct line *l, enum data_direction dir, void *userdata) {
+static gboolean log_data(struct network *network, struct line *l, enum data_direction dir, void *userdata) 
+{
+    struct antiflood_data *dt = userdata;
 	struct network_data *sd;
 	time_t now;
 	
@@ -68,13 +72,13 @@ static gboolean log_data(struct network *network, struct line *l, enum data_dire
 	if (network->config->type != NETWORK_TCP) return TRUE;
 
 	/* Get data for this server from the hash */
-	sd = g_hash_table_lookup(antiflood_servers, network);
+	sd = g_hash_table_lookup(dt->antiflood_servers, network);
 
 	now = time(NULL);
 	
 	if(!sd) {
 		sd = g_new(struct network_data,1);
-		sd->queue_speed = default_queue_speed;
+		sd->queue_speed = dt->queue_speed;
 		sd->tv_last_message = 0;
 
 		sd->timeout_id = g_timeout_add(1000, send_queue , sd);
@@ -82,7 +86,7 @@ static gboolean log_data(struct network *network, struct line *l, enum data_dire
 		sd->message_queue = g_queue_new();
 		sd->network = network;
 
-		g_hash_table_insert(antiflood_servers, network, sd);
+		g_hash_table_insert(dt->antiflood_servers, network, sd);
 	}
 
 	if (sd->tv_last_message < now) 
@@ -108,30 +112,29 @@ static void free_antiflood_server(gpointer user_data)
 	g_free(sd);
 }
 
-static gboolean fini_plugin(struct plugin *p) {
-	del_server_filter("antiflood");
-	
-	g_hash_table_destroy(antiflood_servers);
-	
-	return TRUE;
-}
-
-static gboolean load_config(struct plugin *p, xmlNodePtr node)
+static void load_config(struct global *global)
 {
-	char *qs = xmlGetProp(node, "queue-speed");
-	
-	if (qs) default_queue_speed = atoi(qs);
+    GKeyFile *kf = global->config->keyfile;
+    struct antiflood_data *dt;
+    if (!g_key_file_has_group(kf, "antiflood")) {
+	    del_server_filter("antiflood");
+        return;
+    }
 
-	xmlFree(qs);
+    dt = g_new0(struct antiflood_data, 1);
 
-	return TRUE;
+    dt->antiflood_servers = g_hash_table_new_full(NULL, NULL, NULL, free_antiflood_server);
+    if (g_key_file_has_key(kf, "antiflood", "queue-speed", NULL))
+        dt->queue_speed = g_key_file_get_integer(kf, "antiflood", "queue-speed", NULL);
+    else 
+        dt->queue_speed = DEFAULT_QUEUE_SPEED;
+
+	add_server_filter("antiflood", log_data, dt, 2000);
 }
 
-static gboolean init_plugin(struct plugin *p) {
-	this_plugin = p;
-	add_server_filter("antiflood", log_data, NULL, 2000);
-	antiflood_servers = g_hash_table_new_full(NULL, NULL, NULL, free_antiflood_server);
-	
+static gboolean init_plugin(void) 
+{
+    register_config_notify(load_config);
 	return TRUE;
 }
 
@@ -139,5 +142,4 @@ struct plugin_ops plugin = {
 	.name = "antiflood",
 	.version = 0,
 	.init = init_plugin,
-	.load_config = load_config,
 };

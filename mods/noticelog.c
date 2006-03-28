@@ -40,10 +40,8 @@ static gboolean fini_plugin(struct plugin *p) {
 	return TRUE;
 }
 
-static gboolean init_plugin(struct plugin *p) {
-	guint id = g_log_set_handler(NULL, G_LOG_LEVEL_MASK | G_LOG_FLAG_RECURSION, admin_log, NULL);
-	p->data = g_new(guint,1);
-	memcpy(p->data, &id, sizeof(guint));
+static gboolean init_plugin(void) {
+	g_log_set_handler(NULL, G_LOG_LEVEL_MASK | G_LOG_FLAG_RECURSION, admin_log, NULL);
 	return TRUE;
 }
 

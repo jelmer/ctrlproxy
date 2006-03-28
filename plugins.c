@@ -80,7 +80,7 @@ struct plugin *load_plugin(const char *modulesdir, const char *name)
 	p->module = m;
 	p->ops = ops;
 
-	if(!p->ops->init(p)) {
+	if(!p->ops->init()) {
 		log_global(p->ops->name, LOG_ERROR, "Error during initialization.");
 		g_free(p);
 		return NULL;

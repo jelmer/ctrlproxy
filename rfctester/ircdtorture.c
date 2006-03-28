@@ -21,7 +21,6 @@
 #include "config.h"
 #endif
 
-#define _GNU_SOURCE
 #include "ircdtorture.h"
 
 #include <glib.h>
@@ -33,6 +32,7 @@
 #include <errno.h>
 #include <string.h>
 #include <stdarg.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -154,7 +154,7 @@ static pid_t piped_child(char *const command[], int *f_in)
 }
 
 static const char *ip = NULL;
-static const char **args = NULL;
+static char **args = NULL;
 static const char *port = "6667";
 
 GIOChannel *new_conn(void)

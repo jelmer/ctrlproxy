@@ -1,5 +1,5 @@
 -include ../Makefile.settings
-CFLAGS += -Wall -I.. -DHAVE_CONFIG_H -DMODULESDIR=\"$(modulesdir)\"
+CFLAGS += -Wall -I.. -DHAVE_CONFIG_H -DMODULESDIR=\"$(modulesdir)\" -DSHAREDIR=\"$(datadir)\"
 MODS_SHARED_SUBDIRS = $(foreach mod, $(MODS_SHARED), $(shell test -d $(mod) && echo $(mod)))
 MODS_SHARED_FILES = $(foreach mod, $(MODS_SHARED), $(shell test -f $(mod).c && echo lib$(mod).so))
 INCLUDEFILES = $(wildcard *.h)

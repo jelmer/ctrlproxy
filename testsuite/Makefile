@@ -42,7 +42,8 @@ rfctest: ../rfctester/ircdtorture $(patsubst %.c,%.so,$(wildcard ../rfctester/te
 	$< $(foreach I,$(filter ../rfctester/test-%.so,$^),-m $(shell pwd)/../rfctester/$(I)) -- ../ctrlproxy -d 0 -i TEST -r ctrlproxyrc.torture
 
 %.o: %.c
-	$(CC) $(CFLAGS) -c $<
+	@echo Compiling $<
+	@$(CC) $(CFLAGS) -c $<
 
 install: 
 

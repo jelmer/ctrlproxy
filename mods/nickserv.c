@@ -135,70 +135,73 @@ static void conned_data(struct network *n, void *userdata)
 	identify_me(n, n->state->me.nick);
 }
 
-static gboolean update_config(struct plugin *p, xmlNodePtr node)
+static void update_config(struct global *global)
 {
-	GList *gl;
-	xmlNodePtr cur, next;
+    char *filename = g_build_filename(global->config->config_dir, "nickserv", NULL);
+    GIOChannel *gio;
+    GList *gl;
 
-	/* First, remove old nodes */
-	for (cur = node->children; cur; cur = next)
-	{
-		next = cur->next;
+    gio = g_io_channel_new_file(filename, "w", NULL);
 
-		if (!strcmp(cur->name, "nick"))
-			xmlUnlinkNode(cur);
-	}
+    if (!gio) {
+        /* FIXME */
+        g_free(filename);
+        return;
+    }
 
 	for (gl = nicks; gl; gl = gl->next) {
-		xmlNodePtr p = xmlNewNode(NULL, "nick");	
 		struct nickserv_entry *n = gl->data;
+        char *line;
+        gsize nr;
+        
+        line = g_strdup_printf("%s\t%s\t%s\n", n->nick, n->pass, n->network?n->network:"*");
 
-		xmlSetProp(p, "name", n->nick);
-		if (n->network) xmlSetProp(p, "network", n->network);
-		xmlSetProp(p, "password", n->pass);
+        g_io_channel_write_chars(gio, line, -1, &nr, NULL);
 
-		xmlAddChild(node, p);
+        g_free(line);
 	}
-
-	return TRUE;	
+    
+    g_io_channel_unref(gio);
+    g_free(filename);
 }
 
-static gboolean load_config(struct plugin *p, xmlNodePtr node)
+static void load_config(struct global *global)
 {
-	xmlNodePtr cur;
+    char *filename = g_build_filename(global->config->config_dir, "nickserv", NULL);
+    GIOChannel *gio;
+    char *ret;
+    gsize nr;
 
-	for (cur = node->children; cur; cur = cur->next)
-	{
+    gio = g_io_channel_new_file(filename, "r", NULL);
+
+    if (!gio) {
+        /* FIXME */
+        g_free(filename);
+        return;
+    }
+
+    while (G_IO_STATUS_NORMAL == g_io_channel_read_line(gio, &ret, &nr, NULL, NULL))
+    {
+        char **parts; 
 		struct nickserv_entry *e;
-		if (cur->type != XML_ELEMENT_NODE) continue;
 
-		if (!strcmp(cur->name, "nick")) {
-			if (!xmlHasProp(cur, "name")) {
-				log_global("nickserv", LOG_WARNING, "Malformed nick name entry");
-				continue;
-			} 
-
-			e = g_new0(struct nickserv_entry, 1);
-			e->nick = xmlGetProp(cur, "name");
-			e->pass = xmlGetProp(cur, "password");
-			e->network = xmlGetProp(cur, "network");
-		
-			nicks = g_list_append(nicks, e);
-		}
-	}
-
-	return TRUE;
-}
-
-static gboolean fini_plugin(struct plugin *p) {
-	del_server_connected_hook("nickserv");
-	del_server_filter("nickserv");
-	return TRUE;
+        parts = g_strsplit(ret, "\t", 3);
+        g_free(ret);
+        
+		e = g_new0(struct nickserv_entry, 1);
+		e->nick = parts[0];
+		e->pass = parts[1];
+		e->network = (parts[2] && strcmp(parts[2], "*") != 0)?parts[2]:NULL;
+	
+		nicks = g_list_append(nicks, e);   
+        g_free(parts);
+    }
 }
 
 static gboolean init_plugin(struct plugin *p) {
 	add_server_connected_hook("nickserv", conned_data, NULL);
 	add_server_filter("nickserv", log_data, NULL, 1);
+    register_config_notify(load_config);
 	return TRUE;
 }
 
@@ -206,6 +209,4 @@ struct plugin_ops plugin = {
 	.name = "nickserv",
 	.version = 0,
 	.init = init_plugin,
-	.load_config = load_config,
-	.update_config = update_config
 };

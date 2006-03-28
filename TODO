@@ -11,21 +11,20 @@ current release (3.0.0):
 - merge noticelog into admin
 - load all plugins
 - allow the use of report_time like capabilities again
-- new config file format (yacc!)
- - finish upgrade script
- - make editing config file optional
-
- register_config_group();
- register_config_setting();
+- finish upgrade script
+- automatically call upgrade script?
+- make editing config file optional
 
 next minor release (3.0.1):
 - properly expand second argument of PRIVMSG in log_irssi and log_custom
 - <allow/> rules in socks and listener based on ip addresses/ranges
+ - auth mechanism like the abandoned 3.0 has?
 - support passwords in listener for selecting between networks
 - some sort of cascading filters, remove options from line struct
 - more advanced repl backends, rules-based perhaps?
 - use more GLib functions (e.g. g_spawn() rather then fork(), 
    g_swap_async_with_pipes() instead of piped_child(), etc)
+- warn about unclaimed options!
 
 next major release (3.1.0):
 - merge report_time into the repl_ modules

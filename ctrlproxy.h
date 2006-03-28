@@ -64,6 +64,9 @@ G_MODULE_EXPORT const char *ctrlproxy_version(void);
 G_MODULE_EXPORT const char *get_my_hostname(void);
 G_MODULE_EXPORT struct ctrlproxy_config *get_current_config(void);
 
+typedef void (*config_notify_fn) (struct global *);
+G_MODULE_EXPORT void register_config_notify(config_notify_fn fn);
+
 /* util.c */
 G_MODULE_EXPORT char *list_make_string(GList *);
 G_MODULE_EXPORT int verify_client(const struct network *s, const struct client *c);

@@ -350,3 +350,4 @@ void free_config(struct ctrlproxy_config *cfg)
 	}
 	g_free(cfg);
 }
+

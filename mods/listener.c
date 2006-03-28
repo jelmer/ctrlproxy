@@ -214,86 +214,80 @@ struct listener *listener_init(const char *address, const char *port)
 	return l;
 }
 
-static gboolean update_config(struct plugin *p, xmlNodePtr conf)
+static void update_config(GKeyFile *kf)
 {
 	GList *gl;
-	xmlNodePtr cur, next;
 
-	/* Remove old nodes */
-	for (cur = conf->children; cur; cur = next)
-	{
-		next = cur->next;
-
-		if (!strcmp(cur->name, "listen"))
-			xmlUnlinkNode(cur);
-	}
-	
 	for (gl = listeners; gl; gl = gl->next) {
 		struct listener *l = gl->data;
-		xmlNodePtr n = xmlNewNode(NULL, "listen");
-	
-		if (l->address)
-			xmlSetProp(n, "address", l->address);
+		char *tmp;
 
-		xmlSetProp(n, "port", l->port);
+		tmp = g_strdup_printf("%s:%s", l->address, l->port);
 
 		if (l->password) 
-			xmlSetProp(n, "password", l->password);
+			g_key_file_set_string(kf, tmp, "password", l->password);
 
 		if (l->network) 
-			xmlSetProp(n, "network", l->network->name);
+			g_key_file_set_string(kf, tmp, "network", l->network->name);
 
-		if (l->ssl) 
-			xmlSetProp(n, "ssl", "1");
+		g_key_file_set_boolean(kf, tmp, "ssl", l->ssl);
 
-		xmlAddChild(conf, n);
+		g_free(tmp);
 	}
-
-	return TRUE;
 }
 
-static gboolean load_config(struct plugin *p, xmlNodePtr conf)
+static void load_config(struct global *global)
 {
-	xmlNodePtr cur;
-	extern struct global *_global;
+	char *filename = g_build_filename(global->config->config_dir, "listener", NULL);
+	int i;
+	char **groups;
+	gsize size;
+	GKeyFile *kf;
 
-	for (cur = conf->children; cur; cur = cur->next)
+	kf = g_key_file_new();
+
+	if (!g_key_file_load_from_file(kf, filename, G_KEY_FILE_KEEP_COMMENTS, NULL)) {
+		return;
+	}
+		
+	groups = g_key_file_get_groups(kf, &size);
+
+	for (i = 0; i < size; i++)
 	{
 		struct listener *l;
-		char *port, *address, *tmp;
+		char *address, *port;
 		
-		if (cur->type != XML_ELEMENT_NODE) continue;
+		address = g_strdup(groups[i]);
+		port = strrchr(address, ':');
+		if (port) {
+			*port = '\0';
+			port++;
+		}
+			
+		l = listener_init(address, port?port:"6667");
 
-		port = xmlGetProp(cur, "port");
+		l->password = g_key_file_get_string(kf, groups[i], "password", NULL);
+		if (g_key_file_has_key(kf, groups[i], "ssl", NULL))
+			l->ssl = g_key_file_get_boolean(kf, groups[i], "ssl", NULL);
 
-		address = xmlGetProp(cur, "address");
-
-		l = listener_init(address, port);
-
-		xmlFree(address);
-		xmlFree(port);
-
-		l->password = xmlGetProp(cur, "password");
-		if (xmlHasProp(cur, "ssl")) 
-			l->ssl = 1;
-
-		if (xmlHasProp(cur, "network")) {
-			tmp = xmlGetProp(cur, "network");
-			l->network = find_network(_global, tmp);
+		if (g_key_file_has_key(kf, groups[i], "network", NULL)) {
+			char *tmp = g_key_file_get_string(kf, groups[i], "network", NULL);
+			l->network = find_network(global, tmp);
 			if (!l->network) {
 				log_global("listener", LOG_ERROR, "Unable to find network named \"%s\"", tmp);
 			}
-			xmlFree(tmp);
+			g_free(tmp);
 		}
 			
 		start_listener(l);
 	}
 
-	return TRUE;
+	g_free(groups);
 }
 
-static gboolean init_plugin(struct plugin *p) 
+static gboolean init_plugin(void)
 {
+	register_config_notify(load_config);
 	return TRUE;
 }
 
@@ -313,6 +307,4 @@ struct plugin_ops plugin = {
 	.name = "listener",
 	.version = 0,
 	.init = init_plugin,
-	.load_config = load_config,
-	.update_config = update_config
 };

@@ -14,7 +14,8 @@ ircdtorture: ircdtorture.o ../line.o $(patsubst %.c,%.o,$(wildcard test-*.c))
 	$(CC) $(LIBS) -o $@ $^ 
 
 %.o: %.c
-	$(CC) $(CFLAGS) -c $<
+	@echo Compiling $<
+	@$(CC) $(CFLAGS) -c $<
 
 install: 
 

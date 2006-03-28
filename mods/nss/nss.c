@@ -136,7 +136,7 @@ static gboolean fini_plugin(struct plugin *p)
 
 static PRDescIdentity _identity;
 
-static gboolean init_plugin(struct plugin *p)
+static gboolean init_plugin(void)
 {   
 	PR_Init(PR_SYSTEM_THREAD, PR_PRIORITY_NORMAL, 1);
 	NSS_NoDB_Init(NULL);

@@ -75,7 +75,7 @@ static const struct replication_backend simple =
 	.replication_fn = simple_replicate
 };
 
-static gboolean init_plugin(struct plugin *p) 
+static gboolean init_plugin(void)
 {
 	add_server_filter("repl_simple", log_data, NULL, 200);
 	register_replication_backend(&simple);

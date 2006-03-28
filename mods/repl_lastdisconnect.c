@@ -33,7 +33,8 @@ static void lastdisconnect_replicate(struct client *c)
 	linestack_send(c->network->global->linestack, c->network, lm, NULL, c);
 }
 
-static gboolean fini_plugin(struct plugin *p) {
+static gboolean fini_plugin(void)
+{
 	del_lose_client_hook("repl_lastdisconnect");
 	g_hash_table_destroy(lastdisconnect_backlog); lastdisconnect_backlog = NULL;
 	return TRUE;
@@ -44,7 +45,8 @@ static const struct replication_backend lastdisconnect = {
 	.replication_fn = lastdisconnect_replicate
 };
 
-static gboolean init_plugin(struct plugin *p) {
+static gboolean init_plugin(void)
+{
 	add_lose_client_hook("repl_lastdisconnect", lastdisconnect_mark, NULL);
 	register_replication_backend(&lastdisconnect);
 	lastdisconnect_backlog = g_hash_table_new_full(NULL, NULL, NULL, linestack_free_marker);

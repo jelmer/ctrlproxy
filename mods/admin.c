@@ -123,7 +123,6 @@ static void add_server (const struct client *c, char **args, void *userdata)
 
 	s = g_new0(struct tcp_server_config, 1);
 
-	s->name = g_strdup(args[2]);
 	s->host = g_strdup(args[2]);
 	s->port = g_strdup(args[3]?args[3]:"6667");
 	s->ssl = FALSE;
@@ -386,20 +385,12 @@ static gboolean handle_data(struct client *c, struct line *l, enum data_directio
 	return FALSE;
 }
 
-static gboolean load_config(struct plugin *p, xmlNodePtr node)
+static void load_config(struct global *global)
 {
-	xmlNodePtr cur;
+    GKeyFile *kf = global->config->keyfile;
 
-	for (cur = node->children; cur; cur = cur->next)
-	{
-		if (cur->type != XML_ELEMENT_NODE) continue;	
-
-		if (!strcmp(cur->name, "without_privmsg")) {
-			without_privmsg = TRUE;
-		}
-	}
-
-	return TRUE;
+    if (g_key_file_has_key(kf, "admin", "without_privmsg", NULL))
+        without_privmsg = g_key_file_get_boolean(kf, "admin", "without_privmsg", NULL);
 }
 
 static gboolean admin_net_init(struct network *n)
@@ -439,14 +430,8 @@ struct virtual_network_ops admin_network = {
 	NULL
 };
 
-static gboolean fini_plugin(struct plugin *p) 
+static gboolean init_plugin(void) 
 {
-	unregister_virtual_network(&admin_network);
-	del_client_filter("admin");
-	return TRUE;
-}
-
-static gboolean init_plugin(struct plugin *p) {
 	int i;
 	const static struct admin_command builtin_commands[] = {
 		{ "ADDNETWORK", add_network, ("<name>"), ("Add new network with specified name") },
@@ -472,6 +457,7 @@ static gboolean init_plugin(struct plugin *p) {
 	}
 
 	register_virtual_network(&admin_network);
+    register_config_notify(load_config);
 
 	return TRUE;
 }
@@ -480,5 +466,4 @@ struct plugin_ops plugin = {
 	.name = "admin",
 	.version = 0,
 	.init = init_plugin,
-	.load_config = load_config
 };

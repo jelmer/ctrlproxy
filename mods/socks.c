@@ -97,9 +97,9 @@ struct socks_client
 	socklen_t clientname_len;
 };
 
-static gboolean socks_reply(GIOChannel *ioc, guint8 err, guint8 atyp, guint8 data_len, guint8 *data, guint16 port)
+static gboolean socks_reply(GIOChannel *ioc, guint8 err, guint8 atyp, guint8 data_len, gchar *data, guint16 port)
 {
-	guint8 *header = g_new0(guint8, 7 + data_len);
+	gchar *header = g_new0(gchar, 7 + data_len);
 	GIOStatus status;
 	gsize read;
 
@@ -122,7 +122,7 @@ static gboolean socks_reply(GIOChannel *ioc, guint8 err, guint8 atyp, guint8 dat
 static gboolean socks_error(GIOChannel *ioc, guint8 err)
 {
 	guint8 data = 0x0;
-	return socks_reply(ioc, err, ATYP_FQDN, 1, &data, 0);
+	return socks_reply(ioc, err, ATYP_FQDN, 1, (gchar *)&data, 0);
 }
 
 static gboolean anon_acceptable(struct socks_client *cl)
@@ -138,10 +138,10 @@ static gboolean pass_acceptable(struct socks_client *cl)
 static gboolean pass_handle_data(struct socks_client *cl)
 {
 	GList *gl;
-	guint8 header[2];
+	gchar header[2];
 	gsize read;
 	GIOStatus status;
-	guint8 uname[0x100], pass[0x100];
+	gchar uname[0x100], pass[0x100];
 
 	status = g_io_channel_read_chars(cl->connection, header, 2, &read, NULL);
 	if (status != G_IO_STATUS_NORMAL) {
@@ -158,7 +158,7 @@ static gboolean pass_handle_data(struct socks_client *cl)
 		return FALSE;
 	}
 
-	uname[header[1]] = '\0';
+	uname[(guint8)header[1]] = '\0';
 
 	status = g_io_channel_read_chars(cl->connection, header, 1, &read, NULL);
 	if (status != G_IO_STATUS_NORMAL) {
@@ -170,7 +170,7 @@ static gboolean pass_handle_data(struct socks_client *cl)
 		return FALSE;
 	}
 
-	pass[header[0]] = '\0';
+	pass[(guint8)header[0]] = '\0';
 
 	header[0] = 0x1;
 	header[1] = 0x0; /* set to non-zero if invalid */
@@ -239,8 +239,8 @@ static gboolean handle_client_data (GIOChannel *ioc, GIOCondition o, gpointer da
 	}
 
 	if (cl->state == STATE_NEW) {
-		guint8 header[2];
-		guint8 methods[0x100];
+		gchar header[2];
+		gchar methods[0x100];
 		gsize read;
 		status = g_io_channel_read_chars(ioc, header, 2, &read, NULL);
 		if (status != G_IO_STATUS_NORMAL) {
@@ -298,7 +298,7 @@ static gboolean handle_client_data (GIOChannel *ioc, GIOCondition o, gpointer da
 	} else if (cl->state == STATE_AUTH) {
 		return cl->method->handle_data(cl);
 	} else if (cl->state == STATE_NORMAL) {
-		guint8 header[4];
+		gchar header[4];
 		gsize read;
 
 		status = g_io_channel_read_chars(ioc, header, 4, &read, NULL);
@@ -333,7 +333,7 @@ static gboolean handle_client_data (GIOChannel *ioc, GIOCondition o, gpointer da
 					
 					status = g_io_channel_read_chars(ioc, header, 1, &read, NULL);
 					status = g_io_channel_read_chars(ioc, hostname, header[0], &read, NULL);
-					hostname[header[0]] = '\0';
+					hostname[(guint8)header[0]] = '\0';
 
 					status = g_io_channel_read_chars(ioc, header, 2, &read, NULL);
 					port = ntohs(*(guint16 *)header);
@@ -357,19 +357,19 @@ static gboolean handle_client_data (GIOChannel *ioc, GIOCondition o, gpointer da
 						struct sockaddr_in6 *name6; 
 						struct sockaddr_in *name4; 
 						int atyp, len, port;
-						guint8 *data;
+						gchar *data;
 
 						name6 = (struct sockaddr_in6 *)result->connection.data.tcp.local_name;
 						name4 = (struct sockaddr_in *)result->connection.data.tcp.local_name;
 
 						if (name4->sin_family == AF_INET) {
 							atyp = ATYP_IPV4;
-							data = (guint8 *)&name4->sin_addr;
+							data = (gchar *)&name4->sin_addr;
 							len = 4;
 							port = name4->sin_port;
 						} else if (name6->sin6_family == AF_INET6) {
 							atyp = ATYP_IPV6;
-							data = (guint8 *)&name6->sin6_addr;
+							data = (gchar *)&name6->sin6_addr;
 							len = 16;
 							port = name6->sin6_port;
 						} else {
@@ -380,7 +380,7 @@ static gboolean handle_client_data (GIOChannel *ioc, GIOCondition o, gpointer da
 						socks_reply(ioc, REP_OK, atyp, len, data, port); 
 						
 					} else {
-						char *data = g_strdup("xlocalhost");
+						gchar *data = g_strdup("xlocalhost");
 						data[0] = strlen(data+1);
 						
 						socks_reply(ioc, REP_OK, ATYP_FQDN, data[0]+1, data, 1025);
@@ -434,62 +434,62 @@ static gboolean handle_new_client (GIOChannel *ioc, GIOCondition o, gpointer dat
 	return TRUE;
 }
 
-/* Configure port number to listen on */
-static gboolean fini_plugin(struct plugin *p)
+void kill_pending_client(struct socks_client *sc)
 {
-	GList *gl;
-	for (gl = pending_clients; gl; gl = gl->next) {
-		struct socks_client *sc = gl->data;
+	g_source_remove(sc->watch_id);
 
-		g_source_remove(sc->watch_id);
+	g_free(sc->clientname);
+	g_free(sc);
 
-		g_free(sc->clientname);
-		g_free(sc);
+	pending_clients = g_list_remove(pending_clients, sc);
+}
+
+static void fini_plugin(void)
+{
+	while (pending_clients) {
+		struct socks_client *sc = pending_clients->data;
+		kill_pending_client(sc);
 	}
-
-	g_list_free(pending_clients);
 
 	/* Close port */
 	g_source_remove(server_channel_in);
-	return TRUE;
 }
 
-static gboolean load_config(struct plugin *p, xmlNodePtr conf)
+static void load_config(struct global *global)
 {
 	int sock;
 	const int on = 1;
 	struct sockaddr_in addr;
 	guint16 port;
-	xmlNodePtr cur;
+	GKeyFile *kf = global->config->keyfile;
+	gsize size, i;
+	char **allows;
 
-	for (cur = conf->children; cur; cur = cur->next)
-	{
-		if (cur->type != XML_ELEMENT_NODE) continue;
+	allows = g_key_file_get_string_list(kf, "socks", "allow", &size, NULL);
 
-		if (!strcmp(cur->name, "allow")) {
-			struct allow_rule *r = g_new0(struct allow_rule, 1);
-			
-			r->username = xmlGetProp(cur, "username");
-			r->password = xmlGetProp(cur, "password");
+	for (i = 0; i < size; i++) {
+		struct allow_rule *r = g_new0(struct allow_rule, 1);
+		char **parts = g_strsplit(allows[i], ":", 2);
+					
+		r->username = parts[0];
+		r->password = parts[1];
 
-			allow_rules = g_list_append(allow_rules, r);
-		}
+		g_free(parts);
+		allow_rules = g_list_append(allow_rules, r);
 	}
 
-	port = DEFAULT_SOCKS_PORT;
+	g_strfreev(allows);
 
-	if (xmlHasProp(conf, "port")) {
-		char *tmp = xmlGetProp(conf, "port");
-		port = atoi(tmp);
-		xmlFree(tmp);
-	}
+	if (g_key_file_has_key(kf, "socks", "port", NULL)) 
+		port = g_key_file_get_integer(kf, "socks", "port", NULL);
+	else 
+		port = DEFAULT_SOCKS_PORT;
 
 	sock = socket(PF_INET, SOCK_STREAM, 0);
 	if (sock < 0) {
 		log_global("socks", LOG_ERROR, "error creating socket: %s", strerror(errno));
-		return FALSE;
+		return;
 	}
-
 
     setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
 
@@ -499,12 +499,12 @@ static gboolean load_config(struct plugin *p, xmlNodePtr conf)
 
 	if (bind (sock, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
 		log_global("socks", LOG_ERROR, "Unable to bind to port %d: %s", port, strerror(errno));
-		return FALSE;
+		return;
 	}
 
 	if (listen(sock, 5) < 0) {
 		log_global("socks", LOG_ERROR, "error listening on socket: %s", strerror(errno));
-		return FALSE;
+		return;
 	}
 
 	server_channel = g_io_channel_unix_new(sock);
@@ -512,25 +512,23 @@ static gboolean load_config(struct plugin *p, xmlNodePtr conf)
 
 	if (!server_channel) {
 		log_global("socks", LOG_ERROR, "Unable to create GIOChannel for server socket");
-		return FALSE;
+		return;
 	}
 
 	server_channel_in = g_io_add_watch(server_channel, G_IO_IN, handle_new_client, NULL);
 	g_io_channel_unref(server_channel);
 
 	log_global("socks", LOG_INFO, "Listening for SOCKS connections on port %d", port);
-
-	return TRUE;
 }
 
-static gboolean init_plugin(struct plugin *p)
+static gboolean init_plugin(void)
 {
-		return TRUE;
+	register_config_notify(load_config);
+	return TRUE;
 }
 
 struct plugin_ops plugin = {
 	.name = "socks",
 	.version = 0,
 	.init = init_plugin,
-	.load_config = load_config,
 };

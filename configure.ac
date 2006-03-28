@@ -130,7 +130,6 @@ DEFMODULE(repl_lastdisconnect)
 DEFMODULE(debug)
 DEFMODULE(socks)
 DEFMODULE(listener)
-DEFMODULE(autosend)
 
 AC_SUBST(BINS)
 AC_SUBST(MODS_SHARED)
