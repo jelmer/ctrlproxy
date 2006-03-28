@@ -134,6 +134,8 @@ class OldConfigFile(Config):
                     listener['password'] = cn.attributes['password'].value
                 if cn.attributes.has_key('bind'):
                     listener['bind'] = cn.attributes['bind'].value
+                if cn.attributes.has_key('ssl'):
+                    listener['ssl'] = cn.attributes['ssl'].value
                 self.listeners.append(listener)
             elif cn.nodeName == 'pipe':
                 listener = {'network': name }
@@ -268,21 +270,37 @@ def convert_admin(plugin,conf):
 
 def convert_log_irssi(plugin,conf):
     conf.conf["log-irssi"] = {}
-    if plugin['']:
-        pass
+    for cn in plugin.config:
+        if cn.nodeName == "logfile":
+            conf.conf["log-irssi"]["logfile"] = cn.toxml()
     
 def convert_log_custom(plugin,conf):
     conf.conf["log-custom"] = {}
+    for cn in plugin.config:
+        conf.conf["log-custom"][cn.nodeName] = cn.toxml()
 
 def convert_nickserv(plugin,conf):
     conf.conf["nickserv"] = {}
 
 def convert_auto_away(plugin,conf):
     conf.conf["auto-away"] = {}
+    for cn in plugin.config:
+        if cn.nodeName == 'message':
+            conf.conf['auto-away']['message'] = cn.toxml()
+            if cn.attributes.has_key('time'):
+                conf.conf['auto-away']['time'] = cn.attributes['time'].value
+        elif cn.nodeName == 'only_noclient':
+            conf.conf['auto-away']['only_noclient'] = cn.toxml()
 
 def convert_socket(plugin,conf):
     # Now integrated
-    pass
+    for cn in plugin.config:
+        if cn.nodeName == "sslcertfile":
+            conf.conf['global']['certfile'] = cn.toxml()
+        elif cn.nodeName == "sslkeyfile":
+            conf.conf['global']['keyfile'] = cn.toxml()
+        elif cn.nodeName == "sslcafile":
+            conf.conf['global']['cafile'] = cn.toxml()
 
 def convert_stats(plugin,conf):
     warnings.append("stats module is no longer supported")
@@ -302,8 +320,14 @@ def convert_antiflood(plugin,conf):
     conf.conf['antiflood'] = {}
 
 def convert_repl_highlight(plugin,conf):
-    conf.conf['global']['matches'] = "FIXME"
     conf.conf['global']['replication'] = 'highlight'
+    matches = []
+    for cn in plugin.config:
+        if cn.nodeName == 'match':
+            matches.append(cn.toxml())
+
+    conf.conf['global']['matches'] = ",".join(matches)
+
 
 def convert_repl_simple(plugin,conf):
     conf.conf['global']['replication'] = 'simple'
@@ -335,7 +359,7 @@ if oldfile.autosend_lines:
     warnings.append("autosend data is no longer reported")
 
 for plugin in oldfile.plugins.keys():
-    convert_plugin[plugin](plugin,conf)    
+    convert_plugin[plugin](oldfile.plugins[plugin],conf)    
     del oldfile.plugins[plugin]
 
 for net in oldfile.networks.keys():
@@ -363,6 +387,9 @@ for net in oldfile.networks.keys():
         if oldch.autojoin:
             networks[net].conf[ch]['autojoin'] = oldch.autojoin
 
+    for srv in oldnet.servers:
+        oldsrv = oldnet.servers[srv]
+
     del oldfile.networks[net]
 
 for l in oldfile.listeners:
@@ -377,7 +404,10 @@ for l in oldfile.listeners:
     if l.has_key('password'):
         listeners.conf[key]['password'] = l['password']
 
-#conf.write()
+    if l.has_key('ssl'):
+        listeners.conf[key]['ssl'] = l['ssl']
+
+conf.write()
 
 #for i in networks:
 #    print i
@@ -389,10 +419,8 @@ def write_nickserv_file():
             entry['network'] = "*"
         print "%s\t%s\t%s" % (entry['nick'], entry['password'], entry['network'])
 
-listeners.write()
+#listeners.write()
 
 print "Warnings:"
 for w in warnings:
     print w
-
-print oldfile.__dict__
