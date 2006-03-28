@@ -77,5 +77,4 @@ struct plugin_ops plugin = {
 	.name = "debug",
 	.version = 0,
 	.init = init_plugin,
-	.fini = fini_plugin,
 };

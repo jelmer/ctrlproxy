@@ -66,7 +66,6 @@ struct ctrlproxy_config {
 	GList *networks;
 	int separate_processes:1;
 	char *replication;
-	char *modules_path;
 	char *shared_path;
 	char *linestack_backend;
 };

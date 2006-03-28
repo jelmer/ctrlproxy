@@ -283,7 +283,6 @@ struct ctrlproxy_config *load_configuration(const char *file)
     xmlNodePtr root, cur;
 	struct ctrlproxy_config *cfg = g_new0(struct ctrlproxy_config, 1);
 
-	cfg->modules_path = g_strdup(MODULESDIR);
 	cfg->shared_path = g_strdup(SHAREDIR);
 
 	g_free(last_config_file); last_config_file = g_strdup(file);

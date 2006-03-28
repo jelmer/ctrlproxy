@@ -532,6 +532,5 @@ struct plugin_ops plugin = {
 	.name = "socks",
 	.version = 0,
 	.init = init_plugin,
-	.fini = fini_plugin,
 	.load_config = load_config,
 };

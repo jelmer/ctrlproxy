@@ -185,5 +185,4 @@ struct plugin_ops plugin = {
 	.name = "nss",
 	.version = 0,
 	.init = init_plugin,
-	.fini = fini_plugin
 };

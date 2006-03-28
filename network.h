@@ -96,7 +96,6 @@ G_MODULE_EXPORT void clients_send(struct network *, struct line *, const struct 
 G_MODULE_EXPORT gboolean network_send_line(struct network *s, const struct client *c, const struct line *);
 G_MODULE_EXPORT gboolean network_send_args(struct network *s, ...);
 G_MODULE_EXPORT void register_virtual_network(struct virtual_network_ops *);
-G_MODULE_EXPORT void unregister_virtual_network(struct virtual_network_ops *);
 G_MODULE_EXPORT struct network *find_network(struct global *, const char *);
 G_MODULE_EXPORT gboolean virtual_network_recv_line(struct network *l, struct line *);
 G_MODULE_EXPORT gboolean virtual_network_recv_args(struct network *l, const char *origin, ...); 

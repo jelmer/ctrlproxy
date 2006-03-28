@@ -710,12 +710,6 @@ void register_virtual_network(struct virtual_network_ops *ops)
 	g_hash_table_insert(virtual_network_ops, ops->name, ops);
 }
 
-void unregister_virtual_network(struct virtual_network_ops *ops)
-{
-	g_assert(ops);
-	g_hash_table_remove(virtual_network_ops, ops->name);
-}
-
 gboolean init_networks(void)
 {
 	virtual_network_ops = g_hash_table_new(g_str_hash, g_str_equal);

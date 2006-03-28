@@ -30,11 +30,6 @@ void register_linestack(const struct linestack_ops *b)
 	linestack_backends = g_slist_append(linestack_backends, b);
 }
 
-void unregister_linestack(const struct linestack_ops *b)
-{
-	linestack_backends = g_slist_remove(linestack_backends, b);
-}
-
 struct linestack_context *new_linestack(struct ctrlproxy_config *cfg)
 {
 	extern const struct linestack_ops linestack_file;

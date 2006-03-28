@@ -78,7 +78,6 @@ struct linestack_ops {
 };
 
 G_MODULE_EXPORT void register_linestack(const struct linestack_ops *);
-G_MODULE_EXPORT void unregister_linestack(const struct linestack_ops *);
 G_MODULE_EXPORT linestack_marker *linestack_get_marker_numlines (
 		struct linestack_context *,
 		struct network *, 

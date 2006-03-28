@@ -353,5 +353,4 @@ struct plugin_ops plugin = {
 	.version = 0,
 	.init = init_plugin,
 	.load_config = load_config,
-	.fini = fini_plugin,
 };

@@ -15,9 +15,7 @@
 	 * LISTNETWORKS
 	 * LOADMODULE <location>
 	 * NEXTSERVER <network>
-	 * RELOADMODULE <location>
 	 * SAVECONFIG
-	 * UNLOADMODULE <location>
 
 	(c) 2003-2005 Jelmer Vernooij <jelmer@nl.linux.org>
 
@@ -220,37 +218,8 @@ static void list_modules (const struct client *c, char **args, void *userdata)
 	}
 }
 
-static void unload_module (const struct client *c, char **args, void *userdata)
-{
-	GList *g = get_plugin_list();
-
-	if(!args[1]) {
-		admin_out(c, "Not enough arguments");
-		return;
-	}
-
-	if(!strcmp(args[1], "admin")) {
-		admin_out(c, "Can't unload /this/ module");
-		return;
-	}
-
-	/* Find specified plugins' GModule and xmlNodePtr */
-	while(g) {
-		struct plugin *p = (struct plugin *)g->data;
-		if(!strcmp(p->ops->name, args[1])) {
-			unload_plugin(p);
-			return;
-		}
-		g = g->next;
-	}
-
-	admin_out(c, "No such plugin loaded");
-}
-
 static void load_module (const struct client *c, char **args, void *userdata)
 { 
-	struct plugin_config *p;
-	
 	if(!args[1]) { 
 		admin_out(c, "No file specified");
 		return;
@@ -261,19 +230,11 @@ static void load_module (const struct client *c, char **args, void *userdata)
 		return;
 	}
 
-	p = plugin_config_init(get_current_config(), args[1]);
-
-	if (load_plugin(c->network->global->config->modules_path, p)) {
+	if (load_plugin(MODULESDIR, args[1])) {
 		admin_out(c, "Load successful");
 	} else {
 		admin_out(c, "Load failed");
 	}
-}
-
-static void reload_module (const struct client *c, char **args, void *userdata)
-{
-	unload_module(c, args, NULL);
-	load_module(c, args, NULL);
 }
 
 static void com_save_config (const struct client *c, char **args, void *userdata)
@@ -475,7 +436,8 @@ struct virtual_network_ops admin_network = {
 	NULL
 };
 
-static gboolean fini_plugin(struct plugin *p) {
+static gboolean fini_plugin(struct plugin *p) 
+{
 	unregister_virtual_network(&admin_network);
 	del_client_filter("admin");
 	return TRUE;
@@ -493,8 +455,6 @@ static gboolean init_plugin(struct plugin *p) {
 		{ "DISCONNECT", com_disconnect_network, ("<network>"), ("Disconnect specified network") },
 		{ "LISTNETWORKS", list_networks, "", ("List current networks and their status") },
 		{ "LOADMODULE", load_module, "<name>", ("Load specified module") },
-		{ "UNLOADMODULE", unload_module, ("<name>"), ("Unload specified module") },
-		{ "RELOADMODULE", reload_module, ("<name>"), ("Reload specified module") },
 		{ "LISTMODULES", list_modules, "", ("List currently loaded modules") },
 		{ "SAVECONFIG", com_save_config, "<name>", ("Save current XML configuration to specified file") },
 		{ "DETACH", detach_client, "", ("Detach current client") },
@@ -517,6 +477,5 @@ struct plugin_ops plugin = {
 	.name = "admin",
 	.version = 0,
 	.init = init_plugin,
-	.fini = fini_plugin,
 	.load_config = load_config
 };

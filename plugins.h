@@ -27,7 +27,6 @@ struct plugin {
 		int version;
 		const char *name;
 		gboolean (*init) (struct plugin *);
-		gboolean (*fini) (struct plugin *);
 		gboolean (*update_config) (struct plugin *, xmlNodePtr);
 		gboolean (*load_config) (struct plugin *, xmlNodePtr configuration);
 	} *ops;
@@ -35,12 +34,10 @@ struct plugin {
 
 /* plugins.c */
 G_MODULE_EXPORT struct plugin *load_plugin(const char *dir, const char *name);
-G_MODULE_EXPORT gboolean unload_plugin(struct plugin *);
 G_MODULE_EXPORT gboolean plugin_loaded(const char *name);
 G_MODULE_EXPORT GList *get_plugin_list(void);
 
 #if defined(_WIN32) && !defined(CTRLPROXY_CORE_BUILD)
-G_MODULE_EXPORT gboolean fini_plugin(struct plugin *p);
 G_MODULE_EXPORT gboolean init_plugin(struct plugin *p);
 G_MODULE_EXPORT gboolean load_config(struct plugin *p, xmlNodePtr);
 G_MODULE_EXPORT gboolean save_config(struct plugin *p, xmlNodePtr);

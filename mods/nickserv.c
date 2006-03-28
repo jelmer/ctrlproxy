@@ -206,7 +206,6 @@ struct plugin_ops plugin = {
 	.name = "nickserv",
 	.version = 0,
 	.init = init_plugin,
-	.fini = fini_plugin,
 	.load_config = load_config,
 	.update_config = update_config
 };

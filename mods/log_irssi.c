@@ -207,14 +207,6 @@ static gboolean log_data(struct network *n, struct line *l, enum data_direction 
 	return TRUE;
 }
 
-static gboolean fini_plugin(struct plugin *p)
-{
-	g_hash_table_destroy(files);
-	g_free(logfile); logfile = NULL;
-	del_log_filter("log_irssi");
-	return TRUE;
-}
-
 static gboolean load_config(struct plugin *p, xmlNodePtr node) 
 {
 	xmlNodePtr cur;
@@ -248,6 +240,5 @@ struct plugin_ops plugin = {
 	.name = "log_irssi",
 	.version = 0,
 	.init = init_plugin,
-	.fini = fini_plugin,
 	.load_config = load_config,
 };

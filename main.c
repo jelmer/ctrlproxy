@@ -82,7 +82,6 @@ static void clean_exit()
 	g_main_loop_quit(main_loop);
 
 	fini_config();
-	fini_plugins();
 
 	path = g_build_filename(_global->config->config_dir, "autosave", NULL);
 	save_configuration(_global->config, path);
@@ -248,7 +247,11 @@ int main(int argc, char **argv)
 	init_networks();
 	load_networks(_global, _global->config);
 
-	init_plugins(_global->config->modules_path);
+
+	/* Determine correct modules directory */
+
+
+	init_plugins(getenv("MODULESDIR")?getenv("MODULESDIR"):MODULESDIR);
 	_global->linestack = new_linestack(_global->config);
 	autoconnect_networks(_global);
 

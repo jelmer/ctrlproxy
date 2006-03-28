@@ -26,26 +26,6 @@
 struct plugin *current_plugin = NULL;
 GList *plugins = NULL;
 
-gboolean unload_plugin(struct plugin *p)
-{
-	/* Run exit function if present */
-	if(!p->ops->fini(p)) {
-		log_global(NULL, LOG_ERROR, "Unable to unload plugin '%s': still in use?", p->ops->name);
-		return FALSE;
-	}
-
-#ifndef VALGRIND
-	if (p->module)
-		g_module_close(p->module);
-#endif
-
-	plugins = g_list_remove(plugins, p);
-
-	g_free(p);
-
-	return TRUE;
-}
-
 gboolean plugin_loaded(const char *name)
 {
 	GList *gl;
@@ -57,19 +37,15 @@ gboolean plugin_loaded(const char *name)
 	return FALSE;
 }
 
-struct plugin *load_plugin(const char *dir, const char *name)
+struct plugin *load_plugin(const char *modulesdir, const char *name)
 {
 	GModule *m = NULL;
-	const char *modulesdir;
 	struct plugin_ops *ops = NULL;
 	struct plugin *p = g_new0(struct plugin, 1);
 	gchar *path_name = NULL;
 
 	/* Try to load from .so file */
 	if (!ops) {
-		/* Determine correct modules directory */
-		if(getenv("MODULESDIR"))modulesdir = getenv("MODULESDIR");
-		else modulesdir = dir;
 
 		if(g_file_test(name, G_FILE_TEST_EXISTS))path_name = g_strdup(name);
 		else path_name = g_module_build_path(modulesdir, name);
@@ -113,16 +89,6 @@ struct plugin *load_plugin(const char *dir, const char *name)
 	plugins = g_list_append(plugins, p);
 
 	return p;
-}
-
-void fini_plugins() 
-{
-	while (plugins) 
-	{
-		struct plugin *p = plugins->data;
-
-		unload_plugin(p);
-	}
 }
 
 gboolean init_plugins(const char *plugin_dir)

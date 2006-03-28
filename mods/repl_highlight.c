@@ -83,6 +83,5 @@ struct plugin_ops plugin = {
 	.name = "repl_highlight",
 	.version = 0,
 	.init = init_plugin,
-	.fini = fini_plugin,
 	.load_config = load_config,
 };
