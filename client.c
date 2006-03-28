@@ -238,7 +238,7 @@ void send_motd(struct client *c)
 	int i;
 	g_assert(c);
 
-	lines = get_motd_lines(c->network);
+	lines = get_motd_lines(c);
 
 	if(!lines) {
 		client_send_response(c, ERR_NOMOTD, "No MOTD file", NULL);

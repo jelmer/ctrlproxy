@@ -25,7 +25,7 @@
 
 static char *motd_file = NULL;
 
-char ** motd_file_handler(struct network *n, void *userdata)
+char ** motd_file_handler(struct client *c, void *userdata)
 {
 	char **lines = NULL;
 	size_t nrlines = 0;
