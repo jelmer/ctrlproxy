@@ -1,7 +1,8 @@
 #!/usr/bin/python
 # Upgrade script for CtrlProxy
-# Copyright (C) 2005 Jelmer Vernooij <jelmer@samba.org>
+# Copyright (C) 2005-2006 Jelmer Vernooij <jelmer@samba.org>
 
+import optparse
 import sys
 import os
 from xml.dom import minidom, Node
@@ -19,6 +20,10 @@ class Channel:
 class Network:
     def __init__(self, name=None):
         self.name = name
+        self.nick = None
+        self.fullname = None
+        self.username = None
+        self.autoconnect = None
         self.channels = {}
         self.servers = []
 
@@ -38,18 +43,9 @@ class Config:
         self.listeners = []
         self.autosend_lines = []
         self.nickserv_nicks = []
-        self.required_plugins = []
 
-    def upgrade(self):
-        # Throw out obsolete modules
-        for pl in ['socket','strip','repl_memory','linestack_file','repl_none']:
-            if self.plugins.has_key(pl):
-                self.plugins.pop(pl)
-
-        if 'linestack_memory' in self.plugins:
-            self.plugins.pop('linestack_memory')
-            self.plugins['linestack_memory'] = Plugin(name='linestack_file')
-
+    def has_plugin(self, name):
+        return self.plugins.has_key(name)
 
 class OldConfigFile(Config):
     def _parsePlugin(self,node):
@@ -138,10 +134,8 @@ class OldConfigFile(Config):
                     listener['password'] = cn.attributes['password'].value
                 if cn.attributes.has_key('bind'):
                     listener['bind'] = cn.attributes['bind'].value
-                self.required_plugins.append('listener')
                 self.listeners.append(listener)
             elif cn.nodeName == 'pipe':
-                self.required_plugins.append('pipe')
                 listener = {'network': name }
                 if not clientpass is None:
                     listener['password'] = clientpass
@@ -189,11 +183,9 @@ class OldConfigFile(Config):
             elif cn.nodeName == 'listen':
                 self._parseListeners(network.name, client_pass, cn)
             elif cn.nodeName == 'autosend':
-                self.required_plugins.append('autosend')
                 self.autosend_lines = {'network': network.name, 
                                        'data': cn.toxml()}
             elif cn.nodeName == 'nickserv':
-                self.required_plugins.append('nickserv')
                 self._parseNickserv(network.name, cn) 
             elif cn.nodeType == Node.ELEMENT_NODE:
                 raise UnknownTagError(cn)
@@ -226,8 +218,181 @@ class OldConfigFile(Config):
 if len(sys.argv) > 1:
     oldfile = OldConfigFile(sys.argv[1])
 else:
-    oldfile = OldConfigFile("%s/.ctrlproxyrc" % os.getenv('HOME'))
+    oldfile = OldConfigFile(os.path.join(os.getenv('HOME'), ".ctrlproxyrc"))
 
-oldfile.upgrade()
+class IniFile(object):
+    def __init__(self,dict={}):
+        self.conf = dict
+
+    def write(self):
+        if self.conf.has_key('global'):
+            self.print_section("global")
+            del self.conf["global"]
+   
+        for section in self.conf:
+            print 
+            self.print_section(section)
+
+    def print_section(self,section):
+        print "[%s]" % section
+        for var in self.conf[section]:
+            print "%s = %s" % (var, self.conf[section][var])
+
+conf = IniFile({'global':{}})
+networks = {}
+listeners = IniFile()
+warnings = []
+
+def convert_report_time(plugin,conf):
+    conf.conf['global']['report-time'] = 'true'
+
+def convert_motd_file(plugin,conf):
+    conf.conf["global"]["motd-file"] = 'FIXME'
+
+def convert_linestack_file(plugin,conf):
+    conf.conf["global"]["linestack"] = "file"
+
+def convert_ctcp(plugin,conf):
+    # Now integrated
+    pass
+
+def convert_strip(plugin,conf):
+    # Now integrated
+    pass
+
+def convert_repl_none(plugin,conf):
+    conf.conf["global"]["replication"] = "none"
+
+def convert_admin(plugin,conf):
+    conf.conf["admin"] = {}
+
+def convert_log_irssi(plugin,conf):
+    conf.conf["log-irssi"] = {}
+    if plugin['']:
+        pass
+    
+def convert_log_custom(plugin,conf):
+    conf.conf["log-custom"] = {}
+
+def convert_nickserv(plugin,conf):
+    conf.conf["nickserv"] = {}
+
+def convert_auto_away(plugin,conf):
+    conf.conf["auto-away"] = {}
+
+def convert_socket(plugin,conf):
+    # Now integrated
+    pass
+
+def convert_stats(plugin,conf):
+    warnings.append("stats module is no longer supported")
+
+def convert_linestack_memory(plugin,conf):
+    conf.conf['global']['linestack'] = 'file'
+
+def convert_repl_command(plugin,conf):
+    # Now integrated
+    pass
+
+def convert_repl_memory(plugin,conf):
+    conf.conf['global']['linestack'] = 'file'
+    conf.conf['global']['replication'] = 'simple'
+
+def convert_antiflood(plugin,conf):
+    conf.conf['antiflood'] = {}
+
+def convert_repl_highlight(plugin,conf):
+    conf.conf['global']['matches'] = "FIXME"
+    conf.conf['global']['replication'] = 'highlight'
+
+def convert_repl_simple(plugin,conf):
+    conf.conf['global']['replication'] = 'simple'
+
+convert_plugin = {
+    'report_time': convert_report_time,
+    'motd_file': convert_motd_file,
+    'linestack_file': convert_linestack_file,
+    'ctcp': convert_ctcp,
+    'strip': convert_strip,
+    'repl_none': convert_repl_none,
+    'admin': convert_admin,
+    'nickserv': convert_nickserv,
+    'log_irssi': convert_log_irssi,
+    'log_custom': convert_log_custom,
+    'stats': convert_stats,
+    'socket': convert_socket,
+    'auto_away': convert_auto_away,
+    'linestack_memory': convert_linestack_memory,
+    'repl_command': convert_repl_command,
+    'repl_memory': convert_repl_memory,
+    'antiflood': convert_antiflood,
+    'repl_highlight': convert_repl_highlight,
+    'repl_simple': convert_repl_simple,
+    'auto-away': convert_auto_away,
+}
+
+if oldfile.autosend_lines:
+    warnings.append("autosend data is no longer reported")
+
+for plugin in oldfile.plugins.keys():
+    convert_plugin[plugin](plugin,conf)    
+    del oldfile.plugins[plugin]
+
+for net in oldfile.networks.keys():
+    oldnet = oldfile.networks[net]
+    networks[net] = IniFile({'global':{}})
+    if oldnet.nick:
+        networks[net].conf['global']['nick'] = oldnet.nick
+
+    if oldnet.fullname:
+        networks[net].conf['global']['fullname'] = oldnet.fullname
+
+    if oldnet.username:
+        networks[net].conf['global']['username'] = oldnet.username
+
+    if oldnet.autoconnect:
+        networks[net].conf['global']['autoconnect'] = oldnet.autoconnect
+
+    for ch in oldnet.channels:
+        oldch = oldnet.channels[ch]
+        networks[net].conf[ch] = {}
+
+        if oldch.key:
+            networks[net].conf[ch]['key'] = oldch.key
+
+        if oldch.autojoin:
+            networks[net].conf[ch]['autojoin'] = oldch.autojoin
+
+    del oldfile.networks[net]
+
+for l in oldfile.listeners:
+    key = l['port']
+    if l.has_key('bind'):
+        key = "%s:%d" % (l['bind'], l['port'])
+
+    listeners.conf[key] = {}
+    if l.has_key('network'):
+        listeners.conf[key]['network'] = l['network']
+
+    if l.has_key('password'):
+        listeners.conf[key]['password'] = l['password']
+
+#conf.write()
+
+#for i in networks:
+#    print i
+#    networks[i].write()
+
+def write_nickserv_file():
+    for entry in oldfile.nickserv_nicks:
+        if entry.has_key('network'):
+            entry['network'] = "*"
+        print "%s\t%s\t%s" % (entry['nick'], entry['password'], entry['network'])
+
+listeners.write()
+
+print "Warnings:"
+for w in warnings:
+    print w
 
 print oldfile.__dict__
