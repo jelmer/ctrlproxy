@@ -171,6 +171,12 @@ gboolean linestack_insert_line(struct linestack_context *ctx, const struct netwo
 		g_strcasecmp(l->args[0], "PRIVMSG") && 
 		g_strcasecmp(l->args[0], "NOTICE")) return FALSE;
 
+	/* No CTCP, please */
+	if ((!g_strcasecmp(l->args[0], "PRIVMSG") ||
+		!g_strcasecmp(l->args[0], "NOTICE")) && 
+		l->argc > 2 && l->args[2][0] == '\001')
+		return FALSE;
+
 	for (i = 0; linestack_messages[i]; i++) 
 		if (!g_strcasecmp(linestack_messages[i], l->args[0]))
 			needed = TRUE;
@@ -186,14 +192,46 @@ static void send_line(struct line *l, time_t t, void *_client)
 	client_send_line(c, l);
 }
 
+static void send_line_timed(struct line *l, time_t t, void *_client)
+{
+	struct client *c = _client;
+
+	if ((!g_strcasecmp(l->args[0], "PRIVMSG") ||
+		!g_strcasecmp(l->args[0], "NOTICE")) &&
+		l->argc > 2) {
+		struct line *nl = linedup(l);
+		char stime[512];
+		char *tmp;
+
+		strftime(stime, sizeof(stime), "%H:%M:%S", localtime(&t));
+		tmp = g_strdup_printf("[%s] %s", stime, nl->args[2]);
+		g_free(nl->args[2]);
+		nl->args[2] = tmp;
+		client_send_line(c, nl);
+		free_line(nl);
+	} else {
+		client_send_line(c, l);
+	}
+}
+
 gboolean linestack_send(struct linestack_context *ctx, struct network *n, linestack_marker *mf, linestack_marker *mt, const struct client *c)
 {
 	return linestack_traverse(ctx, n, mf, mt, send_line, c);
 }
 
+gboolean linestack_send_timed(struct linestack_context *ctx, struct network *n, linestack_marker *mf, linestack_marker *mt, const struct client *c)
+{
+	return linestack_traverse(ctx, n, mf, mt, send_line_timed, c);
+}
+
 gboolean linestack_send_object(struct linestack_context *ctx, struct network *n, const char *obj, linestack_marker *mf, linestack_marker *mt, const struct client *c)
 {
 	return linestack_traverse_object(ctx, n, obj, mf, mt, send_line, c);
+}
+
+gboolean linestack_send_object_timed(struct linestack_context *ctx, struct network *n, const char *obj, linestack_marker *mf, linestack_marker *mt, const struct client *c)
+{
+	return linestack_traverse_object(ctx, n, obj, mf, mt, send_line_timed, c);
 }
 
 static void replay_line(struct line *l, time_t t, void *state)

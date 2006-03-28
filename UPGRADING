@@ -19,9 +19,9 @@ utility avaiable in the directory 'scripts' in the source tarball.
   <nick nick="mynick" password="mypass"/>
 
   The network attribute for this element is optional.
-- the "strip", "linestack_file", "ctcp" and "repl_none" modules have been 
-  merged into the main program and should no longer be included in any 
-  configuration files
+- the "strip", "report_time", "linestack_file", "ctcp" and "repl_none" 
+  modules have been merged into the main program and should no longer be 
+  included in any configuration files
 - the <autosend> element is now handled by the new "autosend" module. Move 
   any elements from <network> to the configuration of this module, 
   with an option attribute for the network name.

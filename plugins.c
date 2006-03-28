@@ -80,7 +80,6 @@ struct plugin *load_plugin(const char *dir, struct plugin_config *pc)
 	struct plugin_ops *ops = NULL;
 	struct plugin *p = g_new0(struct plugin, 1);
 	gchar *path_name = NULL;
-	int i;
 
 	g_assert(pc);
 
