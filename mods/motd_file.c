@@ -57,8 +57,8 @@ static void load_config(struct global *global)
 {
     GKeyFile *kf = global->config->keyfile;
 
-    if (g_key_file_has_key(kf, NULL, "motd-file", NULL))
-		motd_file = g_key_file_get_string(kf, NULL, "motd-file", NULL);
+    if (g_key_file_has_key(kf, "global", "motd-file", NULL))
+		motd_file = g_key_file_get_string(kf, "global", "motd-file", NULL);
     else 
 	    motd_file = g_build_filename(SHAREDIR, "motd", NULL);
 

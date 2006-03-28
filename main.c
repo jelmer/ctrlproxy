@@ -228,6 +228,8 @@ int main(int argc, char **argv)
 #endif
 	} 
 
+	init_plugins(getenv("MODULESDIR")?getenv("MODULESDIR"):MODULESDIR);
+
 	_global = new_global();	
 
 	config_dir = g_build_filename(g_get_home_dir(), ".ctrlproxy", NULL);
@@ -259,13 +261,10 @@ int main(int argc, char **argv)
 		}
 	}
 
-
-	load_networks(_global, _global->config);
 	config_notify(_global);
+	load_networks(_global, _global->config);
 
 	/* Determine correct modules directory */
-
-	init_plugins(getenv("MODULESDIR")?getenv("MODULESDIR"):MODULESDIR);
 	_global->linestack = new_linestack(_global->config);
 	autoconnect_networks(_global);
 

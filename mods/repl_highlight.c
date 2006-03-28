@@ -55,7 +55,7 @@ static const struct replication_backend highlight = {
 static void load_config(struct global *global)
 {
     matches = g_key_file_get_string_list(global->config->keyfile,
-                           NULL, "match", NULL, NULL);
+                           "global", "match", NULL, NULL);
 	markers = g_hash_table_new_full(NULL, NULL, NULL, (GDestroyNotify)linestack_free_marker);
 }
 

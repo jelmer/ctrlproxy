@@ -30,6 +30,7 @@ logfile = /home/jelmer/tmp/ctrlproxy
 # Work as a socks proxy
 #[socks]
 #port = 8800
+#allow = jelmer:secret, foo:bar
 
 # Make sure messages are not sent too fast after each other 
 # (prevents being kicked by the server for 'Excess flooding'
