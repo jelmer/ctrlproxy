@@ -46,7 +46,6 @@
 #define MAXHOSTNAMELEN 4096
 
 /* server.c */
-gboolean init_networks();
 void fini_networks(struct global *);
 void kill_pending_clients(const char *reason);
 

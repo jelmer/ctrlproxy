@@ -702,14 +702,10 @@ int verify_client(const struct network *s, const struct client *c)
 
 void register_virtual_network(struct virtual_network_ops *ops)
 {
+	if (virtual_network_ops == NULL)
+		virtual_network_ops = g_hash_table_new(g_str_hash, g_str_equal);
 	g_assert(ops);
 	g_hash_table_insert(virtual_network_ops, ops->name, ops);
-}
-
-gboolean init_networks(void)
-{
-	virtual_network_ops = g_hash_table_new(g_str_hash, g_str_equal);
-	return TRUE;
 }
 
 gboolean autoconnect_networks(struct global *global)

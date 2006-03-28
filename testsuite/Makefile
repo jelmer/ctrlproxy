@@ -27,7 +27,8 @@ libtest-parser.so: test-parser.o ../line.o
 libtest-client.so: test-client.o ../client.o ../line.o ../hooks.o ../log.o ../cache.o ../redirect.o ../network.o ../posix.o ../util.o ../state.o ../linestack.o ../gen_config.o ../settings.o ../isupport.o ../plugins.o
 
 lib%.so: 
-	$(CC) $(LIBS) $(CFLAGS) -shared -o $@ $^
+	@echo Compiling $<
+	@$(CC) $(LIBS) $(CFLAGS) -shared -o $@ $^
 
 ctrlproxyrc.torture: ctrlproxyrc.torture.in
 	sed -e 's/@SERVER@/$(TEST_SERVER)/;s/@PORT@/$(TEST_PORT)/;' < $< > $@

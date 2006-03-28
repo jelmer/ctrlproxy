@@ -149,6 +149,7 @@ int main(int argc, char **argv)
 	char *configuration_file;
 	extern enum log_level current_log_level;
 	extern gboolean no_log_timestamp;
+	char *config_dir;
 	const char *inetd_client = NULL;
 	gboolean version = FALSE;
 	GOptionContext *pc;
@@ -229,40 +230,38 @@ int main(int argc, char **argv)
 
 	_global = new_global();	
 
+	config_dir = g_build_filename(g_get_home_dir(), ".ctrlproxy", NULL);
+	if(mkdir(config_dir, 0700) != 0 && errno != EEXIST) {
+		log_global(NULL, LOG_ERROR, "Unable to open configuration directory '%s'\n", config_dir);
+		g_free(config_dir);
+		config_dir = NULL;
+	}
+
 	if(rcfile) {
 		configuration_file = g_strdup(rcfile);
-		_global->config = load_configuration(configuration_file);
+		_global->config = load_configuration(configuration_file, config_dir);
 		_global->last_config_file = configuration_file;
 	} else { 
-		const char *homedir = g_get_home_dir();
 #ifdef _WIN32
-		configuration_file = g_strdup_printf("%s/_ctrlproxyrc", homedir);
+		configuration_file = g_build_filename(g_get_home_dir(), "_ctrlproxyrc", NULL);
 #else
-		configuration_file = g_strdup_printf("%s/.ctrlproxyrc", homedir);
+		configuration_file = g_build_filename(g_get_home_dir(), ".ctrlproxyrc", NULL);
 #endif
 		/* Copy configuration file from default location if none existed yet */
 		if(g_file_test(configuration_file, G_FILE_TEST_EXISTS)) {
-			_global->config = load_configuration(configuration_file);
+			_global->config = load_configuration(configuration_file, config_dir);
 			_global->last_config_file = configuration_file;
 		} else {
 			g_free(configuration_file);
-			configuration_file = g_strdup(SHAREDIR"/ctrlproxyrc.default");
-			_global->config = load_configuration(configuration_file);
+			configuration_file = g_build_filename(SHAREDIR, "ctrlproxyrc.default", NULL);
+			_global->config = load_configuration(configuration_file, config_dir);
 			_global->last_config_file = configuration_file;
 		}
 	}
 
-	_global->config->config_dir = g_build_filename(g_get_home_dir(), ".ctrlproxy", NULL);
-	if(mkdir(_global->config->config_dir, 0700) != 0 && errno != EEXIST) {
-		log_global(NULL, LOG_ERROR, "Unable to open configuration directory '%s'\n", _global->config->config_dir);
-		g_free(_global->config->config_dir);
-		_global->config->config_dir = NULL;
-	}
 
-	config_notify(_global);
-
-	init_networks();
 	load_networks(_global, _global->config);
+	config_notify(_global);
 
 	/* Determine correct modules directory */
 

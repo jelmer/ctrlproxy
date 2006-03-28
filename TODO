@@ -1,6 +1,5 @@
 current release (3.0.0):
 - test and fix SSL support
-- remove evil 'extern struct global *_global' hacks
 - update documentation
 - finish python module:
  - pass client / network / line arguments correctly
@@ -9,11 +8,11 @@ current release (3.0.0):
 - fix issue with loading state from linestack_file
 - better handling of log_network_state()
 - merge noticelog into admin
-- load all plugins
-- allow the use of report_time like capabilities again
+- use 'report-time' setting
 - finish upgrade script
 - automatically call upgrade script?
 - make editing config file optional
+- fix saving config files
 
 next minor release (3.0.1):
 - properly expand second argument of PRIVMSG in log_irssi and log_custom

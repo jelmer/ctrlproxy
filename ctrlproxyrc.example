@@ -3,6 +3,8 @@
 # Read the documentation for more information about specifics
 # Please adapt to your needs!
 
+[global]
+
 # Replication mechanism to use
 replication = none # Possible values: none, simple, highlight, disconnect
 

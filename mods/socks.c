@@ -73,8 +73,6 @@ static GIOChannel *server_channel = NULL;
 static int server_channel_in = 0;
 enum socks_state { STATE_NEW = 0, STATE_AUTH, STATE_NORMAL };
 
-extern struct global *_global; /* FIXME: EVIL HACK ! */
-
 struct allow_rule {
 	const char *username;
 	const char *password;
@@ -95,6 +93,7 @@ struct socks_client
 	void *method_data;
 	struct sockaddr *clientname;
 	socklen_t clientname_len;
+	struct global *global;
 };
 
 static gboolean socks_reply(GIOChannel *ioc, guint8 err, guint8 atyp, guint8 data_len, gchar *data, guint16 port)
@@ -340,7 +339,7 @@ static gboolean handle_client_data (GIOChannel *ioc, GIOCondition o, gpointer da
 
 					log_global("socks", LOG_INFO, "Request to connect to %s:%d", hostname, port);
 
-					result = socks_map_network_fqdn(_global, hostname, port);
+					result = socks_map_network_fqdn(cl->global, hostname, port);
 
 					if (!result) {
 						log_global("socks", LOG_WARNING, "Unable to return network matching %s:%d", hostname, port);
@@ -411,6 +410,7 @@ static gboolean handle_new_client (GIOChannel *ioc, GIOCondition o, gpointer dat
 	int ns;
 	
 	cl = g_new0(struct socks_client, 1);
+	cl->global = data;
 	cl->clientname_len = sizeof(struct sockaddr_in6);
 	cl->clientname = g_malloc(cl->clientname_len);
 	
@@ -515,7 +515,7 @@ static void load_config(struct global *global)
 		return;
 	}
 
-	server_channel_in = g_io_add_watch(server_channel, G_IO_IN, handle_new_client, NULL);
+	server_channel_in = g_io_add_watch(server_channel, G_IO_IN, handle_new_client, global);
 	g_io_channel_unref(server_channel);
 
 	log_global("socks", LOG_INFO, "Listening for SOCKS connections on port %d", port);

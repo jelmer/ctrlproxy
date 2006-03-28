@@ -1,7 +1,7 @@
  Otherwise indicated differently, all changes made by 
  	Jelmer Vernooij <jelmer@vernstok.nl>
 
-Ctrlproxy 2.7:
+Ctrlproxy 3.0:
  * Removed dependency on popt
  * Move to bzr
  * Make linestack_file the default

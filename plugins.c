@@ -106,6 +106,9 @@ gboolean init_plugins(const char *plugin_dir)
 		}
 
 		while ((name = g_dir_read_name(dir))) {
+			if (g_strcasecmp(name + strlen(name) - strlen(G_MODULE_SUFFIX), G_MODULE_SUFFIX) != 0)
+				continue;
+
 			if (!load_plugin(plugin_dir, name))
 				ret = FALSE;
 		}

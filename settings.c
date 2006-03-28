@@ -48,7 +48,7 @@ static void config_save_tcp_servers(struct network_config *n, GKeyFile *kf)
 		i++;
 	}
 
-	g_key_file_set_string_list(kf, NULL, "servers", values, i);
+	g_key_file_set_string_list(kf, "global", "servers", values, i);
 
 	g_strfreev(values);
 }
@@ -64,17 +64,17 @@ static void config_save_network(const char *dir, struct network_config *n)
 
 	kf = n->keyfile;
 
-	g_key_file_set_boolean(kf, NULL, "autoconnect", n->autoconnect);
-	g_key_file_set_string(kf, NULL, "fullname", n->fullname);
-	g_key_file_set_string(kf, NULL, "nick", n->nick);
-	g_key_file_set_string(kf, NULL, "username", n->username);
+	g_key_file_set_boolean(kf, "global", "autoconnect", n->autoconnect);
+	g_key_file_set_string(kf, "global", "fullname", n->fullname);
+	g_key_file_set_string(kf, "global", "nick", n->nick);
+	g_key_file_set_string(kf, "global", "username", n->username);
 
 	switch(n->type) {
 	case NETWORK_VIRTUAL:
-		g_key_file_set_string(kf, NULL, "virtual", n->type_settings.virtual_type);
+		g_key_file_set_string(kf, "global", "virtual", n->type_settings.virtual_type);
 		break;
 	case NETWORK_PROGRAM:
-		g_key_file_set_string(kf, NULL, "program", n->type_settings.program_location);
+		g_key_file_set_string(kf, "global", "program", n->type_settings.program_location);
 		break;
 	case NETWORK_TCP:
 		config_save_tcp_servers(n, kf);
@@ -146,7 +146,7 @@ static void config_load_servers(struct network_config *n)
 	char **servers;
 	int i;
 	
-	servers = g_key_file_get_string_list(n->keyfile, NULL, "servers", &size, NULL);
+	servers = g_key_file_get_string_list(n->keyfile, "global", "servers", &size, NULL);
 
 	if (!servers)
 		return;
@@ -198,34 +198,34 @@ static struct network_config *config_load_network(struct ctrlproxy_config *cfg, 
 
 	g_free(filename);
 
-	n->autoconnect = (!g_key_file_has_key(kf, NULL, "autoconnect", NULL)) ||
-					   g_key_file_get_boolean(kf, NULL, "autoconnect", NULL);
+	n->autoconnect = (!g_key_file_has_key(kf, "global", "autoconnect", NULL)) ||
+					   g_key_file_get_boolean(kf, "global", "autoconnect", NULL);
 
-	if (g_key_file_has_key(kf, NULL, "fullname", NULL)) {
-		n->fullname = g_key_file_get_string(kf, NULL, "fullname", NULL);
+	if (g_key_file_has_key(kf, "global", "fullname", NULL)) {
+		n->fullname = g_key_file_get_string(kf, "global", "fullname", NULL);
 	}
 
-	if (g_key_file_has_key(kf, NULL, "nick", NULL)) {
-		n->nick = g_key_file_get_string(kf, NULL, "nick", NULL);
+	if (g_key_file_has_key(kf, "global", "nick", NULL)) {
+		n->nick = g_key_file_get_string(kf, "global", "nick", NULL);
 	}
 
-	if (g_key_file_has_key(kf, NULL, "username", NULL)) {
-		n->username = g_key_file_get_string(kf, NULL, "username", NULL);
+	if (g_key_file_has_key(kf, "global", "username", NULL)) {
+		n->username = g_key_file_get_string(kf, "global", "username", NULL);
 	}
 
-	if (g_key_file_has_key(kf, NULL, "ignore_first_nick", NULL)) {
-		n->ignore_first_nick = g_key_file_get_boolean(kf, NULL, "ignore_first_nick", NULL);
+	if (g_key_file_has_key(kf, "global", "ignore_first_nick", NULL)) {
+		n->ignore_first_nick = g_key_file_get_boolean(kf, "global", "ignore_first_nick", NULL);
 	}
 
-	if (g_key_file_has_key(kf, NULL, "password", NULL)) {
-		n->password = g_key_file_get_string(kf, NULL, "password", NULL);
+	if (g_key_file_has_key(kf, "global", "password", NULL)) {
+		n->password = g_key_file_get_string(kf, "global", "password", NULL);
 	}
 
 	n->name = g_strdup(name);
 
-	if (g_key_file_has_key(kf, NULL, "program", NULL)) 
+	if (g_key_file_has_key(kf, "global", "program", NULL)) 
 		n->type = NETWORK_PROGRAM;
-	else if (g_key_file_has_key(kf, NULL, "virtual", NULL)) 
+	else if (g_key_file_has_key(kf, "global", "virtual", NULL)) 
 		n->type = NETWORK_VIRTUAL;
 	else 
 		n->type = NETWORK_TCP;
@@ -235,10 +235,10 @@ static struct network_config *config_load_network(struct ctrlproxy_config *cfg, 
 		config_load_servers(n);
 		break;
 	case NETWORK_PROGRAM:
-		n->type_settings.program_location = g_key_file_get_string(kf, NULL, "program", NULL);
+		n->type_settings.program_location = g_key_file_get_string(kf, "global", "program", NULL);
 		break;
 	case NETWORK_VIRTUAL:
-		n->type_settings.virtual_type = g_key_file_get_string(kf, NULL, "virtual", NULL);
+		n->type_settings.virtual_type = g_key_file_get_string(kf, "global", "virtual", NULL);
 		break;
 	}
 
@@ -272,13 +272,14 @@ static void config_load_networks(struct ctrlproxy_config *cfg)
 	g_dir_close(dir);
 }
 
-struct ctrlproxy_config *load_configuration(const char *file) 
+struct ctrlproxy_config *load_configuration(const char *file, const char *dir) 
 {
 	GKeyFile *kf;
-	GError *error;
+	GError *error = NULL;
 	struct ctrlproxy_config *cfg;
 
 	cfg = g_new0(struct ctrlproxy_config, 1);
+	cfg->config_dir = g_strdup(dir);
 
 	kf = cfg->keyfile = g_key_file_new();
 

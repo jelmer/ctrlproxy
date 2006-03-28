@@ -238,8 +238,7 @@ static void load_module (const struct client *c, char **args, void *userdata)
 
 static void com_save_config (const struct client *c, char **args, void *userdata)
 { 
-	extern struct global *_global; /* FIXME */
-	save_configuration(_global->config, args[1]?args[1]:_global->last_config_file); 
+	save_configuration(c->network->global->config, args[1]?args[1]:c->network->global->last_config_file); 
 }
 
 static void help (const struct client *c, char **args, void *userdata)

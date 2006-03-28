@@ -169,5 +169,3 @@ void fini_log(void)
 	}
 	flog = NULL;
 }
-
-
