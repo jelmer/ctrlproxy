@@ -27,6 +27,30 @@
 #include <netdb.h>
 #include <sys/socket.h>
 
+gboolean g_key_file_save_to_file(GKeyFile *kf, const gchar *file, GError **error)
+{
+	gsize length, nr;
+	char *data = g_key_file_to_data(kf, &length, error);
+	GIOChannel *gio;
+
+	if (!data)
+		return FALSE;
+
+	gio = g_io_channel_new_file(file, "w+", error);
+	if (!gio) {
+		g_free(data);
+		return FALSE;
+	}
+	
+	g_io_channel_write_chars(gio, data, length, &nr, error);
+
+	g_free(data);
+
+	g_io_channel_unref(gio);
+
+	return TRUE;
+}
+
 static void config_save_tcp_servers(struct network_config *n, GKeyFile *kf)
 {
 	GList *gl;
@@ -57,7 +81,8 @@ static void config_save_network(const char *dir, struct network_config *n)
 {
 	GList *gl;
 	GKeyFile *kf;
-
+	char *fn;
+	
 	if (!n->keyfile) {
 		n->keyfile = g_key_file_new();
 	}
@@ -93,7 +118,9 @@ static void config_save_network(const char *dir, struct network_config *n)
 		g_key_file_set_boolean(kf, c->name, "autojoin", c->autojoin);
 	}
 
-	/* FIXME: Save to file */
+	fn = g_build_filename(dir, n->name, NULL);
+	g_key_file_save_to_file(kf, fn, NULL);
+	g_free(fn);
 }
 
 static void config_save_networks(const char *config_dir, GList *networks)
@@ -116,16 +143,19 @@ static void config_save_networks(const char *config_dir, GList *networks)
 	g_free(networksdir);
 }
 
-void save_configuration(struct ctrlproxy_config *cfg, const char *configuration_file)
+void save_configuration(struct ctrlproxy_config *cfg, const char *configuration_dir)
 {
+	char *fn;
 	if (!cfg->keyfile)
 		cfg->keyfile = g_key_file_new();
 
 	/* FIXME */
 
-	config_save_networks(cfg->config_dir, cfg->networks);
+	config_save_networks(configuration_dir, cfg->networks);
 
-	/* FIXME: Save to file */
+	fn = g_build_filename(configuration_dir, "config", NULL);
+	g_key_file_save_to_file(cfg->keyfile, fn, NULL);
+	g_free(fn);
 }
 
 static void config_load_channel(struct network_config *n, GKeyFile *kf, const char *name)
@@ -274,11 +304,14 @@ static void config_load_networks(struct ctrlproxy_config *cfg)
 	g_dir_close(dir);
 }
 
-struct ctrlproxy_config *load_configuration(const char *file, const char *dir) 
+struct ctrlproxy_config *load_configuration(const char *dir) 
 {
 	GKeyFile *kf;
 	GError *error = NULL;
 	struct ctrlproxy_config *cfg;
+	char *file;
+
+	file = g_build_filename(dir, "config", NULL);
 
 	cfg = g_new0(struct ctrlproxy_config, 1);
 	cfg->config_dir = g_strdup(dir);
@@ -288,6 +321,7 @@ struct ctrlproxy_config *load_configuration(const char *file, const char *dir)
 	if (!g_key_file_load_from_file(kf, file, G_KEY_FILE_KEEP_COMMENTS, &error)) {
 		log_global(NULL, LOG_ERROR, "Can't parse configuration file '%s': %s", file, error->message);
 		g_key_file_free(kf);
+		g_free(file);
 		g_free(cfg);
 		return NULL;
 	}
@@ -295,6 +329,8 @@ struct ctrlproxy_config *load_configuration(const char *file, const char *dir)
 	/* FIXME */
 
 	config_load_networks(cfg);
+
+	g_free(file);
 
 	return cfg;
 }
@@ -313,6 +349,17 @@ struct network_config *network_config_init(struct ctrlproxy_config *cfg)
 		cfg->networks = g_list_append(cfg->networks, s);
 	return s;
 }
+
+void setup_configdir(const char *dir)
+{
+	if(mkdir(dir, 0700) != 0) {
+		log_global(NULL, LOG_ERROR, "Unable to open configuration directory '%s'\n", dir);
+		return;
+	}
+
+	/* FIXME: Copy 'config' from ctrlproxy.config.default */
+}
+
 
 void free_config(struct ctrlproxy_config *cfg)
 {

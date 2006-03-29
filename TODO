@@ -10,9 +10,8 @@ current release (3.0.0):
 - merge noticelog into admin
 - use 'report-time' setting
 - finish upgrade script
-- automatically call upgrade script?
+- finish automatic installation
 - make editing config file optional
-- fix saving config files
 
 next minor release (3.0.1):
 - properly expand second argument of PRIVMSG in log_irssi and log_custom

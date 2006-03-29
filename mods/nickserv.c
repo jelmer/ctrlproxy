@@ -135,16 +135,17 @@ static void conned_data(struct network *n, void *userdata)
 	identify_me(n, n->state->me.nick);
 }
 
-static void update_config(struct global *global)
+static void update_config(struct global *global, const char *dir)
 {
-    char *filename = g_build_filename(global->config->config_dir, "nickserv", NULL);
+    char *filename = g_build_filename(dir, "nickserv", NULL);
     GIOChannel *gio;
     GList *gl;
+	GError *error = NULL;
 
-    gio = g_io_channel_new_file(filename, "w", NULL);
+    gio = g_io_channel_new_file(filename, "w", &error);
 
     if (!gio) {
-        /* FIXME */
+		log_global(NULL, LOG_WARNING, "Unable to open nickserv file `%s': %s", filename, error->message);
         g_free(filename);
         return;
     }
@@ -202,10 +203,12 @@ static void load_config(struct global *global)
 	g_io_channel_unref(gio);
 }
 
-static gboolean init_plugin(struct plugin *p) {
+static gboolean init_plugin(void)
+{
 	add_server_connected_hook("nickserv", conned_data, NULL);
 	add_server_filter("nickserv", log_data, NULL, 1);
-    register_config_notify(load_config);
+	register_load_config_notify(load_config);
+	register_save_config_notify(update_config);
 	return TRUE;
 }
 

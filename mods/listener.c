@@ -215,9 +215,16 @@ struct listener *listener_init(const char *address, const char *port)
 	return l;
 }
 
-static void update_config(GKeyFile *kf)
+static void update_config(struct global *global, const char *path)
 {
 	GList *gl;
+	char *filename = g_build_filename(path, "listener", NULL);
+	GKeyFile *kf; 
+	GError *error = NULL;
+	
+	/* FIXME: Store old GKeyFile somewhere, so we can keep comments... */
+
+	kf = g_key_file_new();
 
 	for (gl = listeners; gl; gl = gl->next) {
 		struct listener *l = gl->data;
@@ -235,6 +242,13 @@ static void update_config(GKeyFile *kf)
 
 		g_free(tmp);
 	}
+
+	if (!g_key_file_save_to_file(kf, filename, &error)) {
+		log_global("listener", LOG_WARNING, "Unable to save to \"%s\": %s", filename, error->message);
+	}
+	
+	g_free(filename);
+	g_key_file_free(kf);
 }
 
 static void load_config(struct global *global)
@@ -295,7 +309,8 @@ static void load_config(struct global *global)
 
 static gboolean init_plugin(void)
 {
-	register_config_notify(load_config);
+	register_load_config_notify(load_config);
+	register_save_config_notify(update_config);
 	return TRUE;
 }
 

@@ -111,7 +111,7 @@ static void load_config(struct global *global)
 
 static gboolean init_plugin() 
 {
-	register_config_notify(load_config);
+	register_load_config_notify(load_config);
 	return TRUE;
 }
 

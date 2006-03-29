@@ -230,7 +230,7 @@ static void load_config(struct global *global)
 static gboolean init_plugin()
 {
 	files = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, (GDestroyNotify)fclose);
-	register_config_notify(load_config);
+	register_load_config_notify(load_config);
 	return TRUE;
 }
 

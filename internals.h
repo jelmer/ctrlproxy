@@ -95,5 +95,7 @@ void client_replicate(struct client *);
 
 /* main.c */
 void free_global(struct global *);
+void config_load_notify(struct global *global);
+void config_save_notify(struct global *global, const char *);
 
 #endif /* __INTERNALS_H__ */

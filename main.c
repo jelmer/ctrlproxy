@@ -1,6 +1,6 @@
 /*
 	ctrlproxy: A modular IRC proxy
-	(c) 2002-2005 Jelmer Vernooij <jelmer@nl.linux.org>
+	(c) 2002-2006 Jelmer Vernooij <jelmer@nl.linux.org>
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -82,6 +82,7 @@ static void clean_exit()
 	g_main_loop_quit(main_loop);
 
 	path = g_build_filename(_global->config->config_dir, "autosave", NULL);
+	config_save_notify(_global, path);
 	save_configuration(_global->config, path);
 	g_free(path);
 	free_config(_global->config);
@@ -109,13 +110,23 @@ static void signal_quit(int sig)
 static void signal_save(int sig)
 {
 	log_global(NULL, LOG_INFO, "Received USR1 signal, saving configuration...");
-	save_configuration(_global->config, _global->last_config_file);
+	config_save_notify(_global, _global->config->config_dir);
+	save_configuration(_global->config, _global->config->config_dir);
 }
 
-struct global *new_global()
+struct global *new_global(const char *config_dir)
 {
 	struct global *global = g_new0(struct global, 1);
 
+	global->config = load_configuration(config_dir);
+
+	if (!global->config) {
+		g_free(global);
+		return NULL;
+	}
+
+	config_load_notify(global);
+	
 	return global;
 }
 
@@ -125,31 +136,46 @@ void free_global(struct global *global)
 	fini_networks(global);
 }
 
-static GList *notifies = NULL;
+static GList *load_notifies = NULL, *save_notifies = NULL;
 
-void register_config_notify(config_notify_fn fn)
+void register_load_config_notify(config_load_notify_fn fn)
 {
-	notifies = g_list_append(notifies, fn);
+	load_notifies = g_list_append(load_notifies, fn);
 }
 
-void config_notify(struct global *global)
+void register_save_config_notify(config_save_notify_fn fn)
+{
+	save_notifies = g_list_append(save_notifies, fn);
+}
+
+void config_load_notify(struct global *global)
 {
 	GList *gl;
-	for (gl = notifies; gl; gl = gl->next) {
-		config_notify_fn fn = gl->data;
+	for (gl = load_notifies; gl; gl = gl->next) {
+		config_load_notify_fn fn = gl->data;
 
 		fn(global);
+	}
+}
+
+void config_save_notify(struct global *global, const char *dest)
+{
+	GList *gl;
+	for (gl = save_notifies; gl; gl = gl->next) {
+		config_save_notify_fn fn = gl->data;
+
+		fn(global, dest);
 	}
 }
 
 int main(int argc, char **argv)
 {
 	int isdaemon = 0;
-	char *logfile = NULL, *rcfile = NULL;
-	char *configuration_file;
+	char *logfile = NULL;
 	extern enum log_level current_log_level;
 	extern gboolean no_log_timestamp;
-	char *config_dir;
+	const char *config_dir = NULL;
+	char *tmp;
 	const char *inetd_client = NULL;
 	gboolean version = FALSE;
 	GOptionContext *pc;
@@ -159,7 +185,7 @@ int main(int argc, char **argv)
 		{"no-timestamp", 'n', FALSE, G_OPTION_ARG_NONE, &no_log_timestamp, "No timestamps in logs" },
 		{"daemon", 'D', 0, G_OPTION_ARG_NONE, &isdaemon, ("Run in the background (as a daemon)")},
 		{"log", 'l', 0, G_OPTION_ARG_STRING, &logfile, ("Log messages to specified file"), ("FILE")},
-		{"rc-file", 'r', 0, G_OPTION_ARG_STRING, &rcfile, ("Use configuration file from specified location"), ("FILE")},
+		{"config-dir", 'c', 0, G_OPTION_ARG_STRING, &config_dir, ("Override configuration directory"), ("DIR")},
 		{"version", 'v', 'v', G_OPTION_ARG_NONE, &version, ("Show version information")},
 		{ NULL }
 	};
@@ -189,12 +215,15 @@ int main(int argc, char **argv)
 
 	if (version) {
 		printf("ctrlproxy %s\n", VERSION);
-		printf("(c) 2002-2005 Jelmer Vernooij et al. <jelmer@nl.linux.org>\n");
+		printf("(c) 2002-2006 Jelmer Vernooij et al. <jelmer@nl.linux.org>\n");
 		return 0;
 	}
 
+	if (config_dir == NULL) 
+		config_dir = g_build_filename(g_get_home_dir(), ".ctrlproxy", NULL);
+
 	if(isdaemon && !logfile) {
-		logfile = g_build_filename(_global->config->config_dir, "log", NULL);
+		logfile = g_build_filename(config_dir, "log", NULL);
 	}
 
 	init_log(logfile);
@@ -230,38 +259,30 @@ int main(int argc, char **argv)
 
 	init_plugins(getenv("MODULESDIR")?getenv("MODULESDIR"):MODULESDIR);
 
-	_global = new_global();	
+	tmp = g_build_filename(config_dir, "config", NULL);
 
-	config_dir = g_build_filename(g_get_home_dir(), ".ctrlproxy", NULL);
-	if(mkdir(config_dir, 0700) != 0 && errno != EEXIST) {
-		log_global(NULL, LOG_ERROR, "Unable to open configuration directory '%s'\n", config_dir);
-		g_free(config_dir);
-		config_dir = NULL;
-	}
-
-	if(rcfile) {
-		configuration_file = g_strdup(rcfile);
-		_global->config = load_configuration(configuration_file, config_dir);
-		_global->last_config_file = configuration_file;
-	} else { 
-#ifdef _WIN32
-		configuration_file = g_build_filename(g_get_home_dir(), "_ctrlproxyrc", NULL);
-#else
-		configuration_file = g_build_filename(g_get_home_dir(), ".ctrlproxyrc", NULL);
-#endif
-		/* Copy configuration file from default location if none existed yet */
-		if(g_file_test(configuration_file, G_FILE_TEST_EXISTS)) {
-			_global->config = load_configuration(configuration_file, config_dir);
-			_global->last_config_file = configuration_file;
+	if (!g_file_test(tmp, G_FILE_TEST_EXISTS)) {
+		char *rcfile = g_build_filename(g_get_home_dir(), ".ctrlproxyrc", NULL);
+		
+		if(g_file_test(rcfile, G_FILE_TEST_EXISTS)) {
+			log_global(NULL, LOG_INFO, "Pre-3.0 style .ctrlproxyrc found, starting upgrade");
+			/* FIXME: Upgrade script */
 		} else {
-			g_free(configuration_file);
-			configuration_file = g_build_filename(SHAREDIR, "ctrlproxyrc.default", NULL);
-			_global->config = load_configuration(configuration_file, config_dir);
-			_global->last_config_file = configuration_file;
+			log_global(NULL, LOG_INFO, "No configuration found, installing one");
+			setup_configdir(config_dir);
 		}
+
+		g_free(rcfile);
+	}
+	g_free(tmp);
+
+	_global = new_global(config_dir);	
+	
+	if (_global == NULL) {
+		log_global(NULL, LOG_ERROR, "Unable to load configuration, exiting...");
+		return 1;
 	}
 
-	config_notify(_global);
 	load_networks(_global, _global->config);
 
 	/* Determine correct modules directory */
