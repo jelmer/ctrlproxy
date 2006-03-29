@@ -203,6 +203,7 @@ void free_listener(struct listener *l)
 struct listener *listener_init(const char *address, const char *port)
 {
 	struct listener *l = g_new0(struct listener, 1);
+
 	l->address = g_strdup(address);
 	l->port = g_strdup(port);
 
@@ -247,6 +248,8 @@ static void load_config(struct global *global)
 	kf = g_key_file_new();
 
 	if (!g_key_file_load_from_file(kf, filename, G_KEY_FILE_KEEP_COMMENTS, NULL)) {
+		g_free(filename);
+		g_key_file_free(kf);
 		return;
 	}
 		
@@ -264,13 +267,16 @@ static void load_config(struct global *global)
 			port++;
 		}
 			
-		l = listener_init(address, port?port:"6667");
+		l = listener_init(port?address:"0.0.0.0", port);
+
+		g_free(address);
 
 		l->password = g_key_file_get_string(kf, groups[i], "password", NULL);
 		if (g_key_file_has_key(kf, groups[i], "ssl", NULL))
 			l->ssl = g_key_file_get_boolean(kf, groups[i], "ssl", NULL);
 
 		if (g_key_file_has_key(kf, groups[i], "network", NULL)) {
+
 			char *tmp = g_key_file_get_string(kf, groups[i], "network", NULL);
 			l->network = find_network(global, tmp);
 			if (!l->network) {
@@ -282,7 +288,9 @@ static void load_config(struct global *global)
 		start_listener(l);
 	}
 
-	g_free(groups);
+	g_strfreev(groups);
+	g_free(filename);
+	g_key_file_free(kf);
 }
 
 static gboolean init_plugin(void)

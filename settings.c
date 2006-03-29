@@ -112,6 +112,8 @@ static void config_save_networks(const char *config_dir, GList *networks)
 		struct network_config *n = gl->data;		
 		config_save_network(networksdir, n);
 	}
+
+	g_free(networksdir);
 }
 
 void save_configuration(struct ctrlproxy_config *cfg, const char *configuration_file)
@@ -347,8 +349,11 @@ void free_config(struct ctrlproxy_config *cfg)
 			break;
 		}
 		cfg->networks = g_list_remove(cfg->networks, nc);
+		g_key_file_free(nc->keyfile);
 		g_free(nc);
 	}
+	g_free(cfg->config_dir);
+	g_key_file_free(cfg->keyfile);
 	g_free(cfg);
 }
 

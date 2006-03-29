@@ -67,6 +67,8 @@ void free_linestack_context(struct linestack_context *ctx)
 {
 	if (ctx)
 		ctx->ops->fini(ctx);
+
+	g_free(ctx);
 }
 
 linestack_marker *linestack_get_marker_numlines (struct linestack_context *ctx, struct network *n, int lines)

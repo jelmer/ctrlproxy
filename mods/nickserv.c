@@ -196,6 +196,10 @@ static void load_config(struct global *global)
 		nicks = g_list_append(nicks, e);   
         g_free(parts);
     }
+
+	g_free(filename);
+
+	g_io_channel_unref(gio);
 }
 
 static gboolean init_plugin(struct plugin *p) {
