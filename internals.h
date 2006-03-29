@@ -100,4 +100,9 @@ void free_global(struct global *);
 void config_load_notify(struct global *global);
 void config_save_notify(struct global *global, const char *);
 
+/* nickserv.c */
+void init_nickserv(void);
+gboolean nickserv_load(struct global *global);
+gboolean nickserv_save(struct global *global, const char *dir);
+
 #endif /* __INTERNALS_H__ */

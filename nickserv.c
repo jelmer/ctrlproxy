@@ -1,6 +1,6 @@
 /* 
 	ctrlproxy: A modular IRC proxy
-	(c) 2003 Jelmer Vernooij <jelmer@nl.linux.org>
+	(c) 2003,2006 Jelmer Vernooij <jelmer@nl.linux.org>
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -27,12 +27,10 @@ struct nickserv_entry {
 	const char *pass;
 };
 
-static GList *nicks = NULL;
-
 static const char *nickserv_find_nick(struct network *n, char *nick)
 {
 	GList *gl;
-	for (gl = nicks; gl; gl = gl->next) {
+	for (gl = n->global->nickserv_nicks; gl; gl = gl->next) {
 		struct nickserv_entry *e = gl->data;
 
 		if (g_strcasecmp(e->nick, nick)) 
@@ -70,7 +68,8 @@ static void identify_me(struct network *network, char *nick)
 	}
 }
 
-static gboolean log_data(struct network *n, struct line *l, enum data_direction dir, void *userdata) {
+static gboolean log_data(struct network *n, struct line *l, enum data_direction dir, void *userdata) 
+{
 	static char *nickattempt = NULL;
 
 	/* User has changed his/her nick. Check whether this nick needs to be identified */
@@ -91,10 +90,11 @@ static gboolean log_data(struct network *n, struct line *l, enum data_direction 
 			struct nickserv_entry *e = NULL;
 			GList *gl;
 		
-			for (gl = nicks; gl; gl = gl->next) {
+			for (gl = n->global->nickserv_nicks; gl; gl = gl->next) {
 				e = gl->data;
 
-				if (e->network && !strcasecmp(e->network, n->name) && !strcasecmp(e->nick, n->state->me.nick)) {
+				if (e->network && !g_strcasecmp(e->network, n->name) && 
+					!g_strcasecmp(e->nick, n->state->me.nick)) {
 					break;		
 				}
 			}
@@ -103,7 +103,7 @@ static gboolean log_data(struct network *n, struct line *l, enum data_direction 
 				e = g_new0(struct nickserv_entry, 1);
 				e->nick = g_strdup(n->state->me.nick);
 				e->network = g_strdup(n->name);
-				nicks = g_list_prepend(nicks, e);
+				n->global->nickserv_nicks = g_list_prepend(n->global->nickserv_nicks, e);
 			}
 
 			e->pass = g_strdup(l->args[2] + strlen("IDENTIFY "));
@@ -135,7 +135,7 @@ static void conned_data(struct network *n, void *userdata)
 	identify_me(n, n->state->me.nick);
 }
 
-static void update_config(struct global *global, const char *dir)
+gboolean nickserv_save(struct global *global, const char *dir)
 {
     char *filename = g_build_filename(dir, "nickserv", NULL);
     GIOChannel *gio;
@@ -147,10 +147,10 @@ static void update_config(struct global *global, const char *dir)
     if (!gio) {
 		log_global(NULL, LOG_WARNING, "Unable to open nickserv file `%s': %s", filename, error->message);
         g_free(filename);
-        return;
+        return FALSE;
     }
 
-	for (gl = nicks; gl; gl = gl->next) {
+	for (gl = global->nickserv_nicks; gl; gl = gl->next) {
 		struct nickserv_entry *n = gl->data;
         char *line;
         gsize nr;
@@ -164,56 +164,59 @@ static void update_config(struct global *global, const char *dir)
     
     g_io_channel_unref(gio);
     g_free(filename);
+
+	return TRUE;
 }
 
-static void load_config(struct global *global)
+gboolean nickserv_load(struct global *global)
 {
     char *filename = g_build_filename(global->config->config_dir, "nickserv", NULL);
     GIOChannel *gio;
     char *ret;
-    gsize nr;
+    gsize nr, term;
 
     gio = g_io_channel_new_file(filename, "r", NULL);
 
     if (!gio) {
         /* FIXME */
         g_free(filename);
-        return;
+        return FALSE;
     }
 
-    while (G_IO_STATUS_NORMAL == g_io_channel_read_line(gio, &ret, &nr, NULL, NULL))
+    while (G_IO_STATUS_NORMAL == g_io_channel_read_line(gio, &ret, &nr, &term, NULL))
     {
         char **parts; 
 		struct nickserv_entry *e;
 
+		ret[term] = '\0';
+
         parts = g_strsplit(ret, "\t", 3);
         g_free(ret);
+
+		if (!parts[0] || !parts[1]) {
+			g_strfreev(parts);
+			continue;
+		}
+			
         
 		e = g_new0(struct nickserv_entry, 1);
 		e->nick = parts[0];
 		e->pass = parts[1];
 		e->network = (parts[2] && strcmp(parts[2], "*") != 0)?parts[2]:NULL;
 	
-		nicks = g_list_append(nicks, e);   
+		global->nickserv_nicks = g_list_append(global->nickserv_nicks, e);   
         g_free(parts);
     }
 
 	g_free(filename);
 
 	g_io_channel_unref(gio);
-}
 
-static gboolean init_plugin(void)
-{
-	add_server_connected_hook("nickserv", conned_data, NULL);
-	add_server_filter("nickserv", log_data, NULL, 1);
-	register_load_config_notify(load_config);
-	register_save_config_notify(update_config);
 	return TRUE;
 }
 
-struct plugin_ops plugin = {
-	.name = "nickserv",
-	.version = 0,
-	.init = init_plugin,
-};
+void init_nickserv(void)
+{
+	add_server_connected_hook("nickserv", conned_data, NULL);
+	add_server_filter("nickserv", log_data, NULL, 1);
+}

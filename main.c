@@ -85,6 +85,7 @@ static void clean_exit()
 	config_save_notify(_global, path);
 	if (_global->config->autosave)
 		save_configuration(_global->config, path);
+	nickserv_save(_global, path);
 	free_config(_global->config);
 
 	free_global(_global);
@@ -112,6 +113,7 @@ static void signal_save(int sig)
 	log_global(NULL, LOG_INFO, "Received USR1 signal, saving configuration...");
 	config_save_notify(_global, _global->config->config_dir);
 	save_configuration(_global->config, _global->config->config_dir);
+	nickserv_save(_global, _global->config->config_dir);
 }
 
 struct global *new_global(const char *config_dir)
@@ -119,6 +121,8 @@ struct global *new_global(const char *config_dir)
 	struct global *global = g_new0(struct global, 1);
 
 	global->config = load_configuration(config_dir);
+
+	nickserv_load(global);
 
 	if (!global->config) {
 		g_free(global);
@@ -256,6 +260,8 @@ int main(int argc, char **argv)
 		return -1;
 #endif
 	} 
+
+	init_nickserv();
 
 	init_plugins(getenv("MODULESDIR")?getenv("MODULESDIR"):MODULESDIR);
 

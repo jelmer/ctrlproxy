@@ -56,6 +56,7 @@ struct global {
 	struct ctrlproxy_config *config;
 	struct linestack_context *linestack;
 	GList *networks;
+	GList *nickserv_nicks;
 };
 
 /* main.c */
