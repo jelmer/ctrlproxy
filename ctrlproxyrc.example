@@ -11,6 +11,9 @@ replication = none # Possible values: none, simple, highlight, disconnect
 # Override motd-file location
 #motd-file = /tmp/my-motd
 
+#Disable autosave on exit
+#autosave = False
+
 # Support for interfacing to ctrlproxy 
 # using /MSG ctrlproxy or /CTRLPROXY -->
 [admin]

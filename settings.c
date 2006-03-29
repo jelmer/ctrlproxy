@@ -151,8 +151,12 @@ void save_configuration(struct ctrlproxy_config *cfg, const char *configuration_
 
 	g_key_file_set_boolean(cfg->keyfile, "global", "autosave", cfg->autosave);
 	g_key_file_set_boolean(cfg->keyfile, "global", "separate-processes", cfg->separate_processes);
-	g_key_file_set_string(cfg->keyfile, "global", "replication", cfg->replication);
-	g_key_file_get_string(cfg->keyfile, "global", "linestack", cfg->linestack_backend);
+
+	if (cfg->replication)
+		g_key_file_set_string(cfg->keyfile, "global", "replication", cfg->replication);
+	if (cfg->linestack_backend) 
+		g_key_file_set_string(cfg->keyfile, "global", "linestack", cfg->linestack_backend);
+	g_key_file_set_string(cfg->keyfile, "global", "motd-file", cfg->motd_file);
 
 	config_save_networks(configuration_dir, cfg->networks);
 
@@ -345,6 +349,14 @@ struct ctrlproxy_config *load_configuration(const char *dir)
 	cfg->replication = g_key_file_get_string(kf, "global", "replication", NULL);
 	cfg->linestack_backend = g_key_file_get_string(kf, "global", "linestack", NULL);
 
+    if (g_key_file_has_key(kf, "global", "motd-file", NULL))
+		cfg->motd_file = g_key_file_get_string(kf, "global", "motd-file", NULL);
+    else 
+	    cfg->motd_file = g_build_filename(SHAREDIR, "motd", NULL);
+
+	if(!g_file_test(cfg->motd_file, G_FILE_TEST_EXISTS))
+		log_global(NULL, LOG_ERROR, "Can't open MOTD file '%s' for reading", cfg->motd_file);
+
 	config_load_networks(cfg);
 
 	g_free(file);
@@ -419,6 +431,7 @@ void free_config(struct ctrlproxy_config *cfg)
 	g_free(cfg->config_dir);
 	g_free(cfg->replication);
 	g_free(cfg->linestack_backend);
+	g_free(cfg->motd_file);
 	g_key_file_free(cfg->keyfile);
 	g_free(cfg);
 }

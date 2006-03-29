@@ -47,6 +47,8 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition condition, gpo
 	GError *error = NULL;
 	GIOStatus status;
 
+	g_assert(c);
+
 	status = irc_recv_line(c, &error, &l);
 
 	if (status != G_IO_STATUS_NORMAL)

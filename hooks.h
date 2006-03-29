@@ -45,10 +45,6 @@ typedef void (*lose_client_hook) (struct client *, void *userdata);
 G_MODULE_EXPORT void add_lose_client_hook(const char *name, lose_client_hook h, void *userdata);
 G_MODULE_EXPORT void del_lose_client_hook(const char *name);
 
-typedef char ** (*motd_hook) (struct client *, void *userdata);
-G_MODULE_EXPORT void add_motd_hook(const char *name, motd_hook, void *userdata);
-G_MODULE_EXPORT void del_motd_hook(const char *name);
-
 typedef void (*server_connected_hook) (struct network *, void *userdata);
 G_MODULE_EXPORT void add_server_connected_hook(const char *name, server_connected_hook h, void *userdata);
 G_MODULE_EXPORT void del_server_connected_hook(const char *name);

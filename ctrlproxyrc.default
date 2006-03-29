@@ -11,6 +11,11 @@ replication = none # Possible values: none, simple, highlight, disconnect
 # Override motd-file location
 #motd-file = /tmp/my-motd
 
+# Prepend all lines with the time a line was received when replicating
+report-time = false
+
+autosave = true
+
 # Support for interfacing to ctrlproxy 
 # using /MSG ctrlproxy or /CTRLPROXY -->
 [admin]
@@ -19,9 +24,6 @@ replication = none # Possible values: none, simple, highlight, disconnect
 # (in case "replication = highlight")
 # Seperate using comma's 
 matches = ctrlproxy, foobar
-
-# Prepend all lines with the time a line was received when replicating
-report-time = False
 
 # Irssi-style logging
 [log-irssi]
