@@ -81,9 +81,10 @@ static void clean_exit()
 
 	g_main_loop_quit(main_loop);
 
-	path = g_build_filename(_global->config->config_dir, "autosave", NULL);
+	path = _global->config->config_dir;
 	config_save_notify(_global, path);
-	save_configuration(_global->config, path);
+	if (_global->config->autosave)
+		save_configuration(_global->config, path);
 	g_free(path);
 	free_config(_global->config);
 
