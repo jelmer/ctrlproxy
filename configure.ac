@@ -118,8 +118,6 @@ BINS="ctrlproxy$ac_cv_exeext"
 DEFMODULE(log_irssi)
 DEFMODULE(auto_away)
 DEFMODULE(admin)
-DEFMODULE(noticelog)
-DEFMODULE(nickserv)
 DEFMODULE(log_custom)
 DEFMODULE(antiflood)
 DEFMODULE(repl_simple)
