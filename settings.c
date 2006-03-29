@@ -237,14 +237,17 @@ static struct network_config *config_load_network(struct ctrlproxy_config *cfg, 
 					   g_key_file_get_boolean(kf, "global", "autoconnect", NULL);
 
 	if (g_key_file_has_key(kf, "global", "fullname", NULL)) {
+		g_free(n->fullname);
 		n->fullname = g_key_file_get_string(kf, "global", "fullname", NULL);
 	}
 
 	if (g_key_file_has_key(kf, "global", "nick", NULL)) {
+		g_free(n->nick);
 		n->nick = g_key_file_get_string(kf, "global", "nick", NULL);
 	}
 
 	if (g_key_file_has_key(kf, "global", "username", NULL)) {
+		g_free(n->username);
 		n->username = g_key_file_get_string(kf, "global", "username", NULL);
 	}
 
@@ -253,6 +256,7 @@ static struct network_config *config_load_network(struct ctrlproxy_config *cfg, 
 	}
 
 	if (g_key_file_has_key(kf, "global", "password", NULL)) {
+		g_free(n->password);
 		n->password = g_key_file_get_string(kf, "global", "password", NULL);
 	}
 
@@ -413,6 +417,8 @@ void free_config(struct ctrlproxy_config *cfg)
 		g_free(nc);
 	}
 	g_free(cfg->config_dir);
+	g_free(cfg->replication);
+	g_free(cfg->linestack_backend);
 	g_key_file_free(cfg->keyfile);
 	g_free(cfg);
 }

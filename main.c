@@ -85,7 +85,6 @@ static void clean_exit()
 	config_save_notify(_global, path);
 	if (_global->config->autosave)
 		save_configuration(_global->config, path);
-	g_free(path);
 	free_config(_global->config);
 
 	free_global(_global);

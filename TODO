@@ -10,7 +10,6 @@ current release (3.0.0):
 - merge noticelog into admin
 - use 'report-time' setting
 - finish upgrade script
-- finish automatic installation
 - make editing config file optional
 
 next minor release (3.0.1):
