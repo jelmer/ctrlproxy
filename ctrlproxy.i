@@ -263,21 +263,6 @@ static void pyclient_hook_handler (struct client *c, void *userdata)
 	Py_DECREF(argobj);
 }
 
-static char **pymotd_hook_handler (struct network *c, void *userdata)
-{
-	PyObject *argobj;
-	PyObject *pyfunc = userdata, *ret;
-	argobj = Py_BuildValue("()"); /* FIXME: network */
-	ret = PyEval_CallObject(pyfunc, argobj);
-	if (ret == NULL) {
-		PyErr_Print();
-		PyErr_Clear();
-	}
-	Py_DECREF(argobj);
-	/* FIXME: handle ret */
-	return NULL;
-}
-
 static gboolean pyserver_filter_handler (struct network *n, struct line *l, enum data_direction dir, void *userdata)
 {
 	PyObject *argobj;
@@ -336,13 +321,6 @@ void py_add_lose_client_hook(const char *name, PyObject *pyfunc)
 		add_lose_client_hook(name, pyclient_hook_handler, pyfunc);
 }
 
-void py_add_motd_hook(const char *name, PyObject *pyfunc)
-{
-	Py_INCREF(pyfunc);
-
-	add_motd_hook(name, pymotd_hook_handler, pyfunc);
-}
-
 void py_add_server_filter(const char *name, PyObject *pyfunc, int priority)
 {
 	Py_INCREF(pyfunc);
@@ -383,9 +361,6 @@ void py_add_new_client_hook(const char *name, PyObject *pyfunc);
 
 %rename(add_lose_client_hook) py_add_lose_client_hook;
 void py_add_lose_client_hook(const char *name, PyObject *pyfunc);
-
-%rename(add_motd_hook) py_add_motd_hook;
-void py_add_motd_hook(const char *name, PyObject *pyfunc);
 
 %rename(add_server_filter) py_add_server_filter;
 void py_add_server_filter(const char *name, PyObject *pyfunc, int priority);
