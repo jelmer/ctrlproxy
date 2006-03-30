@@ -263,7 +263,7 @@ int main(int argc, char **argv)
 
 	init_nickserv();
 
-	init_plugins(getenv("MODULESDIR")?getenv("MODULESDIR"):MODULESDIR);
+	init_plugins(getenv("CTRLPROXY_MODULESDIR")?getenv("CTRLPROXY_MODULESDIR"):MODULESDIR);
 
 	tmp = g_build_filename(config_dir, "config", NULL);
 

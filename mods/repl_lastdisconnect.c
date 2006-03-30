@@ -24,6 +24,9 @@ static GHashTable *lastdisconnect_backlog = NULL;
 
 static void lastdisconnect_mark(struct client *c, void *userdata)
 {
+	if (!c->network)
+		return;
+
 	g_hash_table_replace(lastdisconnect_backlog, c->network, linestack_get_marker(c->network->global->linestack, c->network));
 }
 

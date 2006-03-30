@@ -198,11 +198,15 @@ gboolean nickserv_load(struct global *global)
 			continue;
 		}
 			
-        
 		e = g_new0(struct nickserv_entry, 1);
 		e->nick = parts[0];
 		e->pass = parts[1];
-		e->network = (parts[2] && strcmp(parts[2], "*") != 0)?parts[2]:NULL;
+		if (!parts[2] || !strcmp(parts[2], "*")) {
+			e->network = NULL;
+			g_free(parts[2]);
+		} else {
+			e->network = parts[2];
+		}
 	
 		global->nickserv_nicks = g_list_append(global->nickserv_nicks, e);   
         g_free(parts);

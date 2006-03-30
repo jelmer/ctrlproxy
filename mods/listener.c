@@ -93,8 +93,14 @@ static gboolean handle_new_client(GIOChannel *c_server, GIOCondition condition, 
 {
 	struct listener *listener = _listener;
 	GIOChannel *c;
+	int sock = accept(g_io_channel_unix_get_fd(c_server), NULL, 0);
 
-	c = g_io_channel_unix_new(accept(g_io_channel_unix_get_fd(c_server), NULL, 0));
+	if (sock < 0) {
+		log_global("listener", LOG_WARNING, "Error accepting new connection: %s", strerror(errno));
+		return TRUE;
+	}
+
+	c = g_io_channel_unix_new(sock);
 
 	if (listener->ssl) {
 		GIOChannel *nio = sslize(c, TRUE);
@@ -206,7 +212,7 @@ struct listener *listener_init(const char *address, const char *port)
 {
 	struct listener *l = g_new0(struct listener, 1);
 
-	l->address = g_strdup(address);
+	l->address = address?g_strdup(address):NULL;
 	l->port = g_strdup(port);
 
 	if (l->port == NULL) 
@@ -283,7 +289,7 @@ static void load_config(struct global *global)
 			port++;
 		}
 			
-		l = listener_init(port?address:"0.0.0.0", port);
+		l = listener_init(port?address:NULL, port);
 
 		g_free(address);
 

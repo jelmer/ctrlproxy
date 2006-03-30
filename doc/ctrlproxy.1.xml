@@ -115,6 +115,18 @@ to the configuration file (usually ~/.ctrlproxyrc).
 </refsect1>
 
 <refsect1>
+	<title>ENVIRONMENT VARIABLES</title>
+
+	<variablelist>
+		<varlistentry>
+			<term>CTRLPROXY_MODULESDIR</term>
+			<listitem><para>Override directory that will be searched for 
+					plugins.</para></listitem>
+		</varlistentry>
+	</variablelist>
+</refsect1>
+
+<refsect1>
 	<title>SEE ALSO</title>
 
 <para>irssi (1), ctrlproxyrc (5), http://www.nl.linux.org/~jelmer/ctrlproxy/, ctrlproxyrc.example</para>

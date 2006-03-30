@@ -468,8 +468,7 @@ struct client *client_init(struct network *n, GIOChannel *c, const char *desc)
 {
 	struct client *client;
 
-	if (n == NULL || c == NULL)
-		return NULL;
+	g_assert(c);
 
 	client = g_new0(struct client, 1);
 	g_assert(client);
@@ -497,6 +496,8 @@ struct client *client_init(struct network *n, GIOChannel *c, const char *desc)
 
 			client->description = g_strdup_printf("%s:%s", hostname, service);
 		}
+
+		g_free(sa);
 	}
 
 	client->incoming_id = g_io_add_watch(client->incoming, G_IO_IN | G_IO_HUP, handle_pending_client_receive, client);
