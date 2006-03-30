@@ -226,6 +226,7 @@ void disconnect_client(struct client *c, const char *reason)
 
 	g_free(c->description);
 	g_free(c->username);
+	g_free(c->hostname);
 	g_free(c->fullname);
 	g_free(c->nick);
 	g_free(c);
