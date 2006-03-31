@@ -62,7 +62,6 @@ struct global {
 /* main.c */
 G_MODULE_EXPORT const char *ctrlproxy_version(void);
 G_MODULE_EXPORT const char *get_my_hostname(void);
-G_MODULE_EXPORT struct ctrlproxy_config *get_current_config(void);
 
 typedef void (*config_load_notify_fn) (struct global *);
 typedef void (*config_save_notify_fn) (struct global *, const char *);

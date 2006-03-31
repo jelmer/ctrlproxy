@@ -57,13 +57,6 @@ static const struct admin_command cmd_crash = {
 	"ABORT", do_abort, "", NULL, NULL
 };
 
-static gboolean fini_plugin(void)
-{
-	unregister_admin_command(&cmd_dumpjoined);
-	unregister_admin_command(&cmd_crash);
-	return TRUE;
-}
-
 static gboolean init_plugin(void)
 {
 	if(!plugin_loaded("admin")) {

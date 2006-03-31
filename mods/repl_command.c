@@ -53,7 +53,6 @@ static const struct admin_command cmd_backlog = {
 static gboolean fini_plugin(struct plugin *p) 
 {
 	g_hash_table_destroy(markers);
-	unregister_admin_command(&cmd_backlog);
 	return TRUE;
 }
 

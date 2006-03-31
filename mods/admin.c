@@ -76,7 +76,7 @@ static void add_network (const struct client *c, char **args, void *userdata)
 		return;
 	}
 
-	nc = network_config_init(get_current_config());
+	nc = network_config_init(c->network->global);
 	g_free(nc->name); nc->name = g_strdup(args[1]);
 	load_network(c->network->global, nc);
 }
@@ -285,15 +285,13 @@ static void help (const struct client *c, char **args, void *userdata)
 
 static void list_networks(const struct client *c, char **args, void *userdata)
 {
-	GList *gl = get_network_list();
-	while(gl) {
+	GList *gl;
+	for (gl = c->network->global->networks; gl; gl = gl->next) {
 		struct network *n = gl->data;
 
 		if(!n) admin_out(c, ("%s: Not connected"), n->name);
 		else if(n->reconnect_id) admin_out(c, ("%s: Reconnecting"), n->name);
 		else admin_out(c, ("%s: connected"), n->name);
-
-		gl = gl->next;
 	}
 }
 

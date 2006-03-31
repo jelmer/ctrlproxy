@@ -28,6 +28,7 @@ struct auto_away_data {
 	guint timeout_id;
 	gboolean only_for_noclients;
 	gboolean is_away;
+	struct global *global;
 	char *message;
 	char *nick;
 };
@@ -37,9 +38,9 @@ static gboolean check_time(gpointer user_data)
 	struct auto_away_data *d = user_data;
 
 	if(time(NULL) - d->last_message > d->max_idle_time && !d->is_away) { 
-		GList *sl = get_network_list();
+		GList *sl;
 		d->is_away = TRUE;
-		while(sl) {
+		for (sl = d->global->networks; sl; sl = sl->next) {
 			struct network *s = (struct network *)sl->data;
 			if(!d->only_for_noclients || s->clients == NULL) {
 				char *new_msg;
@@ -50,7 +51,6 @@ static gboolean check_time(gpointer user_data)
 				if (d->nick) 
 					network_send_args(s, "NICK", d->nick, NULL);
 			}
-			sl = g_list_next(sl);
 		}
 	}
 
@@ -70,11 +70,10 @@ static gboolean log_data(struct network *n, struct line *l, enum data_direction 
 	   (!g_strcasecmp(l->args[0], "PRIVMSG") || !g_strcasecmp(l->args[0], "NOTICE"))) {
 		d->last_message = time(NULL);
 		if(d->is_away) {
-			GList *sl = get_network_list();
-			while(sl) {
+			GList *sl;
+			for (sl = d->global->networks; sl; sl = sl->next) {
 				struct network *s = (struct network *)sl->data;
 				network_send_args(s, "AWAY", NULL);
-				sl = g_list_next(sl);
 			}
 			d->is_away = FALSE;
 		}
@@ -93,6 +92,7 @@ static void load_config(struct global *global)
 	}
 
 	d = g_new0(struct auto_away_data,1);
+	d->global = global;
 	
 	add_server_filter("auto-away", log_data, d, -1);
 
