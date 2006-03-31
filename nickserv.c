@@ -61,6 +61,7 @@ static void identify_me(struct network *network, char *nick)
 		const char *nickserv_n = nickserv_nick(network);
 		char *raw;
 		raw = g_strdup_printf("IDENTIFY %s", pass);
+		log_network("nickserv", LOG_INFO, network, "Sending password for %s", nickserv_n);
 		network_send_args(network, "PRIVMSG", nickserv_n, raw, NULL);
 		g_free(raw);
 	} else {
@@ -106,9 +107,11 @@ static gboolean log_data(struct network *n, struct line *l, enum data_direction 
 				n->global->nickserv_nicks = g_list_prepend(n->global->nickserv_nicks, e);
 			}
 
-			e->pass = g_strdup(l->args[2] + strlen("IDENTIFY "));
-			
+			if (e->pass == NULL || 
+				strcmp(e->pass, l->args[2] + strlen("IDENTIFY ")) != 0) {
+				e->pass = g_strdup(l->args[2] + strlen("IDENTIFY "));
 			log_network("nickserv", LOG_INFO, n, "Caching password for nick %s", e->nick);
+			} 
 	}
 
 	/* If we receive a nick-already-in-use message, ghost the current user */

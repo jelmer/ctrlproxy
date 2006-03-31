@@ -671,6 +671,8 @@ void unload_network(struct network *s)
 
 	g_free(s->info.supported_user_modes);
 	g_free(s->info.supported_channel_modes);
+	g_free(s->info.server);
+	g_free(s->info.name);
 
 	g_hash_table_destroy(s->info.features);
 	g_free(s);
