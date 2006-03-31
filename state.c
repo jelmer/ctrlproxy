@@ -316,8 +316,9 @@ static void handle_join(struct network_state *s, struct line *l)
 	struct channel_nick *ni;
 	int i;
 	char **channels;
+	char *nick;
 
-	if (line_get_nick(l) == NULL) {
+	if ((nick = line_get_nick(l)) == NULL) {
 		log_network_state(NULL, LOG_WARNING, s, "No hostmask for JOIN line received from server");
 		return;
 	}
@@ -328,16 +329,17 @@ static void handle_join(struct network_state *s, struct line *l)
 		/* Someone is joining a channel the user is on */
 		c = find_add_channel(s, channels[i]);
 		g_assert(s->channels);
-		ni = find_add_channel_nick(c, line_get_nick(l));
+		ni = find_add_channel_nick(c, nick);
 		network_nick_set_hostmask(ni->global_nick, l->origin);
 
 		/* The user is joining a channel */
-		if(!irccmp(s->info, line_get_nick(l), s->me.nick)) {
+		if(!irccmp(s->info, nick, s->me.nick)) {
 			log_network_state(NULL, LOG_INFO, s, "Joining channel %s", c->name);
 		} else {
-			log_network_state(NULL, LOG_TRACE, s, "%s joins channel %s", line_get_nick(l), c->name);
+			log_network_state(NULL, LOG_TRACE, s, "%s joins channel %s", nick, c->name);
 		}
 	}
+	g_free(nick);
 	g_strfreev(channels);
 }
 
@@ -348,8 +350,9 @@ static void handle_part(struct network_state *s, struct line *l)
 	struct channel_nick *n;
 	char **channels;
 	int i;
+	char *nick = line_get_nick(l);
 
-	if(!line_get_nick(l))return;
+	if (!nick)return;
 
 	channels = g_strsplit(l->args[1], ",", 0);
 
@@ -361,20 +364,21 @@ static void handle_part(struct network_state *s, struct line *l)
 			continue;
 		}
 
-		n = find_channel_nick(c, line_get_nick(l));
+		n = find_channel_nick(c, nick);
 		if(n) {
 			free_channel_nick(n);
 		} else {
-			log_network_state(NULL, LOG_WARNING, s, "Can't remove nick %s from channel %s: nick not on channel", line_get_nick(l), channels[i]);
+			log_network_state(NULL, LOG_WARNING, s, "Can't remove nick %s from channel %s: nick not on channel", nick, channels[i]);
 		}
 
-		if(!irccmp(s->info, line_get_nick(l), s->me.nick) && c) {
+		if(!irccmp(s->info, nick, s->me.nick) && c) {
 			log_network_state(NULL, LOG_INFO, s, "Leaving %s", channels[i]);
 			free_channel(c);
 		} else {
-			log_network_state(NULL, LOG_TRACE, s, "%s leaves %s", line_get_nick(l), channels[i]);
+			log_network_state(NULL, LOG_TRACE, s, "%s leaves %s", nick, channels[i]);
 		}
 	}
+	g_free(nick);
 	g_strfreev(channels);
 }
 
@@ -384,6 +388,7 @@ static void handle_kick(struct network_state *s, struct line *l)
 	struct channel_nick *n;
 	char **channels, **nicks;
 	int i;
+	char *nick = line_get_nick(l);
 
 	channels = g_strsplit(l->args[1], ",", 0);
 	nicks = g_strsplit(l->args[2], ",", 0);
@@ -404,11 +409,11 @@ static void handle_kick(struct network_state *s, struct line *l)
 
 		free_channel_nick(n);
 
-		if(!irccmp(s->info, line_get_nick(l), s->me.nick) && c) {
-			log_network_state(NULL, LOG_INFO, s, "Kicked off %s by %s", c->name, line_get_nick(l));
+		if(!irccmp(s->info, nick, s->me.nick) && c) {
+			log_network_state(NULL, LOG_INFO, s, "Kicked off %s by %s", c->name, nick);
 			free_channel(c);
 		} else {
-			log_network_state(NULL, LOG_TRACE, s, "%s kicked off %s by %s", nicks[i], channels[i], line_get_nick(l));
+			log_network_state(NULL, LOG_TRACE, s, "%s kicked off %s by %s", nicks[i], channels[i], nick);
 		}
 	}
 
@@ -416,6 +421,7 @@ static void handle_kick(struct network_state *s, struct line *l)
 		log_network_state(NULL, LOG_WARNING, s, "KICK command has unequal number of channels and nicks");
 	}
 
+	g_free(nick);
 	g_strfreev(nicks);
 	g_strfreev(channels);
 }
@@ -583,7 +589,9 @@ static void handle_end_who(struct network_state *s, struct line *l)
 
 static void handle_quit(struct network_state *s, struct line *l) 
 {
-	struct network_nick *nn = find_network_nick(s, line_get_nick(l));
+	char *nick = line_get_nick(l);
+	struct network_nick *nn = find_network_nick(s, nick);
+	g_free(nick);
 
 	g_assert(nn != &s->me);
 
@@ -619,7 +627,7 @@ static void handle_mode(struct network_state *s, struct line *l)
 							  struct banlist_entry *be = g_new0(struct banlist_entry, 1);
 							  be->time_set = time(NULL);
 							  be->hostmask = g_strdup(l->args[arg]);
-							  be->by = g_strdup(line_get_nick(l));
+							  be->by = line_get_nick(l);
 							  c->banlist = g_list_append(c->banlist, be);
 						  }
 												
@@ -700,16 +708,21 @@ static void handle_004(struct network_state *s, struct line *l)
 static void handle_privmsg(struct network_state *s, struct line *l)
 {
 	struct network_nick *nn;
+	char *nick;
 	if (irccmp(s->info, l->args[1], s->me.nick) != 0) return;
 
-	nn = find_add_network_nick(s, line_get_nick(l));
+	nick = line_get_nick(l);
+	nn = find_add_network_nick(s, nick);
 	nn->query = 1;
+	g_free(nick);
 }
 
 static void handle_nick(struct network_state *s, struct line *l)
 {
 	struct network_nick *nn;
-	nn = find_add_network_nick(s, line_get_nick(l));
+	char *nick = line_get_nick(l);
+	nn = find_add_network_nick(s, nick);
+	g_free(nick);
 	network_nick_set_nick(nn, l->args[1]);
 }
 

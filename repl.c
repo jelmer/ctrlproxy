@@ -90,7 +90,7 @@ gboolean client_send_state(struct client *c, struct network_state *state)
 
 	mode = mode2string(state->me.modes);
 	if (mode) 
-		client_send_args_ex(c, state->me.nick, "MODE", state->me.nick, mode, NULL);
+		client_send_args_ex(c, state->me.nick, "MODE", mode, NULL);
 	g_free(mode);
 
 	return TRUE;

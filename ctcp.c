@@ -143,10 +143,12 @@ gboolean ctcp_process (struct network *n, struct line *l)
 {
 	GList *gl;
 	int i;
-	char *sender = line_get_nick(l), *t;
+	char *sender, *t;
 	char *data;
 	char **args;
 	gboolean ret = FALSE;
+
+	sender = line_get_nick(l);
 
 	data = g_strdup(l->args[2]+1);
 	t = strchr(data, '\001');

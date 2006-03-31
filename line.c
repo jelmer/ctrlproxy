@@ -249,15 +249,15 @@ void free_line(struct line *l) {
 
 char *line_get_nick(struct line *l)
 {
-	static char *nick = NULL;
+	char *nick = NULL;
 	char *t;
 	g_assert(l);
 	g_assert(l->origin);
 
-	if(nick)g_free(nick);
 	nick = g_strdup(l->origin);
 	t = strchr(nick, '!');
-	if(!t)return nick;
+	if(!t) 
+		return nick;
 	*t = '\0';
 	return nick;
 }

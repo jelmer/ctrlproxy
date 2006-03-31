@@ -115,8 +115,13 @@ static char *get_monthname(struct network *n, struct line *l, gboolean case_sens
 
 static char *get_nick(struct network *n, struct line *l, gboolean case_sensitive) {
 	if (l->origin) {
-		if(case_sensitive) return g_ascii_strdown(line_get_nick(l), -1);
-		else return g_strdup(line_get_nick(l)); 
+		char *n = line_get_nick(l);
+		if(case_sensitive) {
+			char *r = g_ascii_strdown(n, -1);
+			g_free(n);
+			return r;
+		}
+		else return n;
 	}
 	
 	return g_strdup("");
@@ -332,7 +337,7 @@ static void file_write_target(struct log_custom_data *data, struct network *netw
 	if(!fmt) return;
 
 	if(!irccmp(network->state->info, network->state->me.nick, l->args[1])) {
-		if (l->origin) t = g_strdup(line_get_nick(l));
+		if (l->origin) t = line_get_nick(l);
 		else t = g_strdup("_messages_");
 	} else {
 		t = g_strdup(l->args[1]);
@@ -382,7 +387,10 @@ static void file_write_channel_query(struct log_custom_data *data, struct networ
 	nick = line_get_nick(l);
 
 	fmt = g_hash_table_lookup(data->fmts, n);
-	if(!fmt) return;
+	if(!fmt) {
+		g_free(nick);
+		return;
+	}
 
 	/* check for the query first */
 	f = find_add_channel_file(data, network, l, nick, FALSE);
@@ -413,12 +421,11 @@ static void file_write_channel_query(struct log_custom_data *data, struct networ
 static gboolean log_custom_data(struct network *network, struct line *l, enum data_direction dir, void *userdata)
 {
     struct log_custom_data *data = userdata;
-	const char *nick = NULL;
-	char *user = NULL;
+	char *nick = NULL;
 	if(!l->args || !l->args[0])return TRUE;
 
-	if (l->origin) nick = line_get_nick(l);
-	if(user){ *user = '\0';user++; }
+	if (l->origin) 
+		nick = line_get_nick(l);
 
 	/* Loop thru possible values for %@ */
 
@@ -487,6 +494,8 @@ static gboolean log_custom_data(struct network *network, struct line *l, enum da
 	} else if(!g_strcasecmp(l->args[0], "NICK") && dir == FROM_SERVER && l->args[1]) {
 		file_write_channel_query(data, network, "nickchange", l);
 	}
+
+	g_free(nick);
 
 	return TRUE;
 }

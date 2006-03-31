@@ -95,11 +95,13 @@ static int parser_stringnl(void)
 static int parser_get_nick(void)
 {
 	struct line l;
+	char *nick = line_get_nick(&l);
 
 	l.origin = "foobar";
-	if (strcmp(line_get_nick(&l), "foobar") != 0) return -3;
+	if (strcmp(nick, "foobar") != 0) { g_free(nick); return -3; }
 	l.origin = "foobar!~username@userhost";
-	if (strcmp(line_get_nick(&l), "foobar") != 0) return -4;
+	if (strcmp(nick, "foobar") != 0) { g_free(nick); return -4; }
+	g_free(nick);
 	return 0;
 }
 
