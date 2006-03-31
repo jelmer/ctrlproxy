@@ -49,43 +49,43 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition condition, gpo
 
 	g_assert(c);
 
-	status = irc_recv_line(c, &error, &l);
+	while ((status = irc_recv_line(c, &error, &l)) == G_IO_STATUS_NORMAL) {
+		g_assert(l);
 
-	if (status != G_IO_STATUS_NORMAL)
-		return FALSE;
-	
-	if (l == NULL) 
-		return TRUE;
-
-	if (!l->args[0]){ 
-		free_line(l);
-		return TRUE;
-	}
-
-	if(!listener->password) {
-		log_network("listener", LOG_WARNING, listener->network, "No password set, allowing client _without_ authentication!");
-	}
-
-	if(!g_strcasecmp(l->args[0], "PASS")) {
-		if (listener->password && strcmp(l->args[1], listener->password)) {
-			log_network("listener", LOG_WARNING, listener->network, "User tried to log in with incorrect password!");
-			irc_sendf(c, ":%s %d %s :Password mismatch", get_my_hostname(), ERR_PASSWDMISMATCH, "*");
-
+		if (!l->args[0]){ 
 			free_line(l);
-			return TRUE;
+			continue;
 		}
 
-		log_network ("listener", LOG_INFO, listener->network, "Client successfully authenticated");
+		if(!listener->password) {
+			log_network("listener", LOG_WARNING, listener->network, "No password set, allowing client _without_ authentication!");
+		}
 
-		client_init(listener->network, c, NULL);
+		if(!g_strcasecmp(l->args[0], "PASS")) {
+			if (listener->password && strcmp(l->args[1], listener->password)) {
+				log_network("listener", LOG_WARNING, listener->network, "User tried to log in with incorrect password!");
+				irc_sendf(c, ":%s %d %s :Password mismatch", get_my_hostname(), ERR_PASSWDMISMATCH, "*");
+	
+				free_line(l);
+				return TRUE;
+			}
 
-		free_line(l); 
-		return FALSE;
-	} else {
-		irc_sendf(c, ":%s %d %s :You are not registered", get_my_hostname(), ERR_NOTREGISTERED, "*");
+			log_network ("listener", LOG_INFO, listener->network, "Client successfully authenticated");
+
+			client_init(listener->network, c, NULL);
+
+			free_line(l); 
+			return FALSE;
+		} else {
+			irc_sendf(c, ":%s %d %s :You are not registered", get_my_hostname(), ERR_NOTREGISTERED, "*");
+		}
+
+		free_line(l);
 	}
 
-	free_line(l);
+	if (status != G_IO_STATUS_AGAIN)
+		return FALSE;
+	
 	return TRUE;
 }
 
@@ -112,6 +112,8 @@ static gboolean handle_new_client(GIOChannel *c_server, GIOCondition condition, 
 	}
 
 	g_io_channel_set_close_on_unref(c, TRUE);
+	g_io_channel_set_encoding(c, NULL, NULL);
+	g_io_channel_set_flags(c, G_IO_FLAG_NONBLOCK, NULL);
 	g_io_add_watch(c, G_IO_IN, handle_client_receive, listener);
 
 	g_io_channel_unref(c);

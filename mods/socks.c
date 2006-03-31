@@ -426,6 +426,7 @@ static gboolean handle_new_client (GIOChannel *ioc, GIOCondition o, gpointer dat
 	g_io_channel_set_close_on_unref(cl->connection, TRUE);
 	cl->state = STATE_NEW;
 	g_io_channel_set_encoding(cl->connection, NULL, NULL);
+	g_io_channel_set_flags(cl->connection, G_IO_FLAG_NONBLOCK, NULL);
 	cl->watch_id = g_io_add_watch(cl->connection, G_IO_IN | G_IO_HUP, handle_client_data, cl);
 	g_io_channel_unref(cl->connection);
 

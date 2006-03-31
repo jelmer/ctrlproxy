@@ -140,32 +140,37 @@ static gboolean handle_server_receive (GIOChannel *c, GIOCondition cond, void *_
 
 	if (cond & G_IO_IN) {
 		GError *err = NULL;
-		GIOStatus status = irc_recv_line(c, &err, &l);
+		GIOStatus status;
+		
+		while ((status = irc_recv_line(c, &err, &l)) == G_IO_STATUS_NORMAL) 
+		{
+			g_assert(l);
 
-		log_network_line(server, l, TRUE);
+			log_network_line(server, l, TRUE);
 
-		if (status == G_IO_STATUS_ERROR) {
+			/* Silently drop empty messages, as allowed by RFC */
+			if(l->argc == 0) {
+				free_line(l);
+				continue;
+			}
+
+			ret = process_from_server(server, l);
+
+			free_line(l);
+
+			if (!ret)
+				return FALSE;
+		}
+
+		if (status != G_IO_STATUS_AGAIN) {
 			log_network(NULL, LOG_WARNING, server, 
-					"Error \"%s\" reading from server, reconnecting in %ds...",
-					err?err->message:"UNKNOWN", server->config->reconnect_interval);
+				"Error \"%s\" reading from server, reconnecting in %ds...",
+				err?err->message:"UNKNOWN", server->config->reconnect_interval);
 			reconnect(server, FALSE);
 			return FALSE;
 		}
-		
-		if(status == G_IO_STATUS_AGAIN || 
-		   status == G_IO_STATUS_EOF || !l) return TRUE;
 
-		/* Silently drop empty messages, as allowed by RFC */
-		if(l->argc == 0) {
-			free_line(l);
-			return TRUE;
-		}
-
-		ret = process_from_server(server, l);
-
-		free_line(l);
-
-		return ret;
+		return TRUE;
 	}
 
 	return TRUE;

@@ -83,16 +83,18 @@ struct line *wait_responses(GIOChannel *ch, const char *cmd[])
 		}
 
 		if (pl.revents & POLLIN)  {
-			status = irc_recv_line(ch, &error, &l);
+			while ((status = irc_recv_line(ch, &error, &l)) == G_IO_STATUS_NORMAL) {
 
-			if (status == G_IO_STATUS_NORMAL && l->argc > 0) {
+				if (l->argc == 0)
+					continue;
 				if (debug) printf("%s ", l->args[0]);
 				if (dump) printf("%s\n", irc_line_string(l));
+
 				for (i = 0; cmd[i]; i++) {
 					if (!strcmp(l->args[0], cmd[i])) 
 						return l;
 				}
-			} 
+			}
 		} else if (pl.revents & POLLHUP) {
 			fprintf(stderr, "remote hup ");
 			return NULL;
