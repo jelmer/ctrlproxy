@@ -294,7 +294,7 @@ static void load_config(struct global *global)
 			port++;
 		}
 			
-		l = listener_init(port?address:NULL, port);
+		l = listener_init(port?address:NULL, port?port:address);
 
 		g_free(address);
 

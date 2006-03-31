@@ -384,6 +384,7 @@ static gboolean connect_current_tcp_server(struct network *s)
 
 	size = sizeof(struct sockaddr_in6);
 	g_free(s->connection.data.tcp.local_name);
+	g_free(s->connection.data.tcp.remote_name);
 	s->connection.data.tcp.remote_name = g_malloc(size);
 	s->connection.data.tcp.local_name = g_malloc(size);
 	s->connection.data.tcp.namelen = getsockname(sock, s->connection.data.tcp.local_name, &size);
