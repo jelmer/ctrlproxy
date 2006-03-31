@@ -90,6 +90,7 @@ static gboolean log_data(struct network *n, struct line *l, enum data_direction 
 		(!g_strcasecmp(l->args[1], nickserv_nick(n)) && !g_strncasecmp(l->args[2], "IDENTIFY ", strlen("IDENTIFY ")))) {
 			struct nickserv_entry *e = NULL;
 			GList *gl;
+			char *newpass = g_strdup(l->args[2] + strlen("IDENTIFY "));
 		
 			for (gl = n->global->nickserv_nicks; gl; gl = gl->next) {
 				e = gl->data;
@@ -97,6 +98,11 @@ static gboolean log_data(struct network *n, struct line *l, enum data_direction 
 				if (e->network && !g_strcasecmp(e->network, n->name) && 
 					!g_strcasecmp(e->nick, n->state->me.nick)) {
 					break;		
+				}
+
+				if (!e->network && !g_strcasecmp(e->nick, n->state->me.nick) &&
+					!g_strcasecmp(e->pass, newpass)) {
+					break;
 				}
 			}
 
@@ -108,10 +114,12 @@ static gboolean log_data(struct network *n, struct line *l, enum data_direction 
 			}
 
 			if (e->pass == NULL || 
-				strcmp(e->pass, l->args[2] + strlen("IDENTIFY ")) != 0) {
-				e->pass = g_strdup(l->args[2] + strlen("IDENTIFY "));
+				strcmp(e->pass, newpass) != 0) {
+				e->pass = g_strdup(newpass);
 				log_network(NULL, LOG_INFO, n, "Caching password for nick %s", e->nick);
 			} 
+
+			g_free(newpass);
 	}
 
 	/* If we receive a nick-already-in-use message, ghost the current user */
