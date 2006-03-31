@@ -38,7 +38,7 @@
 static GMainLoop *main_loop;
 extern char my_hostname[];
 
-struct global *_global;
+struct global *my_global;
 
 static void signal_crash(int sig) 
 {
@@ -77,20 +77,18 @@ static void clean_exit()
 	char *path;
 	kill_pending_clients("Server exiting");
 
-	fini_networks(_global);
-
 	g_main_loop_quit(main_loop);
 
-	path = _global->config->config_dir;
-	config_save_notify(_global, path);
-	if (_global->config->autosave)
-		save_configuration(_global->config, path);
-	nickserv_save(_global, path);
-	free_config(_global->config);
+	path = my_global->config->config_dir;
+	config_save_notify(my_global, path);
+	if (my_global->config->autosave)
+		save_configuration(my_global->config, path);
+	nickserv_save(my_global, path);
 
-	free_global(_global);
+	free_global(my_global);
 
 	g_main_loop_unref(main_loop);
+
 	fini_log();
 }
 
@@ -111,9 +109,9 @@ static void signal_quit(int sig)
 static void signal_save(int sig)
 {
 	log_global(NULL, LOG_INFO, "Received USR1 signal, saving configuration...");
-	config_save_notify(_global, _global->config->config_dir);
-	save_configuration(_global->config, _global->config->config_dir);
-	nickserv_save(_global, _global->config->config_dir);
+	config_save_notify(my_global, my_global->config->config_dir);
+	save_configuration(my_global->config, my_global->config->config_dir);
+	nickserv_save(my_global, my_global->config->config_dir);
 }
 
 struct global *new_global(const char *config_dir)
@@ -122,12 +120,16 @@ struct global *new_global(const char *config_dir)
 
 	global->config = load_configuration(config_dir);
 
+	load_networks(global, global->config);
+
 	nickserv_load(global);
 
 	if (!global->config) {
 		g_free(global);
 		return NULL;
 	}
+
+	global->linestack = new_linestack(global->config);
 
 	config_load_notify(global);
 	
@@ -136,6 +138,8 @@ struct global *new_global(const char *config_dir)
 
 void free_global(struct global *global)
 {
+	fini_networks(global);
+	free_config(global->config);
 	free_linestack_context(global->linestack); global->linestack = NULL;
 	fini_networks(global);
 }
@@ -263,6 +267,7 @@ int main(int argc, char **argv)
 
 	init_nickserv();
 
+	/* Determine correct modules directory */
 	init_plugins(getenv("CTRLPROXY_MODULESDIR")?getenv("CTRLPROXY_MODULESDIR"):MODULESDIR);
 
 	tmp = g_build_filename(config_dir, "config", NULL);
@@ -282,18 +287,14 @@ int main(int argc, char **argv)
 	}
 	g_free(tmp);
 
-	_global = new_global(config_dir);	
+	my_global = new_global(config_dir);	
 	
-	if (_global == NULL) {
+	if (my_global == NULL) {
 		log_global(NULL, LOG_ERROR, "Unable to load configuration, exiting...");
 		return 1;
 	}
 
-	load_networks(_global, _global->config);
-
-	/* Determine correct modules directory */
-	_global->linestack = new_linestack(_global->config);
-	autoconnect_networks(_global);
+	autoconnect_networks(my_global);
 
 	g_option_context_free(pc);
 
@@ -301,7 +302,7 @@ int main(int argc, char **argv)
 
 	if (inetd_client) {
 		GIOChannel *io = g_io_channel_unix_new(0);
-		struct network *n = find_network(_global, inetd_client);
+		struct network *n = find_network(my_global, inetd_client);
 
 		if (!n) {
 			fprintf(stderr, "Unable to find network named '%s'\n", inetd_client);

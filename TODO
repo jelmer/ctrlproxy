@@ -11,6 +11,7 @@ urrent release (3.0.0):
 - use 'report-time' setting
 - finish upgrade script
 - make editing config file optional
+- obey 'separate_processes' option
 
 next minor release (3.0.1):
 - properly expand second argument of PRIVMSG in log_irssi and log_custom

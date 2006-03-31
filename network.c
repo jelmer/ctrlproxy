@@ -424,9 +424,12 @@ static void reconnect(struct network *server, gboolean rm_source)
 
 	g_assert(server->config);
 
-	if (server->config->type == NETWORK_TCP) {
-		server->connection.state = NETWORK_CONNECTION_STATE_RECONNECT_PENDING;
+	if (server->config->type == NETWORK_TCP)
 		server->connection.data.tcp.current_server = network_get_next_tcp_server(server);
+
+	if (server->config->type == NETWORK_TCP ||
+		server->config->type == NETWORK_PROGRAM) {
+		server->connection.state = NETWORK_CONNECTION_STATE_RECONNECT_PENDING;
 		server->reconnect_id = g_timeout_add(1000 * server->config->reconnect_interval, (GSourceFunc) delayed_connect_server, server);
 	} else {
 		connect_server(server);	
@@ -514,6 +517,7 @@ static pid_t piped_child(char* const command[], int *f_in)
 	fcntl(sock[0], F_SETFL, O_NONBLOCK);
 
 	pid = fork();
+
 	if (pid == -1) {
 		log_global(NULL, LOG_ERROR, "fork: %s", strerror(errno));
 		return -1;
@@ -528,8 +532,7 @@ static pid_t piped_child(char* const command[], int *f_in)
 		dup2(sock[1], 0);
 		dup2(sock[1], 1);
 		execvp(command[0], command);
-		log_global(NULL, LOG_ERROR, "Failed to exec %s : %s", command[0], strerror(errno));
-		return -1;
+		exit(-1);
 	}
 
 	close(sock[1]);
