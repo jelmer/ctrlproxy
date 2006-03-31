@@ -172,7 +172,7 @@ gboolean ctcp_process (struct network *n, struct line *l)
 		}
 	}
 
-	for (i = 0; ret && builtins[i].name; i++) {
+	for (i = 0; !ret && builtins[i].name; i++) {
 		if (!g_strcasecmp(builtins[i].name, args[0])) {
 			builtins[i].fn(n, sender, args);
 			ret = TRUE;

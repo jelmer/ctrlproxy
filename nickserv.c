@@ -144,7 +144,7 @@ gboolean nickserv_save(struct global *global, const char *dir)
     gio = g_io_channel_new_file(filename, "w", &error);
 
     if (!gio) {
-		log_global(NULL, LOG_WARNING, "Unable to open nickserv file `%s': %s", filename, error->message);
+		log_global(NULL, LOG_WARNING, "Unable to write nickserv file `%s': %s", filename, error->message);
         g_free(filename);
         return FALSE;
     }
@@ -177,7 +177,6 @@ gboolean nickserv_load(struct global *global)
     gio = g_io_channel_new_file(filename, "r", NULL);
 
     if (!gio) {
-        /* FIXME */
         g_free(filename);
         return FALSE;
     }

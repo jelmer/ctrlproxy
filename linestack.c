@@ -96,8 +96,6 @@ struct network_state *linestack_get_state(
 		struct network *n, 
 		struct linestack_marker *lm)
 {
-	/* FIXME: Return current state rather then NULL in case of 
-	 * failure ? */
 	if (!ctx->ops) return NULL;
 	if (!ctx->ops->get_state) return NULL;
 

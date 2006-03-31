@@ -131,7 +131,7 @@ static void config_save_networks(const char *config_dir, GList *networks)
 
 	if (!g_file_test(networksdir, G_FILE_TEST_IS_DIR)) {
 		if (mkdir(networksdir, 0700) != 0) {
-			/* FIXME: ERROR */
+			log_global(NULL, LOG_ERROR, "Can't create networks directory '%s': %s", networksdir, strerror(errno));
 			return;
 		}
 	}
@@ -222,19 +222,21 @@ static struct network_config *config_load_network(struct ctrlproxy_config *cfg, 
 	char *filename;
 	int i;
 	char **groups;
+	GError *error = NULL;
 	gsize size;
 
-	n = network_config_init(cfg);
-	kf = n->keyfile = g_key_file_new();
+	kf = g_key_file_new();
 
 	filename = g_build_filename(dirname, name, NULL);
 
-	if (!g_key_file_load_from_file(kf, filename, G_KEY_FILE_KEEP_COMMENTS, NULL)) {	
-		/* FIXME: message */
-		/* FIXME: free n */
+	if (!g_key_file_load_from_file(kf, filename, G_KEY_FILE_KEEP_COMMENTS, &error)) {	
+		log_global(NULL, LOG_ERROR, "Can't parse configuration file '%s': %s", filename, error->message);
 		g_key_file_free(kf);
 		return NULL;
 	}	
+
+	n = network_config_init(cfg);
+	n->keyfile = kf;
 
 	g_free(filename);
 

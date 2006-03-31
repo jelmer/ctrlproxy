@@ -112,7 +112,7 @@ static gboolean log_data(struct network *n, struct line *l, enum data_direction 
 		return TRUE;
 
 	if (l->origin) {
-		nick = "FIXME";
+		nick = line_get_nick(l);
 		user = strchr(l->origin, '!');
 		if (user) user++;
 	}
@@ -203,6 +203,8 @@ static gboolean log_data(struct network *n, struct line *l, enum data_direction 
 	}
 
 	if(f)fflush(f);
+
+	g_free(nick);
 
 	return TRUE;
 }
