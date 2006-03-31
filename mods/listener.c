@@ -238,7 +238,10 @@ static void update_config(struct global *global, const char *path)
 		struct listener *l = gl->data;
 		char *tmp;
 
-		tmp = g_strdup_printf("%s:%s", l->address, l->port);
+		if (!l->address) 
+			tmp = g_strdup(l->port);
+		else
+			tmp = g_strdup_printf("%s:%s", l->address, l->port);
 
 		if (l->password) 
 			g_key_file_set_string(kf, tmp, "password", l->password);
