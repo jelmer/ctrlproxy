@@ -60,9 +60,27 @@ struct line *wait_responses(GIOChannel *ch, const char *cmd[])
 {
 	GError *error = NULL;
 	GIOStatus status = G_IO_STATUS_AGAIN;
-	struct line *l = NULL;
+	struct line *l;
 
-	/* FIXME: Timeout */
+	while ((status = irc_recv_line(ch, &error, &l)) == G_IO_STATUS_NORMAL) {
+		int i;
+		g_assert(l);
+
+		if (status == G_IO_STATUS_AGAIN)
+			break;	
+
+		if (l->argc == 0)
+			continue;
+
+		if (debug) printf("%s ", l->args[0]);
+		if (dump) printf("%s\n", irc_line_string(l));
+
+		for (i = 0; cmd[i]; i++) {
+			if (!strcmp(l->args[0], cmd[i])) 
+				return l;
+		}
+	}
+
 	do { 
 		int i, ret;
 		struct pollfd pl;
@@ -83,17 +101,20 @@ struct line *wait_responses(GIOChannel *ch, const char *cmd[])
 		}
 
 		if (pl.revents & POLLIN)  {
-			while ((status = irc_recv_line(ch, &error, &l)) == G_IO_STATUS_NORMAL) {
+			status = irc_recv_line(ch, &error, &l);
 
-				if (l->argc == 0)
-					continue;
-				if (debug) printf("%s ", l->args[0]);
-				if (dump) printf("%s\n", irc_line_string(l));
+			if (status == G_IO_STATUS_AGAIN)
+				continue;
 
-				for (i = 0; cmd[i]; i++) {
-					if (!strcmp(l->args[0], cmd[i])) 
-						return l;
-				}
+			if (!l || l->argc == 0)
+				continue;
+
+			if (debug) printf("%s ", l->args[0]);
+			if (dump) printf("%s\n", irc_line_string(l));
+
+			for (i = 0; cmd[i]; i++) {
+				if (!strcmp(l->args[0], cmd[i])) 
+					return l;
 			}
 		} else if (pl.revents & POLLHUP) {
 			fprintf(stderr, "remote hup ");
@@ -103,10 +124,10 @@ struct line *wait_responses(GIOChannel *ch, const char *cmd[])
 			return NULL;
 		}
 
-	} while(status != G_IO_STATUS_ERROR && 
-		status != G_IO_STATUS_EOF);
+	} while (status == G_IO_STATUS_NORMAL ||
+			 status == G_IO_STATUS_AGAIN);
 	
-	return l;
+	return NULL;
 }
 
 static GList *tests = NULL;
@@ -147,7 +168,7 @@ static pid_t piped_child(char *const command[], int *f_in)
 		dup2(sock[1], 1);
 		execvp(command[0], command);
 		fprintf(stderr, "Failed to exec %s : %s", command[0], strerror(errno));
-		return -1;
+		exit(-1);
 	}
 
 	close(sock[1]);
@@ -161,13 +182,14 @@ static const char *port = "6667";
 
 GIOChannel *new_conn(void)
 {
+	GIOChannel *ch;
 	pid_t child_pid;
 	int std_fd = -1;
 	int fd;
 
 	/* Start the program in question */
 	
-	child_pid = piped_child(args, &std_fd);
+	child_pid = piped_child(&args[1], &std_fd);
 	
 	if (!ip) {
 		fd = std_fd;
@@ -198,7 +220,10 @@ GIOChannel *new_conn(void)
 		}
 	}
 
-	return g_io_channel_unix_new(fd);
+	 ch = g_io_channel_unix_new(fd);
+	g_io_channel_set_flags(ch, G_IO_FLAG_NONBLOCK, NULL);
+
+	return ch;
 }
 
 GIOChannel *new_conn_loggedin(const char *nick)
