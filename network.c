@@ -86,6 +86,9 @@ static gboolean process_from_server(struct network *n, struct line *l)
 		n->connection.state = NETWORK_CONNECTION_STATE_MOTD_RECVD;
 
 		log_network(NULL, LOG_INFO, n, "Successfully logged in");
+
+		nickserv_identify_me(n, n->state->me.nick);
+
 		server_connected_hook_execute(n);
 
 		network_send_args(n, "USERHOST", n->state->me.nick, NULL);

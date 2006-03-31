@@ -160,7 +160,7 @@ static gboolean file_insert_line(struct linestack_context *ctx, const struct net
 	return (ret != EOF);
 }
 
-static linestack_marker *file_get_marker(struct linestack_context *ctx, struct network *n)
+void *file_get_marker(struct linestack_context *ctx, struct network *n)
 {
 	long *pos;
 	struct lf_network_data *nd = get_data(ctx, n);
@@ -175,7 +175,7 @@ static linestack_marker *file_get_marker(struct linestack_context *ctx, struct n
 static 	struct network_state * file_get_state (
 		struct linestack_context *ctx, 
 		struct network *n, 
-		linestack_marker *m)
+		void *m)
 {
 	struct lf_network_data *nd = get_data(ctx, n);
 	struct record_header rh;
@@ -183,6 +183,7 @@ static 	struct network_state * file_get_state (
 	char *raw;
 	long from_offset, *to_offset = m;
 	long save_offset = ftell(nd->file);
+	struct linestack_marker m1, m2;
 
 	if (!nd) 
 		return NULL;
@@ -222,7 +223,10 @@ static 	struct network_state * file_get_state (
 
 	g_free(raw);
 
-	linestack_replay(ctx, n, &from_offset, to_offset, ret);
+	m1.ctx = m2.ctx = ctx;
+	m1.data = &from_offset;
+	m2.data = to_offset;
+	linestack_replay(ctx, n, &m1, &m2, ret);
 
 	/* Go back to original position */
 	fseek(nd->file, save_offset, SEEK_SET);
@@ -232,8 +236,8 @@ static 	struct network_state * file_get_state (
 
 static gboolean file_traverse(struct linestack_context *ctx,
 		struct network *n, 
-		linestack_marker *mf,
-		linestack_marker *mt,
+		void *mf,
+		void *mt,
 		linestack_traverse_fn tf, 
 		void *userdata)
 {

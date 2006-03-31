@@ -48,7 +48,7 @@ static const char *nickserv_nick(struct network *n)
 	return "NickServ";
 }
 
-static void identify_me(struct network *network, char *nick)
+void nickserv_identify_me(struct network *network, char *nick)
 {
 	const char *pass;
 
@@ -61,11 +61,11 @@ static void identify_me(struct network *network, char *nick)
 		const char *nickserv_n = nickserv_nick(network);
 		char *raw;
 		raw = g_strdup_printf("IDENTIFY %s", pass);
-		log_network("nickserv", LOG_INFO, network, "Sending password for %s", nickserv_n);
+		log_network(NULL, LOG_INFO, network, "Sending password for %s", nickserv_n);
 		network_send_args(network, "PRIVMSG", nickserv_n, raw, NULL);
 		g_free(raw);
 	} else {
-		log_network("nickserv", LOG_INFO, network, "No password known for `%s'", nick);
+		log_network(NULL, LOG_INFO, network, "No password known for `%s'", nick);
 	}
 }
 
@@ -76,7 +76,7 @@ static gboolean log_data(struct network *n, struct line *l, enum data_direction 
 	/* User has changed his/her nick. Check whether this nick needs to be identified */
 	if(dir == FROM_SERVER && !g_strcasecmp(l->args[0], "NICK") &&
 	   nickattempt && !g_strcasecmp(nickattempt, l->args[1])) {
-		identify_me(n, l->args[1]);
+		nickserv_identify_me(n, l->args[1]);
 	}
 
 	/* Keep track of the last nick that the user tried to take */
@@ -110,7 +110,7 @@ static gboolean log_data(struct network *n, struct line *l, enum data_direction 
 			if (e->pass == NULL || 
 				strcmp(e->pass, l->args[2] + strlen("IDENTIFY ")) != 0) {
 				e->pass = g_strdup(l->args[2] + strlen("IDENTIFY "));
-			log_network("nickserv", LOG_INFO, n, "Caching password for nick %s", e->nick);
+				log_network(NULL, LOG_INFO, n, "Caching password for nick %s", e->nick);
 			} 
 	}
 
@@ -121,7 +121,7 @@ static gboolean log_data(struct network *n, struct line *l, enum data_direction 
 			const char *nickserv_n = nickserv_nick(n);
 			char *raw;
 			
-			log_network("nickserv", LOG_INFO, n, "Ghosting current user using '%s'", nickattempt);
+			log_network(NULL, LOG_INFO, n, "Ghosting current user using '%s'", nickattempt);
 
 			raw = g_strdup_printf("GHOST %s %s", nickattempt, pass);
 			network_send_args(n, "PRIVMSG", nickserv_n, raw, NULL);
@@ -133,10 +133,6 @@ static gboolean log_data(struct network *n, struct line *l, enum data_direction 
 	return TRUE;
 }
 
-static void conned_data(struct network *n, void *userdata)
-{
-	identify_me(n, n->state->me.nick);
-}
 
 gboolean nickserv_save(struct global *global, const char *dir)
 {
@@ -224,6 +220,5 @@ gboolean nickserv_load(struct global *global)
 
 void init_nickserv(void)
 {
-	add_server_connected_hook("nickserv", conned_data, NULL);
 	add_server_filter("nickserv", log_data, NULL, 1);
 }

@@ -32,7 +32,7 @@ static void lastdisconnect_mark(struct client *c, void *userdata)
 
 static void lastdisconnect_replicate(struct client *c)
 {
-	linestack_marker *lm = g_hash_table_lookup(lastdisconnect_backlog, c->network);
+	struct linestack_marker *lm = g_hash_table_lookup(lastdisconnect_backlog, c->network);
 	linestack_send(c->network->global->linestack, c->network, lm, NULL, c);
 }
 

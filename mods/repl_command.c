@@ -25,7 +25,7 @@ static GHashTable *markers = NULL;
 
 static void repl_command(const struct client *c, char **args, void *userdata)
 {
-	linestack_marker *lm = g_hash_table_lookup(markers, c->network);
+	struct linestack_marker *lm = g_hash_table_lookup(markers, c->network);
 
 	if(!args[1]) {
 		admin_out(c, "Sending backlog for network '%s'", c->network->name);

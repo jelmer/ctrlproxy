@@ -346,6 +346,8 @@ static gboolean welcome_client(struct client *client)
 		return FALSE;
 	}
 
+	client_replicate(client);
+
 	return TRUE;
 }
 

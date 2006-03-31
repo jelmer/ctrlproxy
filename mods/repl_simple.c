@@ -49,7 +49,7 @@ static gboolean log_data(struct network *n, struct line *l, enum data_direction 
 
 static void simple_replicate(struct client *c)
 {
-	linestack_marker *m;
+	struct linestack_marker *m;
 	struct network_state *ns;
 
 	m = g_hash_table_lookup(simple_backlog, c->network);
@@ -79,7 +79,7 @@ static gboolean init_plugin(void)
 {
 	add_server_filter("repl_simple", log_data, NULL, 200);
 	register_replication_backend(&simple);
-	simple_backlog = g_hash_table_new_full(NULL, NULL, NULL, linestack_free_marker);
+	simple_backlog = g_hash_table_new_full(NULL, NULL, NULL, (void (*)(void *))linestack_free_marker);
 	return TRUE;
 }
 

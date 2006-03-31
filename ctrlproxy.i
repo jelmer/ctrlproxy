@@ -177,7 +177,7 @@
 struct linestack
 {
 	struct network *n;
-	linestack_marker *m;
+	struct linestack_marker *m;
 };
 %}
 

@@ -71,39 +71,51 @@ void free_linestack_context(struct linestack_context *ctx)
 	g_free(ctx);
 }
 
-linestack_marker *linestack_get_marker_numlines (struct linestack_context *ctx, struct network *n, int lines)
+static struct linestack_marker *wrap_linestack_marker(struct linestack_context *ctx, void *data)
+{
+	struct linestack_marker *mrk;
+	if (data == NULL)
+		return NULL;
+
+	mrk = g_new0(struct linestack_marker, 1);
+	mrk->ctx = ctx;
+	mrk->data = data;
+	return mrk;
+}
+
+struct linestack_marker *linestack_get_marker_numlines (struct linestack_context *ctx, struct network *n, int lines)
 {
 	if (!ctx->ops) return NULL;
 	if (!ctx->ops->get_marker_numlines) return NULL;
 
-	return ctx->ops->get_marker_numlines(ctx, n, lines);
+	return wrap_linestack_marker(ctx, ctx->ops->get_marker_numlines(ctx, n, lines));
 }
 
 struct network_state *linestack_get_state(
 		struct linestack_context *ctx,
 		struct network *n, 
-		linestack_marker *lm)
+		struct linestack_marker *lm)
 {
 	/* FIXME: Return current state rather then NULL in case of 
 	 * failure ? */
 	if (!ctx->ops) return NULL;
 	if (!ctx->ops->get_state) return NULL;
 
-	return ctx->ops->get_state(ctx, n, lm);
+	return ctx->ops->get_state(ctx, n, lm?lm->data:NULL);
 }
 
 gboolean linestack_traverse(
 		struct linestack_context *ctx,					
 		struct network *n, 
-		linestack_marker *lm_from,
-		linestack_marker *lm_to,
+		struct linestack_marker *lm_from,
+		struct linestack_marker *lm_to,
 		linestack_traverse_fn handler, 
 		void *userdata)
 {
 	if (!ctx->ops) return FALSE;
 	g_assert(ctx->ops->traverse);
 
-	return ctx->ops->traverse(ctx, n, lm_from, lm_to, handler, userdata);
+	return ctx->ops->traverse(ctx, n, lm_from?lm_from->data:NULL, lm_to?lm_to->data:NULL, handler, userdata);
 }
 
 struct traverse_object_data {
@@ -121,7 +133,8 @@ gboolean linestack_traverse_object(
 			struct linestack_context *ctx,
 			struct network *n,
 			const char *obj, 
-			linestack_marker *lm_from, linestack_marker *lm_to, linestack_traverse_fn hl,
+			struct linestack_marker *lm_from, 
+			struct linestack_marker *lm_to, linestack_traverse_fn hl,
 			void *userdata)
 {
 	struct traverse_object_data d;
@@ -130,23 +143,23 @@ gboolean linestack_traverse_object(
 	d.userdata = userdata;
 	d.handler = hl;
 	
-	return linestack_traverse(ctx, n, lm_from, lm_to, traverse_object_handler, &d);
+	return linestack_traverse(ctx, n, lm_from?lm_from->data:NULL, lm_to?lm_to->data:NULL, traverse_object_handler, &d);
 }
 
-void linestack_free_marker(struct linestack_context *ctx, linestack_marker *lm)
+void linestack_free_marker(struct linestack_marker *lm)
 {
 	if (!lm) return;
-	g_assert(ctx->ops);
-	if (!ctx->ops->free_marker) return;
-	ctx->ops->free_marker(lm);
+	g_assert(lm->ctx->ops);
+	if (!lm->ctx->ops->free_marker) return;
+	lm->ctx->ops->free_marker(lm->data);
 }
 
-linestack_marker *linestack_get_marker(struct linestack_context *ctx, struct network *n)
+struct linestack_marker *linestack_get_marker(struct linestack_context *ctx, struct network *n)
 {
 	if (!ctx->ops) return NULL;
 	g_assert(ctx->ops->get_marker);
 
-	return ctx->ops->get_marker(ctx, n);
+	return wrap_linestack_marker(ctx, ctx->ops->get_marker(ctx, n));
 }
 
 static const char *linestack_messages[] = { 
@@ -211,22 +224,22 @@ static void send_line_timed(struct line *l, time_t t, void *_client)
 	}
 }
 
-gboolean linestack_send(struct linestack_context *ctx, struct network *n, linestack_marker *mf, linestack_marker *mt, const struct client *c)
+gboolean linestack_send(struct linestack_context *ctx, struct network *n, struct linestack_marker *mf, struct linestack_marker *mt, const struct client *c)
 {
 	return linestack_traverse(ctx, n, mf, mt, send_line, c);
 }
 
-gboolean linestack_send_timed(struct linestack_context *ctx, struct network *n, linestack_marker *mf, linestack_marker *mt, const struct client *c)
+gboolean linestack_send_timed(struct linestack_context *ctx, struct network *n, struct linestack_marker *mf, struct linestack_marker *mt, const struct client *c)
 {
 	return linestack_traverse(ctx, n, mf, mt, send_line_timed, c);
 }
 
-gboolean linestack_send_object(struct linestack_context *ctx, struct network *n, const char *obj, linestack_marker *mf, linestack_marker *mt, const struct client *c)
+gboolean linestack_send_object(struct linestack_context *ctx, struct network *n, const char *obj, struct linestack_marker *mf, struct linestack_marker *mt, const struct client *c)
 {
 	return linestack_traverse_object(ctx, n, obj, mf, mt, send_line, c);
 }
 
-gboolean linestack_send_object_timed(struct linestack_context *ctx, struct network *n, const char *obj, linestack_marker *mf, linestack_marker *mt, const struct client *c)
+gboolean linestack_send_object_timed(struct linestack_context *ctx, struct network *n, const char *obj, struct linestack_marker *mf, struct linestack_marker *mt, const struct client *c)
 {
 	return linestack_traverse_object(ctx, n, obj, mf, mt, send_line_timed, c);
 }
@@ -237,7 +250,7 @@ static void replay_line(struct line *l, time_t t, void *state)
 	state_handle_data(st, l);
 }
 
-gboolean linestack_replay(struct linestack_context *ctx, struct network *n, linestack_marker *mf, linestack_marker *mt, struct network_state *st)
+gboolean linestack_replay(struct linestack_context *ctx, struct network *n, struct linestack_marker *mf, struct linestack_marker *mt, struct network_state *st)
 {
 	return linestack_traverse(ctx, n, mf, mt, replay_line, st);
 }

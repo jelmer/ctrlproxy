@@ -42,7 +42,7 @@ static void check_highlight(struct line *l, time_t t, void *userdata)
 
 static void highlight_replicate(struct client *c)
 {
-	linestack_marker *lm = g_hash_table_lookup(markers, c->network);
+	struct linestack_marker *lm = g_hash_table_lookup(markers, c->network);
 	linestack_traverse(c->network->global->linestack, c->network, lm, NULL, check_highlight, c);
 	g_hash_table_replace(markers, c->network, linestack_get_marker(c->network->global->linestack, c->network));
 }
