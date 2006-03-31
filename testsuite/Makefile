@@ -19,12 +19,9 @@ all: torture $(patsubst %.c,lib%.so,$(wildcard test-*.c))
 torture: torture.o 
 	$(CC) $(LIBS) -o $@ $^ 
 
-$(patsubst %.c,lib%.so,$(wildcard test-*.c)): lib%.so: %.o
-libtest-cmp.so: test-cmp.o ../util.o
-libtest-state.so: test-state.o ../state.o ../util.o ../isupport.o ../line.o ../log.o
-libtest-isupport.so: test-isupport.o ../state.o ../util.o ../isupport.o ../line.o ../log.o
-libtest-parser.so: test-parser.o ../line.o
-libtest-client.so: test-client.o ../client.o ../line.o ../hooks.o ../log.o ../cache.o ../redirect.o ../network.o ../posix.o ../util.o ../state.o ../linestack.o ../gen_config.o ../settings.o ../isupport.o ../plugins.o
+objs = $(patsubst %.c,%.o,$(filter-out main.c,$(wildcard ../*.c)))
+
+$(patsubst %.c,lib%.so,$(wildcard test-*.c)): lib%.so: %.o $(objs)
 
 lib%.so: 
 	@echo Compiling $<
