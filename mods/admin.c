@@ -285,6 +285,32 @@ static void detach_client(const struct client *c, char **args, void *userdata)
 	disconnect_client(c, "Client exiting");
 }
 
+static void dump_joined_channels(const struct client *c, char **args, void *userdata)
+{
+	struct network *n = c->network;
+	GList *gl;
+
+	if(args[1]) {
+		n = find_network(c->network->global, args[1]);
+		if(!n) {
+			admin_out(c, "Can't find network '%s'", args[1]);
+			return;
+		}
+	}
+
+	for (gl = n->state->channels; gl; gl = gl->next) {
+		struct channel_state *ch = (struct channel_state *)gl->data;
+		admin_out(c, "%s", ch->name);
+	}
+}
+
+#ifdef DEBUG
+static void do_abort(const struct client *c, char **args, void *userdata)
+{
+	abort();
+}
+#endif
+
 static void handle_die(const struct client *c, char **args, void *userdata)
 {
 	exit(0);
@@ -429,6 +455,10 @@ static gboolean init_plugin(void)
 		{ "SAVECONFIG", com_save_config, "<name>", "Save current XML configuration to specified file" },
 		{ "DETACH", detach_client, "", "Detach current client" },
 		{ "HELP", help, "[command]", "This help command" },
+		{ "DUMPJOINEDCHANNELS", dump_joined_channels, "[network]", NULL, NULL },
+#ifdef DEBUG
+		{ "ABORT", do_abort, "", NULL, NULL },
+#endif
 		{ NULL }
 	};
 

@@ -21,6 +21,8 @@ urrent release (3.0.0):
   - LIST
   - <NAME> DISCONNECT
   - <NAME> NEXTSERVER
+  - <NAME> INFO
+ - CHANNEL <NETWORK> LIST
  - LISTENER
  - SAVECONFIG
 

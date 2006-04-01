@@ -124,7 +124,6 @@ DEFMODULE(repl_simple)
 DEFMODULE(repl_command)
 DEFMODULE(repl_highlight)
 DEFMODULE(repl_lastdisconnect)
-DEFMODULE(debug)
 DEFMODULE(socks)
 DEFMODULE(listener)
 
