@@ -197,11 +197,6 @@ static GIOFuncs g_io_gnutls_channel_funcs = {
     g_io_gnutls_get_flags
 };
 
-static gboolean fini_plugin(struct plugin *p)
-{
-	return TRUE;
-}
-
 static void load_config(struct global *global)
 {
 	char *cafile = NULL, *certf = NULL, *keyf = NULL;
@@ -214,7 +209,7 @@ static void load_config(struct global *global)
 	if(!certf) {
 		certf = g_build_filename(global->config->config_dir, "cert.pem", NULL);
 		if(!g_file_test(certf, G_FILE_TEST_EXISTS)) {
-			free(certf);
+			g_free(certf);
 			log_global("gnutls", LOG_ERROR, "No valid certificate set");
 			return;
 		}
@@ -223,7 +218,7 @@ static void load_config(struct global *global)
 	if(!keyf) {
 		keyf = g_build_filename(global->config->config_dir, "key.pem", NULL);
 		if(!g_file_test(keyf, G_FILE_TEST_EXISTS)) {
-			free(keyf);
+			g_free(keyf);
 			log_global("gnutls", LOG_ERROR, "No valid key set");
 			return;
 		}
@@ -232,7 +227,7 @@ static void load_config(struct global *global)
 	if(!cafile) {
 		cafile = g_build_filename(global->config->config_dir, "ca.pem", NULL);
 		if(!g_file_test(cafile, G_FILE_TEST_EXISTS)) {
-			free(cafile);
+			g_free(cafile);
 			cafile = NULL;
 		} 
 	}
@@ -277,7 +272,7 @@ static gboolean init_plugin(void)
 
 	set_sslize_function (g_io_gnutls_get_iochannel);
 
-	register_config_notify(load_config);
+	register_load_config_notify(load_config);
 
 	return TRUE;
 }

@@ -44,11 +44,11 @@
 %rename(NetworkInfo) network_info;
 %rename(Channel) channel;
 
-%include "../../line.h";
-%include "../../network.h";
-%include "../../client.h";
-%include "../../state.h";
-%include "../../ctrlproxy.h";
+%include "line.h";
+%include "network.h";
+%include "client.h";
+%include "state.h";
+%include "ctrlproxy.h";
 
 %extend line {
 	line(const struct line *l) {

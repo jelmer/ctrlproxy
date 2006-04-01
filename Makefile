@@ -1,7 +1,6 @@
 -include Makefile.settings
 
-MODS_SHARED_SUBDIRS = $(foreach mod, $(MODS_SHARED), $(shell test -d mods/$(mod) && echo mods/$(mod)))
-MODS_SHARED_FILES = $(foreach mod, $(MODS_SHARED), $(shell test -f mods/$(mod).c && echo mods/lib$(mod).so))
+MODS_SHARED_FILES = $(patsubst %,mods/lib%.$(SHLIBEXT),$(MODS_SHARED))
 
 GCOV = gcov
 
@@ -18,10 +17,7 @@ SUBDIRS = scripts testsuite rfctester
 
 .PHONY: all clean distclean install install-bin install-dirs install-doc install-data install-mods install-pkgconfig $(SUBDIRS)
 
-all: $(BINS) $(SUBDIRS) $(MODS_SHARED_FILES) $(MODS_SHARED_SUBDIRS)
-
-$(MODS_SHARED_SUBDIRS): 
-	$(MAKE) -C $@
+all: $(BINS) $(SUBDIRS) $(MODS_SHARED_FILES) 
 
 $(SUBDIRS):
 	$(MAKE) -C $@
@@ -30,9 +26,9 @@ ctrlproxy$(EXEEXT): network.o posix.o client.o cache.o line.o main.o state.o uti
 	@echo Linking $@
 	@$(CC) $(LIBS) -rdynamic -o $@ $^
 
-%.$(OBJEXT): %.c
+.c.o:
 	@echo Compiling $<
-	@$(CC) $(CFLAGS) $(GCOV_CFLAGS) -c $<
+	@$(CC) -I. $(CFLAGS) $(GCOV_CFLAGS) -c $< -o $@
 
 configure: autogen.sh configure.ac acinclude.m4 $(wildcard mods/*/*.m4)
 	./$<
@@ -68,7 +64,7 @@ install-data:
 	$(INSTALL) ctrlproxyrc.default $(DESTDIR)$(cdatadir)
 	$(INSTALL) ctrlproxyrc.dtd $(DESTDIR)$(cdatadir)
 
-install-mods: all $(addprefix install-,$(MODS_SHARED_SUBDIRS))
+install-mods: all 
 	$(INSTALL) -d $(DESTDIR)$(modulesdir)
 	$(INSTALL) $(MODS_SHARED_FILES) $(DESTDIR)$(modulesdir)
 
@@ -81,21 +77,12 @@ install-pkgconfig:
 gcov:
 	$(GCOV) -po . *.c 
 
-install-mods/%:
-	$(MAKE) -C mods/$* install
-
-clean-mods/%:
-	$(MAKE) -C mods/$* clean
-
-distclean-mods/%:
-	$(MAKE) -C mods/$* distclean
-
-mods/lib%.so: mods/%.c
+mods/lib%.so: mods/%.o
 	@echo Compiling $<
-	@$(CC) -I. $(CFLAGS) -fPIC -shared -o $@ $<
+	$(CC) $(LDFLAGS) -fPIC -shared -o $@ $<
 
-clean: $(addprefix clean-,$(MODS_SHARED_SUBDIRS))
-	rm -f $(MODS_SHARED_FILES) mods/*.so
+clean::
+	rm -f $(MODS_SHARED_FILES)
 	rm -f *.$(OBJEXT) ctrlproxy$(EXEEXT) printstats *~
 	rm -f *.gcov *.gcno *.gcda
 	$(MAKE) -C testsuite clean
@@ -104,7 +91,7 @@ clean: $(addprefix clean-,$(MODS_SHARED_SUBDIRS))
 dist: distclean
 	$(MAKE) -C doc dist
 
-distclean: clean $(addprefix distclean-,$(MODS_SHARED_SUBDIRS))
+distclean:: clean 
 	rm -f build config.h ctrlproxy.pc *.log
 	rm -rf autom4te.cache/ config.log config.status
 	$(MAKE) -C testsuite distclean
@@ -118,3 +105,30 @@ rfctest: all
 
 ctags:
 	ctags -R .
+
+mods/nss.o: CFLAGS+=$(NSS_CFLAGS)
+mods/libnss.$(SHLIBEXT): LDFLAGS+=$(NSS_LDFLAGS)
+mods/gnutls.o: CFLAGS+=$(GNUTLS_CFLAGS)
+mods/libgnutls.$(SHLIBEXT): LDFLAGS+=$(GNUTLS_LDFLAGS)
+mods/openssl.o: CFLAGS+=$(OPENSSL_CFLAGS)
+mods/libopenssl.$(SHLIBEXT): LDFLAGS+=$(OPENSSL_LDFLAGS)
+
+# Python specific stuff below this line
+mods/python2.o: CFLAGS+=$(PYTHON_CFLAGS)
+mods/libpython2.so: LDFLAGS+=$(PYTHON_LDFLAGS)
+%_wrap.o: CFLAGS+=$(PYTHON_CFLAGS)
+
+%_wrap.c: %.i
+	$(SWIG) -python $*.i
+
+build: ctrlproxy_wrap.c mods/admin_wrap.c mods/listener_wrap.c 
+	LDFLAGS="$(LDFLAGS)" CFLAGS="$(CFLAGS)" $(PYTHON) setup.py build
+
+install-python: all
+	$(PYTHON) setup.py install --root="$(DESTDIR)"
+
+clean::
+	rm -f *_wrap.c *.pyc
+	rm -f ctrlproxy.py admin.py listener.py
+	$(PYTHON) setup.py clean
+	rm -rf build/

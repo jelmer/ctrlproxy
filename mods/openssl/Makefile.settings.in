@@ -1,3 +1,0 @@
--include ../../Makefile.settings
-CFLAGS += -I../.. -I.. @OPENSSL_CFLAGS@ -DHAVE_CONFIG_H
-LDFLAGS += @OPENSSL_LIBS@

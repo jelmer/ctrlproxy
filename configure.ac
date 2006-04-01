@@ -63,13 +63,11 @@ PKG_CHECK_MODULES(COMMON, glib-2.0 gmodule-2.0, , AC_MSG_ERROR([glib is required
 ###############################################################################
 PKG_CHECK_MODULES(NSS, mozilla-nss, 
 	[ DEFMODULE(nss, $NSS_LIBS) ], [ echo "Not using mozilla-nss"; ] )
-AC_CONFIG_FILES([mods/nss/Makefile.settings])
 
 ###############################################################################
 # OpenSSL support
 ###############################################################################
 PKG_CHECK_MODULES(OPENSSL, openssl, [ DEFMODULE(openssl, $OPENSSL_LIBS) ], [ echo "Not building openssl module" ])
-AC_CONFIG_FILES([mods/openssl/Makefile.settings])
 
 ###############################################################################
 # GNUTLS support
@@ -87,7 +85,6 @@ fi
 
 AC_SUBST(GNUTLS_CFLAGS)
 AC_SUBST(GNUTLS_LIBS)
-AC_CONFIG_FILES([mods/gnutls/Makefile.settings])
 
 ###############################################################################
 # SWIG support
@@ -105,7 +102,6 @@ elif test -z "$PYTHON_VERSION"; then
 	AC_MSG_WARN([Python not found, not building python module])
 else
 	DEFMODULE(python2, $PY_LIBS)
-	AC_CONFIG_FILES([mods/python2/Makefile.settings])
 fi
 
 sinclude(doc/config.m4)
