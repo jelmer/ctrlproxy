@@ -74,7 +74,7 @@ mods/lib%.so: mods/%.o
 clean::
 	rm -f $(MODS_SHARED_FILES)
 	rm -f *.$(OBJEXT) ctrlproxy$(EXEEXT) printstats *~
-	rm -f *.gcov *.gcno *.gcda
+	rm -f *.gcov *.gcno *.gcda mods/*.o
 
 dist: distclean
 	$(MAKE) -C doc dist
@@ -109,7 +109,7 @@ install-python: all
 clean::
 	rm -f *_wrap.c *.pyc
 	rm -f ctrlproxy.py admin.py listener.py
-	$(PYTHON) setup.py clean
+#	$(PYTHON) setup.py clean
 	rm -rf build/
 
 # RFC compliance testing using ircdtorture

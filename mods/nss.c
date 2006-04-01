@@ -129,11 +129,6 @@ static GIOFuncs g_io_nss_channel_funcs = {
 
 GIOChannel *g_io_nss_get_iochannel(GIOChannel *handle, gboolean server);
 
-static gboolean fini_plugin(struct plugin *p)
-{
-	return TRUE;
-}
-
 static PRDescIdentity _identity;
 
 static gboolean init_plugin(void)

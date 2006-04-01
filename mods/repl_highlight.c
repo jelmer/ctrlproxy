@@ -28,8 +28,8 @@ static void check_highlight(struct line *l, time_t t, void *userdata)
 	struct client *c = userdata;
     int i;
 
-	if (strcasecmp(l->args[0], "PRIVMSG") != 0 &&
-		strcasecmp(l->args[0], "NOTICE") != 0) 
+	if (g_strcasecmp(l->args[0], "PRIVMSG") != 0 &&
+		g_strcasecmp(l->args[0], "NOTICE") != 0) 
 		return;
 	
 	for (i = 0; matches[i]; i++) {

@@ -70,7 +70,7 @@ static gboolean init_plugin(void)
 {
 	Py_Initialize();
 
-	register_config_notify(load_config);
+	register_load_config_notify(load_config);
 	return TRUE;
 }
 

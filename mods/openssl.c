@@ -193,10 +193,6 @@ GIOChannel *irssi_ssl_get_iochannel(GIOChannel *handle, gboolean server);
 static gboolean irssi_ssl_set_files(const char *certf, const char *keyf);
 static SSL_CTX *ssl_ctx = NULL;
 
-static gboolean fini_plugin(struct plugin *p) {
-	return TRUE;
-}
-
 static void load_config(struct global *global)
 {
 	const char *keyf = NULL, *certf = NULL;
@@ -236,7 +232,7 @@ static gboolean init_plugin(void)
 	}
 
 	set_sslize_function (irssi_ssl_get_iochannel);
-	register_config_notify(load_config);
+	register_load_config_notify(load_config);
 
 	return TRUE;
 }

@@ -26,6 +26,7 @@
 
 #include <netdb.h>
 #include <sys/socket.h>
+#include <glib/gstdio.h>
 
 gboolean g_key_file_save_to_file(GKeyFile *kf, const gchar *file, GError **error)
 {
@@ -130,7 +131,7 @@ static void config_save_networks(const char *config_dir, GList *networks)
 	GList *gl;
 
 	if (!g_file_test(networksdir, G_FILE_TEST_IS_DIR)) {
-		if (mkdir(networksdir, 0700) != 0) {
+		if (g_mkdir(networksdir, 0700) != 0) {
 			log_global(NULL, LOG_ERROR, "Can't create networks directory '%s': %s", networksdir, strerror(errno));
 			return;
 		}
@@ -388,7 +389,7 @@ struct network_config *network_config_init(struct ctrlproxy_config *cfg)
 
 void setup_configdir(const char *dir)
 {
-	if(mkdir(dir, 0700) != 0) {
+	if(g_mkdir(dir, 0700) != 0) {
 		log_global(NULL, LOG_ERROR, "Unable to open configuration directory '%s'\n", dir);
 		return;
 	}

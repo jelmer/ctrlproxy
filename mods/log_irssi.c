@@ -25,12 +25,9 @@
 #include <stdio.h>
 #include <time.h>
 #include <glib.h>
+#include <glib/gstdio.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#ifdef _WIN32
-#include <direct.h>
-#define mkdir(s,t) _mkdir(s)
-#endif
 
 
 
@@ -62,7 +59,7 @@ static FILE *find_add_channel_file(struct network *s, const char *name) {
 
 		n = g_strdup_printf("%s/%s", logfile, server_name);
 		/* Check if directory needs to be created */
-		if(!g_file_test(n, G_FILE_TEST_IS_DIR) && mkdir(n, 0700) == -1) {
+		if(!g_file_test(n, G_FILE_TEST_IS_DIR) && g_mkdir(n, 0700) == -1) {
 			log_network("log_irssi", LOG_ERROR, s, "Couldn't create directory %s for logging!", n);
 			g_free(hash_name);
 			g_free(n);
@@ -102,7 +99,7 @@ static FILE *find_channel_file(struct network *s, const char *name) {
 
 static gboolean log_data(struct network *n, struct line *l, enum data_direction dir, void *userdata)
 {
-	const char *nick = NULL;
+	char *nick = NULL;
 	const char *dest = NULL;
 	time_t ti = time(NULL);
 	char *user = NULL;
@@ -224,7 +221,7 @@ static void load_config(struct global *global)
 	}
 	
 	/* Create logfile directory if it doesn't exist yet */
-	mkdir(logfile, 0700);
+	g_mkdir(logfile, 0700);
 
 	add_log_filter("log_irssi", log_data, NULL, 1000);
 }

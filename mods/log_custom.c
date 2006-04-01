@@ -25,14 +25,9 @@
 #include <stdio.h>
 #include <time.h>
 #include <glib.h>
+#include <glib/gstdio.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-
-#ifdef _WIN32
-#include <direct.h>
-#define mkdir(s,t) _mkdir(s)
-#endif
-
 
 #define MAX_SUBST 256
 #undef G_LOG_DOMAIN
@@ -308,7 +303,7 @@ static FILE *find_add_channel_file(struct log_custom_data *data, struct network 
 		if(p) *p = '\0';
 
 		/* Check if directory needs to be created */
-		if(!g_file_test(dn, G_FILE_TEST_IS_DIR) && mkdir(dn, 0700) == -1) {
+		if(!g_file_test(dn, G_FILE_TEST_IS_DIR) && g_mkdir(dn, 0700) == -1) {
 			log_network("log_custom", LOG_ERROR, network, "Couldn't create directory %s for logging!", dn);
 			g_free(dn);
 			g_free(n);

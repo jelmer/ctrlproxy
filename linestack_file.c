@@ -25,12 +25,8 @@
 #include <unistd.h>
 #endif
 
+#include <glib/gstdio.h>
 #include <sys/stat.h>
-
-#ifdef _WIN32
-#include <direct.h>
-#define mkdir(s,t) _mkdir(s)
-#endif
 
 #define STATE_DUMP_INTERVAL 1000
 
@@ -63,7 +59,7 @@ static gboolean file_init(struct linestack_context *ctx, struct ctrlproxy_config
 {
 	struct lf_data *data = g_new0(struct lf_data, 1);
 	data->data_path = g_build_filename(config->config_dir, "linestack_file", NULL);
-	mkdir(data->data_path, 0700);
+	g_mkdir(data->data_path, 0700);
 	data->networks = g_hash_table_new_full(NULL, NULL, NULL, free_lf_network_data);
 	ctx->backend_data = data;
 	return TRUE;
