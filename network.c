@@ -578,7 +578,7 @@ static gboolean connect_program(struct network *s)
 
 	g_io_channel_unref(s->connection.data.program.outgoing);
 
-	if(!s->name) {
+	if (s->name == NULL) {
 		if (strchr(s->config->type_settings.program_location, '/')) {
 			s->name = g_strdup(strrchr(s->config->type_settings.program_location, '/')+1);
 		} else {

@@ -1,5 +1,8 @@
 -include Makefile.settings
 
+MODS_SHARED_SUBDIRS = $(foreach mod, $(MODS_SHARED), $(shell test -d mods/$(mod) && echo mods/$(mod)))
+MODS_SHARED_FILES = $(foreach mod, $(MODS_SHARED), $(shell test -f mods/$(mod).c && echo mods/lib$(mod).so))
+
 GCOV = gcov
 
 ifeq ($(WITH_GCOV),1)
@@ -11,17 +14,21 @@ endif
 CFLAGS+=-DHAVE_CONFIG_H -DSHAREDIR=\"$(cdatadir)\" -DDTD_FILE=\"$(cdatadir)/ctrlproxyrc.dtd\"
 CFLAGS+=-ansi -Wall -DMODULESDIR=\"$(modulesdir)\" -DSTRICT_MEMORY_ALLOCS=
 
-SUBDIRS = mods scripts testsuite rfctester
+SUBDIRS = scripts testsuite rfctester
 
 .PHONY: all clean distclean install install-bin install-dirs install-doc install-data install-mods install-pkgconfig $(SUBDIRS)
 
-all: $(BINS) $(SUBDIRS)
+all: $(BINS) $(SUBDIRS) $(MODS_SHARED_FILES) $(MODS_SHARED_SUBDIRS)
+
+$(MODS_SHARED_SUBDIRS): 
+	$(MAKE) -C $@
 
 $(SUBDIRS):
 	$(MAKE) -C $@
 
 ctrlproxy$(EXEEXT): network.o posix.o client.o cache.o line.o main.o state.o util.o hooks.o linestack.o plugins.o settings.o isupport.o log.o redirect.o gen_config.o repl.o linestack_file.o ctcp.o motd.o nickserv.o
-	$(CC) $(LIBS) -rdynamic -o $@ $^
+	@echo Linking $@
+	@$(CC) $(LIBS) -rdynamic -o $@ $^
 
 %.$(OBJEXT): %.c
 	@echo Compiling $<
@@ -61,8 +68,9 @@ install-data:
 	$(INSTALL) ctrlproxyrc.default $(DESTDIR)$(cdatadir)
 	$(INSTALL) ctrlproxyrc.dtd $(DESTDIR)$(cdatadir)
 
-install-mods:
-	$(MAKE) -C mods install
+install-mods: all $(addprefix install-,$(MODS_SHARED_SUBDIRS))
+	$(INSTALL) -d $(DESTDIR)$(modulesdir)
+	$(INSTALL) $(MODS_SHARED_FILES) $(DESTDIR)$(modulesdir)
 
 install-scripts:
 	$(MAKE) -C scripts install
@@ -73,20 +81,32 @@ install-pkgconfig:
 gcov:
 	$(GCOV) -po . *.c 
 
-clean: 
+install-mods/%:
+	$(MAKE) -C mods/$* install
+
+clean-mods/%:
+	$(MAKE) -C mods/$* clean
+
+distclean-mods/%:
+	$(MAKE) -C mods/$* distclean
+
+mods/lib%.so: mods/%.c
+	@echo Compiling $<
+	@$(CC) -I. $(CFLAGS) -fPIC -shared -o $@ $<
+
+clean: $(addprefix clean-,$(MODS_SHARED_SUBDIRS))
+	rm -f $(MODS_SHARED_FILES) mods/*.so
 	rm -f *.$(OBJEXT) ctrlproxy$(EXEEXT) printstats *~
 	rm -f *.gcov *.gcno *.gcda
-	$(MAKE) -C mods clean
 	$(MAKE) -C testsuite clean
 	$(MAKE) -C rfctester clean
 
 dist: distclean
 	$(MAKE) -C doc dist
 
-distclean: clean
+distclean: clean $(addprefix distclean-,$(MODS_SHARED_SUBDIRS))
 	rm -f build config.h ctrlproxy.pc *.log
 	rm -rf autom4te.cache/ config.log config.status
-	$(MAKE) -C mods distclean
 	$(MAKE) -C testsuite distclean
 	$(MAKE) -C rfctester distclean
 

@@ -1,21 +1,6 @@
 /*
 	ctrlproxy: A modular IRC proxy
-	admin: module for remote administration. Available commands:
-	 * ADDNETWORK <network>
-	 * ADDLISTEN <network> <type> [<key>=<value>] [...]
-	 * ADDSERVER <network> <type> [<key>=<value>] [...]
-	 * CONNECT <network>
-	 * DELNETWORK <network>
-	 * DETACH
-	 * DIE
-	 * DISCONNECT [<network>]
-	 * DUMPCONFIG
-	 * HELP
-	 * LISTMODULES
-	 * LISTNETWORKS
-	 * LOADMODULE <location>
-	 * NEXTSERVER <network>
-	 * SAVECONFIG
+	admin: module for remote administration. 
 
 	(c) 2003-2005 Jelmer Vernooij <jelmer@nl.linux.org>
 
@@ -209,11 +194,11 @@ static void com_next_server (const struct client *c, char **args, void *userdata
 
 static void list_modules (const struct client *c, char **args, void *userdata)
 {
-	GList *g = get_plugin_list();
-	while(g) {
+	GList *g;
+	
+	for (g = get_plugin_list(); g; g = g->next) {
 		struct plugin *p = (struct plugin *)g->data;
 		admin_out(c, "%s", p->ops->name);
-		g = g->next;
 	}
 }
 
@@ -431,19 +416,19 @@ static gboolean init_plugin(void)
 {
 	int i;
 	const static struct admin_command builtin_commands[] = {
-		{ "ADDNETWORK", add_network, ("<name>"), ("Add new network with specified name") },
-		{ "ADDSERVER", add_server, ("<network> <host> [<port> [<password>]]"), ("Add server to network") },
-		{ "CONNECT", com_connect_network, ("<network>"), ("Connect to specified network. Forces reconnect when waiting.") },
-		{ "DELNETWORK", del_network, ("<network>"), ("Remove specified network") },
-		{ "NEXTSERVER", com_next_server, ("[network]"), ("Disconnect and use to the next server in the list") },
-		{ "DIE", handle_die, "", ("Exit ctrlproxy") },
-		{ "DISCONNECT", com_disconnect_network, ("<network>"), ("Disconnect specified network") },
-		{ "LISTNETWORKS", list_networks, "", ("List current networks and their status") },
-		{ "LOADMODULE", load_module, "<name>", ("Load specified module") },
-		{ "LISTMODULES", list_modules, "", ("List currently loaded modules") },
-		{ "SAVECONFIG", com_save_config, "<name>", ("Save current XML configuration to specified file") },
-		{ "DETACH", detach_client, "", ("Detach current client") },
-		{ "HELP", help, "[command]", ("This help command") },
+		{ "ADDNETWORK", add_network, "<name>", "Add new network with specified name" },
+		{ "ADDSERVER", add_server, "<network> <host> [<port> [<password>]]", "Add server to network" },
+		{ "CONNECT", com_connect_network, "<network>", "Connect to specified network. Forces reconnect when waiting." },
+		{ "DELNETWORK", del_network, "<network>", "Remove specified network" },
+		{ "NEXTSERVER", com_next_server, "[network]", "Disconnect and use to the next server in the list" },
+		{ "DIE", handle_die, "", "Exit ctrlproxy" },
+		{ "DISCONNECT", com_disconnect_network, "<network>", "Disconnect specified network" },
+		{ "LISTNETWORKS", list_networks, "", "List current networks and their status" },
+		{ "LOADMODULE", load_module, "<name>", "Load specified module" },
+		{ "LISTMODULES", list_modules, "", "List currently loaded modules" },
+		{ "SAVECONFIG", com_save_config, "<name>", "Save current XML configuration to specified file" },
+		{ "DETACH", detach_client, "", "Detach current client" },
+		{ "HELP", help, "[command]", "This help command" },
 		{ NULL }
 	};
 
