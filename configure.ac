@@ -29,6 +29,7 @@ AC_CONFIG_HEADER([config.h])
 AC_PROG_CC
 AC_PROG_INSTALL
 AC_PATH_PROG(LD,ld)
+AC_PATH_PROG(IRCDTORTURE,ircdtorture)
 
 AC_ARG_ENABLE(gcov,
 [ --enable-gcov		Enable GCOV support ],
