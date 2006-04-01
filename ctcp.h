@@ -27,7 +27,7 @@ struct ctcp_handler {
 
 gboolean ctcp_process(struct network *, struct line *);
 void ctcp_register_handler(const struct ctcp_handler *);
-void ctcp_send(struct network *n, const char *nick, const char *fmt, ...);
-void ctcp_reply(struct network *n, const char *nick, const char *fmt, ...);
+void ctcp_send(struct network *n, const char *nick, ...);
+void ctcp_reply(struct network *n, const char *nick, ...);
 
 #endif /* __CTCP_H__ */

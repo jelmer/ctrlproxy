@@ -12,6 +12,9 @@ urrent release (3.0.0):
 - finish upgrade script
 - make editing config file optional
 - obey 'separate_processes' option
+- cope with renamed networks (so we don't end up with two 
+							  of the same name)
+- hierarchiecal structure for admin commands
 
 next minor release (3.0.1):
 - properly expand second argument of PRIVMSG in log_irssi and log_custom

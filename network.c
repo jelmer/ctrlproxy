@@ -106,7 +106,9 @@ static gboolean process_from_server(struct network *n, struct line *l)
 	if( n->connection.state == NETWORK_CONNECTION_STATE_MOTD_RECVD) {
 		if (atoi(l->args[0])) {
 			redirect_response(n, l);
-		} else if(!g_strcasecmp(l->args[0], "PRIVMSG") && l->args[2][0] == '\001') {
+		} else if (!g_strcasecmp(l->args[0], "PRIVMSG") && l->argc > 2 && 
+			l->args[2][0] == '\001' && 
+			g_strncasecmp(l->args[2], "\001ACTION", 7) != 0) {
 			ctcp_process(n, l);
 		} else if (run_server_filter(n, l, FROM_SERVER)) {
 			clients_send(n, l, NULL);
@@ -163,6 +165,7 @@ static gboolean handle_server_receive (GIOChannel *c, GIOCondition cond, void *_
 		}
 
 		if (status != G_IO_STATUS_AGAIN) {
+			printf("%d:%d:%d\n", status, G_IO_STATUS_EOF, G_IO_STATUS_ERROR);
 			log_network(NULL, LOG_WARNING, server, 
 				"Error \"%s\" reading from server, reconnecting in %ds...",
 				err?err->message:"UNKNOWN", server->config->reconnect_interval);

@@ -40,7 +40,6 @@ Features
 Requirements
 ------------
  * GNU glib
- * libxml2
  
 Building
 --------
