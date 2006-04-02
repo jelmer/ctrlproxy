@@ -45,3 +45,4 @@ next major release (3.1.0):
 - import anti-idle
 - import authenticators
 - support for multiple users at the same time (same process)?
+- support for the icecap protocol?

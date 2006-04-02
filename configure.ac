@@ -6,20 +6,20 @@ PACKAGE=$PACKAGE_NAME
 VERSION=$PACKAGE_VERSION
 AC_DEFINE_UNQUOTED(PACKAGE,"$PACKAGE", [ Package name])
 
-AC_MSG_CHECKING([whether this is a SVN checkout])
-if ! which svnversion >/dev/null 2>/dev/null; then
+AC_MSG_CHECKING([whether this is a bzr checkout])
+if ! which bzr >/dev/null 2>/dev/null; then
 	AC_MSG_RESULT(no)
 else 
-	REVISION="`svnversion .`"
-	if test "$REVISION" = "exported"; then
-		AC_MSG_RESULT(no)
-	else
+	REVISION="`bzr revno .`"
+	if test -n "$REVISION"; then
 		AC_MSG_RESULT($REVISION)
-		SVNVERSION="-SVN-r$REVISION"
+		BZRVERSION="-bzr-r$REVISION"
+	else
+		AC_MSG_RESULT(no)
 	fi
 fi
 
-AC_DEFINE_UNQUOTED(VERSION,"$VERSION$SVNVERSION", [ Package version])
+AC_DEFINE_UNQUOTED(VERSION,"$VERSION$BZRVERSION", [ Package version])
 AC_SUBST(PACKAGE)
 AC_SUBST(VERSION)
 AC_CONFIG_SRCDIR([line.c])
