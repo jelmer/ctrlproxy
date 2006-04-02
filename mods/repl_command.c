@@ -58,10 +58,6 @@ static gboolean fini_plugin(struct plugin *p)
 
 static gboolean init_plugin(void)
 {
-	if(!plugin_loaded("admin")) {
-		log_global("repl_command", LOG_ERROR, "admin module required for repl_command module. Please load it first");
-		return FALSE;
-	}
 	register_admin_command(&cmd_backlog);
 	markers = g_hash_table_new_full(NULL, NULL, NULL, (GDestroyNotify)linestack_free_marker);
 	return TRUE;

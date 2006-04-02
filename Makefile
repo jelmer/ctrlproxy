@@ -17,7 +17,7 @@ CFLAGS+=-ansi -Wall -DMODULESDIR=\"$(modulesdir)\" -DSTRICT_MEMORY_ALLOCS=
 
 all: $(BINS) $(MODS_SHARED_FILES) 
 
-objs = network.o posix.o client.o cache.o line.o state.o util.o hooks.o linestack.o plugins.o settings.o isupport.o log.o redirect.o gen_config.o repl.o linestack_file.o ctcp.o motd.o nickserv.o
+objs = network.o posix.o client.o cache.o line.o state.o util.o hooks.o linestack.o plugins.o settings.o isupport.o log.o redirect.o gen_config.o repl.o linestack_file.o ctcp.o motd.o nickserv.o admin.o
 
 ctrlproxy$(EXEEXT): main.o $(objs)
 	@echo Linking $@
@@ -100,7 +100,7 @@ mods/libpython2.so: LDFLAGS+=$(PYTHON_LDFLAGS)
 %_wrap.c: %.i
 	$(SWIG) -python $*.i
 
-build: ctrlproxy_wrap.c mods/admin_wrap.c mods/listener_wrap.c 
+build: ctrlproxy_wrap.c mods/listener_wrap.c 
 	LDFLAGS="$(LDFLAGS)" CFLAGS="$(CFLAGS)" $(PYTHON) setup.py build
 
 install-python: all
@@ -108,7 +108,7 @@ install-python: all
 
 clean::
 	rm -f *_wrap.c *.pyc
-	rm -f ctrlproxy.py admin.py listener.py
+	rm -f ctrlproxy.py listener.py
 #	$(PYTHON) setup.py clean
 	rm -rf build/
 

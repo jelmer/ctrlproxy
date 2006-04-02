@@ -108,6 +108,12 @@ static gboolean process_from_client(struct client *c, struct line *l)
 			  !g_strcasecmp(l->args[0], "PASS")) {
 		client_send_response(c, ERR_ALREADYREGISTERED,  
 						 "Please register only once per session", NULL);
+	} else if(!g_strcasecmp(l->args[0], "CTRLPROXY") == 0) {
+		admin_process_command(c, l, 1);
+	} else if (!c->network->global->config->admin_noprivmsg && 
+			   !g_strcasecmp(l->args[0], "PRIVMSG") && 
+			   !g_strcasecmp(l->args[1], "CTRLPROXY")) {
+		admin_process_command(c, l, 2);
 	} else if(c->network->connection.state == NETWORK_CONNECTION_STATE_MOTD_RECVD) {
 		if (c->network->config->disable_cache || !client_try_cache(c, l)) {
 			/* Perhaps check for validity of input here ? It could save us some bandwidth 

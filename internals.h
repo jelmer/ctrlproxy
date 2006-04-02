@@ -106,4 +106,8 @@ gboolean nickserv_load(struct global *global);
 gboolean nickserv_save(struct global *global, const char *dir);
 void nickserv_identify_me(struct network *network, char *nick);
 
+/* admin.c */
+void init_admin(void);
+gboolean admin_process_command(const struct client *c, struct line *l, int cmdoffset);
+
 #endif /* __INTERNALS_H__ */

@@ -114,7 +114,6 @@ test -f doc/most && EXTRA_INSTALL_TARGETS="install-doc"
 BINS="ctrlproxy$ac_cv_exeext"
 DEFMODULE(log_irssi)
 DEFMODULE(auto_away)
-DEFMODULE(admin)
 DEFMODULE(log_custom)
 DEFMODULE(antiflood)
 DEFMODULE(repl_simple)

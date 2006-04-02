@@ -19,14 +19,12 @@
 	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 */
 
-#define ADMIN_CORE_BUILD
 #include "ctrlproxy.h"
 #include <string.h>
 #include "admin.h"
 
 #define ADMIN_CHANNEL "#ctrlproxy"
 
-static gboolean without_privmsg = FALSE;
 static GList *commands = NULL;
 static guint longest_command = 0;
 
@@ -327,7 +325,7 @@ void unregister_admin_command(const struct admin_command *cmd)
 	commands = g_list_remove(commands, cmd);
 }
 
-static gboolean process_command(const struct client *c, struct line *l, int cmdoffset)
+gboolean admin_process_command(const struct client *c, struct line *l, int cmdoffset)
 {
 	char *tmp, **args = NULL;
 	int i;
@@ -373,34 +371,6 @@ static gboolean process_command(const struct client *c, struct line *l, int cmdo
 	return TRUE;
 }
 
-static gboolean handle_data(struct client *c, struct line *l, enum data_direction dir, void *userdata) 
-{
-	int cmdoffset = 0;
-
-	if(dir != TO_SERVER) 
-		return TRUE;
-
-	if(g_strcasecmp(l->args[0], "CTRLPROXY") == 0)cmdoffset = 1;
-
-	if(!without_privmsg && g_strcasecmp(l->args[0], "PRIVMSG") == 0 &&
-	   g_strcasecmp(l->args[1], "CTRLPROXY") == 0) cmdoffset = 2;
-
-	if(cmdoffset == 0) 
-		return TRUE;
-
-	process_command(c, l, cmdoffset);
-
-	return FALSE;
-}
-
-static void load_config(struct global *global)
-{
-    GKeyFile *kf = global->config->keyfile;
-
-    if (g_key_file_has_key(kf, "admin", "without_privmsg", NULL))
-        without_privmsg = g_key_file_get_boolean(kf, "admin", "without_privmsg", NULL);
-}
-
 static gboolean admin_net_init(struct network *n)
 {
 	struct channel_state *cs = g_new0(struct channel_state, 1);
@@ -428,54 +398,40 @@ static gboolean admin_to_server (struct network *n, const struct client *c, stru
 		return TRUE;
 	}
 
-	return process_command(c, l, 2);
+	return admin_process_command(c, l, 2);
 }
 
 struct virtual_network_ops admin_network = {
-	"admin",
-	admin_net_init, 
-	admin_to_server,
-	NULL
+	"admin", admin_net_init, admin_to_server, NULL
 };
 
-static gboolean init_plugin(void) 
+const static struct admin_command builtin_commands[] = {
+	{ "ADDNETWORK", add_network, "<name>", "Add new network with specified name" },
+	{ "ADDSERVER", add_server, "<network> <host> [<port> [<password>]]", "Add server to network" },
+	{ "CONNECT", com_connect_network, "<network>", "Connect to specified network. Forces reconnect when waiting." },
+	{ "DELNETWORK", del_network, "<network>", "Remove specified network" },
+	{ "NEXTSERVER", com_next_server, "[network]", "Disconnect and use to the next server in the list" },
+	{ "DIE", handle_die, "", "Exit ctrlproxy" },
+	{ "DISCONNECT", com_disconnect_network, "<network>", "Disconnect specified network" },
+	{ "LISTNETWORKS", list_networks, "", "List current networks and their status" },
+	{ "LOADMODULE", load_module, "<name>", "Load specified module" },
+	{ "LISTMODULES", list_modules, "", "List currently loaded modules" },
+	{ "SAVECONFIG", com_save_config, "<name>", "Save current XML configuration to specified file" },
+	{ "DETACH", detach_client, "", "Detach current client" },
+	{ "HELP", help, "[command]", "This help command" },
+	{ "DUMPJOINEDCHANNELS", dump_joined_channels, "[network]", NULL, NULL },
+#ifdef DEBUG
+	{ "ABORT", do_abort, "", NULL, NULL },
+#endif
+	{ NULL }
+};
+
+void init_admin(void) 
 {
 	int i;
-	const static struct admin_command builtin_commands[] = {
-		{ "ADDNETWORK", add_network, "<name>", "Add new network with specified name" },
-		{ "ADDSERVER", add_server, "<network> <host> [<port> [<password>]]", "Add server to network" },
-		{ "CONNECT", com_connect_network, "<network>", "Connect to specified network. Forces reconnect when waiting." },
-		{ "DELNETWORK", del_network, "<network>", "Remove specified network" },
-		{ "NEXTSERVER", com_next_server, "[network]", "Disconnect and use to the next server in the list" },
-		{ "DIE", handle_die, "", "Exit ctrlproxy" },
-		{ "DISCONNECT", com_disconnect_network, "<network>", "Disconnect specified network" },
-		{ "LISTNETWORKS", list_networks, "", "List current networks and their status" },
-		{ "LOADMODULE", load_module, "<name>", "Load specified module" },
-		{ "LISTMODULES", list_modules, "", "List currently loaded modules" },
-		{ "SAVECONFIG", com_save_config, "<name>", "Save current XML configuration to specified file" },
-		{ "DETACH", detach_client, "", "Detach current client" },
-		{ "HELP", help, "[command]", "This help command" },
-		{ "DUMPJOINEDCHANNELS", dump_joined_channels, "[network]", NULL, NULL },
-#ifdef DEBUG
-		{ "ABORT", do_abort, "", NULL, NULL },
-#endif
-		{ NULL }
-	};
-
-	add_client_filter("admin", handle_data, NULL, 1);
-
 	for(i = 0; builtin_commands[i].name; i++) {
 		register_admin_command(&builtin_commands[i]);
 	}
 
 	register_virtual_network(&admin_network);
-	register_load_config_notify(load_config);
-
-	return TRUE;
 }
-
-struct plugin_ops plugin = {
-	.name = "admin",
-	.version = 0,
-	.init = init_plugin,
-};

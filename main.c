@@ -265,6 +265,7 @@ int main(int argc, char **argv)
 #endif
 	} 
 
+	init_admin();
 	init_nickserv();
 
 	/* Determine correct modules directory */

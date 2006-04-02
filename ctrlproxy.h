@@ -51,6 +51,7 @@
 #include "hooks.h"
 #include "repl.h"
 #include "ctcp.h"
+#include "admin.h"
 
 struct global {
 	struct ctrlproxy_config *config;
