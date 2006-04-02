@@ -108,7 +108,7 @@ static gboolean process_from_client(struct client *c, struct line *l)
 			  !g_strcasecmp(l->args[0], "PASS")) {
 		client_send_response(c, ERR_ALREADYREGISTERED,  
 						 "Please register only once per session", NULL);
-	} else if(!g_strcasecmp(l->args[0], "CTRLPROXY") == 0) {
+	} else if(!g_strcasecmp(l->args[0], "CTRLPROXY")) {
 		admin_process_command(c, l, 1);
 	} else if (!c->network->global->config->admin_noprivmsg && 
 			   !g_strcasecmp(l->args[0], "PRIVMSG") && 

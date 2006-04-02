@@ -54,7 +54,8 @@ void admin_out(const struct client *c, const char *fmt, ...)
 static void add_network (const struct client *c, char **args, void *userdata)
 {
 	struct network_config *nc;
-	if(!args[1]) {
+
+	if (args[1] == NULL) {
 		admin_out(c, "No name specified");
 		return;
 	}
@@ -68,13 +69,13 @@ static void del_network (const struct client *c, char **args, void *userdata)
 {
 	struct network *n;
 
-	if(!args[1]) {
+	if (args[1] == NULL) {
 		admin_out(c, "Not enough parameters");
 		return;
 	}
 
 	n = find_network(c->network->global, args[1]);
-	if (!n) {
+	if (n == NULL) {
 		admin_out(c, "No such network %s", args[1]);
 		return;
 	}
@@ -234,7 +235,7 @@ static void help (const struct client *c, char **args, void *userdata)
 	if(args[1]) {
 		admin_out(c, "Details for command %s:", args[1]);
 	} else {
-		admin_out(c, ("The following commands are available:"));
+		admin_out(c, "The following commands are available:");
 	}
 	while(gl) {
 		struct admin_command *cmd = (struct admin_command *)gl->data;
@@ -272,9 +273,19 @@ static void list_networks(const struct client *c, char **args, void *userdata)
 	for (gl = c->network->global->networks; gl; gl = gl->next) {
 		struct network *n = gl->data;
 
-		if(!n) admin_out(c, ("%s: Not connected"), n->name);
-		else if(n->reconnect_id) admin_out(c, ("%s: Reconnecting"), n->name);
-		else admin_out(c, ("%s: connected"), n->name);
+		switch (n->connection.state) {
+		case NETWORK_CONNECTION_STATE_NOT_CONNECTED:
+			admin_out(c, ("%s: Not connected"), n->name);
+			break;
+		case NETWORK_CONNECTION_STATE_RECONNECT_PENDING:
+			admin_out(c, ("%s: Reconnecting"), n->name);
+			break;
+		case NETWORK_CONNECTION_STATE_CONNECTED:
+		case NETWORK_CONNECTION_STATE_LOGIN_SENT:
+		case NETWORK_CONNECTION_STATE_MOTD_RECVD:
+			admin_out(c, ("%s: connected"), n->name);
+			break;
+		}
 	}
 }
 
@@ -285,15 +296,17 @@ static void detach_client(const struct client *c, char **args, void *userdata)
 
 static void dump_joined_channels(const struct client *c, char **args, void *userdata)
 {
-	struct network *n = c->network;
+	struct network *n;
 	GList *gl;
 
-	if(args[1]) {
+	if (args[1] != NULL) {
 		n = find_network(c->network->global, args[1]);
-		if(!n) {
+		if(n == NULL) {
 			admin_out(c, "Can't find network '%s'", args[1]);
 			return;
 		}
+	} else {
+		n = c->network;
 	}
 
 	for (gl = n->state->channels; gl; gl = gl->next) {
@@ -332,7 +345,7 @@ gboolean admin_process_command(const struct client *c, struct line *l, int cmdof
 	GList *gl;
 
 	if(!l->args[cmdoffset]) {
-		admin_out(c, "Please give a command. Use the 'help' command to get a list of available commands");
+		admin_out(c, "Please specify a command. Use the 'help' command to get a list of available commands");
 		return TRUE;
 	}
 

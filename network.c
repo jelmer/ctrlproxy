@@ -97,6 +97,7 @@ static gboolean process_from_server(struct network *n, struct line *l)
 		for (gl = n->config->channels; gl; gl = gl->next) 
 		{
 			struct channel_config *c = gl->data;
+
 			if(c->autojoin) {
 				network_send_args(n, "JOIN", c->name, c->key, NULL);
 			} 

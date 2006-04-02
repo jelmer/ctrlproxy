@@ -75,4 +75,6 @@ void channel_update_config(struct channel_state *ns, struct channel_config *nc)
 	if (ns->key) 
 		nc->key = g_strdup(ns->key);
 	nc->autojoin = 1;
+	g_free(nc->name);
+	nc->name = g_strdup(ns->name);
 }
