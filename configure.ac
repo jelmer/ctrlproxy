@@ -105,11 +105,16 @@ else
 	DEFMODULE(python2, $PY_LIBS)
 fi
 
-sinclude(doc/config.m4)
-AC_CONFIG_FILES(doc/Makefile.settings)
+AC_PATH_PROG(XSLTPROC, xsltproc)
+
+AC_SUBST(XSLTPROC)
+
+if test -n "$XSLTPROC"
+then
+	EXTRA_INSTALL_TARGETS="install-doc"
+fi
 
 AC_SUBST(EXTRA_INSTALL_TARGETS)
-test -f doc/most && EXTRA_INSTALL_TARGETS="install-doc"
 
 BINS="ctrlproxy$ac_cv_exeext"
 DEFMODULE(log_irssi)

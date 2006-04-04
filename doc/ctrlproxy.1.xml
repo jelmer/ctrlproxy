@@ -89,22 +89,6 @@ on the number of servers it is connected to.
 </refsect1>
 
 <refsect1>
-<title>PLUGINS</title>
-
-<para>Current included plugins with ctrlproxy are:</para>
-
-<!--FIXME: Autogenerate ? -->
-<variablelist>
-	<xi:include href="modules.list.xml" xmlns:xi="http://www.w3.org/2003/XInclude"/>
-</variablelist>
-
-<para>
-Read the relevant manpages for more info about these plugins.
-</para>
-
-</refsect1>
-
-<refsect1>
 	<title>SIGNALS</title>
 
 <para>

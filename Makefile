@@ -45,7 +45,7 @@ install-dirs:
 install-bin:
 	$(INSTALL) ctrlproxy$(EXEEXT) $(DESTDIR)$(bindir)
 
-install-doc:
+install-doc: doc
 	$(INSTALL) -m 644 ctrlproxy.h $(DESTDIR)$(destincludedir)
 	$(INSTALL) AUTHORS $(DESTDIR)$(docdir)
 	$(INSTALL) COPYING $(DESTDIR)$(docdir)

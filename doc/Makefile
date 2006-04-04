@@ -1,27 +1,19 @@
-include Makefile.settings
-DOCS = ctrlproxy.1 ctrlproxyrc.5 user-guide/index.html
+include ../Makefile.settings
+DOCS = ctrlproxy.1 ctrlproxyrc.5 user-guide.html user-guide/index.html
 
-.PHONY: all most manpages htmlmanpages lint clean distclean
+.PHONY: all manpages clean distclean
 
-most: $(DOCS)
-all: $(DOCS) ctrlproxy.pdf ctrlproxy.ps
-everything: $(DOCS) htmlmanpages
+all: $(DOCS)
 
-dist: most
+dist: all
 
 manpages: ctrlproxy.1 ctrlproxyrc.5 
 
 %/index.html: %.xml
-	$(XMLTO) -o $(@D) html $<
+	$(XSLTPROC) --stringparam base.dir "$(@D)/" http://docbook.sourceforge.net/release/xsl/current/html/chunk.xsl $<
 
 %.html: %.xml
-	$(XMLTO) html-nochunks $<
-
-%.ps: %.xml 
-	$(XMLTO) ps $<
-
-lint: ctrlproxy.xml 
-	$(XMLLINT) --valid --noout --xinclude $<
+	$(XSLTPROC) http://docbook.sourceforge.net/release/xsl/current/html/docbook.xsl $< > $@
 
 %.1: %.1.xml 
 	$(XSLTPROC) http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $< > $@
@@ -29,20 +21,17 @@ lint: ctrlproxy.xml
 %.5: %.5.xml
 	$(XSLTPROC) http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $< > $@
 
-%.pdf: %.xml
-	$(XMLTO) pdf $<
+clean::
+	rm -f *.html *.1 *.5
+	rm -rf user-guide
 
-clean: 
-	rm -f *.html *.pdf $(DOCS)
-
-distclean: clean
+distclean:: clean
 	rm -f Makefile.settings
 
-install: most
-	$(INSTALL) -d $(DESTDIR)$(man1dir)
-	$(INSTALL) -d $(DESTDIR)$(man5dir)
+install: all
+	$(INSTALL) -d $(DESTDIR)$(mandir)/man1
+	$(INSTALL) -d $(DESTDIR)$(mandir)/man5
 	$(INSTALL) -d $(DESTDIR)$(docdir)
-	$(INSTALL) ctrlproxy.1 $(DESTDIR)$(man1dir)
-	$(INSTALL) ctrlproxyrc.5 $(DESTDIR)$(man5dir)
-	$(INSTALL) ctrlproxy.pdf $(DESTDIR)$(docdir)
-	$(INSTALL) ctrlproxy.html $(DESTDIR)$(docdir)
+	$(INSTALL) ctrlproxy.1 $(DESTDIR)$(mandir)/man1
+	$(INSTALL) ctrlproxyrc.5 $(DESTDIR)$(mandir)/man5
+	$(INSTALL) user-guide.html $(DESTDIR)$(docdir)
