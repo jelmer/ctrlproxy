@@ -1,34 +1,26 @@
 include Makefile.settings
-DOCS = ctrlproxy.1 ctrlproxyrc.5 ctrlproxy.pdf ctrlproxy.html $(MOD_MANPAGES)
+DOCS = ctrlproxy.1 ctrlproxyrc.5 user-guide/index.html
 
 .PHONY: all most manpages htmlmanpages lint clean distclean
 
 most: $(DOCS)
-	touch $@
 all: $(DOCS) ctrlproxy.pdf ctrlproxy.ps
 everything: $(DOCS) htmlmanpages
+
 dist: most
-	rm -rf autom4te.cache
 
-manpages: ctrlproxy.1 ctrlproxyrc.5 $(MOD_MANPAGES)
-htmlmanpages: $(MOD_MANPAGES_HTML)
+manpages: ctrlproxy.1 ctrlproxyrc.5 
 
-%.7ctrlproxy.xml: %.mod.xml module-man.xsl
-	$(XSLTPROC) -o $@ module-man.xsl $<
+%/index.html: %.xml
+	$(XMLTO) -o $(@D) html $<
 
-%.xml: %.mod.xml module.xsl
-	$(XSLTPROC) -o $@ module.xsl $<
+%.html: %.xml
+	$(XMLTO) html-nochunks $<
 
-%.7ctrlproxy.html: %.7ctrlproxy.xml
-	$(XSLTPROC) -o $@ http://docbook.sourceforge.net/release/xsl/current/html/docbook.xsl $<
-
-%.html: %.xml $(MODS) overview.png overview2.png
-	$(XSLTPROC) -o $@ http://docbook.sourceforge.net/release/xsl/current/html/docbook.xsl $<
-
-%.ps: %.xml $(MODS) overview.eps overview2.eps
+%.ps: %.xml 
 	$(XMLTO) ps $<
 
-lint: ctrlproxy.xml $(MODS)
+lint: ctrlproxy.xml 
 	$(XMLLINT) --valid --noout --xinclude $<
 
 %.1: %.1.xml 
@@ -37,17 +29,11 @@ lint: ctrlproxy.xml $(MODS)
 %.5: %.5.xml
 	$(XSLTPROC) http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $< > $@
 
-%.pdf: %.xml overview.pdf overview2.pdf
+%.pdf: %.xml
 	$(XMLTO) pdf $<
 
-%.png: %.dia
-	$(DIA) -n -e $@ $<
-
-%.eps: %.dia
-	$(DIA) -n -e $@ $<
-
 clean: 
-	rm -f *.html *.pdf $(DOCS) $(MODS) overview{2,}.{eps,png} $(MOD_MANPAGES_INTER)
+	rm -f *.html *.pdf $(DOCS)
 
 distclean: clean
 	rm -f Makefile.settings
@@ -55,11 +41,8 @@ distclean: clean
 install: most
 	$(INSTALL) -d $(DESTDIR)$(man1dir)
 	$(INSTALL) -d $(DESTDIR)$(man5dir)
-	$(INSTALL) -d $(DESTDIR)$(man7dir)
 	$(INSTALL) -d $(DESTDIR)$(docdir)
 	$(INSTALL) ctrlproxy.1 $(DESTDIR)$(man1dir)
 	$(INSTALL) ctrlproxyrc.5 $(DESTDIR)$(man5dir)
-	$(INSTALL) $(MOD_MANPAGES) $(DESTDIR)$(man7dir)
 	$(INSTALL) ctrlproxy.pdf $(DESTDIR)$(docdir)
 	$(INSTALL) ctrlproxy.html $(DESTDIR)$(docdir)
-

@@ -4,7 +4,6 @@ build: build-stamp
 
 build-stamp:
 	dh_testdir
-	./autogen.sh
 	./configure --prefix=/usr --includedir=/usr/include/ctrlproxy --mandir=/usr/share/man
 	$(MAKE)
 	touch build-stamp
@@ -15,6 +14,7 @@ clean:
 	
 	dh_clean
 	-$(MAKE) distclean
+	rm -f build-stamp
 
 binary-indep: build
 

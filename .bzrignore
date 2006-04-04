@@ -49,3 +49,7 @@ testsuite/ctrlproxyrc.torture
 testsuite/torture
 mods/python2/__init__.py
 testsuite/test-state
+doc/*.html
+debian/files
+debian/*.substvars
+doc/user-guide

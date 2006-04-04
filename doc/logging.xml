@@ -49,7 +49,7 @@
 		<para>This module may be used to write out log files that can 			be parsed by scripts or bots or logs in the same format as your favorite
 			IRC client.</para>
 
-	</description>
+	</para>
 
 	<sect2>
 		<title>Substitutes</title>

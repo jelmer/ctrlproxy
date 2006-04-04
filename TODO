@@ -1,4 +1,4 @@
-urrent release (3.0.0):
+current release (3.0.0):
 - test and fix SSL support
 - update documentation
 - finish python module:
@@ -25,7 +25,6 @@ urrent release (3.0.0):
  - CHANNEL <NETWORK> LIST
  - LISTENER
  - SAVECONFIG
-
 
 next minor release (3.0.1):
 - properly expand second argument of PRIVMSG in log_irssi and log_custom
