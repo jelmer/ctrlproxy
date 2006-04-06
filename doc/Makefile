@@ -1,5 +1,5 @@
 include ../Makefile.settings
-DOCS = ctrlproxy.1 ctrlproxyrc.5 user-guide.html user-guide/index.html
+DOCS = ctrlproxy.1 ctrlproxyrc.5 user-guide.html user-guide/index.html ctrlproxy.1.html ctrlproxyrc.5.html
 
 .PHONY: all manpages clean distclean
 
