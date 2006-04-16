@@ -246,28 +246,38 @@ struct linestack
 
 static void pyserver_hook_handler (struct network *n, void *userdata)
 {
-	PyObject *argobj;
 	PyObject *pyfunc = userdata, *ret;
-	argobj = Py_BuildValue("()"); /* FIXME: network */
-	ret = PyEval_CallObject(pyfunc, argobj);
+	PyObject *py_n;
+
+	py_n = SWIG_NewPointerObj(n, SWIGTYPE_p_network, 0);
+	if (py_n == NULL) {
+		PyErr_Print();
+		PyErr_Clear();
+	}
+
+	ret = PyObject_CallFunction(pyfunc, "O", py_n); 
 	if (ret == NULL) {
 		PyErr_Print();
 		PyErr_Clear();
 	}
-	Py_DECREF(argobj);
 }
 
 static void pyclient_hook_handler (struct client *c, void *userdata)
 {
-	PyObject *argobj;
+	PyObject *py_c;
 	PyObject *pyfunc = userdata, *ret;
-	argobj = Py_BuildValue("()"); /* FIXME: client */
-	ret = PyEval_CallObject(pyfunc, argobj);
+
+	py_c = SWIG_NewPointerObj(c, SWIGTYPE_p_client, 0);
+	if (py_c == NULL) {
+		PyErr_Print();
+		PyErr_Clear();
+	}
+
+	ret = PyObject_CallFunction(pyfunc,"O", py_c);
 	if (ret == NULL) {
 		PyErr_Print();
 		PyErr_Clear();
 	}
-	Py_DECREF(argobj);
 }
 
 static gboolean pyserver_filter_handler (struct network *n, struct line *l, enum data_direction dir, void *userdata)
@@ -393,13 +403,11 @@ static void pyadmin_cmd_handler (const struct client *c, char **args, void *user
 	for (i = 0; args[i]; i++) {
 		PyList_Append(arglist, PyString_FromString(args[i]));
 	}
-	argobj = Py_BuildValue("(O)", arglist);
-	ret = PyEval_CallObject(pyfunc, argobj);
+	ret = PyObject_CallFunction(pyfunc, "O", arglist);
 	if (ret == NULL) {
 		PyErr_Print();
 		PyErr_Clear();
 	}
-	Py_DECREF(argobj);
 }
 
 void py_register_admin_command(const char *name, PyObject *pyfunc, const char *help, const char *help_details) 

@@ -2,8 +2,9 @@ current release (3.0.0):
 - test and fix SSL support
 - update documentation
 - finish python module:
- - pass client / network / line arguments correctly
+ - pass line arguments correctly
  - examples
+ - easy mechanism to test python scripts
 - testing
 - fix issue with loading state from linestack_file
 - better handling of log_network_state()

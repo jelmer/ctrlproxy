@@ -25,7 +25,7 @@ ctrlproxy$(EXEEXT): main.o $(objs)
 
 .c.o:
 	@echo Compiling $<
-	@$(CC) -I. $(CFLAGS) $(GCOV_CFLAGS) -c $< -o $@
+	$(CC) -I. $(CFLAGS) $(GCOV_CFLAGS) -c $< -o $@
 
 configure: autogen.sh configure.ac acinclude.m4 $(wildcard mods/*/*.m4)
 	./$<
@@ -69,7 +69,7 @@ gcov:
 
 mods/lib%.so: mods/%.o
 	@echo Linking $@
-	$(CC) $(LDFLAGS) -fPIC -shared -o $@ $<
+	$(CC) $(LDFLAGS) -fPIC -shared -o $@ $^
 
 clean::
 	rm -f $(MODS_SHARED_FILES)
@@ -94,7 +94,8 @@ mods/openssl.o: CFLAGS+=$(OPENSSL_CFLAGS)
 mods/libopenssl.$(SHLIBEXT): LDFLAGS+=$(OPENSSL_LDFLAGS)
 
 # Python specific stuff below this line
-mods/python2.o: CFLAGS+=$(PYTHON_CFLAGS)
+mods/python2.o ctrlproxy_wrap.o: CFLAGS+=$(PYTHON_CFLAGS)
+mods/libpython2.so: mods/python2.o ctrlproxy_wrap.o
 mods/libpython2.so: LDFLAGS+=$(PYTHON_LDFLAGS)
 
 %_wrap.c: %.i
