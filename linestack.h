@@ -118,6 +118,14 @@ G_MODULE_EXPORT gboolean linestack_send_timed (
 		struct linestack_marker *to, /* Can be NULL for 'now' */
 		const struct client *);
 
+G_MODULE_EXPORT gboolean linestack_send_object_timed(
+		struct linestack_context *, 
+		struct network *, 
+		const char *obj, 
+		struct linestack_marker *from, 
+		struct linestack_marker *to, 
+		const struct client *);
+
 G_MODULE_EXPORT gboolean linestack_send (
 		struct linestack_context *,
 		struct network *,

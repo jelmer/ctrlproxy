@@ -59,14 +59,11 @@ static void simple_replicate(struct client *c)
 		change_nick(c, ns->me.nick);
 	}
 	free_network_state(ns);
-	linestack_send(c->network->global->linestack, c->network, m, NULL, c);
-}
 
-static gboolean fini_plugin(struct plugin *p) 
-{
-	del_server_filter("repl_simple");
-	g_hash_table_destroy(simple_backlog); simple_backlog = NULL;
-	return TRUE;
+	if (c->network->global->config->report_time)
+		linestack_send_timed(c->network->global->linestack, c->network, m, NULL, c);
+	else
+		linestack_send(c->network->global->linestack, c->network, m, NULL, c);
 }
 
 static const struct replication_backend simple = 

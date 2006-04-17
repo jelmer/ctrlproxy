@@ -39,7 +39,12 @@ static void repl_command(const struct client *c, char **args, void *userdata)
 
 	/* Backlog for specific nick/channel */
 	admin_out(c, "Sending backlog for channel %s", args[1]);
-	linestack_send_object(c->network->global->linestack, c->network, args[1], lm, NULL, c);
+
+	if (c->network->global->config->report_time)
+		linestack_send_object_timed(c->network->global->linestack, c->network, args[1], lm, NULL, c);
+	else
+		linestack_send_object(c->network->global->linestack, c->network, args[1], lm, NULL, c);
+
 	g_hash_table_replace(markers, c->network, linestack_get_marker(c->network->global->linestack, c->network));
 }
 

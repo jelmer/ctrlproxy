@@ -1,6 +1,6 @@
 /*
 	ctrlproxy: A modular IRC proxy
-	(c) 2002-2004 Jelmer Vernooij <jelmer@nl.linux.org>
+	(c) 2002-2006 Jelmer Vernooij <jelmer@nl.linux.org>
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -159,6 +159,8 @@ void save_configuration(struct ctrlproxy_config *cfg, const char *configuration_
 	if (cfg->linestack_backend) 
 		g_key_file_set_string(cfg->keyfile, "global", "linestack", cfg->linestack_backend);
 	g_key_file_set_string(cfg->keyfile, "global", "motd-file", cfg->motd_file);
+
+	g_key_file_set_boolean(cfg->keyfile, "global", "report-time", cfg->report_time);
 
 	config_save_networks(configuration_dir, cfg->networks);
 
@@ -352,6 +354,10 @@ struct ctrlproxy_config *load_configuration(const char *dir)
 
 	cfg->replication = g_key_file_get_string(kf, "global", "replication", NULL);
 	cfg->linestack_backend = g_key_file_get_string(kf, "global", "linestack", NULL);
+
+	if (g_key_file_has_key(kf, "global", "report-time", NULL) &&
+		!g_key_file_get_boolean(kf, "global", "report-time", NULL))
+		cfg->report_time = TRUE;
 
     if (g_key_file_has_key(kf, "global", "motd-file", NULL))
 		cfg->motd_file = g_key_file_get_string(kf, "global", "motd-file", NULL);
