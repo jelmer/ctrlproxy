@@ -36,6 +36,10 @@
 %immutable client::nick;
 %immutable NetworkState;
 %immutable NetworkInfo;
+%ignore register_admin_command;
+%rename(AdminCommand) admin_command;
+%immutable admin_command::help;
+%immutable admin_command::help_details;
 %rename(get_version) ctrlproxy_version;
 %rename(Line) line;
 %rename(Plugin) plugin;
@@ -44,11 +48,14 @@
 %rename(NetworkInfo) network_info;
 %rename(Channel) channel;
 
-%include "../../line.h";
-%include "../../network.h";
-%include "../../client.h";
-%include "../../state.h";
-%include "../../ctrlproxy.h";
+%include "line.h";
+%include "network.h";
+%include "client.h";
+%include "state.h";
+%include "ctrlproxy.h";
+%include "admin.h";
+
+
 
 %extend line {
 	line(const struct line *l) {
@@ -177,7 +184,7 @@
 struct linestack
 {
 	struct network *n;
-	linestack_marker *m;
+	struct linestack_marker *m;
 };
 %}
 
@@ -239,43 +246,38 @@ struct linestack
 
 static void pyserver_hook_handler (struct network *n, void *userdata)
 {
-	PyObject *argobj;
 	PyObject *pyfunc = userdata, *ret;
-	argobj = Py_BuildValue("()"); /* FIXME: network */
-	ret = PyEval_CallObject(pyfunc, argobj);
+	PyObject *py_n;
+
+	py_n = SWIG_NewPointerObj(n, SWIGTYPE_p_network, 0);
+	if (py_n == NULL) {
+		PyErr_Print();
+		PyErr_Clear();
+	}
+
+	ret = PyObject_CallFunction(pyfunc, "O", py_n); 
 	if (ret == NULL) {
 		PyErr_Print();
 		PyErr_Clear();
 	}
-	Py_DECREF(argobj);
 }
 
 static void pyclient_hook_handler (struct client *c, void *userdata)
 {
-	PyObject *argobj;
+	PyObject *py_c;
 	PyObject *pyfunc = userdata, *ret;
-	argobj = Py_BuildValue("()"); /* FIXME: client */
-	ret = PyEval_CallObject(pyfunc, argobj);
-	if (ret == NULL) {
-		PyErr_Print();
-		PyErr_Clear();
-	}
-	Py_DECREF(argobj);
-}
 
-static char **pymotd_hook_handler (struct network *c, void *userdata)
-{
-	PyObject *argobj;
-	PyObject *pyfunc = userdata, *ret;
-	argobj = Py_BuildValue("()"); /* FIXME: network */
-	ret = PyEval_CallObject(pyfunc, argobj);
+	py_c = SWIG_NewPointerObj(c, SWIGTYPE_p_client, 0);
+	if (py_c == NULL) {
+		PyErr_Print();
+		PyErr_Clear();
+	}
+
+	ret = PyObject_CallFunction(pyfunc,"O", py_c);
 	if (ret == NULL) {
 		PyErr_Print();
 		PyErr_Clear();
 	}
-	Py_DECREF(argobj);
-	/* FIXME: handle ret */
-	return NULL;
 }
 
 static gboolean pyserver_filter_handler (struct network *n, struct line *l, enum data_direction dir, void *userdata)
@@ -336,13 +338,6 @@ void py_add_lose_client_hook(const char *name, PyObject *pyfunc)
 		add_lose_client_hook(name, pyclient_hook_handler, pyfunc);
 }
 
-void py_add_motd_hook(const char *name, PyObject *pyfunc)
-{
-	Py_INCREF(pyfunc);
-
-	add_motd_hook(name, pymotd_hook_handler, pyfunc);
-}
-
 void py_add_server_filter(const char *name, PyObject *pyfunc, int priority)
 {
 	Py_INCREF(pyfunc);
@@ -384,9 +379,6 @@ void py_add_new_client_hook(const char *name, PyObject *pyfunc);
 %rename(add_lose_client_hook) py_add_lose_client_hook;
 void py_add_lose_client_hook(const char *name, PyObject *pyfunc);
 
-%rename(add_motd_hook) py_add_motd_hook;
-void py_add_motd_hook(const char *name, PyObject *pyfunc);
-
 %rename(add_server_filter) py_add_server_filter;
 void py_add_server_filter(const char *name, PyObject *pyfunc, int priority);
 
@@ -399,6 +391,46 @@ void py_add_replication_filter(const char *name, PyObject *pyfunc, int priority)
 %rename(add_log_filter) py_add_replication_filter;
 void py_add_log_filter(const char *name, PyObject *pyfunc, int priority);
 
+%inline %{
+
+static void pyadmin_cmd_handler (const struct client *c, char **args, void *userdata)
+{
+	PyObject *arglist;
+	PyObject *argobj;
+	PyObject *pyfunc = userdata, *ret;
+	int i;
+	arglist = PyList_New(0);
+	for (i = 0; args[i]; i++) {
+		PyList_Append(arglist, PyString_FromString(args[i]));
+	}
+	ret = PyObject_CallFunction(pyfunc, "O", arglist);
+	if (ret == NULL) {
+		PyErr_Print();
+		PyErr_Clear();
+	}
+}
+
+void py_register_admin_command(const char *name, PyObject *pyfunc, const char *help, const char *help_details) 
+{
+		struct admin_command *adm;
+
+		Py_INCREF(pyfunc);
+
+		adm = g_new0(struct admin_command, 1);
+
+		adm->name = g_strdup(name);
+		adm->help = g_strdup(help);
+		adm->help_details = g_strdup(help_details);
+		adm->handler = pyadmin_cmd_handler;
+		adm->userdata = pyfunc;
+
+		register_admin_command(adm);
+}
+
+%}
+
+%rename(register_admin_command) py_register_admin_command;
+void py_register_admin_command(const char *name, PyObject *pyfunc, const char *help=NULL, const char *help_details=NULL);
 #endif
 
 %makedefault;

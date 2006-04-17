@@ -49,7 +49,7 @@ static gboolean log_data(struct network *n, struct line *l, enum data_direction 
 
 static void simple_replicate(struct client *c)
 {
-	linestack_marker *m;
+	struct linestack_marker *m;
 	struct network_state *ns;
 
 	m = g_hash_table_lookup(simple_backlog, c->network);
@@ -59,14 +59,11 @@ static void simple_replicate(struct client *c)
 		change_nick(c, ns->me.nick);
 	}
 	free_network_state(ns);
-	linestack_send(c->network->global->linestack, c->network, m, NULL, c);
-}
 
-static gboolean fini_plugin(struct plugin *p) 
-{
-	del_server_filter("repl_simple");
-	g_hash_table_destroy(simple_backlog); simple_backlog = NULL;
-	return TRUE;
+	if (c->network->global->config->report_time)
+		linestack_send_timed(c->network->global->linestack, c->network, m, NULL, c);
+	else
+		linestack_send(c->network->global->linestack, c->network, m, NULL, c);
 }
 
 static const struct replication_backend simple = 
@@ -75,11 +72,11 @@ static const struct replication_backend simple =
 	.replication_fn = simple_replicate
 };
 
-static gboolean init_plugin(struct plugin *p) 
+static gboolean init_plugin(void)
 {
 	add_server_filter("repl_simple", log_data, NULL, 200);
 	register_replication_backend(&simple);
-	simple_backlog = g_hash_table_new_full(NULL, NULL, NULL, linestack_free_marker);
+	simple_backlog = g_hash_table_new_full(NULL, NULL, NULL, (void (*)(void *))linestack_free_marker);
 	return TRUE;
 }
 
@@ -87,5 +84,4 @@ struct plugin_ops plugin = {
 	.name = "repl_simple",
 	.version = 0,
 	.init = init_plugin,
-	.fini = fini_plugin
 };

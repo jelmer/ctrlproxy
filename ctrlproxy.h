@@ -27,14 +27,14 @@
 #include <glib.h>
 #include <gmodule.h>
 
-#include <libxml/tree.h>
-
-#ifdef STRICT_MEMORY_ALLOCS
+#if defined(STRICT_MEMORY_ALLOCS) && !defined(SWIGPYTHON)
 #define calloc(a,b) __ERROR_USE_G_NEW0__
 #define malloc(a) __ERROR_USE_G_MALLOC_OR_G_NEW__
 #define realloc(a,b) __ERROR_USE_G_REALLOC_OR_G_RE_NEW__
 #define free(a) __ERROR_USE_G_FREE__
+#undef strdup
 #define strdup(a) __ERROR_USE_G_STRDUP__
+#undef strndup
 #define strndup(a) __ERROR_USE_G_STRNDUP__
 #endif
 
@@ -51,18 +51,23 @@
 #include "hooks.h"
 #include "repl.h"
 #include "ctcp.h"
+#include "admin.h"
 
 struct global {
-	char *last_config_file;
 	struct ctrlproxy_config *config;
 	struct linestack_context *linestack;
 	GList *networks;
+	GList *nickserv_nicks;
 };
 
 /* main.c */
 G_MODULE_EXPORT const char *ctrlproxy_version(void);
 G_MODULE_EXPORT const char *get_my_hostname(void);
-G_MODULE_EXPORT struct ctrlproxy_config *get_current_config(void);
+
+typedef void (*config_load_notify_fn) (struct global *);
+typedef void (*config_save_notify_fn) (struct global *, const char *);
+G_MODULE_EXPORT void register_load_config_notify(config_load_notify_fn fn);
+G_MODULE_EXPORT void register_save_config_notify(config_save_notify_fn fn);
 
 /* util.c */
 G_MODULE_EXPORT char *list_make_string(GList *);

@@ -1,28 +1,45 @@
 current release (3.0.0):
 - test and fix SSL support
-- remove evil 'extern struct global *_global' hacks
 - update documentation
-- finish python module:
- - pass client / network / line arguments correctly
- - examples
-- testing
 - fix issue with loading state from linestack_file
-- better handling of log_network_state()
-- merge noticelog into admin
-- load all plugins
-- allow the use of report_time like capabilities again
-- new config file format (yacc!)
- - finish upgrade script
- - make editing config file optional
+- finish upgrade script
+- fix strange bug with 'reconnect' interaction
+- make editing config file optional
+ - set up a default configuration with: 
+   - admin server
+   - list of irc servers to connect to and ports they'll be available at
+- cope with renamed networks (so we don't end up with two of the same name)
 
 next minor release (3.0.1):
+- better handling of log_network_state()
 - properly expand second argument of PRIVMSG in log_irssi and log_custom
 - <allow/> rules in socks and listener based on ip addresses/ranges
+ - auth mechanism like the abandoned 3.0 has?
 - support passwords in listener for selecting between networks
 - some sort of cascading filters, remove options from line struct
 - more advanced repl backends, rules-based perhaps?
 - use more GLib functions (e.g. g_spawn() rather then fork(), 
    g_swap_async_with_pipes() instead of piped_child(), etc)
+- warn about unclaimed options!
+- hierarchical structure for admin commands
+ - NETWORK
+ - NETWORK ADD <NAME>
+ - NETWORK REMOVE <NAME>
+ - NETWORK LIST
+ - NETWORK DISCONNECT <NAME>
+ - NETWORK INFO <NAME>
+ - NETWORK NEXTSERVER <NAME>
+ - NETWORK SET <NAME> <VAR> <VAL>
+ - CHANNEL <NETWORK> LIST
+ - CHANNEL <NETWORK> SET <VAR> <VAL>
+ - LISTENER ADD <binding> <port> [<network>]
+ - LISTENER DEL <binding> <port>
+ - LISTENER LIST
+ - SAVECONFIG
+- python module:
+ - pass line arguments correctly
+ - examples
+ - easy mechanism to test python scripts
 
 next major release (3.1.0):
 - merge report_time into the repl_ modules
@@ -31,3 +48,4 @@ next major release (3.1.0):
 - import anti-idle
 - import authenticators
 - support for multiple users at the same time (same process)?
+- support for the icecap protocol?

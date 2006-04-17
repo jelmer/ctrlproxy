@@ -1,6 +1,6 @@
 /* 
 	ctrlproxy: A modular IRC proxy
-	(c) 2003 Jelmer Vernooij <jelmer@nl.linux.org>
+	(c) 2003,2006 Jelmer Vernooij <jelmer@nl.linux.org>
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -27,12 +27,10 @@ struct nickserv_entry {
 	const char *pass;
 };
 
-static GList *nicks = NULL;
-
 static const char *nickserv_find_nick(struct network *n, char *nick)
 {
 	GList *gl;
-	for (gl = nicks; gl; gl = gl->next) {
+	for (gl = n->global->nickserv_nicks; gl; gl = gl->next) {
 		struct nickserv_entry *e = gl->data;
 
 		if (g_strcasecmp(e->nick, nick)) 
@@ -50,7 +48,7 @@ static const char *nickserv_nick(struct network *n)
 	return "NickServ";
 }
 
-static void identify_me(struct network *network, char *nick)
+void nickserv_identify_me(struct network *network, char *nick)
 {
 	const char *pass;
 
@@ -63,20 +61,22 @@ static void identify_me(struct network *network, char *nick)
 		const char *nickserv_n = nickserv_nick(network);
 		char *raw;
 		raw = g_strdup_printf("IDENTIFY %s", pass);
+		log_network(NULL, LOG_INFO, network, "Sending password for %s", nickserv_n);
 		network_send_args(network, "PRIVMSG", nickserv_n, raw, NULL);
 		g_free(raw);
 	} else {
-		log_network("nickserv", LOG_INFO, network, "No password known for `%s'", nick);
+		log_network(NULL, LOG_INFO, network, "No password known for `%s'", nick);
 	}
 }
 
-static gboolean log_data(struct network *n, struct line *l, enum data_direction dir, void *userdata) {
+static gboolean log_data(struct network *n, struct line *l, enum data_direction dir, void *userdata) 
+{
 	static char *nickattempt = NULL;
 
 	/* User has changed his/her nick. Check whether this nick needs to be identified */
 	if(dir == FROM_SERVER && !g_strcasecmp(l->args[0], "NICK") &&
 	   nickattempt && !g_strcasecmp(nickattempt, l->args[1])) {
-		identify_me(n, l->args[1]);
+		nickserv_identify_me(n, l->args[1]);
 	}
 
 	/* Keep track of the last nick that the user tried to take */
@@ -90,12 +90,19 @@ static gboolean log_data(struct network *n, struct line *l, enum data_direction 
 		(!g_strcasecmp(l->args[1], nickserv_nick(n)) && !g_strncasecmp(l->args[2], "IDENTIFY ", strlen("IDENTIFY ")))) {
 			struct nickserv_entry *e = NULL;
 			GList *gl;
+			char *newpass = g_strdup(l->args[2] + strlen("IDENTIFY "));
 		
-			for (gl = nicks; gl; gl = gl->next) {
+			for (gl = n->global->nickserv_nicks; gl; gl = gl->next) {
 				e = gl->data;
 
-				if (e->network && !strcasecmp(e->network, n->name) && !strcasecmp(e->nick, n->state->me.nick)) {
+				if (e->network && !g_strcasecmp(e->network, n->name) && 
+					!g_strcasecmp(e->nick, n->state->me.nick)) {
 					break;		
+				}
+
+				if (!e->network && !g_strcasecmp(e->nick, n->state->me.nick) &&
+					!g_strcasecmp(e->pass, newpass)) {
+					break;
 				}
 			}
 
@@ -103,12 +110,16 @@ static gboolean log_data(struct network *n, struct line *l, enum data_direction 
 				e = g_new0(struct nickserv_entry, 1);
 				e->nick = g_strdup(n->state->me.nick);
 				e->network = g_strdup(n->name);
-				nicks = g_list_prepend(nicks, e);
+				n->global->nickserv_nicks = g_list_prepend(n->global->nickserv_nicks, e);
 			}
 
-			e->pass = g_strdup(l->args[2] + strlen("IDENTIFY "));
-			
-			log_network("nickserv", LOG_INFO, n, "Caching password for nick %s", e->nick);
+			if (e->pass == NULL || 
+				strcmp(e->pass, newpass) != 0) {
+				e->pass = g_strdup(newpass);
+				log_network(NULL, LOG_INFO, n, "Caching password for nick %s", e->nick);
+			} 
+
+			g_free(newpass);
 	}
 
 	/* If we receive a nick-already-in-use message, ghost the current user */
@@ -118,7 +129,7 @@ static gboolean log_data(struct network *n, struct line *l, enum data_direction 
 			const char *nickserv_n = nickserv_nick(n);
 			char *raw;
 			
-			log_network("nickserv", LOG_INFO, n, "Ghosting current user using '%s'", nickattempt);
+			log_network(NULL, LOG_INFO, n, "Ghosting current user using '%s'", nickattempt);
 
 			raw = g_strdup_printf("GHOST %s %s", nickattempt, pass);
 			network_send_args(n, "PRIVMSG", nickserv_n, raw, NULL);
@@ -130,83 +141,91 @@ static gboolean log_data(struct network *n, struct line *l, enum data_direction 
 	return TRUE;
 }
 
-static void conned_data(struct network *n, void *userdata)
+
+gboolean nickserv_save(struct global *global, const char *dir)
 {
-	identify_me(n, n->state->me.nick);
-}
+    char *filename = g_build_filename(dir, "nickserv", NULL);
+    GIOChannel *gio;
+    GList *gl;
+	GError *error = NULL;
 
-static gboolean update_config(struct plugin *p, xmlNodePtr node)
-{
-	GList *gl;
-	xmlNodePtr cur, next;
+    gio = g_io_channel_new_file(filename, "w", &error);
 
-	/* First, remove old nodes */
-	for (cur = node->children; cur; cur = next)
-	{
-		next = cur->next;
+    if (!gio) {
+		log_global(NULL, LOG_WARNING, "Unable to write nickserv file `%s': %s", filename, error->message);
+        g_free(filename);
+        return FALSE;
+    }
 
-		if (!strcmp(cur->name, "nick"))
-			xmlUnlinkNode(cur);
-	}
-
-	for (gl = nicks; gl; gl = gl->next) {
-		xmlNodePtr p = xmlNewNode(NULL, "nick");	
+	for (gl = global->nickserv_nicks; gl; gl = gl->next) {
 		struct nickserv_entry *n = gl->data;
+        char *line;
+        gsize nr;
+        
+        line = g_strdup_printf("%s\t%s\t%s\n", n->nick, n->pass, n->network?n->network:"*");
 
-		xmlSetProp(p, "name", n->nick);
-		if (n->network) xmlSetProp(p, "network", n->network);
-		xmlSetProp(p, "password", n->pass);
+        g_io_channel_write_chars(gio, line, -1, &nr, NULL);
 
-		xmlAddChild(node, p);
+        g_free(line);
 	}
+    
+    g_io_channel_unref(gio);
+    g_free(filename);
 
-	return TRUE;	
+	return TRUE;
 }
 
-static gboolean load_config(struct plugin *p, xmlNodePtr node)
+gboolean nickserv_load(struct global *global)
 {
-	xmlNodePtr cur;
+    char *filename = g_build_filename(global->config->config_dir, "nickserv", NULL);
+    GIOChannel *gio;
+    char *ret;
+    gsize nr, term;
 
-	for (cur = node->children; cur; cur = cur->next)
-	{
+    gio = g_io_channel_new_file(filename, "r", NULL);
+
+    if (!gio) {
+        g_free(filename);
+        return FALSE;
+    }
+
+    while (G_IO_STATUS_NORMAL == g_io_channel_read_line(gio, &ret, &nr, &term, NULL))
+    {
+        char **parts; 
 		struct nickserv_entry *e;
-		if (cur->type != XML_ELEMENT_NODE) continue;
 
-		if (!strcmp(cur->name, "nick")) {
-			if (!xmlHasProp(cur, "name")) {
-				log_global("nickserv", LOG_WARNING, "Malformed nick name entry");
-				continue;
-			} 
+		ret[term] = '\0';
 
-			e = g_new0(struct nickserv_entry, 1);
-			e->nick = xmlGetProp(cur, "name");
-			e->pass = xmlGetProp(cur, "password");
-			e->network = xmlGetProp(cur, "network");
-		
-			nicks = g_list_append(nicks, e);
+        parts = g_strsplit(ret, "\t", 3);
+        g_free(ret);
+
+		if (!parts[0] || !parts[1]) {
+			g_strfreev(parts);
+			continue;
 		}
-	}
+			
+		e = g_new0(struct nickserv_entry, 1);
+		e->nick = parts[0];
+		e->pass = parts[1];
+		if (!parts[2] || !strcmp(parts[2], "*")) {
+			e->network = NULL;
+			g_free(parts[2]);
+		} else {
+			e->network = parts[2];
+		}
+	
+		global->nickserv_nicks = g_list_append(global->nickserv_nicks, e);   
+        g_free(parts);
+    }
+
+	g_free(filename);
+
+	g_io_channel_unref(gio);
 
 	return TRUE;
 }
 
-static gboolean fini_plugin(struct plugin *p) {
-	del_server_connected_hook("nickserv");
-	del_server_filter("nickserv");
-	return TRUE;
-}
-
-static gboolean init_plugin(struct plugin *p) {
-	add_server_connected_hook("nickserv", conned_data, NULL);
+void init_nickserv(void)
+{
 	add_server_filter("nickserv", log_data, NULL, 1);
-	return TRUE;
 }
-
-struct plugin_ops plugin = {
-	.name = "nickserv",
-	.version = 0,
-	.init = init_plugin,
-	.fini = fini_plugin,
-	.load_config = load_config,
-	.update_config = update_config
-};

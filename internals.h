@@ -28,7 +28,6 @@
 #ifdef HAVE_UNISTD_H
 #  include <unistd.h>
 #endif
-#define __USE_POSIX
 #include <netdb.h>
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -47,7 +46,6 @@
 #define MAXHOSTNAMELEN 4096
 
 /* server.c */
-gboolean init_networks();
 void fini_networks(struct global *);
 void kill_pending_clients(const char *reason);
 
@@ -56,18 +54,15 @@ void free_channels(struct network *s);
 void network_nick_set_data(struct network_nick *n, const char *nick, const char *username, const char *host);
 gboolean network_nick_set_hostmask(struct network_nick *n, const char *hm);
 
-/* config.c */
-void init_config(void);
-void fini_config(void);
-
 /* plugins.c */
-gboolean init_plugins(struct ctrlproxy_config *);
-void fini_plugins(void);
+gboolean init_plugins(const char *dir);
+
+/* motd.c */
+char **get_motd_lines(struct client *);
 
 /* hooks.c */
 void server_disconnected_hook_execute(struct network *);
 void server_connected_hook_execute(struct network *);
-char **get_motd_lines(struct client *);
 gboolean new_client_hook_execute(struct client *c);
 void lose_client_hook_execute(struct client *c);
 gboolean run_client_filter(struct client *c, struct line *l, enum data_direction dir);
@@ -96,12 +91,24 @@ gboolean linestack_insert_line(struct linestack_context *, const struct network 
 /* gen_config.c */
 void network_update_config(struct network_state *ns, struct network_config *nc);
 void channel_update_config(struct channel_state *ns, struct channel_config *nc);
-void plugin_update_config(struct plugin *ps, struct plugin_config *pc);
 
 /* repl.c */
 void client_replicate(struct client *);
 
 /* main.c */
 void free_global(struct global *);
+void config_load_notify(struct global *global);
+void config_save_notify(struct global *global, const char *);
+
+/* nickserv.c */
+void init_nickserv(void);
+gboolean nickserv_load(struct global *global);
+gboolean nickserv_save(struct global *global, const char *dir);
+void nickserv_identify_me(struct network *network, char *nick);
+
+/* admin.c */
+void init_admin(void);
+gboolean admin_process_command(const struct client *c, struct line *l, int cmdoffset);
+void admin_log(const char *module, enum log_level level, const struct network *n, const struct client *c, const char *data);
 
 #endif /* __INTERNALS_H__ */

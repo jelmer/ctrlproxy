@@ -34,8 +34,7 @@ static char *toarg(va_list ap)
 		len+=strlen(arg) + 2;
 	}
 
-	if (!list) 
-		return g_strdup("\001\001");
+	g_assert(list);
 
 	ret = g_new0(char, len);
 	ret[0] = '\001';
@@ -52,11 +51,11 @@ static char *toarg(va_list ap)
 	return ret;
 }
 
-void ctcp_reply(struct network *n, const char *nick, const char *fmt, ...) 
+void ctcp_reply(struct network *n, const char *nick, ...) 
 {
 	va_list ap;
 	char *msg;
-	va_start(ap, fmt);
+	va_start(ap, nick);
 	msg = toarg(ap);
 	va_end(ap);
 
@@ -64,11 +63,11 @@ void ctcp_reply(struct network *n, const char *nick, const char *fmt, ...)
 	g_free(msg);
 }
 
-void ctcp_send(struct network *n, const char *nick, const char *fmt, ...) 
+void ctcp_send(struct network *n, const char *nick, ...)
 {
 	va_list ap;
 	char *msg;
-	va_start(ap, fmt);
+	va_start(ap, nick);
 	msg = toarg(ap);
 	va_end(ap);
 
@@ -143,10 +142,12 @@ gboolean ctcp_process (struct network *n, struct line *l)
 {
 	GList *gl;
 	int i;
-	char *sender = line_get_nick(l), *t;
+	char *sender, *t;
 	char *data;
 	char **args;
 	gboolean ret = FALSE;
+
+	sender = line_get_nick(l);
 
 	data = g_strdup(l->args[2]+1);
 	t = strchr(data, '\001');
@@ -170,7 +171,7 @@ gboolean ctcp_process (struct network *n, struct line *l)
 		}
 	}
 
-	for (i = 0; ret && builtins[i].name; i++) {
+	for (i = 0; !ret && builtins[i].name; i++) {
 		if (!g_strcasecmp(builtins[i].name, args[0])) {
 			builtins[i].fn(n, sender, args);
 			ret = TRUE;

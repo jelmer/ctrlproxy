@@ -1,6 +1,6 @@
 /*
 	ctrlproxy: A modular IRC proxy
-	(c) 2002-2005 Jelmer Vernooij <jelmer@nl.linux.org>
+	(c) 2002-2006 Jelmer Vernooij <jelmer@nl.linux.org>
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -38,7 +38,7 @@
 static GMainLoop *main_loop;
 extern char my_hostname[];
 
-struct global *_global;
+struct global *my_global;
 
 static void signal_crash(int sig) 
 {
@@ -77,21 +77,18 @@ static void clean_exit()
 	char *path;
 	kill_pending_clients("Server exiting");
 
-	fini_networks(_global);
-
 	g_main_loop_quit(main_loop);
 
-	fini_config();
-	fini_plugins();
+	path = my_global->config->config_dir;
+	config_save_notify(my_global, path);
+	if (my_global->config->autosave)
+		save_configuration(my_global->config, path);
+	nickserv_save(my_global, path);
 
-	path = g_build_filename(_global->config->config_dir, "autosave", NULL);
-	save_configuration(_global->config, path);
-	g_free(path);
-	free_config(_global->config);
-
-	free_global(_global);
+	free_global(my_global);
 
 	g_main_loop_unref(main_loop);
+
 	fini_log();
 }
 
@@ -112,29 +109,81 @@ static void signal_quit(int sig)
 static void signal_save(int sig)
 {
 	log_global(NULL, LOG_INFO, "Received USR1 signal, saving configuration...");
-	save_configuration(_global->config, _global->last_config_file);
+	config_save_notify(my_global, my_global->config->config_dir);
+	save_configuration(my_global->config, my_global->config->config_dir);
+	nickserv_save(my_global, my_global->config->config_dir);
 }
 
-struct global *new_global()
+struct global *new_global(const char *config_dir)
 {
 	struct global *global = g_new0(struct global, 1);
 
+	global->config = load_configuration(config_dir);
+
+	load_networks(global, global->config);
+
+	nickserv_load(global);
+
+	if (!global->config) {
+		g_free(global);
+		return NULL;
+	}
+
+	global->linestack = new_linestack(global->config);
+
+	config_load_notify(global);
+	
 	return global;
 }
 
 void free_global(struct global *global)
 {
+	fini_networks(global);
+	free_config(global->config);
 	free_linestack_context(global->linestack); global->linestack = NULL;
 	fini_networks(global);
+}
+
+static GList *load_notifies = NULL, *save_notifies = NULL;
+
+void register_load_config_notify(config_load_notify_fn fn)
+{
+	load_notifies = g_list_append(load_notifies, fn);
+}
+
+void register_save_config_notify(config_save_notify_fn fn)
+{
+	save_notifies = g_list_append(save_notifies, fn);
+}
+
+void config_load_notify(struct global *global)
+{
+	GList *gl;
+	for (gl = load_notifies; gl; gl = gl->next) {
+		config_load_notify_fn fn = gl->data;
+
+		fn(global);
+	}
+}
+
+void config_save_notify(struct global *global, const char *dest)
+{
+	GList *gl;
+	for (gl = save_notifies; gl; gl = gl->next) {
+		config_save_notify_fn fn = gl->data;
+
+		fn(global, dest);
+	}
 }
 
 int main(int argc, char **argv)
 {
 	int isdaemon = 0;
-	char *logfile = NULL, *rcfile = NULL;
-	char *configuration_file;
+	char *logfile = NULL;
 	extern enum log_level current_log_level;
 	extern gboolean no_log_timestamp;
+	const char *config_dir = NULL;
+	char *tmp;
 	const char *inetd_client = NULL;
 	gboolean version = FALSE;
 	GOptionContext *pc;
@@ -144,7 +193,7 @@ int main(int argc, char **argv)
 		{"no-timestamp", 'n', FALSE, G_OPTION_ARG_NONE, &no_log_timestamp, "No timestamps in logs" },
 		{"daemon", 'D', 0, G_OPTION_ARG_NONE, &isdaemon, ("Run in the background (as a daemon)")},
 		{"log", 'l', 0, G_OPTION_ARG_STRING, &logfile, ("Log messages to specified file"), ("FILE")},
-		{"rc-file", 'r', 0, G_OPTION_ARG_STRING, &rcfile, ("Use configuration file from specified location"), ("FILE")},
+		{"config-dir", 'c', 0, G_OPTION_ARG_STRING, &config_dir, ("Override configuration directory"), ("DIR")},
 		{"version", 'v', 'v', G_OPTION_ARG_NONE, &version, ("Show version information")},
 		{ NULL }
 	};
@@ -174,12 +223,15 @@ int main(int argc, char **argv)
 
 	if (version) {
 		printf("ctrlproxy %s\n", VERSION);
-		printf("(c) 2002-2005 Jelmer Vernooij et al. <jelmer@nl.linux.org>\n");
+		printf("(c) 2002-2006 Jelmer Vernooij et al. <jelmer@nl.linux.org>\n");
 		return 0;
 	}
 
+	if (config_dir == NULL) 
+		config_dir = g_build_filename(g_get_home_dir(), ".ctrlproxy", NULL);
+
 	if(isdaemon && !logfile) {
-		logfile = g_build_filename(_global->config->config_dir, "log", NULL);
+		logfile = g_build_filename(config_dir, "log", NULL);
 	}
 
 	init_log(logfile);
@@ -213,46 +265,37 @@ int main(int argc, char **argv)
 #endif
 	} 
 
-	init_config();
+	init_admin();
+	init_nickserv();
 
-	_global = new_global();	
+	/* Determine correct modules directory */
+	init_plugins(getenv("CTRLPROXY_MODULESDIR")?getenv("CTRLPROXY_MODULESDIR"):MODULESDIR);
 
-	if(rcfile) {
-		configuration_file = g_strdup(rcfile);
-		_global->config = load_configuration(configuration_file);
-		_global->last_config_file = configuration_file;
-	} else { 
-		const char *homedir = g_get_home_dir();
-#ifdef _WIN32
-		configuration_file = g_strdup_printf("%s/_ctrlproxyrc", homedir);
-#else
-		configuration_file = g_strdup_printf("%s/.ctrlproxyrc", homedir);
-#endif
-		/* Copy configuration file from default location if none existed yet */
-		if(g_file_test(configuration_file, G_FILE_TEST_EXISTS)) {
-			_global->config = load_configuration(configuration_file);
-			_global->last_config_file = configuration_file;
+	tmp = g_build_filename(config_dir, "config", NULL);
+
+	if (!g_file_test(tmp, G_FILE_TEST_EXISTS)) {
+		char *rcfile = g_build_filename(g_get_home_dir(), ".ctrlproxyrc", NULL);
+		
+		if(g_file_test(rcfile, G_FILE_TEST_EXISTS)) {
+			log_global(NULL, LOG_INFO, "Pre-3.0 style .ctrlproxyrc found, starting upgrade");
+			/* FIXME: Upgrade script */
 		} else {
-			g_free(configuration_file);
-			configuration_file = g_strdup(SHAREDIR"/ctrlproxyrc.default");
-			_global->config = load_configuration(configuration_file);
-			_global->last_config_file = configuration_file;
+			log_global(NULL, LOG_INFO, "No configuration found, installing one");
+			setup_configdir(config_dir);
 		}
+
+		g_free(rcfile);
+	}
+	g_free(tmp);
+
+	my_global = new_global(config_dir);	
+	
+	if (my_global == NULL) {
+		log_global(NULL, LOG_ERROR, "Unable to load configuration, exiting...");
+		return 1;
 	}
 
-	_global->config->config_dir = g_build_filename(g_get_home_dir(), ".ctrlproxy", NULL);
-	if(mkdir(_global->config->config_dir, 0700) != 0 && errno != EEXIST) {
-		log_global(NULL, LOG_ERROR, "Unable to open configuration directory '%s'\n", _global->config->config_dir);
-		g_free(_global->config->config_dir);
-		_global->config->config_dir = NULL;
-	}
-
-	init_networks();
-	load_networks(_global, _global->config);
-
-	init_plugins(_global->config);
-	_global->linestack = new_linestack(_global->config);
-	autoconnect_networks(_global);
+	autoconnect_networks(my_global);
 
 	g_option_context_free(pc);
 
@@ -260,7 +303,7 @@ int main(int argc, char **argv)
 
 	if (inetd_client) {
 		GIOChannel *io = g_io_channel_unix_new(0);
-		struct network *n = find_network(_global, inetd_client);
+		struct network *n = find_network(my_global, inetd_client);
 
 		if (!n) {
 			fprintf(stderr, "Unable to find network named '%s'\n", inetd_client);

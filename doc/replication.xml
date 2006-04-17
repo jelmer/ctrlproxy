@@ -33,7 +33,7 @@
 	
 		<para>All lines that 
 			were sent after the last time you disconnected a client 
-			are stored and sent to a client that connects to ctrlproxy.</para>
+			are stored and sent to a client that connects to ctrlproxy.
 		</para>
 	</sect1>
 

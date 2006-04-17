@@ -197,50 +197,37 @@ static GIOFuncs g_io_gnutls_channel_funcs = {
     g_io_gnutls_get_flags
 };
 
-static gboolean fini_plugin(struct plugin *p)
+static void load_config(struct global *global)
 {
-	return TRUE;
-}
-
-static gboolean load_config(struct plugin *p, xmlNodePtr node) 
-{
-	extern struct global *_global;
-	xmlNodePtr cur;
 	char *cafile = NULL, *certf = NULL, *keyf = NULL;
 	int err;
-	
-	for (cur = node->xmlChildrenNode; cur; cur = cur->next) {
-		if (!strcmp(cur->name, "keyfile")) {
-			keyf = xmlNodeGetContent(cur);
-		} else if (!strcmp(cur->name, "certfile")) {
-			certf = xmlNodeGetContent(cur);
-		} else if (!strcmp(cur->name, "cafile")) {
-			cafile = xmlNodeGetContent(cur);
-		} 
-	}
+
+	keyf = g_key_file_get_string(global->config->keyfile, "ssl", "keyfile", NULL);
+	certf = g_key_file_get_string(global->config->keyfile, "ssl", "certfile", NULL);
+	cafile = g_key_file_get_string(global->config->keyfile, "ssl", "cafile", NULL);
 
 	if(!certf) {
-		certf = g_build_filename(_global->config->config_dir, "cert.pem", NULL);
+		certf = g_build_filename(global->config->config_dir, "cert.pem", NULL);
 		if(!g_file_test(certf, G_FILE_TEST_EXISTS)) {
-			free(certf);
+			g_free(certf);
 			log_global("gnutls", LOG_ERROR, "No valid certificate set");
-			return FALSE;
+			return;
 		}
 	}
 
 	if(!keyf) {
-		keyf = g_build_filename(_global->config->config_dir, "key.pem", NULL);
+		keyf = g_build_filename(global->config->config_dir, "key.pem", NULL);
 		if(!g_file_test(keyf, G_FILE_TEST_EXISTS)) {
-			free(keyf);
+			g_free(keyf);
 			log_global("gnutls", LOG_ERROR, "No valid key set");
-			return FALSE;
+			return;
 		}
 	}
 
 	if(!cafile) {
-		cafile = g_build_filename(_global->config->config_dir, "ca.pem", NULL);
+		cafile = g_build_filename(global->config->config_dir, "ca.pem", NULL);
 		if(!g_file_test(cafile, G_FILE_TEST_EXISTS)) {
-			free(cafile);
+			g_free(cafile);
 			cafile = NULL;
 		} 
 	}
@@ -254,19 +241,17 @@ static gboolean load_config(struct plugin *p, xmlNodePtr node)
 
 	if (!certf || !keyf) {
 		log_global("gnutls", LOG_ERROR, "No certificate or key set!");
-		return FALSE;
+		return;
 	}
 
 	err = gnutls_certificate_set_x509_key_file(xcred, certf, keyf, GNUTLS_X509_FMT_PEM);
 	if(err < 0) {
 		log_global("gnutls", LOG_ERROR, "Error setting x509 key+cert files: %s (key = %s, cert = %s)", gnutls_strerror(err), keyf, certf);	
-		return FALSE;
+		return;
 	}
-
-	return TRUE;
 }
 
-static gboolean init_plugin(struct plugin *p)
+static gboolean init_plugin(void)
 {
 	gnutls_dh_params dh_params;
 	if(gnutls_global_init() < 0) {
@@ -286,6 +271,8 @@ static gboolean init_plugin(struct plugin *p)
 	gnutls_certificate_set_dh_params( xcred, dh_params);
 
 	set_sslize_function (g_io_gnutls_get_iochannel);
+
+	register_load_config_notify(load_config);
 
 	return TRUE;
 }
@@ -326,6 +313,4 @@ struct plugin_ops plugin = {
 	.name = "gnutls",
 	.version = 0,
 	.init = init_plugin,
-	.load_config = load_config,
-	.fini = fini_plugin,
 };

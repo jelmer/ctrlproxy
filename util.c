@@ -20,10 +20,6 @@
 #include "internals.h"
 #include <errno.h>
 #include <ctype.h>
-#ifdef _WIN32
-#include <direct.h>
-#define mkdir(s,t) _mkdir(s)
-#endif
 
 char *list_make_string(GList *list)
 {

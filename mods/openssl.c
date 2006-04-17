@@ -193,33 +193,22 @@ GIOChannel *irssi_ssl_get_iochannel(GIOChannel *handle, gboolean server);
 static gboolean irssi_ssl_set_files(const char *certf, const char *keyf);
 static SSL_CTX *ssl_ctx = NULL;
 
-static gboolean fini_plugin(struct plugin *p) {
-	return TRUE;
-}
-
-static gboolean load_config(struct plugin *p, xmlNodePtr node)
+static void load_config(struct global *global)
 {
-	extern struct global *_global;
 	const char *keyf = NULL, *certf = NULL;
-	xmlNodePtr cur;
 
-	for (cur = node->children; cur; cur = cur->next)
-	{
-		if (cur->type != XML_ELEMENT_NODE) continue;
-		
-		if (!strcmp(cur->name, "keyfile")) keyf = xmlNodeGetContent(cur);
-		if (!strcmp(cur->name, "certfile")) certf = xmlNodeGetContent(cur);
-	}
+	keyf = g_key_file_get_string(global->config->keyfile, "ssl", "keyfile", NULL);
+	certf = g_key_file_get_string(global->config->keyfile, "ssl", "certfile", NULL);
 
 	if(!certf) {
-		certf = g_build_filename(_global->config->config_dir, "cert.pem", NULL);
+		certf = g_build_filename(global->config->config_dir, "cert.pem", NULL);
 		if(!g_file_test(certf, G_FILE_TEST_EXISTS)) {
 			certf = NULL; 
 		}
 	}
 
 	if(!keyf) {
-		keyf = g_build_filename(_global->config->config_dir, "key.pem", NULL);
+		keyf = g_build_filename(global->config->config_dir, "key.pem", NULL);
 		if(!g_file_test(keyf, G_FILE_TEST_EXISTS)) { 
 			keyf = NULL; 
 		}
@@ -227,17 +216,14 @@ static gboolean load_config(struct plugin *p, xmlNodePtr node)
 
 	if(!irssi_ssl_set_files(certf, keyf)) {
 		log_global("openssl", LOG_ERROR, "Unable to set appropriate files");
-		return FALSE;
 	}
-	
-	return TRUE;
 }
 
-static gboolean init_plugin(struct plugin *p)
+static gboolean init_plugin(void)
 {
 	SSL_library_init();
 	SSL_load_error_strings();
-	
+
 	ssl_ctx = SSL_CTX_new(SSLv23_method());
 	if(!ssl_ctx)
 	{
@@ -245,8 +231,8 @@ static gboolean init_plugin(struct plugin *p)
 		return FALSE;
 	}
 
-
 	set_sslize_function (irssi_ssl_get_iochannel);
+	register_load_config_notify(load_config);
 
 	return TRUE;
 }
@@ -352,6 +338,4 @@ struct plugin_ops plugin = {
 	.name = "openssl",
 	.version = 0,
 	.init = init_plugin,
-	.load_config = load_config,
-	.fini = fini_plugin,
 };

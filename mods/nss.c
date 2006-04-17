@@ -129,14 +129,9 @@ static GIOFuncs g_io_nss_channel_funcs = {
 
 GIOChannel *g_io_nss_get_iochannel(GIOChannel *handle, gboolean server);
 
-static gboolean fini_plugin(struct plugin *p)
-{
-	return TRUE;
-}
-
 static PRDescIdentity _identity;
 
-static gboolean init_plugin(struct plugin *p)
+static gboolean init_plugin(void)
 {   
 	PR_Init(PR_SYSTEM_THREAD, PR_PRIORITY_NORMAL, 1);
 	NSS_NoDB_Init(NULL);
@@ -185,5 +180,4 @@ struct plugin_ops plugin = {
 	.name = "nss",
 	.version = 0,
 	.init = init_plugin,
-	.fini = fini_plugin
 };

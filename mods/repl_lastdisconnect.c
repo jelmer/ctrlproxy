@@ -24,16 +24,24 @@ static GHashTable *lastdisconnect_backlog = NULL;
 
 static void lastdisconnect_mark(struct client *c, void *userdata)
 {
+	if (!c->network)
+		return;
+
 	g_hash_table_replace(lastdisconnect_backlog, c->network, linestack_get_marker(c->network->global->linestack, c->network));
 }
 
 static void lastdisconnect_replicate(struct client *c)
 {
-	linestack_marker *lm = g_hash_table_lookup(lastdisconnect_backlog, c->network);
-	linestack_send(c->network->global->linestack, c->network, lm, NULL, c);
+	struct linestack_marker *lm = g_hash_table_lookup(lastdisconnect_backlog, c->network);
+
+	if (c->network->global->config->report_time)
+		linestack_send_timed(c->network->global->linestack, c->network, lm, NULL, c);
+	else
+		linestack_send(c->network->global->linestack, c->network, lm, NULL, c);
 }
 
-static gboolean fini_plugin(struct plugin *p) {
+static gboolean fini_plugin(void)
+{
 	del_lose_client_hook("repl_lastdisconnect");
 	g_hash_table_destroy(lastdisconnect_backlog); lastdisconnect_backlog = NULL;
 	return TRUE;
@@ -44,7 +52,8 @@ static const struct replication_backend lastdisconnect = {
 	.replication_fn = lastdisconnect_replicate
 };
 
-static gboolean init_plugin(struct plugin *p) {
+static gboolean init_plugin(void)
+{
 	add_lose_client_hook("repl_lastdisconnect", lastdisconnect_mark, NULL);
 	register_replication_backend(&lastdisconnect);
 	lastdisconnect_backlog = g_hash_table_new_full(NULL, NULL, NULL, linestack_free_marker);
@@ -55,5 +64,4 @@ struct plugin_ops plugin = {
 	.name = "repl_lastdisconnect",
 	.version = 0,
 	.init = init_plugin,
-	.fini = fini_plugin
 };

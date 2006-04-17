@@ -33,37 +33,12 @@ static gboolean fini_plugin(struct plugin *p)
 	return TRUE;
 }
 
-static gboolean load_config(struct plugin *p, xmlNodePtr node)
+static void load_config(struct global *global)
 {
-	FILE *fd;
-	xmlNodePtr cur;
-
-	for (cur = node->xmlChildrenNode; cur; cur = cur->next)
-	{
-		if(xmlIsBlankNode(cur))
-			continue;
-		
-		if (!strcmp(cur->name, "script")) {
-			const char *filename = xmlNodeGetContent(cur);
-
-			log_global("python2", LOG_INFO, "Loading `%s'", filename);
-
-			if (PyImport_ImportModule(filename) == NULL) {
-				PyErr_Print();
-				PyErr_Clear();
-			}
-		}
-	}
-
-	return TRUE;
-}
-
-static gboolean init_plugin(struct plugin *p)
-{
-	extern struct global *_global;
-	char *mypath = g_build_filename(_global->config->config_dir, "scripts/python", NULL);
+	const char *filename;
+	GDir *dir; 
+	char *mypath = g_build_filename(global->config->config_dir, "scripts/python", NULL);
 	char *oldpath, *newpath;
-	Py_Initialize();
 
 	oldpath = Py_GetPath();
 
@@ -74,6 +49,28 @@ static gboolean init_plugin(struct plugin *p)
 	PySys_SetPath(newpath);
 
 	g_free(newpath);
+
+	dir = g_dir_open(mypath, 0, NULL);
+	if (!dir)
+		return;
+
+	while ((filename = g_dir_read_name(dir))) {
+		log_global("python2", LOG_INFO, "Loading `%s'", filename);
+
+		if (PyImport_ImportModule(g_strdup(filename)) == NULL) {
+			PyErr_Print();
+			PyErr_Clear();
+		}
+	}
+
+	g_dir_close(dir);
+}
+
+static gboolean init_plugin(void)
+{
+	Py_Initialize();
+
+	register_load_config_notify(load_config);
 	return TRUE;
 }
 
@@ -81,5 +78,4 @@ struct plugin_ops plugin = {
 	.name = "python2",
 	.version = 0,
 	.init = init_plugin,
-	.load_config = load_config
 };

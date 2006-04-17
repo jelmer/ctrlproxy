@@ -20,20 +20,20 @@
 #include "ctrlproxy.h"
 #include <string.h>
 
-static GList *matches = NULL; /* FIXME: Initialize from config! */
+static char **matches;
 static GHashTable *markers = NULL;
 
 static void check_highlight(struct line *l, time_t t, void *userdata)
 {
 	struct client *c = userdata;
-	GList *gl;
+    int i;
 
-	if (strcasecmp(l->args[0], "PRIVMSG") != 0 &&
-		strcasecmp(l->args[0], "NOTICE") != 0) 
+	if (g_strcasecmp(l->args[0], "PRIVMSG") != 0 &&
+		g_strcasecmp(l->args[0], "NOTICE") != 0) 
 		return;
 	
-	for (gl = matches; gl; gl = gl->next) {
-		if (strstr(l->args[2], gl->data)) {
+	for (i = 0; matches[i]; i++) {
+		if (strstr(l->args[2], matches[i])) {
 			client_send_line(c, l);
 			return;
 		}
@@ -42,15 +42,9 @@ static void check_highlight(struct line *l, time_t t, void *userdata)
 
 static void highlight_replicate(struct client *c)
 {
-	linestack_marker *lm = g_hash_table_lookup(markers, c->network);
+	struct linestack_marker *lm = g_hash_table_lookup(markers, c->network);
 	linestack_traverse(c->network->global->linestack, c->network, lm, NULL, check_highlight, c);
 	g_hash_table_replace(markers, c->network, linestack_get_marker(c->network->global->linestack, c->network));
-}
-
-static gboolean fini_plugin(struct plugin *p) 
-{
-	g_hash_table_destroy(markers);	
-	return TRUE;
 }
 
 static const struct replication_backend highlight = {
@@ -58,24 +52,17 @@ static const struct replication_backend highlight = {
 	.replication_fn = highlight_replicate
 };
 
-static gboolean init_plugin(struct plugin *p) 
+static void load_config(struct global *global)
 {
+    matches = g_key_file_get_string_list(global->config->keyfile,
+                           "global", "match", NULL, NULL);
 	markers = g_hash_table_new_full(NULL, NULL, NULL, (GDestroyNotify)linestack_free_marker);
-	register_replication_backend(&highlight);
-	return TRUE;
 }
 
-static gboolean load_config(struct plugin *p, xmlNodePtr node)
+static gboolean init_plugin(void)
 {
-	xmlNodePtr cur;
-	g_list_free(matches);
-	
-	for (cur = node->xmlChildrenNode; cur; cur = cur->next) {
-		if (!strcmp(cur->name, "match")) {
-			matches = g_list_append(matches, xmlNodeGetContent(cur));
-		}
-	}
-
+	register_replication_backend(&highlight);
+	register_load_config_notify(load_config);
 	return TRUE;
 }
 
@@ -83,6 +70,4 @@ struct plugin_ops plugin = {
 	.name = "repl_highlight",
 	.version = 0,
 	.init = init_plugin,
-	.fini = fini_plugin,
-	.load_config = load_config,
 };

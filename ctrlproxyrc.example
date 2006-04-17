@@ -1,97 +1,50 @@
-<?xml version="1.0"?>
-<!--
-	Example RC file for ctrlproxy
-	(C) 2003-2004 Jelmer Vernooij <jelmer@vernstok.nl>
-	Read the documentation for more information about certain plugins, 
-	elements or attributes.
-		
-	Please adapt to your needs!
--->
-<ctrlproxy>
-	<plugins>
-		<!-- Support for interfacing to ctrlproxy 
-		using /MSG ctrlproxy or /CTRLPROXY -->
-		<plugin autoload="1" file="admin"/>
-		<!-- Don't replicate any backlogs, just send channel info -->
-		<plugin autoload="0" file="repl_none"/>
-		<!-- Backlog any data since last time user said something -->
-		<plugin autoload="1" file="repl_simple"/>
-		<!-- Backlog lines matching certain patterns -->
-		<plugin autoload="0" file="repl_highlight">
-			<!-- Replicate all lines containing 'ctrlproxy' or 'foobar' -->
-			<match>ctrlproxy</match>
-			<match>foobar</match>
-		</plugin>
-		<!-- Backlog lines when command /CTRLPROXY BACKLOG is given -->
-		<plugin autoload="1" file="repl_command"/>
-		<plugin autoload="1" file="report_time"/>
+# Example RC file for ctrlproxy
+# (C) 2003-2006 Jelmer Vernooij <jelmer@vernstok.nl>
+# Read the documentation for more information about specifics
+# Please adapt to your needs!
 
-		<plugin autoload="0" file="openssl">
-			<keyfile>key.pem</keyfile>
-			<certfile>cert.pem</certfile>
-		</plugin>
+[global]
 
-		<!-- Irssi-style logging -->
-		<plugin autoload="1" file="log_irssi">
-			<!-- <logfile>/home/jelmer/tmp/ctrlproxy</logfile> -->
-		</plugin>
+# Replication mechanism to use
+# Possible values: none, simple, highlight, disconnect
+replication = none
 
-		<!-- Send CTCP replies (like time, version, etc) -->
-		<plugin autoload="1" file="ctcp"/>
+# Override motd-file location
+#motd-file = /tmp/my-motd
 
-		<plugin autoload="0" file="socks"/>
+#Disable autosave on exit
+#autosave = False
 
-		<!-- Make sure messages are not sent too fast after each other 
-		     (prevents being kicked by the server for 'Excess flooding' -->
-		<plugin autoload="1" file="antiflood"/>
+# Support for interfacing to ctrlproxy 
+# using /MSG ctrlproxy or /CTRLPROXY -->
+[admin]
 
-		<!-- Automatically set AWAY after a certain period of time -->
-		<plugin autoload="1" file="auto-away">
-			<message time="300">I'm currently away, sorry!</message>
-		</plugin>
+# What words to look for when remembering lines 
+# (in case "replication = highlight")
+# Seperate using comma's 
+matches = ctrlproxy, foobar
 
-		<!-- Use /usr/share/ctrlproxy/motd as motd -->
-		<plugin autoload="1" file="motd_file"/>
+# Prepend all lines with the time a line was received when replicating
+report-time = False
 
-		<plugin autoload="1" file="python">
-			<script autoload="0">
-				<file>example/example.py</file>
-				<argument name="test">blubbdada</argument>
-			</script>
-		</plugin>
-		
-		<plugin autoload="1" file="linestack_file"/>
-		<plugin autoload="1" file="linestack_memory"/>
-		<plugin autoload="1" file="listener">
-			<listen port="9666" network="BEE" password="mypass"/>
-		</plugin>
+# Irssi-style logging
+[log-irssi]
+logfile = /home/jelmer/tmp/ctrlproxy
 
-		<plugin autoload="1" file="nickserv">
-			<!-- Automatically send IDENTIFY and GHOST messages when necessary -->
-			<nick name="jelmer" password="foobar"/>
-			<nick name="foobar" password="bar" network="Freenode"/>
-		</plugin>
+# Work as a socks proxy
+#[socks]
+#port = 8800
+#allow = jelmer:secret, foo:bar
 
-		<plugin autoload="1" file="autosend">
-			<autosend network="Freenode">PRIVMSG ctrlsoft :Hi There, I'm using ctrlproxy!</autosend>
-		</plugin>
-	</plugins>
-	
-	<networks>
-		<network autoconnect="1" name="BEE">
-			<servers>
-				<pipe>
-					<path>/usr/sbin/bitlbee</path>
-				</pipe>
-			</servers>
-		</network>
-		<network autoconnect="1" name="Freenode" fullname="CtrlProxy user">
-			<servers>
-				<ipv4 host="irc.freenode.net"/>
-			</servers>
-			<channel name="#ctrlproxy" autojoin="1"/>
-			<channel name="#flood" autojoin="1"/>
-			<channel name="#bla" autojoin="0"/>
-		</network>
-	</networks>
-</ctrlproxy>
+# Make sure messages are not sent too fast after each other 
+# (prevents being kicked by the server for 'Excess flooding'
+#[antiflood]
+
+# Automatically set AWAY after a certain period of time
+#[auto-away]
+#message = I'm currently away, sorry!
+#time = 300 # in seconds
+
+#[nickserv]
+# Learn new nickserv user/password combinations by interpreting traffic to server
+#learn = True

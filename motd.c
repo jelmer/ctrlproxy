@@ -1,6 +1,6 @@
 /* 
 	ctrlproxy: A modular IRC proxy
-	(c) 2003 Jelmer Vernooij <jelmer@nl.linux.org>
+	(c) 2003,2006 Jelmer Vernooij <jelmer@nl.linux.org>
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -23,17 +23,21 @@
 #include <stdio.h>
 #include "irc.h"
 
-static char *motd_file = NULL;
-
-char ** motd_file_handler(struct client *c, void *userdata)
+char ** get_motd_lines(struct client *c)
 {
 	char **lines = NULL;
 	size_t nrlines = 0;
 	FILE *fd;
 
-	fd = fopen(motd_file, "r");
+	if (!c->network->global->config->motd_file)
+		return NULL;
+
+	if (!strcmp(c->network->global->config->motd_file, ""))
+		return NULL;
+
+	fd = fopen(c->network->global->config->motd_file, "r");
 	if(!fd) {
-		log_global("motd_file", LOG_ERROR, "Can't open '%s'", motd_file);
+		log_global(NULL, LOG_ERROR, "Can't open '%s'", c->network->global->config->motd_file);
 		return NULL;
 	}
 
@@ -52,48 +56,3 @@ char ** motd_file_handler(struct client *c, void *userdata)
 
 	return lines;
 }
-
-static gboolean fini_plugin(struct plugin *p) {
-	
-	del_motd_hook("motd_file");
-	g_free(motd_file);
-	motd_file = NULL;
-	return TRUE;
-}
-
-static gboolean load_config(struct plugin *p, xmlNodePtr node) 
-{
-	xmlNodePtr cur;
-	extern struct global *_global;
-
-	for (cur = node->children; cur; cur = cur->next)
-	{
-		if (cur->type != XML_ELEMENT_NODE) continue;
-		
-		if (!strcmp(cur->name, "motd_file")) {
-			motd_file = xmlNodeGetContent(cur);
-		}
-	}
-
-	if (!motd_file) motd_file = g_build_filename(_global->config->shared_path, "motd", NULL);
-
-	if(!g_file_test(motd_file, G_FILE_TEST_EXISTS)) {
-		log_global("motd_file", LOG_ERROR, "Can't open MOTD file '%s' for reading", motd_file);
-		return FALSE;
-	}
-
-	return TRUE;
-}
-
-static gboolean init_plugin(struct plugin *p) {
-	add_motd_hook("motd_file", motd_file_handler, NULL);
-	return TRUE;
-}
-
-struct plugin_ops plugin = {
-	.name = "motd_file",
-	.version = 0,
-	.init = init_plugin,
-	.fini = fini_plugin,
-	.load_config = load_config,
-};

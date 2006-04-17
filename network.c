@@ -86,6 +86,9 @@ static gboolean process_from_server(struct network *n, struct line *l)
 		n->connection.state = NETWORK_CONNECTION_STATE_MOTD_RECVD;
 
 		log_network(NULL, LOG_INFO, n, "Successfully logged in");
+
+		nickserv_identify_me(n, n->state->me.nick);
+
 		server_connected_hook_execute(n);
 
 		network_send_args(n, "USERHOST", n->state->me.nick, NULL);
@@ -94,6 +97,7 @@ static gboolean process_from_server(struct network *n, struct line *l)
 		for (gl = n->config->channels; gl; gl = gl->next) 
 		{
 			struct channel_config *c = gl->data;
+
 			if(c->autojoin) {
 				network_send_args(n, "JOIN", c->name, c->key, NULL);
 			} 
@@ -103,7 +107,9 @@ static gboolean process_from_server(struct network *n, struct line *l)
 	if( n->connection.state == NETWORK_CONNECTION_STATE_MOTD_RECVD) {
 		if (atoi(l->args[0])) {
 			redirect_response(n, l);
-		} else if(!g_strcasecmp(l->args[0], "PRIVMSG") && l->args[2][0] == '\001') {
+		} else if (!g_strcasecmp(l->args[0], "PRIVMSG") && l->argc > 2 && 
+			l->args[2][0] == '\001' && 
+			g_strncasecmp(l->args[2], "\001ACTION", 7) != 0) {
 			ctcp_process(n, l);
 		} else if (run_server_filter(n, l, FROM_SERVER)) {
 			clients_send(n, l, NULL);
@@ -137,32 +143,43 @@ static gboolean handle_server_receive (GIOChannel *c, GIOCondition cond, void *_
 
 	if (cond & G_IO_IN) {
 		GError *err = NULL;
-		GIOStatus status = irc_recv_line(c, &err, &l);
+		GIOStatus status;
+		
+		while ((status = irc_recv_line(c, &err, &l)) == G_IO_STATUS_NORMAL) 
+		{
+			g_assert(l);
 
-		log_network_line(server, l, TRUE);
+			log_network_line(server, l, TRUE);
 
-		if (status == G_IO_STATUS_ERROR) {
+			/* Silently drop empty messages, as allowed by RFC */
+			if(l->argc == 0) {
+				free_line(l);
+				continue;
+			}
+
+			ret = process_from_server(server, l);
+
+			free_line(l);
+
+			if (!ret)
+				return FALSE;
+		}
+
+		if (status == G_IO_STATUS_EOF) {
+			if (server->connection.state != NETWORK_CONNECTION_STATE_NOT_CONNECTED) 
+				reconnect(server, FALSE);
+			return FALSE;
+		}
+
+		if (status != G_IO_STATUS_AGAIN) {
 			log_network(NULL, LOG_WARNING, server, 
-					"Error \"%s\" reading from server, reconnecting in %ds...",
-					err?err->message:"UNKNOWN", server->config->reconnect_interval);
+				"Error \"%s\" reading from server, reconnecting in %ds...",
+				err?err->message:"UNKNOWN", server->config->reconnect_interval);
 			reconnect(server, FALSE);
 			return FALSE;
 		}
-		
-		if(status == G_IO_STATUS_AGAIN || 
-		   status == G_IO_STATUS_EOF || !l) return TRUE;
 
-		/* Silently drop empty messages, as allowed by RFC */
-		if(l->argc == 0) {
-			free_line(l);
-			return TRUE;
-		}
-
-		ret = process_from_server(server, l);
-
-		free_line(l);
-
-		return ret;
+		return TRUE;
 	}
 
 	return TRUE;
@@ -376,6 +393,7 @@ static gboolean connect_current_tcp_server(struct network *s)
 
 	size = sizeof(struct sockaddr_in6);
 	g_free(s->connection.data.tcp.local_name);
+	g_free(s->connection.data.tcp.remote_name);
 	s->connection.data.tcp.remote_name = g_malloc(size);
 	s->connection.data.tcp.local_name = g_malloc(size);
 	s->connection.data.tcp.namelen = getsockname(sock, s->connection.data.tcp.local_name, &size);
@@ -407,10 +425,6 @@ static gboolean connect_current_tcp_server(struct network *s)
 
 	g_io_channel_unref(s->connection.data.tcp.outgoing);
 
-	if(!s->name && cs->name) {
-		s->name = g_strdup(cs->name);
-	}
-
 	return TRUE;
 }
 
@@ -428,9 +442,12 @@ static void reconnect(struct network *server, gboolean rm_source)
 
 	g_assert(server->config);
 
-	if (server->config->type == NETWORK_TCP) {
-		server->connection.state = NETWORK_CONNECTION_STATE_RECONNECT_PENDING;
+	if (server->config->type == NETWORK_TCP)
 		server->connection.data.tcp.current_server = network_get_next_tcp_server(server);
+
+	if (server->config->type == NETWORK_TCP ||
+		server->config->type == NETWORK_PROGRAM) {
+		server->connection.state = NETWORK_CONNECTION_STATE_RECONNECT_PENDING;
 		server->reconnect_id = g_timeout_add(1000 * server->config->reconnect_interval, (GSourceFunc) delayed_connect_server, server);
 	} else {
 		connect_server(server);	
@@ -472,7 +489,8 @@ static gboolean close_server(struct network *n)
 		g_source_remove(n->connection.data.program.outgoing_id); 
 		break;
 	case NETWORK_VIRTUAL:
-		if (n->connection.data.virtual.ops && n->connection.data.virtual.ops->fini) {
+		if (n->connection.data.virtual.ops && 
+			n->connection.data.virtual.ops->fini) {
 			n->connection.data.virtual.ops->fini(n);
 		}
 		break;
@@ -518,6 +536,7 @@ static pid_t piped_child(char* const command[], int *f_in)
 	fcntl(sock[0], F_SETFL, O_NONBLOCK);
 
 	pid = fork();
+
 	if (pid == -1) {
 		log_global(NULL, LOG_ERROR, "fork: %s", strerror(errno));
 		return -1;
@@ -532,8 +551,7 @@ static pid_t piped_child(char* const command[], int *f_in)
 		dup2(sock[1], 0);
 		dup2(sock[1], 1);
 		execvp(command[0], command);
-		log_global(NULL, LOG_ERROR, "Failed to exec %s : %s", command[0], strerror(errno));
-		return -1;
+		exit(-1);
 	}
 
 	close(sock[1]);
@@ -567,7 +585,7 @@ static gboolean connect_program(struct network *s)
 
 	g_io_channel_unref(s->connection.data.program.outgoing);
 
-	if(!s->name) {
+	if (s->name == NULL) {
 		if (strchr(s->config->type_settings.program_location, '/')) {
 			s->name = g_strdup(strrchr(s->config->type_settings.program_location, '/')+1);
 		} else {
@@ -672,6 +690,8 @@ void unload_network(struct network *s)
 
 	g_free(s->info.supported_user_modes);
 	g_free(s->info.supported_channel_modes);
+	g_free(s->info.server);
+	g_free(s->info.name);
 
 	g_hash_table_destroy(s->info.features);
 	g_free(s);
@@ -706,20 +726,10 @@ int verify_client(const struct network *s, const struct client *c)
 
 void register_virtual_network(struct virtual_network_ops *ops)
 {
+	if (virtual_network_ops == NULL)
+		virtual_network_ops = g_hash_table_new(g_str_hash, g_str_equal);
 	g_assert(ops);
 	g_hash_table_insert(virtual_network_ops, ops->name, ops);
-}
-
-void unregister_virtual_network(struct virtual_network_ops *ops)
-{
-	g_assert(ops);
-	g_hash_table_remove(virtual_network_ops, ops->name);
-}
-
-gboolean init_networks(void)
-{
-	virtual_network_ops = g_hash_table_new(g_str_hash, g_str_equal);
-	return TRUE;
 }
 
 gboolean autoconnect_networks(struct global *global)

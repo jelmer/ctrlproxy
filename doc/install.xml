@@ -7,7 +7,7 @@
 		<para>Some distributions come with a packaged version 
 			of ctrlproxy. <ulink url="mailto:lintux@lintux.cx">Wilmer 
 				van der Gaast</ulink> is maintaining the 
-<ulink url="http://packages.debian.org/ctrlproxy">debian ctrlproxy package</ulink> and <ulink url="mailto:agriffis@gentoo.org">Aron Griffis</ulink> maintains the gentoo package of ctrlproxy.</para>
+<ulink url="http://packages.debian.org/ctrlproxy">Debian ctrlproxy package</ulink> and <ulink url="mailto:agriffis@gentoo.org">Aron Griffis</ulink> maintains the gentoo package of ctrlproxy.</para>
 
 		<para>ctrlproxy is included with the BSD ports collection.</para>
 

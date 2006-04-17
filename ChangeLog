@@ -1,7 +1,7 @@
  Otherwise indicated differently, all changes made by 
  	Jelmer Vernooij <jelmer@vernstok.nl>
 
-Ctrlproxy 2.7:
+Ctrlproxy 3.0:
  * Removed dependency on popt
  * Move to bzr
  * Make linestack_file the default
@@ -78,7 +78,6 @@ Ctrlproxy 2.7:
  * Do the actual NICK after GHOST'ing another nick
  * Fix bug with setting PRIVATE too often
  * Fix issue with NickServ IDENTIFY'ing when connecting to server
- * Support multiple processes
  * Add cisg utility
  * Update items kept track of by stats by default
  * Put some modules in their own directory

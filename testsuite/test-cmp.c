@@ -36,7 +36,6 @@ int test_rfccmp(void)
 	return 0;
 }
 
-
 void torture_init(void)
 {
 	register_test("TEST-IRCCMP1459", test_rfccmp);

@@ -1,35 +1,19 @@
-include Makefile.settings
-DOCS = ctrlproxy.1 ctrlproxyrc.5 ctrlproxy.pdf ctrlproxy.html $(MOD_MANPAGES)
+include ../Makefile.settings
+DOCS = ctrlproxy.1 ctrlproxyrc.5 user-guide.html user-guide/index.html ctrlproxy.1.html ctrlproxyrc.5.html
 
-.PHONY: all most manpages htmlmanpages lint clean distclean
+.PHONY: all manpages clean distclean
 
-most: $(DOCS)
-	touch $@
-all: $(DOCS) ctrlproxy.pdf ctrlproxy.ps
-everything: $(DOCS) htmlmanpages
-dist: most
-	rm -rf autom4te.cache
+all: $(DOCS)
 
-manpages: ctrlproxy.1 ctrlproxyrc.5 $(MOD_MANPAGES)
-htmlmanpages: $(MOD_MANPAGES_HTML)
+dist: all
 
-%.7ctrlproxy.xml: %.mod.xml module-man.xsl
-	$(XSLTPROC) -o $@ module-man.xsl $<
+manpages: ctrlproxy.1 ctrlproxyrc.5 
 
-%.xml: %.mod.xml module.xsl
-	$(XSLTPROC) -o $@ module.xsl $<
+%/index.html: %.xml
+	$(XSLTPROC) --stringparam base.dir "$(@D)/" http://docbook.sourceforge.net/release/xsl/current/html/chunk.xsl $<
 
-%.7ctrlproxy.html: %.7ctrlproxy.xml
-	$(XSLTPROC) -o $@ http://docbook.sourceforge.net/release/xsl/current/html/docbook.xsl $<
-
-%.html: %.xml $(MODS) overview.png overview2.png
-	$(XSLTPROC) -o $@ http://docbook.sourceforge.net/release/xsl/current/html/docbook.xsl $<
-
-%.ps: %.xml $(MODS) overview.eps overview2.eps
-	$(XMLTO) ps $<
-
-lint: ctrlproxy.xml $(MODS)
-	$(XMLLINT) --valid --noout --xinclude $<
+%.html: %.xml
+	$(XSLTPROC) http://docbook.sourceforge.net/release/xsl/current/html/docbook.xsl $< > $@
 
 %.1: %.1.xml 
 	$(XSLTPROC) http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $< > $@
@@ -37,29 +21,17 @@ lint: ctrlproxy.xml $(MODS)
 %.5: %.5.xml
 	$(XSLTPROC) http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $< > $@
 
-%.pdf: %.xml overview.pdf overview2.pdf
-	$(XMLTO) pdf $<
+clean::
+	rm -f *.html *.1 *.5
+	rm -rf user-guide
 
-%.png: %.dia
-	$(DIA) -n -e $@ $<
-
-%.eps: %.dia
-	$(DIA) -n -e $@ $<
-
-clean: 
-	rm -f *.html *.pdf $(DOCS) $(MODS) overview{2,}.{eps,png} $(MOD_MANPAGES_INTER)
-
-distclean: clean
+distclean:: clean
 	rm -f Makefile.settings
 
-install: most
-	$(INSTALL) -d $(DESTDIR)$(man1dir)
-	$(INSTALL) -d $(DESTDIR)$(man5dir)
-	$(INSTALL) -d $(DESTDIR)$(man7dir)
+install: all
+	$(INSTALL) -d $(DESTDIR)$(mandir)/man1
+	$(INSTALL) -d $(DESTDIR)$(mandir)/man5
 	$(INSTALL) -d $(DESTDIR)$(docdir)
-	$(INSTALL) ctrlproxy.1 $(DESTDIR)$(man1dir)
-	$(INSTALL) ctrlproxyrc.5 $(DESTDIR)$(man5dir)
-	$(INSTALL) $(MOD_MANPAGES) $(DESTDIR)$(man7dir)
-	$(INSTALL) ctrlproxy.pdf $(DESTDIR)$(docdir)
-	$(INSTALL) ctrlproxy.html $(DESTDIR)$(docdir)
-
+	$(INSTALL) ctrlproxy.1 $(DESTDIR)$(mandir)/man1
+	$(INSTALL) ctrlproxyrc.5 $(DESTDIR)$(mandir)/man5
+	$(INSTALL) user-guide.html $(DESTDIR)$(docdir)

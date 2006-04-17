@@ -21,9 +21,9 @@
 #include "config.h"
 #endif
 
-#define _GNU_SOURCE
 #include "torture.h"
 
+#include <stdio.h>
 #include <glib.h>
 #include <gmodule.h>
 #include "../ctrlproxy.h"
@@ -61,7 +61,10 @@ gboolean load_module(const char *name)
 	void (*init_func) (void);
 	char *path;
 
-	path = g_module_build_path(g_get_current_dir(), name);
+	if (g_file_test(name, G_FILE_TEST_EXISTS))
+		path = g_strdup(name);
+	else
+		path = g_module_build_path(g_get_current_dir(), name);
 
 	m = g_module_open(path, G_MODULE_BIND_LAZY);
 

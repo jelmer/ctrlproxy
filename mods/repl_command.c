@@ -25,7 +25,7 @@ static GHashTable *markers = NULL;
 
 static void repl_command(const struct client *c, char **args, void *userdata)
 {
-	linestack_marker *lm = g_hash_table_lookup(markers, c->network);
+	struct linestack_marker *lm = g_hash_table_lookup(markers, c->network);
 
 	if(!args[1]) {
 		admin_out(c, "Sending backlog for network '%s'", c->network->name);
@@ -39,7 +39,12 @@ static void repl_command(const struct client *c, char **args, void *userdata)
 
 	/* Backlog for specific nick/channel */
 	admin_out(c, "Sending backlog for channel %s", args[1]);
-	linestack_send_object(c->network->global->linestack, c->network, args[1], lm, NULL, c);
+
+	if (c->network->global->config->report_time)
+		linestack_send_object_timed(c->network->global->linestack, c->network, args[1], lm, NULL, c);
+	else
+		linestack_send_object(c->network->global->linestack, c->network, args[1], lm, NULL, c);
+
 	g_hash_table_replace(markers, c->network, linestack_get_marker(c->network->global->linestack, c->network));
 }
 
@@ -50,18 +55,14 @@ static const struct admin_command cmd_backlog = {
 	"Send backlogs for this network or a channel, if specified"
 };
 
-static gboolean fini_plugin(struct plugin *p) {
+static gboolean fini_plugin(struct plugin *p) 
+{
 	g_hash_table_destroy(markers);
-	unregister_admin_command(&cmd_backlog);
 	return TRUE;
 }
 
-static gboolean init_plugin(struct plugin *p) 
+static gboolean init_plugin(void)
 {
-	if(!plugin_loaded("admin")) {
-		log_global("repl_command", LOG_ERROR, "admin module required for repl_command module. Please load it first");
-		return FALSE;
-	}
 	register_admin_command(&cmd_backlog);
 	markers = g_hash_table_new_full(NULL, NULL, NULL, (GDestroyNotify)linestack_free_marker);
 	return TRUE;
@@ -71,5 +72,4 @@ struct plugin_ops plugin = {
 	.name = "repl_command",
 	.version = 0,
 	.init = init_plugin,
-	.fini = fini_plugin,
 };

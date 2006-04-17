@@ -1,3 +1,0 @@
--include ../../Makefile.settings
-CFLAGS += -I../.. -I.. @NSS_CFLAGS@ -DHAVE_CONFIG_H
-LDFLAGS += @NSS_LIBS@

@@ -29,7 +29,6 @@
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/socket.h>
-#define __USE_POSIX
 #include <netdb.h>
 
 #include "internals.h"
@@ -109,6 +108,12 @@ static gboolean process_from_client(struct client *c, struct line *l)
 			  !g_strcasecmp(l->args[0], "PASS")) {
 		client_send_response(c, ERR_ALREADYREGISTERED,  
 						 "Please register only once per session", NULL);
+	} else if(!g_strcasecmp(l->args[0], "CTRLPROXY")) {
+		admin_process_command(c, l, 1);
+	} else if (!c->network->global->config->admin_noprivmsg && 
+			   !g_strcasecmp(l->args[0], "PRIVMSG") && 
+			   !g_strcasecmp(l->args[1], "CTRLPROXY")) {
+		admin_process_command(c, l, 2);
 	} else if(c->network->connection.state == NETWORK_CONNECTION_STATE_MOTD_RECVD) {
 		if (c->network->config->disable_cache || !client_try_cache(c, l)) {
 			/* Perhaps check for validity of input here ? It could save us some bandwidth 
@@ -227,6 +232,7 @@ void disconnect_client(struct client *c, const char *reason)
 
 	g_free(c->description);
 	g_free(c->username);
+	g_free(c->hostname);
 	g_free(c->fullname);
 	g_free(c->nick);
 	g_free(c);
@@ -268,31 +274,34 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition cond, void *_c
 	}
 
 	if (cond & G_IO_IN) {
-		GError *error= NULL;
-		GIOStatus status = irc_recv_line(c, &error, &l);
+		GError *error = NULL;
+		GIOStatus status;
+		
+		while ((status = irc_recv_line(c, &error, &l)) == G_IO_STATUS_NORMAL) {
+			g_assert(l);
 
-		log_client_line(client, l, TRUE);
+			log_client_line(client, l, TRUE);
 
-		if (status == G_IO_STATUS_ERROR) {
+			/* Silently drop empty messages */
+			if (l->argc == 0) {
+				free_line(l);
+				continue;
+			}
+
+			ret = process_from_client(client, l);
+
+			free_line(l);
+
+			if (!ret)
+				return FALSE;
+		}
+
+		if (status != G_IO_STATUS_AGAIN) {
 			disconnect_client(client, error?error->message:"Unknown error");
 			return FALSE;
 		}
 
-		if(status == G_IO_STATUS_EOF ||
-		   status == G_IO_STATUS_AGAIN || 
-		   !l) return TRUE;
-
-		/* Silently drop empty messages */
-		if (l->argc == 0) {
-			free_line(l);
-			return TRUE;
-		}
-
-		ret = process_from_client(client, l);
-
-		free_line(l);
-
-		return ret;
+		return TRUE;
 	}
 	return TRUE;
 }
@@ -346,6 +355,8 @@ static gboolean welcome_client(struct client *client)
 		return FALSE;
 	}
 
+	client_replicate(client);
+
 	return TRUE;
 }
 
@@ -364,85 +375,87 @@ static gboolean handle_pending_client_receive(GIOChannel *c, GIOCondition cond, 
 
 	if (cond & G_IO_IN) {
 		GError *error = NULL;
-		GIOStatus status = irc_recv_line(c, &error, &l);
+		GIOStatus status;
+		
+		while ((status = irc_recv_line(c, &error, &l)) == G_IO_STATUS_NORMAL) 
+		{
+			g_assert(l);
 
-		if (status != G_IO_STATUS_NORMAL) {
-			disconnect_client(client, "Error receiving line from client");
-			return FALSE;
-		}
+			/* Silently drop empty messages */
+			if (l->argc == 0) {
+				free_line(l);
+				continue;
+			}
 
-		if(!l) 
-			return TRUE;
+			g_assert(l->args[0]);
 
-		/* Silently drop empty messages */
-		if (l->argc == 0) {
+			if(!g_strcasecmp(l->args[0], "NICK")) {
+				if (l->argc < 2) {
+					client_send_response(client, ERR_NEEDMOREPARAMS,
+										 l->args[0], "Not enough parameters", NULL);
+					free_line(l);
+					continue;
+				}
+
+				client->nick = g_strdup(l->args[1]); /* Save nick */
+			} else if(!g_strcasecmp(l->args[0], "USER")) {
+
+				if (l->argc < 5) {
+					client_send_response(client, ERR_NEEDMOREPARAMS, 
+										 l->args[0], "Not enough parameters", NULL);
+					free_line(l);
+					continue;
+				}
+
+				g_free(client->username);
+				client->username = g_strdup(l->args[1]);
+
+				g_free(client->hostname);
+				client->hostname = g_strdup(l->args[2]);
+
+				g_free(client->fullname);
+				client->fullname = g_strdup(l->args[4]);
+
+			} else if(!g_strcasecmp(l->args[0], "PASS")) {
+				/* Silently drop... */
+			} else if(!g_strcasecmp(l->args[0], "CONNECT")) {
+				if (l->argc < 3) {
+					client_send_response(client, ERR_NEEDMOREPARAMS,
+										 l->args[0], "Not enough parameters", NULL);
+					free_line(l);
+					continue;
+				}
+
+				client->network = find_network_by_hostname(client->network->global, l->args[1], atoi(l->args[2]), TRUE);
+
+				if (!client->network || !connect_network(client->network)) {
+					log_client(NULL, LOG_ERROR, client, "Unable to connect to network with name %s", l->args[1]);
+				}
+			} else {
+				client_send_response(client, ERR_NOTREGISTERED, "Register first", client->network?client->network->name:get_my_hostname(), NULL);
+			}
+
 			free_line(l);
-			return TRUE;
-		}
 
-		g_assert(l->args[0]);
+			if (client->fullname && client->nick) {
+				if (!client->network) {
+					disconnect_client(client, "Please select a network first, or specify one in your ctrlproxyrc");
+					return FALSE;
+				}
 
-		if(!g_strcasecmp(l->args[0], "NICK")) {
-			if (l->argc < 2) {
-				client_send_response(client, ERR_NEEDMOREPARAMS,
-								 l->args[0], "Not enough parameters", NULL);
-				free_line(l);
-				return TRUE;
-			}
+				welcome_client(client);
 
-			client->nick = g_strdup(l->args[1]); /* Save nick */
-		} else if(!g_strcasecmp(l->args[0], "USER")) {
+				client->incoming_id = g_io_add_watch(client->incoming, G_IO_IN | G_IO_HUP, handle_client_receive, client);
 
-			if (l->argc < 5) {
-				client_send_response(client, ERR_NEEDMOREPARAMS, 
-								 l->args[0], "Not enough parameters", NULL);
-				free_line(l);
-				return TRUE;
-			}
-			
-			g_free(client->username);
-			client->username = g_strdup(l->args[1]);
+				client->network->clients = g_list_append(client->network->clients, client);
+				log_client(NULL, LOG_INFO, client, "New client");
 
-			g_free(client->hostname);
-			client->hostname = g_strdup(l->args[2]);
-
-			g_free(client->fullname);
-			client->fullname = g_strdup(l->args[4]);
-
-		} else if(!g_strcasecmp(l->args[0], "PASS")) {
-			/* Silently drop... */
-		} else if(!g_strcasecmp(l->args[0], "CONNECT")) {
-			if (l->argc < 3) {
-				client_send_response(client, ERR_NEEDMOREPARAMS,
-								 l->args[0], "Not enough parameters", NULL);
-				free_line(l);
-				return TRUE;
-			}
-
-			client->network = find_network_by_hostname(client->network->global, l->args[1], atoi(l->args[2]), TRUE);
-
-			if (!client->network || !connect_network(client->network)) {
-				log_client(NULL, LOG_ERROR, client, "Unable to connect to network with name %s", l->args[1]);
-			}
-		} else {
-			client_send_response(client, ERR_NOTREGISTERED, "Register first", client->network?client->network->name:get_my_hostname(), NULL);
-		}
-
-		free_line(l);
-
-		if (client->fullname && client->nick) {
-			if (!client->network) {
-				disconnect_client(client, "Please select a network first, or specify one in your ctrlproxyrc");
 				return FALSE;
 			}
+		}
 
-			welcome_client(client);
-
-			client->incoming_id = g_io_add_watch(client->incoming, G_IO_IN | G_IO_HUP, handle_client_receive, client);
-
-			client->network->clients = g_list_append(client->network->clients, client);
-			log_client(NULL, LOG_INFO, client, "New client");
-
+		if (status != G_IO_STATUS_AGAIN) {
+			disconnect_client(client, "Error receiving line from client");
 			return FALSE;
 		}
 
@@ -465,19 +478,21 @@ static gboolean client_ping(gpointer user_data) {
 }
 
 
+/* GIOChannels passed into this function 
+ * should preferably:
+ *  - have no encoding set
+ *  - work asynchronously
+ */
 struct client *client_init(struct network *n, GIOChannel *c, const char *desc)
 {
 	struct client *client;
 
-	if (n == NULL || c == NULL)
-		return NULL;
+	g_assert(c);
 
 	client = g_new0(struct client, 1);
 	g_assert(client);
 
 	g_io_channel_set_close_on_unref(c, TRUE);
-	g_io_channel_set_encoding(c, NULL, NULL);
-	g_io_channel_set_flags(c, G_IO_FLAG_NONBLOCK, NULL);
 	client->connect_time = time(NULL);
 	client->ping_id = g_timeout_add(1000 * 300, client_ping, client);
 	client->incoming = c;
@@ -498,8 +513,11 @@ struct client *client_init(struct network *n, GIOChannel *c, const char *desc)
 
 			client->description = g_strdup_printf("%s:%s", hostname, service);
 		}
+
+		g_free(sa);
 	}
 
+	handle_pending_client_receive(client->incoming, g_io_channel_get_buffer_condition(client->incoming), client);
 	client->incoming_id = g_io_add_watch(client->incoming, G_IO_IN | G_IO_HUP, handle_pending_client_receive, client);
 
 	pending_clients = g_list_append(pending_clients, client);

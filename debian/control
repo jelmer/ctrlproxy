@@ -2,8 +2,9 @@ Source: ctrlproxy
 Section: net
 Priority: optional
 Maintainer: Wilmer van der Gaast <lintux@debian.org>
-Standards-Version: 3.5.8
-Build-Depends: libglib2.0-dev, libxml2-dev, libgnutls-dev, debhelper (>> 4.0.0)
+Uploaders: Jelmer Vernooji <jelmer@samba.org>
+Standards-Version: 3.6.2
+Build-Depends: libglib2.0-dev, libgnutls-dev, debhelper (>> 5.0.0)
 
 Package: ctrlproxy
 Architecture: any

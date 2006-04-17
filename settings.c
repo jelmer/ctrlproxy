@@ -1,6 +1,6 @@
 /*
 	ctrlproxy: A modular IRC proxy
-	(c) 2002-2004 Jelmer Vernooij <jelmer@nl.linux.org>
+	(c) 2002-2006 Jelmer Vernooij <jelmer@nl.linux.org>
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -24,350 +24,355 @@
 #include <sys/socket.h>
 #endif
 
-#include <libxml/xmlmemory.h>
-#include <libxml/parser.h>
-
-#define __USE_POSIX
 #include <netdb.h>
 #include <sys/socket.h>
+#include <glib/gstdio.h>
 
-#define DTD_URL "http://ctrlproxy.vernstok.nl/2.7/ctrlproxyrc.dtd"
-
-static xmlDtdPtr dtd;
-
-static xmlNodePtr config_save_plugins(GList *plugins)
+gboolean g_key_file_save_to_file(GKeyFile *kf, const gchar *file, GError **error)
 {
-	GList *gl;
-	xmlNodePtr ret = xmlNewNode(NULL, "plugins");
+	gsize length, nr;
+	char *data = g_key_file_to_data(kf, &length, error);
+	GIOChannel *gio;
 
-	for (gl = plugins; gl; gl = gl->next) {
-		struct plugin_config *pc = gl->data;
-		struct plugin *p;
-		
-		g_assert(!strcmp(pc->node->name, "plugin"));
-		xmlSetProp(pc->node, "file", pc->path);
+	if (!data)
+		return FALSE;
 
-		p = plugin_by_config(pc);
-
-		if (p)
-			plugin_update_config(p, pc);
-		
-		xmlSetProp(pc->node, "autoload", pc->autoload?"1":"0");
-				
-		xmlAddChild(ret, xmlCopyNode(pc->node, 1));
+	gio = g_io_channel_new_file(file, "w+", error);
+	if (!gio) {
+		g_free(data);
+		return FALSE;
 	}
+	
+	g_io_channel_write_chars(gio, data, length, &nr, error);
 
-	return ret;
+	g_free(data);
+
+	g_io_channel_unref(gio);
+
+	return TRUE;
 }
 
-static xmlNodePtr config_save_tcp_servers(struct network_config *n)
+static void config_save_tcp_servers(struct network_config *n, GKeyFile *kf)
 {
 	GList *gl;
-	xmlNodePtr s = xmlNewNode(NULL, "servers");
+	int i = 0; 
+	gchar **values = g_new0(gchar *, g_list_length(n->type_settings.tcp_servers)+1);
+	
 	for (gl = n->type_settings.tcp_servers; gl; gl = gl->next) {
 		struct tcp_server_config *ts = gl->data;
-		xmlNodePtr x = xmlNewNode(NULL, "server");
-		if (ts->name) xmlSetProp(x, "name", ts->name);
-		if (ts->host) xmlSetProp(x, "host", ts->host);
-		if (ts->port) xmlSetProp(x, "port", ts->port);
-		if (ts->ssl) xmlSetProp(x, "ssl", "1");
-		if (ts->password) xmlSetProp(x, "password", ts->password);
+		char *name = g_strdup_printf("%s:%s", ts->host, ts->port);
 
-		xmlAddChild(s, x);
+		values[i] = name;
+
+		g_key_file_set_boolean(kf, name, "ssl", ts->ssl);
+		if (ts->password)
+			g_key_file_set_string(kf, name, "password", ts->password);
+		else
+			g_key_file_remove_key(kf, name, "password", NULL);
+
+		i++;
 	}
 
-	return s;
+	g_key_file_set_string_list(kf, "global", "servers", values, i);
+
+	g_strfreev(values);
 }
 
-static xmlNodePtr config_save_networks(GList *networks)
+static void config_save_network(const char *dir, struct network_config *n)
 {
-	xmlNodePtr ret = xmlNewNode(NULL, "networks");
+	GList *gl;
+	GKeyFile *kf;
+	char *fn;
+	
+	if (!n->keyfile) {
+		n->keyfile = g_key_file_new();
+	}
+
+	kf = n->keyfile;
+
+	g_key_file_set_boolean(kf, "global", "autoconnect", n->autoconnect);
+	g_key_file_set_string(kf, "global", "fullname", n->fullname);
+	g_key_file_set_string(kf, "global", "nick", n->nick);
+	g_key_file_set_string(kf, "global", "username", n->username);
+	g_key_file_set_integer(kf, "global", "reconnect-interval", n->reconnect_interval);
+
+	switch(n->type) {
+	case NETWORK_VIRTUAL:
+		g_key_file_set_string(kf, "global", "virtual", n->type_settings.virtual_type);
+		break;
+	case NETWORK_PROGRAM:
+		g_key_file_set_string(kf, "global", "program", n->type_settings.program_location);
+		break;
+	case NETWORK_TCP:
+		config_save_tcp_servers(n, kf);
+		break;
+	default:break;
+	}
+	
+	for (gl = n->channels; gl; gl = gl->next) {
+		struct channel_config *c = gl->data;
+
+		if (c->key)
+			g_key_file_set_string(kf, c->name, "key", c->key);
+		else 
+			g_key_file_remove_key(kf, c->name, "key", NULL);
+		
+		g_key_file_set_boolean(kf, c->name, "autojoin", c->autojoin);
+	}
+
+	fn = g_build_filename(dir, n->name, NULL);
+	g_key_file_save_to_file(kf, fn, NULL);
+	g_free(fn);
+}
+
+static void config_save_networks(const char *config_dir, GList *networks)
+{
+	char *networksdir = g_build_filename(config_dir, "networks", NULL);
 	GList *gl;
 
+	if (!g_file_test(networksdir, G_FILE_TEST_IS_DIR)) {
+		if (g_mkdir(networksdir, 0700) != 0) {
+			log_global(NULL, LOG_ERROR, "Can't create networks directory '%s': %s", networksdir, strerror(errno));
+			return;
+		}
+	}
+
 	for (gl = networks; gl; gl = gl->next) {
-		GList *gl1;
 		struct network_config *n = gl->data;		
-		xmlNodePtr p = xmlNewNode(NULL, "network"), p1;
-
-		xmlSetProp(p, "autoconnect", n->autoconnect?"1":"0");
-		if (n->name) 
-			xmlSetProp(p, "name", n->name);
-		xmlSetProp(p, "fullname", n->fullname);
-		xmlSetProp(p, "nick", n->nick);
-		xmlSetProp(p, "username", n->username);
-
-		switch(n->type) {
-		case NETWORK_VIRTUAL:
-			p1 = xmlNewChild(p, NULL, "virtual", NULL);
-			xmlSetProp(p1, "type", n->type_settings.virtual_type);
-			break;
-		case NETWORK_PROGRAM:
-			p1 = xmlNewChild(p, NULL, "program", n->type_settings.program_location);
-			break;
-		case NETWORK_TCP:
-			xmlAddChild(p, config_save_tcp_servers(n));
-			break;
-		default:break;
-		}
-		
-		for (gl1 = n->channels; gl1; gl1 = gl1->next) {
-			struct channel_config *c = gl1->data;
-			xmlNodePtr x = xmlNewNode(NULL, "channel");
-			xmlSetProp(x, "name", c->name);
-			if (c->key) xmlSetProp(x, "key", c->key);
-			xmlSetProp(x, "autojoin", c->autojoin?"1":"0");
-
-			xmlAddChild(p, x);
-		}
-
-		xmlAddChild(ret, p);
+		config_save_network(networksdir, n);
 	}
 
-	return ret;
+	g_free(networksdir);
 }
 
-void save_configuration(struct ctrlproxy_config *cfg, const char *configuration_file)
+void save_configuration(struct ctrlproxy_config *cfg, const char *configuration_dir)
 {
-	xmlNodePtr root;
-	xmlDocPtr configuration = xmlNewDoc("1.0");
+	char *fn;
+	if (!cfg->keyfile)
+		cfg->keyfile = g_key_file_new();
 
-	g_assert(configuration_file);
-	
-	root = xmlNewNode(NULL, "ctrlproxy");
+	g_key_file_set_boolean(cfg->keyfile, "global", "autosave", cfg->autosave);
+	g_key_file_set_boolean(cfg->keyfile, "admin", "without_privmsg", cfg->admin_noprivmsg);
 
-	xmlDocSetRootElement(configuration, root);
+	if (cfg->replication)
+		g_key_file_set_string(cfg->keyfile, "global", "replication", cfg->replication);
+	if (cfg->linestack_backend) 
+		g_key_file_set_string(cfg->keyfile, "global", "linestack", cfg->linestack_backend);
+	g_key_file_set_string(cfg->keyfile, "global", "motd-file", cfg->motd_file);
 
-	xmlAddChild(root, config_save_plugins(cfg->plugins));
-	xmlAddChild(root, config_save_networks(cfg->networks));
+	g_key_file_set_boolean(cfg->keyfile, "global", "report-time", cfg->report_time);
 
-	xmlSaveFormatFile(configuration_file, configuration, 1);
+	config_save_networks(configuration_dir, cfg->networks);
 
-	xmlFreeDoc(configuration);
+	fn = g_build_filename(configuration_dir, "config", NULL);
+	g_key_file_save_to_file(cfg->keyfile, fn, NULL);
+	g_free(fn);
 }
 
-static gboolean validate_config(xmlDocPtr configuration)
-{
-	gboolean ret;
-
-	xmlValidCtxtPtr ctxt = xmlNewValidCtxt();
-
-	ret = xmlValidateDtd(ctxt, configuration, dtd);
-
-	xmlFreeValidCtxt(ctxt);
-
-	return ret;
-}
-
-void init_config()
-{
-	dtd = xmlParseDTD(DTD_URL, DTD_FILE);
-
-	if (!dtd) {
-		log_global(NULL, LOG_WARNING, "Can't load DTD file from %s", DTD_FILE);
-	}
-}
-
-void fini_config()
-{
-	xmlFreeDtd(dtd);
-}
-
-static void config_load_plugin(struct ctrlproxy_config *cfg, xmlNodePtr root)
-{
-	char *tmp;
-	struct plugin_config *p;
-	
-	tmp = xmlGetProp(root, "file");
-	p = plugin_config_init(cfg, tmp);
-	xmlFree(tmp);
-
-	if (xmlHasProp(root, "autoload")) {
-		tmp = xmlGetProp(root, "autoload");
-		if (atoi(tmp)) p->autoload = TRUE;
-		xmlFree(tmp);
-	}
-
-	p->node = xmlCopyNode(root, 1);
-}
-
-static void config_load_plugins(struct ctrlproxy_config *cfg, xmlNodePtr root)
-{
-	xmlNodePtr cur;
-	
-	for (cur = root->children; cur; cur = cur->next) 
-	{
-		if (cur->type != XML_ELEMENT_NODE) continue;		
-
-		g_assert(!strcmp(cur->name, "plugin"));
-		config_load_plugin(cfg, cur);
-	}
-}
-
-static void config_load_channel(struct network_config *n, xmlNodePtr root)
+static void config_load_channel(struct network_config *n, GKeyFile *kf, const char *name)
 {
 	struct channel_config *ch = g_new0(struct channel_config, 1);
-	char *tmp;
 
-	ch->name = xmlGetProp(root, "name");
-	ch->key = xmlGetProp(root, "key");
+	ch->name = g_strdup(name);
+	if (g_key_file_has_key(kf, name, "key", NULL)) 
+		ch->key = g_key_file_get_string(kf, name, "key", NULL);
 
-	if (xmlHasProp(root, "autojoin")) {
-		tmp = xmlGetProp(root, "autojoin");
-		if (atoi(tmp)) ch->autojoin = TRUE;
-		xmlFree(tmp);
-	}
+	if (g_key_file_has_key(kf, name, "autojoin", NULL))
+		ch->autojoin = g_key_file_get_boolean(kf, name, "autojoin", NULL);
 	
 	n->channels = g_list_append(n->channels, ch);
 }
 
-static void config_load_servers(struct network_config *n, xmlNodePtr root)
+static void config_load_servers(struct network_config *n)
 {
-	xmlNodePtr cur;
-	n->type = NETWORK_TCP;
+	gsize size;
+	char **servers;
+	int i;
+	
+	servers = g_key_file_get_string_list(n->keyfile, "global", "servers", &size, NULL);
 
-	for (cur = root->children; cur; cur = cur->next) 
-	{
-		struct tcp_server_config *s;
+	if (!servers)
+		return;
 
-		if (cur->type != XML_ELEMENT_NODE) continue;
+	for (i = 0; i < size; i++) {
+		char *tmp;
+		struct tcp_server_config *s = g_new0(struct tcp_server_config, 1);
 		
-		s = g_new0(struct tcp_server_config, 1);
+		s->password = g_key_file_get_string(n->keyfile, servers[i], "password", NULL);
+		if (g_key_file_has_key(n->keyfile, servers[i], "ssl", NULL))
+			s->ssl = g_key_file_get_boolean(n->keyfile, servers[i], "ssl", NULL);
+
+		tmp = strrchr(servers[i], ':');
+
+		if (tmp) {
+			*tmp = '\0';
+			tmp++;
+		}
 		
-		s->host = xmlGetProp(cur, "host");
-		s->password = xmlGetProp(cur, "password");
-
-		if (xmlHasProp(cur, "port")) {
-			s->port = xmlGetProp(cur, "port");
-		} else { 
-			s->port = g_strdup("6667");
-		}
-
-		if (xmlHasProp(cur, "ssl")) {
-			char *tmp = xmlGetProp(cur, "ssl");
-			if (atoi(tmp)) s->ssl = TRUE;
-			xmlFree(tmp);
-		}
-
-		s->name = xmlGetProp(cur, "name");
-		if (!s->name) s->name = xmlGetProp(cur, "host");
-		if (s->name && strchr(s->name, ' ')) {
-			log_global(NULL, LOG_WARNING, "Network name \"%s\" contains spaces!", s->name);
-		}
+		s->host = servers[i];
+		s->port = g_strdup(tmp?tmp:"6667");
 
 		n->type_settings.tcp_servers = g_list_append(n->type_settings.tcp_servers, s);
 	}
+
+	g_free(servers);
 }
 
-static struct network_config *config_load_network(struct ctrlproxy_config *cfg, xmlNodePtr root)
+static struct network_config *config_load_network(struct ctrlproxy_config *cfg, const char *dirname, const char *name)
 {
-	xmlNodePtr cur;
-	char *tmp;
+	GKeyFile *kf;
 	struct network_config *n;
+	char *filename;
+	int i;
+	char **groups;
+	GError *error = NULL;
+	gsize size;
+
+	kf = g_key_file_new();
+
+	filename = g_build_filename(dirname, name, NULL);
+
+	if (!g_key_file_load_from_file(kf, filename, G_KEY_FILE_KEEP_COMMENTS, &error)) {	
+		log_global(NULL, LOG_ERROR, "Can't parse configuration file '%s': %s", filename, error->message);
+		g_key_file_free(kf);
+		return NULL;
+	}	
+
 	n = network_config_init(cfg);
+	n->keyfile = kf;
 
-	if ((tmp = xmlGetProp(root, "autoconnect"))) {
-		if (atoi(tmp)) n->autoconnect = TRUE;
-		xmlFree(tmp);
-	}
+	g_free(filename);
 
-	if (xmlHasProp(root, "fullname")) {
+	n->autoconnect = (!g_key_file_has_key(kf, "global", "autoconnect", NULL)) ||
+					   g_key_file_get_boolean(kf, "global", "autoconnect", NULL);
+
+	if (g_key_file_has_key(kf, "global", "fullname", NULL)) {
 		g_free(n->fullname);
-		n->fullname = xmlGetProp(root, "fullname");
+		n->fullname = g_key_file_get_string(kf, "global", "fullname", NULL);
 	}
 
-	if (xmlHasProp(root, "nick")) {
+	if (g_key_file_has_key(kf, "global", "nick", NULL)) {
 		g_free(n->nick);
-		n->nick = xmlGetProp(root, "nick");
+		n->nick = g_key_file_get_string(kf, "global", "nick", NULL);
 	}
 
-	if (xmlHasProp(root, "username")) {
+	if (g_key_file_has_key(kf, "global", "reconnect-interval", NULL)) {
+		n->reconnect_interval = g_key_file_get_integer(kf, "global", "reconnect-interval", NULL);
+	}
+
+	if (g_key_file_has_key(kf, "global", "username", NULL)) {
 		g_free(n->username);
-		n->username = xmlGetProp(root, "username");
+		n->username = g_key_file_get_string(kf, "global", "username", NULL);
 	}
 
-	if (xmlHasProp(root, "ignore_first_nick")) {
-		tmp = xmlGetProp(root, "ignore_first_nick");
-		if (atoi(tmp)) n->ignore_first_nick = TRUE;
-		xmlFree(tmp);
+	if (g_key_file_has_key(kf, "global", "ignore_first_nick", NULL)) {
+		n->ignore_first_nick = g_key_file_get_boolean(kf, "global", "ignore_first_nick", NULL);
 	}
 
-	if (xmlHasProp(root, "password")) {
+	if (g_key_file_has_key(kf, "global", "password", NULL)) {
 		g_free(n->password);
-		n->password = xmlGetProp(root, "password");
+		n->password = g_key_file_get_string(kf, "global", "password", NULL);
 	}
 
-	if (xmlHasProp(root, "name")) {
-		g_free(n->name);
-		n->name = xmlGetProp(root, "name");
+	n->name = g_strdup(name);
+
+	if (g_key_file_has_key(kf, "global", "program", NULL)) 
+		n->type = NETWORK_PROGRAM;
+	else if (g_key_file_has_key(kf, "global", "virtual", NULL)) 
+		n->type = NETWORK_VIRTUAL;
+	else 
+		n->type = NETWORK_TCP;
+
+	switch (n->type) {
+	case NETWORK_TCP:
+		config_load_servers(n);
+		break;
+	case NETWORK_PROGRAM:
+		n->type_settings.program_location = g_key_file_get_string(kf, "global", "program", NULL);
+		break;
+	case NETWORK_VIRTUAL:
+		n->type_settings.virtual_type = g_key_file_get_string(kf, "global", "virtual", NULL);
+		break;
 	}
 
-	for (cur = root->children; cur; cur = cur->next)
-	{
-		if (cur->type != XML_ELEMENT_NODE) continue;
-
-		if (!strcmp(cur->name, "servers")) {
-			config_load_servers(n, cur);
-		} else if (!strcmp(cur->name, "channel")) {
-			config_load_channel(n, cur);
-		} else if (!strcmp(cur->name, "program")) {
-			n->type = NETWORK_PROGRAM;
-			n->type_settings.program_location = xmlNodeGetContent(cur);
-		} else if (!strcmp(cur->name, "virtual")) {
-			n->type = NETWORK_VIRTUAL;
-			n->type_settings.virtual_type = xmlGetProp(cur, "type");
-		}
+	groups = g_key_file_get_groups(kf, &size);
+	for (i = 0; i < size; i++) {
+		if (is_channelname(groups[i], NULL))  /* FIXME: How about weird channel names ? */
+			config_load_channel(n, kf, groups[i]);
 	}
+
+	g_strfreev(groups);
 
 	return n;
 }
 
-static void config_load_networks(struct ctrlproxy_config *cfg, xmlNodePtr root)
+static void config_load_networks(struct ctrlproxy_config *cfg)
 {
-	xmlNodePtr cur;
-	
-	for (cur = root->children; cur; cur = cur->next) 
-	{
-		if (cur->type != XML_ELEMENT_NODE) continue;		
+	char *networksdir = g_build_filename(cfg->config_dir, "networks", NULL);
+	GDir *dir;
+	const char *name;
 
-		config_load_network(cfg, cur);
+	dir = g_dir_open(networksdir, 0, NULL);
+	if (!dir)
+		return;
+
+	while ((name = g_dir_read_name(dir))) {
+		config_load_network(cfg, networksdir, name);
 	}
+
+	g_free(networksdir);
+
+	g_dir_close(dir);
 }
 
-struct ctrlproxy_config *load_configuration(const char *file) 
+struct ctrlproxy_config *load_configuration(const char *dir) 
 {
-	xmlDocPtr configuration;
-    xmlNodePtr root, cur;
-	struct ctrlproxy_config *cfg = g_new0(struct ctrlproxy_config, 1);
+	GKeyFile *kf;
+	GError *error = NULL;
+	struct ctrlproxy_config *cfg;
+	char *file;
 
-	cfg->modules_path = g_strdup(MODULESDIR);
-	cfg->shared_path = g_strdup(SHAREDIR);
+	file = g_build_filename(dir, "config", NULL);
 
-	configuration = xmlParseFile(file);
-	if(!configuration) {
-		log_global(NULL, LOG_ERROR, "Can't open configuration file '%s'", file);
+	cfg = g_new0(struct ctrlproxy_config, 1);
+	cfg->config_dir = g_strdup(dir);
+
+	kf = cfg->keyfile = g_key_file_new();
+
+	if (!g_key_file_load_from_file(kf, file, G_KEY_FILE_KEEP_COMMENTS, &error)) {
+		log_global(NULL, LOG_ERROR, "Can't parse configuration file '%s': %s", file, error->message);
+		g_key_file_free(kf);
+		g_free(file);
 		g_free(cfg);
 		return NULL;
 	}
 
-	if (!validate_config(configuration)) {
-		log_global(NULL, LOG_ERROR, "Warnings while parsing configuration file");
-	}
+	cfg->autosave = TRUE;
+	if (g_key_file_has_key(kf, "global", "autosave", NULL) &&
+		!g_key_file_get_boolean(kf, "global", "autosave", NULL))
+		cfg->autosave = FALSE;
 
-	root = xmlDocGetRootElement(configuration);
+	cfg->replication = g_key_file_get_string(kf, "global", "replication", NULL);
+	cfg->linestack_backend = g_key_file_get_string(kf, "global", "linestack", NULL);
 
-	for (cur = root->children; cur; cur = cur->next) {
-		if (cur->type != XML_ELEMENT_NODE) continue;
+	if (g_key_file_has_key(kf, "global", "report-time", NULL) &&
+		!g_key_file_get_boolean(kf, "global", "report-time", NULL))
+		cfg->report_time = TRUE;
 
-		if (!strcmp(cur->name, "plugins")) {
-			config_load_plugins(cfg, cur);
-		} else if (!strcmp(cur->name, "networks")) {
-			config_load_networks(cfg, cur);
-		} else if (!strcmp(cur->name, "replication")) {
-			cfg->replication = xmlNodeGetContent(cur);
-		}
-	}
+    if (g_key_file_has_key(kf, "global", "motd-file", NULL))
+		cfg->motd_file = g_key_file_get_string(kf, "global", "motd-file", NULL);
+    else 
+	    cfg->motd_file = g_build_filename(SHAREDIR, "motd", NULL);
 
-	xmlFreeDoc(configuration);
+	if(!g_file_test(cfg->motd_file, G_FILE_TEST_EXISTS))
+		log_global(NULL, LOG_ERROR, "Can't open MOTD file '%s' for reading", cfg->motd_file);
+
+    if (g_key_file_has_key(kf, "admin", "without_privmsg", NULL))
+        cfg->admin_noprivmsg = g_key_file_get_boolean(kf, "admin", "without_privmsg", NULL);
+
+	config_load_networks(cfg);
+
+	g_free(file);
 
 	return cfg;
 }
@@ -387,28 +392,19 @@ struct network_config *network_config_init(struct ctrlproxy_config *cfg)
 	return s;
 }
 
-struct plugin_config *plugin_config_init(struct ctrlproxy_config *cfg, const char *name)
+void setup_configdir(const char *dir)
 {
-	struct plugin_config *p = g_new0(struct plugin_config, 1);
+	if(g_mkdir(dir, 0700) != 0) {
+		log_global(NULL, LOG_ERROR, "Unable to open configuration directory '%s'\n", dir);
+		return;
+	}
 
-	p->path = g_strdup(name);
-
-	if (cfg) 
-		cfg->plugins = g_list_append(cfg->plugins, p);
-
-	return p;
+	/* FIXME: Copy 'config' from ctrlproxy.config.default */
 }
+
 
 void free_config(struct ctrlproxy_config *cfg)
 {
-	while (cfg->plugins) {
-		struct plugin_config *pc = cfg->plugins->data;		
-		g_free(pc->path);
-		xmlUnlinkNode(pc->node);
-		cfg->plugins = g_list_remove(cfg->plugins, pc);
-		g_free(pc);
-	}
-
 	while (cfg->networks) {
 		struct network_config *nc = cfg->networks->data;
 		g_free(nc->name);
@@ -427,7 +423,6 @@ void free_config(struct ctrlproxy_config *cfg)
 		case NETWORK_TCP: 
 			while (nc->type_settings.tcp_servers) {
 				struct tcp_server_config *tc = nc->type_settings.tcp_servers->data;
-				g_free(tc->name);
 				g_free(tc->host);
 				g_free(tc->port);
 				g_free(tc->password);
@@ -443,9 +438,14 @@ void free_config(struct ctrlproxy_config *cfg)
 			break;
 		}
 		cfg->networks = g_list_remove(cfg->networks, nc);
+		g_key_file_free(nc->keyfile);
 		g_free(nc);
 	}
-	g_free(cfg->modules_path);
-	g_free(cfg->shared_path);
+	g_free(cfg->config_dir);
+	g_free(cfg->replication);
+	g_free(cfg->linestack_backend);
+	g_free(cfg->motd_file);
+	g_key_file_free(cfg->keyfile);
 	g_free(cfg);
 }
+

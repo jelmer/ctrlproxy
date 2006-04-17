@@ -19,6 +19,7 @@
 	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 */
 
+#define _GNU_SOURCE
 #include "ctrlproxy.h"
 #include "irc.h"
 #include "listener.h"
@@ -47,43 +48,45 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition condition, gpo
 	GError *error = NULL;
 	GIOStatus status;
 
-	status = irc_recv_line(c, &error, &l);
+	g_assert(c);
 
-	if (status != G_IO_STATUS_NORMAL)
-		return FALSE;
-	
-	if (l == NULL) 
-		return TRUE;
+	while ((status = irc_recv_line(c, &error, &l)) == G_IO_STATUS_NORMAL) {
+		g_assert(l);
 
-	if (!l->args[0]){ 
-		free_line(l);
-		return TRUE;
-	}
-
-	if(!listener->password) {
-		log_network("listener", LOG_WARNING, listener->network, "No password set, allowing client _without_ authentication!");
-	}
-
-	if(!g_strcasecmp(l->args[0], "PASS")) {
-		if (listener->password && strcmp(l->args[1], listener->password)) {
-			log_network("listener", LOG_WARNING, listener->network, "User tried to log in with incorrect password!");
-			irc_sendf(c, ":%s %d %s :Password mismatch", get_my_hostname(), ERR_PASSWDMISMATCH, "*");
-
+		if (!l->args[0]){ 
 			free_line(l);
-			return TRUE;
+			continue;
 		}
 
-		log_network ("listener", LOG_INFO, listener->network, "Client successfully authenticated");
+		if(!listener->password) {
+			log_network("listener", LOG_WARNING, listener->network, "No password set, allowing client _without_ authentication!");
+		}
 
-		client_init(listener->network, c, NULL);
+		if(!g_strcasecmp(l->args[0], "PASS")) {
+			if (listener->password && strcmp(l->args[1], listener->password)) {
+				log_network("listener", LOG_WARNING, listener->network, "User tried to log in with incorrect password!");
+				irc_sendf(c, ":%s %d %s :Password mismatch", get_my_hostname(), ERR_PASSWDMISMATCH, "*");
+	
+				free_line(l);
+				return TRUE;
+			}
 
-		free_line(l); 
-		return FALSE;
-	} else {
-		irc_sendf(c, ":%s %d %s :You are not registered", get_my_hostname(), ERR_NOTREGISTERED, "*");
+			log_network ("listener", LOG_INFO, listener->network, "Client successfully authenticated");
+
+			client_init(listener->network, c, NULL);
+
+			free_line(l); 
+			return FALSE;
+		} else {
+			irc_sendf(c, ":%s %d %s :You are not registered", get_my_hostname(), ERR_NOTREGISTERED, "*");
+		}
+
+		free_line(l);
 	}
 
-	free_line(l);
+	if (status != G_IO_STATUS_AGAIN)
+		return FALSE;
+	
 	return TRUE;
 }
 
@@ -91,8 +94,14 @@ static gboolean handle_new_client(GIOChannel *c_server, GIOCondition condition, 
 {
 	struct listener *listener = _listener;
 	GIOChannel *c;
+	int sock = accept(g_io_channel_unix_get_fd(c_server), NULL, 0);
 
-	c = g_io_channel_unix_new(accept(g_io_channel_unix_get_fd(c_server), NULL, 0));
+	if (sock < 0) {
+		log_global("listener", LOG_WARNING, "Error accepting new connection: %s", strerror(errno));
+		return TRUE;
+	}
+
+	c = g_io_channel_unix_new(sock);
 
 	if (listener->ssl) {
 		GIOChannel *nio = sslize(c, TRUE);
@@ -104,6 +113,8 @@ static gboolean handle_new_client(GIOChannel *c_server, GIOCondition condition, 
 	}
 
 	g_io_channel_set_close_on_unref(c, TRUE);
+	g_io_channel_set_encoding(c, NULL, NULL);
+	g_io_channel_set_flags(c, G_IO_FLAG_NONBLOCK, NULL);
 	g_io_add_watch(c, G_IO_IN, handle_client_receive, listener);
 
 	g_io_channel_unref(c);
@@ -203,7 +214,8 @@ void free_listener(struct listener *l)
 struct listener *listener_init(const char *address, const char *port)
 {
 	struct listener *l = g_new0(struct listener, 1);
-	l->address = g_strdup(address);
+
+	l->address = address?g_strdup(address):NULL;
 	l->port = g_strdup(port);
 
 	if (l->port == NULL) 
@@ -214,86 +226,105 @@ struct listener *listener_init(const char *address, const char *port)
 	return l;
 }
 
-static gboolean update_config(struct plugin *p, xmlNodePtr conf)
+static void update_config(struct global *global, const char *path)
 {
 	GList *gl;
-	xmlNodePtr cur, next;
-
-	/* Remove old nodes */
-	for (cur = conf->children; cur; cur = next)
-	{
-		next = cur->next;
-
-		if (!strcmp(cur->name, "listen"))
-			xmlUnlinkNode(cur);
-	}
+	char *filename = g_build_filename(path, "listener", NULL);
+	GKeyFile *kf; 
+	GError *error = NULL;
 	
+	/* FIXME: Store old GKeyFile somewhere, so we can keep comments... */
+
+	kf = g_key_file_new();
+
 	for (gl = listeners; gl; gl = gl->next) {
 		struct listener *l = gl->data;
-		xmlNodePtr n = xmlNewNode(NULL, "listen");
-	
-		if (l->address)
-			xmlSetProp(n, "address", l->address);
+		char *tmp;
 
-		xmlSetProp(n, "port", l->port);
+		if (!l->address) 
+			tmp = g_strdup(l->port);
+		else
+			tmp = g_strdup_printf("%s:%s", l->address, l->port);
 
 		if (l->password) 
-			xmlSetProp(n, "password", l->password);
+			g_key_file_set_string(kf, tmp, "password", l->password);
 
 		if (l->network) 
-			xmlSetProp(n, "network", l->network->name);
+			g_key_file_set_string(kf, tmp, "network", l->network->name);
 
-		if (l->ssl) 
-			xmlSetProp(n, "ssl", "1");
+		g_key_file_set_boolean(kf, tmp, "ssl", l->ssl);
 
-		xmlAddChild(conf, n);
+		g_free(tmp);
 	}
 
-	return TRUE;
+	if (!g_key_file_save_to_file(kf, filename, &error)) {
+		log_global("listener", LOG_WARNING, "Unable to save to \"%s\": %s", filename, error->message);
+	}
+	
+	g_free(filename);
+	g_key_file_free(kf);
 }
 
-static gboolean load_config(struct plugin *p, xmlNodePtr conf)
+static void load_config(struct global *global)
 {
-	xmlNodePtr cur;
-	extern struct global *_global;
+	char *filename = g_build_filename(global->config->config_dir, "listener", NULL);
+	int i;
+	char **groups;
+	gsize size;
+	GKeyFile *kf;
 
-	for (cur = conf->children; cur; cur = cur->next)
+	kf = g_key_file_new();
+
+	if (!g_key_file_load_from_file(kf, filename, G_KEY_FILE_KEEP_COMMENTS, NULL)) {
+		g_free(filename);
+		g_key_file_free(kf);
+		return;
+	}
+		
+	groups = g_key_file_get_groups(kf, &size);
+
+	for (i = 0; i < size; i++)
 	{
 		struct listener *l;
-		char *port, *address, *tmp;
+		char *address, *port;
 		
-		if (cur->type != XML_ELEMENT_NODE) continue;
+		address = g_strdup(groups[i]);
+		port = strrchr(address, ':');
+		if (port) {
+			*port = '\0';
+			port++;
+		}
+			
+		l = listener_init(port?address:NULL, port?port:address);
 
-		port = xmlGetProp(cur, "port");
+		g_free(address);
 
-		address = xmlGetProp(cur, "address");
+		l->password = g_key_file_get_string(kf, groups[i], "password", NULL);
+		if (g_key_file_has_key(kf, groups[i], "ssl", NULL))
+			l->ssl = g_key_file_get_boolean(kf, groups[i], "ssl", NULL);
 
-		l = listener_init(address, port);
+		if (g_key_file_has_key(kf, groups[i], "network", NULL)) {
 
-		xmlFree(address);
-		xmlFree(port);
-
-		l->password = xmlGetProp(cur, "password");
-		if (xmlHasProp(cur, "ssl")) 
-			l->ssl = 1;
-
-		if (xmlHasProp(cur, "network")) {
-			tmp = xmlGetProp(cur, "network");
-			l->network = find_network(_global, tmp);
+			char *tmp = g_key_file_get_string(kf, groups[i], "network", NULL);
+			l->network = find_network(global, tmp);
 			if (!l->network) {
 				log_global("listener", LOG_ERROR, "Unable to find network named \"%s\"", tmp);
 			}
-			xmlFree(tmp);
+			g_free(tmp);
 		}
 			
 		start_listener(l);
 	}
 
-	return TRUE;
+	g_strfreev(groups);
+	g_free(filename);
+	g_key_file_free(kf);
 }
 
-static gboolean init_plugin(struct plugin *p) 
+static gboolean init_plugin(void)
 {
+	register_load_config_notify(load_config);
+	register_save_config_notify(update_config);
 	return TRUE;
 }
 
@@ -313,7 +344,4 @@ struct plugin_ops plugin = {
 	.name = "listener",
 	.version = 0,
 	.init = init_plugin,
-	.fini = fini_plugin,
-	.load_config = load_config,
-	.update_config = update_config
 };

@@ -25,12 +25,8 @@
 #include <unistd.h>
 #endif
 
+#include <glib/gstdio.h>
 #include <sys/stat.h>
-
-#ifdef _WIN32
-#include <direct.h>
-#define mkdir(s,t) _mkdir(s)
-#endif
 
 #define STATE_DUMP_INTERVAL 1000
 
@@ -63,7 +59,7 @@ static gboolean file_init(struct linestack_context *ctx, struct ctrlproxy_config
 {
 	struct lf_data *data = g_new0(struct lf_data, 1);
 	data->data_path = g_build_filename(config->config_dir, "linestack_file", NULL);
-	mkdir(data->data_path, 0700);
+	g_mkdir(data->data_path, 0700);
 	data->networks = g_hash_table_new_full(NULL, NULL, NULL, free_lf_network_data);
 	ctx->backend_data = data;
 	return TRUE;
@@ -85,7 +81,7 @@ static gboolean file_insert_state(struct lf_network_data *nd, const struct netwo
 	char *raw = network_state_encode(state, &length);
 	struct record_header rh;
 
-	log_network("linestack_file", LOG_TRACE, network, "Inserting state");
+	log_network(NULL, LOG_TRACE, network, "Inserting state");
 	
 	rh.time = time(NULL);
 	rh.length = length;
@@ -117,13 +113,13 @@ static struct lf_network_data *get_data(struct linestack_context *ctx, const str
 		FILE *file;
 		file = fopen(path, "w+");
 		if (!file) {
-			log_network("linestack_file", LOG_ERROR, n, "Unable to open linestack file %s", path);
+			log_network(NULL, LOG_ERROR, n, "Unable to open linestack file %s", path);
 			g_free(path);
 			return NULL;
 		}
 		nd = g_new0(struct lf_network_data, 1);
 		nd->file = file;
-		log_network("linestack_file", LOG_TRACE, n, "Creating new linestack file '%s'", path);
+		log_network(NULL, LOG_TRACE, n, "Creating new linestack file '%s'", path);
 		file_insert_state(nd, n);
 		g_free(path);
 		g_hash_table_insert(data->networks, n, nd);
@@ -160,7 +156,7 @@ static gboolean file_insert_line(struct linestack_context *ctx, const struct net
 	return (ret != EOF);
 }
 
-static linestack_marker *file_get_marker(struct linestack_context *ctx, struct network *n)
+void *file_get_marker(struct linestack_context *ctx, struct network *n)
 {
 	long *pos;
 	struct lf_network_data *nd = get_data(ctx, n);
@@ -175,7 +171,7 @@ static linestack_marker *file_get_marker(struct linestack_context *ctx, struct n
 static 	struct network_state * file_get_state (
 		struct linestack_context *ctx, 
 		struct network *n, 
-		linestack_marker *m)
+		void *m)
 {
 	struct lf_network_data *nd = get_data(ctx, n);
 	struct record_header rh;
@@ -183,6 +179,7 @@ static 	struct network_state * file_get_state (
 	char *raw;
 	long from_offset, *to_offset = m;
 	long save_offset = ftell(nd->file);
+	struct linestack_marker m1, m2;
 
 	if (!nd) 
 		return NULL;
@@ -202,7 +199,7 @@ static 	struct network_state * file_get_state (
 		from_offset = nd->last_state_offset;
 	}
 
-	log_network("linestack_file", LOG_TRACE, n, "Reading state at 0x%04x (for 0x%04x)", from_offset, to_offset?*to_offset:-1);
+	log_network(NULL, LOG_TRACE, n, "Reading state at 0x%04x (for 0x%04x)", from_offset, to_offset?*to_offset:-1);
 
 	/* fseek to state dump */
 	fseek(nd->file, from_offset, SEEK_SET);
@@ -222,7 +219,10 @@ static 	struct network_state * file_get_state (
 
 	g_free(raw);
 
-	linestack_replay(ctx, n, &from_offset, to_offset, ret);
+	m1.ctx = m2.ctx = ctx;
+	m1.data = &from_offset;
+	m2.data = to_offset;
+	linestack_replay(ctx, n, &m1, &m2, ret);
 
 	/* Go back to original position */
 	fseek(nd->file, save_offset, SEEK_SET);
@@ -232,8 +232,8 @@ static 	struct network_state * file_get_state (
 
 static gboolean file_traverse(struct linestack_context *ctx,
 		struct network *n, 
-		linestack_marker *mf,
-		linestack_marker *mt,
+		void *mf,
+		void *mt,
 		linestack_traverse_fn tf, 
 		void *userdata)
 {
