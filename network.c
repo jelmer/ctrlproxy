@@ -484,7 +484,8 @@ static gboolean close_server(struct network *n)
 		g_source_remove(n->connection.data.program.outgoing_id); 
 		break;
 	case NETWORK_VIRTUAL:
-		if (n->connection.data.virtual.ops && n->connection.data.virtual.ops->fini) {
+		if (n->connection.data.virtual.ops && 
+			n->connection.data.virtual.ops->fini) {
 			n->connection.data.virtual.ops->fini(n);
 		}
 		break;

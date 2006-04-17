@@ -2,7 +2,7 @@
 	ctrlproxy: A modular IRC proxy
 	admin: module for remote administration. 
 
-	(c) 2003-2005 Jelmer Vernooij <jelmer@nl.linux.org>
+	(c) 2003-2006 Jelmer Vernooij <jelmer@nl.linux.org>
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -417,6 +417,35 @@ static gboolean admin_to_server (struct network *n, const struct client *c, stru
 struct virtual_network_ops admin_network = {
 	"admin", admin_net_init, admin_to_server, NULL
 };
+
+void admin_log(const char *module, enum log_level level, const struct network *n, const struct client *c, const char *data)
+{
+	extern struct global *my_global;
+	struct line *l;
+	char *tmp;
+	GList *gl;
+
+	if (!my_global->config->admin_log) 
+		return;
+
+	tmp = g_strdup_printf("%s %d %s %s %s", module, level, 
+						  n?n->name:"NONE", c?c->description:"NONE", data);
+
+	l = irc_parse_line_args(":", "PRIVMSG", tmp, NULL); 
+
+	g_free(tmp);
+
+	for (gl = my_global->networks; gl; gl = gl->next) {
+		struct network *network = gl->data;
+
+		if (network->connection.data.virtual.ops != &admin_network)
+			continue;
+		
+		virtual_network_recv_line(network, l);
+	}
+
+	free_line(l);
+}
 
 const static struct admin_command builtin_commands[] = {
 	{ "ADDNETWORK", add_network, "<name>", "Add new network with specified name" },

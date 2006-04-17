@@ -8,7 +8,6 @@ current release (3.0.0):
 - testing
 - fix issue with loading state from linestack_file
 - better handling of log_network_state()
-- reimplement noticelog
 - finish upgrade script
 - make editing config file optional
 - cope with renamed networks (so we don't end up with two 

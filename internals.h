@@ -109,5 +109,6 @@ void nickserv_identify_me(struct network *network, char *nick);
 /* admin.c */
 void init_admin(void);
 gboolean admin_process_command(const struct client *c, struct line *l, int cmdoffset);
+void admin_log(const char *module, enum log_level level, const struct network *n, const struct client *c, const char *data);
 
 #endif /* __INTERNALS_H__ */

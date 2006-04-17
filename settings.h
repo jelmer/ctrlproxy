@@ -68,6 +68,7 @@ struct ctrlproxy_config {
 	char *motd_file;
 	char *replication;
 	char *linestack_backend;
+	gboolean admin_log;
 	gboolean admin_noprivmsg;
 	gboolean report_time;
 	GKeyFile *keyfile;

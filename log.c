@@ -42,6 +42,8 @@ static void log_entry(const char *module, enum log_level level, const struct net
 
 	if (level > current_log_level)
 		return;
+
+	admin_log(module, level, n, c, data);
 	
 	if (!no_log_timestamp)
 		fprintf(flog, "[%s] ", get_date());
