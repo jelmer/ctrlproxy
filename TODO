@@ -5,13 +5,10 @@ current release (3.0.0):
  - pass line arguments correctly
  - examples
  - easy mechanism to test python scripts
-- testing
 - fix issue with loading state from linestack_file
-- better handling of log_network_state()
 - finish upgrade script
 - make editing config file optional
-- cope with renamed networks (so we don't end up with two 
-							  of the same name)
+- cope with renamed networks (so we don't end up with two of the same name)
 - hierarchical structure for admin commands
  - NETWORK
   - ADD
@@ -25,6 +22,7 @@ current release (3.0.0):
  - SAVECONFIG
 
 next minor release (3.0.1):
+- better handling of log_network_state()
 - properly expand second argument of PRIVMSG in log_irssi and log_custom
 - <allow/> rules in socks and listener based on ip addresses/ranges
  - auth mechanism like the abandoned 3.0 has?

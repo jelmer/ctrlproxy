@@ -425,7 +425,8 @@ void admin_log(const char *module, enum log_level level, const struct network *n
 	char *tmp;
 	GList *gl;
 
-	if (!my_global->config->admin_log) 
+	if (!my_global || !my_global->config || 
+		!my_global->config->admin_log) 
 		return;
 
 	tmp = g_strdup_printf("%s %d %s %s %s", module, level, 
