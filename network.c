@@ -166,7 +166,8 @@ static gboolean handle_server_receive (GIOChannel *c, GIOCondition cond, void *_
 		}
 
 		if (status == G_IO_STATUS_EOF) {
-			reconnect(server, FALSE);
+			if (server->connection.state != NETWORK_CONNECTION_STATE_NOT_CONNECTED) 
+				reconnect(server, FALSE);
 			return FALSE;
 		}
 
