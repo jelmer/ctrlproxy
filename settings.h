@@ -65,7 +65,6 @@ struct ctrlproxy_config {
 	char *config_dir;
 	GList *networks;
 	gboolean autosave;
-	gboolean separate_processes;
 	char *motd_file;
 	char *replication;
 	char *linestack_backend;

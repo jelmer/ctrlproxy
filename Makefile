@@ -25,7 +25,7 @@ ctrlproxy$(EXEEXT): main.o $(objs)
 
 .c.o:
 	@echo Compiling $<
-	$(CC) -I. $(CFLAGS) $(GCOV_CFLAGS) -c $< -o $@
+	@$(CC) -I. $(CFLAGS) $(GCOV_CFLAGS) -c $< -o $@
 
 configure: autogen.sh configure.ac acinclude.m4 $(wildcard mods/*/*.m4)
 	./$<
@@ -69,7 +69,7 @@ gcov:
 
 mods/lib%.so: mods/%.o
 	@echo Linking $@
-	$(CC) $(LDFLAGS) -fPIC -shared -o $@ $^
+	@$(CC) $(LDFLAGS) -fPIC -shared -o $@ $^
 
 clean::
 	rm -f $(MODS_SHARED_FILES)
@@ -122,7 +122,7 @@ testsuite/ctrlproxyrc.torture: testsuite/ctrlproxyrc.torture.in
 	sed -e 's/@SERVER@/$(TEST_SERVER)/;s/@PORT@/$(TEST_PORT)/;' < $< > $@
 
 rfctest: testsuite/ctrlproxyrc.torture
-	$(IRCDTORTURE) -- ./ctrlproxy -d 0 -i TEST -r $<
+	@$(IRCDTORTURE) -- ./ctrlproxy -d 0 -i TEST -r $<
 
 # Regular testsuite
 

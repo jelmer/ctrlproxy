@@ -78,7 +78,6 @@ Ctrlproxy 3.0:
  * Do the actual NICK after GHOST'ing another nick
  * Fix bug with setting PRIVATE too often
  * Fix issue with NickServ IDENTIFY'ing when connecting to server
- * Support multiple processes
  * Add cisg utility
  * Update items kept track of by stats by default
  * Put some modules in their own directory

@@ -12,7 +12,6 @@ current release (3.0.0):
 - use 'report-time' setting
 - finish upgrade script
 - make editing config file optional
-- obey 'separate_processes' option
 - cope with renamed networks (so we don't end up with two 
 							  of the same name)
 - hierarchical structure for admin commands

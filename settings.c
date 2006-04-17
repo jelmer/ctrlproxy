@@ -152,7 +152,6 @@ void save_configuration(struct ctrlproxy_config *cfg, const char *configuration_
 		cfg->keyfile = g_key_file_new();
 
 	g_key_file_set_boolean(cfg->keyfile, "global", "autosave", cfg->autosave);
-	g_key_file_set_boolean(cfg->keyfile, "global", "separate-processes", cfg->separate_processes);
 	g_key_file_set_boolean(cfg->keyfile, "admin", "without_privmsg", cfg->admin_noprivmsg);
 
 	if (cfg->replication)
@@ -350,10 +349,6 @@ struct ctrlproxy_config *load_configuration(const char *dir)
 	if (g_key_file_has_key(kf, "global", "autosave", NULL) &&
 		!g_key_file_get_boolean(kf, "global", "autosave", NULL))
 		cfg->autosave = FALSE;
-
-	if (g_key_file_has_key(kf, "global", "separate-processes", NULL) &&
-		g_key_file_get_boolean(kf, "global", "separate-processes", NULL))
-		cfg->separate_processes = TRUE;
 
 	cfg->replication = g_key_file_get_string(kf, "global", "replication", NULL);
 	cfg->linestack_backend = g_key_file_get_string(kf, "global", "linestack", NULL);
