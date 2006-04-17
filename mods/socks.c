@@ -468,6 +468,9 @@ static void load_config(struct global *global)
 
 	allows = g_key_file_get_string_list(kf, "socks", "allow", &size, NULL);
 
+	if (allows == NULL)
+		return;
+
 	for (i = 0; i < size; i++) {
 		struct allow_rule *r = g_new0(struct allow_rule, 1);
 		char **parts = g_strsplit(allows[i], ":", 2);
