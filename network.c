@@ -165,8 +165,12 @@ static gboolean handle_server_receive (GIOChannel *c, GIOCondition cond, void *_
 				return FALSE;
 		}
 
+		if (status == G_IO_STATUS_EOF) {
+			reconnect(server, FALSE);
+			return FALSE;
+		}
+
 		if (status != G_IO_STATUS_AGAIN) {
-			printf("%d:%d:%d\n", status, G_IO_STATUS_EOF, G_IO_STATUS_ERROR);
 			log_network(NULL, LOG_WARNING, server, 
 				"Error \"%s\" reading from server, reconnecting in %ds...",
 				err?err->message:"UNKNOWN", server->config->reconnect_interval);

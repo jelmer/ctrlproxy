@@ -9,17 +9,6 @@ current release (3.0.0):
 - finish upgrade script
 - make editing config file optional
 - cope with renamed networks (so we don't end up with two of the same name)
-- hierarchical structure for admin commands
- - NETWORK
-  - ADD
-  - REMOVE
-  - LIST
-  - <NAME> DISCONNECT
-  - <NAME> NEXTSERVER
-  - <NAME> INFO
- - CHANNEL <NETWORK> LIST
- - LISTENER
- - SAVECONFIG
 
 next minor release (3.0.1):
 - better handling of log_network_state()
@@ -32,6 +21,22 @@ next minor release (3.0.1):
 - use more GLib functions (e.g. g_spawn() rather then fork(), 
    g_swap_async_with_pipes() instead of piped_child(), etc)
 - warn about unclaimed options!
+- hierarchical structure for admin commands
+ - NETWORK
+ - NETWORK ADD <NAME>
+ - NETWORK REMOVE <NAME>
+ - NETWORK LIST
+ - NETWORK DISCONNECT <NAME>
+ - NETWORK INFO <NAME>
+ - NETWORK NEXTSERVER <NAME>
+ - NETWORK SET <NAME> <VAR> <VAL>
+ - CHANNEL <NETWORK> LIST
+ - CHANNEL <NETWORK> SET <VAR> <VAL>
+ - LISTENER ADD <binding> <port> [<network>]
+ - LISTENER DEL <binding> <port>
+ - LISTENER LIST
+ - SAVECONFIG
+
 
 next major release (3.1.0):
 - merge report_time into the repl_ modules

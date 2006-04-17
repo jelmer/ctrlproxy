@@ -50,7 +50,7 @@ static void load_config(struct global *global)
 
 	g_free(newpath);
 
-	dir = g_dir_open(global->config->config_dir, 0, NULL);
+	dir = g_dir_open(mypath, 0, NULL);
 	if (!dir)
 		return;
 
