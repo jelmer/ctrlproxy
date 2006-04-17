@@ -117,17 +117,6 @@ fi
 AC_SUBST(EXTRA_INSTALL_TARGETS)
 
 BINS="ctrlproxy$ac_cv_exeext"
-DEFMODULE(log_irssi)
-DEFMODULE(auto_away)
-DEFMODULE(log_custom)
-DEFMODULE(antiflood)
-DEFMODULE(repl_simple)
-DEFMODULE(repl_command)
-DEFMODULE(repl_highlight)
-DEFMODULE(repl_lastdisconnect)
-DEFMODULE(socks)
-DEFMODULE(listener)
-
 AC_SUBST(BINS)
 AC_SUBST(MODS_SHARED)
 DESTINCLUDEDIR="$includedir/ctrlproxy-2"
