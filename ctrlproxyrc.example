@@ -6,7 +6,8 @@
 [global]
 
 # Replication mechanism to use
-replication = none # Possible values: none, simple, highlight, disconnect
+# Possible values: none, simple, highlight, disconnect
+replication = none
 
 # Override motd-file location
 #motd-file = /tmp/my-motd
