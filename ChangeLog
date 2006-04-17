@@ -36,7 +36,6 @@ Ctrlproxy 3.0:
  * Make reconnect_timeout changeable (Alexander Wild <wild@te-elektronik.com>)
  * Add scripts/ directory and framework
  * Add default ctrlproxyrc and install it
- * Add webconfig python script (Daniel Poelzleithner <ctrlproxy@poelzi.org>)
  * Add some tests to the testsuite
  * Extend linestack interface
  * Add test-filter utility
@@ -84,7 +83,6 @@ Ctrlproxy 3.0:
  * Add linestack_file
  * Add repl_lastdisconnect.so
  * Add server_connect, server_disconnect and initialized hooks
- * Add python plugin (Daniel Poelzleithner <ctrlproxy@poelzi.org>)
  * Add gnutls support
  * Fix problems with incorrectly added colons
  * Add %e to log_custom (Korbinian Rosenegger)

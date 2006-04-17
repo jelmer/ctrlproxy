@@ -92,19 +92,6 @@ AC_SUBST(GNUTLS_LIBS)
 ###############################################################################
 AC_PATH_PROG(SWIG,[swig])
 
-###############################################################################
-# Python support
-###############################################################################
-AC_PYTHON_DEVEL()
-
-if test -z "$SWIG"; then
-	AC_MSG_WARN([SWIG not found, not building python module])
-elif test -z "$PYTHON_VERSION"; then
-	AC_MSG_WARN([Python not found, not building python module])
-else
-	DEFMODULE(python2, $PY_LIBS)
-fi
-
 AC_PATH_PROG(XSLTPROC, xsltproc)
 
 AC_SUBST(XSLTPROC)
