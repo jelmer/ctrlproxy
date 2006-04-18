@@ -223,7 +223,7 @@ static struct tcp_server_config *network_get_next_tcp_server(struct network *n)
 	return NULL;
 }
 
-gboolean network_send_line(struct network *s, const struct client *c, const struct line *ol)
+gboolean network_send_line(struct network *s, struct client *c, const struct line *ol)
 {
 	struct line l;
 	struct line *lc;

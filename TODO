@@ -9,6 +9,7 @@ current release (3.0.0):
 - cope with renamed networks (so we don't end up with two of the same name)
 - need to hide "IDENTIFY " and "GHOST " nickserv commands from clients
 - finish some parts of CTCP handling
+- integrate antiflood
 
 next minor release (3.0.1):
 - better handling of log_network_state()

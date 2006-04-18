@@ -92,7 +92,7 @@ G_MODULE_EXPORT gboolean connect_network(struct network *);
 G_MODULE_EXPORT void network_select_next_server(struct network *n);
 G_MODULE_EXPORT gboolean disconnect_network(struct network *s);
 G_MODULE_EXPORT void clients_send(struct network *, struct line *, const struct client *exception);
-G_MODULE_EXPORT gboolean network_send_line(struct network *s, const struct client *c, const struct line *);
+G_MODULE_EXPORT gboolean network_send_line(struct network *s, struct client *c, const struct line *);
 G_MODULE_EXPORT gboolean network_send_line_direct(struct network *s, const struct client *c, const struct line *);
 G_MODULE_EXPORT gboolean network_send_args(struct network *s, ...);
 G_MODULE_EXPORT void register_virtual_network(struct virtual_network_ops *);

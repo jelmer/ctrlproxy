@@ -1108,7 +1108,6 @@ char *network_state_encode(const struct network_state *st, size_t *len)
 
 	if (st == NULL)
 		return NULL;
-	
 	if (!marshall_network_state(st, MARSHALL_PUSH, &db, st))
 		return NULL;
 	

@@ -73,7 +73,7 @@ static GList *del_filter_ex(GList *list, const char *name)
 }
 
 
-static gboolean filter_class_execute(GList *gl, struct network *s, enum data_direction dir, struct line *l) 
+static gboolean filter_class_execute(GList *gl, struct network *s, enum data_direction dir, const struct line *l) 
 {
 	while(gl) {
 		struct filter_data *d = (struct filter_data *)gl->data;
@@ -103,7 +103,7 @@ void del_##n##_filter(const char *name)\
 {\
 	list = del_filter_ex(list, name); \
 }\
-gboolean run_##n##_filter(struct network *s, struct line *l, enum data_direction dir)\
+gboolean run_##n##_filter(struct network *s, const struct line *l, enum data_direction dir)\
 {\
 	return filter_class_execute(list, s, dir, l);\
 }
@@ -122,7 +122,7 @@ void del_client_filter(const char *name)
 	client_filters = del_filter_ex(client_filters, name); 
 }
 
-gboolean run_client_filter(struct client *c, struct line *l, enum data_direction dir)
+gboolean run_client_filter(struct client *c, const struct line *l, enum data_direction dir)
 {
 	GList *gl;
 	

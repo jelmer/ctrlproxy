@@ -65,10 +65,10 @@ void server_disconnected_hook_execute(struct network *);
 void server_connected_hook_execute(struct network *);
 gboolean new_client_hook_execute(struct client *c);
 void lose_client_hook_execute(struct client *c);
-gboolean run_client_filter(struct client *c, struct line *l, enum data_direction dir);
-gboolean run_server_filter(struct network *s, struct line *l, enum data_direction dir);
-gboolean run_log_filter(struct network *s, struct line *l, enum data_direction dir);
-gboolean run_replication_filter(struct network *s, struct line *l, enum data_direction dir);
+gboolean run_client_filter(struct client *c, const struct line *l, enum data_direction dir);
+gboolean run_server_filter(struct network *s, const struct line *l, enum data_direction dir);
+gboolean run_log_filter(struct network *s, const struct line *l, enum data_direction dir);
+gboolean run_replication_filter(struct network *s, const struct line *l, enum data_direction dir);
 
 /* log.c */
 gboolean init_log(const char *file);

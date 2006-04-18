@@ -41,7 +41,7 @@ G_MODULE_EXPORT struct line * irc_parse_line(const char *data);
 G_MODULE_EXPORT struct line * virc_parse_line(const char *origin, va_list ap);
 G_MODULE_EXPORT char *irc_line_string(const struct line *l);
 G_MODULE_EXPORT char *irc_line_string_nl(const struct line *l);
-G_MODULE_EXPORT char *line_get_nick(struct line *l);
+G_MODULE_EXPORT char *line_get_nick(const struct line *l);
 G_MODULE_EXPORT void free_line(struct line *l);
 G_MODULE_EXPORT gboolean irc_send_args(GIOChannel *, ...);
 G_MODULE_EXPORT gboolean irc_sendf(GIOChannel *, char *fmt, ...);

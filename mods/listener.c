@@ -321,14 +321,7 @@ static void load_config(struct global *global)
 	g_key_file_free(kf);
 }
 
-static gboolean init_plugin(void)
-{
-	register_load_config_notify(load_config);
-	register_save_config_notify(update_config);
-	return TRUE;
-}
-
-static gboolean fini_plugin(struct plugin *p)
+static void fini_plugin(void)
 {
 	while(listeners) {
 		struct listener *l = listeners->data;
@@ -336,8 +329,14 @@ static gboolean fini_plugin(struct plugin *p)
 			stop_listener(l);
 		free_listener(l);
 	}
+}
 
-	return TRUE; 
+static gboolean init_plugin(void)
+{
+	register_load_config_notify(load_config);
+	register_save_config_notify(update_config);
+	atexit(fini_plugin);
+	return TRUE;
 }
 
 struct plugin_ops plugin = {

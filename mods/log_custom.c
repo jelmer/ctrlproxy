@@ -45,51 +45,51 @@ struct log_mapping {
 	char subst;
 	unsigned int index;
 	/* If index is -1 */
-	char *(*callback) (struct network *, struct line *l, gboolean case_sensitive);
+	char *(*callback) (struct network *, const struct line *l, gboolean case_sensitive);
 };
 
-static char *get_hours(struct network *n, struct line *l, gboolean case_sensitive) { 
+static char *get_hours(struct network *n, const struct line *l, gboolean case_sensitive) { 
 	time_t ti = time(NULL);
 	struct tm *t = localtime(&ti);
 	return g_strdup_printf("%02d", t->tm_hour);
 }
 
-static char *get_minutes(struct network *n, struct line *l, gboolean case_sensitive) { 
+static char *get_minutes(struct network *n, const struct line *l, gboolean case_sensitive) { 
 	time_t ti = time(NULL);
 	struct tm *t = localtime(&ti);
 	return g_strdup_printf("%02d", t->tm_min);
 }
 
-static char *get_seconds(struct network *n, struct line *l, gboolean case_sensitive) { 
+static char *get_seconds(struct network *n, const struct line *l, gboolean case_sensitive) { 
 	time_t ti = time(NULL);
 	struct tm *t = localtime(&ti);
 	return g_strdup_printf("%02d", t->tm_sec);
 }
 
-static char *get_seconds_since_1970(struct network *n, struct line *l, gboolean case_sensitive) {
+static char *get_seconds_since_1970(struct network *n, const struct line *l, gboolean case_sensitive) {
 	time_t ti = time(NULL);
 	return g_strdup_printf("%ld", ti);
 }
 
-static char *get_day(struct network *n, struct line *l, gboolean case_sensitive) { 
+static char *get_day(struct network *n, const struct line *l, gboolean case_sensitive) { 
 	time_t ti = time(NULL);
 	struct tm *t = localtime(&ti);
 	return g_strdup_printf("%02d", t->tm_mday);
 }
 
-static char *get_month(struct network *n, struct line *l, gboolean case_sensitive) { 
+static char *get_month(struct network *n, const struct line *l, gboolean case_sensitive) { 
 	time_t ti = time(NULL);
 	struct tm *t = localtime(&ti);
 	return g_strdup_printf("%02d", t->tm_mon + 1);
 }
 
-static char *get_year(struct network *n, struct line *l, gboolean case_sensitive) { 
+static char *get_year(struct network *n, const struct line *l, gboolean case_sensitive) { 
 	time_t ti = time(NULL);
 	struct tm *t = localtime(&ti);
 	return g_strdup_printf("%04d", t->tm_year + 1900);
 }
 
-static char *get_user(struct network *n, struct line *l, gboolean case_sensitive) {
+static char *get_user(struct network *n, const struct line *l, gboolean case_sensitive) {
 	char *nick = NULL;
 	char *user = NULL;
 
@@ -101,14 +101,14 @@ static char *get_user(struct network *n, struct line *l, gboolean case_sensitive
 	else return g_strdup(user);
 }
 
-static char *get_monthname(struct network *n, struct line *l, gboolean case_sensitive) { 
+static char *get_monthname(struct network *n, const struct line *l, gboolean case_sensitive) { 
 	char stime[512];
 	time_t ti = time(NULL);
 	strftime(stime, sizeof(stime), "%b", localtime(&ti));
 	return g_strdup_printf("%s", stime);
 }
 
-static char *get_nick(struct network *n, struct line *l, gboolean case_sensitive) {
+static char *get_nick(struct network *n, const struct line *l, gboolean case_sensitive) {
 	if (l->origin) {
 		char *n = line_get_nick(l);
 		if(case_sensitive) {
@@ -122,21 +122,21 @@ static char *get_nick(struct network *n, struct line *l, gboolean case_sensitive
 	return g_strdup("");
 }
 
-static char *get_network(struct network *n, struct line *l, gboolean case_sensitive) 
+static char *get_network(struct network *n, const struct line *l, gboolean case_sensitive) 
 { return g_strdup(n->name); }
-static char *get_server(struct network *n, struct line *l, gboolean case_sensitive)
+static char *get_server(struct network *n, const struct line *l, gboolean case_sensitive)
 { return g_strdup(n->connection.data.tcp.current_server->host); }
 
-static char *get_percent(struct network *n, struct line *l, gboolean case_sensitive) { return g_strdup("%"); }
+static char *get_percent(struct network *n, const struct line *l, gboolean case_sensitive) { return g_strdup("%"); }
 
 static const char *identifier = NULL;
 
-static char *get_identifier(struct network *n, struct line *l, gboolean case_sensitive) { 
+static char *get_identifier(struct network *n, const struct line *l, gboolean case_sensitive) { 
 	if(case_sensitive) return g_ascii_strdown(identifier, -1); 
 	else return g_strdup(identifier); 
 }
 
-static char *get_modechanges(struct network *n, struct line *l, gboolean case_sensitive) {
+static char *get_modechanges(struct network *n, const struct line *l, gboolean case_sensitive) {
 	char buf[512] = "";
 	int i;
 
@@ -194,7 +194,7 @@ static struct log_mapping mappings[] = {
 	{ NULL }
 };
 
-static char *find_mapping(struct network *network, struct line *l, char c, gboolean case_sensitive)
+static char *find_mapping(struct network *network, const struct line *l, char c, gboolean case_sensitive)
 {
 	int i;
 	for(i = 0; mappings[i].subst; i++) {
@@ -216,7 +216,7 @@ static void convertslashes(char *a)
 	for (j = 0; a[j]; j++) if (a[j] == '/') a[j] = '_';
 }
 
-static void custom_subst(struct network *network, char **_new, const char *fmt, struct line *l, const char *_identifier, gboolean case_sensitive, gboolean noslash)
+static void custom_subst(struct network *network, char **_new, const char *fmt, const struct line *l, const char *_identifier, gboolean case_sensitive, gboolean noslash)
 {
 	char *subst[MAX_SUBST];
 	char *new;
@@ -288,7 +288,7 @@ If appropriate:
  */
 
 
-static FILE *find_add_channel_file(struct log_custom_data *data, struct network *network, struct line *l, const char *identifier, gboolean create_file) 
+static FILE *find_add_channel_file(struct log_custom_data *data, struct network *network, const struct line *l, const char *identifier, gboolean create_file) 
 {
 	char *n = NULL, *dn, *p;
 	FILE *f;
@@ -323,7 +323,7 @@ static FILE *find_add_channel_file(struct log_custom_data *data, struct network 
 	return f;
 }
 
-static void file_write_target(struct log_custom_data *data, struct network *network, const char *n, struct line *l) 
+static void file_write_target(struct log_custom_data *data, struct network *network, const char *n, const struct line *l) 
 {
 	char *t, *s, *fmt;
 	FILE *f;
@@ -351,7 +351,7 @@ static void file_write_target(struct log_custom_data *data, struct network *netw
 	g_free(s);
 }
 
-static void file_write_channel_only(struct log_custom_data *data, struct network *network, const char *n, struct line *l)
+static void file_write_channel_only(struct log_custom_data *data, struct network *network, const char *n, const struct line *l)
 {
 	char *s, *fmt;
 	FILE *f;
@@ -370,7 +370,7 @@ static void file_write_channel_only(struct log_custom_data *data, struct network
 	g_free(s);
 }
 
-static void file_write_channel_query(struct log_custom_data *data, struct network *network, const char *n, struct line *l)
+static void file_write_channel_query(struct log_custom_data *data, struct network *network, const char *n, const struct line *l)
 {
 	char *s, *fmt;
 	char *nick;
@@ -413,7 +413,7 @@ static void file_write_channel_query(struct log_custom_data *data, struct networ
 	}
 }
 
-static gboolean log_custom_data(struct network *network, struct line *l, enum data_direction dir, void *userdata)
+static gboolean log_custom_data(struct network *network, const struct line *l, enum data_direction dir, void *userdata)
 {
     struct log_custom_data *data = userdata;
 	char *nick = NULL;

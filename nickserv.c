@@ -69,7 +69,7 @@ void nickserv_identify_me(struct network *network, char *nick)
 	}
 }
 
-static gboolean log_data(struct network *n, struct line *l, enum data_direction dir, void *userdata) 
+static gboolean log_data(struct network *n, const struct line *l, enum data_direction dir, void *userdata) 
 {
 	static char *nickattempt = NULL;
 

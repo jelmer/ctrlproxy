@@ -60,7 +60,7 @@ static gboolean send_queue(gpointer user_data)
 	return TRUE;
 }
 
-static gboolean log_data(struct network *network, struct line *l, enum data_direction dir, void *userdata) 
+static gboolean log_data(struct network *network, const struct line *l, enum data_direction dir, void *userdata) 
 {
     struct antiflood_data *dt = userdata;
 	struct network_data *sd;

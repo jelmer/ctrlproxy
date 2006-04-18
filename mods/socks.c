@@ -528,6 +528,7 @@ static void load_config(struct global *global)
 static gboolean init_plugin(void)
 {
 	register_load_config_notify(load_config);
+	atexit(fini_plugin);
 	return TRUE;
 }
 

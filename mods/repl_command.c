@@ -23,7 +23,7 @@
 
 static GHashTable *markers = NULL;
 
-static void repl_command(const struct client *c, char **args, void *userdata)
+static void repl_command(struct client *c, char **args, void *userdata)
 {
 	struct linestack_marker *lm = g_hash_table_lookup(markers, c->network);
 
@@ -55,16 +55,16 @@ static const struct admin_command cmd_backlog = {
 	"Send backlogs for this network or a channel, if specified"
 };
 
-static gboolean fini_plugin(struct plugin *p) 
+static void fini_plugin(void) 
 {
 	g_hash_table_destroy(markers);
-	return TRUE;
 }
 
 static gboolean init_plugin(void)
 {
 	register_admin_command(&cmd_backlog);
 	markers = g_hash_table_new_full(NULL, NULL, NULL, (GDestroyNotify)linestack_free_marker);
+	atexit(fini_plugin);
 	return TRUE;
 }
 

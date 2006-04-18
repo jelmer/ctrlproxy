@@ -35,7 +35,7 @@ static void change_nick(struct client *c, const char *newnick)
 	free_line(l);
 }
 
-static gboolean log_data(struct network *n, struct line *l, enum data_direction dir, void *userdata) 
+static gboolean log_data(struct network *n, const struct line *l, enum data_direction dir, void *userdata) 
 {
 	if(dir != TO_SERVER) return TRUE;
 

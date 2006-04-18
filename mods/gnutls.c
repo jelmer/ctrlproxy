@@ -76,7 +76,7 @@ static ssize_t tls_pull(gnutls_transport_ptr ptr, void *buf, size_t size)
 {
 	GIOChannel *parent = ptr;
 	GIOStatus status;
-	gint nr;
+	gsize nr;
 	status = g_io_channel_read_chars(parent, buf, size, &nr, NULL);
 	
 	switch (status) {
@@ -92,7 +92,7 @@ static ssize_t tls_push(gnutls_transport_ptr ptr, const void *buf, size_t size)
 {
 	GIOChannel *parent = ptr;
 	GIOStatus status;
-	gint nr;
+	gsize nr;
 	status = g_io_channel_write_chars(parent, buf, size, &nr, NULL);
 	
 	switch (status) {

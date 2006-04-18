@@ -247,7 +247,7 @@ void free_line(struct line *l) {
 	g_free(l);
 }
 
-char *line_get_nick(struct line *l)
+char *line_get_nick(const struct line *l)
 {
 	char *nick = NULL;
 	char *t;
