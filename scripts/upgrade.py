@@ -262,6 +262,9 @@ def convert_strip(plugin,conf):
     # Now integrated
     pass
 
+def convert_repl_lastdisconnect(plugin,conf):
+    conf.conf["global"]["replication"] = "lastdisconnect"
+
 def convert_repl_none(plugin,conf):
     conf.conf["global"]["replication"] = "none"
 
@@ -349,6 +352,7 @@ convert_plugin = {
     'linestack_memory': convert_linestack_memory,
     'repl_command': convert_repl_command,
     'repl_memory': convert_repl_memory,
+    'repl_lastdisconnect': convert_repl_lastdisconnect,
     'antiflood': convert_antiflood,
     'repl_highlight': convert_repl_highlight,
     'repl_simple': convert_repl_simple,
