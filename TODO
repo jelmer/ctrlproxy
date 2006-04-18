@@ -4,10 +4,8 @@ current release (3.0.0):
 - fix issue with loading state from linestack_file
 - finish upgrade script
 - fix strange bug with 'reconnect' interaction
-- make editing config file optional
- - set up a default configuration with: 
-   - admin server
-   - list of irc servers to connect to and ports they'll be available at
+- set up a default configuration with admin server
+- automatic setup of listeners
 - cope with renamed networks (so we don't end up with two of the same name)
 
 next minor release (3.0.1):

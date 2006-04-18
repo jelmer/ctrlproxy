@@ -22,10 +22,12 @@ replication = none
 # What words to look for when remembering lines 
 # (in case "replication = highlight")
 # Seperate using comma's 
-matches = ctrlproxy, foobar
+matches=ctrlproxy, foobar
 
 # Prepend all lines with the time a line was received when replicating
-report-time = False
+report-time=False
+
+autoconnect=irc.oftc.net;irc.freenode.net;
 
 # Irssi-style logging
 [log-irssi]

@@ -149,6 +149,14 @@ void save_configuration(struct ctrlproxy_config *cfg, const char *configuration_
 	char *fn, **list;
 	int i;
 	GList *gl;
+
+	if (!g_file_test(configuration_dir, G_FILE_TEST_IS_DIR)) {
+		if (g_mkdir(configuration_dir, 0700) != 0) {
+			log_global(NULL, LOG_ERROR, "Unable to open configuration directory '%s'\n", configuration_dir);
+			return;
+		}
+	}
+
 	if (!cfg->keyfile)
 		cfg->keyfile = g_key_file_new();
 
@@ -176,7 +184,8 @@ void save_configuration(struct ctrlproxy_config *cfg, const char *configuration_
 		}
 	}
 	
-	g_key_file_set_string_list(cfg->keyfile, "global", "autoconnect", list, i);
+	if (i > 0) 
+		g_key_file_set_string_list(cfg->keyfile, "global", "autoconnect", list, i);
 
 	fn = g_build_filename(configuration_dir, "config", NULL);
 	g_key_file_save_to_file(cfg->keyfile, fn, NULL);
@@ -479,17 +488,6 @@ struct network_config *network_config_init(struct ctrlproxy_config *cfg)
 		cfg->networks = g_list_append(cfg->networks, s);
 	return s;
 }
-
-void setup_configdir(const char *dir)
-{
-	if(g_mkdir(dir, 0700) != 0) {
-		log_global(NULL, LOG_ERROR, "Unable to open configuration directory '%s'\n", dir);
-		return;
-	}
-
-	/* FIXME: Copy 'config' from ctrlproxy.config.default */
-}
-
 
 void free_config(struct ctrlproxy_config *cfg)
 {

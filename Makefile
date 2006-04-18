@@ -10,7 +10,7 @@ GCOV_LIBS = -lgcov
 LIBS += $(GCOV_LIBS) $(GCOV_CFLAGS)
 endif
 
-CFLAGS+=-DHAVE_CONFIG_H -DSHAREDIR=\"$(cdatadir)\" 
+CFLAGS+=-DHAVE_CONFIG_H -DSHAREDIR=\"$(cdatadir)\" -DDEFAULT_CONFIG_DIR=\"$(DEFAULT_CONFIG_DIR)\"
 CFLAGS+=-ansi -Wall -DMODULESDIR=\"$(modulesdir)\" -DSTRICT_MEMORY_ALLOCS=
 
 .PHONY: all clean distclean install install-bin install-dirs install-doc install-data install-mods install-pkgconfig
@@ -55,7 +55,8 @@ install-doc: doc
 
 install-data:
 	$(INSTALL) motd $(DESTDIR)$(cdatadir)
-	$(INSTALL) ctrlproxyrc.default $(DESTDIR)$(cdatadir)
+	$(INSTALL) -d $(DESTDIR)$(DEFAULT_CONFIG_DIR)
+	$(INSTALL) config.default $(DESTDIR)$(DEFAULT_CONFIG_DIR)/config
 
 install-mods: all 
 	$(INSTALL) -d $(DESTDIR)$(modulesdir)

@@ -20,7 +20,7 @@ MODS_SHARED = log_irssi auto_away log_custom antiflood repl_simple repl_command 
 	socks listener @MODS_SHARED@
 LDFLAGS = @LDFLAGS@
 BINS = @BINS@
-scriptdir = @datadir@/ctrlproxy/scripts
+scriptdir = $(cdatadir)/scripts
 EXTRA_INSTALL_TARGETS = @EXTRA_INSTALL_TARGETS@
 PACKAGE_VERSION = @PACKAGE_VERSION@
 WITH_GCOV = @WITH_GCOV@
@@ -38,3 +38,4 @@ PYTHON_LDFLAGS = @PYTHON_LDFLAGS@ @PYTHON_EXTRA_LIBS@
 IRCDTORTURE = @IRCDTORTURE@
 XSLTPROC = @XSLTPROC@
 EXTRA_INSTALL_TARGETS = @EXTRA_INSTALL_TARGETS@
+DEFAULT_CONFIG_DIR = $(cdatadir)/default

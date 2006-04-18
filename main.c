@@ -21,6 +21,7 @@
 #include "config.h"
 #endif
 #include "internals.h"
+#include <glib/gstdio.h>
 
 #define BACKTRACE_STACK_SIZE 64
 
@@ -80,6 +81,14 @@ static void clean_exit()
 	g_main_loop_quit(main_loop);
 
 	path = my_global->config->config_dir;
+
+	if (!g_file_test(path, G_FILE_TEST_IS_DIR)) {
+		if (g_mkdir(path, 0700) != 0) {
+			log_global(NULL, LOG_ERROR, "Can't create config directory '%s': %s", path, strerror(errno));
+			return;
+		}
+	}
+
 	config_save_notify(my_global, path);
 	if (my_global->config->autosave)
 		save_configuration(my_global->config, path);
@@ -109,6 +118,14 @@ static void signal_quit(int sig)
 static void signal_save(int sig)
 {
 	log_global(NULL, LOG_INFO, "Received USR1 signal, saving configuration...");
+	
+	if (!g_file_test(my_global->config->config_dir, G_FILE_TEST_IS_DIR)) {
+		if (g_mkdir(my_global->config->config_dir, 0700) != 0) {
+			log_global(NULL, LOG_ERROR, "Can't create config directory '%s': %s", my_global->config->config_dir, strerror(errno));
+			return;
+		}
+	}
+
 	config_save_notify(my_global, my_global->config->config_dir);
 	save_configuration(my_global->config, my_global->config->config_dir);
 	nickserv_save(my_global, my_global->config->config_dir);
@@ -281,15 +298,17 @@ int main(int argc, char **argv)
 			log_global(NULL, LOG_INFO, "Pre-3.0 style .ctrlproxyrc found, starting upgrade");
 			/* FIXME: Upgrade script */
 		} else {
-			log_global(NULL, LOG_INFO, "No configuration found, installing one");
-			setup_configdir(config_dir);
+			log_global(NULL, LOG_INFO, "No configuration found, loading default");
+			my_global = new_global(DEFAULT_CONFIG_DIR);	
+			my_global->config->config_dir = g_strdup(config_dir);
 		}
 
 		g_free(rcfile);
+	} else {
+		my_global = new_global(config_dir);	
 	}
 	g_free(tmp);
 
-	my_global = new_global(config_dir);	
 	
 	if (my_global == NULL) {
 		log_global(NULL, LOG_ERROR, "Unable to load configuration, exiting...");

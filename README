@@ -50,7 +50,7 @@ $ ./configure
 $ make
 $ make install
 
-If you have a Subversion checkout, run :
+If you have a bzr checkout, run :
 
 $ autoreconf
 
