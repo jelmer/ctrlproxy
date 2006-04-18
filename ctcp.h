@@ -25,7 +25,10 @@ struct ctcp_handler {
 	void (*fn) (struct network *n, const char *sender, char **args);
 };
 
-gboolean ctcp_process(struct network *, struct line *);
+gboolean ctcp_process_network_request(struct network *, struct line *);
+gboolean ctcp_process_network_reply(struct network *, struct line *);
+gboolean ctcp_process_client_request(struct client *, struct line *);
+gboolean ctcp_process_client_reply(struct client *, struct line *);
 void ctcp_register_handler(const struct ctcp_handler *);
 void ctcp_send(struct network *n, const char *nick, ...);
 void ctcp_reply(struct network *n, const char *nick, ...);

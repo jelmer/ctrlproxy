@@ -138,7 +138,26 @@ void register_ctcp_handler(const struct ctcp_handler *h)
 	cmds = g_list_append(cmds, h);
 }
 
-gboolean ctcp_process (struct network *n, struct line *l) 
+gboolean ctcp_process_client_request (struct client *c, struct line *l)
+{
+	/* FIXME */
+	return TRUE;
+}
+
+gboolean ctcp_process_client_reply (struct client *c, struct line *l)
+{
+	/* FIXME */
+	return TRUE;
+}
+
+gboolean ctcp_process_network_reply (struct network *n, struct line *l) 
+{
+	/* FIXME */
+	return TRUE;
+}
+
+
+gboolean ctcp_process_network_request (struct network *n, struct line *l) 
 {
 	GList *gl;
 	int i;

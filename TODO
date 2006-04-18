@@ -7,6 +7,8 @@ current release (3.0.0):
 - set up a default configuration with admin server
 - automatic setup of listeners
 - cope with renamed networks (so we don't end up with two of the same name)
+- need to hide "IDENTIFY " and "GHOST " nickserv commands from clients
+- finish some parts of CTCP handling
 
 next minor release (3.0.1):
 - better handling of log_network_state()
@@ -38,6 +40,7 @@ next minor release (3.0.1):
  - pass line arguments correctly
  - examples
  - easy mechanism to test python scripts
+- doxygen
 
 next major release (3.1.0):
 - merge report_time into the repl_ modules

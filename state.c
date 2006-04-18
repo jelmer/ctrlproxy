@@ -964,48 +964,6 @@ struct ht_traverse_data
 	struct network_state *nst;
 };
 
-static void marshall_GHashTable_helper (gpointer key, gpointer value, gpointer user_data)
-{
-	struct ht_traverse_data *td = user_data;
-	td->key_fn(td->nst, MARSHALL_PUSH, td->data, &key);
-	td->val_fn(td->nst, MARSHALL_PUSH, td->data, &value);
-}
-
-static gboolean marshall_GHashTable (struct network_state *nst, enum marshall_mode m, struct data_blob *t, GHashTable **gh, marshall_fn_t key_fn, marshall_fn_t val_fn)
-{
-	if (m == MARSHALL_PULL) {
-		size_t count;
-		int i;
-
-		marshall_type(nst, m, t, &count);
-
-		*gh = NULL;
-
-		for (i = 0; i < count; i++) {
-			void *k, *v;
-			if (!key_fn(nst, m, t, &k))
-				return FALSE;
-			if (!val_fn(nst, m, t, &v))
-				return FALSE;
-			g_hash_table_insert(*gh, k, v);
-		}
-	} else {
-		size_t count = g_hash_table_size(*gh);
-		struct ht_traverse_data td;
-
-		marshall_type(nst, m, t, &count);
-
-		td.key_fn = key_fn;
-		td.val_fn = val_fn;
-		td.data = t;
-		td.nst = nst;
-
-		g_hash_table_foreach(*gh, marshall_GHashTable_helper, &td);
-	}
-
-	return TRUE;
-}
-
 static gboolean marshall_GList (struct network_state *nst, enum marshall_mode m, struct data_blob *t, GList **gl, marshall_fn_t marshall_fn)
 {
 	if (m == MARSHALL_PULL) {

@@ -28,7 +28,7 @@
 static GList *commands = NULL;
 static guint longest_command = 0;
 
-void admin_out(const struct client *c, const char *fmt, ...)
+void admin_out(struct client *c, const char *fmt, ...)
 {
 	va_list ap;
 	char *msg;
@@ -51,7 +51,7 @@ void admin_out(const struct client *c, const char *fmt, ...)
 	g_free(msg);
 }
 
-static void add_network (const struct client *c, char **args, void *userdata)
+static void add_network (struct client *c, char **args, void *userdata)
 {
 	struct network_config *nc;
 
@@ -60,12 +60,12 @@ static void add_network (const struct client *c, char **args, void *userdata)
 		return;
 	}
 
-	nc = network_config_init(c->network->global);
+	nc = network_config_init(c->network->global->config);
 	g_free(nc->name); nc->name = g_strdup(args[1]);
 	load_network(c->network->global, nc);
 }
 
-static void del_network (const struct client *c, char **args, void *userdata)
+static void del_network (struct client *c, char **args, void *userdata)
 {
 	struct network *n;
 
@@ -83,7 +83,7 @@ static void del_network (const struct client *c, char **args, void *userdata)
 	disconnect_network(n);
 }
 
-static void add_server (const struct client *c, char **args, void *userdata)
+static void add_server (struct client *c, char **args, void *userdata)
 {
 	struct network *n;
 	struct tcp_server_config *s;
@@ -115,7 +115,7 @@ static void add_server (const struct client *c, char **args, void *userdata)
 	n->config->type_settings.tcp_servers = g_list_append(n->config->type_settings.tcp_servers, s);
 }
 
-static void com_connect_network (const struct client *c, char **args, void *userdata)
+static void com_connect_network (struct client *c, char **args, void *userdata)
 {
 	struct network *s;
 	if(!args[1]) {
@@ -151,7 +151,7 @@ static void com_connect_network (const struct client *c, char **args, void *user
 	}
 }
 
-static void com_disconnect_network (const struct client *c, char **args, void *userdata)
+static void com_disconnect_network (struct client *c, char **args, void *userdata)
 {
 	struct network *n;
 	if(!args[1])n = c->network;
@@ -171,7 +171,7 @@ static void com_disconnect_network (const struct client *c, char **args, void *u
 	}
 }
 
-static void com_next_server (const struct client *c, char **args, void *userdata) {
+static void com_next_server (struct client *c, char **args, void *userdata) {
 	struct network *n;
 	const char *name;
 	if(args[1] != NULL) {
@@ -191,7 +191,7 @@ static void com_next_server (const struct client *c, char **args, void *userdata
 	}
 }
 
-static void list_modules (const struct client *c, char **args, void *userdata)
+static void list_modules (struct client *c, char **args, void *userdata)
 {
 	GList *g;
 	
@@ -201,7 +201,7 @@ static void list_modules (const struct client *c, char **args, void *userdata)
 	}
 }
 
-static void load_module (const struct client *c, char **args, void *userdata)
+static void load_module (struct client *c, char **args, void *userdata)
 { 
 	if(!args[1]) { 
 		admin_out(c, "No file specified");
@@ -220,12 +220,12 @@ static void load_module (const struct client *c, char **args, void *userdata)
 	}
 }
 
-static void com_save_config (const struct client *c, char **args, void *userdata)
+static void com_save_config (struct client *c, char **args, void *userdata)
 { 
 	save_configuration(c->network->global->config, args[1]?args[1]:c->network->global->config->config_dir); 
 }
 
-static void help (const struct client *c, char **args, void *userdata)
+static void help (struct client *c, char **args, void *userdata)
 {
 	GList *gl = commands;
 	char *tmp;
@@ -267,7 +267,7 @@ static void help (const struct client *c, char **args, void *userdata)
 	}
 }
 
-static void list_networks(const struct client *c, char **args, void *userdata)
+static void list_networks(struct client *c, char **args, void *userdata)
 {
 	GList *gl;
 	for (gl = c->network->global->networks; gl; gl = gl->next) {
@@ -289,12 +289,12 @@ static void list_networks(const struct client *c, char **args, void *userdata)
 	}
 }
 
-static void detach_client(const struct client *c, char **args, void *userdata)
+static void detach_client(struct client *c, char **args, void *userdata)
 {
 	disconnect_client(c, "Client exiting");
 }
 
-static void dump_joined_channels(const struct client *c, char **args, void *userdata)
+static void dump_joined_channels(struct client *c, char **args, void *userdata)
 {
 	struct network *n;
 	GList *gl;
@@ -316,13 +316,13 @@ static void dump_joined_channels(const struct client *c, char **args, void *user
 }
 
 #ifdef DEBUG
-static void do_abort(const struct client *c, char **args, void *userdata)
+static void do_abort(struct client *c, char **args, void *userdata)
 {
 	abort();
 }
 #endif
 
-static void handle_die(const struct client *c, char **args, void *userdata)
+static void handle_die(struct client *c, char **args, void *userdata)
 {
 	exit(0);
 }
@@ -338,7 +338,7 @@ void unregister_admin_command(const struct admin_command *cmd)
 	commands = g_list_remove(commands, cmd);
 }
 
-gboolean admin_process_command(const struct client *c, struct line *l, int cmdoffset)
+gboolean admin_process_command(struct client *c, struct line *l, int cmdoffset)
 {
 	char *tmp, **args = NULL;
 	int i;
@@ -402,7 +402,7 @@ static gboolean admin_net_init(struct network *n)
 	return TRUE;
 }
 
-static gboolean admin_to_server (struct network *n, const struct client *c, struct line *l)
+static gboolean admin_to_server (struct network *n, struct client *c, struct line *l)
 {
 	if (g_strcasecmp(l->args[0], "PRIVMSG"))
 		return TRUE;

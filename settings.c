@@ -73,7 +73,7 @@ static void config_save_tcp_servers(struct network_config *n, GKeyFile *kf)
 		i++;
 	}
 
-	g_key_file_set_string_list(kf, "global", "servers", values, i);
+	g_key_file_set_string_list(kf, "global", "servers", (const gchar **)values, i);
 
 	g_strfreev(values);
 }
@@ -185,7 +185,7 @@ void save_configuration(struct ctrlproxy_config *cfg, const char *configuration_
 	}
 	
 	if (i > 0) 
-		g_key_file_set_string_list(cfg->keyfile, "global", "autoconnect", list, i);
+		g_key_file_set_string_list(cfg->keyfile, "global", "autoconnect", (const gchar **)list, i);
 
 	fn = g_build_filename(configuration_dir, "config", NULL);
 	g_key_file_save_to_file(cfg->keyfile, fn, NULL);

@@ -114,6 +114,13 @@ static gboolean process_from_client(struct client *c, struct line *l)
 			   !g_strcasecmp(l->args[0], "PRIVMSG") && 
 			   !g_strcasecmp(l->args[1], "CTRLPROXY")) {
 		admin_process_command(c, l, 2);
+	} else if (!g_strcasecmp(l->args[0], "PRIVMSG") && l->argc > 2 && 
+			l->args[2][0] == '\001' && 
+			g_strncasecmp(l->args[2], "\001ACTION", 7) != 0) {
+		ctcp_process_client_request(c, l);
+	} else if (!g_strcasecmp(l->args[0], "NOTICE") && l->argc > 2 && 
+			l->args[2][0] == '\001') {
+		ctcp_process_client_reply(c, l);
 	} else if(c->network->connection.state == NETWORK_CONNECTION_STATE_MOTD_RECVD) {
 		if (c->network->config->disable_cache || !client_try_cache(c, l)) {
 			/* Perhaps check for validity of input here ? It could save us some bandwidth 

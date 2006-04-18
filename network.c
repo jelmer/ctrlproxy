@@ -110,7 +110,10 @@ static gboolean process_from_server(struct network *n, struct line *l)
 		} else if (!g_strcasecmp(l->args[0], "PRIVMSG") && l->argc > 2 && 
 			l->args[2][0] == '\001' && 
 			g_strncasecmp(l->args[2], "\001ACTION", 7) != 0) {
-			ctcp_process(n, l);
+			ctcp_process_network_request(n, l);
+		} else if (!g_strcasecmp(l->args[0], "NOTICE") && l->argc > 2 && 
+			l->args[2][0] == '\001') {
+			ctcp_process_network_reply(n, l);
 		} else if (run_server_filter(n, l, FROM_SERVER)) {
 			clients_send(n, l, NULL);
 		} 
@@ -237,8 +240,9 @@ gboolean network_send_line(struct network *s, const struct client *c, const stru
 	linestack_insert_line(s->global->linestack, s, ol, TO_SERVER);
 
 	g_assert(l.args[0]);
+
 	/* Also write this message to all other clients currently connected */
-	if(!l.is_private && l.args[0] &&
+	if(!l.is_private && 
 	   (!g_strcasecmp(l.args[0], "PRIVMSG") || 
 		!g_strcasecmp(l.args[0], "NOTICE")) && 
 	   (l.argc <= 2 || l.args[2][0] != '\001')) {
