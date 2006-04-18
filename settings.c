@@ -90,7 +90,6 @@ static void config_save_network(const char *dir, struct network_config *n)
 
 	kf = n->keyfile;
 
-	g_key_file_set_boolean(kf, "global", "autoconnect", n->autoconnect);
 	g_key_file_set_string(kf, "global", "fullname", n->fullname);
 	g_key_file_set_string(kf, "global", "nick", n->nick);
 	g_key_file_set_string(kf, "global", "username", n->username);
@@ -147,7 +146,9 @@ static void config_save_networks(const char *config_dir, GList *networks)
 
 void save_configuration(struct ctrlproxy_config *cfg, const char *configuration_dir)
 {
-	char *fn;
+	char *fn, **list;
+	int i;
+	GList *gl;
 	if (!cfg->keyfile)
 		cfg->keyfile = g_key_file_new();
 
@@ -163,6 +164,19 @@ void save_configuration(struct ctrlproxy_config *cfg, const char *configuration_
 	g_key_file_set_boolean(cfg->keyfile, "global", "report-time", cfg->report_time);
 
 	config_save_networks(configuration_dir, cfg->networks);
+
+	i = 0;
+	list = g_new0(char *, g_list_length(cfg->networks));
+	for (gl = cfg->networks; gl; gl = gl->next) {
+		struct network_config *nc = gl->data;
+
+		if (nc->autoconnect) {
+			list[i] = nc->name;
+			i++;
+		}
+	}
+	
+	g_key_file_set_string_list(cfg->keyfile, "global", "autoconnect", list, i);
 
 	fn = g_build_filename(configuration_dir, "config", NULL);
 	g_key_file_save_to_file(cfg->keyfile, fn, NULL);
@@ -243,9 +257,6 @@ static struct network_config *config_load_network(struct ctrlproxy_config *cfg, 
 
 	g_free(filename);
 
-	n->autoconnect = (!g_key_file_has_key(kf, "global", "autoconnect", NULL)) ||
-					   g_key_file_get_boolean(kf, "global", "autoconnect", NULL);
-
 	if (g_key_file_has_key(kf, "global", "fullname", NULL)) {
 		g_free(n->fullname);
 		n->fullname = g_key_file_get_string(kf, "global", "fullname", NULL);
@@ -306,6 +317,63 @@ static struct network_config *config_load_network(struct ctrlproxy_config *cfg, 
 	return n;
 }
 
+static struct network_config *find_create_network_config(struct ctrlproxy_config *cfg, const char *name)
+{
+	GList *gl;
+	struct network_config *nc;
+	struct tcp_server_config *tc;
+
+	for (gl = cfg->networks; gl; gl = gl->next) {
+		GList *gl1;
+		nc = gl->data;
+
+		if (g_strcasecmp(nc->name, name) == 0) 
+			return nc;
+
+		if (nc->type != NETWORK_TCP) 
+			continue;
+
+		for (gl1 = nc->type_settings.tcp_servers; gl1; gl1 = gl1->next) {
+			char *tmp;
+			struct tcp_server_config *sc = gl1->data;
+
+			if (g_strcasecmp(sc->host, name) == 0)
+				return nc;
+
+			if (g_strncasecmp(sc->host, name, strlen(sc->host)) != 0)
+				continue;
+
+			tmp = g_strdup_printf("%s:%s", sc->host, sc->port);
+
+			if (g_strcasecmp(tmp, name) == 0)
+				return nc;
+
+			g_free(tmp);
+		}
+	}
+
+
+	nc = network_config_init(cfg);
+	nc->name = g_strdup(name);
+	nc->autoconnect = FALSE;
+	nc->reconnect_interval = DEFAULT_RECONNECT_INTERVAL;
+	nc->type = NETWORK_TCP;
+	tc = g_new0(struct tcp_server_config, 1);
+	tc->host = g_strdup(name);
+	if (strchr(tc->host, ':')) {
+		tc->port = tc->host+1;
+		*tc->port = '\0';
+	} else {
+		tc->port = g_strdup("6667");
+	}
+
+	nc->type_settings.tcp_servers = g_list_append(nc->type_settings.tcp_servers, tc);
+
+	cfg->networks = g_list_append(cfg->networks, nc);
+
+	return nc;
+}
+
 static void config_load_networks(struct ctrlproxy_config *cfg)
 {
 	char *networksdir = g_build_filename(cfg->config_dir, "networks", NULL);
@@ -331,6 +399,10 @@ struct ctrlproxy_config *load_configuration(const char *dir)
 	GError *error = NULL;
 	struct ctrlproxy_config *cfg;
 	char *file;
+	char **autoconnect_list;
+	GList *gl;
+	gsize size;
+	int i;
 
 	file = g_build_filename(dir, "config", NULL);
 
@@ -370,7 +442,23 @@ struct ctrlproxy_config *load_configuration(const char *dir)
     if (g_key_file_has_key(kf, "admin", "without_privmsg", NULL))
         cfg->admin_noprivmsg = g_key_file_get_boolean(kf, "admin", "without_privmsg", NULL);
 
+	for (gl = cfg->networks; gl; gl = gl->next) {
+		struct network_config *nc = gl->data;
+
+		nc->autoconnect = FALSE;
+	}
+
 	config_load_networks(cfg);
+
+	size = 0;
+	autoconnect_list = g_key_file_get_string_list(kf, "global", "autoconnect", &size, NULL);
+		
+	for (i = 0; i < size; i++) {
+		struct network_config *nc = find_create_network_config(cfg, autoconnect_list[i]);
+
+		g_assert(nc);
+		nc->autoconnect = TRUE;
+	}
 
 	g_free(file);
 

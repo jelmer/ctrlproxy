@@ -375,7 +375,7 @@ for net in oldfile.networks.keys():
         networks[net].conf['global']['username'] = oldnet.username
 
     if oldnet.autoconnect:
-        networks[net].conf['global']['autoconnect'] = oldnet.autoconnect
+        conf.conf['global']['autoconnect'].append("%s;" % oldnet.name)
 
     for ch in oldnet.channels:
         oldch = oldnet.channels[ch]

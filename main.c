@@ -140,6 +140,7 @@ void free_global(struct global *global)
 {
 	fini_networks(global);
 	free_config(global->config);
+	global->config = NULL;
 	free_linestack_context(global->linestack); global->linestack = NULL;
 	fini_networks(global);
 }
