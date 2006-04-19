@@ -162,6 +162,7 @@ void save_configuration(struct ctrlproxy_config *cfg, const char *configuration_
 
 	g_key_file_set_boolean(cfg->keyfile, "global", "autosave", cfg->autosave);
 	g_key_file_set_boolean(cfg->keyfile, "admin", "without_privmsg", cfg->admin_noprivmsg);
+	g_key_file_set_boolean(cfg->keyfile, "admin", "log", cfg->admin_log);
 
 	if (cfg->replication)
 		g_key_file_set_string(cfg->keyfile, "global", "replication", cfg->replication);
@@ -451,6 +452,11 @@ struct ctrlproxy_config *load_configuration(const char *dir)
 
     if (g_key_file_has_key(kf, "admin", "without_privmsg", NULL))
         cfg->admin_noprivmsg = g_key_file_get_boolean(kf, "admin", "without_privmsg", NULL);
+
+	cfg->admin_log = TRUE;
+    if (g_key_file_has_key(kf, "admin", "log", NULL) && !g_key_file_get_boolean(kf, "admin", "log", NULL))
+        cfg->admin_log = FALSE;
+
 
 	for (gl = cfg->networks; gl; gl = gl->next) {
 		struct network_config *nc = gl->data;

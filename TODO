@@ -34,6 +34,7 @@ next minor release (3.0.1):
  - LISTENER DEL <binding> <port>
  - LISTENER LIST
  - SAVECONFIG
+ - SET <name> <value>
 - python module:
  - pass line arguments correctly
  - examples

@@ -467,28 +467,35 @@ void admin_log(const char *module, enum log_level level, const struct network *n
 {
 	extern struct global *my_global;
 	struct line *l;
-	char *tmp;
+	char *tmp, *hostmask;
 	GList *gl;
 
 	if (!my_global || !my_global->config || 
 		!my_global->config->admin_log) 
 		return;
 
-	tmp = g_strdup_printf("%s %d %s %s %s", module, level, 
-						  n?n->name:"NONE", c?c->description:"NONE", data);
-
-	l = irc_parse_line_args(":", "PRIVMSG", tmp, NULL); 
-
-	g_free(tmp);
+	tmp = g_strdup_printf("%s%s%s%s%s%s", 
+						  data, 
+						  n?" (":"",
+						  n?n->name:"", 
+						  c?"/":"",
+						  c?c->description:"",
+						  n?")":"");
 
 	for (gl = my_global->networks; gl; gl = gl->next) {
 		struct network *network = gl->data;
 
 		if (network->connection.data.virtual.ops != &admin_network)
 			continue;
+
+		hostmask = g_strdup_printf("ctrlproxy!ctrlproxy@%s", network->name);
+		l = irc_parse_line_args(hostmask, "PRIVMSG", ADMIN_CHANNEL, tmp, NULL); 
+		g_free(hostmask);
 		
 		virtual_network_recv_line(network, l);
 	}
+
+	g_free(tmp);
 
 	free_line(l);
 }

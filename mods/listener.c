@@ -248,7 +248,7 @@ static void update_config(struct global *global, const char *path)
 		else
 			tmp = g_strdup_printf("%s:%s", l->address, l->port);
 
-		if (l->password && strcmp(l->password, default_password) != 0) 
+		if (l->password && !(default_password && strcmp(l->password, default_password) == 0)) 
 			g_key_file_set_string(kf, tmp, "password", l->password);
 
 		if (l->network) 
@@ -379,6 +379,7 @@ void cmd_stop_listener(struct client *c, char **args, void *userdata)
 {
 	GList *gl;
 	char *b, *p;
+	int i = 0;
 
 	if (!args[0]) {
 		admin_out(c, "No port specified");
@@ -408,9 +409,12 @@ void cmd_stop_listener(struct client *c, char **args, void *userdata)
 
 		stop_listener(l);
 		free_listener(l);
+		i++;
 	}
 
 	if (b) g_free(b); else g_free(p);
+
+	admin_out(c, "%d listeners stopped", i);
 }
 
 void cmd_list_listener(struct client *c, char **args, void *userdata)
@@ -425,7 +429,7 @@ void cmd_list_listener(struct client *c, char **args, void *userdata)
 }
 
 const static struct admin_command listener_commands[] = {
-	{ "STARTLISTENER", cmd_start_listener, "[<address>:]<name> [<network>]", "Add listener on specified port" },
+	{ "STARTLISTENER", cmd_start_listener, "[<address>:]<port> [<network>]", "Add listener on specified port" },
 	{ "STOPLISTENER", cmd_stop_listener, "[<address>:]<port>", "Stop listener on specified port" },
 	{ "LISTLISTENER", cmd_list_listener, "", "Add new network with specified name" },
 	{ NULL }
