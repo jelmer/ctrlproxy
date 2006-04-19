@@ -38,9 +38,6 @@
 
 #include <netdb.h>
 
-#undef G_LOG_DOMAIN
-#define G_LOG_DOMAIN "listener"
-
 static gboolean handle_client_receive(GIOChannel *c, GIOCondition condition, gpointer data) 
 {
 	struct line *l;
@@ -229,9 +226,14 @@ struct listener *listener_init(const char *address, const char *port)
 static void update_config(struct global *global, const char *path)
 {
 	GList *gl;
-	char *filename = g_build_filename(path, "listener", NULL);
+	char *filename;
 	GKeyFile *kf; 
 	GError *error = NULL;
+	char *default_password;
+
+	default_password = g_key_file_get_string(global->config->keyfile, "listener", "password", NULL);
+
+	filename = g_build_filename(path, "listener", NULL);
 	
 	/* FIXME: Store old GKeyFile somewhere, so we can keep comments... */
 
@@ -246,7 +248,7 @@ static void update_config(struct global *global, const char *path)
 		else
 			tmp = g_strdup_printf("%s:%s", l->address, l->port);
 
-		if (l->password) 
+		if (l->password && strcmp(l->password, default_password) != 0) 
 			g_key_file_set_string(kf, tmp, "password", l->password);
 
 		if (l->network) 
@@ -272,6 +274,9 @@ static void load_config(struct global *global)
 	char **groups;
 	gsize size;
 	GKeyFile *kf;
+	char *default_password;
+
+	default_password = g_key_file_get_string(global->config->keyfile, "listener", "password", NULL);
 
 	kf = g_key_file_new();
 
@@ -300,6 +305,9 @@ static void load_config(struct global *global)
 		g_free(address);
 
 		l->password = g_key_file_get_string(kf, groups[i], "password", NULL);
+		if (!l->password)
+			l->password = default_password;
+
 		if (g_key_file_has_key(kf, groups[i], "ssl", NULL))
 			l->ssl = g_key_file_get_boolean(kf, groups[i], "ssl", NULL);
 
@@ -331,10 +339,107 @@ static void fini_plugin(void)
 	}
 }
 
+
+void cmd_start_listener(struct client *c, char **args, void *userdata)
+{
+	char *b, *p;
+	struct listener *l;
+
+	if (!args[1]) {
+		admin_out(c, "No port specified");
+		return;
+	}
+
+	b = g_strdup(args[1]);
+	if ((p = strchr(b, ':'))) {
+		*p = '\0';
+		p++;
+	} else {
+		p = b;
+		b = NULL;
+	}
+
+	l = listener_init(b, p);
+
+	if (b) g_free(b); else g_free(p);
+
+	if (args[2]) {
+		l->network = find_network(c->network->global, args[2]);
+		if (l->network == NULL) {
+			admin_out(c, "No such network `%s'", args[2]);
+			free_listener(l);
+			return;
+		}
+	}
+
+	start_listener(l);
+}
+
+void cmd_stop_listener(struct client *c, char **args, void *userdata)
+{
+	GList *gl;
+	char *b, *p;
+
+	if (!args[0]) {
+		admin_out(c, "No port specified");
+		return;
+	}
+
+	b = g_strdup(args[1]);
+	if ((p = strchr(b, ':'))) {
+		*p = '\0';
+		p++;
+	} else {
+		p = b;
+		b = NULL;
+	}
+
+	for (gl = listeners; gl; gl = gl->next) {
+		struct listener *l = gl->data;
+
+		if (b && !l->address)
+			continue;
+
+		if (b && l->address && strcmp(b, l->address) != 0)
+			continue;
+
+		if (strcmp(p, l->port) != 0)
+			continue;
+
+		stop_listener(l);
+		free_listener(l);
+	}
+
+	if (b) g_free(b); else g_free(p);
+}
+
+void cmd_list_listener(struct client *c, char **args, void *userdata)
+{
+	GList *gl;
+
+	for (gl = listeners; gl; gl = gl->next) {
+		struct listener *l = gl->data;
+
+		admin_out(c, "%s:%s%s%s%s", l->address?l->address:"", l->port, l->network?" (":"", l->network?l->network->name:"", l->network?")":"");
+	}
+}
+
+const static struct admin_command listener_commands[] = {
+	{ "STARTLISTENER", cmd_start_listener, "[<address>:]<name> [<network>]", "Add listener on specified port" },
+	{ "STOPLISTENER", cmd_stop_listener, "[<address>:]<port>", "Stop listener on specified port" },
+	{ "LISTLISTENER", cmd_list_listener, "", "Add new network with specified name" },
+	{ NULL }
+};
+
 static gboolean init_plugin(void)
 {
+	int i;
 	register_load_config_notify(load_config);
 	register_save_config_notify(update_config);
+
+	for (i = 0; listener_commands[i].name; i++)
+		register_admin_command(&listener_commands[i]);
+
 	atexit(fini_plugin);
 	return TRUE;
 }
