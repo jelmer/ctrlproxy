@@ -317,6 +317,7 @@ gboolean network_send_args(struct network *s, ...)
 
 	va_start(ap, s);
 	l = virc_parse_line(NULL, ap);
+	l->is_private = TRUE;
 	l->origin = g_strdup(s->state->me.nick);
 	va_end(ap);
 

@@ -63,6 +63,8 @@ static void add_network (struct client *c, char **args, void *userdata)
 	nc = network_config_init(c->network->global->config);
 	g_free(nc->name); nc->name = g_strdup(args[1]);
 	load_network(c->network->global, nc);
+
+	admin_out(c, "Network `%s' added", args[1]);
 }
 
 static void del_network (struct client *c, char **args, void *userdata)
@@ -76,17 +78,20 @@ static void del_network (struct client *c, char **args, void *userdata)
 
 	n = find_network(c->network->global, args[1]);
 	if (n == NULL) {
-		admin_out(c, "No such network %s", args[1]);
+		admin_out(c, "No such network `%s'", args[1]);
 		return;
 	}
 
 	disconnect_network(n);
+
+	admin_out(c, "Network `%s' deleted", args[1]);
 }
 
 static void add_server (struct client *c, char **args, void *userdata)
 {
 	struct network *n;
 	struct tcp_server_config *s;
+	char *t;
 
 	if(!args[1] || !args[2]) {
 		admin_out(c, "Not enough parameters");
@@ -108,11 +113,18 @@ static void add_server (struct client *c, char **args, void *userdata)
 	s = g_new0(struct tcp_server_config, 1);
 
 	s->host = g_strdup(args[2]);
-	s->port = g_strdup(args[3]?args[3]:"6667");
+	if ((t = strchr(s->host, ':'))) {
+		*t = '\0';
+		s->port = g_strdup(t+1);
+	} else {
+		s->port = g_strdup("6667");
+	}
 	s->ssl = FALSE;
-	s->password = (args[3] && args[4])?g_strdup(args[4]):NULL;
+	s->password = args[3]?g_strdup(args[3]):NULL;
 
 	n->config->type_settings.tcp_servers = g_list_append(n->config->type_settings.tcp_servers, s);
+
+	admin_out(c, "Server added to `%s'", args[1]);
 }
 
 static void com_connect_network (struct client *c, char **args, void *userdata)
@@ -401,7 +413,7 @@ static gboolean admin_net_init(struct network *n)
 	
 	/* Channel */
 	cs->name = g_strdup(ADMIN_CHANNEL);
-	cs->topic = g_strdup("CtrlProxy administration channel");
+	cs->topic = g_strdup("CtrlProxy administration channel | Type `help' for more information");
 	cs->network = n->state;
 
 	/* The users' user */
@@ -483,7 +495,7 @@ void admin_log(const char *module, enum log_level level, const struct network *n
 
 const static struct admin_command builtin_commands[] = {
 	{ "ADDNETWORK", add_network, "<name>", "Add new network with specified name" },
-	{ "ADDSERVER", add_server, "<network> <host> [<port> [<password>]]", "Add server to network" },
+	{ "ADDSERVER", add_server, "<network> <host>[:<port>] [<password>]", "Add server to network" },
 	{ "CONNECT", com_connect_network, "<network>", "Connect to specified network. Forces reconnect when waiting." },
 	{ "DELNETWORK", del_network, "<network>", "Remove specified network" },
 	{ "NEXTSERVER", com_next_server, "[network]", "Disconnect and use to the next server in the list" },
