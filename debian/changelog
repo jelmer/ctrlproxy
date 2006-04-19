@@ -1,6 +1,13 @@
-ctrlproxy (2.6.99-1) unstable; urgency=low
+ctrlproxy (3.0.0-1) unstable; urgency=low
 
-  * Upstream pre-release.
+  * New upstream release.
+  * Install manpages. (Closes: #307192, #324601)
+  * New configuration format and examples. (Closes: #333126, #308665, #298679)
+  * Fixes directory permissions for log_irssi. (Closes: #33127)
+  * Fixes several segmentation faults. (Closes: #314532)
+  * Lower memory profile. (Closes: #333835)
+  * Removed obsolete ctrlproxy-setup script. (Closes: #324936)
+  * Removed obsolete stats module. (Closes: #276072)
 
  -- Jelmer Vernooij <jelmer@samba.org>  Fri, 13 May 2005 02:32:49 +0200
 
