@@ -70,7 +70,7 @@
 #define REP_ATYP_NOT_SUPPORTED		0x08
 
 static GIOChannel *server_channel = NULL;
-static int server_channel_in = 0;
+static int server_channel_in = -1;
 enum socks_state { STATE_NEW = 0, STATE_AUTH, STATE_NORMAL };
 
 struct allow_rule {
@@ -453,7 +453,8 @@ static void fini_plugin(void)
 	}
 
 	/* Close port */
-	g_source_remove(server_channel_in);
+	if (server_channel_in != -1)
+		g_source_remove(server_channel_in);
 }
 
 static void load_config(struct global *global)
