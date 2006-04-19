@@ -327,9 +327,16 @@ static void handle_die(struct client *c, char **args, void *userdata)
 	exit(0);
 }
 
+static gint cmp_cmd(gconstpointer a, gconstpointer b)
+{
+	const struct admin_command *cmda = a, *cmdb = b;
+
+	return g_strcasecmp(cmda->name, cmdb->name);
+}
+
 void register_admin_command(const struct admin_command *cmd)
 {
-	commands = g_list_append(commands, cmd);
+	commands = g_list_insert_sorted(commands, cmd, cmp_cmd);
 	if (strlen(cmd->name) > longest_command) longest_command = strlen(cmd->name);
 }
 
