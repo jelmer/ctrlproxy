@@ -396,6 +396,8 @@ static void config_load_networks(struct ctrlproxy_config *cfg)
 		return;
 
 	while ((name = g_dir_read_name(dir))) {
+		if (name[0] == '.' || name[strlen(name)-1] == '~')
+			continue;
 		config_load_network(cfg, networksdir, name);
 	}
 
