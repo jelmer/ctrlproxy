@@ -40,6 +40,7 @@ next minor release (3.0.1):
  - examples
  - easy mechanism to test python scripts
 - doxygen
+- support /PASS being send after USER and NICK
 
 next major release (3.1.0):
 - merge report_time into the repl_ modules

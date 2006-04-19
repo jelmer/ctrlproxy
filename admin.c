@@ -493,11 +493,11 @@ void admin_log(const char *module, enum log_level level, const struct network *n
 		g_free(hostmask);
 		
 		virtual_network_recv_line(network, l);
+
+		free_line(l);
 	}
 
 	g_free(tmp);
-
-	free_line(l);
 }
 
 const static struct admin_command builtin_commands[] = {

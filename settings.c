@@ -320,7 +320,7 @@ static struct network_config *config_load_network(struct ctrlproxy_config *cfg, 
 
 	groups = g_key_file_get_groups(kf, &size);
 	for (i = 0; i < size; i++) {
-		if (is_channelname(groups[i], NULL))  /* FIXME: How about weird channel names ? */
+		if (!g_ascii_isalpha(groups[i][0]))
 			config_load_channel(n, kf, groups[i]);
 	}
 
