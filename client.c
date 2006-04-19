@@ -153,7 +153,7 @@ gboolean client_send_response(struct client *c, int response, ...)
 	l->args[0] = g_strdup_printf("%03d", response);
 
 	if (c->nick) l->args[1] = g_strdup(c->nick);
-	else if (c->network && c->network->state->me.nick) l->args[1] = g_strdup(c->network->state->me.nick);
+	else if (c->network && c->network->state && c->network->state->me.nick) l->args[1] = g_strdup(c->network->state->me.nick);
 	else l->args[1] = g_strdup("*");
 
 	l->argc+=2;
