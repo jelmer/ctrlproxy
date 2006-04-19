@@ -17,6 +17,9 @@ report-time = false
 
 autosave = true
 
+# Networks to connect to on startup
+autoconnect = admin
+
 # Support for interfacing to ctrlproxy 
 # using /MSG ctrlproxy or /CTRLPROXY -->
 [admin]

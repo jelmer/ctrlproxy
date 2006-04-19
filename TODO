@@ -4,9 +4,7 @@ current release (3.0.0):
 - fix issue with loading state from linestack_file
 - finish upgrade script
 - fix strange bug with 'reconnect' interaction
-- set up a default configuration with admin server
 - automatic setup of listeners
-- cope with renamed networks (so we don't end up with two of the same name)
 - need to hide "IDENTIFY " and "GHOST " nickserv commands from clients
 - finish some parts of CTCP handling
 - integrate antiflood

@@ -56,7 +56,9 @@ install-doc: doc
 install-data:
 	$(INSTALL) motd $(DESTDIR)$(cdatadir)
 	$(INSTALL) -d $(DESTDIR)$(DEFAULT_CONFIG_DIR)
+	$(INSTALL) -d $(DESTDIR)$(DEFAULT_CONFIG_DIR)/networks
 	$(INSTALL) config.default $(DESTDIR)$(DEFAULT_CONFIG_DIR)/config
+	$(INSTALL) config.admin $(DESTDIR)$(DEFAULT_CONFIG_DIR)/networks/admin
 
 install-mods: all 
 	$(INSTALL) -d $(DESTDIR)$(modulesdir)

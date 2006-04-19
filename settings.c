@@ -174,7 +174,7 @@ void save_configuration(struct ctrlproxy_config *cfg, const char *configuration_
 	config_save_networks(configuration_dir, cfg->networks);
 
 	i = 0;
-	list = g_new0(char *, g_list_length(cfg->networks));
+	list = g_new0(char *, g_list_length(cfg->networks)+1);
 	for (gl = cfg->networks; gl; gl = gl->next) {
 		struct network_config *nc = gl->data;
 
@@ -186,6 +186,8 @@ void save_configuration(struct ctrlproxy_config *cfg, const char *configuration_
 	
 	if (i > 0) 
 		g_key_file_set_string_list(cfg->keyfile, "global", "autoconnect", (const gchar **)list, i);
+
+	g_free(list);
 
 	fn = g_build_filename(configuration_dir, "config", NULL);
 	g_key_file_save_to_file(cfg->keyfile, fn, NULL);
@@ -336,7 +338,7 @@ static struct network_config *find_create_network_config(struct ctrlproxy_config
 		GList *gl1;
 		nc = gl->data;
 
-		if (g_strcasecmp(nc->name, name) == 0) 
+		if (g_strcasecmp(nc->name, name) == 0)
 			return nc;
 
 		if (nc->type != NETWORK_TCP) 
@@ -360,7 +362,6 @@ static struct network_config *find_create_network_config(struct ctrlproxy_config
 			g_free(tmp);
 		}
 	}
-
 
 	nc = network_config_init(cfg);
 	nc->name = g_strdup(name);

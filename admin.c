@@ -40,7 +40,7 @@ void admin_out(struct client *c, const char *fmt, ...)
 	hostmask = g_strdup_printf("ctrlproxy!ctrlproxy@%s", c->network->name);
 	if (c->network->config->type == NETWORK_VIRTUAL && 
 		!strcmp(c->network->connection.data.virtual.ops->name, "admin")) {
-		virtual_network_recv_args(c->network, hostmask+1, "PRIVMSG", ADMIN_CHANNEL, msg, NULL);
+		virtual_network_recv_args(c->network, hostmask, "PRIVMSG", ADMIN_CHANNEL, msg, NULL);
 	} else {
 		char *nick = c->nick;
 		if (c->network->state) nick = c->network->state->me.nick;
@@ -387,16 +387,42 @@ gboolean admin_process_command(struct client *c, struct line *l, int cmdoffset)
 static gboolean admin_net_init(struct network *n)
 {
 	struct channel_state *cs = g_new0(struct channel_state, 1);
-	struct channel_nick *cn = g_new0(struct channel_nick, 1);
+	struct channel_nick *user_nick = g_new0(struct channel_nick, 1);
+	struct channel_nick *admin_nick = g_new0(struct channel_nick, 1);
+	struct network_nick *admin_nnick = g_new0(struct network_nick, 1);
+	char *hostmask;
 	
+	/* Channel */
 	cs->name = g_strdup(ADMIN_CHANNEL);
 	cs->topic = g_strdup("CtrlProxy administration channel");
-	cn->global_nick = &n->state->me;
-	cn->channel = cs;
 	cs->network = n->state;
-	cn->mode = '@';
-	cs->nicks = g_list_append(cs->nicks, cn);
-	n->state->me.channel_nicks = g_list_append(n->state->me.channel_nicks, cn);
+
+	/* The users' user */
+	user_nick->global_nick = &n->state->me;
+	user_nick->channel = cs;
+	user_nick->mode = ' ';
+
+	cs->nicks = g_list_append(cs->nicks, user_nick);
+	n->state->me.channel_nicks = g_list_append(n->state->me.channel_nicks, user_nick);
+
+	/* CtrlProxy administrator */
+	/* global */
+	hostmask = g_strdup_printf("ctrlproxy!ctrlproxy@%s", n->name);
+	network_nick_set_hostmask(admin_nnick, hostmask);
+	g_free(hostmask);
+
+	admin_nnick->fullname = g_strdup("CtrlProxy Admin Tool");
+	admin_nnick->channel_nicks = g_list_append(admin_nnick->channel_nicks, admin_nick);
+
+	n->state->nicks = g_list_append(n->state->nicks, admin_nnick);
+
+	/* channel */
+	admin_nick->global_nick = admin_nnick;
+	admin_nick->channel = cs;
+	admin_nick->mode = '@';
+
+	cs->nicks = g_list_append(cs->nicks, admin_nick);
+	
 	n->state->channels = g_list_append(n->state->channels, cs);
 
 	return TRUE;
