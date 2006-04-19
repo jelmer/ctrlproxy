@@ -72,7 +72,6 @@ gboolean run_replication_filter(struct network *s, const struct line *l, enum da
 
 /* log.c */
 gboolean init_log(const char *file);
-void fini_log(void);
 void log_network_line(const struct network *n, const struct line *l, gboolean incoming);
 void log_client_line(const struct client *c, const struct line *l, gboolean incoming);
 

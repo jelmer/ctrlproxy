@@ -97,8 +97,6 @@ static void clean_exit()
 	free_global(my_global);
 
 	g_main_loop_unref(main_loop);
-
-	fini_log();
 }
 
 static void signal_quit(int sig)

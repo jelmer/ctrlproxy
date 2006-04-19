@@ -38,7 +38,8 @@ FILE *flog = NULL;
 
 static void log_entry(const char *module, enum log_level level, const struct network *n, const struct client *c, const char *data)
 {
-	g_assert(flog);
+	if (flog == NULL)
+		return;
 
 	if (level > current_log_level)
 		return;
@@ -144,6 +145,15 @@ static void log_handler(const gchar *log_domain, GLogLevelFlags flags, const gch
 	log_global(log_domain, LOG_ERROR, message);
 }
 
+static void fini_log(void)
+{
+	log_global(NULL, LOG_INFO, "Closing log file");
+	if (flog != stderr) {
+		fclose(flog);
+	}
+	flog = NULL;
+}
+
 gboolean init_log(const char *lf)
 {
 	g_log_set_handler ("GLib", G_LOG_LEVEL_MASK | G_LOG_FLAG_FATAL | G_LOG_FLAG_RECURSION, log_handler, NULL);
@@ -159,15 +169,8 @@ gboolean init_log(const char *lf)
 		return FALSE;
 	}
 
+	atexit(fini_log);
+
 	log_global(NULL, LOG_INFO, "Opening log file");
 	return TRUE;
-}
-
-void fini_log(void)
-{
-	log_global(NULL, LOG_INFO, "Closing log file");
-	if (flog != stderr) {
-		fclose(flog);
-	}
-	flog = NULL;
 }
