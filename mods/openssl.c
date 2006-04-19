@@ -191,7 +191,6 @@ static GIOFuncs irssi_ssl_channel_funcs = {
 
 GIOChannel *irssi_ssl_get_iochannel(GIOChannel *handle, gboolean server);
 static gboolean irssi_ssl_set_files(const char *certf, const char *keyf);
-static SSL_CTX *ssl_ctx = NULL;
 
 static void load_config(struct global *global)
 {
@@ -214,6 +213,8 @@ static void load_config(struct global *global)
 		}
 	}
 
+	if (!keyf || !certf) return;
+
 	if(!irssi_ssl_set_files(certf, keyf)) {
 		log_global("openssl", LOG_ERROR, "Unable to set appropriate files");
 	}
@@ -224,23 +225,22 @@ static gboolean init_plugin(void)
 	SSL_library_init();
 	SSL_load_error_strings();
 
-	ssl_ctx = SSL_CTX_new(SSLv23_method());
-	if(!ssl_ctx)
-	{
-		log_global("openssl", LOG_ERROR, "Initialization of the SSL library failed");
-		return FALSE;
-	}
-
 	set_sslize_function (irssi_ssl_get_iochannel);
 	register_load_config_notify(load_config);
 
 	return TRUE;
 }
 
+static SSL_CTX *ssl_ctx = NULL;
+
 static gboolean irssi_ssl_set_files(const char *certf, const char *keyf)
 {
+	ssl_ctx = SSL_CTX_new(SSLv23_method());
 	if(!ssl_ctx)
+	{
+		log_global("openssl", LOG_ERROR, "Initialization of the SSL library failed");
 		return FALSE;
+	}
 
 	if(SSL_CTX_use_certificate_file(ssl_ctx, certf, SSL_FILETYPE_PEM) <= 0) {
 		log_global("openssl", LOG_ERROR, "Can't set SSL certificate file %s!", certf);
