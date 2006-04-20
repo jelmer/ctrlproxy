@@ -5,7 +5,6 @@ current release (3.0.0):
 - finish upgrade script
 - fix strange bug with 'reconnect' interaction
 - support automatic setup of listeners
-- finish some parts of CTCP handling
 - integrate antiflood
 
 next minor release (3.0.1):
