@@ -244,9 +244,21 @@ static gboolean network_send_line_direct(struct network *s, struct client *c, co
 	}
 }
 
+static gboolean send_queue(gpointer user_data)
+{
+	struct network *n = user_data;
+
+	/* FIXME: Send as much data as is allowed */
+
+	if (g_queue_is_empty(n->connection.pending_lines))
+		return FALSE;
+
+	return TRUE;
+}
+
 static gboolean need_flood_protection(struct network *s)
 {
-	/* FIXME */
+	/* FIXME: check whether it's possible to send another line */
 
 	return TRUE;
 }
@@ -283,8 +295,12 @@ gboolean network_send_line(struct network *s, struct client *c, const struct lin
 	redirect_record(s, c, &l);
 
 	if (need_flood_protection(s)) {
-		/* FIXME: Add to queue */
-		/* FIXME: Start timeout handler if not active */
+		/* Add to queue */
+		g_queue_push_head(s->connection.pending_lines, linedup(&l));
+
+		/* Start timeout handler if not active */
+		if (s->connection.queue_send_id == -1)
+			s->connection.queue_send_id = g_timeout_add(s->config->queue_speed, send_queue, s);
 
 		return TRUE;
 	}
@@ -671,6 +687,7 @@ struct network *load_network(struct global *global, struct network_config *sc)
 	s->config = sc;
 	s->info.features = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_free);
 	s->name = g_strdup(s->config->name);
+	s->connection.pending_lines = g_queue_new();
 	s->global = global;
 
 	global->networks = g_list_append(global->networks, s);
