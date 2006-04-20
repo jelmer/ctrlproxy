@@ -58,6 +58,7 @@ AC_TYPE_SIGNAL
 AC_CHECK_FUNCS([gethostbyname gethostname memset strchr strerror strstr uname backtrace_symbols gettimeofday strrchr daemon])
 
 PKG_CHECK_MODULES(COMMON, glib-2.0 gmodule-2.0, , AC_MSG_ERROR([glib is required]))
+PKG_CHECK_MODULES(SQLITE, sqlite, [DEFMODULE(linestack_sqlite)])
 
 ###############################################################################
 # NSS support
