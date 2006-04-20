@@ -71,7 +71,7 @@ install-pkgconfig:
 gcov:
 	$(GCOV) -po . *.c 
 
-mods/lib%.so: mods/%.o
+mods/lib%.$(SHLIBEXT): mods/%.o
 	@echo Linking $@
 	@$(CC) $(LDFLAGS) -fPIC -shared -o $@ $^
 
@@ -96,7 +96,8 @@ mods/gnutls.o: CFLAGS+=$(GNUTLS_CFLAGS)
 mods/libgnutls.$(SHLIBEXT): LDFLAGS+=$(GNUTLS_LDFLAGS)
 mods/openssl.o: CFLAGS+=$(OPENSSL_CFLAGS)
 mods/libopenssl.$(SHLIBEXT): LDFLAGS+=$(OPENSSL_LDFLAGS)
-mods/liblinestack_sqlite.$(SHLIBEXT): linestack_sqlite.o
+mods/liblinestack_sqlite.$(SHLIBEXT): LDFLAGS+=$(SQLITE_LDFLAGS)
+mods/linestack_sqlite.o: CFLAGS+=$(SQLITE_CFLAGS)
 
 # Python specific stuff below this line
 mods/python2.o ctrlproxy_wrap.o: CFLAGS+=$(PYTHON_CFLAGS)
@@ -131,9 +132,9 @@ rfctest: testsuite/ctrlproxyrc.torture
 
 # Regular testsuite
 
-$(patsubst testsuite/%.c,testsuite/lib%.$(SHLIBEXT),$(wildcard testsuite/test-*.c)): testsuite/lib%.so: testsuite/%.o $(objs)
+$(patsubst testsuite/%.c,testsuite/lib%.$(SHLIBEXT),$(wildcard testsuite/test-*.c)): testsuite/lib%.$(SHLIBEXT): testsuite/%.o $(objs)
 
-testsuite/lib%.so: 
+testsuite/lib%.$(SHLIBEXT): 
 	@echo Linking $@
 	@$(CC) $(LIBS) $(CFLAGS) -shared -o $@ $^
 
