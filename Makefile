@@ -44,6 +44,7 @@ install-dirs:
 
 install-bin:
 	$(INSTALL) ctrlproxy$(EXEEXT) $(DESTDIR)$(bindir)
+	$(INSTALL) scripts/upgrade.py $(DESTDIR)$(bindir)/ctrlproxy-upgrade 
 
 install-doc: doc
 	$(INSTALL) -m 644 ctrlproxy.h $(DESTDIR)$(destincludedir)

@@ -2,7 +2,6 @@ current release (3.0.0):
 - test and fix SSL support
 - update documentation
 - fix issue with loading state from linestack_file
-- finish upgrade script
 - fix strange bug with 'reconnect' interaction
 - support automatic setup of listeners
 - integrate antiflood
@@ -18,6 +17,7 @@ next minor release (3.0.1):
 - use more GLib functions (e.g. g_spawn() rather then fork(), 
    g_swap_async_with_pipes() instead of piped_child(), etc)
 - warn about unclaimed options!
+- readd stats functionality
 - hierarchical structure for admin commands
  - NETWORK
  - NETWORK ADD <NAME>

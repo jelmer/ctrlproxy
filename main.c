@@ -293,8 +293,9 @@ int main(int argc, char **argv)
 		char *rcfile = g_build_filename(g_get_home_dir(), ".ctrlproxyrc", NULL);
 		
 		if(g_file_test(rcfile, G_FILE_TEST_EXISTS)) {
-			log_global(NULL, LOG_INFO, "Pre-3.0 style .ctrlproxyrc found, starting upgrade");
-			/* FIXME: Upgrade script */
+			log_global(NULL, LOG_INFO, "Pre-3.0 style .ctrlproxyrc found");
+			log_global(NULL, LOG_INFO, "Run ctrlproxy-upgrade to update configuration");
+			return 1;
 		} else {
 			log_global(NULL, LOG_INFO, "No configuration found, loading default");
 			my_global = new_global(DEFAULT_CONFIG_DIR);	
