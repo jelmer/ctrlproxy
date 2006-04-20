@@ -223,6 +223,34 @@ static struct tcp_server_config *network_get_next_tcp_server(struct network *n)
 	return NULL;
 }
 
+static gboolean network_send_line_direct(struct network *s, struct client *c, const struct line *l)
+{
+	g_assert(s->config);
+	switch (s->config->type) {
+	case NETWORK_TCP:
+		return irc_send_line(s->connection.data.tcp.outgoing, l);
+
+	case NETWORK_PROGRAM:
+		return irc_send_line(s->connection.data.program.outgoing, l);
+
+	case NETWORK_VIRTUAL:
+		if (!s->connection.data.virtual.ops) 
+			return FALSE;
+		return s->connection.data.virtual.ops->to_server(s, c, l);
+
+	default:
+		g_assert(0);
+		return FALSE;
+	}
+}
+
+static gboolean need_flood_protection(struct network *s)
+{
+	/* FIXME */
+
+	return TRUE;
+}
+
 gboolean network_send_line(struct network *s, struct client *c, const struct line *ol)
 {
 	struct line l;
@@ -242,10 +270,9 @@ gboolean network_send_line(struct network *s, struct client *c, const struct lin
 	g_assert(l.args[0]);
 
 	/* Also write this message to all other clients currently connected */
-	if(!l.is_private && 
+	if (!l.is_private && 
 	   (!g_strcasecmp(l.args[0], "PRIVMSG") || 
-		!g_strcasecmp(l.args[0], "NOTICE")) && 
-	   (l.argc <= 2 || l.args[2][0] != '\001')) {
+		!g_strcasecmp(l.args[0], "NOTICE"))) {
 		clients_send(s, &l, c);
 	}
 
@@ -255,23 +282,14 @@ gboolean network_send_line(struct network *s, struct client *c, const struct lin
 
 	redirect_record(s, c, &l);
 
-	g_assert(s->config);
-	switch (s->config->type) {
-	case NETWORK_TCP:
-		return irc_send_line(s->connection.data.tcp.outgoing, &l);
+	if (need_flood_protection(s)) {
+		/* FIXME: Add to queue */
+		/* FIXME: Start timeout handler if not active */
 
-	case NETWORK_PROGRAM:
-		return irc_send_line(s->connection.data.program.outgoing, &l);
-
-	case NETWORK_VIRTUAL:
-		if (!s->connection.data.virtual.ops) 
-			return FALSE;
-		return s->connection.data.virtual.ops->to_server(s, c, &l);
-
-	default:
-		g_assert(0);
-		return FALSE;
+		return TRUE;
 	}
+
+	return network_send_line_direct(s, c, &l);
 }
 
 gboolean virtual_network_recv_line(struct network *s, struct line *l)

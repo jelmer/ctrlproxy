@@ -93,6 +93,8 @@ static void config_save_network(const char *dir, struct network_config *n)
 	g_key_file_set_string(kf, "global", "fullname", n->fullname);
 	g_key_file_set_string(kf, "global", "nick", n->nick);
 	g_key_file_set_string(kf, "global", "username", n->username);
+	if (n->queue_speed)
+		g_key_file_set_integer(kf, "global", "queue-speed", n->queue_speed);
 	g_key_file_set_integer(kf, "global", "reconnect-interval", n->reconnect_interval);
 
 	switch(n->type) {
@@ -281,6 +283,10 @@ static struct network_config *config_load_network(struct ctrlproxy_config *cfg, 
 
 	if (g_key_file_has_key(kf, "global", "reconnect-interval", NULL)) {
 		n->reconnect_interval = g_key_file_get_integer(kf, "global", "reconnect-interval", NULL);
+	}
+
+	if (g_key_file_has_key(kf, "global", "queue-speed", NULL)) {
+		n->queue_speed = g_key_file_get_integer(kf, "global", "queue-speed", NULL);
 	}
 
 	if (g_key_file_has_key(kf, "global", "username", NULL)) {
