@@ -22,68 +22,112 @@
 #include <fcntl.h>
 #include <sqlite3.h>
 
-/* TODO: Insert state data */
-
 #define STATE_DUMP_INTERVAL 1000
+
+struct linestack_sqlite_data {
+	int last_state_id;
+	int last_state_line_id;
+	int last_line_id;
+	sqlite3 *db;
+};
 
 static gboolean sqlite_init(struct linestack_context *ctx, struct ctrlproxy_config *config)
 {
 	int rc;
-	sqlite3 *db;
+	struct linestack_sqlite_data *data = g_new0(struct linestack_sqlite_data, 1);
 	char *fname, *err;
 
 	fname = g_build_filename(config->config_dir, "linestack_sqlite", NULL);
 
-	rc = sqlite3_open(fname, &db);
+	rc = sqlite3_open(fname, &data->db);
 	if (rc != SQLITE_OK) {
-		log_global(NULL, LOG_WARNING, "Error opening linestack database '%s': %s", fname, sqlite3_errmsg(db));
+		log_global(NULL, LOG_WARNING, "Error opening linestack database '%s': %s", fname, sqlite3_errmsg(data->db));
 		return FALSE;
 	}
 
-	rc = sqlite3_exec(db, "CREATE TABLE IF NOT EXISTS line(network text, state_id int, id int primary key, time int, data text)", NULL, NULL, &err);
-	if (rc != SQLITE_OK) {
-		log_global(NULL, LOG_WARNING, "Error creating table: %s", err);
-		return FALSE;
-	}
-
-	rc = sqlite3_exec(db, "CREATE TABLE IF NOT EXISTS state_dump(network text, data text, line_id int)", NULL, NULL, &err);
+	rc = sqlite3_exec(data->db, "CREATE TABLE IF NOT EXISTS line(network text, state_id int, time int, data text)", NULL, NULL, &err);
 	if (rc != SQLITE_OK) {
 		log_global(NULL, LOG_WARNING, "Error creating table: %s", err);
 		return FALSE;
 	}
 
-	ctx->backend_data = db;
+	rc = sqlite3_exec(data->db, "CREATE TABLE IF NOT EXISTS state_dump(network text, data blob, line_id int)", NULL, NULL, &err);
+	if (rc != SQLITE_OK) {
+		log_global(NULL, LOG_WARNING, "Error creating table: %s", err);
+		return FALSE;
+	}
+
+	ctx->backend_data = data;
 
 	return TRUE;
 }
 
 static gboolean sqlite_fini(struct linestack_context *ctx)
 {
-	sqlite3 *db = ctx->backend_data;
-	sqlite3_close(db);
+	struct linestack_sqlite_data *data = ctx->backend_data;
+	sqlite3_close(data->db);
+	return TRUE;
+}
+
+static gboolean insert_state_data(struct linestack_sqlite_data *data, const struct network *n)
+{
+	size_t len;
+	char *raw;
+	char *query;
+	int rc;
+	char *err;
+
+	raw = network_state_encode(&n->state, &len);
+
+	query = sqlite3_mprintf("INSERT INTO state_dump (network, data, line_id) VALUES ('%s',?,%d)", n->name, NULL, data->last_line_id);
+	rc = sqlite3_exec(data->db, query, NULL, NULL, &err);
+	sqlite3_free(query);
+
+	g_free(raw);
+
+	if (rc != SQLITE_OK) {
+		log_global(NULL, LOG_WARNING, "Error inserting data: %s", err);
+		return FALSE;
+	}
+
+	data->last_state_id = sqlite3_last_insert_rowid(data->db);
+	data->last_state_line_id = data->last_line_id;
+
 	return TRUE;
 }
 
 static gboolean sqlite_insert_line(struct linestack_context *ctx, const struct network *n, const struct line *l)
 {
-	sqlite3 *db = ctx->backend_data;
+	struct linestack_sqlite_data *data = ctx->backend_data;
 	int rc;
 	char *err, *raw;
 	time_t now = time(NULL);
 	char *query;
 
 	g_assert(n);
-	g_assert(db);
+	g_assert(data->db);
 
 	raw = irc_line_string(l);
 
-	query = sqlite3_mprintf("INSERT INTO line (network, time, data) VALUES ('%s',%lu,'%s')", n->name, now, raw);
-	rc = sqlite3_exec(db, query, NULL, NULL, &err);
+	if (data->last_state_id == -1) {
+		insert_state_data(data, n);
+	}
+
+	query = sqlite3_mprintf("INSERT INTO line (state_id, network, time, data) VALUES (%d, '%s',%lu,'%s')", data->last_state_id, n->name, now, raw);
+	rc = sqlite3_exec(data->db, query, NULL, NULL, &err);
 	sqlite3_free(query);
+
 	g_free(raw);
+
 	if (rc != SQLITE_OK) {
 		log_global(NULL, LOG_WARNING, "Error inserting data: %s", err);
 		return FALSE;
+	}
+
+	data->last_line_id = sqlite3_last_insert_rowid(data->db);
+
+	if (data->last_line_id > data->last_state_line_id + STATE_DUMP_INTERVAL) {
+		insert_state_data(data, n);
 	}
 
 	return TRUE;
@@ -100,7 +144,7 @@ static int find_rowid (void *_ret,int n,char**names, char**values)
 
 static void *sqlite_get_marker(struct linestack_context *ctx, struct network *n)
 {
-	sqlite3 *db = ctx->backend_data;
+	struct linestack_sqlite_data *data = ctx->backend_data;
 	char *err;
 	int rc;
 	int *ret = g_new0(int, 1);
@@ -108,7 +152,7 @@ static void *sqlite_get_marker(struct linestack_context *ctx, struct network *n)
 
 	query = sqlite3_mprintf("SELECT ROWID FROM line WHERE network='%s' ORDER BY ROWID DESC LIMIT 1", n->name);
 
-	rc = sqlite3_exec(db, query, find_rowid, ret, &err);
+	rc = sqlite3_exec(data->db, query, find_rowid, ret, &err);
 	sqlite3_free(query);
 
 	if (rc != SQLITE_OK) {
@@ -140,7 +184,7 @@ static int get_state_data(void *_ret,int n,char**names, char**values)
 
 	sr->line_id = atoi(values[0]);
 	sr->data = g_strdup(values[1]);
-	sr->length = sqlite3_decode_binary(sr->data, sr->data);
+	sr->length = 20; /* FIXME */
 	return 0;
 }
 
@@ -149,7 +193,7 @@ static struct network_state * sqlite_get_state (
 		struct network *n, 
 		void *m)
 {
-	sqlite3 *db = ctx->backend_data;
+	struct linestack_sqlite_data *backend_data = ctx->backend_data;
 	int rc;
 	struct state_result data;
 	char *err;
@@ -162,7 +206,7 @@ static struct network_state * sqlite_get_state (
 	query = sqlite3_mprintf("SELECT state_id FROM line WHERE ROWID=%d", id);
 
 	/* Find line for marker */
-	rc = sqlite3_exec(db, query, find_stateid, &state_id, &err);
+	rc = sqlite3_exec(backend_data->db, query, find_stateid, &state_id, &err);
 	sqlite3_free(query);
 
 	if (rc != SQLITE_OK) {
@@ -172,7 +216,7 @@ static struct network_state * sqlite_get_state (
 
 	/* Get state */
 	query = sqlite3_mprintf("SELECT line_id,data FROM state_dump WHERE ROWID=%d AND network='%s'", state_id, n->name);
-	rc = sqlite3_exec(db, query, get_state_data, &data, &err);
+	rc = sqlite3_exec(backend_data->db, query, get_state_data, &data, &err);
 	sqlite3_free(query);
 
 	if (rc != SQLITE_OK) {
@@ -214,11 +258,12 @@ static gboolean sqlite_traverse(struct linestack_context *ctx,
 		linestack_traverse_fn tf, 
 		void *userdata)
 {
-	sqlite3 *db = ctx->backend_data;
+	struct linestack_sqlite_data *backend_data = ctx->backend_data;
 	int rc;
 	char *err;
 	int from, to;
 	struct traverse_data data;
+	char *query;
 
 	data.fn = tf;
 	data.userdata = userdata;
@@ -226,8 +271,11 @@ static gboolean sqlite_traverse(struct linestack_context *ctx,
 	from = *(int *)mf;
 	to = *(int *)mt;
 
-	rc = sqlite_exec_printf(db, "SELECT time,data FROM line WHERE network='%s' AND ROWID >= %d AND ROWID <= %d", 
-		traverse_fn, &data, &err, n->name, from, to);
+	query = sqlite3_mprintf("SELECT time,data FROM line WHERE network='%s' AND ROWID >= %d AND ROWID <= %d", n->name, from, to);
+
+	rc = sqlite3_exec(backend_data->db, query, traverse_fn, &data, &err);
+	sqlite3_free(query);
+
 	if (rc != SQLITE_OK) {
 		log_global(NULL, LOG_WARNING, "Error traversing lines between %d and %dd: %s", from, to, err);
 		return FALSE;
