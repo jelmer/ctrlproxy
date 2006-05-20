@@ -2,6 +2,7 @@ current release (3.0.0):
 - test and fix SSL support
 - update documentation
 - fix issue with loading state from linestack_file
+ - plain-text dumps
 - fix strange bug with 'reconnect' interaction
 - support automatic setup of listeners
 - integrate antiflood

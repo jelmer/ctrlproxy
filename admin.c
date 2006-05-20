@@ -321,6 +321,11 @@ static void dump_joined_channels(struct client *c, char **args, void *userdata)
 		n = c->network;
 	}
 
+	if (!n->state) {
+		admin_out(c, "Network '%s' not connected", n->name);
+		return;
+	}
+
 	for (gl = n->state->channels; gl; gl = gl->next) {
 		struct channel_state *ch = (struct channel_state *)gl->data;
 		admin_out(c, "%s", ch->name);

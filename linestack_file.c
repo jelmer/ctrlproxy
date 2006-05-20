@@ -156,7 +156,7 @@ static gboolean file_insert_line(struct linestack_context *ctx, const struct net
 	return (ret != EOF);
 }
 
-void *file_get_marker(struct linestack_context *ctx, struct network *n)
+static void *file_get_marker(struct linestack_context *ctx, struct network *n)
 {
 	long *pos;
 	struct lf_network_data *nd = get_data(ctx, n);
@@ -168,7 +168,7 @@ void *file_get_marker(struct linestack_context *ctx, struct network *n)
 	return pos;
 }
 
-static 	struct network_state * file_get_state (
+static struct network_state * file_get_state (
 		struct linestack_context *ctx, 
 		struct network *n, 
 		void *m)
