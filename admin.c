@@ -64,7 +64,7 @@ static void add_network (struct client *c, char **args, void *userdata)
 	g_free(nc->name); nc->name = g_strdup(args[1]);
 	load_network(c->network->global, nc);
 
-	admin_out(c, "Network `%s' added", args[1]);
+	admin_out(c, "Network `%s' added. Use ADDSERVER to add a server to this network.", args[1]);
 }
 
 static void del_network (struct client *c, char **args, void *userdata)

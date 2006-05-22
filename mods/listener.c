@@ -1,6 +1,6 @@
 /* 
 	ctrlproxy: A modular IRC proxy
-	(c) 2005 Jelmer Vernooij <jelmer@nl.linux.org>
+	(c) 2005-2006 Jelmer Vernooij <jelmer@nl.linux.org>
 	
 	Manual listen on ports
 
@@ -121,7 +121,16 @@ static gboolean handle_new_client(GIOChannel *c_server, GIOCondition condition, 
 	return TRUE;
 }
 
+/* FIXME: Store in global struct somehow */
 static GList *listeners = NULL;
+static int autoport = 6667;
+static gboolean auto_listener = FALSE;
+static GKeyFile *keyfile = NULL;
+
+static int next_autoport()
+{
+	return ++autoport;
+}
 
 gboolean start_listener(struct listener *l)
 {
@@ -233,11 +242,16 @@ static void update_config(struct global *global, const char *path)
 
 	default_password = g_key_file_get_string(global->config->keyfile, "listener", "password", NULL);
 
+	g_key_file_set_boolean(global->config->keyfile, "listener", "auto", auto_listener);
+
+	g_key_file_set_integer(global->config->keyfile, "listener", "autoport", autoport);
+
 	filename = g_build_filename(path, "listener", NULL);
 	
-	/* FIXME: Store old GKeyFile somewhere, so we can keep comments... */
+	if (!keyfile)
+		keyfile = g_key_file_new();
 
-	kf = g_key_file_new();
+	kf = keyfile;
 
 	for (gl = listeners; gl; gl = gl->next) {
 		struct listener *l = gl->data;
@@ -264,7 +278,26 @@ static void update_config(struct global *global, const char *path)
 	}
 	
 	g_free(filename);
-	g_key_file_free(kf);
+}
+
+static void auto_add_listener(struct network *n, void *private_data)
+{
+	GList *gl;
+	char *port;
+	struct listener *l;
+
+	/* See if there is already a listener for n */
+	for (gl = listeners; gl; gl = gl->next) {
+		l = gl->data;
+
+		if (l->network == n || l->network == NULL)
+			return;
+	}
+
+	port = g_strdup_printf("%d", next_autoport());
+	l = listener_init(NULL, port);
+	l->network = n;
+	start_listener(l);
 }
 
 static void load_config(struct global *global)
@@ -277,12 +310,19 @@ static void load_config(struct global *global)
 	char *default_password;
 
 	default_password = g_key_file_get_string(global->config->keyfile, "listener", "password", NULL);
+	if (g_key_file_has_key(global->config->keyfile, "listener", "auto", NULL))
+		auto_listener = g_key_file_get_boolean(global->config->keyfile, "listener", "auto", NULL);
 
-	kf = g_key_file_new();
+	if (g_key_file_has_key(global->config->keyfile, "listener", "autoport", NULL))
+		autoport = g_key_file_get_integer(global->config->keyfile, "listener", "autoport", NULL);
+
+	if (auto_listener)
+		register_new_network_notify(global, auto_add_listener, NULL);
+
+	keyfile = kf = g_key_file_new();
 
 	if (!g_key_file_load_from_file(kf, filename, G_KEY_FILE_KEEP_COMMENTS, NULL)) {
 		g_free(filename);
-		g_key_file_free(kf);
 		return;
 	}
 		
@@ -326,7 +366,6 @@ static void load_config(struct global *global)
 
 	g_strfreev(groups);
 	g_free(filename);
-	g_key_file_free(kf);
 }
 
 static void fini_plugin(void)
@@ -350,6 +389,11 @@ void cmd_start_listener(struct client *c, char **args, void *userdata)
 		return;
 	}
 
+	if (!args[2]) {
+		admin_out(c, "No password specified");
+		return;
+	}
+
 	b = g_strdup(args[1]);
 	if ((p = strchr(b, ':'))) {
 		*p = '\0';
@@ -363,10 +407,12 @@ void cmd_start_listener(struct client *c, char **args, void *userdata)
 
 	if (b) g_free(b); else g_free(p);
 
-	if (args[2]) {
-		l->network = find_network(c->network->global, args[2]);
+	l->password = g_strdup(args[2]);
+
+	if (args[3]) {
+		l->network = find_network(c->network->global, args[3]);
 		if (l->network == NULL) {
-			admin_out(c, "No such network `%s'", args[2]);
+			admin_out(c, "No such network `%s'", args[3]);
 			free_listener(l);
 			return;
 		}
@@ -429,7 +475,7 @@ void cmd_list_listener(struct client *c, char **args, void *userdata)
 }
 
 const static struct admin_command listener_commands[] = {
-	{ "STARTLISTENER", cmd_start_listener, "[<address>:]<port> [<network>]", "Add listener on specified port" },
+	{ "STARTLISTENER", cmd_start_listener, "[<address>:]<port> <password> [<network>]", "Add listener on specified port" },
 	{ "STOPLISTENER", cmd_stop_listener, "[<address>:]<port>", "Stop listener on specified port" },
 	{ "LISTLISTENER", cmd_list_listener, "", "Add new network with specified name" },
 	{ NULL }
