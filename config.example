@@ -49,9 +49,10 @@ logfile = /home/jelmer/tmp/ctrlproxy
 
 #[nickserv]
 # Learn new nickserv user/password combinations by interpreting traffic to server
-#learn = True
+#learn = true
 
 [listener]
 # Listen for network connections start port 6667
-ports = 6667..6675
+# auto = true
+# autoport = 6667
 password = secret
