@@ -220,6 +220,7 @@ gboolean nickserv_load(struct global *global)
 
 	g_free(filename);
 
+	g_io_channel_shutdown(gio, TRUE, NULL);
 	g_io_channel_unref(gio);
 
 	return TRUE;
