@@ -192,24 +192,6 @@ void config_save_notify(struct global *global, const char *dest)
 	}
 }
 
-static gboolean create_configuration(const char *config_dir)
-{
-	if (g_file_test(config_dir, G_FILE_TEST_IS_DIR)) {
-		fprintf(stderr, "%s already exists\n", config_dir);
-		return FALSE;
-	}
-
-	if (g_mkdir(config_dir, 0700) != 0) {
-		fprintf(stderr, "Can't create config directory '%s': %s\n", config_dir, strerror(errno));
-		return FALSE;
-	}
-
-	my_global = new_global(DEFAULT_CONFIG_DIR);	
-	my_global->config->config_dir = g_strdup(config_dir);
-	save_configuration(my_global->config, config_dir);
-	return TRUE;
-}
-
 int main(int argc, char **argv)
 {
 	int isdaemon = 0;

@@ -97,6 +97,7 @@ void client_replicate(struct client *);
 void free_global(struct global *);
 void config_load_notify(struct global *global);
 void config_save_notify(struct global *global, const char *);
+struct global *new_global(const char *config_dir);
 
 /* nickserv.c */
 void init_nickserv(void);
@@ -108,5 +109,8 @@ void nickserv_identify_me(struct network *network, char *nick);
 void init_admin(void);
 gboolean admin_process_command(const struct client *c, struct line *l, int cmdoffset);
 void admin_log(const char *module, enum log_level level, const struct network *n, const struct client *c, const char *data);
+
+/* settings.c */
+gboolean create_configuration(const char *config_dir);
 
 #endif /* __INTERNALS_H__ */
