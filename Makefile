@@ -18,6 +18,7 @@ CFLAGS+=-ansi -Wall -DMODULESDIR=\"$(modulesdir)\" -DSTRICT_MEMORY_ALLOCS=
 all: $(BINS) $(MODS_SHARED_FILES) 
 
 objs = network.o posix.o client.o cache.o line.o state.o util.o hooks.o linestack.o plugins.o settings.o isupport.o log.o redirect.o gen_config.o repl.o linestack_file.o ctcp.o motd.o nickserv.o admin.o
+dep_files = $(patsubst %.o, %.d, $(objs)) $(patsubst %.c, %.d, $(wildcard mods/*.c))
 
 ctrlproxy$(EXEEXT): main.o $(objs)
 	@echo Linking $@
@@ -26,6 +27,9 @@ ctrlproxy$(EXEEXT): main.o $(objs)
 .c.o:
 	@echo Compiling $<
 	@$(CC) -I. $(CFLAGS) $(GCOV_CFLAGS) -c $< -o $@
+
+%.d: %.c
+	@$(CC) -I. -M -MG -MP -MT $(<:.c=.o) $(CFLAGS) $< -o $@
 
 configure: autogen.sh configure.ac acinclude.m4 $(wildcard mods/*/*.m4)
 	./$<
@@ -76,9 +80,14 @@ mods/lib%.so: mods/%.o
 	@$(CC) $(LDFLAGS) -fPIC -shared -o $@ $^
 
 clean::
-	rm -f $(MODS_SHARED_FILES)
-	rm -f *.$(OBJEXT) ctrlproxy$(EXEEXT) printstats *~
-	rm -f *.gcov *.gcno *.gcda mods/*.o
+	@echo Removing .so files
+	@rm -f $(MODS_SHARED_FILES)
+	@echo Removing dependency files
+	@rm -f $(dep_files)
+	@echo Removing object files and executables
+	@rm -f *.$(OBJEXT) ctrlproxy$(EXEEXT) *~ mods/*.o
+	@echo Removing gcov output
+	@rm -f *.gcov *.gcno *.gcda 
 
 dist: distclean
 	$(MAKE) -C doc dist
@@ -143,3 +152,5 @@ test: testsuite/torture $(patsubst testsuite/%.c,testsuite/lib%.$(SHLIBEXT),$(wi
 testsuite/torture: testsuite/torture.o 
 	@echo Linking $@
 	@$(CC) $(LIBS) -o $@ $^ 
+
+-include $(dep_files)

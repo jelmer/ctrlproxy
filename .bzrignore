@@ -53,3 +53,4 @@ doc/*.html
 debian/files
 debian/*.substvars
 doc/user-guide
+*.d
