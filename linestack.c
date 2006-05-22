@@ -96,10 +96,16 @@ struct network_state *linestack_get_state(
 		struct network *n, 
 		struct linestack_marker *lm)
 {
+	struct network_state *st;
 	if (!ctx->ops) return NULL;
 	if (!ctx->ops->get_state) return NULL;
 
-	return ctx->ops->get_state(ctx, n, lm?lm->data:NULL);
+	st = ctx->ops->get_state(ctx, n, lm?lm->data:NULL);
+	if (st == NULL)
+		return NULL;
+
+	g_assert(st->me.nick);
+	return st;
 }
 
 gboolean linestack_traverse(
