@@ -54,7 +54,7 @@ install-doc: doc
 	$(INSTALL) -m 644 ctrlproxy.h $(DESTDIR)$(destincludedir)
 	$(INSTALL) AUTHORS $(DESTDIR)$(docdir)
 	$(INSTALL) COPYING $(DESTDIR)$(docdir)
-	$(INSTALL) TODO $(DESTDIR)$(docdir)
+	$(INSTALL) BUGS $(DESTDIR)$(docdir)
 	$(INSTALL) UPGRADING $(DESTDIR)$(docdir)
 	$(MAKE) -C doc install PACKAGE_VERSION=$(PACKAGE_VERSION)
 
