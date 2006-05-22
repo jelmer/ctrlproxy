@@ -212,7 +212,7 @@ int main(int argc, char **argv)
 		{"init", 0, 0, G_OPTION_ARG_NONE, &init, "Create configuration" },
 		{"log", 'l', 0, G_OPTION_ARG_STRING, &logfile, ("Log messages to specified file"), ("FILE")},
 		{"config-dir", 'c', 0, G_OPTION_ARG_STRING, &config_dir, ("Override configuration directory"), ("DIR")},
-		{"version", 'v', 'v', G_OPTION_ARG_NONE, &version, ("Show version information")},
+		{"version", 'v', 0, G_OPTION_ARG_NONE, &version, ("Show version information")},
 		{ NULL }
 	};
 
