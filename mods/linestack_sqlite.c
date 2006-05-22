@@ -35,13 +35,6 @@ static const char *tables[] = {
 	"CREATE TABLE IF NOT EXISTS line(network text, state_id int, time int, data text)",
 	"CREATE TABLE IF NOT EXISTS network_state ("
 		"name text,"
-		"server text,"
-		"supported_user_modes text,"
-		"supported_channel_modes text,"
-		"casemapping int,"
-		"channellen int,"
-		"nicklen int,"
-		"topiclen int,"
 		"nick text,"
 		"line_id int"
 	")",
@@ -57,7 +50,10 @@ static const char *tables[] = {
 		"invitelist_started int,"
 		"exceptlist_started int,"
 		"nicklimit int,"
-		"key text"
+		"modes text,"
+		"mode text,"
+		"key text,"
+		"state_id int"
 	")",
 
 	"CREATE TABLE IF NOT EXISTS network_nick ("
@@ -68,7 +64,7 @@ static const char *tables[] = {
 	"state_id int"
 	")",
 
-	"CREATE TABLE IF NOT EXISTS mode (nick int, channel int, mode text)",
+	"CREATE TABLE IF NOT EXISTS channel_nick (nick text, channel text, mode text)",
 
 	NULL
 };
@@ -162,7 +158,7 @@ static struct network_state *get_network_state(struct linestack_sqlite_data *dat
 	int nrow, ncolumn;
 	struct network_state *state;
 
-	query = sqlite3_mprintf("SELECT nick, line_id FROM network_state WHERE ROWID = '%d'", state_id);
+	query = sqlite3_mprintf("SELECT nick, line_id FROM network_state WHERE ROWID = %d", state_id);
 
 	rc = sqlite3_get_table(data->db, query, &ret, &nrow, &ncolumn, &err);
 	sqlite3_free(query);
@@ -187,13 +183,13 @@ static struct network_state *get_network_state(struct linestack_sqlite_data *dat
 	sqlite3_free(query);
 
 	if (rc != SQLITE_OK) {
-		log_global(NULL, LOG_WARNING, "Error channel data: %s", err);
+		log_global(NULL, LOG_WARNING, "Error network nicks: %s", err);
 		g_free(state);
 		return NULL;
 	}
 
 	if (nrow == 0) {
-		log_global(NULL, LOG_WARNING, "Error channel data: %s", err);
+		log_global(NULL, LOG_WARNING, "Error: no network nicks returned");
 		sqlite3_free_table(ret);
 		g_free(state);
 		return NULL;
@@ -295,26 +291,43 @@ static struct network_state *get_network_state(struct linestack_sqlite_data *dat
 
 static gboolean insert_state_data(struct linestack_sqlite_data *data, const struct network *n)
 {
-	GList *gl;
+	GList *gl, *gl1;
+
+	log_network("sqlite", LOG_TRACE, n, "Inserting state");
 
 	if (!run_query(data, "INSERT INTO network_state (name, nick, line_id) VALUES ('%q','%q',%d)", n->name, n->state->me.nick, data->last_line_id))
 		return FALSE;
 
+	data->last_state_id = sqlite3_last_insert_rowid(data->db);
+
 	for (gl = n->state->nicks; gl; gl = gl->next) {
 		struct network_nick *nn = gl->data;
 
-		if (!run_query(data, "INSERT INTO network_nick (query,fullname,modes,hostmask) VALUES (%d,'%q','%q','%q')", nn->query, nn->fullname, mode2string(nn->modes), nn->hostmask))
+		if (!run_query(data, "INSERT INTO network_nick (state_id,query,fullname,modes,hostmask) VALUES (%d,%d,'%q','%q','%q')", data->last_state_id, nn->query, nn->fullname, mode2string(nn->modes), nn->hostmask))
 			return FALSE;
 	}
 
 	for (gl = n->state->channels; gl; gl = gl->next) {
+		char *modestring;
 		struct channel_state *cs = gl->data;
+		modestring = mode2string(cs->modes);
 
-		if (!run_query(data, "INSERT INTO channel_state (name, topic, namreply_started, banlist_started, invitelist_started, exceptlist_started, nicklimit, key) VALUES ('%q','%q',%d,%d,%d,%d,%d,'%q')", cs->name, cs->topic, cs->namreply_started, cs->banlist_started, cs->invitelist_started, cs->exceptlist_started, cs->limit, cs->key))
+		if (!run_query(data, "INSERT INTO channel_state (state_id, name, topic, namreply_started, banlist_started, invitelist_started, exceptlist_started, nicklimit, key, modes, mode) VALUES (%d,'%q','%q',%d,%d,%d,%d,%d,'%q','%q','%s')", data->last_state_id, cs->name, cs->topic, cs->namreply_started, cs->banlist_started, cs->invitelist_started, cs->exceptlist_started, cs->limit, cs->key, modestring, cs->mode)) {
+			g_free(modestring);
 			return FALSE;
+		}
+		g_free(modestring);
+
+		for (gl1 = cs->nicks; gl1; gl1 = gl1->next) {
+			struct channel_nick *cn = gl1->data;
+
+			if (!run_query(data, "INSERT INTO channel_nick (nick, channel, mode) VALUES ('%q','%q','%c')", cn->global_nick->nick, cn->channel->name, cn->mode))
+				return FALSE;
+
+		}
+		/* FIXME: insert invitelist, exceptlist, banlist */
 	}
 
-	data->last_state_id = sqlite3_last_insert_rowid(data->db);
 	data->last_state_line_id = data->last_line_id;
 
 	return TRUE;
@@ -329,11 +342,12 @@ static gboolean sqlite_insert_line(struct linestack_context *ctx, const struct n
 	g_assert(n);
 	g_assert(data->db);
 
-	raw = irc_line_string(l);
-
-	if (data->last_state_id == -1) {
+	if (data->last_line_id > data->last_state_line_id + STATE_DUMP_INTERVAL ||
+		data->last_line_id == 0) {
 		insert_state_data(data, n);
 	}
+
+	raw = irc_line_string(l);
 
 	if (!run_query(data, "INSERT INTO line (state_id, network, time, data) VALUES (%d, '%q',%lu,'%q')", data->last_state_id, n->name, now, raw)) {
 		g_free(raw);
@@ -343,10 +357,6 @@ static gboolean sqlite_insert_line(struct linestack_context *ctx, const struct n
 	g_free(raw);
 
 	data->last_line_id = sqlite3_last_insert_rowid(data->db);
-
-	if (data->last_line_id > data->last_state_line_id + STATE_DUMP_INTERVAL) {
-		insert_state_data(data, n);
-	}
 
 	return TRUE;
 }
@@ -403,13 +413,18 @@ static struct network_state * sqlite_get_state (
 	int rc;
 	struct state_result data;
 	char *err;
-	int id = *(int *)m;
+	int id;
 	int state_id;
 	struct network_state *state;
 	struct linestack_marker m1, m2;
 	char *query;
 	char **ret;
 	int ncol, nrow;
+
+	if (m != NULL) 
+		id = *(int *)m;
+	else 
+		id = backend_data->last_line_id;
 
 	query = sqlite3_mprintf("SELECT state_id FROM line WHERE ROWID=%d", id);
 
@@ -422,7 +437,7 @@ static struct network_state * sqlite_get_state (
 		return NULL;
 	}
 
-	state_id = atoi(ret[0]);
+	state_id = atoi(ret[1]);
 
 	sqlite3_free_table(ret);
 	
@@ -468,8 +483,15 @@ static gboolean sqlite_traverse(struct linestack_context *ctx,
 	data.fn = tf;
 	data.userdata = userdata;
 
-	from = *(int *)mf;
-	to = *(int *)mt;
+	if (mf != NULL)
+		from = *(int *)mf;
+	else
+		from = backend_data->last_line_id;
+
+	if (mt != NULL)
+		to = *(int *)mt;
+	else
+		to = backend_data->last_line_id;
 
 	query = sqlite3_mprintf("SELECT time,data FROM line WHERE network='%q' AND ROWID >= %d AND ROWID <= %d", n->name, from, to);
 
