@@ -1,5 +1,4 @@
 # Example RC file for ctrlproxy
-# (C) 2003-2006 Jelmer Vernooij <jelmer@vernstok.nl>
 # Read the documentation for more information about specifics
 # Please adapt to your needs!
 
@@ -49,9 +48,10 @@ logfile = /home/jelmer/tmp/ctrlproxy
 
 #[nickserv]
 # Learn new nickserv user/password combinations by interpreting traffic to server
-#learn = True
+#learn = true
 
 [listener]
 # Listen for network connections start port 6667
-ports = 6667..6675
+# auto = true
+# autoport = 6667
 password = secret

@@ -28,6 +28,8 @@
 #include <sys/socket.h>
 #include <glib/gstdio.h>
 
+#define DEFAULT_ADMIN_PORT 6680
+
 gboolean g_key_file_save_to_file(GKeyFile *kf, const gchar *file, GError **error)
 {
 	gsize length, nr;
@@ -544,3 +546,56 @@ void free_config(struct ctrlproxy_config *cfg)
 	g_free(cfg);
 }
 
+gboolean create_configuration(const char *config_dir)
+{
+	GKeyFile *kf;
+	struct global *global;
+	char port[250];
+	char *pass, *listenerfile;
+	GError *error = NULL;
+
+	if (g_file_test(config_dir, G_FILE_TEST_IS_DIR)) {
+		fprintf(stderr, "%s already exists\n", config_dir);
+		return FALSE;
+	}
+
+	if (g_mkdir(config_dir, 0700) != 0) {
+		fprintf(stderr, "Can't create config directory '%s': %s\n", config_dir, strerror(errno));
+		return FALSE;
+	}
+
+	global = new_global(DEFAULT_CONFIG_DIR);	
+	global->config->config_dir = g_strdup(config_dir);
+	save_configuration(global->config, config_dir);
+
+	kf = g_key_file_new();
+
+	snprintf(port, sizeof(port), "%d", DEFAULT_ADMIN_PORT);
+	printf("Please specify port the administration interface should listen on.\n"
+		   "Prepend with a colon to listen on a specific address.\n"
+		   "Example: localhost:6668\n\nPort [%s]: ", port); fflush(stdout);
+	fgets(port, sizeof(port), stdin);
+
+	if (port[strlen(port)-1] == '\n')
+		port[strlen(port)-1] = '\0';
+
+	if (strlen(port) == 0) 
+		snprintf(port, sizeof(port), "%d", DEFAULT_ADMIN_PORT);
+
+	pass = getpass("Please specify a password for the administration interface: "); 
+	g_key_file_set_string(kf, port, "network", "admin");
+	if (!strcmp(pass, "")) {
+		fprintf(stderr, "Warning: no password specified. Authentication disabled!\n");
+	} else {
+		g_key_file_set_string(kf, port, "password", pass);
+	}
+
+	listenerfile = g_build_filename(config_dir, "listener", NULL);
+
+	if (!g_key_file_save_to_file(kf, listenerfile, &error)) {
+		fprintf(stderr, "Error saving %s: %s\n", listenerfile, error->message);
+		return FALSE;
+	}
+
+	return TRUE;
+}

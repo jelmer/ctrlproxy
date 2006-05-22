@@ -16,9 +16,10 @@ of course run irssi on my workstation, but my workstation isn't on
 24/7 and some people depend on the channel logs I generate.
 
 Running ctrlproxy requires much less bandwidth then running a 
-remote irssi inside screen.
+remote irssi inside screen and it works much better over high-latency 
+connections.
 
-The structure of CtrlProxy is very modular and it is easily extendible.
+The structure of CtrlProxy is modular and it is easily extendible.
 
 Features
 --------
@@ -36,6 +37,7 @@ Features
  * SSL support
  * Custom logging in any format you specify
  * Flood protection
+ * IPv6 Support
 
 Requirements
 ------------
@@ -56,28 +58,18 @@ $ autoreconf
 
 before you run ./configure, make and make install
 
+Quick start
+-----------
+1. Install ctrlproxy
+
+2. Run ctrlproxy --init 
+
+2. Run ctrlproxy --daemon or ctrlproxy
+
+3. Connect to ctrlproxy from your IRC client.
+
 Documentation
 -------------
 Most documentation is in the manual and the 
 manpages: ctrlproxy(1) and ctrlproxyrc(5).
 The example ctrlproxyrc file might be of some use..
-
-After you've installed, configured and started ctrlproxy you can connect to 
-it on port 6668 and up.
-
-To build the documentation, run ./configure --enable-docs. Please note that 
-a pregenerated version of the documentation is available in the tarball. So, 
-in most cases, you shouldn't need to rebuild.
-
-Quick start
------------
-1. Install ctrlproxy (either from debian, or from source, see above)
-
-2. Run ctrlproxy --daemon
-
-3. Surf to localhost:8888 with your webbrowser and configure ctrlproxy.
-
-4. Connect to ctrlproxy from your IRC client. By default, you can connect 
-to port 6670.
-
-5. Simply disconnect by typing /QUIT

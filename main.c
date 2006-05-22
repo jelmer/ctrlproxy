@@ -200,6 +200,7 @@ int main(int argc, char **argv)
 	extern gboolean no_log_timestamp;
 	const char *config_dir = NULL;
 	char *tmp;
+	gboolean init = FALSE;
 	const char *inetd_client = NULL;
 	gboolean version = FALSE;
 	GOptionContext *pc;
@@ -208,6 +209,7 @@ int main(int argc, char **argv)
 		{"debug-level", 'd', 'd', G_OPTION_ARG_INT, &current_log_level, ("Debug level [0-5]"), "LEVEL" },
 		{"no-timestamp", 'n', FALSE, G_OPTION_ARG_NONE, &no_log_timestamp, "No timestamps in logs" },
 		{"daemon", 'D', 0, G_OPTION_ARG_NONE, &isdaemon, ("Run in the background (as a daemon)")},
+		{"init", 0, 0, G_OPTION_ARG_NONE, &init, "Create configuration" },
 		{"log", 'l', 0, G_OPTION_ARG_STRING, &logfile, ("Log messages to specified file"), ("FILE")},
 		{"config-dir", 'c', 0, G_OPTION_ARG_STRING, &config_dir, ("Override configuration directory"), ("DIR")},
 		{"version", 'v', 'v', G_OPTION_ARG_NONE, &version, ("Show version information")},
@@ -248,6 +250,13 @@ int main(int argc, char **argv)
 
 	if(isdaemon && !logfile) {
 		logfile = g_build_filename(config_dir, "log", NULL);
+	}
+
+	if (init) {
+		if (!create_configuration(config_dir))
+			return 1;
+		printf("Configuration created in %s. \n", config_dir);
+		return 0;
 	}
 
 	init_log(logfile);
@@ -297,9 +306,8 @@ int main(int argc, char **argv)
 			log_global(NULL, LOG_INFO, "Run ctrlproxy-upgrade to update configuration");
 			return 1;
 		} else {
-			log_global(NULL, LOG_INFO, "No configuration found, loading default");
-			my_global = new_global(DEFAULT_CONFIG_DIR);	
-			my_global->config->config_dir = g_strdup(config_dir);
+			log_global(NULL, LOG_INFO, "No configuration found. Maybe you would like to create one by running with --init ?");
+			return 1;
 		}
 
 		g_free(rcfile);
