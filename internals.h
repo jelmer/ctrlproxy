@@ -92,6 +92,7 @@ void channel_update_config(struct channel_state *ns, struct channel_config *nc);
 
 /* repl.c */
 void client_replicate(struct client *);
+char *mode2string(char modes[255]);
 
 /* main.c */
 void free_global(struct global *);

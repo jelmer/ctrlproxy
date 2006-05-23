@@ -118,6 +118,7 @@ static struct lf_network_data *get_data(struct linestack_context *ctx, const str
 			return NULL;
 		}
 		nd = g_new0(struct lf_network_data, 1);
+		nd->lines_since_last_state = STATE_DUMP_INTERVAL;
 		nd->file = file;
 		log_network(NULL, LOG_TRACE, n, "Creating new linestack file '%s'", path);
 		file_insert_state(nd, n);

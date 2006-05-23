@@ -474,10 +474,19 @@ void admin_log(const char *module, enum log_level level, const struct network *n
 	struct line *l;
 	char *tmp, *hostmask;
 	GList *gl;
+	static gboolean entered = FALSE;
 
 	if (!my_global || !my_global->config || 
 		!my_global->config->admin_log) 
 		return;
+
+	if (level < LOG_INFO)
+		return;
+
+	if (entered)
+		return; /* Prevent inifinite recursion.. */
+
+	entered = TRUE;
 
 	tmp = g_strdup_printf("%s%s%s%s%s%s", 
 						  data, 
@@ -503,6 +512,8 @@ void admin_log(const char *module, enum log_level level, const struct network *n
 	}
 
 	g_free(tmp);
+
+	entered = FALSE;
 }
 
 const static struct admin_command builtin_commands[] = {
