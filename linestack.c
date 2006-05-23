@@ -105,6 +105,7 @@ struct network_state *linestack_get_state(
 		return NULL;
 
 	g_assert(st->me.nick);
+	g_assert(st->me.query);
 	return st;
 }
 
