@@ -63,12 +63,12 @@ static const char *tables[] = {
 	")",
 
 	"CREATE TABLE IF NOT EXISTS network_nick ("
-	"nick text,"
-	"fullname text,"
-	"query int,"
-	"modes text,"
-	"hostmask text,"
-	"state_id int"
+		"nick text,"
+		"fullname text,"
+		"query int,"
+		"modes text,"
+		"hostmask text,"
+		"state_id int"
 	")",
 
 	"CREATE TABLE IF NOT EXISTS channel_nick (nick text, channel text, mode text)",
@@ -86,7 +86,7 @@ static struct linestack_sqlite_network *get_network_data(struct linestack_sqlite
 	ret = g_new0(struct linestack_sqlite_network, 1);
 
 	g_hash_table_insert(data->networks, n, ret);
-
+	
 	insert_state_data(data, n);
 
 	return ret;
@@ -184,6 +184,8 @@ static struct network_state *get_network_state(struct linestack_sqlite_data *dat
 	struct network_state *state;
 	char *mynick;
 
+	g_assert(state_id);
+
 	query = sqlite3_mprintf("SELECT nick, line_id FROM network_state WHERE ROWID = %d", state_id);
 
 	rc = sqlite3_get_table(data->db, query, &ret, &nrow, &ncolumn, &err);
@@ -239,7 +241,7 @@ static struct network_state *get_network_state(struct linestack_sqlite_data *dat
 		g_free(nn->nick);
 		nn->nick = g_strdup(ret[5*i]);
 
-		/*nn->modes = NULL; /* FIXME: ret[i][3] */
+		/*nn->modes = NULL; /* FIXME: ret[5*i+3] */
 
 		if (strcmp(mynick, ret[5*i]) != 0) {
 			state->nicks = g_list_append(state->nicks, nn);
@@ -493,11 +495,12 @@ static struct network_state * sqlite_get_state (
 	}
 
 	if (nrow != 1) {
-		log_global("sqlite", LOG_WARNING, "Expected 1 row, got %d", nrow);
+		log_global("sqlite", LOG_WARNING, "Expected 1 row, got %d (%d)", nrow, id);
 		return NULL;
 	}
 
 	state_id = atoi(ret[1]);
+	g_assert(state_id);
 
 	sqlite3_free_table(ret);
 	
