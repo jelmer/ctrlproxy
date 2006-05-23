@@ -53,7 +53,7 @@ struct linestack_context *new_linestack(struct ctrlproxy_config *cfg)
 	}
 
 	if (!current_backend) {
-		current_backend = linestack_backends->data;
+		current_backend = &linestack_file;
 	}
 
 	ctx = g_new0(struct linestack_context, 1);
