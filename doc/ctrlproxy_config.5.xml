@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<refentry id="ctrlproxy_config.5">
+
+<refmeta>
+	<refentrytitle>ctrlproxy_config</refentrytitle>
+	<manvolnum>5</manvolnum>
+</refmeta>
+
+<refnamediv>
+	<refname>~/ctrlproxy/config</refname>
+	<refpurpose>Configuration file for ctrlproxy</refpurpose>
+</refnamediv>
+
+<refsect1>
+	<title>DESCRIPTION</title>
+<para>
+Ctrlproxy uses a configuration directory called <filename>.ctrlproxy</filename>
+that lives inside the users' home directory. The main configuration 
+file lives in this directory and is called <filename>config</filename>. It 
+is an ini-style configuration file with sections and key-value pairs.
+</para>
+
+<para>
+This manpage discusses the variables that can be set in this file 
+in a standard ControlProxy installation.
+</para>
+
+</refsect1>
+
+<refsect1>
+	<title>SETTINGS</title>
+
+<refsect2>
+	<title>[global]</title>
+
+	<para>The [global] section contains some of the most important settings.</para>
+
+	<variablelist>
+		<varlistentry>
+			<term>replication</term>
+		</varlistentry>
+		
+		<varlistentry>
+			<term>report-time</term>
+		</varlistentry>
+
+		<varlistentry>
+			<term>autosave</term>
+		</varlistentry>
+
+		<varlistentry>
+			<term>autoconnect</term>
+		</varlistentry>
+
+		<varlistentry>
+			<term>motd-file</term>
+		</varlistentry>
+	
+	</variablelist>
+
+</refsect2>
+
+<refsect2>
+	<title>[admin]</title>
+
+	<para>If the [admin] section is present, ControlProxy will 
+		create a fake network with a control channel that can 
+		be used for administration.
+	</para>
+
+	<variablelist>
+		<varlistentry>
+			<term>no_privmsg</term>
+		</varlistentry>
+	</variablelist>
+</refsect2>
+
+<refsect2>
+	<title>[log-irssi]</title>
+
+	<para>If the [log-irssi] section is present, ControlProxy 
+		will write irssi-style log files to <filename>~/.ctrlproxy/log-irssi/NETWORK/CHANNEL</filename>.
+	</para>
+
+	<variablelist>
+		<varlistentry>
+			<term>logfile</term>
+		</varlistentry>
+	</variablelist>
+</refsect2>
+
+<refsect2>
+	<title>[socks]</title>
+
+	<para>
+		If the [socks] section is present, ControlProxy will listen 
+		for SOCKS connections.</para>
+
+	<variablelist>
+		<varlistentry>
+			<term>port</term>
+		</varlistentry>
+		<varlistentry>
+			<term>allow</term>
+		</varlistentry>
+	</variablelist>
+
+</refsect2>
+
+<refsect2>
+	<title>[nickserv]</title>
+
+	<variablelist>
+		<varlistentry>
+			<term>learn</term>
+		</varlistentry>
+	</variablelist>
+</refsect2>
+
+<refsect2>
+	<title>[listener]</title>
+
+	<variablelist>
+		<varlistentry>
+			<term>auto</term>
+		</varlistentry>
+		<varlistentry>
+			<term>autoport</term>
+		</varlistentry>
+		<varlistentry>
+			<term>password</term>
+		</varlistentry>
+	</variablelist>
+</refsect2>	
+
+</refsect1>
+
+<refsect1>
+	<title>SEE ALSO</title>
+
+	<para>ctrlproxy (1), config.example, http://ctrlproxy.vernstok.nl/</para>
+
+</refsect1>
+
+<refsect1>
+	<title>LICENSE</title>
+
+<para>
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+</para>
+
+<para>
+This program is distributed in the hope that it will be useful, but
+\fBWITHOUT ANY WARRANTY\fR; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
+General Public License for more details.
+</para>
+
+<para>
+You should have received a copy of the GNU General Public License 
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple PLace, Suite 330, Boston, MA  02111-1307  USA
+</para>
+
+</refsect1>
+
+<refsect1>
+	<title>BUGS</title>
+
+	<para>
+		CtrlProxy currently does not warn about unknown configuration 
+		parameters.
+	</para>
+</refsect1>
+
+<refsect1>
+	<title>AUTHOR</title>
+
+<para>
+<ulink url="mailto:jelmer@nl.linux.org">Jelmer Vernooij</ulink>
+</para>
+</refsect1>
+</refentry>

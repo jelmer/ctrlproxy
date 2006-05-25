@@ -20,7 +20,7 @@
 
 		<para>CtrlProxy should run on pretty much all POSIX-compatible 
 			platforms. A version for Windows will be released in the future
-			(for 2.7).
+			(for 3.0).
 		</para>
 	</sect1>
 
@@ -31,24 +31,21 @@
 			source files available there can be unpacked using tar and gzip:</para>
 
 		<para><screen>
-<prompt>$ </prompt><userinput>tar xvgz ctrlproxy-2.7.tar.gz</userinput>
-ctrlproxy-2.7/AUTHORS
+<prompt>$ </prompt><userinput>tar xvgz ctrlproxy-3.0.tar.gz</userinput>
+ctrlproxy-3.0/AUTHORS
 ...
 </screen></para>
 
 		<para>If you wish to use the bleeding-edge version of ctrlproxy, you can 
-			download the sources from Subversion. </para>
+			download the sources from Bazaar. </para>
 
 		<sect2>
-			<title>Downloading from Subversion</title>
+			<title>Downloading from Bazaar</title>
 
-			<para>Ctrlproxy Subversion can be accessed by running: </para>
+			<para>Ctrlproxy Bazaar can be accessed by running: </para>
 
 			<para><screen>
-					<prompt>$ </prompt><userinput>svn co http://ctrlproxy.vernstok.nl/svn/trunk ctrlproxy-trunk</userinput>
-ctrlproxy-trunk
-ctrlproxy-trunk/AUTHORS
-ctrlproxy-trunk/README
+					<prompt>$ </prompt><userinput>bzr get http://ctrlproxy.vernstok.nl/bzr/trunk ctrlproxy-trunk</userinput>
 ...
 </screen>
 			</para>

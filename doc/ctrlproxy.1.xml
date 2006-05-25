@@ -64,8 +64,8 @@ on the number of servers it is connected to.
 	<listitem><para>Go to the background after the program has been started (daemon mode).</para></listitem>
 	</varlistentry>
 
-	<varlistentry><term>-r, --rc-file=RCFILE</term>
-	<listitem><para>Read configuration file from specified location <option>RCFILE</option> instead of from <filename>.ctrlproxyrc</filename> in the users' homedirectory.</para></listitem>
+	<varlistentry><term>-c, --config-dir=DIR</term>
+		<listitem><para>Read configuration files from the specified directory <option>DIR</option> instead of from <filename>.ctrlproxy</filename> in the users' homedirectory.</para></listitem>
 	</varlistentry>
 
 	<varlistentry><term>-v, --version</term>
@@ -92,8 +92,7 @@ on the number of servers it is connected to.
 	<title>SIGNALS</title>
 
 <para>
-	When ctrlproxy receives a <constant>USR1</constant> signal, it will save it's current state
-to the configuration file (usually ~/.ctrlproxyrc).
+	When ctrlproxy receives a <constant>USR1</constant> signal, it will save it's current state. 
 </para>
 
 </refsect1>
@@ -113,7 +112,7 @@ to the configuration file (usually ~/.ctrlproxyrc).
 <refsect1>
 	<title>SEE ALSO</title>
 
-<para>irssi (1), ctrlproxyrc (5), http://www.nl.linux.org/~jelmer/ctrlproxy/, ctrlproxyrc.example</para>
+<para>irssi (1), ctrlproxy_config(5), http://ctrlproxy.vernstok.nl/, config.example</para>
 
 </refsect1>
 
