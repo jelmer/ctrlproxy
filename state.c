@@ -1069,9 +1069,9 @@ static gboolean marshall_network_state (struct network_state *nst, enum marshall
 {
 	gboolean ret = TRUE;
 
+	ret &= marshall_network_nick(n, m, t, &n->me);
 	ret &= marshall_GList(n, m, t, &n->nicks, (marshall_fn_t)marshall_network_nick_p);
 	ret &= marshall_GList(n, m, t, &n->channels, (marshall_fn_t)marshall_channel_state);
-	ret &= marshall_network_nick(n, m, t, &n->me);
 
 	g_assert(n->me.nick);
 

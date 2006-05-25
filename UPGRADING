@@ -1,27 +1,7 @@
 Information for users upgrading from 2.6 or 2.7-preXX:
 ======================================================
 
-Any existing configuration files can be upgraded by running the upgrade 
-utility avaiable in the directory 'scripts' in the source tarball.
-
-- GNUTLS is now used by default when it is available instead of SSL. GNUTLS 
-  needs a cafile next to the key and cert files. 
-- The "socket" module has been removed, it is now partially part of the core,
-  and part of it's functionality has been moved to the "listener" module
-- <listen> and client_pass are now below the "liblistener" <plugin> node 
-  rather then under a network. For example, to listen on port 6669 for
-  connections for network MyNetwork and password MyPass:
-
-  <listener port="6669" network="MyNetwork" password="MyPass"/>
-- <nickserv> is now below the "nickserv" <plugin> node as 
-  <nick> rather then under a network. For example:
-
-  <nick nick="mynick" password="mypass"/>
-
-  The network attribute for this element is optional.
-- the "strip", "report_time", "linestack_file", "ctcp" and "repl_none" 
-  modules have been merged into the main program and should no longer be 
-  included in any configuration files
-- the <autosend> element is now handled by the new "autosend" module. Move 
-  any elements from <network> to the configuration of this module, 
-  with an option attribute for the network name.
+The configuration is now maintained as a set of flat-text files in 
+~/.ctrlproxy/. Any existing configuration files can be upgraded by 
+running the upgrade utility avaiable in the directory 'scripts' in 
+the source tarball.
