@@ -22,8 +22,9 @@ report-time = false
 
 autosave = true
 
-# Networks to connect to on startup
+# Networks to connect to on startup. Seperate by semicolons
 autoconnect = admin
+# autoconnect = admin;irc.oftc.net;irc.freenode.net;
 
 # Support for interfacing to ctrlproxy 
 # using /MSG ctrlproxy or /CTRLPROXY -->
