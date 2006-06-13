@@ -340,8 +340,14 @@ static void file_write_target(struct log_custom_data *data, struct network *netw
 	
 	fmt = g_key_file_get_string(data->kf, "log-custom", n, NULL);
 	if(!fmt) return;
+	
+	g_assert(l->args[0]);
+	g_assert(l->args[1]);
+	g_assert(network->state);
+	g_assert(network->state->me.nick);
+	g_assert(network->state->info);
 
-	if(!irccmp(network->state->info, network->state->me.nick, l->args[1])) {
+	if (!irccmp(network->state->info, network->state->me.nick, l->args[1])) {
 		if (l->origin) t = line_get_nick(l);
 		else t = g_strdup("_messages_");
 	} else {
