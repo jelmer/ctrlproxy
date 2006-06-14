@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd" [
 <!ENTITY install SYSTEM "install.xml">
-<!ENTITY syntax SYSTEM "syntax.xml">
 <!ENTITY clients SYSTEM "clients.xml">
 <!ENTITY introduction SYSTEM "introduction.xml">
 ]>
@@ -36,7 +35,6 @@
 
 <part id="configuration">
 	<title>Configuration</title>
-	&syntax;
 	&clients;
 </part>
 
