@@ -17,19 +17,40 @@ CFLAGS+=-ansi -Wall -DMODULESDIR=\"$(modulesdir)\" -DSTRICT_MEMORY_ALLOCS=
 
 all: $(BINS) $(MODS_SHARED_FILES) 
 
-objs = network.o posix.o client.o cache.o line.o state.o util.o hooks.o linestack.o plugins.o settings.o isupport.o log.o redirect.o gen_config.o repl.o linestack_file.o ctcp.o motd.o nickserv.o admin.o user.o
+objs = src/network.o \
+	   src/posix.o \
+	   src/client.o \
+	   src/cache.o \
+	   src/line.o \
+	   src/state.o \
+	   src/util.o \
+	   src/hooks.o \
+	   src/linestack.o \
+	   src/plugins.o \
+	   src/settings.o \
+	   src/isupport.o \
+	   src/log.o \
+	   src/redirect.o \
+	   src/gen_config.o \
+	   src/repl.o \
+	   src/linestack_file.o \
+	   src/ctcp.o \
+	   src/motd.o \
+	   src/nickserv.o \
+	   src/admin.o \
+	   src/user.o
 dep_files = $(patsubst %.o, %.d, $(objs)) $(patsubst %.c, %.d, $(wildcard mods/*.c))
 
-ctrlproxy$(EXEEXT): main.o $(objs)
+ctrlproxy$(EXEEXT): src/main.o $(objs)
 	@echo Linking $@
 	@$(CC) $(LIBS) -rdynamic -o $@ $^
 
 .c.o:
 	@echo Compiling $<
-	@$(CC) -I. $(CFLAGS) $(GCOV_CFLAGS) -c $< -o $@
+	@$(CC) -I. -Isrc $(CFLAGS) $(GCOV_CFLAGS) -c $< -o $@
 
 %.d: %.c
-	@$(CC) -I. -M -MG -MP -MT $(<:.c=.o) $(CFLAGS) $< -o $@
+	@$(CC) -I. -Isrc -M -MG -MP -MT $(<:.c=.o) $(CFLAGS) $< -o $@
 
 configure: autogen.sh configure.ac acinclude.m4 $(wildcard mods/*/*.m4)
 	./$<
