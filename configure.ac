@@ -22,7 +22,7 @@ fi
 AC_DEFINE_UNQUOTED(VERSION,"$VERSION$BZRVERSION", [ Package version])
 AC_SUBST(PACKAGE)
 AC_SUBST(VERSION)
-AC_CONFIG_SRCDIR([line.c])
+AC_CONFIG_SRCDIR([src/line.c])
 AC_CONFIG_HEADER([config.h])
 
 # Checks for programs.
