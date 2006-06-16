@@ -4,7 +4,6 @@ autom4te.cache
 config.h
 config.h.in
 config.log
-config.log
 config.status
 configure
 ctrlproxy
@@ -40,13 +39,10 @@ po/Makefile.in
 po/POTFILES
 po/ctrlproxy.pot
 po/stamp-po
-rfctester/ircdtorture
-rfctester/test-*.so
 tags
 testlinestack
 testsuite/*.so
 testsuite/ctrlproxyrc.torture
-testsuite/torture
 mods/python2/__init__.py
 testsuite/test-state
 doc/*.html

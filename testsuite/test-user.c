@@ -21,25 +21,24 @@
 #include <unistd.h>
 #include <string.h>
 #include <check.h>
-#include "ctrlproxy.h"
+#include "internals.h"
 
-START_TEST(test_rfccmp)
-	fail_if (str_rfc1459cmp("abcde", "ABCDE") != 0);
-	fail_if (str_rfc1459cmp("abcde~{}", "ABCDE^[]") != 0);
-	fail_if (str_asciicmp("abcde", "ABCDE") != 0);
-	fail_if (str_asciicmp("abcde[]", "ABCDE[]") != 0);
-	fail_if (str_asciicmp("abcde{}", "ABCDE[]") == 0);
-	fail_if (str_strictrfc1459cmp("abcde{}", "ABCDE[]") != 0);
-	fail_if (str_strictrfc1459cmp("abcde{}^", "ABCDE[]~") == 0);
-	fail_if (str_strictrfc1459cmp("abcde{}", "abcde{}") != 0);
-	fail_if (str_strictrfc1459cmp("abcde{}^", "abcde{}") == 0);
+START_TEST(test_create)
+	struct global *gl;
+	
+	gl = new_global(DEFAULT_CONFIG_DIR);
+
+	fail_if(gl == NULL, "new_global returned NULL");
+
+	free_global(gl);
 END_TEST
 
-Suite *cmp_suite()
+Suite *user_suite()
 {
-	Suite *s = suite_create("cmp");
+	Suite *s = suite_create("testsuite");
 	TCase *tc_core = tcase_create("core");
 	suite_add_tcase(s, tc_core);
-	tcase_add_test(tc_core, test_rfccmp);
+	tcase_add_test(tc_core, test_create);
 	return s;
 }
+
