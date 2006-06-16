@@ -186,6 +186,7 @@ static void free_channel(struct channel_state *c)
 	g_free(c->name);
 	g_free(c->topic);
 	g_free(c->key);
+	g_assert(c->network);
 	c->network->channels = g_list_remove(c->network->channels, c);
 	g_free(c);
 }
@@ -843,9 +844,7 @@ void free_network_state(struct network_state *state)
 		return;
 
 	while(state->channels)
-	{
 		free_channel((struct channel_state *)state->channels->data);
-	}
 
 	g_free(state->me.nick);
 	g_free(state->me.username);
@@ -1070,9 +1069,11 @@ static gboolean marshall_network_state (struct network_state *nst, enum marshall
 {
 	gboolean ret = TRUE;
 
+	ret &= marshall_network_nick(n, m, t, &n->me);
 	ret &= marshall_GList(n, m, t, &n->nicks, (marshall_fn_t)marshall_network_nick_p);
 	ret &= marshall_GList(n, m, t, &n->channels, (marshall_fn_t)marshall_channel_state);
-	ret &= marshall_network_nick(n, m, t, &n->me);
+
+	g_assert(n->me.nick);
 
 	return ret;
 }

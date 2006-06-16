@@ -35,7 +35,7 @@
 
 struct log_custom_data {
     char *logfilename;
-    GHashTable *fmts;
+	GKeyFile *kf;
     GHashTable *files;
 };
 
@@ -48,48 +48,56 @@ struct log_mapping {
 	char *(*callback) (struct network *, const struct line *l, gboolean case_sensitive);
 };
 
-static char *get_hours(struct network *n, const struct line *l, gboolean case_sensitive) { 
+static char *get_hours(struct network *n, const struct line *l, gboolean case_sensitive) 
+{ 
 	time_t ti = time(NULL);
 	struct tm *t = localtime(&ti);
 	return g_strdup_printf("%02d", t->tm_hour);
 }
 
-static char *get_minutes(struct network *n, const struct line *l, gboolean case_sensitive) { 
+static char *get_minutes(struct network *n, const struct line *l, gboolean case_sensitive) 
+{ 
 	time_t ti = time(NULL);
 	struct tm *t = localtime(&ti);
 	return g_strdup_printf("%02d", t->tm_min);
 }
 
-static char *get_seconds(struct network *n, const struct line *l, gboolean case_sensitive) { 
+static char *get_seconds(struct network *n, const struct line *l, gboolean case_sensitive) 
+{ 
 	time_t ti = time(NULL);
 	struct tm *t = localtime(&ti);
 	return g_strdup_printf("%02d", t->tm_sec);
 }
 
-static char *get_seconds_since_1970(struct network *n, const struct line *l, gboolean case_sensitive) {
+static char *get_seconds_since_1970(struct network *n, const struct line *l, gboolean case_sensitive) 
+{
 	time_t ti = time(NULL);
 	return g_strdup_printf("%ld", ti);
 }
 
-static char *get_day(struct network *n, const struct line *l, gboolean case_sensitive) { 
+static char *get_day(struct network *n, const struct line *l, gboolean case_sensitive) 
+{ 
 	time_t ti = time(NULL);
 	struct tm *t = localtime(&ti);
 	return g_strdup_printf("%02d", t->tm_mday);
 }
 
-static char *get_month(struct network *n, const struct line *l, gboolean case_sensitive) { 
+static char *get_month(struct network *n, const struct line *l, gboolean case_sensitive) 
+{ 
 	time_t ti = time(NULL);
 	struct tm *t = localtime(&ti);
 	return g_strdup_printf("%02d", t->tm_mon + 1);
 }
 
-static char *get_year(struct network *n, const struct line *l, gboolean case_sensitive) { 
+static char *get_year(struct network *n, const struct line *l, gboolean case_sensitive) 
+{ 
 	time_t ti = time(NULL);
 	struct tm *t = localtime(&ti);
 	return g_strdup_printf("%04d", t->tm_year + 1900);
 }
 
-static char *get_user(struct network *n, const struct line *l, gboolean case_sensitive) {
+static char *get_user(struct network *n, const struct line *l, gboolean case_sensitive) 
+{
 	char *nick = NULL;
 	char *user = NULL;
 
@@ -101,14 +109,16 @@ static char *get_user(struct network *n, const struct line *l, gboolean case_sen
 	else return g_strdup(user);
 }
 
-static char *get_monthname(struct network *n, const struct line *l, gboolean case_sensitive) { 
+static char *get_monthname(struct network *n, const struct line *l, gboolean case_sensitive) 
+{ 
 	char stime[512];
 	time_t ti = time(NULL);
 	strftime(stime, sizeof(stime), "%b", localtime(&ti));
 	return g_strdup_printf("%s", stime);
 }
 
-static char *get_nick(struct network *n, const struct line *l, gboolean case_sensitive) {
+static char *get_nick(struct network *n, const struct line *l, gboolean case_sensitive) 
+{
 	if (l->origin) {
 		char *n = line_get_nick(l);
 		if(case_sensitive) {
@@ -327,11 +337,17 @@ static void file_write_target(struct log_custom_data *data, struct network *netw
 {
 	char *t, *s, *fmt;
 	FILE *f;
-
-	fmt = g_hash_table_lookup(data->fmts, n);
+	
+	fmt = g_key_file_get_string(data->kf, "log-custom", n, NULL);
 	if(!fmt) return;
+	
+	g_assert(l->args[0]);
+	g_assert(l->args[1]);
+	g_assert(network->state);
+	g_assert(network->state->me.nick);
+	g_assert(network->state->info);
 
-	if(!irccmp(network->state->info, network->state->me.nick, l->args[1])) {
+	if (!irccmp(network->state->info, network->state->me.nick, l->args[1])) {
 		if (l->origin) t = line_get_nick(l);
 		else t = g_strdup("_messages_");
 	} else {
@@ -356,7 +372,7 @@ static void file_write_channel_only(struct log_custom_data *data, struct network
 	char *s, *fmt;
 	FILE *f;
 
-	fmt = g_hash_table_lookup(data->fmts, n);
+	fmt = g_key_file_get_string(data->kf, "log-custom", n, NULL);
 	if(!fmt) return;
 
 	f = find_add_channel_file(data, network, l, l->args[1], TRUE);
@@ -381,7 +397,7 @@ static void file_write_channel_query(struct log_custom_data *data, struct networ
 	if (!l->origin) return;
 	nick = line_get_nick(l);
 
-	fmt = g_hash_table_lookup(data->fmts, n);
+	fmt = g_key_file_get_string(data->kf, "log-custom", n, NULL);
 	if(!fmt) {
 		g_free(nick);
 		return;
@@ -499,8 +515,6 @@ static void load_config(struct global *global)
 {
     GKeyFile *kf = global->config->keyfile;
     struct log_custom_data *data;
-    char **varnames;
-    int i; gsize len;
     
     if (!g_key_file_has_group(kf, "log-custom")) {
 	    del_log_filter("log_custom");
@@ -512,14 +526,8 @@ static void load_config(struct global *global)
 	add_log_filter("log_custom", log_custom_data, data, 1000);
 
 	data->files = g_hash_table_new(g_str_hash, g_str_equal);
-	data->fmts = g_hash_table_new(g_str_hash, g_str_equal);
     data->logfilename = g_key_file_get_string(kf, "log-custom", "logfilename", NULL);
-
-    varnames = g_key_file_get_keys(kf, "log-custom", &len, NULL);
-    for (i = 0; i < len; i++) {
-	    g_hash_table_insert(data->fmts, varnames[i], g_key_file_get_string(kf, "log-custom", varnames[i], NULL));
-    }
-    g_free(varnames);
+	data->kf = kf;
 }
 
 static gboolean init_plugin(void)

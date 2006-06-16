@@ -1,0 +1,4 @@
+- SSL support is broken
+- Some of the documentation is outdated
+
+see http://bugs.bitlbee.org/ctrlproxy/ for a full list of known bugs.

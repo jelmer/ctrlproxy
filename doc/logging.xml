@@ -18,25 +18,6 @@
 	network.</para>
 
 	<para>If no directory is specified, data will be logged to <filename>$HOME/.ctrlproxy/log_irssi/$NETWORK/$CHANNEL</filename>.</para>
-
-	<example>
-		<![CDATA[
-		<ctrlproxy>
-			<plugins>
-				<plugin autoload="1" file="log_irssi">
-					<logfile>/home/jelmer/log/ctrlproxy</logfile>
-				</plugin>
-			</plugins>
-
-			<networks>
-				<network name="OFTC">
-					<servers><ipv4 host="irc.oftc.net"/></servers>
-					<channel name="#flood"/>
-				</network>
-			</networks>
-		</ctrlproxy>
-		]]>
-	</example>
 </sect1>
 
 <sect1>
@@ -229,32 +210,6 @@
 		</sect3>
 	</sect2>
 
-	<sect2>
-		<title>Example</title>
-
-	<example>
-		<![CDATA[
-		<ctrlproxy>
-			<plugins>
-				<plugin autoload="1" file="log_custom">
-					<logfile>/home/jelmer/log/ctrlproxy/%@</logfile>
-					<join>%h%M%s -!- User %n [%u] has joined %c</join>
-					<part>%h%M%s -!- User %n [%u] has left %c [%m]</part>
-					<quit>%h%M%s -!- User %n [%u] has quit [%m]</quit>
-					<action>%h%M%s * %n %m</action>
-				</plugin>
-			</plugins>
-
-			<networks>
-				<network name="OFTC">
-					<servers><ipv4 host="irc.oftc.net"/></servers>
-					<channel name="#flood"/>
-				</network>
-			</networks>
-		</ctrlproxy>
-		]]>
-	</example>
-</sect2>
 </sect1>
 
 </chapter>

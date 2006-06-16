@@ -1,4 +1,3 @@
-
 /*
     ircdtorture: an IRC RFC compliancy tester
 	(c) 2005 Jelmer Vernooij <jelmer@nl.linux.org>
@@ -18,30 +17,26 @@
 	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 */
 
-#include "torture.h"
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
+#include <check.h>
 #include "ctrlproxy.h"
 
 gboolean network_nick_set_nick(struct network_nick *, const char *);
 gboolean network_nick_set_hostmask(struct network_nick *, const char *);
 
-static int state_init(void)
-{
+START_TEST(state_init)
 	struct network_state *ns = network_state_init(NULL, "bla", "Gebruikersnaam", "Computernaam");
 
-	if (!ns) return -1;
+	fail_if(ns == NULL, "network_state_init returned NULL");
 
-	if (strcmp(ns->me.nick, "bla") != 0) return -2;
-	if (strcmp(ns->me.username, "Gebruikersnaam") != 0) return -3;
-	if (strcmp(ns->me.hostname, "Computernaam") != 0) return -4;
+	fail_unless (strcmp(ns->me.nick, "bla") == 0);
+	fail_unless (strcmp(ns->me.username, "Gebruikersnaam") == 0);
+	fail_unless (strcmp(ns->me.hostname, "Computernaam") == 0);
 
-	if (g_list_length(ns->channels) != 0)
-		return -5;
-
-	return 0;
-}
+	fail_unless (g_list_length(ns->channels) == 0);
+END_TEST
 
 static void state_process(struct network_state *ns, const char *line)
 {
@@ -52,95 +47,76 @@ static void state_process(struct network_state *ns, const char *line)
 	free_line(l);
 }
 
-static int state_join(void)
-{
+START_TEST(state_join)
 	struct network_state *ns = network_state_init(NULL, "bla", "Gebruikersnaam", "Computernaam");
 	struct channel_state *cs;
 
-	if (!ns) return -1;
+	fail_if (!ns);
 
 	state_process(ns, ":bla!user@host JOIN #examplechannel");
 
-	if (g_list_length(ns->channels) != 1)
-		return -1;
+	fail_unless (g_list_length(ns->channels) == 1);
 	
 	cs = ns->channels->data;
 
-	if (strcmp(cs->name, "#examplechannel") != 0)
-		return -2;
+	fail_unless (strcmp(cs->name, "#examplechannel") == 0);
+END_TEST
 
-	return 0;
-}
-
-static int state_part(void)
-{
+START_TEST(state_part)
 	struct network_state *ns = network_state_init(NULL, "bla", "Gebruikersnaam", "Computernaam");
 	struct channel_state *cs;
 
-	if (!ns) return -1;
+	fail_if (!ns);
 
 	state_process(ns, ":bla!user@host JOIN #examplechannel");
 
-	if (g_list_length(ns->channels) != 1)
-		return -1;
+	fail_unless (g_list_length(ns->channels) == 1);
 	
 	cs = ns->channels->data;
 
-	if (strcmp(cs->name, "#examplechannel") != 0)
-		return -2;
+	fail_unless (strcmp(cs->name, "#examplechannel") == 0);
 	
 	state_process(ns, ":bla!user@host PART #examplechannel");
 
-	if (g_list_length(ns->channels) != 0)
-		return -3;
+	fail_unless (g_list_length(ns->channels) == 0);
+END_TEST
 
-	return 0;
-}
-
-static int state_nick_change(void)
-{
+START_TEST(state_nick_change)
 	struct network_state *ns = network_state_init(NULL, "bla", "Gebruikersnaam", "Computernaam");
 
-	if (!ns) return -1;
+	fail_if(ns == NULL);
 
 	state_process(ns, ":bla!user@host NICK blie");
 
-	return strcmp(ns->me.nick, "blie");
-}
+	fail_unless(strcmp(ns->me.nick, "blie") == 0);
+END_TEST
 
-static int state_set_nick(void)
-{
+START_TEST(state_set_nick)
 	struct network_nick nn;
 	memset(&nn, 0, sizeof(nn));
 	
-	if (!network_nick_set_nick(&nn, "mynick")) return -5;
-	if (strcmp(nn.nick, "mynick") != 0) return -1;
-	if (strcmp(nn.hostmask, "mynick!~(null)@(null)") != 0) return -2;
-	if (!network_nick_set_nick(&nn, "mynick")) return -6;
-	if (strcmp(nn.nick, "mynick") != 0) return -3;
-	if (strcmp(nn.hostmask, "mynick!~(null)@(null)") != 0) return -4;
+	fail_if (!network_nick_set_nick(&nn, "mynick"));
+	fail_unless (strcmp(nn.nick, "mynick") == 0);
+	fail_unless (strcmp(nn.hostmask, "mynick!~(null)@(null)") == 0);
+	fail_if (!network_nick_set_nick(&nn, "mynick"));
+	fail_unless (strcmp(nn.nick, "mynick") == 0);
+	fail_unless (strcmp(nn.hostmask, "mynick!~(null)@(null)") == 0);
+END_TEST
 
-	return 0;
-}
-
-static int state_set_hostmask(void)
-{
+START_TEST(state_set_hostmask)
 	struct network_nick nn;
 	memset(&nn, 0, sizeof(nn));
 
-	if (!network_nick_set_hostmask(&nn, "ikke!~uname@uhost")) return -3;
-	if (!nn.nick || strcmp(nn.nick, "ikke") != 0) return -4;
-	if (!nn.username || strcmp(nn.username, "~uname") != 0) return -5;
-	if (!nn.hostname || strcmp(nn.hostname, "uhost") != 0) return -6;
-	if (!network_nick_set_hostmask(&nn, "ikke!~uname@uhost")) return -7;
+	fail_if (!network_nick_set_hostmask(&nn, "ikke!~uname@uhost"));
+	fail_if (!nn.nick || strcmp(nn.nick, "ikke") != 0);
+	fail_if (!nn.username || strcmp(nn.username, "~uname") != 0);
+	fail_if (!nn.hostname || strcmp(nn.hostname, "uhost") != 0);
+	fail_if (!network_nick_set_hostmask(&nn, "ikke!~uname@uhost"));
 
-	if (network_nick_set_hostmask(&nn, "ikkeongeldig")) return -8;
+	fail_if (network_nick_set_hostmask(&nn, "ikkeongeldig"));
+END_TEST
 
-	return 0;
-}
-
-static int state_marshall_simple(void)
-{
+START_TEST(state_marshall_simple)
 	struct network_state *s, *t;
 	size_t len1, len2;
 	char *data1, *data2;
@@ -150,29 +126,32 @@ static int state_marshall_simple(void)
 	t = network_state_decode(data1, len1, NULL);
 	data2 = network_state_encode(s, &len2);
 
-	if (len1 != len2) return -1;
+	fail_unless (len1 == len2);
 
-	if (memcmp(data1, data2, len1) != 0) return -2;
+	fail_unless (memcmp(data1, data2, len1) == 0);
 
-	if (strcmp(s->me.nick, t->me.nick) != 0) return -3;
-	if (strcmp(s->me.username, t->me.username) != 0) return -3;
-	if (strcmp(s->me.hostname, t->me.hostname) != 0) return -4;
+	fail_unless (strcmp(s->me.nick, t->me.nick) == 0);
+	fail_unless (strcmp(s->me.username, t->me.username) == 0);
+	fail_unless (strcmp(s->me.hostname, t->me.hostname) == 0);
 
 	free_network_state(t);
-
-	return 0;
-}
+END_TEST
 
 gboolean init_log(const char *lf);
 
-void torture_init(void)
+Suite *state_suite(void)
 {
+	Suite *s = suite_create("state");
+	TCase *tc_core = tcase_create("Core");
+	suite_add_tcase(s, tc_core);
+	tcase_add_test(tc_core, state_init);
+	/* FIXME: Setup */
 	init_log("test-state");
-	register_test("STATE-INIT", state_init);
-	register_test("STATE-JOIN", state_join);
-	register_test("STATE-PART", state_part);
-	register_test("STATE-SETNICK", state_set_nick);
-	register_test("STATE-SETHOSTMASK", state_set_hostmask);
-	register_test("STATE-NICK-CHANGE", state_nick_change);
-	register_test("MARSHALL-SIMPLE", state_marshall_simple);
+	tcase_add_test(tc_core, state_join);
+	tcase_add_test(tc_core, state_part);
+	tcase_add_test(tc_core, state_set_nick);
+	tcase_add_test(tc_core, state_set_hostmask);
+	tcase_add_test(tc_core, state_nick_change);
+	tcase_add_test(tc_core, state_marshall_simple);
+	return s;
 }

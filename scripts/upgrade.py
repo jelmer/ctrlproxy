@@ -240,7 +240,7 @@ class IniFile(object):
         for var in self.conf[section]:
             print "%s = %s" % (var, self.conf[section][var])
 
-conf = IniFile({'global':{}})
+conf = IniFile({'global':{'autoconnect':[]}})
 networks = {}
 listeners = IniFile()
 warnings = []

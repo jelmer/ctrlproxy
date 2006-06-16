@@ -17,15 +17,40 @@ CFLAGS+=-ansi -Wall -DMODULESDIR=\"$(modulesdir)\" -DSTRICT_MEMORY_ALLOCS=
 
 all: $(BINS) $(MODS_SHARED_FILES) 
 
-objs = network.o posix.o client.o cache.o line.o state.o util.o hooks.o linestack.o plugins.o settings.o isupport.o log.o redirect.o gen_config.o repl.o linestack_file.o ctcp.o motd.o nickserv.o admin.o
+objs = src/network.o \
+	   src/posix.o \
+	   src/client.o \
+	   src/cache.o \
+	   src/line.o \
+	   src/state.o \
+	   src/util.o \
+	   src/hooks.o \
+	   src/linestack.o \
+	   src/plugins.o \
+	   src/settings.o \
+	   src/isupport.o \
+	   src/log.o \
+	   src/redirect.o \
+	   src/gen_config.o \
+	   src/repl.o \
+	   src/linestack_file.o \
+	   src/ctcp.o \
+	   src/motd.o \
+	   src/nickserv.o \
+	   src/admin.o \
+	   src/user.o
+dep_files = $(patsubst %.o, %.d, $(objs)) $(patsubst %.c, %.d, $(wildcard mods/*.c))
 
-ctrlproxy$(EXEEXT): main.o $(objs)
+ctrlproxy$(EXEEXT): src/main.o $(objs)
 	@echo Linking $@
 	@$(CC) $(LIBS) -rdynamic -o $@ $^
 
 .c.o:
 	@echo Compiling $<
-	@$(CC) -I. $(CFLAGS) $(GCOV_CFLAGS) -c $< -o $@
+	@$(CC) -I. -Isrc $(CFLAGS) $(GCOV_CFLAGS) -c $< -o $@
+
+%.d: %.c
+	@$(CC) -I. -Isrc -M -MG -MP -MT $(<:.c=.o) $(CFLAGS) $< -o $@
 
 configure: autogen.sh configure.ac acinclude.m4 $(wildcard mods/*/*.m4)
 	./$<
@@ -44,12 +69,13 @@ install-dirs:
 
 install-bin:
 	$(INSTALL) ctrlproxy$(EXEEXT) $(DESTDIR)$(bindir)
+	$(INSTALL) scripts/upgrade.py $(DESTDIR)$(bindir)/ctrlproxy-upgrade 
 
 install-doc: doc
 	$(INSTALL) -m 644 ctrlproxy.h $(DESTDIR)$(destincludedir)
 	$(INSTALL) AUTHORS $(DESTDIR)$(docdir)
 	$(INSTALL) COPYING $(DESTDIR)$(docdir)
-	$(INSTALL) TODO $(DESTDIR)$(docdir)
+	$(INSTALL) BUGS $(DESTDIR)$(docdir)
 	$(INSTALL) UPGRADING $(DESTDIR)$(docdir)
 	$(MAKE) -C doc install PACKAGE_VERSION=$(PACKAGE_VERSION)
 
@@ -70,14 +96,19 @@ install-pkgconfig:
 gcov:
 	$(GCOV) -po . *.c 
 
-mods/lib%.so: mods/%.o
+mods/lib%.$(SHLIBEXT): mods/%.o
 	@echo Linking $@
 	@$(CC) $(LDFLAGS) -fPIC -shared -o $@ $^
 
 clean::
-	rm -f $(MODS_SHARED_FILES)
-	rm -f *.$(OBJEXT) ctrlproxy$(EXEEXT) printstats *~
-	rm -f *.gcov *.gcno *.gcda mods/*.o
+	@echo Removing .so files
+	@rm -f $(MODS_SHARED_FILES)
+	@echo Removing dependency files
+	@rm -f $(dep_files)
+	@echo Removing object files and executables
+	@rm -f src/*.o testsuite/check ctrlproxy$(EXEEXT) testsuite/*.o *~ mods/*.o
+	@echo Removing gcov output
+	@rm -f *.gcov *.gcno *.gcda 
 
 dist: distclean
 	$(MAKE) -C doc dist
@@ -95,6 +126,8 @@ mods/gnutls.o: CFLAGS+=$(GNUTLS_CFLAGS)
 mods/libgnutls.$(SHLIBEXT): LDFLAGS+=$(GNUTLS_LDFLAGS)
 mods/openssl.o: CFLAGS+=$(OPENSSL_CFLAGS)
 mods/libopenssl.$(SHLIBEXT): LDFLAGS+=$(OPENSSL_LDFLAGS)
+mods/liblinestack_sqlite.$(SHLIBEXT): LDFLAGS+=$(SQLITE_LDFLAGS)
+mods/linestack_sqlite.o: CFLAGS+=$(SQLITE_CFLAGS)
 
 # Python specific stuff below this line
 mods/python2.o ctrlproxy_wrap.o: CFLAGS+=$(PYTHON_CFLAGS)
@@ -127,18 +160,14 @@ testsuite/ctrlproxyrc.torture: testsuite/ctrlproxyrc.torture.in
 rfctest: testsuite/ctrlproxyrc.torture
 	@$(IRCDTORTURE) -- ./ctrlproxy -d 0 -i TEST -r $<
 
-# Regular testsuite
+# Unit tests
 
-$(patsubst testsuite/%.c,testsuite/lib%.$(SHLIBEXT),$(wildcard testsuite/test-*.c)): testsuite/lib%.so: testsuite/%.o $(objs)
-
-testsuite/lib%.so: 
+testsuite/check: testsuite/test-cmp.o testsuite/test-isupport.o testsuite/test-parser.o testsuite/test-state.o testsuite/test-util.o testsuite/torture.o $(objs)
 	@echo Linking $@
-	@$(CC) $(LIBS) $(CFLAGS) -shared -o $@ $^
+	@$(CC) $(LIBS) -o $@ $^ -lcheck
 
-test: testsuite/torture $(patsubst testsuite/%.c,testsuite/lib%.$(SHLIBEXT),$(wildcard testsuite/test-*.c)) 
+check: testsuite/check
 	@echo Running testsuite
-	@$(VALGRIND) ./$< $(patsubst %,./%,$(filter testsuite/libtest-%.$(SHLIBEXT),$^))
+	@$(VALGRIND) ./testsuite/check
 
-testsuite/torture: testsuite/torture.o 
-	@echo Linking $@
-	@$(CC) $(LIBS) -o $@ $^ 
+-include $(dep_files)

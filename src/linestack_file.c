@@ -118,6 +118,7 @@ static struct lf_network_data *get_data(struct linestack_context *ctx, const str
 			return NULL;
 		}
 		nd = g_new0(struct lf_network_data, 1);
+		nd->lines_since_last_state = STATE_DUMP_INTERVAL;
 		nd->file = file;
 		log_network(NULL, LOG_TRACE, n, "Creating new linestack file '%s'", path);
 		file_insert_state(nd, n);
@@ -156,7 +157,7 @@ static gboolean file_insert_line(struct linestack_context *ctx, const struct net
 	return (ret != EOF);
 }
 
-void *file_get_marker(struct linestack_context *ctx, struct network *n)
+static void *file_get_marker(struct linestack_context *ctx, struct network *n)
 {
 	long *pos;
 	struct lf_network_data *nd = get_data(ctx, n);
@@ -168,7 +169,7 @@ void *file_get_marker(struct linestack_context *ctx, struct network *n)
 	return pos;
 }
 
-static 	struct network_state * file_get_state (
+static struct network_state * file_get_state (
 		struct linestack_context *ctx, 
 		struct network *n, 
 		void *m)

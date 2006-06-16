@@ -22,7 +22,7 @@ fi
 AC_DEFINE_UNQUOTED(VERSION,"$VERSION$BZRVERSION", [ Package version])
 AC_SUBST(PACKAGE)
 AC_SUBST(VERSION)
-AC_CONFIG_SRCDIR([line.c])
+AC_CONFIG_SRCDIR([src/line.c])
 AC_CONFIG_HEADER([config.h])
 
 # Checks for programs.
@@ -58,6 +58,7 @@ AC_TYPE_SIGNAL
 AC_CHECK_FUNCS([gethostbyname gethostname memset strchr strerror strstr uname backtrace_symbols gettimeofday strrchr daemon])
 
 PKG_CHECK_MODULES(COMMON, glib-2.0 gmodule-2.0, , AC_MSG_ERROR([glib is required]))
+PKG_CHECK_MODULES(SQLITE, sqlite3, [DEFMODULE(linestack_sqlite)])
 
 ###############################################################################
 # NSS support

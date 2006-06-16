@@ -1,6 +1,6 @@
 /*
 	ctrlproxy: A modular IRC proxy
-	(c) 2002-2005 Jelmer Vernooij <jelmer@nl.linux.org>
+	(c) 2002-2006 Jelmer Vernooij <jelmer@nl.linux.org>
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -28,6 +28,19 @@ static gboolean delayed_connect_server(struct network *s);
 static gboolean connect_server(struct network *s);
 static gboolean close_server(struct network *s);
 static void reconnect(struct network *server, gboolean rm_source);
+
+struct new_network_notify_data {
+	new_network_notify_fn fn;
+	void *data;
+};
+
+void register_new_network_notify(struct global *global, new_network_notify_fn fn, void *userdata)
+{
+	struct new_network_notify_data *p = g_new0(struct new_network_notify_data, 1);
+	p->fn = fn;
+	p->data = userdata;
+	global->new_network_notifiers = g_list_append(global->new_network_notifiers, p);
+}
 
 static void server_send_login (struct network *s) 
 {
@@ -675,6 +688,7 @@ static gboolean delayed_connect_server(struct network *s)
 struct network *load_network(struct global *global, struct network_config *sc)
 {
 	struct network *s;
+	GList *gl;
 
 	g_assert(sc);
 
@@ -691,6 +705,13 @@ struct network *load_network(struct global *global, struct network_config *sc)
 	s->global = global;
 
 	global->networks = g_list_append(global->networks, s);
+
+	for (gl = global->new_network_notifiers; gl; gl = gl->next) {
+		struct new_network_notify_data *p = gl->data;
+
+		p->fn(s, p->data);
+	}
+
 	return s;
 }
 
@@ -904,3 +925,4 @@ void network_select_next_server(struct network *n)
 	log_network(NULL, LOG_INFO, n, "Trying next server");
 	n->connection.data.tcp.current_server = network_get_next_tcp_server(n);
 }
+

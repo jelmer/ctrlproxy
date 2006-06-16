@@ -53,7 +53,10 @@ void nickserv_identify_me(struct network *network, char *nick)
 	const char *pass;
 
 	/* Don't try to identify if we're already identified */
-	if (network->state->me.modes['R']) return;
+	/* FIXME: Apparently, +e indicates being registered on Freenode,
+	 * +R is only used on OFTC */
+	if (network->state->me.modes['R']) 
+		return;
 	
 	pass = nickserv_find_nick(network, nick);
 	
@@ -220,6 +223,7 @@ gboolean nickserv_load(struct global *global)
 
 	g_free(filename);
 
+	g_io_channel_shutdown(gio, TRUE, NULL);
 	g_io_channel_unref(gio);
 
 	return TRUE;

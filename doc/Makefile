@@ -1,5 +1,5 @@
 include ../Makefile.settings
-DOCS = ctrlproxy.1 ctrlproxyrc.5 user-guide.html user-guide/index.html ctrlproxy.1.html ctrlproxyrc.5.html
+DOCS = ctrlproxy.1 ctrlproxy_config.5 user-guide.html user-guide/index.html ctrlproxy.1.html ctrlproxy_config.5.html
 
 .PHONY: all manpages clean distclean
 
@@ -7,7 +7,7 @@ all: $(DOCS)
 
 dist: all
 
-manpages: ctrlproxy.1 ctrlproxyrc.5 
+manpages: ctrlproxy.1 ctrlproxy_config.5 
 
 %/index.html: %.xml
 	$(XSLTPROC) --stringparam base.dir "$(@D)/" http://docbook.sourceforge.net/release/xsl/current/html/chunk.xsl $<
@@ -33,5 +33,5 @@ install: all
 	$(INSTALL) -d $(DESTDIR)$(mandir)/man5
 	$(INSTALL) -d $(DESTDIR)$(docdir)
 	$(INSTALL) ctrlproxy.1 $(DESTDIR)$(mandir)/man1
-	$(INSTALL) ctrlproxyrc.5 $(DESTDIR)$(mandir)/man5
+	$(INSTALL) ctrlproxy_config.5 $(DESTDIR)$(mandir)/man5
 	$(INSTALL) user-guide.html $(DESTDIR)$(docdir)

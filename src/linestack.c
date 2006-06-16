@@ -53,7 +53,7 @@ struct linestack_context *new_linestack(struct ctrlproxy_config *cfg)
 	}
 
 	if (!current_backend) {
-		current_backend = linestack_backends->data;
+		current_backend = &linestack_file;
 	}
 
 	ctx = g_new0(struct linestack_context, 1);
@@ -96,10 +96,17 @@ struct network_state *linestack_get_state(
 		struct network *n, 
 		struct linestack_marker *lm)
 {
+	struct network_state *st;
 	if (!ctx->ops) return NULL;
 	if (!ctx->ops->get_state) return NULL;
 
-	return ctx->ops->get_state(ctx, n, lm?lm->data:NULL);
+	st = ctx->ops->get_state(ctx, n, lm?lm->data:NULL);
+	if (st == NULL)
+		return NULL;
+
+	g_assert(st->me.nick);
+	g_assert(st->me.query);
+	return st;
 }
 
 gboolean linestack_traverse(
