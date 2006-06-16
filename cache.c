@@ -172,29 +172,31 @@ static gboolean client_try_cache_names(struct client *c, struct line *l)
 	return TRUE;
 }
 
+struct cache_command {
+	const char *name;
+	/* Should return FALSE if command couldn't be cached */
+	gboolean (*try_cache) (struct client *c, struct line *l);
+} cache_commands[] = {
+	{ "JOIN", client_try_cache_join },
+	{ "MODE", client_try_cache_mode },
+	{ "NAMES", client_try_cache_names },
+	{ "TOPIC", client_try_cache_topic },
+	{ NULL, NULL }
+};
+
 /* Try to answer a client query from cache */
 gboolean client_try_cache(struct client *c, struct line *l)
 {
 	g_assert(l);
+	int i;
 
 	if (l->argc == 0) 
 		return TRUE;
 
-	if (!g_strcasecmp(l->args[0], "JOIN")) {
-		return client_try_cache_join(c, l);
+	for (i = 0; cache_commands[i].name; i++) {
+		if (!g_strcasecmp(l->args[0], cache_commands[i].name))
+			return cache_commands[i].try_cache(c, l);
 	}
 	
-	if (!g_strcasecmp(l->args[0], "MODE")) {
-		return client_try_cache_mode(c, l);
-	}
-
-	if (!g_strcasecmp(l->args[0], "NAMES")) {
-		return client_try_cache_names(c, l);
-	}
-
-	if (!g_strcasecmp(l->args[0], "TOPIC")) {
-		return client_try_cache_topic(c, l);
-	}
-
 	return FALSE;
 }
