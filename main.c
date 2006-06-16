@@ -38,8 +38,7 @@
 /* globals */
 static GMainLoop *main_loop;
 extern char my_hostname[];
-
-struct global *my_global;
+extern struct global *my_global;
 
 static void signal_crash(int sig) 
 {
@@ -129,68 +128,6 @@ static void signal_save(int sig)
 	nickserv_save(my_global, my_global->config->config_dir);
 }
 
-struct global *new_global(const char *config_dir)
-{
-	struct global *global = g_new0(struct global, 1);
-
-	global->config = load_configuration(config_dir);
-
-	load_networks(global, global->config);
-
-	nickserv_load(global);
-
-	if (!global->config) {
-		g_free(global);
-		return NULL;
-	}
-
-	global->linestack = new_linestack(global->config);
-
-	config_load_notify(global);
-	
-	return global;
-}
-
-void free_global(struct global *global)
-{
-	fini_networks(global);
-	free_config(global->config);
-	global->config = NULL;
-	free_linestack_context(global->linestack); global->linestack = NULL;
-	fini_networks(global);
-}
-
-static GList *load_notifies = NULL, *save_notifies = NULL;
-
-void register_load_config_notify(config_load_notify_fn fn)
-{
-	load_notifies = g_list_append(load_notifies, fn);
-}
-
-void register_save_config_notify(config_save_notify_fn fn)
-{
-	save_notifies = g_list_append(save_notifies, fn);
-}
-
-void config_load_notify(struct global *global)
-{
-	GList *gl;
-	for (gl = load_notifies; gl; gl = gl->next) {
-		config_load_notify_fn fn = gl->data;
-
-		fn(global);
-	}
-}
-
-void config_save_notify(struct global *global, const char *dest)
-{
-	GList *gl;
-	for (gl = save_notifies; gl; gl = gl->next) {
-		config_save_notify_fn fn = gl->data;
-
-		fn(global, dest);
-	}
-}
 
 int main(int argc, char **argv)
 {
