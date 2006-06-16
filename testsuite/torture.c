@@ -24,7 +24,7 @@
 #include <stdio.h>
 #include <glib.h>
 #include <gmodule.h>
-#include "../ctrlproxy.h"
+#include "ctrlproxy.h"
 #include <check.h>
 
 #define DEFAULT_TIMEOUT 1000

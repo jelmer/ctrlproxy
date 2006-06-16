@@ -21,7 +21,7 @@
 #include <string.h>
 #include <glib.h>
 #include <check.h>
-#include "../ctrlproxy.h"
+#include "ctrlproxy.h"
 
 START_TEST(test_list_make_string)
 	GList *gl = NULL;

@@ -21,7 +21,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <check.h>
-#include "../ctrlproxy.h"
+#include "ctrlproxy.h"
 
 START_TEST(test_rfccmp)
 	fail_if (str_rfc1459cmp("abcde", "ABCDE") != 0);

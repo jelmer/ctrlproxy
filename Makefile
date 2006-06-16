@@ -106,7 +106,7 @@ clean::
 	@echo Removing dependency files
 	@rm -f $(dep_files)
 	@echo Removing object files and executables
-	@rm -f *.$(OBJEXT) ctrlproxy$(EXEEXT) *~ mods/*.o
+	@rm -f src/*.o testsuite/check ctrlproxy$(EXEEXT) testsuite/*.o *~ mods/*.o
 	@echo Removing gcov output
 	@rm -f *.gcov *.gcno *.gcda 
 

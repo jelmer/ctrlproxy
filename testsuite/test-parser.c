@@ -2,7 +2,7 @@
 #include <malloc.h>
 #include <string.h>
 #include <check.h>
-#include "../line.h"
+#include "line.h"
 
 static const char *malformed[] = {
 	"PRIVMSG :foo :bar",
