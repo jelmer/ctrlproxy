@@ -54,3 +54,4 @@ debian/files
 debian/*.substvars
 doc/user-guide
 *.d
+testsuite/check

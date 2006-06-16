@@ -203,7 +203,7 @@ gboolean start_listener(struct listener *l)
 
 gboolean stop_listener(struct listener *l)
 {
-	log_global ( "listener", LOG_INFO, "Stopping listener at %s:%s", l->address?l->address:"", l->port);
+	log_global ( "listener", LOG_INFO, "Stopped listening at %s:%s", l->address?l->address:"", l->port);
 	g_source_remove(l->incoming_id);
 	return TRUE;
 }

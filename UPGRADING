@@ -3,5 +3,5 @@ Information for users upgrading from 2.6 or 2.7-preXX:
 
 The configuration is now maintained as a set of flat-text files in 
 ~/.ctrlproxy/. Any existing configuration files can be upgraded by 
-running the upgrade utility avaiable in the directory 'scripts' in 
+running the upgrade utility available in the directory 'scripts' in 
 the source tarball.

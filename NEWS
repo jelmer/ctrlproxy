@@ -91,4 +91,4 @@ Ctrlproxy 3.0	UNRELEASED
 
 	* Add ability to change NICK when away.
 
-	* Add help support in admin module (Daniel Poelzleithner)
+	* Add help support in admin module (Daniel Poelzleithner).
