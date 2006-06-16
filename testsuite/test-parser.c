@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <malloc.h>
 #include <string.h>
-#include "torture.h"
+#include <check.h>
 #include "../line.h"
 
 static const char *malformed[] = {
@@ -13,11 +13,11 @@ static const char *malformed[] = {
 	NULL
 };
 
-static int parser_malformed(void)
-{
+START_TEST(parser_malformed)
 	struct line *l;
 	char *raw;
 	int i;
+
 	for (i = 0; malformed[i]; i++) {
 		l = irc_parse_line(malformed[i]);
 		if (!l) continue;
@@ -25,30 +25,21 @@ static int parser_malformed(void)
 		free(raw);
 		free_line(l);
 	}
-
-	return 0;
-}
+END_TEST
 
 #define NUM_RUNS 200
 
-static int parser_random(void)
-{
+START_TEST(parser_random)
 	struct line *l;
 	char *raw;
 	char buf[4096];
 	FILE *f = fopen("/dev/urandom", "r");
 	int i;
 
-	if (!f) {
-		perror("Couldn't open /dev/urandom");
-		return -1;
-	}
+	fail_if (!f, "Couldn't open /dev/urandom");
 
 	for (i = 0; i < 200; i++) {
-		if (!fgets(buf, sizeof(buf)-2, f)) {
-			perror("error reading random data");
-			return -1;
-		}
+		fail_if (!fgets(buf, sizeof(buf)-2, f), "error reading random data");
 	
 		l = irc_parse_line(buf);
 		if (!l) continue;
@@ -58,25 +49,19 @@ static int parser_random(void)
 	}
 
 	fclose(f);
+END_TEST
 
-	return 0;
-}
-
-static int parser_vargs(void)
-{
+START_TEST(parser_vargs)
 	struct line *l = irc_parse_line_args( "FOO", "x", "y", NULL);
 
-	if (!l) return -1;
-	if (strcmp(l->origin, "FOO") != 0) return -2;
-	if (l->argc != 2) return -3;
-	if (strcmp(l->args[0], "x") != 0) return -4;
-	if (strcmp(l->args[1], "y") != 0) return -5;
+	fail_if (!l);
+	fail_if (strcmp(l->origin, "FOO") != 0);
+	fail_if (l->argc != 2);
+	fail_if (strcmp(l->args[0], "x") != 0);
+	fail_if (strcmp(l->args[1], "y") != 0);
+END_TEST
 
-	return 0;
-}
-
-static int parser_stringnl(void)
-{
+START_TEST( parser_stringnl)
 	struct line l;
 	char *ret;
 	char *args[] = { "x", "y", "z", NULL };
@@ -87,29 +72,24 @@ static int parser_stringnl(void)
 
 	ret = irc_line_string_nl(&l);
 
-	if (strcmp(ret, ":foobar x y z\r\n") != 0) return -1;
+	fail_if (strcmp(ret, ":foobar x y z\r\n") != 0);
+END_TEST
 
-	return 0;
-}
-
-static int parser_get_nick(void)
-{
+START_TEST(parser_get_nick)
 	struct line l;
 	char *nick;
 
 	l.origin = "foobar";
 	nick = line_get_nick(&l);
-	if (strcmp(nick, "foobar") != 0) { g_free(nick); return -3; }
+	fail_if (strcmp(nick, "foobar") != 0);
 	l.origin = "foobar!~username@userhost";
 	g_free(nick);
 	nick = line_get_nick(&l);
-	if (strcmp(nick, "foobar") != 0) { g_free(nick); return -4; }
+	fail_if (strcmp(nick, "foobar") != 0);
 	g_free(nick);
-	return 0;
-}
+END_TEST
 
-static int parser_dup(void)
-{
+START_TEST(parser_dup)
 	struct line l, *m;
 	char *args[] = { "x", "y", "z", NULL };
 	l.is_private = 1;
@@ -120,26 +100,28 @@ static int parser_dup(void)
 
 	m = linedup(&l);
 
-	if (l.is_private != m->is_private) return -1;
-	if (strcmp(l.origin, m->origin)) return -3;
-	if (l.argc != m->argc) return -4;
-	if (strcmp(l.args[0], m->args[0])) return -5;
-	if (strcmp(l.args[1], m->args[1])) return -6;
-	if (strcmp(l.args[2], m->args[2])) return -7;
+	fail_if (l.is_private != m->is_private);
+	fail_if (strcmp(l.origin, m->origin));
+	fail_if (l.argc != m->argc);
+	fail_if (strcmp(l.args[0], m->args[0]));
+	fail_if (strcmp(l.args[1], m->args[1]));
+	fail_if (strcmp(l.args[2], m->args[2]));
 
 	l.origin = NULL;
 	m = linedup(&l);
-	if (m->origin) return -8;
+	fail_if (m->origin);
+END_TEST
 
-	return 0;
-}
-
-void torture_init(void)
+Suite *parser_suite(void)
 {
-	register_test("PARSER-VARGS", parser_vargs);
-	register_test("PARSER-STRINGNL", parser_stringnl);
-	register_test("PARSER-MALFORMED", parser_malformed);
-	register_test("PARSER-RANDOM", parser_random);
-	register_test("PARSER-GETNICK", parser_get_nick);
-	register_test("PARSER-DUP", parser_dup);
+	Suite *s = suite_create("parser");
+	TCase *tcase = tcase_create("core");
+	suite_add_tcase(s, tcase);
+	tcase_add_test(tcase, parser_vargs);
+	tcase_add_test(tcase, parser_stringnl);
+	tcase_add_test(tcase, parser_malformed);
+	tcase_add_test(tcase, parser_random);
+	tcase_add_test(tcase, parser_get_nick);
+	tcase_add_test(tcase, parser_dup);
+	return s;
 }

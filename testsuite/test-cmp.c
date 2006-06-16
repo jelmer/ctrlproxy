@@ -17,26 +17,27 @@
 	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 */
 
-#include "torture.h"
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
+#include <check.h>
 #include "../ctrlproxy.h"
 
-int test_rfccmp(void)
-{
-	if (str_rfc1459cmp("abcde", "ABCDE") != 0) return -1;
-	if (str_rfc1459cmp("abcde~{}", "ABCDE^[]") != 0) return -2;
-	if (str_asciicmp("abcde", "ABCDE") != 0) return -3;
-	if (str_strictrfc1459cmp("abcde{}", "ABCDE[]") != 0) return -4;
-	if (str_strictrfc1459cmp("abcde{}^", "ABCDE[]~") == 0) return -5;
-	if (str_strictrfc1459cmp("abcde{}", "abcde{}") != 0) return -6;
-	if (str_strictrfc1459cmp("abcde{}^", "abcde{}") == 0) return -7;
+START_TEST(test_rfccmp)
+	fail_if (str_rfc1459cmp("abcde", "ABCDE") != 0);
+	fail_if (str_rfc1459cmp("abcde~{}", "ABCDE^[]") != 0);
+	fail_if (str_asciicmp("abcde", "ABCDE") != 0);
+	fail_if (str_strictrfc1459cmp("abcde{}", "ABCDE[]") != 0);
+	fail_if (str_strictrfc1459cmp("abcde{}^", "ABCDE[]~") == 0);
+	fail_if (str_strictrfc1459cmp("abcde{}", "abcde{}") != 0);
+	fail_if (str_strictrfc1459cmp("abcde{}^", "abcde{}") == 0);
+END_TEST
 
-	return 0;
-}
-
-void torture_init(void)
+Suite *cmp_suite()
 {
-	register_test("TEST-IRCCMP1459", test_rfccmp);
+	Suite *s = suite_create("cmp");
+	TCase *tc_core = tcase_create("core");
+	suite_add_tcase(s, tc_core);
+	tcase_add_test(tc_core, test_rfccmp);
+	return s;
 }

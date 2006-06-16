@@ -17,7 +17,7 @@ CFLAGS+=-ansi -Wall -DMODULESDIR=\"$(modulesdir)\" -DSTRICT_MEMORY_ALLOCS=
 
 all: $(BINS) $(MODS_SHARED_FILES) 
 
-objs = network.o posix.o client.o cache.o line.o state.o util.o hooks.o linestack.o plugins.o settings.o isupport.o log.o redirect.o gen_config.o repl.o linestack_file.o ctcp.o motd.o nickserv.o admin.o
+objs = network.o posix.o client.o cache.o line.o state.o util.o hooks.o linestack.o plugins.o settings.o isupport.o log.o redirect.o gen_config.o repl.o linestack_file.o ctcp.o motd.o nickserv.o admin.o user.o
 dep_files = $(patsubst %.o, %.d, $(objs)) $(patsubst %.c, %.d, $(wildcard mods/*.c))
 
 ctrlproxy$(EXEEXT): main.o $(objs)
@@ -139,20 +139,14 @@ testsuite/ctrlproxyrc.torture: testsuite/ctrlproxyrc.torture.in
 rfctest: testsuite/ctrlproxyrc.torture
 	@$(IRCDTORTURE) -- ./ctrlproxy -d 0 -i TEST -r $<
 
-# Regular testsuite
+# Unit tests
 
-$(patsubst testsuite/%.c,testsuite/lib%.$(SHLIBEXT),$(wildcard testsuite/test-*.c)): testsuite/lib%.$(SHLIBEXT): testsuite/%.o $(objs)
-
-testsuite/lib%.$(SHLIBEXT): 
+testsuite/check: testsuite/test-cmp.o testsuite/test-isupport.o testsuite/test-parser.o testsuite/test-state.o testsuite/test-util.o testsuite/torture.o $(objs)
 	@echo Linking $@
-	@$(CC) $(LIBS) $(CFLAGS) -shared -o $@ $^
+	@$(CC) $(LIBS) -o $@ $^ -lcheck
 
-test: testsuite/torture $(patsubst testsuite/%.c,testsuite/lib%.$(SHLIBEXT),$(wildcard testsuite/test-*.c)) 
+check: testsuite/check
 	@echo Running testsuite
-	@$(VALGRIND) ./$< $(patsubst %,./%,$(filter testsuite/libtest-%.$(SHLIBEXT),$^))
-
-testsuite/torture: testsuite/torture.o 
-	@echo Linking $@
-	@$(CC) $(LIBS) -o $@ $^ 
+	@$(VALGRIND) ./testsuite/check
 
 -include $(dep_files)

@@ -18,41 +18,36 @@
 	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 */
 
-#include "torture.h"
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
+#include <check.h>
 #include "ctrlproxy.h"
 
-static int isupport_isprefix(void)
+START_TEST(isupport_isprefix)
+	fail_if (!is_prefix('@', NULL));
+	fail_if (is_prefix('a', NULL));
+END_TEST
+
+START_TEST(isupport_ischannelname)
+	fail_if (!is_channelname("#bla", NULL));
+	fail_if (!is_channelname("&bla", NULL));
+	fail_if (is_channelname("bla", NULL));
+END_TEST
+
+START_TEST(isupport_prefixbymode)
+	fail_if (get_prefix_by_mode('o',NULL) != '@');
+	fail_if (get_prefix_by_mode('v',NULL) != '+');
+	fail_if (get_prefix_by_mode('x',NULL) != ' ');
+END_TEST
+
+Suite *isupport_suite(void)
 {
-	if (!is_prefix('@', NULL)) return -1;
-	if (is_prefix('a', NULL)) return -2;
-
-	return 0;
-}
-
-static int isupport_ischannelname(void)
-{
-	if (!is_channelname("#bla", NULL)) return -1;
-	if (!is_channelname("&bla", NULL)) return -2;
-	if (is_channelname("bla", NULL)) return -3;
-
-	return 0;
-}
-
-static int isupport_prefixbymode(void)
-{
-	if (get_prefix_by_mode('o',NULL) != '@') return -1;
-	if (get_prefix_by_mode('v',NULL) != '+') return -2;
-	if (get_prefix_by_mode('x',NULL) != ' ') return -3;
-
-	return 0;
-}
-
-void torture_init(void)
-{
-	register_test("ISUPPORT-ISPREFIX", isupport_isprefix);
-	register_test("ISUPPORT-ISCHANNELNAME", isupport_ischannelname);
-	register_test("ISUPPORT-PREFIXBYMODE", isupport_prefixbymode);
+	Suite *s = suite_create("isupport");
+	TCase *tc_core = tcase_create("core");
+	suite_add_tcase(s, tc_core);
+	tcase_add_test(tc_core, isupport_isprefix);
+	tcase_add_test(tc_core, isupport_ischannelname);
+	tcase_add_test(tc_core, isupport_prefixbymode);
+	return s;
 }

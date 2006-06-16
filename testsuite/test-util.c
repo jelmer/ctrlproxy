@@ -16,33 +16,33 @@
 	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 */
 
-#include "torture.h"
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
 #include <glib.h>
+#include <check.h>
 #include "../ctrlproxy.h"
 
-static int test_list_make_string(void)
-{
+START_TEST(test_list_make_string)
 	GList *gl = NULL;
 	char *ret;
 
 	ret = list_make_string(NULL);
-	if (strcmp(ret, "") != 0)
-		return -1;
+	fail_unless (strcmp(ret, "") == 0);
 
 	gl = g_list_append(gl, "bla");
 	gl = g_list_append(gl, "bloe");
 	
 	ret = list_make_string(gl);
-	if (strcmp(ret, "bla bloe") != 0)
-		return -2;
+	fail_unless (strcmp(ret, "bla bloe") == 0);
 	
-	return 0;
-}
+END_TEST
 
-void torture_init(void)
+Suite *util_suite(void)
 {
-	register_test("UTIL-LIST-STRING", test_list_make_string);
+	Suite *s = suite_create("util");
+	TCase *tc_core = tcase_create("Core");
+	suite_add_tcase(s, tc_core);
+	tcase_add_test(tc_core, test_list_make_string);
+	return s;
 }
