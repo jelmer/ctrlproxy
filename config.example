@@ -5,7 +5,7 @@
 [global]
 
 # Replication mechanism to use
-# Possible values: none, simple, highlight, disconnect
+# Possible values: none, simple, highlight, lastdisconnect
 replication = none
 
 # Override motd-file location

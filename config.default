@@ -5,11 +5,11 @@
 [global]
 
 # Replication mechanism to use (some other IRC proxies call this backlog)
-# Possible values: none, simple, highlight, disconnect
+# Possible values: none, simple, highlight, lastdisconnect
 # Meanings:
 # 	none: No backlog
 # 	simple: Send backlog since the user last said something
-# 	disconnect: Send backlog since the users' last disconnect
+# 	lastdisconnect: Send backlog since the users' last disconnect
 # 	highlight: Send backlog since last connect, but only lines 
 # 			   containing 'matches' (see below)
 replication = none
