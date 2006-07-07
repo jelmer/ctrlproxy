@@ -785,7 +785,7 @@ gboolean state_handle_data(struct network_state *s, struct line *l)
 {
 	int i,j;
 
-	if(!s || !l->args || !l->args[0])
+	if(!s || !l || !l->args || !l->args[0])
 		return FALSE;
 
 	for(i = 0; irc_commands[i].command; i++) {

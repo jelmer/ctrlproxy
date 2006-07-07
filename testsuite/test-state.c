@@ -48,7 +48,7 @@ static void state_process(struct network_state *ns, const char *line)
 	free_line(l);
 }
 
-START_TEST(state_join)
+START_TEST(state_join_me)
 	struct network_state *ns = network_state_init(NULL, "bla", "Gebruikersnaam", "Computernaam");
 	struct channel_state *cs;
 
@@ -62,6 +62,22 @@ START_TEST(state_join)
 
 	fail_unless (strcmp(cs->name, "#examplechannel") == 0);
 END_TEST
+
+START_TEST(state_join_other)
+	struct network_state *ns = network_state_init(NULL, "bla", "Gebruikersnaam", "Computernaam");
+	struct channel_state *cs;
+
+	fail_if (!ns);
+
+	state_process(ns, ":bla!user@host JOIN #examplechannel");
+	state_process(ns, ":foo!userx@host JOIN #examplechannel");
+
+	fail_unless (g_list_length(ns->channels) == 1);
+	
+	cs = ns->channels->data;
+	fail_unless (g_list_length(cs->nicks) == 2);
+END_TEST
+
 
 START_TEST(state_topic)
 	struct network_state *ns = network_state_init(NULL, "bla", "Gebruikersnaam", "Computernaam");
@@ -232,13 +248,35 @@ START_TEST(state_find_add_network_nick)
 	fail_if (find_add_network_nick(ns, "foo") == NULL);
 END_TEST
 
+START_TEST(state_handle_state_data)
+	struct network_state *ns = network_state_init(NULL, "bla", "Gebruikersnaam", "Computernaam");
+	struct line l;
+	const char *args1[] = {"JOIN", "#bla", NULL};
+	const char *args2[] = {"UNKNOWN", "#bla", NULL};
+
+	memset(&l, 0, sizeof(l));
+	l.origin = "foo";
+
+	fail_if(ns == NULL);
+
+	fail_unless (state_handle_data(ns, NULL) == FALSE);
+	fail_unless (state_handle_data(ns, &l) == FALSE);
+	l.argc = 2;
+	l.args = args1;
+	fail_unless (state_handle_data(ns, &l) == TRUE);
+	l.argc = 2;
+	l.args = args2;
+	fail_unless (state_handle_data(ns, &l) == FALSE);
+END_TEST
+
 Suite *state_suite(void)
 {
 	Suite *s = suite_create("state");
 	TCase *tc_core = tcase_create("Core");
 	suite_add_tcase(s, tc_core);
 	tcase_add_test(tc_core, state_init);
-	tcase_add_test(tc_core, state_join);
+	tcase_add_test(tc_core, state_join_me);
+	tcase_add_test(tc_core, state_join_other);
 	tcase_add_test(tc_core, state_topic);
 	tcase_add_test(tc_core, state_part);
 	tcase_add_test(tc_core, state_cycle);
@@ -251,5 +289,6 @@ Suite *state_suite(void)
 	tcase_add_test(tc_core, state_marshall_simple);
 	tcase_add_test(tc_core, state_find_network_nick);
 	tcase_add_test(tc_core, state_find_add_network_nick);
+	tcase_add_test(tc_core, state_handle_state_data);
 	return s;
 }
