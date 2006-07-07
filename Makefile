@@ -161,8 +161,11 @@ rfctest: testsuite/ctrlproxyrc.torture
 	@$(IRCDTORTURE) -- ./ctrlproxy -d 0 -i TEST -r $<
 
 # Unit tests
-
-testsuite/check: testsuite/test-cmp.o testsuite/test-user.o testsuite/test-isupport.o testsuite/test-parser.o testsuite/test-state.o testsuite/test-util.o testsuite/test-line.o testsuite/torture.o $(objs)
+check_objs = testsuite/test-cmp.o testsuite/test-user.o \
+			 testsuite/test-isupport.o testsuite/test-parser.o \
+			 testsuite/test-state.o testsuite/test-util.o \
+			 testsuite/test-line.o testsuite/torture.o 
+testsuite/check: $(check_objs) $(objs)
 	@echo Linking $@
 	@$(CC) $(LIBS) -o $@ $^ -lcheck
 

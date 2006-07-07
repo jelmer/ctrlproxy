@@ -404,7 +404,7 @@ static void handle_kick(struct network_state *s, struct line *l)
 
 		free_channel_nick(n);
 
-		if(!irccmp(s->info, nick, s->me.nick) && c) {
+		if(!irccmp(s->info, nicks[i], s->me.nick)) {
 			log_network_state(NULL, LOG_INFO, s, "Kicked off %s by %s", c->name, nick);
 			free_channel(c);
 		} else {
@@ -412,7 +412,7 @@ static void handle_kick(struct network_state *s, struct line *l)
 		}
 	}
 
-	if(channels[i] || nicks[i]) {
+	if (channels[i] || nicks[i]) {
 		log_network_state(NULL, LOG_WARNING, s, "KICK command has unequal number of channels and nicks");
 	}
 

@@ -81,6 +81,26 @@ START_TEST(state_part)
 	fail_unless (g_list_length(ns->channels) == 0);
 END_TEST
 
+START_TEST(state_kick)
+	struct network_state *ns = network_state_init(NULL, "bla", "Gebruikersnaam", "Computernaam");
+	struct channel_state *cs;
+
+	fail_if (!ns);
+
+	state_process(ns, ":bla!user@host JOIN #examplechannel");
+
+	fail_unless (g_list_length(ns->channels) == 1);
+	
+	cs = ns->channels->data;
+
+	fail_unless (strcmp(cs->name, "#examplechannel") == 0);
+	
+	state_process(ns, ":bloe!anotheruser@host KICK #examplechannel bla :Doei");
+
+	fail_unless (g_list_length(ns->channels) == 0);
+END_TEST
+
+
 START_TEST(state_nick_change)
 	struct network_state *ns = network_state_init(NULL, "bla", "Gebruikersnaam", "Computernaam");
 
@@ -141,18 +161,15 @@ START_TEST(state_marshall_simple)
 	free_network_state(t);
 END_TEST
 
-gboolean init_log(const char *lf);
-
 Suite *state_suite(void)
 {
 	Suite *s = suite_create("state");
 	TCase *tc_core = tcase_create("Core");
 	suite_add_tcase(s, tc_core);
 	tcase_add_test(tc_core, state_init);
-	/* FIXME: Setup */
-	init_log("test-state");
 	tcase_add_test(tc_core, state_join);
 	tcase_add_test(tc_core, state_part);
+	tcase_add_test(tc_core, state_kick);
 	tcase_add_test(tc_core, state_set_nick);
 	tcase_add_test(tc_core, state_set_hostmask);
 	tcase_add_test(tc_core, state_nick_change);

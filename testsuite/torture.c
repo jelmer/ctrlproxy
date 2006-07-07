@@ -36,19 +36,46 @@ Suite *cmp_suite(void);
 Suite *line_suite(void);
 Suite *parser_suite(void);
 Suite *user_suite(void);
+gboolean init_log(const char *file);
 
-int main (void)
+int main (int argc, char **argv)
 {
+	GOptionContext *pc;
+	gboolean no_fork = FALSE;
+	gboolean verbose = FALSE;
+	gboolean stderr_log = FALSE;
+	GOptionEntry options[] = {
+		{"no-fork", 'n', 0, G_OPTION_ARG_NONE, &no_fork, "Don't fork" },
+		{"stderr", 's', 0, G_OPTION_ARG_NONE, &stderr_log, "Log to stderr", NULL },
+		{"verbose", 'v', 0, G_OPTION_ARG_NONE, &verbose, "Be verbose", NULL },
+		{ NULL }
+	};
 	int nf;
-	SRunner *sr = srunner_create(util_suite());
+	SRunner *sr;
+
+	pc = g_option_context_new("");
+	g_option_context_add_main_entries(pc, options, NULL);
+
+	if(!g_option_context_parse(pc, &argc, &argv, NULL))
+		return 1;
+
+	g_option_context_free(pc);
+
+	if (stderr_log)
+		init_log(NULL);
+
+	sr = srunner_create(util_suite());
 	srunner_add_suite(sr, state_suite());
 	srunner_add_suite(sr, isupport_suite());
 	srunner_add_suite(sr, cmp_suite());
 	srunner_add_suite(sr, parser_suite());
 	srunner_add_suite(sr, user_suite());
 	srunner_add_suite(sr, line_suite());
-	srunner_run_all (sr, CK_NORMAL);
+	if (no_fork)
+		srunner_set_fork_status(sr, CK_NOFORK);
+	srunner_run_all (sr, verbose?CK_VERBOSE:CK_NORMAL);
 	nf = srunner_ntests_failed(sr);
 	srunner_free(sr);
+
 	return (nf == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
 }

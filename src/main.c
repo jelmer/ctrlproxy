@@ -144,7 +144,7 @@ int main(int argc, char **argv)
 	GOptionEntry options[] = {
 		{"inetd-client", 'i', 0, G_OPTION_ARG_STRING, &inetd_client, "Communicate with client to NETWORK via stdio", "NETWORK" },
 		{"debug-level", 'd', 'd', G_OPTION_ARG_INT, &current_log_level, ("Debug level [0-5]"), "LEVEL" },
-		{"no-timestamp", 'n', FALSE, G_OPTION_ARG_NONE, &no_log_timestamp, "No timestamps in logs" },
+		{"no-timestamp", 'n', 0, G_OPTION_ARG_NONE, &no_log_timestamp, "No timestamps in logs" },
 		{"daemon", 'D', 0, G_OPTION_ARG_NONE, &isdaemon, ("Run in the background (as a daemon)")},
 		{"init", 0, 0, G_OPTION_ARG_NONE, &init, "Create configuration" },
 		{"log", 'l', 0, G_OPTION_ARG_STRING, &logfile, ("Log messages to specified file"), ("FILE")},
