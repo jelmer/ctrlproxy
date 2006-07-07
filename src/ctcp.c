@@ -141,11 +141,10 @@ static void handle_version(struct network *n, const char *sender, char **args)
 
 static void handle_ping(struct network *n, const char *sender, char **args)
 {
-	ctcp_reply(n, sender, args[1], NULL);
+	ctcp_reply(n, sender, "PING", args[1], NULL);
 }
 
 static const struct ctcp_handler builtins[] = {
-	{ "PING", handle_ping },
 	{ "VERSION", handle_version },
 	{ "CLIENTINFO", handle_clientinfo },
 	{ "SOURCE", handle_source },
