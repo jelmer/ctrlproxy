@@ -25,6 +25,7 @@
 
 gboolean network_nick_set_nick(struct network_nick *, const char *);
 gboolean network_nick_set_hostmask(struct network_nick *, const char *);
+struct network_nick *find_add_network_nick(struct network_state *n, const char *name);
 
 START_TEST(state_init)
 	struct network_state *ns = network_state_init(NULL, "bla", "Gebruikersnaam", "Computernaam");
@@ -61,6 +62,21 @@ START_TEST(state_join)
 
 	fail_unless (strcmp(cs->name, "#examplechannel") == 0);
 END_TEST
+
+START_TEST(state_topic)
+	struct network_state *ns = network_state_init(NULL, "bla", "Gebruikersnaam", "Computernaam");
+	struct channel_state *cs;
+
+	fail_if (!ns);
+
+	state_process(ns, ":bla!user@host JOIN #examplechannel");
+	state_process(ns, "TOPIC #examplechannel :This is the topic");
+
+	cs = ns->channels->data;
+
+	fail_unless (strcmp(cs->topic, "This is the topic") == 0);
+END_TEST
+
 
 START_TEST(state_part)
 	struct network_state *ns = network_state_init(NULL, "bla", "Gebruikersnaam", "Computernaam");
@@ -123,8 +139,7 @@ START_TEST(state_kick)
 	fail_unless (g_list_length(ns->channels) == 0);
 END_TEST
 
-
-START_TEST(state_nick_change)
+START_TEST(state_nick_change_my)
 	struct network_state *ns = network_state_init(NULL, "bla", "Gebruikersnaam", "Computernaam");
 
 	fail_if(ns == NULL);
@@ -132,6 +147,19 @@ START_TEST(state_nick_change)
 	state_process(ns, ":bla!user@host NICK blie");
 
 	fail_unless(strcmp(ns->me.nick, "blie") == 0);
+END_TEST
+
+START_TEST(state_nick_change_other)
+	struct network_state *ns = network_state_init(NULL, "bla", "Gebruikersnaam", "Computernaam");
+
+	fail_if(ns == NULL);
+
+	state_process(ns, ":foo!user@bar PRIVMSG bla :Hi");
+
+	state_process(ns, ":foo!user@bar NICK blie");
+
+	fail_if (find_network_nick(ns, "foo") != NULL);
+	fail_if (find_network_nick(ns, "blie") == NULL);
 END_TEST
 
 START_TEST(state_set_nick)
@@ -184,6 +212,26 @@ START_TEST(state_marshall_simple)
 	free_network_state(t);
 END_TEST
 
+START_TEST(state_find_network_nick)
+	struct network_state *ns = network_state_init(NULL, "bla", "Gebruikersnaam", "Computernaam");
+
+	fail_if(ns == NULL);
+
+	state_process(ns, ":foo!user@host PRIVMSG bla :Hoi");
+
+	fail_unless(find_network_nick(ns, "foo") != NULL);
+	fail_unless(find_network_nick(ns, "foobla") == NULL);
+END_TEST
+
+START_TEST(state_find_add_network_nick)
+	struct network_state *ns = network_state_init(NULL, "bla", "Gebruikersnaam", "Computernaam");
+
+	fail_if(ns == NULL);
+
+	fail_if (find_add_network_nick(ns, "foo") == NULL);
+	fail_if (find_add_network_nick(ns, "foo") == NULL);
+END_TEST
+
 Suite *state_suite(void)
 {
 	Suite *s = suite_create("state");
@@ -191,12 +239,17 @@ Suite *state_suite(void)
 	suite_add_tcase(s, tc_core);
 	tcase_add_test(tc_core, state_init);
 	tcase_add_test(tc_core, state_join);
+	tcase_add_test(tc_core, state_topic);
 	tcase_add_test(tc_core, state_part);
 	tcase_add_test(tc_core, state_cycle);
 	tcase_add_test(tc_core, state_kick);
 	tcase_add_test(tc_core, state_set_nick);
+	tcase_add_test(tc_core, state_set_nick);
 	tcase_add_test(tc_core, state_set_hostmask);
-	tcase_add_test(tc_core, state_nick_change);
+	tcase_add_test(tc_core, state_nick_change_my);
+	tcase_add_test(tc_core, state_nick_change_other);
 	tcase_add_test(tc_core, state_marshall_simple);
+	tcase_add_test(tc_core, state_find_network_nick);
+	tcase_add_test(tc_core, state_find_add_network_nick);
 	return s;
 }

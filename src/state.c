@@ -224,7 +224,7 @@ struct channel_nick *find_channel_nick(struct channel_state *c, const char *name
 	g_assert(c);
 
 	g_assert(c->network);
-	if(is_prefix(realname[0], c->network->info))
+	if (is_prefix(realname[0], c->network->info))
 		realname++;
 
 	for (l = c->nicks; l; l = l->next) {
@@ -256,7 +256,7 @@ struct network_nick *find_network_nick(struct network_state *n, const char *name
 	return NULL;
 }
 
-static struct network_nick *find_add_network_nick(struct network_state *n, const char *name)
+struct network_nick *find_add_network_nick(struct network_state *n, const char *name)
 {
 	struct network_nick *nd;
 
@@ -269,6 +269,7 @@ static struct network_nick *find_add_network_nick(struct network_state *n, const
 
 	/* create one, if it doesn't exist */
 	nd = g_new0(struct network_nick,1);
+	g_assert(!is_prefix(name[0], n->info));
 	nd->nick = g_strdup(name);
 	
 	n->nicks = g_list_append(n->nicks, nd);
