@@ -74,22 +74,6 @@ static void client_send_banlist(struct client *client, struct channel_state *cha
 	client_send_response(client, RPL_ENDOFBANLIST, channel->name, "End of channel ban list", NULL);
 }
 
-static gboolean client_try_cache_join(struct client *c, struct line *l)
-{
-	struct channel_state *ch;
-
-	g_assert(c);
-	g_assert(l);
-
-	if (l->argc < 2) return FALSE;
-
-	/* Only optimize easy queries :-) */
-	if (strchr(l->args[1], ',')) return FALSE;
-		
-	ch = find_channel(c->network->state, l->args[1]);
-	return (ch != NULL);
-}
-
 static gboolean client_try_cache_mode(struct client *c, struct line *l)
 {
 	int i;
@@ -177,7 +161,6 @@ struct cache_command {
 	/* Should return FALSE if command couldn't be cached */
 	gboolean (*try_cache) (struct client *c, struct line *l);
 } cache_commands[] = {
-	{ "JOIN", client_try_cache_join },
 	{ "MODE", client_try_cache_mode },
 	{ "NAMES", client_try_cache_names },
 	{ "TOPIC", client_try_cache_topic },

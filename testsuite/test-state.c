@@ -81,6 +81,29 @@ START_TEST(state_part)
 	fail_unless (g_list_length(ns->channels) == 0);
 END_TEST
 
+START_TEST(state_cycle)
+	struct network_state *ns = network_state_init(NULL, "bla", "Gebruikersnaam", "Computernaam");
+	struct channel_state *cs;
+
+	fail_if (!ns);
+
+	state_process(ns, ":bla!user@host JOIN #examplechannel");
+
+	fail_unless (g_list_length(ns->channels) == 1);
+	
+	cs = ns->channels->data;
+
+	fail_unless (strcmp(cs->name, "#examplechannel") == 0);
+	
+	state_process(ns, ":bla!user@host PART #examplechannel");
+
+	fail_unless (g_list_length(ns->channels) == 0);
+
+	state_process(ns, ":bla!user@host JOIN #examplechannel");
+
+	fail_unless (g_list_length(ns->channels) == 1);
+END_TEST
+
 START_TEST(state_kick)
 	struct network_state *ns = network_state_init(NULL, "bla", "Gebruikersnaam", "Computernaam");
 	struct channel_state *cs;
@@ -169,6 +192,7 @@ Suite *state_suite(void)
 	tcase_add_test(tc_core, state_init);
 	tcase_add_test(tc_core, state_join);
 	tcase_add_test(tc_core, state_part);
+	tcase_add_test(tc_core, state_cycle);
 	tcase_add_test(tc_core, state_kick);
 	tcase_add_test(tc_core, state_set_nick);
 	tcase_add_test(tc_core, state_set_hostmask);
