@@ -57,8 +57,6 @@ void network_nick_set_data(struct network_nick *n, const char *nick, const char 
 
 gboolean network_nick_set_nick(struct network_nick *n, const char *nick)
 {
-	g_assert(n);
-
 	if (n == NULL)
 		return FALSE;
 
@@ -78,12 +76,8 @@ gboolean network_nick_set_hostmask(struct network_nick *n, const char *hm)
 {
 	char *t, *u;
 
-	g_assert(n);
-
 	if (n == NULL)
 		return FALSE;
-
-	g_assert(hm);
 
 	if (hm == NULL)
 		return FALSE;

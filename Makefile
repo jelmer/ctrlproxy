@@ -93,8 +93,8 @@ install-mods: all
 install-pkgconfig:
 	$(INSTALL) ctrlproxy.pc $(DESTDIR)$(libdir)/pkgconfig
 
-gcov:
-	$(GCOV) -po . *.c 
+gcov: check
+	$(GCOV) -p -o src/ src/*.c 
 
 mods/lib%.$(SHLIBEXT): mods/%.o
 	@echo Linking $@
@@ -162,7 +162,7 @@ rfctest: testsuite/ctrlproxyrc.torture
 
 # Unit tests
 
-testsuite/check: testsuite/test-cmp.o testsuite/test-user.o testsuite/test-isupport.o testsuite/test-parser.o testsuite/test-state.o testsuite/test-util.o testsuite/torture.o $(objs)
+testsuite/check: testsuite/test-cmp.o testsuite/test-user.o testsuite/test-isupport.o testsuite/test-parser.o testsuite/test-state.o testsuite/test-util.o testsuite/test-line.o testsuite/torture.o $(objs)
 	@echo Linking $@
 	@$(CC) $(LIBS) -o $@ $^ -lcheck
 

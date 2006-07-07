@@ -52,3 +52,6 @@ doc/user-guide
 *.d
 testsuite/check
 *.o
+*.gcda
+*.gcno
+*.gcov

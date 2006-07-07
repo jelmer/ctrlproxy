@@ -54,16 +54,10 @@ struct line *virc_parse_line( const char *hostmask, va_list ap)
 	g_assert(l);
 	l->argc = 0;
 	if(hostmask)l->origin = g_strdup(hostmask);
-	else l->origin = NULL;
 	
 	l->args = g_new(char *, MAX_LINE_ARGS+2);
 	
 	while((arg = va_arg(ap, char *))) {
-		if(l->argc > MAX_LINE_ARGS) {
-			g_free(l); 
-			g_free(l->args); 
-			return NULL; 
-		}
 		l->args[l->argc] = g_strdup(arg);
 		l->args = g_realloc(l->args, (((++l->argc)+2)* sizeof(char *)));
 	}

@@ -63,14 +63,14 @@ struct global *new_global(const char *config_dir)
 
 	global->config = load_configuration(config_dir);
 
-	load_networks(global, global->config);
-
-	nickserv_load(global);
-
 	if (!global->config) {
 		g_free(global);
 		return NULL;
 	}
+
+	load_networks(global, global->config);
+
+	nickserv_load(global);
 
 	global->linestack = new_linestack(global->config);
 
@@ -81,6 +81,8 @@ struct global *new_global(const char *config_dir)
 
 void free_global(struct global *global)
 {
+	if (global == NULL)
+		return;
 	fini_networks(global);
 	free_config(global->config);
 	global->config = NULL;

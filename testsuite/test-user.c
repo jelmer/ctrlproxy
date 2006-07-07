@@ -28,9 +28,25 @@ START_TEST(test_create)
 	
 	gl = new_global(DEFAULT_CONFIG_DIR);
 
-	fail_if(gl == NULL, "new_global returned NULL");
+	fail_if(gl == NULL && g_file_test(DEFAULT_CONFIG_DIR, G_FILE_TEST_IS_DIR), 
+			"new_global returned NULL");
 
 	free_global(gl);
+END_TEST
+
+START_TEST(test_create_nonexisting)
+	struct global *gl;
+	
+	gl = new_global("/some-non-existing/directory");
+
+	fail_if(gl != NULL,
+			"new_global returned non-NULL for incorrect directory");
+
+	free_global(gl);
+END_TEST
+
+START_TEST(test_free_null)
+	free_global(NULL);
 END_TEST
 
 Suite *user_suite()
@@ -39,6 +55,8 @@ Suite *user_suite()
 	TCase *tc_core = tcase_create("core");
 	suite_add_tcase(s, tc_core);
 	tcase_add_test(tc_core, test_create);
+	tcase_add_test(tc_core, test_create_nonexisting);
+	tcase_add_test(tc_core, test_free_null);
 	return s;
 }
 

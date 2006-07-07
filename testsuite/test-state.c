@@ -101,6 +101,7 @@ START_TEST(state_set_nick)
 	fail_if (!network_nick_set_nick(&nn, "mynick"));
 	fail_unless (strcmp(nn.nick, "mynick") == 0);
 	fail_unless (strcmp(nn.hostmask, "mynick!~(null)@(null)") == 0);
+	fail_if (network_nick_set_nick(NULL, NULL));
 END_TEST
 
 START_TEST(state_set_hostmask)
@@ -112,8 +113,11 @@ START_TEST(state_set_hostmask)
 	fail_if (!nn.username || strcmp(nn.username, "~uname") != 0);
 	fail_if (!nn.hostname || strcmp(nn.hostname, "uhost") != 0);
 	fail_if (!network_nick_set_hostmask(&nn, "ikke!~uname@uhost"));
+	fail_if (network_nick_set_hostmask(NULL, NULL));
+	fail_if (network_nick_set_hostmask(&nn, NULL));
 
 	fail_if (network_nick_set_hostmask(&nn, "ikkeongeldig"));
+	fail_if (network_nick_set_hostmask(&nn, "ikke!ongeldig"));
 END_TEST
 
 START_TEST(state_marshall_simple)
