@@ -151,6 +151,7 @@ G_MODULE_EXPORT gboolean linestack_replay (
 G_MODULE_EXPORT void linestack_free_marker(struct linestack_marker *);
 G_MODULE_EXPORT struct linestack_marker *linestack_get_marker(struct linestack_context *, struct network *n);
 G_MODULE_EXPORT struct linestack_context *new_linestack(struct ctrlproxy_config *);
+G_MODULE_EXPORT struct linestack_context *create_linestack(const struct linestack_ops *, struct ctrlproxy_config *);
 G_MODULE_EXPORT void free_linestack_context(struct linestack_context *);
 
 #endif /* __CTRLPROXY_LINESTACK_H__ */

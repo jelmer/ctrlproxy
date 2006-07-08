@@ -30,10 +30,20 @@ void register_linestack(const struct linestack_ops *b)
 	linestack_backends = g_slist_append(linestack_backends, b);
 }
 
+struct linestack_context *create_linestack(const struct linestack_ops *ops, struct ctrlproxy_config *cfg)
+{
+	struct linestack_context *ctx;
+
+	ctx = g_new0(struct linestack_context, 1);
+	ctx->ops = ops;
+	ops->init(ctx, cfg);
+
+	return ctx;
+}
+
 struct linestack_context *new_linestack(struct ctrlproxy_config *cfg)
 {
 	extern const struct linestack_ops linestack_file;
-	struct linestack_context *ctx;
 	struct linestack_ops *current_backend = NULL;
 
 	register_linestack(&linestack_file);
@@ -56,11 +66,7 @@ struct linestack_context *new_linestack(struct ctrlproxy_config *cfg)
 		current_backend = &linestack_file;
 	}
 
-	ctx = g_new0(struct linestack_context, 1);
-	ctx->ops = current_backend;
-	current_backend->init(ctx, cfg);
-
-	return ctx;
+	return create_linestack(current_backend, cfg);
 }
 
 void free_linestack_context(struct linestack_context *ctx)

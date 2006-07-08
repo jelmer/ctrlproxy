@@ -36,6 +36,7 @@ Suite *cmp_suite(void);
 Suite *line_suite(void);
 Suite *parser_suite(void);
 Suite *user_suite(void);
+Suite *linestack_suite(void);
 gboolean init_log(const char *file);
 
 int main (int argc, char **argv)
@@ -71,6 +72,7 @@ int main (int argc, char **argv)
 	srunner_add_suite(sr, parser_suite());
 	srunner_add_suite(sr, user_suite());
 	srunner_add_suite(sr, line_suite());
+	srunner_add_suite(sr, linestack_suite());
 	if (no_fork)
 		srunner_set_fork_status(sr, CK_NOFORK);
 	srunner_run_all (sr, verbose?CK_VERBOSE:CK_NORMAL);

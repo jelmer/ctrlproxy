@@ -164,7 +164,8 @@ rfctest: testsuite/ctrlproxyrc.torture
 check_objs = testsuite/test-cmp.o testsuite/test-user.o \
 			 testsuite/test-isupport.o testsuite/test-parser.o \
 			 testsuite/test-state.o testsuite/test-util.o \
-			 testsuite/test-line.o testsuite/torture.o 
+			 testsuite/test-line.o testsuite/torture.o \
+			 testsuite/test-linestack.o
 testsuite/check: $(check_objs) $(objs)
 	@echo Linking $@
 	@$(CC) $(LIBS) -o $@ $^ -lcheck
