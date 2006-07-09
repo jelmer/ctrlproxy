@@ -22,6 +22,16 @@
 #include <check.h>
 #include "ctrlproxy.h"
 
+void stack_process(struct linestack_context *ctx, struct network_state *ns, const char *line)
+{
+	struct line *l;
+	l = irc_parse_line(line);
+	g_assert(l);
+	g_assert(state_handle_data(ns, l));
+	g_assert(linestack_insert_line(ctx, l, FROM_SERVER, ns));
+	free_line(l);
+}
+
 #define null_equal(a,b) { \
 	if ((a) == NULL && (b) == NULL) \
 		return TRUE; \
@@ -185,6 +195,20 @@ START_TEST(test_empty)
 	fail_unless (network_state_equal(ns1, ns2), "Network state returned not equal");
 END_TEST
 
+START_TEST(test_join)
+	struct network_state *ns1, *ns2;
+	struct linestack_context *ctx;
+	
+	ns1 = network_state_init(NULL, "bla", "Gebruikersnaam", "Computernaam");
+	ctx = create_linestack(&linestack_file, "test", my_config, ns1);
+
+	stack_process(ctx, ns1, ":bla!Gebruikersnaam@Computernaam JOIN #bla");
+
+	ns2 = linestack_get_state(ctx, NULL);
+
+	fail_unless (network_state_equal(ns1, ns2), "Network state returned not equal");
+END_TEST
+
 Suite *linestack_suite()
 {
 	Suite *s = suite_create("cmp");
@@ -193,5 +217,6 @@ Suite *linestack_suite()
 	my_config->config_dir = "/tmp";
 	suite_add_tcase(s, tc_core);
 	tcase_add_test(tc_core, test_empty);
+	tcase_add_test(tc_core, test_join);
 	return s;
 }

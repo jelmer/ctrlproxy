@@ -39,7 +39,7 @@ START_TEST(state_init)
 	fail_unless (g_list_length(ns->channels) == 0);
 END_TEST
 
-static void state_process(struct network_state *ns, const char *line)
+void state_process(struct network_state *ns, const char *line)
 {
 	struct line *l;
 	l = irc_parse_line(line);
@@ -184,10 +184,10 @@ START_TEST(state_set_nick)
 	
 	fail_if (!network_nick_set_nick(&nn, "mynick"));
 	fail_unless (strcmp(nn.nick, "mynick") == 0);
-	fail_unless (strcmp(nn.hostmask, "mynick!~(null)@(null)") == 0);
+	fail_unless (strcmp(nn.hostmask, "mynick!(null)@(null)") == 0);
 	fail_if (!network_nick_set_nick(&nn, "mynick"));
 	fail_unless (strcmp(nn.nick, "mynick") == 0);
-	fail_unless (strcmp(nn.hostmask, "mynick!~(null)@(null)") == 0);
+	fail_unless (strcmp(nn.hostmask, "mynick!(null)@(null)") == 0);
 	fail_if (network_nick_set_nick(NULL, NULL));
 END_TEST
 
