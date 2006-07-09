@@ -72,8 +72,6 @@ struct global *new_global(const char *config_dir)
 
 	nickserv_load(global);
 
-	global->linestack = new_linestack(global->config);
-
 	config_load_notify(global);
 	
 	return global;
@@ -86,7 +84,6 @@ void free_global(struct global *global)
 	fini_networks(global);
 	free_config(global->config);
 	global->config = NULL;
-	free_linestack_context(global->linestack); global->linestack = NULL;
 	fini_networks(global);
 }
 

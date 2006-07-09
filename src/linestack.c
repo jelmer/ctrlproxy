@@ -30,43 +30,21 @@ void register_linestack(const struct linestack_ops *b)
 	linestack_backends = g_slist_append(linestack_backends, b);
 }
 
-struct linestack_context *create_linestack(const struct linestack_ops *ops, struct ctrlproxy_config *cfg)
+struct linestack_context *create_linestack(const struct linestack_ops *ops, 
+										   const char *name, 
+										   struct ctrlproxy_config *cfg,
+										   const struct network_state *state)
 {
 	struct linestack_context *ctx;
 
+	g_assert(name);
+	g_assert(state);
+
 	ctx = g_new0(struct linestack_context, 1);
 	ctx->ops = ops;
-	ops->init(ctx, cfg);
+	ops->init(ctx, name, cfg, state);
 
 	return ctx;
-}
-
-struct linestack_context *new_linestack(struct ctrlproxy_config *cfg)
-{
-	extern const struct linestack_ops linestack_file;
-	struct linestack_ops *current_backend = NULL;
-
-	register_linestack(&linestack_file);
-
-	if (cfg && cfg->linestack_backend) {
-		GSList *gl;
-		for (gl = linestack_backends; gl ; gl = gl->next) {
-			struct linestack_ops *ops = gl->data;
-			if (!strcmp(ops->name, cfg->linestack_backend)) {
-				current_backend = ops;
-				break;
-			}
-		}
-
-		if (!current_backend) 
-			log_global(NULL, LOG_WARNING, "Unable to find linestack backend %s: falling back to default", cfg->linestack_backend);
-	}
-
-	if (!current_backend) {
-		current_backend = &linestack_file;
-	}
-
-	return create_linestack(current_backend, cfg);
 }
 
 void free_linestack_context(struct linestack_context *ctx)
@@ -89,24 +67,23 @@ static struct linestack_marker *wrap_linestack_marker(struct linestack_context *
 	return mrk;
 }
 
-struct linestack_marker *linestack_get_marker_numlines (struct linestack_context *ctx, struct network *n, int lines)
+struct linestack_marker *linestack_get_marker_numlines (struct linestack_context *ctx, int lines)
 {
 	if (!ctx->ops) return NULL;
 	if (!ctx->ops->get_marker_numlines) return NULL;
 
-	return wrap_linestack_marker(ctx, ctx->ops->get_marker_numlines(ctx, n, lines));
+	return wrap_linestack_marker(ctx, ctx->ops->get_marker_numlines(ctx, lines));
 }
 
 struct network_state *linestack_get_state(
 		struct linestack_context *ctx,
-		struct network *n, 
 		struct linestack_marker *lm)
 {
 	struct network_state *st;
 	if (!ctx->ops) return NULL;
 	if (!ctx->ops->get_state) return NULL;
 
-	st = ctx->ops->get_state(ctx, n, lm?lm->data:NULL);
+	st = ctx->ops->get_state(ctx, lm?lm->data:NULL);
 	if (st == NULL)
 		return NULL;
 
@@ -117,7 +94,6 @@ struct network_state *linestack_get_state(
 
 gboolean linestack_traverse(
 		struct linestack_context *ctx,					
-		struct network *n, 
 		struct linestack_marker *lm_from,
 		struct linestack_marker *lm_to,
 		linestack_traverse_fn handler, 
@@ -126,7 +102,7 @@ gboolean linestack_traverse(
 	if (!ctx->ops) return FALSE;
 	g_assert(ctx->ops->traverse);
 
-	return ctx->ops->traverse(ctx, n, lm_from?lm_from->data:NULL, lm_to?lm_to->data:NULL, handler, userdata);
+	return ctx->ops->traverse(ctx, lm_from?lm_from->data:NULL, lm_to?lm_to->data:NULL, handler, userdata);
 }
 
 struct traverse_object_data {
@@ -142,7 +118,6 @@ static void traverse_object_handler(struct line *l, time_t t, void *state)
 
 gboolean linestack_traverse_object(
 			struct linestack_context *ctx,
-			struct network *n,
 			const char *obj, 
 			struct linestack_marker *lm_from, 
 			struct linestack_marker *lm_to, linestack_traverse_fn hl,
@@ -154,7 +129,7 @@ gboolean linestack_traverse_object(
 	d.userdata = userdata;
 	d.handler = hl;
 	
-	return linestack_traverse(ctx, n, lm_from?lm_from->data:NULL, lm_to?lm_to->data:NULL, traverse_object_handler, &d);
+	return linestack_traverse(ctx, lm_from?lm_from->data:NULL, lm_to?lm_to->data:NULL, traverse_object_handler, &d);
 }
 
 void linestack_free_marker(struct linestack_marker *lm)
@@ -165,19 +140,19 @@ void linestack_free_marker(struct linestack_marker *lm)
 	lm->ctx->ops->free_marker(lm->data);
 }
 
-struct linestack_marker *linestack_get_marker(struct linestack_context *ctx, struct network *n)
+struct linestack_marker *linestack_get_marker(struct linestack_context *ctx)
 {
 	if (!ctx->ops) return NULL;
 	g_assert(ctx->ops->get_marker);
 
-	return wrap_linestack_marker(ctx, ctx->ops->get_marker(ctx, n));
+	return wrap_linestack_marker(ctx, ctx->ops->get_marker(ctx));
 }
 
 static const char *linestack_messages[] = { 
 	"NICK", "JOIN", "QUIT", "PART", "PRIVMSG", "NOTICE", "KICK", 
 	"MODE", "TOPIC", NULL };
 
-gboolean linestack_insert_line(struct linestack_context *ctx, const struct network *n, const struct line *l, enum data_direction dir)
+gboolean linestack_insert_line(struct linestack_context *ctx, const struct line *l, enum data_direction dir, const struct network_state *state)
 {
 	int i;
 	gboolean needed = FALSE;
@@ -204,7 +179,7 @@ gboolean linestack_insert_line(struct linestack_context *ctx, const struct netwo
 
 	if (!needed) return FALSE;
 
-	return ctx->ops->insert_line(ctx, n, l);
+	return ctx->ops->insert_line(ctx, l, state);
 }
 
 static void send_line(struct line *l, time_t t, void *_client)
@@ -235,24 +210,24 @@ static void send_line_timed(struct line *l, time_t t, void *_client)
 	}
 }
 
-gboolean linestack_send(struct linestack_context *ctx, struct network *n, struct linestack_marker *mf, struct linestack_marker *mt, const struct client *c)
+gboolean linestack_send(struct linestack_context *ctx, struct linestack_marker *mf, struct linestack_marker *mt, const struct client *c)
 {
-	return linestack_traverse(ctx, n, mf, mt, send_line, c);
+	return linestack_traverse(ctx, mf, mt, send_line, c);
 }
 
-gboolean linestack_send_timed(struct linestack_context *ctx, struct network *n, struct linestack_marker *mf, struct linestack_marker *mt, const struct client *c)
+gboolean linestack_send_timed(struct linestack_context *ctx, struct linestack_marker *mf, struct linestack_marker *mt, const struct client *c)
 {
-	return linestack_traverse(ctx, n, mf, mt, send_line_timed, c);
+	return linestack_traverse(ctx, mf, mt, send_line_timed, c);
 }
 
-gboolean linestack_send_object(struct linestack_context *ctx, struct network *n, const char *obj, struct linestack_marker *mf, struct linestack_marker *mt, const struct client *c)
+gboolean linestack_send_object(struct linestack_context *ctx, const char *obj, struct linestack_marker *mf, struct linestack_marker *mt, const struct client *c)
 {
-	return linestack_traverse_object(ctx, n, obj, mf, mt, send_line, c);
+	return linestack_traverse_object(ctx, obj, mf, mt, send_line, c);
 }
 
-gboolean linestack_send_object_timed(struct linestack_context *ctx, struct network *n, const char *obj, struct linestack_marker *mf, struct linestack_marker *mt, const struct client *c)
+gboolean linestack_send_object_timed(struct linestack_context *ctx, const char *obj, struct linestack_marker *mf, struct linestack_marker *mt, const struct client *c)
 {
-	return linestack_traverse_object(ctx, n, obj, mf, mt, send_line_timed, c);
+	return linestack_traverse_object(ctx, obj, mf, mt, send_line_timed, c);
 }
 
 static void replay_line(struct line *l, time_t t, void *state)
@@ -261,7 +236,38 @@ static void replay_line(struct line *l, time_t t, void *state)
 	state_handle_data(st, l);
 }
 
-gboolean linestack_replay(struct linestack_context *ctx, struct network *n, struct linestack_marker *mf, struct linestack_marker *mt, struct network_state *st)
+gboolean linestack_replay(struct linestack_context *ctx, struct linestack_marker *mf, struct linestack_marker *mt, struct network_state *st)
 {
-	return linestack_traverse(ctx, n, mf, mt, replay_line, st);
+	return linestack_traverse(ctx, mf, mt, replay_line, st);
 }
+
+struct linestack_context *new_linestack(struct network *n)
+{
+	extern const struct linestack_ops linestack_file;
+	const struct linestack_ops *current_backend = NULL;
+	struct ctrlproxy_config *cfg = n->global->config;
+
+	register_linestack(&linestack_file);
+
+	if (cfg && cfg->linestack_backend) {
+		GSList *gl;
+		for (gl = linestack_backends; gl ; gl = gl->next) {
+			struct linestack_ops *ops = gl->data;
+			if (!strcmp(ops->name, cfg->linestack_backend)) {
+				current_backend = ops;
+				break;
+			}
+		}
+
+		if (!current_backend) 
+			log_global(NULL, LOG_WARNING, "Unable to find linestack backend %s: falling back to default", cfg->linestack_backend);
+	}
+
+	if (!current_backend) {
+		current_backend = &linestack_file;
+	}
+
+	return create_linestack(current_backend, n->name, cfg, n->state);
+}
+
+

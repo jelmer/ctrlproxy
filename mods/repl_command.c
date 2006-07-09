@@ -30,9 +30,9 @@ static void repl_command(struct client *c, char **args, void *userdata)
 	if(!args[1]) {
 		admin_out(c, "Sending backlog for network '%s'", c->network->name);
 
-		linestack_send(c->network->global->linestack, c->network, lm, NULL, c);
+		linestack_send(c->network->linestack, lm, NULL, c);
 
-		g_hash_table_replace(markers, c->network, linestack_get_marker(c->network->global->linestack, c->network));
+		g_hash_table_replace(markers, c->network, linestack_get_marker(c->network->linestack));
 
 		return;
 	} 
@@ -41,11 +41,11 @@ static void repl_command(struct client *c, char **args, void *userdata)
 	admin_out(c, "Sending backlog for channel %s", args[1]);
 
 	if (c->network->global->config->report_time)
-		linestack_send_object_timed(c->network->global->linestack, c->network, args[1], lm, NULL, c);
+		linestack_send_object_timed(c->network->linestack, args[1], lm, NULL, c);
 	else
-		linestack_send_object(c->network->global->linestack, c->network, args[1], lm, NULL, c);
+		linestack_send_object(c->network->linestack, args[1], lm, NULL, c);
 
-	g_hash_table_replace(markers, c->network, linestack_get_marker(c->network->global->linestack, c->network));
+	g_hash_table_replace(markers, c->network, linestack_get_marker(c->network->linestack));
 }
 
 static const struct admin_command cmd_backlog = {

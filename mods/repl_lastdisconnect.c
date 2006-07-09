@@ -27,7 +27,7 @@ static void lastdisconnect_mark(struct client *c, void *userdata)
 	if (!c->network)
 		return;
 
-	g_hash_table_replace(lastdisconnect_backlog, c->network, linestack_get_marker(c->network->global->linestack, c->network));
+	g_hash_table_replace(lastdisconnect_backlog, c->network, linestack_get_marker(c->network->linestack));
 }
 
 static void lastdisconnect_replicate(struct client *c)
@@ -35,9 +35,9 @@ static void lastdisconnect_replicate(struct client *c)
 	struct linestack_marker *lm = g_hash_table_lookup(lastdisconnect_backlog, c->network);
 
 	if (c->network->global->config->report_time)
-		linestack_send_timed(c->network->global->linestack, c->network, lm, NULL, c);
+		linestack_send_timed(c->network->linestack, lm, NULL, c);
 	else
-		linestack_send(c->network->global->linestack, c->network, lm, NULL, c);
+		linestack_send(c->network->linestack, lm, NULL, c);
 }
 
 static void fini_plugin(void)

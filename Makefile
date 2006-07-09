@@ -1,5 +1,7 @@
 -include Makefile.settings
 
+vpath = src:testsuite
+
 MODS_SHARED_FILES = $(patsubst %,mods/lib%.$(SHLIBEXT),$(MODS_SHARED))
 
 GCOV = gcov

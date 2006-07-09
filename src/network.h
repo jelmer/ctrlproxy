@@ -30,6 +30,7 @@ struct global;
 struct network;
 struct client;
 struct line;
+struct linestack_context;
 
 enum network_connection_state { 
 		NETWORK_CONNECTION_STATE_NOT_CONNECTED = 0, 
@@ -80,6 +81,7 @@ struct network {
 	struct network_state *state;
 	struct network_info info;
 	struct network_connection connection;
+	struct linestack_context *linestack;
 };
 
 /* server.c */
@@ -101,5 +103,6 @@ G_MODULE_EXPORT gboolean virtual_network_recv_line(struct network *l, struct lin
 G_MODULE_EXPORT gboolean virtual_network_recv_args(struct network *l, const char *origin, ...); 
 typedef void (*new_network_notify_fn) (struct network *, void *);
 G_MODULE_EXPORT void register_new_network_notify(struct global *, new_network_notify_fn, void *userdata);
+G_MODULE_EXPORT struct linestack_context *new_linestack(struct network *network);
 
 #endif /* __CTRLPROXY_NETWORK_H__ */

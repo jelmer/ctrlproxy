@@ -22,7 +22,12 @@
 #include <check.h>
 #include "ctrlproxy.h"
 
-#define null_equal(a,b) { if ((a) == NULL && (b) == NULL) return TRUE; if ((a) == NULL || (b) == NULL) return FALSE; }
+#define null_equal(a,b) { \
+	if ((a) == NULL && (b) == NULL) \
+		return TRUE; \
+	if ((a) == NULL || (b) == NULL) \
+	return FALSE; \
+}
 
 struct hash_data {
 	GEqualFunc fn;
@@ -164,13 +169,18 @@ static gboolean network_state_equal(const struct network_state *state1, const st
 		   list_equal(state1->nicks, state2->nicks, (GEqualFunc)network_nick_equal);
 }
 
+static struct ctrlproxy_config *my_config;
+
 extern const struct linestack_ops linestack_file;
 
 START_TEST(test_empty)
-	struct network_state *ns1 = network_state_init(NULL, "bla", "Gebruikersnaam", "Computernaam"), *ns2;
-	struct linestack_context *ctx = create_linestack(&linestack_file, NULL);
+	struct network_state *ns1, *ns2;
+	struct linestack_context *ctx;
+	
+	ns1 = network_state_init(NULL, "bla", "Gebruikersnaam", "Computernaam");
+	ctx = create_linestack(&linestack_file, "test", my_config, ns1);
 
-	ns2 = linestack_get_state(ctx, NULL, NULL);
+	ns2 = linestack_get_state(ctx, NULL);
 
 	fail_unless (network_state_equal(ns1, ns2), "Network state returned not equal");
 END_TEST
@@ -179,6 +189,8 @@ Suite *linestack_suite()
 {
 	Suite *s = suite_create("cmp");
 	TCase *tc_core = tcase_create("core");
+	my_config = g_new0(struct ctrlproxy_config, 1);
+	my_config->config_dir = "/tmp";
 	suite_add_tcase(s, tc_core);
 	tcase_add_test(tc_core, test_empty);
 	return s;

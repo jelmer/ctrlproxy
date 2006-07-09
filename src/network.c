@@ -52,6 +52,7 @@ static void server_send_login (struct network *s)
 	log_network(NULL, LOG_TRACE, s, "Sending login details");
 
 	s->state = network_state_init(&s->info, s->config->nick, s->config->username, get_my_hostname());
+	s->linestack = new_linestack(s);
 
 	if(s->config->type == NETWORK_TCP && 
 	   s->connection.data.tcp.current_server->password) { 
@@ -76,7 +77,7 @@ static gboolean process_from_server(struct network *n, struct line *l)
 	g_assert(n->state);
 
 	state_handle_data(n->state,l);
-	linestack_insert_line(n->global->linestack, n, l, FROM_SERVER);
+	linestack_insert_line(n->linestack, l, FROM_SERVER, n->state);
 
 	g_assert(l->args[0]);
 
@@ -250,7 +251,7 @@ gboolean network_send_line(struct network *s, struct client *c, const struct lin
 
 	run_log_filter(s, lc = linedup(&l), TO_SERVER); free_line(lc);
 	run_replication_filter(s, lc = linedup(&l), TO_SERVER); free_line(lc);
-	linestack_insert_line(s->global->linestack, s, ol, TO_SERVER);
+	linestack_insert_line(s->linestack, ol, TO_SERVER, s->state);
 
 	g_assert(l.args[0]);
 
@@ -493,6 +494,8 @@ static gboolean close_server(struct network *n)
 
 	if (n->state) {
 		network_update_config(n->state, n->config);
+		free_linestack_context(n->linestack);
+		n->linestack = NULL;
 		free_network_state(n->state); 
 		n->state = NULL;
 	}
@@ -631,6 +634,7 @@ static gboolean connect_server(struct network *s)
 		if (!s->connection.data.virtual.ops) return FALSE;
 
 		s->state = network_state_init(&s->info, s->config->nick, s->config->username, get_my_hostname());
+		s->linestack = new_linestack(s);
     	s->connection.state = NETWORK_CONNECTION_STATE_MOTD_RECVD;
 
 		if (s->connection.data.virtual.ops->init)
@@ -890,4 +894,5 @@ void network_select_next_server(struct network *n)
 	log_network(NULL, LOG_INFO, n, "Trying next server");
 	n->connection.data.tcp.current_server = network_get_next_tcp_server(n);
 }
+
 
