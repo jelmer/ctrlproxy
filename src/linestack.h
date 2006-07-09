@@ -140,6 +140,14 @@ G_MODULE_EXPORT gboolean linestack_replay (
 		struct linestack_marker *to,/* Can be NULL for 'now' */
 		struct network_state *st);
 
+enum data_direction;
+
+G_MODULE_EXPORT gboolean linestack_insert_line(
+		struct linestack_context *, 
+		const struct line *l, 
+		enum data_direction dir, 
+		const struct network_state *);
+
 G_MODULE_EXPORT void linestack_free_marker(struct linestack_marker *);
 G_MODULE_EXPORT struct linestack_marker *linestack_get_marker(struct linestack_context *);
 G_MODULE_EXPORT struct linestack_context *create_linestack(const struct linestack_ops *, const char *name, struct ctrlproxy_config *, const struct network_state *);

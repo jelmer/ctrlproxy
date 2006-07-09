@@ -84,7 +84,6 @@ gboolean client_try_cache(struct client *c, struct line *l);
 
 /* linestack.c */
 void init_linestack(struct ctrlproxy_config *);
-gboolean linestack_insert_line(struct linestack_context *, const struct line *l, enum data_direction dir, const struct network_state *);
 
 /* gen_config.c */
 void network_update_config(struct network_state *ns, struct network_config *nc);

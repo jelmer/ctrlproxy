@@ -51,7 +51,7 @@ void network_nick_set_data(struct network_nick *n, const char *nick, const char 
 	
 	if (changed) {
 		g_free(n->hostmask);
-		n->hostmask = g_strdup_printf("%s!~%s@%s", nick, username, host);
+		n->hostmask = g_strdup_printf("%s!%s@%s", nick, username, host);
 	}
 }
 
@@ -67,7 +67,7 @@ gboolean network_nick_set_nick(struct network_nick *n, const char *nick)
 	n->nick = g_strdup(nick);
 	
 	g_free(n->hostmask);
-	n->hostmask = g_strdup_printf("%s!~%s@%s", nick, n->username, n->hostname);
+	n->hostmask = g_strdup_printf("%s!%s@%s", nick, n->username, n->hostname);
 
 	return TRUE;
 }
