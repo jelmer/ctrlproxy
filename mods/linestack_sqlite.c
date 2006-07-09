@@ -24,18 +24,17 @@
 
 #define STATE_DUMP_INTERVAL 1000
 
-struct linestack_sqlite_network {
+/* TODO: Make this a hash table, different by config_dir */
+static sqlite3 *db = NULL;
+
+struct linestack_sqlite_data {
+	char *name;
 	int last_state_id;
 	int last_state_line_id;
 	int last_line_id;
 };
 
-struct linestack_sqlite_data {
-	GHashTable *networks;
-	sqlite3 *db;
-};
-
-static gboolean insert_state_data(struct linestack_sqlite_data *data, const struct network *n);
+static gboolean insert_state_data(struct linestack_sqlite_data *data, const struct network_state *state);
 
 static const char *tables[] = {
 	"CREATE TABLE IF NOT EXISTS line(network text, state_id int, time int, data text)",
@@ -76,22 +75,6 @@ static const char *tables[] = {
 	NULL
 };
 
-static struct linestack_sqlite_network *get_network_data(struct linestack_sqlite_data *data, const struct network *n)
-{
-	struct linestack_sqlite_network *ret = g_hash_table_lookup(data->networks, n);
-
-	if (ret) 
-		return ret;
-
-	ret = g_new0(struct linestack_sqlite_network, 1);
-
-	g_hash_table_insert(data->networks, n, ret);
-	
-	insert_state_data(data, n);
-
-	return ret;
-}
-
 static char **get_table(struct linestack_sqlite_data *data, int *nrow, int *ncol, const char *fmt, ...)
 {
 	char *query;
@@ -104,7 +87,7 @@ static char **get_table(struct linestack_sqlite_data *data, int *nrow, int *ncol
 	query = sqlite3_vmprintf(fmt, ap);
 	va_end(ap);
 
-	rc = sqlite3_get_table(data->db, query, &ret, nrow, ncol, &err);
+	rc = sqlite3_get_table(db, query, &ret, nrow, ncol, &err);
 	sqlite3_free(query);
 
 	if (rc != SQLITE_OK) {
@@ -126,7 +109,7 @@ static gboolean run_query(struct linestack_sqlite_data *data, const char *fmt, .
 	query = sqlite3_vmprintf(fmt, ap);
 	va_end(ap);
 
-	rc = sqlite3_exec(data->db, query, NULL, NULL, &err);
+	rc = sqlite3_exec(db, query, NULL, NULL, &err);
 	sqlite3_free(query);
 
 	if (rc != SQLITE_OK) {
@@ -138,40 +121,43 @@ static gboolean run_query(struct linestack_sqlite_data *data, const char *fmt, .
 }
 
 
-static gboolean sqlite_init(struct linestack_context *ctx, struct ctrlproxy_config *config)
+static gboolean sqlite_init(struct linestack_context *ctx, const char *name, struct ctrlproxy_config *config, const struct network_state *state)
 {
 	int rc;
 	struct linestack_sqlite_data *data = g_new0(struct linestack_sqlite_data, 1);
-	char *fname, *err;
+	char *err;
 	int i;
 
-	fname = g_build_filename(config->config_dir, "linestack_sqlite", NULL);
+	if (db == NULL) {
+		char *fname = g_build_filename(config->config_dir, "linestack_sqlite", NULL);
 
-	rc = sqlite3_open(fname, &data->db);
-	if (rc != SQLITE_OK) {
-		log_global(NULL, LOG_WARNING, "Error opening linestack database '%s': %s", fname, sqlite3_errmsg(data->db));
-		return FALSE;
-	}
-
-	for (i = 0; tables[i]; i++) {
-		rc = sqlite3_exec(data->db, tables[i], NULL, NULL, &err);
+		rc = sqlite3_open(fname, &db);
 		if (rc != SQLITE_OK) {
-			log_global(NULL, LOG_WARNING, "Error creating table: %s", err);
+			log_global(NULL, LOG_WARNING, "Error opening linestack database '%s': %s", fname, sqlite3_errmsg(db));
 			return FALSE;
+		}
+
+		for (i = 0; tables[i]; i++) {
+			rc = sqlite3_exec(db, tables[i], NULL, NULL, &err);
+			if (rc != SQLITE_OK) {
+				log_global(NULL, LOG_WARNING, "Error creating table: %s", err);
+				return FALSE;
+			}
 		}
 	}
 
-	data->networks = g_hash_table_new(g_str_hash, g_str_equal);
+	data->name = g_strdup(name);
 
 	ctx->backend_data = data;
+
+	insert_state_data(data, state);
 
 	return TRUE;
 }
 
 static gboolean sqlite_fini(struct linestack_context *ctx)
 {
-	struct linestack_sqlite_data *data = ctx->backend_data;
-	sqlite3_close(data->db);
+	/* TODO: sqlite3_close(db); */
 	return TRUE;
 }
 
@@ -188,7 +174,7 @@ static struct network_state *get_network_state(struct linestack_sqlite_data *dat
 
 	query = sqlite3_mprintf("SELECT nick, line_id FROM network_state WHERE ROWID = %d", state_id);
 
-	rc = sqlite3_get_table(data->db, query, &ret, &nrow, &ncolumn, &err);
+	rc = sqlite3_get_table(db, query, &ret, &nrow, &ncolumn, &err);
 	sqlite3_free(query);
 
 	if (rc != SQLITE_OK) {
@@ -209,7 +195,7 @@ static struct network_state *get_network_state(struct linestack_sqlite_data *dat
 	state = g_new0(struct network_state, 1);
 
 	query = sqlite3_mprintf("SELECT nick, fullname, query, modes, hostmask FROM network_nick WHERE state_id = %d", state_id);
-	rc = sqlite3_get_table(data->db, query, &ret, &nrow, &ncolumn, &err);
+	rc = sqlite3_get_table(db, query, &ret, &nrow, &ncolumn, &err);
 	sqlite3_free(query);
 
 	if (rc != SQLITE_OK) {
@@ -255,7 +241,7 @@ static struct network_state *get_network_state(struct linestack_sqlite_data *dat
 	g_free(mynick);
 
 	query = sqlite3_mprintf("SELECT ROWID, name, topic, namreply_started, banlist_started, invitelist_started, exceptlist_started, nicklimit, key FROM channel_state WHERE state_id = %d", state_id);
-	rc = sqlite3_get_table(data->db, query, &ret, &nrow, &ncolumn, &err);
+	rc = sqlite3_get_table(db, query, &ret, &nrow, &ncolumn, &err);
 	sqlite3_free(query);
 
 	if (rc != SQLITE_OK) {
@@ -340,41 +326,40 @@ static struct network_state *get_network_state(struct linestack_sqlite_data *dat
 	return state;
 }
 
-static gboolean insert_state_data(struct linestack_sqlite_data *data, const struct network *n)
+static gboolean insert_state_data(struct linestack_sqlite_data *data, const struct network_state *state)
 {
-	struct linestack_sqlite_network *nd = get_network_data(data, n);
 	GList *gl, *gl1;
 
-	log_network("sqlite", LOG_TRACE, n, "Inserting state");
+	log_global("sqlite", LOG_TRACE, "Inserting state for `%s'", data->name);
 
-	if (!run_query(data, "INSERT INTO network_state (name, nick, line_id) VALUES ('%q','%q',%d)", n->name, n->state->me.nick, nd->last_line_id))
+	if (!run_query(data, "INSERT INTO network_state (name, nick, line_id) VALUES ('%q','%q',%d)", data->name, state->me.nick, data->last_line_id))
 		return FALSE;
 
-	nd->last_state_id = sqlite3_last_insert_rowid(data->db);
+	data->last_state_id = sqlite3_last_insert_rowid(db);
 
-	for (gl = n->state->nicks; gl; gl = gl->next) {
+	for (gl = state->nicks; gl; gl = gl->next) {
 		struct network_nick *nn = gl->data;
 
-		if (!run_query(data, "INSERT INTO network_nick (nick,state_id,query,fullname,modes,hostmask) VALUES ('%q',%d,%d,'%q','%q','%q')", nn->nick, nd->last_state_id, nn->query, nn->fullname, mode2string(nn->modes), nn->hostmask))
+		if (!run_query(data, "INSERT INTO network_nick (nick,state_id,query,fullname,modes,hostmask) VALUES ('%q',%d,%d,'%q','%q','%q')", nn->nick, data->last_state_id, nn->query, nn->fullname, mode2string(nn->modes), nn->hostmask))
 			return FALSE;
 	}
 
-	if (!run_query(data, "INSERT INTO network_nick (nick,state_id,query,fullname,modes,hostmask) VALUES ('%q',%d,%d,'%q','%q','%q')", n->state->me.nick, nd->last_state_id, n->state->me.query, n->state->me.fullname, mode2string(n->state->me.modes), n->state->me.hostmask))
+	if (!run_query(data, "INSERT INTO network_nick (nick,state_id,query,fullname,modes,hostmask) VALUES ('%q',%d,%d,'%q','%q','%q')", state->me.nick, data->last_state_id, state->me.query, state->me.fullname, mode2string(state->me.modes), state->me.hostmask))
 			return FALSE;
 
-	for (gl = n->state->channels; gl; gl = gl->next) {
+	for (gl = state->channels; gl; gl = gl->next) {
 		int channel_id;
 		char *modestring;
 		struct channel_state *cs = gl->data;
 		modestring = mode2string(cs->modes);
 
-		if (!run_query(data, "INSERT INTO channel_state (state_id, name, topic, namreply_started, banlist_started, invitelist_started, exceptlist_started, nicklimit, key, modes, mode) VALUES (%d,'%q','%q',%d,%d,%d,%d,%d,'%q','%q','%s')", nd->last_state_id, cs->name, cs->topic, cs->namreply_started, cs->banlist_started, cs->invitelist_started, cs->exceptlist_started, cs->limit, cs->key, modestring, cs->mode)) {
+		if (!run_query(data, "INSERT INTO channel_state (state_id, name, topic, namreply_started, banlist_started, invitelist_started, exceptlist_started, nicklimit, key, modes, mode) VALUES (%d,'%q','%q',%d,%d,%d,%d,%d,'%q','%q','%s')", data->last_state_id, cs->name, cs->topic, cs->namreply_started, cs->banlist_started, cs->invitelist_started, cs->exceptlist_started, cs->limit, cs->key, modestring, cs->mode)) {
 			g_free(modestring);
 			return FALSE;
 		}
 		g_free(modestring);
 		
-		channel_id = sqlite3_last_insert_rowid(data->db);
+		channel_id = sqlite3_last_insert_rowid(db);
 
 		for (gl1 = cs->nicks; gl1; gl1 = gl1->next) {
 			struct channel_nick *cn = gl1->data;
@@ -402,39 +387,38 @@ static gboolean insert_state_data(struct linestack_sqlite_data *data, const stru
 		}
 	}
 
-	nd->last_state_line_id = nd->last_line_id;
+	data->last_state_line_id = data->last_line_id;
 
 	return TRUE;
 }
 
-static gboolean sqlite_insert_line(struct linestack_context *ctx, const struct network *n, const struct line *l)
+static gboolean sqlite_insert_line(struct linestack_context *ctx, const struct line *l, const struct network_state *state)
 {
 	struct linestack_sqlite_data *data = ctx->backend_data;
-	struct linestack_sqlite_network *nd = get_network_data(data, n);
 	char *raw;
 	time_t now = time(NULL);
 
-	g_assert(n);
-	g_assert(data->db);
+	g_assert(state);
+	g_assert(db);
 
-	if (nd->last_line_id > nd->last_state_line_id + STATE_DUMP_INTERVAL)
-		insert_state_data(data, n);
+	if (data->last_line_id > data->last_state_line_id + STATE_DUMP_INTERVAL)
+		insert_state_data(data, state);
 
 	raw = irc_line_string(l);
 
-	if (!run_query(data, "INSERT INTO line (state_id, network, time, data) VALUES (%d, '%q',%lu,'%q')", nd->last_state_id, n->name, now, raw)) {
+	if (!run_query(data, "INSERT INTO line (state_id, network, time, data) VALUES (%d, '%q',%lu,'%q')", data->last_state_id, data->name, now, raw)) {
 		g_free(raw);
 		return FALSE;
 	}
 
 	g_free(raw);
 
-	nd->last_line_id = sqlite3_last_insert_rowid(data->db);
+	data->last_line_id = sqlite3_last_insert_rowid(db);
 
 	return TRUE;
 }
 
-static void *sqlite_get_marker(struct linestack_context *ctx, struct network *n)
+static void *sqlite_get_marker(struct linestack_context *ctx)
 {
 	struct linestack_sqlite_data *data = ctx->backend_data;
 	char *err;
@@ -444,9 +428,9 @@ static void *sqlite_get_marker(struct linestack_context *ctx, struct network *n)
 	int nrow, ncol;
 	int *result = g_new0(int, 1);
 
-	query = sqlite3_mprintf("SELECT ROWID FROM line WHERE network='%q' ORDER BY ROWID DESC LIMIT 1", n->name);
+	query = sqlite3_mprintf("SELECT ROWID FROM line WHERE network='%q' ORDER BY ROWID DESC LIMIT 1", data->name);
 
-	rc = sqlite3_get_table(data->db, query, &ret, &nrow, &ncol, &err);
+	rc = sqlite3_get_table(db, query, &ret, &nrow, &ncol, &err);
 	sqlite3_free(query);
 
 	if (rc != SQLITE_OK) {
@@ -463,7 +447,6 @@ static void *sqlite_get_marker(struct linestack_context *ctx, struct network *n)
 
 static struct network_state * sqlite_get_state (
 		struct linestack_context *ctx, 
-		struct network *n, 
 		void *m)
 {
 	struct linestack_sqlite_data *backend_data = ctx->backend_data;
@@ -476,17 +459,16 @@ static struct network_state * sqlite_get_state (
 	char *query;
 	char **ret;
 	int ncol, nrow;
-	struct linestack_sqlite_network *nd = get_network_data(backend_data, n);
 
 	if (m != NULL) 
 		id = *(int *)m;
 	else 
-		id = nd->last_line_id;
+		id = backend_data->last_line_id;
 
 	query = sqlite3_mprintf("SELECT state_id FROM line WHERE ROWID=%d", id);
 
 	/* Find line for marker */
-	rc = sqlite3_get_table(backend_data->db, query, &ret, &nrow, &ncol, &err);
+	rc = sqlite3_get_table(db, query, &ret, &nrow, &ncol, &err);
 	sqlite3_free(query);
 
 	if (rc != SQLITE_OK) {
@@ -509,7 +491,7 @@ static struct network_state * sqlite_get_state (
 	m1.ctx = m2.ctx = ctx;
 	m1.data = &line_id;
 	m2.data = &id;
-	linestack_replay(ctx, n, &m1, &m2, state);
+	linestack_replay(ctx, &m1, &m2, state);
 
 	return state;
 }
@@ -530,7 +512,6 @@ static int traverse_fn(void *_ret, int n, char **names, char **values)
 }
 
 static gboolean sqlite_traverse(struct linestack_context *ctx,
-		struct network *n, 
 		void *mf,
 		void *mt,
 		linestack_traverse_fn tf, 
@@ -542,7 +523,6 @@ static gboolean sqlite_traverse(struct linestack_context *ctx,
 	int from, to;
 	struct traverse_data data;
 	char *query;
-	struct linestack_sqlite_network *nd = get_network_data(backend_data, n);
 
 	data.fn = tf;
 	data.userdata = userdata;
@@ -550,16 +530,16 @@ static gboolean sqlite_traverse(struct linestack_context *ctx,
 	if (mf != NULL)
 		from = *(int *)mf;
 	else
-		from = nd->last_line_id;
+		from = backend_data->last_line_id;
 
 	if (mt != NULL)
 		to = *(int *)mt;
 	else
-		to = nd->last_line_id;
+		to = backend_data->last_line_id;
 
-	query = sqlite3_mprintf("SELECT time,data FROM line WHERE network='%q' AND ROWID >= %d AND ROWID <= %d", n->name, from, to);
+	query = sqlite3_mprintf("SELECT time,data FROM line WHERE network='%q' AND ROWID >= %d AND ROWID <= %d", backend_data->name, from, to);
 
-	rc = sqlite3_exec(backend_data->db, query, traverse_fn, &data, &err);
+	rc = sqlite3_exec(db, query, traverse_fn, &data, &err);
 	sqlite3_free(query);
 
 	if (rc != SQLITE_OK) {

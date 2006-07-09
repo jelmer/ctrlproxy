@@ -74,7 +74,7 @@ install-bin:
 	$(INSTALL) scripts/upgrade.py $(DESTDIR)$(bindir)/ctrlproxy-upgrade 
 
 install-doc: doc
-	$(INSTALL) -m 644 ctrlproxy.h $(DESTDIR)$(destincludedir)
+	$(INSTALL) -m 644 src/ctrlproxy.h $(DESTDIR)$(destincludedir)
 	$(INSTALL) AUTHORS $(DESTDIR)$(docdir)
 	$(INSTALL) COPYING $(DESTDIR)$(docdir)
 	$(INSTALL) BUGS $(DESTDIR)$(docdir)
