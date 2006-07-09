@@ -172,6 +172,8 @@ testsuite/check: $(check_objs) $(objs)
 	@echo Linking $@
 	@$(CC) $(LIBS) -o $@ $^ -lcheck
 
+CTRLPROXY_MODULESDIR=$(shell pwd)/mods
+
 check: testsuite/check
 	@echo Running testsuite
 	@$(VALGRIND) ./testsuite/check

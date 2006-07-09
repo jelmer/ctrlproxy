@@ -204,7 +204,7 @@ START_TEST(test_join)
 
 	stack_process(ctx, ns1, ":bla!Gebruikersnaam@Computernaam JOIN #bla");
 
-	ns2 = linestack_get_state(ctx, NULL);
+	ns2 = linestack_get_state(ctx, linestack_get_marker(ctx));
 
 	fail_unless (network_state_equal(ns1, ns2), "Network state returned not equal");
 END_TEST

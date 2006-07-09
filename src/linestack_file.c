@@ -34,6 +34,7 @@
 
 struct record_header {
 	guint32 offset;
+	enum { RECORD_STATE, RECORD_LINE } type;
 	time_t time;
 	guint32 length;
 };
@@ -42,6 +43,7 @@ struct lf_data {
 	FILE *file;
 	long last_state_offset;
 	int lines_since_last_state;
+	long last_marker_offset;
 };
 
 static void file_insert_state(struct linestack_context *ctx, const struct network_state *state);
@@ -87,6 +89,7 @@ static void file_insert_state(struct linestack_context *ctx, const struct networ
 	log_network_state(NULL, LOG_TRACE, state, "Inserting state");
 	
 	rh.time = time(NULL);
+	rh.type = RECORD_STATE;
 	rh.length = length;
 	rh.offset = 0;
 
@@ -119,9 +122,12 @@ static gboolean file_insert_line(struct linestack_context *ctx, const struct lin
 		file_insert_state(ctx, state);
 
 	rh.time = time(NULL);
+	rh.type = RECORD_LINE;
 	rh.offset = nd->last_state_offset;
 	raw = irc_line_string_nl(l);
 	rh.length = strlen(raw);
+
+	nd->last_marker_offset = ftell(nd->file);
 	
 	if (fwrite(&rh, sizeof(rh), 1, nd->file) != 1)
 		return FALSE;
@@ -136,11 +142,9 @@ static void *file_get_marker(struct linestack_context *ctx)
 {
 	long *pos;
 	struct lf_data *nd = ctx->backend_data;
-	if (!nd) return NULL;
 
 	pos = g_new0(long, 1);
-	*pos = ftell(nd->file);
-
+	*pos = nd->last_marker_offset;
 	return pos;
 }
 
@@ -153,7 +157,7 @@ static struct network_state * file_get_state (
 	struct network_state *ret;
 	char *raw;
 	long from_offset, *to_offset = m;
-	long save_offset = ftell(nd->file);
+	long save_offset;
 	struct linestack_marker m1, m2;
 
 	if (!nd) 
@@ -162,12 +166,16 @@ static struct network_state * file_get_state (
 	/* Flush channel before reading otherwise data corruption may occur */
 	fflush(nd->file);
 
+	save_offset = ftell(nd->file);
+
 	if (to_offset) {
 		fseek(nd->file, *to_offset, SEEK_SET);
 		
 		/* Read offset at marker position */
-		if (fread(&rh, sizeof(rh), 1, nd->file) != 1)
+		if (fread(&rh, sizeof(rh), 1, nd->file) != 1) {
+			log_global(NULL, LOG_WARNING, "Unable to fread at %ld", *to_offset);
 			return NULL;
+		}
 
 		from_offset = rh.offset;
 	} else {
@@ -183,6 +191,7 @@ static struct network_state * file_get_state (
 		return NULL;
 
 	g_assert(rh.offset == 0);
+	g_assert(rh.type == RECORD_STATE);
 	raw = g_malloc(rh.length+1);
 
 	if (fread(raw, rh.length, 1, nd->file) != 1)
@@ -228,24 +237,28 @@ static gboolean file_traverse(struct linestack_context *ctx,
 	/* Go back to begin of file */
 	fseek(nd->file, start_offset?*start_offset:0, SEEK_SET);
 	
-	while(!feof(nd->file) && (!end_offset || ftell(nd->file) < *end_offset)) 
+	while(!feof(nd->file) && (!end_offset || ftell(nd->file) <= *end_offset)) 
 	{
 		struct record_header rh;
 		char *raw;
 		struct line *l;
 		
-		if (fread(&rh, sizeof(rh), 1, nd->file) != 1)
+		if (fread(&rh, sizeof(rh), 1, nd->file) != 1) {
+			log_global(NULL, LOG_WARNING, "read() failed");
 			return FALSE;
+		}
 
-		if (rh.offset == 0) { /* Skip state records */
+		if (rh.type == RECORD_STATE) { /* Skip state records */
 			fseek(nd->file, rh.length, SEEK_CUR);
 			continue;
 		}
 
 		raw = g_malloc(rh.length+1);
 		
-		if (fgets(raw, rh.length, nd->file) == NULL)
+		if (fgets(raw, rh.length, nd->file) == NULL) {
+			log_global(NULL, LOG_WARNING, "fgets() failed");
 			return FALSE;
+		}
 
 		raw[rh.length] = '\0';
 
