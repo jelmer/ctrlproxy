@@ -13,7 +13,7 @@ else
 	REVISION="`bzr revno .`"
 	if test -n "$REVISION"; then
 		AC_MSG_RESULT($REVISION)
-		BZRVERSION="-bzr-r$REVISION"
+		BZRVERSION="-`bzr nick .`bzr-r$REVISION"
 	else
 		AC_MSG_RESULT(no)
 	fi
