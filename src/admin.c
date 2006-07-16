@@ -234,6 +234,7 @@ static void load_module (struct client *c, char **args, void *userdata)
 
 static void com_save_config (struct client *c, char **args, void *userdata)
 { 
+	global_update_config(c->network->global);
 	save_configuration(c->network->global->config, args[1]?args[1]:c->network->global->config->config_dir); 
 }
 

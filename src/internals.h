@@ -88,6 +88,7 @@ void init_linestack(struct ctrlproxy_config *);
 /* gen_config.c */
 void network_update_config(struct network_state *ns, struct network_config *nc);
 void channel_update_config(struct channel_state *ns, struct channel_config *nc);
+void global_update_config(struct global *my_global);
 
 /* repl.c */
 void client_replicate(struct client *);

@@ -55,3 +55,4 @@ testsuite/check
 *.gcda
 *.gcno
 *.gcov
+testsuite/torture

@@ -124,6 +124,7 @@ static void signal_save(int sig)
 	}
 
 	config_save_notify(my_global, my_global->config->config_dir);
+	global_update_config(my_global);
 	save_configuration(my_global->config, my_global->config->config_dir);
 	nickserv_save(my_global, my_global->config->config_dir);
 }

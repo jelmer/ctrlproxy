@@ -78,3 +78,12 @@ void channel_update_config(struct channel_state *ns, struct channel_config *nc)
 	g_free(nc->name);
 	nc->name = g_strdup(ns->name);
 }
+
+void global_update_config(struct global *my_global)
+{
+	GList *gl;
+	for (gl = my_global->networks; gl; gl = gl->next) {
+		struct network *n = gl->data;
+		network_update_config(n->state, n->config);
+	}
+}
