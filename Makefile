@@ -1,6 +1,6 @@
 -include Makefile.settings
 
-vpath = src:testsuite
+VPATH = src:testsuite
 
 MODS_SHARED_FILES = $(patsubst %,mods/lib%.$(SHLIBEXT),$(MODS_SHARED))
 
@@ -41,7 +41,7 @@ objs = src/network.o \
 	   src/nickserv.o \
 	   src/admin.o \
 	   src/user.o
-dep_files = $(patsubst %.o, %.d, $(objs)) $(patsubst %.c, %.d, $(wildcard mods/*.c))
+dep_files = $(patsubst %.o, %.d, $(objs)) $(patsubst %.o, %.d, $(wildcard mods/*.o))
 
 ctrlproxy$(EXEEXT): src/main.o $(objs)
 	@echo Linking $@
