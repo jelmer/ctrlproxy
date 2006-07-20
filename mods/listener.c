@@ -331,18 +331,22 @@ static void load_config(struct global *global)
 	for (i = 0; i < size; i++)
 	{
 		struct listener *l;
-		char *address, *port;
+		char *address, *port, *tmp;
 		
-		address = g_strdup(groups[i]);
-		port = strrchr(address, ':');
+		tmp = g_strdup(groups[i]);
+		port = strrchr(tmp, ':');
 		if (port) {
+			address = tmp;
 			*port = '\0';
 			port++;
+		} else {
+			port = tmp;
+			address = NULL;
 		}
 			
-		l = listener_init(port?address:NULL, port?port:address);
+		l = listener_init(address, port);
 
-		g_free(address);
+		g_free(tmp);
 
 		l->password = g_key_file_get_string(kf, groups[i], "password", NULL);
 		if (!l->password)
@@ -353,7 +357,7 @@ static void load_config(struct global *global)
 
 		if (g_key_file_has_key(kf, groups[i], "network", NULL)) {
 
-			char *tmp = g_key_file_get_string(kf, groups[i], "network", NULL);
+			tmp = g_key_file_get_string(kf, groups[i], "network", NULL);
 			l->network = find_network(global, tmp);
 			if (!l->network) {
 				log_global("listener", LOG_ERROR, "Unable to find network named \"%s\"", tmp);
