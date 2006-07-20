@@ -488,7 +488,6 @@ static struct network_state * sqlite_get_state (
 	
 	state = get_network_state(backend_data, state_id, &line_id);
 
-	m1.ctx = m2.ctx = ctx;
 	m1.data = &line_id;
 	m2.data = &id;
 	linestack_replay(ctx, &m1, &m2, state);

@@ -203,7 +203,6 @@ static struct network_state * file_get_state (
 
 	g_free(raw);
 
-	m1.ctx = m2.ctx = ctx;
 	m1.data = &from_offset;
 	m2.data = to_offset;
 	linestack_replay(ctx, &m1, &m2, ret);

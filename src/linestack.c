@@ -62,7 +62,7 @@ static struct linestack_marker *wrap_linestack_marker(struct linestack_context *
 		return NULL;
 
 	mrk = g_new0(struct linestack_marker, 1);
-	mrk->ctx = ctx;
+	mrk->free_fn = ctx->ops->free_marker;
 	mrk->data = data;
 	return mrk;
 }
@@ -134,10 +134,11 @@ gboolean linestack_traverse_object(
 
 void linestack_free_marker(struct linestack_marker *lm)
 {
-	if (!lm) return;
-	g_assert(lm->ctx->ops);
-	if (!lm->ctx->ops->free_marker) return;
-	lm->ctx->ops->free_marker(lm->data);
+	if (lm == NULL)
+		return;
+	if (lm->free_fn != NULL) 
+		lm->free_fn(lm->data);
+	g_free(lm);
 }
 
 struct linestack_marker *linestack_get_marker(struct linestack_context *ctx)

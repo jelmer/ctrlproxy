@@ -19,7 +19,7 @@
 	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 */
 
-#include "ctrlproxy.h"
+#include "internals.h"
 #include <string.h>
 #include "admin.h"
 

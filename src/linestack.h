@@ -36,8 +36,8 @@ struct linestack_context
 };
 
 struct linestack_marker {
-	struct linestack_context *ctx;
 	void *data;
+	void (*free_fn) (void *);
 };
 
 /* linestack.c */

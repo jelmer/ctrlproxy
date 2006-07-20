@@ -1004,7 +1004,7 @@ static gboolean marshall_channel_state (struct network_state *nst, enum marshall
 	gboolean ret = TRUE;
 	marshall_new(t, c);
 
-	ret &= marshall_type(nst, m, t, &(*c)->mode);
+	ret &= marshall_type(nst, m, t, &((*c)->mode));
 	ret &= marshall_type(nst, m, t, (*c)->modes);
 	ret &= marshall_type(nst, m, t, &(*c)->namreply_started);
 	ret &= marshall_type(nst, m, t, &(*c)->banlist_started);
