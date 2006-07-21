@@ -21,6 +21,7 @@
 #include <string.h>
 #include <fcntl.h>
 #include <stdio.h>
+#include <unistd.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -87,18 +88,24 @@ static gboolean file_fini(struct linestack_context *ctx)
 	return TRUE;
 }
 
+static gint64 g_io_channel_tell_position(GIOChannel *gio)
+{
+	int fd = g_io_channel_unix_get_fd(gio);
+	return lseek(fd, 0, SEEK_CUR);
+}
+
 static void file_insert_state(struct linestack_context *ctx, const struct network_state *state)
 {
 	size_t length;
 	struct lf_data *nd = ctx->backend_data;
 	char *raw = network_state_encode(state, &length);
-	off_t offset;
+	gint64 offset;
 
 	log_network_state(NULL, LOG_TRACE, state, "Inserting state");
 	
 	nd->lines_since_last_state = 0;
 
-	offset = g_io_channel_seek_position(nd->line_file);
+	offset = g_io_channel_tell_position(nd->line_file);
 
 	if (fwrite(&offset, sizeof(offset), 1, nd->state_file) != 1)
 		return;
@@ -145,7 +152,7 @@ static void *file_get_marker(struct linestack_context *ctx)
 	struct lf_data *nd = ctx->backend_data;
 
 	pos = g_new0(long, 1);
-	*pos = ftell(nd->line_file);
+	*pos = g_io_channel_tell_position(nd->line_file);
 	return pos;
 }
 
