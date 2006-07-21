@@ -31,19 +31,10 @@
 
 #define STATE_DUMP_INTERVAL 1000
 
-
-struct record_header {
-	guint32 offset;
-	enum { RECORD_STATE, RECORD_LINE } type;
-	time_t time;
-	guint32 length;
-};
-
 struct lf_data {
-	FILE *file;
-	long last_state_offset;
+	GIOChannel *line_file;
+	FILE *state_file;
 	int lines_since_last_state;
-	long last_marker_offset;
 };
 
 static void file_insert_state(struct linestack_context *ctx, const struct network_state *state);
@@ -51,21 +42,37 @@ static void file_insert_state(struct linestack_context *ctx, const struct networ
 static gboolean file_init(struct linestack_context *ctx, const char *name, struct ctrlproxy_config *config, const struct network_state *state)
 {
 	struct lf_data *data = g_new0(struct lf_data, 1);
-	char *data_dir, *data_file;
+	char *parent_dir, *data_dir, *data_file;
+	GError *error = NULL;
 
-	data_dir = g_build_filename(config->config_dir, "linestack_file", NULL);
+	parent_dir = g_build_filename(config->config_dir, "linestack_file", NULL);
+	g_mkdir(parent_dir, 0700);
+	data_dir = g_build_filename(parent_dir, name, NULL);
+	g_free(parent_dir);
 	g_mkdir(data_dir, 0700);
-	data_file = g_build_filename(data_dir, name, NULL);
-	g_free(data_dir);
+	data_file = g_build_filename(data_dir, "lines", NULL);
 
-	data->file = fopen(data_file, "w+");
-	if (data->file == NULL) {
+	data->line_file = g_io_channel_new_file(data_file, "w+", &error);
+	if (data->line_file == NULL) {
+		log_global(NULL, LOG_WARNING, "Error opening `%s': %s", 
+						  data_file, error->message);
+		g_free(data_file);
+		return FALSE;
+	}
+	g_free(data_file);
+
+	data_file = g_build_filename(data_dir, "state", NULL);
+
+	data->state_file = fopen(data_file, "w+");
+	if (data->state_file == NULL) {
 		log_global(NULL, LOG_WARNING, "Error opening `%s': %s", 
 						  data_file, strerror(errno));
 		g_free(data_file);
 		return FALSE;
 	}
 	g_free(data_file);
+
+	g_free(data_dir);
 	ctx->backend_data = data;
 	file_insert_state(ctx, state);
 	return TRUE;
@@ -74,7 +81,8 @@ static gboolean file_init(struct linestack_context *ctx, const char *name, struc
 static gboolean file_fini(struct linestack_context *ctx)
 {
 	struct lf_data *data = ctx->backend_data;
-	fclose(data->file);
+	g_io_channel_unref(data->line_file);
+	fclose(data->state_file);
 	g_free(data);
 	return TRUE;
 }
@@ -84,22 +92,21 @@ static void file_insert_state(struct linestack_context *ctx, const struct networ
 	size_t length;
 	struct lf_data *nd = ctx->backend_data;
 	char *raw = network_state_encode(state, &length);
-	struct record_header rh;
+	off_t offset;
 
 	log_network_state(NULL, LOG_TRACE, state, "Inserting state");
 	
-	rh.time = time(NULL);
-	rh.type = RECORD_STATE;
-	rh.length = length;
-	rh.offset = 0;
-
-	nd->last_state_offset = ftell(nd->file);
 	nd->lines_since_last_state = 0;
 
-	if (fwrite(&rh, sizeof(rh), 1, nd->file) != 1)
+	offset = g_io_channel_seek_position(nd->line_file);
+
+	if (fwrite(&offset, sizeof(offset), 1, nd->state_file) != 1)
 		return;
 
-	if (fwrite(raw, length, 1, nd->file) != 1)
+	if (fwrite(&length, sizeof(length), 1, nd->state_file) != 1)
+		return;
+
+	if (fwrite(raw, length, 1, nd->state_file) != 1)
 		return;
 
 	g_free(raw);
@@ -110,9 +117,9 @@ static void file_insert_state(struct linestack_context *ctx, const struct networ
 static gboolean file_insert_line(struct linestack_context *ctx, const struct line *l, const struct network_state *state)
 {
 	struct lf_data *nd = ctx->backend_data;
-	char *raw;
-	int ret;
-	struct record_header rh;
+	char t[20];
+	GError *error = NULL;
+	GIOStatus status;
 	
 	if (nd == NULL) 
 		return FALSE;
@@ -121,21 +128,15 @@ static gboolean file_insert_line(struct linestack_context *ctx, const struct lin
 	if (nd->lines_since_last_state == STATE_DUMP_INTERVAL) 
 		file_insert_state(ctx, state);
 
-	rh.time = time(NULL);
-	rh.type = RECORD_LINE;
-	rh.offset = nd->last_state_offset;
-	raw = irc_line_string_nl(l);
-	rh.length = strlen(raw);
+	g_snprintf(t, sizeof(t), "%ld ", time(NULL));
 
-	nd->last_marker_offset = ftell(nd->file);
-	
-	if (fwrite(&rh, sizeof(rh), 1, nd->file) != 1)
+	status = g_io_channel_write_chars(nd->line_file, t, strlen(t), NULL, &error);
+	g_assert(status == G_IO_STATUS_NORMAL);
+
+	if (!irc_send_line(nd->line_file, l))
 		return FALSE;
 
-	ret = fputs(raw, nd->file);
-	g_free(raw);
-
-	return (ret != EOF);
+	return TRUE;
 }
 
 static void *file_get_marker(struct linestack_context *ctx)
@@ -144,7 +145,7 @@ static void *file_get_marker(struct linestack_context *ctx)
 	struct lf_data *nd = ctx->backend_data;
 
 	pos = g_new0(long, 1);
-	*pos = nd->last_marker_offset;
+	*pos = ftell(nd->line_file);
 	return pos;
 }
 
@@ -153,48 +154,28 @@ static struct network_state * file_get_state (
 		void *m)
 {
 	struct lf_data *nd = ctx->backend_data;
-	struct record_header rh;
 	struct network_state *ret;
 	char *raw;
 	long from_offset, *to_offset = m;
-	long save_offset;
 	struct linestack_marker m1, m2;
+	GError *error = NULL;
+	GIOStatus status;
 
 	if (!nd) 
 		return NULL;
 
 	/* Flush channel before reading otherwise data corruption may occur */
-	fflush(nd->file);
+	g_io_channel_flush(nd->line_file, &error);
+	fflush(nd->state_file);
 
-	save_offset = ftell(nd->file);
+	/* FIXME: Search back from end of the state file to begin 
+	 * and find the state dump with the highest offset but an offset 
+	 * below from_offset */
 
-	if (to_offset) {
-		fseek(nd->file, *to_offset, SEEK_SET);
-		
-		/* Read offset at marker position */
-		if (fread(&rh, sizeof(rh), 1, nd->file) != 1) {
-			log_global(NULL, LOG_WARNING, "Unable to fread at %ld", *to_offset);
-			return NULL;
-		}
-
-		from_offset = rh.offset;
-	} else {
-		from_offset = nd->last_state_offset;
-	}
-
-	log_global(NULL, LOG_TRACE, "Reading state at 0x%04x (for 0x%04x)", from_offset, to_offset?*to_offset:-1);
-
-	/* fseek to state dump */
-	fseek(nd->file, from_offset, SEEK_SET);
-	
-	if (fread(&rh, sizeof(rh), 1, nd->file) != 1)
-		return NULL;
-
-	g_assert(rh.offset == 0);
-	g_assert(rh.type == RECORD_STATE);
+#if 0
 	raw = g_malloc(rh.length+1);
 
-	if (fread(raw, rh.length, 1, nd->file) != 1)
+	if (fread(raw, rh.length, 1, nd->state_file) != 1)
 		return FALSE;
 
 	raw[rh.length] = '\0';
@@ -202,13 +183,13 @@ static struct network_state * file_get_state (
 	ret = network_state_decode(raw, rh.length, NULL);
 
 	g_free(raw);
-
+#endif
 	m1.data = &from_offset;
 	m2.data = to_offset;
 	linestack_replay(ctx, &m1, &m2, ret);
 
-	/* Go back to original position */
-	fseek(nd->file, save_offset, SEEK_SET);
+	status = g_io_channel_seek_position(nd->line_file, 0, G_SEEK_END, &error);
+	g_assert(status == G_IO_STATUS_NORMAL);
 	
 	return ret;
 }
@@ -219,54 +200,53 @@ static gboolean file_traverse(struct linestack_context *ctx,
 		linestack_traverse_fn tf, 
 		void *userdata)
 {
-	long *start_offset, *end_offset, save_offset;
+	long *start_offset, *end_offset;
 	struct lf_data *nd = ctx->backend_data;
+	GError *error = NULL;
+	GIOStatus status;
+	char *raw, *space;
+	struct line *l;
 
 	if (nd == NULL) 
 		return FALSE;
 
-	save_offset = ftell(nd->file);
-
 	/* Flush channel before reading otherwise data corruption may occur */
-	fflush(nd->file);
+	g_io_channel_flush(nd->line_file, &error);
+	fflush(nd->state_file);
 	
 	start_offset = mf;
 	end_offset = mt;
 
 	/* Go back to begin of file */
-	fseek(nd->file, start_offset?*start_offset:0, SEEK_SET);
+	status = g_io_channel_seek_position(nd->line_file, 
+			start_offset?*start_offset:0, G_SEEK_SET, &error);
+
+	g_assert (status == G_IO_STATUS_NORMAL);
 	
-	while(!feof(nd->file) && (!end_offset || ftell(nd->file) <= *end_offset)) 
-	{
-		struct record_header rh;
-		char *raw;
-		struct line *l;
-		
-		if (fread(&rh, sizeof(rh), 1, nd->file) != 1) {
-			log_global(NULL, LOG_WARNING, "read() failed");
+	while((status = g_io_channel_read_line(nd->line_file, &raw, NULL, 
+		                          NULL, &error) != G_IO_STATUS_EOF)) {
+		if (status != G_IO_STATUS_NORMAL) {
+			log_global(NULL, LOG_WARNING, "read_line() failed: %s",
+					error->message);
 			return FALSE;
 		}
 
-		if (rh.type == RECORD_STATE) { /* Skip state records */
-			fseek(nd->file, rh.length, SEEK_CUR);
-			continue;
-		}
+		space = strchr(raw, ' ');
+		*space = '\0';
 
-		raw = g_malloc(rh.length+1);
-		
-		if (fgets(raw, rh.length, nd->file) == NULL) {
-			log_global(NULL, LOG_WARNING, "fgets() failed");
-			return FALSE;
-		}
-
-		raw[rh.length] = '\0';
-
-		l = irc_parse_line(raw);
-		tf(l, rh.time, userdata);
+		g_assert(space);
+	
+		l = irc_parse_line(space+1);
+		tf(l, atol(raw), userdata);
 		free_line(l);
+
+		g_free(raw);
 	}
 
-	fseek(nd->file, save_offset, SEEK_SET);
+	status = g_io_channel_seek_position(nd->line_file, 0, G_SEEK_END, 
+	                                    &error);
+
+	g_assert(status == G_IO_STATUS_NORMAL);
 
 	return TRUE;
 }
