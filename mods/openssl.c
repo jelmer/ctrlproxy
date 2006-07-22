@@ -199,7 +199,7 @@ static void load_config(struct global *global)
 	keyf = g_key_file_get_string(global->config->keyfile, "ssl", "keyfile", NULL);
 	certf = g_key_file_get_string(global->config->keyfile, "ssl", "certfile", NULL);
 
-	if(!certf) {
+	if (!certf) {
 		certf = g_build_filename(global->config->config_dir, "cert.pem", NULL);
 		if(!g_file_test(certf, G_FILE_TEST_EXISTS)) {
 			certf = NULL; 
@@ -218,6 +218,9 @@ static void load_config(struct global *global)
 	if(!irssi_ssl_set_files(certf, keyf)) {
 		log_global("openssl", LOG_ERROR, "Unable to set appropriate files");
 	}
+
+	g_free(certf);
+	g_free(keyf);
 }
 
 static gboolean init_plugin(void)

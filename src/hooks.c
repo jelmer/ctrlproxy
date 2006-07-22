@@ -221,6 +221,7 @@ void del_lose_client_hook(const char *name)
 		if(!strcmp(d->name, name)) {
 			g_free(d->name);
 			lose_client_hooks = g_list_remove(lose_client_hooks, d);
+			g_free(d);
 			return;
 		}
 	}
