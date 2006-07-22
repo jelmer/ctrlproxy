@@ -33,11 +33,17 @@
 #undef G_LOG_DOMAIN
 #define G_LOG_DOMAIN "log_custom"
 
+struct file_info {
+	FILE *file;
+	time_t last_used;
+};
+
 struct log_custom_data {
     char *logfilename;
-	GKeyFile *kf;
-    GHashTable *files;
+    GKeyFile *kf;
 };
+
+static GHashTable *files;
 
 /* Translation table */
 struct log_mapping {
@@ -297,15 +303,14 @@ If appropriate:
  -- NICK: %r
  */
 
-
 static FILE *find_add_channel_file(struct log_custom_data *data, struct network *network, const struct line *l, const char *identifier, gboolean create_file) 
 {
 	char *n = NULL, *dn, *p;
-	FILE *f;
+	struct file_info *fi;
 	if(!data->logfilename) return NULL;
 	custom_subst(network, &n, data->logfilename, l, identifier, TRUE, TRUE);
-	f = g_hash_table_lookup(data->files, n);
-	if(!f && create_file) {
+	fi = g_hash_table_lookup(files, n);
+	if(!fi && create_file) {
 		dn = g_strdup(n);
 		
 		/* Only include directory-part */
@@ -320,17 +325,22 @@ static FILE *find_add_channel_file(struct log_custom_data *data, struct network 
 			return NULL;
 		}
 		g_free(dn);
+
+		fi = g_new0(struct file_info, 1);
 		
 		/* Then open the correct filename */
-		f = fopen(n, "a+");
-		if(!f) {
+		fi->file = fopen(n, "a+");
+		if(!fi->file) {
 			log_network("log_custom", LOG_ERROR, network, "Couldn't open file %s for logging!", n);
 			g_free(n);
+			g_free(fi);
 			return NULL;
 		}
-		g_hash_table_insert(data->files, n, f);
+		g_hash_table_insert(files, n, fi);
 	} else g_free(n);
-	return f;
+
+	fi->last_used = time(NULL);
+	return fi->file;
 }
 
 static void file_write_target(struct log_custom_data *data, struct network *network, const char *n, const struct line *l) 
@@ -511,27 +521,52 @@ static gboolean log_custom_data(struct network *network, const struct line *l, e
 	return TRUE;
 }
 
+static void free_file_info(void *_data)
+{
+	struct file_info *data = _data;
+
+	fclose(data->file);
+	g_free(data);
+}
+
 static void load_config(struct global *global)
 {
-    GKeyFile *kf = global->config->keyfile;
-    struct log_custom_data *data;
-    
-    if (!g_key_file_has_group(kf, "log-custom")) {
-	    del_log_filter("log_custom");
-        return;
-    }
+	GKeyFile *kf = global->config->keyfile;
+	struct log_custom_data *data;
 
-    data = g_new0(struct log_custom_data, 1);
+	if (!g_key_file_has_group(kf, "log-custom")) {
+		del_log_filter("log_custom");
+		return;
+	}
+
+	data = g_new0(struct log_custom_data, 1);
 
 	add_log_filter("log_custom", log_custom_data, data, 1000);
 
-	data->files = g_hash_table_new(g_str_hash, g_str_equal);
-    data->logfilename = g_key_file_get_string(kf, "log-custom", "logfilename", NULL);
+	data->logfilename = g_key_file_get_string(kf, "log-custom", "logfilename", NULL);
 	data->kf = kf;
+}
+
+#define CLEANUP_THRESHOLD (60 * 60 * 24)
+
+static gboolean eval_remove(gpointer key, gpointer value, gpointer user_data)
+{
+	struct file_info *fi = value;
+
+	return (fi->last_used < time(NULL) - CLEANUP_THRESHOLD);
+}
+
+static gboolean cleanup(void *_data)
+{
+	g_hash_table_foreach_remove(files, eval_remove, NULL);
+	return TRUE;
 }
 
 static gboolean init_plugin(void)
 {
+	files = g_hash_table_new_full(g_str_hash, g_str_equal, 
+			g_free, free_file_info);
+	g_timeout_add(60 * 60, cleanup, NULL);
 	register_load_config_notify(load_config);
 	return TRUE;
 }
