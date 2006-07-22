@@ -128,8 +128,6 @@ mods/gnutls.o: CFLAGS+=$(GNUTLS_CFLAGS)
 mods/libgnutls.$(SHLIBEXT): LDFLAGS+=$(GNUTLS_LDFLAGS)
 mods/openssl.o: CFLAGS+=$(OPENSSL_CFLAGS)
 mods/libopenssl.$(SHLIBEXT): LDFLAGS+=$(OPENSSL_LDFLAGS)
-mods/liblinestack_sqlite.$(SHLIBEXT): LDFLAGS+=$(SQLITE_LDFLAGS)
-mods/linestack_sqlite.o: CFLAGS+=$(SQLITE_CFLAGS)
 
 # Python specific stuff below this line
 mods/python2.o ctrlproxy_wrap.o: CFLAGS+=$(PYTHON_CFLAGS)
