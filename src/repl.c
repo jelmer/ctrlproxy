@@ -21,6 +21,20 @@
 #include "irc.h"
 #include "repl.h"
 
+void string2mode(char *modes, char ar[255])
+{
+	memset(ar, 0, sizeof(ar));
+
+	if (modes == NULL)
+		return;
+
+	g_assert(modes[0] == '+');
+	modes++;
+	for (; *modes; modes++) {
+		ar[(int)(*modes)] = 1;
+	}
+}
+
 char *mode2string(char modes[255])
 {
 	char ret[256];
