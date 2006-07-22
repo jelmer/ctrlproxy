@@ -207,27 +207,6 @@ START_TEST(state_set_hostmask)
 	fail_if (network_nick_set_hostmask(&nn, "ikke!ongeldig"));
 END_TEST
 
-START_TEST(state_marshall_simple)
-	struct network_state *s, *t;
-	size_t len1, len2;
-	char *data1, *data2;
-
-	s = network_state_init(NULL, "nick", "uname", "uhost");
-	data1 = network_state_encode(s, &len1);
-	t = network_state_decode(data1, len1, NULL);
-	data2 = network_state_encode(s, &len2);
-
-	fail_unless (len1 == len2);
-
-	fail_unless (memcmp(data1, data2, len1) == 0);
-
-	fail_unless (strcmp(s->me.nick, t->me.nick) == 0);
-	fail_unless (strcmp(s->me.username, t->me.username) == 0);
-	fail_unless (strcmp(s->me.hostname, t->me.hostname) == 0);
-
-	free_network_state(t);
-END_TEST
-
 START_TEST(state_find_network_nick)
 	struct network_state *ns = network_state_init(NULL, "bla", "Gebruikersnaam", "Computernaam");
 
@@ -286,7 +265,6 @@ Suite *state_suite(void)
 	tcase_add_test(tc_core, state_set_hostmask);
 	tcase_add_test(tc_core, state_nick_change_my);
 	tcase_add_test(tc_core, state_nick_change_other);
-	tcase_add_test(tc_core, state_marshall_simple);
 	tcase_add_test(tc_core, state_find_network_nick);
 	tcase_add_test(tc_core, state_find_add_network_nick);
 	tcase_add_test(tc_core, state_handle_state_data);

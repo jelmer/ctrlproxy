@@ -61,7 +61,7 @@ struct channel_state {
 	gboolean banlist_started;
 	gboolean invitelist_started;
 	gboolean exceptlist_started;
-	long limit;
+	int limit;
 	GList *nicks;
 	GList *banlist;
 	GList *invitelist;
@@ -113,10 +113,5 @@ G_MODULE_EXPORT gboolean is_prefix(char p, const struct network_info *n);
 G_MODULE_EXPORT char get_prefix_by_mode(char p, const struct network_info *n);
 G_MODULE_EXPORT int irccmp(const struct network_info *n, const char *a, const char *b);
 G_MODULE_EXPORT gboolean network_supports(const struct network_info *n, const char *fe);
-
-/* Push / pull */
-G_MODULE_EXPORT struct network_state *network_state_decode(char *, size_t, struct network_info *);
-G_MODULE_EXPORT char *network_state_encode(const struct network_state *st, size_t *);
-G_MODULE_EXPORT struct network_state *network_state_dup(struct network_state *st);
 
 #endif /* __CTRLPROXY_STATE_H__ */

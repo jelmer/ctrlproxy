@@ -172,7 +172,7 @@ testsuite/check: $(check_objs) $(objs)
 
 CTRLPROXY_MODULESDIR=$(shell pwd)/mods
 
-check: testsuite/check
+test: testsuite/check
 	@echo Running testsuite
 	@$(VALGRIND) ./testsuite/check
 
