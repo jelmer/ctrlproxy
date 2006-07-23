@@ -5,12 +5,9 @@
 		<title>Why ctrlproxy?</title>
 
 <para>
-CtrlProxy is a project I started because I running irssi in 
-screen on my server was suffering from 
-high latency. My server isn't very fast and that meant 
-when it was on high load ircing was getting pretty hard. I could 
-of course run irssi on my workstation, but my workstation isn't on 
-24/7 and some people depend on the channel logs I generate.
+CtrlProxy is a project I started because running irssi in 
+screen on my server didn't work very well over 
+high latency connections when I was away from home.
 </para>
 
 <para>
@@ -59,13 +56,9 @@ The structure of ctrlproxy is very modular and it is easily extendible.
 	<title>Requirements</title>
 
 <itemizedlist>
-	<listitem><para>libpopt</para></listitem>
 	<listitem><para>GNU glib</para></listitem>
-	<listitem><para>libxml2</para></listitem>
+	<listitem><para>OpenSSL / GNUTLS / Mozilla NSS (for SSL support)</para></listitem>
 </itemizedlist>
-
-	<para>Some of the modules have additional requirements. Read the 
-	chapters about those specific modules for details.</para>
 
 </sect1>
 

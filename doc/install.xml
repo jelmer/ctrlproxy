@@ -5,7 +5,7 @@
 		<title>Precompiled packages</title>
 
 		<para>Some distributions come with a packaged version 
-			of ctrlproxy. <ulink url="mailto:lintux@lintux.cx">Wilmer 
+			of ctrlproxy. <ulink url="mailto:lintux@debian.org">Wilmer 
 				van der Gaast</ulink> is maintaining the 
 <ulink url="http://packages.debian.org/ctrlproxy">Debian ctrlproxy package</ulink> and <ulink url="mailto:agriffis@gentoo.org">Aron Griffis</ulink> maintains the gentoo package of ctrlproxy.</para>
 
@@ -19,8 +19,7 @@
 		<title>Supported platforms</title>
 
 		<para>CtrlProxy should run on pretty much all POSIX-compatible 
-			platforms. A version for Windows will be released in the future
-			(for 3.0).
+			platforms. A version for Windows might be released in the future.
 		</para>
 	</sect1>
 

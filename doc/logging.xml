@@ -3,7 +3,7 @@
 
 
 <para>
-	CtrlProxy has various means for supporting logging. 
+	CtrlProxy has various means for logging conversions to file. 
 </para>
 
 <sect1>
