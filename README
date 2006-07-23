@@ -7,19 +7,11 @@ For a quick start, see the bottom of this file.
 If you are upgrading from an older version of ctrlproxy, please read the 
 file UPGRADING.
 
-Why CtrlProxy?
---------------
-CtrlProxy is a project I started because I got bored with running irssi in 
-screen on my server. My server isn't very fast and that meant 
-when it was on high load ircing was getting pretty hard. I could 
-of course run irssi on my workstation, but my workstation isn't on 
-24/7 and some people depend on the channel logs I generate.
-
-Running ctrlproxy requires much less bandwidth then running a 
-remote irssi inside screen and it works much better over high-latency 
-connections.
-
-The structure of CtrlProxy is modular and it is easily extendible.
+Introduction
+------------
+CtrlProxy is a lightweight IRC proxy. It allows you to keep a permanent 
+connection open to an IRC server and using that connection from wherever 
+you would like to use IRC, without the need to disconnect from the server. 
 
 Features
 --------
@@ -46,7 +38,7 @@ Requirements
 Building
 --------
 
-ctrlproxy can be installed using:
+ctrlproxy can be installed by running:
 
 $ ./configure
 $ make
@@ -72,4 +64,4 @@ Documentation
 -------------
 Most documentation is in the manual and the 
 manpages: ctrlproxy(1) and ctrlproxyrc(5).
-The example ctrlproxyrc file might be of some use..
+The example ctrlproxyrc file might also be of some use.
