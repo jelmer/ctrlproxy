@@ -407,6 +407,8 @@ static void file_write_channel_query(struct log_custom_data *data, struct networ
 	if (!l->origin) return;
 	nick = line_get_nick(l);
 
+	g_assert(n);
+
 	fmt = g_key_file_get_string(data->kf, "log-custom", n, NULL);
 	if(!fmt) {
 		g_free(nick);
