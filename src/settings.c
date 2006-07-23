@@ -72,6 +72,21 @@ static void config_save_tcp_servers(struct network_config *n, GKeyFile *kf)
 		else
 			g_key_file_remove_key(kf, name, "password", NULL);
 
+		if (ts->bind_address) {
+			char *tmp;
+			if (ts->bind_port) 
+				tmp = g_strdup_printf("%s:%s", 
+				                      ts->bind_address,
+						      ts->bind_port);
+			else
+				tmp = g_strdup(ts->bind_address);
+
+			g_key_file_set_string(kf, name, "bind", tmp);
+
+			g_free(tmp);
+		} else 
+			g_key_file_remove_key(kf, name, "bind", NULL);
+
 		i++;
 	}
 
@@ -239,6 +254,11 @@ static void config_load_servers(struct network_config *n)
 		
 		s->host = servers[i];
 		s->port = g_strdup(tmp?tmp:"6667");
+		s->bind_address = g_key_file_get_string(n->keyfile, servers[i], "bind", NULL);
+		if ((tmp = strchr(s->bind_address, ':'))) {
+			*tmp = '\0';
+			s->bind_port = tmp+1;
+		}
 
 		n->type_settings.tcp_servers = g_list_append(n->type_settings.tcp_servers, s);
 	}
@@ -523,6 +543,7 @@ void free_config(struct ctrlproxy_config *cfg)
 				struct tcp_server_config *tc = nc->type_settings.tcp_servers->data;
 				g_free(tc->host);
 				g_free(tc->port);
+				g_free(tc->bind_address);
 				g_free(tc->password);
 				nc->type_settings.tcp_servers = g_list_remove(nc->type_settings.tcp_servers, tc);
 				g_free(tc);

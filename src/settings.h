@@ -29,6 +29,8 @@ struct channel_config {
 struct tcp_server_config {
 	char *host;
 	char *port;
+	char *bind_address;
+	char *bind_port;
 	int ssl:1;
 	char *password;
 };
