@@ -71,6 +71,11 @@ static gboolean process_from_server(struct network *n, struct line *l)
 	g_assert(n);
 	g_assert(l);
 
+	if (n->state == NULL) {
+		log_network(NULL, LOG_WARNING, n, "Dropping message '%s' because network is disconnected.", l->args[0]);
+		return FALSE;
+	}
+
 	run_log_filter(n, lc = linedup(l), FROM_SERVER); free_line(lc);
 	run_replication_filter(n, lc = linedup(l), FROM_SERVER); free_line(lc);
 
