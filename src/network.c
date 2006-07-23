@@ -242,6 +242,46 @@ static struct tcp_server_config *network_get_next_tcp_server(struct network *n)
 	return NULL;
 }
 
+static gboolean network_send_line_direct(struct network *s, struct client *c, const struct line *l)
+{
+	g_assert(s->config);
+	switch (s->config->type) {
+	case NETWORK_TCP:
+		return irc_send_line(s->connection.data.tcp.outgoing, l);
+
+	case NETWORK_PROGRAM:
+		return irc_send_line(s->connection.data.program.outgoing, l);
+
+	case NETWORK_VIRTUAL:
+		if (!s->connection.data.virtual.ops) 
+			return FALSE;
+		return s->connection.data.virtual.ops->to_server(s, c, l);
+
+	default:
+		g_assert(0);
+		return FALSE;
+	}
+}
+
+static gboolean send_queue(gpointer user_data)
+{
+	struct network *n = user_data;
+
+	/* FIXME: Send as much data as is allowed */
+
+	if (g_queue_is_empty(n->connection.pending_lines))
+		return FALSE;
+
+	return TRUE;
+}
+
+static gboolean need_flood_protection(struct network *s)
+{
+	/* FIXME: check whether it's possible to send another line */
+
+	return TRUE;
+}
+
 gboolean network_send_line(struct network *s, struct client *c, const struct line *ol)
 {
 	struct line l;
@@ -261,10 +301,9 @@ gboolean network_send_line(struct network *s, struct client *c, const struct lin
 	g_assert(l.args[0]);
 
 	/* Also write this message to all other clients currently connected */
-	if(!l.is_private && 
+	if (!l.is_private && 
 	   (!g_strcasecmp(l.args[0], "PRIVMSG") || 
-		!g_strcasecmp(l.args[0], "NOTICE")) && 
-	   (l.argc <= 2 || l.args[2][0] != '\001')) {
+		!g_strcasecmp(l.args[0], "NOTICE"))) {
 		clients_send(s, &l, c);
 	}
 
@@ -274,23 +313,18 @@ gboolean network_send_line(struct network *s, struct client *c, const struct lin
 
 	redirect_record(s, c, &l);
 
-	g_assert(s->config);
-	switch (s->config->type) {
-	case NETWORK_TCP:
-		return irc_send_line(s->connection.data.tcp.outgoing, &l);
+	if (need_flood_protection(s)) {
+		/* Add to queue */
+		g_queue_push_head(s->connection.pending_lines, linedup(&l));
 
-	case NETWORK_PROGRAM:
-		return irc_send_line(s->connection.data.program.outgoing, &l);
+		/* Start timeout handler if not active */
+		if (s->connection.queue_send_id == -1)
+			s->connection.queue_send_id = g_timeout_add(s->config->queue_speed, send_queue, s);
 
-	case NETWORK_VIRTUAL:
-		if (!s->connection.data.virtual.ops) 
-			return FALSE;
-		return s->connection.data.virtual.ops->to_server(s, c, &l);
-
-	default:
-		g_assert(0);
-		return FALSE;
+		return TRUE;
 	}
+
+	return network_send_line_direct(s, c, &l);
 }
 
 gboolean virtual_network_recv_line(struct network *s, struct line *l)
@@ -676,6 +710,7 @@ struct network *load_network(struct global *global, struct network_config *sc)
 	s->config = sc;
 	s->info.features = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_free);
 	s->name = g_strdup(s->config->name);
+	s->connection.pending_lines = g_queue_new();
 	s->global = global;
 
 	global->networks = g_list_append(global->networks, s);

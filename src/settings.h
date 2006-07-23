@@ -46,6 +46,7 @@ struct network_config
 	int autoconnect:1;
 	int ignore_first_nick:1;
 	int disable_cache:1;
+	int queue_speed; /* For flood protection */
 	guint reconnect_interval;
 
 	GList *channels;
