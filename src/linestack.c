@@ -23,6 +23,8 @@
 #include "config.h"
 #endif /* HAVE_CONFIG_H */
 
+#include "irc.h"
+
 static GSList *linestack_backends = NULL;
 
 void register_linestack(const struct linestack_ops *b)
@@ -149,9 +151,13 @@ struct linestack_marker *linestack_get_marker(struct linestack_context *ctx)
 	return wrap_linestack_marker(ctx, ctx->ops->get_marker(ctx));
 }
 
+#define NUM(a) #a
+
 static const char *linestack_messages[] = { 
 	"NICK", "JOIN", "QUIT", "PART", "PRIVMSG", "NOTICE", "KICK", 
-	"MODE", "TOPIC", NULL };
+	"MODE", "TOPIC", NUM(RPL_NAMREPLY), NUM(RPL_ENDOFNAMES), 
+	NUM(RPL_NOTOPIC), NUM(RPL_TOPICWHOTIME), NUM(RPL_TOPIC), 
+	NUM(RPL_CHANNELMODEIS), NUM(RPL_CREATIONTIME), NULL };
 
 gboolean linestack_insert_line(struct linestack_context *ctx, const struct line *l, enum data_direction dir, const struct network_state *state)
 {
