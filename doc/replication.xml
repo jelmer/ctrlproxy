@@ -10,38 +10,12 @@
 	</para>
 
 	<sect1>
-		<title>Highlighted words</title>
-
-		<para>Replicate only lines that match certain patterns</para>
-
-		<example>
-			<![CDATA[
-				<ctrlproxy>
-					<plugins>
-						<plugin autoload="1" file="repl_highlight">
-							<match>jelmer</match>
-							<match>ctrlproxy</match>
-						</plugin>
-					</plugins>
-				</ctrlproxy>
-			]]>
-		</example>
-	</sect1>
-
-	<sect1>
 		<title>Simple replication</title>
 	
 		<para>All lines that 
 			were sent after the last time you disconnected a client 
 			are stored and sent to a client that connects to ctrlproxy.
 		</para>
-	</sect1>
-
-	<sect1>
-		<title>Limited lines replication</title>
-
-		<para>Provides limited replication (only sends messsages and 
-			notices and initial join, no changes).</para>
 	</sect1>
 
 	<sect1>
@@ -53,23 +27,10 @@
 	</sect1>
 
 	<sect1>
-		<title>Time reporter</title>
+		<title>Time reporting</title>
 
-		<para>Very simple module that prints the time before every message. Such 
+		<para>If the <option>time_report</option> option is set to true, ctrlproxy will print the time before every message. Such 
 			messages are very useful for backlogs. That way, you can know at 
-			approximately which time something was said.</para>
-
-		<example>
-			<![CDATA[
-			<ctrlproxy>
-				<plugins>
-					<plugin autoload="1" file="report_time">
-						<format>%h:%m:%s</format>
-						<interval>300</interval>
-					</plugin>
-				</plugins>
-			</ctrlproxy>
-		]]>
-		</example>
+			approximately which time lines were written.</para>
 	</sect1>
 </chapter>

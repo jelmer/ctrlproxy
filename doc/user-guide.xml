@@ -2,6 +2,10 @@
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd" [
 <!ENTITY install SYSTEM "install.xml">
 <!ENTITY clients SYSTEM "clients.xml">
+<!ENTITY replication SYSTEM "replication.xml">
+<!ENTITY configuration SYSTEM "configuration.xml">
+<!ENTITY admin SYSTEM "admin.xml">
+<!ENTITY logging SYSTEM "logging.xml">
 <!ENTITY introduction SYSTEM "introduction.xml">
 ]>
 
@@ -15,7 +19,6 @@
 			<address><email>jelmer@vernstok.nl</email></address>
 		</affiliation>
 	</author>
-	<pubdate>$Date: 2005-09-04 21:39:37 +0200 (Sun, 04 Sep 2005) $</pubdate>
 
 	<abstract>
 	<para>This document is still a work-in-progress. We're doing our best to 
@@ -27,15 +30,11 @@
 </bookinfo>
 
 &introduction;
-
-<part id="installation">
-	<title>Installation</title>
-	&install;
-</part>
-
-<part id="configuration">
-	<title>Configuration</title>
-	&clients;
-</part>
+&install;
+&configuration;
+&replication;
+&admin;
+&logging;
+&clients;
 
 </book>

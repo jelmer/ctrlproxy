@@ -1,0 +1,33 @@
+<chapter id="configuration">
+	<title>Configuration</title>
+
+<para>CtrlProxy is configured by a set of plain-text files that 
+live in the <filename>.ctrlproxy</filename> directory in the users' home 
+directory.</para>
+
+<sect1><title>Quick setup</title>
+
+<para>
+
+By running ctrlproxy with the <param>--init</param> argument, you can 
+quickly create a configuration file.
+</para>
+
+<screen>
+gwalcmai:~% <userinput>ctrlproxy --init</userinput>
+Please specify port the administration interface should listen on.
+Prepend with a colon to listen on a specific address.
+Example: localhost:6668
+
+Port [6680]: <userinput>6680</userinput>
+Please specify a password for the administration interface:
+Configuration created in /home/jelmer/.ctrlproxy.
+</screen>
+
+<para>Once you have created a configuration file, you can hand-edit 
+the files in <filename>~/.ctrlproxy</filename> or connect to administration 
+port as specified above using your IRC client and use the admin interface.
+</para>
+
+</sect1>
+</chapter>
