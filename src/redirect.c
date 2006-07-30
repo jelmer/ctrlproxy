@@ -22,10 +22,13 @@
 #include <string.h>
 #include "irc.h"
 
+/* TODO: Clean up stack occasionally */
+
 struct query_stack {
 	const struct query *query;
 	const struct network *network;
 	const struct client *client;	
+	time_t time;
 	struct query_stack *next;
 };
 
@@ -522,7 +525,7 @@ void redirect_response(struct network *network, struct line *l)
 			is_reply(s->query->end_replies, n))) {
 			
 			/* Send to client that queried, if that client still exists */
-			if(s->client && verify_client(s->network, s->client)) {
+			if (s->client && verify_client(s->network, s->client)) {
 				c = s->client;
 				client_send_line(s->client, l);
 			}
@@ -622,6 +625,7 @@ static int handle_default(const struct line *l, const struct network *n, const s
 	g_assert(q);
 	s->network = n;
 	s->client = c;
+	s->time = time(NULL);
 	s->query = q;
 	s->next = stack;
 	stack = s;
