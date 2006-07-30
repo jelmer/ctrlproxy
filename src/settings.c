@@ -257,7 +257,7 @@ static void config_load_servers(struct network_config *n)
 		s->host = servers[i];
 		s->port = g_strdup(tmp?tmp:"6667");
 		s->bind_address = g_key_file_get_string(n->keyfile, servers[i], "bind", NULL);
-		if ((tmp = strchr(s->bind_address, ':'))) {
+		if (s->bind_address && (tmp = strchr(s->bind_address, ':'))) {
 			*tmp = '\0';
 			s->bind_port = tmp+1;
 		}
