@@ -194,7 +194,7 @@ static gboolean irssi_ssl_set_files(const char *certf, const char *keyf);
 
 static void load_config(struct global *global)
 {
-	const char *keyf = NULL, *certf = NULL;
+	char *keyf = NULL, *certf = NULL;
 
 	keyf = g_key_file_get_string(global->config->keyfile, "ssl", "keyfile", NULL);
 	certf = g_key_file_get_string(global->config->keyfile, "ssl", "certfile", NULL);
