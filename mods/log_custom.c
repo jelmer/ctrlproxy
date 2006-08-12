@@ -310,7 +310,7 @@ static FILE *find_add_channel_file(struct log_custom_data *data, struct network 
 	if(!data->logfilename) return NULL;
 	custom_subst(network, &n, data->logfilename, l, identifier, TRUE, TRUE);
 	fi = g_hash_table_lookup(files, n);
-	if(!fi && create_file) {
+	if(fi == NULL && create_file) {
 		dn = g_strdup(n);
 		
 		/* Only include directory-part */
@@ -338,6 +338,9 @@ static FILE *find_add_channel_file(struct log_custom_data *data, struct network 
 		}
 		g_hash_table_insert(files, n, fi);
 	} else g_free(n);
+
+	if (fi == NULL)
+		return NULL;
 
 	fi->last_used = time(NULL);
 	return fi->file;
