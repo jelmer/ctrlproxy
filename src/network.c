@@ -291,12 +291,18 @@ gboolean network_send_line(struct network *s, struct client *c, const struct lin
 	g_assert(s);
 	l = *ol;
 
-	if (!run_server_filter(s, &l, TO_SERVER))
-		return TRUE;
+	g_assert(ol->origin == NULL);
 
-	run_log_filter(s, lc = linedup(&l), TO_SERVER); free_line(lc);
-	run_replication_filter(s, lc = linedup(&l), TO_SERVER); free_line(lc);
-	linestack_insert_line(s->linestack, ol, TO_SERVER, s->state);
+	if (s->state != NULL) {
+		l.origin = g_strdup(s->state->me.nick);
+
+		if (!run_server_filter(s, &l, TO_SERVER))
+			return TRUE;
+
+		run_log_filter(s, lc = linedup(&l), TO_SERVER); free_line(lc);
+		run_replication_filter(s, lc = linedup(&l), TO_SERVER); free_line(lc);
+		linestack_insert_line(s->linestack, ol, TO_SERVER, s->state);
+	}
 
 	g_assert(l.args[0]);
 
@@ -304,12 +310,11 @@ gboolean network_send_line(struct network *s, struct client *c, const struct lin
 	if (!l.is_private && 
 	   (!g_strcasecmp(l.args[0], "PRIVMSG") || 
 		!g_strcasecmp(l.args[0], "NOTICE"))) {
+		g_assert(l.origin);
 		clients_send(s, &l, c);
 	}
 
-	l.origin = NULL;		/* Never send origin to the server */
-
-	log_network_line(s, &l, FALSE);
+	log_network_line(s, ol, FALSE);
 
 	redirect_record(s, c, &l);
 
@@ -365,13 +370,9 @@ gboolean network_send_args(struct network *s, ...)
 
 	g_assert(s);
 
-	if (!s->state) 
-		return FALSE;
-
 	va_start(ap, s);
 	l = virc_parse_line(NULL, ap);
 	l->is_private = TRUE;
-	l->origin = g_strdup(s->state->me.nick);
 	va_end(ap);
 
 	ret = network_send_line(s, NULL, l);
