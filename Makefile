@@ -122,12 +122,8 @@ distclean:: clean
 ctags:
 	ctags -R .
 
-mods/nss.o: CFLAGS+=$(NSS_CFLAGS)
-mods/libnss.$(SHLIBEXT): LDFLAGS+=$(NSS_LDFLAGS)
 mods/gnutls.o: CFLAGS+=$(GNUTLS_CFLAGS)
 mods/libgnutls.$(SHLIBEXT): LDFLAGS+=$(GNUTLS_LDFLAGS)
-mods/openssl.o: CFLAGS+=$(OPENSSL_CFLAGS)
-mods/libopenssl.$(SHLIBEXT): LDFLAGS+=$(OPENSSL_LDFLAGS)
 
 # Python specific stuff below this line
 mods/python2.o ctrlproxy_wrap.o: CFLAGS+=$(PYTHON_CFLAGS)

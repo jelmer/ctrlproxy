@@ -61,17 +61,6 @@ PKG_PROG_PKG_CONFIG
 PKG_CHECK_MODULES(COMMON, glib-2.0 gmodule-2.0)
 
 ###############################################################################
-# NSS support
-###############################################################################
-PKG_CHECK_MODULES(NSS, mozilla-nss, 
-	[ DEFMODULE(nss, $NSS_LIBS) ], [ echo "Not using mozilla-nss"; ] )
-
-###############################################################################
-# OpenSSL support
-###############################################################################
-PKG_CHECK_MODULES(OPENSSL, openssl, [ DEFMODULE(openssl, $OPENSSL_LIBS) ], [ echo "Not building openssl module" ])
-
-###############################################################################
 # GNUTLS support
 ###############################################################################
 AC_PATH_PROG(gnutls_config, libgnutls-config, no)
