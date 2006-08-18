@@ -145,7 +145,10 @@ void linestack_free_marker(struct linestack_marker *lm)
 
 struct linestack_marker *linestack_get_marker(struct linestack_context *ctx)
 {
+	g_assert(ctx);
+
 	if (!ctx->ops) return NULL;
+
 	g_assert(ctx->ops->get_marker);
 
 	return wrap_linestack_marker(ctx, ctx->ops->get_marker(ctx));
@@ -163,6 +166,8 @@ gboolean linestack_insert_line(struct linestack_context *ctx, const struct line 
 {
 	int i;
 	gboolean needed = FALSE;
+
+	if (ctx == NULL) return FALSE;
 
 	if (l->argc == 0) return FALSE;
 

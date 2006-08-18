@@ -51,7 +51,8 @@ static void server_send_login (struct network *s)
 
 	log_network(NULL, LOG_TRACE, s, "Sending login details");
 
-	s->state = network_state_init(&s->info, s->config->nick, s->config->username, get_my_hostname());
+	s->state = network_state_init(&s->info, s->config->nick, 
+	                              s->config->username, get_my_hostname());
 	s->linestack = new_linestack(s);
 
 	if(s->config->type == NETWORK_TCP && 
@@ -81,7 +82,7 @@ static gboolean process_from_server(struct network *n, struct line *l)
 
 	g_assert(n->state);
 
-	state_handle_data(n->state,l);
+	state_handle_data(n->state, l);
 	linestack_insert_line(n->linestack, l, FROM_SERVER, n->state);
 
 	g_assert(l->args[0]);
@@ -279,7 +280,7 @@ static gboolean need_flood_protection(struct network *s)
 {
 	/* FIXME: check whether it's possible to send another line */
 
-	return TRUE;
+	return FALSE;
 }
 
 gboolean network_send_line(struct network *s, struct client *c, const struct line *ol)
@@ -293,16 +294,16 @@ gboolean network_send_line(struct network *s, struct client *c, const struct lin
 
 	g_assert(ol->origin == NULL);
 
-	if (s->state != NULL) {
-		l.origin = g_strdup(s->state->me.nick);
+	g_assert(s->state);
 
-		if (!run_server_filter(s, &l, TO_SERVER))
-			return TRUE;
+	l.origin = g_strdup(s->state->me.nick);
 
-		run_log_filter(s, lc = linedup(&l), TO_SERVER); free_line(lc);
-		run_replication_filter(s, lc = linedup(&l), TO_SERVER); free_line(lc);
-		linestack_insert_line(s->linestack, ol, TO_SERVER, s->state);
-	}
+	if (!run_server_filter(s, &l, TO_SERVER))
+		return TRUE;
+
+	run_log_filter(s, lc = linedup(&l), TO_SERVER); free_line(lc);
+	run_replication_filter(s, lc = linedup(&l), TO_SERVER); free_line(lc);
+	linestack_insert_line(s->linestack, ol, TO_SERVER, s->state);
 
 	g_assert(l.args[0]);
 
