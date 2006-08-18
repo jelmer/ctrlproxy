@@ -191,6 +191,11 @@ gboolean linestack_insert_line(struct linestack_context *ctx, const struct line 
 
 	if (!needed) return FALSE;
 
+	for (i = 0; i < l->argc; i++) {
+		g_assert(strchr(l->args[i], '\n') == NULL);
+		g_assert(strchr(l->args[i], '\r') == NULL);
+	}
+
 	return ctx->ops->insert_line(ctx, l, state);
 }
 
