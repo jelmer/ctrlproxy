@@ -294,16 +294,16 @@ gboolean network_send_line(struct network *s, struct client *c, const struct lin
 
 	g_assert(ol->origin == NULL);
 
-	g_assert(s->state);
+	if (s->state != NULL) {
+		l.origin = g_strdup(s->state->me.nick);
 
-	l.origin = g_strdup(s->state->me.nick);
+		if (!run_server_filter(s, &l, TO_SERVER))
+			return TRUE;
 
-	if (!run_server_filter(s, &l, TO_SERVER))
-		return TRUE;
-
-	run_log_filter(s, lc = linedup(&l), TO_SERVER); free_line(lc);
-	run_replication_filter(s, lc = linedup(&l), TO_SERVER); free_line(lc);
-	linestack_insert_line(s->linestack, ol, TO_SERVER, s->state);
+		run_log_filter(s, lc = linedup(&l), TO_SERVER); free_line(lc);
+		run_replication_filter(s, lc = linedup(&l), TO_SERVER); free_line(lc);
+		linestack_insert_line(s->linestack, ol, TO_SERVER, s->state);
+	}
 
 	g_assert(l.args[0]);
 
