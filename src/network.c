@@ -317,11 +317,11 @@ gboolean network_send_line(struct network *s, struct client *c, const struct lin
 
 	log_network_line(s, ol, FALSE);
 
-	redirect_record(s, c, &l);
+	redirect_record(s, c, ol);
 
 	if (need_flood_protection(s)) {
 		/* Add to queue */
-		g_queue_push_head(s->connection.pending_lines, linedup(&l));
+		g_queue_push_head(s->connection.pending_lines, linedup(ol));
 
 		/* Start timeout handler if not active */
 		if (s->connection.queue_send_id == -1)
@@ -330,7 +330,7 @@ gboolean network_send_line(struct network *s, struct client *c, const struct lin
 		return TRUE;
 	}
 
-	return network_send_line_direct(s, c, &l);
+	return network_send_line_direct(s, c, ol);
 }
 
 gboolean virtual_network_recv_line(struct network *s, struct line *l)
