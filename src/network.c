@@ -286,19 +286,22 @@ static gboolean need_flood_protection(struct network *s)
 gboolean network_send_line(struct network *s, struct client *c, const struct line *ol)
 {
 	struct line l;
+	char *tmp;
 	struct line *lc;
 
 	g_assert(ol);
 	g_assert(s);
 	l = *ol;
 
-	g_assert(ol->origin == NULL);
+	if (l.origin == NULL && s->state != NULL) {
+		tmp = l.origin = g_strdup(s->state->me.nick);
+	}
 
-	if (s->state != NULL) {
-		l.origin = g_strdup(s->state->me.nick);
-
-		if (!run_server_filter(s, &l, TO_SERVER))
+	if (l.origin) {
+		if (!run_server_filter(s, &l, TO_SERVER)) {
+			g_free(tmp);
 			return TRUE;
+		}
 
 		run_log_filter(s, lc = linedup(&l), TO_SERVER); free_line(lc);
 		run_replication_filter(s, lc = linedup(&l), TO_SERVER); free_line(lc);
@@ -314,6 +317,8 @@ gboolean network_send_line(struct network *s, struct client *c, const struct lin
 		g_assert(l.origin);
 		clients_send(s, &l, c);
 	}
+
+	g_free(tmp);
 
 	log_network_line(s, ol, FALSE);
 
