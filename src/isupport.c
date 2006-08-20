@@ -21,6 +21,7 @@
 
 #define DEFAULT_PREFIX		"(ov)@+"
 #define DEFAULT_CHANTYPES 	"#&"
+#define DEFAULT_CHARSET		"iso8859-15"
 
 void handle_005(struct network_state *s, struct line *l)
 {
@@ -131,6 +132,16 @@ gboolean is_prefix(char p, const struct network_info *n)
 
 	if(strchr(pref_end, p)) return TRUE;
 	return FALSE;
+}
+
+const char *get_charset(const struct network_info *n)
+{
+	char *ret = g_hash_table_lookup(n->features, "CHARSET");
+
+	if (ret != NULL)
+		return ret;
+
+	return DEFAULT_CHARSET;
 }
 
 char get_prefix_by_mode(char mode, const struct network_info *n)

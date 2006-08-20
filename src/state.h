@@ -113,5 +113,6 @@ G_MODULE_EXPORT gboolean is_prefix(char p, const struct network_info *n);
 G_MODULE_EXPORT char get_prefix_by_mode(char p, const struct network_info *n);
 G_MODULE_EXPORT int irccmp(const struct network_info *n, const char *a, const char *b);
 G_MODULE_EXPORT gboolean network_supports(const struct network_info *n, const char *fe);
+G_MODULE_EXPORT const char *get_charset(const struct network_info *n);
 
 #endif /* __CTRLPROXY_STATE_H__ */

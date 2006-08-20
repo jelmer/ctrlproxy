@@ -68,6 +68,7 @@ static void server_send_login (struct network *s)
 static gboolean process_from_server(struct network *n, struct line *l)
 {
 	struct line *lc;
+	GError *error = NULL;
 
 	g_assert(n);
 	g_assert(l);
@@ -104,6 +105,18 @@ static gboolean process_from_server(struct network *n, struct line *l)
 			  !g_strcasecmp(l->args[0], "376")) {
 		GList *gl;
 		n->connection.state = NETWORK_CONNECTION_STATE_MOTD_RECVD;
+
+		g_io_channel_set_encoding(n->config->type == NETWORK_TCP?
+				n->connection.data.tcp.outgoing:
+				n->connection.data.program.outgoing,
+				get_charset(&n->info), &error);
+
+		if (error != NULL)
+			log_network(NULL, LOG_WARNING, n, 
+				"Error setting charset %s: %s", 
+				get_charset(&n->info),
+				error->message);
+				
 
 		log_network(NULL, LOG_INFO, n, "Successfully logged in");
 
@@ -681,7 +694,7 @@ static gboolean connect_server(struct network *s)
 
 		s->state = network_state_init(&s->info, s->config->nick, s->config->username, get_my_hostname());
 		s->linestack = new_linestack(s);
-    	s->connection.state = NETWORK_CONNECTION_STATE_MOTD_RECVD;
+    		s->connection.state = NETWORK_CONNECTION_STATE_MOTD_RECVD;
 
 		if (s->connection.data.virtual.ops->init)
 			return s->connection.data.virtual.ops->init(s);
