@@ -51,7 +51,8 @@ static void server_send_login (struct network *s)
 
 	log_network(NULL, LOG_TRACE, s, "Sending login details");
 
-	s->state = network_state_init(&s->info, s->config->nick, s->config->username, get_my_hostname());
+	s->state = network_state_init(&s->info, s->config->nick, 
+	                              s->config->username, get_my_hostname());
 	s->linestack = new_linestack(s);
 
 	if(s->config->type == NETWORK_TCP && 
@@ -81,7 +82,7 @@ static gboolean process_from_server(struct network *n, struct line *l)
 
 	g_assert(n->state);
 
-	state_handle_data(n->state,l);
+	state_handle_data(n->state, l);
 	linestack_insert_line(n->linestack, l, FROM_SERVER, n->state);
 
 	g_assert(l->args[0]);
@@ -279,7 +280,7 @@ static gboolean need_flood_protection(struct network *s)
 {
 	/* FIXME: check whether it's possible to send another line */
 
-	return TRUE;
+	return FALSE;
 }
 
 gboolean network_send_line(struct network *s, struct client *c, const struct line *ol)
@@ -316,11 +317,11 @@ gboolean network_send_line(struct network *s, struct client *c, const struct lin
 
 	log_network_line(s, ol, FALSE);
 
-	redirect_record(s, c, &l);
+	redirect_record(s, c, ol);
 
 	if (need_flood_protection(s)) {
 		/* Add to queue */
-		g_queue_push_head(s->connection.pending_lines, linedup(&l));
+		g_queue_push_head(s->connection.pending_lines, linedup(ol));
 
 		/* Start timeout handler if not active */
 		if (s->connection.queue_send_id == -1)
@@ -329,7 +330,7 @@ gboolean network_send_line(struct network *s, struct client *c, const struct lin
 		return TRUE;
 	}
 
-	return network_send_line_direct(s, c, &l);
+	return network_send_line_direct(s, c, ol);
 }
 
 gboolean virtual_network_recv_line(struct network *s, struct line *l)

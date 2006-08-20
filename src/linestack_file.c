@@ -414,6 +414,8 @@ static gboolean file_init(struct linestack_context *ctx, const char *name, struc
 	g_mkdir(data_dir, 0700);
 	data_file = g_build_filename(data_dir, "lines", NULL);
 
+	unlink(data_file);
+
 	data->line_file = g_io_channel_new_file(data_file, "w+", &error);
 	if (data->line_file == NULL) {
 		log_global(NULL, LOG_WARNING, "Error opening `%s': %s", 
@@ -424,6 +426,8 @@ static gboolean file_init(struct linestack_context *ctx, const char *name, struc
 	g_free(data_file);
 
 	data_file = g_build_filename(data_dir, "state", NULL);
+
+	unlink(data_file);
 
 	data->state_file = g_io_channel_new_file(data_file, "w+", &error);
 	if (data->state_file == NULL) {
@@ -610,6 +614,7 @@ static gboolean file_traverse(struct linestack_context *ctx,
 		}
 
 		space = strchr(raw, ' ');
+		g_assert(space);
 		*space = '\0';
 
 		g_assert(space);
