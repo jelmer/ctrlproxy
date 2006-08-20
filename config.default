@@ -37,7 +37,7 @@ matches = ctrlproxy, foobar
 
 # Irssi-style logging
 [log-irssi]
-logfile = /home/jelmer/tmp/ctrlproxy
+# logfile = /home/jelmer/tmp/ctrlproxy
 
 # Work as a socks proxy
 #[socks]
