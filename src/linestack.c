@@ -71,6 +71,7 @@ static struct linestack_marker *wrap_linestack_marker(struct linestack_context *
 
 struct linestack_marker *linestack_get_marker_numlines (struct linestack_context *ctx, int lines)
 {
+	g_assert(ctx != NULL);
 	if (!ctx->ops) return NULL;
 	if (!ctx->ops->get_marker_numlines) return NULL;
 
@@ -82,6 +83,8 @@ struct network_state *linestack_get_state(
 		struct linestack_marker *lm)
 {
 	struct network_state *st;
+	g_assert(ctx != NULL);
+
 	if (!ctx->ops) return NULL;
 	if (!ctx->ops->get_state) return NULL;
 
@@ -101,6 +104,7 @@ gboolean linestack_traverse(
 		linestack_traverse_fn handler, 
 		void *userdata)
 {
+	g_assert(ctx != NULL);
 	if (!ctx->ops) return FALSE;
 	g_assert(ctx->ops->traverse);
 

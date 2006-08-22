@@ -54,6 +54,7 @@ static void server_send_login (struct network *s)
 	s->state = network_state_init(&s->info, s->config->nick, 
 	                              s->config->username, get_my_hostname());
 	s->linestack = new_linestack(s);
+	g_assert(s->linestack);
 
 	if(s->config->type == NETWORK_TCP && 
 	   s->connection.data.tcp.current_server->password) { 
