@@ -276,7 +276,7 @@ static gboolean network_send_line_direct(struct network *s, struct client *c, co
 
 	if (s->config->type == NETWORK_TCP) {
 		ch = s->connection.data.tcp.outgoing;
-	} else if (s->config->type == NETWORK_PROGRAM) {
+	} else {
 		ch = s->connection.data.program.outgoing;
 	}
 
@@ -313,7 +313,7 @@ static gboolean need_flood_protection(struct network *s)
 gboolean network_send_line(struct network *s, struct client *c, const struct line *ol)
 {
 	struct line l;
-	char *tmp;
+	char *tmp = NULL;
 	struct line *lc;
 
 	g_assert(ol);

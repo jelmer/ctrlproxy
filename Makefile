@@ -122,7 +122,8 @@ distclean:: clean
 ctags:
 	ctags -R .
 
-mods/gnutls.o: CFLAGS+=$(GNUTLS_CFLAGS)
+mods/gnutls.o mods/tlscert.o: CFLAGS+=$(GNUTLS_CFLAGS)
+mods/libgnutls.$(SHLIBEXT): mods/gnutls.o mods/tlscert.o
 mods/libgnutls.$(SHLIBEXT): LDFLAGS+=$(GNUTLS_LDFLAGS)
 
 # Python specific stuff below this line

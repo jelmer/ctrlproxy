@@ -33,6 +33,9 @@
 #undef G_LOG_DOMAIN
 #define G_LOG_DOMAIN "gnutls"
 
+void tls_cert_generate(const char *keyfile, const char *certfile,
+		       const char *cafile);
+
 static gnutls_certificate_credentials xcred;
 
 GIOChannel *g_io_gnutls_get_iochannel(GIOChannel *handle, gboolean server);
@@ -206,30 +209,14 @@ static void load_config(struct global *global)
 	certf = g_key_file_get_string(global->config->keyfile, "ssl", "certfile", NULL);
 	cafile = g_key_file_get_string(global->config->keyfile, "ssl", "cafile", NULL);
 
-	if(!certf) {
+	if (!keyf && !certf && !cafile) {
 		certf = g_build_filename(global->config->config_dir, "cert.pem", NULL);
-		if(!g_file_test(certf, G_FILE_TEST_EXISTS)) {
-			g_free(certf);
-			log_global("gnutls", LOG_ERROR, "No valid certificate set");
-			return;
-		}
-	}
-
-	if(!keyf) {
 		keyf = g_build_filename(global->config->config_dir, "key.pem", NULL);
-		if(!g_file_test(keyf, G_FILE_TEST_EXISTS)) {
-			g_free(keyf);
-			log_global("gnutls", LOG_ERROR, "No valid key set");
-			return;
-		}
-	}
-
-	if(!cafile) {
 		cafile = g_build_filename(global->config->config_dir, "ca.pem", NULL);
-		if(!g_file_test(cafile, G_FILE_TEST_EXISTS)) {
-			g_free(cafile);
-			cafile = NULL;
-		} 
+		tls_cert_generate(keyf, certf, cafile);
+		g_key_file_set_string(global->config->keyfile, "ssl", "keyfile", keyf);
+		g_key_file_set_string(global->config->keyfile, "ssl", "certfile", certf);
+		g_key_file_set_string(global->config->keyfile, "ssl", "cafile", cafile);
 	}
 
 	if (cafile) {
@@ -237,11 +224,6 @@ static void load_config(struct global *global)
 		if(err < 0) {
 			log_global("gnutls", LOG_ERROR, "Error setting x509 trust file: %s (file = %s)", gnutls_strerror(err), cafile);	
 		}
-	}
-
-	if (!certf || !keyf) {
-		log_global("gnutls", LOG_ERROR, "No certificate or key set!");
-		return;
 	}
 
 	err = gnutls_certificate_set_x509_key_file(xcred, certf, keyf, GNUTLS_X509_FMT_PEM);
