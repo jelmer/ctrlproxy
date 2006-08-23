@@ -286,7 +286,7 @@ static gboolean network_send_line_direct(struct network *s, struct client *c, co
 		return TRUE;
 
 	log_network(NULL, LOG_WARNING, s, "Error sending line '%s': %s",
-	           l->args[0], error->message);
+	           l->args[0], error?error->message:"ERROR");
 
 	return FALSE;
 }
