@@ -162,9 +162,15 @@ struct linestack_marker *linestack_get_marker(struct linestack_context *ctx)
 
 static const char *linestack_messages[] = { 
 	"NICK", "JOIN", "QUIT", "PART", "PRIVMSG", "NOTICE", "KICK", 
-	"MODE", "TOPIC", NUM(RPL_NAMREPLY), NUM(RPL_ENDOFNAMES), 
-	NUM(RPL_NOTOPIC), NUM(RPL_TOPICWHOTIME), NUM(RPL_TOPIC), 
-	NUM(RPL_CHANNELMODEIS), NUM(RPL_CREATIONTIME), NULL };
+	"MODE", "TOPIC", 
+	"353", /* RPL_NAMREPLY */
+	"366", /* RPL_ENDOFNAMES */
+	"331", /* RPL_NOTOPIC */
+	"333", /* RPL_TOPICWHOTIME */
+	"332", /* RPL_TOPIC */
+	"324", /* RPL_CHANNELMODEIS */
+	"329", /* RPL_CREATIONTIME */
+	NULL };
 
 gboolean linestack_insert_line(struct linestack_context *ctx, const struct line *l, enum data_direction dir, const struct network_state *state)
 {
