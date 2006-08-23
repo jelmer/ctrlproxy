@@ -121,7 +121,7 @@ struct line * irc_parse_line(const char *d)
 	return l;
 }
 
-gboolean irc_send_line(GIOChannel *c, const struct line *l) 
+GIOStatus irc_send_line(GIOChannel *c, const struct line *l) 
 {
 	char *raw;
 	GIOStatus ret;
@@ -133,10 +133,7 @@ gboolean irc_send_line(GIOChannel *c, const struct line *l)
 	ret = g_io_channel_write_chars(c, raw, -1, &bytes_written, NULL);
 	g_free(raw);
 
-	if (ret == G_IO_STATUS_NORMAL || ret == G_IO_STATUS_AGAIN) 
-		g_io_channel_flush(c, NULL);
-
-	return (ret == G_IO_STATUS_NORMAL);
+	return ret;
 }
 
 
@@ -256,12 +253,12 @@ char *line_get_nick(const struct line *l)
 	return nick;
 }
 
-gboolean irc_sendf(GIOChannel *c, char *fmt, ...) 
+GIOStatus irc_sendf(GIOChannel *c, char *fmt, ...) 
 {
 	va_list ap;
 	char *r = NULL;
 	struct line *l;
-	gboolean ret;
+	GIOStatus ret;
 
 	g_assert(c);
 	g_assert(fmt);
@@ -277,10 +274,10 @@ gboolean irc_sendf(GIOChannel *c, char *fmt, ...)
 	return ret;
 }
 
-gboolean irc_send_args(GIOChannel *c, ...) 
+GIOStatus irc_send_args(GIOChannel *c, ...) 
 {
 	struct line *l;
-	gboolean ret;
+	GIOStatus ret;
 	va_list ap;
 
 	g_assert(c);
@@ -291,7 +288,7 @@ gboolean irc_send_args(GIOChannel *c, ...)
 
 	ret = irc_send_line(c, l);
 
-	free_line(l); l = NULL;
+	free_line(l); 
 
 	return ret;
 }

@@ -259,23 +259,33 @@ static struct tcp_server_config *network_get_next_tcp_server(struct network *n)
 
 static gboolean network_send_line_direct(struct network *s, struct client *c, const struct line *l)
 {
+	GIOStatus status;
+	GIOChannel *ch;
 	g_assert(s->config);
-	switch (s->config->type) {
-	case NETWORK_TCP:
-		return irc_send_line(s->connection.data.tcp.outgoing, l);
 
-	case NETWORK_PROGRAM:
-		return irc_send_line(s->connection.data.program.outgoing, l);
+	g_assert(s->config->type == NETWORK_TCP ||
+		 s->config->type == NETWORK_PROGRAM ||
+		 s->config->type == NETWORK_VIRTUAL);
 
-	case NETWORK_VIRTUAL:
+	if (s->config->type == NETWORK_VIRTUAL) {
 		if (!s->connection.data.virtual.ops) 
 			return FALSE;
 		return s->connection.data.virtual.ops->to_server(s, c, l);
-
-	default:
-		g_assert(0);
-		return FALSE;
 	}
+
+	if (s->config->type == NETWORK_TCP) {
+		ch = s->connection.data.tcp.outgoing;
+	} else if (s->config->type == NETWORK_PROGRAM) {
+		ch = s->connection.data.program.outgoing;
+	}
+
+	status = irc_send_line(ch, l);
+
+	if (status == G_IO_STATUS_NORMAL) 
+		return TRUE;
+
+	/* FIXME: Report */
+	return FALSE;
 }
 
 static gboolean send_queue(gpointer user_data)

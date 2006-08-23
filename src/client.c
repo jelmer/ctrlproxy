@@ -206,10 +206,18 @@ gboolean client_send_args(struct client *c, ...)
 
 gboolean client_send_line(const struct client *c, const struct line *l)
 {
+	GIOStatus status;
 	g_assert(c);
 	g_assert(l);
 	log_client_line(c, l, FALSE);
-	return irc_send_line(c->incoming, l);
+	status = irc_send_line(c->incoming, l);
+
+	if (status == G_IO_STATUS_NORMAL)
+		return TRUE;
+
+	/* FIXME: Report */
+
+	return FALSE;
 }
 
 void disconnect_client(struct client *c, const char *reason) 
