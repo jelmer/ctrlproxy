@@ -43,9 +43,10 @@ G_MODULE_EXPORT char *irc_line_string(const struct line *l);
 G_MODULE_EXPORT char *irc_line_string_nl(const struct line *l);
 G_MODULE_EXPORT char *line_get_nick(const struct line *l);
 G_MODULE_EXPORT void free_line(struct line *l);
-G_MODULE_EXPORT GIOStatus irc_send_args(GIOChannel *, ...);
-G_MODULE_EXPORT GIOStatus irc_sendf(GIOChannel *, char *fmt, ...);
-G_MODULE_EXPORT GIOStatus irc_send_line(GIOChannel *, const struct line *l);
+G_MODULE_EXPORT GIOStatus irc_send_args(GIOChannel *, GError **, ...);
+G_MODULE_EXPORT GIOStatus irc_sendf(GIOChannel *, GError **, char *fmt, ...);
+G_MODULE_EXPORT GIOStatus irc_send_line(GIOChannel *, const struct line *l,
+                                        GError **);
 G_MODULE_EXPORT struct line *irc_parse_linef( char *origin, ... );
 G_MODULE_EXPORT struct line *irc_parse_line_args( char *origin, ... );
 G_MODULE_EXPORT GIOStatus irc_recv_line(GIOChannel *c, GError **err, struct line **);

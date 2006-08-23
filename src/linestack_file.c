@@ -507,7 +507,8 @@ static gboolean file_insert_line(struct linestack_context *ctx, const struct lin
 	status = g_io_channel_write_chars(nd->line_file, t, strlen(t), NULL, &error);
 	g_assert(status == G_IO_STATUS_NORMAL);
 
-	status = irc_send_line(nd->line_file, l);
+	status = irc_send_line(nd->line_file, l, NULL);
+
 	if (status != G_IO_STATUS_NORMAL)
 		return FALSE;
 
@@ -516,7 +517,7 @@ static gboolean file_insert_line(struct linestack_context *ctx, const struct lin
 
 static void *file_get_marker(struct linestack_context *ctx)
 {
-	long *pos;
+	gint64 *pos;
 	struct lf_data *nd = ctx->backend_data;
 
 	pos = g_new0(gint64, 1);

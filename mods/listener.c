@@ -62,7 +62,7 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition condition, gpo
 		if(!g_strcasecmp(l->args[0], "PASS")) {
 			if (listener->password && strcmp(l->args[1], listener->password)) {
 				log_network("listener", LOG_WARNING, listener->network, "User tried to log in with incorrect password!");
-				irc_sendf(c, ":%s %d %s :Password mismatch", get_my_hostname(), ERR_PASSWDMISMATCH, "*");
+				irc_sendf(c, NULL, ":%s %d %s :Password mismatch", get_my_hostname(), ERR_PASSWDMISMATCH, "*");
 	
 				free_line(l);
 				return TRUE;
@@ -75,7 +75,7 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition condition, gpo
 			free_line(l); 
 			return FALSE;
 		} else {
-			irc_sendf(c, ":%s %d %s :You are not registered", get_my_hostname(), ERR_NOTREGISTERED, "*");
+			irc_sendf(c, NULL, ":%s %d %s :You are not registered", get_my_hostname(), ERR_NOTREGISTERED, "*");
 		}
 
 		free_line(l);

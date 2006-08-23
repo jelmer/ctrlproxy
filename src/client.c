@@ -207,15 +207,17 @@ gboolean client_send_args(struct client *c, ...)
 gboolean client_send_line(const struct client *c, const struct line *l)
 {
 	GIOStatus status;
+	GError *error = NULL;
 	g_assert(c);
 	g_assert(l);
 	log_client_line(c, l, FALSE);
-	status = irc_send_line(c->incoming, l);
+	status = irc_send_line(c->incoming, l, &error);
 
 	if (status == G_IO_STATUS_NORMAL)
 		return TRUE;
 
-	/* FIXME: Report */
+	log_client(NULL, LOG_WARNING, c, "Error sending line '%s': %s", 
+		   l->args[0], error->message);
 
 	return FALSE;
 }

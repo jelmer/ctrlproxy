@@ -260,6 +260,7 @@ static struct tcp_server_config *network_get_next_tcp_server(struct network *n)
 static gboolean network_send_line_direct(struct network *s, struct client *c, const struct line *l)
 {
 	GIOStatus status;
+	GError *error = NULL;
 	GIOChannel *ch;
 	g_assert(s->config);
 
@@ -279,12 +280,14 @@ static gboolean network_send_line_direct(struct network *s, struct client *c, co
 		ch = s->connection.data.program.outgoing;
 	}
 
-	status = irc_send_line(ch, l);
+	status = irc_send_line(ch, l, &error);
 
 	if (status == G_IO_STATUS_NORMAL) 
 		return TRUE;
 
-	/* FIXME: Report */
+	log_network(NULL, LOG_WARNING, s, "Error sending line '%s': %s",
+	           l->args[0], error->message);
+
 	return FALSE;
 }
 
