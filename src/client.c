@@ -217,7 +217,7 @@ gboolean client_send_line(const struct client *c, const struct line *l)
 		return TRUE;
 
 	log_client(NULL, LOG_WARNING, c, "Error sending line '%s': %s", 
-		   l->args[0], error->message);
+		   l->args[0], error?error->message:"ERROR");
 
 	return FALSE;
 }
