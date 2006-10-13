@@ -27,7 +27,7 @@
 struct query_stack {
 	const struct query *query;
 	const struct network *network;
-	const struct client *client;	
+	struct client *client;	
 	time_t time;
 	struct query_stack *next;
 };
@@ -41,11 +41,11 @@ struct query {
 	int errors[20];
 	/* Should add this query to the stack. return TRUE if this has 
 	 * been done successfully, FALSE otherwise */
-	int (*handle) (const struct line *, const struct network *n, const struct client *c, struct query *);
+	int (*handle) (const struct line *, const struct network *n, struct client *c, struct query *);
 };
 
-static int handle_default(const struct line *, const struct network *n, const struct client *c, struct query *);
-static int handle_topic(const struct line *, const struct network *n, const struct client *c, struct query *);
+static int handle_default(const struct line *, const struct network *n, struct client *c, struct query *);
+static int handle_topic(const struct line *, const struct network *n, struct client *c, struct query *);
 
 static struct query queries[] = {
 /* Commands that get a one-client reply: 
@@ -594,7 +594,7 @@ void redirect_clear(const struct network *net)
 	}
 }
 
-void redirect_record(const struct network *n, const struct client *c, const struct line *l)
+void redirect_record(const struct network *n, struct client *c, const struct line *l)
 {
 	struct query *q;
 
@@ -617,7 +617,7 @@ void redirect_record(const struct network *n, const struct client *c, const stru
 	q->handle(l, n, c, q);
 }
 
-static int handle_default(const struct line *l, const struct network *n, const struct client *c, struct query *q)
+static int handle_default(const struct line *l, const struct network *n, struct client *c, struct query *q)
 {
 	struct query_stack *s = g_new(struct query_stack,1);
 	g_assert(l);
@@ -632,7 +632,7 @@ static int handle_default(const struct line *l, const struct network *n, const s
 	return 1;
 }
 
-static int handle_topic(const struct line *l, const struct network *n, const struct client *c, struct query *q)
+static int handle_topic(const struct line *l, const struct network *n, struct client *c, struct query *q)
 {
 	if(l->args[2])return 0;
 	return handle_default(l,n,c,q);

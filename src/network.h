@@ -45,7 +45,10 @@ struct network_connection {
 
 	time_t last_line_sent;
 	GQueue *pending_lines;
-	gint queue_send_id;
+
+	GIOChannel *outgoing;
+	gint outgoing_id;
+	gint incoming_id;
 
 	union { 
 		struct {
@@ -53,15 +56,8 @@ struct network_connection {
 			struct sockaddr *remote_name;
 			struct sockaddr *local_name;
 			size_t namelen;
-			GIOChannel *outgoing;
-			gint outgoing_id;
 		} tcp;
 		
-		struct {
-			GIOChannel *outgoing;
-			gint outgoing_id;
-		} program;
-
 		struct {
 			void *private_data;
 			struct virtual_network_ops {

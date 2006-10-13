@@ -108,8 +108,8 @@ static gboolean process_from_server(struct network *n, struct line *l)
 		n->connection.state = NETWORK_CONNECTION_STATE_MOTD_RECVD;
 
 		g_io_channel_set_encoding(n->config->type == NETWORK_TCP?
-				n->connection.data.tcp.outgoing:
-				n->connection.data.program.outgoing,
+				n->connection.outgoing:
+				n->connection.outgoing,
 				get_charset(&n->info), &error);
 
 		if (error != NULL)
@@ -231,7 +231,7 @@ static gboolean handle_server_connected (GIOChannel *c, GIOCondition cond, void 
 	server->connection.state = NETWORK_CONNECTION_STATE_CONNECTED;
 	server_send_login(server);
 
-	server->connection.data.tcp.outgoing_id = g_io_add_watch(server->connection.data.tcp.outgoing, G_IO_IN | G_IO_HUP | G_IO_ERR, handle_server_receive, server);
+	server->connection.incoming_id = g_io_add_watch(server->connection.outgoing, G_IO_IN | G_IO_HUP | G_IO_ERR, handle_server_receive, server);
 	
 	return FALSE;
 }
@@ -257,11 +257,50 @@ static struct tcp_server_config *network_get_next_tcp_server(struct network *n)
 	return NULL;
 }
 
+static gboolean antiflood_allow_line(struct network *s)
+{
+	/* FIXME: Implement antiflood, use s->config->queue_speed */
+	return TRUE;
+}
+
+static gboolean server_send_queue(GIOChannel *ch, GIOCondition cond, gpointer user_data)
+{
+	struct network *s = user_data;
+	GError *error = NULL;
+	GIOStatus status;
+
+	while (!g_queue_is_empty(s->connection.pending_lines)) {
+		struct line *l = g_queue_peek_head(s->connection.pending_lines);
+
+		/* Check if antiflood allows us to send a line */
+		if (!antiflood_allow_line(s)) 
+			return TRUE;
+
+		status = irc_send_line(s->connection.outgoing, l, &error);
+
+		if (status == G_IO_STATUS_AGAIN)
+			return TRUE;
+
+		g_queue_pop_head(s->connection.pending_lines);
+
+		if (status != G_IO_STATUS_NORMAL) {
+			log_network(NULL, LOG_WARNING, s, "Error sending line '%s': %s",
+	           l->args[0], error?error->message:"ERROR");
+			free_line(l);
+
+			return FALSE;
+		}
+		s->connection.last_line_sent = time(NULL);
+
+		free_line(l);
+	}
+
+	s->connection.outgoing_id = 0;
+	return FALSE;
+}
+
 static gboolean network_send_line_direct(struct network *s, struct client *c, const struct line *l)
 {
-	GIOStatus status;
-	GError *error = NULL;
-	GIOChannel *ch;
 	g_assert(s->config);
 
 	g_assert(s->config->type == NETWORK_TCP ||
@@ -274,41 +313,15 @@ static gboolean network_send_line_direct(struct network *s, struct client *c, co
 		return s->connection.data.virtual.ops->to_server(s, c, l);
 	}
 
-	if (s->config->type == NETWORK_TCP) {
-		ch = s->connection.data.tcp.outgoing;
-	} else {
-		ch = s->connection.data.program.outgoing;
-	}
+	g_queue_push_tail(s->connection.pending_lines, linedup(l));
 
-	status = irc_send_line(ch, l, &error);
-
-	if (status == G_IO_STATUS_NORMAL) 
-		return TRUE;
-
-	log_network(NULL, LOG_WARNING, s, "Error sending line '%s': %s",
-	           l->args[0], error?error->message:"ERROR");
-
-	return FALSE;
-}
-
-static gboolean send_queue(gpointer user_data)
-{
-	struct network *n = user_data;
-
-	/* FIXME: Send as much data as is allowed */
-
-	if (g_queue_is_empty(n->connection.pending_lines))
-		return FALSE;
+	if (s->connection.outgoing_id == 0) 
+		s->connection.outgoing_id = g_io_add_watch(s->connection.outgoing, G_IO_OUT, server_send_queue, s);
 
 	return TRUE;
 }
 
-static gboolean need_flood_protection(struct network *s)
-{
-	/* FIXME: check whether it's possible to send another line */
 
-	return FALSE;
-}
 
 gboolean network_send_line(struct network *s, struct client *c, const struct line *ol)
 {
@@ -350,17 +363,6 @@ gboolean network_send_line(struct network *s, struct client *c, const struct lin
 	log_network_line(s, ol, FALSE);
 
 	redirect_record(s, c, ol);
-
-	if (need_flood_protection(s)) {
-		/* Add to queue */
-		g_queue_push_head(s->connection.pending_lines, linedup(ol));
-
-		/* Start timeout handler if not active */
-		if (s->connection.queue_send_id == -1)
-			s->connection.queue_send_id = g_timeout_add(s->config->queue_speed, send_queue, s);
-
-		return TRUE;
-	}
 
 	return network_send_line_direct(s, c, ol);
 }
@@ -511,11 +513,11 @@ static gboolean connect_current_tcp_server(struct network *s)
 	g_io_channel_set_flags(ioc, G_IO_FLAG_NONBLOCK, NULL);
 	g_io_channel_set_encoding(ioc, NULL, NULL);
 
-	s->connection.data.tcp.outgoing = ioc;
+	s->connection.outgoing = ioc;
 	
-	s->connection.data.tcp.outgoing_id = g_io_add_watch(s->connection.data.tcp.outgoing, G_IO_OUT, handle_server_connected, s);
+	s->connection.incoming_id = g_io_add_watch(s->connection.outgoing, G_IO_OUT, handle_server_connected, s);
 
-	g_io_channel_unref(s->connection.data.tcp.outgoing);
+	g_io_channel_unref(s->connection.outgoing);
 
 	return TRUE;
 }
@@ -577,10 +579,10 @@ static gboolean close_server(struct network *n)
 
 	switch (n->config->type) {
 	case NETWORK_TCP: 
-		g_source_remove(n->connection.data.tcp.outgoing_id); 
-		break;
 	case NETWORK_PROGRAM: 
-		g_source_remove(n->connection.data.program.outgoing_id); 
+		g_source_remove(n->connection.incoming_id); 
+		if (n->connection.outgoing_id != 0)
+			g_source_remove(n->connection.outgoing_id); 
 		break;
 	case NETWORK_VIRTUAL:
 		if (n->connection.data.virtual.ops && 
@@ -669,15 +671,15 @@ static gboolean connect_program(struct network *s)
 
 	if (pid == -1) return FALSE;
 
-	s->connection.data.program.outgoing = g_io_channel_unix_new(sock);
-	g_io_channel_set_close_on_unref(s->connection.data.program.outgoing, TRUE);
+	s->connection.outgoing = g_io_channel_unix_new(sock);
+	g_io_channel_set_close_on_unref(s->connection.outgoing, TRUE);
 	s->connection.state = NETWORK_CONNECTION_STATE_CONNECTED;
 
 	server_send_login(s);
 	
-	s->connection.data.program.outgoing_id = g_io_add_watch(s->connection.data.program.outgoing, G_IO_IN | G_IO_HUP | G_IO_ERR, handle_server_receive, s);
+	s->connection.incoming_id = g_io_add_watch(s->connection.outgoing, G_IO_IN | G_IO_HUP | G_IO_ERR, handle_server_receive, s);
 
-	g_io_channel_unref(s->connection.data.program.outgoing);
+	g_io_channel_unref(s->connection.outgoing);
 
 	if (s->name == NULL) {
 		if (strchr(s->config->type_settings.program_location, '/')) {
@@ -766,6 +768,11 @@ gboolean connect_network(struct network *s)
 	return connect_server(s);
 }
 
+static void free_pending_line(void *_line, void *userdata)
+{
+	free_line((struct line *)_line);
+}
+
 void unload_network(struct network *s)
 {
 	GList *l;
@@ -791,6 +798,8 @@ void unload_network(struct network *s)
 		g_free(s->connection.data.tcp.local_name);
 		g_free(s->connection.data.tcp.remote_name);
 	}
+	g_queue_foreach(s->connection.pending_lines, free_pending_line, NULL);
+	g_queue_free(s->connection.pending_lines);
 
 	g_free(s->info.supported_user_modes);
 	g_free(s->info.supported_channel_modes);

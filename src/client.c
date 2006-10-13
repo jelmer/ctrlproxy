@@ -37,6 +37,7 @@
 /* Linked list of clients currently connected (and authenticated, but still need to 
  * send USER and NICK commands) */
 static GList *pending_clients = NULL;
+static gboolean handle_client_receive(GIOChannel *c, GIOCondition cond, void *_client);
 
 static char *network_generate_feature_string(struct network *n)
 {
@@ -76,6 +77,35 @@ static char *network_generate_feature_string(struct network *n)
 	g_list_free(fs);
 
 	return ret;
+}
+
+static gboolean client_send_queue(struct client *c)
+{
+	while (!g_queue_is_empty(c->pending_lines)) {
+		GIOStatus status;
+		GError *error = NULL;
+		struct line *l = g_queue_peek_head(c->pending_lines);
+
+		status = irc_send_line(c->incoming, l, &error);
+
+		if (status == G_IO_STATUS_AGAIN)
+			return TRUE;
+
+		g_queue_pop_head(c->pending_lines);
+
+		if (status != G_IO_STATUS_NORMAL) {
+			disconnect_client(c, g_strdup_printf("Error sending line '%s': %s", l->args[0], error?error->message:"ERROR"));
+
+			free_line(l);
+
+			return FALSE;
+		}
+
+		free_line(l);
+	}
+
+	c->outgoing_id = 0;
+	return FALSE;
 }
 
 static gboolean process_from_client(struct client *c, struct line *l)
@@ -204,22 +234,23 @@ gboolean client_send_args(struct client *c, ...)
 	return ret;
 }
 
-gboolean client_send_line(const struct client *c, const struct line *l)
+gboolean client_send_line(struct client *c, const struct line *l)
 {
-	GIOStatus status;
-	GError *error = NULL;
 	g_assert(c);
 	g_assert(l);
 	log_client_line(c, l, FALSE);
-	status = irc_send_line(c->incoming, l, &error);
 
-	if (status == G_IO_STATUS_NORMAL)
-		return TRUE;
+	g_queue_push_tail(c->pending_lines, linedup(l));
 
-	log_client(NULL, LOG_WARNING, c, "Error sending line '%s': %s", 
-		   l->args[0], error?error->message:"ERROR");
+	if (c->outgoing_id == 0)
+		c->outgoing_id = g_io_add_watch(c->incoming, G_IO_OUT, handle_client_receive, c);
 
-	return FALSE;
+	return TRUE;
+}
+
+static void free_pending_line(void *_line, void *userdata)
+{
+	free_line((struct line *)_line);
 }
 
 void disconnect_client(struct client *c, const char *reason) 
@@ -230,6 +261,7 @@ void disconnect_client(struct client *c, const char *reason)
 	client_send_args_ex(c, NULL, "ERROR", reason, NULL);
 
 	g_source_remove(c->incoming_id);
+	g_source_remove(c->outgoing_id);
 	c->incoming = NULL;
 
 	g_source_remove(c->ping_id);
@@ -252,6 +284,8 @@ void disconnect_client(struct client *c, const char *reason)
 	g_free(c->hostname);
 	g_free(c->fullname);
 	g_free(c->nick);
+	g_queue_foreach(c->pending_lines, free_pending_line, NULL);
+	g_queue_free(c->pending_lines);
 	g_free(c);
 }
 
@@ -320,6 +354,11 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition cond, void *_c
 
 		return TRUE;
 	}
+
+	if (cond & G_IO_OUT) {
+		return client_send_queue(client);
+	}
+
 	return TRUE;
 }
 
@@ -516,6 +555,7 @@ struct client *client_init(struct network *n, GIOChannel *c, const char *desc)
 	client->network = n;
 	client->description = g_strdup(desc);
 	client->exit_on_close = FALSE;
+	client->pending_lines = g_queue_new();
 
 	if (!desc) {
 		socklen_t len = sizeof(struct sockaddr_in6);

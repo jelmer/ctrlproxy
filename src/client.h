@@ -30,7 +30,9 @@ struct client {
 	struct network *network;
 	char *description;
 	GIOChannel *incoming;
+	GQueue *pending_lines;
 	gint incoming_id;
+	gint outgoing_id;
 	gint ping_id;
 	time_t last_ping;
 	time_t last_pong;
@@ -48,6 +50,6 @@ G_MODULE_EXPORT void disconnect_client(struct client *c, const char *reason);
 G_MODULE_EXPORT gboolean client_send_args(struct client *c, ...);
 G_MODULE_EXPORT gboolean client_send_args_ex(struct client *c, const char *hm, ...);
 G_MODULE_EXPORT gboolean client_send_response(struct client *c, int response, ...);
-G_MODULE_EXPORT gboolean client_send_line(const struct client *c, const struct line *);
+G_MODULE_EXPORT gboolean client_send_line(struct client *c, const struct line *);
 
 #endif /* __CTRLPROXY_CLIENT_H__ */
