@@ -41,6 +41,7 @@ void admin_out(struct client *c, const char *fmt, ...)
 	if (c->network->config->type == NETWORK_VIRTUAL && 
 		!strcmp(c->network->connection.data.virtual.ops->name, "admin")) {
 		virtual_network_recv_args(c->network, hostmask, "PRIVMSG", ADMIN_CHANNEL, msg, NULL);
+
 	} else {
 		char *nick = c->nick;
 		if (c->network->state) nick = c->network->state->me.nick;
@@ -455,10 +456,17 @@ static gboolean admin_net_init(struct network *n)
 
 static gboolean admin_to_server (struct network *n, struct client *c, struct line *l)
 {
-	if (g_strcasecmp(l->args[0], "PRIVMSG"))
+	if (g_strcasecmp(l->args[0], "PRIVMSG") && g_strcasecmp(l->args[0], "NOTICE"))
 		return TRUE;
 
-	if (g_strcasecmp(l->args[1], ADMIN_CHANNEL)) {
+	if (g_strcasecmp(l->args[0], n->state->me.nick) == 0) {
+		virtual_network_recv_args(c->network, n->state->me.hostmask, l->args[0], l->args[1], NULL);
+		return TRUE;
+	}
+
+	if (g_strcasecmp(l->args[1], ADMIN_CHANNEL) && 
+		g_strcasecmp(l->args[1], "ctrlproxy")) {
+		virtual_network_recv_args(c->network, NULL, "401", l->args[1], "No such nick/channel", NULL);
 		return TRUE;
 	}
 
