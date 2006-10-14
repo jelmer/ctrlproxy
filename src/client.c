@@ -350,6 +350,20 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition cond, void *_c
 		}
 
 		if (status != G_IO_STATUS_AGAIN) {
+			if (error->domain == G_CONVERT_ERROR &&
+				error->code == G_CONVERT_ERROR_ILLEGAL_SEQUENCE) {
+				char *encoding = g_strdup(g_io_channel_get_encoding(c));
+				g_io_channel_set_encoding(c, NULL, NULL);
+				
+				status = irc_recv_line(c, NULL, &l);
+
+				g_io_channel_set_encoding(c, encoding, NULL);
+
+				client_send_response(client, ERR_BADCHARENCODING, 
+				   "*", encoding, error->message, NULL);
+				g_free(encoding);
+				return TRUE;
+			}
 			disconnect_client(client, error?error->message:"Unknown error");
 			return FALSE;
 		}
