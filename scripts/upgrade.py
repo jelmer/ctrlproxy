@@ -218,9 +218,16 @@ class OldConfigFile(Config):
                 raise UnknownTagError(cn)
 
 if len(sys.argv) > 1:
-    oldfile = OldConfigFile(sys.argv[1])
+    oldfilename = sys.argv[1]
 else:
-    oldfile = OldConfigFile(os.path.join(os.getenv('HOME'), ".ctrlproxyrc"))
+    oldfilename = os.path.join(os.getenv('HOME'), ".ctrlproxyrc")
+
+try:
+    oldfile = OldConfigFile(oldfilename)
+except IOError, e:
+    print "%s" % (e)
+    print "Usage: %s [PATH-TO-CTRLPROXYRC]" % sys.argv[0]
+    sys.exit(1)
 
 class IniFile(object):
     def __init__(self,dict={}):
