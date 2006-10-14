@@ -149,7 +149,8 @@ void linestack_free_marker(struct linestack_marker *lm)
 
 struct linestack_marker *linestack_get_marker(struct linestack_context *ctx)
 {
-	g_assert(ctx);
+	if (ctx == NULL)
+		return NULL;
 
 	if (!ctx->ops) return NULL;
 
