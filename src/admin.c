@@ -346,6 +346,22 @@ static void handle_die(struct client *c, char **args, void *userdata)
 	exit(0);
 }
 
+static void handle_charset(struct client *c, char **args, void *userdata)
+{
+	GError *error = NULL;
+	GIOStatus status;
+
+	if (args[1] == NULL) {
+		admin_out(c, "No charset specified");
+		return;
+	}
+
+	status = g_io_channel_set_encoding(c->incoming, args[1], &error); 
+	if (status != G_IO_STATUS_NORMAL) {
+		admin_out(c, "Error setting charset: %s", error->message);
+	}
+}
+
 static gint cmp_cmd(gconstpointer a, gconstpointer b)
 {
 	const struct admin_command *cmda = a, *cmdb = b;
@@ -525,12 +541,15 @@ void admin_log(const char *module, enum log_level level, const struct network *n
 	entered = FALSE;
 }
 
+
+
 const static struct admin_command builtin_commands[] = {
 	{ "ADDNETWORK", add_network, "<name>", "Add new network with specified name" },
 	{ "ADDSERVER", add_server, "<network> <host>[:<port>] [<password>]", "Add server to network" },
 	{ "CONNECT", com_connect_network, "<network>", "Connect to specified network. Forces reconnect when waiting." },
 	{ "DELNETWORK", del_network, "<network>", "Remove specified network" },
 	{ "NEXTSERVER", com_next_server, "[network]", "Disconnect and use to the next server in the list" },
+	{ "CHARSET", handle_charset, "<charset>", "Change client charset" },
 	{ "DIE", handle_die, "", "Exit ctrlproxy" },
 	{ "DISCONNECT", com_disconnect_network, "<network>", "Disconnect specified network" },
 	{ "LISTNETWORKS", list_networks, "", "List current networks and their status" },
