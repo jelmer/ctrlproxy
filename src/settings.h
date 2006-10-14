@@ -20,6 +20,8 @@
 #ifndef __CTRLPROXY_SETTINGS_H__
 #define __CTRLPROXY_SETTINGS_H__
 
+#define DEFAULT_CLIENT_CHARSET "UTF-8"
+
 struct channel_config {
 	char *name;
 	char *key;
@@ -71,6 +73,7 @@ struct ctrlproxy_config {
 	char *motd_file;
 	char *replication;
 	char *linestack_backend;
+	char *client_charset;
 	gboolean admin_log;
 	gboolean admin_noprivmsg;
 	gboolean report_time;

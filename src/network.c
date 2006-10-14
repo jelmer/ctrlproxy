@@ -117,7 +117,6 @@ static gboolean process_from_server(struct network *n, struct line *l)
 				"Error setting charset %s: %s", 
 				get_charset(&n->info),
 				error->message);
-				
 
 		log_network(NULL, LOG_INFO, n, "Successfully logged in");
 

@@ -67,6 +67,8 @@ static char *network_generate_feature_string(struct network *n)
 
 	fs = g_list_append(fs, g_strdup("FNC"));
 
+	fs = g_list_append(fs, g_strdup_printf("CHARSET=%s", n->global->config->client_charset));
+
 	ret = list_make_string(fs);
 
 	for (gl = fs; gl; gl = gl->next)
@@ -541,6 +543,8 @@ static gboolean client_ping(gpointer user_data) {
  */
 struct client *client_init(struct network *n, GIOChannel *c, const char *desc)
 {
+	GError *error = NULL;
+	GIOStatus status;
 	struct client *client;
 
 	g_assert(c);
@@ -573,6 +577,10 @@ struct client *client_init(struct network *n, GIOChannel *c, const char *desc)
 
 		g_free(sa);
 	}
+
+	status = g_io_channel_set_encoding(c, n->global->config->client_charset, &error);
+	if (status != G_IO_STATUS_NORMAL)
+		log_client(NULL, LOG_WARNING, client, "Error setting charset `%s': %s", n->global->config->client_charset, error->message);
 
 	handle_pending_client_receive(client->incoming, g_io_channel_get_buffer_condition(client->incoming), client);
 	client->incoming_id = g_io_add_watch(client->incoming, G_IO_IN | G_IO_HUP, handle_pending_client_receive, client);

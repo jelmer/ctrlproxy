@@ -183,6 +183,7 @@ void save_configuration(struct ctrlproxy_config *cfg, const char *configuration_
 	g_key_file_set_boolean(cfg->keyfile, "admin", "without_privmsg", cfg->admin_noprivmsg);
 	g_key_file_set_boolean(cfg->keyfile, "admin", "log", cfg->admin_log);
 
+	g_key_file_set_string(cfg->keyfile, "client", "charset", cfg->client_charset);
 	if (cfg->replication)
 		g_key_file_set_string(cfg->keyfile, "global", "replication", cfg->replication);
 	if (cfg->linestack_backend) 
@@ -476,6 +477,11 @@ struct ctrlproxy_config *load_configuration(const char *dir)
 		cfg->motd_file = g_key_file_get_string(kf, "global", "motd-file", NULL);
     else 
 	    cfg->motd_file = g_build_filename(SHAREDIR, "motd", NULL);
+
+    if (g_key_file_has_key(kf, "client", "charset", NULL))
+		cfg->client_charset = g_key_file_get_string(kf, "client", "charset", NULL);
+    else 
+	    cfg->client_charset = g_strdup(DEFAULT_CLIENT_CHARSET);
 
 	if(!g_file_test(cfg->motd_file, G_FILE_TEST_EXISTS))
 		log_global(NULL, LOG_ERROR, "Can't open MOTD file '%s' for reading", cfg->motd_file);
