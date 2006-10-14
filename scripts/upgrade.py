@@ -247,7 +247,7 @@ class IniFile(object):
         for var in self.conf[section]:
             print "%s = %s" % (var, self.conf[section][var])
 
-conf = IniFile({'global':{'autoconnect':[]}})
+conf = IniFile({'global':{'autoconnect':""}})
 networks = {}
 listeners = IniFile()
 warnings = []
@@ -386,7 +386,7 @@ for net in oldfile.networks.keys():
         networks[net].conf['global']['username'] = oldnet.username
 
     if oldnet.autoconnect:
-        conf.conf['global']['autoconnect'].append("%s;" % oldnet.name)
+        conf.conf['global']['autoconnect'] += "%s;" % oldnet.name
 
     for ch in oldnet.channels:
         oldch = oldnet.channels[ch]
@@ -397,9 +397,6 @@ for net in oldfile.networks.keys():
 
         if oldch.autojoin:
             networks[net].conf[ch]['autojoin'] = oldch.autojoin
-
-    for srv in oldnet.servers:
-        oldsrv = oldnet.servers[srv]
 
     del oldfile.networks[net]
 
