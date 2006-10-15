@@ -46,7 +46,6 @@ static void server_send_login (struct network *s)
 {
 	g_assert(s);
 
-	g_assert(s->connection.state == NETWORK_CONNECTION_STATE_CONNECTED);
 	s->connection.state = NETWORK_CONNECTION_STATE_LOGIN_SENT;
 
 	log_network(NULL, LOG_TRACE, s, "Sending login details");
@@ -220,22 +219,6 @@ static gboolean handle_server_receive (GIOChannel *c, GIOCondition cond, void *_
 
 	return TRUE;
 }
-
-static gboolean handle_server_connected (GIOChannel *c, GIOCondition cond, void *_server)
-{
-	struct network *server = (struct network *)_server;
-
-	g_assert(server);
-
-	server->connection.state = NETWORK_CONNECTION_STATE_CONNECTED;
-	server_send_login(server);
-
-	server->connection.incoming_id = g_io_add_watch(server->connection.outgoing, G_IO_IN | G_IO_HUP | G_IO_ERR, handle_server_receive, server);
-	
-	return FALSE;
-}
-
-
 
 static struct tcp_server_config *network_get_next_tcp_server(struct network *n)
 {
@@ -514,7 +497,8 @@ static gboolean connect_current_tcp_server(struct network *s)
 
 	s->connection.outgoing = ioc;
 	
-	s->connection.incoming_id = g_io_add_watch(s->connection.outgoing, G_IO_OUT, handle_server_connected, s);
+	s->connection.incoming_id = g_io_add_watch(s->connection.outgoing, G_IO_IN | G_IO_HUP | G_IO_ERR, handle_server_receive, s);
+	server_send_login(s);
 
 	g_io_channel_unref(s->connection.outgoing);
 
@@ -672,7 +656,6 @@ static gboolean connect_program(struct network *s)
 
 	s->connection.outgoing = g_io_channel_unix_new(sock);
 	g_io_channel_set_close_on_unref(s->connection.outgoing, TRUE);
-	s->connection.state = NETWORK_CONNECTION_STATE_CONNECTED;
 
 	server_send_login(s);
 	

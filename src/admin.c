@@ -154,12 +154,11 @@ static void com_connect_network (struct client *c, char **args, void *userdata)
 			network_select_next_server(s);
 			connect_network(s);
 			break;
-		case NETWORK_CONNECTION_STATE_CONNECTED:
-			admin_out(c, "Already connected to `%s'", args[1]);
-			break;
 		case NETWORK_CONNECTION_STATE_LOGIN_SENT:
-		case NETWORK_CONNECTION_STATE_MOTD_RECVD:
 			admin_out(c, "Connect to `%s' already in progress", args[1]);
+			break;
+		case NETWORK_CONNECTION_STATE_MOTD_RECVD:
+			admin_out(c, "Already connected to `%s'", args[1]);
 			break;
 	}
 }
@@ -294,7 +293,6 @@ static void list_networks(struct client *c, char **args, void *userdata)
 		case NETWORK_CONNECTION_STATE_RECONNECT_PENDING:
 			admin_out(c, ("%s: Reconnecting"), n->name);
 			break;
-		case NETWORK_CONNECTION_STATE_CONNECTED:
 		case NETWORK_CONNECTION_STATE_LOGIN_SENT:
 		case NETWORK_CONNECTION_STATE_MOTD_RECVD:
 			admin_out(c, ("%s: connected"), n->name);
