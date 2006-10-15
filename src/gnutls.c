@@ -47,7 +47,6 @@ typedef struct
 	GIOChannel *giochan;
 	gnutls_session session;
 	gboolean isserver;
-	gnutls_x509_crt cert;
 	char secure;
 } GIOTLSChannel;
 
@@ -236,11 +235,6 @@ static void load_config(struct global *global)
 static gboolean init_plugin(void)
 {
 	gnutls_dh_params dh_params;
-	if(gnutls_global_init() < 0) {
-		log_global("gnutls", LOG_ERROR, "gnutls global state initialization error");
-		return FALSE;
-	}
-
 	gnutls_dh_params_init( &dh_params);
 	gnutls_dh_params_generate2( dh_params, DH_BITS);
 
@@ -290,9 +284,3 @@ GIOChannel *g_io_gnutls_get_iochannel(GIOChannel *handle, gboolean server)
 	
 	return gchan;
 }
-
-struct plugin_ops plugin = {
-	.name = "gnutls",
-	.version = 0,
-	.init = init_plugin,
-};
