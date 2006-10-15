@@ -12,6 +12,9 @@ GCOV_LIBS = -lgcov
 LIBS += $(GCOV_LIBS) $(GCOV_CFLAGS)
 endif
 
+LIBS += $(GNUTLS_LIBS)
+CFLAGS += $(GNUTLS_CFLAGS)
+
 CFLAGS+=-DHAVE_CONFIG_H -DSHAREDIR=\"$(cdatadir)\" -DDEFAULT_CONFIG_DIR=\"$(DEFAULT_CONFIG_DIR)\"
 CFLAGS+=-ansi -Wall -DMODULESDIR=\"$(modulesdir)\" -DSTRICT_MEMORY_ALLOCS=
 
@@ -40,7 +43,8 @@ objs = src/network.o \
 	   src/motd.o \
 	   src/nickserv.o \
 	   src/admin.o \
-	   src/user.o
+	   src/user.o \
+	   $(SSL_OBJS)
 dep_files = $(patsubst %.o, %.d, $(objs)) $(patsubst %.o, %.d, $(wildcard mods/*.o))
 
 ctrlproxy$(EXEEXT): src/main.o $(objs)
@@ -121,10 +125,6 @@ distclean:: clean
 
 ctags:
 	ctags -R .
-
-mods/gnutls.o mods/tlscert.o: CFLAGS+=$(GNUTLS_CFLAGS)
-mods/libgnutls.$(SHLIBEXT): mods/gnutls.o mods/tlscert.o
-mods/libgnutls.$(SHLIBEXT): LDFLAGS+=$(GNUTLS_LDFLAGS)
 
 # Python specific stuff below this line
 mods/python2.o ctrlproxy_wrap.o: CFLAGS+=$(PYTHON_CFLAGS)

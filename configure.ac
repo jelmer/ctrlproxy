@@ -63,19 +63,11 @@ PKG_CHECK_MODULES(COMMON, glib-2.0 gmodule-2.0)
 ###############################################################################
 # GNUTLS support
 ###############################################################################
-AC_PATH_PROG(gnutls_config, libgnutls-config, no)
-
-GNUTLS_LIBS=""
-
-if test "$gnutls_config" != "no" && test "`libgnutls-config --version | cut -f 1 -d .`" = "1"; then
-	GNUTLS_CFLAGS="`$gnutls_config --cflags`"
-	GNUTLS_LIBS="`$gnutls_config --libs`"
-	DEFMODULE(gnutls, $GNUTLS_LIBS)
-	AC_CHECK_HEADERS([gnutls/gnutls.h])
-fi
-
-AC_SUBST(GNUTLS_CFLAGS)
-AC_SUBST(GNUTLS_LIBS)
+PKG_CHECK_MODULES(GNUTLS, gnutls, [
+		AC_DEFINE(HAVE_GNUTLS, 1, [Whether GNUTLS is available])
+		SSL_OBJS="src/gnutls.o src/tlscert.o"
+		AC_SUBST(SSL_OBJS)
+		], [ AC_MSG_WARN([GNUTLS not found, SSL will not be available]) ])
 
 ###############################################################################
 # SWIG support
