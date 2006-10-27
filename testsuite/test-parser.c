@@ -16,10 +16,10 @@ static const char *malformed[] = {
 START_TEST(parser_malformed)
 	struct line *l;
 	char *raw;
-	int i;
+	int j;
 
-	for (i = 0; malformed[i]; i++) {
-		l = irc_parse_line(malformed[i]);
+	for (j = 0; malformed[j]; i++) {
+		l = irc_parse_line(malformed[j]);
 		if (!l) continue;
 		raw = irc_line_string(l);
 		free(raw);
@@ -34,11 +34,11 @@ START_TEST(parser_random)
 	char *raw;
 	char buf[4096];
 	FILE *f = fopen("/dev/urandom", "r");
-	int i;
+	int j;
 
 	fail_if (!f, "Couldn't open /dev/urandom");
 
-	for (i = 0; i < 200; i++) {
+	for (j = 0; j < 200; j++) {
 		fail_if (!fgets(buf, sizeof(buf)-2, f), "error reading random data");
 	
 		l = irc_parse_line(buf);

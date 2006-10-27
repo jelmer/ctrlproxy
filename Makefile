@@ -126,26 +126,6 @@ distclean:: clean
 ctags:
 	ctags -R .
 
-# Python specific stuff below this line
-mods/python2.o ctrlproxy_wrap.o: CFLAGS+=$(PYTHON_CFLAGS)
-mods/libpython2.so: mods/python2.o ctrlproxy_wrap.o
-mods/libpython2.so: LDFLAGS+=$(PYTHON_LDFLAGS)
-
-%_wrap.c: %.i
-	$(SWIG) -python $*.i
-
-build: ctrlproxy_wrap.c mods/listener_wrap.c 
-	LDFLAGS="$(LDFLAGS)" CFLAGS="$(CFLAGS)" $(PYTHON) setup.py build
-
-install-python: all
-	$(PYTHON) setup.py install --root="$(DESTDIR)"
-
-clean::
-	rm -f *_wrap.c *.pyc
-	rm -f ctrlproxy.py listener.py
-#	$(PYTHON) setup.py clean
-	rm -rf build/
-
 # RFC compliance testing using ircdtorture
 
 TEST_SERVER := localhost
