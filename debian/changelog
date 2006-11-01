@@ -1,4 +1,4 @@
-ctrlproxy (3.0.0-1) unstable; urgency=low
+ctrlproxy (3.0.0~bzr869-1) unstable; urgency=low
 
   * New upstream release.
   * Install manpages. (Closes: #307192, #324601)
@@ -9,7 +9,7 @@ ctrlproxy (3.0.0-1) unstable; urgency=low
   * Removed obsolete ctrlproxy-setup script. (Closes: #324936)
   * Removed obsolete stats module. (Closes: #276072)
 
- -- Jelmer Vernooij <jelmer@samba.org>  Fri, 13 May 2005 02:32:49 +0200
+ -- Jelmer Vernooij <jelmer@samba.org>  Wed,  1 Nov 2006 17:59:20 +0100
 
 ctrlproxy (2.6.2-1) unstable; urgency=low
 
