@@ -344,6 +344,33 @@ static void handle_die(struct client *c, char **args, void *userdata)
 	exit(0);
 }
 
+static GHashTable *markers = NULL;
+
+static void repl_command(struct client *c, char **args, void *userdata)
+{
+	struct linestack_marker *lm = g_hash_table_lookup(markers, c->network);
+
+	if(!args[1]) {
+		admin_out(c, "Sending backlog for network '%s'", c->network->name);
+
+		linestack_send(c->network->linestack, lm, NULL, c);
+
+		g_hash_table_replace(markers, c->network, linestack_get_marker(c->network->linestack));
+
+		return;
+	} 
+
+	/* Backlog for specific nick/channel */
+	admin_out(c, "Sending backlog for channel %s", args[1]);
+
+	if (c->network->global->config->report_time)
+		linestack_send_object_timed(c->network->linestack, args[1], lm, NULL, c);
+	else
+		linestack_send_object(c->network->linestack, args[1], lm, NULL, c);
+
+	g_hash_table_replace(markers, c->network, linestack_get_marker(c->network->linestack));
+}
+
 static void handle_charset(struct client *c, char **args, void *userdata)
 {
 	GError *error = NULL;
@@ -544,6 +571,7 @@ void admin_log(const char *module, enum log_level level, const struct network *n
 const static struct admin_command builtin_commands[] = {
 	{ "ADDNETWORK", add_network, "<name>", "Add new network with specified name" },
 	{ "ADDSERVER", add_server, "<network> <host>[:<port>] [<password>]", "Add server to network" },
+	{ "BACKLOG", repl_command, "[channel]", "Send backlogs for this network or a channel, if specified" },
 	{ "CONNECT", com_connect_network, "<network>", "Connect to specified network. Forces reconnect when waiting." },
 	{ "DELNETWORK", del_network, "<network>", "Remove specified network" },
 	{ "NEXTSERVER", com_next_server, "[network]", "Disconnect and use to the next server in the list" },
@@ -571,4 +599,6 @@ void init_admin(void)
 	}
 
 	register_virtual_network(&admin_network);
+
+	markers = g_hash_table_new_full(NULL, NULL, NULL, (GDestroyNotify)linestack_free_marker);
 }
