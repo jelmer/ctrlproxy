@@ -2,14 +2,14 @@ Source: ctrlproxy
 Section: net
 Priority: optional
 Maintainer: Wilmer van der Gaast <lintux@debian.org>
-Uploaders: Jelmer Vernooji <jelmer@samba.org>
-Standards-Version: 3.6.2
+Uploaders: Jelmer Vernooij <jelmer@samba.org>
+Standards-Version: 3.7.2
 Build-Depends: libglib2.0-dev, libgnutls-dev, debhelper (>> 5.0.0)
 
 Package: ctrlproxy
 Architecture: any
 Depends: ${shlibs:Depends}
-Suggests: ${shlibs:Suggests}, bitlbee
+Suggests: bitlbee
 Description: An IRC proxy with multiserver support
  ctrlproxy is an IRC server with multiserver support. It runs as a daemon
  and connects to a number of IRC servers, then allows you to connect from

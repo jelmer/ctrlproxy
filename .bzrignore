@@ -56,3 +56,4 @@ testsuite/check
 *.gcno
 *.gcov
 testsuite/torture
+build-stamp

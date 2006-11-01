@@ -27,8 +27,8 @@ binary-arch: build
 	$(MAKE) install DESTDIR=`pwd`/debian/ctrlproxy
 	dh_strip
 	dh_installdocs -a
-	dh_installchangelogs -a ChangeLog
-	dh_installexamples -a ctrlproxyrc.example
+	dh_installchangelogs -a 
+	dh_installexamples -a 
 	dh_installman -a
 	dh_compress -a
 	dh_fixperms -a
