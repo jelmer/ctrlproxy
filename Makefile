@@ -78,26 +78,26 @@ install-bin:
 	$(INSTALL) scripts/upgrade.py $(DESTDIR)$(bindir)/ctrlproxy-upgrade 
 
 install-doc: doc
-	$(INSTALL) -m 644 src/ctrlproxy.h $(DESTDIR)$(destincludedir)
-	$(INSTALL) AUTHORS $(DESTDIR)$(docdir)
-	$(INSTALL) COPYING $(DESTDIR)$(docdir)
-	$(INSTALL) BUGS $(DESTDIR)$(docdir)
-	$(INSTALL) UPGRADING $(DESTDIR)$(docdir)
+	$(INSTALL) -m 0644 src/ctrlproxy.h $(DESTDIR)$(destincludedir)
+	$(INSTALL) -m 0644 AUTHORS $(DESTDIR)$(docdir)
+	$(INSTALL) -m 0644 COPYING $(DESTDIR)$(docdir)
+	$(INSTALL) -m 0644 BUGS $(DESTDIR)$(docdir)
+	$(INSTALL) -m 0644 UPGRADING $(DESTDIR)$(docdir)
 	$(MAKE) -C doc install PACKAGE_VERSION=$(PACKAGE_VERSION)
 
 install-data:
-	$(INSTALL) motd $(DESTDIR)$(cdatadir)
+	$(INSTALL) -m 0644 motd $(DESTDIR)$(cdatadir)
 	$(INSTALL) -d $(DESTDIR)$(DEFAULT_CONFIG_DIR)
 	$(INSTALL) -d $(DESTDIR)$(DEFAULT_CONFIG_DIR)/networks
-	$(INSTALL) config.default $(DESTDIR)$(DEFAULT_CONFIG_DIR)/config
-	$(INSTALL) config.admin $(DESTDIR)$(DEFAULT_CONFIG_DIR)/networks/admin
+	$(INSTALL) -m 0644 config.default $(DESTDIR)$(DEFAULT_CONFIG_DIR)/config
+	$(INSTALL) -m 0644 config.admin $(DESTDIR)$(DEFAULT_CONFIG_DIR)/networks/admin
 
 install-mods: all 
 	$(INSTALL) -d $(DESTDIR)$(modulesdir)
 	$(INSTALL) $(MODS_SHARED_FILES) $(DESTDIR)$(modulesdir)
 
 install-pkgconfig:
-	$(INSTALL) ctrlproxy.pc $(DESTDIR)$(libdir)/pkgconfig
+	$(INSTALL) -m 0644 ctrlproxy.pc $(DESTDIR)$(libdir)/pkgconfig
 
 gcov: check
 	$(GCOV) -p -o src/ src/*.c 

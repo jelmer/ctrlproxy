@@ -32,6 +32,6 @@ install: all
 	$(INSTALL) -d $(DESTDIR)$(mandir)/man1
 	$(INSTALL) -d $(DESTDIR)$(mandir)/man5
 	$(INSTALL) -d $(DESTDIR)$(docdir)
-	$(INSTALL) ctrlproxy.1 $(DESTDIR)$(mandir)/man1
-	$(INSTALL) ctrlproxy_config.5 $(DESTDIR)$(mandir)/man5
-	$(INSTALL) user-guide.html $(DESTDIR)$(docdir)
+	$(INSTALL) -m 0644 ctrlproxy.1 $(DESTDIR)$(mandir)/man1
+	$(INSTALL) -m 0644 ctrlproxy_config.5 $(DESTDIR)$(mandir)/man5
+	$(INSTALL) -m 0644 user-guide.html $(DESTDIR)$(docdir)
