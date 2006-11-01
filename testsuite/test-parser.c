@@ -18,7 +18,7 @@ START_TEST(parser_malformed)
 	char *raw;
 	int j;
 
-	for (j = 0; malformed[j]; i++) {
+	for (j = 0; malformed[j]; j++) {
 		l = irc_parse_line(malformed[j]);
 		if (!l) continue;
 		raw = irc_line_string(l);
