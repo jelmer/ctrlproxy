@@ -97,12 +97,9 @@ struct network_state *linestack_get_state(
 	return st;
 }
 
-gboolean linestack_traverse(
-		struct linestack_context *ctx,					
-		struct linestack_marker *lm_from,
-		struct linestack_marker *lm_to,
-		linestack_traverse_fn handler, 
-		void *userdata)
+gboolean linestack_traverse(struct linestack_context *ctx,					
+		struct linestack_marker *lm_from, struct linestack_marker *lm_to,
+		linestack_traverse_fn handler, void *userdata)
 {
 	g_assert(ctx != NULL);
 	if (!ctx->ops) return FALSE;
@@ -238,22 +235,22 @@ static void send_line_timed(struct line *l, time_t t, void *_client)
 	}
 }
 
-gboolean linestack_send(struct linestack_context *ctx, struct linestack_marker *mf, struct linestack_marker *mt, const struct client *c)
+gboolean linestack_send(struct linestack_context *ctx, struct linestack_marker *mf, struct linestack_marker *mt, struct client *c)
 {
 	return linestack_traverse(ctx, mf, mt, send_line, c);
 }
 
-gboolean linestack_send_timed(struct linestack_context *ctx, struct linestack_marker *mf, struct linestack_marker *mt, const struct client *c)
+gboolean linestack_send_timed(struct linestack_context *ctx, struct linestack_marker *mf, struct linestack_marker *mt, struct client *c)
 {
 	return linestack_traverse(ctx, mf, mt, send_line_timed, c);
 }
 
-gboolean linestack_send_object(struct linestack_context *ctx, const char *obj, struct linestack_marker *mf, struct linestack_marker *mt, const struct client *c)
+gboolean linestack_send_object(struct linestack_context *ctx, const char *obj, struct linestack_marker *mf, struct linestack_marker *mt, struct client *c)
 {
 	return linestack_traverse_object(ctx, obj, mf, mt, send_line, c);
 }
 
-gboolean linestack_send_object_timed(struct linestack_context *ctx, const char *obj, struct linestack_marker *mf, struct linestack_marker *mt, const struct client *c)
+gboolean linestack_send_object_timed(struct linestack_context *ctx, const char *obj, struct linestack_marker *mf, struct linestack_marker *mt, struct client *c)
 {
 	return linestack_traverse_object(ctx, obj, mf, mt, send_line_timed, c);
 }
