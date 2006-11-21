@@ -29,7 +29,7 @@ static GSList *linestack_backends = NULL;
 
 void register_linestack(const struct linestack_ops *b)
 {
-	linestack_backends = g_slist_append(linestack_backends, b);
+	linestack_backends = g_slist_append(linestack_backends, g_memdup(b, sizeof(*b)));
 }
 
 struct linestack_context *create_linestack(const struct linestack_ops *ops, 

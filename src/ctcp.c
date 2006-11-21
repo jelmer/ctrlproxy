@@ -158,7 +158,7 @@ static GList *cmds = NULL;
 
 void register_ctcp_handler(const struct ctcp_handler *h)
 {
-	cmds = g_list_append(cmds, h);
+	cmds = g_list_append(cmds, g_memdup(h, sizeof(*h)));
 }
 
 struct ctcp_request {
