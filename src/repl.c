@@ -120,7 +120,7 @@ static GList *backends = NULL;
 
 void register_replication_backend(const struct replication_backend *backend)
 {
-	backends = g_list_append(backends, backend);
+	backends = g_list_append(backends, g_memdup(backend, sizeof(*backend)));
 }
 
 void client_replicate(struct client *client)
