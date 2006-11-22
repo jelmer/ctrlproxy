@@ -372,7 +372,7 @@ static gboolean marshall_channel_state (struct network_state *nst, const char *n
 	return ret;
 }
 
-static gboolean marshall_network_state (enum marshall_mode m, GIOChannel *t, struct network_state *n)
+static gboolean marshall_network_state(enum marshall_mode m, GIOChannel *t, struct network_state *n)
 {
 	gboolean ret = TRUE;
 

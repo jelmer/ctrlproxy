@@ -114,7 +114,7 @@ FILTER_FUNCTIONS(server,server_filters)
 
 void add_client_filter(const char *name, client_filter_function f, void *userdata, int priority)
 {
-	client_filters = add_filter_ex(client_filters, name, f, userdata, priority);
+	client_filters = add_filter_ex(client_filters, name, (server_filter_function)f, userdata, priority);
 }
 
 void del_client_filter(const char *name)

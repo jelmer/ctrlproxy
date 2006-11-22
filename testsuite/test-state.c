@@ -230,8 +230,8 @@ END_TEST
 START_TEST(state_handle_state_data)
 	struct network_state *ns = network_state_init(NULL, "bla", "Gebruikersnaam", "Computernaam");
 	struct line l;
-	const char *args1[] = {"JOIN", "#bla", NULL};
-	const char *args2[] = {"UNKNOWN", "#bla", NULL};
+	char *args1[] = {"JOIN", "#bla", NULL};
+	char *args2[] = {"UNKNOWN", "#bla", NULL};
 
 	memset(&l, 0, sizeof(l));
 	l.origin = "foo";

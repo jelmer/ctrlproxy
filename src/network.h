@@ -62,7 +62,7 @@ struct network_connection {
 			struct virtual_network_ops {
 				char *name;
 				gboolean (*init) (struct network *);
-				gboolean (*to_server) (struct network *, struct client *c, struct line *);
+				gboolean (*to_server) (struct network *, struct client *c, const struct line *);
 				gboolean (*fini) (struct network *);
 			} *ops;
 		} virtual;

@@ -405,7 +405,7 @@ void unregister_admin_command(const struct admin_command *cmd)
 	commands = g_list_remove(commands, cmd);
 }
 
-gboolean admin_process_command(struct client *c, struct line *l, int cmdoffset)
+static gboolean process_cmd(struct client *c, const struct line *l, int cmdoffset)
 {
 	char *tmp, **args = NULL;
 	int i;
@@ -416,7 +416,6 @@ gboolean admin_process_command(struct client *c, struct line *l, int cmdoffset)
 		return TRUE;
 	}
 
-	l->is_private = 1;
 	tmp = g_strdup(l->args[cmdoffset]);
 
 	if(l->args[cmdoffset+1]) {
@@ -431,8 +430,7 @@ gboolean admin_process_command(struct client *c, struct line *l, int cmdoffset)
 	args = g_strsplit(tmp, " ", 0);
 
 	/* Ok, arguments are processed now. Execute the corresponding command */
-	gl = commands;
-	while(gl) {
+	for (gl = commands; gl; gl = gl->next) {
 		struct admin_command *cmd = (struct admin_command *)gl->data;
 		if(!g_strcasecmp(cmd->name, args[0])) {
 			cmd->handler(c, args, cmd->userdata);
@@ -440,7 +438,6 @@ gboolean admin_process_command(struct client *c, struct line *l, int cmdoffset)
 			g_free(tmp);
 			return TRUE;
 		}
-		gl = gl->next;
 	}
 
 	admin_out(c, ("Can't find command '%s'. Type 'help' for a list of available commands. "), args[0]);
@@ -449,6 +446,12 @@ gboolean admin_process_command(struct client *c, struct line *l, int cmdoffset)
 	g_free(tmp);
 
 	return TRUE;
+}
+
+gboolean admin_process_command(struct client *c, struct line *l, int cmdoffset)
+{
+	l->is_private = 1;
+	return process_cmd(c, l, cmdoffset);
 }
 
 static gboolean admin_net_init(struct network *n)
@@ -495,7 +498,7 @@ static gboolean admin_net_init(struct network *n)
 	return TRUE;
 }
 
-static gboolean admin_to_server (struct network *n, struct client *c, struct line *l)
+static gboolean admin_to_server (struct network *n, struct client *c, const struct line *l)
 {
 	if (g_strcasecmp(l->args[0], "PRIVMSG") && g_strcasecmp(l->args[0], "NOTICE"))
 		return TRUE;
@@ -511,7 +514,7 @@ static gboolean admin_to_server (struct network *n, struct client *c, struct lin
 		return TRUE;
 	}
 
-	return admin_process_command(c, l, 2);
+	return process_cmd(c, l, 2);
 }
 
 struct virtual_network_ops admin_network = {
