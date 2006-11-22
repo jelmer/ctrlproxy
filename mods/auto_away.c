@@ -43,11 +43,7 @@ static gboolean check_time(gpointer user_data)
 		for (sl = d->global->networks; sl; sl = sl->next) {
 			struct network *s = (struct network *)sl->data;
 			if(!d->only_for_noclients || s->clients == NULL) {
-				char *new_msg;
-				new_msg = g_strdup_printf(":%s", d->message?d->message:"Auto Away");
-				network_send_args(s, "AWAY", new_msg, NULL);
-				g_free(new_msg);
-
+				network_send_args(s, "AWAY", d->message?d->message:"Auto Away", NULL);
 				if (d->nick) 
 					network_send_args(s, "NICK", d->nick, NULL);
 			}
