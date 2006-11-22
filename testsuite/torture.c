@@ -33,6 +33,7 @@ Suite *util_suite(void);
 Suite *state_suite(void);
 Suite *isupport_suite(void);
 Suite *cmp_suite(void);
+Suite *client_suite(void);
 Suite *line_suite(void);
 Suite *parser_suite(void);
 Suite *user_suite(void);
@@ -69,6 +70,7 @@ int main (int argc, char **argv)
 	srunner_add_suite(sr, state_suite());
 	srunner_add_suite(sr, isupport_suite());
 	srunner_add_suite(sr, cmp_suite());
+	srunner_add_suite(sr, client_suite());
 	srunner_add_suite(sr, parser_suite());
 	srunner_add_suite(sr, user_suite());
 	srunner_add_suite(sr, line_suite());

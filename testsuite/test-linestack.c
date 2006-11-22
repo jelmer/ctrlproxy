@@ -211,7 +211,7 @@ END_TEST
 
 Suite *linestack_suite()
 {
-	Suite *s = suite_create("cmp");
+	Suite *s = suite_create("linestack");
 	TCase *tc_core = tcase_create("core");
 	my_config = g_new0(struct ctrlproxy_config, 1);
 	my_config->config_dir = "/tmp";
