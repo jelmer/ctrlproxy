@@ -26,6 +26,7 @@ struct client;
 #include <sys/time.h>
 #include <gmodule.h>
 
+#include "hooks.h"
 
 struct linestack_marker;
 struct linestack_ops;
@@ -139,8 +140,6 @@ G_MODULE_EXPORT gboolean linestack_replay (
 		struct linestack_marker *from,
 		struct linestack_marker *to,/* Can be NULL for 'now' */
 		struct network_state *st);
-
-enum data_direction;
 
 G_MODULE_EXPORT gboolean linestack_insert_line(
 		struct linestack_context *, 
