@@ -103,7 +103,7 @@ install-mods: all
 install-pkgconfig:
 	$(INSTALL) -m 0644 ctrlproxy.pc $(DESTDIR)$(libdir)/pkgconfig
 
-gcov: check
+gcov: test
 	$(GCOV) -p -o src/ src/*.c 
 
 mods/lib%.$(SHLIBEXT): mods/%.o
