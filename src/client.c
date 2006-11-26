@@ -560,7 +560,7 @@ struct client *client_init(struct network *n, GIOChannel *c, const char *desc)
 	GError *error = NULL;
 	GIOStatus status;
 	struct client *client;
-	const char *charset;
+	const char *charset = NULL;
 
 	g_assert(c);
 
@@ -593,7 +593,8 @@ struct client *client_init(struct network *n, GIOChannel *c, const char *desc)
 		g_free(sa);
 	}
 
-	charset = n->global->config->client_charset;
+	if (n)
+		charset = n->global->config->client_charset;
 	if (charset == NULL)
 		charset = DEFAULT_CLIENT_CHARSET;
 

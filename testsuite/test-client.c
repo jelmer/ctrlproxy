@@ -23,7 +23,9 @@
 #include <check.h>
 #include "ctrlproxy.h"
 
-START_TEST(test_rfccmp)
+START_TEST(test_create_no_network)
+	GIOChannel *ch = g_io_channel_unix_new(0);
+	client_init(NULL, ch, NULL);
 END_TEST
 
 Suite *client_suite()
@@ -31,6 +33,6 @@ Suite *client_suite()
 	Suite *s = suite_create("client");
 	TCase *tc_core = tcase_create("core");
 	suite_add_tcase(s, tc_core);
-	tcase_add_test(tc_core, test_rfccmp);
+	tcase_add_test(tc_core, test_create_no_network);
 	return s;
 }
