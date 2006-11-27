@@ -356,8 +356,10 @@ static void load_config(struct global *global)
 		if (g_key_file_has_key(kf, groups[i], "ssl", NULL))
 			l->ssl = g_key_file_get_boolean(kf, groups[i], "ssl", NULL);
 
+#ifdef HAVE_GNUTLS
 		if (l->ssl)
 			l->ssl_credentials = ssl_create_server_credentials(global, kf, groups[i]);
+#endif
 
 		if (g_key_file_has_key(kf, groups[i], "network", NULL)) {
 
