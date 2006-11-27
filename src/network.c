@@ -515,11 +515,11 @@ static gboolean connect_current_tcp_server(struct network *s)
 
 	if (cs->ssl) {
 #ifdef HAVE_GNUTLS
-		GIOChannel *nio = ssl_wrap_iochannel (ioc, SSL_TYPE_CLIENT, 
+		ioc = ssl_wrap_iochannel (ioc, SSL_TYPE_CLIENT, 
 								 s->connection.data.tcp.current_server->host,
 								 s->ssl_credentials
 								 );
-		ioc = nio;
+		g_assert(ioc != NULL);
 #else
 		log_network(NULL, LOG_WARNING, s, "SSL enabled for %s:%s, but no SSL support loaded", cs->host, cs->port);
 #endif

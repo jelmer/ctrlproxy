@@ -102,9 +102,9 @@ static gboolean handle_new_client(GIOChannel *c_server, GIOCondition condition, 
 
 	if (listener->ssl) {
 #ifdef HAVE_GNUTLS
-		GIOChannel *nio = ssl_wrap_iochannel(c, SSL_TYPE_SERVER, 
+		c = ssl_wrap_iochannel(c, SSL_TYPE_SERVER, 
 											 NULL, listener->ssl_credentials);
-		c = nio;
+		g_assert(c != NULL);
 #else
 		log_global("listener", LOG_WARNING, "SSL support not available, not listening for SSL connection");
 #endif
