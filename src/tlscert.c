@@ -21,6 +21,10 @@
 
 #include "ctrlproxy.h"
 
+#include <glib.h>
+
+#include "ssl.h"
+
 #include <gnutls/gnutls.h>
 #include <gnutls/x509.h>
 
@@ -33,7 +37,7 @@
 /* 
    auto-generate a set of self signed certificates
 */
-void tls_cert_generate(const char *keyfile, const char *certfile,
+void ssl_cert_generate(const char *keyfile, const char *certfile,
 		       const char *cafile)
 {
 	gnutls_x509_crt cacrt, crt;
@@ -134,11 +138,34 @@ void tls_cert_generate(const char *keyfile, const char *certfile,
 	gnutls_x509_privkey_deinit(cakey);
 	gnutls_x509_crt_deinit(cacrt);
 	gnutls_x509_crt_deinit(crt);
-	gnutls_global_deinit();
 
 	log_global(NULL, LOG_INFO, "TLS self-signed keys generated OK");
 	return;
 
 failed:
 	log_global(NULL, LOG_WARNING, "TLS certificate generation failed");
+}
+
+gpointer ssl_create_server_credentials(struct global *global, 
+									   GKeyFile *kf, const char *group)
+{
+	if (!g_key_file_has_key(kf, group, "keyfile", NULL) &&
+		!g_key_file_has_key(kf, group, "certfile", NULL)) {
+		char *keyfile = g_build_filename(global->config->config_dir, "key.pem", NULL);
+		char *certfile = g_build_filename(global->config->config_dir, "cert.pem", NULL);
+		g_key_file_set_string(kf, group, "keyfile", keyfile);
+		g_key_file_set_string(kf, group, "certfile", certfile);
+		if (!g_file_test(keyfile, G_FILE_TEST_EXISTS) && 
+			!g_file_test(certfile, G_FILE_TEST_EXISTS)) {
+			char *cafile = g_build_filename(global->config->config_dir, "ca.pem", NULL);
+			ssl_cert_generate(keyfile, certfile, cafile);
+			g_free(cafile);
+		}
+		g_free(keyfile);
+		g_free(certfile);
+	}
+
+	return ssl_get_server_credentials(
+					g_key_file_get_string(kf, group, "certfile", NULL),
+					g_key_file_get_string(kf, group, "keyfile", NULL));
 }

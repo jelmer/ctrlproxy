@@ -17,6 +17,7 @@ struct listener {
 	char *address;
 	char *port;
 	struct network *network;
+	gpointer ssl_credentials;
 };
 
 G_MODULE_EXPORT struct listener *listener_init(const char *addr, const char *port);

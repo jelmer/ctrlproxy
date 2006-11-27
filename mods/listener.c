@@ -103,7 +103,7 @@ static gboolean handle_new_client(GIOChannel *c_server, GIOCondition condition, 
 	if (listener->ssl) {
 #ifdef HAVE_GNUTLS
 		GIOChannel *nio = ssl_wrap_iochannel(c, SSL_TYPE_SERVER, 
-											 NULL, NULL /* FIXME: Credentials */);
+											 NULL, listener->ssl_credentials);
 		c = nio;
 #else
 		log_global("listener", LOG_WARNING, "SSL support not available, not listening for SSL connection");
@@ -355,6 +355,9 @@ static void load_config(struct global *global)
 
 		if (g_key_file_has_key(kf, groups[i], "ssl", NULL))
 			l->ssl = g_key_file_get_boolean(kf, groups[i], "ssl", NULL);
+
+		if (l->ssl)
+			l->ssl_credentials = ssl_create_server_credentials(global, kf, groups[i]);
 
 		if (g_key_file_has_key(kf, groups[i], "network", NULL)) {
 
