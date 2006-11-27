@@ -450,6 +450,9 @@ struct ctrlproxy_config *load_configuration(const char *dir)
 
 	cfg = g_new0(struct ctrlproxy_config, 1);
 	cfg->config_dir = g_strdup(dir);
+	cfg->pipes_dir = g_build_filename(cfg->config_dir, "pipes", NULL);
+
+	mkdir(cfg->pipes_dir, 0755);
 
 	kf = cfg->keyfile = g_key_file_new();
 
