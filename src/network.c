@@ -399,6 +399,41 @@ gboolean network_send_args(struct network *s, ...)
 	return ret;
 }
 
+static gboolean bindsock(struct network *s,
+						 int sock, struct addrinfo *res, 
+						 const char *address,
+						 const char *service)
+{
+	struct addrinfo hints_bind;
+	int error;
+	struct addrinfo *res_bind, *addrinfo_bind;
+
+	memset(&hints_bind, 0, sizeof(hints_bind));
+	hints_bind.ai_family = res->ai_family;
+	hints_bind.ai_socktype = res->ai_socktype;
+	hints_bind.ai_protocol = res->ai_protocol;
+
+	error = getaddrinfo(address, service, &hints_bind, &addrinfo_bind);
+	if (error) {
+		log_network(NULL, LOG_ERROR, s, 
+					"Unable to lookup %s:%s %s", address, service, 
+					gai_strerror(error));
+		return FALSE;
+	} 
+
+	for (res_bind = addrinfo_bind; 
+		 res_bind; res_bind = res_bind->ai_next) {
+		if (bind(sock, res_bind->ai_addr, res_bind->ai_addrlen) < 0) {
+			log_network(NULL, LOG_ERROR, s, "Unable to bind to %s:%s %s", 
+						address, service, strerror(errno));
+		} else 
+			break;
+	}
+	freeaddrinfo(addrinfo_bind);
+
+	return (res_bind != NULL);
+}
+
 static gboolean connect_current_tcp_server(struct network *s) 
 {
 	struct addrinfo *res;
@@ -444,11 +479,15 @@ static gboolean connect_current_tcp_server(struct network *s)
 	/* Connect */
 
 	for (res = addrinfo; res; res = res->ai_next) {
+
 		sock = socket(res->ai_family, res->ai_socktype,
 					  res->ai_protocol);
 		if (sock < 0) {
 			continue;
 		}
+
+		if (cs->bind_address || cs->bind_port)
+			bindsock(s, sock, res, cs->bind_address, cs->bind_port);
 
 		ioc = g_io_channel_unix_new(sock);
 		if (connect(sock, res->ai_addr, res->ai_addrlen) < 0 && errno != EINPROGRESS) {
