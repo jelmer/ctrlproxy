@@ -239,6 +239,7 @@ int main(int argc, char **argv)
 	if(gnutls_global_init() < 0) {
 		log_global("gnutls", LOG_ERROR, "gnutls global state initialization error");
 	}
+	init_ssl();
 #endif
 
 	/* Determine correct modules directory */

@@ -38,8 +38,6 @@ void tls_cert_generate(const char *keyfile, const char *certfile,
 
 static gnutls_certificate_credentials xcred;
 
-GIOChannel *g_io_gnutls_get_iochannel(GIOChannel *handle, gboolean server);
-
 /* gnutls i/o channel object */
 typedef struct
 {
@@ -232,7 +230,7 @@ static void load_config(struct global *global)
 	}
 }
 
-static gboolean init_plugin(void)
+gboolean init_ssl(void)
 {
 	gnutls_dh_params dh_params;
 	gnutls_dh_params_init( &dh_params);
@@ -245,8 +243,6 @@ static gboolean init_plugin(void)
 	}
 
 	gnutls_certificate_set_dh_params( xcred, dh_params);
-
-	set_sslize_function (g_io_gnutls_get_iochannel);
 
 	register_load_config_notify(load_config);
 

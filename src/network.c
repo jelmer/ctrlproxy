@@ -20,8 +20,6 @@
 #include "internals.h"
 #include "irc.h"
 
-static GIOChannel * (*sslize_function) (GIOChannel *, gboolean);
-
 static GHashTable *virtual_network_ops = NULL;
 
 static gboolean delayed_connect_server(struct network *s);
@@ -899,20 +897,16 @@ gboolean load_networks(struct global *global, struct ctrlproxy_config *cfg)
 	return TRUE;
 }
 
-void set_sslize_function (GIOChannel * (*f) (GIOChannel *, gboolean)) 
-{
-	sslize_function = f;
-}
-
 GIOChannel *sslize (GIOChannel *orig, gboolean server)
 {
-	if (!sslize_function)
-		return NULL;
-
+#ifndef HAVE_GNUTLS
+	return NULL;
+#else
 	g_io_channel_set_close_on_unref(orig, TRUE);
 	g_io_channel_set_encoding(orig, NULL, NULL);
 
-	return sslize_function(orig, server);
+	return g_io_gnutls_get_iochannel(orig, server);
+#endif
 }
 
 struct network *find_network(struct global *global, const char *name)

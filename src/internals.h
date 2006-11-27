@@ -119,4 +119,8 @@ gboolean create_configuration(const char *config_dir);
 gboolean network_start_unix_pipe(struct network *n);
 gboolean network_stop_unix_pipe(struct network *n);
 
+/* gnutls.c */
+gboolean init_ssl(void);
+GIOChannel *g_io_gnutls_get_iochannel(GIOChannel *handle, gboolean server);
+
 #endif /* __INTERNALS_H__ */
