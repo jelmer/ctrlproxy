@@ -28,7 +28,7 @@ static const char *get_date(void)
 {
 	static char ret[40];
 	time_t t = time(NULL);
-	strftime(ret, sizeof(ret), "%F %H:%M", localtime(&t));
+	strftime(ret, sizeof(ret), "%F %H:%M:%S", localtime(&t));
 	return ret;
 }
 
