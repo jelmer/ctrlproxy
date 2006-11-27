@@ -79,6 +79,8 @@ struct network {
 	GList *clients;
 	guint reconnect_id;
 
+	gpointer ssl_credentials;
+
 	struct network_state *state;
 	struct network_info info;
 	struct network_connection connection;

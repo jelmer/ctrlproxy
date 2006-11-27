@@ -76,10 +76,6 @@ G_MODULE_EXPORT int str_rfc1459cmp(const char *a, const char *b);
 G_MODULE_EXPORT int str_strictrfc1459cmp(const char *a, const char *b);
 G_MODULE_EXPORT int str_asciicmp(const char *a, const char *b);
 
-G_MODULE_EXPORT void set_sslize_function (GIOChannel *(*) (GIOChannel *, gboolean));
-G_MODULE_EXPORT GIOChannel *sslize (GIOChannel *orig, gboolean server,
-					const char *remote_host, gpointer credentials);
-
 /* log.c */
 enum log_level { LOG_DATA=5, LOG_TRACE=4, LOG_INFO=3, LOG_WARNING=2, LOG_ERROR=1 };
 G_MODULE_EXPORT void log_network(const char *module, enum log_level, const struct network *, const char *fmt, ...);

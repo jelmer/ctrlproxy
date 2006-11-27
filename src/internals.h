@@ -41,7 +41,6 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include "ctrlproxy.h"
-#include "ssl.h"
 
 #define DEFAULT_RECONNECT_INTERVAL 60
 #define MAXHOSTNAMELEN 4096

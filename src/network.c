@@ -19,6 +19,7 @@
 
 #include "internals.h"
 #include "irc.h"
+#include "ssl.h"
 
 static GHashTable *virtual_network_ops = NULL;
 
@@ -513,16 +514,15 @@ static gboolean connect_current_tcp_server(struct network *s)
 	getpeername(sock, s->connection.data.tcp.remote_name, &size);
 
 	if (cs->ssl) {
-		GIOChannel *nio = sslize(ioc, FALSE, 
+#ifdef HAVE_GNUTLS
+		GIOChannel *nio = ssl_wrap_iochannel (ioc, SSL_TYPE_CLIENT, 
 								 s->connection.data.tcp.current_server->host,
-								 NULL /* FIXME: Provide credentials */
+								 s->ssl_credentials
 								 );
-
-		if (!nio) {
-			log_network(NULL, LOG_WARNING, s, "SSL enabled for %s:%s, but no SSL support loaded", cs->host, cs->port);
-		} else {
-			ioc = nio;
-		}
+		ioc = nio;
+#else
+		log_network(NULL, LOG_WARNING, s, "SSL enabled for %s:%s, but no SSL support loaded", cs->host, cs->port);
+#endif
 	}
 
 	if(!ioc) {
@@ -781,6 +781,10 @@ struct network *load_network(struct global *global, struct network_config *sc)
 
 	network_start_unix_pipe(s);
 
+#ifdef HAVE_GNUTLS
+	s->ssl_credentials = ssl_get_client_credentials(NULL);
+#endif
+
 	return s;
 }
 
@@ -833,6 +837,11 @@ void unload_network(struct network *s)
 	g_free(s->info.name);
 
 	g_hash_table_destroy(s->info.features);
+
+#ifdef HAVE_GNUTLS
+	ssl_free_client_credentials(s->ssl_credentials);
+#endif
+
 	g_free(s);
 }
 
@@ -898,20 +907,6 @@ gboolean load_networks(struct global *global, struct ctrlproxy_config *cfg)
 	}
 
 	return TRUE;
-}
-
-GIOChannel *sslize (GIOChannel *orig, gboolean server, 
-					const char *remote_host, gpointer credentials)
-{
-#ifndef HAVE_GNUTLS
-	return NULL;
-#else
-	g_io_channel_set_close_on_unref(orig, TRUE);
-	g_io_channel_set_encoding(orig, NULL, NULL);
-	
-	return ssl_wrap_iochannel (orig, server?SSL_TYPE_SERVER:SSL_TYPE_CLIENT,
-			 remote_host, credentials);
-#endif
 }
 
 struct network *find_network(struct global *global, const char *name)

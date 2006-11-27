@@ -19,10 +19,10 @@
 	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 */
 
-#define _GNU_SOURCE
-#include "ctrlproxy.h"
+#include "internals.h"
 #include "irc.h"
 #include "listener.h"
+#include "ssl.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
@@ -101,12 +101,13 @@ static gboolean handle_new_client(GIOChannel *c_server, GIOCondition condition, 
 	c = g_io_channel_unix_new(sock);
 
 	if (listener->ssl) {
-		GIOChannel *nio = sslize(c, TRUE);
-		if (!nio) {
-			log_global("listener", LOG_WARNING, "SSL support not available, not listening for SSL connection");
-		} else {
-			c = nio;
-		}
+#ifdef HAVE_GNUTLS
+		GIOChannel *nio = ssl_wrap_iochannel(c, SSL_TYPE_SERVER, 
+											 NULL, NULL /* FIXME: Credentials */);
+		c = nio;
+#else
+		log_global("listener", LOG_WARNING, "SSL support not available, not listening for SSL connection");
+#endif
 	}
 
 	g_io_channel_set_close_on_unref(c, TRUE);
