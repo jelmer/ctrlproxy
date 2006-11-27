@@ -44,6 +44,7 @@ objs = src/network.o \
 	   src/nickserv.o \
 	   src/admin.o \
 	   src/user.o \
+	   src/pipes.o \
 	   $(SSL_OBJS)
 dep_files = $(patsubst %.o, %.d, $(objs)) $(patsubst %.o, %.d, $(wildcard mods/*.o))
 

@@ -739,6 +739,8 @@ struct network *load_network(struct global *global, struct network_config *sc)
 		p->fn(s, p->data);
 	}
 
+	network_start_unix_pipe(s);
+
 	return s;
 }
 
@@ -771,6 +773,8 @@ void unload_network(struct network *s)
 		l = l->next;
 		disconnect_client(c, "Server exiting");
 	}
+
+	network_stop_unix_pipe(s);
 
 	s->global->networks = g_list_remove(s->global->networks, s);
 
