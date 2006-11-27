@@ -513,7 +513,10 @@ static gboolean connect_current_tcp_server(struct network *s)
 	getpeername(sock, s->connection.data.tcp.remote_name, &size);
 
 	if (cs->ssl) {
-		GIOChannel *nio = sslize(ioc, FALSE);
+		GIOChannel *nio = sslize(ioc, FALSE, 
+								 s->connection.data.tcp.current_server->host,
+								 NULL /* FIXME: Provide credentials */
+								 );
 
 		if (!nio) {
 			log_network(NULL, LOG_WARNING, s, "SSL enabled for %s:%s, but no SSL support loaded", cs->host, cs->port);
@@ -897,15 +900,17 @@ gboolean load_networks(struct global *global, struct ctrlproxy_config *cfg)
 	return TRUE;
 }
 
-GIOChannel *sslize (GIOChannel *orig, gboolean server)
+GIOChannel *sslize (GIOChannel *orig, gboolean server, 
+					const char *remote_host, gpointer credentials)
 {
 #ifndef HAVE_GNUTLS
 	return NULL;
 #else
 	g_io_channel_set_close_on_unref(orig, TRUE);
 	g_io_channel_set_encoding(orig, NULL, NULL);
-
-	return g_io_gnutls_get_iochannel(orig, server);
+	
+	return ssl_wrap_iochannel (orig, server?SSL_TYPE_SERVER:SSL_TYPE_CLIENT,
+			 remote_host, credentials);
 #endif
 }
 

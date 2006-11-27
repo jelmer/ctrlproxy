@@ -1,282 +1,558 @@
+/* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*
-    Copyright (C) 2004 Jelmer Vernooij
+ * soup-gnutls.c
+ *
+ * Authors:
+ *      Ian Peters <itp@ximian.com>
+ *
+ * Modified for ctrlproxy by Jelmer Vernooij <jelmer@samba.org>
+ *
+ * Copyright (C) 2003, Ximian, Inc.
+ */
 
-    This program is free software; you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation; either version 2 of the License, or
-    (at your option) any later version.
+#include "internals.h"
 
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-*/
-
-#include "ctrlproxy.h"
-#include <glib.h>
-#include "../config.h"
 #include <errno.h>
-#include <unistd.h>
-#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
+#include <glib.h>
+
+#include <gcrypt.h>
 #include <gnutls/gnutls.h>
-#include <gnutls/extra.h>
 #include <gnutls/x509.h>
+
+#include "ssl.h"
+
+gboolean ssl_supported = TRUE;
 
 #define DH_BITS 1024
 
-#undef G_LOG_DOMAIN
-#define G_LOG_DOMAIN "gnutls"
+typedef struct {
+	gnutls_certificate_credentials cred;
+	gboolean have_ca_file;
+} GNUTLSCred;
 
-void tls_cert_generate(const char *keyfile, const char *certfile,
-		       const char *cafile);
-
-static gnutls_certificate_credentials xcred;
-
-/* gnutls i/o channel object */
-typedef struct
-{
-	GIOChannel pad;
-	GIOChannel *giochan;
+typedef struct {
+	GIOChannel channel;
+	int fd;
+	GIOChannel *real_sock;
 	gnutls_session session;
-	gboolean isserver;
-	char secure;
-} GIOTLSChannel;
+	GNUTLSCred *cred;
+	char *hostname;
+	gboolean established;
+	SSLType type;
+} GNUTLSChannel;
 
-static GIOStatus g_io_gnutls_error(gint e)
+static gboolean
+verify_certificate (gnutls_session session, const char *hostname, GError **err)
 {
-	switch(e)
-	{
-		case GNUTLS_E_INTERRUPTED:
-		case GNUTLS_E_AGAIN:
-			return G_IO_STATUS_AGAIN;
-		default:
-			log_global("gnutls", LOG_ERROR, "TLS Error: %s", gnutls_strerror(e));
-			if(gnutls_error_is_fatal(e)) return G_IO_STATUS_EOF;
-			return G_IO_STATUS_ERROR;
-	}
+	int status;
 
-	return G_IO_STATUS_ERROR;
-}
-	
-static void g_io_gnutls_free(GIOChannel *handle)
-{
-	GIOTLSChannel *chan = (GIOTLSChannel *)handle;
-	g_io_channel_unref(chan->giochan);
-	gnutls_deinit(chan->session);
-	g_free(chan);
-}
+	status = gnutls_certificate_verify_peers (session);
 
-static ssize_t tls_pull(gnutls_transport_ptr ptr, void *buf, size_t size)
-{
-	GIOChannel *parent = ptr;
-	GIOStatus status;
-	gsize nr;
-	status = g_io_channel_read_chars(parent, buf, size, &nr, NULL);
-	
-	switch (status) {
-	case G_IO_STATUS_ERROR:
-	case G_IO_STATUS_EOF:
-		return -1;
-	default:
-		return nr;
-	}
-}
-
-static ssize_t tls_push(gnutls_transport_ptr ptr, const void *buf, size_t size)
-{
-	GIOChannel *parent = ptr;
-	GIOStatus status;
-	gsize nr;
-	status = g_io_channel_write_chars(parent, buf, size, &nr, NULL);
-	
-	switch (status) {
-	case G_IO_STATUS_ERROR:
-	case G_IO_STATUS_EOF:
-		return -1;
-	default:
-		return nr;
-	}
-}
-static GIOStatus g_io_gnutls_read(GIOChannel *handle, gchar *buf, guint len, guint *ret, GError **gerr)
-{
-	GIOTLSChannel *chan = (GIOTLSChannel *)handle;
-	gint err;
-	*ret = 0;
-
-	if(!chan->secure) {
-		err = gnutls_handshake(chan->session);
-		if(err < 0) {
-			log_global("gnutls", LOG_ERROR, "TLS Handshake failed");
-			return g_io_gnutls_error(err);
-		}
-		chan->secure = 1;
-	}
-
-	err = gnutls_record_recv(chan->session, buf, len);
-	if(err == 0) return G_IO_STATUS_EOF;
-	if(err < 0) return g_io_gnutls_error(err);
-	*ret = err;
-	return G_IO_STATUS_NORMAL;
-}
-
-static GIOStatus g_io_gnutls_write(GIOChannel *handle, const gchar *buf, gsize len, gsize *ret, GError **gerr)
-{
-	GIOTLSChannel *chan = (GIOTLSChannel *)handle;
-	gint err;
-
-	if(!chan->secure) 
-	{
-		err = gnutls_handshake(chan->session);
-		if(err < 0) {
-			log_global("gnutls", LOG_ERROR, "TLS Handshake failed");
-			return g_io_gnutls_error(err);
-		}
-		chan->secure = 1;
-	}
-
-	*ret = 0;
-
-	err = gnutls_record_send(chan->session, (const char *)buf, len);
-	if(err == 0) return G_IO_STATUS_EOF;
-	if(err < 0) return g_io_gnutls_error(err);
-	*ret = err;
-	return G_IO_STATUS_NORMAL;
-}
-
-static GIOStatus g_io_gnutls_seek(GIOChannel *handle, gint64 offset, GSeekType type, GError **gerr)
-{
-	GIOTLSChannel *chan = (GIOTLSChannel *)handle;
-	GIOError e;
-	e = g_io_channel_seek(chan->giochan, offset, type);
-	return (e == G_IO_ERROR_NONE) ? G_IO_STATUS_NORMAL : G_IO_STATUS_ERROR;
-}
-
-static GIOStatus g_io_gnutls_close(GIOChannel *handle, GError **gerr)
-{
-	GIOTLSChannel *chan = (GIOTLSChannel *)handle;
-	gnutls_bye(chan->session, GNUTLS_SHUT_RDWR);
-	g_io_channel_close(chan->giochan);
-	return G_IO_STATUS_NORMAL;
-}
-
-static GSource *g_io_gnutls_create_watch(GIOChannel *handle, GIOCondition cond)
-{
-	GIOTLSChannel *chan = (GIOTLSChannel *)handle;
-
-	return chan->giochan->funcs->io_create_watch(chan->giochan, cond);
-}
-
-static GIOStatus g_io_gnutls_set_flags(GIOChannel *handle, GIOFlags flags, GError **gerr)
-{
-    GIOTLSChannel *chan = (GIOTLSChannel *)handle;
-
-    return chan->giochan->funcs->io_set_flags(chan->giochan, flags, gerr);
-}
-
-static GIOFlags g_io_gnutls_get_flags(GIOChannel *handle)
-{
-    GIOTLSChannel *chan = (GIOTLSChannel *)handle;
-
-    return chan->giochan->funcs->io_get_flags(chan->giochan);
-}
-
-static GIOFuncs g_io_gnutls_channel_funcs = {
-    g_io_gnutls_read,
-    g_io_gnutls_write,
-    g_io_gnutls_seek,
-    g_io_gnutls_close,
-    g_io_gnutls_create_watch,
-    g_io_gnutls_free,
-    g_io_gnutls_set_flags,
-    g_io_gnutls_get_flags
-};
-
-static void load_config(struct global *global)
-{
-	char *cafile = NULL, *certf = NULL, *keyf = NULL;
-	int err;
-
-	keyf = g_key_file_get_string(global->config->keyfile, "ssl", "keyfile", NULL);
-	certf = g_key_file_get_string(global->config->keyfile, "ssl", "certfile", NULL);
-	cafile = g_key_file_get_string(global->config->keyfile, "ssl", "cafile", NULL);
-
-	if (!keyf && !certf && !cafile) {
-		certf = g_build_filename(global->config->config_dir, "cert.pem", NULL);
-		keyf = g_build_filename(global->config->config_dir, "key.pem", NULL);
-		cafile = g_build_filename(global->config->config_dir, "ca.pem", NULL);
-		tls_cert_generate(keyf, certf, cafile);
-		g_key_file_set_string(global->config->keyfile, "ssl", "keyfile", keyf);
-		g_key_file_set_string(global->config->keyfile, "ssl", "certfile", certf);
-		g_key_file_set_string(global->config->keyfile, "ssl", "cafile", cafile);
-	}
-
-	if (cafile) {
-		err = gnutls_certificate_set_x509_trust_file(xcred, cafile, GNUTLS_X509_FMT_PEM);
-		if(err < 0) {
-			log_global("gnutls", LOG_ERROR, "Error setting x509 trust file: %s (file = %s)", gnutls_strerror(err), cafile);	
-		}
-	}
-
-	err = gnutls_certificate_set_x509_key_file(xcred, certf, keyf, GNUTLS_X509_FMT_PEM);
-	if(err < 0) {
-		log_global("gnutls", LOG_ERROR, "Error setting x509 key+cert files: %s (key = %s, cert = %s)", gnutls_strerror(err), keyf, certf);	
-		return;
-	}
-}
-
-gboolean init_ssl(void)
-{
-	gnutls_dh_params dh_params;
-	gnutls_dh_params_init( &dh_params);
-	gnutls_dh_params_generate2( dh_params, DH_BITS);
-
-	/* X509 stuff */
-	if (gnutls_certificate_allocate_credentials(&xcred) < 0) {	/* space for 2 certificates */
-		log_global("gnutls", LOG_ERROR, "gnutls memory error");
+	if (status == GNUTLS_E_NO_CERTIFICATE_FOUND) {
+		g_set_error (err, SSL_ERROR,
+			     SSL_ERROR_CERTIFICATE,
+			     "No SSL certificate was sent.");
 		return FALSE;
 	}
 
-	gnutls_certificate_set_dh_params( xcred, dh_params);
+	if (status & GNUTLS_CERT_INVALID ||
+#ifdef GNUTLS_CERT_NOT_TRUSTED
+	    status & GNUTLS_CERT_NOT_TRUSTED ||
+#endif
+	    status & GNUTLS_CERT_REVOKED)
+	{
+		g_set_error (err, SSL_ERROR,
+			     SSL_ERROR_CERTIFICATE,
+			     "The SSL certificate is not trusted.");
+		return FALSE;
+	}
 
-	register_load_config_notify(load_config);
+	if (gnutls_certificate_expiration_time_peers (session) < time (0)) {
+		g_set_error (err, SSL_ERROR,
+			     SSL_ERROR_CERTIFICATE,
+			     "The SSL certificate has expired.");
+		return FALSE;
+	}
+
+	if (gnutls_certificate_activation_time_peers (session) > time (0)) {
+		g_set_error (err, SSL_ERROR,
+			     SSL_ERROR_CERTIFICATE,
+			     "The SSL certificate is not yet activated.");
+		return FALSE;
+	}
+
+	if (gnutls_certificate_type_get (session) == GNUTLS_CRT_X509) {
+		const gnutls_datum* cert_list;
+		guint cert_list_size;
+		gnutls_x509_crt cert;
+
+		if (gnutls_x509_crt_init (&cert) < 0) {
+			g_set_error (err, SSL_ERROR,
+				     SSL_ERROR_CERTIFICATE,
+				     "Error initializing SSL certificate.");
+			return FALSE;
+		}
+      
+		cert_list = gnutls_certificate_get_peers (
+			session, &cert_list_size);
+
+		if (cert_list == NULL) {
+			g_set_error (err, SSL_ERROR,
+				     SSL_ERROR_CERTIFICATE,
+				     "No SSL certificate was found.");
+			return FALSE;
+		}
+
+		if (gnutls_x509_crt_import (cert, &cert_list[0],
+					    GNUTLS_X509_FMT_DER) < 0) {
+			g_set_error (err, SSL_ERROR,
+				     SSL_ERROR_CERTIFICATE,
+				     "The SSL certificate could not be parsed.");
+			return FALSE;
+		}
+
+		if (!gnutls_x509_crt_check_hostname (cert, hostname)) {
+			g_set_error (err, SSL_ERROR,
+				     SSL_ERROR_CERTIFICATE,
+				     "The SSL certificate does not match the hostname.");
+			return FALSE;
+		}
+	}
 
 	return TRUE;
 }
 
-GIOChannel *g_io_gnutls_get_iochannel(GIOChannel *handle, gboolean server)
+static GIOStatus
+do_handshake (GNUTLSChannel *chan, GError **err)
 {
-	GIOTLSChannel *chan;
-	GIOChannel *gchan;
+	int result;
 
-	g_return_val_if_fail(handle != NULL, NULL);
-	
-	chan = g_new0(GIOTLSChannel, 1);
+	result = gnutls_handshake (chan->session);
 
-	gnutls_init(&chan->session, server?GNUTLS_SERVER:GNUTLS_CLIENT);
+	if (result == GNUTLS_E_AGAIN ||
+	    result == GNUTLS_E_INTERRUPTED) {
+		g_set_error (err, SSL_ERROR,
+			     (gnutls_record_get_direction (chan->session) ?
+			      SSL_ERROR_HANDSHAKE_NEEDS_WRITE :
+			      SSL_ERROR_HANDSHAKE_NEEDS_READ),
+			     "Handshaking...");
+		return G_IO_STATUS_AGAIN;
+	}
 
-	gnutls_set_default_priority(chan->session);
-    gnutls_credentials_set(chan->session, GNUTLS_CRD_CERTIFICATE, xcred);
-	gnutls_transport_set_ptr(chan->session, (gnutls_transport_ptr)handle);
-	gnutls_transport_set_pull_function(chan->session, tls_pull);
-	gnutls_transport_set_push_function(chan->session, tls_push);
+	if (result < 0) {
+		g_set_error (err, G_IO_CHANNEL_ERROR,
+			     G_IO_CHANNEL_ERROR_FAILED,
+			     "Unable to handshake");
+		return G_IO_STATUS_ERROR;
+	}
 
-	gnutls_certificate_server_set_request(chan->session, GNUTLS_CERT_REQUEST);
-	gnutls_dh_set_prime_bits( chan->session, DH_BITS);
-						   
-	chan->secure = 0;
-	chan->giochan = handle;
-	chan->isserver = server;
-	g_io_channel_ref(handle);
+	if (chan->type == SSL_TYPE_CLIENT && chan->cred->have_ca_file &&
+	    !verify_certificate (chan->session, chan->hostname, err))
+		return G_IO_STATUS_ERROR;
 
-	gchan = (GIOChannel *)chan;
-	gchan->funcs = &g_io_gnutls_channel_funcs;
-	g_io_channel_init(gchan);
-	
+	return G_IO_STATUS_NORMAL;
+}
+
+static GIOStatus
+_gnutls_read (GIOChannel   *channel,
+		  gchar        *buf,
+		  gsize         count,
+		  gsize        *bytes_read,
+		  GError      **err)
+{
+	GNUTLSChannel *chan = (GNUTLSChannel *) channel;
+	gint result;
+
+	*bytes_read = 0;
+
+	if (!chan->established) {
+		result = do_handshake (chan, err);
+
+		if (result == G_IO_STATUS_AGAIN ||
+		    result == G_IO_STATUS_ERROR)
+			return result;
+
+		chan->established = TRUE;
+	}
+
+	result = gnutls_record_recv (chan->session, buf, count);
+
+	if (result == GNUTLS_E_REHANDSHAKE) {
+		chan->established = FALSE;
+		return G_IO_STATUS_AGAIN;
+	}
+
+	if (result < 0) {
+		if ((result == GNUTLS_E_INTERRUPTED) ||
+		    (result == GNUTLS_E_AGAIN))
+			return G_IO_STATUS_AGAIN;
+		g_set_error (err, G_IO_CHANNEL_ERROR,
+			     G_IO_CHANNEL_ERROR_FAILED,
+			     "Received corrupted data");
+		return G_IO_STATUS_ERROR;
+	} else {
+		*bytes_read = result;
+
+		return (result > 0) ? G_IO_STATUS_NORMAL : G_IO_STATUS_EOF;
+	}
+}
+
+static GIOStatus
+_gnutls_write (GIOChannel   *channel,
+		   const gchar  *buf,
+		   gsize         count,
+		   gsize        *bytes_written,
+		   GError      **err)
+{
+	GNUTLSChannel *chan = (GNUTLSChannel *) channel;
+	gint result;
+
+	*bytes_written = 0;
+
+	if (!chan->established) {
+		result = do_handshake (chan, err);
+
+		if (result == G_IO_STATUS_AGAIN ||
+		    result == G_IO_STATUS_ERROR)
+			return result;
+
+		chan->established = TRUE;
+	}
+
+	result = gnutls_record_send (chan->session, buf, count);
+
+	if (result == GNUTLS_E_REHANDSHAKE) {
+		chan->established = FALSE;
+		return G_IO_STATUS_AGAIN;
+	}
+
+	if (result < 0) {
+		if ((result == GNUTLS_E_INTERRUPTED) ||
+		    (result == GNUTLS_E_AGAIN))
+			return G_IO_STATUS_AGAIN;
+		g_set_error (err, G_IO_CHANNEL_ERROR,
+			     G_IO_CHANNEL_ERROR_FAILED,
+			     "Received corrupted data");
+		return G_IO_STATUS_ERROR;
+	} else {
+		*bytes_written = result;
+
+		return (result > 0) ? G_IO_STATUS_NORMAL : G_IO_STATUS_EOF;
+	}
+}
+
+static GIOStatus
+gnutls_seek (GIOChannel  *channel,
+		  gint64       offset,
+		  GSeekType    type,
+		  GError     **err)
+{
+	GNUTLSChannel *chan = (GNUTLSChannel *) channel;
+
+	return chan->real_sock->funcs->io_seek (channel, offset, type, err);
+}
+
+static GIOStatus
+gnutls_close (GIOChannel  *channel,
+		   GError     **err)
+{
+	GNUTLSChannel *chan = (GNUTLSChannel *) channel;
+
+	if (chan->established) {
+		int ret;
+
+		do {
+			ret = gnutls_bye (chan->session, GNUTLS_SHUT_WR);
+		} while (ret == GNUTLS_E_INTERRUPTED);
+	}
+
+	return chan->real_sock->funcs->io_close (channel, err);
+}
+
+static GSource *
+gnutls_create_watch (GIOChannel   *channel,
+			  GIOCondition  condition)
+{
+	GNUTLSChannel *chan = (GNUTLSChannel *) channel;
+
+	return chan->real_sock->funcs->io_create_watch (channel,
+							condition);
+}
+
+static void
+_gnutls_free (GIOChannel *channel)
+{
+	GNUTLSChannel *chan = (GNUTLSChannel *) channel;
+	g_io_channel_unref (chan->real_sock);
+	gnutls_deinit (chan->session);
+	g_free (chan->hostname);
+	g_free (chan);
+}
+
+static GIOStatus
+gnutls_set_flags (GIOChannel  *channel,
+		       GIOFlags     flags,
+		       GError     **err)
+{
+	GNUTLSChannel *chan = (GNUTLSChannel *) channel;
+
+	return chan->real_sock->funcs->io_set_flags (channel, flags, err);
+}
+
+static GIOFlags
+gnutls_get_flags (GIOChannel *channel)
+{
+	GNUTLSChannel *chan = (GNUTLSChannel *) channel;
+
+	return chan->real_sock->funcs->io_get_flags (channel);
+}
+
+GIOFuncs gnutls_channel_funcs = {
+	_gnutls_read,
+	_gnutls_write,
+	gnutls_seek,
+	gnutls_close,
+	gnutls_create_watch,
+	_gnutls_free,
+	gnutls_set_flags,
+	gnutls_get_flags
+};
+
+static gnutls_dh_params dh_params = NULL;
+
+static gboolean
+init_dh_params (void)
+{
+	if (gnutls_dh_params_init (&dh_params) != 0)
+		goto THROW_CREATE_ERROR;
+
+	if (gnutls_dh_params_generate2 (dh_params, DH_BITS) != 0)
+		goto THROW_CREATE_ERROR;
+
+	return TRUE;
+
+THROW_CREATE_ERROR:
+	if (dh_params) {
+		gnutls_dh_params_deinit (dh_params);
+		dh_params = NULL;
+	}
+
+	return FALSE;
+}
+
+/**
+ * ssl_wrap_iochannel:
+ * @sock: a #GIOChannel wrapping a TCP socket.
+ * @type: whether this is a client or server socket
+ * @remote_host: the hostname of the remote machine
+ * @credentials: a client or server credentials structure
+ *
+ * This attempts to wrap a new #GIOChannel around @sock that
+ * will SSL-encrypt/decrypt all traffic through it.
+ *
+ * Return value: an SSL-encrypting #GIOChannel, or %NULL on
+ * failure.
+ **/
+GIOChannel *
+ssl_wrap_iochannel (GIOChannel *sock, SSLType type,
+			 const char *remote_host, gpointer credentials)
+{
+	GNUTLSChannel *chan = NULL;
+	GIOChannel *gchan = NULL;
+	gnutls_session session = NULL;
+	GNUTLSCred *cred = credentials;
+	int sockfd;
+	int ret;
+
+	g_return_val_if_fail (sock != NULL, NULL);
+	g_return_val_if_fail (credentials != NULL, NULL);
+
+	sockfd = g_io_channel_unix_get_fd (sock);
+	if (!sockfd) {
+		g_warning ("Failed to get channel fd.");
+		goto THROW_CREATE_ERROR;
+	}
+
+	ret = gnutls_init (&session,
+			   (type == SSL_TYPE_CLIENT) ? GNUTLS_CLIENT : GNUTLS_SERVER);
+	if (ret)
+		goto THROW_CREATE_ERROR;
+
+	if (gnutls_set_default_priority (session) != 0)
+		goto THROW_CREATE_ERROR;
+
+	if (gnutls_credentials_set (session, GNUTLS_CRD_CERTIFICATE,
+				    cred->cred) != 0)
+		goto THROW_CREATE_ERROR;
+
+	if (type == SSL_TYPE_SERVER)
+		gnutls_dh_set_prime_bits (session, DH_BITS);
+
+	gnutls_transport_set_ptr (session, GINT_TO_POINTER (sockfd));
+
+	chan = g_new0 (GNUTLSChannel, 1);
+	chan->fd = sockfd;
+	chan->real_sock = sock;
+	chan->session = session;
+	chan->cred = cred;
+	chan->hostname = g_strdup (remote_host);
+	chan->type = type;
+	g_io_channel_ref (sock);
+
+	gchan = (GIOChannel *) chan;
+	gchan->funcs = &gnutls_channel_funcs;
+	g_io_channel_init (gchan);
+	gchan->is_readable = gchan->is_writeable = TRUE;
+	gchan->use_buffer = FALSE;
+
 	return gchan;
+
+ THROW_CREATE_ERROR:
+	if (session)
+		gnutls_deinit (session);
+	return NULL;
+}
+
+static gboolean gnutls_inited = FALSE;
+
+static void
+_gnutls_init (void)
+{
+	gnutls_global_init ();
+	gnutls_inited = TRUE;
+}
+
+/**
+ * ssl_get_client_credentials:
+ * @ca_file: path to a file containing X509-encoded Certificate
+ * Authority certificates.
+ *
+ * Creates an opaque client credentials object which can later be
+ * passed to ssl_wrap_iochannel().
+ *
+ * If @ca_file is non-%NULL, any certificate received from a server
+ * must be signed by one of the CAs in the file, or an error will
+ * be returned.
+ *
+ * Return value: the client credentials, which must be freed with
+ * ssl_free_client_credentials().
+ **/
+gpointer
+ssl_get_client_credentials (const char *ca_file)
+{
+	GNUTLSCred *cred;
+	int status;
+
+	if (!gnutls_inited)
+		_gnutls_init ();
+
+	cred = g_new0 (GNUTLSCred, 1);
+	gnutls_certificate_allocate_credentials (&cred->cred);
+
+	if (ca_file) {
+		cred->have_ca_file = TRUE;
+		status = gnutls_certificate_set_x509_trust_file (
+			cred->cred, ca_file, GNUTLS_X509_FMT_PEM);
+		if (status < 0) {
+			g_warning ("Failed to set SSL trust file (%s).",
+				   ca_file);
+			/* Since we set have_ca_file though, this just
+			 * means that no certs will validate, so we're
+			 * ok securitywise if we just return these
+			 * creds to the caller.
+			 */
+		}
+	}
+
+	return cred;
+}
+
+/**
+ * ssl_free_client_credentials:
+ * @creds: a client credentials structure returned by
+ * ssl_get_client_credentials().
+ *
+ * Frees @client_creds.
+ **/
+void
+ssl_free_client_credentials (gpointer creds)
+{
+	GNUTLSCred *cred = creds;
+
+	gnutls_certificate_free_credentials (cred->cred);
+	g_free (cred);
+}
+
+/**
+ * ssl_get_server_credentials:
+ * @cert_file: path to a file containing an X509-encoded server
+ * certificate
+ * @key_file: path to a file containing an X509-encoded key for
+ * @cert_file.
+ *
+ * Creates an opaque server credentials object which can later be
+ * passed to ssl_wrap_iochannel().
+ *
+ * Return value: the server credentials, which must be freed with
+ * ssl_free_server_credentials().
+ **/
+gpointer
+ssl_get_server_credentials (const char *cert_file, const char *key_file)
+{
+	GNUTLSCred *cred;
+
+	if (!gnutls_inited)
+		_gnutls_init ();
+	if (!dh_params) {
+		if (!init_dh_params ())
+			return NULL;
+	}
+
+	cred = g_new0 (GNUTLSCred, 1);
+	gnutls_certificate_allocate_credentials (&cred->cred);
+
+	if (gnutls_certificate_set_x509_key_file (cred->cred,
+						  cert_file, key_file,
+						  GNUTLS_X509_FMT_PEM) != 0) {
+		g_warning ("Failed to set SSL certificate and key files "
+			   "(%s, %s).", cert_file, key_file);
+		ssl_free_server_credentials (cred);
+		return NULL;
+	}
+
+	gnutls_certificate_set_dh_params (cred->cred, dh_params);
+	return cred;
+}
+
+/**
+ * ssl_free_server_credentials:
+ * @creds: a server credentials structure returned by
+ * ssl_get_server_credentials().
+ *
+ * Frees @server_creds.
+ **/
+void
+ssl_free_server_credentials (gpointer creds)
+{
+	GNUTLSCred *cred = creds;
+
+	gnutls_certificate_free_credentials (cred->cred);
+	g_free (cred);
+}
+
+/**
+ * soup_ssl_error_quark:
+ *
+ * Return value: The quark used as %SOUP_SSL_ERROR
+ **/
+GQuark
+ssl_error_quark (void)
+{
+	static GQuark error;
+	if (!error)
+		error = g_quark_from_static_string ("ssl_error_quark");
+	return error;
 }
