@@ -349,6 +349,11 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition cond, void *_c
 				return FALSE;
 		}
 
+		if (status == G_IO_STATUS_EOF) {
+			disconnect_client(client, "Connection closed by client");
+			return FALSE;
+		}
+
 		if (status != G_IO_STATUS_AGAIN) {
 			if (error->domain == G_CONVERT_ERROR &&
 				error->code == G_CONVERT_ERROR_ILLEGAL_SEQUENCE) {
