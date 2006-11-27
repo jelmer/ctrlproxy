@@ -75,7 +75,7 @@ Ctrlproxy 3.0	UNRELEASED
 
 	* Support autogenerating a configuration using `ctrlproxy --init'.
 
-	* Add Mozilla NSS and GNUTLS support.
+	* Uses GNUTLS now rather than OpenSSL.
 
 	* Remove linestack_memory and make linestack_file the default.
 
@@ -92,3 +92,6 @@ Ctrlproxy 3.0	UNRELEASED
 	* Add ability to change NICK when away.
 
 	* Add help support in admin module (Daniel Poelzleithner).
+
+	* Allows connecting to networks on ~/.ctrlproxy/pipes/NETWORK using 
+	  unix domain sockets.
