@@ -23,10 +23,6 @@
 #include "internals.h"
 #include <glib/gstdio.h>
 
-#ifdef HAVE_GNUTLS
-#include <gnutls/gnutls.h>
-#endif
-
 #define BACKTRACE_STACK_SIZE 64
 
 #ifdef HAVE_EXECINFO_H
@@ -234,12 +230,6 @@ int main(int argc, char **argv)
 
 	init_admin();
 	init_nickserv();
-
-#ifdef HAVE_GNUTLS
-	if(gnutls_global_init() < 0) {
-		log_global("gnutls", LOG_ERROR, "gnutls global state initialization error");
-	}
-#endif
 
 	/* Determine correct modules directory */
 	init_plugins(getenv("CTRLPROXY_MODULESDIR")?getenv("CTRLPROXY_MODULESDIR"):MODULESDIR);
