@@ -26,6 +26,7 @@
 #include <gmodule.h>
 #include "ctrlproxy.h"
 #include <check.h>
+#include <sys/socket.h>
 
 #define DEFAULT_TIMEOUT 1000
 
@@ -39,6 +40,19 @@ Suite *parser_suite(void);
 Suite *user_suite(void);
 Suite *linestack_suite(void);
 gboolean init_log(const char *file);
+
+gboolean g_io_channel_pair(GIOChannel **ch1, GIOChannel **ch2)
+{
+	int sock[2];
+	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNIX, sock) < 0) {
+		perror("socketpair");
+		return FALSE;
+	}
+
+	*ch1 = g_io_channel_unix_new(sock[0]);
+	*ch2 = g_io_channel_unix_new(sock[1]);
+	return TRUE;
+}
 
 int main (int argc, char **argv)
 {

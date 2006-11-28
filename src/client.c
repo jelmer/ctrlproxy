@@ -263,7 +263,8 @@ void disconnect_client(struct client *c, const char *reason)
 	client_send_args_ex(c, NULL, "ERROR", reason, NULL);
 
 	g_source_remove(c->incoming_id);
-	g_source_remove(c->outgoing_id);
+	if (c->outgoing_id)
+		g_source_remove(c->outgoing_id);
 	c->incoming = NULL;
 
 	g_source_remove(c->ping_id);

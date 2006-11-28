@@ -603,6 +603,7 @@ static gboolean close_server(struct network *n)
 	switch (n->config->type) {
 	case NETWORK_TCP: 
 	case NETWORK_PROGRAM: 
+		g_assert(n->connection.incoming_id > 0);
 		g_source_remove(n->connection.incoming_id); 
 		if (n->connection.outgoing_id != 0)
 			g_source_remove(n->connection.outgoing_id); 

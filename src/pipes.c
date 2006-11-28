@@ -92,6 +92,7 @@ gboolean network_start_unix_pipe(struct network *n)
 
 gboolean network_stop_unix_pipe(struct network *n)
 {
-	g_source_remove(n->connection.unix_incoming_id);
+	if (n->connection.unix_incoming_id > 0)
+		g_source_remove(n->connection.unix_incoming_id);
 	return TRUE;
 }

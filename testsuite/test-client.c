@@ -22,10 +22,17 @@
 #include <string.h>
 #include <check.h>
 #include "ctrlproxy.h"
+#include "torture.h"
 
 START_TEST(test_create_no_network)
 	GIOChannel *ch = g_io_channel_unix_new(0);
 	client_init(NULL, ch, NULL);
+END_TEST
+
+START_TEST(test_create_introduction)
+	GIOChannel *ch1, *ch2;
+	g_io_channel_pair(&ch1, &ch2);
+	client_init(NULL, ch1, NULL);
 END_TEST
 
 Suite *client_suite()
@@ -34,5 +41,6 @@ Suite *client_suite()
 	TCase *tc_core = tcase_create("core");
 	suite_add_tcase(s, tc_core);
 	tcase_add_test(tc_core, test_create_no_network);
+	tcase_add_test(tc_core, test_create_introduction);
 	return s;
 }

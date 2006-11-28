@@ -51,7 +51,7 @@ END_TEST
 
 Suite *user_suite()
 {
-	Suite *s = suite_create("testsuite");
+	Suite *s = suite_create("user");
 	TCase *tc_core = tcase_create("core");
 	suite_add_tcase(s, tc_core);
 	tcase_add_test(tc_core, test_create);
