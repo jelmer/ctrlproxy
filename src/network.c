@@ -780,10 +780,12 @@ struct network *load_network(struct global *global, struct network_config *sc)
 
 	g_assert(sc);
 
-	/* Don't connect to the same network twice */
-	s = find_network(global, sc->name);
-	if (s) 
-		return s;
+	if (global != NULL) {
+		/* Don't connect to the same network twice */
+		s = find_network(global, sc->name);
+		if (s) 
+			return s;
+	}
 
 	s = g_new0(struct network, 1);
 	s->config = sc;
@@ -792,15 +794,16 @@ struct network *load_network(struct global *global, struct network_config *sc)
 	s->connection.pending_lines = g_queue_new();
 	s->global = global;
 
-	global->networks = g_list_append(global->networks, s);
+	if (global != NULL) {
+		global->networks = g_list_append(global->networks, s);
 
-	for (gl = global->new_network_notifiers; gl; gl = gl->next) {
-		struct new_network_notify_data *p = gl->data;
+		for (gl = global->new_network_notifiers; gl; gl = gl->next) {
+			struct new_network_notify_data *p = gl->data;
 
-		p->fn(s, p->data);
+			p->fn(s, p->data);
+		}
+		network_start_unix_pipe(s);
 	}
-
-	network_start_unix_pipe(s);
 
 #ifdef HAVE_GNUTLS
 	s->ssl_credentials = ssl_get_client_credentials(NULL);
@@ -839,9 +842,11 @@ void unload_network(struct network *s)
 		disconnect_client(c, "Server exiting");
 	}
 
-	network_stop_unix_pipe(s);
 
-	s->global->networks = g_list_remove(s->global->networks, s);
+	if (s->global != NULL) {
+		network_stop_unix_pipe(s);
+		s->global->networks = g_list_remove(s->global->networks, s);
+	}
 
 	g_free(s->name);
 
