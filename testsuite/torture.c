@@ -73,6 +73,7 @@ gboolean g_io_channel_pair(GIOChannel **ch1, GIOChannel **ch2)
 	*ch2 = g_io_channel_unix_new(sock[1]);
 	return TRUE;
 }
+extern enum log_level current_log_level;
 
 int main (int argc, char **argv)
 {
@@ -80,10 +81,12 @@ int main (int argc, char **argv)
 	gboolean no_fork = FALSE;
 	gboolean verbose = FALSE;
 	gboolean stderr_log = FALSE;
+	gboolean trace = FALSE;
 	GOptionEntry options[] = {
 		{"no-fork", 'n', 0, G_OPTION_ARG_NONE, &no_fork, "Don't fork" },
 		{"stderr", 's', 0, G_OPTION_ARG_NONE, &stderr_log, "Log to stderr", NULL },
 		{"verbose", 'v', 0, G_OPTION_ARG_NONE, &verbose, "Be verbose", NULL },
+		{"trace", 't', 0, G_OPTION_ARG_NONE, &trace, "Trace data", NULL },
 		{ NULL }
 	};
 	int nf;
@@ -100,6 +103,11 @@ int main (int argc, char **argv)
 
 	if (stderr_log)
 		init_log(NULL);
+
+	stderr_log |= trace;
+
+	if (trace)
+		current_log_level = LOG_TRACE;
 
 	for (i = 0; i < 1000; i++) {
 		snprintf(test_dir, sizeof(test_dir), "test-%d", i);

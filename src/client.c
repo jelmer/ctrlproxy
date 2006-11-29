@@ -282,9 +282,8 @@ void disconnect_client(struct client *c, const char *reason)
 
 	g_source_remove(c->ping_id);
 
-	if (c->network) {
+	if (c->network)
 		c->network->clients = g_list_remove(c->network->clients, c);
-	} 
 
 	pending_clients = g_list_remove(pending_clients, c);
 
@@ -478,7 +477,7 @@ static gboolean handle_pending_client_receive(GIOChannel *c, GIOCondition cond, 
 
 			g_assert(l->args[0]);
 
-			if(!g_strcasecmp(l->args[0], "NICK")) {
+			if (!g_strcasecmp(l->args[0], "NICK")) {
 				if (l->argc < 2) {
 					client_send_response(client, ERR_NEEDMOREPARAMS,
 										 l->args[0], "Not enough parameters", NULL);
@@ -526,7 +525,7 @@ static gboolean handle_pending_client_receive(GIOChannel *c, GIOCondition cond, 
 
 			free_line(l);
 
-			if (client->fullname && client->nick) {
+			if (client->fullname != NULL && client->nick != NULL) {
 				if (!client->network) {
 					disconnect_client(client, "Please select a network first, or specify one in your ctrlproxyrc");
 					return FALSE;
@@ -585,6 +584,7 @@ struct client *client_init(struct network *n, GIOChannel *c, const char *desc)
 	client = g_new0(struct client, 1);
 	g_assert(client);
 
+	g_io_channel_set_flags(c, G_IO_FLAG_NONBLOCK, NULL);
 	g_io_channel_set_close_on_unref(c, TRUE);
 	client->connect_time = time(NULL);
 	client->ping_id = g_timeout_add(1000 * 300, client_ping, client);
@@ -594,8 +594,9 @@ struct client *client_init(struct network *n, GIOChannel *c, const char *desc)
 	client->exit_on_close = FALSE;
 	client->pending_lines = g_queue_new();
 
-	if (n)
+	if (n && n->global)
 		charset = n->global->config->client_charset;
+
 	if (charset == NULL)
 		charset = DEFAULT_CLIENT_CHARSET;
 
@@ -603,8 +604,8 @@ struct client *client_init(struct network *n, GIOChannel *c, const char *desc)
 	if (status != G_IO_STATUS_NORMAL)
 		log_client(NULL, LOG_WARNING, client, "Error setting charset `%s': %s", charset, error->message);
 
-	handle_pending_client_receive(client->incoming, g_io_channel_get_buffer_condition(client->incoming), client);
 	client->incoming_id = g_io_add_watch(client->incoming, G_IO_IN | G_IO_HUP, handle_pending_client_receive, client);
+	handle_pending_client_receive(client->incoming, g_io_channel_get_buffer_condition(client->incoming), client);
 
 	pending_clients = g_list_append(pending_clients, client);
 	return client;

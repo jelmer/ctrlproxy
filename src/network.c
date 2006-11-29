@@ -701,6 +701,7 @@ void network_set_iochannel(struct network *s, GIOChannel *ioc)
 	g_io_channel_set_close_on_unref(s->connection.outgoing, TRUE);
 
 	s->connection.incoming_id = g_io_add_watch(s->connection.outgoing, G_IO_IN | G_IO_HUP | G_IO_ERR, handle_server_receive, s);
+	handle_server_receive(s->connection.outgoing, g_io_channel_get_buffer_condition(s->connection.outgoing), s);
 
 	server_send_login(s);
 }
