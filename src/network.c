@@ -105,7 +105,7 @@ static gboolean process_from_server(struct network *n, struct line *l)
 		GList *gl;
 		n->connection.state = NETWORK_CONNECTION_STATE_MOTD_RECVD;
 
-		g_io_channel_set_encoding(n->config->type == NETWORK_TCP?
+		g_io_channel_set_encoding(n->config->type != NETWORK_VIRTUAL?
 				n->connection.outgoing:
 				n->connection.outgoing,
 				get_charset(&n->info), &error);
@@ -286,6 +286,7 @@ static gboolean network_send_line_direct(struct network *s, struct client *c, co
 
 	g_assert(s->config->type == NETWORK_TCP ||
 		 s->config->type == NETWORK_PROGRAM ||
+		 s->config->type == NETWORK_IOCHANNEL ||
 		 s->config->type == NETWORK_VIRTUAL);
 
 	if (s->config->type == NETWORK_VIRTUAL) {
@@ -551,8 +552,6 @@ static gboolean connect_current_tcp_server(struct network *s)
 
 	g_io_channel_unref(s->connection.outgoing);
 
-	server_send_login(s);
-
 	return TRUE;
 }
 
@@ -574,6 +573,7 @@ static void reconnect(struct network *server, gboolean rm_source)
 		server->connection.data.tcp.current_server = network_get_next_tcp_server(server);
 
 	if (server->config->type == NETWORK_TCP ||
+		server->config->type == NETWORK_IOCHANNEL ||
 		server->config->type == NETWORK_PROGRAM) {
 		server->connection.state = NETWORK_CONNECTION_STATE_RECONNECT_PENDING;
 		server->reconnect_id = g_timeout_add(1000 * server->config->reconnect_interval, (GSourceFunc) delayed_connect_server, server);
@@ -614,6 +614,7 @@ static gboolean close_server(struct network *n)
 	switch (n->config->type) {
 	case NETWORK_TCP: 
 	case NETWORK_PROGRAM: 
+	case NETWORK_IOCHANNEL:
 		g_assert(n->connection.incoming_id > 0);
 		g_source_remove(n->connection.incoming_id); 
 		if (n->connection.outgoing_id != 0)
@@ -700,6 +701,8 @@ void network_set_iochannel(struct network *s, GIOChannel *ioc)
 	g_io_channel_set_close_on_unref(s->connection.outgoing, TRUE);
 
 	s->connection.incoming_id = g_io_add_watch(s->connection.outgoing, G_IO_IN | G_IO_HUP | G_IO_ERR, handle_server_receive, s);
+
+	server_send_login(s);
 }
 
 static gboolean connect_program(struct network *s)
@@ -722,7 +725,6 @@ static gboolean connect_program(struct network *s)
 
 	g_io_channel_unref(s->connection.outgoing);
 
-	server_send_login(s);
 
 	if (s->name == NULL) {
 		if (strchr(s->config->type_settings.program_location, '/')) {

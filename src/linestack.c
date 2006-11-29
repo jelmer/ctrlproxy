@@ -270,7 +270,10 @@ struct linestack_context *new_linestack(struct network *n)
 {
 	extern const struct linestack_ops linestack_file;
 	const struct linestack_ops *current_backend = NULL;
-	struct ctrlproxy_config *cfg = n->global->config;
+	struct ctrlproxy_config *cfg = NULL;
+	
+	if (n->global != NULL)
+		cfg = n->global->config;
 
 	register_linestack(&linestack_file);
 

@@ -80,6 +80,7 @@ G_MODULE_EXPORT int verify_client(const struct network *s, const struct client *
 G_MODULE_EXPORT int str_rfc1459cmp(const char *a, const char *b);
 G_MODULE_EXPORT int str_strictrfc1459cmp(const char *a, const char *b);
 G_MODULE_EXPORT int str_asciicmp(const char *a, const char *b);
+G_MODULE_EXPORT char *g_io_channel_ip_get_description(GIOChannel *ch);
 
 /* log.c */
 enum log_level { LOG_DATA=5, LOG_TRACE=4, LOG_INFO=3, LOG_WARNING=2, LOG_ERROR=1 };

@@ -580,6 +580,7 @@ struct client *client_init(struct network *n, GIOChannel *c, const char *desc)
 	const char *charset = NULL;
 
 	g_assert(c);
+	g_assert(desc);
 
 	client = g_new0(struct client, 1);
 	g_assert(client);
@@ -592,23 +593,6 @@ struct client *client_init(struct network *n, GIOChannel *c, const char *desc)
 	client->description = g_strdup(desc);
 	client->exit_on_close = FALSE;
 	client->pending_lines = g_queue_new();
-
-	if (!desc) {
-		socklen_t len = sizeof(struct sockaddr_in6);
-		struct sockaddr *sa = g_malloc(len);
-		char hostname[NI_MAXHOST];
-		char service[NI_MAXSERV];
-		int fd = g_io_channel_unix_get_fd(c);
-
-		if (getpeername (fd, sa, &len) == 0 &&
-			getnameinfo(sa, len, hostname, sizeof(hostname),
-						service, sizeof(service), NI_NOFQDN | NI_NUMERICSERV) == 0) {
-
-			client->description = g_strdup_printf("%s:%s", hostname, service);
-		}
-
-		g_free(sa);
-	}
 
 	if (n)
 		charset = n->global->config->client_charset;

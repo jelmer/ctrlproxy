@@ -24,11 +24,13 @@
 #include <stdio.h>
 #include <glib.h>
 #include <gmodule.h>
-#include "ctrlproxy.h"
+#include "internals.h"
 #include <check.h>
 #include <sys/socket.h>
 
 #define DEFAULT_TIMEOUT 1000
+
+static char test_dir[PATH_MAX];
 
 Suite *util_suite(void);
 Suite *state_suite(void);
@@ -41,6 +43,23 @@ Suite *parser_suite(void);
 Suite *user_suite(void);
 Suite *linestack_suite(void);
 gboolean init_log(const char *file);
+
+struct global *torture_global(const char *name)
+{
+	char *config_dir = g_build_filename(test_dir, name, NULL);
+	struct global *g;
+
+	g = new_global(DEFAULT_CONFIG_DIR);	
+	g->config->config_dir = g_strdup(config_dir);
+	save_configuration(g->config, config_dir);
+
+	free_global(g);
+
+	g = new_global(config_dir);
+
+	g_free(config_dir);
+	return g;
+}
 
 gboolean g_io_channel_pair(GIOChannel **ch1, GIOChannel **ch2)
 {
@@ -69,6 +88,7 @@ int main (int argc, char **argv)
 	};
 	int nf;
 	SRunner *sr;
+	int i;
 
 	pc = g_option_context_new("");
 	g_option_context_add_main_entries(pc, options, NULL);
@@ -80,6 +100,12 @@ int main (int argc, char **argv)
 
 	if (stderr_log)
 		init_log(NULL);
+
+	for (i = 0; i < 1000; i++) {
+		snprintf(test_dir, sizeof(test_dir), "test-%d", i);
+		if (mkdir(test_dir, 0755) == 0)
+			break;
+	}
 
 	sr = srunner_create(util_suite());
 	srunner_add_suite(sr, state_suite());

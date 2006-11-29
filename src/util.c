@@ -82,3 +82,23 @@ int str_rfc1459cmp(const char *a, const char *b)
 	g_assert(b != NULL);
 	return str_cmphelper(a, b, 97, 65, 126, 94);
 }
+
+char *g_io_channel_ip_get_description(GIOChannel *ch)
+{
+	socklen_t len = sizeof(struct sockaddr_in6);
+	struct sockaddr *sa = g_malloc(len);
+	char hostname[NI_MAXHOST];
+	char service[NI_MAXSERV];
+	char *description = NULL;
+	int fd = g_io_channel_unix_get_fd(ch);
+
+	if (getpeername (fd, sa, &len) == 0 &&
+		getnameinfo(sa, len, hostname, sizeof(hostname),
+					service, sizeof(service), NI_NOFQDN | NI_NUMERICSERV) == 0) {
+
+		description = g_strdup_printf("%s:%s", hostname, service);
+	}
+
+	g_free(sa);
+	return description;
+}

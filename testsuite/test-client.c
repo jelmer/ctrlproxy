@@ -26,13 +26,13 @@
 
 START_TEST(test_create_no_network)
 	GIOChannel *ch = g_io_channel_unix_new(0);
-	client_init(NULL, ch, NULL);
+	client_init(NULL, ch, "desc");
 END_TEST
 
 START_TEST(test_create_introduction)
 	GIOChannel *ch1, *ch2;
 	g_io_channel_pair(&ch1, &ch2);
-	client_init(NULL, ch1, NULL);
+	client_init(NULL, ch1, "desc");
 END_TEST
 
 START_TEST(test_disconnect)
@@ -42,7 +42,7 @@ START_TEST(test_disconnect)
 	GError *error = NULL;
 	gsize length;
 	g_io_channel_pair(&ch1, &ch2);
-	client = client_init(NULL, ch1, NULL);
+	client = client_init(NULL, ch1, "desc");
 	g_io_channel_unref(ch1);
 	disconnect_client(client, "Because");
 	g_io_channel_read_to_end(ch2, &raw, &length, &error);

@@ -61,7 +61,8 @@ struct network_config
 	enum { 
 		NETWORK_TCP, 
 		NETWORK_PROGRAM, 
-		NETWORK_VIRTUAL 
+		NETWORK_VIRTUAL,
+		NETWORK_IOCHANNEL
 	} type;
 
 	union {
