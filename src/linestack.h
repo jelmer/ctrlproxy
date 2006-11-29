@@ -20,6 +20,11 @@
 #ifndef __CTRLPROXY_LINESTACK_H__
 #define __CTRLPROXY_LINESTACK_H__
 
+/**
+ * @file
+ * @brief Linestack handling
+ */
+
 struct line;
 struct network;
 struct client;
@@ -149,6 +154,15 @@ G_MODULE_EXPORT gboolean linestack_insert_line(
 
 G_MODULE_EXPORT void linestack_free_marker(struct linestack_marker *);
 G_MODULE_EXPORT struct linestack_marker *linestack_get_marker(struct linestack_context *);
+
+/**
+ * Create a new linestack context
+ *
+ * @param ops Linestack backend to use.
+ * @param name Name of the network
+ * @param cfg CtrlProxy configuration
+ * @param state Current network state
+ */
 G_MODULE_EXPORT struct linestack_context *create_linestack(const struct linestack_ops *, const char *name, struct ctrlproxy_config *, const struct network_state *);
 G_MODULE_EXPORT void free_linestack_context(struct linestack_context *);
 

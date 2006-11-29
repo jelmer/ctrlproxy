@@ -20,6 +20,11 @@
 #ifndef __CTRLPROXY_SETTINGS_H__
 #define __CTRLPROXY_SETTINGS_H__
 
+/**
+ * @file
+ * @brief Settings
+ */
+
 #define DEFAULT_CLIENT_CHARSET "UTF-8"
 
 struct channel_config {

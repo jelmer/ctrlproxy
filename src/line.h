@@ -26,6 +26,11 @@
 #define G_MODULE_EXPORT
 #endif
 
+/**
+ * @file
+ * @brief Line manipulation
+ */
+
 enum has_endcolon { COLON_UNKNOWN = 0, WITH_COLON = 1, WITHOUT_COLON = 2 } ;
 
 struct line {
@@ -36,9 +41,12 @@ struct line {
 	enum has_endcolon has_endcolon;
 };
 
+/** 
+ * Copy a line
+ */
 G_MODULE_EXPORT struct line *linedup(const struct line *l);
-G_MODULE_EXPORT struct line * irc_parse_line(const char *data);
-G_MODULE_EXPORT struct line * virc_parse_line(const char *origin, va_list ap);
+G_MODULE_EXPORT struct line *irc_parse_line(const char *data);
+G_MODULE_EXPORT struct line *virc_parse_line(const char *origin, va_list ap);
 G_MODULE_EXPORT char *irc_line_string(const struct line *l);
 G_MODULE_EXPORT char *irc_line_string_nl(const struct line *l);
 G_MODULE_EXPORT char *line_get_nick(const struct line *l);
@@ -49,6 +57,11 @@ G_MODULE_EXPORT GIOStatus irc_send_line(GIOChannel *, const struct line *l,
                                         GError **);
 G_MODULE_EXPORT struct line *irc_parse_linef( char *origin, ... );
 G_MODULE_EXPORT struct line *irc_parse_line_args( char *origin, ... );
+
+/**
+ * Read a line from an IO Channel. This will return a line _with_ UTF-8 
+ * characters only!
+ */
 G_MODULE_EXPORT GIOStatus irc_recv_line(GIOChannel *c, GError **err, struct line **);
 
 #endif /* __CTRLPROXY_LINE_H__ */

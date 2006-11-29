@@ -20,6 +20,11 @@
 #ifndef __CTRLPROXY_NETWORK_H__
 #define __CTRLPROXY_NETWORK_H__
 
+/**
+ * @file
+ * @brief Network functions
+ */
+
 #ifndef G_MODULE_EXPORT
 #define G_MODULE_EXPORT 
 #endif

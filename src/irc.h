@@ -1,6 +1,11 @@
 #ifndef __IRC_H__
 #define __IRC_H__
 
+/**
+ * @file
+ * @brief IRC Constants
+ */
+
 /* Written by Jelmer Vernooij, 2003 based on the list of error codes
  * and responses listed in RFC 1459 and RFC 2812 */
 

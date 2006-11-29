@@ -20,6 +20,11 @@
 #ifndef __CTRLPROXY_HOOKS_H__
 #define __CTRLPROXY_HOOKS_H__
 
+/**
+ * @file
+ * @brief Hooks
+ */
+
 enum data_direction { TO_SERVER = 1, FROM_SERVER = 2 };
 
 /* Returns TRUE if filter should be continued, FALSE if it should be stopped. */

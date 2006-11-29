@@ -6,6 +6,11 @@
 #ifndef SSL_H
 #define SSL_H 1
 
+/**
+ * @file
+ * @brief SSL
+ */
+
 #include <glib.h>
 
 /**

@@ -27,6 +27,11 @@
 #include <glib.h>
 #include <gmodule.h>
 
+/**
+ * @file
+ * @brief Main functions
+ */
+
 #if defined(STRICT_MEMORY_ALLOCS) && !defined(SWIGPYTHON)
 #define calloc(a,b) __ERROR_USE_G_NEW0__
 #define malloc(a) __ERROR_USE_G_MALLOC_OR_G_NEW__

@@ -20,6 +20,11 @@
 #ifndef __CTCP_H__
 #define __CTCP_H__
 
+/**
+ * @file
+ * @brief CTCP handling
+ */
+
 struct ctcp_handler {
 	const char *name;
 	void (*fn) (struct network *n, const char *sender, char **args);

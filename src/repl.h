@@ -20,6 +20,10 @@
 #ifndef __CTRLPROXY_REPL_H__
 #define __CTRLPROXY_REPL_H__
 
+/**
+ * @file
+ * @brief Replication
+ */
 
 struct replication_backend {
 	const char *name;

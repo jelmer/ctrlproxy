@@ -20,6 +20,11 @@
 #ifndef __CTRLPROXY_STATE_H__
 #define __CTRLPROXY_STATE_H__
 
+/**
+ * @file
+ * @brief State information
+ */
+
 struct network;
 struct client;
 struct line;

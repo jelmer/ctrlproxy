@@ -20,6 +20,11 @@
 #ifndef __CTRLPROXY_PLUGINS_H__
 #define __CTRLPROXY_PLUGINS_H__
 
+/**
+ * @file
+ * @brief Plugins
+ */
+
 struct plugin {
 	GModule *module;
 	void *data;
