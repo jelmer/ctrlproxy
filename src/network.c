@@ -588,6 +588,7 @@ static gboolean close_server(struct network *n)
 
 	if(n->connection.state == NETWORK_CONNECTION_STATE_RECONNECT_PENDING) {
 		g_source_remove(n->reconnect_id);
+		n->reconnect_id = 0;
 		n->connection.state = NETWORK_CONNECTION_STATE_NOT_CONNECTED;
 	}
 
@@ -616,9 +617,11 @@ static gboolean close_server(struct network *n)
 	case NETWORK_PROGRAM: 
 	case NETWORK_IOCHANNEL:
 		g_assert(n->connection.incoming_id > 0);
+		n->connection.incoming_id = 0;
 		g_source_remove(n->connection.incoming_id); 
 		if (n->connection.outgoing_id != 0)
 			g_source_remove(n->connection.outgoing_id); 
+		n->connection.outgoing_id = 0;
 		break;
 	case NETWORK_VIRTUAL:
 		if (n->connection.data.virtual.ops && 
@@ -650,8 +653,6 @@ void clients_send(struct network *server, struct line *l, const struct client *e
 		}
 	}
 }
-
-
 
 static pid_t piped_child(char* const command[], int *f_in)
 {
@@ -752,7 +753,8 @@ static gboolean connect_server(struct network *s)
 
 	case NETWORK_VIRTUAL:
 		s->connection.data.virtual.ops = g_hash_table_lookup(virtual_network_ops, s->config->type_settings.virtual_type);
-		if (!s->connection.data.virtual.ops) return FALSE;
+		if (!s->connection.data.virtual.ops) 
+			return FALSE;
 
 		s->state = network_state_init(&s->info, s->config->nick, s->config->username, get_my_hostname());
 		s->linestack = new_linestack(s);
@@ -975,7 +977,8 @@ struct network *find_network_by_hostname(struct global *global, const char *host
 		while (sv) {
 			struct tcp_server_config *server = sv->data;
 
-			if (!g_strcasecmp(server->host, hostname) && !g_strcasecmp(server->port, portname)) {
+			if (!g_strcasecmp(server->host, hostname) && 
+				!g_strcasecmp(server->port, portname)) {
 				g_free(portname);
 				return n;
 			}
@@ -1025,5 +1028,3 @@ void network_select_next_server(struct network *n)
 	log_network(NULL, LOG_INFO, n, "Trying next server");
 	n->connection.data.tcp.current_server = network_get_next_tcp_server(n);
 }
-
-
