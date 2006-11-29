@@ -242,10 +242,23 @@ gboolean client_send_line(struct client *c, const struct line *l)
 	g_assert(l);
 	log_client_line(c, l, FALSE);
 
-	g_queue_push_tail(c->pending_lines, linedup(l));
+	if (c->outgoing_id == 0) {
+		GError *error = NULL;
+		GIOStatus status = irc_send_line(c->incoming, l, &error);
 
-	if (c->outgoing_id == 0)
-		c->outgoing_id = g_io_add_watch(c->incoming, G_IO_OUT, handle_client_receive, c);
+		if (status == G_IO_STATUS_AGAIN) {
+			c->outgoing_id = g_io_add_watch(c->incoming, G_IO_OUT, handle_client_receive, c);
+			g_queue_push_tail(c->pending_lines, linedup(l));
+		} else if (status != G_IO_STATUS_NORMAL) {
+			disconnect_client(c, g_strdup_printf("Error sending line '%s': %s", l->args[0], error?error->message:"ERROR"));
+
+			return FALSE;
+		} 
+
+		return TRUE;
+	}
+
+	g_queue_push_tail(c->pending_lines, linedup(l));
 
 	return TRUE;
 }
@@ -316,7 +329,7 @@ void send_motd(struct client *c)
 
 static gboolean handle_client_receive(GIOChannel *c, GIOCondition cond, void *_client)
 {
-	gboolean ret;
+	gboolean ret = TRUE;
 	struct client *client = (struct client *)_client;
 	struct line *l;
 
@@ -342,7 +355,7 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition cond, void *_c
 				continue;
 			}
 
-			ret = process_from_client(client, l);
+			ret &= process_from_client(client, l);
 
 			free_line(l);
 
@@ -368,20 +381,18 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition cond, void *_c
 				client_send_response(client, ERR_BADCHARENCODING, 
 				   "*", encoding, error->message, NULL);
 				g_free(encoding);
-				return TRUE;
+			} else {
+				disconnect_client(client, error?error->message:"Unknown error");
+				return FALSE;
 			}
-			disconnect_client(client, error?error->message:"Unknown error");
-			return FALSE;
 		}
-
-		return TRUE;
 	}
 
 	if (cond & G_IO_OUT) {
-		return client_send_queue(client);
+		ret &= client_send_queue(client);
 	}
 
-	return TRUE;
+	return ret;
 }
 
 static gboolean welcome_client(struct client *client)

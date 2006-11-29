@@ -313,11 +313,6 @@ struct line *linedup(const struct line *l)
 	return ret;
 }
 
-/**
- * Read a line from an IO Channel. This will return a line _with_ UTF-8 
- * characters only!
- */
-
 GIOStatus irc_recv_line(GIOChannel *c, GError **error, struct line **l)
 {
 	gchar *raw = NULL;

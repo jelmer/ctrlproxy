@@ -294,10 +294,24 @@ static gboolean network_send_line_direct(struct network *s, struct client *c, co
 		return s->connection.data.virtual.ops->to_server(s, c, l);
 	}
 
-	g_queue_push_tail(s->connection.pending_lines, linedup(l));
+	if (s->connection.outgoing_id == 0) {
+		GError *error = NULL;
 
-	if (s->connection.outgoing_id == 0) 
-		s->connection.outgoing_id = g_io_add_watch(s->connection.outgoing, G_IO_OUT, server_send_queue, s);
+		GIOStatus status = irc_send_line(s->connection.outgoing, l, &error);
+
+		if (status == G_IO_STATUS_AGAIN) {
+			g_queue_push_tail(s->connection.pending_lines, linedup(l));
+			s->connection.outgoing_id = g_io_add_watch(s->connection.outgoing, G_IO_OUT, server_send_queue, s);
+		} else if (status != G_IO_STATUS_NORMAL) {
+			log_network(NULL, LOG_WARNING, s, "Error sending line '%s': %s",
+	           l->args[0], error?error->message:"ERROR");
+			return FALSE;
+		}
+
+		s->connection.last_line_sent = time(NULL);
+		return TRUE;
+	} else 
+		g_queue_push_tail(s->connection.pending_lines, linedup(l));
 
 	return TRUE;
 }
@@ -515,6 +529,9 @@ static gboolean connect_current_tcp_server(struct network *s)
 
 	if (cs->ssl) {
 #ifdef HAVE_GNUTLS
+		g_io_channel_set_close_on_unref(ioc, TRUE);
+		g_io_channel_set_flags(ioc, G_IO_FLAG_NONBLOCK, NULL);
+
 		ioc = ssl_wrap_iochannel (ioc, SSL_TYPE_CLIENT, 
 								 s->connection.data.tcp.current_server->host,
 								 s->ssl_credentials
@@ -530,17 +547,11 @@ static gboolean connect_current_tcp_server(struct network *s)
 		return FALSE;
 	}
 
-	g_io_channel_set_close_on_unref(ioc, TRUE);
-
-	g_io_channel_set_flags(ioc, G_IO_FLAG_NONBLOCK, NULL);
-	g_io_channel_set_encoding(ioc, NULL, NULL);
-
-	s->connection.outgoing = ioc;
-	
-	s->connection.incoming_id = g_io_add_watch(s->connection.outgoing, G_IO_IN | G_IO_HUP | G_IO_ERR, handle_server_receive, s);
-	server_send_login(s);
+	network_set_iochannel(s, ioc);
 
 	g_io_channel_unref(s->connection.outgoing);
+
+	server_send_login(s);
 
 	return TRUE;
 }
@@ -679,6 +690,18 @@ static pid_t piped_child(char* const command[], int *f_in)
 	return pid;
 }
 
+void network_set_iochannel(struct network *s, GIOChannel *ioc)
+{
+	g_io_channel_set_encoding(ioc, NULL, NULL);
+	g_io_channel_set_close_on_unref(ioc, TRUE);
+	g_io_channel_set_flags(ioc, G_IO_FLAG_NONBLOCK, NULL);
+
+	s->connection.outgoing = ioc;
+	g_io_channel_set_close_on_unref(s->connection.outgoing, TRUE);
+
+	s->connection.incoming_id = g_io_add_watch(s->connection.outgoing, G_IO_IN | G_IO_HUP | G_IO_ERR, handle_server_receive, s);
+}
+
 static gboolean connect_program(struct network *s)
 {
 	int sock;
@@ -695,14 +718,11 @@ static gboolean connect_program(struct network *s)
 
 	if (pid == -1) return FALSE;
 
-	s->connection.outgoing = g_io_channel_unix_new(sock);
-	g_io_channel_set_close_on_unref(s->connection.outgoing, TRUE);
-
-	server_send_login(s);
-	
-	s->connection.incoming_id = g_io_add_watch(s->connection.outgoing, G_IO_IN | G_IO_HUP | G_IO_ERR, handle_server_receive, s);
+	network_set_iochannel(s, g_io_channel_unix_new(sock));
 
 	g_io_channel_unref(s->connection.outgoing);
+
+	server_send_login(s);
 
 	if (s->name == NULL) {
 		if (strchr(s->config->type_settings.program_location, '/')) {
