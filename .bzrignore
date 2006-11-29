@@ -57,3 +57,4 @@ testsuite/check
 *.gcov
 testsuite/torture
 build-stamp
+api
