@@ -328,6 +328,7 @@ static gboolean handle_client_data (GIOChannel *ioc, GIOCondition o, gpointer da
 				{
 					char hostname[0x100];
 					guint16 port;
+					char *desc;
 					struct network *result;
 					
 					status = g_io_channel_read_chars(ioc, header, 1, &read, NULL);
@@ -385,7 +386,9 @@ static gboolean handle_client_data (GIOChannel *ioc, GIOCondition o, gpointer da
 						socks_reply(ioc, REP_OK, ATYP_FQDN, data[0]+1, data, 1025);
 					}
 
-					client_init(result, ioc, NULL);
+					desc = g_io_channel_ip_get_description(ioc);
+					client_init(result, ioc, desc);
+					g_free(desc);
 
 					pending_clients = g_list_remove(pending_clients, cl);
 
