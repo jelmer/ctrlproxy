@@ -35,6 +35,20 @@ START_TEST(test_create_introduction)
 	client_init(NULL, ch1, NULL);
 END_TEST
 
+START_TEST(test_disconnect)
+	GIOChannel *ch1, *ch2;
+	struct client *client;
+	char *raw;
+	GError *error = NULL;
+	gsize length;
+	g_io_channel_pair(&ch1, &ch2);
+	client = client_init(NULL, ch1, NULL);
+	g_io_channel_unref(ch1);
+	disconnect_client(client, "Because");
+	g_io_channel_read_to_end(ch2, &raw, &length, &error);
+	fail_unless(!strcmp(raw, "ERROR :Because\r\n"));
+END_TEST
+
 Suite *client_suite()
 {
 	Suite *s = suite_create("client");
@@ -42,5 +56,6 @@ Suite *client_suite()
 	suite_add_tcase(s, tc_core);
 	tcase_add_test(tc_core, test_create_no_network);
 	tcase_add_test(tc_core, test_create_introduction);
+	tcase_add_test(tc_core, test_disconnect);
 	return s;
 }
