@@ -22,6 +22,9 @@ CFLAGS+=-ansi -Wall -DMODULESDIR=\"$(modulesdir)\" -DSTRICT_MEMORY_ALLOCS=
 
 all: $(BINS) $(MODS_SHARED_FILES) 
 
+doxygen:
+	doxygen
+
 objs = src/network.o \
 	   src/posix.o \
 	   src/client.o \
