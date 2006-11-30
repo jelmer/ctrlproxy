@@ -42,6 +42,7 @@ struct client {
 	gint incoming_id;
 	gint outgoing_id;
 	gint ping_id;
+	GIConv *iconv;
 	time_t last_ping;
 	time_t last_pong;
 	time_t connect_time;

@@ -88,7 +88,7 @@ static gboolean client_send_queue(struct client *c)
 		GError *error = NULL;
 		struct line *l = g_queue_peek_head(c->pending_lines);
 
-		status = irc_send_line(c->incoming, l, &error);
+		status = irc_send_line(c->incoming, c->iconv, l, &error);
 
 		if (status == G_IO_STATUS_AGAIN)
 			return TRUE;
@@ -244,7 +244,7 @@ gboolean client_send_line(struct client *c, const struct line *l)
 
 	if (c->outgoing_id == 0) {
 		GError *error = NULL;
-		GIOStatus status = irc_send_line(c->incoming, l, &error);
+		GIOStatus status = irc_send_line(c->incoming, c->iconv, l, &error);
 
 		if (status == G_IO_STATUS_AGAIN) {
 			c->outgoing_id = g_io_add_watch(c->incoming, G_IO_OUT, handle_client_receive, c);
@@ -343,7 +343,7 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition cond, void *_c
 		GError *error = NULL;
 		GIOStatus status;
 		
-		while ((status = irc_recv_line(c, &error, &l)) == G_IO_STATUS_NORMAL) {
+		while ((status = irc_recv_line(c, client->iconv, &error, &l)) == G_IO_STATUS_NORMAL) {
 			g_assert(l);
 
 			log_client_line(client, l, TRUE);
@@ -373,7 +373,7 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition cond, void *_c
 				char *encoding = g_strdup(g_io_channel_get_encoding(c));
 				g_io_channel_set_encoding(c, NULL, NULL);
 				
-				status = irc_recv_line(c, NULL, &l);
+				status = irc_recv_line(c, client->iconv, NULL, &l);
 
 				g_io_channel_set_encoding(c, encoding, NULL);
 
@@ -465,7 +465,8 @@ static gboolean handle_pending_client_receive(GIOChannel *c, GIOCondition cond, 
 		GError *error = NULL;
 		GIOStatus status;
 		
-		while ((status = irc_recv_line(c, &error, &l)) == G_IO_STATUS_NORMAL) 
+		while ((status = irc_recv_line(c, client->iconv, 
+									   &error, &l)) == G_IO_STATUS_NORMAL) 
 		{
 			g_assert(l);
 
