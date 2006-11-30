@@ -345,6 +345,9 @@ static struct network_config *config_load_network(struct ctrlproxy_config *cfg, 
 	case NETWORK_VIRTUAL:
 		n->type_settings.virtual_type = g_key_file_get_string(kf, "global", "virtual", NULL);
 		break;
+	case NETWORK_IOCHANNEL:
+		/* Don't store */
+		break;
 	}
 
 	groups = g_key_file_get_groups(kf, &size);
@@ -569,6 +572,9 @@ void free_config(struct ctrlproxy_config *cfg)
 			break;
 		case NETWORK_PROGRAM:
 			g_free(nc->type_settings.program_location);
+			break;
+		case NETWORK_IOCHANNEL:
+			/* Nothing to free */
 			break;
 		}
 		cfg->networks = g_list_remove(cfg->networks, nc);
