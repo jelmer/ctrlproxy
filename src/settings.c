@@ -576,6 +576,7 @@ void free_config(struct ctrlproxy_config *cfg)
 		g_free(nc);
 	}
 	g_free(cfg->config_dir);
+	g_free(cfg->pipes_dir);
 	g_free(cfg->replication);
 	g_free(cfg->linestack_backend);
 	g_free(cfg->motd_file);
