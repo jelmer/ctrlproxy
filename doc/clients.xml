@@ -17,9 +17,14 @@ with ctrlproxy.</para>
 
 		<screen>
 			/set proxy_address <replaceable>ctrlproxy-host</replaceable>
-			/set proxy_port <replaceable>ctrlproxy-port</replaceable>
 			/set proxy_password <replaceable>ctrlproxy-password</replaceable>
 			/set use_proxy ON
+		</screen>
+
+		and, if you're running ctrlproxy on a different port than 1080:
+
+		<screen>
+			/set proxy_port <replaceable>ctrlproxy-port</replaceable>
 		</screen>
 	</para>
 </sect1>
@@ -36,4 +41,21 @@ with ctrlproxy.</para>
 	</para>
 </sect1>
 
+<sect1>
+	<title>BitchX</title>
+
+	<para>
+		Use ctrlproxy with the socks module and configure socks in BitchX.
+
+		<screen>
+			/SET socks_host ctrlproxy-host
+		</screen>
+
+		and, if you're running ctrlproxy on a port different than 1080:
+
+		<screen>
+			/SET socks_port ctrlproxy-port
+		</screen>
+	</para>
+</sect1>
 </chapter>
