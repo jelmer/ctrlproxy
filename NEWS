@@ -95,3 +95,5 @@ Ctrlproxy 3.0	UNRELEASED
 
 	* Allows connecting to networks on ~/.ctrlproxy/pipes/NETWORK using 
 	  unix domain sockets.
+
+	* Write out PID file.

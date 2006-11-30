@@ -128,6 +128,34 @@ static void signal_save(int sig)
 	nickserv_save(my_global, my_global->config->config_dir);
 }
 
+static pid_t read_pidfile(struct global *global)
+{
+	char *path = g_build_filename(global->config->config_dir, "pid", NULL);
+	char *contents;
+	pid_t pid;
+	GError *error = NULL;
+	if (!g_file_get_contents(path, &contents, NULL, &error)) 
+		return -1;
+	g_free(path);
+	pid = atol(contents);
+	/* FIXME: Check if pid is still running */
+	g_free(contents);
+	return pid;
+}
+
+static gboolean write_pidfile(struct global *global)
+{
+	char *path = g_build_filename(global->config->config_dir, "pid", NULL);
+	GError *error = NULL;
+	char contents[100];
+	snprintf(contents, 100, "%u", getpid());
+	if (!g_file_set_contents(path, contents, -1, &error)) {
+		log_global(NULL, LOG_ERROR, "Unable to write pid file `%s'", path);
+		return FALSE;
+	}
+	g_free(path);
+	return TRUE;
+}
 
 int main(int argc, char **argv)
 {
@@ -206,7 +234,6 @@ int main(int argc, char **argv)
 	}
 
 	if(isdaemon) {
-
 #ifdef HAVE_DAEMON 
 #ifdef SIGTTOU
 		signal(SIGTTOU, SIG_IGN);
@@ -253,11 +280,12 @@ int main(int argc, char **argv)
 	}
 	g_free(tmp);
 
-	
 	if (my_global == NULL) {
 		log_global(NULL, LOG_ERROR, "Unable to load configuration, exiting...");
 		return 1;
 	}
+
+	write_pidfile(my_global);
 
 	autoconnect_networks(my_global);
 
