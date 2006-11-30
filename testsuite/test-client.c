@@ -70,6 +70,29 @@ START_TEST(test_login)
 	fail_unless(!strcmp(c->nick, "bla"));
 END_TEST
 
+START_TEST(test_read_nonutf8)
+	GIOChannel *ch1, *ch2;
+	struct client *c;
+	struct global *g = TORTURE_GLOBAL;
+	struct network n = { 
+		.name = "test",
+		.global = g,
+	};
+	g_io_channel_pair(&ch1, &ch2);
+	c = client_init(&n, ch1, "desc");
+	g_io_channel_unref(ch1);
+	fail_unless(g_io_channel_write_chars(ch2, "NICK bla\r\n"
+				"USER a a a a\r\n"
+				"PRIVMSG foo :èeeé\\r\n", -1, NULL, NULL) == G_IO_STATUS_NORMAL);
+	fail_unless(g_io_channel_flush(ch2, NULL) == G_IO_STATUS_NORMAL);
+	g_main_iteration(FALSE);
+	fail_if(c->nick == NULL);
+	fail_unless(!strcmp(c->nick, "bla"));
+	client_send_args(c, "PRIVMSG", "foo", "\x024:öéé", NULL);
+END_TEST
+
+
+
 START_TEST(test_disconnect)
 	GIOChannel *ch1, *ch2;
 	struct client *client;
@@ -94,5 +117,6 @@ Suite *client_suite()
 	tcase_add_test(tc_core, test_disconnect);
 	tcase_add_test(tc_core, test_login);
 	tcase_add_test(tc_core, test_network_first);
+	tcase_add_test(tc_core, test_read_nonutf8);
 	return s;
 }

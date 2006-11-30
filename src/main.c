@@ -299,6 +299,7 @@ int main(int argc, char **argv)
 
 		if (!n) {
 			fprintf(stderr, "Unable to find network named '%s'\n", inetd_client);
+			return 1;
 		} else {
 			/* Find clients network by name */
 			struct client *client = client_init(n, io, "Standard I/O");
