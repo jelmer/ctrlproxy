@@ -58,6 +58,9 @@
 #include "ctcp.h"
 #include "admin.h"
 
+/**
+ * Global information.
+ */
 struct global {
 	struct ctrlproxy_config *config;
 	GList *new_network_notifiers;

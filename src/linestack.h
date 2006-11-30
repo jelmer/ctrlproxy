@@ -35,12 +35,19 @@ struct client;
 
 struct linestack_marker;
 struct linestack_ops;
+
+/**
+ * A linestack instance.
+ */
 struct linestack_context
 {
 	void *backend_data;
 	const struct linestack_ops *ops;
 };
 
+/**
+ * Mark set a specific point in time in a linestack.
+ */
 struct linestack_marker {
 	void *data;
 	void (*free_fn) (void *);
@@ -48,6 +55,9 @@ struct linestack_marker {
 
 /* linestack.c */
 typedef void (*linestack_traverse_fn) (struct line *, time_t, void *);
+/**
+ * Linestack functions
+ */
 struct linestack_ops {
 	char *name;
 	gboolean (*init) (struct linestack_context *, 

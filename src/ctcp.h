@@ -25,6 +25,9 @@
  * @brief CTCP handling
  */
 
+/**
+ * CTCP command handling
+ */
 struct ctcp_handler {
 	const char *name;
 	void (*fn) (struct network *n, const char *sender, char **args);

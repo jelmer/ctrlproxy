@@ -34,6 +34,9 @@ struct query_stack {
 
 static struct query_stack *stack = NULL;
 
+/**
+ * IRC Query done by a client
+ */
 struct query {
 	char *name;
 	int replies[20];

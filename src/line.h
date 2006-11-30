@@ -33,6 +33,9 @@
 
 enum has_endcolon { COLON_UNKNOWN = 0, WITH_COLON = 1, WITHOUT_COLON = 2 } ;
 
+/**
+ * Line information.
+ */
 struct line {
 	int	is_private:1;
 	char *origin;

@@ -9,6 +9,10 @@
 #include "client.h"
 
 typedef void (*admin_command_handler) (struct client *c, char **, void *userdata);
+
+/**
+ * Administration command
+ */
 struct admin_command {
 	char *name;
 	admin_command_handler handler;

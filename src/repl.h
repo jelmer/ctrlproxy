@@ -25,6 +25,9 @@
  * @brief Replication
  */
 
+/**
+ * A replication backend
+ */
 struct replication_backend {
 	const char *name;
 	void (*replication_fn) (struct client *);

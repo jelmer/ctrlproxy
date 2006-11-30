@@ -7,6 +7,9 @@
 #define G_MODULE_EXPORT
 #endif
 
+/**
+ * A listener.
+ */
 struct listener {
 	int active:1;
 	int ssl:1;

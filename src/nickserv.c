@@ -21,6 +21,9 @@
 #include <string.h>
 #include "irc.h"
 
+/**
+ * Nickname/password combination for a particular network or globally.
+ */
 struct nickserv_entry {
 	const char *network;
 	const char *nick;

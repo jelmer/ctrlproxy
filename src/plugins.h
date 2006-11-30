@@ -25,9 +25,13 @@
  * @brief Plugins
  */
 
+/**
+ * A plugin.
+ */
 struct plugin {
 	GModule *module;
 	void *data;
+	/** Plugin operations */
 	struct plugin_ops {
 		int version;
 		const char *name;

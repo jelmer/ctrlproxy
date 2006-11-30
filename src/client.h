@@ -31,6 +31,9 @@
 #include <glib.h>
 #include <gmodule.h>
 
+/**
+ * Connection with a client.
+ */
 struct client {
 	struct network *network;
 	char *description;

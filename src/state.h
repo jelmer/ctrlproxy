@@ -32,6 +32,9 @@ struct line;
 /* When changing one of these structs, also change the marshalling
  * function for that struct in state.c */
 
+/**
+ * Record of a nick on a channel.
+ */
 struct channel_nick {
 	char mode;
 	struct network_nick *global_nick;
@@ -50,12 +53,18 @@ struct network_nick {
 	GList *channel_nicks;
 };
 
+/**
+ * An entry in the banlist of a channel.
+ */
 struct banlist_entry {
 	char *hostmask;
 	char *by;
 	time_t time_set;
 };
 
+/**
+ * The state of a particular channel.
+ */
 struct channel_state {
 	char *name;
 	char *key;
@@ -81,6 +90,10 @@ enum casemapping {
 		CASEMAP_STRICT_RFC1459 
 	};
 
+/**
+ * Information about a network (doesn't change between connects or 
+ * servers).
+ */
 struct network_info
 {
 	char *name;
@@ -94,6 +107,9 @@ struct network_info
 	int topiclen;
 };
 
+/**
+ * Describes the (partial) state of a network at a specific time
+ */
 struct network_state 
 {
 	GList *channels;

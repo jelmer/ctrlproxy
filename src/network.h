@@ -44,6 +44,9 @@ enum network_connection_state {
 		NETWORK_CONNECTION_STATE_MOTD_RECVD,
 };
 
+/**
+ * Information about the connection to a network.
+ */
 struct network_connection {
  	enum network_connection_state state;
 
@@ -76,6 +79,9 @@ struct network_connection {
 	} data;
 };
 
+/**
+ * An IRC network
+ */
 struct network {
 	char *name;
 	struct global *global;

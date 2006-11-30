@@ -27,12 +27,18 @@
 
 #define DEFAULT_CLIENT_CHARSET "UTF-8"
 
+/**
+ * Configuration for a particular channel
+ */
 struct channel_config {
 	char *name;
 	char *key;
 	int autojoin:1;
 };
 
+/**
+ * TCP/IP server configuration
+ */
 struct tcp_server_config {
 	char *host;
 	char *port;
@@ -42,6 +48,9 @@ struct tcp_server_config {
 	char *password;
 };
 
+/**
+ * Network configuration.
+ */
 struct network_config 
 {
 	GKeyFile *keyfile;
@@ -72,6 +81,9 @@ struct network_config
 	} type_settings; 
 };
 
+/**
+ * Configuration
+ */
 struct ctrlproxy_config {
 	char *config_dir;
 	GList *networks;
