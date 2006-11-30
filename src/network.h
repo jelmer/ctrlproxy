@@ -58,7 +58,8 @@ struct network_connection {
 	gint outgoing_id;
 	gint incoming_id;
 	gint unix_incoming_id;
-	GIConv *iconv;
+	GIConv outgoing_iconv;
+	GIConv incoming_iconv;
 
 	union { 
 		struct {

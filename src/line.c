@@ -121,7 +121,7 @@ struct line * irc_parse_line(const char *d)
 	return l;
 }
 
-GIOStatus irc_send_line(GIOChannel *c, GIConv *iconv, 
+GIOStatus irc_send_line(GIOChannel *c, GIConv iconv, 
 						const struct line *l, GError **error) 
 {
 	char *raw;
@@ -257,7 +257,7 @@ char *line_get_nick(const struct line *l)
 	return nick;
 }
 
-GIOStatus irc_sendf(GIOChannel *c, GIConv *iconv, 
+GIOStatus irc_sendf(GIOChannel *c, GIConv iconv, 
 					GError **error, char *fmt, ...) 
 {
 	va_list ap;
@@ -279,7 +279,7 @@ GIOStatus irc_sendf(GIOChannel *c, GIConv *iconv,
 	return ret;
 }
 
-GIOStatus irc_send_args(GIOChannel *c, GIConv *iconv, 
+GIOStatus irc_send_args(GIOChannel *c, GIConv iconv, 
 						GError **error, ...) 
 {
 	struct line *l;
@@ -316,7 +316,7 @@ struct line *linedup(const struct line *l)
 	return ret;
 }
 
-GIOStatus irc_recv_line(GIOChannel *c, GIConv *iconv, 
+GIOStatus irc_recv_line(GIOChannel *c, GIConv iconv, 
 						GError **error, struct line **l)
 {
 	gchar *raw = NULL;

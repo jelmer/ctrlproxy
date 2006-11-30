@@ -88,7 +88,7 @@ static gboolean client_send_queue(struct client *c)
 		GError *error = NULL;
 		struct line *l = g_queue_peek_head(c->pending_lines);
 
-		status = irc_send_line(c->incoming, c->iconv, l, &error);
+		status = irc_send_line(c->incoming, c->outgoing_iconv, l, &error);
 
 		if (status == G_IO_STATUS_AGAIN)
 			return TRUE;
@@ -244,7 +244,7 @@ gboolean client_send_line(struct client *c, const struct line *l)
 
 	if (c->outgoing_id == 0) {
 		GError *error = NULL;
-		GIOStatus status = irc_send_line(c->incoming, c->iconv, l, &error);
+		GIOStatus status = irc_send_line(c->incoming, c->outgoing_iconv, l, &error);
 
 		if (status == G_IO_STATUS_AGAIN) {
 			c->outgoing_id = g_io_add_watch(c->incoming, G_IO_OUT, handle_client_receive, c);
@@ -290,6 +290,9 @@ void disconnect_client(struct client *c, const char *reason)
 	lose_client_hook_execute(c);
 
 	log_client(NULL, LOG_INFO, c, "Removed client");
+
+	g_iconv_close(c->outgoing_iconv);
+	g_iconv_close(c->incoming_iconv);
 
 	if (c->exit_on_close) 
 		exit(0);
@@ -343,7 +346,7 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition cond, void *_c
 		GError *error = NULL;
 		GIOStatus status;
 		
-		while ((status = irc_recv_line(c, client->iconv, &error, &l)) == G_IO_STATUS_NORMAL) {
+		while ((status = irc_recv_line(c, client->incoming_iconv, &error, &l)) == G_IO_STATUS_NORMAL) {
 			g_assert(l);
 
 			log_client_line(client, l, TRUE);
@@ -373,7 +376,7 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition cond, void *_c
 				char *encoding = g_strdup(g_io_channel_get_encoding(c));
 				g_io_channel_set_encoding(c, NULL, NULL);
 				
-				status = irc_recv_line(c, client->iconv, NULL, &l);
+				status = irc_recv_line(c, client->incoming_iconv, NULL, &l);
 
 				g_io_channel_set_encoding(c, encoding, NULL);
 
@@ -465,7 +468,7 @@ static gboolean handle_pending_client_receive(GIOChannel *c, GIOCondition cond, 
 		GError *error = NULL;
 		GIOStatus status;
 		
-		while ((status = irc_recv_line(c, client->iconv, 
+		while ((status = irc_recv_line(c, client->incoming_iconv, 
 									   &error, &l)) == G_IO_STATUS_NORMAL) 
 		{
 			g_assert(l);
@@ -600,6 +603,11 @@ struct client *client_init(struct network *n, GIOChannel *c, const char *desc)
 
 	if (charset == NULL)
 		charset = DEFAULT_CLIENT_CHARSET;
+
+	client->incoming_iconv = g_iconv_open(charset == NULL?"UTF-8":charset, "UTF-8");
+	g_assert(client->incoming_iconv != (GIConv)-1);
+	client->outgoing_iconv = g_iconv_open("UTF-8", charset == NULL?"UTF-8":charset);
+	g_assert(client->outgoing_iconv != (GIConv)-1);
 
 	status = g_io_channel_set_encoding(c, charset, &error);
 	if (status != G_IO_STATUS_NORMAL)
