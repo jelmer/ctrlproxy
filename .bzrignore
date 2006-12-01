@@ -58,3 +58,4 @@ testsuite/check
 testsuite/torture
 build-stamp
 api
+test-*
