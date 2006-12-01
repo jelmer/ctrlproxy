@@ -67,8 +67,6 @@ static void server_send_login (struct network *s)
 gboolean network_set_charset(struct network *n, const char *name)
 {
 	GIConv tmp;
-	GIOStatus status;
-	GError *error = NULL;
 	tmp = g_iconv_open("UTF-8", name);
 
 	if (tmp == (GIConv)-1) {
@@ -94,15 +92,6 @@ gboolean network_set_charset(struct network *n, const char *name)
 
 	if (n->config->type == NETWORK_VIRTUAL)
 		return TRUE;
-
-	g_assert(n->connection.outgoing);
-	status = g_io_channel_set_encoding(n->connection.outgoing,
-			name, &error);
-	if (status != G_IO_STATUS_NORMAL) {
-		log_network(NULL, LOG_WARNING, n, "Unable to set charset `%s': %s", 
-					name, error->message);
-		return FALSE;
-	}
 
 	return TRUE;
 }

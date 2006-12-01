@@ -507,7 +507,7 @@ static gboolean file_insert_line(struct linestack_context *ctx, const struct lin
 	status = g_io_channel_write_chars(nd->line_file, t, strlen(t), NULL, &error);
 	g_assert(status == G_IO_STATUS_NORMAL);
 
-	status = irc_send_line(nd->line_file, NULL, l, NULL);
+	status = irc_send_line(nd->line_file, (GIConv)-1, l, NULL);
 
 	if (status != G_IO_STATUS_NORMAL)
 		return FALSE;

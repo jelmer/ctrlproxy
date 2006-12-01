@@ -88,6 +88,7 @@ static gboolean client_send_queue(struct client *c)
 		GError *error = NULL;
 		struct line *l = g_queue_peek_head(c->pending_lines);
 
+		g_assert(c->incoming != NULL);
 		status = irc_send_line(c->incoming, c->outgoing_iconv, l, &error);
 
 		if (status == G_IO_STATUS_AGAIN)
@@ -278,11 +279,10 @@ void disconnect_client(struct client *c, const char *reason)
 	g_source_remove(c->incoming_id);
 	if (c->outgoing_id)
 		g_source_remove(c->outgoing_id);
-	c->incoming = NULL;
 
 	g_source_remove(c->ping_id);
 
-	if (c->network)
+	if (c->network != NULL)
 		c->network->clients = g_list_remove(c->network->clients, c);
 
 	pending_clients = g_list_remove(pending_clients, c);
@@ -290,6 +290,8 @@ void disconnect_client(struct client *c, const char *reason)
 	lose_client_hook_execute(c);
 
 	log_client(NULL, LOG_INFO, c, "Removed client");
+
+	c->incoming = NULL;
 
 	g_iconv_close(c->outgoing_iconv);
 	g_iconv_close(c->incoming_iconv);
@@ -539,6 +541,7 @@ static gboolean handle_pending_client_receive(GIOChannel *c, GIOCondition cond, 
 
 				client->incoming_id = g_io_add_watch(client->incoming, G_IO_IN | G_IO_HUP, handle_client_receive, client);
 
+				pending_clients = g_list_remove(pending_clients, client);
 				client->network->clients = g_list_append(client->network->clients, client);
 				log_client(NULL, LOG_INFO, client, "New client");
 
@@ -614,14 +617,13 @@ struct client *client_init(struct network *n, GIOChannel *c, const char *desc)
 
 void kill_pending_clients(const char *reason)
 {
-	while(pending_clients) disconnect_client(pending_clients->data, reason);
+	while (pending_clients != NULL) 
+		disconnect_client(pending_clients->data, reason);
 }
 
 gboolean client_set_charset(struct client *c, const char *name)
 {
 	GIConv tmp;
-	GError *error = NULL;
-	GIOStatus status;
 	tmp = g_iconv_open("UTF-8", name);
 
 	if (tmp == (GIConv)-1) {
@@ -644,13 +646,6 @@ gboolean client_set_charset(struct client *c, const char *name)
 		g_iconv_close(c->incoming_iconv);
 
 	c->incoming_iconv = tmp;
-
-	g_assert(c->incoming);
-	status = g_io_channel_set_encoding(c->incoming, name, &error);
-	if (status != G_IO_STATUS_NORMAL) {
-		log_client(NULL, LOG_WARNING, c, "Error setting charset `%s': %s", name, error->message);
-		return FALSE;
-	}
 
 	return TRUE;
 }
