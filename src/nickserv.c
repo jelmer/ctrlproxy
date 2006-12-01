@@ -19,7 +19,12 @@
 
 #include "ctrlproxy.h"
 #include <string.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <errno.h>
 #include "irc.h"
+
 
 /**
  * Nickname/password combination for a particular network or globally.
@@ -151,14 +156,13 @@ static gboolean log_data(struct network *n, const struct line *l, enum data_dire
 gboolean nickserv_save(struct global *global, const char *dir)
 {
     char *filename = g_build_filename(dir, "nickserv", NULL);
-    GIOChannel *gio;
     GList *gl;
-	GError *error = NULL;
+	int fd;
 
-    gio = g_io_channel_new_file(filename, "w", &error);
+	fd = open(filename, O_WRONLY | O_CREAT, 0600);
 
-    if (!gio) {
-		log_global(NULL, LOG_WARNING, "Unable to write nickserv file `%s': %s", filename, error->message);
+    if (fd == -1) {
+		log_global(NULL, LOG_WARNING, "Unable to write nickserv file `%s': %s", filename, strerror(errno));
         g_free(filename);
         return FALSE;
     }
@@ -166,16 +170,14 @@ gboolean nickserv_save(struct global *global, const char *dir)
 	for (gl = global->nickserv_nicks; gl; gl = gl->next) {
 		struct nickserv_entry *n = gl->data;
         char *line;
-        gsize nr;
         
         line = g_strdup_printf("%s\t%s\t%s\n", n->nick, n->pass, n->network?n->network:"*");
-
-        g_io_channel_write_chars(gio, line, -1, &nr, NULL);
+		write(fd, line, strlen(line));
 
         g_free(line);
 	}
     
-    g_io_channel_unref(gio);
+    close(fd);
     g_free(filename);
 
 	return TRUE;
