@@ -58,6 +58,8 @@ struct network_connection {
 	gint outgoing_id;
 	gint incoming_id;
 	gint unix_incoming_id;
+	GIConv outgoing_iconv;
+	GIConv incoming_iconv;
 
 	union { 
 		struct {
@@ -99,6 +101,7 @@ struct network {
 };
 
 /* server.c */
+G_MODULE_EXPORT gboolean network_set_charset(struct network *n, const char *name);
 G_MODULE_EXPORT struct network *find_network_by_hostname(struct global *global, const char *host, guint16 port, gboolean create);
 G_MODULE_EXPORT gboolean load_networks(struct global *, struct ctrlproxy_config *cfg);
 G_MODULE_EXPORT gboolean autoconnect_networks(struct global *);

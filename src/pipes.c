@@ -44,7 +44,7 @@ static gboolean handle_new_client(GIOChannel *c_server, GIOCondition condition, 
 	g_io_channel_set_flags(c, G_IO_FLAG_NONBLOCK, NULL);
 
 	client_init(network, c, "Client on unix socket");
-	/*/g_io_channel_unref(c);*/
+	g_io_channel_unref(c);
 
 	return TRUE;
 }

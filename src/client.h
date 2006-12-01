@@ -42,6 +42,8 @@ struct client {
 	gint incoming_id;
 	gint outgoing_id;
 	gint ping_id;
+	GIConv incoming_iconv;
+	GIConv outgoing_iconv;
 	time_t last_ping;
 	time_t last_pong;
 	time_t connect_time;
@@ -49,6 +51,7 @@ struct client {
 	char *fullname;
 	char *hostname;
 	char *username;
+	char *charset;
 	int exit_on_close:1;
 };
 
@@ -75,5 +78,6 @@ G_MODULE_EXPORT gboolean client_send_response(struct client *c,
 											  int response, ...);
 G_MODULE_EXPORT gboolean client_send_line(struct client *c, 
 										  const struct line *);
+G_MODULE_EXPORT gboolean client_set_charset(struct client *c, const char *name);
 
 #endif /* __CTRLPROXY_CLIENT_H__ */

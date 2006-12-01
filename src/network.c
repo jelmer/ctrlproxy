@@ -64,6 +64,38 @@ static void server_send_login (struct network *s)
 	network_send_args(s, "USER", s->config->username, get_my_hostname(), s->config->name, s->config->fullname, NULL);
 }
 
+gboolean network_set_charset(struct network *n, const char *name)
+{
+	GIConv tmp;
+	tmp = g_iconv_open(name, "UTF-8");
+
+	if (tmp == (GIConv)-1) {
+		log_network(NULL, LOG_WARNING, n, "Unable to find charset `%s'", name);
+		return FALSE;
+	}
+	
+	if (n->connection.outgoing_iconv != (GIConv)-1)
+		g_iconv_close(n->connection.outgoing_iconv);
+
+	n->connection.outgoing_iconv = tmp;
+
+	tmp = g_iconv_open("UTF-8", name);
+	if (tmp == (GIConv)-1) {
+		log_network(NULL, LOG_WARNING, n, "Unable to find charset `%s'", name);
+		return FALSE;
+	}
+
+	if (n->connection.incoming_iconv != (GIConv)-1)
+		g_iconv_close(n->connection.incoming_iconv);
+
+	n->connection.incoming_iconv = tmp;
+
+	if (n->config->type == NETWORK_VIRTUAL)
+		return TRUE;
+
+	return TRUE;
+}
+
 static gboolean process_from_server(struct network *n, struct line *l)
 {
 	struct line *lc;
@@ -105,10 +137,7 @@ static gboolean process_from_server(struct network *n, struct line *l)
 		GList *gl;
 		n->connection.state = NETWORK_CONNECTION_STATE_MOTD_RECVD;
 
-		g_io_channel_set_encoding(n->config->type != NETWORK_VIRTUAL?
-				n->connection.outgoing:
-				n->connection.outgoing,
-				get_charset(&n->info), &error);
+		network_set_charset(n, get_charset(&n->info));
 
 		if (error != NULL)
 			log_network(NULL, LOG_WARNING, n, 
@@ -179,7 +208,7 @@ static gboolean handle_server_receive (GIOChannel *c, GIOCondition cond, void *_
 		GError *err = NULL;
 		GIOStatus status;
 		
-		while ((status = irc_recv_line(c, &err, &l)) == G_IO_STATUS_NORMAL) 
+		while ((status = irc_recv_line(c, server->connection.incoming_iconv, &err, &l)) == G_IO_STATUS_NORMAL) 
 		{
 			g_assert(l);
 
@@ -257,7 +286,7 @@ static gboolean server_send_queue(GIOChannel *ch, GIOCondition cond, gpointer us
 		if (!antiflood_allow_line(s)) 
 			return TRUE;
 
-		status = irc_send_line(s->connection.outgoing, l, &error);
+		status = irc_send_line(s->connection.outgoing, s->connection.outgoing_iconv, l, &error);
 
 		if (status == G_IO_STATUS_AGAIN)
 			return TRUE;
@@ -298,7 +327,7 @@ static gboolean network_send_line_direct(struct network *s, struct client *c, co
 	if (s->connection.outgoing_id == 0) {
 		GError *error = NULL;
 
-		GIOStatus status = irc_send_line(s->connection.outgoing, l, &error);
+		GIOStatus status = irc_send_line(s->connection.outgoing, s->connection.outgoing_iconv, l, &error);
 
 		if (status == G_IO_STATUS_AGAIN) {
 			g_queue_push_tail(s->connection.pending_lines, linedup(l));
@@ -798,6 +827,7 @@ struct network *load_network(struct global *global, struct network_config *sc)
 	s->name = g_strdup(s->config->name);
 	s->connection.pending_lines = g_queue_new();
 	s->global = global;
+	s->connection.outgoing_iconv = s->connection.incoming_iconv = (GIConv)-1;
 
 	if (global != NULL) {
 		global->networks = g_list_append(global->networks, s);
@@ -872,6 +902,9 @@ void unload_network(struct network *s)
 #ifdef HAVE_GNUTLS
 	ssl_free_client_credentials(s->ssl_credentials);
 #endif
+
+	g_iconv_close(s->connection.incoming_iconv);
+	g_iconv_close(s->connection.outgoing_iconv);
 
 	g_free(s);
 }

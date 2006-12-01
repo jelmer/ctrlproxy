@@ -121,17 +121,26 @@ struct line * irc_parse_line(const char *d)
 	return l;
 }
 
-GIOStatus irc_send_line(GIOChannel *c, const struct line *l, GError **error) 
+GIOStatus irc_send_line(GIOChannel *c, GIConv iconv, 
+						const struct line *l, GError **error) 
 {
-	char *raw;
+	char *raw, *cvrt = NULL;
 	GIOStatus ret;
 	gsize bytes_written;
-
+ 
 	g_assert(c);
 
 	raw = irc_line_string_nl(l);
-	ret = g_io_channel_write_chars(c, raw, -1, &bytes_written, error);
-	g_free(raw);
+	if (iconv != (GIConv)-1) {
+		cvrt = g_convert_with_iconv(raw, -1, iconv, NULL, NULL, error);
+		if (cvrt == NULL)
+			return G_IO_STATUS_ERROR;
+		g_free(raw);
+	} else {
+		cvrt = raw;
+	}
+	ret = g_io_channel_write_chars(c, cvrt, -1, &bytes_written, error);
+	g_free(cvrt);
 
 	if (ret != G_IO_STATUS_NORMAL)
 		return ret;
@@ -256,7 +265,8 @@ char *line_get_nick(const struct line *l)
 	return nick;
 }
 
-GIOStatus irc_sendf(GIOChannel *c, GError **error, char *fmt, ...) 
+GIOStatus irc_sendf(GIOChannel *c, GIConv iconv, 
+					GError **error, char *fmt, ...) 
 {
 	va_list ap;
 	char *r = NULL;
@@ -270,14 +280,15 @@ GIOStatus irc_sendf(GIOChannel *c, GError **error, char *fmt, ...)
 	r = g_strdup_vprintf(fmt, ap);
 	l = irc_parse_line(r);
 	g_free(r);
-	ret = irc_send_line(c, l, error);
+	ret = irc_send_line(c, iconv, l, error);
 
 	free_line(l); 
 
 	return ret;
 }
 
-GIOStatus irc_send_args(GIOChannel *c, GError **error, ...) 
+GIOStatus irc_send_args(GIOChannel *c, GIConv iconv, 
+						GError **error, ...) 
 {
 	struct line *l;
 	GIOStatus ret;
@@ -289,7 +300,7 @@ GIOStatus irc_send_args(GIOChannel *c, GError **error, ...)
 	l = virc_parse_line(NULL, ap);
 	va_end(ap);
 
-	ret = irc_send_line(c, l, error);
+	ret = irc_send_line(c, iconv, l, error);
 
 	free_line(l); 
 
@@ -313,21 +324,37 @@ struct line *linedup(const struct line *l)
 	return ret;
 }
 
-GIOStatus irc_recv_line(GIOChannel *c, GError **error, struct line **l)
+GIOStatus irc_recv_line(GIOChannel *c, GIConv iconv, 
+						GError **error, struct line **l)
 {
-	gchar *raw = NULL;
+	gchar *raw = NULL, *cvrt = NULL;
 	GIOStatus status;
+	gsize in_len;
+
+	g_assert(l != NULL);
+
 	*l = NULL;
 
 	g_assert(c);
 
-	status = g_io_channel_read_line(c, &raw, NULL, NULL, error);
-
-	if (status == G_IO_STATUS_NORMAL) {
-		*l = irc_parse_line(raw);
+	status = g_io_channel_read_line(c, &raw, &in_len, NULL, error);
+	if (status != G_IO_STATUS_NORMAL) {
+		g_free(raw);
+		return status;
 	}
 
-	g_free(raw);
+	if (iconv == (GIConv)-1) {
+		cvrt = raw;
+	} else {
+		cvrt = g_convert_with_iconv(raw, -1, iconv, NULL, NULL, error);
+		if (cvrt == NULL)
+			return G_IO_STATUS_ERROR;
+		g_free(raw);
+	}
+
+	*l = irc_parse_line(cvrt);
+
+	g_free(cvrt);
 
 	return status;
 }

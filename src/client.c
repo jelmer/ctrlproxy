@@ -88,7 +88,8 @@ static gboolean client_send_queue(struct client *c)
 		GError *error = NULL;
 		struct line *l = g_queue_peek_head(c->pending_lines);
 
-		status = irc_send_line(c->incoming, l, &error);
+		g_assert(c->incoming != NULL);
+		status = irc_send_line(c->incoming, c->outgoing_iconv, l, &error);
 
 		if (status == G_IO_STATUS_AGAIN)
 			return TRUE;
@@ -244,7 +245,7 @@ gboolean client_send_line(struct client *c, const struct line *l)
 
 	if (c->outgoing_id == 0) {
 		GError *error = NULL;
-		GIOStatus status = irc_send_line(c->incoming, l, &error);
+		GIOStatus status = irc_send_line(c->incoming, c->outgoing_iconv, l, &error);
 
 		if (status == G_IO_STATUS_AGAIN) {
 			c->outgoing_id = g_io_add_watch(c->incoming, G_IO_OUT, handle_client_receive, c);
@@ -278,11 +279,10 @@ void disconnect_client(struct client *c, const char *reason)
 	g_source_remove(c->incoming_id);
 	if (c->outgoing_id)
 		g_source_remove(c->outgoing_id);
-	c->incoming = NULL;
 
 	g_source_remove(c->ping_id);
 
-	if (c->network)
+	if (c->network != NULL)
 		c->network->clients = g_list_remove(c->network->clients, c);
 
 	pending_clients = g_list_remove(pending_clients, c);
@@ -291,9 +291,15 @@ void disconnect_client(struct client *c, const char *reason)
 
 	log_client(NULL, LOG_INFO, c, "Removed client");
 
+	c->incoming = NULL;
+
+	g_iconv_close(c->outgoing_iconv);
+	g_iconv_close(c->incoming_iconv);
+
 	if (c->exit_on_close) 
 		exit(0);
 
+	g_free(c->charset);
 	g_free(c->description);
 	g_free(c->username);
 	g_free(c->hostname);
@@ -343,7 +349,7 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition cond, void *_c
 		GError *error = NULL;
 		GIOStatus status;
 		
-		while ((status = irc_recv_line(c, &error, &l)) == G_IO_STATUS_NORMAL) {
+		while ((status = irc_recv_line(c, client->incoming_iconv, &error, &l)) == G_IO_STATUS_NORMAL) {
 			g_assert(l);
 
 			log_client_line(client, l, TRUE);
@@ -370,16 +376,8 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition cond, void *_c
 		if (status != G_IO_STATUS_AGAIN) {
 			if (error->domain == G_CONVERT_ERROR &&
 				error->code == G_CONVERT_ERROR_ILLEGAL_SEQUENCE) {
-				char *encoding = g_strdup(g_io_channel_get_encoding(c));
-				g_io_channel_set_encoding(c, NULL, NULL);
-				
-				status = irc_recv_line(c, NULL, &l);
-
-				g_io_channel_set_encoding(c, encoding, NULL);
-
 				client_send_response(client, ERR_BADCHARENCODING, 
-				   "*", encoding, error->message, NULL);
-				g_free(encoding);
+				   "*", client->charset, error->message, NULL);
 			} else {
 				disconnect_client(client, error?error->message:"Unknown error");
 				return FALSE;
@@ -465,7 +463,8 @@ static gboolean handle_pending_client_receive(GIOChannel *c, GIOCondition cond, 
 		GError *error = NULL;
 		GIOStatus status;
 		
-		while ((status = irc_recv_line(c, &error, &l)) == G_IO_STATUS_NORMAL) 
+		while ((status = irc_recv_line(c, client->incoming_iconv, 
+									   &error, &l)) == G_IO_STATUS_NORMAL) 
 		{
 			g_assert(l);
 
@@ -535,6 +534,7 @@ static gboolean handle_pending_client_receive(GIOChannel *c, GIOCondition cond, 
 
 				client->incoming_id = g_io_add_watch(client->incoming, G_IO_IN | G_IO_HUP, handle_client_receive, client);
 
+				pending_clients = g_list_remove(pending_clients, client);
 				client->network->clients = g_list_append(client->network->clients, client);
 				log_client(NULL, LOG_INFO, client, "New client");
 
@@ -573,10 +573,7 @@ static gboolean client_ping(gpointer user_data) {
  */
 struct client *client_init(struct network *n, GIOChannel *c, const char *desc)
 {
-	GError *error = NULL;
-	GIOStatus status;
 	struct client *client;
-	const char *charset = NULL;
 
 	g_assert(c);
 	g_assert(desc);
@@ -594,18 +591,13 @@ struct client *client_init(struct network *n, GIOChannel *c, const char *desc)
 	client->exit_on_close = FALSE;
 	client->pending_lines = g_queue_new();
 
+	client->outgoing_iconv = client->incoming_iconv = (GIConv)-1;
 	if (n && n->global)
-		charset = n->global->config->client_charset;
-
-	if (charset == NULL)
-		charset = DEFAULT_CLIENT_CHARSET;
-
-	status = g_io_channel_set_encoding(c, charset, &error);
-	if (status != G_IO_STATUS_NORMAL)
-		log_client(NULL, LOG_WARNING, client, "Error setting charset `%s': %s", charset, error->message);
+		client_set_charset(client, n->global->config->client_charset);
+	else
+		client_set_charset(client, DEFAULT_CLIENT_CHARSET);
 
 	client->incoming_id = g_io_add_watch(client->incoming, G_IO_IN | G_IO_HUP, handle_pending_client_receive, client);
-	handle_pending_client_receive(client->incoming, g_io_channel_get_buffer_condition(client->incoming), client);
 
 	pending_clients = g_list_append(pending_clients, client);
 	return client;
@@ -613,5 +605,38 @@ struct client *client_init(struct network *n, GIOChannel *c, const char *desc)
 
 void kill_pending_clients(const char *reason)
 {
-	while(pending_clients) disconnect_client(pending_clients->data, reason);
+	while (pending_clients != NULL) 
+		disconnect_client(pending_clients->data, reason);
+}
+
+gboolean client_set_charset(struct client *c, const char *name)
+{
+	GIConv tmp;
+	tmp = g_iconv_open(name, "UTF-8");
+
+	if (tmp == (GIConv)-1) {
+		log_client(NULL, LOG_WARNING, c, "Unable to find charset `%s'", name);
+		return FALSE;
+	}
+	
+	if (c->outgoing_iconv != (GIConv)-1)
+		g_iconv_close(c->outgoing_iconv);
+
+	c->outgoing_iconv = tmp;
+
+	tmp = g_iconv_open("UTF-8", name);
+	if (tmp == (GIConv)-1) {
+		log_client(NULL, LOG_WARNING, c, "Unable to find charset `%s'", name);
+		return FALSE;
+	}
+
+	if (c->incoming_iconv != (GIConv)-1)
+		g_iconv_close(c->incoming_iconv);
+
+	c->incoming_iconv = tmp;
+
+	g_free(c->charset);
+	c->charset = g_strdup(name);
+
+	return TRUE;
 }

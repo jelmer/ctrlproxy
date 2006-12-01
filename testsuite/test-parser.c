@@ -3,6 +3,7 @@
 #include <string.h>
 #include <check.h>
 #include "line.h"
+#include "torture.h"
 
 static const char *malformed[] = {
 	"PRIVMSG :foo :bar",
@@ -89,6 +90,83 @@ START_TEST(parser_get_nick)
 	g_free(nick);
 END_TEST
 
+START_TEST(parser_recv_line)
+	GIOChannel *ch1, *ch2;
+	struct line *l;
+	GIConv iconv;
+
+	g_io_channel_pair(&ch1, &ch2);
+	g_io_channel_set_flags(ch1, G_IO_FLAG_NONBLOCK, NULL);
+	g_io_channel_set_flags(ch2, G_IO_FLAG_NONBLOCK, NULL);
+
+	iconv = g_iconv_open("UTF-8", "UTF-8");
+
+	g_io_channel_write_chars(ch2, "PRIVMSG :bla\r\nFOO", -1, NULL, NULL);
+	g_io_channel_flush(ch2, NULL);
+
+	fail_unless(irc_recv_line(ch1, iconv, NULL, &l) == G_IO_STATUS_NORMAL);
+	fail_unless(l->argc == 2);
+	fail_unless(!strcmp(l->args[0], "PRIVMSG"));
+	fail_unless(!strcmp(l->args[1], "bla"));
+	fail_unless(irc_recv_line(ch1, iconv, NULL, &l) == G_IO_STATUS_AGAIN);
+
+	g_iconv_close(iconv);
+END_TEST
+
+START_TEST(parser_recv_line_invalid)
+	GIOChannel *ch1, *ch2;
+	struct line *l;
+	GIConv iconv;
+
+	g_io_channel_pair(&ch1, &ch2);
+	g_io_channel_set_flags(ch1, G_IO_FLAG_NONBLOCK, NULL);
+	g_io_channel_set_flags(ch2, G_IO_FLAG_NONBLOCK, NULL);
+	g_io_channel_set_encoding(ch1, NULL, NULL);
+	g_io_channel_set_encoding(ch2, NULL, NULL);
+
+	iconv = g_iconv_open("ISO8859-1", "UTF-8");
+
+	g_io_channel_write_chars(ch2, "PRIVMSG :bl\366a\r\n", -1, NULL, NULL);
+	g_io_channel_flush(ch2, NULL);
+
+	fail_unless(irc_recv_line(ch1, iconv, NULL, &l) == G_IO_STATUS_ERROR);
+	fail_unless(l == NULL);
+	fail_unless(irc_recv_line(ch1, iconv, NULL, &l) == G_IO_STATUS_AGAIN);
+
+	g_iconv_close(iconv);
+END_TEST
+
+
+
+START_TEST(parser_recv_line_iso8859)
+	GIOChannel *ch1, *ch2;
+	struct line *l;
+	GIConv iconv;
+
+	g_io_channel_pair(&ch1, &ch2);
+	g_io_channel_set_flags(ch1, G_IO_FLAG_NONBLOCK, NULL);
+	g_io_channel_set_flags(ch2, G_IO_FLAG_NONBLOCK, NULL);
+	g_io_channel_set_encoding(ch1, NULL, NULL);
+	g_io_channel_set_encoding(ch2, NULL, NULL);
+
+	iconv = g_iconv_open("UTF-8", "ISO8859-1");
+
+	fail_if(iconv == (GIConv)-1);
+
+	g_io_channel_write_chars(ch2, "PRIVMSG \366 p\r\n", -1, NULL, NULL);
+	g_io_channel_flush(ch2, NULL);
+
+	fail_unless(irc_recv_line(ch1, iconv, NULL, &l) == G_IO_STATUS_NORMAL);
+	fail_unless(l->argc == 3);
+	fail_unless(!strcmp(l->args[0], "PRIVMSG"));
+	fail_unless(!strcmp(l->args[1], "ö"));
+	fail_unless(irc_recv_line(ch1, iconv, NULL, &l) == G_IO_STATUS_AGAIN);
+
+	g_iconv_close(iconv);
+END_TEST
+
+
+
 START_TEST(parser_dup)
 	struct line l, *m;
 	char *args[] = { "x", "y", "z", NULL };
@@ -112,6 +190,45 @@ START_TEST(parser_dup)
 	fail_if (m->origin);
 END_TEST
 
+START_TEST(send_args)
+	GIOChannel *ch1, *ch2;
+	char *str;
+
+	g_io_channel_pair(&ch1, &ch2);
+	g_io_channel_set_flags(ch1, G_IO_FLAG_NONBLOCK, NULL);
+	g_io_channel_set_flags(ch2, G_IO_FLAG_NONBLOCK, NULL);
+	g_io_channel_set_encoding(ch1, NULL, NULL);
+	g_io_channel_set_encoding(ch2, NULL, NULL);
+
+	irc_send_args(ch1, (GIConv)-1, NULL, "PRIVMSG", "foo", NULL);
+
+	g_io_channel_read_line(ch2, &str, NULL, NULL, NULL);
+
+	fail_unless(!strcmp(str, "PRIVMSG :foo\r\n"));
+END_TEST
+
+START_TEST(send_args_utf8)
+	GIOChannel *ch1, *ch2;
+	char *str;
+	GIConv iconv;
+
+	iconv = g_iconv_open("ISO8859-1", "UTF-8");
+
+	g_io_channel_pair(&ch1, &ch2);
+	g_io_channel_set_flags(ch1, G_IO_FLAG_NONBLOCK, NULL);
+	g_io_channel_set_flags(ch2, G_IO_FLAG_NONBLOCK, NULL);
+	g_io_channel_set_encoding(ch1, NULL, NULL);
+	g_io_channel_set_encoding(ch2, NULL, NULL);
+
+	irc_send_args(ch1, iconv, NULL, "PRIVMSG", "fooö", NULL);
+
+	g_iconv_close(iconv);
+
+	g_io_channel_read_line(ch2, &str, NULL, NULL, NULL);
+
+	fail_unless(!strcmp(str, "PRIVMSG :foo\366\r\n"));
+END_TEST
+
 Suite *parser_suite(void)
 {
 	Suite *s = suite_create("parser");
@@ -123,5 +240,10 @@ Suite *parser_suite(void)
 	tcase_add_test(tcase, parser_random);
 	tcase_add_test(tcase, parser_get_nick);
 	tcase_add_test(tcase, parser_dup);
+	tcase_add_test(tcase, parser_recv_line);
+	tcase_add_test(tcase, parser_recv_line_iso8859);
+	tcase_add_test(tcase, parser_recv_line_invalid);
+	tcase_add_test(tcase, send_args);
+	tcase_add_test(tcase, send_args_utf8);
 	return s;
 }
