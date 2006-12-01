@@ -609,7 +609,6 @@ struct client *client_init(struct network *n, GIOChannel *c, const char *desc)
 	client_set_charset(client, charset == NULL?"UTF-8":charset);
 
 	client->incoming_id = g_io_add_watch(client->incoming, G_IO_IN | G_IO_HUP, handle_pending_client_receive, client);
-	handle_pending_client_receive(client->incoming, g_io_channel_get_buffer_condition(client->incoming), client);
 
 	pending_clients = g_list_append(pending_clients, client);
 	return client;
