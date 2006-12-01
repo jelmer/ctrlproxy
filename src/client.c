@@ -577,8 +577,6 @@ static gboolean client_ping(gpointer user_data) {
  */
 struct client *client_init(struct network *n, GIOChannel *c, const char *desc)
 {
-	GError *error = NULL;
-	GIOStatus status;
 	struct client *client;
 	const char *charset = NULL;
 
@@ -604,14 +602,8 @@ struct client *client_init(struct network *n, GIOChannel *c, const char *desc)
 	if (charset == NULL)
 		charset = DEFAULT_CLIENT_CHARSET;
 
-	client->incoming_iconv = g_iconv_open(charset == NULL?"UTF-8":charset, "UTF-8");
-	g_assert(client->incoming_iconv != (GIConv)-1);
-	client->outgoing_iconv = g_iconv_open("UTF-8", charset == NULL?"UTF-8":charset);
-	g_assert(client->outgoing_iconv != (GIConv)-1);
-
-	status = g_io_channel_set_encoding(c, charset, &error);
-	if (status != G_IO_STATUS_NORMAL)
-		log_client(NULL, LOG_WARNING, client, "Error setting charset `%s': %s", charset, error->message);
+	client->outgoing_iconv = client->incoming_iconv = (GIConv)-1;
+	client_set_charset(client, charset == NULL?"UTF-8":charset);
 
 	client->incoming_id = g_io_add_watch(client->incoming, G_IO_IN | G_IO_HUP, handle_pending_client_receive, client);
 	handle_pending_client_receive(client->incoming, g_io_channel_get_buffer_condition(client->incoming), client);
@@ -623,4 +615,42 @@ struct client *client_init(struct network *n, GIOChannel *c, const char *desc)
 void kill_pending_clients(const char *reason)
 {
 	while(pending_clients) disconnect_client(pending_clients->data, reason);
+}
+
+gboolean client_set_charset(struct client *c, const char *name)
+{
+	GIConv tmp;
+	GError *error = NULL;
+	GIOStatus status;
+	tmp = g_iconv_open("UTF-8", name);
+
+	if (tmp == (GIConv)-1) {
+		log_client(NULL, LOG_WARNING, c, "Unable to find charset `%s'", name);
+		return FALSE;
+	}
+	
+	if (c->outgoing_iconv != (GIConv)-1)
+		g_iconv_close(c->outgoing_iconv);
+
+	c->outgoing_iconv = tmp;
+
+	tmp = g_iconv_open(name, "UTF-8");
+	if (tmp == (GIConv)-1) {
+		log_client(NULL, LOG_WARNING, c, "Unable to find charset `%s'", name);
+		return FALSE;
+	}
+
+	if (c->incoming_iconv != (GIConv)-1)
+		g_iconv_close(c->incoming_iconv);
+
+	c->incoming_iconv = tmp;
+
+	g_assert(c->incoming);
+	status = g_io_channel_set_encoding(c->incoming, name, &error);
+	if (status != G_IO_STATUS_NORMAL) {
+		log_client(NULL, LOG_WARNING, c, "Error setting charset `%s': %s", name, error->message);
+		return FALSE;
+	}
+
+	return TRUE;
 }

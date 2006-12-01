@@ -67,7 +67,7 @@ G_MODULE_EXPORT struct line *irc_parse_line_args( char *origin, ... );
  * Read a line from an IO Channel. This will return a line _with_ UTF-8 
  * characters only!
  */
-G_MODULE_EXPORT GIOStatus irc_recv_line(GIOChannel *c, GIConv,
+G_MODULE_EXPORT GIOStatus irc_recv_line(GIOChannel *c, GIConv iconv,
 										GError **err, 
 										struct line **);
 

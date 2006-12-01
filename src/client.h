@@ -77,5 +77,6 @@ G_MODULE_EXPORT gboolean client_send_response(struct client *c,
 											  int response, ...);
 G_MODULE_EXPORT gboolean client_send_line(struct client *c, 
 										  const struct line *);
+G_MODULE_EXPORT gboolean client_set_charset(struct client *c, const char *name);
 
 #endif /* __CTRLPROXY_CLIENT_H__ */

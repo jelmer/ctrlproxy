@@ -38,7 +38,7 @@
 
 #include <netdb.h>
 
-static GIConv *iconv = NULL;
+static GIConv iconv = NULL;
 
 static gboolean handle_client_receive(GIOChannel *c, GIOCondition condition, gpointer data) 
 {

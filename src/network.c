@@ -64,6 +64,49 @@ static void server_send_login (struct network *s)
 	network_send_args(s, "USER", s->config->username, get_my_hostname(), s->config->name, s->config->fullname, NULL);
 }
 
+gboolean network_set_charset(struct network *n, const char *name)
+{
+	GIConv tmp;
+	GIOStatus status;
+	GError *error = NULL;
+	tmp = g_iconv_open("UTF-8", name);
+
+	if (tmp == (GIConv)-1) {
+		log_network(NULL, LOG_WARNING, n, "Unable to find charset `%s'", name);
+		return FALSE;
+	}
+	
+	if (n->connection.outgoing_iconv != (GIConv)-1)
+		g_iconv_close(n->connection.outgoing_iconv);
+
+	n->connection.outgoing_iconv = tmp;
+
+	tmp = g_iconv_open(name, "UTF-8");
+	if (tmp == (GIConv)-1) {
+		log_network(NULL, LOG_WARNING, n, "Unable to find charset `%s'", name);
+		return FALSE;
+	}
+
+	if (n->connection.incoming_iconv != (GIConv)-1)
+		g_iconv_close(n->connection.incoming_iconv);
+
+	n->connection.incoming_iconv = tmp;
+
+	if (n->config->type == NETWORK_VIRTUAL)
+		return TRUE;
+
+	g_assert(n->connection.outgoing);
+	status = g_io_channel_set_encoding(n->connection.outgoing,
+			name, &error);
+	if (status != G_IO_STATUS_NORMAL) {
+		log_network(NULL, LOG_WARNING, n, "Unable to set charset `%s': %s", 
+					name, error->message);
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
 static gboolean process_from_server(struct network *n, struct line *l)
 {
 	struct line *lc;
@@ -105,10 +148,7 @@ static gboolean process_from_server(struct network *n, struct line *l)
 		GList *gl;
 		n->connection.state = NETWORK_CONNECTION_STATE_MOTD_RECVD;
 
-		g_io_channel_set_encoding(n->config->type != NETWORK_VIRTUAL?
-				n->connection.outgoing:
-				n->connection.outgoing,
-				get_charset(&n->info), &error);
+		network_set_charset(n, get_charset(&n->info));
 
 		if (error != NULL)
 			log_network(NULL, LOG_WARNING, n, 
@@ -694,11 +734,11 @@ static pid_t piped_child(char* const command[], int *f_in)
 
 void network_set_iochannel(struct network *s, GIOChannel *ioc)
 {
-	g_io_channel_set_encoding(ioc, NULL, NULL);
 	g_io_channel_set_close_on_unref(ioc, TRUE);
 	g_io_channel_set_flags(ioc, G_IO_FLAG_NONBLOCK, NULL);
 
 	s->connection.outgoing = ioc;
+	network_set_charset(s, "UTF-8");
 	g_io_channel_set_close_on_unref(s->connection.outgoing, TRUE);
 
 	s->connection.incoming_id = g_io_add_watch(s->connection.outgoing, G_IO_IN | G_IO_HUP | G_IO_ERR, handle_server_receive, s);
@@ -798,8 +838,7 @@ struct network *load_network(struct global *global, struct network_config *sc)
 	s->name = g_strdup(s->config->name);
 	s->connection.pending_lines = g_queue_new();
 	s->global = global;
-	s->connection.outgoing_iconv = g_iconv_open("UTF-8", "UTF-8");
-	s->connection.incoming_iconv = g_iconv_open("UTF-8", "UTF-8");
+	s->connection.outgoing_iconv = s->connection.incoming_iconv = (GIConv)-1;
 
 	if (global != NULL) {
 		global->networks = g_list_append(global->networks, s);

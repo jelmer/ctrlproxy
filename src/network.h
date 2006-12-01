@@ -101,6 +101,7 @@ struct network {
 };
 
 /* server.c */
+G_MODULE_EXPORT gboolean network_set_charset(struct network *n, const char *name);
 G_MODULE_EXPORT struct network *find_network_by_hostname(struct global *global, const char *host, guint16 port, gboolean create);
 G_MODULE_EXPORT gboolean load_networks(struct global *, struct ctrlproxy_config *cfg);
 G_MODULE_EXPORT gboolean autoconnect_networks(struct global *);

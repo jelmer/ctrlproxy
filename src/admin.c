@@ -374,15 +374,13 @@ static void repl_command(struct client *c, char **args, void *userdata)
 static void handle_charset(struct client *c, char **args, void *userdata)
 {
 	GError *error = NULL;
-	GIOStatus status;
 
 	if (args[1] == NULL) {
 		admin_out(c, "No charset specified");
 		return;
 	}
 
-	status = g_io_channel_set_encoding(c->incoming, args[1], &error); 
-	if (status != G_IO_STATUS_NORMAL) {
+	if (!client_set_charset(c, args[1])) {
 		admin_out(c, "Error setting charset: %s", error->message);
 	}
 }

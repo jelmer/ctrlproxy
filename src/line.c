@@ -321,6 +321,9 @@ GIOStatus irc_recv_line(GIOChannel *c, GIConv iconv,
 {
 	gchar *raw = NULL;
 	GIOStatus status;
+
+	g_assert(l != NULL);
+
 	*l = NULL;
 
 	g_assert(c);
