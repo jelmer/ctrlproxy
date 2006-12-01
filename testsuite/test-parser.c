@@ -3,6 +3,7 @@
 #include <string.h>
 #include <check.h>
 #include "line.h"
+#include "torture.h"
 
 static const char *malformed[] = {
 	"PRIVMSG :foo :bar",
@@ -89,6 +90,29 @@ START_TEST(parser_get_nick)
 	g_free(nick);
 END_TEST
 
+START_TEST(parser_recv_line)
+	GIOChannel *ch1, *ch2;
+	struct line *l;
+	GIConv iconv;
+
+	g_io_channel_pair(&ch1, &ch2);
+	g_io_channel_set_flags(ch1, G_IO_FLAG_NONBLOCK, NULL);
+	g_io_channel_set_flags(ch2, G_IO_FLAG_NONBLOCK, NULL);
+
+	iconv = g_iconv_open("UTF-8", "UTF-8");
+
+	g_io_channel_write_chars(ch2, "PRIVMSG :bla\r\nFOO", -1, NULL, NULL);
+	g_io_channel_flush(ch2, NULL);
+
+	fail_unless(irc_recv_line(ch1, iconv, NULL, &l) == G_IO_STATUS_NORMAL);
+	fail_unless(l->argc == 2);
+	fail_unless(!strcmp(l->args[0], "PRIVMSG"));
+	fail_unless(!strcmp(l->args[1], "bla"));
+	fail_unless(irc_recv_line(ch1, iconv, NULL, &l) == G_IO_STATUS_AGAIN);
+
+	g_iconv_close(iconv);
+END_TEST
+
 START_TEST(parser_dup)
 	struct line l, *m;
 	char *args[] = { "x", "y", "z", NULL };
@@ -123,5 +147,6 @@ Suite *parser_suite(void)
 	tcase_add_test(tcase, parser_random);
 	tcase_add_test(tcase, parser_get_nick);
 	tcase_add_test(tcase, parser_dup);
+	tcase_add_test(tcase, parser_recv_line);
 	return s;
 }
