@@ -135,12 +135,14 @@ GIOStatus irc_send_line(GIOChannel *c, GIConv iconv,
 	raw = irc_line_string_nl(l);
 	if (iconv != (GIConv)-1) {
 		char *tmp, *tmp_cvrt;
+		size_t ret;
 		in_len = strlen(raw);
 		cvrt_in = in_len*2+1;
 		cvrt = g_malloc(cvrt_in);
 		tmp = raw;
 		tmp_cvrt = cvrt;
-		g_iconv(iconv, &tmp, &in_len, &tmp_cvrt, &cvrt_in);
+		ret = g_iconv(iconv, &tmp, &in_len, &tmp_cvrt, &cvrt_in);
+		g_assert(ret != (size_t)-1);
 		*tmp_cvrt = '\0';
 		g_free(raw);
 	} else {
@@ -353,12 +355,14 @@ GIOStatus irc_recv_line(GIOChannel *c, GIConv iconv,
 	if (iconv == (GIConv)-1) {
 		cvrt = raw;
 	} else {
+		size_t ret;
 		char *tmp, *tmp_cvrt;
 		cvrt_len = in_len*2+1;
 		cvrt = g_malloc(cvrt_len);
 		tmp = raw;
 		tmp_cvrt = cvrt;
-		g_iconv(iconv, &tmp, &in_len, &tmp_cvrt, &cvrt_len);
+		ret = g_iconv(iconv, &tmp, &in_len, &tmp_cvrt, &cvrt_len);
+		g_assert(ret != (size_t)-1);
 		*tmp_cvrt = '\0';
 		g_free(raw);
 	}

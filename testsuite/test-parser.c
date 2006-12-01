@@ -113,6 +113,33 @@ START_TEST(parser_recv_line)
 	g_iconv_close(iconv);
 END_TEST
 
+START_TEST(parser_recv_line_invalid)
+	GIOChannel *ch1, *ch2;
+	struct line *l;
+	GIConv iconv;
+
+	g_io_channel_pair(&ch1, &ch2);
+	g_io_channel_set_flags(ch1, G_IO_FLAG_NONBLOCK, NULL);
+	g_io_channel_set_flags(ch2, G_IO_FLAG_NONBLOCK, NULL);
+	g_io_channel_set_encoding(ch1, NULL, NULL);
+	g_io_channel_set_encoding(ch2, NULL, NULL);
+
+	iconv = g_iconv_open("ISO8859-1", "UTF-8");
+
+	g_io_channel_write_chars(ch2, "PRIVMSG :bl\366a\r\n", -1, NULL, NULL);
+	g_io_channel_flush(ch2, NULL);
+
+	fail_unless(irc_recv_line(ch1, iconv, NULL, &l) == G_IO_STATUS_NORMAL);
+	fail_unless(l->argc == 2);
+	fail_unless(!strcmp(l->args[0], "PRIVMSG"));
+	fail_unless(!strcmp(l->args[1], "bla"));
+	fail_unless(irc_recv_line(ch1, iconv, NULL, &l) == G_IO_STATUS_AGAIN);
+
+	g_iconv_close(iconv);
+END_TEST
+
+
+
 START_TEST(parser_recv_line_iso8859)
 	GIOChannel *ch1, *ch2;
 	struct line *l;
@@ -217,6 +244,7 @@ Suite *parser_suite(void)
 	tcase_add_test(tcase, parser_dup);
 	tcase_add_test(tcase, parser_recv_line);
 	tcase_add_test(tcase, parser_recv_line_iso8859);
+	tcase_add_test(tcase, parser_recv_line_invalid);
 	tcase_add_test(tcase, send_args);
 	tcase_add_test(tcase, send_args_utf8);
 	return s;
