@@ -127,23 +127,14 @@ GIOStatus irc_send_line(GIOChannel *c, GIConv iconv,
 	char *raw, *cvrt = NULL;
 	GIOStatus ret;
 	gsize bytes_written;
-	gsize in_len;
-	gsize cvrt_in;
  
 	g_assert(c);
 
 	raw = irc_line_string_nl(l);
 	if (iconv != (GIConv)-1) {
-		char *tmp, *tmp_cvrt;
-		size_t ret;
-		in_len = strlen(raw);
-		cvrt_in = in_len*2+1;
-		cvrt = g_malloc(cvrt_in);
-		tmp = raw;
-		tmp_cvrt = cvrt;
-		ret = g_iconv(iconv, &tmp, &in_len, &tmp_cvrt, &cvrt_in);
-		g_assert(ret != (size_t)-1);
-		*tmp_cvrt = '\0';
+		cvrt = g_convert_with_iconv(raw, -1, iconv, NULL, NULL, error);
+		if (cvrt == NULL)
+			return G_IO_STATUS_ERROR;
 		g_free(raw);
 	} else {
 		cvrt = raw;
@@ -338,7 +329,7 @@ GIOStatus irc_recv_line(GIOChannel *c, GIConv iconv,
 {
 	gchar *raw = NULL, *cvrt = NULL;
 	GIOStatus status;
-	gsize in_len, cvrt_len;
+	gsize in_len;
 
 	g_assert(l != NULL);
 
@@ -355,15 +346,9 @@ GIOStatus irc_recv_line(GIOChannel *c, GIConv iconv,
 	if (iconv == (GIConv)-1) {
 		cvrt = raw;
 	} else {
-		size_t ret;
-		char *tmp, *tmp_cvrt;
-		cvrt_len = in_len*2+1;
-		cvrt = g_malloc(cvrt_len);
-		tmp = raw;
-		tmp_cvrt = cvrt;
-		ret = g_iconv(iconv, &tmp, &in_len, &tmp_cvrt, &cvrt_len);
-		g_assert(ret != (size_t)-1);
-		*tmp_cvrt = '\0';
+		cvrt = g_convert_with_iconv(raw, -1, iconv, NULL, NULL, error);
+		if (cvrt == NULL)
+			return G_IO_STATUS_ERROR;
 		g_free(raw);
 	}
 

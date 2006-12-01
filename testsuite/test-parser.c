@@ -129,10 +129,8 @@ START_TEST(parser_recv_line_invalid)
 	g_io_channel_write_chars(ch2, "PRIVMSG :bl\366a\r\n", -1, NULL, NULL);
 	g_io_channel_flush(ch2, NULL);
 
-	fail_unless(irc_recv_line(ch1, iconv, NULL, &l) == G_IO_STATUS_NORMAL);
-	fail_unless(l->argc == 2);
-	fail_unless(!strcmp(l->args[0], "PRIVMSG"));
-	fail_unless(!strcmp(l->args[1], "bla"));
+	fail_unless(irc_recv_line(ch1, iconv, NULL, &l) == G_IO_STATUS_ERROR);
+	fail_unless(l == NULL);
 	fail_unless(irc_recv_line(ch1, iconv, NULL, &l) == G_IO_STATUS_AGAIN);
 
 	g_iconv_close(iconv);
