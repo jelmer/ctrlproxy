@@ -51,6 +51,7 @@ struct client {
 	char *fullname;
 	char *hostname;
 	char *username;
+	char *charset;
 	int exit_on_close:1;
 };
 

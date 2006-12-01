@@ -299,6 +299,7 @@ void disconnect_client(struct client *c, const char *reason)
 	if (c->exit_on_close) 
 		exit(0);
 
+	g_free(c->charset);
 	g_free(c->description);
 	g_free(c->username);
 	g_free(c->hostname);
@@ -375,9 +376,8 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition cond, void *_c
 		if (status != G_IO_STATUS_AGAIN) {
 			if (error->domain == G_CONVERT_ERROR &&
 				error->code == G_CONVERT_ERROR_ILLEGAL_SEQUENCE) {
-				char *encoding = "FIXME";
 				client_send_response(client, ERR_BADCHARENCODING, 
-				   "*", encoding, error->message, NULL);
+				   "*", client->charset, error->message, NULL);
 			} else {
 				disconnect_client(client, error?error->message:"Unknown error");
 				return FALSE;
@@ -574,7 +574,6 @@ static gboolean client_ping(gpointer user_data) {
 struct client *client_init(struct network *n, GIOChannel *c, const char *desc)
 {
 	struct client *client;
-	const char *charset = NULL;
 
 	g_assert(c);
 	g_assert(desc);
@@ -592,14 +591,11 @@ struct client *client_init(struct network *n, GIOChannel *c, const char *desc)
 	client->exit_on_close = FALSE;
 	client->pending_lines = g_queue_new();
 
-	if (n && n->global)
-		charset = n->global->config->client_charset;
-
-	if (charset == NULL)
-		charset = DEFAULT_CLIENT_CHARSET;
-
 	client->outgoing_iconv = client->incoming_iconv = (GIConv)-1;
-	client_set_charset(client, charset == NULL?"UTF-8":charset);
+	if (n && n->global)
+		client_set_charset(client, n->global->config->client_charset);
+	else
+		client_set_charset(client, DEFAULT_CLIENT_CHARSET);
 
 	client->incoming_id = g_io_add_watch(client->incoming, G_IO_IN | G_IO_HUP, handle_pending_client_receive, client);
 
@@ -638,6 +634,9 @@ gboolean client_set_charset(struct client *c, const char *name)
 		g_iconv_close(c->incoming_iconv);
 
 	c->incoming_iconv = tmp;
+
+	g_free(c->charset);
+	c->charset = g_strdup(name);
 
 	return TRUE;
 }
