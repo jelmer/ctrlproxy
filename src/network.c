@@ -67,7 +67,7 @@ static void server_send_login (struct network *s)
 gboolean network_set_charset(struct network *n, const char *name)
 {
 	GIConv tmp;
-	tmp = g_iconv_open("UTF-8", name);
+	tmp = g_iconv_open(name, "UTF-8");
 
 	if (tmp == (GIConv)-1) {
 		log_network(NULL, LOG_WARNING, n, "Unable to find charset `%s'", name);
@@ -79,7 +79,7 @@ gboolean network_set_charset(struct network *n, const char *name)
 
 	n->connection.outgoing_iconv = tmp;
 
-	tmp = g_iconv_open(name, "UTF-8");
+	tmp = g_iconv_open("UTF-8", name);
 	if (tmp == (GIConv)-1) {
 		log_network(NULL, LOG_WARNING, n, "Unable to find charset `%s'", name);
 		return FALSE;

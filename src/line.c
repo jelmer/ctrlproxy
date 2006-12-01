@@ -344,7 +344,7 @@ GIOStatus irc_recv_line(GIOChannel *c, GIConv iconv,
 
 	g_assert(c);
 
-	status = g_io_channel_read_line(c, &raw, NULL, NULL, error);
+	status = g_io_channel_read_line(c, &raw, &in_len, NULL, error);
 	if (status != G_IO_STATUS_NORMAL) {
 		g_free(raw);
 		return status;
@@ -354,7 +354,6 @@ GIOStatus irc_recv_line(GIOChannel *c, GIConv iconv,
 		cvrt = raw;
 	} else {
 		char *tmp, *tmp_cvrt;
-		in_len = strlen(raw);
 		cvrt_len = in_len*2+1;
 		cvrt = g_malloc(cvrt_len);
 		tmp = raw;

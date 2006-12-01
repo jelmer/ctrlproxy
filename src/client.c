@@ -375,16 +375,9 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition cond, void *_c
 		if (status != G_IO_STATUS_AGAIN) {
 			if (error->domain == G_CONVERT_ERROR &&
 				error->code == G_CONVERT_ERROR_ILLEGAL_SEQUENCE) {
-				char *encoding = g_strdup(g_io_channel_get_encoding(c));
-				g_io_channel_set_encoding(c, NULL, NULL);
-				
-				status = irc_recv_line(c, client->incoming_iconv, NULL, &l);
-
-				g_io_channel_set_encoding(c, encoding, NULL);
-
+				char *encoding = "FIXME";
 				client_send_response(client, ERR_BADCHARENCODING, 
 				   "*", encoding, error->message, NULL);
-				g_free(encoding);
 			} else {
 				disconnect_client(client, error?error->message:"Unknown error");
 				return FALSE;
@@ -623,7 +616,7 @@ void kill_pending_clients(const char *reason)
 gboolean client_set_charset(struct client *c, const char *name)
 {
 	GIConv tmp;
-	tmp = g_iconv_open("UTF-8", name);
+	tmp = g_iconv_open(name, "UTF-8");
 
 	if (tmp == (GIConv)-1) {
 		log_client(NULL, LOG_WARNING, c, "Unable to find charset `%s'", name);
@@ -635,7 +628,7 @@ gboolean client_set_charset(struct client *c, const char *name)
 
 	c->outgoing_iconv = tmp;
 
-	tmp = g_iconv_open(name, "UTF-8");
+	tmp = g_iconv_open("UTF-8", name);
 	if (tmp == (GIConv)-1) {
 		log_client(NULL, LOG_WARNING, c, "Unable to find charset `%s'", name);
 		return FALSE;
