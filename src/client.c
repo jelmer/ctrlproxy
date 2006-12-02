@@ -521,7 +521,7 @@ static gboolean handle_pending_client_receive(GIOChannel *c, GIOCondition cond, 
 				}
 
 				if (client->network->connection.state == NETWORK_CONNECTION_STATE_NOT_CONNECTED) {
-					client_send_args(client, "NOTICE", "Connecting to network", NULL);
+					client_send_args(client, "NOTICE", client->nick?client->nick:"*", "Connecting to network", NULL);
 					connect_network(client->network);
 				}
 			} else {
