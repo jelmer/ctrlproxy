@@ -852,6 +852,9 @@ struct network *load_network(struct global *global, struct network_config *sc)
 gboolean connect_network(struct network *s) 
 {
 	g_assert(s);
+	g_assert(s->connection.state == NETWORK_CONNECTION_STATE_NOT_CONNECTED ||
+			 s->connection.state == NETWORK_CONNECTION_STATE_RECONNECT_PENDING);
+
 	return connect_server(s);
 }
 
@@ -952,9 +955,8 @@ gboolean autoconnect_networks(struct global *global)
 		struct network *n = gl->data;
 		g_assert(n);
 		g_assert(n->config);
-		if (n->config->autoconnect) {
+		if (n->config->autoconnect)
 			connect_network(n);
-		}
 	}
 
 	return TRUE;

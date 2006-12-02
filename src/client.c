@@ -515,8 +515,13 @@ static gboolean handle_pending_client_receive(GIOChannel *c, GIOCondition cond, 
 
 				client->network = find_network_by_hostname(client->network->global, l->args[1], atoi(l->args[2]), TRUE);
 
-				if (!client->network || !connect_network(client->network)) {
+				if (!client->network) {
 					log_client(NULL, LOG_ERROR, client, "Unable to connect to network with name %s", l->args[1]);
+				}
+
+				if (client->network->connection.state == NETWORK_CONNECTION_STATE_NOT_CONNECTED) {
+					client_send_args(client, "NOTICE", "Connecting to network", NULL);
+					connect_network(client->network);
 				}
 			} else {
 				client_send_response(client, ERR_NOTREGISTERED, "Register first", client->network?client->network->name:get_my_hostname(), NULL);
