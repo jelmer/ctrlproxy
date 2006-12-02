@@ -346,8 +346,6 @@ static gboolean network_send_line_direct(struct network *s, struct client *c, co
 	return TRUE;
 }
 
-
-
 gboolean network_send_line(struct network *s, struct client *c, const struct line *ol)
 {
 	struct line l;

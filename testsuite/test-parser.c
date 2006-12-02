@@ -14,6 +14,18 @@ static const char *malformed[] = {
 	NULL
 };
 
+START_TEST(parser_empty)
+	struct line *l;
+	
+	l = irc_parse_line("");
+
+	fail_unless(l->argc == 0);
+
+	l = irc_parse_line("\r\n");
+
+	fail_unless(l->argc == 0);
+END_TEST
+
 START_TEST(parser_malformed)
 	struct line *l;
 	char *raw;
@@ -243,6 +255,7 @@ Suite *parser_suite(void)
 	tcase_add_test(tcase, parser_recv_line);
 	tcase_add_test(tcase, parser_recv_line_iso8859);
 	tcase_add_test(tcase, parser_recv_line_invalid);
+	tcase_add_test(tcase, parser_empty);
 	tcase_add_test(tcase, send_args);
 	tcase_add_test(tcase, send_args_utf8);
 	return s;
