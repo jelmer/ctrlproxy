@@ -59,3 +59,4 @@ testsuite/torture
 build-stamp
 api
 test-*
+linestack-cmd

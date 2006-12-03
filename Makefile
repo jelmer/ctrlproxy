@@ -51,6 +51,10 @@ objs = src/network.o \
 	   $(SSL_OBJS)
 dep_files = $(patsubst %.o, %.d, $(objs)) $(patsubst %.o, %.d, $(wildcard mods/*.o))
 
+linestack-cmd$(EXEEXT): src/linestack-cmd.o $(objs)
+	@echo Linking $@
+	@$(CC) $(LIBS) -lreadline -rdynamic -o $@ $^
+
 ctrlproxy$(EXEEXT): src/main.o $(objs)
 	@echo Linking $@
 	@$(CC) $(LIBS) -rdynamic -o $@ $^

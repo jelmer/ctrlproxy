@@ -33,8 +33,10 @@ struct client;
 
 #include "hooks.h"
 
+struct network_state;
 struct linestack_marker;
 struct linestack_ops;
+struct ctrlproxy_config;
 
 /**
  * A linestack instance.
