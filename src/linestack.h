@@ -177,5 +177,8 @@ G_MODULE_EXPORT struct linestack_marker *linestack_get_marker(struct linestack_c
  */
 G_MODULE_EXPORT struct linestack_context *create_linestack(const struct linestack_ops *, const char *name, struct ctrlproxy_config *, const struct network_state *);
 G_MODULE_EXPORT void free_linestack_context(struct linestack_context *);
+G_MODULE_EXPORT struct linestack_ops *linestack_find_ops(const char *name);
+
+extern const struct linestack_ops linestack_file;
 
 #endif /* __CTRLPROXY_LINESTACK_H__ */

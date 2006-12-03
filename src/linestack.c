@@ -41,6 +41,7 @@ struct linestack_context *create_linestack(const struct linestack_ops *ops,
 
 	g_assert(name);
 	g_assert(state);
+	g_assert(cfg);
 
 	ctx = g_new0(struct linestack_context, 1);
 	ctx->ops = ops;
@@ -264,9 +265,20 @@ gboolean linestack_replay(struct linestack_context *ctx, struct linestack_marker
 	return linestack_traverse(ctx, mf, mt, replay_line, st);
 }
 
+struct linestack_ops *linestack_find_ops(const char *name)
+{
+	GSList *gl;
+	for (gl = linestack_backends; gl ; gl = gl->next) {
+		struct linestack_ops *ops = gl->data;
+		if (!strcmp(ops->name, name))
+			return ops;
+	}
+
+	return NULL;
+}
+
 struct linestack_context *new_linestack(struct network *n)
 {
-	extern const struct linestack_ops linestack_file;
 	const struct linestack_ops *current_backend = NULL;
 	struct ctrlproxy_config *cfg = NULL;
 	
@@ -276,14 +288,7 @@ struct linestack_context *new_linestack(struct network *n)
 	register_linestack(&linestack_file);
 
 	if (cfg && cfg->linestack_backend) {
-		GSList *gl;
-		for (gl = linestack_backends; gl ; gl = gl->next) {
-			struct linestack_ops *ops = gl->data;
-			if (!strcmp(ops->name, cfg->linestack_backend)) {
-				current_backend = ops;
-				break;
-			}
-		}
+		current_backend = linestack_find_ops(cfg->linestack_backend);
 
 		if (!current_backend) 
 			log_global(NULL, LOG_WARNING, "Unable to find linestack backend %s: falling back to default", cfg->linestack_backend);
