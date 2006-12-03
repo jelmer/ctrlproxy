@@ -50,6 +50,11 @@ static void handle_exit(int argc, char **argv)
 	exit(0);
 }
 
+static void freels(void)
+{
+	free_linestack_context(ctx);
+}
+
 int main(int argc, char **argv)
 {
 	GOptionContext *pc;
@@ -101,6 +106,8 @@ int main(int argc, char **argv)
 
 	ctx = create_linestack(ops, argv[1], cfg, state);
 
+	atexit(freels);
+
 	if (ctx == NULL) {
 		fprintf(stderr, "Unable to open linestack context\n");
 		return 1;
@@ -127,8 +134,10 @@ int main(int argc, char **argv)
 		}
 
 		for (i = 0; cmds[i].name; i++) {
-			if (!strcmp(cmds[i].name, cargv[0]))
+			if (!strcmp(cmds[i].name, cargv[0])) {
 				cmds[i].handler(cargc, cargv);
+				goto next;
+			}
 		}
 
 		fprintf(stderr, "Unknown command `%s'\n", cargv[0]);
@@ -139,8 +148,6 @@ next:
 		free(line);
 	}
 	g_option_context_free(pc);
-
-	free_linestack_context(ctx);
 
 	return 0;
 }
