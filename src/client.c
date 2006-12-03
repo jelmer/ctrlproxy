@@ -272,10 +272,8 @@ static void free_pending_line(void *_line, void *userdata)
 
 void disconnect_client(struct client *c, const char *reason) 
 {
-	g_assert(c);
-	g_assert(c->incoming);
-
-	client_send_args_ex(c, NULL, "ERROR", reason, NULL);
+	g_assert(c != NULL);
+	g_assert(c->incoming != NULL);
 
 	g_source_remove(c->incoming_id);
 	if (c->outgoing_id)
@@ -292,6 +290,8 @@ void disconnect_client(struct client *c, const char *reason)
 
 	log_client(NULL, LOG_INFO, c, "Removed client");
 
+	irc_send_args(c->incoming, c->outgoing_iconv, NULL, "ERROR", reason, NULL);
+	
 	c->incoming = NULL;
 
 	g_iconv_close(c->outgoing_iconv);
