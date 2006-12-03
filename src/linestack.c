@@ -156,8 +156,6 @@ struct linestack_marker *linestack_get_marker(struct linestack_context *ctx)
 	return wrap_linestack_marker(ctx, ctx->ops->get_marker(ctx));
 }
 
-#define NUM(a) #a
-
 static const char *linestack_messages[] = { 
 	"NICK", "JOIN", "QUIT", "PART", "PRIVMSG", "NOTICE", "KICK", 
 	"MODE", "TOPIC", 
