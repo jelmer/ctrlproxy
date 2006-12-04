@@ -32,6 +32,7 @@
 
 static char test_dir[PATH_MAX];
 
+Suite *tls_suite(void);
 Suite *util_suite(void);
 Suite *state_suite(void);
 Suite *isupport_suite(void);
@@ -43,6 +44,11 @@ Suite *parser_suite(void);
 Suite *user_suite(void);
 Suite *linestack_suite(void);
 gboolean init_log(const char *file);
+
+char *torture_tempfile(const char *path)
+{
+	return g_build_filename(path, test_dir, path, NULL);
+}
 
 struct global *torture_global(const char *name)
 {
@@ -125,6 +131,7 @@ int main (int argc, char **argv)
 	srunner_add_suite(sr, user_suite());
 	srunner_add_suite(sr, line_suite());
 	srunner_add_suite(sr, linestack_suite());
+	srunner_add_suite(sr, tls_suite());
 	if (no_fork)
 		srunner_set_fork_status(sr, CK_NOFORK);
 	srunner_run_all (sr, verbose?CK_VERBOSE:CK_NORMAL);
