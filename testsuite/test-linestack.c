@@ -336,6 +336,48 @@ START_TEST(test_object_msg)
 							 "ERROR :foo\r\n"));
 END_TEST
 
+
+START_TEST(test_object_open)
+	struct network_state *ns1;
+	struct linestack_context *ctx;
+	struct linestack_marker *lm;
+	struct client *cl;
+
+	GIOChannel *ch1, *ch2;
+	char *raw;
+
+	int j;
+	
+	ns1 = network_state_init(NULL, "bla", "Gebruikersnaam", "Computernaam");
+	ctx = create_linestack(&linestack_file, "test", my_config, ns1);
+
+	lm = linestack_get_marker(ctx);
+
+	stack_process(ctx, ns1, ":bla!Gebruikersnaam@Computernaam JOIN #foo");
+	stack_process(ctx, ns1, ":bla!Gebruikersnaam@Computernaam JOIN #bla");
+	stack_process(ctx, ns1, ":bloe!Gebruikersnaam@Computernaam PRIVMSG #foo :hihi");
+	stack_process(ctx, ns1, ":bloe!Gebruikersnaam@Computernaam PRIVMSG #bar :hihi");
+	stack_process(ctx, ns1, ":bloe!Gebruikersnaam@Computernaam PRIVMSG #blablie :hihi");
+	stack_process(ctx, ns1, ":bloe!Gebruikersnaam@Computernaam PRIVMSG #bla :hihi");
+
+	for (j = 0; j < 4; j++) {
+		g_io_channel_pair(&ch1, &ch2);
+		g_io_channel_set_flags(ch1, G_IO_FLAG_NONBLOCK, NULL);
+		g_io_channel_set_flags(ch2, G_IO_FLAG_NONBLOCK, NULL);
+		cl = client_init(NULL, ch1, "test");
+		g_io_channel_unref(ch1);
+
+		linestack_send_object(ctx, "#bla", NULL, NULL, cl);
+		disconnect_client(cl, "foo");
+
+		g_io_channel_read_to_end(ch2, &raw, NULL, NULL);
+
+		fail_unless(!strcmp(raw, ":bla!Gebruikersnaam@Computernaam JOIN #bla\r\n"
+						":bloe!Gebruikersnaam@Computernaam PRIVMSG #bla :hihi\r\n"
+						"ERROR :foo\r\n"));
+	}
+END_TEST
+
 START_TEST(test_join)
 	struct network_state *ns1, *ns2;
 	struct linestack_context *ctx;
@@ -350,9 +392,6 @@ START_TEST(test_join)
 	fail_unless (network_state_equal(ns1, ns2), "Network state returned not equal");
 END_TEST
 
-
-
-
 Suite *linestack_suite()
 {
 	Suite *s = suite_create("linestack");
@@ -365,6 +404,7 @@ Suite *linestack_suite()
 	tcase_add_test(tc_core, test_msg);
 	tcase_add_test(tc_core, test_skip_msg);
 	tcase_add_test(tc_core, test_object_msg);
+	tcase_add_test(tc_core, test_object_open);
 	tcase_add_test(tc_core, test_join_part);
 	return s;
 }
