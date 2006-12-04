@@ -91,6 +91,7 @@ static void clean_exit()
 	if (my_global->config->autosave)
 		save_configuration(my_global->config, path);
 	nickserv_save(my_global, path);
+	stop_unix_socket(my_global);
 
 	free_global(my_global);
 
@@ -290,6 +291,8 @@ int main(int argc, char **argv)
 #if GLIB_MAJOR_VERSION >= 2 && GLIB_MINOR_VERSION >= 8
 	write_pidfile(my_global);
 #endif
+
+	start_unix_socket(my_global);
 
 	autoconnect_networks(my_global);
 

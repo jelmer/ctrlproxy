@@ -66,6 +66,9 @@ struct global {
 	GList *new_network_notifiers;
 	GList *networks;
 	GList *nickserv_nicks;
+
+	GIOChannel *unix_incoming;
+	gint unix_incoming_id;
 };
 
 /* main.c */

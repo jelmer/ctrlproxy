@@ -54,10 +54,8 @@ struct network_connection {
 	GQueue *pending_lines;
 
 	GIOChannel *outgoing;
-	GIOChannel *unix_incoming;
 	gint outgoing_id;
 	gint incoming_id;
-	gint unix_incoming_id;
 	GIConv outgoing_iconv;
 	GIConv incoming_iconv;
 

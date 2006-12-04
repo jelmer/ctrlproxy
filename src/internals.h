@@ -117,6 +117,6 @@ void admin_log(const char *module, enum log_level level, const struct network *n
 gboolean create_configuration(const char *config_dir);
 
 /* pipes.c */
-gboolean network_start_unix_pipe(struct network *n);
-gboolean network_stop_unix_pipe(struct network *n);
+gboolean start_unix_socket(struct global *);
+gboolean stop_unix_socket(struct global *);
 #endif /* __INTERNALS_H__ */

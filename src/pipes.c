@@ -2,7 +2,7 @@
 	ctrlproxy: A modular IRC proxy
 	(c) 2006 Jelmer Vernooij <jelmer@nl.linux.org>
 	
-	Listening on pipes in ~/.ctrlproxy/pipes/NETWORK
+	Listening on unix socket in ~/.ctrlproxy/socket
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -26,9 +26,10 @@
 #include <sys/socket.h>
 #endif
 
-static gboolean handle_new_client(GIOChannel *c_server, GIOCondition condition, void *_network)
+static gboolean handle_new_client(GIOChannel *c_server, GIOCondition condition, void *_global)
 {
-	struct network *network = _network;
+	struct global *global = _global;
+	struct network *network = NULL;
 	GIOChannel *c;
 	int sock = accept(g_io_channel_unix_get_fd(c_server), NULL, 0);
 
@@ -43,13 +44,15 @@ static gboolean handle_new_client(GIOChannel *c_server, GIOCondition condition, 
 	g_io_channel_set_encoding(c, NULL, NULL);
 	g_io_channel_set_flags(c, G_IO_FLAG_NONBLOCK, NULL);
 
+	/* FIXME: network */
+
 	client_init(network, c, "Client on unix socket");
 	g_io_channel_unref(c);
 
 	return TRUE;
 }
 
-gboolean network_start_unix_pipe(struct network *n)
+gboolean start_unix_socket(struct global *global)
 {
 	int sock;
 	struct sockaddr_un un;
@@ -61,7 +64,7 @@ gboolean network_start_unix_pipe(struct network *n)
 	}
 	
 	un.sun_family = AF_UNIX;
-	snprintf(un.sun_path, sizeof(un.sun_path), "%s/%s", n->global->config->pipes_dir, n->name);
+	strncpy(un.sun_path, global->config->socket_path, sizeof(un.sun_path));
 	unlink(un.sun_path);
 
 	if (bind(sock, (struct sockaddr *)&un, sizeof(un)) < 0) {
@@ -74,25 +77,26 @@ gboolean network_start_unix_pipe(struct network *n)
 		return FALSE;
 	}
 
-	n->connection.unix_incoming = g_io_channel_unix_new(sock);
+	global->unix_incoming = g_io_channel_unix_new(sock);
 
-	if (!n->connection.unix_incoming) {
+	if (!global->unix_incoming) {
 		log_global(NULL, LOG_ERROR, "Unable to create GIOChannel for unix server socket");
 		return FALSE;
 	}
 
-	g_io_channel_set_close_on_unref(n->connection.unix_incoming, TRUE);
+	g_io_channel_set_close_on_unref(global->unix_incoming, TRUE);
 
-	g_io_channel_set_encoding(n->connection.unix_incoming, NULL, NULL);
-	n->connection.unix_incoming_id = g_io_add_watch(n->connection.unix_incoming, G_IO_IN, handle_new_client, n);
-	g_io_channel_unref(n->connection.unix_incoming);
+	g_io_channel_set_encoding(global->unix_incoming, NULL, NULL);
+	global->unix_incoming_id = g_io_add_watch(global->unix_incoming, G_IO_IN, handle_new_client, global);
+	g_io_channel_unref(global->unix_incoming);
 
 	return TRUE;
 }
 
-gboolean network_stop_unix_pipe(struct network *n)
+gboolean stop_unix_socket(struct global *global)
 {
-	if (n->connection.unix_incoming_id > 0)
-		g_source_remove(n->connection.unix_incoming_id);
+	if (global->unix_incoming_id > 0)
+		g_source_remove(global->unix_incoming_id);
+	unlink(global->config->socket_path);
 	return TRUE;
 }

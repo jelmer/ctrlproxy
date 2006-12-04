@@ -89,7 +89,7 @@ struct ctrlproxy_config {
 	GList *networks;
 	gboolean autosave;
 	char *motd_file;
-	char *pipes_dir;
+	char *socket_path;
 	char *replication;
 	char *linestack_backend;
 	char *client_charset;

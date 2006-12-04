@@ -93,7 +93,7 @@ Ctrlproxy 3.0	UNRELEASED
 
 	* Add help support in admin module (Daniel Poelzleithner).
 
-	* Allows connecting to networks on ~/.ctrlproxy/pipes/NETWORK using 
+	* Allows connecting to networks on ~/.ctrlproxy/socket using 
 	  unix domain sockets.
 
 	* Write out PID file.
