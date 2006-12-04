@@ -1,5 +1,5 @@
 /*
-	(c) 2005 Jelmer Vernooij <jelmer@nl.linux.org>
+	(c) 2005-2006 Jelmer Vernooij <jelmer@nl.linux.org>
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -21,6 +21,8 @@
 #include <string.h>
 #include <glib.h>
 #include <check.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
 #include "ctrlproxy.h"
 
 START_TEST(test_list_make_string)
@@ -38,11 +40,39 @@ START_TEST(test_list_make_string)
 	
 END_TEST
 
+START_TEST(test_get_description)
+	int sock[2];
+	GIOChannel *ch;
+	char *desc;
+	struct sockaddr_in in;
+	socklen_t len;
+
+	sock[0] = socket(PF_INET, SOCK_STREAM, 0);
+	sock[1] = socket(PF_INET, SOCK_STREAM, 0);
+
+	fail_if(sock[0] < 0);
+	fail_if(sock[1] < 0);
+
+	fail_if(listen(sock[1], 1) < 0);
+
+	ch = g_io_channel_unix_new(sock[0]);
+	desc = g_io_channel_ip_get_description(ch);
+	fail_unless(desc == NULL);
+	len = sizeof(in);
+	fail_if(getsockname(sock[1], (struct sockaddr *)&in, &len) < 0);
+	fail_if(connect(sock[0], (struct sockaddr *)&in, len) < 0);
+	desc = g_io_channel_ip_get_description(ch);
+	fail_if(desc == NULL);
+
+	g_free(desc);
+END_TEST
+
 Suite *util_suite(void)
 {
 	Suite *s = suite_create("util");
 	TCase *tc_core = tcase_create("Core");
 	suite_add_tcase(s, tc_core);
+	tcase_add_test(tc_core, test_get_description);
 	tcase_add_test(tc_core, test_list_make_string);
 	return s;
 }

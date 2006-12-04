@@ -8,6 +8,7 @@
 
 gboolean g_io_channel_pair(GIOChannel **ch1, GIOChannel **ch2);
 struct global *torture_global(const char *name);
+char *torture_tempfile(const char *path);
 #define TORTURE_GLOBAL torture_global(__FUNCTION__)
 
 #endif /* _TORTURE_H_ */
