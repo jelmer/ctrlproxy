@@ -275,6 +275,7 @@ void disconnect_client(struct client *c, const char *reason)
 	g_assert(c != NULL);
 	g_assert(c->incoming != NULL);
 
+	g_io_channel_ref(c->incoming);
 	g_source_remove(c->incoming_id);
 	if (c->outgoing_id)
 		g_source_remove(c->outgoing_id);
@@ -291,6 +292,8 @@ void disconnect_client(struct client *c, const char *reason)
 	log_client(NULL, LOG_INFO, c, "Removed client");
 
 	irc_send_args(c->incoming, c->outgoing_iconv, NULL, "ERROR", reason, NULL);
+
+	g_io_channel_unref(c->incoming);
 	
 	c->incoming = NULL;
 

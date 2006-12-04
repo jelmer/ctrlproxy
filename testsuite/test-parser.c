@@ -19,11 +19,11 @@ START_TEST(parser_empty)
 	
 	l = irc_parse_line("");
 
-	fail_unless(l->argc == 0);
+	fail_unless(l->argc == 1);
 
 	l = irc_parse_line("\r\n");
 
-	fail_unless(l->argc == 0);
+	fail_unless(l->argc == 1);
 END_TEST
 
 START_TEST(parser_malformed)

@@ -103,6 +103,7 @@ START_TEST(test_disconnect)
 	client = client_init(NULL, ch1, "desc");
 	g_io_channel_unref(ch1);
 	disconnect_client(client, "Because");
+	g_io_channel_flush(ch1, NULL);
 	g_io_channel_read_to_end(ch2, &raw, &length, &error);
 	fail_unless(!strcmp(raw, "ERROR :Because\r\n"));
 END_TEST
