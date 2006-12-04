@@ -531,7 +531,7 @@ static struct network_state * file_get_state (
 {
 	struct lf_data *nd = ctx->backend_data;
 	struct network_state *ret;
-	long *to_offset = m, t;
+	gint64 *to_offset = m, t;
 	struct linestack_marker m1, m2;
 	GError *error = NULL;
 	GIOStatus status;
@@ -557,7 +557,9 @@ static struct network_state * file_get_state (
 			break;
 	}
 
-	status = g_io_channel_seek_position(nd->state_file, nd->state_dumps[i].state_offset, G_SEEK_SET, &error);
+	status = g_io_channel_seek_position(nd->state_file, 
+										nd->state_dumps[i].state_offset, 
+										G_SEEK_SET, &error);
 
 	g_assert(status == G_IO_STATUS_NORMAL);
 
@@ -568,7 +570,9 @@ static struct network_state * file_get_state (
 	status = g_io_channel_seek_position(nd->state_file, 0, G_SEEK_END, &error);
 	g_assert(status == G_IO_STATUS_NORMAL);
 
+	m1.free_fn = NULL;
 	m1.data = &nd->state_dumps[i].line_offset;
+	m2.free_fn = NULL;
 	m2.data = to_offset;
 	linestack_replay(ctx, &m1, &m2, ret);
 
@@ -584,7 +588,7 @@ static gboolean file_traverse(struct linestack_context *ctx,
 		linestack_traverse_fn tf, 
 		void *userdata)
 {
-	long *start_offset, *end_offset;
+	gint64 *start_offset, *end_offset;
 	struct lf_data *nd = ctx->backend_data;
 	GError *error = NULL;
 	GIOStatus status;
@@ -602,13 +606,14 @@ static gboolean file_traverse(struct linestack_context *ctx,
 
 	/* Go back to begin of file */
 	status = g_io_channel_seek_position(nd->line_file, 
-			start_offset?*start_offset:0, G_SEEK_SET, &error);
+			(start_offset != NULL)?(*start_offset):0, G_SEEK_SET, &error);
 
 	g_assert (status == G_IO_STATUS_NORMAL);
 	
 	while((status = g_io_channel_read_line(nd->line_file, &raw, NULL, 
 		                          NULL, &error) != G_IO_STATUS_EOF) && 
-		(!end_offset || g_io_channel_tell_position(nd->line_file) <= (*end_offset))) {
+		(!end_offset || 
+		 g_io_channel_tell_position(nd->line_file) <= (*end_offset))) {
 		if (status != G_IO_STATUS_NORMAL) {
 			log_global(NULL, LOG_WARNING, "read_line() failed: %s",
 					error->message);
