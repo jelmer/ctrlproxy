@@ -507,14 +507,14 @@ static gboolean handle_pending_client_receive(GIOChannel *c, GIOCondition cond, 
 			} else if(!g_strcasecmp(l->args[0], "PASS")) {
 				/* Silently drop... */
 			} else if(!g_strcasecmp(l->args[0], "CONNECT")) {
-				if (l->argc < 3) {
+				if (l->argc < 2) {
 					client_send_response(client, ERR_NEEDMOREPARAMS,
 										 l->args[0], "Not enough parameters", NULL);
 					free_line(l);
 					continue;
 				}
 
-				client->network = find_network_by_hostname(client->network->global, l->args[1], atoi(l->args[2]), TRUE);
+				client->network = find_network_by_hostname(client->network->global, l->args[1], l->args[2]?atoi(l->args[2]):6667, TRUE);
 
 				if (!client->network) {
 					log_client(NULL, LOG_ERROR, client, "Unable to connect to network with name %s", l->args[1]);
