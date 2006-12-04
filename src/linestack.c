@@ -111,13 +111,32 @@ gboolean linestack_traverse(struct linestack_context *ctx,
 
 struct traverse_object_data {
 	linestack_traverse_fn handler;
+	const char *object;
 	void *userdata;
 };
 
 static void traverse_object_handler(struct line *l, time_t t, void *state)
 {
 	struct traverse_object_data *d = state;
-	d->handler(l, t, d->userdata);
+
+	if (l->argc < 2) 
+		return;
+
+	if (strchr(l->args[1], ',') == NULL) {
+		if (!strcmp(l->args[1], d->object))
+			d->handler(l, t, d->userdata);
+	} else {
+		int i;
+		char **channels = g_strsplit(l->args[1], ",", 0);
+		for (i = 0; channels[i]; i++) {
+			if (!strcmp(channels[i], d->object)) {
+				d->handler(l, t, d->userdata);
+				g_strfreev(channels);
+				return;
+			}
+		}
+		g_strfreev(channels);
+	}
 }
 
 gboolean linestack_traverse_object(
@@ -130,6 +149,7 @@ gboolean linestack_traverse_object(
 	struct traverse_object_data d;
 	if (!ctx->ops) return FALSE;
 
+	d.object = obj;
 	d.userdata = userdata;
 	d.handler = hl;
 	
