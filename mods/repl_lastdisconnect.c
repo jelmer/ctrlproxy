@@ -22,21 +22,6 @@
 
 static GHashTable *lastdisconnect_backlog = NULL;
 
-static void change_nick(struct client *c, const char *newnick) 
-{
-	struct line *l;
-	g_assert(c);
-	g_assert(newnick);
-
-	g_assert(c->network->state);
-	
-	l = irc_parse_line_args(c->network->state->me.hostmask, "NICK", newnick, NULL);
-	client_send_line(c, l);
-	free_line(l);
-}
-
-
-
 static void lastdisconnect_mark(struct client *c, void *userdata)
 {
 	if (!c->network)
@@ -53,7 +38,6 @@ static void lastdisconnect_replicate(struct client *c)
 	ns = linestack_get_state(c->network->linestack, lm);
 	if (ns) {
 		client_send_state(c, ns);
-		change_nick(c, ns->me.nick);
 	}
 	free_network_state(ns);
 

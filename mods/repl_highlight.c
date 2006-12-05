@@ -20,21 +20,6 @@
 #include "ctrlproxy.h"
 #include <string.h>
 
-static void change_nick(struct client *c, const char *newnick) 
-{
-	struct line *l;
-	g_assert(c);
-	g_assert(newnick);
-
-	g_assert(c->network->state);
-	
-	l = irc_parse_line_args(c->network->state->me.hostmask, "NICK", newnick, NULL);
-	client_send_line(c, l);
-	free_line(l);
-}
-
-
-
 static char **matches = NULL;
 static GHashTable *markers = NULL;
 
@@ -61,7 +46,6 @@ static void highlight_replicate(struct client *c)
 
 	if (c->network->state) {
 		client_send_state(c, c->network->state);
-		change_nick(c, c->network->state->me.nick);
 	}
 
 	linestack_traverse(c->network->linestack, lm, NULL, check_highlight, c);
