@@ -521,7 +521,7 @@ static void *file_get_marker(struct linestack_context *ctx)
 	struct lf_data *nd = ctx->backend_data;
 
 	pos = g_new0(gint64, 1);
-	*pos = g_io_channel_tell_position(nd->line_file);
+	(*pos) = g_io_channel_tell_position(nd->line_file);
 	return pos;
 }
 

@@ -153,13 +153,15 @@ gboolean linestack_traverse_object(
 	d.userdata = userdata;
 	d.handler = hl;
 	
-	return linestack_traverse(ctx, lm_from?lm_from->data:NULL, lm_to?lm_to->data:NULL, traverse_object_handler, &d);
+	return linestack_traverse(ctx, lm_from, lm_to, traverse_object_handler, &d);
 }
 
 void linestack_free_marker(struct linestack_marker *lm)
 {
+	return;
 	if (lm == NULL)
 		return;
+
 	if (lm->free_fn != NULL) 
 		lm->free_fn(lm->data);
 	g_free(lm);
