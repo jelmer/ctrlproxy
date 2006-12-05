@@ -1,10 +1,10 @@
-#include <readline/readline.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include "line.h"
 #include "linestack.h"
 #include "settings.h"
 #include "state.h"
+#include <readline/readline.h>
 
 static struct linestack_context *ctx = NULL;
 static struct network_state *state = NULL;

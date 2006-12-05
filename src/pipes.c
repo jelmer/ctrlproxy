@@ -60,7 +60,7 @@ gboolean start_unix_socket(struct global *global)
 	}
 	
 	un.sun_family = AF_UNIX;
-	strncpy(un.sun_path, global->config->socket_path, sizeof(un.sun_path));
+	strncpy(un.sun_path, global->config->network_socket, sizeof(un.sun_path));
 	unlink(un.sun_path);
 
 	if (bind(sock, (struct sockaddr *)&un, sizeof(un)) < 0) {
@@ -93,6 +93,6 @@ gboolean stop_unix_socket(struct global *global)
 {
 	if (global->unix_incoming_id > 0)
 		g_source_remove(global->unix_incoming_id);
-	unlink(global->config->socket_path);
+	unlink(global->config->network_socket);
 	return TRUE;
 }
