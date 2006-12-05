@@ -27,6 +27,7 @@ static gboolean delayed_connect_server(struct network *s);
 static gboolean connect_server(struct network *s);
 static gboolean close_server(struct network *s);
 static void reconnect(struct network *server, gboolean rm_source);
+static void clients_send_state(GList *clients, struct network_state *s);
 
 struct new_network_notify_data {
 	new_network_notify_fn fn;
@@ -148,6 +149,8 @@ static gboolean process_from_server(struct network *n, struct line *l)
 		log_network(LOG_INFO, n, "Successfully logged in");
 
 		nickserv_identify_me(n, n->state->me.nick);
+
+		clients_send_state(n->clients, n->state);
 
 		server_connected_hook_execute(n);
 
@@ -609,6 +612,16 @@ static void reconnect(struct network *server, gboolean rm_source)
 	}
 }
 
+static void clients_send_state(GList *clients, struct network_state *s)
+{
+	GList *gl;
+
+	for (gl = clients; gl; gl = gl->next) {
+		struct client *c = gl->data;
+		client_send_state(c, s);
+	}
+}
+
 static void clients_invalidate_state(GList *clients, struct network_state *s)
 {
 	GList *gl;
@@ -623,6 +636,8 @@ static void clients_invalidate_state(GList *clients, struct network_state *s)
 	/* private queries quit */
 	for (gl = s->nicks; gl; gl = gl->next) {
 		struct network_nick *gn = gl->data;
+
+		if (!gn->query || gn == &s->me) continue;
 
 		clients_send_args_ex(clients, gn->hostmask, "QUIT", "Network disconnected", NULL);
 	}
