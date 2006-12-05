@@ -61,7 +61,7 @@ Ctrlproxy 3.0	UNRELEASED
 
 	* Add support for %B, %e and %Y in log_custom (Korbinian Rosenegger)
 
-	* Support CONNECT proxy command as used by irssi
+	* Support CONNECT proxy command as used by irssi and other clients.
 
 	* Use new CtrlProxy-specific logging system. 
 	  Logs go to ~/.ctrlproxy/log by default now when in daemon mode.
@@ -97,3 +97,5 @@ Ctrlproxy 3.0	UNRELEASED
 	  unix domain sockets.
 
 	* Write out PID file.
+
+	* lots of other small improvements

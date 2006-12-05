@@ -32,11 +32,7 @@ struct plugin {
 	GModule *module;
 	void *data;
 	/** Plugin operations */
-	struct plugin_ops {
-		int version;
-		const char *name;
-		gboolean (*init) (void);
-	} *ops;
+	struct plugin_ops *ops;
 };
 
 /* plugins.c */
