@@ -29,7 +29,8 @@ static gboolean log_data(struct network *n, const struct line *l, enum data_dire
 	if (g_strcasecmp(l->args[0], "PRIVMSG") && 
 		g_strcasecmp(l->args[0], "NOTICE")) return TRUE;
 
-	g_hash_table_replace(simple_backlog, n, linestack_get_marker(n->linestack));
+	if (n->linestack != NULL) 
+		g_hash_table_replace(simple_backlog, n, linestack_get_marker(n->linestack));
 
 	return TRUE;
 }
@@ -38,6 +39,9 @@ static void simple_replicate(struct client *c)
 {
 	struct linestack_marker *m;
 	struct network_state *ns;
+
+	if (c->network->linestack == NULL)
+		return;
 
 	m = g_hash_table_lookup(simple_backlog, c->network);
 	ns = linestack_get_state(c->network->linestack, m);

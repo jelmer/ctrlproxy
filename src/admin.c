@@ -350,6 +350,11 @@ static void repl_command(struct client *c, char **args, void *userdata)
 {
 	struct linestack_marker *lm = g_hash_table_lookup(markers, c->network);
 
+	if (c->network->linestack == NULL) {
+		admin_out(c, "No backlog available. Perhaps the connection to the network is down?");
+		return;
+	}
+
 	if(!args[1]) {
 		admin_out(c, "Sending backlog for network '%s'", c->network->name);
 
