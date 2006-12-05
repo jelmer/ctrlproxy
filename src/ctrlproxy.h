@@ -48,7 +48,6 @@
 #endif
 
 #include "settings.h"
-#include "plugins.h"
 #include "network.h"
 #include "client.h"
 #include "state.h"
@@ -69,6 +68,12 @@ struct global {
 
 	GIOChannel *unix_incoming;
 	gint unix_incoming_id;
+};
+
+struct plugin_ops {
+	int version;
+	const char *name;
+	gboolean (*init) (void);
 };
 
 /* main.c */

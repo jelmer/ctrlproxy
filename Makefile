@@ -49,6 +49,20 @@ objs = src/network.o \
 	   src/user.o \
 	   src/pipes.o \
 	   $(SSL_OBJS)
+
+headers = src/admin.h \
+		  src/client.h \
+		  src/ctcp.h \
+		  src/ctrlproxy.h \
+		  src/hooks.h \
+		  src/irc.h \
+		  src/line.h \
+		  src/linestack.h \
+		  src/network.h \
+		  src/repl.h \
+		  src/settings.h \
+		  src/ssl.h \
+		  src/state.h
 dep_files = $(patsubst %.o, %.d, $(objs)) $(patsubst %.o, %.d, $(wildcard mods/*.o))
 
 linestack-cmd$(EXEEXT): src/linestack-cmd.o $(objs)
@@ -90,10 +104,7 @@ install-bin:
 	$(INSTALL) scripts/upgrade.py $(DESTDIR)$(bindir)/ctrlproxy-upgrade 
 
 install-doc: doc
-	$(INSTALL) -m 0644 src/ctrlproxy.h $(DESTDIR)$(destincludedir)
-	$(INSTALL) -m 0644 AUTHORS $(DESTDIR)$(docdir)
-	$(INSTALL) -m 0644 COPYING $(DESTDIR)$(docdir)
-	$(INSTALL) -m 0644 BUGS $(DESTDIR)$(docdir)
+	$(INSTALL) -m 0644 $(headers) $(DESTDIR)$(destincludedir)
 	$(INSTALL) -m 0644 UPGRADING $(DESTDIR)$(docdir)
 	$(MAKE) -C doc install PACKAGE_VERSION=$(PACKAGE_VERSION)
 
