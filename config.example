@@ -16,8 +16,8 @@ replication = none
 #
 # What words to look for when remembering lines 
 # (in case "replication = highlight")
-# Seperate using comma's 
-matches=ctrlproxy, foobar
+# Seperate using semicolons
+matches=ctrlproxy;foobar
 
 # Support for interfacing to ctrlproxy 
 # using /MSG ctrlproxy or /CTRLPROXY -->
