@@ -30,11 +30,6 @@ autoconnect = admin
 # using /MSG ctrlproxy or /CTRLPROXY -->
 [admin]
 
-# What words to look for when remembering lines 
-# (in case "replication = highlight")
-# Seperate using comma's 
-matches = ctrlproxy, foobar
-
 # Irssi-style logging
 [log-irssi]
 # logfile = /home/jelmer/tmp/ctrlproxy

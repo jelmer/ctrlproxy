@@ -13,15 +13,16 @@ replication = none
 
 #Disable autosave on exit
 #autosave = False
+#
+# What words to look for when remembering lines 
+# (in case "replication = highlight")
+# Seperate using comma's 
+matches=ctrlproxy, foobar
 
 # Support for interfacing to ctrlproxy 
 # using /MSG ctrlproxy or /CTRLPROXY -->
 [admin]
 
-# What words to look for when remembering lines 
-# (in case "replication = highlight")
-# Seperate using comma's 
-matches=ctrlproxy, foobar
 
 # Prepend all lines with the time a line was received when replicating
 report-time=False
