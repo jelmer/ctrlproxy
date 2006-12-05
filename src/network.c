@@ -27,6 +27,7 @@ static gboolean delayed_connect_server(struct network *s);
 static gboolean connect_server(struct network *s);
 static gboolean close_server(struct network *s);
 static void reconnect(struct network *server, gboolean rm_source);
+static void clients_send_state(GList *clients, struct network_state *s);
 
 struct new_network_notify_data {
 	new_network_notify_fn fn;
@@ -149,6 +150,8 @@ static gboolean process_from_server(struct network *n, struct line *l)
 
 		nickserv_identify_me(n, n->state->me.nick);
 
+		clients_send_state(n->clients, n->state);
+
 		server_connected_hook_execute(n);
 
 		network_send_args(n, "USERHOST", n->state->me.nick, NULL);
@@ -175,7 +178,7 @@ static gboolean process_from_server(struct network *n, struct line *l)
 			l->args[2][0] == '\001') {
 			ctcp_process_network_reply(n, l);
 		} else if (run_server_filter(n, l, FROM_SERVER)) {
-			clients_send(n, l, NULL);
+			clients_send(n->clients, l, NULL);
 		} 
 	} 
 
@@ -378,7 +381,7 @@ gboolean network_send_line(struct network *s, struct client *c, const struct lin
 	   (!g_strcasecmp(l.args[0], "PRIVMSG") || 
 		!g_strcasecmp(l.args[0], "NOTICE"))) {
 		g_assert(l.origin);
-		clients_send(s, &l, c);
+		clients_send(s->clients, &l, c);
 	}
 
 	g_free(tmp);
@@ -609,6 +612,37 @@ static void reconnect(struct network *server, gboolean rm_source)
 	}
 }
 
+static void clients_send_state(GList *clients, struct network_state *s)
+{
+	GList *gl;
+
+	for (gl = clients; gl; gl = gl->next) {
+		struct client *c = gl->data;
+		client_send_state(c, s);
+	}
+}
+
+static void clients_invalidate_state(GList *clients, struct network_state *s)
+{
+	GList *gl;
+
+	/* Leave channels */
+	for (gl = s->channels; gl; gl = gl->next) {
+		struct channel_state *ch = gl->data;
+
+		clients_send_args_ex(clients, s->me.hostmask, "PART", ch->name, "Network disconnected", NULL);
+	}
+
+	/* private queries quit */
+	for (gl = s->nicks; gl; gl = gl->next) {
+		struct network_nick *gn = gl->data;
+
+		if (!gn->query || gn == &s->me) continue;
+
+		clients_send_args_ex(clients, gn->hostmask, "QUIT", "Network disconnected", NULL);
+	}
+}
+
 static gboolean close_server(struct network *n) 
 {
 	g_assert(n);
@@ -630,6 +664,7 @@ static gboolean close_server(struct network *n)
 	}
 
 	if (n->state) {
+		clients_invalidate_state(n->clients, n->state);
 		network_update_config(n->state, n->config);
 		free_linestack_context(n->linestack);
 		n->linestack = NULL;
@@ -665,13 +700,25 @@ static gboolean close_server(struct network *n)
 	return TRUE;
 }
 
-void clients_send(struct network *server, struct line *l, const struct client *exception) 
+void clients_send_args_ex(GList *clients, const char *hostmask, ...)
+{
+	struct line *l;
+	va_list ap;
+
+	va_start(ap, hostmask);
+	l = virc_parse_line(hostmask, ap);
+	va_end(ap);
+
+	clients_send(clients, l, NULL);
+
+	free_line(l); l = NULL;
+}
+
+void clients_send(GList *clients, struct line *l, const struct client *exception) 
 {
 	GList *g;
 
-	g_assert(server);
-
-	for (g = server->clients; g; g = g->next) {
+	for (g = clients; g; g = g->next) {
 		struct client *c = (struct client *)g->data;
 		if(c != exception) {
 			if(run_client_filter(c, l, FROM_SERVER)) { 

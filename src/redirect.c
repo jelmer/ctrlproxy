@@ -548,7 +548,7 @@ void redirect_response(struct network *network, struct line *l)
 	/* See if this is a response that should be sent to all clients */
 	for (i = 0; response_all[i]; i++) {
 		if (response_all[i] == n) {
-			clients_send(network, l, c);
+			clients_send(network->clients, l, c);
 			return;
 		}
 	}
@@ -570,7 +570,7 @@ void redirect_response(struct network *network, struct line *l)
 
 	if (!c) {
 		log_network(LOG_WARNING, network, "Unable to redirect response %s", l->args[0]);
-		clients_send(network, l, NULL);
+		clients_send(network->clients, l, NULL);
 	}
 }
 
