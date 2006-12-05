@@ -27,13 +27,18 @@ static void lastdisconnect_mark(struct client *c, void *userdata)
 	if (!c->network)
 		return;
 
-	g_hash_table_replace(lastdisconnect_backlog, c->network, linestack_get_marker(c->network->linestack));
+	if (c->network->linestack != NULL) 
+		g_hash_table_replace(lastdisconnect_backlog, c->network, 
+							 linestack_get_marker(c->network->linestack));
 }
 
 static void lastdisconnect_replicate(struct client *c)
 {
 	struct linestack_marker *lm = g_hash_table_lookup(lastdisconnect_backlog, c->network);
 	struct network_state *ns;
+
+	if (c->network->linestack == NULL)
+		return;
 
 	ns = linestack_get_state(c->network->linestack, lm);
 	if (ns) {
