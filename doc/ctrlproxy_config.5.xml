@@ -9,7 +9,7 @@
 </refmeta>
 
 <refnamediv>
-	<refname>~/ctrlproxy/config</refname>
+	<refname>ctrlproxy_config</refname>
 	<refpurpose>Configuration file for ctrlproxy</refpurpose>
 </refnamediv>
 
@@ -40,24 +40,55 @@ in a standard ControlProxy installation.
 	<variablelist>
 		<varlistentry>
 			<term>replication</term>
+			<listitem><para>
+					Replication backend to use. See the section about 
+					replication below for details.
+				</para>
+			</listitem>
 		</varlistentry>
 		
 		<varlistentry>
 			<term>report-time</term>
+			<listitem><para>
+					Set to <emphasis>true</emphasis> to prefix replicated 
+					lines with the time the line was sent.
+				</para>
+			</listitem>
 		</varlistentry>
 
 		<varlistentry>
 			<term>autosave</term>
+			<listitem><para>
+					Automatically save configuration on exit</para>
+			</listitem>
 		</varlistentry>
 
 		<varlistentry>
 			<term>autoconnect</term>
+			<listitem><para>
+					Semi-colon separated list of networks or 
+					servers to connect to on startup.
+			</para></listitem>
 		</varlistentry>
 
 		<varlistentry>
 			<term>motd-file</term>
+			<listitem><para>
+					Path to the message of the day file that is sent to 
+					clients upon connect.
+			</para></listitem>
 		</varlistentry>
-	
+
+		<varlistentry>
+			<term>match</term>
+			<listitem><para>
+					If the replication backend is set to 
+					<emphasis>highlight</emphasis>, this variable 
+					should contain a semicolon-separated list of 
+					words to search for.
+			</para></listitem>
+		</varlistentry>
+
 	</variablelist>
 
 </refsect2>
@@ -73,8 +104,26 @@ in a standard ControlProxy installation.
 	<variablelist>
 		<varlistentry>
 			<term>no_privmsg</term>
+			<listitem><para>
+				Don't interpret messages to the user 
+				<emphasis>ctrlproxy</emphasis> as administration commands.
+			</para>
+			<para>
+				This option would be needed if you want to be able to 
+				send messages to an actual user with the nickname 
+				<emphasis>ctrlproxy</emphasis>.
+		</para></listitem>
 		</varlistentry>
 	</variablelist>
+</refsect2>
+
+<refsect2>
+	<title>[log-custom]</title>
+
+	<para>
+		If the [log-custom] section is present, ControlProxy 
+		will write a log to <filename>~/.ctrlproxy/log-custom/</filename>
+	</para>
 </refsect2>
 
 <refsect2>
@@ -87,8 +136,49 @@ in a standard ControlProxy installation.
 	<variablelist>
 		<varlistentry>
 			<term>logfile</term>
+			<listitem><para>
+					Directory in which logs will be written (defaults to 
+					<filename>~/.ctrlproxy/log-irssi/</filename>.
+			</para></listitem>
 		</varlistentry>
 	</variablelist>
+</refsect2>
+
+<refsect2>
+	<title>[auto-away]</title>
+
+	<para>
+		Add this section to automatically change the state of the 
+		user to AWAY when the user is idle for a specific username.</para>
+
+	<variablelist>
+		<varlistentry>
+			<term>message</term>
+			<listitem><para>
+					Away message to set.
+			</para></listitem>
+		</varlistentry>
+		<varlistentry>
+			<term>only_noclient</term>
+			<listitem><para>
+					Boolean variable. If set to true, then 
+					the connection will only be changed to away if there are 
+					no clients connected.
+			</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+			<term>time</term>
+			<listitem><para>
+					Number of seconds of idleness after which the 
+					connection should be set to away. Default is 10 minutes.
+			</para></listitem>
+		</varlistentry>
+	</variablelist>
+
+
+
+
 </refsect2>
 
 <refsect2>
@@ -101,9 +191,16 @@ in a standard ControlProxy installation.
 	<variablelist>
 		<varlistentry>
 			<term>port</term>
+			<listitem><para>
+					TCP/IP port to listen on for new connections.
+			</para></listitem>
 		</varlistentry>
 		<varlistentry>
 			<term>allow</term>
+			<listitem><para>
+					Semicolon-separeted list of usernames and passwords allowed 
+					to connect. Separate user name and password by a colon.
+			</para></listitem>
 		</varlistentry>
 	</variablelist>
 
@@ -125,15 +222,93 @@ in a standard ControlProxy installation.
 	<variablelist>
 		<varlistentry>
 			<term>auto</term>
+			<listitem><para>
+					Automatically start a listener on a new port for 
+					each network that ctrlproxy connects to.</para></listitem>
 		</varlistentry>
 		<varlistentry>
 			<term>autoport</term>
+			<listitem><para>
+					First port of port range used when adding new listeners.
+			</para></listitem>
 		</varlistentry>
+
 		<varlistentry>
 			<term>password</term>
+			<listitem><para>
+					Password that the user should specify to log in.
+			</para></listitem>
 		</varlistentry>
+
+		<!--
+		<varlistentry>
+			<term>ssl</term>
+			<listitem><para>
+					Specifies whether the incoming connections will be SSL.
+			</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+			<term>network</term>
+			<listitem><para>
+					The network this listener will connect clients to, if 
+					not specified otherwise.
+				</para>
+				<para>
+					If no network is set, clients will have to select 
+					a network upon connect using the <command>CONNECT</command>
+					command.
+				</para>
+			</listitem>
+		</varlistentry>-->
 	</variablelist>
 </refsect2>	
+
+</refsect1>
+
+<refsect1>
+	<title>REPLICATION</title>
+
+	<para>When a client connects, ctrlproxy will send information about 
+		the channels the user is on. Optionally, it can also send 
+		some of the messages that were received before the client connected 
+		(replication).
+	</para>
+
+	<para>
+		The <parameter>replication</parameter> variable determines what 
+		kind of replication is used. At the moment, the following 
+		values are supported:
+	</para>
+
+	<variablelist>
+		<varlistentry>
+			<term>none</term>
+			<listitem><para>No replication.</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+			<term>highlight</term>
+			<listitem><para>
+				Send messages that one of a set of regular expressions. 
+				The regular expressions should be specified in 
+				variable.</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+			<term>lastdisconnect</term>
+			<listitem><para>
+					Send all messages since the last client disconnected.
+			</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+			<term>simple</term>
+			<listitem><para>
+					Send all messages since the last message said by 
+					the user.</para></listitem>
+		</varlistentry>
+	</variablelist>
 
 </refsect1>
 
