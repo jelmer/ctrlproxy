@@ -172,7 +172,9 @@ gboolean nickserv_save(struct global *global, const char *dir)
         char *line;
         
         line = g_strdup_printf("%s\t%s\t%s\n", n->nick, n->pass, n->network?n->network:"*");
-		write(fd, line, strlen(line));
+		if (write(fd, line, strlen(line)) < 0) {
+			log_global(LOG_WARNING, "error writing line `%s': %s", line, strerror(errno));
+		}
 
         g_free(line);
 	}

@@ -249,7 +249,10 @@ int main(int argc, char **argv)
 #ifdef SIGTSTP
 		signal(SIGTSTP, SIG_IGN);
 #endif
-		daemon(1, 0);
+		if (daemon(1, 0) < 0) {
+			log_global(LOG_ERROR, "Unable to daemonize\n");
+			return -1;
+		}
 		isdaemon = 1;
 #else
 		log_global(LOG_ERROR, "Daemon mode not compiled in");

@@ -482,7 +482,7 @@ static gboolean connect_current_tcp_server(struct network *s)
 {
 	struct addrinfo *res;
 	int sock = -1;
-	size_t size;
+	socklen_t size;
 	struct tcp_server_config *cs;
 	GIOChannel *ioc = NULL;
 	struct addrinfo hints;
