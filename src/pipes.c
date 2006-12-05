@@ -32,7 +32,7 @@ static gboolean handle_new_client(GIOChannel *c_server, GIOCondition condition, 
 	int sock = accept(g_io_channel_unix_get_fd(c_server), NULL, 0);
 
 	if (sock < 0) {
-		log_global(NULL, LOG_WARNING, "Error accepting new connection: %s", strerror(errno));
+		log_global(LOG_WARNING, "Error accepting new connection: %s", strerror(errno));
 		return TRUE;
 	}
 
@@ -55,7 +55,7 @@ gboolean start_unix_socket(struct global *global)
 
 	sock = socket(PF_UNIX, SOCK_STREAM, 0);
 	if (sock < 0) {
-		log_global(NULL, LOG_ERROR, "error creating unix socket: %s", strerror(errno));
+		log_global(LOG_ERROR, "error creating unix socket: %s", strerror(errno));
 		return FALSE;
 	}
 	
@@ -64,19 +64,19 @@ gboolean start_unix_socket(struct global *global)
 	unlink(un.sun_path);
 
 	if (bind(sock, (struct sockaddr *)&un, sizeof(un)) < 0) {
-		log_global(NULL, LOG_ERROR, "unable to bind to %s: %s", un.sun_path, strerror(errno));
+		log_global(LOG_ERROR, "unable to bind to %s: %s", un.sun_path, strerror(errno));
 		return FALSE;
 	}
 	
 	if (listen(sock, 5) < 0) {
-		log_global(NULL, LOG_ERROR, "error listening on socket: %s", strerror(errno));
+		log_global(LOG_ERROR, "error listening on socket: %s", strerror(errno));
 		return FALSE;
 	}
 
 	global->unix_incoming = g_io_channel_unix_new(sock);
 
 	if (!global->unix_incoming) {
-		log_global(NULL, LOG_ERROR, "Unable to create GIOChannel for unix server socket");
+		log_global(LOG_ERROR, "Unable to create GIOChannel for unix server socket");
 		return FALSE;
 	}
 

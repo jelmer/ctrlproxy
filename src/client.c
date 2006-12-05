@@ -289,7 +289,7 @@ void disconnect_client(struct client *c, const char *reason)
 
 	lose_client_hook_execute(c);
 
-	log_client(NULL, LOG_INFO, c, "Removed client");
+	log_client(LOG_INFO, c, "Removed client");
 
 	irc_send_args(c->incoming, c->outgoing_iconv, NULL, "ERROR", reason, NULL);
 
@@ -520,7 +520,7 @@ static gboolean handle_pending_client_receive(GIOChannel *c, GIOCondition cond, 
 				client->network = find_network_by_hostname(client->network->global, l->args[1], l->args[2]?atoi(l->args[2]):6667, TRUE);
 
 				if (!client->network) {
-					log_client(NULL, LOG_ERROR, client, "Unable to connect to network with name %s", l->args[1]);
+					log_client(LOG_ERROR, client, "Unable to connect to network with name %s", l->args[1]);
 				}
 
 				if (client->network->connection.state == NETWORK_CONNECTION_STATE_NOT_CONNECTED) {
@@ -545,7 +545,7 @@ static gboolean handle_pending_client_receive(GIOChannel *c, GIOCondition cond, 
 
 				pending_clients = g_list_remove(pending_clients, client);
 				client->network->clients = g_list_append(client->network->clients, client);
-				log_client(NULL, LOG_INFO, client, "New client");
+				log_client(LOG_INFO, client, "New client");
 
 				return FALSE;
 			}
@@ -624,7 +624,7 @@ gboolean client_set_charset(struct client *c, const char *name)
 	tmp = g_iconv_open(name, "UTF-8");
 
 	if (tmp == (GIConv)-1) {
-		log_client(NULL, LOG_WARNING, c, "Unable to find charset `%s'", name);
+		log_client(LOG_WARNING, c, "Unable to find charset `%s'", name);
 		return FALSE;
 	}
 	
@@ -635,7 +635,7 @@ gboolean client_set_charset(struct client *c, const char *name)
 
 	tmp = g_iconv_open("UTF-8", name);
 	if (tmp == (GIConv)-1) {
-		log_client(NULL, LOG_WARNING, c, "Unable to find charset `%s'", name);
+		log_client(LOG_WARNING, c, "Unable to find charset `%s'", name);
 		return FALSE;
 	}
 

@@ -148,7 +148,7 @@ static gboolean pass_handle_data(struct socks_client *cl)
 	}
 
 	if (header[0] != SOCKS_VERSION && header[0] != 0x1) {
-		log_global("socks", LOG_WARNING, "Client suddenly changed socks uname/pwd version to %x", header[0]);
+		log_global(LOG_WARNING, "Client suddenly changed socks uname/pwd version to %x", header[0]);
 	 	return socks_error(cl->connection, REP_GENERAL_FAILURE);
 	}
 
@@ -202,7 +202,7 @@ static gboolean pass_handle_data(struct socks_client *cl)
 		cl->state = STATE_NORMAL;		
 		return TRUE;
 	} else {
-		log_global("socks", LOG_WARNING, "Password mismatch for user %s", uname);
+		log_global(LOG_WARNING, "Password mismatch for user %s", uname);
 		return FALSE;
 	}
 }
@@ -248,7 +248,7 @@ static gboolean handle_client_data (GIOChannel *ioc, GIOCondition o, gpointer da
 
 		if (header[0] != SOCKS_VERSION) 
 		{
-			log_global("socks", LOG_WARNING, "Ignoring client with socks version %d", header[0]);
+			log_global(LOG_WARNING, "Ignoring client with socks version %d", header[0]);
 			return FALSE;
 		}
 
@@ -283,11 +283,11 @@ static gboolean handle_client_data (GIOChannel *ioc, GIOCondition o, gpointer da
 		g_io_channel_flush(ioc, NULL);
 
 		if (!cl->method) {
-			log_global("socks", LOG_WARNING, "Refused client because no valid method was available");
+			log_global(LOG_WARNING, "Refused client because no valid method was available");
 			return FALSE;
 		}
 
-		log_global("socks", LOG_INFO, "Accepted socks client authenticating using %s", cl->method->name);
+		log_global(LOG_INFO, "Accepted socks client authenticating using %s", cl->method->name);
 
 		if (!cl->method->handle_data) {
 			cl->state = STATE_NORMAL;
@@ -306,12 +306,12 @@ static gboolean handle_client_data (GIOChannel *ioc, GIOCondition o, gpointer da
 		}
 
 		if (header[0] != SOCKS_VERSION) {
-			log_global("socks", LOG_WARNING, "Client suddenly changed socks version to %x", header[0]);
+			log_global(LOG_WARNING, "Client suddenly changed socks version to %x", header[0]);
 		 	return socks_error(ioc, REP_GENERAL_FAILURE);
 		}
 
 		if (header[1] != CMD_CONNECT) {
-			log_global("socks", LOG_WARNING, "Client used unknown command %x", header[1]);
+			log_global(LOG_WARNING, "Client used unknown command %x", header[1]);
 			return socks_error(ioc, REP_CMD_NOT_SUPPORTED);
 		}
 
@@ -338,18 +338,18 @@ static gboolean handle_client_data (GIOChannel *ioc, GIOCondition o, gpointer da
 					status = g_io_channel_read_chars(ioc, header, 2, &read, NULL);
 					port = ntohs(*(guint16 *)header);
 
-					log_global("socks", LOG_INFO, "Request to connect to %s:%d", hostname, port);
+					log_global(LOG_INFO, "Request to connect to %s:%d", hostname, port);
 
 					result = socks_map_network_fqdn(cl->global, hostname, port);
 
 					if (!result) {
-						log_global("socks", LOG_WARNING, "Unable to return network matching %s:%d", hostname, port);
+						log_global(LOG_WARNING, "Unable to return network matching %s:%d", hostname, port);
 						return socks_error(ioc, REP_NET_UNREACHABLE);
 					} 
 
 					if (result->connection.state == NETWORK_CONNECTION_STATE_NOT_CONNECTED && 
 						!connect_network(result)) {
-						log_network("socks", LOG_ERROR, result, "Unable to connect");
+						log_network(LOG_ERROR, result, "Unable to connect");
 						return socks_error(ioc, REP_NET_UNREACHABLE);
 					}
 
@@ -373,7 +373,7 @@ static gboolean handle_client_data (GIOChannel *ioc, GIOCondition o, gpointer da
 							len = 16;
 							port = name6->sin6_port;
 						} else {
-							log_network("socks", LOG_ERROR, result, "Unable to obtain local address for connection to server");
+							log_network(LOG_ERROR, result, "Unable to obtain local address for connection to server");
 							return socks_error(ioc, REP_NET_UNREACHABLE);
 						}
 							
@@ -421,7 +421,7 @@ static gboolean handle_new_client (GIOChannel *ioc, GIOCondition o, gpointer dat
 	if (!ns) {
 		g_free(cl->clientname);
 		g_free(cl);
-		log_global("socks", LOG_ERROR, "Unable to accept connection");
+		log_global(LOG_ERROR, "Unable to accept connection");
 		return TRUE;
 	}
 	
@@ -495,7 +495,7 @@ static void load_config(struct global *global)
 
 	sock = socket(PF_INET, SOCK_STREAM, 0);
 	if (sock < 0) {
-		log_global("socks", LOG_ERROR, "error creating socket: %s", strerror(errno));
+		log_global(LOG_ERROR, "error creating socket: %s", strerror(errno));
 		return;
 	}
 
@@ -506,12 +506,12 @@ static void load_config(struct global *global)
 	addr.sin_addr.s_addr = htonl(INADDR_ANY);
 
 	if (bind (sock, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
-		log_global("socks", LOG_ERROR, "Unable to bind to port %d: %s", port, strerror(errno));
+		log_global(LOG_ERROR, "Unable to bind to port %d: %s", port, strerror(errno));
 		return;
 	}
 
 	if (listen(sock, 5) < 0) {
-		log_global("socks", LOG_ERROR, "error listening on socket: %s", strerror(errno));
+		log_global(LOG_ERROR, "error listening on socket: %s", strerror(errno));
 		return;
 	}
 
@@ -519,14 +519,14 @@ static void load_config(struct global *global)
 	g_io_channel_set_close_on_unref(server_channel, TRUE);
 
 	if (!server_channel) {
-		log_global("socks", LOG_ERROR, "Unable to create GIOChannel for server socket");
+		log_global(LOG_ERROR, "Unable to create GIOChannel for server socket");
 		return;
 	}
 
 	server_channel_in = g_io_add_watch(server_channel, G_IO_IN, handle_new_client, global);
 	g_io_channel_unref(server_channel);
 
-	log_global("socks", LOG_INFO, "Listening for SOCKS connections on port %d", port);
+	log_global(LOG_INFO, "Listening for SOCKS connections on port %d", port);
 }
 
 static gboolean init_plugin(void)

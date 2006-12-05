@@ -72,11 +72,11 @@ void nickserv_identify_me(struct network *network, char *nick)
 		const char *nickserv_n = nickserv_nick(network);
 		char *raw;
 		raw = g_strdup_printf("IDENTIFY %s", pass);
-		log_network(NULL, LOG_INFO, network, "Sending password for %s", nickserv_n);
+		log_network(LOG_INFO, network, "Sending password for %s", nickserv_n);
 		network_send_args(network, "PRIVMSG", nickserv_n, raw, NULL);
 		g_free(raw);
 	} else {
-		log_network(NULL, LOG_INFO, network, "No password known for `%s'", nick);
+		log_network(LOG_INFO, network, "No password known for `%s'", nick);
 	}
 }
 
@@ -127,7 +127,7 @@ static gboolean log_data(struct network *n, const struct line *l, enum data_dire
 			if (e->pass == NULL || 
 				strcmp(e->pass, newpass) != 0) {
 				e->pass = g_strdup(newpass);
-				log_network(NULL, LOG_INFO, n, "Caching password for nick %s", e->nick);
+				log_network(LOG_INFO, n, "Caching password for nick %s", e->nick);
 			} 
 
 			g_free(newpass);
@@ -140,7 +140,7 @@ static gboolean log_data(struct network *n, const struct line *l, enum data_dire
 			const char *nickserv_n = nickserv_nick(n);
 			char *raw;
 			
-			log_network(NULL, LOG_INFO, n, "Ghosting current user using '%s'", nickattempt);
+			log_network(LOG_INFO, n, "Ghosting current user using '%s'", nickattempt);
 
 			raw = g_strdup_printf("GHOST %s %s", nickattempt, pass);
 			network_send_args(n, "PRIVMSG", nickserv_n, raw, NULL);
@@ -162,7 +162,7 @@ gboolean nickserv_save(struct global *global, const char *dir)
 	fd = open(filename, O_WRONLY | O_CREAT, 0600);
 
     if (fd == -1) {
-		log_global(NULL, LOG_WARNING, "Unable to write nickserv file `%s': %s", filename, strerror(errno));
+		log_global(LOG_WARNING, "Unable to write nickserv file `%s': %s", filename, strerror(errno));
         g_free(filename);
         return FALSE;
     }

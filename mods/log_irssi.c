@@ -60,7 +60,7 @@ static FILE *find_add_channel_file(struct network *s, const char *name) {
 		n = g_strdup_printf("%s/%s", logfile, server_name);
 		/* Check if directory needs to be created */
 		if(!g_file_test(n, G_FILE_TEST_IS_DIR) && g_mkdir(n, 0700) == -1) {
-			log_network("log_irssi", LOG_ERROR, s, "Couldn't create directory %s for logging!", n);
+			log_network(LOG_ERROR, s, "Couldn't create directory %s for logging!", n);
 			g_free(hash_name);
 			g_free(n);
 			return NULL;
@@ -74,7 +74,7 @@ static FILE *find_add_channel_file(struct network *s, const char *name) {
 		g_free(cn);
 		f = fopen(n, "a+");
 		if(!f) {
-			log_network("log_irssi", LOG_ERROR, s, "Couldn't open file %s for logging!", n);
+			log_network(LOG_ERROR, s, "Couldn't open file %s for logging!", n);
 			g_free(n);
 			return NULL;
 		}

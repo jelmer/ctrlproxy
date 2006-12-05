@@ -53,32 +53,32 @@ void ssl_cert_generate(const char *keyfile, const char *certfile,
 	if (g_file_test(keyfile, G_FILE_TEST_EXISTS) || 
 		g_file_test(certfile, G_FILE_TEST_EXISTS) || 
 		g_file_test(cafile, G_FILE_TEST_EXISTS)) {
-		log_global(NULL, LOG_WARNING, "TLS autogeneration skipped - some TLS files already exist");
+		log_global(LOG_WARNING, "TLS autogeneration skipped - some TLS files already exist");
 		return;
 	}
 
 #define TLSCHECK(call) do { \
 	ret = call; \
 	if (ret < 0) { \
-		log_global(NULL, LOG_WARNING, "TLS %s - %s", #call, gnutls_strerror(ret)); \
+		log_global(LOG_WARNING, "TLS %s - %s", #call, gnutls_strerror(ret)); \
 		goto failed; \
 	} \
 } while (0)
 
 	TLSCHECK(gnutls_global_init());
 
-	log_global(NULL, LOG_INFO, 
+	log_global(LOG_INFO, 
 			   "Attempting to autogenerate TLS self-signed keys");
 	
-	log_global(NULL, LOG_TRACE, "Generating private key");
+	log_global(LOG_TRACE, "Generating private key");
 	TLSCHECK(gnutls_x509_privkey_init(&key));
 	TLSCHECK(gnutls_x509_privkey_generate(key,   GNUTLS_PK_RSA, DH_BITS, 0));
 
-	log_global(NULL, LOG_TRACE, "Generating CA private key");
+	log_global(LOG_TRACE, "Generating CA private key");
 	TLSCHECK(gnutls_x509_privkey_init(&cakey));
 	TLSCHECK(gnutls_x509_privkey_generate(cakey, GNUTLS_PK_RSA, DH_BITS, 0));
 
-	log_global(NULL, LOG_TRACE, "Generating CA certificate");
+	log_global(LOG_TRACE, "Generating CA certificate");
 	TLSCHECK(gnutls_x509_crt_init(&cacrt));
 	TLSCHECK(gnutls_x509_crt_set_dn_by_oid(cacrt, 
 				      GNUTLS_OID_X520_ORGANIZATION_NAME, 0,
@@ -99,7 +99,7 @@ void ssl_cert_generate(const char *keyfile, const char *certfile,
 	TLSCHECK(gnutls_x509_crt_set_subject_key_id(cacrt, keyid, keyidsize));
 	TLSCHECK(gnutls_x509_crt_sign(cacrt, cacrt, cakey));
 
-	log_global(NULL, LOG_TRACE, "Generating TLS certificaten");
+	log_global(LOG_TRACE, "Generating TLS certificaten");
 	TLSCHECK(gnutls_x509_crt_init(&crt));
 	TLSCHECK(gnutls_x509_crt_set_dn_by_oid(crt, 
 				      GNUTLS_OID_X520_ORGANIZATION_NAME, 0,
@@ -120,7 +120,7 @@ void ssl_cert_generate(const char *keyfile, const char *certfile,
 	TLSCHECK(gnutls_x509_crt_set_subject_key_id(crt, keyid, keyidsize));
 	TLSCHECK(gnutls_x509_crt_sign(crt, crt, key));
 
-	log_global(NULL, LOG_TRACE, "Exporting TLS keys");
+	log_global(LOG_TRACE, "Exporting TLS keys");
 
 	bufsize = sizeof(buf);
 	TLSCHECK(gnutls_x509_crt_export(crt, GNUTLS_X509_FMT_PEM, buf, &bufsize));
@@ -139,11 +139,11 @@ void ssl_cert_generate(const char *keyfile, const char *certfile,
 	gnutls_x509_crt_deinit(cacrt);
 	gnutls_x509_crt_deinit(crt);
 
-	log_global(NULL, LOG_INFO, "TLS self-signed keys generated OK");
+	log_global(LOG_INFO, "TLS self-signed keys generated OK");
 	return;
 
 failed:
-	log_global(NULL, LOG_WARNING, "TLS certificate generation failed");
+	log_global(LOG_WARNING, "TLS certificate generation failed");
 }
 
 gpointer ssl_create_server_credentials(struct global *global, 

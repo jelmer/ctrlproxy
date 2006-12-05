@@ -418,7 +418,7 @@ static gboolean file_init(struct linestack_context *ctx, const char *name, struc
 
 	data->line_file = g_io_channel_new_file(data_file, "w+", &error);
 	if (data->line_file == NULL) {
-		log_global(NULL, LOG_WARNING, "Error opening `%s': %s", 
+		log_global(LOG_WARNING, "Error opening `%s': %s", 
 						  data_file, error->message);
 		g_free(data_file);
 		return FALSE;
@@ -431,7 +431,7 @@ static gboolean file_init(struct linestack_context *ctx, const char *name, struc
 
 	data->state_file = g_io_channel_new_file(data_file, "w+", &error);
 	if (data->state_file == NULL) {
-		log_global(NULL, LOG_WARNING, "Error opening `%s': %s", 
+		log_global(LOG_WARNING, "Error opening `%s': %s", 
 						  data_file, error->message);
 		g_free(data_file);
 		return FALSE;
@@ -467,7 +467,7 @@ static void file_insert_state(struct linestack_context *ctx, const struct networ
 	GError *error = NULL;
 	GIOStatus status;
 
-	log_network_state(NULL, LOG_TRACE, state, "Inserting state");
+	log_network_state(LOG_TRACE, state, "Inserting state");
 	
 	nd->lines_since_last_state = 0;
 
@@ -615,7 +615,7 @@ static gboolean file_traverse(struct linestack_context *ctx,
 		(!end_offset || 
 		 g_io_channel_tell_position(nd->line_file) <= (*end_offset))) {
 		if (status != G_IO_STATUS_NORMAL) {
-			log_global(NULL, LOG_WARNING, "read_line() failed: %s",
+			log_global(LOG_WARNING, "read_line() failed: %s",
 					error->message);
 			return FALSE;
 		}

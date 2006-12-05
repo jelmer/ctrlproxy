@@ -519,7 +519,7 @@ struct virtual_network_ops admin_network = {
 	"admin", admin_net_init, admin_to_server, NULL
 };
 
-void admin_log(const char *module, enum log_level level, const struct network *n, const struct client *c, const char *data)
+void admin_log(enum log_level level, const struct network *n, const struct client *c, const char *data)
 {
 	extern struct global *my_global;
 	struct line *l;

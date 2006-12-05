@@ -36,7 +36,7 @@ gboolean no_log_timestamp = FALSE;
 enum log_level current_log_level = LOG_INFO;
 FILE *flog = NULL;
 
-static void log_entry(const char *module, enum log_level level, const struct network *n, const struct client *c, const char *data)
+static void log_entry(enum log_level level, const struct network *n, const struct client *c, const char *data)
 {
 	if (flog == NULL)
 		return;
@@ -44,14 +44,11 @@ static void log_entry(const char *module, enum log_level level, const struct net
 	if (level > current_log_level)
 		return;
 
-	admin_log(module, level, n, c, data);
+	admin_log(level, n, c, data);
 	
 	if (!no_log_timestamp)
 		fprintf(flog, "[%s] ", get_date());
 	
-	if (module) 
-		fprintf(flog, "[%s] ", module);
-
 	fprintf(flog, "%s", data);
 
 	if (n) {
@@ -74,7 +71,7 @@ void log_network_line(const struct network *n, const struct line *l, gboolean in
 		return;
 
 	raw = irc_line_string(l);
-	log_network(NULL, LOG_DATA, n, "%c %s", incoming?'<':'>', raw);
+	log_network(LOG_DATA, n, "%c %s", incoming?'<':'>', raw);
 	g_free(raw);
 }
 
@@ -85,44 +82,44 @@ void log_client_line(const struct client *n, const struct line *l, gboolean inco
 		return;
 
 	raw = irc_line_string(l);
-	log_client(NULL, LOG_DATA, n, "%c %s", incoming?'<':'>', raw);
+	log_client(LOG_DATA, n, "%c %s", incoming?'<':'>', raw);
 	g_free(raw);
 }
 
-void log_network(const char *module, enum log_level level, const struct network *n, const char *fmt, ...)
+void log_network(enum log_level level, const struct network *n, const char *fmt, ...)
 {
 	va_list ap;	
 	char *tmp; 
 	va_start(ap, fmt);
 	tmp = g_strdup_vprintf(fmt, ap);
-	log_entry(module, level, n, NULL, tmp);
+	log_entry(level, n, NULL, tmp);
 	va_end(ap);
 	g_free(tmp);
 }
 
-void log_client(const char *module, enum log_level level, const struct client *c, const char *fmt, ...)
-{
-	va_list ap;	
-	char *tmp; 
-	va_start(ap, fmt);
-	tmp = g_strdup_vprintf(fmt, ap);
-	va_end(ap);
-	log_entry(module, level, c->network, c, tmp);
-	g_free(tmp);
-}
-
-void log_global(const char *module, enum log_level level, const char *fmt, ...)
+void log_client(enum log_level level, const struct client *c, const char *fmt, ...)
 {
 	va_list ap;	
 	char *tmp; 
 	va_start(ap, fmt);
 	tmp = g_strdup_vprintf(fmt, ap);
 	va_end(ap);
-	log_entry(module, level, NULL, NULL, tmp);
+	log_entry(level, c->network, c, tmp);
 	g_free(tmp);
 }
 
-void log_network_state(const char *module, enum log_level l, const struct network_state *st, const char *fmt, ...)
+void log_global(enum log_level level, const char *fmt, ...)
+{
+	va_list ap;	
+	char *tmp; 
+	va_start(ap, fmt);
+	tmp = g_strdup_vprintf(fmt, ap);
+	va_end(ap);
+	log_entry(level, NULL, NULL, tmp);
+	g_free(tmp);
+}
+
+void log_network_state(enum log_level l, const struct network_state *st, const char *fmt, ...)
 {
 	char *ret;
 	va_list ap;
@@ -134,7 +131,7 @@ void log_network_state(const char *module, enum log_level l, const struct networ
 	ret = g_strdup_vprintf(fmt, ap);
 	va_end(ap);
 
-	log_global(module, l, "%s", ret);
+	log_global(l, "%s", ret);
 
 	g_free(ret);
 }
@@ -142,12 +139,12 @@ void log_network_state(const char *module, enum log_level l, const struct networ
 
 
 static void log_handler(const gchar *log_domain, GLogLevelFlags flags, const gchar *message, gpointer user_data) {
-	log_global(log_domain, LOG_ERROR, message);
+	log_global(LOG_ERROR, "[%s] %s", log_domain, message);
 }
 
 static void fini_log(void)
 {
-	log_global(NULL, LOG_INFO, "Closing log file");
+	log_global(LOG_INFO, "Closing log file");
 	if (flog != stderr) {
 		fclose(flog);
 	}
@@ -171,6 +168,6 @@ gboolean init_log(const char *lf)
 
 	atexit(fini_log);
 
-	log_global(NULL, LOG_INFO, "Opening log file");
+	log_global(LOG_INFO, "Opening log file");
 	return TRUE;
 }

@@ -175,7 +175,7 @@ gboolean ctcp_process_client_request (struct client *c, struct line *l)
 	char *command = get_ctcp_command(l->args[2]);
 
 	if (command == NULL) {
-		log_client(NULL, LOG_WARNING, c, "Received mailformed CTCP request");
+		log_client(LOG_WARNING, c, "Received mailformed CTCP request");
 		return FALSE;
 	}
 
@@ -187,7 +187,7 @@ gboolean ctcp_process_client_request (struct client *c, struct line *l)
 		req->destination = g_strdup(l->args[1]);
 	req->command = command;
 
-	log_client(NULL, LOG_TRACE, c, "Tracking CTCP request '%s' to %s", req->command, req->destination);
+	log_client(LOG_TRACE, c, "Tracking CTCP request '%s' to %s", req->command, req->destination);
 
 	ctcp_request_queue = g_list_append(ctcp_request_queue, req);
 
@@ -203,12 +203,12 @@ gboolean ctcp_process_client_reply (struct client *c, struct line *l)
 	char *command = get_ctcp_command(l->args[2]);
 
 	if (command == NULL) {
-		log_client(NULL, LOG_WARNING, c, "Received mailformed CTCP reply");
+		log_client(LOG_WARNING, c, "Received mailformed CTCP reply");
 		return FALSE;
 	}
 
 
-	log_client(NULL, LOG_WARNING, c, "Received CTCP client reply '%s' from client", command);
+	log_client(LOG_WARNING, c, "Received CTCP client reply '%s' from client", command);
 	g_free(command);
 
 	return TRUE;
@@ -224,7 +224,7 @@ gboolean ctcp_process_network_reply (struct network *n, struct line *l)
 	nick = line_get_nick(l);
 
 	if (command == NULL) {
-		log_network(NULL, LOG_WARNING, n, "Received mailformed CTCP request from `%s'", nick);
+		log_network(LOG_WARNING, n, "Received mailformed CTCP request from `%s'", nick);
 		g_free(nick);
 		return FALSE;
 	}
@@ -257,7 +257,7 @@ gboolean ctcp_process_network_reply (struct network *n, struct line *l)
 	}
 
 	/* otherwise, inform user */
-	log_network(NULL, LOG_WARNING, n, "Don't know where to send unknown CTCP reply '%s'", command);
+	log_network(LOG_WARNING, n, "Don't know where to send unknown CTCP reply '%s'", command);
 
 	g_free(command);
 
@@ -279,7 +279,7 @@ gboolean ctcp_process_network_request (struct network *n, struct line *l)
 	t = strchr(data, '\001');
 	if(!t) { 
 		g_free(data); 
-		log_network(NULL, LOG_WARNING, n, "Malformed CTCP request from %s!", sender);
+		log_network(LOG_WARNING, n, "Malformed CTCP request from %s!", sender);
 		g_free(sender);
 		return FALSE;
 	}
@@ -307,7 +307,7 @@ gboolean ctcp_process_network_request (struct network *n, struct line *l)
 
 	if (!ret) {
 		ctcp_reply(n, sender, "ERRMSG", NULL);
-		log_network(NULL, LOG_WARNING, n, "Received unknown CTCP request '%s'!", data);
+		log_network(LOG_WARNING, n, "Received unknown CTCP request '%s'!", data);
 		ret = FALSE;
 	}
 

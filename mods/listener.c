@@ -58,20 +58,20 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition condition, gpo
 		}
 
 		if(!listener->password) {
-			log_network("listener", LOG_WARNING, listener->network, "No password set, allowing client _without_ authentication!");
+			log_network(LOG_WARNING, listener->network, "No password set, allowing client _without_ authentication!");
 		}
 
 		if(!g_strcasecmp(l->args[0], "PASS")) {
 			char *desc;
 			if (listener->password && strcmp(l->args[1], listener->password)) {
-				log_network("listener", LOG_WARNING, listener->network, "User tried to log in with incorrect password!");
+				log_network(LOG_WARNING, listener->network, "User tried to log in with incorrect password!");
 				irc_sendf(c, iconv, NULL, ":%s %d %s :Password mismatch", get_my_hostname(), ERR_PASSWDMISMATCH, "*");
 	
 				free_line(l);
 				return TRUE;
 			}
 
-			log_network ("listener", LOG_INFO, listener->network, "Client successfully authenticated");
+			log_network (LOG_INFO, listener->network, "Client successfully authenticated");
 
 			desc = g_io_channel_ip_get_description(c);
 			client_init(listener->network, c, desc);
@@ -98,7 +98,7 @@ static gboolean handle_new_client(GIOChannel *c_server, GIOCondition condition, 
 	int sock = accept(g_io_channel_unix_get_fd(c_server), NULL, 0);
 
 	if (sock < 0) {
-		log_global("listener", LOG_WARNING, "Error accepting new connection: %s", strerror(errno));
+		log_global(LOG_WARNING, "Error accepting new connection: %s", strerror(errno));
 		return TRUE;
 	}
 
@@ -110,7 +110,7 @@ static gboolean handle_new_client(GIOChannel *c_server, GIOCondition condition, 
 											 NULL, listener->ssl_credentials);
 		g_assert(c != NULL);
 #else
-		log_global("listener", LOG_WARNING, "SSL support not available, not listening for SSL connection");
+		log_global(LOG_WARNING, "SSL support not available, not listening for SSL connection");
 #endif
 	}
 
@@ -152,14 +152,14 @@ gboolean start_listener(struct listener *l)
 
 	error = getaddrinfo(l->address, l->port, &hints, &all_res);
 	if (error) {
-		log_global("listener", LOG_ERROR, "Can't get address for %s:%s", l->address?l->address:"", l->port);
+		log_global(LOG_ERROR, "Can't get address for %s:%s", l->address?l->address:"", l->port);
 		return FALSE;
 	}
 
 	for (res = all_res; res; res = res->ai_next) {
 		sock = socket(PF_INET, SOCK_STREAM, 0);
 		if (sock < 0) {
-			log_global( "listener", LOG_ERROR, "error creating socket: %s", strerror(errno));
+			log_global(LOG_ERROR, "error creating socket: %s", strerror(errno));
 			freeaddrinfo(all_res);
 			return FALSE;
 		}
@@ -167,14 +167,14 @@ gboolean start_listener(struct listener *l)
 		setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
 	
 		if (bind(sock, res->ai_addr, res->ai_addrlen) < 0) {
-			log_global( "listener", LOG_ERROR, "bind to port %s failed: %s", l->port, strerror(errno));
+			log_global(LOG_ERROR, "bind to port %s failed: %s", l->port, strerror(errno));
 			freeaddrinfo(all_res);
 			return FALSE;
 		}
 	}
 
 	if (sock == -1) {
-		log_global( "listener", LOG_ERROR, "Unable to connect");
+		log_global(LOG_ERROR, "Unable to connect");
 		freeaddrinfo(all_res);
 		return FALSE;
 	}
@@ -182,14 +182,14 @@ gboolean start_listener(struct listener *l)
 	freeaddrinfo(all_res);
 	
 	if (listen(sock, 5) < 0) {
-		log_global( "listener", LOG_ERROR, "error listening on socket: %s", strerror(errno));
+		log_global( LOG_ERROR, "error listening on socket: %s", strerror(errno));
 		return FALSE;
 	}
 
 	l->incoming = g_io_channel_unix_new(sock);
 
 	if (!l->incoming) {
-		log_global( "listener", LOG_ERROR, "Unable to create GIOChannel for server socket");
+		log_global( LOG_ERROR, "Unable to create GIOChannel for server socket");
 		return FALSE;
 	}
 
@@ -199,7 +199,7 @@ gboolean start_listener(struct listener *l)
 	l->incoming_id = g_io_add_watch(l->incoming, G_IO_IN, handle_new_client, l);
 	g_io_channel_unref(l->incoming);
 
-	log_network( "listener", LOG_INFO, l->network, "Listening on %s:%s", l->address?l->address:"", l->port);
+	log_network( LOG_INFO, l->network, "Listening on %s:%s", l->address?l->address:"", l->port);
 
 	l->active = TRUE;
 
@@ -208,7 +208,7 @@ gboolean start_listener(struct listener *l)
 
 gboolean stop_listener(struct listener *l)
 {
-	log_global ( "listener", LOG_INFO, "Stopped listening at %s:%s", l->address?l->address:"", l->port);
+	log_global ( LOG_INFO, "Stopped listening at %s:%s", l->address?l->address:"", l->port);
 	g_source_remove(l->incoming_id);
 	return TRUE;
 }
@@ -279,7 +279,7 @@ static void update_config(struct global *global, const char *path)
 	}
 
 	if (!g_key_file_save_to_file(kf, filename, &error)) {
-		log_global("listener", LOG_WARNING, "Unable to save to \"%s\": %s", filename, error->message);
+		log_global(LOG_WARNING, "Unable to save to \"%s\": %s", filename, error->message);
 	}
 	
 	g_free(filename);
@@ -370,7 +370,7 @@ static void load_config(struct global *global)
 			tmp = g_key_file_get_string(kf, groups[i], "network", NULL);
 			l->network = find_network(global, tmp);
 			if (!l->network) {
-				log_global("listener", LOG_ERROR, "Unable to find network named \"%s\"", tmp);
+				log_global(LOG_ERROR, "Unable to find network named \"%s\"", tmp);
 			}
 			g_free(tmp);
 		}

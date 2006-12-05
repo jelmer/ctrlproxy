@@ -53,15 +53,16 @@ struct plugin *load_plugin(const char *modulesdir, const char *name)
 		m = g_module_open(path_name, 0);
 
 		if(!m) {
-			log_global(NULL, LOG_ERROR, "Unable to open module %s(%s), ignoring", path_name, g_module_error());
+			log_global(LOG_ERROR, "Unable to open module %s(%s), ignoring", path_name, g_module_error());
 			g_free(path_name);
 			g_free(p);
 			return NULL;
 		}
 
 		if(!g_module_symbol(m, "plugin", (gpointer)&ops)) {
-			log_global(strchr(path_name, '/')?(strrchr(path_name, '/')+1):NULL, 
-					   LOG_ERROR, "No valid plugin information found");
+			log_global(LOG_ERROR, "%s: No valid plugin information found", 
+				strchr(path_name, '/')?(strrchr(path_name, '/')+1):"error"
+					   );
 			g_free(path_name);
 			g_free(p);
 			return NULL;
@@ -69,7 +70,7 @@ struct plugin *load_plugin(const char *modulesdir, const char *name)
 	}
 
 	if(plugin_loaded(ops->name)) {
-		log_global(ops->name, LOG_WARNING, "Plugin already loaded");
+		log_global(LOG_WARNING, "%s: Plugin already loaded", ops->name);
 		g_free(path_name);
 		g_free(p);
 		return NULL;
@@ -81,7 +82,7 @@ struct plugin *load_plugin(const char *modulesdir, const char *name)
 	p->ops = ops;
 
 	if(!p->ops->init()) {
-		log_global(p->ops->name, LOG_ERROR, "Error during initialization.");
+		log_global( LOG_ERROR, "%s: Error during initialization.", p->ops->name);
 		g_free(p);
 		return NULL;
 	}
@@ -96,12 +97,12 @@ gboolean init_plugins(const char *plugin_dir)
 	gboolean ret = TRUE;
 
 	if(!g_module_supported()) {
-		log_global(NULL, LOG_WARNING, "DSO's not supported on this platform. Not loading any plugins");
+		log_global(LOG_WARNING, "DSO's not supported on this platform. Not loading any plugins");
 	} else {
 		const char *name;
 		GDir *dir = g_dir_open(plugin_dir, 0, NULL);
 		if (!dir) {
-			log_global(NULL, LOG_WARNING, "Plugin dir does not exist, not loading plugins");
+			log_global(LOG_WARNING, "Plugin dir does not exist, not loading plugins");
 			return FALSE;
 		}
 

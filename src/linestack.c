@@ -311,7 +311,7 @@ struct linestack_context *new_linestack(struct network *n)
 		current_backend = linestack_find_ops(cfg->linestack_backend);
 
 		if (!current_backend) 
-			log_global(NULL, LOG_WARNING, "Unable to find linestack backend %s: falling back to default", cfg->linestack_backend);
+			log_global(LOG_WARNING, "Unable to find linestack backend %s: falling back to default", cfg->linestack_backend);
 	}
 
 	if (!current_backend) {

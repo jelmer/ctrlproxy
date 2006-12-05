@@ -447,27 +447,27 @@ static struct query unknown_query = {
 
 static void handle_465(struct network *n, struct line *l)
 {
-	log_network(NULL, LOG_ERROR, n, "Banned from server: %s", l->args[1]);
+	log_network(LOG_ERROR, n, "Banned from server: %s", l->args[1]);
 }
 
 static void handle_451(struct network *n, struct line *l)
 {
-	log_network(NULL, LOG_ERROR, n, "Not registered error, this is probably a bug...");
+	log_network(LOG_ERROR, n, "Not registered error, this is probably a bug...");
 }
 
 static void handle_462(struct network *n, struct line *l)
 {
-	log_network(NULL, LOG_ERROR, n, "Double registration error, this is probably a bug...");
+	log_network(LOG_ERROR, n, "Double registration error, this is probably a bug...");
 }
 
 static void handle_463(struct network *n, struct line *l)
 {
-	log_network(NULL, LOG_ERROR, n, "Host not privileged to connect");
+	log_network(LOG_ERROR, n, "Host not privileged to connect");
 }
 
 static void handle_464(struct network *n, struct line *l)
 {
-	log_network(NULL, LOG_ERROR, n, "Password mismatch");
+	log_network(LOG_ERROR, n, "Password mismatch");
 }
 
 /* List of responses that should be sent to all clients */
@@ -569,7 +569,7 @@ void redirect_response(struct network *network, struct line *l)
 	}
 
 	if (!c) {
-		log_network(NULL, LOG_WARNING, network, "Unable to redirect response %s", l->args[0]);
+		log_network(LOG_WARNING, network, "Unable to redirect response %s", l->args[0]);
 		clients_send(network, l, NULL);
 	}
 }
@@ -608,9 +608,9 @@ void redirect_record(const struct network *n, struct client *c, const struct lin
 	q = find_query(l->args[0]);
 	if(!q) {
 		if (c) {
-			log_client(NULL, LOG_WARNING, c, "Unknown command from client: %s", l->args[0]);
+			log_client(LOG_WARNING, c, "Unknown command from client: %s", l->args[0]);
 		} else {
-			log_network(NULL, LOG_WARNING, n, "Sending unknown command '%s'", l->args[0]);
+			log_network(LOG_WARNING, n, "Sending unknown command '%s'", l->args[0]);
 		}
 
 		q = &unknown_query;

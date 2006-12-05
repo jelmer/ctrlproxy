@@ -60,7 +60,7 @@ void handle_005(struct network_state *s, struct line *l)
 				s->info->casemapping = CASEMAP_ASCII;
 			} else {
 				s->info->casemapping = CASEMAP_UNKNOWN;
-				log_network_state(NULL, LOG_WARNING, s, "Unknown CASEMAPPING value '%s'", val);
+				log_network_state(LOG_WARNING, s, "Unknown CASEMAPPING value '%s'", val);
 			}
 		} else if(!g_strcasecmp(key, "NETWORK")) {
 			g_free(s->info->name);
@@ -161,7 +161,7 @@ char get_prefix_by_mode(char mode, const struct network_info *n)
 	
 	pref_end = strchr(prefix, ')');
 	if(prefix[0] != '(' || !pref_end) {
-		log_global(NULL, LOG_WARNING, "Malformed PREFIX data `%s'", prefix);
+		log_global(LOG_WARNING, "Malformed PREFIX data `%s'", prefix);
 		return ' ';
 	}
 	pref_end++;

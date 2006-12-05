@@ -94,7 +94,7 @@ gboolean client_send_state(struct client *c, struct network_state *state)
 	g_assert(c);
 	g_assert(state);
 
-    log_client(NULL, LOG_TRACE, c, "Sending state (%d channels)", g_list_length(state->channels));
+    log_client(LOG_TRACE, c, "Sending state (%d channels)", g_list_length(state->channels));
 
 	for (cl = state->channels; cl; cl = cl->next) {
 		ch = (struct channel_state *)cl->data;
@@ -141,7 +141,7 @@ void client_replicate(struct client *client)
 		}
 
 		if (!fn) {
-			log_client(NULL, LOG_WARNING, client, "Unable to find replication backend '%s'\n", bn);
+			log_client(LOG_WARNING, client, "Unable to find replication backend '%s'\n", bn);
 			fn = none_replicate;
 		}
 	}

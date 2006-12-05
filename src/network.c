@@ -47,7 +47,7 @@ static void server_send_login (struct network *s)
 
 	s->connection.state = NETWORK_CONNECTION_STATE_LOGIN_SENT;
 
-	log_network(NULL, LOG_TRACE, s, "Sending login details");
+	log_network(LOG_TRACE, s, "Sending login details");
 
 	s->state = network_state_init(&s->info, s->config->nick, 
 	                              s->config->username, get_my_hostname());
@@ -70,7 +70,7 @@ gboolean network_set_charset(struct network *n, const char *name)
 	tmp = g_iconv_open(name, "UTF-8");
 
 	if (tmp == (GIConv)-1) {
-		log_network(NULL, LOG_WARNING, n, "Unable to find charset `%s'", name);
+		log_network(LOG_WARNING, n, "Unable to find charset `%s'", name);
 		return FALSE;
 	}
 	
@@ -81,7 +81,7 @@ gboolean network_set_charset(struct network *n, const char *name)
 
 	tmp = g_iconv_open("UTF-8", name);
 	if (tmp == (GIConv)-1) {
-		log_network(NULL, LOG_WARNING, n, "Unable to find charset `%s'", name);
+		log_network(LOG_WARNING, n, "Unable to find charset `%s'", name);
 		return FALSE;
 	}
 
@@ -105,7 +105,7 @@ static gboolean process_from_server(struct network *n, struct line *l)
 	g_assert(l);
 
 	if (n->state == NULL) {
-		log_network(NULL, LOG_WARNING, n, "Dropping message '%s' because network is disconnected.", l->args[0]);
+		log_network(LOG_WARNING, n, "Dropping message '%s' because network is disconnected.", l->args[0]);
 		return FALSE;
 	}
 
@@ -125,12 +125,12 @@ static gboolean process_from_server(struct network *n, struct line *l)
 	} else if(!g_strcasecmp(l->args[0], "PONG")){
 		return TRUE;
 	} else if(!g_strcasecmp(l->args[0], "ERROR")) {
-		log_network(NULL, LOG_ERROR, n, "error: %s", l->args[1]);
+		log_network(LOG_ERROR, n, "error: %s", l->args[1]);
 	} else if(!g_strcasecmp(l->args[0], "433") && 
 			  n->connection.state == NETWORK_CONNECTION_STATE_LOGIN_SENT){
 		char *tmp = g_strdup_printf("%s_", l->args[2]);
 		network_send_args(n, "NICK", tmp, NULL);
-		log_network(NULL, LOG_WARNING, n, "%s was already in use, trying %s", l->args[2], tmp);
+		log_network(LOG_WARNING, n, "%s was already in use, trying %s", l->args[2], tmp);
 		g_free(tmp);
 	} else if(!g_strcasecmp(l->args[0], "422") ||
 			  !g_strcasecmp(l->args[0], "376")) {
@@ -140,12 +140,12 @@ static gboolean process_from_server(struct network *n, struct line *l)
 		network_set_charset(n, get_charset(&n->info));
 
 		if (error != NULL)
-			log_network(NULL, LOG_WARNING, n, 
+			log_network(LOG_WARNING, n, 
 				"Error setting charset %s: %s", 
 				get_charset(&n->info),
 				error->message);
 
-		log_network(NULL, LOG_INFO, n, "Successfully logged in");
+		log_network(LOG_INFO, n, "Successfully logged in");
 
 		nickserv_identify_me(n, n->state->me.nick);
 
@@ -192,13 +192,13 @@ static gboolean handle_server_receive (GIOChannel *c, GIOCondition cond, void *_
 	g_assert(server);
 
 	if ((cond & G_IO_HUP)) {
-		log_network(NULL, LOG_WARNING, server, "Hangup from server, scheduling reconnect");
+		log_network(LOG_WARNING, server, "Hangup from server, scheduling reconnect");
 		reconnect(server, FALSE);
 		return FALSE;
 	}
 
 	if ((cond & G_IO_ERR)) {
-		log_network(NULL, LOG_WARNING, server, "Error from server, scheduling reconnect");
+		log_network(LOG_WARNING, server, "Error from server, scheduling reconnect");
 		reconnect(server, FALSE);
 		return FALSE;
 	}
@@ -235,7 +235,7 @@ static gboolean handle_server_receive (GIOChannel *c, GIOCondition cond, void *_
 		}
 
 		if (status != G_IO_STATUS_AGAIN) {
-			log_network(NULL, LOG_WARNING, server, 
+			log_network(LOG_WARNING, server, 
 				"Error \"%s\" reading from server, reconnecting in %ds...",
 				err?err->message:"UNKNOWN", server->config->reconnect_interval);
 			reconnect(server, FALSE);
@@ -294,7 +294,7 @@ static gboolean server_send_queue(GIOChannel *ch, GIOCondition cond, gpointer us
 		g_queue_pop_head(s->connection.pending_lines);
 
 		if (status != G_IO_STATUS_NORMAL) {
-			log_network(NULL, LOG_WARNING, s, "Error sending line '%s': %s",
+			log_network(LOG_WARNING, s, "Error sending line '%s': %s",
 	           l->args[0], error?error->message:"ERROR");
 			free_line(l);
 
@@ -333,7 +333,7 @@ static gboolean network_send_line_direct(struct network *s, struct client *c, co
 			g_queue_push_tail(s->connection.pending_lines, linedup(l));
 			s->connection.outgoing_id = g_io_add_watch(s->connection.outgoing, G_IO_OUT, server_send_queue, s);
 		} else if (status != G_IO_STATUS_NORMAL) {
-			log_network(NULL, LOG_WARNING, s, "Error sending line '%s': %s",
+			log_network(LOG_WARNING, s, "Error sending line '%s': %s",
 	           l->args[0], error?error->message:"ERROR");
 			return FALSE;
 		}
@@ -456,7 +456,7 @@ static gboolean bindsock(struct network *s,
 
 	error = getaddrinfo(address, service, &hints_bind, &addrinfo_bind);
 	if (error) {
-		log_network(NULL, LOG_ERROR, s, 
+		log_network(LOG_ERROR, s, 
 					"Unable to lookup %s:%s %s", address, service, 
 					gai_strerror(error));
 		return FALSE;
@@ -465,7 +465,7 @@ static gboolean bindsock(struct network *s,
 	for (res_bind = addrinfo_bind; 
 		 res_bind; res_bind = res_bind->ai_next) {
 		if (bind(sock, res_bind->ai_addr, res_bind->ai_addrlen) < 0) {
-			log_network(NULL, LOG_ERROR, s, "Unable to bind to %s:%s %s", 
+			log_network(LOG_ERROR, s, "Unable to bind to %s:%s %s", 
 						address, service, strerror(errno));
 		} else 
 			break;
@@ -492,16 +492,16 @@ static gboolean connect_current_tcp_server(struct network *s)
 		s->connection.data.tcp.current_server = network_get_next_tcp_server(s);
 	}
 
-	log_network(NULL, LOG_TRACE, s, "connect_current_tcp_server");
+	log_network(LOG_TRACE, s, "connect_current_tcp_server");
 	
 	cs = s->connection.data.tcp.current_server;
 	if(!cs) {
 		s->config->autoconnect = FALSE;
-		log_network(NULL, LOG_WARNING, s, "No servers listed, not connecting");
+		log_network(LOG_WARNING, s, "No servers listed, not connecting");
 		return FALSE;
 	}
 
-	log_network(NULL, LOG_INFO, s, "Connecting with %s:%s", 
+	log_network(LOG_INFO, s, "Connecting with %s:%s", 
 			  cs->host, 
 			  cs->port);
 
@@ -512,7 +512,7 @@ static gboolean connect_current_tcp_server(struct network *s)
 	/* Lookup */
 	error = getaddrinfo(cs->host, cs->port, &hints, &addrinfo);
 	if (error) {
-		log_network(NULL, LOG_ERROR, s, "Unable to lookup %s:%s %s", cs->host, cs->port, gai_strerror(error));
+		log_network(LOG_ERROR, s, "Unable to lookup %s:%s %s", cs->host, cs->port, gai_strerror(error));
 		freeaddrinfo(addrinfo);
 		return FALSE;
 	}
@@ -543,7 +543,7 @@ static gboolean connect_current_tcp_server(struct network *s)
 	freeaddrinfo(addrinfo);
 
 	if (!ioc) {
-		log_network(NULL, LOG_ERROR, s, "Unable to connect: %s", strerror(errno));
+		log_network(LOG_ERROR, s, "Unable to connect: %s", strerror(errno));
 		return FALSE;
 	}
 
@@ -566,12 +566,12 @@ static gboolean connect_current_tcp_server(struct network *s)
 								 );
 		g_assert(ioc != NULL);
 #else
-		log_network(NULL, LOG_WARNING, s, "SSL enabled for %s:%s, but no SSL support loaded", cs->host, cs->port);
+		log_network(LOG_WARNING, s, "SSL enabled for %s:%s, but no SSL support loaded", cs->host, cs->port);
 #endif
 	}
 
 	if(!ioc) {
-		log_network(NULL, LOG_ERROR, s, "Couldn't connect via server %s:%s", cs->host, cs->port);
+		log_network(LOG_ERROR, s, "Couldn't connect via server %s:%s", cs->host, cs->port);
 		return FALSE;
 	}
 
@@ -687,7 +687,7 @@ static pid_t piped_child(char* const command[], int *f_in)
 	int sock[2];
 
 	if(socketpair(PF_UNIX, SOCK_STREAM, AF_LOCAL, sock) == -1) {
-		log_global(NULL, LOG_ERROR, "socketpair: %s", strerror(errno));
+		log_global(LOG_ERROR, "socketpair: %s", strerror(errno));
 		return -1;
 	}
 
@@ -698,7 +698,7 @@ static pid_t piped_child(char* const command[], int *f_in)
 	pid = fork();
 
 	if (pid == -1) {
-		log_global(NULL, LOG_ERROR, "fork: %s", strerror(errno));
+		log_global(LOG_ERROR, "fork: %s", strerror(errno));
 		return -1;
 	}
 
@@ -868,7 +868,7 @@ void unload_network(struct network *s)
 	l = s->clients;
 
 	if (s->connection.state == NETWORK_CONNECTION_STATE_MOTD_RECVD) {
-		log_network(NULL, LOG_INFO, s, "Closing connection");
+		log_network(LOG_INFO, s, "Closing connection");
 	}
 
 	while(l) {
@@ -914,7 +914,7 @@ gboolean disconnect_network(struct network *s)
 	if(s->connection.state == NETWORK_CONNECTION_STATE_NOT_CONNECTED) {
 		return FALSE;
 	}
-	log_network(NULL, LOG_INFO, s, "Disconnecting");
+	log_network(LOG_INFO, s, "Disconnecting");
 	return close_server(s);
 }
 
@@ -1056,6 +1056,6 @@ void network_select_next_server(struct network *n)
 	if (n->config->type != NETWORK_TCP) 
 		return;
 
-	log_network(NULL, LOG_INFO, n, "Trying next server");
+	log_network(LOG_INFO, n, "Trying next server");
 	n->connection.data.tcp.current_server = network_get_next_tcp_server(n);
 }

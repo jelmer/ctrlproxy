@@ -111,7 +111,7 @@ void nickserv_identify_me(struct network *network, char *nick);
 /* admin.c */
 void init_admin(void);
 gboolean admin_process_command(struct client *c, struct line *l, int cmdoffset);
-void admin_log(const char *module, enum log_level level, const struct network *n, const struct client *c, const char *data);
+void admin_log(enum log_level level, const struct network *n, const struct client *c, const char *data);
 
 /* settings.c */
 gboolean create_configuration(const char *config_dir);

@@ -47,27 +47,27 @@ static void signal_crash(int sig)
 	size_t backtrace_size;
 	char **backtrace_strings;
 #endif
-	log_global(NULL, LOG_ERROR, "Received SIGSEGV!");
+	log_global(LOG_ERROR, "Received SIGSEGV!");
 
 #ifdef HAVE_BACKTRACE_SYMBOLS
 	/* get the backtrace (stack frames) */
 	backtrace_size = backtrace(backtrace_stack,BACKTRACE_STACK_SIZE);
 	backtrace_strings = backtrace_symbols(backtrace_stack, backtrace_size);
 
-	log_global(NULL, LOG_ERROR, "BACKTRACE: %d stack frames:", backtrace_size);
+	log_global(LOG_ERROR, "BACKTRACE: %d stack frames:", backtrace_size);
 	
 	if (backtrace_strings) {
 		int i;
 
 		for (i = 0; i < backtrace_size; i++)
-			log_global(NULL, LOG_ERROR, " #%u %s", i, backtrace_strings[i]);
+			log_global(LOG_ERROR, " #%u %s", i, backtrace_strings[i]);
 
 		g_free(backtrace_strings);
 	}
 
 #endif
-	log_global(NULL, LOG_ERROR, "Please send a bug report to jelmer@vernstok.nl.");
-	log_global(NULL, LOG_ERROR, "A gdb backtrace is appreciated if you can reproduce this bug.");
+	log_global(LOG_ERROR, "Please send a bug report to jelmer@vernstok.nl.");
+	log_global(LOG_ERROR, "A gdb backtrace is appreciated if you can reproduce this bug.");
 	abort();
 }
 
@@ -82,7 +82,7 @@ static void clean_exit()
 
 	if (!g_file_test(path, G_FILE_TEST_IS_DIR)) {
 		if (g_mkdir(path, 0700) != 0) {
-			log_global(NULL, LOG_ERROR, "Can't create config directory '%s': %s", path, strerror(errno));
+			log_global(LOG_ERROR, "Can't create config directory '%s': %s", path, strerror(errno));
 			return;
 		}
 	}
@@ -101,7 +101,7 @@ static void clean_exit()
 static void signal_quit(int sig)
 {
 	static int state = 0;
-	log_global(NULL, LOG_WARNING, "Received signal %d, quitting...", sig);
+	log_global(LOG_WARNING, "Received signal %d, quitting...", sig);
 	if(state == 1) { 
 		signal(SIGINT, SIG_IGN); 
 		exit(0);
@@ -114,11 +114,11 @@ static void signal_quit(int sig)
 
 static void signal_save(int sig)
 {
-	log_global(NULL, LOG_INFO, "Received USR1 signal, saving configuration...");
+	log_global(LOG_INFO, "Received USR1 signal, saving configuration...");
 	
 	if (!g_file_test(my_global->config->config_dir, G_FILE_TEST_IS_DIR)) {
 		if (g_mkdir(my_global->config->config_dir, 0700) != 0) {
-			log_global(NULL, LOG_ERROR, "Can't create config directory '%s': %s", my_global->config->config_dir, strerror(errno));
+			log_global(LOG_ERROR, "Can't create config directory '%s': %s", my_global->config->config_dir, strerror(errno));
 			return;
 		}
 	}
@@ -152,7 +152,7 @@ static gboolean write_pidfile(struct global *global)
 	char contents[100];
 	snprintf(contents, 100, "%u", getpid());
 	if (!g_file_set_contents(path, contents, -1, &error)) {
-		log_global(NULL, LOG_ERROR, "Unable to write pid file `%s'", path);
+		log_global(LOG_ERROR, "Unable to write pid file `%s'", path);
 		return FALSE;
 	}
 	g_free(path);
@@ -229,10 +229,10 @@ int main(int argc, char **argv)
 
 	init_log(logfile);
 
-	log_global(NULL, LOG_INFO, "CtrlProxy %s starting", VERSION);
+	log_global(LOG_INFO, "CtrlProxy %s starting", VERSION);
 
 	if(gethostname(my_hostname, MAXHOSTNAMELEN) != 0) {
-		log_global(NULL, LOG_WARNING, "Can't figure out hostname of local host!");
+		log_global(LOG_WARNING, "Can't figure out hostname of local host!");
 		return 1;
 	}
 
@@ -252,7 +252,7 @@ int main(int argc, char **argv)
 		daemon(1, 0);
 		isdaemon = 1;
 #else
-		log_global(NULL, LOG_ERROR, "Daemon mode not compiled in");
+		log_global(LOG_ERROR, "Daemon mode not compiled in");
 		return -1;
 #endif
 	} 
@@ -269,11 +269,11 @@ int main(int argc, char **argv)
 		char *rcfile = g_build_filename(g_get_home_dir(), ".ctrlproxyrc", NULL);
 		
 		if(g_file_test(rcfile, G_FILE_TEST_EXISTS)) {
-			log_global(NULL, LOG_INFO, "Pre-3.0 style .ctrlproxyrc found");
-			log_global(NULL, LOG_INFO, "Run ctrlproxy-upgrade to update configuration");
+			log_global(LOG_INFO, "Pre-3.0 style .ctrlproxyrc found");
+			log_global(LOG_INFO, "Run ctrlproxy-upgrade to update configuration");
 			return 1;
 		} else {
-			log_global(NULL, LOG_INFO, "No configuration found. Maybe you would like to create one by running with --init ?");
+			log_global(LOG_INFO, "No configuration found. Maybe you would like to create one by running with --init ?");
 			return 1;
 		}
 
@@ -284,7 +284,7 @@ int main(int argc, char **argv)
 	g_free(tmp);
 
 	if (my_global == NULL) {
-		log_global(NULL, LOG_ERROR, "Unable to load configuration, exiting...");
+		log_global(LOG_ERROR, "Unable to load configuration, exiting...");
 		return 1;
 	}
 

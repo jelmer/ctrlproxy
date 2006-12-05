@@ -150,7 +150,7 @@ static void config_save_networks(const char *config_dir, GList *networks)
 
 	if (!g_file_test(networksdir, G_FILE_TEST_IS_DIR)) {
 		if (g_mkdir(networksdir, 0700) != 0) {
-			log_global(NULL, LOG_ERROR, "Can't create networks directory '%s': %s", networksdir, strerror(errno));
+			log_global(LOG_ERROR, "Can't create networks directory '%s': %s", networksdir, strerror(errno));
 			return;
 		}
 	}
@@ -171,7 +171,7 @@ void save_configuration(struct ctrlproxy_config *cfg, const char *configuration_
 
 	if (!g_file_test(configuration_dir, G_FILE_TEST_IS_DIR)) {
 		if (g_mkdir(configuration_dir, 0700) != 0) {
-			log_global(NULL, LOG_ERROR, "Unable to open configuration directory '%s'\n", configuration_dir);
+			log_global(LOG_ERROR, "Unable to open configuration directory '%s'\n", configuration_dir);
 			return;
 		}
 	}
@@ -284,7 +284,7 @@ static struct network_config *config_load_network(struct ctrlproxy_config *cfg, 
 	filename = g_build_filename(dirname, name, NULL);
 
 	if (!g_key_file_load_from_file(kf, filename, G_KEY_FILE_KEEP_COMMENTS, &error)) {	
-		log_global(NULL, LOG_ERROR, "Can't parse configuration file '%s': %s", filename, error->message);
+		log_global(LOG_ERROR, "Can't parse configuration file '%s': %s", filename, error->message);
 		g_key_file_free(kf);
 		return NULL;
 	}	
@@ -458,7 +458,7 @@ struct ctrlproxy_config *load_configuration(const char *dir)
 	kf = cfg->keyfile = g_key_file_new();
 
 	if (!g_key_file_load_from_file(kf, file, G_KEY_FILE_KEEP_COMMENTS, &error)) {
-		log_global(NULL, LOG_ERROR, "Can't parse configuration file '%s': %s", file, error->message);
+		log_global(LOG_ERROR, "Can't parse configuration file '%s': %s", file, error->message);
 		g_key_file_free(kf);
 		g_free(file);
 		g_free(cfg);
@@ -488,7 +488,7 @@ struct ctrlproxy_config *load_configuration(const char *dir)
 	    cfg->client_charset = g_strdup(DEFAULT_CLIENT_CHARSET);
 
 	if(!g_file_test(cfg->motd_file, G_FILE_TEST_EXISTS))
-		log_global(NULL, LOG_ERROR, "Can't open MOTD file '%s' for reading", cfg->motd_file);
+		log_global(LOG_ERROR, "Can't open MOTD file '%s' for reading", cfg->motd_file);
 
     if (g_key_file_has_key(kf, "admin", "without_privmsg", NULL))
         cfg->admin_noprivmsg = g_key_file_get_boolean(kf, "admin", "without_privmsg", NULL);
