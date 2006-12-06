@@ -41,6 +41,10 @@ struct channel_nick {
 	char mode;
 	struct network_nick *global_nick;
 	struct channel_state *channel;
+
+	/* This information is not always set and may change */
+	time_t last_update; /* last time this section was updated */
+	char *last_flags; /* whether the user is an oper, away, etc */
 };
 
 struct network_nick {
@@ -55,10 +59,7 @@ struct network_nick {
 	char *server;
 	GList *channel_nicks;
 
-	/* This information is not always set and may change */
-	time_t last_update; /* last time this section was updated */
-	int last_hops; /* IRC hops from user to this user */
-	char *last_flags; /* whether the user is an oper, away, etc */
+	int hops; /* IRC hops from user to this user */
 };
 
 /**

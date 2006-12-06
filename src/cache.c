@@ -188,22 +188,21 @@ static gboolean client_try_cache_who(struct client *c, struct line *l)
 	/* Check that the cache data hasn't expired yet */
 	for (gl = ch->nicks; gl; gl = gl->next) {
 		struct channel_nick *cn = gl->data;
-		struct network_nick *nn = cn->global_nick;
 		
-		if (nn->last_update == 0)
+		if (cn->last_update == 0)
 			return FALSE;
 
-		if ((nn->last_update + max_who_age) <= now)
+		if ((cn->last_update + max_who_age) <= now)
 			return FALSE;
 	}
 
 	for (gl = ch->nicks; gl; gl = gl->next) {
 		struct channel_nick *cn = gl->data;
 		struct network_nick *nn = cn->global_nick;
-		char *info = g_strdup_printf("%d %s", nn->last_hops, nn->fullname);
+		char *info = g_strdup_printf("%d %s", nn->hops, nn->fullname);
 		
 		client_send_response(c, RPL_WHOREPLY, l->args[1], nn->username, nn->hostname, nn->server, nn->nick, 
-							 nn->last_flags, info, NULL);
+							 cn->last_flags, info, NULL);
 
 		g_free(info);
 	}

@@ -271,7 +271,7 @@ struct network_nick *find_add_network_nick(struct network_state *n, const char *
 	nd = g_new0(struct network_nick,1);
 	g_assert(!is_prefix(name[0], n->info));
 	nd->nick = g_strdup(name);
-	nd->last_hops = -1;
+	nd->hops = -1;
 	
 	n->nicks = g_list_append(n->nicks, nd);
 	return nd;
@@ -572,6 +572,7 @@ static void handle_whoreply(struct network_state *s, struct line *l)
 {
 	struct channel_state *cs;
 	struct network_nick *nn;
+	struct channel_nick *cn;
 	char *fullname;
 
 	nn = find_add_network_nick(s, l->args[6]);
@@ -579,7 +580,7 @@ static void handle_whoreply(struct network_state *s, struct line *l)
 	network_nick_set_data(nn, l->args[6], l->args[3], l->args[4]);
 
 	fullname = NULL;
-	nn->last_hops = strtol(l->args[8], &fullname, 10);
+	nn->hops = strtol(l->args[8], &fullname, 10);
 	g_assert(fullname);
 
 	if (nn->fullname == NULL) {
@@ -590,24 +591,27 @@ static void handle_whoreply(struct network_state *s, struct line *l)
 		nn->fullname = g_strdup(fullname);
 	}
 
-	g_free(nn->last_flags);
-	nn->last_flags = g_strdup(l->args[7]);
-
 	g_free(nn->server);
 	nn->server = g_strdup(l->args[5]);
-
-	nn->last_update = time(NULL);
 
 	cs = find_channel(s, l->args[2]);
 	if(!cs) 
 		return;
 
-	if (find_channel_nick(cs, nn->nick) == NULL) {
+	cn = find_channel_nick(cs, nn->nick);
+	
+	if (cn == NULL) {
 		log_network_state(LOG_WARNING, 
 						  s,
 						  "User %s in WHO reply not in expected channel %s!", 
 						  nn->nick, l->args[2]);
+		return;
 	}
+
+	g_free(cn->last_flags);
+	cn->last_flags = g_strdup(l->args[7]);
+
+	cn->last_update = time(NULL);
 }
 
 static void handle_end_who(struct network_state *s, struct line *l) 
