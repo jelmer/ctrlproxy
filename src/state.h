@@ -84,6 +84,7 @@ struct channel_state {
 	gboolean banlist_started;
 	gboolean invitelist_started;
 	gboolean exceptlist_started;
+	gboolean mode_received;
 	int limit;
 	GList *nicks;
 	GList *banlist;

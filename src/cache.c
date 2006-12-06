@@ -104,10 +104,13 @@ static gboolean client_try_cache_mode(struct client *c, struct line *l)
 		}
 
 		return TRUE;
+	/* Queries in the form MODE #channel */
 	} else if (l->argc == 2) {
 		char *mode;
 		ch = find_channel(c->network->state, l->args[1]);
 		if (!ch) return FALSE;
+
+		if (!ch->mode_received) return FALSE;
 
 		mode = mode2string(ch->modes);
 		client_send_response(c, RPL_CHANNELMODEIS, ch->name, mode, NULL);
