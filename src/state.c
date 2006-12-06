@@ -855,4 +855,25 @@ void free_network_state(struct network_state *state)
 	g_free(state);
 }
 
+void log_network_state(enum log_level l, 
+					   const struct network_state *st, const char *fmt, ...)
+{
+	char *ret;
+	va_list ap;
+
+	if (st->log == NULL)
+		return;
+
+	g_assert(st);
+	g_assert(fmt);
+
+	va_start(ap, fmt);
+	ret = g_strdup_vprintf(fmt, ap);
+	va_end(ap);
+
+	st->log(l, st->userdata, ret);
+
+	g_free(ret);
+}
+
 

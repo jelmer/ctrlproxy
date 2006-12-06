@@ -20,6 +20,8 @@
 #ifndef __CTRLPROXY_STATE_H__
 #define __CTRLPROXY_STATE_H__
 
+#include "log.h"
+
 /**
  * @file
  * @brief State information
@@ -112,6 +114,10 @@ struct network_info
  */
 struct network_state 
 {
+	void *userdata;
+	void (*log) (enum log_level l,
+				 void *userdata,
+				 const char *msg);
 	GList *channels;
 	GList *nicks;
 	struct network_nick me;
