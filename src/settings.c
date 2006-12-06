@@ -182,6 +182,7 @@ void save_configuration(struct ctrlproxy_config *cfg, const char *configuration_
 	g_key_file_set_boolean(cfg->keyfile, "global", "autosave", cfg->autosave);
 	g_key_file_set_boolean(cfg->keyfile, "admin", "without_privmsg", cfg->admin_noprivmsg);
 	g_key_file_set_boolean(cfg->keyfile, "admin", "log", cfg->admin_log);
+	g_key_file_set_integer(cfg->keyfile, "global", "max_who_age", cfg->max_who_age);
 
 	g_key_file_set_string(cfg->keyfile, "client", "charset", cfg->client_charset);
 	if (cfg->replication)
@@ -470,6 +471,9 @@ struct ctrlproxy_config *load_configuration(const char *dir)
 	if (g_key_file_has_key(kf, "global", "autosave", NULL) &&
 		!g_key_file_get_boolean(kf, "global", "autosave", NULL))
 		cfg->autosave = FALSE;
+
+	if (g_key_file_has_key(kf, "global", "max_who_age", NULL))
+		cfg->max_who_age = g_key_file_get_integer(kf, "global", "max_who_age", NULL);
 
 	cfg->replication = g_key_file_get_string(kf, "global", "replication", NULL);
 	cfg->linestack_backend = g_key_file_get_string(kf, "global", "linestack", NULL);

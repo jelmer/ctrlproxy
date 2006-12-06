@@ -10,6 +10,11 @@ Ctrlproxy 3.0.1 UNRELEASED
 
 	* 324 and 329 replies are now cached.
 
+	* 352 and 315 replies are now (optionally) cached. The "max_who_age" 
+	  setting can be set to the number of seconds that results should be cached.
+	  This prevents "Excess Flood" errors when connecting using several xchat clients
+	  at once.
+
 Ctrlproxy 3.0	UNRELEASED
 
   This list is not complete. Several subsystems in ctrlproxy have been 
