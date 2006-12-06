@@ -73,6 +73,7 @@ struct channel_state {
 	char *topic;
 	char mode; /* Private, secret, etc */
 	char modes[255];
+	time_t creation_time;
 	gboolean namreply_started;
 	gboolean banlist_started;
 	gboolean invitelist_started;

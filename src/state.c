@@ -731,6 +731,19 @@ static void handle_umodeis(struct network_state *s, struct line *l)
 	}
 }
 
+static void handle_329(struct network_state *s, struct line *l)
+{
+	struct channel_state *ch = find_channel(s, l->args[1]);
+
+	if (ch == NULL) {
+		log_network_state(LOG_WARNING, s, 
+			"Can't store creationtime for %s: channel not found\n", l->args[1]);
+		return;
+	}
+
+	ch->creation_time = atol(l->args[2]);
+}
+
 static void handle_302(struct network_state *s, struct line *l)
 {
 	/* We got a USERHOST response, split it into nick and user@host, and check the nick */
@@ -766,6 +779,7 @@ static struct irc_command {
 	{ "005", 3, handle_005 },
 	{ "221", 1, handle_umodeis },
 	{ "302", 2, handle_302 },
+	{ "329", 2, handle_329 },
 	{ "332", 3, handle_332 },
 	{ "331", 1, handle_no_topic },
 	{ "353", 4, handle_namreply },

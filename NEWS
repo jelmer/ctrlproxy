@@ -1,6 +1,15 @@
  Otherwise indicated differently, all changes made by 
  	Jelmer Vernooij.
 
+Ctrlproxy 3.0.1 UNRELEASED
+
+  BUG FIXES
+
+    * Logging for network state information has been simplified and been 
+	  made less verbose.
+
+	* 324 and 329 replies are now cached.
+
 Ctrlproxy 3.0	UNRELEASED
 
   This list is not complete. Several subsystems in ctrlproxy have been 

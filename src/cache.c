@@ -88,23 +88,40 @@ static gboolean client_try_cache_mode(struct client *c, struct line *l)
 	/* Only optimize easy queries... */
 	if (strchr(l->args[1], ',')) return FALSE;
 		
-	/* Only queries in the form of MODE #channel mode */
-	if (l->argc != 3) return FALSE; 
+	/* Queries in the form of MODE #channel mode */
+	if (l->argc == 3) {
+		g_assert(c->network);
+		g_assert(c->network->state);
 
-	g_assert(c->network);
-	g_assert(c->network->state);
+		ch = find_channel(c->network->state, l->args[1]);
+		if (!ch) return FALSE;
 
-	ch = find_channel(c->network->state, l->args[1]);
-	if (!ch) return FALSE;
-
-	for (i = 0; (m = l->args[2][i]); i++) {
-		switch (m) {
-		case 'b': client_send_banlist(c, ch); break;
-		default: return FALSE;
+		for (i = 0; (m = l->args[2][i]); i++) {
+			switch (m) {
+			case 'b': client_send_banlist(c, ch); break;
+			default: return FALSE;
+			}
 		}
+
+		return TRUE;
+	} else if (l->argc == 2) {
+		char *mode;
+		ch = find_channel(c->network->state, l->args[1]);
+		if (!ch) return FALSE;
+
+		mode = mode2string(ch->modes);
+		client_send_response(c, RPL_CHANNELMODEIS, ch->name, mode, NULL);
+		g_free(mode);
+		if (ch->creation_time > 0) {
+			char time[20];
+			snprintf(time, sizeof(time), "%lu", ch->creation_time);
+			client_send_response(c, RPL_CREATIONTIME, ch->name, time, NULL);
+		}
+
+		return TRUE;
 	}
 
-	return TRUE;
+	return FALSE;
 }
 
 static gboolean client_try_cache_topic(struct client *c, struct line *l)
