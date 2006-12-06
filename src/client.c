@@ -404,7 +404,7 @@ static gboolean welcome_client(struct client *client)
 
 	client_send_response(client, RPL_WELCOME, "Welcome to the ctrlproxy", NULL);
 	client_send_response(client, RPL_YOURHOST, tmp = g_strdup_printf("Host %s is running ctrlproxy", get_my_hostname()), NULL); g_free(tmp);
-	client_send_response(client, RPL_CREATED, "Ctrlproxy (c) 2002-2005 Jelmer Vernooij <jelmer@vernstok.nl>", NULL);
+	client_send_response(client, RPL_CREATED, "Ctrlproxy (c) 2002-2006 Jelmer Vernooij <jelmer@vernstok.nl>", NULL);
 	client_send_response(client, RPL_MYINFO, 
 		 client->network->name, 
 		 ctrlproxy_version(), 
