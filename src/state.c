@@ -271,6 +271,7 @@ struct network_nick *find_add_network_nick(struct network_state *n, const char *
 	nd = g_new0(struct network_nick,1);
 	g_assert(!is_prefix(name[0], n->info));
 	nd->nick = g_strdup(name);
+	nd->last_hops = -1;
 	
 	n->nicks = g_list_append(n->nicks, nd);
 	return nd;
@@ -571,15 +572,23 @@ static void handle_whoreply(struct network_state *s, struct line *l)
 {
 	struct channel_state *cs;
 	struct network_nick *nn;
+	char *fullname;
 
 	nn = find_add_network_nick(s, l->args[6]);
 	g_assert(nn != NULL);
 	network_nick_set_data(nn, l->args[6], l->args[3], l->args[4]);
 
-	g_free(nn->fullname);
-	nn->fullname = g_strdup(l->args[9]);
+	fullname = NULL;
+	nn->last_hops = strtol(l->args[8], &fullname, 10);
+	g_assert(fullname);
 
-	nn->last_hops = atoi(l->args[8]);
+	if (nn->fullname == NULL) {
+		if (fullname[0] == ' ')
+			fullname++;
+
+		g_free(nn->fullname);
+		nn->fullname = g_strdup(fullname);
+	}
 
 	g_free(nn->last_flags);
 	nn->last_flags = g_strdup(l->args[7]);
@@ -812,7 +821,7 @@ static struct irc_command {
 	{ "347", 2, handle_end_invitelist },
 	{ "348", 2, handle_exceptlist_entry },
 	{ "349", 2, handle_end_exceptlist },
-	{ "352", 7, handle_whoreply },
+	{ "352", 8, handle_whoreply },
 	{ "315", 1, handle_end_who },
 	{ NULL }
 };
