@@ -569,14 +569,36 @@ static void handle_end_banlist(struct network_state *s, struct line *l)
 
 static void handle_whoreply(struct network_state *s, struct line *l) 
 {
-	struct channel_nick *n; struct channel_state *c;
+	struct channel_state *cs;
+	struct network_nick *nn;
 
-	c = find_channel(s, l->args[2]);
-	if(!c) 
+	nn = find_add_network_nick(s, l->args[6]);
+	g_assert(nn != NULL);
+	network_nick_set_data(nn, l->args[6], l->args[3], l->args[4]);
+
+	g_free(nn->fullname);
+	nn->fullname = g_strdup(l->args[9]);
+
+	nn->last_hops = atoi(l->args[8]);
+
+	g_free(nn->last_flags);
+	nn->last_flags = g_strdup(l->args[7]);
+
+	g_free(nn->server);
+	nn->server = g_strdup(l->args[5]);
+
+	nn->last_update = time(NULL);
+
+	cs = find_channel(s, l->args[2]);
+	if(!cs) 
 		return;
 
-	n = find_add_channel_nick(c, l->args[6]);
-	network_nick_set_data(n->global_nick, l->args[6], l->args[3], l->args[4]);
+	if (find_channel_nick(cs, nn->nick) == NULL) {
+		log_network_state(LOG_WARNING, 
+						  s,
+						  "User %s in WHO reply not in expected channel %s!", 
+						  nn->nick, l->args[2]);
+	}
 }
 
 static void handle_end_who(struct network_state *s, struct line *l) 
