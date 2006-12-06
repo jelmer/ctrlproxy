@@ -69,7 +69,7 @@ PKG_CHECK_MODULES(GNUTLS, gnutls, [
 		AC_SUBST(SSL_OBJS)
 		], [ AC_MSG_WARN([GNUTLS not found, SSL will not be available]) ])
 
-AC_CHECK_LIB(readline, readline, [ BINS="$BINS linestack-cmd" ])
+AC_CHECK_LIB(readline, readline, [ BINS="$BINS linestack-cmd$ac_cv_exeext" ])
 
 ###############################################################################
 # SWIG support
