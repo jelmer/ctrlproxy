@@ -354,12 +354,16 @@ static gboolean handle_client_data (GIOChannel *ioc, GIOCondition o, gpointer da
 					}
 
 					if (result->config->type == NETWORK_TCP) {
+#ifdef HAVE_IPV6
 						struct sockaddr_in6 *name6; 
+#endif
 						struct sockaddr_in *name4; 
 						int atyp, len, port;
 						gchar *data;
 
+#ifdef HAVE_IPV6
 						name6 = (struct sockaddr_in6 *)result->connection.data.tcp.local_name;
+#endif
 						name4 = (struct sockaddr_in *)result->connection.data.tcp.local_name;
 
 						if (name4->sin_family == AF_INET) {
@@ -367,11 +371,13 @@ static gboolean handle_client_data (GIOChannel *ioc, GIOCondition o, gpointer da
 							data = (gchar *)&name4->sin_addr;
 							len = 4;
 							port = name4->sin_port;
+#ifdef HAVE_IPV6
 						} else if (name6->sin6_family == AF_INET6) {
 							atyp = ATYP_IPV6;
 							data = (gchar *)&name6->sin6_addr;
 							len = 16;
 							port = name6->sin6_port;
+#endif
 						} else {
 							log_network(LOG_ERROR, result, "Unable to obtain local address for connection to server");
 							return socks_error(ioc, REP_NET_UNREACHABLE);
@@ -414,7 +420,11 @@ static gboolean handle_new_client (GIOChannel *ioc, GIOCondition o, gpointer dat
 	
 	cl = g_new0(struct socks_client, 1);
 	cl->global = data;
+#ifdef HAVE_IPV6
 	cl->clientname_len = sizeof(struct sockaddr_in6);
+#else
+	cl->clientname_len = sizeof(struct sockaddr_in);
+#endif
 	cl->clientname = g_malloc(cl->clientname_len);
 	
 	ns = accept(g_io_channel_unix_get_fd(ioc), cl->clientname, &cl->clientname_len);

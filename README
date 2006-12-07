@@ -11,7 +11,8 @@ Introduction
 ------------
 CtrlProxy is a lightweight IRC proxy. It allows you to keep a permanent 
 connection open to an IRC server and using that connection from wherever 
-you would like to use IRC, without the need to disconnect from the server. 
+you would like to use IRC, without the need to disconnect and connect to IRC 
+continuously while missing text. 
 
 Features
 --------
@@ -21,19 +22,22 @@ Features
  * irssi-style logging support
  * Transparent detaching and attaching of clients
  * Password support
- * Replication support (from memory or file)
+ * Replication support
  * Auto-Away support
  * Keeping track of events occuring 
- * Direct, inetd-style interfacing with local IRC servers (such as bitlbee)
- * Responses to queries are only sent to the originator of the query
+ * Direct, inetd-style interfacing with local IRC servers (such as BitlBee)
+ * Works transparently
  * SSL support
  * Custom logging in any format you specify
  * Flood protection
  * IPv6 Support
+ * Automatic NickServ support
+ * Low memory, CPU and bandwidth requirements
 
 Requirements
 ------------
  * GNU glib
+ * GNU TLS (optional)
  
 Building
 --------
@@ -46,7 +50,7 @@ $ make install
 
 If you have a bzr checkout, run :
 
-$ autoreconf
+$ ./autogen.sh
 
 before you run ./configure, make and make install
 
@@ -63,5 +67,5 @@ Quick start
 Documentation
 -------------
 Most documentation is in the manual and the 
-manpages: ctrlproxy(1) and ctrlproxyrc(5).
-The example ctrlproxyrc file might also be of some use.
+manpages: ctrlproxy(1) and ctrlproxy_config(5).
+The example config.example file might also be of some use.
