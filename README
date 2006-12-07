@@ -31,6 +31,7 @@ Features
  * Custom logging in any format you specify
  * Flood protection
  * IPv6 Support
+ * Automatic NickServ support
  * Low memory, CPU and bandwidth requirements
 
 Requirements

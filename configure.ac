@@ -36,6 +36,8 @@ AC_ARG_ENABLE(gcov,
 [ WITH_GCOV=1 ], [ WITH_GCOV=0 ])
 AC_SUBST(WITH_GCOV)
 
+AC_DEFINE(HAVE_IPV6, 1, [Whether IPv6 support is available])
+
 # Checks for header files.
 AC_HEADER_DIRENT
 AC_HEADER_STDC
