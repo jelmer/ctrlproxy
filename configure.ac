@@ -70,7 +70,10 @@ PKG_CHECK_MODULES(GNUTLS, gnutls, [
 		AC_SUBST(SSL_OBJS)
 		], [ AC_MSG_WARN([GNUTLS not found, SSL will not be available]) ])
 
-AC_CHECK_LIB(readline, readline, [ BINS="$BINS linestack-cmd$ac_cv_exeext" ])
+AC_CHECK_LIB(readline, readline, [ 
+	AC_DEFINE(HAVE_READLINE, 1, [Whether readline is available])
+	BINS="$BINS linestack-cmd$ac_cv_exeext" 
+])
 
 ###############################################################################
 # IPv6 support

@@ -92,6 +92,7 @@ static void clean_exit()
 		save_configuration(my_global->config, path);
 	nickserv_save(my_global, path);
 	stop_unix_socket(my_global);
+	stop_admin_socket(my_global);
 
 	free_global(my_global);
 
@@ -168,6 +169,7 @@ int main(int argc, char **argv)
 	extern gboolean no_log_timestamp;
 	const char *config_dir = NULL;
 	char *tmp;
+	gboolean admin = FALSE;
 	gboolean init = FALSE;
 	const char *inetd_client = NULL;
 	gboolean version = FALSE;
@@ -181,6 +183,7 @@ int main(int argc, char **argv)
 		{"log", 'l', 0, G_OPTION_ARG_STRING, &logfile, ("Log messages to specified file"), ("FILE")},
 		{"config-dir", 'c', 0, G_OPTION_ARG_STRING, &config_dir, ("Override configuration directory"), ("DIR")},
 		{"version", 'v', 0, G_OPTION_ARG_NONE, &version, ("Show version information")},
+		{"admin", 'a', 0, G_OPTION_ARG_NONE, &admin, "Show administration prompt" },
 		{ NULL }
 	};
 
@@ -225,6 +228,12 @@ int main(int argc, char **argv)
 			return 1;
 		printf("Configuration created in %s. \n", config_dir);
 		return 0;
+	}
+
+	if (admin) {
+		if (admin_socket_prompt(config_dir)) 
+			return 0;
+		return 1;
 	}
 
 	init_log(logfile);
@@ -296,6 +305,7 @@ int main(int argc, char **argv)
 #endif
 
 	start_unix_socket(my_global);
+	start_admin_socket(my_global);
 
 	autoconnect_networks(my_global);
 
