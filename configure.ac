@@ -1,13 +1,13 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT(ctrlproxy, 3.0beta1, [jelmer@vernstok.nl])
+AC_INIT(ctrlproxy, 3.0, [jelmer@vernstok.nl])
 PACKAGE=$PACKAGE_NAME
 VERSION=$PACKAGE_VERSION
 AC_DEFINE_UNQUOTED(PACKAGE,"$PACKAGE", [ Package name])
 
 AC_MSG_CHECKING([whether this is a bzr checkout])
-if ! which bzr >/dev/null 2>/dev/null; then
+if ! test -d .bzr; then
 	AC_MSG_RESULT(no)
 else 
 	REVISION="`bzr revno .`"
@@ -69,7 +69,7 @@ PKG_CHECK_MODULES(GNUTLS, gnutls, [
 		AC_SUBST(SSL_OBJS)
 		], [ AC_MSG_WARN([GNUTLS not found, SSL will not be available]) ])
 
-AC_CHECK_LIB(readline, readline, [ BINS="$BINS linestack-cmd" ])
+AC_CHECK_LIB(readline, readline, [ BINS="$BINS linestack-cmd$ac_cv_exeext" ])
 
 ###############################################################################
 # SWIG support

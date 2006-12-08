@@ -453,7 +453,8 @@ struct ctrlproxy_config *load_configuration(const char *dir)
 
 	cfg = g_new0(struct ctrlproxy_config, 1);
 	cfg->config_dir = g_strdup(dir);
-	cfg->socket_path = g_build_filename(cfg->config_dir, "socket", NULL);
+	cfg->network_socket = g_build_filename(cfg->config_dir, "socket", NULL);
+	cfg->admin_socket = g_build_filename(cfg->config_dir, "admin", NULL);
 
 	kf = cfg->keyfile = g_key_file_new();
 
@@ -580,7 +581,8 @@ void free_config(struct ctrlproxy_config *cfg)
 		g_free(nc);
 	}
 	g_free(cfg->config_dir);
-	g_free(cfg->socket_path);
+	g_free(cfg->network_socket);
+	g_free(cfg->admin_socket);
 	g_free(cfg->replication);
 	g_free(cfg->linestack_backend);
 	g_free(cfg->motd_file);
@@ -616,7 +618,8 @@ gboolean create_configuration(const char *config_dir)
 	printf("Please specify port the administration interface should listen on.\n"
 		   "Prepend with a colon to listen on a specific address.\n"
 		   "Example: localhost:6668\n\nPort [%s]: ", port); fflush(stdout);
-	fgets(port, sizeof(port), stdin);
+	if (fgets(port, sizeof(port), stdin))
+		snprintf(port, sizeof(port), "%d", DEFAULT_ADMIN_PORT);
 
 	if (port[strlen(port)-1] == '\n')
 		port[strlen(port)-1] = '\0';

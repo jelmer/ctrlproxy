@@ -30,6 +30,7 @@
 #endif
 
 #include "state.h"
+#include <sys/socket.h>
 
 struct global;
 struct network;
@@ -64,7 +65,7 @@ struct network_connection {
 			struct tcp_server_config *current_server;
 			struct sockaddr *remote_name;
 			struct sockaddr *local_name;
-			size_t namelen;
+			socklen_t namelen;
 		} tcp;
 		
 		struct {

@@ -482,7 +482,7 @@ static gboolean connect_current_tcp_server(struct network *s)
 {
 	struct addrinfo *res;
 	int sock = -1;
-	size_t size;
+	socklen_t size;
 	struct tcp_server_config *cs;
 	GIOChannel *ioc = NULL;
 	struct addrinfo hints;
@@ -550,7 +550,11 @@ static gboolean connect_current_tcp_server(struct network *s)
 		return FALSE;
 	}
 
+#ifdef HAVE_IPV6
 	size = sizeof(struct sockaddr_in6);
+#else
+	size = sizeof(struct sockaddr_in);
+#endif
 	g_free(s->connection.data.tcp.local_name);
 	g_free(s->connection.data.tcp.remote_name);
 	s->connection.data.tcp.remote_name = g_malloc(size);
