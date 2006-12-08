@@ -15,7 +15,7 @@ Ctrlproxy 3.0.1 UNRELEASED
 	  This prevents "Excess Flood" errors when connecting using several xchat clients
 	  at once.
 
-Ctrlproxy 3.0	UNRELEASED
+Ctrlproxy 3.0	2006-12-08
 
   This list is not complete. Several subsystems in ctrlproxy have been 
   rewritten.
