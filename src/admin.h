@@ -6,9 +6,11 @@
  * @brief Administration interface
  */
 
-#include "client.h"
+struct admin_handle;
 
-typedef void (*admin_command_handler) (struct client *c, char **, void *userdata);
+typedef struct admin_handle *admin_handle;
+
+typedef void (*admin_command_handler) (admin_handle, char **, void *userdata);
 
 /**
  * Administration command
@@ -40,9 +42,15 @@ G_MODULE_EXPORT void unregister_admin_command(const struct admin_command *cmd);
 /**
  * Reply to an administration command.
  *
- * @param c Client to send to
+ * @param h admin handle
  * @param fmt printf-style string to send
  */
-G_MODULE_EXPORT void admin_out(struct client *c, const char *fmt, ...);
+G_MODULE_EXPORT void admin_out(admin_handle h, const char *fmt, ...);
+
+G_MODULE_EXPORT struct client *admin_get_client(admin_handle h);
+
+G_MODULE_EXPORT struct network *admin_get_network(admin_handle h);
+
+G_MODULE_EXPORT struct global *admin_get_global(admin_handle h);
 
 #endif

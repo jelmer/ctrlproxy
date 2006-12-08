@@ -393,18 +393,18 @@ static void fini_plugin(void)
 }
 
 
-void cmd_start_listener(struct client *c, char **args, void *userdata)
+void cmd_start_listener(admin_handle h, char **args, void *userdata)
 {
 	char *b, *p;
 	struct listener *l;
 
 	if (!args[1]) {
-		admin_out(c, "No port specified");
+		admin_out(h, "No port specified");
 		return;
 	}
 
 	if (!args[2]) {
-		admin_out(c, "No password specified");
+		admin_out(h, "No password specified");
 		return;
 	}
 
@@ -424,9 +424,9 @@ void cmd_start_listener(struct client *c, char **args, void *userdata)
 	l->password = g_strdup(args[2]);
 
 	if (args[3]) {
-		l->network = find_network(c->network->global, args[3]);
+		l->network = find_network(admin_get_global(h), args[3]);
 		if (l->network == NULL) {
-			admin_out(c, "No such network `%s'", args[3]);
+			admin_out(h, "No such network `%s'", args[3]);
 			free_listener(l);
 			return;
 		}
@@ -435,14 +435,14 @@ void cmd_start_listener(struct client *c, char **args, void *userdata)
 	start_listener(l);
 }
 
-void cmd_stop_listener(struct client *c, char **args, void *userdata)
+void cmd_stop_listener(admin_handle h, char **args, void *userdata)
 {
 	GList *gl;
 	char *b, *p;
 	int i = 0;
 
 	if (!args[0]) {
-		admin_out(c, "No port specified");
+		admin_out(h, "No port specified");
 		return;
 	}
 
@@ -474,17 +474,17 @@ void cmd_stop_listener(struct client *c, char **args, void *userdata)
 
 	if (b) g_free(b); else g_free(p);
 
-	admin_out(c, "%d listeners stopped", i);
+	admin_out(h, "%d listeners stopped", i);
 }
 
-void cmd_list_listener(struct client *c, char **args, void *userdata)
+void cmd_list_listener(admin_handle h, char **args, void *userdata)
 {
 	GList *gl;
 
 	for (gl = listeners; gl; gl = gl->next) {
 		struct listener *l = gl->data;
 
-		admin_out(c, "%s:%s%s%s%s", l->address?l->address:"", l->port, l->network?" (":"", l->network?l->network->name:"", l->network?")":"");
+		admin_out(h, "%s:%s%s%s%s", l->address?l->address:"", l->port, l->network?" (":"", l->network?l->network->name:"", l->network?")":"");
 	}
 }
 
