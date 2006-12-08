@@ -1,13 +1,13 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT(ctrlproxy, 3.0, [jelmer@vernstok.nl])
+AC_INIT(ctrlproxy, 3.0beta1, [jelmer@vernstok.nl])
 PACKAGE=$PACKAGE_NAME
 VERSION=$PACKAGE_VERSION
 AC_DEFINE_UNQUOTED(PACKAGE,"$PACKAGE", [ Package name])
 
 AC_MSG_CHECKING([whether this is a bzr checkout])
-if ! test -d .bzr; then
+if ! which bzr >/dev/null 2>/dev/null; then
 	AC_MSG_RESULT(no)
 else 
 	REVISION="`bzr revno .`"
@@ -36,12 +36,13 @@ AC_ARG_ENABLE(gcov,
 [ WITH_GCOV=1 ], [ WITH_GCOV=0 ])
 AC_SUBST(WITH_GCOV)
 
+
 # Checks for header files.
 AC_HEADER_DIRENT
 AC_HEADER_STDC
 AC_HEADER_TIME
 AC_CHECK_HEADERS(
-[stdlib.h string.h unistd.h execinfo.h sys/time.h sys/socket.h])
+[stdlib.h string.h unistd.h execinfo.h sys/time.h sys/socket.h netinet/in6.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
@@ -69,7 +70,40 @@ PKG_CHECK_MODULES(GNUTLS, gnutls, [
 		AC_SUBST(SSL_OBJS)
 		], [ AC_MSG_WARN([GNUTLS not found, SSL will not be available]) ])
 
-AC_CHECK_LIB(readline, readline, [ BINS="$BINS linestack-cmd$ac_cv_exeext" ])
+AC_CHECK_LIB(readline, readline, [ 
+	AC_DEFINE(HAVE_READLINE, 1, [Whether readline is available])
+	BINS="$BINS linestack-cmd$ac_cv_exeext" 
+])
+
+###############################################################################
+# IPv6 support
+###############################################################################
+AC_CACHE_CHECK([for IPv6], ac_cv_lib_ipv6, [
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#ifdef HAVE_NETINET_IN6_H
+#include <netinet/in6.h>
+#endif
+]],
+[[
+ struct sockaddr_in6 sin6;
+ int s;
+
+ s = socket(AF_INET6, SOCK_DGRAM, 0);
+
+ sin6.sin6_family = AF_INET6;
+ sin6.sin6_port = htons(17);
+ sin6.sin6_addr = in6addr_any;
+ bind(s, (struct sockaddr *)&sin6, sizeof(sin6));
+]])],
+[ac_cv_lib_ipv6=yes],
+[ac_cv_lib_ipv6=no])])
+
+if test "$ac_cv_lib_ipv6" = yes; then
+  AC_DEFINE(HAVE_IPV6, 1, [Define if you have IPv6.])
+fi
 
 ###############################################################################
 # SWIG support
