@@ -33,8 +33,12 @@ static void handle_insert(int argc, char **argv)
 
 	if (!g_strcasecmp(argv[1], "client")) 
 		direction = TO_SERVER;
-	if (!g_strcasecmp(argv[1], "server"))
+	else if (!g_strcasecmp(argv[1], "server"))
 		direction = FROM_SERVER;
+	else {
+		fprintf(stderr, "Unable to parse direction `%s'\n", argv[1]);
+		return;
+	}
 	
 	l = irc_parse_line(argv[2]);
 	if (l == NULL) {
