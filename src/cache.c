@@ -151,6 +151,11 @@ static gboolean client_try_cache_topic(struct client *c, struct line *l)
 	return TRUE;
 }
 
+static gboolean client_try_cache_userhost(struct client *c, struct line *l)
+{
+	return FALSE;
+}
+
 static gboolean client_try_cache_who(struct client *c, struct line *l)
 {
 	struct channel_state *ch;
@@ -246,6 +251,7 @@ struct cache_command {
 	{ "NAMES", client_try_cache_names },
 	{ "TOPIC", client_try_cache_topic },
 	{ "WHO", client_try_cache_who },
+	{ "USERHOST", client_try_cache_userhost },
 	{ NULL, NULL }
 };
 
