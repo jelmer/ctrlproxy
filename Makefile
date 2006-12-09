@@ -135,6 +135,7 @@ clean::
 	@rm -f $(dep_files)
 	@echo Removing object files and executables
 	@rm -f src/*.o testsuite/check ctrlproxy$(EXEEXT) testsuite/*.o *~ mods/*.o
+	@rm -f linestack-cmd$(EXEEXT)
 	@echo Removing gcov output
 	@rm -f *.gcov *.gcno *.gcda 
 
