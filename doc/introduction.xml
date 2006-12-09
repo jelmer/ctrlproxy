@@ -42,7 +42,7 @@ The structure of ctrlproxy is very modular and it is easily extendible.
  <listitem><para>irssi-style logging support</para></listitem>
  <listitem><para>Transparent detaching and attaching of clients</para></listitem>
  <listitem><para>Password support</para></listitem>
- <listitem><para>Replication support (from memory)</para></listitem>
+ <listitem><para>Replication support</para></listitem>
  <listitem><para>Auto-Away support</para></listitem>
  <listitem><para>Keeping track of events occuring </para></listitem>
  <listitem><para>Direct, inetd-style interfacing with local IRC servers (such as bitlbee)</para></listitem>
@@ -57,7 +57,7 @@ The structure of ctrlproxy is very modular and it is easily extendible.
 
 <itemizedlist>
 	<listitem><para>GNU glib</para></listitem>
-	<listitem><para>OpenSSL / GNUTLS / Mozilla NSS (for SSL support)</para></listitem>
+	<listitem><para>GNUTLS (for SSL support)</para></listitem>
 </itemizedlist>
 
 </sect1>
