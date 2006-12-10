@@ -1,6 +1,29 @@
  Otherwise indicated differently, all changes made by 
  	Jelmer Vernooij.
 
+Ctrlproxy 3.0.1 UNRELEASED
+
+  BUG FIXES
+
+   * Fixed bug in administration command (reported by Daniel Poelzleithner)
+
+   * Fix invalid assert in auto-away (reported by Daniel Poelzleithner)
+
+  PORTABILITY
+  
+   * Added replacement functions for g_file_{set,get}_contents, for those 
+     with GLib < 2.8
+    
+  DOCUMENTATION UPDATES
+
+   * Updated command documentation
+
+   * Updated requirements
+
+  MINOR CHANGES
+
+   * Fixed several warnings
+
 Ctrlproxy 3.0	2006-12-08
 
   This list is not complete. Several subsystems in ctrlproxy have been 
