@@ -100,4 +100,15 @@ G_MODULE_EXPORT void log_client(enum log_level, const struct client *, const cha
 G_MODULE_EXPORT void log_global(enum log_level, const char *fmt, ...);
 G_MODULE_EXPORT void log_network_state(enum log_level l, const struct network_state *st, const char *fmt, ...);
 
+#if GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION < 8
+gboolean    g_file_get_contents             (const gchar *filename,
+                                             gchar **contents,
+                                             gsize *length,
+                                             GError **error);
+gboolean    g_file_set_contents             (const gchar *filename,
+                                             const gchar *contents,
+                                             gssize length,
+                                             GError **error);
+#endif
+
 #endif /* __CTRLPROXY_H__ */

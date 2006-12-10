@@ -20,6 +20,7 @@
 #include "internals.h"
 #include <errno.h>
 #include <ctype.h>
+#include <fcntl.h>
 
 char *list_make_string(GList *list)
 {
@@ -106,3 +107,84 @@ char *g_io_channel_ip_get_description(GIOChannel *ch)
 	g_free(sa);
 	return description;
 }
+
+#if GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION < 8
+gboolean    g_file_get_contents             (const gchar *filename,
+                                             gchar **contents,
+                                             gsize *length,
+                                             GError **error)
+{
+	int fd;	
+	struct stat sbuf;
+	char *p;
+
+	fd = open(filename, O_RDONLY);
+	if (fd == -1) {
+		g_set_error(error, G_FILE_ERROR, 
+				g_file_error_from_errno (errno),
+				"opening file %s", filename);
+		return FALSE;
+	}
+
+	if (fstat(fd, &sbuf) != 0) {
+		g_set_error(error, G_FILE_ERROR, 
+				g_file_error_from_errno (errno),
+				"statting file %s", filename);
+		return FALSE;
+	}
+
+	p = (char *)g_malloc(sbuf.st_size+1);
+	if (!p) {
+		g_set_error(error, G_FILE_ERROR, 
+					g_file_error_from_errno (errno),
+					"allocating file %s", filename);
+		return FALSE;
+	}
+
+	if (read(fd, p, sbuf.st_size) != sbuf.st_size) {
+		g_set_error(error, G_FILE_ERROR, 
+					g_file_error_from_errno (errno),
+					"short read %s", filename);
+		g_free(p);
+		return FALSE;
+	}
+	p[sbuf.st_size] = 0;
+
+	if (length) *length = sbuf.st_size;
+	*contents = p;
+
+	close(fd);
+
+	return TRUE;
+}
+
+gboolean    g_file_set_contents             (const gchar *filename,
+                                             const gchar *contents,
+                                             gssize length,
+                                             GError **error)
+{
+	int fd, ret;
+
+	fd = open(filename, O_WRONLY);
+	if (fd == -1) {
+		g_set_error(error, G_FILE_ERROR, 
+				g_file_error_from_errno (errno),
+				"opening file %s", filename);
+		return FALSE;
+	}
+
+	ret = write(fd, contents, length);
+
+	if (ret < 0) {
+		g_set_error(error, G_FILE_ERROR, 
+				g_file_error_from_errno (errno),
+				"writing file %s", filename);
+		return FALSE;
+	}
+
+	close(fd);
+
+	return TRUE;
+}
+
+#endif
