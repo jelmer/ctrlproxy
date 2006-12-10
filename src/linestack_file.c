@@ -482,7 +482,7 @@ static void file_insert_state(struct linestack_context *ctx, const struct networ
 
 	nd->num_state_dumps++;
 
-	marshall_network_state(MARSHALL_PUSH, nd->state_file, state);
+	marshall_network_state(MARSHALL_PUSH, nd->state_file, (struct network_state *)state);
 
 	status = g_io_channel_flush(nd->state_file, &error);
 	g_assert(status);
