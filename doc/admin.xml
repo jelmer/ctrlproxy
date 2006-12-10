@@ -22,22 +22,15 @@
 			Adds a new network with the specified name.
 			</para></listitem></varlistentry>
 
-			<varlistentry><term>ADDLISTEN &lt;network&gt; &lt;type&gt; [&lt;key&gt;=&lt;value&gt;] [...]</term>
-			<listitem><para>
-			Adds a new 'listener' to the specified network with the specified type and options.</para>
-
-			<para>Example: <command>addlisten OPN ipv4 port=6676</command></para>
-			</listitem></varlistentry>
-
-			<varlistentry><term>ADDSERVER &lt;network&gt; &lt;type&gt; [&lt;key&gt;=&lt;value&gt;] [...]</term>
+			<varlistentry><term>ADDSERVER &lt;network&gt; &lt;server&gt; &lt;port&gt;</term>
 			<listitem><para>
 			Adds a new server to the specified network with the specified type and options.</para>
 
-			<para>Example: <command>addserver OPN ipv4 host=irc.freenode.net</command></para>
+			<para>Example: <command>addserver OPN irc.freenode.net 6667</command></para>
 
 			</listitem></varlistentry>
 
-			<varlistentry><term>BACKLOG [&lt;channel&gt; [&lt;numlines&gt;]]</term>
+			<varlistentry><term>BACKLOG [&lt;channel&gt;]</term>
 			<listitem>
 				<para>Without any arguments, the BACKLOG command replicates all the 
 				backlogs for the current channel.</para>
@@ -45,9 +38,6 @@
 			<para>With one argument, the name of a channel, all lines on that 
 				channel are replicated.</para>
 
-			<para>With two arguments, the first argument contains the name of a channel 
-				and the second the number of lines to replicate, the specified number 
-				of (most recent) lines from the specified channel is replicated.</para>
 			</listitem></varlistentry>
 
 			<varlistentry><term>CONNECT &lt;network&gt;</term>
@@ -78,23 +68,8 @@
 				<listitem><para>Makes the specified network disconnect from the current server and go to the next one.</para></listitem>
 			</varlistentry>
 
-			<varlistentry><term>LOADMODULE &lt;location&gt;</term>
-			<listitem><para>Load DSO module (aka 'plugin') from the specified location. </para></listitem></varlistentry>
-
-			<varlistentry><term>RELOADMODULE &lt;location&gt;</term>
-			<listitem><para>Reload the DSO module at the specified location. This does the same as doing a <command>UNLOADMODULE</command> followed by a <command>LOADMODULE</command>.</para></listitem></varlistentry>
-
-			<varlistentry><term>UNLOADMODULE &lt;location&gt;</term>
-			<listitem><para>Unload the DSO module which was loaded from the specified location. This may or may not work correctly, depending on the plugin you are trying to unload.</para></listitem></varlistentry>
-
-			<varlistentry><term>LISTMODULES</term>
-			<listitem><para>Prints out a list of all currently loaded plugins.</para></listitem></varlistentry>
-
-			<varlistentry><term>DUMPCONFIG</term>
-			<listitem><para>Prints out the current configuration file XML data.</para></listitem></varlistentry>
-
 			<varlistentry><term>SAVECONFIG</term>
-			<listitem><para>Save the (updated) XML configuration file to the location it was loaded from (usually <filename>$HOME/.ctrlproxyrc</filename>).</para></listitem></varlistentry>
+				<listitem><para>Save the (updated) configuration to the location it was loaded from (usually <filename>$HOME/.ctrlproxy/</filename>).</para></listitem></varlistentry>
 
 			<varlistentry><term>HELP</term>
 			<listitem><para>Prints out list of available commands.</para></listitem></varlistentry>
@@ -112,8 +87,7 @@
 	port 6667.
 	<screen>
 ADDNETWORK OFTC
-ADDSERVER OFTC ipv4 host=irc.oftc.net
-ADDLISTEN OFTC ipv4 port=6667
+ADDSERVER OFTC irc.oftc.net
 CONNECT OFTC
 </screen>
 </para>
