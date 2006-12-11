@@ -138,13 +138,20 @@ clean::
 	@rm -f linestack-cmd$(EXEEXT)
 	@echo Removing gcov output
 	@rm -f *.gcov *.gcno *.gcda 
+	@echo Removing test output
+	@rm -rf test-*
 
-dist: distclean
+doc-dist:: configure
 	$(MAKE) -C doc dist
+
+dist: configure doc-dist distclean
 
 distclean:: clean 
 	rm -f build config.h ctrlproxy.pc *.log
 	rm -rf autom4te.cache/ config.log config.status
+
+realclean:: distclean
+	@$(MAKE) -C doc clean
 
 ctags:
 	ctags -R .
