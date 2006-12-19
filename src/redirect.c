@@ -434,6 +434,16 @@ static struct query queries[] = {
 		handle_default
 	},
 
+/* AUTH */
+	{ "AUTH",
+		{ 0 },
+		{ 0 },
+		{ ERR_NEEDMOREPARAMS, ERR_ALREADYAUTHENTICATED, ERR_ALREADYREGISTERED,
+		  ERR_AUTHENTICATIONFAILED, ERR_AUTHENTICATIONSUSPENDED, 
+		  ERR_BADCOMMAND, ERR_UNKNOWNPACKAGE, 0 },
+		handle_default
+	},
+
 	{ NULL }
 };
 
