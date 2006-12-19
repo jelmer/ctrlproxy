@@ -44,11 +44,13 @@ static void log_entry(enum log_level level, const struct network *n, const struc
 	if (level > current_log_level)
 		return;
 
-	admin_log(level, n, c, data);
+	if (level < LOG_DATA)
+		admin_log(level, n, c, data);
 	
 	if (!no_log_timestamp)
 		fprintf(flog, "[%s] ", get_date());
 	
+	g_assert(strchr(data, '\n') == NULL);
 	fprintf(flog, "%s", data);
 
 	if (n) {
