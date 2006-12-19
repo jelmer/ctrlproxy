@@ -478,9 +478,8 @@ struct ctrlproxy_config *load_configuration(const char *dir)
 	cfg->replication = g_key_file_get_string(kf, "global", "replication", NULL);
 	cfg->linestack_backend = g_key_file_get_string(kf, "global", "linestack", NULL);
 
-	if (g_key_file_has_key(kf, "global", "report-time", NULL) &&
-		!g_key_file_get_boolean(kf, "global", "report-time", NULL))
-		cfg->report_time = TRUE;
+	if (g_key_file_has_key(kf, "global", "report-time", NULL))
+		cfg->report_time = g_key_file_get_boolean(kf, "global", "report-time", NULL);
 
     if (g_key_file_has_key(kf, "global", "motd-file", NULL))
 		cfg->motd_file = g_key_file_get_string(kf, "global", "motd-file", NULL);
