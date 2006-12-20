@@ -82,8 +82,8 @@ in a standard ControlProxy installation.
 		<varlistentry>
 			<term>match</term>
 			<listitem><para>
-					If the replication backend is set to 
-					<emphasis>highlight</emphasis>, this variable 
+				       If the replication backend is set 
+				       to <emphasis>highlight</emphasis>, this variable 
 					should contain a semicolon-separated list of 
 					words to search for.
 			</para></listitem>
@@ -105,13 +105,13 @@ in a standard ControlProxy installation.
 		<varlistentry>
 			<term>no_privmsg</term>
 			<listitem><para>
-				Don't interpret messages to the user 
-				<emphasis>ctrlproxy</emphasis> as administration commands.
+			       Don't interpret messages to the 
+			       user <emphasis>ctrlproxy</emphasis> as administration commands.
 			</para>
 			<para>
 				This option would be needed if you want to be able to 
-				send messages to an actual user with the nickname 
-				<emphasis>ctrlproxy</emphasis>.
+			       send messages to an actual user with the 
+			       nickname <emphasis>ctrlproxy</emphasis>.
 		</para></listitem>
 		</varlistentry>
 	</variablelist>
@@ -137,8 +137,8 @@ in a standard ControlProxy installation.
 		<varlistentry>
 			<term>logfile</term>
 			<listitem><para>
-					Directory in which logs will be written (defaults to 
-					<filename>~/.ctrlproxy/log-irssi/</filename>.
+				       Directory in which logs will be written (defaults 
+				       to <filename>~/.ctrlproxy/log-irssi/</filename>.
 			</para></listitem>
 		</varlistentry>
 	</variablelist>
