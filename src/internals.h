@@ -54,6 +54,7 @@ void network_set_iochannel(struct network *s, GIOChannel *ioc);
 /* state.c */
 void free_channels(struct network *s);
 void network_nick_set_data(struct network_nick *n, const char *nick, const char *username, const char *host);
+void log_network_state(enum log_level l, const struct network_state *st, const char *fmt, ...);
 
 /* plugins.c */
 gboolean init_plugins(const char *dir);
@@ -120,6 +121,5 @@ gboolean create_configuration(const char *config_dir);
 /* pipes.c */
 gboolean start_unix_socket(struct global *);
 gboolean stop_unix_socket(struct global *);
-
 
 #endif /* __INTERNALS_H__ */

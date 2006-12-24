@@ -44,11 +44,13 @@ static void log_entry(enum log_level level, const struct network *n, const struc
 	if (level > current_log_level)
 		return;
 
-	admin_log(level, n, c, data);
+	if (level < LOG_DATA)
+		admin_log(level, n, c, data);
 	
 	if (!no_log_timestamp)
 		fprintf(flog, "[%s] ", get_date());
 	
+	g_assert(strchr(data, '\n') == NULL);
 	fprintf(flog, "%s", data);
 
 	if (n) {
@@ -117,23 +119,6 @@ void log_global(enum log_level level, const char *fmt, ...)
 	va_end(ap);
 	log_entry(level, NULL, NULL, tmp);
 	g_free(tmp);
-}
-
-void log_network_state(enum log_level l, const struct network_state *st, const char *fmt, ...)
-{
-	char *ret;
-	va_list ap;
-
-	g_assert(st);
-	g_assert(fmt);
-
-	va_start(ap, fmt);
-	ret = g_strdup_vprintf(fmt, ap);
-	va_end(ap);
-
-	log_global(l, "%s", ret);
-
-	g_free(ret);
 }
 
 

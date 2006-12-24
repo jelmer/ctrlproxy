@@ -88,23 +88,43 @@ static gboolean client_try_cache_mode(struct client *c, struct line *l)
 	/* Only optimize easy queries... */
 	if (strchr(l->args[1], ',')) return FALSE;
 		
-	/* Only queries in the form of MODE #channel mode */
-	if (l->argc != 3) return FALSE; 
+	/* Queries in the form of MODE #channel mode */
+	if (l->argc == 3) {
+		g_assert(c->network);
+		g_assert(c->network->state);
 
-	g_assert(c->network);
-	g_assert(c->network->state);
+		ch = find_channel(c->network->state, l->args[1]);
+		if (!ch) return FALSE;
 
-	ch = find_channel(c->network->state, l->args[1]);
-	if (!ch) return FALSE;
-
-	for (i = 0; (m = l->args[2][i]); i++) {
-		switch (m) {
-		case 'b': client_send_banlist(c, ch); break;
-		default: return FALSE;
+		for (i = 0; (m = l->args[2][i]); i++) {
+			switch (m) {
+			case 'b': client_send_banlist(c, ch); break;
+			default: return FALSE;
+			}
 		}
+
+		return TRUE;
+	/* Queries in the form MODE #channel */
+	} else if (l->argc == 2) {
+		char *mode;
+		ch = find_channel(c->network->state, l->args[1]);
+		if (!ch) return FALSE;
+
+		if (!ch->mode_received) return FALSE;
+
+		mode = mode2string(ch->modes);
+		client_send_response(c, RPL_CHANNELMODEIS, ch->name, mode, NULL);
+		g_free(mode);
+		if (ch->creation_time > 0) {
+			char time[20];
+			snprintf(time, sizeof(time), "%lu", ch->creation_time);
+			client_send_response(c, RPL_CREATIONTIME, ch->name, time, NULL);
+		}
+
+		return TRUE;
 	}
 
-	return TRUE;
+	return FALSE;
 }
 
 static gboolean client_try_cache_topic(struct client *c, struct line *l)
@@ -127,6 +147,72 @@ static gboolean client_try_cache_topic(struct client *c, struct line *l)
 	} else {
 		client_send_response(c, RPL_NOTOPIC, ch->name, "No topic set", NULL);
 	}
+
+	return TRUE;
+}
+
+static gboolean client_try_cache_userhost(struct client *c, struct line *l)
+{
+	return FALSE;
+}
+
+static gboolean client_try_cache_who(struct client *c, struct line *l)
+{
+	struct channel_state *ch;
+	int max_who_age;
+	time_t now;
+	GList *gl;
+
+	g_assert(l);
+	g_assert(c);
+
+	if (l->argc < 2) return FALSE;
+	
+	/* Only optimize easy queries... */
+	if (strchr(l->args[1], ',')) return FALSE;
+	if (strchr(l->args[1], '*')) return FALSE;
+
+	max_who_age = c->network->global->config->max_who_age;
+
+	/* Never cache when max_who_age is set to 0 */
+	if (max_who_age == 0)
+		return FALSE;
+
+	if (l->argc != 2) 
+		return FALSE;
+
+	g_assert(c->network);
+	g_assert(c->network->state);
+
+	ch = find_channel(c->network->state, l->args[1]);
+	if (ch == NULL)
+		return FALSE;
+
+	now = time(NULL);
+
+	/* Check that the cache data hasn't expired yet */
+	for (gl = ch->nicks; gl; gl = gl->next) {
+		struct channel_nick *cn = gl->data;
+		
+		if (cn->last_update == 0)
+			return FALSE;
+
+		if ((cn->last_update + max_who_age) <= now)
+			return FALSE;
+	}
+
+	for (gl = ch->nicks; gl; gl = gl->next) {
+		struct channel_nick *cn = gl->data;
+		struct network_nick *nn = cn->global_nick;
+		char *info = g_strdup_printf("%d %s", nn->hops, nn->fullname);
+		
+		client_send_response(c, RPL_WHOREPLY, l->args[1], nn->username, nn->hostname, nn->server, nn->nick, 
+							 cn->last_flags, info, NULL);
+
+		g_free(info);
+	}
+
+	client_send_response(c, RPL_ENDOFWHO, l->args[1], "End of /WHO list.", NULL);
 
 	return TRUE;
 }
@@ -164,6 +250,8 @@ struct cache_command {
 	{ "MODE", client_try_cache_mode },
 	{ "NAMES", client_try_cache_names },
 	{ "TOPIC", client_try_cache_topic },
+	{ "WHO", client_try_cache_who },
+	{ "USERHOST", client_try_cache_userhost },
 	{ NULL, NULL }
 };
 

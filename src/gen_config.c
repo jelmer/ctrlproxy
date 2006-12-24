@@ -59,9 +59,15 @@ void network_update_config(struct network_state *ns, struct network_config *nc)
 	g_free(nc->nick);
 	nc->nick = g_strdup(ns->me.nick);
 
+	for (gl = nc->channels; gl; gl = gl->next) {
+		struct channel_config *cc = gl->data;
+
+		cc->autojoin = 0;
+	}
+
 	for (gl = ns->channels; gl; gl = gl->next) {
 		struct channel_state *cs = gl->data;
-		struct channel_config *cc = gl->data;
+		struct channel_config *cc;
 
 		/* Find channel */
 		cc = config_find_channel(ns->info, nc, cs->name);
@@ -71,6 +77,7 @@ void network_update_config(struct network_state *ns, struct network_config *nc)
 		}
 		channel_update_config(cs, cc);
 	}
+
 }
 
 void channel_update_config(struct channel_state *ns, struct channel_config *nc)

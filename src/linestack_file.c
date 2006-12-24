@@ -467,7 +467,7 @@ static void file_insert_state(struct linestack_context *ctx, const struct networ
 	GError *error = NULL;
 	GIOStatus status;
 
-	log_network_state(LOG_TRACE, state, "Inserting state");
+	log_global(LOG_TRACE, "Inserting state");
 	
 	nd->lines_since_last_state = 0;
 

@@ -42,6 +42,11 @@ void register_new_network_notify(struct global *global, new_network_notify_fn fn
 	global->new_network_notifiers = g_list_append(global->new_network_notifiers, p);
 }
 
+static void state_log_helper(enum log_level l, void *userdata, const char *msg)
+{
+	log_network(l, (struct network *)userdata, msg);
+}
+
 static void server_send_login (struct network *s) 
 {
 	g_assert(s);
@@ -52,6 +57,8 @@ static void server_send_login (struct network *s)
 
 	s->state = network_state_init(&s->info, s->config->nick, 
 	                              s->config->username, get_my_hostname());
+	s->state->userdata = s;
+	s->state->log = state_log_helper;
 	s->linestack = new_linestack(s);
 	g_assert(s->linestack);
 
@@ -835,6 +842,8 @@ static gboolean connect_server(struct network *s)
 			return FALSE;
 
 		s->state = network_state_init(&s->info, s->config->nick, s->config->username, get_my_hostname());
+		s->state->userdata = s;
+		s->state->log = state_log_helper;
 		s->linestack = new_linestack(s);
     		s->connection.state = NETWORK_CONNECTION_STATE_MOTD_RECVD;
 

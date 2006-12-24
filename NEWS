@@ -5,24 +5,41 @@ Ctrlproxy 3.0.1 UNRELEASED
 
   BUG FIXES
 
-   * Fixed bug in administration command (reported by Daniel Poelzleithner)
+    * Logging for network state information has been simplified and been 
+	  made less verbose.
 
-   * Fix invalid assert in auto-away (reported by Daniel Poelzleithner)
+	* 324 and 329 replies are now cached.
+
+	* 352 and 315 replies are now (optionally) cached. The "max_who_age" 
+	  setting can be set to the number of seconds that results should be cached.
+	  This prevents "Excess Flood" errors when connecting using several xchat clients
+	  at once.
+
+    * Fixed bug in administration command (reported by Daniel Poelzleithner)
+
+    * Fix invalid assert in auto-away (reported by Daniel Poelzleithner)
+
+	* Fix rejoining parted channels on restart (#78)
+
+	* Fix erroneus toggling of "report-time" setting (#77)
+	
+	* Fix endless loop in logging system when debug level is 
+	  set to 5 (reported by _static_).
 
   PORTABILITY
   
-   * Added replacement functions for g_file_{set,get}_contents, for those 
-     with GLib < 2.8
+    * Added replacement functions for g_file_{set,get}_contents, for those 
+      with GLib < 2.8
     
   DOCUMENTATION UPDATES
 
-   * Updated command documentation
+    * Updated command documentation
 
-   * Updated requirements
+    * Updated requirements
 
   MINOR CHANGES
 
-   * Fixed several warnings
+    * Fixed several compiler warnings
 
 Ctrlproxy 3.0	2006-12-08
 

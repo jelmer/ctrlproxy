@@ -170,6 +170,21 @@
 #define RPL_STATSQLINE 217
 #define RPL_TRACECLASS 209
 
+/* <command> :Bad command */
+#define ERR_BADCOMMAND				900
+
+/* <package> :Already authenticated */
+#define ERR_ALREADYAUTHENTICATED 	909
+
+/* <package> :Authentication failed */
+#define ERR_AUTHENTICATIONFAILED 	910
+
+/* <package> :Authentication suspended for this IP */
+#define ERR_AUTHENTICATIONSUSPENDED 911
+
+/* <package> :Unsupported authentication package */
+#define ERR_UNKNOWNPACKAGE			912
+
 #define ALLMODES "aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPqQrRsStTuUvVwWxXyYzZ"
 
 #endif

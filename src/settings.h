@@ -97,6 +97,7 @@ struct ctrlproxy_config {
 	gboolean admin_log;
 	gboolean admin_noprivmsg;
 	gboolean report_time;
+	int max_who_age;
 	GKeyFile *keyfile;
 };
 

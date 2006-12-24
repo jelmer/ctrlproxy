@@ -20,6 +20,8 @@
 #ifndef __CTRLPROXY_STATE_H__
 #define __CTRLPROXY_STATE_H__
 
+#include "log.h"
+
 /**
  * @file
  * @brief State information
@@ -39,6 +41,10 @@ struct channel_nick {
 	char mode;
 	struct network_nick *global_nick;
 	struct channel_state *channel;
+
+	/* This information is not always set and may change */
+	time_t last_update; /* last time this section was updated */
+	char *last_flags; /* whether the user is an oper, away, etc */
 };
 
 struct network_nick {
@@ -50,7 +56,10 @@ struct network_nick {
 	char *hostname;
 	char *hostmask;
 	char modes[255];
+	char *server;
 	GList *channel_nicks;
+
+	int hops; /* IRC hops from user to this user */
 };
 
 /**
@@ -71,10 +80,12 @@ struct channel_state {
 	char *topic;
 	char mode; /* Private, secret, etc */
 	char modes[255];
+	time_t creation_time;
 	gboolean namreply_started;
 	gboolean banlist_started;
 	gboolean invitelist_started;
 	gboolean exceptlist_started;
+	gboolean mode_received;
 	int limit;
 	GList *nicks;
 	GList *banlist;
@@ -112,6 +123,10 @@ struct network_info
  */
 struct network_state 
 {
+	void *userdata;
+	void (*log) (enum log_level l,
+				 void *userdata,
+				 const char *msg);
 	GList *channels;
 	GList *nicks;
 	struct network_nick me;

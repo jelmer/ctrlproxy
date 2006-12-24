@@ -62,7 +62,8 @@ headers = src/admin.h \
 		  src/repl.h \
 		  src/settings.h \
 		  src/ssl.h \
-		  src/state.h
+		  src/state.h \
+		  src/log.h
 dep_files = $(patsubst %.o, %.d, $(objs)) $(patsubst %.o, %.d, $(wildcard mods/*.o))
 
 linestack-cmd$(EXEEXT): src/linestack-cmd.o $(objs)

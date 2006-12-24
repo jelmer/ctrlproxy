@@ -271,6 +271,7 @@ struct network_nick *find_add_network_nick(struct network_state *n, const char *
 	nd = g_new0(struct network_nick,1);
 	g_assert(!is_prefix(name[0], n->info));
 	nd->nick = g_strdup(name);
+	nd->hops = -1;
 	
 	n->nicks = g_list_append(n->nicks, nd);
 	return nd;
@@ -481,7 +482,7 @@ static void handle_end_names(struct network_state *s, struct line *l)
 {
 	struct channel_state *c = find_channel(s, l->args[2]);
 	if(c)c->namreply_started = FALSE;
-	else log_network_state(LOG_WARNING, s, "Can't end /NAMES command for %s: channel not found\n", l->args[2]);
+	else log_network_state(LOG_WARNING, s, "Can't end /NAMES command for %s: channel not found", l->args[2]);
 }
 
 static void handle_invitelist_entry(struct network_state *s, struct line *l) 
@@ -505,7 +506,7 @@ static void handle_end_invitelist(struct network_state *s, struct line *l)
 {
 	struct channel_state *c = find_channel(s, l->args[2]);
 	if(c)c->invitelist_started = FALSE;
-	else log_network_state(LOG_WARNING, s, "Can't end invitelist for %s: channel not found\n", l->args[2]);
+	else log_network_state(LOG_WARNING, s, "Can't end invitelist for %s: channel not found", l->args[2]);
 }
 
 static void handle_exceptlist_entry(struct network_state *s, struct line *l) 
@@ -529,7 +530,7 @@ static void handle_end_exceptlist(struct network_state *s, struct line *l)
 {
 	struct channel_state *c = find_channel(s, l->args[2]);
 	if(c)c->exceptlist_started = FALSE;
-	else log_network_state(LOG_WARNING, s, "Can't end exceptlist for %s: channel not found\n", l->args[2]);
+	else log_network_state(LOG_WARNING, s, "Can't end exceptlist for %s: channel not found", l->args[2]);
 }
 
 
@@ -564,19 +565,53 @@ static void handle_end_banlist(struct network_state *s, struct line *l)
 {
 	struct channel_state *c = find_channel(s, l->args[2]);
 	if(c)c->banlist_started = FALSE;
-	else log_network_state(LOG_WARNING, s, "Can't end banlist for %s: channel not found\n", l->args[2]);
+	else log_network_state(LOG_WARNING, s, "Can't end banlist for %s: channel not found", l->args[2]);
 }
 
 static void handle_whoreply(struct network_state *s, struct line *l) 
 {
-	struct channel_nick *n; struct channel_state *c;
+	struct channel_state *cs;
+	struct network_nick *nn;
+	struct channel_nick *cn;
+	char *fullname;
 
-	c = find_channel(s, l->args[2]);
-	if(!c) 
+	nn = find_add_network_nick(s, l->args[6]);
+	g_assert(nn != NULL);
+	network_nick_set_data(nn, l->args[6], l->args[3], l->args[4]);
+
+	fullname = NULL;
+	nn->hops = strtol(l->args[8], &fullname, 10);
+	g_assert(fullname);
+
+	if (nn->fullname == NULL) {
+		if (fullname[0] == ' ')
+			fullname++;
+
+		g_free(nn->fullname);
+		nn->fullname = g_strdup(fullname);
+	}
+
+	g_free(nn->server);
+	nn->server = g_strdup(l->args[5]);
+
+	cs = find_channel(s, l->args[2]);
+	if(!cs) 
 		return;
 
-	n = find_add_channel_nick(c, l->args[6]);
-	network_nick_set_data(n->global_nick, l->args[6], l->args[3], l->args[4]);
+	cn = find_channel_nick(cs, nn->nick);
+	
+	if (cn == NULL) {
+		log_network_state(LOG_WARNING, 
+						  s,
+						  "User %s in WHO reply not in expected channel %s!", 
+						  nn->nick, l->args[2]);
+		return;
+	}
+
+	g_free(cn->last_flags);
+	cn->last_flags = g_strdup(l->args[7]);
+
+	cn->last_update = time(NULL);
 }
 
 static void handle_end_who(struct network_state *s, struct line *l) 
@@ -603,14 +638,14 @@ static void handle_mode(struct network_state *s, struct line *l)
 	int i;
 
 	/* Channel modes */
-	if(is_channelname(l->args[1], s->info)) {
+	if (is_channelname(l->args[1], s->info)) {
 		struct channel_state *c = find_channel(s, l->args[1]);
 		struct channel_nick *n;
 		char p;
 		int arg = 2;
 
 		if (c == NULL) {
-			log_network_state(LOG_WARNING, s, "Unable to change mode for unknown channel '%s'\n", l->args[1]);
+			log_network_state(LOG_WARNING, s, "Unable to change mode for unknown channel '%s'", l->args[1]);
 			return;
 		}
 		
@@ -731,6 +766,34 @@ static void handle_umodeis(struct network_state *s, struct line *l)
 	}
 }
 
+static void handle_324(struct network_state *s, struct line *l)
+{
+	struct channel_state *ch = find_channel(s, l->args[2]);
+
+	if (ch == NULL) {
+		log_network_state(LOG_WARNING, s, 
+			"Can't store modes for %s: channel not found", l->args[2]);
+		return;
+	}
+
+	string2mode(l->args[3], ch->modes);
+
+	ch->mode_received = TRUE;
+}
+
+static void handle_329(struct network_state *s, struct line *l)
+{
+	struct channel_state *ch = find_channel(s, l->args[2]);
+
+	if (ch == NULL) {
+		log_network_state(LOG_WARNING, s, 
+			"Can't store creationtime for %s: channel not found", l->args[2]);
+		return;
+	}
+
+	ch->creation_time = atol(l->args[3]);
+}
+
 static void handle_302(struct network_state *s, struct line *l)
 {
 	/* We got a USERHOST response, split it into nick and user@host, and check the nick */
@@ -766,6 +829,8 @@ static struct irc_command {
 	{ "005", 3, handle_005 },
 	{ "221", 1, handle_umodeis },
 	{ "302", 2, handle_302 },
+	{ "324", 3, handle_324 },
+	{ "329", 3, handle_329 },
 	{ "332", 3, handle_332 },
 	{ "331", 1, handle_no_topic },
 	{ "353", 4, handle_namreply },
@@ -776,7 +841,7 @@ static struct irc_command {
 	{ "347", 2, handle_end_invitelist },
 	{ "348", 2, handle_exceptlist_entry },
 	{ "349", 2, handle_end_exceptlist },
-	{ "352", 7, handle_whoreply },
+	{ "352", 8, handle_whoreply },
 	{ "315", 1, handle_end_who },
 	{ NULL }
 };
@@ -853,6 +918,27 @@ void free_network_state(struct network_state *state)
 	}
 
 	g_free(state);
+}
+
+void log_network_state(enum log_level l, 
+					   const struct network_state *st, const char *fmt, ...)
+{
+	char *ret;
+	va_list ap;
+
+	if (st->log == NULL)
+		return;
+
+	g_assert(st);
+	g_assert(fmt);
+
+	va_start(ap, fmt);
+	ret = g_strdup_vprintf(fmt, ap);
+	va_end(ap);
+
+	st->log(l, st->userdata, ret);
+
+	g_free(ret);
 }
 
 

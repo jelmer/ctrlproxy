@@ -56,6 +56,7 @@
 #include "repl.h"
 #include "ctcp.h"
 #include "admin.h"
+#include "log.h"
 
 /**
  * Global information.
@@ -94,7 +95,6 @@ G_MODULE_EXPORT int str_asciicmp(const char *a, const char *b);
 G_MODULE_EXPORT char *g_io_channel_ip_get_description(GIOChannel *ch);
 
 /* log.c */
-enum log_level { LOG_DATA=5, LOG_TRACE=4, LOG_INFO=3, LOG_WARNING=2, LOG_ERROR=1 };
 G_MODULE_EXPORT void log_network(enum log_level, const struct network *, const char *fmt, ...);
 G_MODULE_EXPORT void log_client(enum log_level, const struct client *, const char *fmt, ...);
 G_MODULE_EXPORT void log_global(enum log_level, const char *fmt, ...);

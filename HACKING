@@ -110,8 +110,8 @@ Your message handler should return TRUE if the rest of the filter
 functions should also see the message and FALSE if ctrlproxy should 
 stop running filter functions on the given line struct.</para>
 
-These hooks are executed before 
-the data as returned by find_channel() and find_nick() is updated
+These hooks are executed before the data as returned by find_channel() 
+and find_nick() is updated
 
 Registering a new client/server or lose client/server handler
 -------------------------------------------------------------
