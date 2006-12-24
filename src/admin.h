@@ -35,11 +35,6 @@ struct admin_command {
 G_MODULE_EXPORT void register_admin_command(const struct admin_command *cmd);
 
 /**
- * Unregister an administration command
- */
-G_MODULE_EXPORT void unregister_admin_command(const struct admin_command *cmd);
-
-/**
  * Reply to an administration command.
  *
  * @param h admin handle

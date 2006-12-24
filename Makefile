@@ -48,6 +48,7 @@ objs = src/network.o \
 	   src/admin.o \
 	   src/user.o \
 	   src/pipes.o \
+	   src/help.o \
 	   $(SSL_OBJS)
 
 headers = src/admin.h \
