@@ -203,39 +203,13 @@ static void com_next_server (struct client *c, char **args, void *userdata) {
 	}
 }
 
-static void list_modules (struct client *c, char **args, void *userdata)
-{
-	GList *g;
-	
-	for (g = get_plugin_list(); g; g = g->next) {
-		struct plugin *p = (struct plugin *)g->data;
-		admin_out(c, "%s", p->ops->name);
-	}
-}
-
-static void load_module (struct client *c, char **args, void *userdata)
-{ 
-	if(!args[1]) { 
-		admin_out(c, "No file specified");
-		return;
-	}
-
-   	if(plugin_loaded(args[1])) {
-		admin_out(c, "Module already loaded");
-		return;
-	}
-
-	if (load_plugin(MODULESDIR, args[1])) {
-		admin_out(c, "Load successful");
-	} else {
-		admin_out(c, "Load failed");
-	}
-}
-
 static void com_save_config (struct client *c, char **args, void *userdata)
 { 
+	const char *adm_dir;
 	global_update_config(c->network->global);
-	save_configuration(c->network->global->config, args[1]?args[1]:c->network->global->config->config_dir); 
+	adm_dir = args[1]?args[1]:c->network->global->config->config_dir; 
+	save_configuration(c->network->global->config, adm_dir);
+	admin_out(c, "Configuration saved in %s", adm_dir);
 }
 
 static void help (struct client *c, char **args, void *userdata)
@@ -585,8 +559,6 @@ const static struct admin_command builtin_commands[] = {
 	{ "DIE", handle_die, "", "Exit ctrlproxy" },
 	{ "DISCONNECT", com_disconnect_network, "<network>", "Disconnect specified network" },
 	{ "LISTNETWORKS", list_networks, "", "List current networks and their status" },
-	{ "LOADMODULE", load_module, "<name>", "Load specified module" },
-	{ "LISTMODULES", list_modules, "", "List currently loaded modules" },
 	{ "SAVECONFIG", com_save_config, "<name>", "Save current XML configuration to specified file" },
 	{ "DETACH", detach_client, "", "Detach current client" },
 	{ "HELP", help, "[command]", "This help command" },
