@@ -11,7 +11,7 @@
 	by spaces. Quoting is not supported. Those familiar with 
 	NickServ or ChanServ will already be used to this syntax.</para>
 
-	<sect1>
+	<sect1 id="commands">
 		<title>Commands</title>
 
 		<para>The following commands are supported:</para>
@@ -79,7 +79,7 @@
 		</variablelist>
 	</sect1>
 
-	<sect1>
+	<sect1 id="admin example">
 			<title>Example commands</title>
 
 <para>
