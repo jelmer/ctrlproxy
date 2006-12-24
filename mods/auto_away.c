@@ -53,23 +53,28 @@ static gboolean check_time(gpointer user_data)
 	return TRUE;
 }
 
-static gboolean log_data(struct network *n, const struct line *l, enum data_direction dir, void *userdata) 
+static gboolean log_data(struct network *n, const struct line *l, 
+						 enum data_direction dir, void *userdata) 
 {
 	struct auto_away_data *d = userdata;
 
-	if(dir == TO_SERVER && !g_strcasecmp(l->args[0], "AWAY")) {
-		if(l->args[1])d->is_away = TRUE;
-		else d->is_away = FALSE;
+	if (dir == TO_SERVER && !g_strcasecmp(l->args[0], "AWAY")) {
+		if (l->args[1])
+			d->is_away = TRUE;
+		else 
+			d->is_away = FALSE;
 	}
 
-	if(dir == TO_SERVER &&  
-	   (!g_strcasecmp(l->args[0], "PRIVMSG") || !g_strcasecmp(l->args[0], "NOTICE"))) {
+	if (dir == TO_SERVER &&  
+	   (!g_strcasecmp(l->args[0], "PRIVMSG") || 
+		!g_strcasecmp(l->args[0], "NOTICE"))) {
 		d->last_message = time(NULL);
-		if(d->is_away) {
+		if (d->is_away) {
 			GList *sl;
 			for (sl = d->global->networks; sl; sl = sl->next) {
 				struct network *s = (struct network *)sl->data;
-				network_send_args(s, "AWAY", NULL);
+				if (s->connection.state == NETWORK_CONNECTION_STATE_MOTD_RECVD)
+					network_send_args(s, "AWAY", NULL);
 			}
 			d->is_away = FALSE;
 		}

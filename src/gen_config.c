@@ -42,9 +42,15 @@ static struct channel_config *config_find_channel(struct network_info *ni, struc
 void network_update_config(struct network_state *ns, struct network_config *nc)
 {
 	GList *gl;
+
+	nc->autoconnect = 1;
+
+	if (ns == NULL)
+		return;
 	
 	/* Network name */
-	if (ns->info->name && strcmp(ns->info->name, nc->name)) {
+	if (ns->info != NULL && ns->info->name != NULL && 
+		(nc->name == NULL || strcmp(ns->info->name, nc->name) != 0)) {
 		g_free(nc->name);
 		nc->name = g_strdup(ns->info->name);
 	}
@@ -53,11 +59,15 @@ void network_update_config(struct network_state *ns, struct network_config *nc)
 	g_free(nc->nick);
 	nc->nick = g_strdup(ns->me.nick);
 
-	nc->autoconnect = 1;
+	for (gl = nc->channels; gl; gl = gl->next) {
+		struct channel_config *cc = gl->data;
+
+		cc->autojoin = 0;
+	}
 
 	for (gl = ns->channels; gl; gl = gl->next) {
 		struct channel_state *cs = gl->data;
-		struct channel_config *cc = gl->data;
+		struct channel_config *cc;
 
 		/* Find channel */
 		cc = config_find_channel(ns->info, nc, cs->name);
@@ -67,6 +77,7 @@ void network_update_config(struct network_state *ns, struct network_config *nc)
 		}
 		channel_update_config(cs, cc);
 	}
+
 }
 
 void channel_update_config(struct channel_state *ns, struct channel_config *nc)

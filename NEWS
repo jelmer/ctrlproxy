@@ -13,9 +13,35 @@ Ctrlproxy 3.0.1 UNRELEASED
 	* 352 and 315 replies are now (optionally) cached. The "max_who_age" 
 	  setting can be set to the number of seconds that results should be cached.
 	  This prevents "Excess Flood" errors when connecting using several xchat clients
-	  at once.
+	  at once. Can be disabled by setting max_who_age=0 (the default).
 
-Ctrlproxy 3.0	UNRELEASED
+    * Fixed bug in administration command (reported by Daniel Poelzleithner)
+
+    * Fix invalid assert in auto-away (reported by Daniel Poelzleithner)
+
+	* Fix rejoining parted channels on restart (#78)
+
+	* Fix erroneus toggling of "report-time" setting (#77)
+	
+	* Fix endless loop in logging system when debug level is 
+	  set to 5 (reported by _static_).
+
+  PORTABILITY
+  
+    * Added replacement functions for g_file_{set,get}_contents, for those 
+      with GLib < 2.8
+    
+  DOCUMENTATION UPDATES
+
+    * Updated command documentation (thanks, Korbinian Rosenegger)
+
+    * Updated requirements
+
+  MINOR CHANGES
+
+    * Fixed several compiler warnings
+
+Ctrlproxy 3.0	2006-12-08
 
   This list is not complete. Several subsystems in ctrlproxy have been 
   rewritten.

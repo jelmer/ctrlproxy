@@ -1,7 +1,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT(ctrlproxy, 3.0beta1, [jelmer@vernstok.nl])
+AC_INIT(ctrlproxy, 3.0.1, [jelmer@vernstok.nl])
 PACKAGE=$PACKAGE_NAME
 VERSION=$PACKAGE_VERSION
 AC_DEFINE_UNQUOTED(PACKAGE,"$PACKAGE", [ Package name])
@@ -73,6 +73,7 @@ PKG_CHECK_MODULES(GNUTLS, gnutls, [
 AC_CHECK_LIB(readline, readline, [ 
 	AC_DEFINE(HAVE_READLINE, 1, [Whether readline is available])
 	BINS="$BINS linestack-cmd$ac_cv_exeext" 
+	LIBS="$LIBS -lreadline"
 ])
 
 ###############################################################################

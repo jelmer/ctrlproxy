@@ -130,7 +130,6 @@ static void signal_save(int sig)
 	nickserv_save(my_global, my_global->config->config_dir);
 }
 
-#if GLIB_MAJOR_VERSION >= 2 && GLIB_MINOR_VERSION >= 8
 static pid_t read_pidfile(struct global *global)
 {
 	char *path = g_build_filename(global->config->config_dir, "pid", NULL);
@@ -159,7 +158,6 @@ static gboolean write_pidfile(struct global *global)
 	g_free(path);
 	return TRUE;
 }
-#endif
 
 int main(int argc, char **argv)
 {
@@ -300,9 +298,7 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
-#if GLIB_MAJOR_VERSION >= 2 && GLIB_MINOR_VERSION >= 8
 	write_pidfile(my_global);
-#endif
 
 	start_unix_socket(my_global);
 	start_admin_socket(my_global);

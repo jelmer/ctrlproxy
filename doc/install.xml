@@ -44,7 +44,7 @@ ctrlproxy-3.0/AUTHORS
 			<para>Ctrlproxy Bazaar can be accessed by running: </para>
 
 			<para><screen>
-					<prompt>$ </prompt><userinput>bzr get http://ctrlproxy.vernstok.nl/bzr/trunk ctrlproxy-trunk</userinput>
+					<prompt>$ </prompt><userinput>bzr get http://people.samba.org/bzr/jelmer/ctrlproxy/trunk ctrlproxy-trunk</userinput>
 ...
 </screen>
 			</para>

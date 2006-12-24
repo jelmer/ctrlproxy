@@ -18,6 +18,7 @@
 		<arg choice="opt">-d file</arg>
 		<arg choice="opt">-l file</arg>
 		<arg choice="opt">-D</arg>
+		<arg choice="opt">--init</arg>
 		<arg choice="opt">-r file</arg>
 		<arg choice="opt">-v</arg>
 	</cmdsynopsis>
@@ -66,6 +67,10 @@ on the number of servers it is connected to.
 
 	<varlistentry><term>-c, --config-dir=DIR</term>
 		<listitem><para>Read configuration files from the specified directory <option>DIR</option> instead of from <filename>.ctrlproxy</filename> in the users' homedirectory.</para></listitem>
+	</varlistentry>
+
+	<varlistentry><term>--init</term>
+		<listitem><para>Create a new configuration file.</para></listitem>
 	</varlistentry>
 
 	<varlistentry><term>-v, --version</term>
