@@ -16,12 +16,17 @@ clean:
 	-$(MAKE) distclean
 	rm -f build-stamp
 
-binary-indep: build
+test:
+	$(MAKE) test
 
-binary-arch: build
+test-stamp: test
+	touch test-stamp
+
+binary-indep: build test
+
+binary-arch: build test
 	dh_testdir
 	dh_testroot
-	
 	dh_clean -k
 	dh_installdirs
 	$(MAKE) install DESTDIR=`pwd`/debian/ctrlproxy
