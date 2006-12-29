@@ -1,10 +1,10 @@
 Source: ctrlproxy
 Section: net
 Priority: optional
-Maintainer: Wilmer van der Gaast <lintux@debian.org>
-Uploaders: Jelmer Vernooij <jelmer@samba.org>
+Maintainer: Jelmer Vernooij <jelmer@samba.org>
+Uploaders: Wilmer van der Gaast <lintux@debian.org>
 Standards-Version: 3.7.2
-Build-Depends: libglib2.0-dev, libgnutls-dev, debhelper (>> 5.0.0)
+Build-Depends: libglib2.0-dev, libgnutls-dev, debhelper (>> 5.0.0), check
 
 Package: ctrlproxy
 Architecture: any
@@ -21,3 +21,10 @@ Description: An IRC proxy with multiserver support
  while you have an IRC session open somewhere else. It supports logging
  (in the same format as the irssi IRC client), password authentication,
  and ctcp (in case no clients are connected).
+
+Package: ctrlproxy-dev
+Architecture: any
+Depends: ctrlproxy, libglib2.0-dev
+Description: An IRC proxy
+ .
+ This package contains the development files.
