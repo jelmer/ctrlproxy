@@ -280,7 +280,7 @@ int main(int argc, char **argv)
 
 		g_free(rcfile);
 	} else {
-		my_global = new_global(config_dir);	
+		my_global = load_global(config_dir);	
 	}
 	g_free(tmp);
 

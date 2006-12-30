@@ -57,16 +57,24 @@ void config_save_notify(struct global *global, const char *dest)
 /* globals */
 struct global *my_global;
 
-struct global *new_global(const char *config_dir)
+struct global *init_global(void)
 {
 	struct global *global = g_new0(struct global, 1);
 
-	global->config = load_configuration(config_dir);
+	return global;
+}
 
-	if (!global->config) {
-		g_free(global);
+struct global *load_global(const char *config_dir)
+{
+	struct global *global;
+	struct ctrlproxy_config *cfg;
+	cfg = load_configuration(config_dir);
+
+	if (cfg == NULL)
 		return NULL;
-	}
+
+	global = init_global();
+	global->config = cfg;
 
 	load_networks(global, global->config);
 
@@ -82,7 +90,8 @@ void free_global(struct global *global)
 	if (global == NULL)
 		return;
 	fini_networks(global);
-	free_config(global->config);
+	if (global->config != NULL)
+		free_config(global->config);
 	global->config = NULL;
 	fini_networks(global);
 }
