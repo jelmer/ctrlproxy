@@ -11,7 +11,6 @@ build-stamp:
 clean:
 	dh_testdir
 	dh_testroot
-	
 	dh_clean
 	-$(MAKE) distclean
 	rm -f build-stamp
@@ -29,8 +28,9 @@ binary-arch: build test
 	dh_testroot
 	dh_clean -k
 	dh_installdirs
-	$(MAKE) install DESTDIR=`pwd`/debian/ctrlproxy
-	dh_strip
+	$(MAKE) install DESTDIR=`pwd`/debian/tmp
+	dh_install --sourcedir=debian/tmp -a --list-missing --fail-missing
+	dh_strip -a
 	dh_installdocs -a
 	dh_installchangelogs -a 
 	dh_installexamples -a 
