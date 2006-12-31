@@ -1045,37 +1045,39 @@ struct network *find_network(struct global *global, const char *name)
 struct network *find_network_by_hostname(struct global *global, const char *hostname, guint16 port, gboolean create)
 {
 	GList *gl;
-	struct network *n;
 	char *portname = g_strdup_printf("%d", port);
 	g_assert(portname);
 	g_assert(hostname);
 	
 	for (gl = global->networks; gl; gl = gl->next) {
 		GList *sv;
-		n = gl->data;
+		struct network *n = gl->data;
 		g_assert(n);
 
 		if (n->name && !g_strcasecmp(n->name, hostname)) {
 			g_free(portname);
 			return n;
 		}
-		
+
 		g_assert(n->config);
-		if (n->config->type != NETWORK_TCP) continue;
-		
-		sv = n->config->type_settings.tcp_servers;
+		if (n->config->type == NETWORK_TCP) 
+		{
+			for (sv = n->config->type_settings.tcp_servers; sv; sv = sv->next)
+			{
+				struct tcp_server_config *server = sv->data;
 
-		while (sv) {
-			struct tcp_server_config *server = sv->data;
+				if (!g_strcasecmp(server->host, hostname) && 
+					!g_strcasecmp(server->port, portname)) {
+					g_free(portname);
+					return n;
+				}
+			} 
+		}
 
-			if (!g_strcasecmp(server->host, hostname) && 
-				!g_strcasecmp(server->port, portname)) {
-				g_free(portname);
-				return n;
-			}
-
-			sv = sv->next;
-		} 
+		if (n->info.name && !g_strcasecmp(n->info.name, hostname)) {
+			g_free(portname);
+			return n;
+		}
 	}
 
 	/* Create a new server */
@@ -1119,3 +1121,47 @@ void network_select_next_server(struct network *n)
 	log_network(LOG_INFO, n, "Trying next server");
 	n->connection.data.tcp.current_server = network_get_next_tcp_server(n);
 }
+
+char *network_generate_feature_string(struct network *n)
+{
+	GList *fs = NULL, *gl;
+	char *name, *casemap;
+	char *ret;
+
+	g_assert(n);
+	
+	name = g_strdup_printf("NETWORK=%s", n->name);
+	fs = g_list_append(fs, name);
+
+	switch (n->info.casemapping) {
+	default:
+	case CASEMAP_RFC1459:
+		casemap = g_strdup("CASEMAPPING=rfc1459");
+		break;
+	case CASEMAP_STRICT_RFC1459:
+		casemap = g_strdup("CASEMAPPING=strict-rfc1459");
+		break;
+	case CASEMAP_ASCII:
+		casemap = g_strdup("CASEMAPPING=ascii");
+		break;
+	}
+
+	fs = g_list_append(fs, casemap);
+
+	fs = g_list_append(fs, g_strdup("FNC"));
+
+	fs = g_list_append(fs, g_strdup_printf("CHARSET=%s", n->global->config->client_charset));
+
+	ret = list_make_string(fs);
+
+	for (gl = fs; gl; gl = gl->next)
+	{
+		g_free(gl->data);
+	}
+
+	g_list_free(fs);
+
+	return ret;
+}
+
+

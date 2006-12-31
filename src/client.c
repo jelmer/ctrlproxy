@@ -39,48 +39,6 @@
 static GList *pending_clients = NULL;
 static gboolean handle_client_receive(GIOChannel *c, GIOCondition cond, void *_client);
 
-static char *network_generate_feature_string(struct network *n)
-{
-	GList *fs = NULL, *gl;
-	char *name, *casemap;
-	char *ret;
-
-	g_assert(n);
-	
-	name = g_strdup_printf("NETWORK=%s", n->name);
-	fs = g_list_append(fs, name);
-
-	switch (n->info.casemapping) {
-	default:
-	case CASEMAP_RFC1459:
-		casemap = g_strdup("CASEMAPPING=rfc1459");
-		break;
-	case CASEMAP_STRICT_RFC1459:
-		casemap = g_strdup("CASEMAPPING=strict-rfc1459");
-		break;
-	case CASEMAP_ASCII:
-		casemap = g_strdup("CASEMAPPING=ascii");
-		break;
-	}
-
-	fs = g_list_append(fs, casemap);
-
-	fs = g_list_append(fs, g_strdup("FNC"));
-
-	fs = g_list_append(fs, g_strdup_printf("CHARSET=%s", n->global->config->client_charset));
-
-	ret = list_make_string(fs);
-
-	for (gl = fs; gl; gl = gl->next)
-	{
-		g_free(gl->data);
-	}
-
-	g_list_free(fs);
-
-	return ret;
-}
-
 static gboolean client_send_queue(struct client *c)
 {
 	while (!g_queue_is_empty(c->pending_lines)) {
