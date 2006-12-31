@@ -412,6 +412,7 @@ static gboolean handle_pending_client_receive(GIOChannel *c, GIOCondition cond, 
 {
 	struct client *client = (struct client *)_client;
 	struct line *l;
+	extern struct global *my_global;
 
 	g_assert(client);
 	g_assert(c);
@@ -475,7 +476,7 @@ static gboolean handle_pending_client_receive(GIOChannel *c, GIOCondition cond, 
 					continue;
 				}
 
-				client->network = find_network_by_hostname(client->network->global, l->args[1], l->args[2]?atoi(l->args[2]):6667, TRUE);
+				client->network = find_network_by_hostname(my_global, l->args[1], l->args[2]?atoi(l->args[2]):6667, TRUE);
 
 				if (!client->network) {
 					log_client(LOG_ERROR, client, "Unable to connect to network with name %s", l->args[1]);
