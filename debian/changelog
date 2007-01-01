@@ -17,6 +17,7 @@ ctrlproxy (3.0.0) unstable; urgency=high
   * Removed obsolete ctrlproxy-setup script. (Closes: #324936)
   * Removed obsolete stats module. (Closes: #276072)
   * Fixes dates in logs (Closes: #222994)
+  * New maintainer.
 
  -- Jelmer Vernooij <jelmer@samba.org>  Fri,  8 Dec 2006 17:32:25 +0100
 

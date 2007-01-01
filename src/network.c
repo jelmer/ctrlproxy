@@ -925,11 +925,11 @@ void unload_network(struct network *s)
 	GList *l;
 	
 	g_assert(s);
-	l = s->clients;
-
 	if (s->connection.state == NETWORK_CONNECTION_STATE_MOTD_RECVD) {
 		log_network(LOG_INFO, s, "Closing connection");
 	}
+
+	l = s->clients;
 
 	while(l) {
 		struct client *c = l->data;
@@ -1036,7 +1036,8 @@ struct network *find_network(struct global *global, const char *name)
 	GList *gl;
 	for (gl = global->networks; gl; gl = gl->next) {
 		struct network *n = gl->data;
-		if (n->name && !g_strcasecmp(n->name, name)) return n;
+		if (n->name && !g_strcasecmp(n->name, name)) 
+			return n;
 	}
 
 	return NULL;
