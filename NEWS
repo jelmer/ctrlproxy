@@ -25,6 +25,8 @@ Ctrlproxy 3.0.1 UNRELEASED
 	
 	* Fix endless loop in logging system when debug level is 
 	  set to 5 (reported by _static_).
+	
+	* listener configuration is no longer truncated at exit.
 
 	* Fix channel information not being replicated for the administration 
 	  network.

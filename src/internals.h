@@ -102,7 +102,8 @@ void string2mode(char *modes, char ar[255]);
 void free_global(struct global *);
 void config_load_notify(struct global *global);
 void config_save_notify(struct global *global, const char *);
-struct global *new_global(const char *config_dir);
+struct global *load_global(const char *config_dir);
+struct global *init_global(void);
 
 /* nickserv.c */
 void init_nickserv(void);

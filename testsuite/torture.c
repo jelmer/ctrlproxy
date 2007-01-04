@@ -55,14 +55,15 @@ struct global *torture_global(const char *name)
 	char *config_dir = g_build_filename(test_dir, name, NULL);
 	struct global *g;
 
-	g = new_global(DEFAULT_CONFIG_DIR);	
+	g = init_global();
+	g->config = init_configuration();
 	g_assert(g != NULL);
 	g->config->config_dir = g_strdup(config_dir);
 	save_configuration(g->config, config_dir);
 
 	free_global(g);
 
-	g = new_global(config_dir);
+	g = load_global(config_dir);
 	g_assert(g != NULL);
 
 	g_free(config_dir);
