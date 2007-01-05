@@ -42,7 +42,8 @@ AC_HEADER_DIRENT
 AC_HEADER_STDC
 AC_HEADER_TIME
 AC_CHECK_HEADERS(
-[stdlib.h string.h unistd.h execinfo.h sys/time.h sys/socket.h netinet/in6.h])
+[stdlib.h string.h unistd.h execinfo.h sys/time.h sys/socket.h]
+[netinet/in.h netinet/in6.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
@@ -82,7 +83,9 @@ AC_CACHE_CHECK([for IPv6], ac_cv_lib_ipv6, [
 AC_LINK_IFELSE([AC_LANG_PROGRAM([[
 #include <sys/types.h>
 #include <sys/socket.h>
+#ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
+#endif
 #ifdef HAVE_NETINET_IN6_H
 #include <netinet/in6.h>
 #endif

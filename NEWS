@@ -1,6 +1,13 @@
  Otherwise indicated differently, all changes made by 
  	Jelmer Vernooij.
 
+Ctrlproxy 3.0.2 UNRELEASED
+
+  PORTABILITY
+    
+    * Include netinet/in.h in src/utils.c and src/network.c. Required 
+	  for building on FreeBSD. Reported by underlig.
+
 Ctrlproxy 3.0.1 2007-01-04
 
   BUG FIXES
