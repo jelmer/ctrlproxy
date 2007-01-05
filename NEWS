@@ -1,7 +1,7 @@
  Otherwise indicated differently, all changes made by 
  	Jelmer Vernooij.
 
-Ctrlproxy 3.0.1 UNRELEASED
+Ctrlproxy 3.0.1 2007-01-04
 
   BUG FIXES
 
@@ -13,7 +13,7 @@ Ctrlproxy 3.0.1 UNRELEASED
 	* 352 and 315 replies are now (optionally) cached. The "max_who_age" 
 	  setting can be set to the number of seconds that results should be cached.
 	  This prevents "Excess Flood" errors when connecting using several xchat clients
-	  at once.
+	  at once. Can be disabled by setting max_who_age=0 (the default).
 
     * Fixed bug in administration command (reported by Daniel Poelzleithner)
 
@@ -28,6 +28,9 @@ Ctrlproxy 3.0.1 UNRELEASED
 	
 	* listener configuration is no longer truncated at exit.
 
+	* Fix channel information not being replicated for the administration 
+	  network.
+
   PORTABILITY
   
     * Added replacement functions for g_file_{set,get}_contents, for those 
@@ -35,7 +38,7 @@ Ctrlproxy 3.0.1 UNRELEASED
     
   DOCUMENTATION UPDATES
 
-    * Updated command documentation
+    * Updated command documentation (thanks, Korbinian Rosenegger)
 
     * Updated requirements
 

@@ -98,8 +98,8 @@ static struct query queries[] = {
 	
  /* WHOWAS <nickname> [<count> [<server>]]*/
 	{"WHOWAS", 
-		{ RPL_WHOWASUSER, 0 },
-		{ RPL_ENDOFWHOWAS, RPL_WHOISSERVER, 0 },
+		{ RPL_WHOWASUSER, RPL_WHOISSERVER, 0 },
+		{ RPL_ENDOFWHOWAS, 0 },
 		{ ERR_NONICKNAMEGIVEN, ERR_WASNOSUCHNICK, 0 },
 		handle_default
 	},

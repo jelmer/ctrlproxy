@@ -22,11 +22,11 @@ manpages: ctrlproxy.1 ctrlproxy_config.5
 	$(XSLTPROC) http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $< > $@
 
 clean::
-	rm -f *.html *.1 *.5
-	rm -rf user-guide
+	@echo Removing documentation files
+	@rm -f *.html *.1 *.5
+	@rm -rf user-guide
 
 distclean:: clean
-	rm -f Makefile.settings
 
 install: all
 	$(INSTALL) -d $(DESTDIR)$(mandir)/man1
