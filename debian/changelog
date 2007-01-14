@@ -4,7 +4,7 @@ ctrlproxy (3.0.1) unstable; urgency=low
   * Add development package with headers and pkg-config file.
   * Run testsuite when building package.
 
- -- Jelmer Vernooij <jelmer@samba.org>  Fri,  30 Dec 2006 19:15:25 +0100
+ -- Jelmer Vernooij <jelmer@samba.org>  Fri, 30 Dec 2006 19:15:25 +0100
 
 ctrlproxy (3.0.0) unstable; urgency=high
 
