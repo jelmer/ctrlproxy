@@ -22,6 +22,12 @@
 #include <sys/utsname.h>
 #endif
 
+struct ctcp_handle 
+{
+	struct network *network;
+	char *nick;
+};
+
 static char *toarg(va_list ap)
 {
 	char *arg;
@@ -51,15 +57,15 @@ static char *toarg(va_list ap)
 	return ret;
 }
 
-void ctcp_reply(struct network *n, const char *nick, ...) 
+void ctcp_reply(struct ctcp_handle *h, ...) 
 {
 	va_list ap;
 	char *msg;
-	va_start(ap, nick);
+	va_start(ap, h);
 	msg = toarg(ap);
 	va_end(ap);
 
-	network_send_args(n, "NOTICE", nick, msg, NULL);
+	network_send_args(h->network, "NOTICE", h->nick, msg, NULL);
 	g_free(msg);
 }
 
@@ -100,32 +106,32 @@ static char *get_ctcp_command(const char *data)
 }
 
 
-static void handle_time(struct network *n, const char *sender, char **args)
+static void handle_time(struct ctcp_handle *h, char **args)
 {
 	time_t ti = time(NULL);
 	char *t, *msg = g_strdup(ctime(&ti));
 	t = strchr(msg, '\n');
 	if(t)*t = '\0';
-	ctcp_reply(n, sender, "TIME", msg, NULL);
+	ctcp_reply(h, "TIME", msg, NULL);
 	g_free(msg);
 }
 
-static void handle_finger(struct network *n, const char *sender, char **args)
+static void handle_finger(struct ctcp_handle *h, char **args)
 {
-	ctcp_reply(n, sender, "FINGER", n->state->me.fullname, NULL);
+	ctcp_reply(h, "FINGER", h->network->state->me.fullname, NULL);
 }
 
-static void handle_source(struct network *n, const char *sender, char **args)
+static void handle_source(struct ctcp_handle *h, char **args)
 {
-	ctcp_reply(n, sender, "SOURCE", "http://ctrlproxy.vernstok.nl/:releases:ctrlproxy-latest.tar.gz", NULL);
+	ctcp_reply(h, "SOURCE", "http://ctrlproxy.vernstok.nl/:releases:ctrlproxy-latest.tar.gz", NULL);
 }
 
-static void handle_clientinfo(struct network *n, const char *sender, char **args)
+static void handle_clientinfo(struct ctcp_handle *h, char **args)
 {
-	ctcp_reply(n, sender, "CLIENTINFO", "ACTION CLIENTINFO VERSION TIME FINGER SOURCE CLIENTINFO PING", NULL);
+	ctcp_reply(h, "CLIENTINFO", "ACTION CLIENTINFO VERSION TIME FINGER SOURCE CLIENTINFO PING", NULL);
 }
 
-static void handle_version(struct network *n, const char *sender, char **args)
+static void handle_version(struct ctcp_handle *h, char **args)
 {
 	char *msg;
 #ifndef _WIN32
@@ -135,13 +141,13 @@ static void handle_version(struct network *n, const char *sender, char **args)
 #else
 	msg = g_strdup_printf("ctrlproxy:%s:Windows %d.%d", ctrlproxy_version(), _winmajor, _winminor);
 #endif
-	ctcp_reply(n, sender, "VERSION", msg, NULL);
+	ctcp_reply(h, "VERSION", msg, NULL);
 	g_free(msg);
 }
 
-static void handle_ping(struct network *n, const char *sender, char **args)
+static void handle_ping(struct ctcp_handle *h, char **args)
 {
-	ctcp_reply(n, sender, "PING", args[1], NULL);
+	ctcp_reply(h, "PING", args[1], NULL);
 }
 
 static const struct ctcp_handler builtins[] = {
@@ -268,19 +274,21 @@ gboolean ctcp_process_network_request (struct network *n, struct line *l)
 {
 	GList *gl;
 	int i;
-	char *sender, *t;
+	char *t;
 	char *data;
 	char **args;
 	gboolean ret = FALSE;
 
-	sender = line_get_nick(l);
+	struct ctcp_handle h;
+	h.network = n;
+	h.nick = line_get_nick(l);
 
 	data = g_strdup(l->args[2]+1);
 	t = strchr(data, '\001');
 	if(!t) { 
 		g_free(data); 
-		log_network(LOG_WARNING, n, "Malformed CTCP request from %s!", sender);
-		g_free(sender);
+		log_network(LOG_WARNING, n, "Malformed CTCP request from %s!", h.nick);
+		g_free(h.nick);
 		return FALSE;
 	}
 	*t = '\0';
@@ -288,10 +296,10 @@ gboolean ctcp_process_network_request (struct network *n, struct line *l)
 	args = g_strsplit(data, " ", 0);
 
 	for (gl = cmds; gl; gl = gl->next) {
-		struct ctcp_handler *h = gl->data;
+		struct ctcp_handler *hl = gl->data;
 
-		if (!g_strcasecmp(h->name, args[0])) {
-			h->fn(n, sender, args);
+		if (!g_strcasecmp(hl->name, args[0])) {
+			hl->fn(&h, args);
 			ret = TRUE;
 			break;
 		}
@@ -299,21 +307,21 @@ gboolean ctcp_process_network_request (struct network *n, struct line *l)
 
 	for (i = 0; !ret && builtins[i].name; i++) {
 		if (!g_strcasecmp(builtins[i].name, args[0])) {
-			builtins[i].fn(n, sender, args);
+			builtins[i].fn(&h, args);
 			ret = TRUE;
 			break;
 		}
 	}
 
 	if (!ret) {
-		ctcp_reply(n, sender, "ERRMSG", NULL);
+		ctcp_reply(&h, "ERRMSG", NULL);
 		log_network(LOG_WARNING, n, "Received unknown CTCP request '%s'!", data);
 		ret = FALSE;
 	}
 
 	g_strfreev(args);
 	g_free(data);
-	g_free(sender);
+	g_free(h.nick);
 
 	return ret;
 }
