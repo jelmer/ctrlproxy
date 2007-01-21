@@ -647,6 +647,7 @@ static int handle_default(const struct line *l, const struct network *n, struct 
 
 static int handle_topic(const struct line *l, const struct network *n, struct client *c, struct query *q)
 {
-	if(l->args[2])return 0;
+	if (l->args[2] != NULL)
+		return 0;
 	return handle_default(l,n,c,q);
 }

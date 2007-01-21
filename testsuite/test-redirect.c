@@ -35,11 +35,41 @@ START_TEST(test_465)
 	test_redirect_response(n, "465 irc.example.com :You are banned");
 END_TEST
 
+START_TEST(test_451)
+	struct network *n = dummy_network();
+	test_redirect_response(n, "451 nick :Not registered");
+END_TEST
+
+START_TEST(test_462)
+	struct network *n = dummy_network();
+	test_redirect_response(n, "462 nick :Already registered");
+END_TEST
+
+START_TEST(test_463)
+	struct network *n = dummy_network();
+	test_redirect_response(n, "463 hostname :Not privileged to connect");
+END_TEST
+
+START_TEST(test_464)
+	struct network *n = dummy_network();
+	test_redirect_response(n, "464 nick :Password mismatch");
+END_TEST
+
+START_TEST(test_topic)
+	struct network *n = dummy_network();
+	test_redirect_response(n, "332 #channel :Foobar");
+END_TEST
+
 Suite *redirect_suite()
 {
 	Suite *s = suite_create("redirect");
 	TCase *tc_core = tcase_create("core");
 	suite_add_tcase(s, tc_core);
 	tcase_add_test(tc_core, test_465);
+	tcase_add_test(tc_core, test_451);
+	tcase_add_test(tc_core, test_462);
+	tcase_add_test(tc_core, test_463);
+	tcase_add_test(tc_core, test_464);
+	tcase_add_test(tc_core, test_topic);
 	return s;
 }
