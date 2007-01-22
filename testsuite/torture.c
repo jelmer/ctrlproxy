@@ -45,6 +45,7 @@ Suite *user_suite(void);
 Suite *linestack_suite(void);
 Suite *redirect_suite(void);
 Suite *networkinfo_suite(void);
+Suite *ctcp_suite(void);
 gboolean init_log(const char *file);
 
 char *torture_tempfile(const char *path)
@@ -150,6 +151,7 @@ int main (int argc, char **argv)
 	srunner_add_suite(sr, tls_suite());
 	srunner_add_suite(sr, redirect_suite());
 	srunner_add_suite(sr, networkinfo_suite());
+	srunner_add_suite(sr, ctcp_suite());
 	if (no_fork)
 		srunner_set_fork_status(sr, CK_NOFORK);
 	srunner_run_all (sr, verbose?CK_VERBOSE:CK_NORMAL);
