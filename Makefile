@@ -123,7 +123,11 @@ install-pkgconfig:
 	$(INSTALL) -m 0644 ctrlproxy.pc $(DESTDIR)$(libdir)/pkgconfig
 
 gcov: test
-	$(GCOV) -p -o src/ src/*.c 
+	$(GCOV) -f -p -o src/ src/*.c 
+
+lcov:
+	lcov --base-directory `pwd` --directory . --capture --output-file app.info
+	genhtml -o coverage app.info
 
 mods/lib%.$(SHLIBEXT): mods/%.o
 	@echo Linking $@
