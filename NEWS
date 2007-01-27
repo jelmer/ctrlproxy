@@ -31,6 +31,8 @@ Ctrlproxy 3.0.1 2007-01-04
 	* Fix channel information not being replicated for the administration 
 	  network.
 
+	* Allow ports different than 6680 in ctrlproxy --init. (#85)
+
   PORTABILITY
   
     * Added replacement functions for g_file_{set,get}_contents, for those 

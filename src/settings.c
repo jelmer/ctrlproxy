@@ -631,7 +631,7 @@ gboolean create_configuration(const char *config_dir)
 	printf("Please specify port the administration interface should listen on.\n"
 		   "Prepend with a colon to listen on a specific address.\n"
 		   "Example: localhost:6668\n\nPort [%s]: ", port); fflush(stdout);
-	if (fgets(port, sizeof(port), stdin))
+	if (!fgets(port, sizeof(port), stdin))
 		snprintf(port, sizeof(port), "%d", DEFAULT_ADMIN_PORT);
 
 	if (port[strlen(port)-1] == '\n')
