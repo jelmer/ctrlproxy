@@ -1,6 +1,19 @@
  Otherwise indicated differently, all changes made by 
  	Jelmer Vernooij.
 
+Ctrlproxy 3.0.2 UNRELEASED
+
+  BUG FIXES
+
+    * Support redirecting 396, 318, 437 and 330 replies. (#84)
+
+    * Don't abort when trying to send auto-AWAY while network is 
+	  disconnected.
+
+  PORTABILITY
+
+  DOCUMENTATION
+
 Ctrlproxy 3.0.1 2007-01-04
 
   BUG FIXES
