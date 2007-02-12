@@ -10,6 +10,8 @@ Ctrlproxy 3.0.2 UNRELEASED
     * Don't abort when trying to send auto-AWAY while network is 
 	  disconnected.
 
+	* Handle CTRLPROXY command without any arguments. (#92)
+
   PORTABILITY
 
   DOCUMENTATION
