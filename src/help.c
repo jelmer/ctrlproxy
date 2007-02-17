@@ -25,19 +25,15 @@ void admin_cmd_help(admin_handle h, char **args, void *userdata)
 {
 	extern GList *admin_commands;
 	extern guint longest_command;
-	GList *gl = admin_commands;
+	GList *gl;
 	char *tmp;
 	char **details;
 	int i;
 
 	if(args[1]) {
 		admin_out(h, "Details for command %s:", args[1]);
-	} else {
-		admin_out(h, "The following commands are available:");
-	}
-	while(gl) {
-		struct admin_command *cmd = (struct admin_command *)gl->data;
-		if(args[1]) {
+		for (gl = admin_commands; gl; gl = gl->next) {
+			struct admin_command *cmd = (struct admin_command *)gl->data;
 			if(!g_strcasecmp(args[1], cmd->name)) {
 				if(cmd->help_details != NULL) {
 					details = g_strsplit(cmd->help_details, "\n", 0);
@@ -49,7 +45,12 @@ void admin_cmd_help(admin_handle h, char **args, void *userdata)
 					admin_out(h, "Sorry, no help for %s available", args[1]);
 				}
 			}
-		} else {
+		}
+		admin_out(h, "Unknown command");
+	} else {
+		admin_out(h, "The following commands are available:");
+		for (gl = admin_commands; gl; gl = gl->next) {
+			struct admin_command *cmd = (struct admin_command *)gl->data;
 			if(cmd->help != NULL) {
 				tmp = g_strdup_printf("%s%s     %s",cmd->name,g_strnfill(longest_command - strlen(cmd->name),' '),cmd->help);
 				admin_out(h, tmp);
@@ -58,9 +59,5 @@ void admin_cmd_help(admin_handle h, char **args, void *userdata)
 				admin_out(h, cmd->name);
 			}
 		}
-		gl = gl->next;
-	}
-	if(args[1]) {
-		admin_out(h, "Unknown command");
 	}
 }

@@ -391,7 +391,7 @@ void register_admin_command(const struct admin_command *cmd)
 
 void unregister_admin_command(const struct admin_command *cmd)
 {
-	commands = g_list_remove(commands, cmd);
+	admin_commands = g_list_remove(admin_commands, cmd);
 }
 
 gboolean process_cmd(admin_handle h, const char *cmd)
