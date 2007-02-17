@@ -263,7 +263,7 @@ int main(int argc, char **argv)
 
 	init_admin();
 	init_nickserv();
-	help_init(&help, HELPFILE);
+	help = help_load_file(HELPFILE);
 
 	/* Determine correct modules directory */
 	init_plugins(getenv("CTRLPROXY_MODULESDIR")?getenv("CTRLPROXY_MODULESDIR"):MODULESDIR);

@@ -32,7 +32,7 @@ typedef struct help
 	GHashTable *entries;
 } help_t;
 
-help_t *help_init( const char *helpfile );
+help_t *help_load_file(const char *helpfile);
 const char *help_get( help_t *help, const char *string );
 void help_free(help_t *h);
 
