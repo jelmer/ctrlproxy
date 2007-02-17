@@ -35,7 +35,7 @@ struct nickserv_entry {
 	const char *pass;
 };
 
-static const char *nickserv_find_nick(struct network *n, char *nick)
+const char *nickserv_find_nick(struct network *n, char *nick)
 {
 	GList *gl;
 	for (gl = n->global->nickserv_nicks; gl; gl = gl->next) {
@@ -51,7 +51,7 @@ static const char *nickserv_find_nick(struct network *n, char *nick)
 	return NULL;
 }
 
-static const char *nickserv_nick(struct network *n)
+const char *nickserv_nick(struct network *n)
 {
 	return "NickServ";
 }
