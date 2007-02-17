@@ -11,75 +11,9 @@
 	by spaces. Quoting is not supported. Those familiar with 
 	NickServ or ChanServ will already be used to this syntax.</para>
 
-	<sect1>
-		<title>Commands</title>
+<xi:include href="commands.xml/">
 
-		<para>The following commands are supported:</para>
-
-		<variablelist>
-			<varlistentry><term>ADDNETWORK &lt;name&gt;</term>
-			<listitem><para>
-			Adds a new network with the specified name.
-			</para></listitem></varlistentry>
-
-			<varlistentry><term>ADDSERVER &lt;network&gt; &lt;server&gt; &lt;port&gt;</term>
-			<listitem><para>
-			Adds a new server to the specified network with the specified type and options.</para>
-
-			<para>Example: <command>addserver OPN irc.freenode.net 6667</command></para>
-
-			</listitem></varlistentry>
-
-			<varlistentry><term>BACKLOG [&lt;channel&gt;]</term>
-			<listitem>
-				<para>Without any arguments, the BACKLOG command replicates all the 
-				backlogs for the current channel.</para>
-
-			<para>With one argument, the name of a channel, all lines on that 
-				channel are replicated.</para>
-
-			</listitem></varlistentry>
-
-			<varlistentry><term>CONNECT &lt;network&gt;</term>
-
-			<listitem><para>Connect to the specifed network. Ctrlproxy will connect to the first known server for this network.</para></listitem></varlistentry>
-
-			<varlistentry><term>DELNETWORK &lt;network&gt;</term>
-
-			<listitem><para>Remove the specified network. The network may not be connected.</para></listitem></varlistentry>
-
-			<varlistentry><term>DIE</term>
-
-			<listitem><para>Disconnect all clients and servers and exit ctrlproxy.</para></listitem></varlistentry>
-
-			<varlistentry><term>DISCONNECT &lt;network&gt;</term>
-
-			<listitem><para>Disconnect from the specified network.</para></listitem></varlistentry>
-
-			<varlistentry><term>DETACH</term>
-
-			<listitem><para>Detach client from the proxy.</para></listitem></varlistentry>
-
-			<varlistentry><term>LISTNETWORKS</term>
-			<listitem><para>Prints out a list of all networks 
-			ctrlproxy is connected to at the moment.</para></listitem></varlistentry>
-
-			<varlistentry><term>NEXTSERVER</term>
-				<listitem><para>Makes the specified network disconnect from the current server and go to the next one.</para></listitem>
-			</varlistentry>
-
-			<varlistentry><term>SAVECONFIG</term>
-				<listitem><para>Save the (updated) configuration to the location it was loaded from (usually <filename>$HOME/.ctrlproxy/</filename>).</para></listitem></varlistentry>
-
-			<varlistentry><term>HELP</term>
-			<listitem><para>Prints out list of available commands.</para></listitem></varlistentry>
-
-
-
-		</variablelist>
-	</sect1>
-
-	<sect1>
+	<sect1 id="admin example">
 			<title>Example commands</title>
 
 <para>

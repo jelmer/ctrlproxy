@@ -35,10 +35,13 @@
 
 #include <netdb.h>
 
+#include "help.h"
+
 /* globals */
 static GMainLoop *main_loop;
 extern char my_hostname[];
 extern struct global *my_global;
+extern help_t *help; 
 
 static void signal_crash(int sig) 
 {
@@ -260,6 +263,7 @@ int main(int argc, char **argv)
 
 	init_admin();
 	init_nickserv();
+	help = help_load_file(HELPFILE);
 
 	/* Determine correct modules directory */
 	init_plugins(getenv("CTRLPROXY_MODULESDIR")?getenv("CTRLPROXY_MODULESDIR"):MODULESDIR);

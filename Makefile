@@ -15,7 +15,7 @@ endif
 LIBS += $(GNUTLS_LIBS)
 CFLAGS += $(GNUTLS_CFLAGS)
 
-CFLAGS+=-DHAVE_CONFIG_H -DSHAREDIR=\"$(cdatadir)\" -DDEFAULT_CONFIG_DIR=\"$(DEFAULT_CONFIG_DIR)\"
+CFLAGS+=-DHAVE_CONFIG_H -DSHAREDIR=\"$(cdatadir)\" -DDEFAULT_CONFIG_DIR=\"$(DEFAULT_CONFIG_DIR)\" -DHELPFILE=\"$(HELPFILE)\"
 CFLAGS+=-ansi -Wall -DMODULESDIR=\"$(modulesdir)\" -DSTRICT_MEMORY_ALLOCS=
 
 .PHONY: all clean distclean install install-bin install-dirs install-doc install-data install-mods install-pkgconfig
@@ -48,6 +48,7 @@ objs = src/network.o \
 	   src/admin.o \
 	   src/user.o \
 	   src/pipes.o \
+	   src/help.o \
 	   $(SSL_OBJS)
 
 headers = src/admin.h \
@@ -103,7 +104,7 @@ install-dirs:
 install-bin:
 	$(INSTALL) ctrlproxy$(EXEEXT) $(DESTDIR)$(bindir)
 
-install-doc: doc
+install-doc:: doc
 	$(INSTALL) -m 0644 $(headers) $(DESTDIR)$(destincludedir)
 	$(INSTALL) -m 0644 UPGRADING $(DESTDIR)$(docdir)
 	$(MAKE) -C doc install PACKAGE_VERSION=$(PACKAGE_VERSION)
@@ -180,7 +181,8 @@ check_objs = testsuite/test-cmp.o testsuite/test-user.o \
 			 testsuite/torture.o testsuite/test-linestack.o \
 			 testsuite/test-client.o testsuite/test-network.o \
 			 testsuite/test-tls.o testsuite/test-redirect.o \
-			 testsuite/test-networkinfo.o testsuite/test-ctcp.o
+			 testsuite/test-networkinfo.o testsuite/test-ctcp.o \
+			 testsuite/test-help.o
 testsuite/check: $(check_objs) $(objs)
 	@echo Linking $@
 	@$(CC) $(LIBS) -o $@ $^ -lcheck
