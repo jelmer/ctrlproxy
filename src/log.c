@@ -123,8 +123,20 @@ void log_global(enum log_level level, const char *fmt, ...)
 
 
 
-static void log_handler(const gchar *log_domain, GLogLevelFlags flags, const gchar *message, gpointer user_data) {
-	log_global(LOG_ERROR, "[%s] %s", log_domain, message);
+static void log_handler(const gchar *log_domain, GLogLevelFlags flags, const gchar *message, gpointer user_data) 
+{
+	if (strchr(message, '\n')) {
+		char **lines = g_strsplit(message, "\n", 0);
+		int i;
+		for (i = 0; lines[i]; i++) {
+			if (strlen(lines[i]) == 0)
+				continue;
+			log_global(LOG_ERROR, "[%s] %s", log_domain, lines[i]);
+		}
+		g_strfreev(lines);
+	} else {
+		log_global(LOG_ERROR, "[%s] %s", log_domain, message);
+	}
 }
 
 static void fini_log(void)
