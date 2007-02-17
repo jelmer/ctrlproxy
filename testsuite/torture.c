@@ -38,6 +38,7 @@ Suite *state_suite(void);
 Suite *isupport_suite(void);
 Suite *cmp_suite(void);
 Suite *client_suite(void);
+Suite *admin_suite(void);
 Suite *network_suite(void);
 Suite *line_suite(void);
 Suite *parser_suite(void);
@@ -151,6 +152,7 @@ int main (int argc, char **argv)
 	srunner_add_suite(sr, tls_suite());
 	srunner_add_suite(sr, redirect_suite());
 	srunner_add_suite(sr, networkinfo_suite());
+	srunner_add_suite(sr, admin_suite());
 	srunner_add_suite(sr, ctcp_suite());
 	if (no_fork)
 		srunner_set_fork_status(sr, CK_NOFORK);

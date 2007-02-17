@@ -12,6 +12,15 @@ typedef struct admin_handle *admin_handle;
 
 typedef void (*admin_command_handler) (admin_handle, char **, void *userdata);
 
+struct admin_handle
+{
+	struct global *global;
+	struct client *client;
+	struct network *network;
+	void *user_data;
+	void (*send_fn) (struct admin_handle *, const char *data);
+};
+
 /**
  * Administration command
  */

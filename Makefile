@@ -174,13 +174,13 @@ rfctest: testsuite/ctrlproxyrc.torture
 
 # Unit tests
 check_objs = testsuite/test-cmp.o testsuite/test-user.o \
-			 testsuite/test-isupport.o testsuite/test-parser.o \
-			 testsuite/test-state.o testsuite/test-util.o \
-			 testsuite/test-line.o testsuite/torture.o \
-			 testsuite/test-linestack.o testsuite/test-client.o \
-			 testsuite/test-network.o testsuite/test-tls.o \
-			 testsuite/test-redirect.o testsuite/test-networkinfo.o \
-			 testsuite/test-ctcp.o
+			 testsuite/test-admin.o testsuite/test-isupport.o \
+			 testsuite/test-parser.o testsuite/test-state.o \
+			 testsuite/test-util.o testsuite/test-line.o \
+			 testsuite/torture.o testsuite/test-linestack.o \
+			 testsuite/test-client.o testsuite/test-network.o \
+			 testsuite/test-tls.o testsuite/test-redirect.o \
+			 testsuite/test-networkinfo.o testsuite/test-ctcp.o
 testsuite/check: $(check_objs) $(objs)
 	@echo Linking $@
 	@$(CC) $(LIBS) -o $@ $^ -lcheck
