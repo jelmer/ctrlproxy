@@ -1,7 +1,5 @@
 -include Makefile.settings
 
-VPATH = src:testsuite
-
 MODS_SHARED_FILES = $(patsubst %,mods/lib%.$(SHLIBEXT),$(MODS_SHARED))
 
 GCOV = gcov
@@ -183,14 +181,17 @@ check_objs = testsuite/test-cmp.o testsuite/test-user.o \
 			 testsuite/test-tls.o testsuite/test-redirect.o \
 			 testsuite/test-networkinfo.o testsuite/test-ctcp.o \
 			 testsuite/test-help.o testsuite/test-nickserv.o
+
 testsuite/check: $(check_objs) $(objs)
 	@echo Linking $@
 	@$(CC) $(LIBS) -o $@ $^ -lcheck
 
 CTRLPROXY_MODULESDIR=$(shell pwd)/mods
 
-test: testsuite/check
+test:: testsuite/check
 	@echo Running testsuite
 	@$(VALGRIND) ./testsuite/check
+
+check: test
 
 -include $(dep_files)

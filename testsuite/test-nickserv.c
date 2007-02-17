@@ -32,7 +32,6 @@ Suite *nickserv_suite()
 {
 	Suite *s = suite_create("nickserv");
 	TCase *tc_core = tcase_create("core");
-	init_admin();
 	suite_add_tcase(s, tc_core);
 	return s;
 }

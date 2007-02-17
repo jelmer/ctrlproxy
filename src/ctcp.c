@@ -105,7 +105,6 @@ static char *get_ctcp_command(const char *data)
 	return NULL;
 }
 
-
 static void handle_time(struct ctcp_handle *h, char **args)
 {
 	time_t ti = time(NULL);
@@ -278,8 +277,8 @@ gboolean ctcp_process_network_request (struct network *n, struct line *l)
 	char *data;
 	char **args;
 	gboolean ret = FALSE;
-
 	struct ctcp_handle h;
+
 	h.network = n;
 	h.nick = line_get_nick(l);
 
