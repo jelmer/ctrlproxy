@@ -252,8 +252,8 @@ static void update_config(struct global *global, const char *path)
 	g_key_file_set_integer(global->config->keyfile, "listener", "autoport", autoport);
 
 	filename = g_build_filename(path, "listener", NULL);
-	
-	if (!keyfile)
+
+	if (keyfile)
 		keyfile = g_key_file_new();
 
 	kf = keyfile;
@@ -384,11 +384,11 @@ static void load_config(struct global *global)
 
 static void fini_plugin(void)
 {
-	while(listeners) {
-		struct listener *l = listeners->data;
+	GList *gl;
+	for(gl = listeners; gl; gl = gl->next) {
+		struct listener *l = gl->data;
 		if (l->active) 
 			stop_listener(l);
-		free_listener(l);
 	}
 }
 

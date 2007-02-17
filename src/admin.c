@@ -29,15 +29,6 @@ void admin_cmd_help (admin_handle h, char **args, void *userdata);
 GList *admin_commands = NULL;
 guint longest_command = 0;
 
-struct admin_handle
-{
-	struct global *global;
-	struct client *client;
-	struct network *network;
-	void *user_data;
-	void (*send_fn) (struct admin_handle *, const char *data);
-};
-
 static void privmsg_admin_out(admin_handle h, const char *data)
 {
 	struct client *c = h->client;
@@ -380,6 +371,11 @@ static void handle_charset(admin_handle h, char **args, void *userdata)
 	}
 }
 
+static void cmd_echo(admin_handle h, char **args, void *userdata)
+{
+	admin_out(h, "%s", args[1]);
+}
+
 static gint cmp_cmd(gconstpointer a, gconstpointer b)
 {
 	const struct admin_command *cmda = a, *cmdb = b;
@@ -393,7 +389,12 @@ void register_admin_command(const struct admin_command *cmd)
 	if (strlen(cmd->name) > longest_command) longest_command = strlen(cmd->name);
 }
 
-static gboolean process_cmd(admin_handle h, const char *cmd)
+void unregister_admin_command(const struct admin_command *cmd)
+{
+	commands = g_list_remove(commands, cmd);
+}
+
+gboolean process_cmd(admin_handle h, const char *cmd)
 {
 	char **args = NULL;
 	GList *gl;
@@ -404,6 +405,11 @@ static gboolean process_cmd(admin_handle h, const char *cmd)
 	}
 
 	args = g_strsplit(cmd, " ", 0);
+
+	if (!args[0]) {
+		admin_out(h, "Please specify a command. Use the 'help' command to get a list of available commands");
+		return TRUE;
+	}
 
 	/* Ok, arguments are processed now. Execute the corresponding command */
 	for (gl = admin_commands; gl; gl = gl->next) {
@@ -553,14 +559,13 @@ void admin_log(enum log_level level, const struct network *n, const struct clien
 	entered = FALSE;
 }
 
-
-
 const static struct admin_command builtin_commands[] = {
 	{ "ADDNETWORK", add_network, "<name>", "Add new network with specified name" },
 	{ "ADDSERVER", add_server, "<network> <host>[:<port>] [<password>]", "Add server to network" },
 	{ "BACKLOG", repl_command, "[channel]", "Send backlogs for this network or a channel, if specified" },
 	{ "CONNECT", com_connect_network, "<network>", "Connect to specified network. Forces reconnect when waiting." },
 	{ "DELNETWORK", del_network, "<network>", "Remove specified network" },
+	{ "ECHO", cmd_echo, "<DATA>", "Simple echo command" },
 	{ "NEXTSERVER", com_next_server, "[network]", "Disconnect and use to the next server in the list" },
 	{ "CHARSET", handle_charset, "<charset>", "Change client charset" },
 	{ "DIE", handle_die, "", "Exit ctrlproxy" },

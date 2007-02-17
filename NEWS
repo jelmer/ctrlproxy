@@ -1,7 +1,24 @@
  Otherwise indicated differently, all changes made by 
  	Jelmer Vernooij.
 
-Ctrlproxy 3.0.1 UNRELEASED
+Ctrlproxy 3.0.2 UNRELEASED
+
+  BUG FIXES
+
+    * Support redirecting 396, 318, 437 and 330 replies. (#84)
+
+    * Don't abort when trying to send auto-AWAY while network is 
+	  disconnected.
+
+	* Handle CTRLPROXY command without any arguments. (#92)
+
+    * Fixed crash when using SSL support. (#83)
+
+  PORTABILITY
+
+  DOCUMENTATION
+
+Ctrlproxy 3.0.1 2007-01-04
 
   BUG FIXES
 
@@ -25,9 +42,13 @@ Ctrlproxy 3.0.1 UNRELEASED
 	
 	* Fix endless loop in logging system when debug level is 
 	  set to 5 (reported by _static_).
+	
+	* listener configuration is no longer truncated at exit.
 
 	* Fix channel information not being replicated for the administration 
 	  network.
+
+	* Allow ports different than 6680 in ctrlproxy --init. (#85)
 
   PORTABILITY
   

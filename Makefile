@@ -124,7 +124,11 @@ install-pkgconfig:
 	$(INSTALL) -m 0644 ctrlproxy.pc $(DESTDIR)$(libdir)/pkgconfig
 
 gcov: test
-	$(GCOV) -p -o src/ src/*.c 
+	$(GCOV) -f -p -o src/ src/*.c 
+
+lcov:
+	lcov --base-directory `pwd` --directory . --capture --output-file ctrlproxy.info
+	genhtml -o coverage ctrlproxy.info
 
 mods/lib%.$(SHLIBEXT): mods/%.o
 	@echo Linking $@
@@ -171,11 +175,13 @@ rfctest: testsuite/ctrlproxyrc.torture
 
 # Unit tests
 check_objs = testsuite/test-cmp.o testsuite/test-user.o \
-			 testsuite/test-isupport.o testsuite/test-parser.o \
-			 testsuite/test-state.o testsuite/test-util.o \
-			 testsuite/test-line.o testsuite/torture.o \
-			 testsuite/test-linestack.o testsuite/test-client.o \
-			 testsuite/test-network.o testsuite/test-tls.o
+			 testsuite/test-admin.o testsuite/test-isupport.o \
+			 testsuite/test-parser.o testsuite/test-state.o \
+			 testsuite/test-util.o testsuite/test-line.o \
+			 testsuite/torture.o testsuite/test-linestack.o \
+			 testsuite/test-client.o testsuite/test-network.o \
+			 testsuite/test-tls.o testsuite/test-redirect.o \
+			 testsuite/test-networkinfo.o testsuite/test-ctcp.o
 testsuite/check: $(check_objs) $(objs)
 	@echo Linking $@
 	@$(CC) $(LIBS) -o $@ $^ -lcheck

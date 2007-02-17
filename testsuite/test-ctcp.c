@@ -1,6 +1,6 @@
 /*
     ircdtorture: an IRC RFC compliancy tester
-	(c) 2005 Jelmer Vernooij <jelmer@nl.linux.org>
+	(c) 2007 Jelmer Vernooij <jelmer@nl.linux.org>
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -21,41 +21,13 @@
 #include <unistd.h>
 #include <string.h>
 #include <check.h>
-#include "internals.h"
+#include "ctrlproxy.h"
+#include "torture.h"
 
-START_TEST(test_create)
-	struct global *gl;
-	
-	gl = init_global();
-
-	fail_if(gl == NULL, "load_global returned NULL");
-
-	free_global(gl);
-END_TEST
-
-START_TEST(test_create_nonexisting)
-	struct global *gl;
-	
-	gl = load_global("/some-non-existing/directory");
-
-	fail_if(gl != NULL,
-			"load_global returned non-NULL for incorrect directory");
-
-	free_global(gl);
-END_TEST
-
-START_TEST(test_free_null)
-	free_global(NULL);
-END_TEST
-
-Suite *user_suite()
+Suite *ctcp_suite()
 {
-	Suite *s = suite_create("user");
+	Suite *s = suite_create("ctcp");
 	TCase *tc_core = tcase_create("core");
 	suite_add_tcase(s, tc_core);
-	tcase_add_test(tc_core, test_create);
-	tcase_add_test(tc_core, test_create_nonexisting);
-	tcase_add_test(tc_core, test_free_null);
 	return s;
 }
-

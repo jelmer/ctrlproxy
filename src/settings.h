@@ -105,6 +105,7 @@ struct ctrlproxy_config {
 G_MODULE_EXPORT struct network_config *network_config_init(struct ctrlproxy_config *cfg);
 G_MODULE_EXPORT void save_configuration(struct ctrlproxy_config *cfg, const char *name);
 G_MODULE_EXPORT struct ctrlproxy_config *load_configuration(const char *dir);
+G_MODULE_EXPORT struct ctrlproxy_config *init_configuration(void);
 G_MODULE_EXPORT void free_config(struct ctrlproxy_config *);
 G_MODULE_EXPORT void setup_configdir(const char *dir);
 G_MODULE_EXPORT gboolean g_key_file_save_to_file(GKeyFile *kf, const gchar *file, GError **error);

@@ -1,31 +1,38 @@
 #!/usr/bin/make -f
 
+# turn DEB_BUILD_OPTIONS='foo,bar' into DEB_BUILD_OPT_FOO and DEB_BUILD_OPT_BAR
+d_b_o:=$(shell echo "$$DEB_BUILD_OPTIONS"|sed 's/[^-[:alnum:]]/ /g'|tr a-z A-Z)
+$(foreach o, $(d_b_o), $(eval DEB_BUILD_OPT_$o := 1))
+
 build: build-stamp
 
 build-stamp:
 	dh_testdir
 	./configure --prefix=/usr --includedir=/usr/include/ctrlproxy --mandir=/usr/share/man
 	$(MAKE)
+ifndef DEB_BUILD_OPT_NOTEST
+	$(MAKE) test
+endif
 	touch build-stamp
 
 clean:
 	dh_testdir
 	dh_testroot
-	
 	dh_clean
 	-$(MAKE) distclean
 	rm -f build-stamp
+
 
 binary-indep: build
 
 binary-arch: build
 	dh_testdir
 	dh_testroot
-	
 	dh_clean -k
 	dh_installdirs
-	$(MAKE) install DESTDIR=`pwd`/debian/ctrlproxy
-	dh_strip
+	$(MAKE) install DESTDIR=`pwd`/debian/tmp
+	dh_install --sourcedir=debian/tmp -a --list-missing --fail-missing
+	dh_strip -a
 	dh_installdocs -a
 	dh_installchangelogs -a 
 	dh_installexamples -a 

@@ -184,12 +184,14 @@ void save_configuration(struct ctrlproxy_config *cfg, const char *configuration_
 	g_key_file_set_boolean(cfg->keyfile, "admin", "log", cfg->admin_log);
 	g_key_file_set_integer(cfg->keyfile, "global", "max_who_age", cfg->max_who_age);
 
-	g_key_file_set_string(cfg->keyfile, "client", "charset", cfg->client_charset);
+	if (cfg->client_charset != NULL)
+		g_key_file_set_string(cfg->keyfile, "client", "charset", cfg->client_charset);
 	if (cfg->replication)
 		g_key_file_set_string(cfg->keyfile, "global", "replication", cfg->replication);
 	if (cfg->linestack_backend) 
 		g_key_file_set_string(cfg->keyfile, "global", "linestack", cfg->linestack_backend);
-	g_key_file_set_string(cfg->keyfile, "global", "motd-file", cfg->motd_file);
+	if (cfg->motd_file != NULL)
+		g_key_file_set_string(cfg->keyfile, "global", "motd-file", cfg->motd_file);
 
 	g_key_file_set_boolean(cfg->keyfile, "global", "report-time", cfg->report_time);
 
@@ -439,6 +441,14 @@ static void config_load_networks(struct ctrlproxy_config *cfg)
 	g_dir_close(dir);
 }
 
+struct ctrlproxy_config *init_configuration(void)
+{
+	struct ctrlproxy_config *cfg;
+	cfg = g_new0(struct ctrlproxy_config, 1);
+
+	return cfg;
+}
+
 struct ctrlproxy_config *load_configuration(const char *dir) 
 {
 	GKeyFile *kf;
@@ -452,7 +462,7 @@ struct ctrlproxy_config *load_configuration(const char *dir)
 
 	file = g_build_filename(dir, "config", NULL);
 
-	cfg = g_new0(struct ctrlproxy_config, 1);
+	cfg = init_configuration();
 	cfg->config_dir = g_strdup(dir);
 	cfg->network_socket = g_build_filename(cfg->config_dir, "socket", NULL);
 	cfg->admin_socket = g_build_filename(cfg->config_dir, "admin", NULL);
@@ -611,7 +621,7 @@ gboolean create_configuration(const char *config_dir)
 		return FALSE;
 	}
 
-	global = new_global(DEFAULT_CONFIG_DIR);	
+	global = load_global(DEFAULT_CONFIG_DIR);	
 	global->config->config_dir = g_strdup(config_dir);
 	save_configuration(global->config, config_dir);
 
@@ -621,7 +631,7 @@ gboolean create_configuration(const char *config_dir)
 	printf("Please specify port the administration interface should listen on.\n"
 		   "Prepend with a colon to listen on a specific address.\n"
 		   "Example: localhost:6668\n\nPort [%s]: ", port); fflush(stdout);
-	if (fgets(port, sizeof(port), stdin))
+	if (!fgets(port, sizeof(port), stdin))
 		snprintf(port, sizeof(port), "%d", DEFAULT_ADMIN_PORT);
 
 	if (port[strlen(port)-1] == '\n')

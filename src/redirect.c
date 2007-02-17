@@ -56,7 +56,7 @@ static struct query queries[] = {
 	{"WHOIS", 
 		{ RPL_WHOISUSER, RPL_WHOISCHANNELS, RPL_AWAY,
 		  RPL_WHOISIDLE, RPL_WHOISCHANNELS,
-		  RPL_WHOISSERVER, RPL_WHOISOPERATOR, 
+		  RPL_WHOISSERVER, RPL_WHOISOPERATOR, RPL_WHOISACTUALLY,
 		  RPL_WHOISIDENTIFIED, 0 }, 
 		{ RPL_ENDOFWHOIS, 0 }, 
 		{ ERR_NOSUCHSERVER, ERR_NONICKNAMEGIVEN, ERR_NOSUCHNICK, 0 },
@@ -98,7 +98,7 @@ static struct query queries[] = {
 	
  /* WHOWAS <nickname> [<count> [<server>]]*/
 	{"WHOWAS", 
-		{ RPL_WHOWASUSER, RPL_WHOISSERVER, 0 },
+		{ RPL_WHOWASUSER, RPL_WHOISSERVER, RPL_WHOWAS_TIME,  0 },
 		{ RPL_ENDOFWHOWAS, 0 },
 		{ ERR_NONICKNAMEGIVEN, ERR_WASNOSUCHNICK, 0 },
 		handle_default
@@ -239,7 +239,6 @@ static struct query queries[] = {
 	{ "MODE", 
 		{  /* Replies to channel mode queries */
 			RPL_BANLIST, RPL_EXCEPTLIST, RPL_INVITELIST, 
-			
 			0 },
 		{ 
 			/* Replies to user mode queries */
@@ -483,7 +482,8 @@ static void handle_464(struct network *n, struct line *l)
 /* List of responses that should be sent to all clients */
 static int response_all[] = { RPL_NOWAWAY, RPL_UNAWAY, RPL_NAMREPLY, 
 	RPL_ENDOFNAMES, ERR_NEEDREGGEDNICK, RPL_UMODEIS, 
-	ERR_NO_OP_SPLIT, 0 };
+	ERR_NO_OP_SPLIT, RPL_HIDINGHOST,
+	0 };
 static int response_none[] = { ERR_NOMOTD, RPL_ENDOFMOTD, 0 };
 static struct {
 	int response;
@@ -647,6 +647,7 @@ static int handle_default(const struct line *l, const struct network *n, struct 
 
 static int handle_topic(const struct line *l, const struct network *n, struct client *c, struct query *q)
 {
-	if(l->args[2])return 0;
+	if (l->args[2] != NULL)
+		return 0;
 	return handle_default(l,n,c,q);
 }
