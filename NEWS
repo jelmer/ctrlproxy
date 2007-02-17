@@ -12,6 +12,8 @@ Ctrlproxy 3.0.2 UNRELEASED
 
 	* Handle CTRLPROXY command without any arguments. (#92)
 
+    * Fixed crash when using SSL support. (#83)
+
   PORTABILITY
 
   DOCUMENTATION
