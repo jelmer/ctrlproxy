@@ -28,19 +28,12 @@
 
 typedef struct help
 {
-	int fd;
-	time_t mtime;
-	char *string;
-	union
-	{
-		off_t file_offset;
-		char *mem_offset;
-	} offset;
-	int length;
-	struct help *next;
+	GMappedFile *file;
+	GHashTable *entries;
 } help_t;
 
-help_t *help_init( help_t **help, const char *helpfile );
-char *help_get( help_t **help, const char *string );
+help_t *help_init( const char *helpfile );
+const char *help_get( help_t *help, const char *string );
+void help_free(help_t *h);
 
 #endif

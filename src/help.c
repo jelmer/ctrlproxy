@@ -22,161 +22,73 @@
 
 #include "internals.h"
 #include "help.h"
+#include "log.h"
 
 #define BUFSIZE 1100
 
-help_t *help_init( help_t **help, const char *helpfile )
+void help_free(help_t *h)
 {
-	int i, buflen = 0;
-	help_t *h;
-	char *s, *t;
-	time_t mtime;
-	struct stat stat[1];
-	
-	*help = h = g_new0 ( help_t, 1 );
-	
-	h->fd = open( helpfile, O_RDONLY
-#ifdef _WIN32
-				  | O_BINARY
-#endif
-				  );
-	
-	if( h->fd == -1 )
-	{
-		g_free( h );
-		return( *help = NULL );
-	}
-	
-	if( fstat( h->fd, stat ) != 0 )
-	{
-		g_free( h );
-		return( *help = NULL );
-	}
-	mtime = stat->st_mtime;
-	
-	s = g_new (char, BUFSIZE + 1 );
-	s[BUFSIZE] = 0;
-	
-	while( ( ( i = read( h->fd, s + buflen, BUFSIZE - buflen ) ) > 0 ) ||
-	       ( i == 0 && strstr( s, "\n%\n" ) ) )
-	{
-		buflen += i;
-		memset( s + buflen, 0, BUFSIZE - buflen );
-		if( !( t = strstr( s, "\n%\n" ) ) || s[0] != '?' )
-		{
-			/* FIXME: Clean up */
-			*help = NULL;
-			g_free( s );
-			return( NULL );
-		}
-		i = strchr( s, '\n' ) - s;
-		
-		if( h->string )
-		{
-			h = h->next = g_new0( help_t, 1 );
-		}
-		h->string = g_new ( char, i );
-		
-		strncpy( h->string, s + 1, i - 1 );
-		h->string[i-1] = 0;
-		h->fd = (*help)->fd;
-		h->offset.file_offset = lseek( h->fd, 0, SEEK_CUR ) - buflen + i + 1;
-		h->length = t - s - i - 1;
-		h->mtime = mtime;
-		
-		buflen -= ( t + 3 - s );
-		t = g_strdup( t + 3 );
-		g_free( s );
-		s = g_renew( char, t, BUFSIZE + 1 );
-		s[BUFSIZE] = 0;
-	}
-	
-	g_free( s );
-	
-	return( *help );
+	g_mapped_file_free(h->file);
+	g_hash_table_destroy(h->entries);
+	g_free(h);
 }
 
-char *help_get( help_t **help, const char *string )
+help_t *help_init( const char *helpfile )
 {
-	time_t mtime;
-	struct stat stat[1];
 	help_t *h;
-
-	h=*help;	
-
-	while( h )
-	{
-		if( g_strcasecmp( h->string, string ) == 0 ) break;
-		h = h->next;
-	}
-	if( h && h->length > 0 )
-	{
-		char *s = g_new( char, h->length + 1 );
-		
-		if( fstat( h->fd, stat ) != 0 )
-		{
-			g_free( h );
-			*help = NULL;
-			return NULL;
-		}
-		mtime = stat->st_mtime;
-		
-		if( mtime > h->mtime )
-			return NULL;
-		
-		s[h->length] = 0;
-		if( h->fd >= 0 )
-		{
-			lseek( h->fd, h->offset.file_offset, SEEK_SET );
-			read( h->fd, s, h->length );
-		}
-		else
-		{
-			strncpy( s, h->offset.mem_offset, h->length );
-		}
-		return s;
+	char *data;
+	GError *error = NULL;
+	gsize len, i, k;
+	char *p;
+	
+	h = g_new0 (help_t, 1);
+	
+	h->file = g_mapped_file_new(helpfile, TRUE, &error);
+	if (h->file != NULL) {
+		len = g_mapped_file_get_length(h->file);
+		data = g_mapped_file_get_contents(h->file);
 	}
 	
+	if( h->file == NULL ) {
+		log_global(LOG_WARNING, "Unable to open help file `%s': %s", helpfile, 
+				  error->message);
+		g_free( h );
+		return NULL;
+	}
+
+	h->entries = g_hash_table_new(g_str_hash, g_str_equal);
+	i = 0;
+	while (i < len) {
+		if (data[i] == '?') {
+			/* Key starts here */
+			k = i+1;
+			p = g_strstr_len(data+k, len-k, "\n%\n");
+			if (p == NULL) {
+				log_global(LOG_WARNING, "Error parsing help file");
+				goto error;
+			}
+			p[1] = 0;
+			i+=strlen(data+i+3);
+			p = g_strstr_len(data+k, len-k, "\n");
+			p[0] = 0;
+			g_hash_table_insert(h->entries, data+k, p+1);
+		} else {
+			log_global(LOG_WARNING, "Unknown character '%c' in help file", 
+					   data[i]);
+			i++;
+		}
+	}
+
+	return h;
+
+error:
+	g_mapped_file_free(h->file);
+	g_hash_table_destroy(h->entries);
+	g_free(h);
 	return NULL;
 }
 
-void admin_cmd_help(admin_handle h, char **args, void *userdata)
+const char *help_get(help_t *h, const char *string)
 {
-	extern GList *admin_commands;
-	extern guint longest_command;
-	GList *gl;
-	char *tmp;
-	char **details;
-	int i;
-
-	if (args[1]) {
-		admin_out(h, "Details for command %s:", args[1]);
-		for (gl = admin_commands; gl; gl = gl->next) {
-			struct admin_command *cmd = (struct admin_command *)gl->data;
-			if(!g_strcasecmp(args[1], cmd->name)) {
-				if(cmd->help_details != NULL) {
-					details = g_strsplit(cmd->help_details, "\n", 0);
-					for(i = 0; details[i] != NULL; i++) {
-						admin_out(h, details[i]);
-					}
-					return;
-				} else {
-					admin_out(h, "Sorry, no help for %s available", args[1]);
-				}
-			}
-		}
-		admin_out(h, "Unknown command");
-	} else {
-		admin_out(h, "The following commands are available:");
-		for (gl = admin_commands; gl; gl = gl->next) {
-			struct admin_command *cmd = (struct admin_command *)gl->data;
-			if(cmd->help != NULL) {
-				tmp = g_strdup_printf("%s%s     %s",cmd->name,g_strnfill(longest_command - strlen(cmd->name),' '),cmd->help);
-				admin_out(h, tmp);
-				g_free(tmp);
-			} else {
-				admin_out(h, cmd->name);
-			}
-		}
-	}
+	return g_hash_table_lookup(h->entries, string);
 }
