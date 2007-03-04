@@ -210,7 +210,7 @@ int main(int argc, char **argv)
 
 	if (version) {
 		printf("ctrlproxy %s\n", VERSION);
-		printf("(c) 2002-2006 Jelmer Vernooij et al. <jelmer@nl.linux.org>\n");
+		printf("(c) 2002-2007 Jelmer Vernooij et al. <jelmer@nl.linux.org>\n");
 		return 0;
 	}
 
