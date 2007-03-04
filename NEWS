@@ -7,6 +7,8 @@ Ctrlproxy 3.0.2 UNRELEASED
 
     * Support redirecting 396, 318, 437 and 330 replies. (#84)
 
+	* Fixed redirect warnings for 251, 252, 253, 254, 265 and 266.
+
     * Don't abort when trying to send auto-AWAY while network is 
 	  disconnected.
 

@@ -168,6 +168,8 @@
 #define RPL_ADMINLOC2 258
 #define RPL_ADMINLOC3 259
 #define RPL_TRYAGAIN 263
+#define RPL_LOCALUSERS 265
+#define RPL_GLOBALUSERS 266
 
 /* These are obsolete */
 #define RPL_STATSQLINE 217

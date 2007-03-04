@@ -482,8 +482,8 @@ static void handle_464(struct network *n, struct line *l)
 /* List of responses that should be sent to all clients */
 static int response_all[] = { RPL_NOWAWAY, RPL_UNAWAY, RPL_NAMREPLY, 
 	RPL_ENDOFNAMES, ERR_NEEDREGGEDNICK, RPL_UMODEIS, 
-	ERR_NO_OP_SPLIT, RPL_HIDINGHOST,
-	0 };
+	RPL_LUSERCLIENT, RPL_LUSEROP, RPL_LUSERUNKNOWN, RPL_LUSERCHANNELS,
+	RPL_LUSERME, ERR_NO_OP_SPLIT, RPL_LOCALUSERS, RPL_GLOBALUSERS, 0 };
 static int response_none[] = { ERR_NOMOTD, RPL_ENDOFMOTD, 0 };
 static struct {
 	int response;
