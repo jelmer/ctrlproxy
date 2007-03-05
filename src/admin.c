@@ -381,6 +381,23 @@ static void repl_command(admin_handle h, char **args, void *userdata)
 	g_hash_table_replace(markers, n, linestack_get_marker(n->linestack));
 }
 
+static void cmd_log_level(admin_handle h, char **args, void *userdata)
+{
+	extern enum log_level current_log_level;
+	
+	if (args[1] == NULL) 
+		admin_out(h, "Current log level: %d", current_log_level);
+	else {
+		int x = atoi(args[1]);
+		if (x < 0 || x > 5) 
+			admin_out(h, "Invalid log level %d", x);
+		else { 
+			current_log_level = x;
+			admin_out(h, "Log level changed to %d", x);
+		}
+	}
+}
+
 static void handle_charset(admin_handle h, char **args, void *userdata)
 {
 	GError *error = NULL;
@@ -538,6 +555,7 @@ struct virtual_network_ops admin_network = {
 	"admin", admin_net_init, admin_to_server, NULL
 };
 
+
 void admin_log(enum log_level level, const struct network *n, const struct client *c, const char *data)
 {
 	extern struct global *my_global;
@@ -593,6 +611,7 @@ const static struct admin_command builtin_commands[] = {
 	{ "CONNECT", com_connect_network, "<network>", "Connect to specified network. Forces reconnect when waiting." },
 	{ "DELNETWORK", del_network, "<network>", "Remove specified network" },
 	{ "ECHO", cmd_echo, "<DATA>", "Simple echo command" },
+	{ "LOG_LEVEL", cmd_log_level, "[level]", "Change/Show log level" },
 	{ "NEXTSERVER", com_next_server, "[network]", "Disconnect and use to the next server in the list" },
 	{ "CHARSET", handle_charset, "<charset>", "Change client charset" },
 	{ "DIE", handle_die, "", "Exit ctrlproxy" },

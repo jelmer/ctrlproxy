@@ -16,7 +16,11 @@ Ctrlproxy 3.0.2 UNRELEASED
 
     * Fixed crash when using SSL support. (#83)
 
+  FEATURES
+
     * More advanced help support
+
+	* Add LOG_LEVEL command (#101)
 
   PORTABILITY
 
