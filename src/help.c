@@ -98,8 +98,8 @@ help_t *help_load_file( const char *helpfile )
 				  error->message);
 		help_free( h );
 		return NULL;
-
 	} 
+	data = h->file;
 #endif
 
 	h->entries = help_build_hash(data, len);
