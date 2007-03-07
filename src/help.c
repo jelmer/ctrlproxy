@@ -28,7 +28,7 @@
 
 void help_free(help_t *h)
 {
-#if GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION < 8
+#if GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION >= 8
 	g_mapped_file_free(h->file);
 #else
 	g_free(h->file);
@@ -79,7 +79,7 @@ help_t *help_load_file( const char *helpfile )
 	
 	h = g_new0 (help_t, 1);
 	
-#if GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION < 8
+#if GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION >= 8
 	h->file = g_mapped_file_new(helpfile, TRUE, &error);
 	if (h->file != NULL) {
 		len = g_mapped_file_get_length(h->file);

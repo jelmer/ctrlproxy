@@ -28,7 +28,7 @@
 
 typedef struct help
 {
-#if GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION < 8
+#if GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION >= 8
 	GMappedFile *file;
 #else
 	char *file;
