@@ -184,7 +184,7 @@ check_objs = testsuite/test-cmp.o testsuite/test-user.o \
 
 testsuite/check: $(check_objs) $(objs)
 	@echo Linking $@
-	@$(CC) $(LIBS) -o $@ $^ -lcheck
+	@$(CC) $(LIBS) -o $@ $^ $(CHECK_LIBS)
 
 CTRLPROXY_MODULESDIR=$(shell pwd)/mods
 

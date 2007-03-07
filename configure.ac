@@ -61,6 +61,8 @@ AC_CHECK_FUNCS([gethostbyname gethostname memset strchr strerror strstr uname ba
 PKG_PROG_PKG_CONFIG
 PKG_CHECK_MODULES(COMMON, glib-2.0 gmodule-2.0)
 
+PKG_CHECK_MODULES(CHECK, check)
+
 ###############################################################################
 # GNUTLS support
 ###############################################################################

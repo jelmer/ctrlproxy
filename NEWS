@@ -24,6 +24,8 @@ Ctrlproxy 3.0.2 UNRELEASED
 
   PORTABILITY
 
+    * Looks for check using pkg-config now.
+
   DOCUMENTATION
 
 Ctrlproxy 3.0.1 2007-01-04
