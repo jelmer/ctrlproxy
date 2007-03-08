@@ -28,12 +28,14 @@
 
 void help_free(help_t *h)
 {
+	if (h->file != NULL)
 #if GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION >= 8
-	g_mapped_file_free(h->file);
+		g_mapped_file_free(h->file);
 #else
-	g_free(h->file);
+		g_free(h->file);
 #endif
-	g_hash_table_destroy(h->entries);
+	if (h->entries != NULL)
+		g_hash_table_destroy(h->entries);
 	g_free(h);
 }
 
