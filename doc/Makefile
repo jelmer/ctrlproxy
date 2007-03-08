@@ -41,3 +41,12 @@ install: all
 	$(INSTALL) -m 0644 help.txt $(DESTDIR)$(HELPFILE)
 	$(INSTALL) -m 0644 ctrlproxy_config.5 $(DESTDIR)$(mandir)/man5
 	$(INSTALL) -m 0644 user-guide.html $(DESTDIR)$(docdir)
+
+uninstall: 
+	rm -f $(DESTDIR)$(mandir)/man1/ctrlproxy.1 
+	rm -f $(DESTDIR)$(HELPFILE)
+	rm -f $(DESTDIR)$(mandir)/man5/ctrlproxy_config.5 
+	rm -f $(DESTDIR)$(docdir)/user-guide.html
+	-rmdir $(DESTDIR)$(mandir)/man1
+	-rmdir $(DESTDIR)$(mandir)/man5
+	-rmdir $(DESTDIR)$(docdir)

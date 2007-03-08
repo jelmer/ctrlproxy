@@ -90,24 +90,47 @@ configure: autogen.sh configure.ac acinclude.m4 $(wildcard mods/*/*.m4)
 ctrlproxy.pc Makefile.settings: configure Makefile.settings.in ctrlproxy.pc.in
 	./$<
 
-install: all install-dirs install-bin install-mods install-data install-pkgconfig $(EXTRA_INSTALL_TARGETS)
+install: all install-dirs install-bin install-header install-mods install-data install-pkgconfig $(EXTRA_INSTALL_TARGETS)
 install-dirs:
-	$(INSTALL) -d $(DESTDIR)$(bindir)
-	$(INSTALL) -d $(DESTDIR)$(destincludedir)
 	$(INSTALL) -d $(DESTDIR)$(modulesdir)
-	$(INSTALL) -d $(DESTDIR)$(docdir)
-	$(INSTALL) -d $(DESTDIR)$(cdatadir)
-	$(INSTALL) -d $(DESTDIR)$(libdir)/pkgconfig
+
+uninstall: uninstall-bin uninstall-header uninstall-mods uninstall-data uninstall-pkgconfig $(patsubst install-%,uninstall-%,$(EXTRA_INSTALL_TARGETS))
+uninstall-bin:
+	-rm -f $(DESTDIR)$(bindir)/ctrlproxy$(EXEEXT)
+	-rmdir $(DESTDIR)$(bindir)
 
 install-bin:
+	$(INSTALL) -d $(DESTDIR)$(bindir)
 	$(INSTALL) ctrlproxy$(EXEEXT) $(DESTDIR)$(bindir)
 
-install-doc:: doc
+uninstall-header:
+	-rm -f $(patsubst %,$(DESTDIR)$(destincludedir)/%,$(notdir $(headers)))
+	-rmdir $(DESTDIR)$(destincludedir)
+
+install-header::
+	$(INSTALL) -d $(DESTDIR)$(destincludedir)
 	$(INSTALL) -m 0644 $(headers) $(DESTDIR)$(destincludedir)
+
+install-doc:: doc
+	$(INSTALL) -d $(DESTDIR)$(docdir)
 	$(INSTALL) -m 0644 UPGRADING $(DESTDIR)$(docdir)
 	$(MAKE) -C doc install PACKAGE_VERSION=$(PACKAGE_VERSION)
 
+uninstall-doc: 
+	$(MAKE) -C doc uninstall
+	rm -f $(DESTDIR)$(docdir)/UPGRADING
+	-rmdir $(DESTDIR)$(docdir)
+
+uninstall-data::
+	-rm -f $(DESTDIR)$(cdatadir)/motd
+	-rm -f $(DESTDIR)$(DEFAULT_CONFIG_DIR)/config
+	-rm -f $(DESTDIR)$(DEFAULT_CONFIG_DIR)/networks/admin
+	-rmdir $(DESTDIR)$(DEFAULT_CONFIG_DIR)/networks
+	-rmdir $(DESTDIR)$(DEFAULT_CONFIG_DIR)
+	-rmdir $(DESTDIR)$(cdatadir)
+
 install-data:
+	$(INSTALL) -d $(DESTDIR)$(cdatadir)
 	$(INSTALL) -m 0644 motd $(DESTDIR)$(cdatadir)
 	$(INSTALL) -d $(DESTDIR)$(DEFAULT_CONFIG_DIR)
 	$(INSTALL) -d $(DESTDIR)$(DEFAULT_CONFIG_DIR)/networks
@@ -118,8 +141,17 @@ install-mods: all
 	$(INSTALL) -d $(DESTDIR)$(modulesdir)
 	$(INSTALL) $(MODS_SHARED_FILES) $(DESTDIR)$(modulesdir)
 
+uninstall-mods:
+	-rm -f $(patsubst %,$(DESTDIR)$(modulesdir)/%,$(notdir $(MODS_SHARED_FILES)))
+	-rmdir $(DESTDIR)$(modulesdir)
+
 install-pkgconfig:
+	$(INSTALL) -d $(DESTDIR)$(libdir)/pkgconfig
 	$(INSTALL) -m 0644 ctrlproxy.pc $(DESTDIR)$(libdir)/pkgconfig
+
+uninstall-pkgconfig:
+	-rm -f $(DESTDIR)$(libdir)/pkgconfig/ctrlproxy.pc
+	-rmdir $(DESTDIR)$(libdir)/pkgconfig
 
 gcov: test
 	$(GCOV) -f -p -o src/ src/*.c 
