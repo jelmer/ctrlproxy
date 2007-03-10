@@ -78,6 +78,8 @@ struct channel_state {
 	char *name;
 	char *key;
 	char *topic;
+	time_t topic_set_time;
+	char *topic_set_by; /* nickname */
 	char mode; /* Private, secret, etc */
 	char modes[255];
 	time_t creation_time;

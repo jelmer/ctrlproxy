@@ -16,6 +16,8 @@ Ctrlproxy 3.0.2 UNRELEASED
 
     * Fixed crash when using SSL support. (#83)
 
+	* Add support for storing topic set time and topic set by nick (#97).
+
   FEATURES
 
     * More advanced help support

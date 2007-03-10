@@ -86,11 +86,13 @@ START_TEST(state_topic)
 	fail_if (!ns);
 
 	state_process(ns, ":bla!user@host JOIN #examplechannel");
-	state_process(ns, "TOPIC #examplechannel :This is the topic");
+	state_process(ns, ":bla!user@host TOPIC #examplechannel :This is the topic");
 
 	cs = ns->channels->data;
 
 	fail_unless (strcmp(cs->topic, "This is the topic") == 0);
+	fail_unless (abs(cs->topic_set_time - time(NULL)) < 5);
+	fail_unless (strcmp(cs->topic_set_by, "bla") == 0);
 END_TEST
 
 

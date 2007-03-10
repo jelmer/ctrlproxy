@@ -69,6 +69,11 @@ static void gen_replication_channel(struct client *c, struct channel_state *ch)
 	if(ch->topic) {
 		client_send_response(c, RPL_TOPIC, ch->name, ch->topic, NULL);
 	}
+	if(ch->topic_set_time && ch->topic_set_by) {
+		char tmp[5];
+		snprintf(tmp, sizeof(tmp), "%lu", ch->topic_set_time);
+		client_send_response(c, RPL_TOPICWHOTIME, ch->topic_set_by, tmp, NULL);
+	}
 
 	for (nl = ch->nicks; nl; nl = nl->next) {
 		char mode[2] = { ch->mode, 0 };

@@ -301,14 +301,14 @@ static struct network_config *config_load_network(struct ctrlproxy_config *cfg, 
 		g_free(n->fullname);
 		n->fullname = g_key_file_get_string(kf, "global", "fullname", NULL);
 		if (!strcmp(n->fullname, "") || n->fullname[0] == ' ')
-			log_network(LOG_WARNING, n, "Invalid fullname `%s' set", n->fullname);
+			log_global(LOG_WARNING, "Invalid fullname `%s' set for network `%s'", n->fullname, n->name);
 	}
 
 	if (g_key_file_has_key(kf, "global", "nick", NULL)) {
 		g_free(n->nick);
 		n->nick = g_key_file_get_string(kf, "global", "nick", NULL);
 		if (!strcmp(n->nick, "") || n->nick[0] == ' ')
-			log_network(LOG_WARNING, n, "Invalid nick name `%s' set", n->fullname);
+			log_global(LOG_WARNING, "Invalid nick name `%s' set for `%s'", n->nick, n->name);
 	}
 
 	if (g_key_file_has_key(kf, "global", "reconnect-interval", NULL)) {
@@ -323,7 +323,7 @@ static struct network_config *config_load_network(struct ctrlproxy_config *cfg, 
 		g_free(n->username);
 		n->username = g_key_file_get_string(kf, "global", "username", NULL);
 		if (!strcmp(n->username, "") || n->username[0] == ' ')
-			log_network(LOG_WARNING, n, "Invalid username `%s' set", n->username);
+			log_global(LOG_WARNING, "Invalid username `%s' set for network `%s'", n->username, n->name);
 	}
 
 	if (g_key_file_has_key(kf, "global", "ignore_first_nick", NULL)) {
