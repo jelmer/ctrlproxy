@@ -122,7 +122,7 @@ static void handle_finger(struct ctcp_handle *h, char **args)
 
 static void handle_source(struct ctcp_handle *h, char **args)
 {
-	ctcp_reply(h, "SOURCE", "http://ctrlproxy.vernstok.nl/:releases:ctrlproxy-latest.tar.gz", NULL);
+	ctcp_reply(h, "SOURCE", "ctrlproxy.vernstok.nl:pub/ctrlproxy:ctrlproxy-latest.tar.gz", NULL);
 }
 
 static void handle_clientinfo(struct ctcp_handle *h, char **args)
