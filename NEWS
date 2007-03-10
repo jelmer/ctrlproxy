@@ -24,6 +24,8 @@ Ctrlproxy 3.0.2 UNRELEASED
 
 	* Add 'make uninstall' (#95)
 
+	* Do some more config checking (#102)
+
   PORTABILITY
 
     * Looks for check using pkg-config now.

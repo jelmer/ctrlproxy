@@ -300,11 +300,15 @@ static struct network_config *config_load_network(struct ctrlproxy_config *cfg, 
 	if (g_key_file_has_key(kf, "global", "fullname", NULL)) {
 		g_free(n->fullname);
 		n->fullname = g_key_file_get_string(kf, "global", "fullname", NULL);
+		if (!strcmp(n->fullname, "") || n->fullname[0] == ' ')
+			log_network(LOG_WARNING, n, "Invalid fullname `%s' set", n->fullname);
 	}
 
 	if (g_key_file_has_key(kf, "global", "nick", NULL)) {
 		g_free(n->nick);
 		n->nick = g_key_file_get_string(kf, "global", "nick", NULL);
+		if (!strcmp(n->nick, "") || n->nick[0] == ' ')
+			log_network(LOG_WARNING, n, "Invalid nick name `%s' set", n->fullname);
 	}
 
 	if (g_key_file_has_key(kf, "global", "reconnect-interval", NULL)) {
@@ -318,6 +322,8 @@ static struct network_config *config_load_network(struct ctrlproxy_config *cfg, 
 	if (g_key_file_has_key(kf, "global", "username", NULL)) {
 		g_free(n->username);
 		n->username = g_key_file_get_string(kf, "global", "username", NULL);
+		if (!strcmp(n->username, "") || n->username[0] == ' ')
+			log_network(LOG_WARNING, n, "Invalid username `%s' set", n->username);
 	}
 
 	if (g_key_file_has_key(kf, "global", "ignore_first_nick", NULL)) {
