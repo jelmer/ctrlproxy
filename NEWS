@@ -28,6 +28,8 @@ Ctrlproxy 3.0.2 UNRELEASED
 
 	* Do some more config checking (#102)
 
+	* Show disconnect reason in admin network (#100)
+
   PORTABILITY
 
     * Looks for check using pkg-config now.

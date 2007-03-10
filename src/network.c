@@ -192,6 +192,20 @@ static gboolean process_from_server(struct network *n, struct line *l)
 	return TRUE;
 }
 
+static void network_report_disconnect(struct network *n, const char *fmt, ...)
+{
+	va_list ap;
+	char *tmp;
+	va_start(ap, fmt);
+	tmp = g_strdup_vprintf(fmt, ap);
+	va_end(ap);
+
+	g_free(n->connection.data.tcp.last_disconnect_reason);
+	n->connection.data.tcp.last_disconnect_reason = tmp;
+
+	log_network(LOG_WARNING, n, "%s", tmp);
+}
+
 static gboolean handle_server_receive (GIOChannel *c, GIOCondition cond, void *_server)
 {
 	struct network *server = (struct network *)_server;
@@ -202,13 +216,13 @@ static gboolean handle_server_receive (GIOChannel *c, GIOCondition cond, void *_
 	g_assert(server);
 
 	if ((cond & G_IO_HUP)) {
-		log_network(LOG_WARNING, server, "Hangup from server, scheduling reconnect");
+		network_report_disconnect(server, "Hangup from server, scheduling reconnect");
 		reconnect(server, FALSE);
 		return FALSE;
 	}
 
 	if ((cond & G_IO_ERR)) {
-		log_network(LOG_WARNING, server, "Error from server, scheduling reconnect");
+		network_report_disconnect(server, "Error from server, scheduling reconnect");
 		reconnect(server, FALSE);
 		return FALSE;
 	}
@@ -245,7 +259,7 @@ static gboolean handle_server_receive (GIOChannel *c, GIOCondition cond, void *_
 		}
 
 		if (status != G_IO_STATUS_AGAIN) {
-			log_network(LOG_WARNING, server, 
+			network_report_disconnect(server, 
 				"Error \"%s\" reading from server, reconnecting in %ds...",
 				err?err->message:"UNKNOWN", server->config->reconnect_interval);
 			reconnect(server, FALSE);

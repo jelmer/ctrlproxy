@@ -120,7 +120,14 @@ static gboolean process_from_client(struct client *c, struct line *l)
 			network_send_line(c->network, c, l);
 		}
 	} else if(c->network->connection.state == NETWORK_CONNECTION_STATE_NOT_CONNECTED) {
-		client_send_args(c, "NOTICE", c->nick?c->nick:c->network->state->me.nick, "Currently not connected to server...", NULL);
+		char *msg;
+		if (c->network->connection.data.tcp.last_disconnect_reason == NULL)
+			msg = g_strdup("Currently not connected to server...");
+		else
+			msg = g_strdup_printf("Currently not connected to server... (%s)",
+					c->network->connection.data.tcp.last_disconnect_reason);
+
+		client_send_args(c, "NOTICE", c->nick?c->nick:c->network->state->me.nick, msg, NULL);
 	}
 
 	return TRUE;

@@ -284,14 +284,18 @@ static void list_networks(admin_handle h, char **args, void *userdata)
 
 		switch (n->connection.state) {
 		case NETWORK_CONNECTION_STATE_NOT_CONNECTED:
-			admin_out(h, ("%s: Not connected"), n->name);
+			if (n->connection.data.tcp.last_disconnect_reason)
+				admin_out(h, "%s: Not connected: %s", n->name, 
+						  n->connection.data.tcp.last_disconnect_reason);
+			else
+				admin_out(h, "%s: Not connected", n->name);
 			break;
 		case NETWORK_CONNECTION_STATE_RECONNECT_PENDING:
-			admin_out(h, ("%s: Reconnecting"), n->name);
+			admin_out(h, "%s: Reconnecting", n->name);
 			break;
 		case NETWORK_CONNECTION_STATE_LOGIN_SENT:
 		case NETWORK_CONNECTION_STATE_MOTD_RECVD:
-			admin_out(h, ("%s: connected"), n->name);
+			admin_out(h, "%s: connected", n->name);
 			break;
 		}
 	}
