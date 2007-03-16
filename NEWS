@@ -20,6 +20,10 @@ Ctrlproxy 3.0.2 UNRELEASED
 
 	* Fixed CTCP source reply URL. (#86)
 
+	* Hide assertion in g_key_file_free in free_config when a network has no associated file (patch by exg)
+
+	* Fix coredump with --init when the default config cannot be opened (patch by exg)
+
   FEATURES
 
     * More advanced help support

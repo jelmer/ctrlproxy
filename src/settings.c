@@ -596,7 +596,7 @@ void free_config(struct ctrlproxy_config *cfg)
 			break;
 		}
 		cfg->networks = g_list_remove(cfg->networks, nc);
-		g_key_file_free(nc->keyfile);
+		if (nc->keyfile) g_key_file_free(nc->keyfile);
 		g_free(nc);
 	}
 	g_free(cfg->config_dir);
@@ -628,6 +628,7 @@ gboolean create_configuration(const char *config_dir)
 	}
 
 	global = load_global(DEFAULT_CONFIG_DIR);	
+	if (global == NULL) return FALSE;
 	global->config->config_dir = g_strdup(config_dir);
 	save_configuration(global->config, config_dir);
 
