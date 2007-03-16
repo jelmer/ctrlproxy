@@ -225,5 +225,6 @@ G_MODULE_EXPORT char get_prefix_by_mode(char p, const struct network_info *n);
 G_MODULE_EXPORT int irccmp(const struct network_info *n, const char *a, const char *b);
 G_MODULE_EXPORT gboolean network_supports(const struct network_info *n, const char *fe);
 G_MODULE_EXPORT const char *get_charset(const struct network_info *n);
+G_MODULE_EXPORT void network_info_parse(struct network_info *info, const char *parameter);
 
 #endif /* __CTRLPROXY_STATE_H__ */

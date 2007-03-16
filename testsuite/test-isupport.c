@@ -41,6 +41,22 @@ START_TEST(isupport_prefixbymode)
 	fail_if (get_prefix_by_mode('x',NULL) != ' ');
 END_TEST
 
+START_TEST(isupport_info_parse_casemapping)
+	struct network_info *info = g_new0(struct network_info, 1);
+	info->features = g_hash_table_new(NULL, NULL);
+	network_info_parse(info, "CASEMAPPING=ascii");
+	fail_unless (info->casemapping == CASEMAP_ASCII);
+	network_info_parse(info, "CASEMAPPING=strict-rfc1459");
+	fail_unless (info->casemapping == CASEMAP_STRICT_RFC1459);
+END_TEST
+
+START_TEST(isupport_info_parse_name)
+	struct network_info *info = g_new0(struct network_info, 1);
+	info->features = g_hash_table_new(NULL, NULL);
+	network_info_parse(info, "NETWORK=bla");
+	fail_unless (strcmp(info->name, "bla") == 0);
+END_TEST
+
 Suite *isupport_suite(void)
 {
 	Suite *s = suite_create("isupport");
@@ -49,5 +65,7 @@ Suite *isupport_suite(void)
 	tcase_add_test(tc_core, isupport_isprefix);
 	tcase_add_test(tc_core, isupport_ischannelname);
 	tcase_add_test(tc_core, isupport_prefixbymode);
+	tcase_add_test(tc_core, isupport_info_parse_casemapping);
+	tcase_add_test(tc_core, isupport_info_parse_name);
 	return s;
 }
