@@ -114,10 +114,37 @@ struct network_info
 	GHashTable *features;
 	char *supported_user_modes;
 	char *supported_channel_modes;
+
+	/* Case mapping used for nick- and channel name comparing */
 	enum casemapping casemapping;
+
+	/* Maximum channel name length */
 	int channellen;
+
+	/* The max length of an away message */
+	int awaylen;
+
+	/* Maximum kick comment length */
+	int kicklen;
+
+	/* Maximum targets allowed for PRIVMSG and NOTICE commands */
+	int maxtargets;
+
+	/* Maximum nickname length */
 	int nicklen;
+
+	/* Maximum number of channels allowed to join */
+	int maxchannels;
+
+	/* Maximum topic length */ 
 	int topiclen;
+
+	/* Maximum number of bans per channel */
+	int maxbans;
+
+	/* Maximum number of channel modes with parameter allowed per MODE 
+	 * command  */
+	int maxmodes;
 };
 
 /**

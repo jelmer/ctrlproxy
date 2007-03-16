@@ -65,7 +65,27 @@ void handle_005(struct network_state *s, struct line *l)
 		} else if(!g_strcasecmp(key, "NETWORK")) {
 			g_free(s->info->name);
 			s->info->name = g_strdup(val);
-		} 
+		} else if(!g_strcasecmp(key, "NICKLEN")) {
+			s->info->nicklen = atoi(val);
+		} else if(!g_strcasecmp(key, "CHANNELLEN")) {
+			s->info->channellen = atoi(val);
+		} else if(!g_strcasecmp(key, "AWAYLEN")) {
+			s->info->awaylen = atoi(val);
+		} else if(!g_strcasecmp(key, "KICKLEN")) {
+			s->info->kicklen = atoi(val);
+		} else if(!g_strcasecmp(key, "TOPICLEN")) {
+			s->info->topiclen = atoi(val);
+		} else if(!g_strcasecmp(key, "MAXCHANNELS")) {
+			s->info->maxchannels = atoi(val);
+		} else if(!g_strcasecmp(key, "MAXTARGETS")) {
+			s->info->maxtargets = atoi(val);
+		} else if(!g_strcasecmp(key, "MAXBANS")) {
+			s->info->maxbans = atoi(val);
+		} else if(!g_strcasecmp(key, "MODES")) {
+			s->info->maxmodes = atoi(val);
+		} else {
+			log_network_state(LOG_WARNING, s, "Unknown 005 parameter `%s'", key);
+		}
 	}
 }
 

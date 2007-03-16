@@ -66,7 +66,7 @@ struct network_connection {
 			struct sockaddr *remote_name;
 			struct sockaddr *local_name;
 			socklen_t namelen;
-			const char *last_disconnect_reason;
+			char *last_disconnect_reason;
 		} tcp;
 		
 		struct {

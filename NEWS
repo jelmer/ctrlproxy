@@ -32,6 +32,10 @@ Ctrlproxy 3.0.2 UNRELEASED
 
 	* Show disconnect reason in admin network (#100)
 
+	* Add support for handling additional 005 parameters: MAXCHANNELS,
+		NICKLEN, MAXBANS, MODES, NICKLEN, MAXBANS, TOPICLEN, KICKLEN, 
+		AWAYLEN, MAXTARGETS.
+
   PORTABILITY
 
     * Looks for check using pkg-config now.
