@@ -103,8 +103,6 @@ void network_info_parse(struct network_info *info, const char *parameter)
 	} else {
 		log_global(LOG_WARNING, "Unknown 005 parameter `%s'", key);
 	}
-	g_free(key);
-	g_free(val);
 }
 
 void handle_005(struct network_state *s, struct line *l)
