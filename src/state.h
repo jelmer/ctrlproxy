@@ -145,6 +145,52 @@ struct network_info
 	/* Maximum number of channel modes with parameter allowed per MODE 
 	 * command  */
 	int maxmodes;
+
+	/* The server supports messaging channel operators (NOTICE @#channel) */
+	gboolean wallchops;
+
+	/* Notice to +#channel goes to all voiced persons */
+	gboolean wallvoices;
+
+	/* Server supports RFC 2812 features */
+	gboolean rfc2812;
+
+	/* Server gives extra penalty to some commands instead of the normal 2 
+	 * seconds per message and 1 second for every 120 bytes in a message */
+	gboolean penalty;
+
+	/* Forced nick changes: The server may change the nickname without the 
+	 * client sending a NICK message */
+	gboolean forced_nick_changes;
+
+	/* The LIST is sent in multiple iterations so send queue won't fill and 
+	 * kill the client connection. */
+	gboolean safelist;
+
+	/* The USERIP command exists */
+	gboolean userip;
+
+	/* The CPRIVMSG command exists, used for mass messaging people in specified 
+	 * channel (CPRIVMSG channel nick,nick2,... :text) */
+	gboolean cprivmsg;
+
+	/* The CNOTICE command exists, just like CPRIVMSG */
+	gboolean cnotice;
+
+	/* The KNOCK command exists */
+	gboolean knock;
+
+	/* Server supports virtual channels. See  vchans.txt for more information */
+	gboolean vchannels;
+
+	/* The WHO command uses WHOX protocol */
+	gboolean whox;
+
+	/* The server supports server side ignores via the +g user mode */
+	gboolean callerid;
+
+	/* [Deprecated] The same as CALLERID */
+	gboolean accept;
 };
 
 /**

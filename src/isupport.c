@@ -83,6 +83,34 @@ void handle_005(struct network_state *s, struct line *l)
 			s->info->maxbans = atoi(val);
 		} else if(!g_strcasecmp(key, "MODES")) {
 			s->info->maxmodes = atoi(val);
+		} else if(!g_strcasecmp(key, "WALLCHOPS")) {
+			s->info->wallchops = true;
+		} else if(!g_strcasecmp(key, "WALLVOICES")) {
+			s->info->wallvoices = true;
+		} else if(!g_strcasecmp(key, "RFC2812")) {
+			s->info->rfc2812 = true;
+		} else if(!g_strcasecmp(key, "PENALTY")) {
+			s->info->penalty = true;
+		} else if(!g_strcasecmp(key, "FNC")) {
+			s->info->forced_nick_changes = true;
+		} else if(!g_strcasecmp(key, "SAFELIST")) {
+			s->info->safelist = true;
+		} else if(!g_strcasecmp(key, "USERIP")) {
+			s->info->userip = true;
+		} else if(!g_strcasecmp(key, "CPRIVMSG")) {
+			s->info->cprivmsg = true;
+		} else if(!g_strcasecmp(key, "CNOTICE")) {
+			s->info->cnotice = true;
+		} else if(!g_strcasecmp(key, "KNOCK")) {
+			s->info->knock = true;
+		} else if(!g_strcasecmp(key, "VCHANNELS")) {
+			s->info->vchannels = true;
+		} else if(!g_strcasecmp(key, "WHOX")) {
+			s->info->whox = true;
+		} else if(!g_strcasecmp(key, "CALLERID")) {
+			s->info->callerid = true;
+		} else if(!g_strcasecmp(key, "ACCEPT")) {
+			s->info->accept = true;
 		} else {
 			log_network_state(LOG_WARNING, s, "Unknown 005 parameter `%s'", key);
 		}
