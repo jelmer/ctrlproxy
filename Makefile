@@ -71,7 +71,7 @@ linestack-cmd$(EXEEXT): src/linestack-cmd.o $(objs)
 
 ctrlproxy$(EXEEXT): src/main.o $(objs)
 	@echo Linking $@
-	@$(CC) $(LIBS) -rdynamic -o $@ $^
+	@$(CC) $(LDFLAGS) -rdynamic -o $@ $^ $(LIBS)
 
 mods/%.o: mods/%.c
 	@echo Compiling for shared library $<
