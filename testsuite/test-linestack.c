@@ -112,6 +112,10 @@ static gboolean network_info_equal(const struct network_info *info1, const struc
 		   str_equal(info1->prefix, info2->prefix) &&
 		   str_equal(info1->chantypes, info2->chantypes) &&
 		   str_equal(info1->charset, info2->charset) &&
+		   str_equal(info1->chanmodes[0], info2->chanmodes[0]) &&
+		   str_equal(info1->chanmodes[1], info2->chanmodes[1]) &&
+		   str_equal(info1->chanmodes[2], info2->chanmodes[2]) &&
+		   str_equal(info1->chanmodes[3], info2->chanmodes[3]) &&
 		   info1->keylen == info2->keylen &&
 		   info1->silence == info2->silence &&
 		   info1->channellen == info2->channellen &&

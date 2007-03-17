@@ -1159,17 +1159,13 @@ char *network_generate_feature_string(struct network *n)
 	}
 
 	fs = g_list_append(fs, casemap);
-
 	fs = g_list_append(fs, g_strdup("FNC"));
-
 	fs = g_list_append(fs, g_strdup_printf("CHARSET=%s", n->global->config->client_charset));
 
 	ret = list_make_string(fs);
 
 	for (gl = fs; gl; gl = gl->next)
-	{
 		g_free(gl->data);
-	}
 
 	g_list_free(fs);
 

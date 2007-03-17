@@ -109,6 +109,10 @@ void network_info_parse(struct network_info *info, const char *parameter)
 	} else if(!g_strcasecmp(key, "CHANTYPES")) {
 		g_free(info->chantypes);
 		info->chantypes = g_strdup(val);
+	} else if(!g_strcasecmp(key, "CHANMODES")) {
+		g_strfreev(info->chanmodes);
+		info->chanmodes = g_strsplit(val, ",", 4);
+		/* FIXME: Make sure info->chanmodes length is exactly 4 */
 	} else if(!g_strcasecmp(key, "PREFIX")) {
 		g_free(info->prefix);
 		info->prefix = g_strdup(val);
@@ -222,4 +226,20 @@ char get_prefix_by_mode(char mode, const struct network_info *n)
 		if(prefix[i] == mode) return pref_end[i];
 	}
 	return ' ';
+}
+
+const static char *default_chanmodes[] = { 
+	"beI", "k" , "l" , "imnpsta" 
+};
+
+int network_chanmode_type(char m, struct network_info *n)
+{
+	int i;
+	for (i = 0; i < 4; i++) {
+		if (strchr((n && n->chanmodes)?n->chanmodes[i]:default_chanmodes[i], m)) {
+			return i;
+		}
+	}
+
+	return 3;
 }

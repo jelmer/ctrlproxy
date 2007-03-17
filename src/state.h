@@ -127,6 +127,14 @@ struct network_info
 	/* Server supported character set */
 	char *charset;
 
+	/* This is a list of channel modes according to 4 types.
+	 * A = Mode that adds or removes a nick or address to a list. Always has a parameter.
+	 * B = Mode that changes a setting and always has a parameter.
+	 * C = Mode that changes a setting and only has a parameter when set.
+	 * D = Mode that changes a setting and never has a parameter.
+	 */
+	char **chanmodes;
+
 	/* Maximum key length */
 	int keylen;
 
@@ -247,5 +255,6 @@ G_MODULE_EXPORT char get_prefix_by_mode(char p, const struct network_info *n);
 G_MODULE_EXPORT int irccmp(const struct network_info *n, const char *a, const char *b);
 G_MODULE_EXPORT const char *get_charset(const struct network_info *n);
 G_MODULE_EXPORT void network_info_parse(struct network_info *info, const char *parameter);
+G_MODULE_EXPORT int network_chanmode_type(char m, struct network_info *n);
 
 #endif /* __CTRLPROXY_STATE_H__ */
