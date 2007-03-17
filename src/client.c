@@ -549,6 +549,7 @@ static gboolean client_ping(gpointer user_data) {
 struct client *client_init(struct network *n, GIOChannel *c, const char *desc)
 {
 	struct client *client;
+	gboolean charset_ok = FALSE;
 
 	g_assert(c);
 	g_assert(desc);
@@ -568,8 +569,8 @@ struct client *client_init(struct network *n, GIOChannel *c, const char *desc)
 
 	client->outgoing_iconv = client->incoming_iconv = (GIConv)-1;
 	if (n && n->global)
-		client_set_charset(client, n->global->config->client_charset);
-	else
+		charset_ok = client_set_charset(client, n->global->config->client_charset);
+	if (!charset_ok)
 		client_set_charset(client, DEFAULT_CLIENT_CHARSET);
 
 	client->incoming_id = g_io_add_watch(client->incoming, G_IO_IN | G_IO_HUP, handle_pending_client_receive, client);

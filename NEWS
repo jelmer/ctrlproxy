@@ -26,6 +26,9 @@ Ctrlproxy 3.0.2 UNRELEASED
 
 	* Fix crash when CHARSET command fails (#89)
 
+	* Fall back to default charset if client charset can't be set 
+		(patch by Emanuele Giaquinta <e.giaquinta@glauco.it>)
+
   FEATURES
 
     * More advanced help support
