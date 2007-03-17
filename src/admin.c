@@ -404,18 +404,17 @@ static void cmd_log_level(admin_handle h, char **args, void *userdata)
 
 static void handle_charset(admin_handle h, char **args, void *userdata)
 {
-	GError *error = NULL;
 	struct client *c;
-
-	c = admin_get_client(h);
 
 	if (args[1] == NULL) {
 		admin_out(h, "No charset specified");
 		return;
 	}
 
+	c = admin_get_client(h);
+
 	if (!client_set_charset(c, args[1])) {
-		admin_out(h, "Error setting charset: %s", error->message);
+		admin_out(h, "Error setting charset: %s", args[1]);
 	}
 }
 

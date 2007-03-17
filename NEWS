@@ -24,6 +24,8 @@ Ctrlproxy 3.0.2 UNRELEASED
 
 	* Fix coredump with --init when the default config cannot be opened (patch by exg)
 
+	* Fix crash when CHARSET command fails (#89)
+
   FEATURES
 
     * More advanced help support
