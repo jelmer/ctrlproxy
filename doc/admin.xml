@@ -11,7 +11,7 @@
 	by spaces. Quoting is not supported. Those familiar with 
 	NickServ or ChanServ will already be used to this syntax.</para>
 
-<xi:include href="commands.xml/">
+<xi:include href="commands.xml"/>
 
 	<sect1 id="admin example">
 			<title>Example commands</title>

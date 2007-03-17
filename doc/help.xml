@@ -27,6 +27,6 @@ You can read more about them with <emphasis>help &lt;subject&gt;</emphasis>
 
 <xi:include href="admin.xml"/>
 <xi:include href="clients.xml"/>
-<xi:include href="commands"/>
+<xi:include href="commands.xml"/>
 
 </book>
