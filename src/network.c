@@ -55,8 +55,8 @@ static void server_send_login (struct network *s)
 
 	log_network(LOG_TRACE, s, "Sending login details");
 
-	s->state = network_state_init(&s->info, s->config->nick, 
-	                              s->config->username, get_my_hostname());
+	s->state = network_state_init(s->config->nick, s->config->username, 
+								  get_my_hostname());
 	s->state->userdata = s;
 	s->state->log = state_log_helper;
 	s->linestack = new_linestack(s);
@@ -855,7 +855,7 @@ static gboolean connect_server(struct network *s)
 		if (!s->connection.data.virtual.ops) 
 			return FALSE;
 
-		s->state = network_state_init(&s->info, s->config->nick, s->config->username, get_my_hostname());
+		s->state = network_state_init(s->config->nick, s->config->username, get_my_hostname());
 		s->state->userdata = s;
 		s->state->log = state_log_helper;
 		s->linestack = new_linestack(s);
@@ -1136,40 +1136,9 @@ void network_select_next_server(struct network *n)
 
 char *network_generate_feature_string(struct network *n)
 {
-	GList *fs = NULL, *gl;
-	char *name, *casemap;
-	char *ret;
-
 	g_assert(n);
-	
-	name = g_strdup_printf("NETWORK=%s", n->name);
-	fs = g_list_append(fs, name);
 
-	switch (n->info.casemapping) {
-	default:
-	case CASEMAP_RFC1459:
-		casemap = g_strdup("CASEMAPPING=rfc1459");
-		break;
-	case CASEMAP_STRICT_RFC1459:
-		casemap = g_strdup("CASEMAPPING=strict-rfc1459");
-		break;
-	case CASEMAP_ASCII:
-		casemap = g_strdup("CASEMAPPING=ascii");
-		break;
-	}
-
-	fs = g_list_append(fs, casemap);
-	fs = g_list_append(fs, g_strdup("FNC"));
-	fs = g_list_append(fs, g_strdup_printf("CHARSET=%s", n->global->config->client_charset));
-
-	ret = list_make_string(fs);
-
-	for (gl = fs; gl; gl = gl->next)
-		g_free(gl->data);
-
-	g_list_free(fs);
-
-	return ret;
+	return network_info_string(&n->info);
 }
 
 

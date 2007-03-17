@@ -23,6 +23,137 @@
 #define DEFAULT_CHANTYPES 	"#&"
 #define DEFAULT_CHARSET		"iso8859-15"
 
+char *network_info_string(struct network_info *info)
+{
+	char *ret = NULL;
+	GList *fs = NULL, *gl;
+	char *casemap = NULL;
+
+	if (info->name != NULL)
+		fs = g_list_append(fs, g_strdup_printf("NETWORK=%s", info->name));
+
+	switch (info->casemapping) {
+	default:
+	case CASEMAP_RFC1459:
+		casemap = g_strdup("CASEMAPPING=rfc1459");
+		break;
+	case CASEMAP_STRICT_RFC1459:
+		casemap = g_strdup("CASEMAPPING=strict-rfc1459");
+		break;
+	case CASEMAP_ASCII:
+		casemap = g_strdup("CASEMAPPING=ascii");
+		break;
+	}
+
+	if (casemap != NULL)
+		fs = g_list_append(fs, casemap);
+
+	if (info->forced_nick_changes)
+		fs = g_list_append(fs, g_strdup("FNC"));
+
+	if (info->charset != NULL)
+		fs = g_list_append(fs, g_strdup_printf("CHARSET=%s", info->charset));
+
+	if (info->nicklen != 0)
+		fs = g_list_append(fs, g_strdup_printf("NICKLEN=%d", info->nicklen));
+
+	if (info->userlen != 0)
+		fs = g_list_append(fs, g_strdup_printf("USERLEN=%d", info->userlen));
+
+	if (info->hostlen != 0)
+		fs = g_list_append(fs, g_strdup_printf("HOSTLEN=%d", info->hostlen));
+
+	if (info->channellen != 0)
+		fs = g_list_append(fs, g_strdup_printf("CHANNELLEN=%d", info->channellen));
+
+	if (info->awaylen != 0)
+		fs = g_list_append(fs, g_strdup_printf("AWAYLEN=%d", info->awaylen));
+
+	if (info->kicklen != 0)
+		fs = g_list_append(fs, g_strdup_printf("KICKLEN=%d", info->kicklen));
+
+	if (info->topiclen != 0)
+		fs = g_list_append(fs, g_strdup_printf("TOPICLEN=%d", info->topiclen));
+
+	if (info->maxchannels != 0)
+		fs = g_list_append(fs, g_strdup_printf("MAXCHANNELS=%d", info->maxchannels));
+
+	if (info->maxtargets != 0)
+		fs = g_list_append(fs, g_strdup_printf("MAXTARGETS=%d", info->maxtargets));
+
+	if (info->maxbans != 0)
+		fs = g_list_append(fs, g_strdup_printf("MAXBANS=%d", info->maxbans));
+
+	if (info->maxmodes != 0)
+		fs = g_list_append(fs, g_strdup_printf("MODES=%d", info->maxmodes));
+
+	if (info->wallchops)
+		fs = g_list_append(fs, g_strdup("WALLCHOPS"));
+
+	if (info->wallvoices)
+		fs = g_list_append(fs, g_strdup("WALLVOICES"));
+
+	if (info->rfc2812)
+		fs = g_list_append(fs, g_strdup("RFC2812"));
+
+	if (info->penalty)
+		fs = g_list_append(fs, g_strdup("PENALTY"));
+
+	if (info->safelist)
+		fs = g_list_append(fs, g_strdup("SAFELIST"));
+	
+	if (info->userip)
+		fs = g_list_append(fs, g_strdup("USERIP"));
+
+	if (info->cprivmsg)
+		fs = g_list_append(fs, g_strdup("CPRIVMSG"));
+
+	if (info->cnotice)
+		fs = g_list_append(fs, g_strdup("CNOTICE"));
+
+	if (info->knock)
+		fs = g_list_append(fs, g_strdup("KNOCK"));
+
+	if (info->vchannels)
+		fs = g_list_append(fs, g_strdup("VCHANNELS"));
+
+	if (info->whox)
+		fs = g_list_append(fs, g_strdup("WHOX"));
+
+	if (info->callerid)
+		fs = g_list_append(fs, g_strdup("CALLERID"));
+
+	if (info->accept)
+		fs = g_list_append(fs, g_strdup("ACCEPT"));
+
+	if (info->keylen != 0)
+		fs = g_list_append(fs, g_strdup_printf("KEYLEN=%d", info->keylen));
+
+	if (info->silence != 0)
+		fs = g_list_append(fs, g_strdup_printf("SILENCE=%d", info->silence));
+
+	if (info->chantypes != NULL)
+		fs = g_list_append(fs, g_strdup_printf("CHANTYPES=%s", info->chantypes));
+
+	if (info->chanmodes != NULL) {
+		char *tmp = g_strjoinv(",", info->chanmodes);
+		fs = g_list_append(fs, g_strdup_printf("CHANMODES=%s", tmp));
+		g_free(tmp);
+	}
+
+	if (info->prefix != NULL) 
+		fs = g_list_append(fs, g_strdup_printf("PREFIX=%s", info->prefix));
+
+	ret = list_make_string(fs);
+
+	for (gl = fs; gl; gl = gl->next)
+		g_free(gl->data);
+
+	g_list_free(fs);
+
+	return ret;
+}
+
 void network_info_parse(struct network_info *info, const char *parameter)
 {
 	char *sep;
@@ -130,13 +261,12 @@ void handle_005(struct network_state *s, struct line *l)
 {
 	int i;
 	g_assert(s);
-	g_assert(s->info);
 	g_assert(l);
 
 	g_assert(l->argc >= 1);
 
 	for (i = 3; i < l->argc-1; i++) 
-		network_info_parse(s->info, l->args[i]);
+		network_info_parse(&s->info, l->args[i]);
 }
 
 int irccmp(const struct network_info *n, const char *a, const char *b)

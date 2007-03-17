@@ -30,6 +30,7 @@
 #endif
 
 #include "state.h"
+#include "isupport.h"
 #include <sys/socket.h>
 
 struct global;

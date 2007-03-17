@@ -86,7 +86,7 @@ int main(int argc, char **argv)
 
 	info = g_new0(struct network_info, 1);
 
-	state = network_state_init(info, "nick", "username", "hostname");
+	state = network_state_init("nick", "username", "hostname");
 
 	g_assert(state != NULL);
 

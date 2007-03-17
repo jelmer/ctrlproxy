@@ -193,7 +193,7 @@ struct channel_state *find_channel(struct network_state *st, const char *name)
 	for (cl = st->channels; cl; cl = cl->next) {
 		struct channel_state *c = (struct channel_state *)cl->data;
 
-		if(!irccmp(st->info, c->name, name)) 
+		if(!irccmp(&st->info, c->name, name)) 
 			return c;
 	}
 	return NULL;
@@ -224,12 +224,12 @@ struct channel_nick *find_channel_nick(struct channel_state *c, const char *name
 	g_assert(c);
 
 	g_assert(c->network);
-	if (is_prefix(realname[0], c->network->info))
+	if (is_prefix(realname[0], &c->network->info))
 		realname++;
 
 	for (l = c->nicks; l; l = l->next) {
 		struct channel_nick *n = (struct channel_nick *)l->data;
-		if(!irccmp(c->network->info, n->global_nick->nick, realname))
+		if(!irccmp(&c->network->info, n->global_nick->nick, realname))
 			return n;
 	}
 
@@ -243,12 +243,12 @@ struct network_nick *find_network_nick(struct network_state *n, const char *name
 	g_assert(name);
 	g_assert(n);
 
-	if (!irccmp(n->info, n->me.nick, name))
+	if (!irccmp(&n->info, n->me.nick, name))
 		return &n->me;
 
 	for (gl = n->nicks; gl; gl = gl->next) {
 		struct network_nick *ndd = (struct network_nick*)gl->data;
-		if(!irccmp(n->info, ndd->nick, name)) {
+		if(!irccmp(&n->info, ndd->nick, name)) {
 			return ndd;
 		}
 	}
@@ -269,7 +269,7 @@ struct network_nick *find_add_network_nick(struct network_state *n, const char *
 
 	/* create one, if it doesn't exist */
 	nd = g_new0(struct network_nick,1);
-	g_assert(!is_prefix(name[0], n->info));
+	g_assert(!is_prefix(name[0], &n->info));
 	nd->nick = g_strdup(name);
 	nd->hops = -1;
 	
@@ -288,7 +288,7 @@ struct channel_nick *find_add_channel_nick(struct channel_state *c, const char *
 	g_assert(strlen(name) > 0);
 	g_assert(c->network);
 
-	if(is_prefix(realname[0], c->network->info)) {
+	if(is_prefix(realname[0], &c->network->info)) {
 		mymode = realname[0];
 		realname++;
 	}
@@ -330,7 +330,7 @@ static void handle_join(struct network_state *s, struct line *l)
 		network_nick_set_hostmask(ni->global_nick, l->origin);
 
 		/* The user is joining a channel */
-		if(!irccmp(s->info, nick, s->me.nick)) {
+		if(!irccmp(&s->info, nick, s->me.nick)) {
 			log_network_state(LOG_INFO, s, "Joining channel %s", c->name);
 		} else {
 			log_network_state(LOG_TRACE, s, "%s joins channel %s", nick, c->name);
@@ -368,7 +368,7 @@ static void handle_part(struct network_state *s, struct line *l)
 			log_network_state(LOG_WARNING, s, "Can't remove nick %s from channel %s: nick not on channel", nick, channels[i]);
 		}
 
-		if(!irccmp(s->info, nick, s->me.nick) && c) {
+		if(!irccmp(&s->info, nick, s->me.nick) && c) {
 			log_network_state(LOG_INFO, s, "Leaving %s", channels[i]);
 			free_channel(c);
 		} else {
@@ -406,7 +406,7 @@ static void handle_kick(struct network_state *s, struct line *l)
 
 		free_channel_nick(n);
 
-		if(!irccmp(s->info, nicks[i], s->me.nick)) {
+		if(!irccmp(&s->info, nicks[i], s->me.nick)) {
 			log_network_state(LOG_INFO, s, "Kicked off %s by %s", c->name, nick);
 			free_channel(c);
 		} else {
@@ -653,7 +653,7 @@ static void handle_mode(struct network_state *s, struct line *l)
 	int i;
 
 	/* Channel modes */
-	if (is_channelname(l->args[1], s->info)) {
+	if (is_channelname(l->args[1], &s->info)) {
 		struct channel_state *c = find_channel(s, l->args[1]);
 		struct channel_nick *n;
 		char p;
@@ -708,7 +708,7 @@ static void handle_mode(struct network_state *s, struct line *l)
 
 					break;
 				default:
-					  p = get_prefix_by_mode(l->args[2][i], s->info);
+					  p = get_prefix_by_mode(l->args[2][i], &s->info);
 					  if(p == ' ') {
 						  c->modes[(unsigned char)l->args[2][i]] = t;
 					  } else {
@@ -746,16 +746,16 @@ static void handle_001(struct network_state *s, struct line *l)
 
 static void handle_004(struct network_state *s, struct line *l)
 {
-	s->info->supported_user_modes = g_strdup(l->args[4]);
-	s->info->supported_channel_modes = g_strdup(l->args[5]);
-	s->info->server = g_strdup(l->args[2]);
+	s->info.supported_user_modes = g_strdup(l->args[4]);
+	s->info.supported_channel_modes = g_strdup(l->args[5]);
+	s->info.server = g_strdup(l->args[2]);
 }
 
 static void handle_privmsg(struct network_state *s, struct line *l)
 {
 	struct network_nick *nn;
 	char *nick;
-	if (irccmp(s->info, l->args[1], s->me.nick) != 0) return;
+	if (irccmp(&s->info, l->args[1], s->me.nick) != 0) return;
 
 	nick = line_get_nick(l);
 	nn = find_add_network_nick(s, nick);
@@ -883,10 +883,9 @@ gboolean state_handle_data(struct network_state *s, struct line *l)
 	return FALSE;
 }
 
-struct network_state *network_state_init(struct network_info *info, const char *nick, const char *username, const char *hostname)
+struct network_state *network_state_init(const char *nick, const char *username, const char *hostname)
 {
 	struct network_state *state = g_new0(struct network_state, 1);
-	state->info = info;
 	state->me.query = 1;
 	network_nick_set_data(&state->me, nick, username, hostname);
 

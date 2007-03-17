@@ -35,7 +35,7 @@ struct nickserv_entry {
 	const char *pass;
 };
 
-const char *nickserv_find_nick(struct network *n, char *nick)
+const char *nickserv_find_nick(struct network *n, const char *nick)
 {
 	GList *gl;
 	for (gl = n->global->nickserv_nicks; gl; gl = gl->next) {
