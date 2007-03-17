@@ -25,46 +25,38 @@
 #include "internals.h"
 #include "torture.h"
 
-START_TEST(test_network_supports)
-	struct network_info info;
-	info.features = g_hash_table_new(NULL, NULL);
-	g_hash_table_insert(info.features, "foo", "bla");
-	fail_if(network_supports(&info, "foo") == false);
-	fail_if(network_supports(&info, "foobar") == true);
-END_TEST
-
 START_TEST(test_is_prefix)
 	struct network_info info;
-	info.features = g_hash_table_new(NULL, NULL);
-	g_hash_table_insert(info.features, "PREFIX", "(qaohv)~&@%+");
+	memset(&info, 0, sizeof(info));
+	network_info_parse(&info, "PREFIX=(qaohv)~&@%+");
 	fail_unless(is_prefix('&', &info));
 	fail_if(is_prefix(' ', &info));
-	g_hash_table_replace(info.features, "PREFIX", "");
+	network_info_parse(&info, "PREFIX=");
 	fail_if(is_prefix('&', &info));
 END_TEST
 
 START_TEST(test_get_prefix_by_mode)
 	struct network_info info;
-	info.features = g_hash_table_new(NULL, NULL);
-	g_hash_table_insert(info.features, "PREFIX", "(qaohv)~&@%+");
+	memset(&info, 0, sizeof(info));
+	network_info_parse(&info, "PREFIX=(qaohv)~&@%+");
 	fail_unless(get_prefix_by_mode('a', &info) == '&');
 	fail_unless(get_prefix_by_mode('q', &info) == '~');
 	fail_unless(get_prefix_by_mode('h', &info) == '%');
 	fail_unless(get_prefix_by_mode('!', &info) == ' ');
-	g_hash_table_replace(info.features, "PREFIX", "(qaohv~&@%+");
+	network_info_parse(&info, "PREFIX=(qaohv~&@%+");
 	fail_unless(get_prefix_by_mode('a', &info) == ' ');
 END_TEST
 
 START_TEST(test_get_charset)
 	struct network_info info;
-	info.features = g_hash_table_new(NULL, NULL);
-	g_hash_table_insert(info.features, "CHARSET", "ascii");
+	memset(&info, 0, sizeof(info));
+	network_info_parse(&info, "CHARSET=ascii");
 	fail_unless(!strcmp(get_charset(&info), "ascii"));
 END_TEST
 
 START_TEST(test_get_charset_default)
 	struct network_info info;
-	info.features = g_hash_table_new(NULL, NULL);
+	memset(&info, 0, sizeof(info));
 	fail_unless(!strcmp(get_charset(&info), "iso8859-15"));
 END_TEST
 
@@ -73,7 +65,6 @@ Suite *networkinfo_suite()
 	Suite *s = suite_create("networkinfo");
 	TCase *tc_core = tcase_create("core");
 	suite_add_tcase(s, tc_core);
-	tcase_add_test(tc_core, test_network_supports);
 	tcase_add_test(tc_core, test_is_prefix);
 	tcase_add_test(tc_core, test_get_prefix_by_mode);
 	tcase_add_test(tc_core, test_get_charset);

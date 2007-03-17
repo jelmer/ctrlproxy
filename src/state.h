@@ -111,12 +111,28 @@ struct network_info
 {
 	char *name;
 	char *server;
-	GHashTable *features;
 	char *supported_user_modes;
 	char *supported_channel_modes;
 
 	/* Case mapping used for nick- and channel name comparing */
 	enum casemapping casemapping;
+
+	/* A list of channel modes a person can get and the respective 
+	 * prefix a channel or nickname will get in case the person has it */
+	char *prefix;
+
+	/* The supported channel prefixes */
+	char *chantypes;
+
+	/* Server supported character set */
+	char *charset;
+
+	/* Maximum key length */
+	int keylen;
+
+	/* The server support the SILENCE command. 
+	 * The number is the maximum number of allowed entries in the list. */
+	int silence;
 
 	/* Maximum channel name length */
 	int channellen;
@@ -132,6 +148,12 @@ struct network_info
 
 	/* Maximum nickname length */
 	int nicklen;
+
+	/* Maximum username length */
+	int userlen;
+
+	/* Maximum hostname length */
+	int hostlen;
 
 	/* Maximum number of channels allowed to join */
 	int maxchannels;
@@ -223,7 +245,6 @@ G_MODULE_EXPORT gboolean is_channelname(const char *name, const struct network_i
 G_MODULE_EXPORT gboolean is_prefix(char p, const struct network_info *n);
 G_MODULE_EXPORT char get_prefix_by_mode(char p, const struct network_info *n);
 G_MODULE_EXPORT int irccmp(const struct network_info *n, const char *a, const char *b);
-G_MODULE_EXPORT gboolean network_supports(const struct network_info *n, const char *fe);
 G_MODULE_EXPORT const char *get_charset(const struct network_info *n);
 G_MODULE_EXPORT void network_info_parse(struct network_info *info, const char *parameter);
 

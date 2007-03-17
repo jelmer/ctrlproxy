@@ -38,8 +38,6 @@ void network_info_parse(struct network_info *info, const char *parameter)
 		val = g_strdup(sep+1);
 	}
 	
-	g_hash_table_replace(info->features, key, val);
-
 	if(!g_strcasecmp(key, "CASEMAPPING")) {
 		if(!g_strcasecmp(val, "rfc1459")) {
 			info->casemapping = CASEMAP_RFC1459;
@@ -56,6 +54,10 @@ void network_info_parse(struct network_info *info, const char *parameter)
 		info->name = g_strdup(val);
 	} else if(!g_strcasecmp(key, "NICKLEN")) {
 		info->nicklen = atoi(val);
+	} else if(!g_strcasecmp(key, "USERLEN")) {
+		info->userlen = atoi(val);
+	} else if(!g_strcasecmp(key, "HOSTLEN")) {
+		info->hostlen = atoi(val);
 	} else if(!g_strcasecmp(key, "CHANNELLEN")) {
 		info->channellen = atoi(val);
 	} else if(!g_strcasecmp(key, "AWAYLEN")) {
@@ -100,9 +102,24 @@ void network_info_parse(struct network_info *info, const char *parameter)
 		info->callerid = TRUE;
 	} else if(!g_strcasecmp(key, "ACCEPT")) {
 		info->accept = TRUE;
+	} else if(!g_strcasecmp(key, "KEYLEN")) {
+		info->keylen = atoi(val);
+	} else if(!g_strcasecmp(key, "SILENCE")) {
+		info->silence = atoi(val);
+	} else if(!g_strcasecmp(key, "CHANTYPES")) {
+		g_free(info->chantypes);
+		info->chantypes = g_strdup(val);
+	} else if(!g_strcasecmp(key, "PREFIX")) {
+		g_free(info->prefix);
+		info->prefix = g_strdup(val);
+	} else if(!g_strcasecmp(key, "CHARSET")) {
+		g_free(info->charset);
+		info->charset = g_strdup(val);
 	} else {
 		log_global(LOG_WARNING, "Unknown 005 parameter `%s'", key);
 	}
+	g_free(key);
+	g_free(val);
 }
 
 void handle_005(struct network_state *s, struct line *l)
@@ -116,14 +133,6 @@ void handle_005(struct network_state *s, struct line *l)
 
 	for (i = 3; i < l->argc-1; i++) 
 		network_info_parse(s->info, l->args[i]);
-}
-
-gboolean network_supports(const struct network_info *n, const char *fe)
-{
-	gpointer k, v;
-	g_assert(n);
-	g_assert(n->features);
-	return g_hash_table_lookup_extended (n->features, fe, &k, &v);
 }
 
 int irccmp(const struct network_info *n, const char *a, const char *b)
@@ -149,9 +158,7 @@ gboolean is_channelname(const char *name, const struct network_info *n)
 	g_assert(name);
 
 	if (n != NULL) {
-		g_assert(n->features);
-	
-		chantypes = g_hash_table_lookup(n->features, "CHANTYPES");
+		chantypes = n->chantypes;
 	}
 
 	if(chantypes == NULL) 
@@ -169,8 +176,7 @@ gboolean is_prefix(char p, const struct network_info *n)
 	const char *pref_end;
 	
 	if (n != NULL) {
-		g_assert(n->features);
-		prefix = g_hash_table_lookup(n->features, "PREFIX");
+		prefix = n->prefix;
 	}
 	
 	if (prefix == NULL) 
@@ -185,10 +191,8 @@ gboolean is_prefix(char p, const struct network_info *n)
 
 const char *get_charset(const struct network_info *n)
 {
-	char *ret = g_hash_table_lookup(n->features, "CHARSET");
-
-	if (ret != NULL)
-		return ret;
+	if (n != NULL && n->charset != NULL)
+		return n->charset;
 
 	return DEFAULT_CHARSET;
 }
@@ -200,9 +204,7 @@ char get_prefix_by_mode(char mode, const struct network_info *n)
 	char *pref_end;
 
 	if (n != NULL) {
-		g_assert(n->features);
-
-		prefix = g_hash_table_lookup(n->features, "PREFIX");
+		prefix = n->prefix;
 	}
 
 	if (prefix == NULL) 

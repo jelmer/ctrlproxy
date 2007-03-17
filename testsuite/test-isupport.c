@@ -43,7 +43,6 @@ END_TEST
 
 START_TEST(isupport_info_parse_casemapping)
 	struct network_info *info = g_new0(struct network_info, 1);
-	info->features = g_hash_table_new(NULL, NULL);
 	network_info_parse(info, "CASEMAPPING=ascii");
 	fail_unless (info->casemapping == CASEMAP_ASCII);
 	network_info_parse(info, "CASEMAPPING=strict-rfc1459");
@@ -52,7 +51,6 @@ END_TEST
 
 START_TEST(isupport_info_parse_name)
 	struct network_info *info = g_new0(struct network_info, 1);
-	info->features = g_hash_table_new(NULL, NULL);
 	network_info_parse(info, "NETWORK=bla");
 	fail_unless (strcmp(info->name, "bla") == 0);
 END_TEST

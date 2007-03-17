@@ -40,48 +40,6 @@ void stack_process(struct linestack_context *ctx, struct network_state *ns, cons
 	return FALSE; \
 }
 
-struct hash_data {
-	GEqualFunc fn;
-	GHashTable *hash2;
-	gboolean success;
-};
-
-static void hash_traverse_equal(void *key, void *val1, void *userdata)
-{
-	struct hash_data *hash = userdata;
-	void *val2;
-
-	val2 = g_hash_table_lookup(hash->hash2, key);
-
-	hash->success &= hash->fn(val1, val2);
-}
-
-static gboolean hash_equal(GHashTable *hash1, GHashTable *hash2, GEqualFunc eqval)
-{
-	struct hash_data userdata;
-
-	null_equal(hash1, hash2);
-	
-	/* Traverse over all keys in hash1 and make sure they exist
-	 * with the same value in hash1 and hash2 */
-
-	userdata.fn = eqval;
-	userdata.hash2 = hash2;
-	userdata.success = TRUE;
-	g_hash_table_foreach(hash1, hash_traverse_equal, &userdata);
-	if (!userdata.success)
-		return FALSE;
-	
-	/* Traverse over all keys in hash2 and make sure 
-	 * they exist in hash1 */
-
-	userdata.fn = eqval;
-	userdata.hash2 = hash1;
-	g_hash_table_foreach(hash2, hash_traverse_equal, &userdata);
-
-	return userdata.success;
-}
-
 static gboolean list_equal(GList *list1, GList *list2, GEqualFunc eq)
 {
 	GList *gl1, *gl2;
@@ -149,12 +107,38 @@ static gboolean network_info_equal(const struct network_info *info1, const struc
 
 	return str_equal(info1->name, info2->name) &&
 		   str_equal(info1->server, info2->server) &&
-		   hash_equal(info1->features, info2->features, (GEqualFunc)str_equal) &&
 		   str_equal(info1->supported_user_modes, info2->supported_user_modes) &&
 		   str_equal(info1->supported_channel_modes, info2->supported_channel_modes) &&
-		   info1->casemapping == info2->casemapping &&
+		   str_equal(info1->prefix, info2->prefix) &&
+		   str_equal(info1->chantypes, info2->chantypes) &&
+		   str_equal(info1->charset, info2->charset) &&
+		   info1->keylen == info2->keylen &&
+		   info1->silence == info2->silence &&
 		   info1->channellen == info2->channellen &&
-		   info1->topiclen == info2->topiclen;
+		   info1->awaylen == info2->awaylen &&
+		   info1->maxtargets == info2->maxtargets &&
+		   info1->nicklen == info2->nicklen &&
+		   info1->userlen == info2->userlen &&
+		   info1->hostlen == info2->hostlen &&
+		   info1->maxchannels == info2->maxchannels &&
+		   info1->topiclen == info2->topiclen &&
+		   info1->maxbans == info2->maxbans &&
+		   info1->maxmodes == info2->maxmodes &&
+		   info1->wallchops == info2->wallchops &&
+		   info1->wallvoices == info2->wallvoices &&
+		   info1->rfc2812 == info2->rfc2812 &&
+		   info1->penalty == info2->penalty &&
+		   info1->forced_nick_changes == info2->forced_nick_changes &&
+		   info1->safelist == info2->safelist &&
+		   info1->userip == info2->userip &&
+		   info1->cprivmsg == info2->cprivmsg &&
+		   info1->cnotice == info2->cnotice &&
+		   info1->knock == info2->knock &&
+		   info1->vchannels == info2->vchannels &&
+		   info1->whox == info2->whox &&
+		   info1->callerid == info2->callerid &&
+		   info1->accept == info2->accept &&
+		   info1->casemapping == info2->casemapping;
 }
 
 static gboolean network_nick_equal(const struct network_nick *nick1, const struct network_nick *nick2)

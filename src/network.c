@@ -895,7 +895,6 @@ struct network *load_network(struct global *global, struct network_config *sc)
 
 	s = g_new0(struct network, 1);
 	s->config = sc;
-	s->info.features = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_free);
 	s->name = g_strdup(s->config->name);
 	s->connection.pending_lines = g_queue_new();
 	s->global = global;
@@ -969,8 +968,6 @@ void unload_network(struct network *s)
 	g_free(s->info.supported_channel_modes);
 	g_free(s->info.server);
 	g_free(s->info.name);
-
-	g_hash_table_destroy(s->info.features);
 
 #ifdef HAVE_GNUTLS
 	ssl_free_client_credentials(s->ssl_credentials);
