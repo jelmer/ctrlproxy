@@ -525,33 +525,80 @@ static gboolean admin_net_init(struct network *n)
 
 static gboolean admin_to_server (struct network *n, struct client *c, const struct line *l)
 {
-	struct admin_handle ah;
+	if (!g_strcasecmp(l->args[0], "PRIVMSG") && 
+		!g_strcasecmp(l->args[0], "NOTICE")) {
+		struct admin_handle ah;
 
-	if (g_strcasecmp(l->args[0], "PRIVMSG") && 
-		g_strcasecmp(l->args[0], "NOTICE")) {
+		if (g_strcasecmp(l->args[0], n->state->me.nick) == 0) {
+			virtual_network_recv_args(c->network, n->state->me.hostmask, l->args[0], l->args[1], NULL);
+			return TRUE;
+		}
+
+		if (g_strcasecmp(l->args[1], ADMIN_CHANNEL) && 
+			g_strcasecmp(l->args[1], "ctrlproxy")) {
+			virtual_network_recv_response(c->network, ERR_NOSUCHNICK, l->args[1], "No such nick/channel", NULL);
+			return TRUE;
+		}
+
+		ah.send_fn = network_admin_out;
+		ah.user_data = NULL;
+		ah.client = c;
+		ah.network = n;
+		ah.global = n->global;
+
+		return process_cmd(&ah, l->args[2]);
+	} else if (!g_strcasecmp(l->args[0], "ISON")) {
+		int i;
+		char *tmp;
+		GList *gl = NULL;
+
+		if (l->args[1] == NULL) {
+			virtual_network_recv_response(c->network, ERR_NEEDMOREPARAMS, l->args[0], "Not enough params", NULL);
+			return TRUE;
+		}
+
+		for (i = 1; l->args[i]; i++) {
+			if (!g_strcasecmp(l->args[i], "ctrlproxy") ||
+				!g_strcasecmp(l->args[i], n->state->me.nick)) {
+				gl = g_list_append(gl, l->args[i]);
+			}
+		}
+		virtual_network_recv_response(n, RPL_ISON, tmp = list_make_string(gl), NULL);
+		g_free(tmp);
+		g_list_free(gl);
+		return TRUE;
+	} else if (!g_strcasecmp(l->args[0], "USERHOST")) {
+		GList *gl = NULL;
+		char *tmp;
+		int i;
+
+		if (l->args[1] == NULL) {
+			virtual_network_recv_response(c->network, ERR_NEEDMOREPARAMS, l->args[0], "Not enough params", NULL);
+			return TRUE;
+		}
+
+		for (i = 1; l->args[i]; i++) {
+			if (!g_strcasecmp(l->args[i], "ctrlproxy")) {
+				gl = g_list_append(gl, g_strdup_printf("%s=+%s", l->args[i], get_my_hostname()));
+			}
+			if (!g_strcasecmp(l->args[i], c->network->state->me.nick)) {
+				gl = g_list_append(gl, g_strdup_printf("%s=+%s", l->args[i], c->network->state->me.hostname));
+			}
+		}
+
+		virtual_network_recv_response(n, RPL_ISON, tmp = list_make_string(gl), NULL);
+		g_free(tmp);
+		while (gl) {
+			g_free(gl->data);
+			gl = g_list_remove(gl, gl->data);
+		}
+		return TRUE;
+	} else {
+		virtual_network_recv_response(c->network, ERR_UNKNOWNCOMMAND, l->args[0], "Unknown command", NULL);
 		log_global(LOG_TRACE, "Unhandled command `%s' to admin network", 
 				   l->args[0]);
 		return TRUE;
 	}
-
-	if (g_strcasecmp(l->args[0], n->state->me.nick) == 0) {
-		virtual_network_recv_args(c->network, n->state->me.hostmask, l->args[0], l->args[1], NULL);
-		return TRUE;
-	}
-
-	if (g_strcasecmp(l->args[1], ADMIN_CHANNEL) && 
-		g_strcasecmp(l->args[1], "ctrlproxy")) {
-		virtual_network_recv_args(c->network, NULL, "401", l->args[1], "No such nick/channel", NULL);
-		return TRUE;
-	}
-
-	ah.send_fn = network_admin_out;
-	ah.user_data = NULL;
-	ah.client = c;
-	ah.network = n;
-	ah.global = n->global;
-
-	return process_cmd(&ah, l->args[2]);
 }
 
 struct virtual_network_ops admin_network = {

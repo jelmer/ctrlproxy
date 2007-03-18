@@ -52,6 +52,8 @@ Ctrlproxy 3.0.2 UNRELEASED
     * Remove is_private from line struct (#12).
 		(patch by Emanuele Giaquinta <e.giaquinta@glauco.it>)
 
+	* Implement ISON, USERHOST for admin networks. (#99)
+
   PORTABILITY
 
     * Looks for check using pkg-config now.
