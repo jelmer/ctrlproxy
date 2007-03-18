@@ -414,6 +414,36 @@ gboolean network_send_line(struct network *s, struct client *c, const struct lin
 	return network_send_line_direct(s, c, ol);
 }
 
+gboolean virtual_network_recv_response(struct network *n, int num, ...) 
+{
+	va_list ap;
+	struct line *l;
+	gboolean ret;
+
+	g_assert(n);
+
+	va_start(ap, num);
+	l = virc_parse_line(n->name, ap);
+	va_end(ap);
+
+	l->args = g_realloc(l->args, sizeof(char *) * (l->argc+4));
+	memmove(&l->args[2], &l->args[0], l->argc * sizeof(char *));
+
+	l->args[0] = g_strdup_printf("%03d", num);
+
+	if (n->state && n->state->me.nick) l->args[1] = g_strdup(n->state->me.nick);
+	else l->args[1] = g_strdup("*");
+
+	l->argc+=2;
+	l->args[l->argc] = NULL;
+
+	ret = virtual_network_recv_line(n, l);
+
+	free_line(l);
+
+	return ret;
+}
+
 gboolean virtual_network_recv_line(struct network *s, struct line *l)
 {
 	g_assert(s);

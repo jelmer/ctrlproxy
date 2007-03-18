@@ -23,6 +23,7 @@
 #include <string.h>
 #include "admin.h"
 #include "help.h"
+#include "irc.h"
 
 help_t *help;
 
@@ -509,14 +510,14 @@ static gboolean admin_net_init(struct network *n)
 	hostmask = g_strdup_printf("ctrlproxy!ctrlproxy@%s", n->name);
 	
 	virtual_network_recv_args(n, n->state->me.hostmask, "JOIN", ADMIN_CHANNEL, NULL);
-	virtual_network_recv_args(n, NULL, "332", n->config->nick, ADMIN_CHANNEL, 
+	virtual_network_recv_response(n, RPL_TOPIC, ADMIN_CHANNEL, 
 		"CtrlProxy administration channel | Type `help' for more information",
 							  NULL);
 	nicks = g_strdup_printf("@ctrlproxy %s", n->config->nick);
 
-	virtual_network_recv_args(n, NULL, "353", n->config->nick, "=", ADMIN_CHANNEL, nicks, NULL);
+	virtual_network_recv_response(n, RPL_NAMREPLY, "=", ADMIN_CHANNEL, nicks, NULL);
 	g_free(nicks);
-	virtual_network_recv_args(n, NULL, "366", n->config->nick, ADMIN_CHANNEL, "End of /NAMES list.", NULL);
+	virtual_network_recv_response(n, RPL_ENDOFNAMES, ADMIN_CHANNEL, "End of /NAMES list.", NULL);
 
 	g_free(hostmask);
 
