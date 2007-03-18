@@ -370,7 +370,7 @@ static gboolean network_send_line_direct(struct network *s, struct client *c, co
 	return TRUE;
 }
 
-gboolean network_send_line(struct network *s, struct client *c, const struct line *ol)
+gboolean network_send_line(struct network *s, struct client *c, const struct line *ol, gboolean is_private)
 {
 	struct line l;
 	char *tmp = NULL;
@@ -398,7 +398,7 @@ gboolean network_send_line(struct network *s, struct client *c, const struct lin
 	g_assert(l.args[0]);
 
 	/* Also write this message to all other clients currently connected */
-	if (!l.is_private && 
+	if (!is_private && 
 	   (!g_strcasecmp(l.args[0], "PRIVMSG") || 
 		!g_strcasecmp(l.args[0], "NOTICE"))) {
 		g_assert(l.origin);
@@ -484,10 +484,9 @@ gboolean network_send_args(struct network *s, ...)
 
 	va_start(ap, s);
 	l = virc_parse_line(NULL, ap);
-	l->is_private = TRUE;
 	va_end(ap);
 
-	ret = network_send_line(s, NULL, l);
+	ret = network_send_line(s, NULL, l, TRUE);
 
 	free_line(l);
 

@@ -489,7 +489,6 @@ gboolean admin_process_command(struct client *c, struct line *l, int cmdoffset)
 		tmp = g_strdup_printf("%s %s", oldtmp, l->args[i]);
 		g_free(oldtmp);
 	}
-	l->is_private = 1;
 
 	ah.send_fn = privmsg_admin_out;
 	ah.client = c;
