@@ -123,7 +123,6 @@ static gboolean process_from_server(struct network *n, struct line *l)
 	g_assert(n->state);
 
 	state_handle_data(n->state, l);
-	linestack_insert_line(n->linestack, l, FROM_SERVER, n->state);
 
 	g_assert(l->args[0]);
 
@@ -175,8 +174,9 @@ static gboolean process_from_server(struct network *n, struct line *l)
 	} 
 
 	if( n->connection.state == NETWORK_CONNECTION_STATE_MOTD_RECVD) {
+		gboolean linestack_store = TRUE;
 		if (atoi(l->args[0])) {
-			redirect_response(n, l);
+			linestack_store &= (!redirect_response(n, l));
 		} else if (!g_strcasecmp(l->args[0], "PRIVMSG") && l->argc > 2 && 
 			l->args[2][0] == '\001' && 
 			g_strncasecmp(l->args[2], "\001ACTION", 7) != 0) {
@@ -187,6 +187,9 @@ static gboolean process_from_server(struct network *n, struct line *l)
 		} else if (run_server_filter(n, l, FROM_SERVER)) {
 			clients_send(n->clients, l, NULL);
 		} 
+
+		if (linestack_store)
+			linestack_insert_line(n->linestack, l, FROM_SERVER, n->state);
 	} 
 
 	return TRUE;

@@ -79,7 +79,7 @@ void log_client_line(const struct client *c, const struct line *l, gboolean inco
 
 /* redirect.c */
 void redirect_record(const struct network *n, const struct client *c, const struct line *l);
-void redirect_response(struct network *n, struct line *l);
+gboolean redirect_response(struct network *n, struct line *l);
 void redirect_clear(const struct network *n);
 
 /* cache.c */
