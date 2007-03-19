@@ -60,8 +60,6 @@ static void network_admin_out(admin_handle h, const char *data)
 static void cmd_help(admin_handle h, char **args, void *userdata)
 {
 	const char *s;
-	char **lines;
-	int i;
 
 	s = help_get(help, args[1] != NULL?args[1]:"index");
 
@@ -73,13 +71,13 @@ static void cmd_help(admin_handle h, char **args, void *userdata)
 		return;
 	}
 
-	lines = g_strsplit(s, "\n", 0);
-
-	for (i = 0; lines[i]; i++) {
-		admin_out(h, "%s", lines[i]);
+	while (strncmp(s, "%\n", 2) != 0) {
+		char *tmp;
+		admin_out(h, "%s", tmp = g_strndup(s, strchr(s, '\n')-s));
+		g_free(tmp);
+			
+		s = strchr(s, '\n')+1;
 	}
-
-	g_strfreev(lines);
 }
 
 struct client *admin_get_client(admin_handle h)
