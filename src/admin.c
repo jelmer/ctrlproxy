@@ -523,7 +523,7 @@ static gboolean admin_net_init(struct network *n)
 
 static gboolean admin_to_server (struct network *n, struct client *c, const struct line *l)
 {
-	if (!g_strcasecmp(l->args[0], "PRIVMSG") && 
+	if (!g_strcasecmp(l->args[0], "PRIVMSG") ||
 		!g_strcasecmp(l->args[0], "NOTICE")) {
 		struct admin_handle ah;
 
@@ -590,6 +590,12 @@ static gboolean admin_to_server (struct network *n, struct client *c, const stru
 			g_free(gl->data);
 			gl = g_list_remove(gl, gl->data);
 		}
+		return TRUE;
+	} else if (!g_strcasecmp(l->args[0], "QUIT")) {
+		disconnect_client(c, l->args[1]);
+		return TRUE;
+	} else if (!g_strcasecmp(l->args[0], "MODE")) {
+		/* FIXME: Do something here ? */
 		return TRUE;
 	} else {
 		virtual_network_recv_response(n, ERR_UNKNOWNCOMMAND, l->args[0], "Unknown command", NULL);
