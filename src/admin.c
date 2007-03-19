@@ -530,13 +530,13 @@ static gboolean admin_to_server (struct network *n, struct client *c, const stru
 		struct admin_handle ah;
 
 		if (g_strcasecmp(l->args[0], n->state->me.nick) == 0) {
-			virtual_network_recv_args(c->network, n->state->me.hostmask, l->args[0], l->args[1], NULL);
+			virtual_network_recv_args(n, n->state->me.hostmask, l->args[0], l->args[1], NULL);
 			return TRUE;
 		}
 
 		if (g_strcasecmp(l->args[1], ADMIN_CHANNEL) && 
 			g_strcasecmp(l->args[1], "ctrlproxy")) {
-			virtual_network_recv_response(c->network, ERR_NOSUCHNICK, l->args[1], "No such nick/channel", NULL);
+			virtual_network_recv_response(n, ERR_NOSUCHNICK, l->args[1], "No such nick/channel", NULL);
 			return TRUE;
 		}
 
@@ -553,7 +553,7 @@ static gboolean admin_to_server (struct network *n, struct client *c, const stru
 		GList *gl = NULL;
 
 		if (l->args[1] == NULL) {
-			virtual_network_recv_response(c->network, ERR_NEEDMOREPARAMS, l->args[0], "Not enough params", NULL);
+			virtual_network_recv_response(n, ERR_NEEDMOREPARAMS, l->args[0], "Not enough params", NULL);
 			return TRUE;
 		}
 
@@ -573,7 +573,7 @@ static gboolean admin_to_server (struct network *n, struct client *c, const stru
 		int i;
 
 		if (l->args[1] == NULL) {
-			virtual_network_recv_response(c->network, ERR_NEEDMOREPARAMS, l->args[0], "Not enough params", NULL);
+			virtual_network_recv_response(n, ERR_NEEDMOREPARAMS, l->args[0], "Not enough params", NULL);
 			return TRUE;
 		}
 
@@ -581,8 +581,8 @@ static gboolean admin_to_server (struct network *n, struct client *c, const stru
 			if (!g_strcasecmp(l->args[i], "ctrlproxy")) {
 				gl = g_list_append(gl, g_strdup_printf("%s=+%s", l->args[i], get_my_hostname()));
 			}
-			if (!g_strcasecmp(l->args[i], c->network->state->me.nick)) {
-				gl = g_list_append(gl, g_strdup_printf("%s=+%s", l->args[i], c->network->state->me.hostname));
+			if (!g_strcasecmp(l->args[i], n->state->me.nick)) {
+				gl = g_list_append(gl, g_strdup_printf("%s=+%s", l->args[i], n->state->me.hostname));
 			}
 		}
 
@@ -594,7 +594,7 @@ static gboolean admin_to_server (struct network *n, struct client *c, const stru
 		}
 		return TRUE;
 	} else {
-		virtual_network_recv_response(c->network, ERR_UNKNOWNCOMMAND, l->args[0], "Unknown command", NULL);
+		virtual_network_recv_response(n, ERR_UNKNOWNCOMMAND, l->args[0], "Unknown command", NULL);
 		log_global(LOG_TRACE, "Unhandled command `%s' to admin network", 
 				   l->args[0]);
 		return TRUE;
