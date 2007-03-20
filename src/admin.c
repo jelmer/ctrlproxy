@@ -659,24 +659,24 @@ void admin_log(enum log_level level, const struct network *n, const struct clien
 }
 
 const static struct admin_command builtin_commands[] = {
-	{ "ADDNETWORK", add_network, "<name>", "Add new network with specified name" },
-	{ "ADDSERVER", add_server, "<network> <host>[:<port>] [<password>]", "Add server to network" },
-	{ "BACKLOG", repl_command, "[channel]", "Send backlogs for this network or a channel, if specified" },
-	{ "CONNECT", com_connect_network, "<network>", "Connect to specified network. Forces reconnect when waiting." },
-	{ "DELNETWORK", del_network, "<network>", "Remove specified network" },
-	{ "ECHO", cmd_echo, "<DATA>", "Simple echo command" },
-	{ "LOG_LEVEL", cmd_log_level, "[level]", "Change/Show log level" },
-	{ "NEXTSERVER", com_next_server, "[network]", "Disconnect and use to the next server in the list" },
-	{ "CHARSET", handle_charset, "<charset>", "Change client charset" },
-	{ "DIE", handle_die, "", "Exit ctrlproxy" },
-	{ "DISCONNECT", com_disconnect_network, "<network>", "Disconnect specified network" },
-	{ "LISTNETWORKS", list_networks, "", "List current networks and their status" },
-	{ "SAVECONFIG", com_save_config, "<name>", "Save current XML configuration to specified file" },
-	{ "DETACH", detach_client, "", "Detach current client" },
-	{ "HELP", cmd_help, "[command]", "This help command" },
-	{ "DUMPJOINEDCHANNELS", dump_joined_channels, "[network]", NULL, NULL },
+	{ "ADDNETWORK", add_network },
+	{ "ADDSERVER", add_server },
+	{ "BACKLOG", repl_command },
+	{ "CONNECT", com_connect_network },
+	{ "DELNETWORK", del_network },
+	{ "ECHO", cmd_echo },
+	{ "LOG_LEVEL", cmd_log_level },
+	{ "NEXTSERVER", com_next_server },
+	{ "CHARSET", handle_charset },
+	{ "DIE", handle_die },
+	{ "DISCONNECT", com_disconnect_network },
+	{ "LISTNETWORKS", list_networks },
+	{ "SAVECONFIG", com_save_config },
+	{ "DETACH", detach_client },
+	{ "HELP", cmd_help },
+	{ "DUMPJOINEDCHANNELS" },
 #ifdef DEBUG
-	{ "ABORT", do_abort, "", NULL, NULL },
+	{ "ABORT", do_abort },
 #endif
 	{ NULL }
 };
