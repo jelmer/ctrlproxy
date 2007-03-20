@@ -592,7 +592,6 @@ static gboolean admin_to_server (struct network *n, struct client *c, const stru
 		}
 		return TRUE;
 	} else if (!g_strcasecmp(l->args[0], "QUIT")) {
-		disconnect_client(c, l->args[1]?l->args[1]:"Client Exiting");
 		return TRUE;
 	} else if (!g_strcasecmp(l->args[0], "MODE")) {
 		/* FIXME: Do something here ? */
