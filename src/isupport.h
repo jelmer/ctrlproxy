@@ -150,6 +150,11 @@ struct network_info
 
 	/* [Deprecated] The same as CALLERID */
 	gboolean accept;
+
+	/* Support for CAPAB 
+	 * http://www3.ietf.org/proceedings/03mar/I-D/draft-baudis-irc-capab-00.txt
+	 */
+	gboolean capab;
 };
 
 G_MODULE_EXPORT char *network_info_string(struct network_info *info);

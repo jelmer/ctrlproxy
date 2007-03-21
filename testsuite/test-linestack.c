@@ -142,6 +142,7 @@ static gboolean network_info_equal(const struct network_info *info1, const struc
 		   info1->whox == info2->whox &&
 		   info1->callerid == info2->callerid &&
 		   info1->accept == info2->accept &&
+		   info1->capab == info2->capab &&
 		   info1->casemapping == info2->casemapping;
 }
 

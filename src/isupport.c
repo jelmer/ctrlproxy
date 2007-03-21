@@ -105,6 +105,9 @@ char *network_info_string(struct network_info *info)
 	if (info->userip)
 		fs = g_list_append(fs, g_strdup("USERIP"));
 
+	if (info->capab)
+		fs = g_list_append(fs, g_strdup("CAPAB"));
+
 	if (info->cprivmsg)
 		fs = g_list_append(fs, g_strdup("CPRIVMSG"));
 
@@ -225,6 +228,8 @@ void network_info_parse(struct network_info *info, const char *parameter)
 		info->cnotice = TRUE;
 	} else if(!g_strcasecmp(key, "KNOCK")) {
 		info->knock = TRUE;
+	} else if(!g_strcasecmp(key, "CAPAB")) {
+		info->capab = TRUE;
 	} else if(!g_strcasecmp(key, "VCHANNELS")) {
 		info->vchannels = TRUE;
 	} else if(!g_strcasecmp(key, "WHOX")) {
