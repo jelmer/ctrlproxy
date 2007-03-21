@@ -429,6 +429,7 @@ static void file_write_channel_query(struct log_custom_data *data, struct networ
 	}
 	
 	nn = find_network_nick(network->state, nick);
+	g_free(nick);
 	g_assert(nn);
 
 	/* now, loop thru the users' channels */
