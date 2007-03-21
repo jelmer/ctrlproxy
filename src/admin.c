@@ -673,7 +673,7 @@ const static struct admin_command builtin_commands[] = {
 	{ "SAVECONFIG", com_save_config },
 	{ "DETACH", detach_client },
 	{ "HELP", cmd_help },
-	{ "DUMPJOINEDCHANNELS" },
+	{ "DUMPJOINEDCHANNELS", dump_joined_channels },
 #ifdef DEBUG
 	{ "ABORT", do_abort },
 #endif
