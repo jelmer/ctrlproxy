@@ -447,15 +447,15 @@ static void handle_332(struct network_state *s, struct line *l)
 
 static void handle_333(struct network_state *s, struct line *l) 
 {
-	struct channel_state *c = find_channel(s, l->args[1]);
+	struct channel_state *c = find_channel(s, l->args[2]);
 
 	if(!c) {
-		log_network_state(LOG_WARNING, s, "Can't set topic last set time for unknown channel '%s'!", l->args[1]);
+		log_network_state(LOG_WARNING, s, "Can't set topic last set time for unknown channel '%s'!", l->args[2]);
 		return;
 	}
 
-	c->topic_set_time = atoi(l->args[3]);
-	c->topic_set_by = g_strdup(l->args[2]);
+	c->topic_set_time = atoi(l->args[4]);
+	c->topic_set_by = g_strdup(l->args[3]);
 }
 
 static void handle_no_topic(struct network_state *s, struct line *l) 
