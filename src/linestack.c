@@ -320,7 +320,7 @@ struct linestack_context *new_linestack(struct network *n)
 		current_backend = &linestack_file;
 	}
 
-	return create_linestack(current_backend, n->name, cfg, n->state);
+	return create_linestack(current_backend, n->info.name, cfg, n->state);
 }
 
 

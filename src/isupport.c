@@ -144,6 +144,25 @@ char *network_info_string(struct network_info *info)
 		g_free(tmp);
 	}
 
+	if (info->chanlimit != NULL) {
+		fs = g_list_append(fs, g_strdup_printf("CHANLIMIT=%s", info->chanlimit));
+	}
+
+	if (info->excepts_mode != '\0')
+		fs = g_list_append(fs, g_strdup_printf("EXCEPTS=%c", info->excepts_mode));
+
+	if (info->statusmsg != NULL)
+		fs = g_list_append(fs, g_strdup_printf("STATUSMSG=%s", info->statusmsg));
+
+	if (info->invex_mode != '\0')
+		fs = g_list_append(fs, g_strdup_printf("INVEX=%c", info->invex_mode));
+
+	if (info->maxlist != NULL)
+		fs = g_list_append(fs, g_strdup_printf("MAXLIST=%s", info->maxlist));
+
+	if (info->idchan != NULL)
+		fs = g_list_append(fs, g_strdup_printf("IDCHAN=%s", info->idchan));
+
 	if (info->prefix != NULL) 
 		fs = g_list_append(fs, g_strdup_printf("PREFIX=%s", info->prefix));
 
@@ -249,6 +268,32 @@ void network_info_parse(struct network_info *info, const char *parameter)
 		g_strfreev(info->chanmodes);
 		info->chanmodes = g_strsplit(val, ",", 4);
 		/* FIXME: Make sure info->chanmodes length is exactly 4 */
+	} else if(!g_strcasecmp(key, "CHANLIMIT")) {
+		g_free(info->chanlimit);
+		info->chanlimit = g_strdup(val);
+	} else if(!g_strcasecmp(key, "EXCEPTS")) {
+		if (val == NULL) 
+			info->excepts_mode = 'e';
+		else if (strlen(val) > 1)
+			log_global(LOG_WARNING, "Invalid length excepts value: %s", val);
+		else
+			info->excepts_mode = val[0];
+	} else if(!g_strcasecmp(key, "INVEX")) {
+		if (val == NULL) 
+			info->invex_mode = 'I';
+		else if (strlen(val) > 1)
+			log_global(LOG_WARNING, "Invalid length invex value: %s", val);
+		else
+			info->invex_mode = val[0];
+	} else if(!g_strcasecmp(key, "MAXLIST")) {
+		g_free(info->maxlist);
+		info->maxlist = g_strdup(val);
+	} else if(!g_strcasecmp(key, "IDCHAN")) {
+		g_free(info->idchan);
+		info->idchan = g_strdup(val);
+	} else if(!g_strcasecmp(key, "STATUSMSG")) {
+		g_free(info->statusmsg);
+		info->statusmsg = g_strdup(val);
 	} else if(!g_strcasecmp(key, "PREFIX")) {
 		g_free(info->prefix);
 		info->prefix = g_strdup(val);

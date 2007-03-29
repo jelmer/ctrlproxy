@@ -64,6 +64,33 @@ struct network_info
 	 */
 	char **chanmodes;
 
+	/** Maximum number of channels allowed to join by channel prefix. */
+	/* FIXME: Should be a hash table */
+	char *chanlimit;
+
+	/** Maximum number entries in the list per mode. */
+	/* FIXME: Should be a hash table */
+	char *maxlist;
+
+	/** The ID length for channels with an ID. The prefix says for which 
+	 * channel type it is, and the number how long it is. See RFC 2811 for 
+	 * more information. */
+	/* FIXME: Should be a hash table */
+	char *idchan;
+
+	/** The server support ban exceptions (e mode). See  
+	 * RFC 2811 for more information. */
+	char excepts_mode;
+
+	/** The server support invite exceptions (+I mode). See 
+	 * RFC 2811 for more information. */
+	char invex_mode;
+
+	/** The server supports messaging channel member who have a 
+	 * certain status or higher. The status is one of the letters from 
+	 * PREFIX. */
+	char *statusmsg;
+
 	/* Maximum key length */
 	int keylen;
 

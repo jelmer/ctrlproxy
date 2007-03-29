@@ -428,7 +428,7 @@ gboolean virtual_network_recv_response(struct network *n, int num, ...)
 	g_assert(n);
 
 	va_start(ap, num);
-	l = virc_parse_line(n->name, ap);
+	l = virc_parse_line(n->info.name, ap);
 	va_end(ap);
 
 	l->args = g_realloc(l->args, sizeof(char *) * (l->argc+4));
@@ -880,11 +880,11 @@ static gboolean connect_program(struct network *s)
 	g_io_channel_unref(s->connection.outgoing);
 
 
-	if (s->name == NULL) {
+	if (s->info.name == NULL) {
 		if (strchr(s->config->type_settings.program_location, '/')) {
-			s->name = g_strdup(strrchr(s->config->type_settings.program_location, '/')+1);
+			s->info.name = g_strdup(strrchr(s->config->type_settings.program_location, '/')+1);
 		} else {
-			s->name = g_strdup(s->config->type_settings.program_location);
+			s->info.name = g_strdup(s->config->type_settings.program_location);
 		}
 	}
 
@@ -948,9 +948,11 @@ struct network *load_network(struct global *global, struct network_config *sc)
 
 	s = g_new0(struct network, 1);
 	s->config = sc;
-	s->name = g_strdup(s->config->name);
+	s->info.name = g_strdup(s->config->name);
 	s->connection.pending_lines = g_queue_new();
 	s->global = global;
+	s->info.forced_nick_changes = TRUE; /* Forced nick changes are done by ctrlproxy */
+	s->info.charset = s->global->config->client_charset;
 	s->connection.outgoing_iconv = s->connection.incoming_iconv = (GIConv)-1;
 
 	if (global != NULL) {
@@ -1008,7 +1010,7 @@ void unload_network(struct network *s)
 		s->global->networks = g_list_remove(s->global->networks, s);
 	}
 
-	g_free(s->name);
+	g_free(s->info.name);
 
 	if (s->config->type == NETWORK_TCP) {
 		g_free(s->connection.data.tcp.local_name);
@@ -1100,7 +1102,7 @@ struct network *find_network(struct global *global, const char *name)
 	GList *gl;
 	for (gl = global->networks; gl; gl = gl->next) {
 		struct network *n = gl->data;
-		if (n->name && !g_strcasecmp(n->name, name)) 
+		if (n->info.name && !g_strcasecmp(n->info.name, name)) 
 			return n;
 	}
 
@@ -1119,7 +1121,7 @@ struct network *find_network_by_hostname(struct global *global, const char *host
 		struct network *n = gl->data;
 		g_assert(n);
 
-		if (n->name && !g_strcasecmp(n->name, hostname)) {
+		if (n->info.name && !g_strcasecmp(n->info.name, hostname)) {
 			g_free(portname);
 			return n;
 		}

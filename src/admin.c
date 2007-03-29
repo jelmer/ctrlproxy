@@ -38,7 +38,7 @@ static void privmsg_admin_out(admin_handle h, const char *data)
 	char *nick = c->nick;
 	char *hostmask;
 
-	hostmask = g_strdup_printf("ctrlproxy!ctrlproxy@%s", c->network->name);
+	hostmask = g_strdup_printf("ctrlproxy!ctrlproxy@%s", c->network->info.name);
 	if (c->network->state) nick = c->network->state->me.nick;
 	client_send_args_ex(c, hostmask, "NOTICE", nick, data, NULL);
 
@@ -50,7 +50,7 @@ static void network_admin_out(admin_handle h, const char *data)
 	struct client *c = h->client;
 	char *hostmask;
 
-	hostmask = g_strdup_printf("ctrlproxy!ctrlproxy@%s", c->network->name);
+	hostmask = g_strdup_printf("ctrlproxy!ctrlproxy@%s", c->network->info.name);
 	virtual_network_recv_args(c->network, hostmask, "PRIVMSG", ADMIN_CHANNEL, 
 							  data, NULL);
 
@@ -252,7 +252,7 @@ static void com_next_server (admin_handle h, char **args, void *userdata)
 		n = find_network(admin_get_global(h), args[1]);
 	} else {
 		n = admin_get_network(h);
-		name = n->name;
+		name = n->info.name;
 	}
 	if(!n) {
 		admin_out(h, "%s: Not connected", name);
@@ -284,17 +284,17 @@ static void list_networks(admin_handle h, char **args, void *userdata)
 		switch (n->connection.state) {
 		case NETWORK_CONNECTION_STATE_NOT_CONNECTED:
 			if (n->connection.data.tcp.last_disconnect_reason)
-				admin_out(h, "%s: Not connected: %s", n->name, 
+				admin_out(h, "%s: Not connected: %s", n->info.name, 
 						  n->connection.data.tcp.last_disconnect_reason);
 			else
-				admin_out(h, "%s: Not connected", n->name);
+				admin_out(h, "%s: Not connected", n->info.name);
 			break;
 		case NETWORK_CONNECTION_STATE_RECONNECT_PENDING:
-			admin_out(h, "%s: Reconnecting", n->name);
+			admin_out(h, "%s: Reconnecting", n->info.name);
 			break;
 		case NETWORK_CONNECTION_STATE_LOGIN_SENT:
 		case NETWORK_CONNECTION_STATE_MOTD_RECVD:
-			admin_out(h, "%s: connected", n->name);
+			admin_out(h, "%s: connected", n->info.name);
 			break;
 		}
 	}
@@ -323,7 +323,7 @@ static void dump_joined_channels(admin_handle h, char **args, void *userdata)
 	}
 
 	if (!n->state) {
-		admin_out(h, "Network '%s' not connected", n->name);
+		admin_out(h, "Network '%s' not connected", n->info.name);
 		return;
 	}
 
@@ -362,7 +362,7 @@ static void repl_command(admin_handle h, char **args, void *userdata)
 	}
 
 	if(!args[1]) {
-		admin_out(h, "Sending backlog for network '%s'", n->name);
+		admin_out(h, "Sending backlog for network '%s'", n->info.name);
 
 		linestack_send(n->linestack, lm, NULL, admin_get_client(h));
 
@@ -504,7 +504,7 @@ static gboolean admin_net_init(struct network *n)
 	char *hostmask;
 	char *nicks;
 
-	hostmask = g_strdup_printf("ctrlproxy!ctrlproxy@%s", n->name);
+	hostmask = g_strdup_printf("ctrlproxy!ctrlproxy@%s", n->info.name);
 	
 	virtual_network_recv_args(n, n->state->me.hostmask, "JOIN", ADMIN_CHANNEL, NULL);
 	virtual_network_recv_response(n, RPL_TOPIC, ADMIN_CHANNEL, 
@@ -632,7 +632,7 @@ void admin_log(enum log_level level, const struct network *n, const struct clien
 	tmp = g_strdup_printf("%s%s%s%s%s%s", 
 						  data, 
 						  n?" (":"",
-						  n?n->name:"", 
+						  n?n->info.name:"", 
 						  c?"/":"",
 						  c?c->description:"",
 						  n?")":"");
@@ -643,7 +643,7 @@ void admin_log(enum log_level level, const struct network *n, const struct clien
 		if (network->connection.data.virtual.ops != &admin_network)
 			continue;
 
-		hostmask = g_strdup_printf("ctrlproxy!ctrlproxy@%s", network->name);
+		hostmask = g_strdup_printf("ctrlproxy!ctrlproxy@%s", network->info.name);
 		l = irc_parse_line_args(hostmask, "PRIVMSG", ADMIN_CHANNEL, tmp, NULL); 
 		g_free(hostmask);
 		
