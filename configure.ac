@@ -59,7 +59,7 @@ AC_TYPE_SIGNAL
 AC_CHECK_FUNCS([gethostbyname gethostname memset strchr strerror strstr uname backtrace_symbols gettimeofday strrchr daemon])
 
 PKG_PROG_PKG_CONFIG
-PKG_CHECK_MODULES(COMMON, glib-2.0 gmodule-2.0)
+PKG_CHECK_MODULES(COMMON, glib-2.0 >= 2.6.0 gmodule-2.0)
 
 PKG_CHECK_MODULES(CHECK, check, [], [ echo -n "" ])
 

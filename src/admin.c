@@ -23,6 +23,7 @@
 #include <string.h>
 #include "admin.h"
 #include "help.h"
+#include "irc.h"
 
 help_t *help;
 
@@ -59,8 +60,6 @@ static void network_admin_out(admin_handle h, const char *data)
 static void cmd_help(admin_handle h, char **args, void *userdata)
 {
 	const char *s;
-	char **lines;
-	int i;
 
 	s = help_get(help, args[1] != NULL?args[1]:"index");
 
@@ -72,13 +71,13 @@ static void cmd_help(admin_handle h, char **args, void *userdata)
 		return;
 	}
 
-	lines = g_strsplit(s, "\n", 0);
-
-	for (i = 0; lines[i]; i++) {
-		admin_out(h, "%s", lines[i]);
+	while (strncmp(s, "%\n", 2) != 0) {
+		char *tmp;
+		admin_out(h, "%s", tmp = g_strndup(s, strchr(s, '\n')-s));
+		g_free(tmp);
+			
+		s = strchr(s, '\n')+1;
 	}
-
-	g_strfreev(lines);
 }
 
 struct client *admin_get_client(admin_handle h)
@@ -488,7 +487,6 @@ gboolean admin_process_command(struct client *c, struct line *l, int cmdoffset)
 		tmp = g_strdup_printf("%s %s", oldtmp, l->args[i]);
 		g_free(oldtmp);
 	}
-	l->is_private = 1;
 
 	ah.send_fn = privmsg_admin_out;
 	ah.client = c;
@@ -509,14 +507,14 @@ static gboolean admin_net_init(struct network *n)
 	hostmask = g_strdup_printf("ctrlproxy!ctrlproxy@%s", n->name);
 	
 	virtual_network_recv_args(n, n->state->me.hostmask, "JOIN", ADMIN_CHANNEL, NULL);
-	virtual_network_recv_args(n, NULL, "332", n->config->nick, ADMIN_CHANNEL, 
+	virtual_network_recv_response(n, RPL_TOPIC, ADMIN_CHANNEL, 
 		"CtrlProxy administration channel | Type `help' for more information",
 							  NULL);
 	nicks = g_strdup_printf("@ctrlproxy %s", n->config->nick);
 
-	virtual_network_recv_args(n, NULL, "353", n->config->nick, "=", ADMIN_CHANNEL, nicks, NULL);
+	virtual_network_recv_response(n, RPL_NAMREPLY, "=", ADMIN_CHANNEL, nicks, NULL);
 	g_free(nicks);
-	virtual_network_recv_args(n, NULL, "366", n->config->nick, ADMIN_CHANNEL, "End of /NAMES list.", NULL);
+	virtual_network_recv_response(n, RPL_ENDOFNAMES, ADMIN_CHANNEL, "End of /NAMES list.", NULL);
 
 	g_free(hostmask);
 
@@ -525,33 +523,85 @@ static gboolean admin_net_init(struct network *n)
 
 static gboolean admin_to_server (struct network *n, struct client *c, const struct line *l)
 {
-	struct admin_handle ah;
+	if (!g_strcasecmp(l->args[0], "PRIVMSG") ||
+		!g_strcasecmp(l->args[0], "NOTICE")) {
+		struct admin_handle ah;
 
-	if (g_strcasecmp(l->args[0], "PRIVMSG") && 
-		g_strcasecmp(l->args[0], "NOTICE")) {
+		if (g_strcasecmp(l->args[0], n->state->me.nick) == 0) {
+			virtual_network_recv_args(n, n->state->me.hostmask, l->args[0], l->args[1], NULL);
+			return TRUE;
+		}
+
+		if (g_strcasecmp(l->args[1], ADMIN_CHANNEL) && 
+			g_strcasecmp(l->args[1], "ctrlproxy")) {
+			virtual_network_recv_response(n, ERR_NOSUCHNICK, l->args[1], "No such nick/channel", NULL);
+			return TRUE;
+		}
+
+		ah.send_fn = network_admin_out;
+		ah.user_data = NULL;
+		ah.client = c;
+		ah.network = n;
+		ah.global = n->global;
+
+		return process_cmd(&ah, l->args[2]);
+	} else if (!g_strcasecmp(l->args[0], "ISON")) {
+		int i;
+		char *tmp;
+		GList *gl = NULL;
+
+		if (l->args[1] == NULL) {
+			virtual_network_recv_response(n, ERR_NEEDMOREPARAMS, l->args[0], "Not enough params", NULL);
+			return TRUE;
+		}
+
+		for (i = 1; l->args[i]; i++) {
+			if (!g_strcasecmp(l->args[i], "ctrlproxy") ||
+				!g_strcasecmp(l->args[i], n->state->me.nick)) {
+				gl = g_list_append(gl, l->args[i]);
+			}
+		}
+		virtual_network_recv_response(n, RPL_ISON, tmp = list_make_string(gl), NULL);
+		g_free(tmp);
+		g_list_free(gl);
+		return TRUE;
+	} else if (!g_strcasecmp(l->args[0], "USERHOST")) {
+		GList *gl = NULL;
+		char *tmp;
+		int i;
+
+		if (l->args[1] == NULL) {
+			virtual_network_recv_response(n, ERR_NEEDMOREPARAMS, l->args[0], "Not enough params", NULL);
+			return TRUE;
+		}
+
+		for (i = 1; l->args[i]; i++) {
+			if (!g_strcasecmp(l->args[i], "ctrlproxy")) {
+				gl = g_list_append(gl, g_strdup_printf("%s=+%s", l->args[i], get_my_hostname()));
+			}
+			if (!g_strcasecmp(l->args[i], n->state->me.nick)) {
+				gl = g_list_append(gl, g_strdup_printf("%s=+%s", l->args[i], n->state->me.hostname));
+			}
+		}
+
+		virtual_network_recv_response(n, RPL_ISON, tmp = list_make_string(gl), NULL);
+		g_free(tmp);
+		while (gl) {
+			g_free(gl->data);
+			gl = g_list_remove(gl, gl->data);
+		}
+		return TRUE;
+	} else if (!g_strcasecmp(l->args[0], "QUIT")) {
+		return TRUE;
+	} else if (!g_strcasecmp(l->args[0], "MODE")) {
+		/* FIXME: Do something here ? */
+		return TRUE;
+	} else {
+		virtual_network_recv_response(n, ERR_UNKNOWNCOMMAND, l->args[0], "Unknown command", NULL);
 		log_global(LOG_TRACE, "Unhandled command `%s' to admin network", 
 				   l->args[0]);
 		return TRUE;
 	}
-
-	if (g_strcasecmp(l->args[0], n->state->me.nick) == 0) {
-		virtual_network_recv_args(c->network, n->state->me.hostmask, l->args[0], l->args[1], NULL);
-		return TRUE;
-	}
-
-	if (g_strcasecmp(l->args[1], ADMIN_CHANNEL) && 
-		g_strcasecmp(l->args[1], "ctrlproxy")) {
-		virtual_network_recv_args(c->network, NULL, "401", l->args[1], "No such nick/channel", NULL);
-		return TRUE;
-	}
-
-	ah.send_fn = network_admin_out;
-	ah.user_data = NULL;
-	ah.client = c;
-	ah.network = n;
-	ah.global = n->global;
-
-	return process_cmd(&ah, l->args[2]);
 }
 
 struct virtual_network_ops admin_network = {
@@ -608,24 +658,24 @@ void admin_log(enum log_level level, const struct network *n, const struct clien
 }
 
 const static struct admin_command builtin_commands[] = {
-	{ "ADDNETWORK", add_network, "<name>", "Add new network with specified name" },
-	{ "ADDSERVER", add_server, "<network> <host>[:<port>] [<password>]", "Add server to network" },
-	{ "BACKLOG", repl_command, "[channel]", "Send backlogs for this network or a channel, if specified" },
-	{ "CONNECT", com_connect_network, "<network>", "Connect to specified network. Forces reconnect when waiting." },
-	{ "DELNETWORK", del_network, "<network>", "Remove specified network" },
-	{ "ECHO", cmd_echo, "<DATA>", "Simple echo command" },
-	{ "LOG_LEVEL", cmd_log_level, "[level]", "Change/Show log level" },
-	{ "NEXTSERVER", com_next_server, "[network]", "Disconnect and use to the next server in the list" },
-	{ "CHARSET", handle_charset, "<charset>", "Change client charset" },
-	{ "DIE", handle_die, "", "Exit ctrlproxy" },
-	{ "DISCONNECT", com_disconnect_network, "<network>", "Disconnect specified network" },
-	{ "LISTNETWORKS", list_networks, "", "List current networks and their status" },
-	{ "SAVECONFIG", com_save_config, "<name>", "Save current XML configuration to specified file" },
-	{ "DETACH", detach_client, "", "Detach current client" },
-	{ "HELP", cmd_help, "[command]", "This help command" },
-	{ "DUMPJOINEDCHANNELS", dump_joined_channels, "[network]", NULL, NULL },
+	{ "ADDNETWORK", add_network },
+	{ "ADDSERVER", add_server },
+	{ "BACKLOG", repl_command },
+	{ "CONNECT", com_connect_network },
+	{ "DELNETWORK", del_network },
+	{ "ECHO", cmd_echo },
+	{ "LOG_LEVEL", cmd_log_level },
+	{ "NEXTSERVER", com_next_server },
+	{ "CHARSET", handle_charset },
+	{ "DIE", handle_die },
+	{ "DISCONNECT", com_disconnect_network },
+	{ "LISTNETWORKS", list_networks },
+	{ "SAVECONFIG", com_save_config },
+	{ "DETACH", detach_client },
+	{ "HELP", cmd_help },
+	{ "DUMPJOINEDCHANNELS", dump_joined_channels },
 #ifdef DEBUG
-	{ "ABORT", do_abort, "", NULL, NULL },
+	{ "ABORT", do_abort },
 #endif
 	{ NULL }
 };

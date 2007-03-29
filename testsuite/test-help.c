@@ -16,7 +16,7 @@ static GHashTable *build_hash(const char *data)
 START_TEST(test_help_hash)
 	GHashTable *h = build_hash("?foo\nbar\n%\n");
 	fail_unless(g_hash_table_lookup(h, "foo") != NULL);
-	fail_unless(strcmp(g_hash_table_lookup(h, "foo"), "bar\n") == 0);
+	fail_unless(strncmp(g_hash_table_lookup(h, "foo"), "bar\n", 4) == 0);
 END_TEST
 
 START_TEST(test_help_hash_nopercent)
@@ -27,15 +27,15 @@ END_TEST
 START_TEST(test_help_hash_multiple)
 	GHashTable *h = build_hash("?foo\nbar\n%\n?bla\nbloe\nblie\n%\n");
 	fail_unless(g_hash_table_lookup(h, "foo") != NULL);
-	fail_unless(strcmp(g_hash_table_lookup(h, "foo"), "bar\n") == 0);
-	fail_unless(strcmp(g_hash_table_lookup(h, "bla"), "bloe\nblie\n") == 0);
+	fail_unless(strncmp(g_hash_table_lookup(h, "foo"), "bar\n", 4) == 0);
+	fail_unless(strncmp(g_hash_table_lookup(h, "bla"), "bloe\nblie\n", 10) == 0);
 END_TEST
 
 START_TEST(test_help_hash_empty)
 	GHashTable *h = build_hash("?foo\nbar\n%\n?\nbloe\nblie\n%\n");
 	fail_unless(g_hash_table_lookup(h, "foo") != NULL);
-	fail_unless(strcmp(g_hash_table_lookup(h, "foo"), "bar\n") == 0);
-	fail_unless(strcmp(g_hash_table_lookup(h, ""), "bloe\nblie\n") == 0);
+	fail_unless(strncmp(g_hash_table_lookup(h, "foo"), "bar\n", 4) == 0);
+	fail_unless(strncmp(g_hash_table_lookup(h, ""), "bloe\nblie\n", 10) == 0);
 END_TEST
 
 START_TEST(test_help_hash_strange)

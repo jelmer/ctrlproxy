@@ -197,8 +197,7 @@ gboolean ctcp_process_client_request (struct client *c, struct line *l)
 	ctcp_request_queue = g_list_append(ctcp_request_queue, req);
 
 	/* send off to server */
-	l->is_private = TRUE;
-	network_send_line(c->network, c, l);
+	network_send_line(c->network, c, l, TRUE);
 
 	return TRUE;
 }

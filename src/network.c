@@ -112,6 +112,8 @@ static gboolean process_from_server(struct network *n, struct line *l)
 	g_assert(n);
 	g_assert(l);
 
+	n->connection.last_line_recvd = time(NULL);
+
 	if (n->state == NULL) {
 		log_network(LOG_WARNING, n, "Dropping message '%s' because network is disconnected.", l->args[0]);
 		return FALSE;
@@ -123,7 +125,6 @@ static gboolean process_from_server(struct network *n, struct line *l)
 	g_assert(n->state);
 
 	state_handle_data(n->state, l);
-	linestack_insert_line(n->linestack, l, FROM_SERVER, n->state);
 
 	g_assert(l->args[0]);
 
@@ -175,8 +176,9 @@ static gboolean process_from_server(struct network *n, struct line *l)
 	} 
 
 	if( n->connection.state == NETWORK_CONNECTION_STATE_MOTD_RECVD) {
+		gboolean linestack_store = TRUE;
 		if (atoi(l->args[0])) {
-			redirect_response(n, l);
+			linestack_store &= (!redirect_response(n, l));
 		} else if (!g_strcasecmp(l->args[0], "PRIVMSG") && l->argc > 2 && 
 			l->args[2][0] == '\001' && 
 			g_strncasecmp(l->args[2], "\001ACTION", 7) != 0) {
@@ -187,6 +189,9 @@ static gboolean process_from_server(struct network *n, struct line *l)
 		} else if (run_server_filter(n, l, FROM_SERVER)) {
 			clients_send(n->clients, l, NULL);
 		} 
+
+		if (linestack_store)
+			linestack_insert_line(n->linestack, l, FROM_SERVER, n->state);
 	} 
 
 	return TRUE;
@@ -370,7 +375,7 @@ static gboolean network_send_line_direct(struct network *s, struct client *c, co
 	return TRUE;
 }
 
-gboolean network_send_line(struct network *s, struct client *c, const struct line *ol)
+gboolean network_send_line(struct network *s, struct client *c, const struct line *ol, gboolean is_private)
 {
 	struct line l;
 	char *tmp = NULL;
@@ -398,7 +403,7 @@ gboolean network_send_line(struct network *s, struct client *c, const struct lin
 	g_assert(l.args[0]);
 
 	/* Also write this message to all other clients currently connected */
-	if (!l.is_private && 
+	if (!is_private && 
 	   (!g_strcasecmp(l.args[0], "PRIVMSG") || 
 		!g_strcasecmp(l.args[0], "NOTICE"))) {
 		g_assert(l.origin);
@@ -412,6 +417,36 @@ gboolean network_send_line(struct network *s, struct client *c, const struct lin
 	redirect_record(s, c, ol);
 
 	return network_send_line_direct(s, c, ol);
+}
+
+gboolean virtual_network_recv_response(struct network *n, int num, ...) 
+{
+	va_list ap;
+	struct line *l;
+	gboolean ret;
+
+	g_assert(n);
+
+	va_start(ap, num);
+	l = virc_parse_line(n->name, ap);
+	va_end(ap);
+
+	l->args = g_realloc(l->args, sizeof(char *) * (l->argc+4));
+	memmove(&l->args[2], &l->args[0], l->argc * sizeof(char *));
+
+	l->args[0] = g_strdup_printf("%03d", num);
+
+	if (n->state && n->state->me.nick) l->args[1] = g_strdup(n->state->me.nick);
+	else l->args[1] = g_strdup("*");
+
+	l->argc+=2;
+	l->args[l->argc] = NULL;
+
+	ret = virtual_network_recv_line(n, l);
+
+	free_line(l);
+
+	return ret;
 }
 
 gboolean virtual_network_recv_line(struct network *s, struct line *l)
@@ -454,10 +489,9 @@ gboolean network_send_args(struct network *s, ...)
 
 	va_start(ap, s);
 	l = virc_parse_line(NULL, ap);
-	l->is_private = TRUE;
 	va_end(ap);
 
-	ret = network_send_line(s, NULL, l);
+	ret = network_send_line(s, NULL, l, TRUE);
 
 	free_line(l);
 
@@ -497,6 +531,16 @@ static gboolean bindsock(struct network *s,
 	freeaddrinfo(addrinfo_bind);
 
 	return (res_bind != NULL);
+}
+
+static void ping_server(struct network *server, gboolean ping_source)
+{
+	gint silent_time = time(NULL) - server->connection.last_line_recvd;
+	if (silent_time > MAX_SILENT_TIME) {
+		disconnect_network(server);
+	} else if (silent_time > MIN_SILENT_TIME) {
+		network_send_args(server, "PING", "ctrlproxy", NULL);
+	}
 }
 
 static gboolean connect_current_tcp_server(struct network *s) 
@@ -607,8 +651,13 @@ static gboolean connect_current_tcp_server(struct network *s)
 
 	g_io_channel_unref(s->connection.outgoing);
 
+	s->connection.data.tcp.ping_id = g_timeout_add(5000, 
+								   (GSourceFunc) ping_server, s);
+
+
 	return TRUE;
 }
+
 
 static void reconnect(struct network *server, gboolean rm_source)
 {
@@ -708,6 +757,10 @@ static gboolean close_server(struct network *n)
 		n->connection.incoming_id = 0;
 		if (n->connection.outgoing_id > 0)
 			g_source_remove(n->connection.outgoing_id); 
+		if (n->connection.data.tcp.ping_id > 0) {
+			g_source_remove(n->connection.data.tcp.ping_id);
+			n->connection.data.tcp.ping_id = 0;
+		}
 		n->connection.outgoing_id = 0;
 		break;
 	case NETWORK_VIRTUAL:

@@ -42,31 +42,32 @@ void help_free(help_t *h)
 GHashTable *help_build_hash(char *data, gsize len)
 {
 	GHashTable *h = g_hash_table_new(g_str_hash, g_str_equal);
-	gsize i, k;
+	gsize i;
 	char *p;
 
 	i = 0;
 	while (i < len) {
-		if (data[i] == '?') {
-			/* Key starts here */
-			k = i+1;
-			p = g_strstr_len(data+k, len-k, "\n%\n");
-			if (p == NULL) {
-				log_global(LOG_WARNING, "Error parsing help file");
-				g_hash_table_destroy(h);
-				return NULL;
-			}
-			p[1] = 0;
-			i+=strlen(data+i)+2;
-			p = g_strstr_len(data+k, len-k, "\n");
-			p[0] = 0;
-			g_hash_table_insert(h, data+k, p+1);
-		} else {
+		if (data[i] != '?') {
 			log_global(LOG_WARNING, "Unknown character '0x%02x' in help file", 
 					   data[i]);
 			g_hash_table_destroy(h);
 			return NULL;
 		}
+		/* Key starts here */
+		p = g_strstr_len(data+i, len-i, "\n");
+		if (p == NULL) {
+			log_global(LOG_WARNING, "Error parsing help file");
+			g_hash_table_destroy(h);
+			return NULL;
+		}
+		g_hash_table_insert(h, g_strndup(data+i+1, p-(data+i)-1), p+1);
+		p = g_strstr_len(data+i, len-i, "\n%\n");
+		if (p == NULL) {
+			log_global(LOG_WARNING, "Error parsing help file");
+			g_hash_table_destroy(h);
+			return NULL;
+		}
+		i = p-data+3;
 	}
 	
 	return h;
@@ -82,7 +83,7 @@ help_t *help_load_file( const char *helpfile )
 	h = g_new0 (help_t, 1);
 	
 #if GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION >= 8
-	h->file = g_mapped_file_new(helpfile, TRUE, &error);
+	h->file = g_mapped_file_new(helpfile, FALSE, &error);
 	if (h->file != NULL) {
 		len = g_mapped_file_get_length(h->file);
 		data = g_mapped_file_get_contents(h->file);

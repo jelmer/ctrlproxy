@@ -29,6 +29,8 @@ Ctrlproxy 3.0.2 UNRELEASED
 	* Fall back to default charset if client charset can't be set 
 		(patch by Emanuele Giaquinta <e.giaquinta@glauco.it>)
 
+	* Fix use of %S segfault in log_custom. (#111)
+
   FEATURES
 
     * More advanced help support
@@ -46,6 +48,13 @@ Ctrlproxy 3.0.2 UNRELEASED
 		AWAYLEN, MAXTARGETS, WALLCHOPS, WALLVOICES, RFC2812, PENALTY,
 		FNC, SAFELIST, USERIP, CNOTICE, KNOCK, VCHANNELS, WHOX, CALLERID,
 		ACCEPT, KEYLEN, USERLEN, HOSTLEN and SILENCE
+
+  INTERNALS
+
+    * Remove is_private from line struct (#12).
+		(patch by Emanuele Giaquinta <e.giaquinta@glauco.it>)
+
+	* Implement ISON, USERHOST for admin networks. (#99)
 
   PORTABILITY
 

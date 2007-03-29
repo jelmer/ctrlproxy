@@ -182,7 +182,6 @@ END_TEST
 START_TEST(parser_dup)
 	struct line l, *m;
 	char *args[] = { "x", "y", "z", NULL };
-	l.is_private = 1;
 	l.origin = "bla";
 	l.argc = 3;
 	l.args = args;
@@ -190,7 +189,6 @@ START_TEST(parser_dup)
 
 	m = linedup(&l);
 
-	fail_if (l.is_private != m->is_private);
 	fail_if (strcmp(l.origin, m->origin));
 	fail_if (l.argc != m->argc);
 	fail_if (strcmp(l.args[0], m->args[0]));

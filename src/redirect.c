@@ -454,29 +454,34 @@ static struct query unknown_query = {
 	handle_default
 };
 
-static void handle_465(struct network *n, struct line *l)
+static gboolean handle_465(struct network *n, struct line *l)
 {
 	log_network(LOG_ERROR, n, "Banned from server: %s", l->args[1]);
+	return TRUE;
 }
 
-static void handle_451(struct network *n, struct line *l)
+static gboolean handle_451(struct network *n, struct line *l)
 {
 	log_network(LOG_ERROR, n, "Not registered error, this is probably a bug...");
+	return TRUE;
 }
 
-static void handle_462(struct network *n, struct line *l)
+static gboolean handle_462(struct network *n, struct line *l)
 {
 	log_network(LOG_ERROR, n, "Double registration error, this is probably a bug...");
+	return TRUE;
 }
 
-static void handle_463(struct network *n, struct line *l)
+static gboolean handle_463(struct network *n, struct line *l)
 {
 	log_network(LOG_ERROR, n, "Host not privileged to connect");
+	return TRUE;
 }
 
-static void handle_464(struct network *n, struct line *l)
+static gboolean handle_464(struct network *n, struct line *l)
 {
 	log_network(LOG_ERROR, n, "Password mismatch");
+	return TRUE;
 }
 
 /* List of responses that should be sent to all clients */
@@ -488,7 +493,7 @@ static int response_all[] = { RPL_NOWAWAY, RPL_UNAWAY, RPL_NAMREPLY,
 static int response_none[] = { ERR_NOMOTD, RPL_ENDOFMOTD, 0 };
 static struct {
 	int response;
-	void (*handler) (struct network *n, struct line *);
+	gboolean (*handler) (struct network *n, struct line *);
 } response_handler[] = {
 	{ ERR_PASSWDMISMATCH, handle_464 },
 	{ ERR_ALREADYREGISTERED, handle_462 },
@@ -519,7 +524,13 @@ static struct query *find_query(char *name)
 	return NULL;
 }
 
-void redirect_response(struct network *network, struct line *l)
+/**
+ * Redirect a response received from the server.
+ *
+ * @return TRUE if the message was redirected to zero or more clients, 
+ *         FALSE if it was sent to all clients.
+ */
+gboolean redirect_response(struct network *network, struct line *l)
 {
 	struct query_stack *s, *p = NULL;
 	const struct client *c = NULL;
@@ -551,7 +562,7 @@ void redirect_response(struct network *network, struct line *l)
 				g_free(s);
 			}
 
-			return;
+			return TRUE;
 		}
 		p = s; 
 	}
@@ -560,22 +571,21 @@ void redirect_response(struct network *network, struct line *l)
 	for (i = 0; response_all[i]; i++) {
 		if (response_all[i] == n) {
 			clients_send(network->clients, l, c);
-			return;
+			return FALSE;
 		}
 	}
 
 	/* See if this is a response that shouldn't be sent to clients at all */
 	for (i = 0; response_none[i]; i++) {
 		if (response_none[i] == n) {
-			return;
+			return TRUE;
 		}
 	}
 
 	/* Handle response using custom function */
 	for (i = 0; response_handler[i].handler; i++) {
 		if (response_handler[i].response == n) {
-			response_handler[i].handler(network, l);
-			return;
+			return response_handler[i].handler(network, l);
 		}
 	}
 
@@ -583,6 +593,8 @@ void redirect_response(struct network *network, struct line *l)
 		log_network(LOG_WARNING, network, "Unable to redirect response %s", l->args[0]);
 		clients_send(network->clients, l, NULL);
 	}
+
+	return FALSE;
 }
 
 void redirect_clear(const struct network *net)

@@ -43,8 +43,10 @@
 #include "ctrlproxy.h"
 #include "plugins.h"
 
-#define DEFAULT_RECONNECT_INTERVAL 60
-#define MAXHOSTNAMELEN 4096
+#define DEFAULT_RECONNECT_INTERVAL 	60
+#define MIN_SILENT_TIME				60
+#define MAX_SILENT_TIME 			(2*MIN_SILENT_TIME)
+#define MAXHOSTNAMELEN 				4096
 
 /* server.c */
 void fini_networks(struct global *);
@@ -79,7 +81,7 @@ void log_client_line(const struct client *c, const struct line *l, gboolean inco
 
 /* redirect.c */
 void redirect_record(const struct network *n, const struct client *c, const struct line *l);
-void redirect_response(struct network *n, struct line *l);
+gboolean redirect_response(struct network *n, struct line *l);
 void redirect_clear(const struct network *n);
 
 /* cache.c */

@@ -140,8 +140,13 @@ static char *get_nick(struct network *n, const struct line *l, gboolean case_sen
 
 static char *get_network(struct network *n, const struct line *l, gboolean case_sensitive) 
 { return g_strdup(n->name); }
+
 static char *get_server(struct network *n, const struct line *l, gboolean case_sensitive)
-{ return g_strdup(n->connection.data.tcp.current_server->host); }
+{
+	if (n->connection.data.tcp.current_server)
+		return g_strdup(n->connection.data.tcp.current_server->host);
+	return g_strdup("");
+}
 
 static char *get_percent(struct network *n, const struct line *l, gboolean case_sensitive) { return g_strdup("%"); }
 
@@ -407,17 +412,14 @@ static void file_write_channel_query(struct log_custom_data *data, struct networ
 	struct network_nick *nn;
 
 	if (!l->origin) return;
-	nick = line_get_nick(l);
 
 	g_assert(n);
 
 	fmt = g_key_file_get_string(data->kf, "log-custom", n, NULL);
-	if(!fmt) {
-		g_free(nick);
-		return;
-	}
+	if(!fmt) return;
 
 	/* check for the query first */
+	nick = line_get_nick(l);
 	f = find_add_channel_file(data, network, l, nick, FALSE);
 
 	if(f) {
@@ -428,6 +430,7 @@ static void file_write_channel_query(struct log_custom_data *data, struct networ
 	}
 	
 	nn = find_network_nick(network->state, nick);
+	g_free(nick);
 	g_assert(nn);
 
 	/* now, loop thru the users' channels */

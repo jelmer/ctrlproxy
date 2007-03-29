@@ -489,9 +489,9 @@ void cmd_list_listener(admin_handle h, char **args, void *userdata)
 }
 
 const static struct admin_command listener_commands[] = {
-	{ "STARTLISTENER", cmd_start_listener, "[<address>:]<port> <password> [<network>]", "Add listener on specified port" },
-	{ "STOPLISTENER", cmd_stop_listener, "[<address>:]<port>", "Stop listener on specified port" },
-	{ "LISTLISTENER", cmd_list_listener, "", "Add new network with specified name" },
+	{ "STARTLISTENER", cmd_start_listener },
+	{ "STOPLISTENER", cmd_stop_listener },
+	{ "LISTLISTENER", cmd_list_listener },
 	{ NULL }
 };
 

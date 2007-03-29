@@ -27,14 +27,6 @@ struct admin_handle
 struct admin_command {
 	char *name;
 	admin_command_handler handler;
-	/**
-	 * One line description
-	 */
-	const char *help;
-	/**
-	 * Extended (multi-line) description
-	 */
-	const char *help_details;
 	void *userdata;
 };
 

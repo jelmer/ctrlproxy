@@ -53,6 +53,7 @@ struct network_connection {
  	enum network_connection_state state;
 
 	time_t last_line_sent;
+	time_t last_line_recvd;
 	GQueue *pending_lines;
 
 	GIOChannel *outgoing;
@@ -68,6 +69,7 @@ struct network_connection {
 			struct sockaddr *local_name;
 			socklen_t namelen;
 			char *last_disconnect_reason;
+			gint ping_id;
 		} tcp;
 		
 		struct {
@@ -113,12 +115,13 @@ G_MODULE_EXPORT void network_select_next_server(struct network *n);
 G_MODULE_EXPORT gboolean disconnect_network(struct network *s);
 G_MODULE_EXPORT void clients_send(GList *clients, struct line *, const struct client *exception);
 G_MODULE_EXPORT void clients_send_args_ex(GList *clients, const char *hostmask, ...);
-G_MODULE_EXPORT gboolean network_send_line(struct network *s, struct client *c, const struct line *);
+G_MODULE_EXPORT gboolean network_send_line(struct network *s, struct client *c, const struct line *, gboolean);
 G_MODULE_EXPORT gboolean network_send_args(struct network *s, ...);
 G_MODULE_EXPORT void register_virtual_network(struct virtual_network_ops *);
 G_MODULE_EXPORT struct network *find_network(struct global *, const char *);
 G_MODULE_EXPORT gboolean virtual_network_recv_line(struct network *l, struct line *);
 G_MODULE_EXPORT gboolean virtual_network_recv_args(struct network *l, const char *origin, ...); 
+G_MODULE_EXPORT gboolean virtual_network_recv_response(struct network *n, int num, ...);
 typedef void (*new_network_notify_fn) (struct network *, void *);
 G_MODULE_EXPORT void register_new_network_notify(struct global *, new_network_notify_fn, void *userdata);
 G_MODULE_EXPORT struct linestack_context *new_linestack(struct network *network);

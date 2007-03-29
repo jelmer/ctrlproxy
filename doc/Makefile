@@ -28,7 +28,7 @@ help.txt: help.xml help.xsl
 
 clean::
 	@echo Removing documentation files
-	@rm -f *.html *.1 *.5
+	@rm -f *.html *.1 *.5 help.txt
 	@rm -rf user-guide
 
 distclean:: clean
