@@ -29,6 +29,8 @@ Ctrlproxy 3.0.2 UNRELEASED
 	* Fall back to default charset if client charset can't be set 
 		(patch by Emanuele Giaquinta <e.giaquinta@glauco.it>)
 
+	* Fix use of %S segfault in log_custom. (#111)
+
   FEATURES
 
     * More advanced help support
