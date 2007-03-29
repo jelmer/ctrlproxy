@@ -112,6 +112,8 @@ static gboolean process_from_server(struct network *n, struct line *l)
 	g_assert(n);
 	g_assert(l);
 
+	n->connection.last_line_recvd = time(NULL);
+
 	if (n->state == NULL) {
 		log_network(LOG_WARNING, n, "Dropping message '%s' because network is disconnected.", l->args[0]);
 		return FALSE;
@@ -531,6 +533,16 @@ static gboolean bindsock(struct network *s,
 	return (res_bind != NULL);
 }
 
+static void ping_server(struct network *server, gboolean ping_source)
+{
+	gint silent_time = time(NULL) - server->connection.last_line_recvd;
+	if (silent_time > MAX_SILENT_TIME) {
+		disconnect_network(server);
+	} else if (silent_time > MIN_SILENT_TIME) {
+		network_send_args(server, "PING", "ctrlproxy", NULL);
+	}
+}
+
 static gboolean connect_current_tcp_server(struct network *s) 
 {
 	struct addrinfo *res;
@@ -639,8 +651,13 @@ static gboolean connect_current_tcp_server(struct network *s)
 
 	g_io_channel_unref(s->connection.outgoing);
 
+	s->connection.data.tcp.ping_id = g_timeout_add(5000, 
+								   (GSourceFunc) ping_server, s);
+
+
 	return TRUE;
 }
+
 
 static void reconnect(struct network *server, gboolean rm_source)
 {
@@ -740,6 +757,10 @@ static gboolean close_server(struct network *n)
 		n->connection.incoming_id = 0;
 		if (n->connection.outgoing_id > 0)
 			g_source_remove(n->connection.outgoing_id); 
+		if (n->connection.data.tcp.ping_id > 0) {
+			g_source_remove(n->connection.data.tcp.ping_id);
+			n->connection.data.tcp.ping_id = 0;
+		}
 		n->connection.outgoing_id = 0;
 		break;
 	case NETWORK_VIRTUAL:

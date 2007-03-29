@@ -43,8 +43,10 @@
 #include "ctrlproxy.h"
 #include "plugins.h"
 
-#define DEFAULT_RECONNECT_INTERVAL 60
-#define MAXHOSTNAMELEN 4096
+#define DEFAULT_RECONNECT_INTERVAL 	60
+#define MIN_SILENT_TIME				60
+#define MAX_SILENT_TIME 			(2*MIN_SILENT_TIME)
+#define MAXHOSTNAMELEN 				4096
 
 /* server.c */
 void fini_networks(struct global *);

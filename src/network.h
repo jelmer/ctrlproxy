@@ -52,6 +52,7 @@ struct network_connection {
  	enum network_connection_state state;
 
 	time_t last_line_sent;
+	time_t last_line_recvd;
 	GQueue *pending_lines;
 
 	GIOChannel *outgoing;
@@ -67,6 +68,7 @@ struct network_connection {
 			struct sockaddr *local_name;
 			socklen_t namelen;
 			char *last_disconnect_reason;
+			gint ping_id;
 		} tcp;
 		
 		struct {
