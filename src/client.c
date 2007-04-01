@@ -37,7 +37,8 @@
 /* Linked list of clients currently connected (and authenticated, but still need to 
  * send USER and NICK commands) */
 static GList *pending_clients = NULL;
-static gboolean handle_client_receive(GIOChannel *c, GIOCondition cond, void *_client);
+static gboolean handle_client_receive(GIOChannel *c, GIOCondition cond, 
+									  void *_client);
 
 static gboolean client_send_queue(struct client *c)
 {
@@ -133,6 +134,11 @@ static gboolean process_from_client(struct client *c, struct line *l)
 	return TRUE;
 }
 
+/**
+ * Send a response to a client.
+ * @param c Client to send to
+ * @param response Response number to send
+ */
 gboolean client_send_response(struct client *c, int response, ...)
 {
 	struct line *l;
@@ -165,6 +171,11 @@ gboolean client_send_response(struct client *c, int response, ...)
 	return ret;
 }
 
+/**
+ * Build a line and send it to a client
+ * @param c Client to send to
+ * @param hm Hostmask to use
+ */
 gboolean client_send_args_ex(struct client *c, const char *hm, ...)
 {
 	struct line *l;
@@ -184,6 +195,11 @@ gboolean client_send_args_ex(struct client *c, const char *hm, ...)
 	return ret;
 }
 
+/**
+ * Send a message to a client.
+ * @param c Client to send to
+ * @return whether the line was send correctly
+ */
 gboolean client_send_args(struct client *c, ...)
 {
 	struct line *l;
@@ -203,6 +219,12 @@ gboolean client_send_args(struct client *c, ...)
 	return ret;
 }
 
+/**
+ * Send a line to a client.
+ * @param c Client to send to
+ * @param l Line to send
+ * @return Whether the line was sent successfully
+ */
 gboolean client_send_line(struct client *c, const struct line *l)
 {
 	g_assert(c);

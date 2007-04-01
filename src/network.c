@@ -72,6 +72,13 @@ static void server_send_login (struct network *s)
 	network_send_args(s, "USER", s->config->username, get_my_hostname(), s->config->name, s->config->fullname, NULL);
 }
 
+/**
+ * Change the character set used to communicate with a network.
+ *
+ * @param n Network to change the setting for
+ * @param name Name of the character set to use
+ * @returns true if changing the character set succeeded
+ */
 gboolean network_set_charset(struct network *n, const char *name)
 {
 	GIConv tmp;
@@ -232,7 +239,6 @@ static gboolean handle_server_receive (GIOChannel *c, GIOCondition cond, void *_
 		return FALSE;
 	}
 
-
 	if (cond & G_IO_IN) {
 		GError *err = NULL;
 		GIOStatus status;
@@ -375,7 +381,15 @@ static gboolean network_send_line_direct(struct network *s, struct client *c, co
 	return TRUE;
 }
 
-gboolean network_send_line(struct network *s, struct client *c, const struct line *ol, gboolean is_private)
+/**
+ * Send a line to the network.
+ * @param s Network to send to.
+ * @param c Client the line was sent by originally.
+ * @param ol Line to send to the network
+ * @param is_private Whether the line should not be broadcast to other clients
+ */
+gboolean network_send_line(struct network *s, struct client *c, 
+						   const struct line *ol, gboolean is_private)
 {
 	struct line l;
 	char *tmp = NULL;
@@ -419,6 +433,12 @@ gboolean network_send_line(struct network *s, struct client *c, const struct lin
 	return network_send_line_direct(s, c, ol);
 }
 
+/**
+ * Indicate that a response is received by a virtual network.
+ *
+ * @param n Network to receive data
+ * @param num Number of the response to receive
+ */
 gboolean virtual_network_recv_response(struct network *n, int num, ...) 
 {
 	va_list ap;
@@ -426,6 +446,7 @@ gboolean virtual_network_recv_response(struct network *n, int num, ...)
 	gboolean ret;
 
 	g_assert(n);
+	g_assert(n->config.type == NETWORK_VIRTUAL);
 
 	va_start(ap, num);
 	l = virc_parse_line(n->name, ap);
@@ -449,6 +470,12 @@ gboolean virtual_network_recv_response(struct network *n, int num, ...)
 	return ret;
 }
 
+/**
+ * Indicate that a line is received by a virtual network.
+ *
+ * @param s Network to send to.
+ * @param l Line to receive.
+ */
 gboolean virtual_network_recv_line(struct network *s, struct line *l)
 {
 	g_assert(s);
@@ -460,6 +487,12 @@ gboolean virtual_network_recv_line(struct network *s, struct line *l)
 	return process_from_server(s, l);
 }
 
+/**
+ * Indicate that a line has been received.
+ *
+ * @param s Network to use.
+ * @param origin Origin to make the data originate from
+ */
 gboolean virtual_network_recv_args(struct network *s, const char *origin, ...)
 {
 	va_list ap;
@@ -792,7 +825,15 @@ void clients_send_args_ex(GList *clients, const char *hostmask, ...)
 	free_line(l); l = NULL;
 }
 
-void clients_send(GList *clients, struct line *l, const struct client *exception) 
+/**
+ * Send a line to a list of clients.
+ *
+ * @param clients List of clients to send to
+ * @param l Line to send
+ * @param exception Client to which nothing should be sent. Can be NULL.
+ */
+void clients_send(GList *clients, struct line *l, 
+				  const struct client *exception) 
 {
 	GList *g;
 
@@ -844,8 +885,14 @@ static pid_t piped_child(char* const command[], int *f_in)
 	return pid;
 }
 
+/**
+ * Change the IO channel used to communicate with a network.
+ * @param s Network to set the IO channel for.
+ * @param ioc IO channel to use
+ */
 void network_set_iochannel(struct network *s, GIOChannel *ioc)
 {
+	g_assert(s->config.type != NETWORK_VIRTUAL);
 	g_io_channel_set_encoding(ioc, NULL, NULL);
 	g_io_channel_set_close_on_unref(ioc, TRUE);
 	g_io_channel_set_flags(ioc, G_IO_FLAG_NONBLOCK, NULL);
@@ -931,7 +978,13 @@ static gboolean delayed_connect_server(struct network *s)
 	return (s->connection.state == NETWORK_CONNECTION_STATE_RECONNECT_PENDING);
 }
 
-
+/**
+ * Load a network from a configuration file specification.
+ *
+ * @param global Global context to use.
+ * @param sc Network configuration to load form
+ * @return A new network instance, already added to the global context.
+ */
 struct network *load_network(struct global *global, struct network_config *sc)
 {
 	struct network *s;
@@ -970,8 +1023,12 @@ struct network *load_network(struct global *global, struct network_config *sc)
 	return s;
 }
 
-/* Connect to a network, returns TRUE if connection was successful 
- * (or startup of connection was successful) */
+/**
+ * Connect to a network, returns TRUE if connection was successful 
+ * (or startup of connection was successful) 
+ *
+ * @param s Network to connect to
+ */
 gboolean connect_network(struct network *s) 
 {
 	g_assert(s);
@@ -986,6 +1043,11 @@ static void free_pending_line(void *_line, void *userdata)
 	free_line((struct line *)_line);
 }
 
+/** 
+ * Unload a network from a global context.
+ *
+ * @param s Network to unload.
+ */
 void unload_network(struct network *s)
 {
 	GList *l;
@@ -1032,6 +1094,13 @@ void unload_network(struct network *s)
 	g_free(s);
 }
 
+/** 
+ * Disconnect from a network. The network will still be kept in memory, 
+ * but all socket connections associated with it will be dropped.
+ *
+ * @param s Network to disconnect from
+ * @return Whether disconnecting succeeded.
+ */
 gboolean disconnect_network(struct network *s)
 {
 	g_assert(s);
@@ -1042,23 +1111,35 @@ gboolean disconnect_network(struct network *s)
 	return close_server(s);
 }
 
-int verify_client(const struct network *s, const struct client *c)
+/**
+ * Check whether a client is still associated with a network.
+ *
+ * The client pointer does not have to point to a valid piece of memory.
+ *
+ * @param s Network the client should be associated with.
+ * @param c The client.
+ * @return Whether the client is still associated with the network.
+ */
+gboolean verify_client(const struct network *s, const struct client *c)
 {
 	GList *gl;
 
 	g_assert(s);
 	g_assert(c);
 	
-	gl = s->clients;
-	while(gl) {
+	for (gl = s->clients; gl; gl = gl->next) {
 		struct client *nc = (struct client *)gl->data;
-		if(c == nc)return 1;
-		gl = gl->next;
+		if(c == nc) return 1;
 	}
 
 	return 0;
 }
 
+/**
+ * Register a new virtual network type.
+ *
+ * @param ops Callback functions for the virtual network type.
+ */
 void register_virtual_network(struct virtual_network_ops *ops)
 {
 	if (virtual_network_ops == NULL)
@@ -1067,6 +1148,12 @@ void register_virtual_network(struct virtual_network_ops *ops)
 	g_hash_table_insert(virtual_network_ops, ops->name, ops);
 }
 
+/**
+ * Autoconnect to all the networks in a global context.
+ *
+ * @param Global global context
+ * @return TRUE
+ */
 gboolean autoconnect_networks(struct global *global)
 {
 	GList *gl;
@@ -1082,6 +1169,13 @@ gboolean autoconnect_networks(struct global *global)
 	return TRUE;
 }
 
+/**
+ * Load all the networks in a configuration file.
+ *
+ * @param global Global context to load networks into.
+ * @param cfg Configuration to read from
+ * @return TRUE
+ */
 gboolean load_networks(struct global *global, struct ctrlproxy_config *cfg)
 {
 	GList *gl;
@@ -1095,6 +1189,13 @@ gboolean load_networks(struct global *global, struct ctrlproxy_config *cfg)
 	return TRUE;
 }
 
+/**
+ * Find a network by name.
+ *
+ * @param global Global context to search in.
+ * @param name Name of the network to search for.
+ * @return first network found or NULL
+ */
 struct network *find_network(struct global *global, const char *name)
 {
 	GList *gl;
@@ -1107,7 +1208,18 @@ struct network *find_network(struct global *global, const char *name)
 	return NULL;
 }
 
-struct network *find_network_by_hostname(struct global *global, const char *hostname, guint16 port, gboolean create)
+/**
+ * Find a network by host name and port or name.
+ * 
+ * @param global Context to search in
+ * @param hostname Hostname to search for
+ * @param port Port to search from.
+ * @param create Whether to create the network if it wasn't found.
+ * @return the network found or created or NULL
+ */
+struct network *find_network_by_hostname(struct global *global, 
+										 const char *hostname, guint16 port, 
+										 gboolean create)
 {
 	GList *gl;
 	char *portname = g_strdup_printf("%d", port);
@@ -1165,6 +1277,11 @@ struct network *find_network_by_hostname(struct global *global, const char *host
 	return NULL;
 }
 
+/**
+ * Disconnect from and unload all networks.
+ *
+ * @param global Global context
+ */
 void fini_networks(struct global *global)
 {
 	GList *gl;
@@ -1175,6 +1292,11 @@ void fini_networks(struct global *global)
 	}
 }
 
+/**
+ * Switch to the next server listed for a network.
+ *
+ * @param n Network
+ */
 void network_select_next_server(struct network *n)
 {
 	g_assert(n);
@@ -1187,6 +1309,12 @@ void network_select_next_server(struct network *n)
 	n->connection.data.tcp.current_server = network_get_next_tcp_server(n);
 }
 
+/**
+ * Generate 005-response string to send to client connected to a network.
+ *
+ * @param n Network to generate for
+ * @return An 005 string, newly allocated
+ */
 char *network_generate_feature_string(struct network *n)
 {
 	GList *fs = NULL, *gl;
