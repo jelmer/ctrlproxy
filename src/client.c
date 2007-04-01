@@ -78,7 +78,8 @@ static gboolean process_from_client(struct client *c, struct line *l)
 	if (c->network && c->network->state) 
 		l->origin = g_strdup(c->network->state->me.hostmask);
 	else
-		l->origin = g_strdup_printf("%s!~%s@%s", c->nick, c->username, c->hostname);
+		l->origin = g_strdup_printf("%s!~%s@%s", c->nick, c->username, 
+									c->hostname);
 
 	if (!run_client_filter(c, l, TO_SERVER)) 
 		return TRUE;
@@ -92,7 +93,8 @@ static gboolean process_from_client(struct client *c, struct line *l)
 		client_send_args(c, "PONG", c->network->name, l->args[1], NULL);
 	} else if(!g_strcasecmp(l->args[0], "PONG")) {
 		if (l->argc < 2) {
-			client_send_response(c, ERR_NEEDMOREPARAMS, l->args[0], "Not enough parameters", NULL);
+			client_send_response(c, ERR_NEEDMOREPARAMS, l->args[0], 
+								 "Not enough parameters", NULL);
 			return TRUE;
 		}
 		c->last_pong = time(NULL);
@@ -128,7 +130,8 @@ static gboolean process_from_client(struct client *c, struct line *l)
 			msg = g_strdup_printf("Currently not connected to server... (%s)",
 					c->network->connection.data.tcp.last_disconnect_reason);
 
-		client_send_args(c, "NOTICE", c->nick?c->nick:c->network->state->me.nick, msg, NULL);
+		client_send_args(c, "NOTICE", 
+						 c->nick?c->nick:c->network->state->me.nick, msg, NULL);
 	}
 
 	return TRUE;
@@ -157,9 +160,12 @@ gboolean client_send_response(struct client *c, int response, ...)
 
 	l->args[0] = g_strdup_printf("%03d", response);
 
-	if (c->nick) l->args[1] = g_strdup(c->nick);
-	else if (c->network && c->network->state && c->network->state->me.nick) l->args[1] = g_strdup(c->network->state->me.nick);
-	else l->args[1] = g_strdup("*");
+	if (c->nick) 
+		l->args[1] = g_strdup(c->nick);
+	else if (c->network && c->network->state && c->network->state->me.nick) 
+		l->args[1] = g_strdup(c->network->state->me.nick);
+	else 
+		l->args[1] = g_strdup("*");
 
 	l->argc+=2;
 	l->args[l->argc] = NULL;
@@ -236,7 +242,8 @@ gboolean client_send_line(struct client *c, const struct line *l)
 		GIOStatus status = irc_send_line(c->incoming, c->outgoing_iconv, l, &error);
 
 		if (status == G_IO_STATUS_AGAIN) {
-			c->outgoing_id = g_io_add_watch(c->incoming, G_IO_OUT, handle_client_receive, c);
+			c->outgoing_id = g_io_add_watch(c->incoming, G_IO_OUT, 
+											handle_client_receive, c);
 			g_queue_push_tail(c->pending_lines, linedup(l));
 		} else if (status != G_IO_STATUS_NORMAL) {
 			disconnect_client(c, g_strdup_printf("Error sending line '%s': %s", l->args[0], error?error->message:"ERROR"));
@@ -443,7 +450,8 @@ static gboolean welcome_client(struct client *client)
  * @param cond condition that has been triggered
  * @param client pointer to client context
  */
-static gboolean handle_pending_client_receive(GIOChannel *c, GIOCondition cond, void *_client)
+static gboolean handle_pending_client_receive(GIOChannel *c, 
+											  GIOCondition cond, void *_client)
 {
 	struct client *client = (struct client *)_client;
 	struct line *l;
@@ -477,7 +485,7 @@ static gboolean handle_pending_client_receive(GIOChannel *c, GIOCondition cond, 
 			if (!g_strcasecmp(l->args[0], "NICK")) {
 				if (l->argc < 2) {
 					client_send_response(client, ERR_NEEDMOREPARAMS,
-										 l->args[0], "Not enough parameters", NULL);
+								 l->args[0], "Not enough parameters", NULL);
 					free_line(l);
 					continue;
 				}
@@ -487,7 +495,7 @@ static gboolean handle_pending_client_receive(GIOChannel *c, GIOCondition cond, 
 
 				if (l->argc < 5) {
 					client_send_response(client, ERR_NEEDMOREPARAMS, 
-										 l->args[0], "Not enough parameters", NULL);
+									 l->args[0], "Not enough parameters", NULL);
 					free_line(l);
 					continue;
 				}
@@ -506,7 +514,7 @@ static gboolean handle_pending_client_receive(GIOChannel *c, GIOCondition cond, 
 			} else if(!g_strcasecmp(l->args[0], "CONNECT")) {
 				if (l->argc < 2) {
 					client_send_response(client, ERR_NEEDMOREPARAMS,
-										 l->args[0], "Not enough parameters", NULL);
+									 l->args[0], "Not enough parameters", NULL);
 					free_line(l);
 					continue;
 				}
