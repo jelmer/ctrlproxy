@@ -56,7 +56,7 @@ struct linestack_marker {
 };
 
 /* linestack.c */
-typedef void (*linestack_traverse_fn) (struct line *, time_t, void *);
+typedef gboolean (*linestack_traverse_fn) (struct line *, time_t, void *);
 /**
  * Linestack functions
  */

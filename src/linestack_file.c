@@ -589,6 +589,7 @@ static gboolean file_traverse(struct linestack_context *ctx,
 		void *userdata)
 {
 	gint64 *start_offset, *end_offset;
+	gboolean ret = TRUE;
 	struct lf_data *nd = ctx->backend_data;
 	GError *error = NULL;
 	GIOStatus status;
@@ -627,10 +628,13 @@ static gboolean file_traverse(struct linestack_context *ctx,
 		g_assert(space);
 	
 		l = irc_parse_line(space+1);
-		tf(l, atol(raw), userdata);
+		ret &= tf(l, atol(raw), userdata);
 		free_line(l);
 
 		g_free(raw);
+
+		if (ret == FALSE) 
+			break;
 	}
 
 	status = g_io_channel_seek_position(nd->line_file, 0, G_SEEK_END, 
@@ -638,7 +642,7 @@ static gboolean file_traverse(struct linestack_context *ctx,
 
 	g_assert(status == G_IO_STATUS_NORMAL);
 
-	return TRUE;
+	return ret;
 }
 
 const struct linestack_ops linestack_file = {

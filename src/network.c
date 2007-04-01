@@ -446,7 +446,7 @@ gboolean virtual_network_recv_response(struct network *n, int num, ...)
 	gboolean ret;
 
 	g_assert(n);
-	g_assert(n->config.type == NETWORK_VIRTUAL);
+	g_assert(n->config->type == NETWORK_VIRTUAL);
 
 	va_start(ap, num);
 	l = virc_parse_line(n->name, ap);
@@ -892,7 +892,7 @@ static pid_t piped_child(char* const command[], int *f_in)
  */
 void network_set_iochannel(struct network *s, GIOChannel *ioc)
 {
-	g_assert(s->config.type != NETWORK_VIRTUAL);
+	g_assert(s->config->type != NETWORK_VIRTUAL);
 	g_io_channel_set_encoding(ioc, NULL, NULL);
 	g_io_channel_set_close_on_unref(ioc, TRUE);
 	g_io_channel_set_flags(ioc, G_IO_FLAG_NONBLOCK, NULL);

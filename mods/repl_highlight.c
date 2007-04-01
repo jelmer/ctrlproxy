@@ -23,21 +23,22 @@
 static char **matches = NULL;
 static GHashTable *markers = NULL;
 
-static void check_highlight(struct line *l, time_t t, void *userdata)
+static gboolean check_highlight(struct line *l, time_t t, void *userdata)
 {
 	struct client *c = userdata;
     int i;
 
 	if (g_strcasecmp(l->args[0], "PRIVMSG") != 0 &&
 		g_strcasecmp(l->args[0], "NOTICE") != 0) 
-		return;
+		return TRUE;
 	
 	for (i = 0; matches && matches[i]; i++) {
 		if (strstr(l->args[2], matches[i])) {
-			client_send_line(c, l);
-			return;
+			return client_send_line(c, l);
 		}
 	}
+
+	return TRUE;
 }
 
 static void highlight_replicate(struct client *c)
