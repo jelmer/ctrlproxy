@@ -415,6 +415,12 @@ static gboolean welcome_client(struct client *client)
 	return TRUE;
 }
 
+/**
+ * Handles incoming messages from the client
+ * @param c IO Channel to receive from
+ * @param cond condition that has been triggered
+ * @param client pointer to client context
+ */
 static gboolean handle_pending_client_receive(GIOChannel *c, GIOCondition cond, void *_client)
 {
 	struct client *client = (struct client *)_client;
@@ -500,8 +506,9 @@ static gboolean handle_pending_client_receive(GIOChannel *c, GIOCondition cond, 
 			free_line(l);
 
 			if (client->fullname != NULL && client->nick != NULL) {
-				if (!client->network) {
-					disconnect_client(client, "Please select a network first, or specify one in your ctrlproxyrc");
+				if (client->network == NULL) {
+					disconnect_client(client, 
+									  "Please select a network first, or specify one in your ctrlproxyrc");
 					return FALSE;
 				}
 
@@ -569,11 +576,13 @@ struct client *client_init(struct network *n, GIOChannel *c, const char *desc)
 
 	client->outgoing_iconv = client->incoming_iconv = (GIConv)-1;
 	if (n && n->global)
-		charset_ok = client_set_charset(client, n->global->config->client_charset);
+		charset_ok = client_set_charset(client, 
+										n->global->config->client_charset);
 	if (!charset_ok)
 		client_set_charset(client, DEFAULT_CLIENT_CHARSET);
 
-	client->incoming_id = g_io_add_watch(client->incoming, G_IO_IN | G_IO_HUP, handle_pending_client_receive, client);
+	client->incoming_id = g_io_add_watch(client->incoming, G_IO_IN | G_IO_HUP, 
+										 handle_pending_client_receive, client);
 
 	pending_clients = g_list_append(pending_clients, client);
 	return client;
@@ -585,6 +594,12 @@ void kill_pending_clients(const char *reason)
 		disconnect_client(pending_clients->data, reason);
 }
 
+/**
+ * Change the character set used to send data to a client
+ * @param c client to change the character set for
+ * @param name name of the character set to change to
+ * @return whether changing the character set succeeded
+ */
 gboolean client_set_charset(struct client *c, const char *name)
 {
 	GIConv tmp;
