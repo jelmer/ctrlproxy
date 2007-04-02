@@ -1,6 +1,7 @@
 SHLIBEXT = so
 LIBS = @LIBS@ @COMMON_LIBS@ 
 CC = @CC@
+LD = @CC@
 prefix = @prefix@
 exec_prefix = @exec_prefix@
 datarootdir = @datarootdir@

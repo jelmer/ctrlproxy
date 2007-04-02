@@ -25,7 +25,8 @@ static void free_channel(struct channel_state *c);
 
 enum mode_type { REMOVE = 0, ADD = 1};
 
-void network_nick_set_data(struct network_nick *n, const char *nick, const char *username, const char *host)
+void network_nick_set_data(struct network_nick *n, const char *nick, 
+						   const char *username, const char *host)
 {
 	gboolean changed = FALSE;
 
@@ -888,6 +889,7 @@ struct network_state *network_state_init(const char *nick, const char *username,
 	struct network_state *state = g_new0(struct network_state, 1);
 	state->me.query = 1;
 	network_nick_set_data(&state->me, nick, username, hostname);
+	network_info_init(&state->info);
 
 	return state;
 }
@@ -932,6 +934,7 @@ void free_network_state(struct network_state *state)
 		free_network_nick(state, nn);
 	}
 
+	free_network_info(&state->info);
 	g_free(state);
 }
 

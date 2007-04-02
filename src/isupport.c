@@ -23,6 +23,30 @@
 #define DEFAULT_CHANTYPES 	"#&"
 #define DEFAULT_CHARSET		"iso8859-15"
 
+void network_info_init(struct network_info *info)
+{
+	memset(info, 0, sizeof(struct network_info));
+	info->prefix = g_strdup(DEFAULT_PREFIX);
+	info->chantypes = g_strdup(DEFAULT_CHANTYPES);
+	info->charset = g_strdup(DEFAULT_CHARSET);
+}
+
+void free_network_info(struct network_info *info)
+{
+	g_free(info->prefix);
+	g_free(info->chantypes);
+	g_free(info->charset);
+	g_free(info->name);
+	g_free(info->server);
+	g_free(info->supported_user_modes);
+	g_free(info->supported_channel_modes);
+	g_strfreev(info->chanmodes);
+	g_free(info->chanlimit);
+	g_free(info->maxlist);
+	g_free(info->idchan);
+	g_free(info->statusmsg);
+}
+
 char *network_info_string(struct network_info *info)
 {
 	char *ret = NULL;
@@ -337,18 +361,12 @@ int irccmp(const struct network_info *n, const char *a, const char *b)
 
 gboolean is_channelname(const char *name, const struct network_info *n)
 {
-	const char *chantypes = NULL;
+	g_assert(n != NULL);
+	g_assert(n->chantypes != NULL);
 
 	g_assert(name);
-
-	if (n != NULL) {
-		chantypes = n->chantypes;
-	}
-
-	if(chantypes == NULL) 
-		chantypes = DEFAULT_CHANTYPES;
 	
-	if(strchr(chantypes, name[0])) 
+	if (strchr(n->chantypes, name[0])) 
 		return TRUE;
 
 	return FALSE;
@@ -356,18 +374,13 @@ gboolean is_channelname(const char *name, const struct network_info *n)
 
 gboolean is_prefix(char p, const struct network_info *n)
 {
-	const char *prefix = NULL;
 	const char *pref_end;
 	
-	if (n != NULL) {
-		prefix = n->prefix;
-	}
-	
-	if (prefix == NULL) 
-		prefix = DEFAULT_PREFIX;
+	g_assert(n != NULL);
+	g_assert(n->prefix != NULL);
 
-	pref_end = strchr(prefix, ')');
-	if (!pref_end)pref_end = prefix; else pref_end++;
+	pref_end = strchr(n->prefix, ')');
+	if (!pref_end)pref_end = n->prefix; else pref_end++;
 
 	if(strchr(pref_end, p)) return TRUE;
 	return FALSE;
@@ -375,24 +388,21 @@ gboolean is_prefix(char p, const struct network_info *n)
 
 const char *get_charset(const struct network_info *n)
 {
-	if (n != NULL && n->charset != NULL)
-		return n->charset;
-
-	return DEFAULT_CHARSET;
+	g_assert(n != NULL);
+	g_assert(n->charset != NULL);
+	return n->charset;
 }
 
 char get_prefix_by_mode(char mode, const struct network_info *n)
 {
-	const char *prefix = NULL;
 	int i;
 	char *pref_end;
+	const char *prefix;
+	
+	g_assert(n != NULL);
+	g_assert(n->prefix != NULL);
 
-	if (n != NULL) {
-		prefix = n->prefix;
-	}
-
-	if (prefix == NULL) 
-		prefix = DEFAULT_PREFIX;
+	prefix = n->prefix;
 	
 	pref_end = strchr(prefix, ')');
 	if(prefix[0] != '(' || !pref_end) {

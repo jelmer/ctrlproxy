@@ -192,7 +192,7 @@ G_MODULE_EXPORT int irccmp(const struct network_info *n, const char *a, const ch
 G_MODULE_EXPORT const char *get_charset(const struct network_info *n);
 G_MODULE_EXPORT void network_info_parse(struct network_info *info, const char *parameter);
 G_MODULE_EXPORT int network_chanmode_type(char m, struct network_info *n);
-
-
+G_MODULE_EXPORT void network_info_init(struct network_info *info);
+G_MODULE_EXPORT void free_network_info(struct network_info *info);
 
 #endif /* __CTRLPROXY_ISUPPORT_H__ */
