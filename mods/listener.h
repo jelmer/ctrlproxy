@@ -1,6 +1,7 @@
 #ifndef __CTRLPROXY_LISTENER_H__
 #define __CTRLPROXY_LISTENER_H__
 
+#include <netdb.h>
 #include "ctrlproxy.h"
 
 #ifndef G_MODULE_EXPORT
@@ -13,14 +14,19 @@
 struct listener {
 	int active:1;
 	int ssl:1;
-	GIOChannel *incoming;
-	gint incoming_id;
+	GList *incoming;
 	GList *pending;
 	char *password;
 	char *address;
 	char *port;
 	struct network *network;
 	gpointer ssl_credentials;
+};
+
+struct listener_iochannel {
+	char address[NI_MAXHOST];
+	char port[NI_MAXSERV];
+	gint watch_id;
 };
 
 G_MODULE_EXPORT struct listener *listener_init(const char *addr, const char *port);

@@ -144,11 +144,14 @@ gboolean start_listener(struct listener *l)
 	struct addrinfo *res, *all_res;
 	int error;
 	struct addrinfo hints;
+	struct listener_iochannel *lio;
 
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = PF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
-	hints.ai_flags = AI_PASSIVE;
+	hints.ai_flags = AI_ADDRCONFIG;
+
+	g_assert(!l->active);
 
 	error = getaddrinfo(l->address, l->port, &hints, &all_res);
 	if (error) {
@@ -157,59 +160,89 @@ gboolean start_listener(struct listener *l)
 	}
 
 	for (res = all_res; res; res = res->ai_next) {
+		GIOChannel *ioc;
+
+		lio = g_new0(struct listener_iochannel, 1);
+
+		if (getnameinfo(res->ai_addr, res->ai_addrlen, 
+						lio->address, NI_MAXHOST, lio->port, NI_MAXSERV, 
+						NI_NUMERICHOST) != 0) {
+			strcpy(lio->address, "");
+			strcpy(lio->port, "");
+		}
+
 		sock = socket(PF_INET, SOCK_STREAM, 0);
 		if (sock < 0) {
 			log_global(LOG_ERROR, "error creating socket: %s", strerror(errno));
-			freeaddrinfo(all_res);
-			return FALSE;
+			close(sock);
+			g_free(lio);
+			continue;
 		}
 
 		setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
 	
 		if (bind(sock, res->ai_addr, res->ai_addrlen) < 0) {
-			log_global(LOG_ERROR, "bind to port %s failed: %s", l->port, strerror(errno));
-			freeaddrinfo(all_res);
-			return FALSE;
+			/* Don't warn when binding to the same address using IPv4 
+			 * /and/ ipv6. */
+			if (!l->active || errno != EADDRINUSE)  {
+				log_global(LOG_ERROR, "bind to %s:%s failed: %s", l->address, 
+						   l->port, strerror(errno));
+			}
+			close(sock);
+			g_free(lio);
+			continue;
 		}
-	}
 
-	if (sock == -1) {
-		log_global(LOG_ERROR, "Unable to connect");
-		freeaddrinfo(all_res);
-		return FALSE;
+		if (listen(sock, 5) < 0) {
+			log_global(LOG_ERROR, "error listening on socket: %s", 
+						strerror(errno));
+			close(sock);
+			g_free(lio);
+			continue;
+		}
+
+		ioc = g_io_channel_unix_new(sock);
+
+		if (ioc == NULL) {
+			log_global(LOG_ERROR, 
+						"Unable to create GIOChannel for server socket");
+			close(sock);
+			g_free(lio);
+			continue;
+		}
+
+		g_io_channel_set_close_on_unref(ioc, TRUE);
+
+		g_io_channel_set_encoding(ioc, NULL, NULL);
+		lio->watch_id = g_io_add_watch(ioc, G_IO_IN, handle_new_client, l);
+		g_io_channel_unref(ioc);
+		l->incoming = g_list_append(l->incoming, lio);
+
+		log_network( LOG_INFO, l->network, "Listening on %s:%s", 
+					 lio->address, lio->port);
+		l->active = TRUE;
 	}
 
 	freeaddrinfo(all_res);
 	
-	if (listen(sock, 5) < 0) {
-		log_global( LOG_ERROR, "error listening on socket: %s", strerror(errno));
-		return FALSE;
-	}
-
-	l->incoming = g_io_channel_unix_new(sock);
-
-	if (!l->incoming) {
-		log_global( LOG_ERROR, "Unable to create GIOChannel for server socket");
-		return FALSE;
-	}
-
-	g_io_channel_set_close_on_unref(l->incoming, TRUE);
-
-	g_io_channel_set_encoding(l->incoming, NULL, NULL);
-	l->incoming_id = g_io_add_watch(l->incoming, G_IO_IN, handle_new_client, l);
-	g_io_channel_unref(l->incoming);
-
-	log_network( LOG_INFO, l->network, "Listening on %s:%s", l->address?l->address:"", l->port);
-
-	l->active = TRUE;
-
-	return TRUE;
+	return l->active;
 }
 
 gboolean stop_listener(struct listener *l)
 {
-	log_global ( LOG_INFO, "Stopped listening at %s:%s", l->address?l->address:"", l->port);
-	g_source_remove(l->incoming_id);
+
+	while (l->incoming != NULL) {
+		struct listener_iochannel *lio = l->incoming->data;
+
+		g_source_remove(lio->watch_id);
+		
+		log_global(LOG_INFO, "Stopped listening at %s:%s", lio->address, 
+					 lio->port);
+		g_free(lio);
+
+		l->incoming = g_list_remove(l->incoming, lio);
+	}
+
 	return TRUE;
 }
 

@@ -52,6 +52,11 @@ Ctrlproxy 3.0.2 UNRELEASED
 		FNC, SAFELIST, USERIP, CNOTICE, KNOCK, VCHANNELS, WHOX, CALLERID,
 		ACCEPT, KEYLEN, USERLEN, HOSTLEN and SILENCE
 
+	* Default to binding to 127.0.0.1 if no IP was specified in the 
+	  listener, instead of 0.0.0.0.
+
+	* Print actual address that a listener bound to.
+
   INTERNALS
 
     * Remove is_private from line struct (#12).
@@ -62,6 +67,8 @@ Ctrlproxy 3.0.2 UNRELEASED
   PORTABILITY
 
     * Looks for check using pkg-config now.
+
+    * Fix handling of addresses when listening on FreeBSD. (#87)
 
   DOCUMENTATION
 
