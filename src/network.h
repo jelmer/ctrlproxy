@@ -30,6 +30,7 @@
 #endif
 
 #include "state.h"
+#include "isupport.h"
 #include <sys/socket.h>
 
 struct global;
@@ -87,7 +88,6 @@ struct network_connection {
  * An IRC network
  */
 struct network {
-	char *name;
 	struct global *global;
 	struct network_config *config;
 

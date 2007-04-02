@@ -57,6 +57,7 @@
 #include "ctcp.h"
 #include "admin.h"
 #include "log.h"
+#include "isupport.h"
 
 /**
  * Global information.

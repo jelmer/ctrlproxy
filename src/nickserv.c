@@ -35,7 +35,7 @@ struct nickserv_entry {
 	const char *pass;
 };
 
-const char *nickserv_find_nick(struct network *n, char *nick)
+const char *nickserv_find_nick(struct network *n, const char *nick)
 {
 	GList *gl;
 	for (gl = n->global->nickserv_nicks; gl; gl = gl->next) {
@@ -45,7 +45,7 @@ const char *nickserv_find_nick(struct network *n, char *nick)
 			continue;
 
 		if (!e->network) return e->pass;
-		if (!g_strcasecmp(e->network, n->name)) return e->pass;
+		if (!g_strcasecmp(e->network, n->info.name)) return e->pass;
 	}
 	
 	return NULL;
@@ -106,7 +106,7 @@ static gboolean log_data(struct network *n, const struct line *l, enum data_dire
 			for (gl = n->global->nickserv_nicks; gl; gl = gl->next) {
 				e = gl->data;
 
-				if (e->network && !g_strcasecmp(e->network, n->name) && 
+				if (e->network && !g_strcasecmp(e->network, n->info.name) && 
 					!g_strcasecmp(e->nick, n->state->me.nick)) {
 					break;		
 				}
@@ -120,7 +120,7 @@ static gboolean log_data(struct network *n, const struct line *l, enum data_dire
 			if (!gl) {
 				e = g_new0(struct nickserv_entry, 1);
 				e->nick = g_strdup(n->state->me.nick);
-				e->network = g_strdup(n->name);
+				e->network = g_strdup(n->info.name);
 				n->global->nickserv_nicks = g_list_prepend(n->global->nickserv_nicks, e);
 			}
 

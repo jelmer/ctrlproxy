@@ -23,6 +23,183 @@
 #define DEFAULT_CHANTYPES 	"#&"
 #define DEFAULT_CHARSET		"iso8859-15"
 
+void network_info_init(struct network_info *info)
+{
+	memset(info, 0, sizeof(struct network_info));
+	info->prefix = g_strdup(DEFAULT_PREFIX);
+	info->chantypes = g_strdup(DEFAULT_CHANTYPES);
+	info->charset = g_strdup(DEFAULT_CHARSET);
+}
+
+void free_network_info(struct network_info *info)
+{
+	g_free(info->prefix);
+	g_free(info->chantypes);
+	g_free(info->charset);
+	g_free(info->name);
+	g_free(info->server);
+	g_free(info->supported_user_modes);
+	g_free(info->supported_channel_modes);
+	g_strfreev(info->chanmodes);
+	g_free(info->chanlimit);
+	g_free(info->maxlist);
+	g_free(info->idchan);
+	g_free(info->statusmsg);
+}
+
+char *network_info_string(struct network_info *info)
+{
+	char *ret = NULL;
+	GList *fs = NULL, *gl;
+	char *casemap = NULL;
+
+	if (info->name != NULL)
+		fs = g_list_append(fs, g_strdup_printf("NETWORK=%s", info->name));
+
+	switch (info->casemapping) {
+	default:
+	case CASEMAP_RFC1459:
+		casemap = g_strdup("CASEMAPPING=rfc1459");
+		break;
+	case CASEMAP_STRICT_RFC1459:
+		casemap = g_strdup("CASEMAPPING=strict-rfc1459");
+		break;
+	case CASEMAP_ASCII:
+		casemap = g_strdup("CASEMAPPING=ascii");
+		break;
+	}
+
+	if (casemap != NULL)
+		fs = g_list_append(fs, casemap);
+
+	if (info->forced_nick_changes)
+		fs = g_list_append(fs, g_strdup("FNC"));
+
+	if (info->charset != NULL)
+		fs = g_list_append(fs, g_strdup_printf("CHARSET=%s", info->charset));
+
+	if (info->nicklen != 0)
+		fs = g_list_append(fs, g_strdup_printf("NICKLEN=%d", info->nicklen));
+
+	if (info->userlen != 0)
+		fs = g_list_append(fs, g_strdup_printf("USERLEN=%d", info->userlen));
+
+	if (info->hostlen != 0)
+		fs = g_list_append(fs, g_strdup_printf("HOSTLEN=%d", info->hostlen));
+
+	if (info->channellen != 0)
+		fs = g_list_append(fs, g_strdup_printf("CHANNELLEN=%d", info->channellen));
+
+	if (info->awaylen != 0)
+		fs = g_list_append(fs, g_strdup_printf("AWAYLEN=%d", info->awaylen));
+
+	if (info->kicklen != 0)
+		fs = g_list_append(fs, g_strdup_printf("KICKLEN=%d", info->kicklen));
+
+	if (info->topiclen != 0)
+		fs = g_list_append(fs, g_strdup_printf("TOPICLEN=%d", info->topiclen));
+
+	if (info->maxchannels != 0)
+		fs = g_list_append(fs, g_strdup_printf("MAXCHANNELS=%d", info->maxchannels));
+
+	if (info->maxtargets != 0)
+		fs = g_list_append(fs, g_strdup_printf("MAXTARGETS=%d", info->maxtargets));
+
+	if (info->maxbans != 0)
+		fs = g_list_append(fs, g_strdup_printf("MAXBANS=%d", info->maxbans));
+
+	if (info->maxmodes != 0)
+		fs = g_list_append(fs, g_strdup_printf("MODES=%d", info->maxmodes));
+
+	if (info->wallchops)
+		fs = g_list_append(fs, g_strdup("WALLCHOPS"));
+
+	if (info->wallvoices)
+		fs = g_list_append(fs, g_strdup("WALLVOICES"));
+
+	if (info->rfc2812)
+		fs = g_list_append(fs, g_strdup("RFC2812"));
+
+	if (info->penalty)
+		fs = g_list_append(fs, g_strdup("PENALTY"));
+
+	if (info->safelist)
+		fs = g_list_append(fs, g_strdup("SAFELIST"));
+	
+	if (info->userip)
+		fs = g_list_append(fs, g_strdup("USERIP"));
+
+	if (info->capab)
+		fs = g_list_append(fs, g_strdup("CAPAB"));
+
+	if (info->cprivmsg)
+		fs = g_list_append(fs, g_strdup("CPRIVMSG"));
+
+	if (info->cnotice)
+		fs = g_list_append(fs, g_strdup("CNOTICE"));
+
+	if (info->knock)
+		fs = g_list_append(fs, g_strdup("KNOCK"));
+
+	if (info->vchannels)
+		fs = g_list_append(fs, g_strdup("VCHANNELS"));
+
+	if (info->whox)
+		fs = g_list_append(fs, g_strdup("WHOX"));
+
+	if (info->callerid)
+		fs = g_list_append(fs, g_strdup("CALLERID"));
+
+	if (info->accept)
+		fs = g_list_append(fs, g_strdup("ACCEPT"));
+
+	if (info->keylen != 0)
+		fs = g_list_append(fs, g_strdup_printf("KEYLEN=%d", info->keylen));
+
+	if (info->silence != 0)
+		fs = g_list_append(fs, g_strdup_printf("SILENCE=%d", info->silence));
+
+	if (info->chantypes != NULL)
+		fs = g_list_append(fs, g_strdup_printf("CHANTYPES=%s", info->chantypes));
+
+	if (info->chanmodes != NULL) {
+		char *tmp = g_strjoinv(",", info->chanmodes);
+		fs = g_list_append(fs, g_strdup_printf("CHANMODES=%s", tmp));
+		g_free(tmp);
+	}
+
+	if (info->chanlimit != NULL) {
+		fs = g_list_append(fs, g_strdup_printf("CHANLIMIT=%s", info->chanlimit));
+	}
+
+	if (info->excepts_mode != '\0')
+		fs = g_list_append(fs, g_strdup_printf("EXCEPTS=%c", info->excepts_mode));
+
+	if (info->statusmsg != NULL)
+		fs = g_list_append(fs, g_strdup_printf("STATUSMSG=%s", info->statusmsg));
+
+	if (info->invex_mode != '\0')
+		fs = g_list_append(fs, g_strdup_printf("INVEX=%c", info->invex_mode));
+
+	if (info->maxlist != NULL)
+		fs = g_list_append(fs, g_strdup_printf("MAXLIST=%s", info->maxlist));
+
+	if (info->idchan != NULL)
+		fs = g_list_append(fs, g_strdup_printf("IDCHAN=%s", info->idchan));
+
+	if (info->prefix != NULL) 
+		fs = g_list_append(fs, g_strdup_printf("PREFIX=%s", info->prefix));
+
+	ret = list_make_string(fs);
+
+	for (gl = fs; gl; gl = gl->next)
+		g_free(gl->data);
+
+	g_list_free(fs);
+
+	return ret;
+}
+
 void network_info_parse(struct network_info *info, const char *parameter)
 {
 	char *sep;
@@ -94,6 +271,8 @@ void network_info_parse(struct network_info *info, const char *parameter)
 		info->cnotice = TRUE;
 	} else if(!g_strcasecmp(key, "KNOCK")) {
 		info->knock = TRUE;
+	} else if(!g_strcasecmp(key, "CAPAB")) {
+		info->capab = TRUE;
 	} else if(!g_strcasecmp(key, "VCHANNELS")) {
 		info->vchannels = TRUE;
 	} else if(!g_strcasecmp(key, "WHOX")) {
@@ -113,6 +292,32 @@ void network_info_parse(struct network_info *info, const char *parameter)
 		g_strfreev(info->chanmodes);
 		info->chanmodes = g_strsplit(val, ",", 4);
 		/* FIXME: Make sure info->chanmodes length is exactly 4 */
+	} else if(!g_strcasecmp(key, "CHANLIMIT")) {
+		g_free(info->chanlimit);
+		info->chanlimit = g_strdup(val);
+	} else if(!g_strcasecmp(key, "EXCEPTS")) {
+		if (val == NULL) 
+			info->excepts_mode = 'e';
+		else if (strlen(val) > 1)
+			log_global(LOG_WARNING, "Invalid length excepts value: %s", val);
+		else
+			info->excepts_mode = val[0];
+	} else if(!g_strcasecmp(key, "INVEX")) {
+		if (val == NULL) 
+			info->invex_mode = 'I';
+		else if (strlen(val) > 1)
+			log_global(LOG_WARNING, "Invalid length invex value: %s", val);
+		else
+			info->invex_mode = val[0];
+	} else if(!g_strcasecmp(key, "MAXLIST")) {
+		g_free(info->maxlist);
+		info->maxlist = g_strdup(val);
+	} else if(!g_strcasecmp(key, "IDCHAN")) {
+		g_free(info->idchan);
+		info->idchan = g_strdup(val);
+	} else if(!g_strcasecmp(key, "STATUSMSG")) {
+		g_free(info->statusmsg);
+		info->statusmsg = g_strdup(val);
 	} else if(!g_strcasecmp(key, "PREFIX")) {
 		g_free(info->prefix);
 		info->prefix = g_strdup(val);
@@ -130,18 +335,17 @@ void handle_005(struct network_state *s, struct line *l)
 {
 	int i;
 	g_assert(s);
-	g_assert(s->info);
 	g_assert(l);
 
 	g_assert(l->argc >= 1);
 
 	for (i = 3; i < l->argc-1; i++) 
-		network_info_parse(s->info, l->args[i]);
+		network_info_parse(&s->info, l->args[i]);
 }
 
 int irccmp(const struct network_info *n, const char *a, const char *b)
 {
-	switch(n?n->casemapping:CASEMAP_UNKNOWN) {
+	switch(n != NULL?n->casemapping:CASEMAP_UNKNOWN) {
 	default:
 	case CASEMAP_UNKNOWN:
 	case CASEMAP_RFC1459:
@@ -157,18 +361,12 @@ int irccmp(const struct network_info *n, const char *a, const char *b)
 
 gboolean is_channelname(const char *name, const struct network_info *n)
 {
-	const char *chantypes = NULL;
+	g_assert(n != NULL);
+	g_assert(n->chantypes != NULL);
 
-	g_assert(name);
-
-	if (n != NULL) {
-		chantypes = n->chantypes;
-	}
-
-	if(chantypes == NULL) 
-		chantypes = DEFAULT_CHANTYPES;
+	g_assert(name != NULL);
 	
-	if(strchr(chantypes, name[0])) 
+	if (strchr(n->chantypes, name[0])) 
 		return TRUE;
 
 	return FALSE;
@@ -176,18 +374,13 @@ gboolean is_channelname(const char *name, const struct network_info *n)
 
 gboolean is_prefix(char p, const struct network_info *n)
 {
-	const char *prefix = NULL;
 	const char *pref_end;
 	
-	if (n != NULL) {
-		prefix = n->prefix;
-	}
-	
-	if (prefix == NULL) 
-		prefix = DEFAULT_PREFIX;
+	g_assert(n != NULL);
+	g_assert(n->prefix != NULL);
 
-	pref_end = strchr(prefix, ')');
-	if (!pref_end)pref_end = prefix; else pref_end++;
+	pref_end = strchr(n->prefix, ')');
+	if (!pref_end)pref_end = n->prefix; else pref_end++;
 
 	if(strchr(pref_end, p)) return TRUE;
 	return FALSE;
@@ -195,24 +388,21 @@ gboolean is_prefix(char p, const struct network_info *n)
 
 const char *get_charset(const struct network_info *n)
 {
-	if (n != NULL && n->charset != NULL)
-		return n->charset;
-
-	return DEFAULT_CHARSET;
+	g_assert(n != NULL);
+	g_assert(n->charset != NULL);
+	return n->charset;
 }
 
 char get_prefix_by_mode(char mode, const struct network_info *n)
 {
-	const char *prefix = NULL;
 	int i;
 	char *pref_end;
+	const char *prefix;
+	
+	g_assert(n != NULL);
+	g_assert(n->prefix != NULL);
 
-	if (n != NULL) {
-		prefix = n->prefix;
-	}
-
-	if (prefix == NULL) 
-		prefix = DEFAULT_PREFIX;
+	prefix = n->prefix;
 	
 	pref_end = strchr(prefix, ')');
 	if(prefix[0] != '(' || !pref_end) {

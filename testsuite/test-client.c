@@ -56,7 +56,7 @@ START_TEST(test_login)
 	struct client *c;
 	struct global *g = TORTURE_GLOBAL;
 	struct network n = { 
-		.name = "test",
+		.info.name = "test",
 		.global = g,
 	};
 	g_io_channel_pair(&ch1, &ch2);
@@ -75,7 +75,7 @@ START_TEST(test_read_nonutf8)
 	struct client *c;
 	struct global *g = TORTURE_GLOBAL;
 	struct network n = { 
-		.name = "test",
+		.info.name = "test",
 		.global = g,
 	};
 	g_io_channel_pair(&ch1, &ch2);

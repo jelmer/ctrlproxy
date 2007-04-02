@@ -139,7 +139,7 @@ static char *get_nick(struct network *n, const struct line *l, gboolean case_sen
 }
 
 static char *get_network(struct network *n, const struct line *l, gboolean case_sensitive) 
-{ return g_strdup(n->name); }
+{ return g_strdup(n->info.name); }
 
 static char *get_server(struct network *n, const struct line *l, gboolean case_sensitive)
 {
@@ -363,9 +363,8 @@ static void file_write_target(struct log_custom_data *data, struct network *netw
 	g_assert(l->args[1]);
 	g_assert(network->state);
 	g_assert(network->state->me.nick);
-	g_assert(network->state->info);
 
-	if (!irccmp(network->state->info, network->state->me.nick, l->args[1])) {
+	if (!irccmp(&network->state->info, network->state->me.nick, l->args[1])) {
 		if (l->origin) t = line_get_nick(l);
 		else t = g_strdup("_messages_");
 	} else {
@@ -485,7 +484,7 @@ static gboolean log_custom_data(struct network *network, const struct line *l, e
 	} else if(!g_strcasecmp(l->args[0], "NOTICE")) {
 		file_write_target(data, network, "notice", l);
 	} else if(!g_strcasecmp(l->args[0], "MODE") && l->args[1] && 
-			  is_channelname(l->args[1], network->state->info) && dir == FROM_SERVER) {
+			  is_channelname(l->args[1], &network->state->info) && dir == FROM_SERVER) {
 		file_write_target(data, network, "mode", l);
 	} else if(!g_strcasecmp(l->args[0], "QUIT")) {
 		file_write_channel_query(data, network, "quit", l);

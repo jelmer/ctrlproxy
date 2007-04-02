@@ -55,8 +55,8 @@ static void server_send_login (struct network *s)
 
 	log_network(LOG_TRACE, s, "Sending login details");
 
-	s->state = network_state_init(&s->info, s->config->nick, 
-	                              s->config->username, get_my_hostname());
+	s->state = network_state_init(s->config->nick, s->config->username, 
+								  get_my_hostname());
 	s->state->userdata = s;
 	s->state->log = state_log_helper;
 	s->linestack = new_linestack(s);
@@ -64,20 +64,22 @@ static void server_send_login (struct network *s)
 
 	if(s->config->type == NETWORK_TCP && 
 	   s->connection.data.tcp.current_server->password) { 
-		network_send_args(s, "PASS", s->connection.data.tcp.current_server->password, NULL);
+		network_send_args(s, "PASS", 
+					s->connection.data.tcp.current_server->password, NULL);
 	} else if (s->config->password) {
 		network_send_args(s, "PASS", s->config->password, NULL);
 	}
 	network_send_args(s, "NICK", s->config->nick, NULL);
-	network_send_args(s, "USER", s->config->username, get_my_hostname(), s->config->name, s->config->fullname, NULL);
+	network_send_args(s, "USER", s->config->username, get_my_hostname(), 
+					  s->config->name, s->config->fullname, NULL);
 }
 
 /**
- * Change the character set used to communicate with a network.
+ * Change the character set used to communicate with the server.
  *
- * @param n Network to change the setting for
- * @param name Name of the character set to use
- * @returns true if changing the character set succeeded
+ * @param n network to change the character set for
+ * @param name name of the character set to use
+ * @return true if setting the charset worked
  */
 gboolean network_set_charset(struct network *n, const char *name)
 {
@@ -107,6 +109,31 @@ gboolean network_set_charset(struct network *n, const char *name)
 
 	if (n->config->type == NETWORK_VIRTUAL)
 		return TRUE;
+
+	return TRUE;
+}
+
+static gboolean network_update_isupport(struct network_info *net_info,
+										struct network_info *remote_info)
+{
+	if (remote_info->name != NULL) {
+		g_free(net_info->name);
+		net_info->name = g_strdup(remote_info->name);
+	}
+
+	if (remote_info->prefix != NULL) {
+		g_free(net_info->prefix);
+		net_info->prefix = g_strdup(remote_info->prefix);
+	}
+
+	if (remote_info->chantypes != NULL) {
+		g_free(net_info->chantypes);
+		net_info->chantypes = g_strdup(remote_info->chantypes);
+	}
+
+	if (remote_info->casemapping != CASEMAP_UNKNOWN) {
+		net_info->casemapping = remote_info->casemapping;
+	}
 
 	return TRUE;
 }
@@ -148,8 +175,8 @@ static gboolean process_from_server(struct network *n, struct line *l)
 		network_send_args(n, "NICK", tmp, NULL);
 		log_network(LOG_WARNING, n, "%s was already in use, trying %s", l->args[2], tmp);
 		g_free(tmp);
-	} else if(!g_strcasecmp(l->args[0], "422") ||
-			  !g_strcasecmp(l->args[0], "376")) {
+	} else if(atoi(l->args[0]) == RPL_ENDOFMOTD ||
+			  atoi(l->args[0]) == ERR_NOMOTD) {
 		GList *gl;
 		n->connection.state = NETWORK_CONNECTION_STATE_MOTD_RECVD;
 
@@ -162,6 +189,8 @@ static gboolean process_from_server(struct network *n, struct line *l)
 				error->message);
 
 		log_network(LOG_INFO, n, "Successfully logged in");
+
+		network_update_isupport(&n->info, &n->state->info);
 
 		nickserv_identify_me(n, n->state->me.nick);
 
@@ -449,7 +478,7 @@ gboolean virtual_network_recv_response(struct network *n, int num, ...)
 	g_assert(n->config->type == NETWORK_VIRTUAL);
 
 	va_start(ap, num);
-	l = virc_parse_line(n->name, ap);
+	l = virc_parse_line(n->info.name, ap);
 	va_end(ap);
 
 	l->args = g_realloc(l->args, sizeof(char *) * (l->argc+4));
@@ -713,7 +742,9 @@ static void reconnect(struct network *server, gboolean rm_source)
 		server->config->type == NETWORK_IOCHANNEL ||
 		server->config->type == NETWORK_PROGRAM) {
 		server->connection.state = NETWORK_CONNECTION_STATE_RECONNECT_PENDING;
-		server->reconnect_id = g_timeout_add(1000 * server->config->reconnect_interval, (GSourceFunc) delayed_connect_server, server);
+		server->reconnect_id = g_timeout_add(1000 * 
+								server->config->reconnect_interval, 
+								(GSourceFunc) delayed_connect_server, server);
 	} else {
 		connect_server(server);	
 	}
@@ -737,7 +768,8 @@ static void clients_invalidate_state(GList *clients, struct network_state *s)
 	for (gl = s->channels; gl; gl = gl->next) {
 		struct channel_state *ch = gl->data;
 
-		clients_send_args_ex(clients, s->me.hostmask, "PART", ch->name, "Network disconnected", NULL);
+		clients_send_args_ex(clients, s->me.hostmask, "PART", ch->name, 
+							 "Network disconnected", NULL);
 	}
 
 	/* private queries quit */
@@ -900,8 +932,12 @@ void network_set_iochannel(struct network *s, GIOChannel *ioc)
 	s->connection.outgoing = ioc;
 	g_io_channel_set_close_on_unref(s->connection.outgoing, TRUE);
 
-	s->connection.incoming_id = g_io_add_watch(s->connection.outgoing, G_IO_IN | G_IO_HUP | G_IO_ERR, handle_server_receive, s);
-	handle_server_receive(s->connection.outgoing, g_io_channel_get_buffer_condition(s->connection.outgoing), s);
+	s->connection.incoming_id = g_io_add_watch(s->connection.outgoing, 
+								G_IO_IN | G_IO_HUP | G_IO_ERR, 
+								handle_server_receive, s);
+	handle_server_receive(s->connection.outgoing, 
+				  g_io_channel_get_buffer_condition(s->connection.outgoing), 
+				  s);
 
 	server_send_login(s);
 }
@@ -927,11 +963,11 @@ static gboolean connect_program(struct network *s)
 	g_io_channel_unref(s->connection.outgoing);
 
 
-	if (s->name == NULL) {
+	if (s->info.name == NULL) {
 		if (strchr(s->config->type_settings.program_location, '/')) {
-			s->name = g_strdup(strrchr(s->config->type_settings.program_location, '/')+1);
+			s->info.name = g_strdup(strrchr(s->config->type_settings.program_location, '/')+1);
 		} else {
-			s->name = g_strdup(s->config->type_settings.program_location);
+			s->info.name = g_strdup(s->config->type_settings.program_location);
 		}
 	}
 
@@ -951,15 +987,18 @@ static gboolean connect_server(struct network *s)
 		return connect_program(s);
 
 	case NETWORK_VIRTUAL:
-		s->connection.data.virtual.ops = g_hash_table_lookup(virtual_network_ops, s->config->type_settings.virtual_type);
+		s->connection.data.virtual.ops = g_hash_table_lookup(
+								virtual_network_ops, 
+								s->config->type_settings.virtual_type);
 		if (!s->connection.data.virtual.ops) 
 			return FALSE;
 
-		s->state = network_state_init(&s->info, s->config->nick, s->config->username, get_my_hostname());
+		s->state = network_state_init(s->config->nick, s->config->username, 
+									  get_my_hostname());
 		s->state->userdata = s;
 		s->state->log = state_log_helper;
 		s->linestack = new_linestack(s);
-    		s->connection.state = NETWORK_CONNECTION_STATE_MOTD_RECVD;
+		s->connection.state = NETWORK_CONNECTION_STATE_MOTD_RECVD;
 
 		if (s->connection.data.virtual.ops->init)
 			return s->connection.data.virtual.ops->init(s);
@@ -1001,12 +1040,19 @@ struct network *load_network(struct global *global, struct network_config *sc)
 
 	s = g_new0(struct network, 1);
 	s->config = sc;
-	s->name = g_strdup(s->config->name);
+	network_info_init(&s->info);
+	s->info.name = g_strdup(s->config->name);
 	s->connection.pending_lines = g_queue_new();
 	s->global = global;
+	s->info.forced_nick_changes = TRUE; /* Forced nick changes are done by ctrlproxy */
 	s->connection.outgoing_iconv = s->connection.incoming_iconv = (GIConv)-1;
 
 	if (global != NULL) {
+		g_free(s->info.charset);
+		if (s->global->config->client_charset != NULL) {
+			s->info.charset = g_strdup(s->global->config->client_charset);
+		}
+
 		global->networks = g_list_append(global->networks, s);
 
 		for (gl = global->new_network_notifiers; gl; gl = gl->next) {
@@ -1065,12 +1111,9 @@ void unload_network(struct network *s)
 		disconnect_client(c, "Server exiting");
 	}
 
-
 	if (s->global != NULL) {
 		s->global->networks = g_list_remove(s->global->networks, s);
 	}
-
-	g_free(s->name);
 
 	if (s->config->type == NETWORK_TCP) {
 		g_free(s->connection.data.tcp.local_name);
@@ -1079,10 +1122,7 @@ void unload_network(struct network *s)
 	g_queue_foreach(s->connection.pending_lines, free_pending_line, NULL);
 	g_queue_free(s->connection.pending_lines);
 
-	g_free(s->info.supported_user_modes);
-	g_free(s->info.supported_channel_modes);
-	g_free(s->info.server);
-	g_free(s->info.name);
+	free_network_info(&s->info);
 
 #ifdef HAVE_GNUTLS
 	ssl_free_client_credentials(s->ssl_credentials);
@@ -1201,7 +1241,7 @@ struct network *find_network(struct global *global, const char *name)
 	GList *gl;
 	for (gl = global->networks; gl; gl = gl->next) {
 		struct network *n = gl->data;
-		if (n->name && !g_strcasecmp(n->name, name)) 
+		if (n->info.name && !g_strcasecmp(n->info.name, name)) 
 			return n;
 	}
 
@@ -1231,7 +1271,7 @@ struct network *find_network_by_hostname(struct global *global,
 		struct network *n = gl->data;
 		g_assert(n);
 
-		if (n->name && !g_strcasecmp(n->name, hostname)) {
+		if (n->info.name && !g_strcasecmp(n->info.name, hostname)) {
 			g_free(portname);
 			return n;
 		}
@@ -1317,40 +1357,9 @@ void network_select_next_server(struct network *n)
  */
 char *network_generate_feature_string(struct network *n)
 {
-	GList *fs = NULL, *gl;
-	char *name, *casemap;
-	char *ret;
-
 	g_assert(n);
-	
-	name = g_strdup_printf("NETWORK=%s", n->name);
-	fs = g_list_append(fs, name);
 
-	switch (n->info.casemapping) {
-	default:
-	case CASEMAP_RFC1459:
-		casemap = g_strdup("CASEMAPPING=rfc1459");
-		break;
-	case CASEMAP_STRICT_RFC1459:
-		casemap = g_strdup("CASEMAPPING=strict-rfc1459");
-		break;
-	case CASEMAP_ASCII:
-		casemap = g_strdup("CASEMAPPING=ascii");
-		break;
-	}
-
-	fs = g_list_append(fs, casemap);
-	fs = g_list_append(fs, g_strdup("FNC"));
-	fs = g_list_append(fs, g_strdup_printf("CHARSET=%s", n->global->config->client_charset));
-
-	ret = list_make_string(fs);
-
-	for (gl = fs; gl; gl = gl->next)
-		g_free(gl->data);
-
-	g_list_free(fs);
-
-	return ret;
+	return network_info_string(&n->info);
 }
 
 

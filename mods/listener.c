@@ -271,7 +271,7 @@ static void update_config(struct global *global, const char *path)
 			g_key_file_set_string(kf, tmp, "password", l->password);
 
 		if (l->network) 
-			g_key_file_set_string(kf, tmp, "network", l->network->name);
+			g_key_file_set_string(kf, tmp, "network", l->network->info.name);
 
 		g_key_file_set_boolean(kf, tmp, "ssl", l->ssl);
 
@@ -484,7 +484,7 @@ void cmd_list_listener(admin_handle h, char **args, void *userdata)
 	for (gl = listeners; gl; gl = gl->next) {
 		struct listener *l = gl->data;
 
-		admin_out(h, "%s:%s%s%s%s", l->address?l->address:"", l->port, l->network?" (":"", l->network?l->network->name:"", l->network?")":"");
+		admin_out(h, "%s:%s%s%s%s", l->address?l->address:"", l->port, l->network?" (":"", l->network?l->network->info.name:"", l->network?")":"");
 	}
 }
 

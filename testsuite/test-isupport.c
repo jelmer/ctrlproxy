@@ -25,20 +25,29 @@
 #include "ctrlproxy.h"
 
 START_TEST(isupport_isprefix)
-	fail_if (!is_prefix('@', NULL));
-	fail_if (is_prefix('a', NULL));
+	struct network_info ni = {
+		.prefix = "(ov)@+"
+	};
+	fail_if (!is_prefix('@', &ni));
+	fail_if (is_prefix('a', &ni));
 END_TEST
 
 START_TEST(isupport_ischannelname)
-	fail_if (!is_channelname("#bla", NULL));
-	fail_if (!is_channelname("&bla", NULL));
-	fail_if (is_channelname("bla", NULL));
+	struct network_info ni = {
+		.chantypes = "#&"
+	};
+	fail_if (!is_channelname("#bla", &ni));
+	fail_if (!is_channelname("&bla", &ni));
+	fail_if (is_channelname("bla", &ni));
 END_TEST
 
 START_TEST(isupport_prefixbymode)
-	fail_if (get_prefix_by_mode('o',NULL) != '@');
-	fail_if (get_prefix_by_mode('v',NULL) != '+');
-	fail_if (get_prefix_by_mode('x',NULL) != ' ');
+	struct network_info ni = {
+		.prefix = "(ov)@+"
+	};
+	fail_if (get_prefix_by_mode('o', &ni) != '@');
+	fail_if (get_prefix_by_mode('v', &ni) != '+');
+	fail_if (get_prefix_by_mode('x', &ni) != ' ');
 END_TEST
 
 START_TEST(isupport_info_parse_casemapping)

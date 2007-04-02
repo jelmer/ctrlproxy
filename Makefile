@@ -67,11 +67,11 @@ dep_files = $(patsubst %.o, %.d, $(objs)) $(patsubst %.o, %.d, $(wildcard mods/*
 
 linestack-cmd$(EXEEXT): src/linestack-cmd.o $(objs)
 	@echo Linking $@
-	@$(CC) $(LIBS) -lreadline -rdynamic -o $@ $^
+	@$(LD) $(LIBS) -lreadline -rdynamic -o $@ $^
 
 ctrlproxy$(EXEEXT): src/main.o $(objs)
 	@echo Linking $@
-	@$(CC) $(LDFLAGS) -rdynamic -o $@ $^ $(LIBS)
+	@$(LD) $(LDFLAGS) -rdynamic -o $@ $^ $(LIBS)
 
 mods/%.o: mods/%.c
 	@echo Compiling for shared library $<
@@ -162,7 +162,7 @@ lcov:
 
 mods/lib%.$(SHLIBEXT): mods/%.o
 	@echo Linking $@
-	@$(CC) $(LDFLAGS) -fPIC -shared -o $@ $^
+	@$(LD) $(LDFLAGS) -fPIC -shared -o $@ $^
 
 clean::
 	@echo Removing .so files

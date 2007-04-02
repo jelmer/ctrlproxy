@@ -90,7 +90,7 @@ static gboolean process_from_client(struct client *c, struct line *l)
 		disconnect_client(c, "Client exiting");
 		return FALSE;
 	} else if(!g_strcasecmp(l->args[0], "PING")) {
-		client_send_args(c, "PONG", c->network->name, l->args[1], NULL);
+		client_send_args(c, "PONG", c->network->info.name, l->args[1], NULL);
 	} else if(!g_strcasecmp(l->args[0], "PONG")) {
 		if (l->argc < 2) {
 			client_send_response(c, ERR_NEEDMOREPARAMS, l->args[0], 
@@ -152,7 +152,7 @@ gboolean client_send_response(struct client *c, int response, ...)
 	g_assert(response);
 	
 	va_start(ap, response);
-	l = virc_parse_line(c->network?c->network->name:get_my_hostname(), ap);
+	l = virc_parse_line(c->network?c->network->info.name:get_my_hostname(), ap);
 	va_end(ap);
 
 	l->args = g_realloc(l->args, sizeof(char *) * (l->argc+4));
@@ -215,7 +215,7 @@ gboolean client_send_args(struct client *c, ...)
 	g_assert(c);
 	
 	va_start(ap, c);
-	l = virc_parse_line(c->network?c->network->name:"ctrlproxy", ap);
+	l = virc_parse_line(c->network?c->network->info.name:"ctrlproxy", ap);
 	va_end(ap);
 
 	ret = client_send_line(c, l);
@@ -400,7 +400,7 @@ static gboolean welcome_client(struct client *client)
 	client_send_response(client, RPL_YOURHOST, tmp = g_strdup_printf("Host %s is running ctrlproxy", get_my_hostname()), NULL); g_free(tmp);
 	client_send_response(client, RPL_CREATED, "Ctrlproxy (c) 2002-2006 Jelmer Vernooij <jelmer@vernstok.nl>", NULL);
 	client_send_response(client, RPL_MYINFO, 
-		 client->network->name, 
+		 client->network->info.name, 
 		 ctrlproxy_version(), 
 		 (client->network->state && client->network->info.supported_user_modes)?client->network->info.supported_user_modes:ALLMODES, 
 		 (client->network->state && client->network->info.supported_channel_modes)?client->network->info.supported_channel_modes:ALLMODES,
@@ -530,7 +530,7 @@ static gboolean handle_pending_client_receive(GIOChannel *c,
 					connect_network(client->network);
 				}
 			} else {
-				client_send_response(client, ERR_NOTREGISTERED, "Register first", client->network?client->network->name:get_my_hostname(), NULL);
+				client_send_response(client, ERR_NOTREGISTERED, "Register first", client->network?client->network->info.name:get_my_hostname(), NULL);
 			}
 
 			free_line(l);
@@ -572,7 +572,7 @@ static gboolean client_ping(gpointer user_data) {
 	g_assert(client);
 
 	client->last_ping = time(NULL);
-	client_send_args_ex(client, NULL, "PING", client->network->name, NULL);
+	client_send_args_ex(client, NULL, "PING", client->network->info.name, NULL);
 
 	return TRUE;
 }

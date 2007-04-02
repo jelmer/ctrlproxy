@@ -56,7 +56,7 @@ END_TEST
 
 START_TEST(test_get_charset_default)
 	struct network_info info;
-	memset(&info, 0, sizeof(info));
+	network_info_init(&info);
 	fail_unless(!strcmp(get_charset(&info), "iso8859-15"));
 END_TEST
 

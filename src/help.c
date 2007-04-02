@@ -41,7 +41,8 @@ void help_free(help_t *h)
 
 GHashTable *help_build_hash(char *data, gsize len)
 {
-	GHashTable *h = g_hash_table_new(g_str_hash, g_str_equal);
+	GHashTable *h = g_hash_table_new_full(g_str_hash, g_str_equal,
+										  g_free, NULL);
 	gsize i;
 	char *p;
 
