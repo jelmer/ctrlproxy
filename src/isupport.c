@@ -345,7 +345,7 @@ void handle_005(struct network_state *s, struct line *l)
 
 int irccmp(const struct network_info *n, const char *a, const char *b)
 {
-	switch(n?n->casemapping:CASEMAP_UNKNOWN) {
+	switch(n != NULL?n->casemapping:CASEMAP_UNKNOWN) {
 	default:
 	case CASEMAP_UNKNOWN:
 	case CASEMAP_RFC1459:
@@ -364,7 +364,7 @@ gboolean is_channelname(const char *name, const struct network_info *n)
 	g_assert(n != NULL);
 	g_assert(n->chantypes != NULL);
 
-	g_assert(name);
+	g_assert(name != NULL);
 	
 	if (strchr(n->chantypes, name[0])) 
 		return TRUE;

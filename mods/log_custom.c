@@ -139,7 +139,7 @@ static char *get_nick(struct network *n, const struct line *l, gboolean case_sen
 }
 
 static char *get_network(struct network *n, const struct line *l, gboolean case_sensitive) 
-{ return g_strdup(n->name); }
+{ return g_strdup(n->info.name); }
 
 static char *get_server(struct network *n, const struct line *l, gboolean case_sensitive)
 {

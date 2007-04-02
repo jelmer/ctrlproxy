@@ -45,7 +45,7 @@ static FILE *find_add_channel_file(struct network *s, const char *name) {
 	char *lowercase;
 
 	lowercase = g_ascii_strdown(name?name:"messages", -1);
-	hash_name = g_strdup_printf("%s/%s", s->name, lowercase);
+	hash_name = g_strdup_printf("%s/%s", s->info.name, lowercase);
 	g_free(lowercase);
 
 	f = g_hash_table_lookup(files, hash_name);
@@ -53,7 +53,7 @@ static FILE *find_add_channel_file(struct network *s, const char *name) {
 		char *cn; 
 		const char *server_name;
 
-		server_name = s->name;
+		server_name = s->info.name;
 
 		if(strchr(server_name, '/'))server_name = strrchr(server_name, '/');
 
@@ -89,7 +89,7 @@ static FILE *find_channel_file(struct network *s, const char *name) {
 	FILE *f;
 	char *hash_name, *lowercase;
 	lowercase = g_ascii_strdown(name?name:"messages", -1);
-	hash_name = g_strdup_printf("%s/%s", s->name, lowercase);
+	hash_name = g_strdup_printf("%s/%s", s->info.name, lowercase);
 	g_free(lowercase);
 
 	f = g_hash_table_lookup(files, hash_name);
@@ -124,8 +124,8 @@ static gboolean log_data(struct network *n, const struct line *l, enum data_dire
 		if(f)fprintf(f, "%02d:%02d -!- %s [%s] has left %s [%s]\n", t->tm_hour, t->tm_min, nick, user, l->args[1], l->args[2]?l->args[2]:"");
 	} else if(!g_strcasecmp(l->args[0], "PRIVMSG") && l->argc > 2) {
 		dest = l->args[1];
-		if(!irccmp(&n->state->info, dest, n->state->me.nick))dest = nick;
-		if(l->args[2][0] == '\001') { 
+		if (!irccmp(&n->state->info, dest, n->state->me.nick)) dest = nick;
+		if (l->args[2][0] == '\001') { 
 			l->args[2][strlen(l->args[2])-1] = '\0';
 			if(!g_ascii_strncasecmp(l->args[2], "\001ACTION ", 8)) { 
 				f = find_add_channel_file(n, dest);
