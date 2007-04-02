@@ -11,8 +11,10 @@ These are the available help subjects:
 </para>
 
 <variablelist>
-  <varlistentry><term>quickstart</term><listitem><para>A short introduction into CtrlProxy</para></listitem></varlistentry>
   <varlistentry><term>commands</term><listitem><para>All available commands and settings</para></listitem></varlistentry>
+  <varlistentry><term>clients</term><listitem><para>Using ctrlproxy with different clients</para></listitem></varlistentry>
+  <varlistentry><term>logging</term><listitem><para>Information about setting up logging</para></listitem></varlistentry>
+  <varlistentry><term>about</term><listitem><para>About information</para></listitem></varlistentry>
 </variablelist>
 
 <para>

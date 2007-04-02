@@ -71,6 +71,9 @@ Ctrlproxy 3.0.2 UNRELEASED
     * Fix handling of addresses when listening on FreeBSD. (#87)
 
   DOCUMENTATION
+  	
+  	* Added more documentation to the help system. (#106)
+
 
 Ctrlproxy 3.0.1 2007-01-04
 

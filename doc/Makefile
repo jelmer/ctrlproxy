@@ -9,11 +9,14 @@ dist: all
 
 manpages: ctrlproxy.1 ctrlproxy_config.5 
 
-%/index.html: %.xml
+%.tmp.xml: %.xml
+	$(XSLTPROC) --xinclude docbook.xsl $< > $@
+
+%/index.html: %.tmp.xml
 	$(XSLTPROC) --stringparam base.dir "$(@D)/" http://docbook.sourceforge.net/release/xsl/current/html/chunk.xsl $<
 
-%.html: %.xml
-	$(XSLTPROC) http://docbook.sourceforge.net/release/xsl/current/html/docbook.xsl $< > $@
+%.html: %.tmp.xml
+	$(XSLTPROC) --xinclude http://docbook.sourceforge.net/release/xsl/current/html/docbook.xsl $< > $@
 
 %.1: %.1.xml 
 	$(XSLTPROC) http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $< > $@
@@ -30,6 +33,7 @@ clean::
 	@echo Removing documentation files
 	@rm -f *.html *.1 *.5 help.txt
 	@rm -rf user-guide
+	@rm -f *.tmp.xml
 
 distclean:: clean
 
