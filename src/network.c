@@ -999,6 +999,7 @@ struct network *load_network(struct global *global, struct network_config *sc)
 	s->connection.pending_lines = g_queue_new();
 	s->global = global;
 	s->info.forced_nick_changes = TRUE; /* Forced nick changes are done by ctrlproxy */
+	g_free(s->info.charset);
 	s->info.charset = g_strdup(s->global->config->client_charset);
 	s->connection.outgoing_iconv = s->connection.incoming_iconv = (GIConv)-1;
 
@@ -1051,7 +1052,6 @@ void unload_network(struct network *s)
 		l = l->next;
 		disconnect_client(c, "Server exiting");
 	}
-
 
 	if (s->global != NULL) {
 		s->global->networks = g_list_remove(s->global->networks, s);
