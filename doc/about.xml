@@ -1,0 +1,11 @@
+<chapter id="about">
+<title>About</title>
+
+<para>CtrlProxy was written by Jelmer Vernooij with the help from 
+	various other people. See the AUTHORS file in the tarball for details.
+</para>
+
+<para>The CtrlProxy homepage can be found at 
+	<emphasis>http://ctrlproxy.vernstok.nl/</emphasis>.</para>
+
+</chapter>

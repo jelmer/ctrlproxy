@@ -28,5 +28,6 @@
 <xi:include href="admin.xml"/>
 <xi:include href="logging.xml"/>
 <xi:include href="clients.xml"/>
+<xi:include href="about.xml"/>
 
 </book>

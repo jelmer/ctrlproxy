@@ -87,7 +87,5 @@
 		<varlistentry><term>HELP [&lt;topic&gt;]</term>
 		<listitem><para>Prints out list of available commands.</para></listitem></varlistentry>
 
-
-
 	</variablelist>
 </sect1>

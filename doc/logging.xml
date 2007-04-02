@@ -6,7 +6,7 @@
 	CtrlProxy has various means for logging conversions to file. 
 </para>
 
-<sect1>
+<sect1 id="log irssi">
 	<title>Logging in irssi-style format</title>
 
 	<para>By setting <parameter>log_irssi_path</parameter> to a directory, 
@@ -20,7 +20,7 @@
 	<para>If no directory is specified, data will be logged to <filename>$HOME/.ctrlproxy/log_irssi/$NETWORK/$CHANNEL</filename>.</para>
 </sect1>
 
-<sect1>
+<sect1 id="log custom">
 	<title>Logging in a custom format</title>
 
 	<para>
@@ -32,7 +32,7 @@
 
 	</para>
 
-	<sect2>
+	<sect2 id="log custom variables">
 		<title>Substitutes</title>
 
 		<para>The configuration values define the syntax that is used to

@@ -1,7 +1,7 @@
 <chapter id="introduction">
 	<title>Introduction</title>
 
-	<sect1>
+	<sect1 id="why">
 		<title>Why ctrlproxy?</title>
 
 <para>
@@ -16,7 +16,7 @@ The structure of ctrlproxy is very modular and it is easily extendible.
 
 </sect1>
 
-<sect1><title>What is ctrlproxy?</title>
+<sect1 id="whatis"><title>What is ctrlproxy?</title>
 
 	<para>Ctrlproxy is a so-called IRC proxy or BNC (bouncer). It keeps a 
 		permanent connection to one or more IRC servers. The user can then 
@@ -33,7 +33,7 @@ The structure of ctrlproxy is very modular and it is easily extendible.
 	
 </sect1>
 
-<sect1><title>Features</title>
+<sect1 id="features"><title>Features</title>
 
 <itemizedlist>
 	<listitem><para>Connect to one server with many clients under one nick transparently</para></listitem>
@@ -52,7 +52,7 @@ The structure of ctrlproxy is very modular and it is easily extendible.
 
 </sect1>
 
-<sect1>
+<sect1 id="requirements">
 	<title>Requirements</title>
 
 <itemizedlist>
