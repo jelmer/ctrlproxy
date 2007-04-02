@@ -501,7 +501,8 @@ static gboolean handle_pending_client_receive(GIOChannel *c, GIOCondition cond, 
 
 			if (client->fullname != NULL && client->nick != NULL) {
 				if (!client->network) {
-					disconnect_client(client, "Please select a network first, or specify one in your ctrlproxyrc");
+					disconnect_client(client, 
+						"Please select a network first, or specify one in your ctrlproxyrc");
 					return FALSE;
 				}
 

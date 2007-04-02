@@ -999,11 +999,14 @@ struct network *load_network(struct global *global, struct network_config *sc)
 	s->connection.pending_lines = g_queue_new();
 	s->global = global;
 	s->info.forced_nick_changes = TRUE; /* Forced nick changes are done by ctrlproxy */
-	g_free(s->info.charset);
-	s->info.charset = g_strdup(s->global->config->client_charset);
 	s->connection.outgoing_iconv = s->connection.incoming_iconv = (GIConv)-1;
 
 	if (global != NULL) {
+		g_free(s->info.charset);
+		if (s->global->config->client_charset != NULL) {
+			s->info.charset = g_strdup(s->global->config->client_charset);
+		}
+
 		global->networks = g_list_append(global->networks, s);
 
 		for (gl = global->new_network_notifiers; gl; gl = gl->next) {

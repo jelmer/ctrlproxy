@@ -109,9 +109,9 @@ static gboolean marshall_struct(GIOChannel *t, enum marshall_mode m, int level, 
 	}
 }
 
-
-
-static gboolean marshall_string (struct network_state *nst, const char *name, int level, enum marshall_mode m, GIOChannel *t, char **d)
+static gboolean marshall_string (struct network_state *nst, 
+								 const char *name, int level, 
+								 enum marshall_mode m, GIOChannel *t, char **d)
 {
 	if (m == MARSHALL_PUSH)
 		return marshall_set(t, level, name, *d);
@@ -119,7 +119,9 @@ static gboolean marshall_string (struct network_state *nst, const char *name, in
 		return marshall_get(t, level, name, d);
 }
 
-static gboolean marshall_bool(struct network_state *nst, const char *name, int level, enum marshall_mode m, GIOChannel *t, gboolean *n)
+static gboolean marshall_bool(struct network_state *nst, const char *name, 
+							  int level, enum marshall_mode m, GIOChannel *t, 
+							  gboolean *n)
 {
 	if (m == MARSHALL_PUSH) {
 		if (*n) return marshall_set(t, level, name, "true");
@@ -293,7 +295,10 @@ static gboolean marshall_banlist_entry (struct network_state *nst, const char *n
 	return ret;
 }
 
-static gboolean marshall_channel_state (struct network_state *nst, const char *name, int level, enum marshall_mode m, GIOChannel *t, struct channel_state **c)
+static gboolean marshall_channel_state (struct network_state *nst, 
+										const char *name, int level, 
+										enum marshall_mode m, GIOChannel *t, 
+										struct channel_state **c)
 {
 	gboolean ret = TRUE;
 	marshall_new(m, c);
@@ -372,7 +377,8 @@ static gboolean marshall_channel_state (struct network_state *nst, const char *n
 	return ret;
 }
 
-static gboolean marshall_network_state(enum marshall_mode m, GIOChannel *t, struct network_state *n)
+static gboolean marshall_network_state(enum marshall_mode m, GIOChannel *t, 
+									   struct network_state *n)
 {
 	gboolean ret = TRUE;
 
@@ -399,9 +405,12 @@ struct lf_data {
 	int lines_since_last_state;
 };
 
-static void file_insert_state(struct linestack_context *ctx, const struct network_state *state);
+static void file_insert_state(struct linestack_context *ctx, 
+							  const struct network_state *state);
 
-static gboolean file_init(struct linestack_context *ctx, const char *name, struct ctrlproxy_config *config, const struct network_state *state)
+static gboolean file_init(struct linestack_context *ctx, const char *name, 
+						  struct ctrlproxy_config *config, 
+						  const struct network_state *state)
 {
 	struct lf_data *data = g_new0(struct lf_data, 1);
 	char *parent_dir, *data_dir, *data_file;
@@ -461,7 +470,8 @@ static gint64 g_io_channel_tell_position(GIOChannel *gio)
 	return lseek(fd, 0, SEEK_CUR);
 }
 
-static void file_insert_state(struct linestack_context *ctx, const struct network_state *state)
+static void file_insert_state(struct linestack_context *ctx, 
+							  const struct network_state *state)
 {
 	struct lf_data *nd = ctx->backend_data;
 	GError *error = NULL;
@@ -488,7 +498,9 @@ static void file_insert_state(struct linestack_context *ctx, const struct networ
 	g_assert(status);
 }
 
-static gboolean file_insert_line(struct linestack_context *ctx, const struct line *l, const struct network_state *state)
+static gboolean file_insert_line(struct linestack_context *ctx, 
+								 const struct line *l, 
+								 const struct network_state *state)
 {
 	struct lf_data *nd = ctx->backend_data;
 	char t[20];
@@ -525,9 +537,8 @@ static void *file_get_marker(struct linestack_context *ctx)
 	return pos;
 }
 
-static struct network_state * file_get_state (
-		struct linestack_context *ctx, 
-		void *m)
+static struct network_state *file_get_state (struct linestack_context *ctx, 
+											  void *m)
 {
 	struct lf_data *nd = ctx->backend_data;
 	struct network_state *ret;
@@ -563,7 +574,7 @@ static struct network_state * file_get_state (
 
 	g_assert(status == G_IO_STATUS_NORMAL);
 
-	ret = g_new0(struct network_state, 1);
+	ret = network_state_init("", "", "");
 	if (!marshall_network_state(MARSHALL_PULL, nd->state_file, ret))
 		return NULL;
 
@@ -582,11 +593,8 @@ static struct network_state * file_get_state (
 	return ret;
 }
 
-static gboolean file_traverse(struct linestack_context *ctx,
-		void *mf,
-		void *mt,
-		linestack_traverse_fn tf, 
-		void *userdata)
+static gboolean file_traverse(struct linestack_context *ctx, void *mf,
+		void *mt, linestack_traverse_fn tf, void *userdata)
 {
 	gint64 *start_offset, *end_offset;
 	struct lf_data *nd = ctx->backend_data;
