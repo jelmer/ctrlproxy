@@ -24,12 +24,15 @@ Ctrlproxy 3.0.2 UNRELEASED
 
 	* Fix coredump with --init when the default config cannot be opened (patch by exg)
 
-	* Fix crash when CHARSET command fails (#89)
+	* Fix crash when CHARSET command fails (#89, #96)
 
 	* Fall back to default charset if client charset can't be set 
 		(patch by Emanuele Giaquinta <e.giaquinta@glauco.it>)
 
 	* Fix use of %S segfault in log_custom. (#111)
+
+	* 005-lines are now forwarded to the end-client in a more 
+      structural manner. (#94)
 
   FEATURES
 
