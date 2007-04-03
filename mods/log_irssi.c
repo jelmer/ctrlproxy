@@ -86,18 +86,31 @@ static FILE *find_add_channel_file(struct network *s, const char *name)
 	return f;
 }
 
-static void target_printf(struct network *n, const char *name, 
-						  char *fmt, ...)
+static void target_vprintf(struct network *n, const char *name, 
+						   char *fmt, va_list ap)
 {
-	FILE *f = NULL;
-	va_list ap;
-	va_start(ap, fmt);
-
-	f = find_add_channel_file(n, name);
+	FILE *f = find_add_channel_file(n, name);
 	if (f != NULL) {
 		vfprintf(f, fmt, ap);
 		fflush(f);
 	}
+}
+
+static void target_printf(struct network *n, const char *name, 
+						  char *fmt, ...)
+{
+	va_list ap;
+	va_start(ap, fmt);
+
+	if (strchr(name, ',') != NULL) {
+		char **channels = g_strsplit(name, ",", 0);
+		int i;
+
+		for (i = 0; channels[i]; i++) {
+			target_vprintf(n, channels[i], fmt, ap);
+		}
+	} else 
+		target_vprintf(n, name, fmt, ap);
 	va_end(ap);
 }
 

@@ -33,6 +33,9 @@ Ctrlproxy 3.0.2 UNRELEASED
 
 	* 005-lines are now forwarded to the end-client in a more 
       structural manner. (#94)
+	
+	* Properly expand target in log_irssi if it is a comma-separated list (#9)
+        (based on patch by Korbinian Rosenegger)
 
   FEATURES
 
