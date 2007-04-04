@@ -413,7 +413,7 @@ static void file_write_target(struct log_custom_data *data,
 	}
 
 	f = find_add_channel_file(data, network, l, t, TRUE);
-	if (f != NULL) { g_free(t); return; }
+	if (f == NULL) { g_free(t); return; }
 	
 	custom_subst(network, &s, fmt, l, t, FALSE, FALSE);
 	g_free(t);
