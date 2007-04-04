@@ -1,17 +1,21 @@
-Jelmer Vernooij <jelmer@nl.linux.org> (Main developer)
+Jelmer Vernooij <jelmer@nl.linux.org> (Original author and maintainer)
+
+Thanks to the following people for providing patches and useful bugreports:
+Wilmer van der Gaast <lintux@debian.org> (debian package)
+'igla' at #ctrlproxy (bug reports)
+Emanuele Giaquinta (several patches)
+Aron Griffis <agriffis@gentoo.org> (gentoo package, bug reports)
+mibukyoshiro@altern.org (bug reports, setup script)
+Stephane Lacoin <stephane@zoo-matic.homeip.net> (patch for DETACH command in the admin module)
+Barnaba Marcello <vjt@users.sf.net>, original author of network-openssl.c
+Elliot Murphy (patch)
 Daniel Poelzleithner <ctrlproxy@poelzi.org> (several major patches, autosave/python module)
+Sean Reifschneider <jafo@tummy.com> (.spec file, bug reports, doc update)
+Korbinian Rosenegger (large number of bugreports and patches)
+Modestas Vainius <geromanas@mailas.com> (patches)
+Alexander Wild <wild@te-elektronik.com> (patches)
+
+and several others (see the history in Bazaar for details)
 
 gnutls.c and ssl.h were taken from libsoup, which is licensed under the 
 GNU LGPL.
-
-Thanks to the following people for patches and useful bugreports:
-Korbinian Rosenegger (various bugreports and patches)
-mibukyoshiro@altern.org (bug reports, setup script)
-Aron Griffis <agriffis@gentoo.org> (gentoo package, bug reports)
-Barnaba Marcello <vjt@users.sf.net>, original author of network-openssl.c
-Wilmer van der Gaast <lintux@debian.org> (debian package)
-Sean Reifschneider <jafo@tummy.com> (.spec file, bug reports, doc update)
-'igla' at #ctrlproxy (bug reports)
-Stephane Lacoin <stephane@zoo-matic.homeip.net> (patch for DETACH command in the admin module)
-Alexander Wild <wild@te-elektronik.com> (patches)
-Modestas Vainius <geromanas@mailas.com> (patches)
