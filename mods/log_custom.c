@@ -387,12 +387,29 @@ static FILE *find_add_channel_file(struct log_custom_data *data,
 	return fi->file;
 }
 
+static void file_write_line(struct log_custom_data *data, struct network *network, const char *fmt,
+				   const struct line *l, const char *t, gboolean create_file)
+{
+	FILE *f;
+	char *s;
+
+	f = find_add_channel_file(data, network, l, t, create_file);
+	if (f == NULL) return;
+
+	custom_subst(network, &s, fmt, l, t, FALSE, FALSE);
+
+	fputs(s, f);
+	fputc('\n', f);
+	fflush(f);
+
+	g_free(s);
+}
+
 static void file_write_target(struct log_custom_data *data, 
 							  struct network *network, const char *n, 
 							  const struct line *l) 
 {
-	char *t, *s, *fmt;
-	FILE *f;
+	char *t, *fmt;
 	
 	fmt = g_key_file_get_string(data->kf, "log-custom", n, NULL);
 	if (fmt == NULL) 
@@ -411,48 +428,28 @@ static void file_write_target(struct log_custom_data *data,
 	} else {
 		t = g_strdup(l->args[1]);
 	}
-
-	f = find_add_channel_file(data, network, l, t, TRUE);
-	if (f != NULL) { g_free(t); return; }
-	
-	custom_subst(network, &s, fmt, l, t, FALSE, FALSE);
+	file_write_line(data, network, fmt, l, t, TRUE);
 	g_free(t);
-
-	fputs(s, f);
-	fputc('\n', f);
-	fflush(f);
-
-	g_free(s);
 }
 
 static void file_write_channel_only(struct log_custom_data *data, 
 									struct network *network, const char *n, 
 									const struct line *l)
 {
-	char *s, *fmt;
-	FILE *f;
+	char *fmt;
 
 	fmt = g_key_file_get_string(data->kf, "log-custom", n, NULL);
 	if (fmt == NULL) return;
 
-	f = find_add_channel_file(data, network, l, l->args[1], TRUE);
-	if (f == NULL) return; 
-
-	custom_subst(network, &s, fmt, l, l->args[1], FALSE, FALSE);
-
-	fputs(s, f); fputc('\n', f);
-	fflush(f);
-
-	g_free(s);
+	file_write_line(data, network, fmt, l, l->args[1], TRUE);
 }
 
 static void file_write_channel_query(struct log_custom_data *data, 
 									 struct network *network, const char *n, 
 									 const struct line *l)
 {
-	char *s, *fmt;
+	char *fmt;
 	char *nick;
-	FILE *f;
 	GList *gl;
 	struct network_nick *nn;
 
@@ -467,14 +464,7 @@ static void file_write_channel_query(struct log_custom_data *data,
 
 	/* check for the query first */
 	nick = line_get_nick(l);
-	f = find_add_channel_file(data, network, l, nick, FALSE);
-
-	if (f != NULL) {
-		custom_subst(network, &s, fmt, l, nick, FALSE, FALSE);
-		fputs(s, f); fputc('\n', f);
-		fflush(f);
-		g_free(s);
-	}
+	file_write_line(data, network, fmt, l, nick, FALSE);
 	
 	nn = find_network_nick(network->state, nick);
 	g_free(nick);
@@ -483,14 +473,7 @@ static void file_write_channel_query(struct log_custom_data *data,
 	/* now, loop thru the users' channels */
 	for (gl = nn->channel_nicks; gl; gl = gl->next) {
 		struct channel_nick *cn = gl->data;
-		f = find_add_channel_file(data, network, l, cn->channel->name, TRUE);
-		if (f == NULL) 
-			continue;
-
-		custom_subst(network, &s, fmt, l, cn->channel->name, FALSE, FALSE);
-		fputs(s, f); fputc('\n', f);
-		fflush(f);
-		g_free(s);
+		file_write_line(data, network, fmt, l, cn->channel->name, TRUE);
 	}
 }
 
