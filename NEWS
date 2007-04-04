@@ -37,6 +37,8 @@ Ctrlproxy 3.0.2 UNRELEASED
 	* Properly expand target in log_irssi if it is a comma-separated list (#9)
         (based on patch by Korbinian Rosenegger)
 
+	* Don't append extra colon before RPL_TOPICWHOTIME (Korbinian Rosenegger)
+
   FEATURES
 
     * More advanced help support

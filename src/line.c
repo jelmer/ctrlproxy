@@ -202,6 +202,7 @@ static int requires_colon(const struct line *l)
 	case RPL_STATSOLINE:
 	case RPL_STATSHLINE:
 	case RPL_UMODEIS:
+	case RPL_TOPICWHOTIME:
 		return 0;
 
 	default: return 1;
