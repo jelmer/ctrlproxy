@@ -39,6 +39,9 @@ Ctrlproxy 3.0.2 UNRELEASED
 
 	* Don't append extra colon before RPL_TOPICWHOTIME (Korbinian Rosenegger)
 
+	* Adding timed backlog in BACKLOG command without a channel 
+	  (Korbinian Rosenegger)
+
   FEATURES
 
     * More advanced help support
