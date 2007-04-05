@@ -165,7 +165,7 @@ gboolean    g_file_set_contents             (const gchar *filename,
 {
 	int fd, ret;
 
-	fd = open(filename, O_WRONLY | O_CREAT);
+	fd = creat(filename, 0600);
 	if (fd == -1) {
 		g_set_error(error, G_FILE_ERROR, 
 				g_file_error_from_errno (errno),

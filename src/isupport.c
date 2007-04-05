@@ -226,102 +226,102 @@ void network_info_parse(struct network_info *info, const char *parameter)
 			info->casemapping = CASEMAP_UNKNOWN;
 			log_global(LOG_WARNING, "Unknown CASEMAPPING value '%s'", val);
 		}
-	} else if(!g_strcasecmp(key, "NETWORK")) {
+	} else if (!g_strcasecmp(key, "NETWORK")) {
 		g_free(info->name);
 		info->name = g_strdup(val);
-	} else if(!g_strcasecmp(key, "NICKLEN")) {
+	} else if (!g_strcasecmp(key, "NICKLEN") || !g_strcasecmp(key, "MAXNICKLEN")) {
 		info->nicklen = atoi(val);
-	} else if(!g_strcasecmp(key, "USERLEN")) {
+	} else if (!g_strcasecmp(key, "USERLEN")) {
 		info->userlen = atoi(val);
-	} else if(!g_strcasecmp(key, "HOSTLEN")) {
+	} else if (!g_strcasecmp(key, "HOSTLEN")) {
 		info->hostlen = atoi(val);
-	} else if(!g_strcasecmp(key, "CHANNELLEN")) {
+	} else if (!g_strcasecmp(key, "CHANNELLEN") || !g_strcasecmp(key, "MAXCHANNELLEN")) {
 		info->channellen = atoi(val);
-	} else if(!g_strcasecmp(key, "AWAYLEN")) {
+	} else if (!g_strcasecmp(key, "AWAYLEN")) {
 		info->awaylen = atoi(val);
-	} else if(!g_strcasecmp(key, "KICKLEN")) {
+	} else if (!g_strcasecmp(key, "KICKLEN")) {
 		info->kicklen = atoi(val);
-	} else if(!g_strcasecmp(key, "TOPICLEN")) {
+	} else if (!g_strcasecmp(key, "TOPICLEN")) {
 		info->topiclen = atoi(val);
-	} else if(!g_strcasecmp(key, "MAXCHANNELS")) {
+	} else if (!g_strcasecmp(key, "MAXCHANNELS")) {
 		info->maxchannels = atoi(val);
-	} else if(!g_strcasecmp(key, "MAXTARGETS")) {
+	} else if (!g_strcasecmp(key, "MAXTARGETS")) {
 		info->maxtargets = atoi(val);
-	} else if(!g_strcasecmp(key, "MAXBANS")) {
+	} else if (!g_strcasecmp(key, "MAXBANS")) {
 		info->maxbans = atoi(val);
-	} else if(!g_strcasecmp(key, "MODES")) {
+	} else if (!g_strcasecmp(key, "MODES")) {
 		info->maxmodes = atoi(val);
-	} else if(!g_strcasecmp(key, "WALLCHOPS")) {
+	} else if (!g_strcasecmp(key, "WALLCHOPS")) {
 		info->wallchops = TRUE;
-	} else if(!g_strcasecmp(key, "WALLVOICES")) {
+	} else if (!g_strcasecmp(key, "WALLVOICES")) {
 		info->wallvoices = TRUE;
-	} else if(!g_strcasecmp(key, "RFC2812")) {
+	} else if (!g_strcasecmp(key, "RFC2812")) {
 		info->rfc2812 = TRUE;
-	} else if(!g_strcasecmp(key, "PENALTY")) {
+	} else if (!g_strcasecmp(key, "PENALTY")) {
 		info->penalty = TRUE;
-	} else if(!g_strcasecmp(key, "FNC")) {
+	} else if (!g_strcasecmp(key, "FNC")) {
 		info->forced_nick_changes = TRUE;
-	} else if(!g_strcasecmp(key, "SAFELIST")) {
+	} else if (!g_strcasecmp(key, "SAFELIST")) {
 		info->safelist = TRUE;
-	} else if(!g_strcasecmp(key, "USERIP")) {
+	} else if (!g_strcasecmp(key, "USERIP")) {
 		info->userip = TRUE;
-	} else if(!g_strcasecmp(key, "CPRIVMSG")) {
+	} else if (!g_strcasecmp(key, "CPRIVMSG")) {
 		info->cprivmsg = TRUE;
-	} else if(!g_strcasecmp(key, "CNOTICE")) {
+	} else if (!g_strcasecmp(key, "CNOTICE")) {
 		info->cnotice = TRUE;
-	} else if(!g_strcasecmp(key, "KNOCK")) {
+	} else if (!g_strcasecmp(key, "KNOCK")) {
 		info->knock = TRUE;
-	} else if(!g_strcasecmp(key, "CAPAB")) {
+	} else if (!g_strcasecmp(key, "CAPAB")) {
 		info->capab = TRUE;
-	} else if(!g_strcasecmp(key, "VCHANNELS")) {
+	} else if (!g_strcasecmp(key, "VCHANNELS")) {
 		info->vchannels = TRUE;
-	} else if(!g_strcasecmp(key, "WHOX")) {
+	} else if (!g_strcasecmp(key, "WHOX")) {
 		info->whox = TRUE;
-	} else if(!g_strcasecmp(key, "CALLERID")) {
+	} else if (!g_strcasecmp(key, "CALLERID")) {
 		info->callerid = TRUE;
-	} else if(!g_strcasecmp(key, "ACCEPT")) {
+	} else if (!g_strcasecmp(key, "ACCEPT")) {
 		info->accept = TRUE;
-	} else if(!g_strcasecmp(key, "KEYLEN")) {
+	} else if (!g_strcasecmp(key, "KEYLEN")) {
 		info->keylen = atoi(val);
-	} else if(!g_strcasecmp(key, "SILENCE")) {
+	} else if (!g_strcasecmp(key, "SILENCE")) {
 		info->silence = atoi(val);
-	} else if(!g_strcasecmp(key, "CHANTYPES")) {
+	} else if (!g_strcasecmp(key, "CHANTYPES")) {
 		g_free(info->chantypes);
 		info->chantypes = g_strdup(val);
-	} else if(!g_strcasecmp(key, "CHANMODES")) {
+	} else if (!g_strcasecmp(key, "CHANMODES")) {
 		g_strfreev(info->chanmodes);
 		info->chanmodes = g_strsplit(val, ",", 4);
 		/* FIXME: Make sure info->chanmodes length is exactly 4 */
-	} else if(!g_strcasecmp(key, "CHANLIMIT")) {
+	} else if (!g_strcasecmp(key, "CHANLIMIT")) {
 		g_free(info->chanlimit);
 		info->chanlimit = g_strdup(val);
-	} else if(!g_strcasecmp(key, "EXCEPTS")) {
+	} else if (!g_strcasecmp(key, "EXCEPTS")) {
 		if (val == NULL) 
 			info->excepts_mode = 'e';
 		else if (strlen(val) > 1)
 			log_global(LOG_WARNING, "Invalid length excepts value: %s", val);
 		else
 			info->excepts_mode = val[0];
-	} else if(!g_strcasecmp(key, "INVEX")) {
+	} else if (!g_strcasecmp(key, "INVEX")) {
 		if (val == NULL) 
 			info->invex_mode = 'I';
 		else if (strlen(val) > 1)
 			log_global(LOG_WARNING, "Invalid length invex value: %s", val);
 		else
 			info->invex_mode = val[0];
-	} else if(!g_strcasecmp(key, "MAXLIST")) {
+	} else if (!g_strcasecmp(key, "MAXLIST")) {
 		g_free(info->maxlist);
 		info->maxlist = g_strdup(val);
-	} else if(!g_strcasecmp(key, "IDCHAN")) {
+	} else if (!g_strcasecmp(key, "IDCHAN")) {
 		g_free(info->idchan);
 		info->idchan = g_strdup(val);
-	} else if(!g_strcasecmp(key, "STATUSMSG")) {
+	} else if (!g_strcasecmp(key, "STATUSMSG")) {
 		g_free(info->statusmsg);
 		info->statusmsg = g_strdup(val);
-	} else if(!g_strcasecmp(key, "PREFIX")) {
+	} else if (!g_strcasecmp(key, "PREFIX")) {
 		g_free(info->prefix);
 		info->prefix = g_strdup(val);
-	} else if(!g_strcasecmp(key, "CHARSET")) {
+	} else if (!g_strcasecmp(key, "CHARSET")) {
 		g_free(info->charset);
 		info->charset = g_strdup(val);
 	} else {
