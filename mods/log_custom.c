@@ -405,6 +405,21 @@ static void file_write_line(struct log_custom_data *data, struct network *networ
 	g_free(s);
 }
 
+static void file_write_line_target(struct log_custom_data *data, struct network *network, const char *fmt,
+				   const struct line *l, const char *t, gboolean create_file)
+{
+	if (strchr(t, ',') != NULL) {
+		char **channels = g_strsplit(t, ",", 0);
+		int i;
+
+		for (i = 0; channels[i]; i++) {
+			file_write_line(data, network, fmt, l, channels[i], TRUE);
+		}
+		g_strfreev(channels);
+	} else
+		file_write_line(data, network, fmt, l, t, TRUE);
+}
+
 static void file_write_target(struct log_custom_data *data, 
 							  struct network *network, const char *n, 
 							  const struct line *l) 
@@ -425,11 +440,10 @@ static void file_write_target(struct log_custom_data *data,
 			t = line_get_nick(l);
 		else 
 			t = g_strdup("_messages_");
-	} else {
-		t = g_strdup(l->args[1]);
-	}
-	file_write_line(data, network, fmt, l, t, TRUE);
-	g_free(t);
+		file_write_line(data, network, fmt, l, t, TRUE);
+		g_free(t);
+	} else
+		file_write_line_target(data, network, fmt, l, l->args[1], TRUE);
 }
 
 static void file_write_channel_only(struct log_custom_data *data, 
@@ -441,7 +455,7 @@ static void file_write_channel_only(struct log_custom_data *data,
 	fmt = g_key_file_get_string(data->kf, "log-custom", n, NULL);
 	if (fmt == NULL) return;
 
-	file_write_line(data, network, fmt, l, l->args[1], TRUE);
+	file_write_line_target(data, network, fmt, l, l->args[1], TRUE);
 }
 
 static void file_write_channel_query(struct log_custom_data *data, 
