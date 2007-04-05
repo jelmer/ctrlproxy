@@ -37,6 +37,9 @@ Ctrlproxy 3.0.2 UNRELEASED
 	* Properly expand target in log_irssi if it is a comma-separated list (#9)
         (based on patch by Korbinian Rosenegger)
 
+    * Properly expand target in log_custom if it is a comma-separated list (#9)
+        (patch by Emanuele Giaquinta and Korbinian Rosenegger)
+
 	* Don't append extra colon before RPL_TOPICWHOTIME (Korbinian Rosenegger)
 
 	* Adding timed backlog in BACKLOG command without a channel 
