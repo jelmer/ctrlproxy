@@ -109,6 +109,7 @@ static void target_printf(struct network *n, const char *name,
 		for (i = 0; channels[i]; i++) {
 			target_vprintf(n, channels[i], fmt, ap);
 		}
+		g_strfreev(channels);
 	} else 
 		target_vprintf(n, name, fmt, ap);
 	va_end(ap);
