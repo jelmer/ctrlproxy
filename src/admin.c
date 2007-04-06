@@ -117,6 +117,11 @@ static void add_network (admin_handle h, char **args, void *userdata)
 		return;
 	}
 
+	if (find_network(admin_get_global(h), args[1]) != NULL) {
+		admin_out(h, "Network with name `%s' already exists", args[1]);
+		return;
+	}
+
 	nc = network_config_init(admin_get_global(h)->config);
 	g_free(nc->name); nc->name = g_strdup(args[1]);
 	load_network(admin_get_global(h), nc);
