@@ -604,6 +604,35 @@ static gboolean admin_to_server (struct network *n, struct client *c, const stru
 	} else if (!g_strcasecmp(l->args[0], "MODE")) {
 		/* FIXME: Do something here ? */
 		return TRUE;
+	} else if (!g_strcasecmp(l->args[0], "WHO")) {
+		if (!strcmp(l->args[1], ADMIN_CHANNEL) || 
+			!strcmp(l->args[1], "ctrlproxy")) {
+			virtual_network_recv_response(n, RPL_WHOREPLY, ADMIN_CHANNEL, 
+									  "ctrlproxy",
+									  get_my_hostname(),
+									  get_my_hostname(),
+									  "ctrlproxy",
+									  "H",
+									  "0 CtrlProxy user",
+									  NULL);
+		}
+		if (!strcmp(l->args[1], ADMIN_CHANNEL) ||
+			!strcmp(l->args[1], n->state->me.nick)) {
+			char *fullname = g_strdup_printf("0 %s", n->state->me.fullname);
+			virtual_network_recv_response(n, RPL_WHOREPLY, ADMIN_CHANNEL, 
+									  n->state->me.username,
+									  n->state->me.hostname,
+									  get_my_hostname(),
+									  n->state->me.nick,
+									  "H",
+									  fullname,
+									  NULL);
+			g_free(fullname);
+		}
+
+		virtual_network_recv_response(n, RPL_ENDOFWHO, l->args[1], "End of /WHO list.", NULL);
+
+		return TRUE;
 	} else {
 		virtual_network_recv_response(n, ERR_UNKNOWNCOMMAND, l->args[0], "Unknown command", NULL);
 		log_global(LOG_TRACE, "Unhandled command `%s' to admin network", 
