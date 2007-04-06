@@ -638,6 +638,15 @@ static gboolean admin_to_server (struct network *n, struct client *c, const stru
 			virtual_network_recv_response(n, ERR_NOSUCHCHANNEL, l->args[1], "No such channel", NULL);
 		}
 		return TRUE;
+	} else if (!g_strcasecmp(l->args[0], "PART")) {
+		if (strcmp(l->args[1], ADMIN_CHANNEL) != 0) {
+			virtual_network_recv_response(n, ERR_NOTONCHANNEL, l->args[1], "You're not on that channel", NULL);
+		} else {
+			virtual_network_recv_args(n, n->state->me.hostmask, "PART", l->args[1], NULL);
+			admin_net_init(n);
+		}
+		return TRUE;
+
 	} else {
 		virtual_network_recv_response(n, ERR_UNKNOWNCOMMAND, l->args[0], "Unknown command", NULL);
 		log_global(LOG_TRACE, "Unhandled command `%s' to admin network", 
