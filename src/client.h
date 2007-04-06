@@ -53,6 +53,7 @@ struct client {
 	char *username;
 	char *charset;
 	gboolean exit_on_close;
+	gboolean connected;
 };
 
 /**

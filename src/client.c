@@ -246,7 +246,7 @@ gboolean client_send_line(struct client *c, const struct line *l)
 											handle_client_receive, c);
 			g_queue_push_tail(c->pending_lines, linedup(l));
 		} else if (status != G_IO_STATUS_NORMAL) {
-			disconnect_client(c, g_strdup_printf("Error sending line '%s': %s", l->args[0], error?error->message:"ERROR"));
+			c->connected = FALSE;
 
 			return FALSE;
 		} 
@@ -347,7 +347,8 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition cond, void *_c
 		GError *error = NULL;
 		GIOStatus status;
 		
-		while ((status = irc_recv_line(c, client->incoming_iconv, &error, &l)) == G_IO_STATUS_NORMAL) {
+		while ((status = irc_recv_line(c, client->incoming_iconv, &error, 
+									   &l)) == G_IO_STATUS_NORMAL) {
 			g_assert(l);
 
 			log_client_line(client, l, TRUE);
@@ -386,6 +387,8 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition cond, void *_c
 	if (cond & G_IO_OUT) {
 		ret &= client_send_queue(client);
 	}
+
+	ret &= client->connected;
 
 	return ret;
 }
@@ -542,7 +545,9 @@ static gboolean handle_pending_client_receive(GIOChannel *c,
 					return FALSE;
 				}
 
-				welcome_client(client);
+				if (!welcome_client(client)) {
+					return FALSE;
+				}
 
 				client->incoming_id = g_io_add_watch(client->incoming, G_IO_IN | G_IO_HUP, handle_client_receive, client);
 
@@ -601,6 +606,7 @@ struct client *client_init(struct network *n, GIOChannel *c, const char *desc)
 	client->incoming = c;
 	client->network = n;
 	client->description = g_strdup(desc);
+	client->connected = TRUE;
 	client->exit_on_close = FALSE;
 	client->pending_lines = g_queue_new();
 

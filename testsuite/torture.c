@@ -53,7 +53,7 @@ gboolean init_log(const char *file);
 
 char *torture_tempfile(const char *path)
 {
-	return g_build_filename(path, test_dir, path, NULL);
+	return g_build_filename(test_dir, path, NULL);
 }
 
 struct network *dummy_network(void)
@@ -137,8 +137,9 @@ int main (int argc, char **argv)
 
 	for (i = 0; i < 1000; i++) {
 		snprintf(test_dir, sizeof(test_dir), "test-%d", i);
-		if (mkdir(test_dir, 0755) == 0)
+		if (mkdir(test_dir, 0755) == 0) {
 			break;
+		}
 	}
 
 	sr = srunner_create(util_suite());

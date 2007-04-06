@@ -23,7 +23,9 @@
 #include <check.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <glib/gstdio.h>
 #include "ctrlproxy.h"
+#include "torture.h"
 
 START_TEST(test_list_make_string)
 	GList *gl = NULL;
@@ -67,6 +69,21 @@ START_TEST(test_get_description)
 	g_free(desc);
 END_TEST
 
+START_TEST(test_get_set_file_contents)
+	char *cont = NULL;
+	struct stat st;
+	gsize len;
+	GError *error = NULL;
+	char *f = torture_tempfile("get_set_file_contents");
+	fail_unless(rep_g_file_set_contents(f, "bla\nbloe\n", -1, &error) == TRUE, "g_file_set_contents failed: %s", error == NULL?"(null)":error->message);
+	fail_unless(g_stat(f, &st) == 0);
+	fail_unless((st.st_mode & 0777) == 0644);
+	fail_unless(st.st_size == 9);
+	fail_unless(rep_g_file_get_contents(f, &cont, &len, &error) == TRUE, "g_file_get_contents failed: %s", error == NULL?"(null)":error->message);
+	fail_unless(!strcmp(cont, "bla\nbloe\n"));
+	fail_unless(9 == len);
+END_TEST
+
 Suite *util_suite(void)
 {
 	Suite *s = suite_create("util");
@@ -74,5 +91,6 @@ Suite *util_suite(void)
 	suite_add_tcase(s, tc_core);
 	tcase_add_test(tc_core, test_get_description);
 	tcase_add_test(tc_core, test_list_make_string);
+	tcase_add_test(tc_core, test_get_set_file_contents);
 	return s;
 }
