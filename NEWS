@@ -45,6 +45,8 @@ Ctrlproxy 3.0.2 UNRELEASED
 	* Adding timed backlog in BACKLOG command without a channel 
 	  (Korbinian Rosenegger)
 
+	* Handle disconnects of clients properly (#108)
+
   FEATURES
 
     * More advanced help support

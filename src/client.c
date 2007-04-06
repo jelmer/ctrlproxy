@@ -388,8 +388,6 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition cond, void *_c
 		ret &= client_send_queue(client);
 	}
 
-	ret &= client->connected;
-
 	return ret;
 }
 
