@@ -409,6 +409,14 @@ static struct query queries[] = {
 		handle_default
 	},
 
+/* PING */
+	{ "PING", 
+		{ 0 },
+		{ 0 },
+		{ ERR_NOORIGIN, 0 },
+		handle_default
+	},
+
  /* WALLOPS */
 	{ "WALLOPS",
 		{ 0 },

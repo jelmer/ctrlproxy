@@ -303,8 +303,10 @@ static void update_config(struct global *global, const char *path)
 		if (l->password && !(default_password && strcmp(l->password, default_password) == 0)) 
 			g_key_file_set_string(kf, tmp, "password", l->password);
 
-		if (l->network) 
+		if (l->network) {
+			g_assert(l->network->info.name != NULL);
 			g_key_file_set_string(kf, tmp, "network", l->network->info.name);
+		}
 
 		g_key_file_set_boolean(kf, tmp, "ssl", l->ssl);
 
