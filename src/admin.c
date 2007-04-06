@@ -633,6 +633,11 @@ static gboolean admin_to_server (struct network *n, struct client *c, const stru
 		virtual_network_recv_response(n, RPL_ENDOFWHO, l->args[1], "End of /WHO list.", NULL);
 
 		return TRUE;
+	} else if (!g_strcasecmp(l->args[0], "JOIN")) {
+		if (strcmp(l->args[1], ADMIN_CHANNEL) != 0) {
+			virtual_network_recv_response(n, ERR_NOSUCHCHANNEL, l->args[1], "No such channel", NULL);
+		}
+		return TRUE;
 	} else {
 		virtual_network_recv_response(n, ERR_UNKNOWNCOMMAND, l->args[0], "Unknown command", NULL);
 		log_global(LOG_TRACE, "Unhandled command `%s' to admin network", 
