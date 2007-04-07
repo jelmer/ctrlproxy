@@ -73,8 +73,11 @@ static struct linestack_marker *wrap_linestack_marker(struct linestack_context *
 struct linestack_marker *linestack_get_marker_numlines (struct linestack_context *ctx, int lines)
 {
 	g_assert(ctx != NULL);
-	if (!ctx->ops) return NULL;
-	if (!ctx->ops->get_marker_numlines) return NULL;
+	if (ctx->ops == NULL) 
+		return NULL;
+
+	if (ctx->ops->get_marker_numlines == NULL) 
+		return NULL;
 
 	return wrap_linestack_marker(ctx, ctx->ops->get_marker_numlines(ctx, lines));
 }
@@ -176,9 +179,10 @@ struct linestack_marker *linestack_get_marker(struct linestack_context *ctx)
 	if (ctx == NULL)
 		return NULL;
 
-	if (!ctx->ops) return NULL;
+	if (ctx->ops == NULL) 
+		return NULL;
 
-	g_assert(ctx->ops->get_marker);
+	g_assert(ctx->ops->get_marker != NULL);
 
 	return wrap_linestack_marker(ctx, ctx->ops->get_marker(ctx));
 }
