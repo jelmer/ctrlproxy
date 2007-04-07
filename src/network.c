@@ -60,7 +60,7 @@ static void server_send_login (struct network *s)
 	s->state->userdata = s;
 	s->state->log = state_log_helper;
 	s->linestack = new_linestack(s);
-	g_assert(s->linestack);
+	g_assert(s->linestack != NULL);
 
 	if(s->config->type == NETWORK_TCP && 
 	   s->connection.data.tcp.current_server->password) { 
@@ -1271,8 +1271,8 @@ struct network *find_network_by_hostname(struct global *global,
 {
 	GList *gl;
 	char *portname = g_strdup_printf("%d", port);
-	g_assert(portname);
-	g_assert(hostname);
+	g_assert(portname != NULL);
+	g_assert(hostname != NULL);
 	
 	for (gl = global->networks; gl; gl = gl->next) {
 		GList *sv;
@@ -1321,6 +1321,8 @@ struct network *find_network_by_hostname(struct global *global,
 
 		return load_network(global, nc);
 	}
+
+	g_free(portname);
 
 	return NULL;
 }
