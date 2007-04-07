@@ -146,6 +146,8 @@ static void del_network (admin_handle h, char **args, void *userdata)
 
 	disconnect_network(n);
 
+	unload_network(n);
+
 	admin_out(h, "Network `%s' deleted", args[1]);
 }
 
