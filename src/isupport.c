@@ -181,6 +181,9 @@ char *network_info_string(struct network_info *info)
 	if (info->invex_mode != '\0')
 		fs = g_list_append(fs, g_strdup_printf("INVEX=%c", info->invex_mode));
 
+	if (info->deaf_mode != '\0')
+		fs = g_list_append(fs, g_strdup_printf("DEAF=%c", info->deaf_mode));
+
 	if (info->maxlist != NULL)
 		fs = g_list_append(fs, g_strdup_printf("MAXLIST=%s", info->maxlist));
 
@@ -309,6 +312,13 @@ void network_info_parse(struct network_info *info, const char *parameter)
 			log_global(LOG_WARNING, "Invalid length invex value: %s", val);
 		else
 			info->invex_mode = val[0];
+	} else if (!g_strcasecmp(key, "DEAF")) {
+		if (val == NULL) 
+			info->deaf_mode = 'D';
+		else if (strlen(val) > 1)
+			log_global(LOG_WARNING, "Invalid length deaf value: %s", val);
+		else
+			info->deaf_mode = val[0];
 	} else if (!g_strcasecmp(key, "MAXLIST")) {
 		g_free(info->maxlist);
 		info->maxlist = g_strdup(val);

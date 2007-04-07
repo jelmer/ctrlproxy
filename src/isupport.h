@@ -86,6 +86,9 @@ struct network_info
 	 * RFC 2811 for more information. */
 	char invex_mode;
 
+	/** The server supports dead mode (+d). */
+	char deaf_mode;
+
 	/** The server supports messaging channel member who have a 
 	 * certain status or higher. The status is one of the letters from 
 	 * PREFIX. */
