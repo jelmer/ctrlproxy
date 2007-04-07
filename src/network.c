@@ -146,6 +146,13 @@ static gboolean process_from_server(struct network *n, struct line *l)
 	g_assert(n);
 	g_assert(l);
 
+	log_network_line(n, l, TRUE);
+
+	/* Silently drop empty messages, as allowed by RFC */
+	if(l->argc == 0) {
+		return TRUE;
+	}
+
 	n->connection.last_line_recvd = time(NULL);
 
 	if (n->state == NULL) {
@@ -272,17 +279,10 @@ static gboolean handle_server_receive (GIOChannel *c, GIOCondition cond, void *_
 		GError *err = NULL;
 		GIOStatus status;
 		
-		while ((status = irc_recv_line(c, server->connection.incoming_iconv, &err, &l)) == G_IO_STATUS_NORMAL) 
+		while ((status = irc_recv_line(c, server->connection.incoming_iconv, 
+									   &err, &l)) == G_IO_STATUS_NORMAL) 
 		{
 			g_assert(l);
-
-			log_network_line(server, l, TRUE);
-
-			/* Silently drop empty messages, as allowed by RFC */
-			if(l->argc == 0) {
-				free_line(l);
-				continue;
-			}
 
 			ret = process_from_server(server, l);
 
@@ -292,18 +292,26 @@ static gboolean handle_server_receive (GIOChannel *c, GIOCondition cond, void *_
 				return FALSE;
 		}
 
-		if (status == G_IO_STATUS_EOF) {
+		switch (status) {
+		case G_IO_STATUS_AGAIN:
+			return TRUE;
+		case G_IO_STATUS_EOF:
 			if (server->connection.state != NETWORK_CONNECTION_STATE_NOT_CONNECTED) 
 				reconnect(server, FALSE);
 			return FALSE;
-		}
+		case G_IO_STATUS_ERROR:
+			g_assert(err != NULL);
+			log_network(LOG_WARNING, server, "Error \"%s\" reading from server", err->message);
+			if (l != NULL) {
+				ret = process_from_server(server, l);
 
-		if (status != G_IO_STATUS_AGAIN) {
-			network_report_disconnect(server, 
-				"Error \"%s\" reading from server, reconnecting in %ds...",
-				err?err->message:"UNKNOWN", server->config->reconnect_interval);
-			reconnect(server, FALSE);
-			return FALSE;
+				free_line(l);
+
+				return ret;
+			}
+
+			return TRUE;
+		default: g_assert(0);
 		}
 
 		return TRUE;

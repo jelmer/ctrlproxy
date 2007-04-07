@@ -142,7 +142,7 @@ START_TEST(parser_recv_line_invalid)
 	g_io_channel_flush(ch2, NULL);
 
 	fail_unless(irc_recv_line(ch1, iconv, NULL, &l) == G_IO_STATUS_ERROR);
-	fail_unless(l == NULL);
+	fail_unless(!strcmp(l->args[1], "bl\366a"));
 	fail_unless(irc_recv_line(ch1, iconv, NULL, &l) == G_IO_STATUS_AGAIN);
 
 	g_iconv_close(iconv);

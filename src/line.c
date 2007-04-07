@@ -348,9 +348,12 @@ GIOStatus irc_recv_line(GIOChannel *c, GIConv iconv,
 		cvrt = raw;
 	} else {
 		cvrt = g_convert_with_iconv(raw, -1, iconv, NULL, NULL, error);
-		if (cvrt == NULL)
-			return G_IO_STATUS_ERROR;
-		g_free(raw);
+		if (cvrt == NULL) {
+			cvrt = raw;
+			status = G_IO_STATUS_ERROR;
+		} else {
+			g_free(raw);
+		}
 	}
 
 	*l = irc_parse_line(cvrt);
