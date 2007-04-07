@@ -215,7 +215,7 @@ gboolean client_send_args(struct client *c, ...)
 	g_assert(c);
 	
 	va_start(ap, c);
-	l = virc_parse_line(c->network?c->network->info.name:"ctrlproxy", ap);
+	l = virc_parse_line(get_my_hostname(), ap);
 	va_end(ap);
 
 	ret = client_send_line(c, l);
