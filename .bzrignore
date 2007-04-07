@@ -64,3 +64,4 @@ debian/ctrlproxy-dev
 debian/tmp
 doc/help.txt
 coverage
+ctrlproxy.info
