@@ -74,6 +74,23 @@ START_TEST(test_read_file_empty)
 	fail_unless(gl == NULL);
 END_TEST
 
+START_TEST(test_read_file_empty_lines)
+	char *fn = torture_tempfile(__FUNCTION__);
+	GList *gl = NULL;
+	fail_unless(g_file_set_contents(fn, "\n\n\n", -1, NULL));
+	fail_unless(nickserv_read_file(fn, &gl));
+	fail_unless(gl == NULL);
+END_TEST
+
+START_TEST(test_read_file_almost_empty_lines)
+	char *fn = torture_tempfile(__FUNCTION__);
+	GList *gl = NULL;
+	fail_unless(g_file_set_contents(fn, "foo\nbar\nbla\n", -1, NULL));
+	fail_unless(nickserv_read_file(fn, &gl));
+	fail_unless(gl == NULL);
+END_TEST
+
+
 START_TEST(test_read_file_simple_network)
 	char *fn = torture_tempfile(__FUNCTION__);
 	GList *gl = NULL;
@@ -109,6 +126,8 @@ Suite *nickserv_suite()
 	tcase_add_test(tc_core, test_write_file_simple_network);
 	tcase_add_test(tc_core, test_write_file_simple_nonetwork);
 	tcase_add_test(tc_core, test_read_file_empty);
+	tcase_add_test(tc_core, test_read_file_empty_lines);
+	tcase_add_test(tc_core, test_read_file_almost_empty_lines);
 	tcase_add_test(tc_core, test_read_file_simple_network);
 	tcase_add_test(tc_core, test_read_file_simple_nonetwork);
 	return s;
