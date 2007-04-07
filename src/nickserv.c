@@ -188,17 +188,15 @@ gboolean nickserv_save(struct global *global, const char *dir)
 	return ret;
 }
 
-gboolean nickserv_load(struct global *global)
+gboolean nickserv_read_file(const char *filename, GList **nicks)
 {
-    char *filename = g_build_filename(global->config->config_dir, "nickserv", NULL);
     GIOChannel *gio;
     char *ret;
     gsize nr, term;
 
     gio = g_io_channel_new_file(filename, "r", NULL);
 
-    if (!gio) {
-        g_free(filename);
+    if (gio == NULL) {
         return FALSE;
     }
 
@@ -227,14 +225,23 @@ gboolean nickserv_load(struct global *global)
 			e->network = parts[2];
 		}
 	
-		global->nickserv_nicks = g_list_append(global->nickserv_nicks, e);   
+		*nicks = g_list_append(*nicks, e);   
         g_free(parts);
     }
 
-	g_free(filename);
-
 	g_io_channel_shutdown(gio, TRUE, NULL);
 	g_io_channel_unref(gio);
+
+	return TRUE;
+}
+
+gboolean nickserv_load(struct global *global)
+{
+	gboolean ret;
+    char *filename = g_build_filename(global->config->config_dir, "nickserv", 
+									  NULL);
+	ret = nickserv_read_file(filename, &global->nickserv_nicks);
+	g_free(filename);
 
 	return TRUE;
 }

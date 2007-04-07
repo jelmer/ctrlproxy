@@ -29,6 +29,7 @@ const char *nickserv_find_nick(struct network *n, char *nick);
 const char *nickserv_nick(struct network *n);
 void nickserv_identify_me(struct network *network, char *nick);
 gboolean nickserv_write_file(GList *nicks, const char *filename);
+gboolean nickserv_read_file(const char *filename, GList **nicks);
 
 START_TEST(test_write_file_empty)
 	char *fn = torture_tempfile(__FUNCTION__);
@@ -65,6 +66,40 @@ START_TEST(test_write_file_simple_nonetwork)
 	fail_unless(!strcmp(contents, "anick\tsomepw\t*\n"), "got: %s", contents);
 END_TEST
 
+START_TEST(test_read_file_empty)
+	char *fn = torture_tempfile(__FUNCTION__);
+	GList *gl = NULL;
+	fail_unless(g_file_set_contents(fn, "", -1, NULL));
+	fail_unless(nickserv_read_file(fn, &gl));
+	fail_unless(gl == NULL);
+END_TEST
+
+START_TEST(test_read_file_simple_network)
+	char *fn = torture_tempfile(__FUNCTION__);
+	GList *gl = NULL;
+	struct nickserv_entry *e;
+	fail_unless(g_file_set_contents(fn, "bla\tbloe\tblie\n", -1, NULL));
+	fail_unless(nickserv_read_file(fn, &gl));
+	e = gl->data;
+	fail_unless(!strcmp(e->nick, "bla"));
+	fail_unless(!strcmp(e->pass, "bloe"));
+	fail_unless(!strcmp(e->network, "blie"));
+	fail_unless(gl->next == NULL);
+END_TEST
+
+START_TEST(test_read_file_simple_nonetwork)
+	char *fn = torture_tempfile(__FUNCTION__);
+	GList *gl = NULL;
+	struct nickserv_entry *e;
+	fail_unless(g_file_set_contents(fn, "bla\tbloe\t*\n", -1, NULL));
+	fail_unless(nickserv_read_file(fn, &gl));
+	e = gl->data;
+	fail_unless(!strcmp(e->nick, "bla"));
+	fail_unless(!strcmp(e->pass, "bloe"));
+	fail_unless(e->network == NULL);
+	fail_unless(gl->next == NULL);
+END_TEST
+
 Suite *nickserv_suite()
 {
 	Suite *s = suite_create("nickserv");
@@ -73,5 +108,8 @@ Suite *nickserv_suite()
 	tcase_add_test(tc_core, test_write_file_empty);
 	tcase_add_test(tc_core, test_write_file_simple_network);
 	tcase_add_test(tc_core, test_write_file_simple_nonetwork);
+	tcase_add_test(tc_core, test_read_file_empty);
+	tcase_add_test(tc_core, test_read_file_simple_network);
+	tcase_add_test(tc_core, test_read_file_simple_nonetwork);
 	return s;
 }
