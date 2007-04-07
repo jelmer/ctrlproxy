@@ -181,6 +181,26 @@ char *network_info_string(struct network_info *info)
 	if (info->invex_mode != '\0')
 		fs = g_list_append(fs, g_strdup_printf("INVEX=%c", info->invex_mode));
 
+	if (info->elist_mask_search ||
+		info->elist_inverse_mask_search ||
+		info->elist_usercount_search ||
+		info->elist_creation_time_search ||
+		info->elist_topic_search) {
+		char elist[100];
+		strcpy(elist, "");
+		if (info->elist_mask_search)
+			strncat(elist, "M", sizeof(elist));
+		if (info->elist_inverse_mask_search)
+			strncat(elist, "N", sizeof(elist));
+		if (info->elist_usercount_search)
+			strncat(elist, "U", sizeof(elist));
+		if (info->elist_creation_time_search)
+			strncat(elist, "C", sizeof(elist));
+		if (info->elist_topic_search)
+			strncat(elist, "T", sizeof(elist));
+		fs = g_list_append(fs, g_strdup_printf("ELIST=%s", elist));
+	}
+	
 	if (info->deaf_mode != '\0')
 		fs = g_list_append(fs, g_strdup_printf("DEAF=%c", info->deaf_mode));
 
@@ -312,6 +332,20 @@ void network_info_parse(struct network_info *info, const char *parameter)
 			log_global(LOG_WARNING, "Invalid length invex value: %s", val);
 		else
 			info->invex_mode = val[0];
+	} else if (!g_strcasecmp(key, "ELIST")) {
+		int i;
+		for (i = 0; val[i]; i++) {
+			switch (val[i]) {
+			case 'M': info->elist_mask_search = TRUE; break;
+			case 'N': info->elist_inverse_mask_search = TRUE; break;
+			case 'T': info->elist_topic_search = TRUE; break;
+			case 'U': info->elist_usercount_search = TRUE; break;
+			case 'C': info->elist_creation_time_search = TRUE; break;
+			default:
+				  log_global(LOG_WARNING, "Unknown ELIST parameter '%c'", val[i]);
+				  break;
+			}
+		}
 	} else if (!g_strcasecmp(key, "DEAF")) {
 		if (val == NULL) 
 			info->deaf_mode = 'D';

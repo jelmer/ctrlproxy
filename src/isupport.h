@@ -72,6 +72,15 @@ struct network_info
 	/* FIXME: Should be a hash table */
 	char *maxlist;
 
+	/** The server supports extentions for the LIST command. 
+	 * The tokens specify which extention are supported. *
+	 */
+	gboolean elist_mask_search;
+	gboolean elist_inverse_mask_search;
+	gboolean elist_usercount_search;
+	gboolean elist_creation_time_search;
+	gboolean elist_topic_search;
+
 	/** The ID length for channels with an ID. The prefix says for which 
 	 * channel type it is, and the number how long it is. See RFC 2811 for 
 	 * more information. */
