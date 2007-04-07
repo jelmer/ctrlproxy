@@ -23,17 +23,9 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <errno.h>
+#include "nickserv.h"
 #include "irc.h"
 
-
-/**
- * Nickname/password combination for a particular network or globally.
- */
-struct nickserv_entry {
-	const char *network;
-	const char *nick;
-	const char *pass;
-};
 
 const char *nickserv_find_nick(struct network *n, const char *nick)
 {
@@ -152,37 +144,48 @@ static gboolean log_data(struct network *n, const struct line *l, enum data_dire
 	return TRUE;
 }
 
-
-gboolean nickserv_save(struct global *global, const char *dir)
+gboolean nickserv_write_file(GList *nicks, const char *filename)
 {
-    char *filename = g_build_filename(dir, "nickserv", NULL);
-    GList *gl;
+	GList *gl;
 	int fd;
 
 	fd = open(filename, O_WRONLY | O_CREAT, 0600);
 
     if (fd == -1) {
 		log_global(LOG_WARNING, "Unable to write nickserv file `%s': %s", filename, strerror(errno));
-        g_free(filename);
         return FALSE;
     }
 
-	for (gl = global->nickserv_nicks; gl; gl = gl->next) {
+	for (gl = nicks; gl; gl = gl->next) {
 		struct nickserv_entry *n = gl->data;
         char *line;
         
         line = g_strdup_printf("%s\t%s\t%s\n", n->nick, n->pass, n->network?n->network:"*");
 		if (write(fd, line, strlen(line)) < 0) {
 			log_global(LOG_WARNING, "error writing line `%s': %s", line, strerror(errno));
+			g_free(line);
+			close(fd);
+			return FALSE;
 		}
 
         g_free(line);
 	}
     
     close(fd);
-    g_free(filename);
 
 	return TRUE;
+}
+
+gboolean nickserv_save(struct global *global, const char *dir)
+{
+    char *filename = g_build_filename(dir, "nickserv", NULL);
+	gboolean ret;
+
+	ret = nickserv_write_file(global->nickserv_nicks, filename);
+
+    g_free(filename);
+
+	return ret;
 }
 
 gboolean nickserv_load(struct global *global)
