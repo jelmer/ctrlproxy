@@ -648,7 +648,11 @@ static gboolean admin_to_server (struct network *n, struct client *c, const stru
 			admin_net_init(n);
 		}
 		return TRUE;
-
+	} else if (!g_strcasecmp(l->args[0], "WHOIS")) {
+		/* FIXME: Send something sensible */
+		virtual_network_recv_response(n, RPL_ENDOFWHOIS, l->args[1], 
+									  "End of /WHOIS list.", NULL);
+		return TRUE;
 	} else {
 		virtual_network_recv_response(n, ERR_UNKNOWNCOMMAND, l->args[0], "Unknown command", NULL);
 		log_global(LOG_TRACE, "Unhandled command `%s' to admin network", 

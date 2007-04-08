@@ -76,7 +76,7 @@ Ctrlproxy 3.0.2 UNRELEASED
     * Remove is_private from line struct (#12).
 		(patch by Emanuele Giaquinta <e.giaquinta@glauco.it>)
 
-	* Implement ISON, USERHOST, WHO, JOIN, PART for admin networks. (#99)
+	* Implement ISON, USERHOST, WHO, WHOIS, JOIN, PART for admin networks. (#99)
 
   PORTABILITY
 
