@@ -33,6 +33,8 @@
 #include "isupport.h"
 #include <sys/socket.h>
 
+#define DEFAULT_NETWORK_CHARSET NULL
+
 struct global;
 struct network;
 struct client;

@@ -433,7 +433,6 @@ gboolean is_prefix(char p, const struct network_info *n)
 const char *get_charset(const struct network_info *n)
 {
 	g_assert(n != NULL);
-	g_assert(n->charset != NULL);
 	return n->charset;
 }
 

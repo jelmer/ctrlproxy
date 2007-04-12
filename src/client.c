@@ -637,11 +637,16 @@ void kill_pending_clients(const char *reason)
 gboolean client_set_charset(struct client *c, const char *name)
 {
 	GIConv tmp;
-	tmp = g_iconv_open(name, "UTF-8");
 
-	if (tmp == (GIConv)-1) {
-		log_client(LOG_WARNING, c, "Unable to find charset `%s'", name);
-		return FALSE;
+	if (name != NULL) {
+		tmp = g_iconv_open(name, "UTF-8");
+
+		if (tmp == (GIConv)-1) {
+			log_client(LOG_WARNING, c, "Unable to find charset `%s'", name);
+			return FALSE;
+		}
+	} else {
+		tmp = (GIConv)-1;
 	}
 	
 	if (c->outgoing_iconv != (GIConv)-1)
@@ -649,10 +654,15 @@ gboolean client_set_charset(struct client *c, const char *name)
 
 	c->outgoing_iconv = tmp;
 
-	tmp = g_iconv_open("UTF-8", name);
-	if (tmp == (GIConv)-1) {
-		log_client(LOG_WARNING, c, "Unable to find charset `%s'", name);
-		return FALSE;
+	if (name != NULL) {
+		tmp = g_iconv_open("UTF-8", name);
+
+		if (tmp == (GIConv)-1) {
+			log_client(LOG_WARNING, c, "Unable to find charset `%s'", name);
+			return FALSE;
+		}
+	} else {
+		tmp = (GIConv)-1;
 	}
 
 	if (c->incoming_iconv != (GIConv)-1)

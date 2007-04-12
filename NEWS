@@ -47,6 +47,10 @@ Ctrlproxy 3.0.2 UNRELEASED
 
 	* Handle disconnects of clients properly (#108)
 
+	* Fix handling of non-UTF8 characters in linestack_file.
+
+	* Don't use CHARSETs by default (#117).
+
   FEATURES
 
     * More advanced help support

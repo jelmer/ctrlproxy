@@ -25,7 +25,7 @@
  * @brief Settings
  */
 
-#define DEFAULT_CLIENT_CHARSET "UTF-8"
+#define DEFAULT_CLIENT_CHARSET NULL
 
 /**
  * Configuration for a particular channel
