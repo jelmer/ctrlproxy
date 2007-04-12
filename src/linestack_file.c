@@ -434,6 +434,8 @@ static gboolean file_init(struct linestack_context *ctx, const char *name,
 	}
 	g_free(data_file);
 
+	g_io_channel_set_encoding(data->line_file, NULL, NULL);
+
 	data_file = g_build_filename(data_dir, "state", NULL);
 
 	unlink(data_file);
@@ -446,6 +448,8 @@ static gboolean file_init(struct linestack_context *ctx, const char *name,
 		return FALSE;
 	}
 	g_free(data_file);
+
+	g_io_channel_set_encoding(data->state_file, NULL, NULL);
 
 	g_free(data_dir);
 	ctx->backend_data = data;
