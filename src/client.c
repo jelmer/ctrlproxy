@@ -34,8 +34,8 @@
 #include "internals.h"
 #include "irc.h"
 
-/* Linked list of clients currently connected (and authenticated, but still need to 
- * send USER and NICK commands) */
+/* Linked list of clients currently connected (and authenticated, but still 
+ * need to send USER and NICK commands) */
 static GList *pending_clients = NULL;
 static gboolean handle_client_receive(GIOChannel *c, GIOCondition cond, 
 									  void *_client);
@@ -56,7 +56,8 @@ static gboolean client_send_queue(struct client *c)
 		g_queue_pop_head(c->pending_lines);
 
 		if (status != G_IO_STATUS_NORMAL) {
-			disconnect_client(c, g_strdup_printf("Error sending line '%s': %s", l->args[0], error?error->message:"ERROR"));
+			disconnect_client(c, g_strdup_printf("Error sending line '%s': %s", 
+							l->args[0], error?error->message:"ERROR"));
 
 			free_line(l);
 
@@ -148,8 +149,8 @@ gboolean client_send_response(struct client *c, int response, ...)
 	gboolean ret;
 	va_list ap;
 
-	g_assert(c);
-	g_assert(response);
+	g_assert(c != NULL);
+	g_assert(response > 0);
 	
 	va_start(ap, response);
 	l = virc_parse_line(c->network?c->network->info.name:get_my_hostname(), ap);
@@ -160,9 +161,11 @@ gboolean client_send_response(struct client *c, int response, ...)
 
 	l->args[0] = g_strdup_printf("%03d", response);
 
-	if (c->nick) 
+	if (c->nick != NULL) 
 		l->args[1] = g_strdup(c->nick);
-	else if (c->network && c->network->state && c->network->state->me.nick) 
+	else if (c->network != NULL && 
+			 c->network->state != NULL && 
+			 c->network->state->me.nick != NULL) 
 		l->args[1] = g_strdup(c->network->state->me.nick);
 	else 
 		l->args[1] = g_strdup("*");
@@ -239,7 +242,8 @@ gboolean client_send_line(struct client *c, const struct line *l)
 
 	if (c->outgoing_id == 0) {
 		GError *error = NULL;
-		GIOStatus status = irc_send_line(c->incoming, c->outgoing_iconv, l, &error);
+		GIOStatus status = irc_send_line(c->incoming, c->outgoing_iconv, l, 
+										 &error);
 
 		if (status == G_IO_STATUS_AGAIN) {
 			c->outgoing_id = g_io_add_watch(c->incoming, G_IO_OUT, 
@@ -330,7 +334,8 @@ void send_motd(struct client *c)
 	client_send_response(c, RPL_ENDOFMOTD, "End of MOTD", NULL);
 }
 
-static gboolean handle_client_receive(GIOChannel *c, GIOCondition cond, void *_client)
+static gboolean handle_client_receive(GIOChannel *c, GIOCondition cond, 
+									  void *_client)
 {
 	gboolean ret = TRUE;
 	struct client *client = (struct client *)_client;
@@ -398,8 +403,11 @@ static gboolean welcome_client(struct client *client)
 	g_assert(client);
 
 	client_send_response(client, RPL_WELCOME, "Welcome to the ctrlproxy", NULL);
-	client_send_response(client, RPL_YOURHOST, tmp = g_strdup_printf("Host %s is running ctrlproxy", get_my_hostname()), NULL); g_free(tmp);
-	client_send_response(client, RPL_CREATED, "Ctrlproxy (c) 2002-2006 Jelmer Vernooij <jelmer@vernstok.nl>", NULL);
+	tmp = g_strdup_printf("Host %s is running ctrlproxy", get_my_hostname());
+	client_send_response(client, RPL_YOURHOST, tmp, NULL); 
+	g_free(tmp);
+	client_send_response(client, RPL_CREATED, 
+		"Ctrlproxy (c) 2002-2006 Jelmer Vernooij <jelmer@vernstok.nl>", NULL);
 	client_send_response(client, RPL_MYINFO, 
 		 client->network->info.name, 
 		 ctrlproxy_version(), 
@@ -409,7 +417,8 @@ static gboolean welcome_client(struct client *client)
 
 	features = network_generate_feature_string(client->network);
 
-	client_send_response(client, RPL_BOUNCE, features, "are supported on this server", NULL);
+	client_send_response(client, RPL_BOUNCE, features, 
+						 "are supported on this server", NULL);
 
 	g_free(features);
 
@@ -520,18 +529,25 @@ static gboolean handle_pending_client_receive(GIOChannel *c,
 					continue;
 				}
 
-				client->network = find_network_by_hostname(my_global, l->args[1], l->args[2]?atoi(l->args[2]):6667, TRUE);
+				client->network = find_network_by_hostname(my_global, 
+						l->args[1], l->args[2]?atoi(l->args[2]):6667, TRUE);
 
 				if (!client->network) {
-					log_client(LOG_ERROR, client, "Unable to connect to network with name %s", l->args[1]);
+					log_client(LOG_ERROR, client, 
+						"Unable to connect to network with name %s", 
+						l->args[1]);
 				}
 
 				if (client->network->connection.state == NETWORK_CONNECTION_STATE_NOT_CONNECTED) {
-					client_send_args(client, "NOTICE", client->nick?client->nick:"*", "Connecting to network", NULL);
+					client_send_args(client, "NOTICE", 
+										client->nick?client->nick:"*", 
+										"Connecting to network", NULL);
 					connect_network(client->network);
 				}
 			} else {
-				client_send_response(client, ERR_NOTREGISTERED, "Register first", client->network?client->network->info.name:get_my_hostname(), NULL);
+				client_send_response(client, ERR_NOTREGISTERED, 
+					"Register first", 
+					client->network?client->network->info.name:get_my_hostname(), NULL);
 			}
 
 			free_line(l);
@@ -539,7 +555,7 @@ static gboolean handle_pending_client_receive(GIOChannel *c,
 			if (client->fullname != NULL && client->nick != NULL) {
 				if (client->network == NULL) {
 					disconnect_client(client, 
-									  "Please select a network first, or specify one in your ctrlproxyrc");
+						  "Please select a network first, or specify one in your configuration file");
 					return FALSE;
 				}
 
@@ -591,8 +607,8 @@ struct client *client_init(struct network *n, GIOChannel *c, const char *desc)
 	struct client *client;
 	gboolean charset_ok = FALSE;
 
-	g_assert(c);
-	g_assert(desc);
+	g_assert(c != NULL);
+	g_assert(desc != NULL);
 
 	client = g_new0(struct client, 1);
 	g_assert(client);
@@ -609,7 +625,7 @@ struct client *client_init(struct network *n, GIOChannel *c, const char *desc)
 	client->pending_lines = g_queue_new();
 
 	client->outgoing_iconv = client->incoming_iconv = (GIConv)-1;
-	if (n && n->global)
+	if (n != NULL && n->global != NULL)
 		charset_ok = client_set_charset(client, 
 										n->global->config->client_charset);
 	if (!charset_ok)

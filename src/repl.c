@@ -58,20 +58,22 @@ static void gen_replication_channel(struct client *c, struct channel_state *ch)
 	struct channel_nick *n;
 	GList *nl;
 
-	g_assert(c);
-	g_assert(ch);
-	g_assert(c->network);
-	g_assert(c->network->state);
-	g_assert(ch->name);
+	g_assert(c != NULL);
+	g_assert(ch != NULL);
+	g_assert(c->network != NULL);
+	g_assert(c->network->state != NULL);
+	g_assert(ch->name != NULL);
 
-	client_send_args_ex(c, c->network->state->me.hostmask, "JOIN", ch->name, NULL);
+	client_send_args_ex(c, c->network->state->me.hostmask, "JOIN", ch->name, 
+						NULL);
 
-	if(ch->topic) {
+	if (ch->topic != NULL) {
 		client_send_response(c, RPL_TOPIC, ch->name, ch->topic, NULL);
 	}
-	if(ch->topic_set_time && ch->topic_set_by) {
+	if (ch->topic_set_time != 0 && ch->topic_set_by != NULL) {
 		char *tmp = g_strdup_printf("%lu", ch->topic_set_time);
-		client_send_response(c, RPL_TOPICWHOTIME, ch->name, ch->topic_set_by, tmp, NULL);
+		client_send_response(c, RPL_TOPICWHOTIME, ch->name, ch->topic_set_by, 
+							 tmp, NULL);
 		g_free(tmp);
 	}
 
@@ -87,7 +89,8 @@ static void gen_replication_channel(struct client *c, struct channel_state *ch)
 		client_send_response(c, RPL_NAMREPLY, mode, ch->name, tmp, NULL);
 		g_free(tmp);
 	}
-	client_send_response(c, RPL_ENDOFNAMES, ch->name, "End of /NAMES list", NULL);
+	client_send_response(c, RPL_ENDOFNAMES, ch->name, "End of /NAMES list", 
+						 NULL);
 }
 
 gboolean client_send_state(struct client *c, struct network_state *state)
@@ -105,7 +108,8 @@ gboolean client_send_state(struct client *c, struct network_state *state)
 	g_assert(c);
 	g_assert(state);
 
-    log_client(LOG_TRACE, c, "Sending state (%d channels)", g_list_length(state->channels));
+    log_client(LOG_TRACE, c, "Sending state (%d channels)", 
+			   g_list_length(state->channels));
 
 	for (cl = state->channels; cl; cl = cl->next) {
 		ch = (struct channel_state *)cl->data;
@@ -152,7 +156,8 @@ void client_replicate(struct client *client)
 		}
 
 		if (!fn) {
-			log_client(LOG_WARNING, client, "Unable to find replication backend '%s'\n", bn);
+			log_client(LOG_WARNING, client, 
+					   "Unable to find replication backend '%s'", bn);
 			fn = none_replicate;
 		}
 	}
