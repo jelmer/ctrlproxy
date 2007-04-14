@@ -201,6 +201,11 @@ struct network_info
 	/* The NAMESX extension is supported by the server. See 
 	 * http://www.inspircd.org/wiki/NAMESX_Module for details */
 	gboolean namesx; 
+
+	/* This server uses SECURELIST, meaning that LIST can not be 
+	 * run 60 seconds within connect. See 
+	 * http://www.inspircd.org/wiki/Secure_LIST_Module for details. */
+	gboolean securelist;
 };
 
 G_MODULE_EXPORT char *network_info_string(struct network_info *info);

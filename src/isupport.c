@@ -177,6 +177,9 @@ char *network_info_string(struct network_info *info)
 	if (info->namesx) 
 		fs = g_list_append(fs, "NAMESX");
 
+	if (info->securelist)
+		fs = g_list_append(fs, "SECURELIST");
+
 	if (info->excepts_mode != '\0')
 		fs = g_list_append(fs, g_strdup_printf("EXCEPTS=%c", info->excepts_mode));
 
@@ -377,6 +380,8 @@ void network_info_parse(struct network_info *info, const char *parameter)
 		info->charset = g_strdup(val);
 	} else if (!g_strcasecmp(key, "NAMESX")) {
 		info->namesx = TRUE;
+	} else if (!g_strcasecmp(key, "SECURELIST")) {
+		info->securelist = TRUE;
 	} else {
 		log_global(LOG_WARNING, "Unknown 005 parameter `%s'", key);
 	}
