@@ -212,6 +212,9 @@ struct network_info
 
 	/* Server supports /fpart of /remove */
 	gboolean remove;
+
+	/* Server supports /map */
+	gboolean map;
 };
 
 G_MODULE_EXPORT char *network_info_string(struct network_info *info);
