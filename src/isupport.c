@@ -90,6 +90,9 @@ char *network_info_string(struct network_info *info)
 	if (info->watch != 0)
 		fs = g_list_append(fs, g_strdup_printf("WATCH=%d", info->watch));
 
+	if (info->operoverride)
+		fs = g_list_append(fs, "OVERRIDE");
+
 	if (info->hostlen != 0)
 		fs = g_list_append(fs, g_strdup_printf("HOSTLEN=%d", info->hostlen));
 
@@ -275,6 +278,8 @@ void network_info_parse(struct network_info *info, const char *parameter)
 		info->userlen = atoi(val);
 	} else if (!g_strcasecmp(key, "HOSTLEN")) {
 		info->hostlen = atoi(val);
+	} else if (!g_strcasecmp(key, "OVERRIDE")) {
+		info->operoverride = TRUE;
 	} else if (!g_strcasecmp(key, "CHANNELLEN") || !g_strcasecmp(key, "MAXCHANNELLEN")) {
 		info->channellen = atoi(val);
 	} else if (!g_strcasecmp(key, "AWAYLEN")) {

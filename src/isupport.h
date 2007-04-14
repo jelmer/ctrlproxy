@@ -215,6 +215,9 @@ struct network_info
 
 	/* Server supports /map */
 	gboolean map;
+
+	/* Server supports operoverride */
+	gboolean operoverride;
 };
 
 G_MODULE_EXPORT char *network_info_string(struct network_info *info);
