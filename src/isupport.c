@@ -111,6 +111,9 @@ char *network_info_string(struct network_info *info)
 	if (info->maxmodes != 0)
 		fs = g_list_append(fs, g_strdup_printf("MODES=%d", info->maxmodes));
 
+	if (info->maxpara != 0)
+		fs = g_list_append(fs, g_strdup_printf("MAXPARA=%d", info->maxpara));
+
 	if (info->wallchops)
 		fs = g_list_append(fs, g_strdup("WALLCHOPS"));
 
@@ -266,6 +269,8 @@ void network_info_parse(struct network_info *info, const char *parameter)
 		info->kicklen = atoi(val);
 	} else if (!g_strcasecmp(key, "TOPICLEN")) {
 		info->topiclen = atoi(val);
+	} else if (!g_strcasecmp(key, "MAXPARA")) {
+		info->maxpara = atoi(val);
 	} else if (!g_strcasecmp(key, "MAXCHANNELS")) {
 		info->maxchannels = atoi(val);
 	} else if (!g_strcasecmp(key, "MAXTARGETS")) {

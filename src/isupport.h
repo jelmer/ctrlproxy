@@ -194,6 +194,9 @@ struct network_info
 	 * http://www3.ietf.org/proceedings/03mar/I-D/draft-baudis-irc-capab-00.txt
 	 */
 	gboolean capab;
+
+	/* Maximum number of arguments per command. */
+	gint maxpara;
 };
 
 G_MODULE_EXPORT char *network_info_string(struct network_info *info);
