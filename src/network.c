@@ -588,6 +588,7 @@ static gboolean bindsock(struct network *s,
 
 	memset(&hints_bind, 0, sizeof(hints_bind));
 	hints_bind.ai_family = res->ai_family;
+	hints_bind.ai_flags = AI_ADDRCONFIG;
 	hints_bind.ai_socktype = res->ai_socktype;
 	hints_bind.ai_protocol = res->ai_protocol;
 
@@ -655,6 +656,7 @@ static gboolean connect_current_tcp_server(struct network *s)
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = PF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_flags = AI_ADDRCONFIG;
 
 	/* Lookup */
 	error = getaddrinfo(cs->host, cs->port, &hints, &addrinfo);
