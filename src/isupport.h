@@ -210,14 +210,17 @@ struct network_info
 	/* Number of watches allowed */
 	gint watch;
 
-	/* Server supports /fpart of /remove */
+	/* Server supports /fpart or /remove command */
 	gboolean remove;
 
-	/* Server supports /map */
+	/* Server supports /map command */
 	gboolean map;
 
 	/* Server supports operoverride */
 	gboolean operoverride;
+
+	/* Server supports vbanlist */
+	gboolean vbanlist;
 };
 
 G_MODULE_EXPORT char *network_info_string(struct network_info *info);

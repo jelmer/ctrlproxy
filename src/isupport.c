@@ -90,6 +90,9 @@ char *network_info_string(struct network_info *info)
 	if (info->watch != 0)
 		fs = g_list_append(fs, g_strdup_printf("WATCH=%d", info->watch));
 
+	if (info->vbanlist)
+		fs = g_list_append(fs, "VBANLIST");
+
 	if (info->operoverride)
 		fs = g_list_append(fs, "OVERRIDE");
 
@@ -290,6 +293,8 @@ void network_info_parse(struct network_info *info, const char *parameter)
 		info->topiclen = atoi(val);
 	} else if (!g_strcasecmp(key, "WATCH")) {
 		info->watch = atoi(val);
+	} else if (!g_strcasecmp(key, "VBANLIST")) {
+		info->vbanlist = TRUE;
 	} else if (!g_strcasecmp(key, "MAXPARA")) {
 		info->maxpara = atoi(val);
 	} else if (!g_strcasecmp(key, "MAXCHANNELS")) {
