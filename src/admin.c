@@ -653,6 +653,13 @@ static gboolean admin_to_server (struct network *n, struct client *c, const stru
 		virtual_network_recv_response(n, RPL_ENDOFWHOIS, l->args[1], 
 									  "End of /WHOIS list.", NULL);
 		return TRUE;
+	} else if (!g_strcasecmp(l->args[0], "AWAY")) {
+		if (l->args[1] != NULL && strcmp(l->args[1], "") != 0) {
+			virtual_network_recv_response(n, RPL_NOWAWAY, "You are now marked as being away", NULL);
+		} else {
+			virtual_network_recv_response(n, RPL_UNAWAY, "You are no longer marked as being away", NULL);
+		}
+		return TRUE;
 	} else {
 		virtual_network_recv_response(n, ERR_UNKNOWNCOMMAND, l->args[0], "Unknown command", NULL);
 		log_global(LOG_TRACE, "Unhandled command `%s' to admin network", 
