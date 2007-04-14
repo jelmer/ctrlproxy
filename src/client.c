@@ -55,9 +55,11 @@ static gboolean client_send_queue(struct client *c)
 
 		g_queue_pop_head(c->pending_lines);
 
-		if (status != G_IO_STATUS_NORMAL) {
-			disconnect_client(c, g_strdup_printf("Error sending line '%s': %s", 
-							l->args[0], error?error->message:"ERROR"));
+		if (status == G_IO_STATUS_ERROR) {
+			log_client(LOG_WARNING, c, "Error sending line '%s': %s", 
+							l->args[0], error->message);
+		} else if (status == G_IO_STATUS_EOF) {
+			disconnect_client(c, "Hangup from client");
 
 			free_line(l);
 
