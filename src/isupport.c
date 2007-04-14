@@ -84,6 +84,9 @@ char *network_info_string(struct network_info *info)
 	if (info->userlen != 0)
 		fs = g_list_append(fs, g_strdup_printf("USERLEN=%d", info->userlen));
 
+	if (info->watch != 0)
+		fs = g_list_append(fs, g_strdup_printf("WATCH=%d", info->watch));
+
 	if (info->hostlen != 0)
 		fs = g_list_append(fs, g_strdup_printf("HOSTLEN=%d", info->hostlen));
 
@@ -274,6 +277,8 @@ void network_info_parse(struct network_info *info, const char *parameter)
 		info->kicklen = atoi(val);
 	} else if (!g_strcasecmp(key, "TOPICLEN")) {
 		info->topiclen = atoi(val);
+	} else if (!g_strcasecmp(key, "WATCH")) {
+		info->watch = atoi(val);
 	} else if (!g_strcasecmp(key, "MAXPARA")) {
 		info->maxpara = atoi(val);
 	} else if (!g_strcasecmp(key, "MAXCHANNELS")) {

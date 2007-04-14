@@ -206,6 +206,9 @@ struct network_info
 	 * run 60 seconds within connect. See 
 	 * http://www.inspircd.org/wiki/Secure_LIST_Module for details. */
 	gboolean securelist;
+
+	/* Number of watches allowed */
+	gint watch;
 };
 
 G_MODULE_EXPORT char *network_info_string(struct network_info *info);
