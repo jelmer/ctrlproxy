@@ -129,6 +129,9 @@ char *network_info_string(struct network_info *info)
 	if (info->penalty)
 		fs = g_list_append(fs, g_strdup("PENALTY"));
 
+	if (info->remove)
+		fs = g_list_append(fs, g_strdup("REMOVE"));
+
 	if (info->safelist)
 		fs = g_list_append(fs, g_strdup("SAFELIST"));
 	
@@ -285,6 +288,8 @@ void network_info_parse(struct network_info *info, const char *parameter)
 		info->maxchannels = atoi(val);
 	} else if (!g_strcasecmp(key, "MAXTARGETS")) {
 		info->maxtargets = atoi(val);
+	} else if (!g_strcasecmp(key, "REMOVE")) {
+		info->remove = TRUE;
 	} else if (!g_strcasecmp(key, "MAXBANS")) {
 		info->maxbans = atoi(val);
 	} else if (!g_strcasecmp(key, "MODES")) {

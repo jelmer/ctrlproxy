@@ -209,6 +209,9 @@ struct network_info
 
 	/* Number of watches allowed */
 	gint watch;
+
+	/* Server supports /fpart of /remove */
+	gboolean remove;
 };
 
 G_MODULE_EXPORT char *network_info_string(struct network_info *info);
