@@ -197,6 +197,10 @@ struct network_info
 
 	/* Maximum number of arguments per command. */
 	gint maxpara;
+
+	/* The NAMESX extension is supported by the server. See 
+	 * http://www.inspircd.org/wiki/NAMESX_Module for details */
+	gboolean namesx; 
 };
 
 G_MODULE_EXPORT char *network_info_string(struct network_info *info);

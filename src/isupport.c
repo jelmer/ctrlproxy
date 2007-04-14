@@ -171,9 +171,11 @@ char *network_info_string(struct network_info *info)
 		g_free(tmp);
 	}
 
-	if (info->chanlimit != NULL) {
+	if (info->chanlimit != NULL)
 		fs = g_list_append(fs, g_strdup_printf("CHANLIMIT=%s", info->chanlimit));
-	}
+
+	if (info->namesx) 
+		fs = g_list_append(fs, "NAMESX");
 
 	if (info->excepts_mode != '\0')
 		fs = g_list_append(fs, g_strdup_printf("EXCEPTS=%c", info->excepts_mode));
@@ -373,6 +375,8 @@ void network_info_parse(struct network_info *info, const char *parameter)
 	} else if (!g_strcasecmp(key, "CHARSET")) {
 		g_free(info->charset);
 		info->charset = g_strdup(val);
+	} else if (!g_strcasecmp(key, "NAMESX")) {
+		info->namesx = TRUE;
 	} else {
 		log_global(LOG_WARNING, "Unknown 005 parameter `%s'", key);
 	}
