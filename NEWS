@@ -51,6 +51,8 @@ Ctrlproxy 3.0.2 UNRELEASED
 
 	* Don't use CHARSETs by default (#117).
 
+	* Never send origin to the server (#122).
+
   FEATURES
 
     * More advanced help support

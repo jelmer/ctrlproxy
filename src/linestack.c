@@ -179,10 +179,8 @@ struct linestack_marker *linestack_get_marker(struct linestack_context *ctx)
 	if (ctx == NULL)
 		return NULL;
 
-	if (ctx->ops == NULL) 
-		return NULL;
-
-	g_assert(ctx->ops->get_marker != NULL);
+	g_assert (ctx->ops != NULL);
+	g_assert (ctx->ops->get_marker != NULL);
 
 	return wrap_linestack_marker(ctx, ctx->ops->get_marker(ctx));
 }

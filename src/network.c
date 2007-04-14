@@ -390,8 +390,10 @@ static gboolean server_send_queue(GIOChannel *ch, GIOCondition cond, gpointer us
 	return FALSE;
 }
 
-static gboolean network_send_line_direct(struct network *s, struct client *c, const struct line *l)
+static gboolean network_send_line_direct(struct network *s, struct client *c, const struct line *ol)
 {
+	struct line nl, *l;
+
 	g_assert(s->config);
 
 	g_assert(s->config->type == NETWORK_TCP ||
@@ -399,13 +401,17 @@ static gboolean network_send_line_direct(struct network *s, struct client *c, co
 		 s->config->type == NETWORK_IOCHANNEL ||
 		 s->config->type == NETWORK_VIRTUAL);
 
+	l = &nl;
+	memcpy(l, ol, sizeof(struct line));
+	nl.origin = NULL;
+
+	g_assert(l->origin == NULL); /* origin lines should never be sent to the server */
+
 	if (s->config->type == NETWORK_VIRTUAL) {
 		if (!s->connection.data.virtual.ops) 
 			return FALSE;
 		return s->connection.data.virtual.ops->to_server(s, c, l);
-	}
-
-	if (s->connection.outgoing_id == 0) {
+	} else if (s->connection.outgoing_id == 0) {
 		GError *error = NULL;
 
 		GIOStatus status = irc_send_line(s->connection.outgoing, s->connection.outgoing_iconv, l, &error);
@@ -421,8 +427,9 @@ static gboolean network_send_line_direct(struct network *s, struct client *c, co
 
 		s->connection.last_line_sent = time(NULL);
 		return TRUE;
-	} else 
+	} else {
 		g_queue_push_tail(s->connection.pending_lines, linedup(l));
+	}
 
 	return TRUE;
 }
@@ -449,7 +456,7 @@ gboolean network_send_line(struct network *s, struct client *c,
 		tmp = l.origin = g_strdup(s->state->me.nick);
 	}
 
-	if (l.origin) {
+	if (l.origin != NULL) {
 		if (!run_server_filter(s, &l, TO_SERVER)) {
 			g_free(tmp);
 			return TRUE;

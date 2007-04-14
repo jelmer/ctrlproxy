@@ -87,7 +87,7 @@ static gboolean process_from_client(struct client *c, struct line *l)
 	if (!run_client_filter(c, l, TO_SERVER)) 
 		return TRUE;
 
-	g_assert(l->args[0]);
+	g_assert(l->args[0] != NULL);
 
 	if(!g_strcasecmp(l->args[0], "QUIT")) {
 		disconnect_client(c, "Client exiting");
