@@ -149,7 +149,7 @@ gboolean start_listener(struct listener *l)
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = PF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
-	hints.ai_flags = AI_ADDRCONFIG;
+	hints.ai_flags = AI_ADDRCONFIG | AI_PASSIVE;
 
 	g_assert(!l->active);
 
@@ -166,7 +166,7 @@ gboolean start_listener(struct listener *l)
 
 		if (getnameinfo(res->ai_addr, res->ai_addrlen, 
 						lio->address, NI_MAXHOST, lio->port, NI_MAXSERV, 
-						NI_NUMERICHOST) != 0) {
+						NI_NUMERICHOST | NI_NUMERICSERV) != 0) {
 			strcpy(lio->address, "");
 			strcpy(lio->port, "");
 		}

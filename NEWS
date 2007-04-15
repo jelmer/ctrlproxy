@@ -75,9 +75,6 @@ Ctrlproxy 3.0.2 UNRELEASED
 		MAXNICKLEN, DEAF, ELIST, MAXPARA, NAMESX, SECURELIST, WATCH
 		REMOVE, MAP, OVERRIDE, VBANLIST and SILENCE
 
-	* Default to binding to 127.0.0.1 if no IP was specified in the 
-	  listener, instead of 0.0.0.0.
-
 	* Print actual address that a listener bound to.
 
   INTERNALS
