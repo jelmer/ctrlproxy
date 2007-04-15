@@ -27,7 +27,8 @@ char ** get_motd_lines(struct client *c)
 {
 	char **lines = NULL;
 	size_t nrlines = 0;
-	FILE *fd;
+	GIOChannel *fd;
+	GError *error = NULL;
 
 	if (!c->network->global->config->motd_file)
 		return NULL;
@@ -35,24 +36,27 @@ char ** get_motd_lines(struct client *c)
 	if (!strcmp(c->network->global->config->motd_file, ""))
 		return NULL;
 
-	fd = fopen(c->network->global->config->motd_file, "r");
+	fd = g_io_channel_new_file(c->network->global->config->motd_file, "r", &error);
 	if(!fd) {
 		log_global(LOG_ERROR, "Can't open '%s'", c->network->global->config->motd_file);
 		return NULL;
 	}
 
-	while(!feof(fd)) {
-		char buf[512]; char *eol;
-		if(!fgets(buf, sizeof(buf), fd))break;
+	while (1) {
+		GIOStatus status;
+		char *buf;
+		gsize eol;
+
+		status = g_io_channel_read_line(fd, &buf, NULL, &eol, &error);
+		if (status == G_IO_STATUS_EOF) break;
+		if (buf[eol] == '\n' || buf[eol] == '\r') buf[eol] = '\0';
 		lines = g_realloc(lines, (nrlines+2) * sizeof(char *));
-		lines[nrlines] = g_strdup(buf);
-		if ((eol = strchr(lines[nrlines], '\n'))) *eol = '\0';
-		if ((eol = strchr(lines[nrlines], '\r'))) *eol = '\0';
+		lines[nrlines] = buf;
 		nrlines++;
 		lines[nrlines] = NULL;
 	}
 
-	fclose(fd);
+	g_io_channel_close(fd);
 
 	return lines;
 }
