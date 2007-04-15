@@ -269,16 +269,16 @@ static gboolean handle_server_receive (GIOChannel *c, GIOCondition cond, void *_
 	struct line *l;
 	gboolean ret;
 
-	g_assert(c);
-	g_assert(server);
+	g_assert(c != NULL);
+	g_assert(server != NULL);
 
-	if ((cond & G_IO_HUP)) {
+	if (cond & G_IO_HUP) {
 		network_report_disconnect(server, "Hangup from server, scheduling reconnect");
 		reconnect(server, FALSE);
 		return FALSE;
 	}
 
-	if ((cond & G_IO_ERR)) {
+	if (cond & G_IO_ERR) {
 		network_report_disconnect(server, "Error from server, scheduling reconnect");
 		reconnect(server, FALSE);
 		return FALSE;
@@ -291,7 +291,7 @@ static gboolean handle_server_receive (GIOChannel *c, GIOCondition cond, void *_
 		while ((status = irc_recv_line(c, server->connection.incoming_iconv, 
 									   &err, &l)) == G_IO_STATUS_NORMAL) 
 		{
-			g_assert(l);
+			g_assert(l != NULL);
 
 			ret = process_from_server(server, l);
 
@@ -320,7 +320,7 @@ static gboolean handle_server_receive (GIOChannel *c, GIOCondition cond, void *_
 			}
 
 			return TRUE;
-		default: g_assert(0);
+		default: abort();
 		}
 
 		return TRUE;
@@ -338,12 +338,13 @@ static struct tcp_server_config *network_get_next_tcp_server(struct network *n)
 	cur = g_list_find(n->config->type_settings.tcp_servers, n->connection.data.tcp.current_server);
 
 	/* Get next available server */
-	if(cur && cur->next) 
+	if (cur != NULL && cur->next != NULL) 
 		cur = cur->next; 
 	else 
 		cur = n->config->type_settings.tcp_servers;
 
-	if(cur) return cur->data; 
+	if (cur != NULL) 
+		return cur->data; 
 
 	return NULL;
 }
@@ -394,7 +395,7 @@ static gboolean network_send_line_direct(struct network *s, struct client *c, co
 {
 	struct line nl, *l;
 
-	g_assert(s->config);
+	g_assert(s->config != NULL);
 
 	g_assert(s->config->type == NETWORK_TCP ||
 		 s->config->type == NETWORK_PROGRAM ||
@@ -408,7 +409,7 @@ static gboolean network_send_line_direct(struct network *s, struct client *c, co
 	g_assert(l->origin == NULL); /* origin lines should never be sent to the server */
 
 	if (s->config->type == NETWORK_VIRTUAL) {
-		if (!s->connection.data.virtual.ops) 
+		if (s->connection.data.virtual.ops == NULL) 
 			return FALSE;
 		return s->connection.data.virtual.ops->to_server(s, c, l);
 	} else if (s->connection.outgoing_id == 0) {
@@ -467,7 +468,7 @@ gboolean network_send_line(struct network *s, struct client *c,
 		linestack_insert_line(s->linestack, ol, TO_SERVER, s->state);
 	}
 
-	g_assert(l.args[0]);
+	g_assert(l.args[0] != NULL);
 
 	/* Also write this message to all other clients currently connected */
 	if (!is_private && 
@@ -510,8 +511,10 @@ gboolean virtual_network_recv_response(struct network *n, int num, ...)
 
 	l->args[0] = g_strdup_printf("%03d", num);
 
-	if (n->state && n->state->me.nick) l->args[1] = g_strdup(n->state->me.nick);
-	else l->args[1] = g_strdup("*");
+	if (n->state != NULL && n->state->me.nick != NULL) 
+		l->args[1] = g_strdup(n->state->me.nick);
+	else 
+		l->args[1] = g_strdup("*");
 
 	l->argc+=2;
 	l->args[l->argc] = NULL;
@@ -531,10 +534,10 @@ gboolean virtual_network_recv_response(struct network *n, int num, ...)
  */
 gboolean virtual_network_recv_line(struct network *s, struct line *l)
 {
-	g_assert(s);
-	g_assert(l);
+	g_assert(s != NULL);
+	g_assert(l != NULL);
 
-	if (!l->origin) 
+	if (l->origin == NULL) 
 		l->origin = g_strdup(get_my_hostname());
 
 	return process_from_server(s, l);
@@ -641,7 +644,7 @@ static gboolean connect_current_tcp_server(struct network *s)
 	struct addrinfo *addrinfo = NULL;
 	int error;
 
-	g_assert(s);
+	g_assert(s != NULL);
 
 	if (!s->connection.data.tcp.current_server) {
 		s->connection.data.tcp.current_server = network_get_next_tcp_server(s);
@@ -650,7 +653,7 @@ static gboolean connect_current_tcp_server(struct network *s)
 	log_network(LOG_TRACE, s, "connect_current_tcp_server");
 	
 	cs = s->connection.data.tcp.current_server;
-	if(!cs) {
+	if (cs == NULL) {
 		s->config->autoconnect = FALSE;
 		log_network(LOG_WARNING, s, "No servers listed, not connecting");
 		return FALSE;
