@@ -1,0 +1,41 @@
+Source: ctrlproxy
+Section: net
+Priority: optional
+Maintainer: Jelmer Vernooij <jelmer@samba.org>
+Uploaders: Wilmer van der Gaast <lintux@debian.org>
+Standards-Version: 3.7.2
+Build-Depends: libglib2.0-dev, libgnutls-dev, debhelper (>> 5.0.0), check
+XS-Vcs-Bzr: http://people.samba.org/bzr/jelmer/ctrlproxy/debian
+
+Package: ctrlproxy
+Architecture: any
+Depends: ${shlibs:Depends}
+Suggests: bitlbee
+Description: IRC proxy with conversation replay support
+ ctrlproxy is an IRC proxy with support for multiple 
+ client and server connections within a single process. It can 
+ replay stored conversations when a client connects.
+ .
+ It has an easy configuration that can be changed at run-time using special 
+ IRC commands.
+ .
+ Other features include flexible logging, SSL, IPv6, acting as a SOCKS proxy, 
+ ability to talk to NickServ and support for CTCP when no clients are 
+ connected.
+
+Package: ctrlproxy-dev
+Architecture: any
+Depends: ctrlproxy, libglib2.0-dev
+Description: IRC proxy with conversation replay support - development files
+ ctrlproxy is an IRC proxy with support for multiple 
+ client and server connections within a single process. It can 
+ replay stored conversations when a client connects.
+ .
+ It has an easy configuration that can be changed at run-time using special 
+ IRC commands.
+ .
+ Other features include flexible logging, SSL, IPv6, acting as a SOCKS proxy, 
+ ability to talk to NickServ and support for CTCP when no clients are 
+ connected.
+ .
+ This package contains files required for building ctrlproxy plugins.
