@@ -47,7 +47,7 @@ START_TEST(test_network_first)
 	fail_unless(g_io_channel_flush(ch2, NULL) == G_IO_STATUS_NORMAL);
 	g_main_iteration(FALSE);
 	g_io_channel_read_to_end(ch2, &raw, NULL, NULL);
-	fail_unless(!strcmp(raw, "ERROR :Please select a network first, or specify one in your ctrlproxyrc\r\n"));
+	fail_unless(!strcmp(raw, "ERROR :Please select a network first, or specify one in your configuration file\r\n"), "Got: %s", raw);
 END_TEST
 
 
