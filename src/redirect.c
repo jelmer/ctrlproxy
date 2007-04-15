@@ -55,7 +55,7 @@ static struct query queries[] = {
  * WHOIS [<server>] <nickmask>[,<nickmask>[,...]] */
 	{"WHOIS", 
 		{ RPL_WHOISUSER, RPL_WHOISCHANNELS, RPL_AWAY,
-		  RPL_WHOISIDLE, RPL_WHOISCHANNELS,
+		  RPL_WHOISIDLE, RPL_WHOISCHANNELS, RPL_WHOISIP,
 		  RPL_WHOISSERVER, RPL_WHOISOPERATOR, RPL_WHOISACTUALLY,
 		  RPL_WHOISIDENTIFIED, 0 }, 
 		{ RPL_ENDOFWHOIS, 0 }, 
@@ -165,7 +165,7 @@ static struct query queries[] = {
 		{ ERR_NOSUCHSERVER, ERR_FILEERROR, ERR_USERSDISABLED, 0 },
 		handle_default
 	},
-	
+
  /* USERHOST <nickname>{ <nickname>}{ ...}*/
 	{"USERHOST",
 		{ 0 },

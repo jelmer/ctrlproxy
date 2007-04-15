@@ -53,6 +53,8 @@ Ctrlproxy 3.0.2 UNRELEASED
 
 	* Never send origin to the server (#122).
 
+	* Added support for 307 responses. 
+
   FEATURES
 
     * More advanced help support
