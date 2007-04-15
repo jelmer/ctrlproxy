@@ -70,7 +70,7 @@ static void server_send_login (struct network *s)
 		network_send_args(s, "PASS", s->config->password, NULL);
 	}
 	network_send_args(s, "NICK", s->config->nick, NULL);
-	network_send_args(s, "USER", s->config->username, get_my_hostname(), 
+	network_send_args(s, "USER", s->config->username, s->config->username, 
 					  s->config->name, s->config->fullname, NULL);
 }
 
