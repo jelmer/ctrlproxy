@@ -161,7 +161,7 @@ static const struct ctcp_handler builtins[] = {
 
 static GList *cmds = NULL;
 
-void register_ctcp_handler(const struct ctcp_handler *h)
+void ctcp_register_handler(const struct ctcp_handler *h)
 {
 	cmds = g_list_append(cmds, g_memdup(h, sizeof(*h)));
 }
