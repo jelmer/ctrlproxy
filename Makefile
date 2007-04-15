@@ -84,8 +84,10 @@ mods/%.o: mods/%.c
 %.d: %.c
 	@$(CC) -I. -Isrc -M -MG -MP -MT $(<:.c=.o) $(CFLAGS) $< -o $@
 
+ifeq ($(BZR_CHECKOUT),yes)
 configure: autogen.sh configure.ac acinclude.m4 $(wildcard mods/*/*.m4)
 	./$<
+endif
 
 ctrlproxy.pc Makefile.settings: configure Makefile.settings.in ctrlproxy.pc.in
 	./$<

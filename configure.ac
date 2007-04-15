@@ -6,10 +6,13 @@ PACKAGE=$PACKAGE_NAME
 VERSION=$PACKAGE_VERSION
 AC_DEFINE_UNQUOTED(PACKAGE,"$PACKAGE", [ Package name])
 
+AC_SUBST(BZR_CHECKOUT)
+BZR_CHECKOUT=no
 AC_MSG_CHECKING([whether this is a bzr checkout])
 if ! which bzr >/dev/null 2>/dev/null; then
 	AC_MSG_RESULT(no)
 else 
+	BZR_CHECKOUT=yes
 	REVISION="`bzr revno .`"
 	if test -n "$REVISION"; then
 		AC_MSG_RESULT($REVISION)
@@ -42,8 +45,7 @@ AC_HEADER_DIRENT
 AC_HEADER_STDC
 AC_HEADER_TIME
 AC_CHECK_HEADERS(
-[stdlib.h string.h unistd.h execinfo.h sys/time.h sys/socket.h]
-[netinet/in.h netinet/in6.h])
+[stdlib.h string.h unistd.h execinfo.h sys/time.h sys/socket.h netinet/in.h netinet/in6.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
