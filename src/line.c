@@ -53,13 +53,14 @@ struct line *virc_parse_line( const char *hostmask, va_list ap)
 	l = g_new0(struct line, 1);
 	g_assert(l);
 	l->argc = 0;
-	if(hostmask)l->origin = g_strdup(hostmask);
+	if (hostmask != NULL)
+		l->origin = g_strdup(hostmask);
 	
 	l->args = g_new(char *, MAX_LINE_ARGS+2);
 	
 	while((arg = va_arg(ap, char *))) {
 		l->args[l->argc] = g_strdup(arg);
-		l->args = g_realloc(l->args, (((++l->argc)+2)* sizeof(char *)));
+		l->args = g_realloc(l->args, (((++l->argc)+2) * sizeof(char *)));
 	}
 	l->args[l->argc] = NULL;
 
@@ -95,19 +96,19 @@ struct line * irc_parse_line(const char *d)
 
 	l->args[0] = p;
 
-	for(; *p; p++) {
-		if(*p == ' ' && dosplit) {
+	for (; *p; p++) {
+		if (*p == ' ' && dosplit) {
 			*p = '\0';
 			l->argc++;
 			l->args[l->argc] = p+1;
-			if(*(p+1) == ':'){ 
+			if (*(p+1) == ':'){ 
 				l->has_endcolon = WITH_COLON; 
 				dosplit = 0; 
 				l->args[l->argc]++; 
 			}
 		}
 
-		if(*p == '\r' || *p == '\n') {
+		if (*p == '\r' || *p == '\n') {
 			*p = '\0';
 			break;
 		}
