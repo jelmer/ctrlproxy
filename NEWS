@@ -3,6 +3,11 @@
 
 Ctrlproxy 3.0.3 UNRELEASED
 
+  INTERNALS
+
+    * Use GIOChannels for reading the motd. 
+		(patch by Emanuele Giaquinta <e.giaquinta@glauco.it>)
+
   PORTABILITY
     
     * Include netinet/in.h in src/utils.c and src/network.c. Required 
