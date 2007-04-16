@@ -144,6 +144,16 @@ static gboolean network_update_isupport(struct network_info *net_info,
 		net_info->casemapping = remote_info->casemapping;
 	}
 
+	if (remote_info->supported_user_modes != NULL) {
+		g_free(net_info->supported_user_modes);
+		net_info->supported_user_modes = g_strdup(remote_info->supported_user_modes);
+	} 
+
+	if (remote_info->supported_channel_modes != NULL) {
+		g_free(net_info->supported_channel_modes);
+		net_info->supported_channel_modes = g_strdup(remote_info->supported_channel_modes);
+	}
+
 	return TRUE;
 }
 
