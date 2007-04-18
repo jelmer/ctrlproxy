@@ -3,6 +3,12 @@
 
 Ctrlproxy 3.0.3 UNRELEASED
 
+  BUG FIXES
+
+    * Handle 470 response correctly.
+
+	* Recognize supported channel / user modes correctly.
+
   INTERNALS
 
     * Use GIOChannels for reading the motd. 
