@@ -64,7 +64,7 @@ START_TEST(test_login)
 	disconnect_network(n);
 	g_io_channel_read_to_end(ch2, &raw, NULL, &error);
 	fail_unless(error == NULL);
-	fail_unless(!strcmp(raw, "NICK foo\r\nUSER blah  :test\r\nQUIT\r\n"));
+	fail_unless(!strcmp(raw, "NICK foo\r\nUSER blah blah :test\r\nQUIT\r\n"));
 END_TEST
 
 Suite *network_suite()
