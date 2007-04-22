@@ -158,6 +158,25 @@ static gboolean marshall_char(struct network_state *nst, const char *name, int l
 	}
 }
 
+static gboolean marshall_long(struct network_state *nst, const char *name, int level, enum marshall_mode m, GIOChannel *t, long *n)
+{
+	if (m == MARSHALL_PUSH) {
+		char tmp[10];
+		g_snprintf(tmp, sizeof(tmp), "%ld", *n);
+		return marshall_set(t, level, name, tmp);
+	} else {
+		char *tmp;
+		gboolean ret = marshall_get(t, level, name, &tmp);
+		if (!ret) return FALSE;
+
+		*n = atol(tmp);
+
+		g_free(tmp);
+
+		return TRUE;
+	}
+}
+
 static gboolean marshall_int(struct network_state *nst, const char *name, int level, enum marshall_mode m, GIOChannel *t, int *n)
 {
 	if (m == MARSHALL_PUSH) {
@@ -314,11 +333,12 @@ static gboolean marshall_channel_state (struct network_state *nst,
 	ret &= marshall_string(nst, "name", level+1, m, t, &(*c)->name);
 	ret &= marshall_string(nst, "key", level+1, m, t, &(*c)->key);
 	ret &= marshall_string(nst, "topic", level+1, m, t, &(*c)->topic);
+	ret &= marshall_string(nst, "topic_set_by", level+1, m, t, &(*c)->topic_set_by);
+	ret &= marshall_long(nst, "topic_set_time", level+1, m, t, &(*c)->topic_set_time);
 	ret &= marshall_GList(nst, "banlist", level+1, m, t, &(*c)->banlist, (marshall_fn_t)marshall_banlist_entry);
 	ret &= marshall_GList(nst, "invitelist", level+1, m, t, &(*c)->invitelist, (marshall_fn_t)marshall_string);
 	ret &= marshall_GList(nst, "exceptlist", level+1, m, t, &(*c)->exceptlist, (marshall_fn_t)marshall_string);
 	(*c)->network = nst;
-
 
 	marshall_struct(t, m, level+1, "nicks");
 

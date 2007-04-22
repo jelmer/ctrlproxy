@@ -8,6 +8,9 @@ Ctrlproxy 3.0.3 UNRELEASED
     * Handle 470 response correctly.
 
 	* Recognize supported channel / user modes correctly.
+	
+	* Properly store topic_set_time and topic_set_by in the 
+	  linestack. (#108, #125)
 
   INTERNALS
 

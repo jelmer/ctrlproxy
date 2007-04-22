@@ -434,7 +434,10 @@ static void handle_kick(struct network_state *s, struct line *l)
 static void handle_topic(struct network_state *s, struct line *l) 
 {
 	struct channel_state *c = find_channel(s, l->args[1]);
-	if(c->topic)g_free(c->topic);
+	if (c->topic != NULL)
+		g_free(c->topic);
+	if (c->topic_set_by != NULL)
+		g_free(c->topic_set_by);
 	c->topic = g_strdup(l->args[2]);
 	c->topic_set_time = time(NULL);
 	c->topic_set_by = line_get_nick(l);

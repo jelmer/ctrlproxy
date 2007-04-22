@@ -256,13 +256,14 @@ char *line_get_nick(const struct line *l)
 {
 	char *nick = NULL;
 	char *t;
-	g_assert(l);
-	g_assert(l->origin);
+	g_assert(l != NULL);
+	g_assert(l->origin != NULL);
 
 	nick = g_strdup(l->origin);
 	t = strchr(nick, '!');
-	if(!t) 
+	if(t == NULL) 
 		return nick;
+
 	*t = '\0';
 	return nick;
 }
