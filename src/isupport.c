@@ -21,14 +21,12 @@
 
 #define DEFAULT_PREFIX		"(ov)@+"
 #define DEFAULT_CHANTYPES 	"#&"
-#define DEFAULT_CHARSET		"iso8859-15"
 
 void network_info_init(struct network_info *info)
 {
 	memset(info, 0, sizeof(struct network_info));
 	info->prefix = g_strdup(DEFAULT_PREFIX);
 	info->chantypes = g_strdup(DEFAULT_CHANTYPES);
-	info->charset = g_strdup(DEFAULT_CHARSET);
 }
 
 void free_network_info(struct network_info *info)
