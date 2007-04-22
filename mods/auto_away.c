@@ -64,6 +64,7 @@ static gboolean log_data(struct network *n, const struct line *l,
 			d->is_away = TRUE;
 		else 
 			d->is_away = FALSE;
+		d->last_message = time(NULL);
 	}
 
 	if (dir == TO_SERVER &&  

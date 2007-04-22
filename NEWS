@@ -10,7 +10,9 @@ Ctrlproxy 3.0.3 UNRELEASED
 	* Recognize supported channel / user modes correctly.
 	
 	* Properly store topic_set_time and topic_set_by in the 
-	  linestack. (#108, #125)
+	  linestack. (#108)
+
+    * Reset idle time when AWAY is used in auto-away (#121)
 
   INTERNALS
 
