@@ -14,6 +14,8 @@ Ctrlproxy 3.0.3 UNRELEASED
 
     * Reset idle time when AWAY is used in auto-away (#121)
 
+	* Fix crash when using /CTRLPROXY without arguments
+
   INTERNALS
 
     * Use GIOChannels for reading the motd. 

@@ -487,9 +487,16 @@ gboolean process_cmd(admin_handle h, const char *cmd)
 gboolean admin_process_command(struct client *c, struct line *l, int cmdoffset)
 {
 	int i;
-	char *tmp = g_strdup(l->args[cmdoffset]);
+	char *tmp;
 	gboolean ret;
 	struct admin_handle ah;
+
+	if (l->args[cmdoffset] == NULL) {
+		client_send_response(c, ERR_NEEDMOREPARAMS, l->args[0], "Not enough parameters", NULL);
+		return TRUE;
+	}
+
+	tmp = g_strdup(l->args[cmdoffset]);
 
 	/* Add everything after l->args[cmdoffset] to tmp */
 	for(i = cmdoffset+1; l->args[i]; i++) {
