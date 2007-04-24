@@ -839,11 +839,11 @@ static gboolean close_server(struct network *n)
 
 	if (n->connection.state == NETWORK_CONNECTION_STATE_MOTD_RECVD) {
 		server_disconnected_hook_execute(n);
+		clients_invalidate_state(n->clients, n->state);
+		network_update_config(n->state, n->config);
 	}
 
 	if (n->state) {
-		clients_invalidate_state(n->clients, n->state);
-		network_update_config(n->state, n->config);
 		free_linestack_context(n->linestack);
 		n->linestack = NULL;
 		free_network_state(n->state); 
