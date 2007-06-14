@@ -47,8 +47,10 @@ struct query {
 	int (*handle) (const struct line *, const struct network *n, struct client *c, struct query *);
 };
 
-static int handle_default(const struct line *, const struct network *n, struct client *c, struct query *);
-static int handle_topic(const struct line *, const struct network *n, struct client *c, struct query *);
+static int handle_default(const struct line *, const struct network *n, 
+						  struct client *c, struct query *);
+static int handle_topic(const struct line *, const struct network *n, 
+						struct client *c, struct query *);
 
 static struct query queries[] = {
 /* Commands that get a one-client reply: 
@@ -184,7 +186,7 @@ static struct query queries[] = {
 
 /* JOIN <channel>{,<channel>} [<key>{,<key>}] */
 	{"JOIN",
-		{ RPL_TOPIC, RPL_TOPICWHOTIME, RPL_CREATIONTIME, 0 },
+		{ 0 },
 		{ 0 },
 		{ ERR_NEEDMOREPARAMS, ERR_BANNEDFROMCHAN,
 		  ERR_INVITEONLYCHAN, ERR_BADCHANNELKEY,
@@ -494,12 +496,15 @@ static gboolean handle_464(struct network *n, struct line *l)
 }
 
 /* List of responses that should be sent to all clients */
-static int response_all[] = { RPL_NOWAWAY, RPL_UNAWAY, RPL_NAMREPLY, 
+static int response_all[] = { RPL_NOWAWAY, RPL_UNAWAY, 
 	ERR_NO_OP_SPLIT, RPL_HIDINGHOST,
-	RPL_ENDOFNAMES, ERR_NEEDREGGEDNICK, RPL_UMODEIS, 
+	ERR_NEEDREGGEDNICK, RPL_UMODEIS, 
 	RPL_LUSERCLIENT, RPL_LUSEROP, RPL_LUSERUNKNOWN, RPL_LUSERCHANNELS,
-	RPL_LUSERME, ERR_NO_OP_SPLIT, RPL_LOCALUSERS, RPL_GLOBALUSERS, 0 };
-static int response_none[] = { ERR_NOMOTD, RPL_ENDOFMOTD, 0 };
+	RPL_LUSERME, ERR_NO_OP_SPLIT, RPL_LOCALUSERS, RPL_GLOBALUSERS, 
+	RPL_NAMREPLY, RPL_ENDOFNAMES, RPL_TOPIC, RPL_TOPICWHOTIME, 
+		RPL_CREATIONTIME, 0 };
+static int response_none[] = { ERR_NOMOTD, RPL_MOTDSTART, RPL_MOTD, 
+	RPL_ENDOFMOTD, 0 };
 static struct {
 	int response;
 	gboolean (*handler) (struct network *n, struct line *);
@@ -512,10 +517,13 @@ static struct {
 	{ 0, NULL }
 };
 
+/**
+ * Check whether reply r is part of a specified list
+ */
 static int is_reply(const int *replies, int r)
 {
 	int i;
-	g_assert(replies);
+	g_assert(replies != NULL);
 
 	for(i = 0; i < 20 && replies[i]; i++) {
 		if(replies[i] == r) return 1;
@@ -559,14 +567,14 @@ gboolean redirect_response(struct network *network, struct line *l)
 			is_reply(s->query->end_replies, n))) {
 			
 			/* Send to client that queried, if that client still exists */
-			if (s->client && verify_client(s->network, s->client)) {
+			if (s->client != NULL && verify_client(s->network, s->client)) {
 				c = s->client;
 				client_send_line(s->client, l);
 			}
 
-			if(!is_reply(s->query->replies, n)) {
+			if (!is_reply(s->query->replies, n)) {
 				/* Remove from stack */
-				if(!p)stack = s->next;	
+				if (p == NULL)stack = s->next;	
 				else p->next = s->next;
 				g_free(s);
 			}
@@ -613,7 +621,7 @@ void redirect_clear(const struct network *net)
 	g_assert(net);
 
 	q = stack;
-	while (q) {
+	while (q != NULL) {
 		if (q->network != net) {
 			p = q;
 			q = q->next;
@@ -621,7 +629,7 @@ void redirect_clear(const struct network *net)
 		}
 
 		/* Remove from stack */
-		if(!p)stack = q->next;	
+		if (p == NULL)stack = q->next;	
 		else p->next = q->next;
 		n = q->next;
 		g_free(q);
@@ -629,7 +637,8 @@ void redirect_clear(const struct network *net)
 	}
 }
 
-void redirect_record(const struct network *n, struct client *c, const struct line *l)
+void redirect_record(const struct network *n, struct client *c, 
+					 const struct line *l)
 {
 	struct query *q;
 
@@ -638,11 +647,13 @@ void redirect_record(const struct network *n, struct client *c, const struct lin
 	g_assert(l->args[0]);
 
 	q = find_query(l->args[0]);
-	if(!q) {
-		if (c) {
-			log_client(LOG_WARNING, c, "Unknown command from client: %s", l->args[0]);
+	if (q == NULL) {
+		if (c != NULL) {
+			log_client(LOG_WARNING, c, "Unknown command from client: %s", 
+					   l->args[0]);
 		} else {
-			log_network(LOG_WARNING, n, "Sending unknown command '%s'", l->args[0]);
+			log_network(LOG_WARNING, n, "Sending unknown command '%s'", 
+						l->args[0]);
 		}
 
 		q = &unknown_query;
@@ -652,12 +663,13 @@ void redirect_record(const struct network *n, struct client *c, const struct lin
 	q->handle(l, n, c, q);
 }
 
-static int handle_default(const struct line *l, const struct network *n, struct client *c, struct query *q)
+static int handle_default(const struct line *l, const struct network *n, 
+						  struct client *c, struct query *q)
 {
-	struct query_stack *s = g_new(struct query_stack,1);
-	g_assert(l);
-	g_assert(n);
-	g_assert(q);
+	struct query_stack *s = g_new(struct query_stack, 1);
+	g_assert(l != NULL);
+	g_assert(n != NULL);
+	g_assert(q != NULL);
 	s->network = n;
 	s->client = c;
 	s->time = time(NULL);
