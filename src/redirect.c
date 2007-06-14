@@ -65,7 +65,7 @@ static struct query queries[] = {
 
 	/* WHO [<name> [<o>]] */
 	{"WHO", 
-	    { RPL_WHOREPLY, 0 }, 
+	    { RPL_WHOREPLY, RPL_WHOSPCRPL, 0 }, 
 		{ RPL_ENDOFWHO, 0 },
 		{ ERR_NOSUCHSERVER, 0 },
 		handle_default 

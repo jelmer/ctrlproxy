@@ -105,8 +105,8 @@ gboolean client_send_state(struct client *c, struct network_state *state)
 		c->nick = g_strdup(state->me.nick);
 	}
 
-	g_assert(c);
-	g_assert(state);
+	g_assert(c != NULL);
+	g_assert(state != NULL);
 
     log_client(LOG_TRACE, c, "Sending state (%d channels)", 
 			   g_list_length(state->channels));
@@ -118,7 +118,7 @@ gboolean client_send_state(struct client *c, struct network_state *state)
 	}
 
 	mode = mode2string(state->me.modes);
-	if (mode) 
+	if (mode != NULL) 
 		client_send_args_ex(c, state->me.nick, "MODE", mode, NULL);
 	g_free(mode);
 

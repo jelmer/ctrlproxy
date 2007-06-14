@@ -18,6 +18,8 @@ Ctrlproxy 3.0.3 UNRELEASED
 
 	* Don't update config when we're disconnecting during shutdown. (#113)
 
+	* Handle 354 response correctly. (#134)
+
   INTERNALS
 
     * Use GIOChannels for reading the motd. 

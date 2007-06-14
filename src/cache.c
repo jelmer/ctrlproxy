@@ -172,6 +172,9 @@ static gboolean client_try_cache_who(struct client *c, struct line *l)
 	if (strchr(l->args[1], ',')) return FALSE;
 	if (strchr(l->args[1], '*')) return FALSE;
 
+	/* Don't cache complex requests.. for now */
+	if (l->argc > 2) return FALSE;
+
 	max_who_age = c->network->global->config->max_who_age;
 
 	/* Never cache when max_who_age is set to 0 */

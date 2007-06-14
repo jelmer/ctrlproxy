@@ -468,7 +468,7 @@ static void handle_333(struct network_state *s, struct line *l)
 		return;
 	}
 
-	c->topic_set_time = atoi(l->args[4]);
+	c->topic_set_time = atol(l->args[4]);
 	c->topic_set_by = g_strdup(l->args[3]);
 }
 
