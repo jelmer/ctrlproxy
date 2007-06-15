@@ -113,7 +113,7 @@ static struct query queries[] = {
 		  RPL_STATSKLINE, RPL_STATSLLINE, RPL_STATSUPTIME, RPL_STATSOLINE, 
 		  RPL_STATSTLINE,
 		  0 },
-		{ RPL_ENDOFSTATS, 0 },
+		{ RPL_TRYAGAIN, RPL_ENDOFSTATS, 0 },
 		{ ERR_NOSUCHSERVER, 0 },
 		handle_default
 	}, 
