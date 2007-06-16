@@ -26,6 +26,8 @@ Ctrlproxy 3.0.3 UNRELEASED
 
 	* Handle 263 response correctly. (#135)
 
+    * Handle 330 response correclty. (#137)
+
   INTERNALS
 
     * Use GIOChannels for reading the motd. 
