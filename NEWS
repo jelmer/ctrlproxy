@@ -28,6 +28,9 @@ Ctrlproxy 3.0.3 UNRELEASED
 
     * Handle 330 response correclty. (#137)
 
+	* Handle 403 response correctly when sent in response to a MODE 
+	  query. (#139)
+
   INTERNALS
 
     * Use GIOChannels for reading the motd. 
