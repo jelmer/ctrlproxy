@@ -549,7 +549,13 @@ struct network_config *network_config_init(struct ctrlproxy_config *cfg)
 	s->autoconnect = FALSE;
 	s->nick = g_strdup(g_get_user_name());
 	s->username = g_strdup(g_get_user_name());
+	g_assert(s->username != NULL && strlen(s->username) > 0);
 	s->fullname = g_strdup(g_get_real_name());
+	if (s->fullname == NULL || 
+		strlen(s->fullname) == 0) {
+		g_free(s->fullname);
+		s->fullname = g_strdup(s->username);
+	}
 	s->reconnect_interval = DEFAULT_RECONNECT_INTERVAL;
 
 	if (cfg) 
