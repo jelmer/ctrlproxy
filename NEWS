@@ -31,6 +31,8 @@ Ctrlproxy 3.0.3 UNRELEASED
 	* Handle 403 response correctly when sent in response to a MODE 
 	  query. (#139)
 
+	* Fall back to user name if real name is empty. 
+
   INTERNALS
 
     * Use GIOChannels for reading the motd. 

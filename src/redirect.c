@@ -323,7 +323,7 @@ static struct query queries[] = {
  /* LUSERS [ <mask> [ <target> ] ] */
 	{ "LUSERS",
 		{ RPL_LUSERCLIENT, RPL_LUSEROP, RPL_LUSERUNKNOWN, RPL_LUSERCHANNELS, 
-			RPL_LUSERME, 0 },
+			RPL_LUSERME, RPL_STATSTLINE, 0 },
 		{ 0 },
 		{ ERR_NOSUCHSERVER, 0 },
 		handle_default
