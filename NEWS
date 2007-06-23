@@ -33,6 +33,8 @@ Ctrlproxy 3.0.3 UNRELEASED
 
 	* Fall back to user name if real name is empty. 
 
+	* Handle 479 responses correctly. (#142)
+
   INTERNALS
 
     * Use GIOChannels for reading the motd. 

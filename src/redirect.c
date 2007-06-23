@@ -263,6 +263,7 @@ static struct query queries[] = {
 			/* Replies to channel mode queries */
 			ERR_USERNOTINCHANNEL, ERR_KEYSET, ERR_CHANOPPRIVSNEEDED,
 			ERR_UNKNOWNMODE, ERR_NOCHANMODES, ERR_NOSUCHCHANNEL,
+			ERR_ILLEGALCHANNELNAME,
 			
 			0 },
 		handle_default
