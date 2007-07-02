@@ -240,6 +240,22 @@ static gboolean send_line(struct line *l, time_t t, void *_client)
 	return client_send_line(c, l);
 }
 
+struct line *line_prefix_time(struct line *l, time_t t)
+{
+	struct line *nl = linedup(l);
+	char stime[512];
+	char *tmp;
+
+	strftime(stime, sizeof(stime), "%H:%M:%S", localtime(&t));
+	tmp = g_strdup_printf("[%s] %s", stime, nl->args[2]);
+	if (tmp == NULL)
+		return NULL;
+	g_free(nl->args[2]);
+	nl->args[2] = tmp;
+
+	return nl;
+}
+
 static gboolean send_line_timed(struct line *l, time_t t, void *_client)
 {
 	struct client *c = _client;
@@ -247,21 +263,47 @@ static gboolean send_line_timed(struct line *l, time_t t, void *_client)
 	if ((!g_strcasecmp(l->args[0], "PRIVMSG") ||
 		!g_strcasecmp(l->args[0], "NOTICE")) &&
 		l->argc > 2) {
+		struct line *nl = line_prefix_time(l, t);
 		gboolean ret;
-		struct line *nl = linedup(l);
-		char stime[512];
-		char *tmp;
-
-		strftime(stime, sizeof(stime), "%H:%M:%S", localtime(&t));
-		tmp = g_strdup_printf("[%s] %s", stime, nl->args[2]);
-		g_free(nl->args[2]);
-		nl->args[2] = tmp;
 		ret = client_send_line(c, nl);
 		free_line(nl);
 		return ret;
 	} else {
 		return client_send_line(c, l);
 	}
+}
+
+static gboolean send_line_timed_dataonly(struct line *l, time_t t, void *_client)
+{
+	struct client *c = _client;
+	gboolean ret;
+	struct line *nl;
+
+	if (g_strcasecmp(l->args[0], "PRIVMSG") != 0 && 
+		g_strcasecmp(l->args[0], "NOTICE") != 0)
+		return TRUE;
+
+	if (l->argc <= 2)
+		return TRUE;
+
+	nl = line_prefix_time(l, t);
+	ret = client_send_line(c, nl);
+	free_line(nl);
+	return ret;
+}
+
+static gboolean send_line_dataonly(struct line *l, time_t t, void *_client)
+{
+	struct client *c = _client;
+
+	if (g_strcasecmp(l->args[0], "PRIVMSG") != 0 && 
+		g_strcasecmp(l->args[0], "NOTICE") != 0)
+		return TRUE;
+
+	if (l->argc <= 2)
+		return TRUE;
+
+	return client_send_line(c, l);
 }
 
 gboolean linestack_send(struct linestack_context *ctx, struct linestack_marker *mf, struct linestack_marker *mt, struct client *c)
@@ -274,6 +316,16 @@ gboolean linestack_send_timed(struct linestack_context *ctx, struct linestack_ma
 	return linestack_traverse(ctx, mf, mt, send_line_timed, c);
 }
 
+gboolean linestack_send_dataonly(struct linestack_context *ctx, struct linestack_marker *mf, struct linestack_marker *mt, struct client *c)
+{
+	return linestack_traverse(ctx, mf, mt, send_line_dataonly, c);
+}
+
+gboolean linestack_send_timed_dataonly(struct linestack_context *ctx, struct linestack_marker *mf, struct linestack_marker *mt, struct client *c)
+{
+	return linestack_traverse(ctx, mf, mt, send_line_timed_dataonly, c);
+}
+
 gboolean linestack_send_object(struct linestack_context *ctx, const char *obj, struct linestack_marker *mf, struct linestack_marker *mt, struct client *c)
 {
 	return linestack_traverse_object(ctx, obj, mf, mt, send_line, c);
@@ -282,6 +334,16 @@ gboolean linestack_send_object(struct linestack_context *ctx, const char *obj, s
 gboolean linestack_send_object_timed(struct linestack_context *ctx, const char *obj, struct linestack_marker *mf, struct linestack_marker *mt, struct client *c)
 {
 	return linestack_traverse_object(ctx, obj, mf, mt, send_line_timed, c);
+}
+
+gboolean linestack_send_object_dataonly(struct linestack_context *ctx, const char *obj, struct linestack_marker *mf, struct linestack_marker *mt, struct client *c)
+{
+	return linestack_traverse_object(ctx, obj, mf, mt, send_line_dataonly, c);
+}
+
+gboolean linestack_send_object_timed_dataonly(struct linestack_context *ctx, const char *obj, struct linestack_marker *mf, struct linestack_marker *mt, struct client *c)
+{
+	return linestack_traverse_object(ctx, obj, mf, mt, send_line_timed_dataonly, c);
 }
 
 static gboolean replay_line(struct line *l, time_t t, void *state)

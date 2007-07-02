@@ -372,9 +372,10 @@ static void repl_command(admin_handle h, char **args, void *userdata)
 		admin_out(h, "Sending backlog for network '%s'", n->info.name);
 
 		if (n->global->config->report_time)
-			linestack_send_timed(n->linestack, lm, NULL, admin_get_client(h));
+			linestack_send_timed_dataonly(n->linestack, lm, NULL, 
+										  admin_get_client(h));
 		else
-			linestack_send(n->linestack, lm, NULL, admin_get_client(h));
+			linestack_send_dataonly(n->linestack, lm, NULL, admin_get_client(h));
 
 		g_hash_table_replace(markers, n, linestack_get_marker(n->linestack));
 

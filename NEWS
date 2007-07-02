@@ -35,6 +35,8 @@ Ctrlproxy 3.0.3 UNRELEASED
 
 	* Handle 479 responses correctly. (#142)
 
+	* Only send PRIVMSG and NOTICE lines during the BACKLOG command. (#143)
+
   INTERNALS
 
     * Use GIOChannels for reading the motd. 
