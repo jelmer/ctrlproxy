@@ -306,44 +306,41 @@ static gboolean send_line_dataonly(struct line *l, time_t t, void *_client)
 	return client_send_line(c, l);
 }
 
-gboolean linestack_send(struct linestack_context *ctx, struct linestack_marker *mf, struct linestack_marker *mt, struct client *c)
+gboolean linestack_send(struct linestack_context *ctx, struct linestack_marker *mf, struct linestack_marker *mt, struct client *c, gboolean dataonly, gboolean timed)
 {
-	return linestack_traverse(ctx, mf, mt, send_line, c);
+	linestack_traverse_fn trav_fn;
+
+	if (dataonly) {
+		if (timed) 
+			trav_fn = send_line_timed_dataonly;
+		else 
+			trav_fn = send_line_dataonly;
+	} else {
+		if (timed)
+			trav_fn = send_line_timed;
+		else
+			trav_fn = send_line;
+	}
+
+	return linestack_traverse(ctx, mf, mt, trav_fn, c);
 }
 
-gboolean linestack_send_timed(struct linestack_context *ctx, struct linestack_marker *mf, struct linestack_marker *mt, struct client *c)
+gboolean linestack_send_object(struct linestack_context *ctx, const char *obj, struct linestack_marker *mf, struct linestack_marker *mt, struct client *c, gboolean dataonly, gboolean timed)
 {
-	return linestack_traverse(ctx, mf, mt, send_line_timed, c);
-}
+	linestack_traverse_fn trav_fn;
+	if (dataonly) {
+		if (timed) 
+			trav_fn = send_line_timed_dataonly;
+		else 
+			trav_fn = send_line_dataonly;
+	} else {
+		if (timed)
+			trav_fn = send_line_timed;
+		else
+			trav_fn = send_line;
+	}
 
-gboolean linestack_send_dataonly(struct linestack_context *ctx, struct linestack_marker *mf, struct linestack_marker *mt, struct client *c)
-{
-	return linestack_traverse(ctx, mf, mt, send_line_dataonly, c);
-}
-
-gboolean linestack_send_timed_dataonly(struct linestack_context *ctx, struct linestack_marker *mf, struct linestack_marker *mt, struct client *c)
-{
-	return linestack_traverse(ctx, mf, mt, send_line_timed_dataonly, c);
-}
-
-gboolean linestack_send_object(struct linestack_context *ctx, const char *obj, struct linestack_marker *mf, struct linestack_marker *mt, struct client *c)
-{
-	return linestack_traverse_object(ctx, obj, mf, mt, send_line, c);
-}
-
-gboolean linestack_send_object_timed(struct linestack_context *ctx, const char *obj, struct linestack_marker *mf, struct linestack_marker *mt, struct client *c)
-{
-	return linestack_traverse_object(ctx, obj, mf, mt, send_line_timed, c);
-}
-
-gboolean linestack_send_object_dataonly(struct linestack_context *ctx, const char *obj, struct linestack_marker *mf, struct linestack_marker *mt, struct client *c)
-{
-	return linestack_traverse_object(ctx, obj, mf, mt, send_line_dataonly, c);
-}
-
-gboolean linestack_send_object_timed_dataonly(struct linestack_context *ctx, const char *obj, struct linestack_marker *mf, struct linestack_marker *mt, struct client *c)
-{
-	return linestack_traverse_object(ctx, obj, mf, mt, send_line_timed_dataonly, c);
+	return linestack_traverse_object(ctx, obj, mf, mt, trav_fn, c);
 }
 
 static gboolean replay_line(struct line *l, time_t t, void *state)
