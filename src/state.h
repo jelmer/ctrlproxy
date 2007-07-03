@@ -119,6 +119,7 @@ G_MODULE_EXPORT gboolean state_handle_data(struct network_state *s, struct line 
 
 G_MODULE_EXPORT struct channel_state *find_channel(struct network_state *st, const char *name);
 G_MODULE_EXPORT struct channel_nick *find_channel_nick(struct channel_state *c, const char *name);
+G_MODULE_EXPORT struct channel_nick *find_channel_nick_hostmask(struct channel_state *c, const char *hostmask);
 G_MODULE_EXPORT struct channel_nick *find_add_channel_nick(struct channel_state *c, const char *name);
 G_MODULE_EXPORT struct network_nick *find_network_nick(struct network_state *c, const char *name);
 G_MODULE_EXPORT gboolean network_nick_set_hostmask(struct network_nick *n, const char *hm);

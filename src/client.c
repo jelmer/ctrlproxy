@@ -73,6 +73,13 @@ static gboolean client_send_queue(struct client *c)
 	return FALSE;
 }
 
+/**
+ * Process incoming lines from a client.
+ *
+ * @param c Client to talk to
+ * @param l Line received
+ * @return Whether the line was processed correctly
+ */
 static gboolean process_from_client(struct client *c, struct line *l)
 {
 	g_assert(c);
@@ -398,6 +405,13 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition cond,
 	return ret;
 }
 
+/**
+ * Send welcome information to a client, optionally disconnecting 
+ * the client if it isn't welcome.
+ *
+ * @param client Client to talk to.
+ * @return whether the client was accepted or refused
+ */
 static gboolean welcome_client(struct client *client)
 {
 	char *features, *tmp;
@@ -409,7 +423,7 @@ static gboolean welcome_client(struct client *client)
 	client_send_response(client, RPL_YOURHOST, tmp, NULL); 
 	g_free(tmp);
 	client_send_response(client, RPL_CREATED, 
-		"Ctrlproxy (c) 2002-2006 Jelmer Vernooij <jelmer@vernstok.nl>", NULL);
+		"Ctrlproxy (c) 2002-2007 Jelmer Vernooij <jelmer@vernstok.nl>", NULL);
 	client_send_response(client, RPL_MYINFO, 
 		 client->network->info.name, 
 		 ctrlproxy_version(), 
@@ -587,10 +601,16 @@ static gboolean handle_pending_client_receive(GIOChannel *c,
 
 }
 
-static gboolean client_ping(gpointer user_data) {
-	struct client *client = user_data;
-
-	g_assert(client);
+/**
+ * Ping a client.
+ *
+ * @param client Client to send ping to
+ *
+ * @return Whether to keep event around
+ */
+static gboolean client_ping(struct client *client)
+{
+	g_assert(client != NULL);
 
 	client->last_ping = time(NULL);
 	client_send_args_ex(client, NULL, "PING", client->network->info.name, NULL);
@@ -603,6 +623,10 @@ static gboolean client_ping(gpointer user_data) {
  * should preferably:
  *  - have no encoding set
  *  - work asynchronously
+ *
+ * @param n Network to use
+ * @param c Channel to talk over
+ * @param desc Description of the client
  */
 struct client *client_init(struct network *n, GIOChannel *c, const char *desc)
 {
@@ -618,7 +642,8 @@ struct client *client_init(struct network *n, GIOChannel *c, const char *desc)
 	g_io_channel_set_flags(c, G_IO_FLAG_NONBLOCK, NULL);
 	g_io_channel_set_close_on_unref(c, TRUE);
 	client->connect_time = time(NULL);
-	client->ping_id = g_timeout_add(1000 * 300, client_ping, client);
+	client->ping_id = g_timeout_add(1000 * 300, (GSourceFunc)client_ping, 
+									client);
 	client->incoming = c;
 	client->network = n;
 	client->description = g_strdup(desc);
@@ -640,6 +665,11 @@ struct client *client_init(struct network *n, GIOChannel *c, const char *desc)
 	return client;
 }
 
+/**
+ * Kill all current pending clients (not authenticated yet).
+ *
+ * @param reason Reason to report to the clients for the disconnect.
+ */
 void kill_pending_clients(const char *reason)
 {
 	while (pending_clients != NULL) 
