@@ -195,16 +195,17 @@ static gboolean log_data(struct network *n, const struct line *l,
 	} else if(!g_strcasecmp(l->args[0], "TOPIC") && dir == FROM_SERVER && l->args[1]) {
 		if(l->args[2])target_printf(n, l->args[1], "%02d:%02d -!- %s has changed the topic to %s\n", t->tm_hour, t->tm_min, nick, l->args[2]);
 		else target_printf(n, l->args[1], "%02d:%02d -!- %s has removed the topic\n", t->tm_hour, t->tm_min, nick);
-	} else if(!g_strcasecmp(l->args[0], "NICK") && dir == FROM_SERVER && l->args[1]) {
+	} else if (!g_strcasecmp(l->args[0], "NICK") && 
+			   dir == FROM_SERVER && l->args[1]) {
 		struct network_nick *nn = find_network_nick(n->state, nick);
 		GList *gl;
 
-		g_assert(nn != NULL);
+		if (nn != NULL) {
+			for (gl = nn->channel_nicks; gl; gl = gl->next) {
+				struct channel_nick *cn = gl->data;
 
-		for (gl = nn->channel_nicks; gl; gl = gl->next) {
-			struct channel_nick *cn = gl->data;
-
-			target_printf(n, cn->channel->name, "%02d:%02d -!- %s is now known as %s\n", t->tm_hour, t->tm_min, nick, l->args[1]);
+				target_printf(n, cn->channel->name, "%02d:%02d -!- %s is now known as %s\n", t->tm_hour, t->tm_min, nick, l->args[1]);
+			}
 		}
 	}
 
