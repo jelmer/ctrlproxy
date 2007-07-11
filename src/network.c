@@ -122,6 +122,14 @@ gboolean network_set_charset(struct network *n, const char *name)
 	return TRUE;
 }
 
+/**
+ * Update the isupport settings for a local network based on the 
+ * ISUPPORT info sent by a server.
+ *
+ * @param net_info Current information
+ * @param remote_info Remote information
+ * @return Whether updating went ok.
+ */
 static gboolean network_update_isupport(struct network_info *net_info,
 										struct network_info *remote_info)
 {
@@ -157,6 +165,13 @@ static gboolean network_update_isupport(struct network_info *net_info,
 	return TRUE;
 }
 
+/**
+ * Process a line received from the server
+ *
+ * @param n Network the line is received at
+ * @param l Line received
+ * @return Whether the message was received ok
+ */
 static gboolean process_from_server(struct network *n, struct line *l)
 {
 	struct line *lc;
@@ -365,7 +380,8 @@ static gboolean antiflood_allow_line(struct network *s)
 	return TRUE;
 }
 
-static gboolean server_send_queue(GIOChannel *ch, GIOCondition cond, gpointer user_data)
+static gboolean server_send_queue(GIOChannel *ch, GIOCondition cond, 
+								  gpointer user_data)
 {
 	struct network *s = user_data;
 	GError *error = NULL;
@@ -401,7 +417,8 @@ static gboolean server_send_queue(GIOChannel *ch, GIOCondition cond, gpointer us
 	return FALSE;
 }
 
-static gboolean network_send_line_direct(struct network *s, struct client *c, const struct line *ol)
+static gboolean network_send_line_direct(struct network *s, struct client *c, 
+										 const struct line *ol)
 {
 	struct line nl, *l;
 
@@ -578,6 +595,12 @@ gboolean virtual_network_recv_args(struct network *s, const char *origin, ...)
 	return ret;
 }
 
+/**
+ * Send a new line to the network.
+ *
+ * @param s Network
+ * @param ... Arguments terminated by NULL
+ */
 gboolean network_send_args(struct network *s, ...)
 {
 	va_list ap;
@@ -633,6 +656,12 @@ static gboolean bindsock(struct network *s,
 	return (res_bind != NULL);
 }
 
+/**
+ * Ping the network.
+ *
+ * @param server network to ping
+ * @param ping_source GSource id of the ping event
+ */
 static void ping_server(struct network *server, gboolean ping_source)
 {
 	gint silent_time = time(NULL) - server->connection.last_line_recvd;

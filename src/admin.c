@@ -371,11 +371,8 @@ static void repl_command(admin_handle h, char **args, void *userdata)
 	if(!args[1]) {
 		admin_out(h, "Sending backlog for network '%s'", n->info.name);
 
-		if (n->global->config->report_time)
-			linestack_send_timed_dataonly(n->linestack, lm, NULL, 
-										  admin_get_client(h));
-		else
-			linestack_send_dataonly(n->linestack, lm, NULL, admin_get_client(h));
+		linestack_send(n->linestack, lm, NULL, admin_get_client(h),
+					   TRUE, n->global->config->report_time);
 
 		g_hash_table_replace(markers, n, linestack_get_marker(n->linestack));
 
@@ -385,12 +382,9 @@ static void repl_command(admin_handle h, char **args, void *userdata)
 	/* Backlog for specific nick/channel */
 	admin_out(h, "Sending backlog for channel %s", args[1]);
 
-	if (n->global->config->report_time)
-		linestack_send_object_timed(n->linestack, args[1], lm, NULL, 
-									admin_get_client(h));
-	else
-		linestack_send_object(n->linestack, args[1], lm, NULL, 
-							  admin_get_client(h));
+	linestack_send_object(n->linestack, args[1], lm, NULL, 
+						  admin_get_client(h), TRUE, 
+						  n->global->config->report_time);
 
 	g_hash_table_replace(markers, n, linestack_get_marker(n->linestack));
 }

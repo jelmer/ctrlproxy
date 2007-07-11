@@ -217,7 +217,15 @@ struct channel_state *find_add_channel(struct network_state *st, char *name)
 	return c;
 }
 
-struct channel_nick *find_channel_nick(struct channel_state *c, const char *name) 
+/**
+ * Find channel nick by name
+ *
+ * @param c Channel state to search
+ * @param name Name of the nick to search for
+ * @return NULL if not found, channel_nick if found
+ */
+struct channel_nick *find_channel_nick(struct channel_state *c, 
+									   const char *name) 
 {
 	GList *l;
 	const char *realname = name;
@@ -237,6 +245,37 @@ struct channel_nick *find_channel_nick(struct channel_state *c, const char *name
 	return NULL;
 }
 
+/**
+ * Find channel nick by hostmask
+ *
+ * @param c Channel state to search
+ * @param hm Hostmask of the nick to search for
+ * @return NULL if not found, channel_nick if found
+ */
+struct channel_nick *find_channel_nick_hostmask(struct channel_state *c, 
+									   		    const char *hm) 
+{
+	GList *l;
+	g_assert(hm);
+	g_assert(c);
+
+	g_assert(c->network);
+	for (l = c->nicks; l; l = l->next) {
+		struct channel_nick *n = (struct channel_nick *)l->data;
+		if(!irccmp(&c->network->info, n->global_nick->hostmask, hm))
+			return n;
+	}
+
+	return NULL;
+}
+
+/**
+ * Find network nick by name
+ * 
+ * @param n Network state to search
+ * @param name Name of the nick to search for
+ * @return NULL if not found, network_nick otherwise
+ */
 struct network_nick *find_network_nick(struct network_state *n, 
 									   const char *name)
 {
@@ -258,15 +297,23 @@ struct network_nick *find_network_nick(struct network_state *n,
 	return NULL;
 }
 
-struct network_nick *find_add_network_nick(struct network_state *n, const char *name)
+/**
+ * Search for a network nick, or add it if not found.
+ *
+ * @param n Network state to search
+ * @param name Name of the nick to search for
+ * @return network_nick structure, or NULL if out of memory.
+ */
+struct network_nick *find_add_network_nick(struct network_state *n, 
+										   const char *name)
 {
 	struct network_nick *nd;
 
-	g_assert(name);
-	g_assert(n);
+	g_assert(name != NULL);
+	g_assert(n != NULL);
 
 	nd = find_network_nick(n, name);
-	if (nd) 
+	if (nd != NULL) 
 		return nd;
 
 	/* create one, if it doesn't exist */
@@ -279,7 +326,15 @@ struct network_nick *find_add_network_nick(struct network_state *n, const char *
 	return nd;
 }
 
-struct channel_nick *find_add_channel_nick(struct channel_state *c, const char *name) 
+/**
+ * Search for a channel nick, or add it if not found.
+ *
+ * @param n Channel state to search
+ * @param name Name of the nick to search for
+ * @return channel_nick structure, or NULL if out of memory.
+ */
+struct channel_nick *find_add_channel_nick(struct channel_state *c, 
+										   const char *name) 
 {
 	struct channel_nick *n;
 	const char *realname = name;

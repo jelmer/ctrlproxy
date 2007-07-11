@@ -46,10 +46,8 @@ static void lastdisconnect_replicate(struct client *c)
 	}
 	free_network_state(ns);
 
-	if (c->network->global->config->report_time)
-		linestack_send_timed(c->network->linestack, lm, NULL, c);
-	else
-		linestack_send(c->network->linestack, lm, NULL, c);
+	linestack_send(c->network->linestack, lm, NULL, c, TRUE, 
+				   c->network->global->config->report_time);
 }
 
 static void fini_plugin(void)

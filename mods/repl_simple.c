@@ -50,10 +50,8 @@ static void simple_replicate(struct client *c)
 	}
 	free_network_state(ns);
 
-	if (c->network->global->config->report_time)
-		linestack_send_timed(c->network->linestack, m, NULL, c);
-	else
-		linestack_send(c->network->linestack, m, NULL, c);
+	linestack_send(c->network->linestack, m, NULL, c, FALSE, 
+				   c->network->global->config->report_time);
 }
 
 static const struct replication_backend simple = 
