@@ -199,6 +199,8 @@ static gboolean log_data(struct network *n, const struct line *l,
 		struct network_nick *nn = find_network_nick(n->state, nick);
 		GList *gl;
 
+		g_assert(nn != NULL);
+
 		for (gl = nn->channel_nicks; gl; gl = gl->next) {
 			struct channel_nick *cn = gl->data;
 

@@ -237,7 +237,8 @@ struct channel_nick *find_channel_nick(struct channel_state *c, const char *name
 	return NULL;
 }
 
-struct network_nick *find_network_nick(struct network_state *n, const char *name)
+struct network_nick *find_network_nick(struct network_state *n, 
+									   const char *name)
 {
 	GList *gl;
 
