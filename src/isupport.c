@@ -172,8 +172,13 @@ char *network_info_string(struct network_info *info)
 	if (info->keylen != 0)
 		fs = g_list_append(fs, g_strdup_printf("KEYLEN=%d", info->keylen));
 
-	if (info->silence != 0)
-		fs = g_list_append(fs, g_strdup_printf("SILENCE=%d", info->silence));
+	if (info->silence) {
+		if (info->silence_limit != 0)
+			fs = g_list_append(fs, 
+				 	g_strdup_printf("SILENCE=%d", info->silence_limit));
+		else 
+			fs = g_list_append(fs, g_strdup("SILENCE"));
+	}
 
 	if (info->chantypes != NULL)
 		fs = g_list_append(fs, g_strdup_printf("CHANTYPES=%s", info->chantypes));
@@ -340,7 +345,11 @@ void network_info_parse(struct network_info *info, const char *parameter)
 	} else if (!g_strcasecmp(key, "KEYLEN")) {
 		info->keylen = atoi(val);
 	} else if (!g_strcasecmp(key, "SILENCE")) {
-		info->silence = atoi(val);
+		if (val) {
+			info->silence_limit = atoi(val);
+			info->silence = TRUE;
+		} else
+			info->silence = TRUE;
 	} else if (!g_strcasecmp(key, "CHANTYPES")) {
 		g_free(info->chantypes);
 		info->chantypes = g_strdup(val);

@@ -37,6 +37,8 @@ Ctrlproxy 3.0.3 UNRELEASED
 
 	* Only send PRIVMSG and NOTICE lines during the BACKLOG command. (#143)
 
+    * Support SILENCE without arguments. 
+
   INTERNALS
 
     * Use GIOChannels for reading the motd. 

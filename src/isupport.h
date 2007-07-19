@@ -106,9 +106,12 @@ struct network_info
 	/* Maximum key length */
 	int keylen;
 
-	/* The server support the SILENCE command. 
-	 * The number is the maximum number of allowed entries in the list. */
-	int silence;
+	/* The server support the SILENCE command.  */
+	gboolean silence;
+
+	/* The number is the maximum number of allowed entries in the silence 
+	 * list. */
+	int silence_limit;
 
 	/* Maximum channel name length */
 	int channellen;
