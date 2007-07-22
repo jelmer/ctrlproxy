@@ -1,6 +1,6 @@
 /* 
 	ctrlproxy: A modular IRC proxy
-	(c) 2006 Jelmer Vernooij <jelmer@nl.linux.org>
+	(c) 2006-2007 Jelmer Vernooij <jelmer@nl.linux.org>
 	
 	Listening on unix socket in ~/.ctrlproxy/socket
 
