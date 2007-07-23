@@ -1,3 +1,9 @@
+ctrlproxy (3.0.3-1) unstable; urgency=low
+
+  * New upstream release.
+
+ -- Jelmer Vernooij <jelmer@samba.org>  Mon, 23 Jul 2007 13:48:04 +0200
+
 ctrlproxy (3.0.2-1) unstable; urgency=low
 
   * New upstream release.
