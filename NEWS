@@ -7,6 +7,8 @@ Ctrlproxy 3.0.4 UNRELEASED
 
     * Check for empty argument to /CTRLPROXY BACKLOG (#132)
 
+	* Integrate some more standard replication backends. 
+
 Ctrlproxy 3.0.3 2007-07-22
 
   BUG FIXES

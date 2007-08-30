@@ -263,6 +263,7 @@ int main(int argc, char **argv)
 
 	init_admin();
 	init_nickserv();
+	init_replication();
 	help = help_load_file(HELPFILE);
 
 	/* Determine correct modules directory */

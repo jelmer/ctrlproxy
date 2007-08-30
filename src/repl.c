@@ -221,12 +221,6 @@ gboolean client_send_state(struct client *c, struct network_state *state)
 	return TRUE;
 }
 
-static void none_replicate(struct client *c)
-{
-	if (c->network->state)
-		client_send_state(c, c->network->state);
-}
-
 static GList *backends = NULL;
 
 void register_replication_backend(const struct replication_backend *backend)
@@ -238,25 +232,28 @@ void client_replicate(struct client *client)
 {
 	void (*fn) (struct client *);
 	const char *bn = client->network->global->config->replication;
+	GList *gl;
 	
-	if (bn == NULL || !strcmp(bn, "none")) 
-		fn = none_replicate;
-	else {
-		GList *gl;
-		fn = NULL;
+	if (bn == NULL)
+		bn = "none";
 
-		for (gl = backends; gl; gl = gl->next) {
-			struct replication_backend *backend = gl->data;
-			if (!strcmp(backend->name, bn))
-				fn = backend->replication_fn;
-		}
+	fn = NULL;
 
-		if (!fn) {
-			log_client(LOG_WARNING, client, 
-					   "Unable to find replication backend '%s'", bn);
-			fn = none_replicate;
-		}
+	for (gl = backends; gl; gl = gl->next) {
+		struct replication_backend *backend = gl->data;
+		if (!strcmp(backend->name, bn))
+			fn = backend->replication_fn;
 	}
+
+	if (fn == NULL) {
+		log_client(LOG_WARNING, client, 
+				   "Unable to find replication backend '%s'", bn);
+
+		if (client->network->state)
+			client_send_state(client, client->network->state);
+
+		return;
+	} 
 
 	fn(client);
 }

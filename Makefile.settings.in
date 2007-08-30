@@ -19,7 +19,7 @@ cdatadir = @datadir@/ctrlproxy
 EXEEXT = @EXEEXT@
 OBJEXT = @OBJEXT@
 CFLAGS = @CFLAGS@ @COMMON_CFLAGS@
-MODS_SHARED = log_irssi auto_away log_custom repl_simple repl_highlight repl_lastdisconnect \
+MODS_SHARED = log_irssi auto_away log_custom \
 	socks listener @MODS_SHARED@
 LDFLAGS = @LDFLAGS@
 BINS = @BINS@

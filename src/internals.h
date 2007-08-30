@@ -106,6 +106,8 @@ void client_replicate(struct client *);
 char *mode2string(char modes[255]);
 void string2mode(char *modes, char ar[255]);
 
+gboolean init_replication(void);
+
 /* main.c */
 void free_global(struct global *);
 void config_load_notify(struct global *global);
