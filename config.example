@@ -19,15 +19,15 @@ replication = none
 # Seperate using semicolons
 matches=ctrlproxy;foobar
 
-# Support for interfacing to ctrlproxy 
-# using /MSG ctrlproxy or /CTRLPROXY -->
-[admin]
-
-
 # Prepend all lines with the time a line was received when replicating
 report-time=False
 
+# List of networks/servers to autoconnect to
 autoconnect=irc.oftc.net;irc.freenode.net;
+
+# Support for interfacing to ctrlproxy 
+# using /MSG ctrlproxy or /CTRLPROXY -->
+[admin]
 
 # Irssi-style logging
 [log-irssi]
