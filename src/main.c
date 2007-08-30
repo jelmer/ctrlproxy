@@ -105,7 +105,7 @@ static void signal_quit(int sig)
 {
 	static int state = 0;
 	log_global(LOG_WARNING, "Received signal %d, quitting...", sig);
-	if(state == 1) { 
+	if (state == 1) { 
 		signal(SIGINT, SIG_IGN); 
 		exit(0);
 	}
@@ -205,7 +205,7 @@ int main(int argc, char **argv)
 	pc = g_option_context_new("");
 	g_option_context_add_main_entries(pc, options, NULL);
 
-	if(!g_option_context_parse(pc, &argc, &argv, NULL))
+	if (!g_option_context_parse(pc, &argc, &argv, NULL))
 		return 1;
 
 	if (version) {
@@ -217,7 +217,7 @@ int main(int argc, char **argv)
 	if (config_dir == NULL) 
 		config_dir = g_build_filename(g_get_home_dir(), ".ctrlproxy", NULL);
 
-	if(isdaemon && !logfile) {
+	if (isdaemon && !logfile) {
 		logfile = g_build_filename(config_dir, "log", NULL);
 	}
 
@@ -232,12 +232,12 @@ int main(int argc, char **argv)
 
 	log_global(LOG_INFO, "CtrlProxy %s starting", VERSION);
 
-	if(gethostname(my_hostname, MAXHOSTNAMELEN) != 0) {
+	if (gethostname(my_hostname, MAXHOSTNAMELEN) != 0) {
 		log_global(LOG_WARNING, "Can't figure out hostname of local host!");
 		return 1;
 	}
 
-	if(isdaemon) {
+	if (isdaemon) {
 #ifdef HAVE_DAEMON 
 #ifdef SIGTTOU
 		signal(SIGTTOU, SIG_IGN);
@@ -274,7 +274,7 @@ int main(int argc, char **argv)
 	if (!g_file_test(tmp, G_FILE_TEST_EXISTS)) {
 		char *rcfile = g_build_filename(g_get_home_dir(), ".ctrlproxyrc", NULL);
 		
-		if(g_file_test(rcfile, G_FILE_TEST_EXISTS)) {
+		if (g_file_test(rcfile, G_FILE_TEST_EXISTS)) {
 			log_global(LOG_INFO, "Pre-3.0 style .ctrlproxyrc found");
 			log_global(LOG_INFO, "Run ctrlproxy-upgrade to update configuration");
 			return 1;

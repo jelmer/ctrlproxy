@@ -110,7 +110,7 @@ static void handle_time(struct ctcp_handle *h, char **args)
 	time_t ti = time(NULL);
 	char *t, *msg = g_strdup(ctime(&ti));
 	t = strchr(msg, '\n');
-	if(t)*t = '\0';
+	if (t)*t = '\0';
 	ctcp_reply(h, "TIME", msg, NULL);
 	g_free(msg);
 }
@@ -283,7 +283,7 @@ gboolean ctcp_process_network_request (struct network *n, struct line *l)
 
 	data = g_strdup(l->args[2]+1);
 	t = strchr(data, '\001');
-	if(!t) { 
+	if (!t) { 
 		g_free(data); 
 		log_network(LOG_WARNING, n, "Malformed CTCP request from %s!", h.nick);
 		g_free(h.nick);

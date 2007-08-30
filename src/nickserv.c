@@ -77,14 +77,14 @@ static gboolean log_data(struct network *n, const struct line *l, enum data_dire
 	static char *nickattempt = NULL;
 
 	/* User has changed his/her nick. Check whether this nick needs to be identified */
-	if(dir == FROM_SERVER && !g_strcasecmp(l->args[0], "NICK") &&
+	if (dir == FROM_SERVER && !g_strcasecmp(l->args[0], "NICK") &&
 	   nickattempt && !g_strcasecmp(nickattempt, l->args[1])) {
 		nickserv_identify_me(n, l->args[1]);
 	}
 
 	/* Keep track of the last nick that the user tried to take */
-	if(dir == TO_SERVER && !g_strcasecmp(l->args[0], "NICK")) {
-		if(nickattempt) g_free(nickattempt);
+	if (dir == TO_SERVER && !g_strcasecmp(l->args[0], "NICK")) {
+		if (nickattempt) g_free(nickattempt);
 		nickattempt = g_strdup(l->args[1]);
 	}
 
@@ -126,9 +126,9 @@ static gboolean log_data(struct network *n, const struct line *l, enum data_dire
 	}
 
 	/* If we receive a nick-already-in-use message, ghost the current user */
-	if(dir == FROM_SERVER && atol(l->args[0]) == ERR_NICKNAMEINUSE) {
+	if (dir == FROM_SERVER && atol(l->args[0]) == ERR_NICKNAMEINUSE) {
 		const char *pass = nickserv_find_nick(n, nickattempt);
-		if(nickattempt && pass) {
+		if (nickattempt && pass) {
 			const char *nickserv_n = nickserv_nick(n);
 			char *raw;
 			

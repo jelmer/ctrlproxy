@@ -507,7 +507,7 @@ struct ctrlproxy_config *load_configuration(const char *dir)
     else 
 	    cfg->client_charset = NULL;
 
-	if(!g_file_test(cfg->motd_file, G_FILE_TEST_EXISTS))
+	if (!g_file_test(cfg->motd_file, G_FILE_TEST_EXISTS))
 		log_global(LOG_ERROR, "Can't open MOTD file '%s' for reading", cfg->motd_file);
 
     if (g_key_file_has_key(kf, "admin", "without_privmsg", NULL))

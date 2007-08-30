@@ -42,7 +42,7 @@ char *mode2string(char modes[255])
 	int pos = 0;
 	ret[0] = '\0';
 	for(i = 0; i < 255; i++) {
-		if(modes[i]) { ret[pos] = (char)i; pos++; }
+		if (modes[i]) { ret[pos] = (char)i; pos++; }
 	}
 	ret[pos] = '\0';
 
@@ -82,7 +82,7 @@ static void client_send_channel_state(struct client *c,
 		char mode[2] = { ch->mode, 0 };
 		char *tmp;
 		n = (struct channel_nick *)nl->data;
-		if(n->mode && n->mode != ' ') {
+		if (n->mode && n->mode != ' ') {
 			tmp = g_strdup_printf("%c%s", n->mode, n->global_nick->nick);
 		} else 	{ 
 			tmp = g_strdup(n->global_nick->nick);

@@ -62,7 +62,7 @@ static void server_send_login (struct network *s)
 	s->linestack = new_linestack(s);
 	g_assert(s->linestack != NULL);
 
-	if(s->config->type == NETWORK_TCP && 
+	if (s->config->type == NETWORK_TCP && 
 	   s->connection.data.tcp.current_server->password) { 
 		network_send_args(s, "PASS", 
 					s->connection.data.tcp.current_server->password, NULL);
@@ -183,7 +183,7 @@ static gboolean process_from_server(struct network *n, struct line *l)
 	log_network_line(n, l, TRUE);
 
 	/* Silently drop empty messages, as allowed by RFC */
-	if(l->argc == 0) {
+	if (l->argc == 0) {
 		return TRUE;
 	}
 
@@ -203,20 +203,20 @@ static gboolean process_from_server(struct network *n, struct line *l)
 
 	g_assert(l->args[0]);
 
-	if(!g_strcasecmp(l->args[0], "PING")){
+	if (!g_strcasecmp(l->args[0], "PING")){
 		network_send_args(n, "PONG", l->args[1], NULL);
 		return TRUE;
-	} else if(!g_strcasecmp(l->args[0], "PONG")){
+	} else if (!g_strcasecmp(l->args[0], "PONG")){
 		return TRUE;
-	} else if(!g_strcasecmp(l->args[0], "ERROR")) {
+	} else if (!g_strcasecmp(l->args[0], "ERROR")) {
 		log_network(LOG_ERROR, n, "error: %s", l->args[1]);
-	} else if(!g_strcasecmp(l->args[0], "433") && 
+	} else if (!g_strcasecmp(l->args[0], "433") && 
 			  n->connection.state == NETWORK_CONNECTION_STATE_LOGIN_SENT){
 		char *tmp = g_strdup_printf("%s_", l->args[2]);
 		network_send_args(n, "NICK", tmp, NULL);
 		log_network(LOG_WARNING, n, "%s was already in use, trying %s", l->args[2], tmp);
 		g_free(tmp);
-	} else if(atoi(l->args[0]) == RPL_ENDOFMOTD ||
+	} else if (atoi(l->args[0]) == RPL_ENDOFMOTD ||
 			  atoi(l->args[0]) == ERR_NOMOTD) {
 		GList *gl;
 		n->connection.state = NETWORK_CONNECTION_STATE_MOTD_RECVD;
@@ -246,13 +246,13 @@ static gboolean process_from_server(struct network *n, struct line *l)
 		{
 			struct channel_config *c = gl->data;
 
-			if(c->autojoin) {
+			if (c->autojoin) {
 				network_send_args(n, "JOIN", c->name, c->key, NULL);
 			} 
 		}
 	} 
 
-	if( n->connection.state == NETWORK_CONNECTION_STATE_MOTD_RECVD) {
+	if ( n->connection.state == NETWORK_CONNECTION_STATE_MOTD_RECVD) {
 		gboolean linestack_store = TRUE;
 		if (atoi(l->args[0])) {
 			linestack_store &= (!redirect_response(n, l));
@@ -772,7 +772,7 @@ static gboolean connect_current_tcp_server(struct network *s)
 #endif
 	}
 
-	if(!ioc) {
+	if (!ioc) {
 		log_network(LOG_ERROR, s, "Couldn't connect via server %s:%s", cs->host, cs->port);
 		return FALSE;
 	}
@@ -854,13 +854,13 @@ static gboolean close_server(struct network *n)
 {
 	g_assert(n);
 
-	if(n->connection.state == NETWORK_CONNECTION_STATE_RECONNECT_PENDING) {
+	if (n->connection.state == NETWORK_CONNECTION_STATE_RECONNECT_PENDING) {
 		g_source_remove(n->reconnect_id);
 		n->reconnect_id = 0;
 		n->connection.state = NETWORK_CONNECTION_STATE_NOT_CONNECTED;
 	}
 
-	if(n->connection.state == NETWORK_CONNECTION_STATE_NOT_CONNECTED) {
+	if (n->connection.state == NETWORK_CONNECTION_STATE_NOT_CONNECTED) {
 		return FALSE;
 	} 
 
@@ -939,8 +939,8 @@ void clients_send(GList *clients, struct line *l,
 
 	for (g = clients; g; g = g->next) {
 		struct client *c = (struct client *)g->data;
-		if(c != exception) {
-			if(run_client_filter(c, l, FROM_SERVER)) { 
+		if (c != exception) {
+			if (run_client_filter(c, l, FROM_SERVER)) { 
 				client_send_line(c, l);
 			}
 		}
@@ -952,7 +952,7 @@ static pid_t piped_child(char* const command[], int *f_in)
 	pid_t pid;
 	int sock[2];
 
-	if(socketpair(PF_UNIX, SOCK_STREAM, AF_LOCAL, sock) == -1) {
+	if (socketpair(PF_UNIX, SOCK_STREAM, AF_LOCAL, sock) == -1) {
 		log_global(LOG_ERROR, "socketpair: %s", strerror(errno));
 		return -1;
 	}
@@ -1212,7 +1212,7 @@ void unload_network(struct network *s)
 gboolean disconnect_network(struct network *s)
 {
 	g_assert(s);
-	if(s->connection.state == NETWORK_CONNECTION_STATE_NOT_CONNECTED) {
+	if (s->connection.state == NETWORK_CONNECTION_STATE_NOT_CONNECTED) {
 		return FALSE;
 	}
 	log_network(LOG_INFO, s, "Disconnecting");
@@ -1237,7 +1237,7 @@ gboolean verify_client(const struct network *s, const struct client *c)
 	
 	for (gl = s->clients; gl; gl = gl->next) {
 		struct client *nc = (struct client *)gl->data;
-		if(c == nc) return 1;
+		if (c == nc) return 1;
 	}
 
 	return 0;

@@ -157,7 +157,7 @@ static void add_server (admin_handle h, char **args, void *userdata)
 	struct tcp_server_config *s;
 	char *t;
 
-	if(!args[1] || !args[2]) {
+	if (!args[1] || !args[2]) {
 		admin_out(h, "Not enough parameters");
 		return;
 	}
@@ -194,7 +194,7 @@ static void add_server (admin_handle h, char **args, void *userdata)
 static void com_connect_network (admin_handle h, char **args, void *userdata)
 {
 	struct network *s;
-	if(!args[1]) {
+	if (!args[1]) {
 		 admin_out(h, "No network specified");
 		 return;
 	}
@@ -234,7 +234,7 @@ static void com_disconnect_network (admin_handle h, char **args, void *userdata)
 
 	if (args[1] != NULL) {
 		n = find_network(admin_get_global(h), args[1]);
-		if(!n) {
+		if (!n) {
 			admin_out(h, "Can't find active network with that name");
 			return;
 		}
@@ -254,14 +254,14 @@ static void com_next_server (admin_handle h, char **args, void *userdata)
 	const char *name;
 
 
-	if(args[1] != NULL) {
+	if (args[1] != NULL) {
 		name = args[1];
 		n = find_network(admin_get_global(h), args[1]);
 	} else {
 		n = admin_get_network(h);
 		name = n->info.name;
 	}
-	if(!n) {
+	if (!n) {
 		admin_out(h, "%s: Not connected", name);
 	} else {
 		admin_out(h, "%s: Reconnecting", name);
@@ -321,7 +321,7 @@ static void dump_joined_channels(admin_handle h, char **args, void *userdata)
 
 	if (args[1] != NULL) {
 		n = find_network(admin_get_global(h), args[1]);
-		if(n == NULL) {
+		if (n == NULL) {
 			admin_out(h, "Can't find network '%s'", args[1]);
 			return;
 		}
@@ -465,7 +465,7 @@ gboolean process_cmd(admin_handle h, const char *cmd)
 	/* Ok, arguments are processed now. Execute the corresponding command */
 	for (gl = admin_commands; gl; gl = gl->next) {
 		struct admin_command *cmd = (struct admin_command *)gl->data;
-		if(!g_strcasecmp(cmd->name, args[0])) {
+		if (!g_strcasecmp(cmd->name, args[0])) {
 			cmd->handler(h, args, cmd->userdata);
 			g_strfreev(args);
 			return TRUE;

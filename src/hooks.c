@@ -61,7 +61,7 @@ static GList *del_filter_ex(GList *list, const char *name)
 	{
 		struct filter_data *d = (struct filter_data *)gl->data;
 
-		if(!g_strcasecmp(d->name, name)) 
+		if (!g_strcasecmp(d->name, name)) 
 		{
 			g_free(d->name);
 			g_free(d);
@@ -78,7 +78,7 @@ static gboolean filter_class_execute(GList *gl, struct network *s, enum data_dir
 	while(gl) {
 		struct filter_data *d = (struct filter_data *)gl->data;
 		
-		if(!d->function(s, l, dir, d->userdata)) {
+		if (!d->function(s, l, dir, d->userdata)) {
 			return FALSE;
 		}
 
@@ -130,7 +130,7 @@ gboolean run_client_filter(struct client *c, const struct line *l, enum data_dir
 	{
 		struct client_filter_data *d = (struct client_filter_data *)gl->data;
 		
-		if(!d->function(c, l, dir, d->userdata)) {
+		if (!d->function(c, l, dir, d->userdata)) {
 			return FALSE;
 		}
 	}
@@ -175,7 +175,7 @@ void del_new_client_hook(const char *name)
 	for (l = new_client_hooks; l; l = l->next)
 	{
 		struct new_client_hook_data *d = (struct new_client_hook_data *)l->data;
-		if(!strcmp(d->name, name)) {
+		if (!strcmp(d->name, name)) {
 			g_free(d->name);
 			g_free(d);
 			new_client_hooks = g_list_remove(new_client_hooks, d);
@@ -192,7 +192,7 @@ gboolean new_client_hook_execute(struct client *c)
 	{
 		struct new_client_hook_data *d = (struct new_client_hook_data *)l->data;
 	
-		if(!d->hook(c, d->userdata)) {
+		if (!d->hook(c, d->userdata)) {
 			g_debug(("New client hook '%s' refused new client"), d->name);
 			return FALSE;
 		}
@@ -218,7 +218,7 @@ void del_lose_client_hook(const char *name)
 	for (l = lose_client_hooks; l; l = l->next)
 	{
 		struct lose_client_hook_data *d = (struct lose_client_hook_data *)l->data;
-		if(!strcmp(d->name, name)) {
+		if (!strcmp(d->name, name)) {
 			g_free(d->name);
 			lose_client_hooks = g_list_remove(lose_client_hooks, d);
 			g_free(d);
@@ -263,7 +263,7 @@ void del_server_connected_hook(const char *name)
 	for (l = server_connected_hooks; l; l = l->next) 
 	{
 		struct server_connected_hook_data *d = (struct server_connected_hook_data *)l->data;
-		if(!strcmp(d->name, name)) {
+		if (!strcmp(d->name, name)) {
 			g_free(d->name);
 			g_free(d);
 			server_connected_hooks = g_list_remove(server_connected_hooks, d);
@@ -308,7 +308,7 @@ void del_server_disconnected_hook(const char *name)
 	for (l = server_disconnected_hooks; l; l = l->next) 
 	{
 		struct server_disconnected_hook_data *d = (struct server_disconnected_hook_data *)l->data;
-		if(!strcmp(d->name, name)) {
+		if (!strcmp(d->name, name)) {
 			g_free(d->name);
 			g_free(d);
 			server_disconnected_hooks = g_list_remove(server_disconnected_hooks, d);

@@ -37,7 +37,7 @@ static gboolean check_time(gpointer user_data)
 {
 	struct auto_away_data *d = user_data;
 
-	if(time(NULL) - d->last_message > d->max_idle_time && !d->is_away) { 
+	if (time(NULL) - d->last_message > d->max_idle_time && !d->is_away) { 
 		GList *sl;
 		d->is_away = TRUE;
 		for (sl = d->global->networks; sl; sl = sl->next) {

@@ -528,7 +528,7 @@ static int is_reply(const int *replies, int r)
 	g_assert(replies != NULL);
 
 	for(i = 0; i < 20 && replies[i]; i++) {
-		if(replies[i] == r) return 1;
+		if (replies[i] == r) return 1;
 	}
 	return 0;
 }
@@ -537,7 +537,7 @@ static struct query *find_query(char *name)
 {
 	int i;
 	for(i = 0; queries[i].name; i++) {
-		if(!g_strcasecmp(queries[i].name, name)) return &queries[i];
+		if (!g_strcasecmp(queries[i].name, name)) return &queries[i];
 	}
 
 	return NULL;
@@ -563,7 +563,7 @@ gboolean redirect_response(struct network *network, struct line *l)
 
 	/* Find a request that this response is a reply to */
 	for (s = stack; s; s = s->next) {
-		if(s->network == network && 
+		if (s->network == network && 
 		   (is_reply(s->query->replies, n) || 
 			is_reply(s->query->errors, n) ||
 			is_reply(s->query->end_replies, n))) {

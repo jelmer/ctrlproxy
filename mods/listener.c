@@ -57,11 +57,11 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition condition, gpo
 			continue;
 		}
 
-		if(!listener->password) {
+		if (!listener->password) {
 			log_network(LOG_WARNING, listener->network, "No password set, allowing client _without_ authentication!");
 		}
 
-		if(!g_strcasecmp(l->args[0], "PASS")) {
+		if (!g_strcasecmp(l->args[0], "PASS")) {
 			char *desc;
 			if (listener->password && strcmp(l->args[1], listener->password)) {
 				log_network(LOG_WARNING, listener->network, "User tried to log in with incorrect password!");

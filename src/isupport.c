@@ -264,12 +264,12 @@ void network_info_parse(struct network_info *info, const char *parameter)
 		val = g_strdup(sep+1);
 	}
 	
-	if(!g_strcasecmp(key, "CASEMAPPING")) {
-		if(!g_strcasecmp(val, "rfc1459")) {
+	if (!g_strcasecmp(key, "CASEMAPPING")) {
+		if (!g_strcasecmp(val, "rfc1459")) {
 			info->casemapping = CASEMAP_RFC1459;
-		} else if(!g_strcasecmp(val, "strict-rfc1459")) {
+		} else if (!g_strcasecmp(val, "strict-rfc1459")) {
 			info->casemapping = CASEMAP_STRICT_RFC1459;
-		} else if(!g_strcasecmp(val, "ascii")) {
+		} else if (!g_strcasecmp(val, "ascii")) {
 			info->casemapping = CASEMAP_ASCII;
 		} else {
 			info->casemapping = CASEMAP_UNKNOWN;
@@ -472,7 +472,7 @@ gboolean is_prefix(char p, const struct network_info *n)
 	pref_end = strchr(n->prefix, ')');
 	if (!pref_end)pref_end = n->prefix; else pref_end++;
 
-	if(strchr(pref_end, p)) return TRUE;
+	if (strchr(pref_end, p)) return TRUE;
 	return FALSE;
 }
 
@@ -494,7 +494,7 @@ char get_prefix_by_mode(char mode, const struct network_info *n)
 	prefix = n->prefix;
 	
 	pref_end = strchr(prefix, ')');
-	if(prefix[0] != '(' || !pref_end) {
+	if (prefix[0] != '(' || !pref_end) {
 		log_global(LOG_WARNING, "Malformed PREFIX data `%s'", prefix);
 		return ' ';
 	}
@@ -502,7 +502,7 @@ char get_prefix_by_mode(char mode, const struct network_info *n)
 	prefix++;
 
 	for(i = 0; pref_end[i]; i++) {
-		if(prefix[i] == mode) return pref_end[i];
+		if (prefix[i] == mode) return pref_end[i];
 	}
 	return ' ';
 }

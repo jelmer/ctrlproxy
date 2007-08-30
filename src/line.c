@@ -81,16 +81,16 @@ struct line * irc_parse_line(const char *d)
 	l->has_endcolon = WITHOUT_COLON;
 	p = data;
 
-	if(p[0] == ':') {
+	if (p[0] == ':') {
 		p = strchr(data, ' ');
-		if(!p){ g_free(data); g_free(l); return NULL; }
+		if (!p){ g_free(data); g_free(l); return NULL; }
 		*p = '\0';
 		l->origin = g_strdup(data+1);
 		for(; *(p+1) == ' '; p++);
 		p++;
 	}
 
-	for(i = 0; p[i]; i++) if(p[i] == ' ')estimate++;
+	for(i = 0; p[i]; i++) if (p[i] == ' ')estimate++;
 
 	l->args = g_new(char *, estimate+2);
 
@@ -169,14 +169,14 @@ static int requires_colon(const struct line *l)
 
 	g_assert(l);
 
-	if(l->has_endcolon == WITH_COLON) return 1;
-	else if(l->has_endcolon == WITHOUT_COLON) return 0;
+	if (l->has_endcolon == WITH_COLON) return 1;
+	else if (l->has_endcolon == WITHOUT_COLON) return 0;
 
 	g_assert(l->args[0]);
 
 	c = atoi(l->args[0]);
-	if(!g_strcasecmp(l->args[0], "MODE"))return 0;
-	if(!g_strcasecmp(l->args[0], "NICK"))return 0;
+	if (!g_strcasecmp(l->args[0], "MODE"))return 0;
+	if (!g_strcasecmp(l->args[0], "NICK"))return 0;
 
 	switch(c) {
 	case RPL_CHANNELMODEIS:
@@ -218,20 +218,20 @@ char *irc_line_string(const struct line *l)
 	g_assert(l);
 
 	/* Silently ignore empty messages */
-	if(l->argc == 0) return g_strdup("");
+	if (l->argc == 0) return g_strdup("");
 
-	if(l->origin)len+=strlen(l->origin);
+	if (l->origin)len+=strlen(l->origin);
 	for(i = 0; l->args[i]; i++) len+=strlen(l->args[i])+2;
 	ret = g_malloc(len+20);
 	strcpy(ret, "");
 	
-	if(l->origin) sprintf(ret, ":%s ", l->origin);
+	if (l->origin) sprintf(ret, ":%s ", l->origin);
 
 	for(i = 0; i < l->argc; i++) {
-		if(i == l->argc-1 && requires_colon(l) && i != 0)
+		if (i == l->argc-1 && requires_colon(l) && i != 0)
 			strcat(ret, ":");
 		strcat(ret, l->args[i]);
-		if(i != l->argc-1)strcat(ret, " ");
+		if (i != l->argc-1)strcat(ret, " ");
 	}
 
 	return ret;
@@ -242,8 +242,8 @@ void free_line(struct line *l) {
 	if (l == NULL)
 		return;
 
-	if(l->origin)g_free(l->origin);
-	if(l->args) {
+	if (l->origin)g_free(l->origin);
+	if (l->args) {
 		for(i = 0; l->args[i]; i++)g_free(l->args[i]);
 		g_free(l->args);
 	}
@@ -261,7 +261,7 @@ char *line_get_nick(const struct line *l)
 
 	nick = g_strdup(l->origin);
 	t = strchr(nick, '!');
-	if(t == NULL) 
+	if (t == NULL) 
 		return nick;
 
 	*t = '\0';
@@ -318,7 +318,7 @@ struct line *linedup(const struct line *l)
 
 	ret = g_memdup(l, sizeof(struct line));
 
-	if(l->origin)ret->origin = g_strdup(l->origin);
+	if (l->origin)ret->origin = g_strdup(l->origin);
 	ret->args = g_new(char *, ret->argc+MAX_LINE_ARGS);
 	for(i = 0; l->args[i]; i++) {
 		ret->args[i] = g_strdup(l->args[i]);

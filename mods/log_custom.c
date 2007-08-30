@@ -518,7 +518,7 @@ static gboolean log_custom_data(struct network *network, const struct line *l,
 	} else if (!g_strcasecmp(l->args[0], "PRIVMSG")) {
 		if (l->args[2][0] == '\001') { 
 			l->args[2][strlen(l->args[2])-1] = '\0';
-			if(!g_ascii_strncasecmp(l->args[2], "\001ACTION ", 8)) { 
+			if (!g_ascii_strncasecmp(l->args[2], "\001ACTION ", 8)) { 
 				l->args[2]+=8;
 				file_write_target(data, network, "action", l);
 				l->args[2]-=8;
@@ -550,14 +550,14 @@ static gboolean log_custom_data(struct network *network, const struct line *l,
 			while (cont) {
 				n = strchr(p, ',');
 
-				if(!n) cont = 0;
+				if (!n) cont = 0;
 				else *n = '\0';
 
 				file_write_channel_only(data, network, "kick", l);
 
 				p = n+1;
 				_nick = strchr(_nick, ',');
-				if(!_nick)break;
+				if (!_nick)break;
 				_nick++;
 			}
 			

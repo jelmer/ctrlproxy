@@ -90,7 +90,7 @@ help_t *help_load_file( const char *helpfile )
 		data = g_mapped_file_get_contents(h->file);
 	}
 	
-	if( h->file == NULL ) {
+	if (h->file == NULL) {
 		log_global(LOG_WARNING, "Unable to open help file `%s': %s", helpfile, 
 				  error->message);
 		help_free( h );

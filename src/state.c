@@ -194,7 +194,7 @@ struct channel_state *find_channel(struct network_state *st, const char *name)
 	for (cl = st->channels; cl; cl = cl->next) {
 		struct channel_state *c = (struct channel_state *)cl->data;
 
-		if(!irccmp(&st->info, c->name, name)) 
+		if (!irccmp(&st->info, c->name, name)) 
 			return c;
 	}
 	return NULL;
@@ -207,7 +207,7 @@ struct channel_state *find_add_channel(struct network_state *st, char *name)
 	g_assert(name);
 	
 	c = find_channel(st, name);
-	if(c)
+	if (c)
 		return c;
 	c = g_new0(struct channel_state ,1);
 	c->network = st;
@@ -238,7 +238,7 @@ struct channel_nick *find_channel_nick(struct channel_state *c,
 
 	for (l = c->nicks; l; l = l->next) {
 		struct channel_nick *n = (struct channel_nick *)l->data;
-		if(!irccmp(&c->network->info, n->global_nick->nick, realname))
+		if (!irccmp(&c->network->info, n->global_nick->nick, realname))
 			return n;
 	}
 
@@ -262,7 +262,7 @@ struct channel_nick *find_channel_nick_hostmask(struct channel_state *c,
 	g_assert(c->network);
 	for (l = c->nicks; l; l = l->next) {
 		struct channel_nick *n = (struct channel_nick *)l->data;
-		if(!irccmp(&c->network->info, n->global_nick->hostmask, hm))
+		if (!irccmp(&c->network->info, n->global_nick->hostmask, hm))
 			return n;
 	}
 
@@ -289,7 +289,7 @@ struct network_nick *find_network_nick(struct network_state *n,
 
 	for (gl = n->nicks; gl; gl = gl->next) {
 		struct network_nick *ndd = (struct network_nick*)gl->data;
-		if(!irccmp(&n->info, ndd->nick, name)) {
+		if (!irccmp(&n->info, ndd->nick, name)) {
 			return ndd;
 		}
 	}
@@ -517,7 +517,7 @@ static void handle_333(struct network_state *s, struct line *l)
 {
 	struct channel_state *c = find_channel(s, l->args[2]);
 
-	if(!c) {
+	if (!c) {
 		log_network_state(LOG_WARNING, s, 
 				"Can't set topic last set time for unknown channel '%s'!", 
 				l->args[2]);
@@ -778,7 +778,7 @@ static void handle_mode(struct network_state *s, struct line *l)
 				case 'l':
 					c->modes[(unsigned char)'l'] = t;
 				    if (t) {
-						if(!l->args[++arg]) {
+						if (!l->args[++arg]) {
 							log_network_state(LOG_WARNING, s, "Mode +l requires argument, but no argument found");
 							break;
 						}
@@ -790,7 +790,7 @@ static void handle_mode(struct network_state *s, struct line *l)
 				case 'k':
 					c->modes[(unsigned char)'k'] = t;
 					if (t) {
-						if(!l->args[++arg]) {
+						if (!l->args[++arg]) {
 							log_network_state(LOG_WARNING, s, "Mode k requires argument, but no argument found");
 							break;
 						}
@@ -805,11 +805,11 @@ static void handle_mode(struct network_state *s, struct line *l)
 					break;
 				default:
 					  p = get_prefix_by_mode(l->args[2][i], &s->info);
-					  if(p == ' ') {
+					  if (p == ' ') {
 						  c->modes[(unsigned char)l->args[2][i]] = t;
 					  } else {
 							n = find_channel_nick(c, l->args[++arg]);
-							if(!n) {
+							if (!n) {
 								log_network_state(LOG_WARNING, s, "Can't set mode %c%c on nick %s on channel %s, because nick does not exist!", t == ADD?'+':'-', l->args[2][i], l->args[arg], l->args[1]);
 								break;
 							}

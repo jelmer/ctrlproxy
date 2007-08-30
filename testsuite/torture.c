@@ -122,7 +122,7 @@ int main (int argc, char **argv)
 	pc = g_option_context_new("");
 	g_option_context_add_main_entries(pc, options, NULL);
 
-	if(!g_option_context_parse(pc, &argc, &argv, NULL))
+	if (!g_option_context_parse(pc, &argc, &argv, NULL))
 		return 1;
 
 	g_option_context_free(pc);

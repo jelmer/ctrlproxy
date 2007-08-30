@@ -96,23 +96,23 @@ static gboolean process_from_client(struct client *c, struct line *l)
 
 	g_assert(l->args[0] != NULL);
 
-	if(!g_strcasecmp(l->args[0], "QUIT")) {
+	if (!g_strcasecmp(l->args[0], "QUIT")) {
 		disconnect_client(c, "Client exiting");
 		return FALSE;
-	} else if(!g_strcasecmp(l->args[0], "PING")) {
+	} else if (!g_strcasecmp(l->args[0], "PING")) {
 		client_send_args(c, "PONG", c->network->info.name, l->args[1], NULL);
-	} else if(!g_strcasecmp(l->args[0], "PONG")) {
+	} else if (!g_strcasecmp(l->args[0], "PONG")) {
 		if (l->argc < 2) {
 			client_send_response(c, ERR_NEEDMOREPARAMS, l->args[0], 
 								 "Not enough parameters", NULL);
 			return TRUE;
 		}
 		c->last_pong = time(NULL);
-	} else if(!g_strcasecmp(l->args[0], "USER") ||
+	} else if (!g_strcasecmp(l->args[0], "USER") ||
 			  !g_strcasecmp(l->args[0], "PASS")) {
 		client_send_response(c, ERR_ALREADYREGISTERED,  
 						 "Please register only once per session", NULL);
-	} else if(!g_strcasecmp(l->args[0], "CTRLPROXY")) {
+	} else if (!g_strcasecmp(l->args[0], "CTRLPROXY")) {
 		admin_process_command(c, l, 1);
 	} else if (!c->network->global->config->admin_noprivmsg && 
 			   !g_strcasecmp(l->args[0], "PRIVMSG") && 
@@ -126,13 +126,13 @@ static gboolean process_from_client(struct client *c, struct line *l)
 			l->args[2][0] == '\001') {
 		ctcp_process_client_reply(c, l);
 	} else if (!g_strcasecmp(l->args[0], "")) {
-	} else if(c->network->connection.state == NETWORK_CONNECTION_STATE_MOTD_RECVD) {
+	} else if (c->network->connection.state == NETWORK_CONNECTION_STATE_MOTD_RECVD) {
 		if (c->network->config->disable_cache || !client_try_cache(c, l)) {
 			/* Perhaps check for validity of input here ? It could save us some bandwidth 
 			 * to the server, though very unlikely to occur often */
 			network_send_line(c->network, c, l, FALSE);
 		}
-	} else if(c->network->connection.state == NETWORK_CONNECTION_STATE_NOT_CONNECTED) {
+	} else if (c->network->connection.state == NETWORK_CONNECTION_STATE_NOT_CONNECTED) {
 		char *msg;
 		if (c->network->connection.data.tcp.last_disconnect_reason == NULL)
 			msg = g_strdup("Currently not connected to server...");
@@ -329,7 +329,7 @@ void send_motd(struct client *c)
 
 	lines = get_motd_lines(c);
 
-	if(!lines) {
+	if (!lines) {
 		client_send_response(c, ERR_NOMOTD, "No MOTD file", NULL);
 		return;
 	}
@@ -460,7 +460,7 @@ static gboolean welcome_client(struct client *client)
 		}
 	}
 
-	if(!new_client_hook_execute(client)) {
+	if (!new_client_hook_execute(client)) {
 		disconnect_client(client, "Refused by client connect hook");
 		return FALSE;
 	}
@@ -517,7 +517,7 @@ static gboolean handle_pending_client_receive(GIOChannel *c,
 				}
 
 				client->nick = g_strdup(l->args[1]); /* Save nick */
-			} else if(!g_strcasecmp(l->args[0], "USER")) {
+			} else if (!g_strcasecmp(l->args[0], "USER")) {
 
 				if (l->argc < 5) {
 					client_send_response(client, ERR_NEEDMOREPARAMS, 
@@ -535,9 +535,9 @@ static gboolean handle_pending_client_receive(GIOChannel *c,
 				g_free(client->fullname);
 				client->fullname = g_strdup(l->args[4]);
 
-			} else if(!g_strcasecmp(l->args[0], "PASS")) {
+			} else if (!g_strcasecmp(l->args[0], "PASS")) {
 				/* Silently drop... */
-			} else if(!g_strcasecmp(l->args[0], "CONNECT")) {
+			} else if (!g_strcasecmp(l->args[0], "CONNECT")) {
 				if (l->argc < 2) {
 					client_send_response(client, ERR_NEEDMOREPARAMS,
 									 l->args[0], "Not enough parameters", NULL);

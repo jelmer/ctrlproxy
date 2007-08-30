@@ -142,7 +142,7 @@ static gboolean client_try_cache_topic(struct client *c, struct line *l)
 	ch = find_channel(c->network->state, l->args[1]);
 	if (!ch) return FALSE;
 
-	if(ch->topic) {
+	if (ch->topic) {
 		client_send_response(c, RPL_TOPIC, ch->name, ch->topic, NULL);
 	} else {
 		client_send_response(c, RPL_NOTOPIC, ch->name, "No topic set", NULL);

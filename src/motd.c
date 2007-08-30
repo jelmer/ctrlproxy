@@ -37,7 +37,7 @@ char ** get_motd_lines(struct client *c)
 		return NULL;
 
 	fd = g_io_channel_new_file(c->network->global->config->motd_file, "r", &error);
-	if(!fd) {
+	if (!fd) {
 		log_global(LOG_ERROR, "Can't open '%s'", c->network->global->config->motd_file);
 		return NULL;
 	}
