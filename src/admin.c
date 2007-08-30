@@ -368,7 +368,7 @@ static void repl_command(admin_handle h, char **args, void *userdata)
 		return;
 	}
 
-	if(!args[1]) {
+	if (!args[1] || strlen(args[1]) == 0) {
 		admin_out(h, "Sending backlog for network '%s'", n->info.name);
 
 		linestack_send(n->linestack, lm, NULL, admin_get_client(h),

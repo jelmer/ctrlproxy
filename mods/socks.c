@@ -178,7 +178,7 @@ static gboolean pass_handle_data(struct socks_client *cl)
 	{
 		struct allow_rule *r = gl->data;
 
-		if (!r->password || !r->username) 
+		if (r->password == NULL || r->username == NULL) 
 			continue;
 
 		if (strcmp(r->username, uname)) 
@@ -186,6 +186,7 @@ static gboolean pass_handle_data(struct socks_client *cl)
 
 		if (strcmp(r->password, pass))
 			continue;
+
 		break;
 	}
 

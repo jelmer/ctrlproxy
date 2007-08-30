@@ -1,6 +1,12 @@
  Otherwise indicated differently, all changes made by 
  	Jelmer Vernooij.
 
+Ctrlproxy 3.0.4 UNRELEASED
+
+  BUG FIXES
+
+    * Check for empty argument to /CTRLPROXY BACKLOG (#132)
+
 Ctrlproxy 3.0.3 2007-07-22
 
   BUG FIXES
