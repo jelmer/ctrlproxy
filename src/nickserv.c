@@ -77,6 +77,39 @@ void nickserv_identify_me(struct network *network, char *nick)
 	}
 }
 
+static void cache_nickserv_pass(struct network *n, const char *newpass)
+{
+	struct nickserv_entry *e = NULL;
+	GList *gl;
+
+	for (gl = n->global->nickserv_nicks; gl; gl = gl->next) {
+		e = gl->data;
+
+		if (e->network && !g_strcasecmp(e->network, n->info.name) && 
+			!g_strcasecmp(e->nick, n->state->me.nick)) {
+			break;		
+		}
+
+		if (!e->network && !g_strcasecmp(e->nick, n->state->me.nick) &&
+			!g_strcasecmp(e->pass, newpass)) {
+			break;
+		}
+	}
+
+	if (!gl) {
+		e = g_new0(struct nickserv_entry, 1);
+		e->nick = g_strdup(n->state->me.nick);
+		e->network = g_strdup(n->info.name);
+		n->global->nickserv_nicks = g_list_prepend(n->global->nickserv_nicks, e);
+	}
+
+	if (e->pass == NULL || 
+		strcmp(e->pass, newpass) != 0) {
+		e->pass = g_strdup(newpass);
+		log_network(LOG_INFO, n, "Caching password for nick %s", e->nick);
+	} 
+}
+
 static gboolean log_data(struct network *n, const struct line *l, enum data_direction dir, void *userdata) 
 {
 	static char *nickattempt = NULL;
@@ -96,38 +129,13 @@ static gboolean log_data(struct network *n, const struct line *l, enum data_dire
 	if (dir == TO_SERVER && 
 		(!g_strcasecmp(l->args[0], "PRIVMSG") || !g_strcasecmp(l->args[0], "NOTICE")) &&
 		(!g_strcasecmp(l->args[1], nickserv_nick(n)) && !g_strncasecmp(l->args[2], "IDENTIFY ", strlen("IDENTIFY ")))) {
-			struct nickserv_entry *e = NULL;
-			GList *gl;
-			char *newpass = g_strdup(l->args[2] + strlen("IDENTIFY "));
-		
-			for (gl = n->global->nickserv_nicks; gl; gl = gl->next) {
-				e = gl->data;
+			cache_nickserv_pass(n, l->args[2] + strlen("IDENTIFY "));
+	}
 
-				if (e->network && !g_strcasecmp(e->network, n->info.name) && 
-					!g_strcasecmp(e->nick, n->state->me.nick)) {
-					break;		
-				}
-
-				if (!e->network && !g_strcasecmp(e->nick, n->state->me.nick) &&
-					!g_strcasecmp(e->pass, newpass)) {
-					break;
-				}
-			}
-
-			if (!gl) {
-				e = g_new0(struct nickserv_entry, 1);
-				e->nick = g_strdup(n->state->me.nick);
-				e->network = g_strdup(n->info.name);
-				n->global->nickserv_nicks = g_list_prepend(n->global->nickserv_nicks, e);
-			}
-
-			if (e->pass == NULL || 
-				strcmp(e->pass, newpass) != 0) {
-				e->pass = g_strdup(newpass);
-				log_network(LOG_INFO, n, "Caching password for nick %s", e->nick);
-			} 
-
-			g_free(newpass);
+	if (dir == TO_SERVER && 
+		!g_strcasecmp(l->args[0], "NS") &&
+		!g_strcasecmp(l->args[1], "IDENTIFY")) {
+		cache_nickserv_pass(n, l->args[2]);
 	}
 
 	/* If we receive a nick-already-in-use message, ghost the current user */
