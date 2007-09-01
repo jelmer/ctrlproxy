@@ -40,8 +40,9 @@ struct pending_client {
 	struct {
 		struct socks_method *method;
 		enum state { 
-			SOCKS_UNUSED = 0,
-			SOCKS_STATE_NEW = -1, 
+			SOCKS_UNUSED = -1,
+			SOCKS_UNKNOWN = 0,
+			SOCKS_STATE_NEW = 1, 
 			SOCKS_STATE_AUTH, 
 			SOCKS_STATE_NORMAL 
 		} state;

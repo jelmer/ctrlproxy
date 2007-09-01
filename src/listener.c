@@ -56,80 +56,181 @@ static gboolean kill_pending_client(struct pending_client *pc)
 	return TRUE;
 }
 
-static gboolean handle_client_receive(GIOChannel *c, GIOCondition condition, gpointer data) 
+static gboolean handle_client_detect(GIOChannel *ioc, struct pending_client *cl);
+static gboolean handle_client_socks_data(GIOChannel *ioc, struct pending_client *cl);
+static gboolean handle_client_line(GIOChannel *c, struct pending_client *pc, const struct line *l)
 {
-	struct line *l;
-	struct pending_client *pc = data;
-	GError *error = NULL;
-	GIOStatus status;
-
-	if (condition == G_IO_HUP) {
-		kill_pending_client(pc);
-		return FALSE;	
+	if (l->args[0] == NULL) { 
+		return TRUE;
 	}
 
-	g_assert(c != NULL);
-
-	while ((status = irc_recv_line(c, iconv, &error, &l)) == G_IO_STATUS_NORMAL) {
-		g_assert(l != NULL);
-
-		if (!l->args[0]){ 
-			free_line(l);
-			continue;
-		}
+	if (!g_strcasecmp(l->args[0], "PASS")) {
+		char *desc;
+		const char *networkname = NULL;
+		struct network *n = pc->listener->network;
+		gboolean authenticated = FALSE;
 
 		if (pc->listener->config->password == NULL) {
-			log_network(LOG_WARNING, pc->listener->network, "No password set, allowing client _without_ authentication!");
+			log_network(LOG_WARNING, pc->listener->network, 
+						"No password set, allowing client _without_ authentication!");
+			authenticated = TRUE;
+			networkname = l->args[1];
+		} else if (strcmp(l->args[1], pc->listener->config->password) == 0) {
+			authenticated = TRUE;
+		} else if (strncmp(l->args[1], pc->listener->config->password, strlen(pc->listener->config->password)) == 0 &&
+				   l->args[1][strlen(pc->listener->config->password)] == ':') {
+			authenticated = TRUE;
+			networkname = l->args[1]+strlen(pc->listener->config->password)+1;
 		}
 
-		if (!g_strcasecmp(l->args[0], "PASS")) {
-			char *desc;
-			struct network *n = pc->listener->network;
-			gboolean authenticated = FALSE;
+		if (authenticated) {
+			log_network (LOG_INFO, n, "Client successfully authenticated");
 
-			if (pc->listener->config->password == NULL) {
-				authenticated = TRUE;
-			} else if (strcmp(l->args[1], pc->listener->config->password) == 0) {
-				authenticated = TRUE;
-			} else if (strncmp(l->args[1], pc->listener->config->password, strlen(pc->listener->config->password)) == 0 &&
-					   l->args[1][strlen(pc->listener->config->password)+1] == ':') {
-				authenticated = TRUE;
-				n = find_network(pc->listener->global, l->args[1]+strlen(pc->listener->config->password)+1);
+			if (networkname != NULL) {
+				n = find_network_by_hostname(pc->listener->global, 
+											 networkname, 6667, TRUE);
 				if (n == NULL) {
-					log_network(LOG_WARNING, pc->listener->network, "User tried to log in with incorrect password!");
-					irc_sendf(c, iconv, NULL, ":%s %d %s :Password mismatch", get_my_hostname(), ERR_PASSWDMISMATCH, "*");
-	
-					free_line(l);
-					return TRUE;
+					irc_sendf(c, iconv, NULL, ":%s %d %s :Password error: unable to find network", 
+							  get_my_hostname(), ERR_PASSWDMISMATCH, "*");
+					return FALSE;
+				}
+
+				if (n->connection.state == NETWORK_CONNECTION_STATE_NOT_CONNECTED && 
+					!connect_network(n)) {
+					irc_sendf(c, iconv, NULL, ":%s %d %s :Password error: unable to connect", 
+							  get_my_hostname(), ERR_PASSWDMISMATCH, "*");
+					return FALSE;
 				}
 			}
 
-			if (authenticated) {
-				log_network (LOG_INFO, n, "Client successfully authenticated");
+			desc = g_io_channel_ip_get_description(c);
+			client_init(n, c, desc);
 
-				desc = g_io_channel_ip_get_description(c);
-				client_init(n, c, desc);
-
-				kill_pending_client(pc);
-
-				free_line(l); 
-				return FALSE;
-			} else {
-				log_network(LOG_WARNING, pc->listener->network, "User tried to log in with incorrect password!");
-				irc_sendf(c, iconv, NULL, ":%s %d %s :Password mismatch", get_my_hostname(), ERR_PASSWDMISMATCH, "*");
-	
-				free_line(l);
-				return TRUE;
-			}
+			return FALSE;
 		} else {
-			irc_sendf(c, iconv, NULL, ":%s %d %s :You are not registered", get_my_hostname(), ERR_NOTREGISTERED, "*");
-		}
+			log_network(LOG_WARNING, pc->listener->network, "User tried to log in with incorrect password!");
+			irc_sendf(c, iconv, NULL, ":%s %d %s :Password mismatch", get_my_hostname(), ERR_PASSWDMISMATCH, "*");
 
-		free_line(l);
+			return TRUE;
+		}
+	} else {
+		irc_sendf(c, iconv, NULL, ":%s %d %s :You are not registered", get_my_hostname(), ERR_NOTREGISTERED, "*");
 	}
 
-	if (status != G_IO_STATUS_AGAIN)
+	return TRUE;
+}
+
+
+static gboolean handle_client_detect(GIOChannel *ioc, struct pending_client *pc)
+{
+	GIOStatus status;
+	gsize read;
+	gchar header[2];
+
+	status = g_io_channel_read_chars(ioc, header, 1, &read, NULL);
+
+	if (status != G_IO_STATUS_NORMAL) {
 		return FALSE;
+	}
+
+	if (header[0] == SOCKS_VERSION) {
+		pc->socks.state = SOCKS_STATE_NEW;
+		return TRUE;
+	} else {
+		struct line *l = NULL;
+		gchar *raw = NULL, *cvrt = NULL;
+		gchar *complete;
+		GIOStatus status;
+		gboolean ret;
+		GError *error = NULL;
+		gsize in_len;
+
+		pc->socks.state = SOCKS_UNUSED;
+
+		g_assert(ioc != NULL);
+
+		status = g_io_channel_read_line(ioc, &raw, &in_len, NULL, &error);
+		if (status != G_IO_STATUS_NORMAL) {
+			g_free(raw);
+			return status;
+		}
+
+		complete = g_malloc(in_len+1);
+		complete[0] = header[0];
+		memcpy(complete+1, raw, in_len);
+		g_free(raw);
+
+		if (iconv == (GIConv)-1) {
+			cvrt = complete;
+		} else {
+			cvrt = g_convert_with_iconv(complete, -1, iconv, NULL, NULL, &error);
+			if (cvrt == NULL) {
+				cvrt = complete;
+				status = G_IO_STATUS_ERROR;
+			} else {
+				g_free(complete);
+			}
+		}
+
+		l = irc_parse_line(cvrt);
+
+		ret = handle_client_line(ioc, pc, l);
+
+		g_free(cvrt);
+
+		return ret;
+	}
+}
+
+static gboolean handle_client_receive(GIOChannel *c, GIOCondition condition, gpointer data) 
+{
+	struct pending_client *pc = data;
+
+	g_assert(c != NULL);
+
+	if (condition & G_IO_IN) {
+		if (pc->socks.state == SOCKS_UNKNOWN) {
+			if (!handle_client_detect(c, pc)) {
+				kill_pending_client(pc);
+				return FALSE;
+			}
+		}
+
+		if (pc->socks.state == SOCKS_UNUSED) {
+			GIOStatus status;
+			GError *error = NULL;
+			struct line *l;
+
+			while ((status = irc_recv_line(c, iconv, &error, &l)) == G_IO_STATUS_NORMAL) {
+				gboolean ret;
+				g_assert(l != NULL);
+
+				ret = handle_client_line(c, pc, l);
+
+				free_line(l);
+
+				if (!ret) {
+					kill_pending_client(pc);
+					return FALSE;
+				}
+			}
+
+			if (status != G_IO_STATUS_AGAIN) {
+				kill_pending_client(pc);
+				return FALSE;
+			}
+		} else {
+			gboolean ret = handle_client_socks_data(c, pc);
+			if (!ret)
+				kill_pending_client(pc);
+			return ret;
+		}
+	}
+
+	if (condition & G_IO_HUP) {
+		kill_pending_client(pc);
+		return FALSE;	
+	}
 	
 	return TRUE;
 }
@@ -451,7 +552,7 @@ static gboolean pass_handle_data(struct pending_client *cl)
 	pass[(guint8)header[0]] = '\0';
 
 	header[0] = 0x1;
-	header[1] = 0x0; /* set to non-zero if invalid */
+	header[1] = 0x1; /* set to non-zero if invalid */
 
 	for (gl = cl->listener->config->allow_rules; gl; gl = gl->next)
 	{
@@ -466,10 +567,12 @@ static gboolean pass_handle_data(struct pending_client *cl)
 		if (strcmp(r->password, pass))
 			continue;
 
+		header[1] = 0x0;
 		break;
 	}
 
-	header[1] = (gl == NULL);
+	if (strcmp(cl->listener->config->password, pass) == 0)
+		header[1] = 0x0;
 
 	status = g_io_channel_write_chars(cl->connection, header, 2, &read, NULL);
 	if (status != G_IO_STATUS_NORMAL) {
@@ -499,43 +602,35 @@ static struct socks_method {
 	{ -1, NULL, NULL }
 };
 
-static gboolean handle_client_data (GIOChannel *ioc, GIOCondition o, gpointer data)
+
+static gboolean handle_client_socks_data(GIOChannel *ioc, struct pending_client *cl)
 {
-	struct pending_client *cl = data;
 	GIOStatus status;
-	int i;
 
 	if (cl->socks.state == SOCKS_STATE_NEW) {
+		int i;
 		gchar header[2];
 		gchar methods[0x100];
 		gsize read;
-		status = g_io_channel_read_chars(ioc, header, 2, &read, NULL);
+		status = g_io_channel_read_chars(ioc, header, 1, &read, NULL);
 		if (status != G_IO_STATUS_NORMAL) {
-			kill_pending_client(cl);
-			return FALSE;
-		}
-
-		if (header[0] != SOCKS_VERSION) 
-		{
-			log_global(LOG_WARNING, "Ignoring client with socks version %d", header[0]);
-			kill_pending_client(cl);
 			return FALSE;
 		}
 
 		/* None by default */
 		cl->socks.method = NULL;
 
-		status = g_io_channel_read_chars(ioc, methods, header[1], &read, NULL);
+		status = g_io_channel_read_chars(ioc, methods, header[0], &read, NULL);
 		if (status != G_IO_STATUS_NORMAL) {
-			kill_pending_client(cl);
 			return FALSE;
 		}
-		for (i = 0; i < header[1]; i++) {
+
+		for (i = 0; i < header[0]; i++) {
 			int j;
 			for (j = 0; socks_methods[j].id != -1; j++)
 			{
 				if (socks_methods[j].id == methods[i] && 
-					socks_methods[j].acceptable &&
+					socks_methods[j].acceptable != NULL &&
 					socks_methods[j].acceptable(cl)) {
 					cl->socks.method = &socks_methods[j];
 					break;
@@ -548,7 +643,6 @@ static gboolean handle_client_data (GIOChannel *ioc, GIOCondition o, gpointer da
 
 		status = g_io_channel_write_chars(ioc, header, 2, &read, NULL);
 		if (status != G_IO_STATUS_NORMAL) {
-			kill_pending_client(cl);
 			return FALSE;
 		} 
 
@@ -556,7 +650,6 @@ static gboolean handle_client_data (GIOChannel *ioc, GIOCondition o, gpointer da
 
 		if (!cl->socks.method) {
 			log_global(LOG_WARNING, "Refused client because no valid method was available");
-			kill_pending_client(cl);
 			return FALSE;
 		}
 
@@ -568,30 +661,23 @@ static gboolean handle_client_data (GIOChannel *ioc, GIOCondition o, gpointer da
 			cl->socks.state = SOCKS_STATE_AUTH;
 		}
 	} else if (cl->socks.state == SOCKS_STATE_AUTH) {
-		gboolean ret;
-		ret = cl->socks.method->handle_data(cl);
-		if (!ret) 
-			kill_pending_client(cl);
-		return ret;
+		return cl->socks.method->handle_data(cl);
 	} else if (cl->socks.state == SOCKS_STATE_NORMAL) {
 		gchar header[4];
 		gsize read;
 
 		status = g_io_channel_read_chars(ioc, header, 4, &read, NULL);
 		if (status != G_IO_STATUS_NORMAL) {
-			kill_pending_client(cl);
 			return FALSE;
 		}
 
 		if (header[0] != SOCKS_VERSION) {
 			log_global(LOG_WARNING, "Client suddenly changed socks version to %x", header[0]);
-			kill_pending_client(cl);
 		 	return socks_error(ioc, REP_GENERAL_FAILURE);
 		}
 
 		if (header[1] != CMD_CONNECT) {
 			log_global(LOG_WARNING, "Client used unknown command %x", header[1]);
-			kill_pending_client(cl);
 			return socks_error(ioc, REP_CMD_NOT_SUPPORTED);
 		}
 
@@ -599,11 +685,9 @@ static gboolean handle_client_data (GIOChannel *ioc, GIOCondition o, gpointer da
 	
 		switch (header[3]) {
 			case ATYP_IPV4: 
-				kill_pending_client(cl);
 				return socks_error(ioc, REP_ATYP_NOT_SUPPORTED);
 
 			case ATYP_IPV6:
-				kill_pending_client(cl);
 				return socks_error(ioc, REP_ATYP_NOT_SUPPORTED);
 
 			case ATYP_FQDN:
@@ -624,16 +708,14 @@ static gboolean handle_client_data (GIOChannel *ioc, GIOCondition o, gpointer da
 
 					result = find_network_by_hostname(cl->listener->global, hostname, port, TRUE);
 
-					if (!result) {
+					if (result == NULL) {
 						log_global(LOG_WARNING, "Unable to return network matching %s:%d", hostname, port);
-						kill_pending_client(cl);
 						return socks_error(ioc, REP_NET_UNREACHABLE);
 					} 
 
 					if (result->connection.state == NETWORK_CONNECTION_STATE_NOT_CONNECTED && 
 						!connect_network(result)) {
 						log_network(LOG_ERROR, result, "Unable to connect");
-						kill_pending_client(cl);
 						return socks_error(ioc, REP_NET_UNREACHABLE);
 					}
 
@@ -664,7 +746,6 @@ static gboolean handle_client_data (GIOChannel *ioc, GIOCondition o, gpointer da
 #endif
 						} else {
 							log_network(LOG_ERROR, result, "Unable to obtain local address for connection to server");
-							kill_pending_client(cl);
 							return socks_error(ioc, REP_NET_UNREACHABLE);
 						}
 							
@@ -681,12 +762,9 @@ static gboolean handle_client_data (GIOChannel *ioc, GIOCondition o, gpointer da
 					client_init(result, ioc, desc);
 					g_free(desc);
 
-					kill_pending_client(cl);
-
 					return FALSE;
 				}
 			default:
-				kill_pending_client(cl);
 				return socks_error(ioc, REP_ATYP_NOT_SUPPORTED);
 		}
 	}

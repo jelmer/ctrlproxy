@@ -507,6 +507,8 @@ static void config_load_listeners_socks(struct ctrlproxy_config *cfg)
 	if (allows == NULL)
 		return;
 
+	g_key_file_remove_key(kf, "socks", "allow", NULL);
+
 	l = g_new0(struct listener_config, 1);
 
 	if (g_key_file_has_key(kf, "socks", "port", NULL)) 
