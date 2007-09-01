@@ -23,6 +23,7 @@
 #include "irc.h"
 #include "listener.h"
 #include "ssl.h"
+#include "socks.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
@@ -42,12 +43,30 @@
 
 static GIConv iconv = (GIConv)-1;
 
+static gboolean kill_pending_client(struct pending_client *pc)
+{
+	pc->listener->pending = g_list_remove(pc->listener->pending, pc);
+
+	g_source_remove(pc->watch_id);
+
+	g_free(pc->clientname);
+
+	g_free(pc);
+
+	return TRUE;
+}
+
 static gboolean handle_client_receive(GIOChannel *c, GIOCondition condition, gpointer data) 
 {
 	struct line *l;
-	struct listener *listener = data;
+	struct pending_client *pc = data;
 	GError *error = NULL;
 	GIOStatus status;
+
+	if (condition == G_IO_HUP) {
+		kill_pending_client(pc);
+		return FALSE;	
+	}
 
 	g_assert(c != NULL);
 
@@ -59,25 +78,25 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition condition, gpo
 			continue;
 		}
 
-		if (listener->config->password == NULL) {
-			log_network(LOG_WARNING, listener->network, "No password set, allowing client _without_ authentication!");
+		if (pc->listener->config->password == NULL) {
+			log_network(LOG_WARNING, pc->listener->network, "No password set, allowing client _without_ authentication!");
 		}
 
 		if (!g_strcasecmp(l->args[0], "PASS")) {
 			char *desc;
-			struct network *n = listener->network;
+			struct network *n = pc->listener->network;
 			gboolean authenticated = FALSE;
 
-			if (listener->config->password == NULL) {
+			if (pc->listener->config->password == NULL) {
 				authenticated = TRUE;
-			} else if (strcmp(l->args[1], listener->config->password) == 0) {
+			} else if (strcmp(l->args[1], pc->listener->config->password) == 0) {
 				authenticated = TRUE;
-			} else if (strncmp(l->args[1], listener->config->password, strlen(listener->config->password)) == 0 &&
-					   l->args[1][strlen(listener->config->password)+1] == ':') {
+			} else if (strncmp(l->args[1], pc->listener->config->password, strlen(pc->listener->config->password)) == 0 &&
+					   l->args[1][strlen(pc->listener->config->password)+1] == ':') {
 				authenticated = TRUE;
-				n = find_network(listener->global, l->args[1]+strlen(listener->config->password)+1);
+				n = find_network(pc->listener->global, l->args[1]+strlen(pc->listener->config->password)+1);
 				if (n == NULL) {
-					log_network(LOG_WARNING, listener->network, "User tried to log in with incorrect password!");
+					log_network(LOG_WARNING, pc->listener->network, "User tried to log in with incorrect password!");
 					irc_sendf(c, iconv, NULL, ":%s %d %s :Password mismatch", get_my_hostname(), ERR_PASSWDMISMATCH, "*");
 	
 					free_line(l);
@@ -91,10 +110,12 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition condition, gpo
 				desc = g_io_channel_ip_get_description(c);
 				client_init(n, c, desc);
 
+				kill_pending_client(pc);
+
 				free_line(l); 
 				return FALSE;
 			} else {
-				log_network(LOG_WARNING, listener->network, "User tried to log in with incorrect password!");
+				log_network(LOG_WARNING, pc->listener->network, "User tried to log in with incorrect password!");
 				irc_sendf(c, iconv, NULL, ":%s %d %s :Password mismatch", get_my_hostname(), ERR_PASSWDMISMATCH, "*");
 	
 				free_line(l);
@@ -116,6 +137,7 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition condition, gpo
 static gboolean handle_new_client(GIOChannel *c_server, GIOCondition condition, void *_listener)
 {
 	struct listener *listener = _listener;
+	struct pending_client *pc;
 	GIOChannel *c;
 	int sock = accept(g_io_channel_unix_get_fd(c_server), NULL, 0);
 
@@ -139,11 +161,14 @@ static gboolean handle_new_client(GIOChannel *c_server, GIOCondition condition, 
 	g_io_channel_set_close_on_unref(c, TRUE);
 	g_io_channel_set_encoding(c, NULL, NULL);
 	g_io_channel_set_flags(c, G_IO_FLAG_NONBLOCK, NULL);
-	g_io_add_watch(c, G_IO_IN, handle_client_receive, listener);
+	pc = g_new0(struct pending_client, 1);
+	pc->connection = c;
+	pc->watch_id = g_io_add_watch(c, G_IO_IN | G_IO_HUP, handle_client_receive, pc);
+	pc->listener = listener;
 
 	g_io_channel_unref(c);
 
-	listener->pending = g_list_append(listener->pending, c);
+	listener->pending = g_list_append(listener->pending, pc);
 
 	return TRUE;
 }
@@ -341,4 +366,330 @@ void fini_listeners(struct global *global)
 		if (l->active) 
 			stop_listener(l);
 	}
+}
+
+
+/* TODO:
+ *  - support for ipv4 and ipv6 atyp's
+ *  - support for gssapi method
+ *  - support for ident method
+ */
+
+static gboolean socks_reply(GIOChannel *ioc, guint8 err, guint8 atyp, guint8 data_len, gchar *data, guint16 port)
+{
+	gchar *header = g_new0(gchar, 7 + data_len);
+	GIOStatus status;
+	gsize read;
+
+	header[0] = SOCKS_VERSION;
+	header[1] = err;
+	header[2] = 0x0; /* Reserved */
+	header[3] = atyp;
+	memcpy(header+4, data, data_len);
+	*((guint16 *)(header+4+data_len)) = htons(port);
+
+	status = g_io_channel_write_chars(ioc, header, 6 + data_len, &read, NULL);
+
+	g_free(header);
+
+	g_io_channel_flush(ioc, NULL);
+
+	return (err == REP_OK);
+}
+
+static gboolean socks_error(GIOChannel *ioc, guint8 err)
+{
+	guint8 data = 0x0;
+	return socks_reply(ioc, err, ATYP_FQDN, 1, (gchar *)&data, 0);
+}
+
+static gboolean anon_acceptable(struct pending_client *cl)
+{
+	return FALSE; /* Don't allow anonymous connects */
+}
+
+static gboolean pass_acceptable(struct pending_client *cl)
+{
+	return TRUE; /* FIXME: Check whether there is a password specified */
+}
+
+static gboolean pass_handle_data(struct pending_client *cl)
+{
+	GList *gl;
+	gchar header[2];
+	gsize read;
+	GIOStatus status;
+	gchar uname[0x100], pass[0x100];
+
+	status = g_io_channel_read_chars(cl->connection, header, 2, &read, NULL);
+	if (status != G_IO_STATUS_NORMAL) {
+		return FALSE;
+	}
+
+	if (header[0] != SOCKS_VERSION && header[0] != 0x1) {
+		log_global(LOG_WARNING, "Client suddenly changed socks uname/pwd version to %x", header[0]);
+	 	return socks_error(cl->connection, REP_GENERAL_FAILURE);
+	}
+
+	status = g_io_channel_read_chars(cl->connection, uname, header[1], &read, NULL);
+	if (status != G_IO_STATUS_NORMAL) {
+		return FALSE;
+	}
+
+	uname[(guint8)header[1]] = '\0';
+
+	status = g_io_channel_read_chars(cl->connection, header, 1, &read, NULL);
+	if (status != G_IO_STATUS_NORMAL) {
+		return FALSE;
+	}
+
+	status = g_io_channel_read_chars(cl->connection, pass, header[0], &read, NULL);
+	if (status != G_IO_STATUS_NORMAL) {
+		return FALSE;
+	}
+
+	pass[(guint8)header[0]] = '\0';
+
+	header[0] = 0x1;
+	header[1] = 0x0; /* set to non-zero if invalid */
+
+	for (gl = cl->listener->config->allow_rules; gl; gl = gl->next)
+	{
+		struct allow_rule *r = gl->data;
+
+		if (r->password == NULL || r->username == NULL) 
+			continue;
+
+		if (strcmp(r->username, uname)) 
+			continue;
+
+		if (strcmp(r->password, pass))
+			continue;
+
+		break;
+	}
+
+	header[1] = (gl == NULL);
+
+	status = g_io_channel_write_chars(cl->connection, header, 2, &read, NULL);
+	if (status != G_IO_STATUS_NORMAL) {
+		return FALSE;
+	} 
+
+	g_io_channel_flush(cl->connection, NULL);
+
+	if (header[1] == 0x0) {
+		cl->socks.state = SOCKS_STATE_NORMAL;		
+		return TRUE;
+	} else {
+		log_global(LOG_WARNING, "Password mismatch for user %s", uname);
+		return FALSE;
+	}
+}
+
+static struct socks_method {
+	gint id;
+	const char *name;
+	gboolean (*acceptable) (struct pending_client *cl);
+	gboolean (*handle_data) (struct pending_client *cl);
+} socks_methods[] = {
+	{ SOCKS_METHOD_NOAUTH, "none", anon_acceptable, NULL },
+	{ SOCKS_METHOD_GSSAPI, "gssapi", NULL, NULL },
+	{ SOCKS_METHOD_USERNAME_PW, "username/password", pass_acceptable, pass_handle_data },
+	{ -1, NULL, NULL }
+};
+
+static gboolean handle_client_data (GIOChannel *ioc, GIOCondition o, gpointer data)
+{
+	struct pending_client *cl = data;
+	GIOStatus status;
+	int i;
+
+	if (cl->socks.state == SOCKS_STATE_NEW) {
+		gchar header[2];
+		gchar methods[0x100];
+		gsize read;
+		status = g_io_channel_read_chars(ioc, header, 2, &read, NULL);
+		if (status != G_IO_STATUS_NORMAL) {
+			kill_pending_client(cl);
+			return FALSE;
+		}
+
+		if (header[0] != SOCKS_VERSION) 
+		{
+			log_global(LOG_WARNING, "Ignoring client with socks version %d", header[0]);
+			kill_pending_client(cl);
+			return FALSE;
+		}
+
+		/* None by default */
+		cl->socks.method = NULL;
+
+		status = g_io_channel_read_chars(ioc, methods, header[1], &read, NULL);
+		if (status != G_IO_STATUS_NORMAL) {
+			kill_pending_client(cl);
+			return FALSE;
+		}
+		for (i = 0; i < header[1]; i++) {
+			int j;
+			for (j = 0; socks_methods[j].id != -1; j++)
+			{
+				if (socks_methods[j].id == methods[i] && 
+					socks_methods[j].acceptable &&
+					socks_methods[j].acceptable(cl)) {
+					cl->socks.method = &socks_methods[j];
+					break;
+				}
+			}
+		}
+
+		header[0] = SOCKS_VERSION;
+		header[1] = cl->socks.method?cl->socks.method->id:SOCKS_METHOD_NOACCEPTABLE;
+
+		status = g_io_channel_write_chars(ioc, header, 2, &read, NULL);
+		if (status != G_IO_STATUS_NORMAL) {
+			kill_pending_client(cl);
+			return FALSE;
+		} 
+
+		g_io_channel_flush(ioc, NULL);
+
+		if (!cl->socks.method) {
+			log_global(LOG_WARNING, "Refused client because no valid method was available");
+			kill_pending_client(cl);
+			return FALSE;
+		}
+
+		log_global(LOG_INFO, "Accepted socks client authenticating using %s", cl->socks.method->name);
+
+		if (!cl->socks.method->handle_data) {
+			cl->socks.state = SOCKS_STATE_NORMAL;
+		} else {
+			cl->socks.state = SOCKS_STATE_AUTH;
+		}
+	} else if (cl->socks.state == SOCKS_STATE_AUTH) {
+		gboolean ret;
+		ret = cl->socks.method->handle_data(cl);
+		if (!ret) 
+			kill_pending_client(cl);
+		return ret;
+	} else if (cl->socks.state == SOCKS_STATE_NORMAL) {
+		gchar header[4];
+		gsize read;
+
+		status = g_io_channel_read_chars(ioc, header, 4, &read, NULL);
+		if (status != G_IO_STATUS_NORMAL) {
+			kill_pending_client(cl);
+			return FALSE;
+		}
+
+		if (header[0] != SOCKS_VERSION) {
+			log_global(LOG_WARNING, "Client suddenly changed socks version to %x", header[0]);
+			kill_pending_client(cl);
+		 	return socks_error(ioc, REP_GENERAL_FAILURE);
+		}
+
+		if (header[1] != CMD_CONNECT) {
+			log_global(LOG_WARNING, "Client used unknown command %x", header[1]);
+			kill_pending_client(cl);
+			return socks_error(ioc, REP_CMD_NOT_SUPPORTED);
+		}
+
+		/* header[2] is reserved */
+	
+		switch (header[3]) {
+			case ATYP_IPV4: 
+				kill_pending_client(cl);
+				return socks_error(ioc, REP_ATYP_NOT_SUPPORTED);
+
+			case ATYP_IPV6:
+				kill_pending_client(cl);
+				return socks_error(ioc, REP_ATYP_NOT_SUPPORTED);
+
+			case ATYP_FQDN:
+				{
+					char hostname[0x100];
+					guint16 port;
+					char *desc;
+					struct network *result;
+					
+					status = g_io_channel_read_chars(ioc, header, 1, &read, NULL);
+					status = g_io_channel_read_chars(ioc, hostname, header[0], &read, NULL);
+					hostname[(guint8)header[0]] = '\0';
+
+					status = g_io_channel_read_chars(ioc, header, 2, &read, NULL);
+					port = ntohs(*(guint16 *)header);
+
+					log_global(LOG_INFO, "Request to connect to %s:%d", hostname, port);
+
+					result = find_network_by_hostname(cl->listener->global, hostname, port, TRUE);
+
+					if (!result) {
+						log_global(LOG_WARNING, "Unable to return network matching %s:%d", hostname, port);
+						kill_pending_client(cl);
+						return socks_error(ioc, REP_NET_UNREACHABLE);
+					} 
+
+					if (result->connection.state == NETWORK_CONNECTION_STATE_NOT_CONNECTED && 
+						!connect_network(result)) {
+						log_network(LOG_ERROR, result, "Unable to connect");
+						kill_pending_client(cl);
+						return socks_error(ioc, REP_NET_UNREACHABLE);
+					}
+
+					if (result->config->type == NETWORK_TCP) {
+#ifdef HAVE_IPV6
+						struct sockaddr_in6 *name6; 
+#endif
+						struct sockaddr_in *name4; 
+						int atyp, len, port;
+						gchar *data;
+
+#ifdef HAVE_IPV6
+						name6 = (struct sockaddr_in6 *)result->connection.data.tcp.local_name;
+#endif
+						name4 = (struct sockaddr_in *)result->connection.data.tcp.local_name;
+
+						if (name4->sin_family == AF_INET) {
+							atyp = ATYP_IPV4;
+							data = (gchar *)&name4->sin_addr;
+							len = 4;
+							port = name4->sin_port;
+#ifdef HAVE_IPV6
+						} else if (name6->sin6_family == AF_INET6) {
+							atyp = ATYP_IPV6;
+							data = (gchar *)&name6->sin6_addr;
+							len = 16;
+							port = name6->sin6_port;
+#endif
+						} else {
+							log_network(LOG_ERROR, result, "Unable to obtain local address for connection to server");
+							kill_pending_client(cl);
+							return socks_error(ioc, REP_NET_UNREACHABLE);
+						}
+							
+						socks_reply(ioc, REP_OK, atyp, len, data, port); 
+						
+					} else {
+						gchar *data = g_strdup("xlocalhost");
+						data[0] = strlen(data+1);
+						
+						socks_reply(ioc, REP_OK, ATYP_FQDN, data[0]+1, data, 1025);
+					}
+
+					desc = g_io_channel_ip_get_description(ioc);
+					client_init(result, ioc, desc);
+					g_free(desc);
+
+					kill_pending_client(cl);
+
+					return FALSE;
+				}
+			default:
+				kill_pending_client(cl);
+				return socks_error(ioc, REP_ATYP_NOT_SUPPORTED);
+		}
+	}
+	
+	return TRUE;
 }

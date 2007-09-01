@@ -13,6 +13,11 @@ Ctrlproxy 3.0.4 UNRELEASED
 
 	* Integrate listeners into the core.
 
+	* Integrate socks support into listener code. Socks connections 
+	  can now be accepted at the same port as other connections.
+
+	* Allow configuring a single listener in ~/.ctrlproxy/config.
+
 
 Ctrlproxy 3.0.3 2007-07-22
 

@@ -81,6 +81,11 @@ struct network_config
 	} type_settings; 
 };
 
+struct allow_rule {
+	const char *username;
+	const char *password;
+};
+
 struct listener_config {
 	gboolean ssl;
 	gpointer ssl_credentials;
@@ -88,6 +93,8 @@ struct listener_config {
 	char *address;
 	char *port;
 	char *network;
+	GList *allow_rules;
+	gboolean is_default; /* Whether this is the "default" listener, stored in ~/.ctrlproxy/config */
 };
 
 /**
@@ -104,7 +111,7 @@ struct ctrlproxy_config {
 	char *linestack_backend;
 	char *client_charset;
 	gboolean admin_log;
-	gboolean admin_noprivmsg;
+	char *admin_user;
 	gboolean report_time;
 	int max_who_age;
 	GKeyFile *keyfile;
