@@ -1,7 +1,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT(ctrlproxy, 3.0.3, [jelmer@vernstok.nl])
+AC_INIT(ctrlproxy, 3.0.4, [jelmer@vernstok.nl])
 PACKAGE=$PACKAGE_NAME
 VERSION=$PACKAGE_VERSION
 AC_DEFINE_UNQUOTED(PACKAGE,"$PACKAGE", [ Package name])
