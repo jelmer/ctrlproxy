@@ -19,6 +19,7 @@
 
 
 #include "internals.h"
+#include "ssl.h"
 
 #ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
@@ -143,6 +144,53 @@ static void config_save_network(const char *dir, struct network_config *n)
 	g_free(fn);
 }
 
+static void config_save_listeners(struct ctrlproxy_config *cfg, const char *path)
+{
+	GList *gl;
+	char *filename;
+	GKeyFile *kf; 
+	GError *error = NULL;
+	char *default_password;
+
+	default_password = g_key_file_get_string(cfg->keyfile, "listener", "password", NULL);
+
+	g_key_file_set_boolean(cfg->keyfile, "listener", "auto", cfg->auto_listener);
+
+	g_key_file_set_integer(cfg->keyfile, "listener", "autoport", cfg->listener_autoport);
+
+	filename = g_build_filename(path, "listener", NULL);
+
+	kf = g_key_file_new();
+
+	for (gl = cfg->listeners; gl; gl = gl->next) {
+		struct listener_config *l = gl->data;
+		char *tmp;
+
+		if (!l->address) 
+			tmp = g_strdup(l->port);
+		else
+			tmp = g_strdup_printf("%s:%s", l->address, l->port);
+
+		if (l->password != NULL && 
+			!(default_password != NULL && strcmp(l->password, default_password) == 0)) 
+			g_key_file_set_string(kf, tmp, "password", l->password);
+
+		if (l->network != NULL) {
+			g_key_file_set_string(kf, tmp, "network", l->network);
+		}
+
+		g_key_file_set_boolean(kf, tmp, "ssl", l->ssl);
+
+		g_free(tmp);
+	}
+
+	if (!g_key_file_save_to_file(kf, filename, &error)) {
+		log_global(LOG_WARNING, "Unable to save to \"%s\": %s", filename, error->message);
+	}
+	
+	g_free(filename);
+}
+
 static void config_save_networks(const char *config_dir, GList *networks)
 {
 	char *networksdir = g_build_filename(config_dir, "networks", NULL);
@@ -196,6 +244,8 @@ void save_configuration(struct ctrlproxy_config *cfg, const char *configuration_
 	g_key_file_set_boolean(cfg->keyfile, "global", "report-time", cfg->report_time);
 
 	config_save_networks(configuration_dir, cfg->networks);
+
+	config_save_listeners(cfg, configuration_dir);
 
 	i = 0;
 	list = g_new0(char *, g_list_length(cfg->networks)+1);
@@ -426,6 +476,75 @@ static struct network_config *find_create_network_config(struct ctrlproxy_config
 	return nc;
 }
 
+static void config_load_listeners(struct ctrlproxy_config *cfg)
+{
+	char *filename = g_build_filename(cfg->config_dir, "listener", NULL);
+	int i;
+	char **groups;
+	gsize size;
+	GKeyFile *kf;
+	char *default_password;
+	GError *error = NULL;
+
+	default_password = g_key_file_get_string(cfg->keyfile, "listener", "password", NULL);
+	if (g_key_file_has_key(cfg->keyfile, "listener", "auto", NULL))
+		cfg->auto_listener = g_key_file_get_boolean(cfg->keyfile, "listener", "auto", NULL);
+
+	if (g_key_file_has_key(cfg->keyfile, "listener", "autoport", NULL))
+		cfg->listener_autoport = g_key_file_get_integer(cfg->keyfile, "listener", "autoport", NULL);
+
+	kf = g_key_file_new();
+
+	if (!g_key_file_load_from_file(kf, filename, G_KEY_FILE_KEEP_COMMENTS, &error)) {
+		log_global(LOG_ERROR, "Can't parse configuration file '%s': %s", filename, error->message);
+		g_free(filename);
+		return;
+	}
+		
+	groups = g_key_file_get_groups(kf, &size);
+
+	for (i = 0; i < size; i++)
+	{
+		struct listener_config *l;
+		char *tmp;
+		
+		l = g_new0(struct listener_config, 1);
+
+		tmp = g_strdup(groups[i]);
+		l->port = strrchr(tmp, ':');
+		if (l->port != NULL) {
+			l->address = tmp;
+			*l->port = '\0';
+			l->port++;
+		} else {
+			l->port = tmp;
+			l->address = NULL;
+		}
+
+		l->password = g_key_file_get_string(kf, groups[i], "password", NULL);
+		if (l->password == NULL)
+			l->password = default_password;
+
+		if (g_key_file_has_key(kf, groups[i], "ssl", NULL))
+			l->ssl = g_key_file_get_boolean(kf, groups[i], "ssl", NULL);
+
+#ifdef HAVE_GNUTLS
+		if (l->ssl)
+			l->ssl_credentials = ssl_create_server_credentials(cfg, kf, groups[i]);
+#endif
+
+		if (g_key_file_has_key(kf, groups[i], "network", NULL))
+			l->network = g_key_file_get_string(kf, groups[i], "network", NULL);
+
+		cfg->listeners = g_list_append(cfg->listeners, l);
+	}
+
+	g_strfreev(groups);
+	g_free(filename);
+}
+
+
+
 static void config_load_networks(struct ctrlproxy_config *cfg)
 {
 	char *networksdir = g_build_filename(cfg->config_dir, "networks", NULL);
@@ -525,6 +644,8 @@ struct ctrlproxy_config *load_configuration(const char *dir)
 	}
 
 	config_load_networks(cfg);
+
+	config_load_listeners(cfg);
 
 	size = 0;
 	autoconnect_list = g_key_file_get_string_list(kf, "global", "autoconnect", &size, NULL);

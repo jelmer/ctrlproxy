@@ -11,6 +11,8 @@ Ctrlproxy 3.0.4 UNRELEASED
 
 	* Allow specifying a network in the password, separated by a colon (:).
 
+	* Integrate listeners into the core.
+
 
 Ctrlproxy 3.0.3 2007-07-22
 

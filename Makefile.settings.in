@@ -20,7 +20,7 @@ EXEEXT = @EXEEXT@
 OBJEXT = @OBJEXT@
 CFLAGS = @CFLAGS@ @COMMON_CFLAGS@
 MODS_SHARED = log_irssi auto_away log_custom \
-	socks listener @MODS_SHARED@
+	socks @MODS_SHARED@
 LDFLAGS = @LDFLAGS@
 BINS = @BINS@
 scriptdir = $(cdatadir)/scripts

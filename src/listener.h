@@ -13,14 +13,10 @@
  */
 struct listener {
 	int active:1;
-	int ssl:1;
 	GList *incoming;
 	GList *pending;
-	char *password;
-	char *address;
-	char *port;
+	struct listener_config *config;
 	struct network *network;
-	gpointer ssl_credentials;
 	struct global *global;
 };
 
@@ -30,12 +26,11 @@ struct listener_iochannel {
 	gint watch_id;
 };
 
-G_MODULE_EXPORT struct listener *listener_init(const char *addr, const char *port);
+G_MODULE_EXPORT struct listener *listener_init(struct global *global, struct listener_config *);
 G_MODULE_EXPORT gboolean start_listener(struct listener *);
 G_MODULE_EXPORT gboolean stop_listener(struct listener *);
-
-#if defined(_WIN32) && !defined(LISTENER_CORE_BUILD)
-#pragma comment(lib,"liblistener.lib")
-#endif
+G_MODULE_EXPORT void fini_listeners(struct global *);
+G_MODULE_EXPORT void free_listener(struct listener *l);
+G_MODULE_EXPORT gboolean init_listeners(struct global *global);
 
 #endif

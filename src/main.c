@@ -95,6 +95,7 @@ static void clean_exit()
 		save_configuration(my_global->config, path);
 	nickserv_save(my_global, path);
 	stop_unix_socket(my_global);
+	fini_listeners(my_global);
 
 	free_global(my_global);
 
@@ -299,6 +300,8 @@ int main(int argc, char **argv)
 	start_unix_socket(my_global);
 
 	autoconnect_networks(my_global);
+
+	init_listeners(my_global);
 
 	g_option_context_free(pc);
 

@@ -723,6 +723,105 @@ void admin_log(enum log_level level, const struct network *n, const struct clien
 	entered = FALSE;
 }
 
+static void cmd_start_listener(admin_handle h, char **args, void *userdata)
+{
+	char *b, *p;
+	struct listener_config *cfg;
+	struct listener *l;
+
+	if (!args[1]) {
+		admin_out(h, "No port specified");
+		return;
+	}
+
+	if (!args[2]) {
+		admin_out(h, "No password specified");
+		return;
+	}
+
+	cfg = g_new0(struct listener_config, 1);
+
+	b = g_strdup(args[1]);
+	if ((p = strchr(b, ':'))) {
+		*p = '\0';
+		p++;
+		cfg->address = b;
+		cfg->port = g_strdup(p);
+	} else {
+		cfg->port = g_strdup(b);
+		cfg->address = NULL;
+	}
+
+	if (args[3]) {
+		cfg->network = g_strdup(args[3]);
+		if (find_network(admin_get_global(h), args[3]) == NULL) {
+			admin_out(h, "No such network `%s`", args[3]);
+			return;
+		}
+	}
+
+	l = listener_init(admin_get_global(h), cfg);
+	l->config->password = g_strdup(args[2]);
+	l->global = admin_get_global(h);
+
+	start_listener(l);
+}
+
+static void cmd_stop_listener(admin_handle h, char **args, void *userdata)
+{
+	GList *gl;
+	char *b, *p;
+	int i = 0;
+
+	if (!args[0]) {
+		admin_out(h, "No port specified");
+		return;
+	}
+
+	b = g_strdup(args[1]);
+	if ((p = strchr(b, ':'))) {
+		*p = '\0';
+		p++;
+	} else {
+		p = b;
+		b = NULL;
+	}
+
+	for (gl = admin_get_global(h)->listeners; gl; gl = gl->next) {
+		struct listener *l = gl->data;
+
+		if (b && l->config->address == NULL)
+			continue;
+
+		if (b && l->config->address != NULL && strcmp(b, l->config->address) != 0)
+			continue;
+
+		if (strcmp(p, l->config->port) != 0)
+			continue;
+
+		stop_listener(l);
+		free_listener(l);
+		i++;
+	}
+
+	if (b) g_free(b); else g_free(p);
+
+	admin_out(h, "%d listeners stopped", i);
+}
+
+static void cmd_list_listener(admin_handle h, char **args, void *userdata)
+{
+	GList *gl;
+
+	for (gl = admin_get_global(h)->listeners; gl; gl = gl->next) {
+		struct listener *l = gl->data;
+
+		admin_out(h, "%s:%s%s%s%s", l->config->address?l->config->address:"", l->config->port, 
+				  l->network?" (":"", l->network?l->network->info.name:"", 
+				  l->network?")":"");
+	}
+}
+
 const static struct admin_command builtin_commands[] = {
 	{ "ADDNETWORK", add_network },
 	{ "ADDSERVER", add_server },
@@ -740,6 +839,9 @@ const static struct admin_command builtin_commands[] = {
 	{ "DETACH", detach_client },
 	{ "HELP", cmd_help },
 	{ "DUMPJOINEDCHANNELS", dump_joined_channels },
+	{ "STARTLISTENER", cmd_start_listener },
+	{ "STOPLISTENER", cmd_stop_listener },
+	{ "LISTLISTENER", cmd_list_listener },
 #ifdef DEBUG
 	{ "ABORT", do_abort },
 #endif

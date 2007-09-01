@@ -67,6 +67,7 @@ struct global {
 	GList *new_network_notifiers;
 	GList *networks;
 	GList *nickserv_nicks;
+	GList *listeners;
 
 	GIOChannel *unix_incoming;
 	gint unix_incoming_id;

@@ -81,6 +81,15 @@ struct network_config
 	} type_settings; 
 };
 
+struct listener_config {
+	gboolean ssl;
+	gpointer ssl_credentials;
+	char *password;
+	char *address;
+	char *port;
+	char *network;
+};
+
 /**
  * Configuration
  */
@@ -99,6 +108,9 @@ struct ctrlproxy_config {
 	gboolean report_time;
 	int max_who_age;
 	GKeyFile *keyfile;
+	GList *listeners;
+	gboolean auto_listener;
+	int listener_autoport;
 };
 
 /* config.c */
