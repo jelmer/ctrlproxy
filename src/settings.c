@@ -570,7 +570,8 @@ static void config_load_listeners(struct ctrlproxy_config *cfg)
 	kf = g_key_file_new();
 
 	if (!g_key_file_load_from_file(kf, filename, G_KEY_FILE_KEEP_COMMENTS, &error)) {
-		log_global(LOG_ERROR, "Can't parse configuration file '%s': %s", filename, error->message);
+		if (error->code != G_FILE_ERROR_NOENT)
+			log_global(LOG_ERROR, "Can't parse configuration file '%s': %s", filename, error->message);
 		g_free(filename);
 		return;
 	}
