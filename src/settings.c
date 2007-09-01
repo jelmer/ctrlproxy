@@ -30,6 +30,7 @@
 #include <glib/gstdio.h>
 
 #define DEFAULT_ADMIN_PORT 6680
+#define DEFAULT_SOCKS_PORT 1080
 
 gboolean g_key_file_save_to_file(GKeyFile *kf, const gchar *file, GError **error)
 {
@@ -154,9 +155,10 @@ static void config_save_listeners(struct ctrlproxy_config *cfg, const char *path
 
 	default_password = g_key_file_get_string(cfg->keyfile, "listener", "password", NULL);
 
-	g_key_file_set_boolean(cfg->keyfile, "listener", "auto", cfg->auto_listener);
-
-	g_key_file_set_integer(cfg->keyfile, "listener", "autoport", cfg->listener_autoport);
+	if (cfg->auto_listener) {
+		g_key_file_set_boolean(cfg->keyfile, "listener", "auto", cfg->auto_listener);
+		g_key_file_set_integer(cfg->keyfile, "listener", "autoport", cfg->listener_autoport);
+	}
 
 	filename = g_build_filename(path, "listener", NULL);
 
@@ -164,24 +166,34 @@ static void config_save_listeners(struct ctrlproxy_config *cfg, const char *path
 
 	for (gl = cfg->listeners; gl; gl = gl->next) {
 		struct listener_config *l = gl->data;
-		char *tmp;
 
-		if (!l->address) 
-			tmp = g_strdup(l->port);
-		else
-			tmp = g_strdup_printf("%s:%s", l->address, l->port);
+		if (l->is_default) {
+			g_key_file_set_string(cfg->keyfile, "global", "port", l->port);
+			if (l->address != NULL)
+				g_key_file_set_string(cfg->keyfile, "global", "bind", l->address);
+			if (l->password != NULL)
+				g_key_file_set_string(cfg->keyfile, "global", "password", l->password);
 
-		if (l->password != NULL && 
-			!(default_password != NULL && strcmp(l->password, default_password) == 0)) 
-			g_key_file_set_string(kf, tmp, "password", l->password);
+			g_key_file_set_boolean(cfg->keyfile, "global", "ssl", l->ssl);
+		} else {
+			char *tmp;
+			if (!l->address) 
+				tmp = g_strdup(l->port);
+			else
+				tmp = g_strdup_printf("%s:%s", l->address, l->port);
 
-		if (l->network != NULL) {
-			g_key_file_set_string(kf, tmp, "network", l->network);
+			if (l->password != NULL && 
+				!(default_password != NULL && strcmp(l->password, default_password) == 0)) 
+				g_key_file_set_string(kf, tmp, "password", l->password);
+
+			if (l->network != NULL) {
+				g_key_file_set_string(kf, tmp, "network", l->network);
+			}
+
+			g_key_file_set_boolean(kf, tmp, "ssl", l->ssl);
+		
+			g_free(tmp);
 		}
-
-		g_key_file_set_boolean(kf, tmp, "ssl", l->ssl);
-
-		g_free(tmp);
 	}
 
 	if (!g_key_file_save_to_file(kf, filename, &error)) {
@@ -228,8 +240,9 @@ void save_configuration(struct ctrlproxy_config *cfg, const char *configuration_
 		cfg->keyfile = g_key_file_new();
 
 	g_key_file_set_boolean(cfg->keyfile, "global", "autosave", cfg->autosave);
-	g_key_file_set_boolean(cfg->keyfile, "admin", "without_privmsg", cfg->admin_noprivmsg);
-	g_key_file_set_boolean(cfg->keyfile, "admin", "log", cfg->admin_log);
+	if (cfg->admin_user != NULL)
+		g_key_file_set_string(cfg->keyfile, "global", "admin-user", cfg->admin_user);
+	g_key_file_set_boolean(cfg->keyfile, "global", "admin-log", cfg->admin_log);
 	g_key_file_set_integer(cfg->keyfile, "global", "max_who_age", cfg->max_who_age);
 
 	if (cfg->client_charset != NULL)
@@ -476,6 +489,49 @@ static struct network_config *find_create_network_config(struct ctrlproxy_config
 	return nc;
 }
 
+static void config_load_listeners_socks(struct ctrlproxy_config *cfg)
+{
+	char **allows;
+	gsize size, i;
+	GKeyFile *kf = cfg->keyfile;
+	struct listener_config *l;
+
+	allows = g_key_file_get_string_list(kf, "socks", "allow", &size, NULL);
+
+	if (allows == NULL)
+		return;
+
+	l = g_new0(struct listener_config, 1);
+
+	if (g_key_file_has_key(kf, "socks", "port", NULL)) 
+		l->port = g_key_file_get_string(kf, "socks", "port", NULL);
+	else 
+		l->port = g_strdup_printf("%d", DEFAULT_SOCKS_PORT);
+
+	/* We can use the socks listener as default listener, if there was 
+	 * no default listener specified */
+	if (cfg->listeners == NULL ||
+		!((struct listener_config *)cfg->listeners->data)->is_default)
+		l->is_default = TRUE;
+
+	g_key_file_remove_key(kf, "socks", "port", NULL);
+
+	for (i = 0; i < size; i++) {
+		struct allow_rule *r = g_new0(struct allow_rule, 1);
+		char **parts = g_strsplit(allows[i], ":", 2);
+					
+		r->username = parts[0];
+		r->password = parts[1];
+
+		g_free(parts);
+		l->allow_rules = g_list_append(l->allow_rules, r);
+	}
+
+	g_strfreev(allows);
+
+	cfg->listeners = g_list_append(cfg->listeners, l);
+}
+
 static void config_load_listeners(struct ctrlproxy_config *cfg)
 {
 	char *filename = g_build_filename(cfg->config_dir, "listener", NULL);
@@ -492,6 +548,18 @@ static void config_load_listeners(struct ctrlproxy_config *cfg)
 
 	if (g_key_file_has_key(cfg->keyfile, "listener", "autoport", NULL))
 		cfg->listener_autoport = g_key_file_get_integer(cfg->keyfile, "listener", "autoport", NULL);
+
+	if (g_key_file_has_key(cfg->keyfile, "global", "port", NULL)) {
+		struct listener_config *l = g_new0(struct listener_config, 1);
+		l->port = g_key_file_get_string(cfg->keyfile, "global", "port", NULL);
+		l->password = g_key_file_get_string(cfg->keyfile, "global", "password", NULL);
+		l->address = g_key_file_get_string(cfg->keyfile, "global", "bind", NULL);
+		l->ssl = g_key_file_has_key(cfg->keyfile, "global", "ssl", NULL) &&
+				 g_key_file_get_boolean(cfg->keyfile, "global", "ssl", NULL);
+		l->is_default = TRUE;
+
+		cfg->listeners = g_list_append(cfg->listeners, l);
+	}
 
 	kf = g_key_file_new();
 
@@ -542,8 +610,6 @@ static void config_load_listeners(struct ctrlproxy_config *cfg)
 	g_strfreev(groups);
 	g_free(filename);
 }
-
-
 
 static void config_load_networks(struct ctrlproxy_config *cfg)
 {
@@ -629,13 +695,25 @@ struct ctrlproxy_config *load_configuration(const char *dir)
 	if (!g_file_test(cfg->motd_file, G_FILE_TEST_EXISTS))
 		log_global(LOG_ERROR, "Can't open MOTD file '%s' for reading", cfg->motd_file);
 
-    if (g_key_file_has_key(kf, "admin", "without_privmsg", NULL))
-        cfg->admin_noprivmsg = g_key_file_get_boolean(kf, "admin", "without_privmsg", NULL);
+    if (g_key_file_has_key(kf, "admin", "without_privmsg", NULL)) {
+		if (g_key_file_get_boolean(kf, "admin", "without_privmsg", NULL)) {
+			cfg->admin_user = NULL;
+		} else {
+			cfg->admin_user = g_strdup("ctrlproxy");
+		}
+		g_key_file_remove_key(kf, "admin", "without_privmsg", NULL);
+	}
+
+	if (g_key_file_has_key(kf, "global", "admin-user", NULL)) {
+		cfg->admin_user = g_key_file_get_string(kf, "global", "admin-user", NULL);
+	}
 
 	cfg->admin_log = TRUE;
     if (g_key_file_has_key(kf, "admin", "log", NULL) && !g_key_file_get_boolean(kf, "admin", "log", NULL))
         cfg->admin_log = FALSE;
-
+	g_key_file_remove_key(kf, "admin", "log", NULL);
+    if (g_key_file_has_key(kf, "global", "admin-log", NULL) && !g_key_file_get_boolean(kf, "global", "admin-log", NULL))
+        cfg->admin_log = FALSE;
 
 	for (gl = cfg->networks; gl; gl = gl->next) {
 		struct network_config *nc = gl->data;
@@ -646,6 +724,7 @@ struct ctrlproxy_config *load_configuration(const char *dir)
 	config_load_networks(cfg);
 
 	config_load_listeners(cfg);
+	config_load_listeners_socks(cfg);
 
 	size = 0;
 	autoconnect_list = g_key_file_get_string_list(kf, "global", "autoconnect", &size, NULL);
@@ -738,11 +817,10 @@ void free_config(struct ctrlproxy_config *cfg)
 
 gboolean create_configuration(const char *config_dir)
 {
-	GKeyFile *kf;
 	struct global *global;
 	char port[250];
-	char *pass, *listenerfile;
-	GError *error = NULL;
+	struct listener_config *l;
+	char *pass;
 
 	if (g_file_test(config_dir, G_FILE_TEST_IS_DIR)) {
 		fprintf(stderr, "%s already exists\n", config_dir);
@@ -759,8 +837,6 @@ gboolean create_configuration(const char *config_dir)
 	global->config->config_dir = g_strdup(config_dir);
 	save_configuration(global->config, config_dir);
 
-	kf = g_key_file_new();
-
 	snprintf(port, sizeof(port), "%d", DEFAULT_ADMIN_PORT);
 	printf("Please specify port the administration interface should listen on.\n"
 		   "Prepend with a colon to listen on a specific address.\n"
@@ -774,20 +850,16 @@ gboolean create_configuration(const char *config_dir)
 	if (strlen(port) == 0) 
 		snprintf(port, sizeof(port), "%d", DEFAULT_ADMIN_PORT);
 
+	l = g_new0(struct listener_config, 1);
 	pass = getpass("Please specify a password for the administration interface: "); 
-	g_key_file_set_string(kf, port, "network", "admin");
+	l->port = port;
 	if (!strcmp(pass, "")) {
 		fprintf(stderr, "Warning: no password specified. Authentication disabled!\n");
 	} else {
-		g_key_file_set_string(kf, port, "password", pass);
+		l->password = pass;
 	}
 
-	listenerfile = g_build_filename(config_dir, "listener", NULL);
-
-	if (!g_key_file_save_to_file(kf, listenerfile, &error)) {
-		fprintf(stderr, "Error saving %s: %s\n", listenerfile, error->message);
-		return FALSE;
-	}
+	global->config->listeners = g_list_append(global->config->listeners, l);
 
 	return TRUE;
 }

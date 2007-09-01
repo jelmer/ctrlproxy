@@ -8,6 +8,7 @@
 #define G_MODULE_EXPORT
 #endif
 
+
 /**
  * A listener.
  */
@@ -24,6 +25,28 @@ struct listener_iochannel {
 	char address[NI_MAXHOST];
 	char port[NI_MAXSERV];
 	gint watch_id;
+};
+
+struct socks_method;
+
+struct pending_client {
+	GIOChannel *connection;
+	const char *user;
+	const char *password;
+	gint watch_id;
+	struct sockaddr *clientname;
+	socklen_t clientname_len;
+	struct listener *listener;
+	struct {
+		struct socks_method *method;
+		enum state { 
+			SOCKS_UNUSED = 0,
+			SOCKS_STATE_NEW = -1, 
+			SOCKS_STATE_AUTH, 
+			SOCKS_STATE_NORMAL 
+		} state;
+		void *method_data;
+	} socks;
 };
 
 G_MODULE_EXPORT struct listener *listener_init(struct global *global, struct listener_config *);
