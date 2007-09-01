@@ -9,6 +9,9 @@ Ctrlproxy 3.0.4 UNRELEASED
 
 	* Integrate some more standard replication backends. 
 
+	* Allow specifying a network in the password, separated by a colon (:).
+
+
 Ctrlproxy 3.0.3 2007-07-22
 
   BUG FIXES

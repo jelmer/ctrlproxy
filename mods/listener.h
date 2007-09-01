@@ -21,6 +21,7 @@ struct listener {
 	char *port;
 	struct network *network;
 	gpointer ssl_credentials;
+	struct global *global;
 };
 
 struct listener_iochannel {

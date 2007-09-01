@@ -47,37 +47,57 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition condition, gpo
 	GError *error = NULL;
 	GIOStatus status;
 
-	g_assert(c);
+	g_assert(c != NULL);
 
 	while ((status = irc_recv_line(c, iconv, &error, &l)) == G_IO_STATUS_NORMAL) {
-		g_assert(l);
+		g_assert(l != NULL);
 
 		if (!l->args[0]){ 
 			free_line(l);
 			continue;
 		}
 
-		if (!listener->password) {
+		if (listener->password == NULL) {
 			log_network(LOG_WARNING, listener->network, "No password set, allowing client _without_ authentication!");
 		}
 
 		if (!g_strcasecmp(l->args[0], "PASS")) {
 			char *desc;
-			if (listener->password && strcmp(l->args[1], listener->password)) {
+			struct network *n = listener->network;
+			gboolean authenticated = FALSE;
+
+			if (listener->password == NULL) {
+				authenticated = TRUE;
+			} else if (strcmp(l->args[1], listener->password) == 0) {
+				authenticated = TRUE;
+			} else if (strncmp(l->args[1], listener->password, strlen(listener->password)) == 0 &&
+					   l->args[1][strlen(listener->password)+1] == ':') {
+				authenticated = TRUE;
+				n = find_network(listener->global, l->args[1]+strlen(listener->password)+1);
+				if (n == NULL) {
+					log_network(LOG_WARNING, listener->network, "User tried to log in with incorrect password!");
+					irc_sendf(c, iconv, NULL, ":%s %d %s :Password mismatch", get_my_hostname(), ERR_PASSWDMISMATCH, "*");
+	
+					free_line(l);
+					return TRUE;
+				}
+			}
+
+			if (authenticated) {
+				log_network (LOG_INFO, n, "Client successfully authenticated");
+
+				desc = g_io_channel_ip_get_description(c);
+				client_init(n, c, desc);
+
+				free_line(l); 
+				return FALSE;
+			} else {
 				log_network(LOG_WARNING, listener->network, "User tried to log in with incorrect password!");
 				irc_sendf(c, iconv, NULL, ":%s %d %s :Password mismatch", get_my_hostname(), ERR_PASSWDMISMATCH, "*");
 	
 				free_line(l);
 				return TRUE;
 			}
-
-			log_network (LOG_INFO, listener->network, "Client successfully authenticated");
-
-			desc = g_io_channel_ip_get_description(c);
-			client_init(listener->network, c, desc);
-
-			free_line(l); 
-			return FALSE;
 		} else {
 			irc_sendf(c, iconv, NULL, ":%s %d %s :You are not registered", get_my_hostname(), ERR_NOTREGISTERED, "*");
 		}
@@ -137,6 +157,11 @@ static int next_autoport()
 	return ++autoport;
 }
 
+/**
+ * Start a listener.
+ *
+ * @param l Listener to start.
+ */
 gboolean start_listener(struct listener *l)
 {
 	int sock = -1;
@@ -230,7 +255,6 @@ gboolean start_listener(struct listener *l)
 
 gboolean stop_listener(struct listener *l)
 {
-
 	while (l->incoming != NULL) {
 		struct listener_iochannel *lio = l->incoming->data;
 
@@ -336,6 +360,7 @@ static void auto_add_listener(struct network *n, void *private_data)
 
 	port = g_strdup_printf("%d", next_autoport());
 	l = listener_init(NULL, port);
+	l->global = n->global;
 	l->network = n;
 	start_listener(l);
 }
@@ -385,11 +410,12 @@ static void load_config(struct global *global)
 		}
 			
 		l = listener_init(address, port);
+		l->global = global;
 
 		g_free(tmp);
 
 		l->password = g_key_file_get_string(kf, groups[i], "password", NULL);
-		if (!l->password)
+		if (l->password == NULL)
 			l->password = default_password;
 
 		if (g_key_file_has_key(kf, groups[i], "ssl", NULL))
@@ -453,6 +479,7 @@ void cmd_start_listener(admin_handle h, char **args, void *userdata)
 	}
 
 	l = listener_init(b, p);
+	l->global = admin_get_global(h);
 
 	if (b) g_free(b); else g_free(p);
 

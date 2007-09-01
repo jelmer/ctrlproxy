@@ -529,7 +529,7 @@ static void load_config(struct global *global)
 	server_channel = g_io_channel_unix_new(sock);
 	g_io_channel_set_close_on_unref(server_channel, TRUE);
 
-	if (!server_channel) {
+	if (server_channel == NULL) {
 		log_global(LOG_ERROR, "Unable to create GIOChannel for server socket");
 		return;
 	}
