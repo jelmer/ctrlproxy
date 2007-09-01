@@ -688,7 +688,6 @@ static gboolean handle_client_data (GIOChannel *ioc, GIOCondition o, gpointer da
 			default:
 				kill_pending_client(cl);
 				return socks_error(ioc, REP_ATYP_NOT_SUPPORTED);
-
 		}
 	}
 	

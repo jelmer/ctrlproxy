@@ -26,6 +26,11 @@
 #include "nickserv.h"
 #include "irc.h"
 
+#define NICKSERV_FILE_HEADER "# This file contains passwords for NickServ\n" \
+	"# It has the same format as the ppp secrets files.\n" \
+	"# It should contain one entry per line, each entry consisting of: \n" \
+	"# a nick name, password and network name, separated by tabs.\n" \
+	"#\n"
 
 const char *nickserv_find_nick(struct network *n, const char *nick)
 {
@@ -148,6 +153,7 @@ gboolean nickserv_write_file(GList *nicks, const char *filename)
 {
 	GList *gl;
 	int fd;
+	gboolean empty = TRUE;
 
 	fd = open(filename, O_WRONLY | O_CREAT, 0600);
 
@@ -156,9 +162,17 @@ gboolean nickserv_write_file(GList *nicks, const char *filename)
         return FALSE;
     }
 
+	if (write(fd, NICKSERV_FILE_HEADER, strlen(NICKSERV_FILE_HEADER)) < 0) {
+		log_global(LOG_WARNING, "error writing file header: %s", strerror(errno));
+		close(fd);
+		return FALSE;
+	}
+
 	for (gl = nicks; gl; gl = gl->next) {
 		struct nickserv_entry *n = gl->data;
         char *line;
+
+		empty = FALSE;
         
         line = g_strdup_printf("%s\t%s\t%s\n", n->nick, n->pass, n->network?n->network:"*");
 		if (write(fd, line, strlen(line)) < 0) {
@@ -204,6 +218,11 @@ gboolean nickserv_read_file(const char *filename, GList **nicks)
     {
         char **parts; 
 		struct nickserv_entry *e;
+
+		if (ret[0] == '#') {
+        	g_free(ret);
+			continue;
+		}
 
 		ret[term] = '\0';
 

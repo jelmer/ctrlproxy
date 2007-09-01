@@ -151,6 +151,7 @@ static void config_save_listeners(struct ctrlproxy_config *cfg, const char *path
 	char *filename;
 	GKeyFile *kf; 
 	GError *error = NULL;
+	gboolean empty = TRUE;
 	char *default_password;
 
 	default_password = g_key_file_get_string(cfg->keyfile, "listener", "password", NULL);
@@ -177,6 +178,7 @@ static void config_save_listeners(struct ctrlproxy_config *cfg, const char *path
 			g_key_file_set_boolean(cfg->keyfile, "global", "ssl", l->ssl);
 		} else {
 			char *tmp;
+			empty = FALSE;
 			if (!l->address) 
 				tmp = g_strdup(l->port);
 			else
@@ -196,8 +198,12 @@ static void config_save_listeners(struct ctrlproxy_config *cfg, const char *path
 		}
 	}
 
-	if (!g_key_file_save_to_file(kf, filename, &error)) {
-		log_global(LOG_WARNING, "Unable to save to \"%s\": %s", filename, error->message);
+	if (empty) {
+		unlink(filename);
+	} else { 
+		if (!g_key_file_save_to_file(kf, filename, &error)) {
+			log_global(LOG_WARNING, "Unable to save to \"%s\": %s", filename, error->message);
+		}
 	}
 	
 	g_free(filename);
