@@ -4,7 +4,7 @@ Priority: optional
 Maintainer: Jelmer Vernooij <jelmer@samba.org>
 Uploaders: Wilmer van der Gaast <lintux@debian.org>
 Standards-Version: 3.7.2
-Build-Depends: libglib2.0-dev, libgnutls-dev, debhelper (>> 5.0.0), check
+Build-Depends: libglib2.0-dev, libgnutls-dev, debhelper (>> 5.0.0), check, xsltproc 
 XS-Vcs-Bzr: http://people.samba.org/bzr/jelmer/ctrlproxy/debian
 
 Package: ctrlproxy
