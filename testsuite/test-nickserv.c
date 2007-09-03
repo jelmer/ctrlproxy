@@ -31,11 +31,25 @@ void nickserv_identify_me(struct network *network, char *nick);
 gboolean nickserv_write_file(GList *nicks, const char *filename);
 gboolean nickserv_read_file(const char *filename, GList **nicks);
 
+static void strip_comments(char *str)
+{
+	char *comment_start, *line_end;
+
+	do {
+		comment_start = strchr(str, '#');
+		if (comment_start == NULL)
+			return;
+		line_end = strchr(comment_start, '\n');
+		memmove(comment_start, line_end+1, strlen(line_end+1)+1);
+	} while(TRUE);
+}
+
 START_TEST(test_write_file_empty)
 	char *fn = torture_tempfile(__FUNCTION__);
 	char *contents;
 	fail_unless(nickserv_write_file(NULL, fn) == TRUE);
 	fail_unless(g_file_get_contents(fn, &contents, NULL, NULL));
+	strip_comments(contents);
 	fail_unless(!strcmp(contents, ""), "Excepted empty file, got: %s", contents);
 END_TEST
 
@@ -49,6 +63,7 @@ START_TEST(test_write_file_simple_network)
 	};
 	fail_unless(nickserv_write_file(g_list_append(NULL, &n), fn) == TRUE);
 	fail_unless(g_file_get_contents(fn, &contents, NULL, NULL));
+	strip_comments(contents);
 	fail_unless(!strcmp(contents, "anick\tsomepw\tbla\n"), "got: %s", contents);
 END_TEST
 
@@ -63,6 +78,7 @@ START_TEST(test_write_file_simple_nonetwork)
 	};
 	fail_unless(nickserv_write_file(g_list_append(NULL, &n), fn) == TRUE);
 	fail_unless(g_file_get_contents(fn, &contents, NULL, NULL));
+	strip_comments(contents);
 	fail_unless(!strcmp(contents, "anick\tsomepw\t*\n"), "got: %s", contents);
 END_TEST
 

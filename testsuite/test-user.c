@@ -17,11 +17,11 @@
 	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 */
 
+#include "internals.h"
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
 #include <check.h>
-#include "internals.h"
 
 START_TEST(test_create)
 	struct global *gl;

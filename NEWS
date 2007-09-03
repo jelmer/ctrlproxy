@@ -18,6 +18,8 @@ Ctrlproxy 3.0.4 UNRELEASED
 
 	* Allow configuring a single listener in ~/.ctrlproxy/config.
 
+	* Several simplifications of the configuration file.
+
 	* Recognize NS as command for NickServ (#145)
 
 
