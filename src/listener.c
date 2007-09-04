@@ -39,8 +39,6 @@
 
 #include <netdb.h>
 
-#define DEFAULT_PORT "6667"
-
 static GIConv iconv = (GIConv)-1;
 
 static gboolean kill_pending_client(struct pending_client *pc)
@@ -300,7 +298,7 @@ gboolean start_listener(struct listener *l)
 
 	g_assert(!l->active);
 
-	error = getaddrinfo(l->config->address, l->config->port != NULL?l->config->port:DEFAULT_PORT, &hints, &all_res);
+	error = getaddrinfo(l->config->address, l->config->port != NULL?l->config->port:DEFAULT_IRC_PORT, &hints, &all_res);
 	if (error) {
 		log_global(LOG_ERROR, "Can't get address for %s:%s", l->config->address?l->config->address:"", l->config->port);
 		return FALSE;

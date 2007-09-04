@@ -233,7 +233,7 @@ int main(int argc, char **argv)
 
 	log_global(LOG_INFO, "CtrlProxy %s starting", VERSION);
 
-	if (gethostname(my_hostname, MAXHOSTNAMELEN) != 0) {
+	if (gethostname(my_hostname, NI_MAXHOST) != 0) {
 		log_global(LOG_WARNING, "Can't figure out hostname of local host!");
 		return 1;
 	}

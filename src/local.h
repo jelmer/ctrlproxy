@@ -29,5 +29,8 @@
 /* Default channel name prefixes if not sent by the network */
 #define DEFAULT_CHANTYPES 	"#&"
 
+/* Default port that will be used if no port was specified */
+#define DEFAULT_IRC_PORT "6667"
+
 
 #endif /* _CTRLPROXY_LOCAL_H_ */

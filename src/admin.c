@@ -30,14 +30,20 @@ help_t *help;
 GList *admin_commands = NULL;
 guint longest_command = 0;
 
+static char *admin_hostmask(struct network *n)
+{
+	return g_strdup_printf("ctrlproxy!ctrlproxy@%s", n->info.name);
+}
+
 static void privmsg_admin_out(admin_handle h, const char *data)
 {
 	struct client *c = h->client;
 	char *nick = c->nick;
 	char *hostmask;
 
-	hostmask = g_strdup_printf("ctrlproxy!ctrlproxy@%s", c->network->info.name);
-	if (c->network->state) nick = c->network->state->me.nick;
+	hostmask = admin_hostmask(c->network);
+	if (c->network->state != NULL) 
+		nick = c->network->state->me.nick;
 	client_send_args_ex(c, hostmask, "NOTICE", nick, data, NULL);
 
 	g_free(hostmask);
@@ -48,7 +54,7 @@ static void network_admin_out(admin_handle h, const char *data)
 	struct client *c = h->client;
 	char *hostmask;
 
-	hostmask = g_strdup_printf("ctrlproxy!ctrlproxy@%s", c->network->info.name);
+	hostmask = admin_hostmask(c->network);
 	virtual_network_recv_args(c->network, hostmask, "PRIVMSG", ADMIN_CHANNEL, 
 							  data, NULL);
 
@@ -179,7 +185,7 @@ static void add_server (admin_handle h, char **args, void *userdata)
 		*t = '\0';
 		s->port = g_strdup(t+1);
 	} else {
-		s->port = g_strdup("6667");
+		s->port = g_strdup(DEFAULT_IRC_PORT);
 	}
 	s->ssl = FALSE;
 	s->password = args[3]?g_strdup(args[3]):NULL;
@@ -514,7 +520,7 @@ static gboolean admin_net_init(struct network *n)
 	char *hostmask;
 	char *nicks;
 
-	hostmask = g_strdup_printf("ctrlproxy!ctrlproxy@%s", n->info.name);
+	hostmask = admin_hostmask(n);
 	
 	virtual_network_recv_args(n, n->state->me.hostmask, "JOIN", ADMIN_CHANNEL, NULL);
 	virtual_network_recv_response(n, RPL_TOPIC, ADMIN_CHANNEL, 
@@ -707,7 +713,7 @@ void admin_log(enum log_level level, const struct network *n, const struct clien
 		if (network->connection.data.virtual.ops != &admin_network)
 			continue;
 
-		hostmask = g_strdup_printf("ctrlproxy!ctrlproxy@%s", network->info.name);
+		hostmask = admin_hostmask(network);
 		l = irc_parse_line_args(hostmask, "PRIVMSG", ADMIN_CHANNEL, tmp, NULL); 
 		g_free(hostmask);
 		

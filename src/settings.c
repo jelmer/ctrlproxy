@@ -328,7 +328,7 @@ static void config_load_servers(struct network_config *n)
 		}
 		
 		s->host = servers[i];
-		s->port = g_strdup(tmp?tmp:"6667");
+		s->port = g_strdup(tmp != NULL?tmp:DEFAULT_IRC_PORT);
 		s->bind_address = g_key_file_get_string(n->keyfile, servers[i], "bind", NULL);
 		if (s->bind_address && (tmp = strchr(s->bind_address, ':'))) {
 			*tmp = '\0';
@@ -485,7 +485,7 @@ static struct network_config *find_create_network_config(struct ctrlproxy_config
 		tc->port = tc->host+1;
 		*tc->port = '\0';
 	} else {
-		tc->port = g_strdup("6667");
+		tc->port = g_strdup(DEFAULT_IRC_PORT);
 	}
 
 	nc->type_settings.tcp_servers = g_list_append(nc->type_settings.tcp_servers, tc);
