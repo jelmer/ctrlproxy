@@ -19,9 +19,6 @@
 
 #include "internals.h"
 
-#define DEFAULT_PREFIX		"(ov)@+"
-#define DEFAULT_CHANTYPES 	"#&"
-
 void network_info_init(struct network_info *info)
 {
 	memset(info, 0, sizeof(struct network_info));

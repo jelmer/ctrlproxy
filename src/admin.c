@@ -27,8 +27,6 @@
 
 help_t *help;
 
-#define ADMIN_CHANNEL "#ctrlproxy"
-
 GList *admin_commands = NULL;
 guint longest_command = 0;
 

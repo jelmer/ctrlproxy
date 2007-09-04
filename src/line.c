@@ -163,20 +163,25 @@ char *irc_line_string_nl(const struct line *l)
 	return raw;
 }
 
-static int requires_colon(const struct line *l)
+static gboolean requires_colon(const struct line *l)
 {
 	int c;
 
 	g_assert(l);
 
-	if (l->has_endcolon == WITH_COLON) return 1;
-	else if (l->has_endcolon == WITHOUT_COLON) return 0;
+	if (l->has_endcolon == WITH_COLON)
+		return TRUE;
+	else if (l->has_endcolon == WITHOUT_COLON)
+		return FALSE;
 
 	g_assert(l->args[0]);
 
 	c = atoi(l->args[0]);
-	if (!g_strcasecmp(l->args[0], "MODE"))return 0;
-	if (!g_strcasecmp(l->args[0], "NICK"))return 0;
+	if (!g_strcasecmp(l->args[0], "MODE"))
+		return FALSE;
+
+	if (!g_strcasecmp(l->args[0], "NICK"))
+		return FALSE;
 
 	switch(c) {
 	case RPL_CHANNELMODEIS:
@@ -204,9 +209,9 @@ static int requires_colon(const struct line *l)
 	case RPL_STATSHLINE:
 	case RPL_UMODEIS:
 	case RPL_TOPICWHOTIME:
-		return 0;
+		return FALSE;
 
-	default: return 1;
+	default: return TRUE;
 	}
 }
 
@@ -220,30 +225,36 @@ char *irc_line_string(const struct line *l)
 	/* Silently ignore empty messages */
 	if (l->argc == 0) return g_strdup("");
 
-	if (l->origin)len+=strlen(l->origin);
+	if (l->origin != NULL)
+		len+=strlen(l->origin);
 	for(i = 0; l->args[i]; i++) len+=strlen(l->args[i])+2;
 	ret = g_malloc(len+20);
 	strcpy(ret, "");
 	
-	if (l->origin) sprintf(ret, ":%s ", l->origin);
+	if (l->origin != NULL)
+		sprintf(ret, ":%s ", l->origin);
 
 	for(i = 0; i < l->argc; i++) {
 		if (i == l->argc-1 && requires_colon(l) && i != 0)
 			strcat(ret, ":");
 		strcat(ret, l->args[i]);
-		if (i != l->argc-1)strcat(ret, " ");
+		if (i != l->argc-1)
+			strcat(ret, " ");
 	}
 
 	return ret;
 }
 
-void free_line(struct line *l) {
+void free_line(struct line *l) 
+{
 	int i;
 	if (l == NULL)
 		return;
 
-	if (l->origin)g_free(l->origin);
-	if (l->args) {
+	if (l->origin != NULL)
+		g_free(l->origin);
+	
+	if (l->args != NULL) {
 		for(i = 0; l->args[i]; i++)g_free(l->args[i]);
 		g_free(l->args);
 	}
@@ -318,7 +329,8 @@ struct line *linedup(const struct line *l)
 
 	ret = g_memdup(l, sizeof(struct line));
 
-	if (l->origin)ret->origin = g_strdup(l->origin);
+	if (l->origin != NULL)
+		ret->origin = g_strdup(l->origin);
 	ret->args = g_new(char *, ret->argc+MAX_LINE_ARGS);
 	for(i = 0; l->args[i]; i++) {
 		ret->args[i] = g_strdup(l->args[i]);
