@@ -33,15 +33,8 @@ As has been said in the introduction, ctrlproxy
 is easily extendible. At the time of writing, there 
 are nine modules available.
 
-The simplest possible module would be:
-
-#include <ctrlproxy.h>
-
-gboolean init_plugin(struct plugin *p)
-{   
-	/* Do something */
-	return TRUE;
-}
+The simplest possible module can be found in example/foo.c in the source 
+distribution.
 
 The init_plugin function is called when the module is loaded. 
 In this function, you should register whatever functions the module 

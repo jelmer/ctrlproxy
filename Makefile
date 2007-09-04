@@ -64,6 +64,7 @@ headers = src/admin.h \
 		  src/settings.h \
 		  src/ssl.h \
 		  src/state.h \
+		  src/isupport.h \
 		  src/log.h
 dep_files = $(patsubst %.o, %.d, $(objs)) $(patsubst %.o, %.d, $(wildcard mods/*.o))
 
