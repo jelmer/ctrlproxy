@@ -60,6 +60,7 @@
 #include "admin.h"
 #include "log.h"
 #include "isupport.h"
+#include "log_support.h"
 
 /**
  * Global information.

@@ -168,7 +168,7 @@ int main(int argc, char **argv)
 	char *logfile = NULL;
 	extern enum log_level current_log_level;
 	extern gboolean no_log_timestamp;
-	const char *config_dir = NULL;
+	char *config_dir = NULL;
 	char *tmp;
 	gboolean init = FALSE;
 	const char *inetd_client = NULL;
@@ -322,6 +322,8 @@ int main(int argc, char **argv)
 	}
 
 	g_main_loop_run(main_loop);
+
+	g_free(config_dir);
 
 	return 0;
 }

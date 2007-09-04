@@ -820,6 +820,7 @@ void free_config(struct ctrlproxy_config *cfg)
 	g_free(cfg->replication);
 	g_free(cfg->linestack_backend);
 	g_free(cfg->motd_file);
+	g_free(cfg->admin_user);
 	g_key_file_free(cfg->keyfile);
 	g_free(cfg);
 }

@@ -24,6 +24,9 @@ Ctrlproxy 3.0.4 UNRELEASED
 
 	* Start checking plugin versions.
 
+  INTERNALS
+
+    * Moved some common logging code to the core.
 
 Ctrlproxy 3.0.3 2007-07-22
 

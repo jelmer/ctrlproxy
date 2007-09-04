@@ -29,69 +29,39 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-static char *logfile = NULL;
-static GHashTable *files = NULL;
+static char *logbasedir = NULL;
+struct log_support_context *log_ctx = NULL;
 
-static FILE *find_add_channel_file(struct network *s, const char *name) 
+void strip_slashes(char *cn)
 {
-	char *n = NULL;
-	FILE *f;
-	char *hash_name;
 	int i;
-	char *lowercase;
+	for (i = 0; cn[i]; i++) 
+		if (cn[i] == '/') 
+			cn[i] = '_';
 
-	lowercase = g_ascii_strdown(name?name:"messages", -1);
-	hash_name = g_strdup_printf("%s/%s", s->info.name, lowercase);
-	g_free(lowercase);
-
-	f = g_hash_table_lookup(files, hash_name);
-	if (f == NULL) {
-		char *cn; 
-		const char *server_name;
-
-		server_name = s->info.name;
-
-		if (strchr(server_name, '/') != NULL) 
-			server_name = strrchr(server_name, '/');
-
-		n = g_build_filename(logfile, server_name, NULL);
-		/* Check if directory needs to be created */
-		if (!g_file_test(n, G_FILE_TEST_IS_DIR) && g_mkdir(n, 0700) == -1) {
-			log_network(LOG_ERROR, s, "Couldn't create directory %s for logging!", n);
-			g_free(hash_name);
-			g_free(n);
-			return NULL;
-		}
-		g_free(n);
-		
-		/* Then open the correct filename */
-		cn = g_ascii_strdown(name != NULL?name:"messages", -1);
-		for (i = 0; cn[i]; i++) 
-			if (cn[i] == '/') 
-				cn[i] = '_';
-		n = g_build_filename(logfile, server_name, cn, NULL);
-		g_free(cn);
-		f = fopen(n, "a+");
-		if (f == NULL) {
-			log_network(LOG_ERROR, s, "Couldn't open file %s for logging!", n);
-			g_free(n);
-			return NULL;
-		}
-		g_free(n);
-		g_hash_table_insert(files, hash_name, f);
-	} else g_free(hash_name);
-	g_assert(f);
-	return f;
 }
 
-static void target_vprintf(struct network *n, const char *name, 
+static void target_vprintf(struct network *s, const char *name, 
 						   char *fmt, va_list ap)
 {
-	FILE *f = find_add_channel_file(n, name);
-	if (f != NULL) {
-		vfprintf(f, fmt, ap);
-		fflush(f);
-	}
+	char *lowercase;
+	char *text;
+	char *networkname;
+	char *hash_name;
+
+	lowercase = g_ascii_strdown(name != NULL?name:"messages", -1);
+	networkname = g_strdup(s->info.name);
+	strip_slashes(lowercase);
+	hash_name = g_build_filename(logbasedir, networkname, lowercase, NULL);
+	g_free(networkname);
+	g_free(lowercase);
+
+	/* Then open the correct filename */
+	text = g_strdup_vprintf(fmt, ap);
+	log_support_write(log_ctx, hash_name, text);
+	g_free(text);
+
+	g_free(hash_name);
 }
 
 static void target_printf(struct network *n, const char *name, 
@@ -221,27 +191,29 @@ static gboolean log_data(struct network *n, const struct line *l,
 
 static void load_config(struct global *global)
 {
-	GKeyFile *kf = global->config->keyfile;
+	GKeyFile *kf;
+	
+	kf = global->config->keyfile;
 	if (!g_key_file_has_group(kf, "log-irssi")) {
 		del_log_filter("log_irssi");
 		return;
 	}
 
 	if (!g_key_file_has_key(kf, "log-irssi", "logfile", NULL)) {
-		logfile = g_build_filename(global->config->config_dir, "log_irssi", NULL);
+		logbasedir = g_build_filename(global->config->config_dir, "log_irssi", NULL);
 	} else {
-		logfile = g_key_file_get_string(kf, "log-irssi", "logfile", NULL);
+		logbasedir = g_key_file_get_string(kf, "log-irssi", "logfile", NULL);
 	}
 	
-	/* Create logfile directory if it doesn't exist yet */
-	g_mkdir(logfile, 0700);
 
+	log_ctx = log_support_init();
+
+	/* Create logfile directory if it doesn't exist yet */
 	add_log_filter("log_irssi", log_data, NULL, 1000);
 }
 
 static gboolean init_plugin()
 {
-	files = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, (GDestroyNotify)fclose);
 	register_load_config_notify(load_config);
 	return TRUE;
 }

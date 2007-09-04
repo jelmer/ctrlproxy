@@ -18,11 +18,6 @@
 */
 
 #include "internals.h"
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-#include <stdarg.h>
-#include <stdio.h>
 
 static const char *get_date(void)
 {

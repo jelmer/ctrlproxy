@@ -49,6 +49,7 @@ objs = src/network.o \
 	   src/help.o \
 	   src/repl_backends.o \
 	   src/listener.o \
+	   src/log_support.o \
 	   $(SSL_OBJS)
 
 headers = src/admin.h \
@@ -60,6 +61,7 @@ headers = src/admin.h \
 		  src/line.h \
 		  src/linestack.h \
 		  src/network.h \
+		  src/log_support.h \
 		  src/repl.h \
 		  src/settings.h \
 		  src/ssl.h \

@@ -480,7 +480,7 @@ gboolean network_send_line(struct network *s, struct client *c,
 	l = *ol;
 
 	if (l.origin == NULL && s->state != NULL) {
-		tmp = l.origin = g_strdup(s->state->me.nick);
+		tmp = l.origin = g_strdup(s->state->me.hostmask);
 	}
 
 	if (l.origin != NULL) {
@@ -1399,6 +1399,10 @@ void fini_networks(struct global *global)
 		disconnect_network(n);
 		unload_network(n);
 	}
+
+	if (virtual_network_ops != NULL)
+		g_hash_table_destroy(virtual_network_ops);
+	virtual_network_ops = NULL;
 }
 
 /**

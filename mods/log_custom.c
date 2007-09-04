@@ -31,17 +31,11 @@
 
 #define MAX_SUBST 256
 
-struct file_info {
-	FILE *file;
-	time_t last_used;
-};
-
 struct log_custom_data {
     char *logfilename;
     GKeyFile *kf;
+	struct log_support_context *log_ctx;
 };
-
-static GHashTable *files;
 
 /* Translation table */
 struct log_mapping {
@@ -114,12 +108,19 @@ static char *get_user(struct network *n, const struct line *l,
 	char *nick = NULL;
 	char *user = NULL;
 
-	if (l->origin != NULL) nick = g_strdup(l->origin);
-	if (nick != NULL) user = strchr(nick, '!');
-	if (user != NULL) { *user = '\0';user++; }
+	if (l->origin != NULL) 
+		nick = g_strdup(l->origin);
+	if (nick != NULL) 
+		user = strchr(nick, '!');
+	if (user != NULL) { 
+		*user = '\0'; 
+		user++; 
+	}
 
-	if (case_sensitive) return g_ascii_strdown(user, -1);
-	else return g_strdup(user);
+	if (case_sensitive) 
+		return g_ascii_strdown(user, -1);
+	else 
+		return g_strdup(user);
 }
 
 static char *get_monthname(struct network *n, const struct line *l, 
@@ -344,73 +345,23 @@ If appropriate:
  -- NICK: %r
  */
 
-static FILE *find_add_channel_file(struct log_custom_data *data, 
-								   struct network *network, 
-								   const struct line *l, 
-								   const char *identifier, 
-								   gboolean create_file) 
+static void file_write_line(struct log_custom_data *data, struct network *network, const char *fmt,
+				   const struct line *l, const char *identifier, gboolean create_file)
 {
-	char *n = NULL, *dn, *p;
-	struct file_info *fi;
+	char *s;
+	char *n = NULL;
+
+	custom_subst(network, &s, fmt, l, identifier, FALSE, FALSE);
+
 	if (data->logfilename == NULL) 
-		return NULL;
+		return;
 
 	custom_subst(network, &n, data->logfilename, l, identifier, TRUE, TRUE);
-	fi = g_hash_table_lookup(files, n);
 
-	if (fi == NULL && create_file) {
-		dn = g_strdup(n);
-		
-		/* Only include directory-part */
-		p = strrchr(dn, '/');
-		if (p != NULL) 
-			*p = '\0';
-
-		/* Check if directory needs to be created */
-		if (!g_file_test(dn, G_FILE_TEST_IS_DIR) && g_mkdir(dn, 0700) == -1) {
-			log_network(LOG_ERROR, network, "Couldn't create directory %s for logging!", dn);
-			g_free(dn);
-			g_free(n);
-			return NULL;
-		}
-		g_free(dn);
-
-		fi = g_new0(struct file_info, 1);
-		
-		/* Then open the correct filename */
-		fi->file = fopen(n, "a+");
-		if (fi->file == NULL) {
-			log_network(LOG_ERROR, network, "Couldn't open file %s for logging!", n);
-			g_free(n);
-			g_free(fi);
-			return NULL;
-		}
-		g_hash_table_insert(files, n, fi);
-	} else g_free(n);
-
-	if (fi == NULL)
-		return NULL;
-
-	fi->last_used = time(NULL);
-	return fi->file;
-}
-
-static void file_write_line(struct log_custom_data *data, struct network *network, const char *fmt,
-				   const struct line *l, const char *t, gboolean create_file)
-{
-	FILE *f;
-	char *s;
-
-	f = find_add_channel_file(data, network, l, t, create_file);
-	if (f == NULL) return;
-
-	custom_subst(network, &s, fmt, l, t, FALSE, FALSE);
-
-	fputs(s, f);
-	fputc('\n', f);
-	fflush(f);
+	log_support_write(data->log_ctx, n, s);
 
 	g_free(s);
+	g_free(n);
 }
 
 static void file_write_line_target(struct log_custom_data *data, struct network *network, const char *fmt,
@@ -438,10 +389,10 @@ static void file_write_target(struct log_custom_data *data,
 	if (fmt == NULL) 
 		return;
 	
-	g_assert(l->args[0]);
-	g_assert(l->args[1]);
-	g_assert(network->state);
-	g_assert(network->state->me.nick);
+	g_assert(l->args[0] != NULL);
+	g_assert(l->args[1] != NULL);
+	g_assert(network->state != NULL);
+	g_assert(network->state->me.nick != NULL);
 
 	if (!irccmp(&network->state->info, network->state->me.nick, l->args[1])) {
 		if (l->origin != NULL)
@@ -478,7 +429,7 @@ static void file_write_channel_query(struct log_custom_data *data,
 	if (l->origin == NULL) 
 		return;
 
-	g_assert(n);
+	g_assert(n != NULL);
 
 	fmt = g_key_file_get_string(data->kf, "log-custom", n, NULL);
 	if (fmt == NULL) 
@@ -558,8 +509,10 @@ static gboolean log_custom_data(struct network *network, const struct line *l,
 			while (cont) {
 				n = strchr(p, ',');
 
-				if (!n) cont = 0;
-				else *n = '\0';
+				if (n == NULL) 
+					cont = 0;
+				else 
+					*n = '\0';
 
 				file_write_channel_only(data, network, "kick", l);
 
@@ -587,14 +540,6 @@ static gboolean log_custom_data(struct network *network, const struct line *l,
 	return TRUE;
 }
 
-static void free_file_info(void *_data)
-{
-	struct file_info *data = _data;
-
-	fclose(data->file);
-	g_free(data);
-}
-
 static void load_config(struct global *global)
 {
 	GKeyFile *kf = global->config->keyfile;
@@ -610,29 +555,12 @@ static void load_config(struct global *global)
 	add_log_filter("log_custom", log_custom_data, data, 1000);
 
 	data->logfilename = g_key_file_get_string(kf, "log-custom", "logfilename", NULL);
+	data->log_ctx = log_support_init();
 	data->kf = kf;
-}
-
-#define CLEANUP_THRESHOLD (60 * 60 * 24)
-
-static gboolean eval_remove(gpointer key, gpointer value, gpointer user_data)
-{
-	struct file_info *fi = value;
-
-	return (fi->last_used < time(NULL) - CLEANUP_THRESHOLD);
-}
-
-static gboolean cleanup(void *_data)
-{
-	g_hash_table_foreach_remove(files, eval_remove, NULL);
-	return TRUE;
 }
 
 static gboolean init_plugin(void)
 {
-	files = g_hash_table_new_full(g_str_hash, g_str_equal, 
-			g_free, free_file_info);
-	g_timeout_add(60 * 60, cleanup, NULL);
 	register_load_config_notify(load_config);
 	return TRUE;
 }
