@@ -120,6 +120,6 @@ static gboolean init_plugin()
 
 struct plugin_ops plugin = {
 	.name = "auto_away",
-	.version = 0,
+	.version = CTRLPROXY_PLUGIN_VERSION,
 	.init = init_plugin,
 };

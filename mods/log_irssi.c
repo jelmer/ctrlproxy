@@ -239,6 +239,6 @@ static gboolean init_plugin()
 
 struct plugin_ops plugin = {
 	.name = "log_irssi",
-	.version = 0,
+	.version = CTRLPROXY_PLUGIN_VERSION,
 	.init = init_plugin
 };

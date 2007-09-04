@@ -631,6 +631,6 @@ static gboolean init_plugin(void)
 
 struct plugin_ops plugin = {
 	.name = "log_custom",
-	.version = 0,
+	.version = CTRLPROXY_PLUGIN_VERSION,
 	.init = init_plugin,
 };
