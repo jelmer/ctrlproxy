@@ -22,6 +22,14 @@ The structure of ctrlproxy is very modular and it is easily extendible.
 		permanent connection to one or more IRC servers. The user can then 
 		connect and disconnect his/her IRC client to the bouncer without actually disconnecting from the 'real' IRC server.</para>
 
+	<para>Any conversations (or parts of them) that happen on IRC while the 
+		user is disconnected can then be sent when the user connects again 
+		or asks for them explicitly.
+	</para>
+
+	<para>It is also be possible to log in from multiple locations 
+		simultaneously while using one and the same nick name on IRC. </para>
+
 	 <mediaobject>
 	    <imageobject role="html">
 		      <imagedata format="PNG" align="center" fileref="overview2.png"/>
