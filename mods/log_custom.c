@@ -240,13 +240,20 @@ static char *find_mapping(struct network *network, const struct line *l, char c,
 {
 	int i;
 	for (i = 0; mappings[i].subst; i++) {
-		if (mappings[i].command && 
-		   strcmp(mappings[i].command, l->args[0])) continue;
-		if (mappings[i].subst != c) continue;
-		if (mappings[i].index == -1) return mappings[i].callback(network, l, case_sensitive);
+		if (mappings[i].command && strcmp(mappings[i].command, l->args[0])) 
+			continue;
+
+		if (mappings[i].subst != c) 
+			continue;
+
+		if (mappings[i].index == -1) 
+			return mappings[i].callback(network, l, case_sensitive);
+
 		if (mappings[i].index < l->argc) {
-			if (case_sensitive) return g_ascii_strdown(l->args[mappings[i].index], -1);
-			else return g_strdup(l->args[mappings[i].index]);
+			if (case_sensitive) 
+				return g_ascii_strdown(l->args[mappings[i].index], -1);
+			else 
+				return g_strdup(l->args[mappings[i].index]);
 		}
 	}
 	return g_strdup("");
@@ -256,7 +263,8 @@ static void convertslashes(char *a)
 {
 	int j;
 	for (j = 0; a[j]; j++) 
-		if (a[j] == '/') a[j] = '_';
+		if (a[j] == '/') 
+			a[j] = '_';
 }
 
 static void custom_subst(struct network *network, char **_new, 

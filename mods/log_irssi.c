@@ -45,7 +45,7 @@ static FILE *find_add_channel_file(struct network *s, const char *name)
 	g_free(lowercase);
 
 	f = g_hash_table_lookup(files, hash_name);
-	if (!f) {
+	if (f == NULL) {
 		char *cn; 
 		const char *server_name;
 
@@ -54,7 +54,7 @@ static FILE *find_add_channel_file(struct network *s, const char *name)
 		if (strchr(server_name, '/') != NULL) 
 			server_name = strrchr(server_name, '/');
 
-		n = g_strdup_printf("%s/%s", logfile, server_name);
+		n = g_build_filename(logfile, server_name, NULL);
 		/* Check if directory needs to be created */
 		if (!g_file_test(n, G_FILE_TEST_IS_DIR) && g_mkdir(n, 0700) == -1) {
 			log_network(LOG_ERROR, s, "Couldn't create directory %s for logging!", n);
@@ -65,12 +65,14 @@ static FILE *find_add_channel_file(struct network *s, const char *name)
 		g_free(n);
 		
 		/* Then open the correct filename */
-		cn = g_ascii_strdown(name?name:"messages", -1);
-		for (i = 0; cn[i]; i++) if (cn[i] == '/') cn[i] = '_';
-		n = g_strdup_printf("%s/%s/%s", logfile, server_name, cn);
+		cn = g_ascii_strdown(name != NULL?name:"messages", -1);
+		for (i = 0; cn[i]; i++) 
+			if (cn[i] == '/') 
+				cn[i] = '_';
+		n = g_build_filename(logfile, server_name, cn, NULL);
 		g_free(cn);
 		f = fopen(n, "a+");
-		if (!f) {
+		if (f == NULL) {
 			log_network(LOG_ERROR, s, "Couldn't open file %s for logging!", n);
 			g_free(n);
 			return NULL;
@@ -121,13 +123,14 @@ static gboolean log_data(struct network *n, const struct line *l,
 	char *user = NULL;
 	struct tm *t = localtime(&ti);
 	
-	if (l->args == NULL|| l->args[0] == NULL)
+	if (l->args == NULL || l->args[0] == NULL)
 		return TRUE;
 
-	if (l->origin) {
+	if (l->origin != NULL) {
 		nick = line_get_nick(l);
 		user = strchr(l->origin, '!');
-		if (user) user++;
+		if (user != NULL) 
+			user++;
 	}
 
 	if (dir == FROM_SERVER && !g_strcasecmp(l->args[0], "JOIN")) {
@@ -154,34 +157,38 @@ static gboolean log_data(struct network *n, const struct line *l,
 		/* Loop thru the channels this user is on */
 		GList *gl;
 		struct network_nick *nn = find_network_nick(n->state, nick);
-		if (nn) {
+		if (nn != NULL) {
 			for (gl = nn->channel_nicks; gl; gl = gl ->next) {
 				struct channel_nick *cn = (struct channel_nick *)gl->data;
 				target_printf(n, cn->channel->name, "%02d:%02d -!- %s [%s] has quit [%s]\n", t->tm_hour, t->tm_min, nick, user, l->args[1]?l->args[1]:"");
 			}
 		}
 	} else if (!g_strcasecmp(l->args[0], "KICK") && l->args[1] && l->args[2] && dir == FROM_SERVER) {
-		if (!strchr(l->args[1], ',')) {
+		if (strchr(l->args[1], ',') == NULL) {
 			target_printf(n, l->args[1], "%02d:%02d -!- %s has been kicked by %s [%s]\n", t->tm_hour, t->tm_min, l->args[2], nick, l->args[3]?l->args[3]:"");
 		} else { 
 			char *channels = g_strdup(l->args[1]);
 			char *nicks = g_strdup(l->args[1]);
-			char *p,*nx; char cont = 1;
+			char *p,*nx; 
+			gboolean cont = TRUE;
 			char *_nick;
 
 			p = channels;
 			_nick = nicks;
-			while(cont) {
+			while (cont) {
 				nx = strchr(p, ',');
 
-				if (!nx) cont = 0;
-				else *nx = '\0';
+				if (nx == NULL) 
+					cont = FALSE;
+				else 
+					*nx = '\0';
 
 				target_printf(n, p, "%02d:%02d -!- %s has been kicked by %s [%s]\n", t->tm_hour, t->tm_min, _nick, nick, l->args[3]?l->args[3]:"");
 
 				p = nx+1;
 				_nick = strchr(_nick, ',');
-				if (!_nick)break;
+				if (_nick == NULL)
+					break;
 				_nick++;
 			}
 			
@@ -189,8 +196,10 @@ static gboolean log_data(struct network *n, const struct line *l,
 			g_free(nicks);
 		}
 	} else if (!g_strcasecmp(l->args[0], "TOPIC") && dir == FROM_SERVER && l->args[1]) {
-		if (l->args[2])target_printf(n, l->args[1], "%02d:%02d -!- %s has changed the topic to %s\n", t->tm_hour, t->tm_min, nick, l->args[2]);
-		else target_printf(n, l->args[1], "%02d:%02d -!- %s has removed the topic\n", t->tm_hour, t->tm_min, nick);
+		if (l->args[2] != NULL)
+			target_printf(n, l->args[1], "%02d:%02d -!- %s has changed the topic to %s\n", t->tm_hour, t->tm_min, nick, l->args[2]);
+		else 
+			target_printf(n, l->args[1], "%02d:%02d -!- %s has removed the topic\n", t->tm_hour, t->tm_min, nick);
 	} else if (!g_strcasecmp(l->args[0], "NICK") && 
 			   dir == FROM_SERVER && l->args[1]) {
 		struct network_nick *nn = find_network_nick(n->state, nick);
