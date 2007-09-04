@@ -29,11 +29,6 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-
-
-#undef G_LOG_DOMAIN
-#define G_LOG_DOMAIN "log_irssi"
-
 static char *logfile = NULL;
 static GHashTable *files = NULL;
 

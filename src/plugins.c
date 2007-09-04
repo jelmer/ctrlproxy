@@ -76,6 +76,14 @@ struct plugin *load_plugin(const char *modulesdir, const char *name)
 		return NULL;
 	}
 
+	if (ops->version != CTRLPROXY_PLUGIN_VERSION) {
+		log_global(LOG_WARNING, "%s: Plugin has incompatible version %d, expected %d", 
+				   ops->name, ops->version, CTRLPROXY_PLUGIN_VERSION);
+		g_free(path_name);
+		g_free(p);
+		return NULL;
+	}
+
 	g_free(path_name);
 
 	p->module = m;

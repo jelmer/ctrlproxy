@@ -22,6 +22,8 @@ Ctrlproxy 3.0.4 UNRELEASED
 
 	* Recognize NS as command for NickServ (#145)
 
+	* Start checking plugin versions.
+
 
 Ctrlproxy 3.0.3 2007-07-22
 
