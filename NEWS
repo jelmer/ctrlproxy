@@ -24,6 +24,8 @@ Ctrlproxy 3.0.4 UNRELEASED
 
 	* Start checking plugin versions.
 
+	* Open log file if stdout goes away.
+
   INTERNALS
 
     * Moved some common logging code to the core.

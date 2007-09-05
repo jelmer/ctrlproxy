@@ -43,6 +43,13 @@ extern char my_hostname[];
 extern struct global *my_global;
 extern help_t *help; 
 
+static void signal_hup(int sig)
+{
+	char *logfile;
+	logfile = g_build_filename(my_global->config->config_dir, "log", NULL);
+	init_log(logfile);
+}
+
 static void signal_crash(int sig) 
 {
 #ifdef HAVE_BACKTRACE_SYMBOLS
@@ -192,7 +199,7 @@ int main(int argc, char **argv)
 	signal(SIGPIPE, SIG_IGN);
 #endif
 #ifdef SIGHUP
-	signal(SIGHUP, SIG_IGN);
+	signal(SIGHUP, signal_hup);
 #endif
 #ifdef SIGSEGV
 	signal(SIGSEGV, signal_crash);
