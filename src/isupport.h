@@ -199,7 +199,7 @@ struct network_info
 	gboolean capab;
 
 	/* Maximum number of arguments per command. */
-	gint maxpara;
+	int maxpara;
 
 	/* The NAMESX extension is supported by the server. See 
 	 * http://www.inspircd.org/wiki/NAMESX_Module for details */
@@ -211,7 +211,7 @@ struct network_info
 	gboolean securelist;
 
 	/* Number of watches allowed */
-	gint watch;
+	int watch;
 
 	/* Server supports /fpart or /remove command */
 	gboolean remove;
