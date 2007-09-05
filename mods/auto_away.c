@@ -44,7 +44,7 @@ static gboolean check_time(gpointer user_data)
 			struct network *s = (struct network *)sl->data;
 			if (s->connection.state == NETWORK_CONNECTION_STATE_MOTD_RECVD &&
 			    (!d->only_for_noclients || s->clients == NULL)) {
-				network_send_args(s, "AWAY", d->message?d->message:"Auto Away", NULL);
+				network_send_args(s, "AWAY", d->message != NULL?d->message:"Auto Away", NULL);
 				if (d->nick != NULL) {
 					network_send_args(s, "NICK", d->nick, NULL);
 				}
@@ -85,6 +85,16 @@ static gboolean log_data(struct network *n, const struct line *l,
 	return TRUE;
 }
 
+static gboolean new_client(struct client *c, void *userdata) 
+{
+	struct auto_away_data *d = userdata;
+
+	if (d->is_away && d->only_for_noclients) 
+		network_send_args(c->network, "AWAY", NULL);
+
+	return TRUE;
+}
+
 static void load_config(struct global *global)
 {
 	struct auto_away_data *d;
@@ -95,7 +105,7 @@ static void load_config(struct global *global)
 		return;
 	}
 
-	d = g_new0(struct auto_away_data,1);
+	d = g_new0(struct auto_away_data, 1);
 	d->global = global;
 	
 	add_server_filter("auto-away", log_data, d, -1);
@@ -111,6 +121,7 @@ static void load_config(struct global *global)
 		d->max_idle_time = DEFAULT_TIME;
 
 	d->timeout_id = g_timeout_add(1000, check_time, d);
+	add_new_client_hook("auto-away", new_client, d);
 }
 
 static gboolean init_plugin() 

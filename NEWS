@@ -28,6 +28,8 @@ Ctrlproxy 3.0.4 UNRELEASED
 
     * Make /AWAY with empty argument mark as unaway. (Adeodato Simó)
 
+    * Automatically mark as unaway when a client connects and auto-away/no_client=true. (#150)
+
   INTERNALS
 
     * Moved some common logging code to the core.
