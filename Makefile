@@ -87,7 +87,7 @@ mods/%.o: mods/%.c
 	@$(CC) -I. -Isrc $(CFLAGS) $(GCOV_CFLAGS) -c $< -o $@
 
 %.d: %.c
-	@$(CC) -I. -Isrc -M -MG -MP -MT $(<:.c=.o) $(CFLAGS) $< -o $@
+	@$(CC) -I. -Isrc -M -MT $(<:.c=.o) $(CFLAGS) $< -o $@
 
 ifeq ($(BZR_CHECKOUT),yes)
 configure: autogen.sh configure.ac acinclude.m4 $(wildcard mods/*/*.m4)
