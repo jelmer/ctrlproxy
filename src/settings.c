@@ -68,7 +68,9 @@ static void config_save_tcp_servers(struct network_config *n, GKeyFile *kf)
 
 		values[i] = name;
 
-		g_key_file_set_boolean(kf, name, "ssl", ts->ssl);
+		if (g_key_file_has_key(kf, name, "ssl", NULL) || ts->ssl)
+			g_key_file_set_boolean(kf, name, "ssl", ts->ssl);
+
 		if (ts->password)
 			g_key_file_set_string(kf, name, "password", ts->password);
 		else
@@ -175,7 +177,8 @@ static void config_save_listeners(struct ctrlproxy_config *cfg, const char *path
 			if (l->password != NULL)
 				g_key_file_set_string(cfg->keyfile, "global", "password", l->password);
 
-			g_key_file_set_boolean(cfg->keyfile, "global", "ssl", l->ssl);
+			if (g_key_file_has_key(cfg->keyfile, "global", "ssl", NULL) || l->ssl)
+				g_key_file_set_boolean(cfg->keyfile, "global", "ssl", l->ssl);
 		} else {
 			char *tmp;
 			empty = FALSE;
@@ -248,11 +251,25 @@ void save_configuration(struct ctrlproxy_config *cfg, const char *configuration_
 	g_key_file_set_boolean(cfg->keyfile, "global", "autosave", cfg->autosave);
 	if (cfg->admin_user != NULL)
 		g_key_file_set_string(cfg->keyfile, "global", "admin-user", cfg->admin_user);
-	g_key_file_set_boolean(cfg->keyfile, "global", "admin-log", cfg->admin_log);
-	g_key_file_set_integer(cfg->keyfile, "global", "max_who_age", cfg->max_who_age);
+
+	if (g_key_file_has_key(cfg->keyfile, "global", "admin-log", NULL) ||
+		!cfg->admin_log)
+		g_key_file_set_boolean(cfg->keyfile, "global", "admin-log", cfg->admin_log);
+
+	if (g_key_file_has_key(cfg->keyfile, "global", "max_who_age", NULL) ||
+		cfg->max_who_age != 0)
+		g_key_file_set_integer(cfg->keyfile, "global", "max_who_age", cfg->max_who_age);
+
+	if (g_key_file_has_key(cfg->keyfile, "global", "learn-nickserv", NULL) ||
+		!cfg->learn_nickserv)
+		g_key_file_set_boolean(cfg->keyfile, "global", "learn-nickserv", cfg->learn_nickserv);
+
+	if (g_key_file_has_key(cfg->keyfile, "global", "learn-network-name", NULL) ||
+		!cfg->learn_network_name)
+		g_key_file_set_boolean(cfg->keyfile, "global", "learn-network-name", cfg->learn_network_name);
 
 	if (cfg->client_charset != NULL)
-		g_key_file_set_string(cfg->keyfile, "client", "charset", cfg->client_charset);
+		g_key_file_set_string(cfg->keyfile, "global", "client-charset", cfg->client_charset);
 	if (cfg->replication)
 		g_key_file_set_string(cfg->keyfile, "global", "replication", cfg->replication);
 	if (cfg->linestack_backend) 
@@ -698,8 +715,20 @@ struct ctrlproxy_config *load_configuration(const char *dir)
 
     if (g_key_file_has_key(kf, "client", "charset", NULL))
 		cfg->client_charset = g_key_file_get_string(kf, "client", "charset", NULL);
+	else if (g_key_file_has_key(kf, "global", "client-charset", NULL))
+		cfg->client_charset = g_key_file_get_string(kf, "global", "client-charset", NULL);
     else 
 	    cfg->client_charset = NULL;
+
+    if (g_key_file_has_key(kf, "global", "learn-nickserv", NULL))
+		cfg->learn_nickserv = g_key_file_get_boolean(kf, "global", "learn-nicksev", NULL);
+    else 
+	    cfg->learn_nickserv = TRUE;
+
+    if (g_key_file_has_key(kf, "global", "learn-network-name", NULL))
+		cfg->learn_network_name = g_key_file_get_boolean(kf, "global", "learn-network-name", NULL);
+    else 
+	    cfg->learn_network_name = TRUE;
 
 	if (!g_file_test(cfg->motd_file, G_FILE_TEST_EXISTS))
 		log_global(LOG_ERROR, "Can't open MOTD file '%s' for reading", cfg->motd_file);
@@ -843,7 +872,10 @@ gboolean create_configuration(const char *config_dir)
 	}
 
 	global = load_global(DEFAULT_CONFIG_DIR);	
-	if (global == NULL) return FALSE;
+	if (global == NULL) { 
+		fprintf(stderr, "Unable to load default configuration '%s'\n", DEFAULT_CONFIG_DIR);	
+		return FALSE;
+	}
 	global->config->config_dir = g_strdup(config_dir);
 	save_configuration(global->config, config_dir);
 

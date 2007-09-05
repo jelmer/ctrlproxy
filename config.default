@@ -29,7 +29,7 @@ port=6680
 password=
 
 # Set "bind" to make ctrlproxy only listen on a specific IP address:
-# Example: bind=192.168.4.3
+#bind=192.168.4.3
 
 # Override motd-file location
 #motd-file = /tmp/my-motd
@@ -48,9 +48,16 @@ admin-user = ctrlproxy
 # Send ctrlproxy log messages to the admin channel
 admin-log = true
 
+# Whether to remember passwords sent to NickServ
+#learn-nickserv = true
+
+# Whether to update a networks name based on the NETWORK= line sent when 
+# connected to it
+#learn-network-name = true
+
 # Irssi-style logging
 [log-irssi]
-# logfile = /home/jelmer/tmp/ctrlproxy
+#logfile = /home/jelmer/tmp/ctrlproxy
 
 # Work as a socks proxy
 #[socks]
@@ -60,3 +67,4 @@ admin-log = true
 #[auto-away]
 #message = I'm currently away, sorry!
 #time = 300 # in seconds
+#nick = jelmer|away

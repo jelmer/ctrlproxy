@@ -103,8 +103,8 @@ static void cache_nickserv_pass(struct network *n, const char *newpass)
 		n->global->nickserv_nicks = g_list_prepend(n->global->nickserv_nicks, e);
 	}
 
-	if (e->pass == NULL || 
-		strcmp(e->pass, newpass) != 0) {
+	if ((e->pass == NULL || 
+		strcmp(e->pass, newpass) != 0) && n->global->config->learn_nickserv) {
 		e->pass = g_strdup(newpass);
 		log_network(LOG_INFO, n, "Caching password for nick %s", e->nick);
 	} 

@@ -118,6 +118,8 @@ struct ctrlproxy_config {
 	GList *listeners;
 	gboolean auto_listener;
 	int listener_autoport;
+	gboolean learn_nickserv;
+	gboolean learn_network_name;
 };
 
 /* config.c */
