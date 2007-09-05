@@ -1,5 +1,5 @@
  Otherwise indicated differently, all changes made by 
- 	Jelmer Vernooij.
+     Jelmer Vernooij.
 
 Ctrlproxy 3.0.4 UNRELEASED
 
@@ -7,26 +7,26 @@ Ctrlproxy 3.0.4 UNRELEASED
 
     * Check for empty argument to /CTRLPROXY BACKLOG (#132)
 
-	* Integrate some more standard replication backends. 
+    * Integrate some more standard replication backends. 
 
-	* Allow specifying a network in the password, separated by a colon (:).
+    * Allow specifying a network in the password, separated by a colon (:).
 
-	* Integrate listeners into the core.
+    * Integrate listeners into the core.
 
-	* Integrate socks support into listener code. Socks connections 
-	  can now be accepted at the same port as other connections.
+    * Integrate socks support into listener code. Socks connections 
+      can now be accepted at the same port as other connections.
 
-	* Allow configuring a single listener in ~/.ctrlproxy/config.
+    * Allow configuring a single listener in ~/.ctrlproxy/config.
 
-	* Several simplifications of the configuration file.
+    * Several simplifications of the configuration file.
 
-	* Recognize NS as command for NickServ (#145)
+    * Recognize NS as command for NickServ (#145)
 
-	* Start checking plugin versions.
+    * Start checking plugin versions.
 
-	* Open log file if stdout goes away.
+    * Open log file if stdout goes away.
 
-	* Make /AWAY with empty argument mark as unaway. (Adeodato Simó)
+    * Make /AWAY with empty argument mark as unaway. (Adeodato Simó)
 
   INTERNALS
 
@@ -38,47 +38,47 @@ Ctrlproxy 3.0.3 2007-07-22
 
     * Handle 470 response correctly.
 
-	* Recognize supported channel / user modes correctly.
-	
-	* Properly store topic_set_time and topic_set_by in the 
-	  linestack. (#108)
+    * Recognize supported channel / user modes correctly.
+    
+    * Properly store topic_set_time and topic_set_by in the 
+      linestack. (#108)
 
     * Reset idle time when AWAY is used in auto-away (#121)
 
-	* Fix crash when using /CTRLPROXY without arguments
+    * Fix crash when using /CTRLPROXY without arguments
 
-	* Don't update config when we're disconnecting during shutdown. (#113)
+    * Don't update config when we're disconnecting during shutdown. (#113)
 
-	* Handle 354 response correctly. (#134)
+    * Handle 354 response correctly. (#134)
 
     * Handle responses after forced joins correctly. (#125)
 
-	* Handle 250 response correctly. (#138)
+    * Handle 250 response correctly. (#138)
 
-	* Handle 263 response correctly. (#135)
+    * Handle 263 response correctly. (#135)
 
     * Handle 330 response correclty. (#137)
 
-	* Handle 403 response correctly when sent in response to a MODE 
-	  query. (#139)
+    * Handle 403 response correctly when sent in response to a MODE 
+      query. (#139)
 
-	* Fall back to user name if real name is empty. 
+    * Fall back to user name if real name is empty. 
 
-	* Handle 479 responses correctly. (#142)
+    * Handle 479 responses correctly. (#142)
 
-	* Only send PRIVMSG and NOTICE lines during the BACKLOG command. (#143)
+    * Only send PRIVMSG and NOTICE lines during the BACKLOG command. (#143)
 
     * Support SILENCE without arguments. 
 
   INTERNALS
 
     * Use GIOChannels for reading the motd. 
-		(patch by Emanuele Giaquinta <e.giaquinta@glauco.it>)
+        (patch by Emanuele Giaquinta <e.giaquinta@glauco.it>)
 
   PORTABILITY
     
     * Include netinet/in.h in src/utils.c and src/network.c. Required 
-	  for building on FreeBSD. Reported by underlig.
+      for building on FreeBSD. Reported by underlig.
 
 
 Ctrlproxy 3.0.2 2007-04-15
@@ -87,82 +87,82 @@ Ctrlproxy 3.0.2 2007-04-15
 
     * Support redirecting 396, 318, 437 and 330 replies. (#84)
 
-	* Fixed redirect warnings for 251, 252, 253, 254, 265 and 266.
+    * Fixed redirect warnings for 251, 252, 253, 254, 265 and 266.
 
     * Don't abort when trying to send auto-AWAY while network is 
-	  disconnected.
+      disconnected.
 
-	* Handle CTRLPROXY command without any arguments. (#92)
+    * Handle CTRLPROXY command without any arguments. (#92)
 
     * Fixed crash when using SSL support. (#83)
 
-	* Add support for storing topic set time and topic set by nick (#97).
+    * Add support for storing topic set time and topic set by nick (#97).
 
-	* Fixed CTCP source reply URL. (#86)
+    * Fixed CTCP source reply URL. (#86)
 
-	* Hide assertion in g_key_file_free in free_config when a network has no associated file (patch by exg)
+    * Hide assertion in g_key_file_free in free_config when a network has no associated file (patch by exg)
 
-	* Fix coredump with --init when the default config cannot be opened (patch by exg)
+    * Fix coredump with --init when the default config cannot be opened (patch by exg)
 
-	* Fix crash when CHARSET command fails (#89, #96)
+    * Fix crash when CHARSET command fails (#89, #96)
 
-	* Fall back to default charset if client charset can't be set 
-		(patch by Emanuele Giaquinta <e.giaquinta@glauco.it>)
+    * Fall back to default charset if client charset can't be set 
+        (patch by Emanuele Giaquinta <e.giaquinta@glauco.it>)
 
-	* Fix use of %S segfault in log_custom. (#111)
+    * Fix use of %S segfault in log_custom. (#111)
 
-	* 005-lines are now forwarded to the end-client in a more 
+    * 005-lines are now forwarded to the end-client in a more 
       structural manner. (#94)
-	
-	* Properly expand target in log_irssi if it is a comma-separated list (#9)
+    
+    * Properly expand target in log_irssi if it is a comma-separated list (#9)
         (based on patch by Korbinian Rosenegger)
 
     * Properly expand target in log_custom if it is a comma-separated list (#9)
         (patch by Emanuele Giaquinta and Korbinian Rosenegger)
 
-	* Don't append extra colon before RPL_TOPICWHOTIME (Korbinian Rosenegger)
+    * Don't append extra colon before RPL_TOPICWHOTIME (Korbinian Rosenegger)
 
-	* Adding timed backlog in BACKLOG command without a channel 
-	  (Korbinian Rosenegger)
+    * Adding timed backlog in BACKLOG command without a channel 
+      (Korbinian Rosenegger)
 
-	* Handle disconnects of clients properly (#108)
+    * Handle disconnects of clients properly (#108)
 
-	* Fix handling of non-UTF8 characters in linestack_file.
+    * Fix handling of non-UTF8 characters in linestack_file.
 
-	* Don't use CHARSETs by default (#117).
+    * Don't use CHARSETs by default (#117).
 
-	* Never send origin to the server (#122).
+    * Never send origin to the server (#122).
 
-	* Added support for 307 responses. 
+    * Added support for 307 responses. 
 
   FEATURES
 
     * More advanced help support
 
-	* Add LOG_LEVEL command (#101)
+    * Add LOG_LEVEL command (#101)
 
-	* Add 'make uninstall' (#95)
+    * Add 'make uninstall' (#95)
 
-	* Do some more config checking (#102)
+    * Do some more config checking (#102)
 
-	* Show disconnect reason in admin network (#100)
+    * Show disconnect reason in admin network (#100)
 
-	* Add support for handling additional 005 parameters: MAXCHANNELS,
-		NICKLEN, MAXBANS, MODES, NICKLEN, MAXBANS, TOPICLEN, KICKLEN, 
-		AWAYLEN, MAXTARGETS, WALLCHOPS, WALLVOICES, RFC2812, PENALTY,
-		FNC, SAFELIST, USERIP, CNOTICE, KNOCK, VCHANNELS, WHOX, CALLERID,
-		ACCEPT, KEYLEN, USERLEN, HOSTLEN, MAXCHANNELLEN, 
-		MAXNICKLEN, DEAF, ELIST, MAXPARA, NAMESX, SECURELIST, WATCH
-		REMOVE, MAP, OVERRIDE, VBANLIST and SILENCE
+    * Add support for handling additional 005 parameters: MAXCHANNELS,
+        NICKLEN, MAXBANS, MODES, NICKLEN, MAXBANS, TOPICLEN, KICKLEN, 
+        AWAYLEN, MAXTARGETS, WALLCHOPS, WALLVOICES, RFC2812, PENALTY,
+        FNC, SAFELIST, USERIP, CNOTICE, KNOCK, VCHANNELS, WHOX, CALLERID,
+        ACCEPT, KEYLEN, USERLEN, HOSTLEN, MAXCHANNELLEN, 
+        MAXNICKLEN, DEAF, ELIST, MAXPARA, NAMESX, SECURELIST, WATCH
+        REMOVE, MAP, OVERRIDE, VBANLIST and SILENCE
 
-	* Print actual address that a listener bound to.
+    * Print actual address that a listener bound to.
 
   INTERNALS
 
     * Remove is_private from line struct (#12).
-		(patch by Emanuele Giaquinta <e.giaquinta@glauco.it>)
+        (patch by Emanuele Giaquinta <e.giaquinta@glauco.it>)
 
-	* Implement ISON, USERHOST, WHO, WHOIS, JOIN, PART, AWAY for admin networks. (#99)
+    * Implement ISON, USERHOST, WHO, WHOIS, JOIN, PART, AWAY for admin networks. (#99)
 
   PORTABILITY
 
@@ -171,8 +171,8 @@ Ctrlproxy 3.0.2 2007-04-15
     * Fix handling of addresses when listening on FreeBSD. (#87)
 
   DOCUMENTATION
-  	
-  	* Added more documentation to the help system. (#106)
+      
+      * Added more documentation to the help system. (#106)
 
 
 Ctrlproxy 3.0.1 2007-01-04
@@ -180,32 +180,32 @@ Ctrlproxy 3.0.1 2007-01-04
   BUG FIXES
 
     * Logging for network state information has been simplified and been 
-	  made less verbose.
+      made less verbose.
 
-	* 324 and 329 replies are now cached.
+    * 324 and 329 replies are now cached.
 
-	* 352 and 315 replies are now (optionally) cached. The "max_who_age" 
-	  setting can be set to the number of seconds that results should be cached.
-	  This prevents "Excess Flood" errors when connecting using several xchat clients
-	  at once. Can be disabled by setting max_who_age=0 (the default).
+    * 352 and 315 replies are now (optionally) cached. The "max_who_age" 
+      setting can be set to the number of seconds that results should be cached.
+      This prevents "Excess Flood" errors when connecting using several xchat clients
+      at once. Can be disabled by setting max_who_age=0 (the default).
 
     * Fixed bug in administration command (reported by Daniel Poelzleithner)
 
     * Fix invalid assert in auto-away (reported by Daniel Poelzleithner)
 
-	* Fix rejoining parted channels on restart (#78)
+    * Fix rejoining parted channels on restart (#78)
 
-	* Fix erroneus toggling of "report-time" setting (#77)
-	
-	* Fix endless loop in logging system when debug level is 
-	  set to 5 (reported by _static_).
-	
-	* listener configuration is no longer truncated at exit.
+    * Fix erroneus toggling of "report-time" setting (#77)
+    
+    * Fix endless loop in logging system when debug level is 
+      set to 5 (reported by _static_).
+    
+    * listener configuration is no longer truncated at exit.
 
-	* Fix channel information not being replicated for the administration 
-	  network.
+    * Fix channel information not being replicated for the administration 
+      network.
 
-	* Allow ports different than 6680 in ctrlproxy --init. (#85)
+    * Allow ports different than 6680 in ctrlproxy --init. (#85)
 
   PORTABILITY
   
@@ -222,7 +222,7 @@ Ctrlproxy 3.0.1 2007-01-04
 
     * Fixed several compiler warnings
 
-Ctrlproxy 3.0	2006-12-08
+Ctrlproxy 3.0    2006-12-08
 
   This list is not complete. Several subsystems in ctrlproxy have been 
   rewritten.
@@ -233,90 +233,90 @@ Ctrlproxy 3.0	2006-12-08
 
     * Properly support strict-rfc1459 comparisons.
 
-	* No longer depend on specific order of USER and NICK commands.
+    * No longer depend on specific order of USER and NICK commands.
 
-	* Fixed 100% CPU usage bug.
+    * Fixed 100% CPU usage bug.
 
-	* Fix large number of memory leaks.
+    * Fix large number of memory leaks.
 
-	* Fix crash bug in log_custom (Korbinian Rosenegger)
+    * Fix crash bug in log_custom (Korbinian Rosenegger)
 
-	* Support 'true' RFC1459 string comparison.
+    * Support 'true' RFC1459 string comparison.
 
-	* Respect CASEMAPPING sent by server.
+    * Respect CASEMAPPING sent by server.
 
-	* Support different NICK sent by client in replication.
+    * Support different NICK sent by client in replication.
 
-	* Make repl_* work when NICK sent by client differs from current NICK.
+    * Make repl_* work when NICK sent by client differs from current NICK.
 
-	* Support mIRC and ksirc.
+    * Support mIRC and ksirc.
 
-	* Fix bug with setting PRIVATE too often.
+    * Fix bug with setting PRIVATE too often.
 
-	* Fix issue with NickServ IDENTIFY'ing when connecting to server.
-	
-	* Fix problems with incorrectly added colons.
+    * Fix issue with NickServ IDENTIFY'ing when connecting to server.
+    
+    * Fix problems with incorrectly added colons.
 
   INTERNALS
 
-	* Reduce number of files generated by configure.
+    * Reduce number of files generated by configure.
 
-	* Moved source control system to Bazaar (http://www.bazaar-vcs.org/)
+    * Moved source control system to Bazaar (http://www.bazaar-vcs.org/)
 
-	* Use separate include files rather than one large one.
+    * Use separate include files rather than one large one.
 
-	* Get rid of complicated filter class system.
+    * Get rid of complicated filter class system.
 
-	* Several modules have been integrated into the ControlProxy binary 
-	  to avoid (engineering) overhead.
+    * Several modules have been integrated into the ControlProxy binary 
+      to avoid (engineering) overhead.
 
-	* There now is a testsuite that tests some of the internal functions.
+    * There now is a testsuite that tests some of the internal functions.
 
-	* Add 'debug' module for easier debugging.
+    * Add 'debug' module for easier debugging.
 
   NEW FEATURES
 
-	* Removed dependency on popt and libxml.
+    * Removed dependency on popt and libxml.
 
     * Enhance custom_log (Alexander Wild).
 
-	* Add support for %B, %e and %Y in log_custom (Korbinian Rosenegger)
+    * Add support for %B, %e and %Y in log_custom (Korbinian Rosenegger)
 
-	* Support CONNECT proxy command as used by irssi and other clients.
+    * Support CONNECT proxy command as used by irssi and other clients.
 
-	* Use new CtrlProxy-specific logging system. 
-	  Logs go to ~/.ctrlproxy/log by default now when in daemon mode.
+    * Use new CtrlProxy-specific logging system. 
+      Logs go to ~/.ctrlproxy/log by default now when in daemon mode.
 
-	* nickserv is now "self-learning".
+    * nickserv is now "self-learning".
 
-	* Add socks module to allow connecting using SOCKS.
+    * Add socks module to allow connecting using SOCKS.
 
-	* Install default configuration that is used when the user 
-	  does not have a local configuration.
+    * Install default configuration that is used when the user 
+      does not have a local configuration.
 
-	* Support autogenerating a configuration using `ctrlproxy --init'.
+    * Support autogenerating a configuration using `ctrlproxy --init'.
 
-	* Uses GNUTLS now rather than OpenSSL.
+    * Uses GNUTLS now rather than OpenSSL.
 
-	* Remove linestack_memory and make linestack_file the default.
+    * Remove linestack_memory and make linestack_file the default.
 
-	* Admin module can now also work as a seperate ('virtual') network.
+    * Admin module can now also work as a seperate ('virtual') network.
 
-	* Make reconnect_timeout changeable (Alexander Wild)
+    * Make reconnect_timeout changeable (Alexander Wild)
 
-	* Add inetd-style client support.
+    * Add inetd-style client support.
 
-	* Support non-blocking connects. (Daniel Poelzleithner)
+    * Support non-blocking connects. (Daniel Poelzleithner)
 
-	* Parse 005 line sent by server for PREFIX, CHANTYPES, NETWORK.
+    * Parse 005 line sent by server for PREFIX, CHANTYPES, NETWORK.
 
-	* Add ability to change NICK when away.
+    * Add ability to change NICK when away.
 
-	* Add help support in admin module (Daniel Poelzleithner).
+    * Add help support in admin module (Daniel Poelzleithner).
 
-	* Allows connecting to networks on ~/.ctrlproxy/socket using 
-	  unix domain sockets.
+    * Allows connecting to networks on ~/.ctrlproxy/socket using 
+      unix domain sockets.
 
-	* Write out PID file.
+    * Write out PID file.
 
-	* lots of other small improvements
+    * lots of other small improvements
