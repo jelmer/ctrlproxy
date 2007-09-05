@@ -26,6 +26,8 @@ Ctrlproxy 3.0.4 UNRELEASED
 
 	* Open log file if stdout goes away.
 
+	* Make /AWAY with empty argument mark as unaway. (Adeodato Simó)
+
   INTERNALS
 
     * Moved some common logging code to the core.

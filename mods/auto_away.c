@@ -60,7 +60,7 @@ static gboolean log_data(struct network *n, const struct line *l,
 	struct auto_away_data *d = userdata;
 
 	if (dir == TO_SERVER && !g_strcasecmp(l->args[0], "AWAY")) {
-		if (l->args[1])
+		if (l->args[1] && g_strcasecmp(l->args[1], ""))
 			d->is_away = TRUE;
 		else 
 			d->is_away = FALSE;
