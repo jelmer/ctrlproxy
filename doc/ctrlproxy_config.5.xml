@@ -107,11 +107,14 @@ in a standard ControlProxy installation.
 			</para></listitem>
 		</varlistentry>
 		<varlistentry>
-			<term>only_noclient</term>
+			<term>client_limit</term>
 			<listitem><para>
-					Boolean variable. If set to true, then 
-					the connection will only be changed to away if there are 
-					no clients connected.
+					Integer variable. After idle for the specified time,
+					the connection will only be changed to away if there are
+					not more than client_limit connected. The default is -1
+					(always set idle no matter how many clients there are).
+					To achive the behavior of the old variable <term>only_noclient</term>,
+					set client_limit to 0.
 			</para></listitem>
 		</varlistentry>
 

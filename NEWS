@@ -30,6 +30,14 @@ Ctrlproxy 3.0.4 UNRELEASED
 
     * Automatically mark as unaway when a client connects and auto-away/no_client=true. (#150)
 
+  NEW FEATURES
+
+    * New configuration option for auto-away: "client_limit". If set,
+      the connection will never be changed to away if there are more
+      than client_limit clients connected. Supersedes "only_noclient";
+      to achieve the effect of only_noclient=true, set client_limit=0.
+      (Adeodato Simó)
+
   INTERNALS
 
     * Moved some common logging code to the core.
