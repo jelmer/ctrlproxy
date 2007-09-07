@@ -46,14 +46,11 @@ static void target_vprintf(struct network *s, const char *name,
 {
 	char *lowercase;
 	char *text;
-	char *networkname;
 	char *hash_name;
 
 	lowercase = g_ascii_strdown(name != NULL?name:"messages", -1);
-	networkname = g_strdup(s->info.name);
 	strip_slashes(lowercase);
-	hash_name = g_build_filename(logbasedir, networkname, lowercase, NULL);
-	g_free(networkname);
+	hash_name = g_build_filename(logbasedir, s->info.name, lowercase, NULL);
 	g_free(lowercase);
 
 	/* Then open the correct filename */
