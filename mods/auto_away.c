@@ -27,7 +27,6 @@ struct auto_away_data {
 	time_t max_idle_time;
 	guint timeout_id;
 	gboolean only_for_noclients;
-	gboolean is_away;
 	struct global *global;
 	char *message;
 	char *nick;
@@ -35,16 +34,18 @@ struct auto_away_data {
 
 static gboolean check_time(gpointer user_data) 
 {
-	struct auto_away_data *d = user_data;
+	struct auto_away_data *d = (struct auto_away_data *)user_data;
 
-	if (time(NULL) - d->last_message > d->max_idle_time && !d->is_away) { 
+	if (time(NULL) - d->last_message > d->max_idle_time) {
 		GList *sl;
-		d->is_away = TRUE;
 		for (sl = d->global->networks; sl; sl = sl->next) {
 			struct network *s = (struct network *)sl->data;
 			if (s->connection.state == NETWORK_CONNECTION_STATE_MOTD_RECVD &&
+				s->state != NULL && !s->state->is_away && 
 			    (!d->only_for_noclients || s->clients == NULL)) {
-				network_send_args(s, "AWAY", d->message != NULL?d->message:"Auto Away", NULL);
+				network_send_args(s, "AWAY", 
+								  d->message != NULL?d->message:"Auto Away", 
+								  NULL);
 				if (d->nick != NULL) {
 					network_send_args(s, "NICK", d->nick, NULL);
 				}
@@ -59,12 +60,9 @@ static gboolean log_data(struct network *n, const struct line *l,
 						 enum data_direction dir, void *userdata) 
 {
 	struct auto_away_data *d = userdata;
+	GList *sl;
 
 	if (dir == TO_SERVER && !g_strcasecmp(l->args[0], "AWAY")) {
-		if (l->args[1] && g_strcasecmp(l->args[1], ""))
-			d->is_away = TRUE;
-		else 
-			d->is_away = FALSE;
 		d->last_message = time(NULL);
 	}
 
@@ -72,14 +70,11 @@ static gboolean log_data(struct network *n, const struct line *l,
 	   (!g_strcasecmp(l->args[0], "PRIVMSG") || 
 		!g_strcasecmp(l->args[0], "NOTICE"))) {
 		d->last_message = time(NULL);
-		if (d->is_away) {
-			GList *sl;
-			for (sl = d->global->networks; sl; sl = sl->next) {
-				struct network *s = (struct network *)sl->data;
-				if (s->connection.state == NETWORK_CONNECTION_STATE_MOTD_RECVD)
-					network_send_args(s, "AWAY", NULL);
-			}
-			d->is_away = FALSE;
+		for (sl = d->global->networks; sl; sl = sl->next) {
+			struct network *s = (struct network *)sl->data;
+			if (s->connection.state == NETWORK_CONNECTION_STATE_MOTD_RECVD &&
+				s->state != NULL && s->state->is_away)
+				network_send_args(s, "AWAY", NULL);
 		}
 	}
 	return TRUE;
