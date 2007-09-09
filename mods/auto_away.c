@@ -89,7 +89,7 @@ static gboolean new_client(struct client *c, void *userdata)
 {
 	struct auto_away_data *d = userdata;
 
-	if (d->is_away && d->only_for_noclients) 
+	if (d->only_for_noclients) 
 		network_send_args(c->network, "AWAY", NULL);
 
 	return TRUE;
