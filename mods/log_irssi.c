@@ -71,9 +71,9 @@ static void target_printf(struct network *n, const char *name,
 		char **channels = g_strsplit(name, ",", 0);
 		int i;
 
-		for (i = 0; channels[i]; i++) {
+		for (i = 0; channels[i]; i++)
 			target_vprintf(n, channels[i], fmt, ap);
-		}
+
 		g_strfreev(channels);
 	} else 
 		target_vprintf(n, name, fmt, ap);
@@ -101,25 +101,34 @@ static gboolean log_data(struct network *n, const struct line *l,
 	}
 
 	if (dir == FROM_SERVER && !g_strcasecmp(l->args[0], "JOIN")) {
-		target_printf(n, l->args[1], "%02d:%02d -!- %s [%s] has joined %s\n", t->tm_hour, t->tm_min, nick, user, l->args[1]);
+		target_printf(n, l->args[1], "%02d:%02d -!- %s [%s] has joined %s\n", 
+					  t->tm_hour, t->tm_min, nick, user, l->args[1]);
 	} else if (dir == FROM_SERVER && !g_strcasecmp(l->args[0], "PART")) {
-		target_printf(n, l->args[1], "%02d:%02d -!- %s [%s] has left %s [%s]\n", t->tm_hour, t->tm_min, nick, user, l->args[1], l->args[2]?l->args[2]:"");
+		target_printf(n, l->args[1], 
+					  "%02d:%02d -!- %s [%s] has left %s [%s]\n", t->tm_hour, 
+					  t->tm_min, nick, user, l->args[1], 
+					  l->args[2] != NULL?l->args[2]:"");
 	} else if (!g_strcasecmp(l->args[0], "PRIVMSG") && l->argc > 2) {
 		dest = l->args[1];
 		if (!irccmp(&n->state->info, dest, n->state->me.nick)) dest = nick;
 		if (l->args[2][0] == '\001') { 
 			l->args[2][strlen(l->args[2])-1] = '\0';
 			if (!g_ascii_strncasecmp(l->args[2], "\001ACTION ", 8)) { 
-				target_printf(n, dest, "%02d:%02d  * %s %s\n", t->tm_hour, t->tm_min, nick, l->args[2]+8);
+				target_printf(n, dest, "%02d:%02d  * %s %s\n", t->tm_hour, 
+							  t->tm_min, nick, l->args[2]+8);
 			}
 			l->args[2][strlen(l->args[2])] = '\001';
 			/* Ignore all other ctcp messages */
 		} else {
-			target_printf(n, dest, "%02d:%02d < %s> %s\n", t->tm_hour, t->tm_min, nick, l->args[2]);
+			target_printf(n, dest, "%02d:%02d < %s> %s\n", t->tm_hour, 
+						  t->tm_min, nick, l->args[2]);
 		}
-	} else if (!g_strcasecmp(l->args[0], "MODE") && l->args[1] && 
-			  is_channelname(l->args[1], &n->state->info) && dir == FROM_SERVER) {
-		target_printf(n, l->args[1], "%02d:%02d -!- mode/%s [%s %s] by %s\n", t->tm_hour, t->tm_min, l->args[1], l->args[2], l->args[3], nick);
+	} else if (!g_strcasecmp(l->args[0], "MODE") && l->args[1] != NULL && 
+			  is_channelname(l->args[1], &n->state->info) && 
+			  dir == FROM_SERVER) {
+		target_printf(n, l->args[1], "%02d:%02d -!- mode/%s [%s %s] by %s\n", 
+					  t->tm_hour, t->tm_min, l->args[1], l->args[2], 
+					  l->args[3], nick);
 	} else if (!g_strcasecmp(l->args[0], "QUIT")) {
 		/* Loop thru the channels this user is on */
 		GList *gl;
@@ -127,12 +136,19 @@ static gboolean log_data(struct network *n, const struct line *l,
 		if (nn != NULL) {
 			for (gl = nn->channel_nicks; gl; gl = gl ->next) {
 				struct channel_nick *cn = (struct channel_nick *)gl->data;
-				target_printf(n, cn->channel->name, "%02d:%02d -!- %s [%s] has quit [%s]\n", t->tm_hour, t->tm_min, nick, user, l->args[1]?l->args[1]:"");
+				target_printf(n, cn->channel->name, 
+							  "%02d:%02d -!- %s [%s] has quit [%s]\n", 
+							  t->tm_hour, t->tm_min, nick, user, 
+							  l->args[1] != NULL?l->args[1]:"");
 			}
 		}
-	} else if (!g_strcasecmp(l->args[0], "KICK") && l->args[1] && l->args[2] && dir == FROM_SERVER) {
+	} else if (!g_strcasecmp(l->args[0], "KICK") && l->args[1] != NULL && 
+			   l->args[2] && dir == FROM_SERVER) {
 		if (strchr(l->args[1], ',') == NULL) {
-			target_printf(n, l->args[1], "%02d:%02d -!- %s has been kicked by %s [%s]\n", t->tm_hour, t->tm_min, l->args[2], nick, l->args[3]?l->args[3]:"");
+			target_printf(n, l->args[1], 
+						  "%02d:%02d -!- %s has been kicked by %s [%s]\n", 
+						  t->tm_hour, t->tm_min, l->args[2], nick, 
+						  l->args[3] != NULL?l->args[3]:"");
 		} else { 
 			char *channels = g_strdup(l->args[1]);
 			char *nicks = g_strdup(l->args[1]);
@@ -150,7 +166,10 @@ static gboolean log_data(struct network *n, const struct line *l,
 				else 
 					*nx = '\0';
 
-				target_printf(n, p, "%02d:%02d -!- %s has been kicked by %s [%s]\n", t->tm_hour, t->tm_min, _nick, nick, l->args[3]?l->args[3]:"");
+				target_printf(n, p, 
+							  "%02d:%02d -!- %s has been kicked by %s [%s]\n", 
+							  t->tm_hour, t->tm_min, _nick, nick, 
+							  l->args[3] != NULL?l->args[3]:"");
 
 				p = nx+1;
 				_nick = strchr(_nick, ',');
@@ -162,7 +181,8 @@ static gboolean log_data(struct network *n, const struct line *l,
 			g_free(channels);
 			g_free(nicks);
 		}
-	} else if (!g_strcasecmp(l->args[0], "TOPIC") && dir == FROM_SERVER && l->args[1]) {
+	} else if (!g_strcasecmp(l->args[0], "TOPIC") && dir == FROM_SERVER && 
+			   l->args[1] != NULL) {
 		if (l->args[2] != NULL)
 			target_printf(n, l->args[1], "%02d:%02d -!- %s has changed the topic to %s\n", t->tm_hour, t->tm_min, nick, l->args[2]);
 		else 
@@ -176,7 +196,9 @@ static gboolean log_data(struct network *n, const struct line *l,
 			for (gl = nn->channel_nicks; gl; gl = gl->next) {
 				struct channel_nick *cn = gl->data;
 
-				target_printf(n, cn->channel->name, "%02d:%02d -!- %s is now known as %s\n", t->tm_hour, t->tm_min, nick, l->args[1]);
+				target_printf(n, cn->channel->name, 
+							  "%02d:%02d -!- %s is now known as %s\n", 
+							  t->tm_hour, t->tm_min, nick, l->args[1]);
 			}
 		}
 	}
@@ -197,7 +219,8 @@ static void load_config(struct global *global)
 	}
 
 	if (!g_key_file_has_key(kf, "log-irssi", "logfile", NULL)) {
-		logbasedir = g_build_filename(global->config->config_dir, "log_irssi", NULL);
+		logbasedir = g_build_filename(global->config->config_dir, 
+									  "log_irssi", NULL);
 	} else {
 		logbasedir = g_key_file_get_string(kf, "log-irssi", "logfile", NULL);
 	}
