@@ -30,6 +30,8 @@ Ctrlproxy 3.0.4 UNRELEASED
 
     * Automatically mark as unaway when a client connects and auto-away/no_client=true. (#150)
 
+    * Add support for handling additional 005 parameters: HCN.
+
   NEW FEATURES
 
     * New configuration option for auto-away: "client_limit". If set,

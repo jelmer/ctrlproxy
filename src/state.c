@@ -728,6 +728,16 @@ static void handle_end_who(struct network_state *s, struct line *l)
 {
 }
 
+static void handle_nowaway(struct network_state *s, struct line *l)
+{
+	s->is_away = TRUE;
+}
+
+static void handle_unaway(struct network_state *s, struct line *l)
+{
+	s->is_away = FALSE;
+}
+
 static void handle_quit(struct network_state *s, struct line *l) 
 {
 	char *nick = line_get_nick(l);
@@ -955,6 +965,8 @@ static struct irc_command {
 	{ "349", 2, handle_end_exceptlist },
 	{ "352", 8, handle_whoreply },
 	{ "315", 1, handle_end_who },
+	{ "306", 1, handle_nowaway },
+	{ "305", 1, handle_unaway },
 	{ NULL }
 };
 

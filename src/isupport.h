@@ -109,6 +109,9 @@ struct network_info
 	/* The server support the SILENCE command.  */
 	gboolean silence;
 
+	/* Server supports HybridIRC Connection Notices */
+	gboolean hcn;
+
 	/* The number is the maximum number of allowed entries in the silence 
 	 * list. */
 	int silence_limit;

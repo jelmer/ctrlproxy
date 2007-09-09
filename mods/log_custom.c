@@ -237,7 +237,8 @@ static struct log_mapping mappings[] = {
 	{ NULL }
 };
 
-static char *find_mapping(struct network *network, const struct line *l, char c, gboolean case_sensitive)
+static char *find_mapping(struct network *network, const struct line *l, 
+						  char c, gboolean case_sensitive)
 {
 	int i;
 	for (i = 0; mappings[i].subst; i++) {
@@ -285,8 +286,10 @@ static void custom_subst(struct network *network, char **_new,
 	memset(subst, 0, sizeof(char *) * MAX_SUBST);
 	for (i = 0; i < strlen(fmt); i++) {
 		if (fmt[i] == '%') {
-			subst[(int)fmt[i+1]] = find_mapping(network, l, fmt[i+1], case_sensitive);	
-			if (subst[(int)fmt[i+1]] == NULL) subst[(int)fmt[i+1]] = g_strdup("");
+			subst[(int)fmt[i+1]] = find_mapping(network, l, fmt[i+1], 
+												case_sensitive);	
+			if (subst[(int)fmt[i+1]] == NULL) 
+				subst[(int)fmt[i+1]] = g_strdup("");
 			if (noslash) convertslashes(subst[(int)fmt[i+1]]);
 			len += strlen(subst[(int)fmt[i+1]]);
 		}
@@ -345,8 +348,10 @@ If appropriate:
  -- NICK: %r
  */
 
-static void file_write_line(struct log_custom_data *data, struct network *network, const char *fmt,
-				   const struct line *l, const char *identifier, gboolean create_file)
+static void file_write_line(struct log_custom_data *data, 
+							struct network *network, const char *fmt, 
+							const struct line *l, const char *identifier, 
+							gboolean create_file)
 {
 	char *s;
 	char *n = NULL;
@@ -364,8 +369,10 @@ static void file_write_line(struct log_custom_data *data, struct network *networ
 	g_free(n);
 }
 
-static void file_write_line_target(struct log_custom_data *data, struct network *network, const char *fmt,
-				   const struct line *l, const char *t, gboolean create_file)
+static void file_write_line_target(struct log_custom_data *data, 
+								   struct network *network, const char *fmt, 
+								   const struct line *l, const char *t, 
+								   gboolean create_file)
 {
 	if (strchr(t, ',') != NULL) {
 		char **channels = g_strsplit(t, ",", 0);
@@ -450,7 +457,8 @@ static void file_write_channel_query(struct log_custom_data *data,
 	}
 }
 
-static gboolean log_custom_data(struct network *network, const struct line *l, 
+static gboolean log_custom_data(struct network *network, 
+								const struct line *l, 
 								enum data_direction dir, void *userdata)
 {
     struct log_custom_data *data = userdata;
@@ -466,7 +474,8 @@ static gboolean log_custom_data(struct network *network, const struct line *l,
 	/* There are a few possibilities:
 	 * - log to line_get_nick(l) or l->args[1] file depending on which 
 	 *   was the current user (PRIVMSG, NOTICE, ACTION, MODE) (target)
-	 * - log to all channels line_get_nick(l) was on, and to query, if applicable (NICK, QUIT) (channel_query)
+	 * - log to all channels line_get_nick(l) was on, and to query, if 
+	 *   applicable (NICK, QUIT) (channel_query)
 	 * - log to channel only (KICK, PART, JOIN, TOPIC) (channel_only)
 	 */
 
@@ -495,13 +504,14 @@ static gboolean log_custom_data(struct network *network, const struct line *l,
 		file_write_target(data, network, "mode", l);
 	} else if (!g_strcasecmp(l->args[0], "QUIT")) {
 		file_write_channel_query(data, network, "quit", l);
-	} else if (!g_strcasecmp(l->args[0], "KICK") && l->args[1] && l->args[2] && dir == FROM_SERVER) {
+	} else if (!g_strcasecmp(l->args[0], "KICK") && l->args[1] != NULL && 
+			   l->args[2] != NULL && dir == FROM_SERVER) {
 		if (strchr(l->args[1], ',') == NULL) {
 			file_write_channel_only(data, network, "kick", l);
 		} else { 
 			char *channels = g_strdup(l->args[1]);
 			char *nicks = g_strdup(l->args[1]);
-			char *p,*n; char cont = 1;
+			char *p,*n; gboolean cont = TRUE;
 			char *_nick;
 
 			p = channels;
@@ -510,7 +520,7 @@ static gboolean log_custom_data(struct network *network, const struct line *l,
 				n = strchr(p, ',');
 
 				if (n == NULL) 
-					cont = 0;
+					cont = FALSE;
 				else 
 					*n = '\0';
 
@@ -525,7 +535,8 @@ static gboolean log_custom_data(struct network *network, const struct line *l,
 			g_free(channels);
 			g_free(nicks);
 		}
-	} else if (!g_strcasecmp(l->args[0], "TOPIC") && dir == FROM_SERVER && l->args[1]) {
+	} else if (!g_strcasecmp(l->args[0], "TOPIC") && dir == FROM_SERVER && 
+			   l->args[1] != NULL) {
 		if (l->args[2] != NULL) 
 			file_write_channel_only(data, network, "topic", l);
 		else 
@@ -554,7 +565,8 @@ static void load_config(struct global *global)
 
 	add_log_filter("log_custom", log_custom_data, data, 1000);
 
-	data->logfilename = g_key_file_get_string(kf, "log-custom", "logfilename", NULL);
+	data->logfilename = g_key_file_get_string(kf, "log-custom", 
+											  "logfilename", NULL);
 	data->log_ctx = log_support_init();
 	data->kf = kf;
 }

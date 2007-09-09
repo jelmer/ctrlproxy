@@ -17,19 +17,11 @@
 	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 */
 
-/* TODO
- * (1) This does not work:
- *   * One client connected, client_limit=0.
- *   * Client sends a public message. d->last_time is set.
- *   * "time" seconds pass. d->is_away gets set to TRUE, but the
- *     connection is not set to AWAY because len(clients) > client_limit
- *   * Client quits: connection is never set to AWAY.
- *
- *  (2) This breaks:
+/* TODO This breaks:
  *    * One client connected. User does /AWAY msg.
  *    * Client quits.
  *    * Client rejoins. If client_limit=0, the connection is set as not away
- *      => there should be distinction between auto-away and client-away.
+ *      => there should be distinction between auto-away and client-away?
  */
 
 #include "ctrlproxy.h"
@@ -42,7 +34,6 @@ struct auto_away_data {
 	time_t max_idle_time;
 	guint timeout_id;
 	gint client_limit;
-	gboolean is_away;
 	struct global *global;
 	char *message;
 	char *nick;
@@ -50,16 +41,18 @@ struct auto_away_data {
 
 static gboolean check_time(gpointer user_data) 
 {
-	struct auto_away_data *d = user_data;
+	struct auto_away_data *d = (struct auto_away_data *)user_data;
 
-	if (time(NULL) - d->last_message > d->max_idle_time && !d->is_away) { 
+	if (time(NULL) - d->last_message > d->max_idle_time) {
 		GList *sl;
-		d->is_away = TRUE;
 		for (sl = d->global->networks; sl; sl = sl->next) {
 			struct network *s = (struct network *)sl->data;
 			if (s->connection.state == NETWORK_CONNECTION_STATE_MOTD_RECVD &&
+				s->state != NULL && !s->state->is_away && 
 			    (d->client_limit < 0 || g_list_length(s->clients) <= d->client_limit)) {
-				network_send_args(s, "AWAY", d->message != NULL?d->message:"Auto Away", NULL);
+				network_send_args(s, "AWAY", 
+								  d->message != NULL?d->message:"Auto Away", 
+								  NULL);
 				if (d->nick != NULL) {
 					network_send_args(s, "NICK", d->nick, NULL);
 				}
@@ -74,12 +67,9 @@ static gboolean log_data(struct network *n, const struct line *l,
 						 enum data_direction dir, void *userdata) 
 {
 	struct auto_away_data *d = userdata;
+	GList *sl;
 
 	if (dir == TO_SERVER && !g_strcasecmp(l->args[0], "AWAY")) {
-		if (l->args[1] && g_strcasecmp(l->args[1], ""))
-			d->is_away = TRUE;
-		else 
-			d->is_away = FALSE;
 		d->last_message = time(NULL);
 	}
 
@@ -87,14 +77,11 @@ static gboolean log_data(struct network *n, const struct line *l,
 	   (!g_strcasecmp(l->args[0], "PRIVMSG") || 
 		!g_strcasecmp(l->args[0], "NOTICE"))) {
 		d->last_message = time(NULL);
-		if (d->is_away) {
-			GList *sl;
-			for (sl = d->global->networks; sl; sl = sl->next) {
-				struct network *s = (struct network *)sl->data;
-				if (s->connection.state == NETWORK_CONNECTION_STATE_MOTD_RECVD)
-					network_send_args(s, "AWAY", NULL);
-			}
-			d->is_away = FALSE;
+		for (sl = d->global->networks; sl; sl = sl->next) {
+			struct network *s = (struct network *)sl->data;
+			if (s->connection.state == NETWORK_CONNECTION_STATE_MOTD_RECVD &&
+				s->state != NULL && s->state->is_away)
+				network_send_args(s, "AWAY", NULL);
 		}
 	}
 	return TRUE;
@@ -104,7 +91,7 @@ static gboolean new_client(struct client *c, void *userdata)
 {
 	struct auto_away_data *d = userdata;
 
-	if (d->is_away && d->client_limit >= 0 && d->client_limit < g_list_length(c->network->clients)+1)
+	if (d->client_limit >= 0 && d->client_limit < g_list_length(c->network->clients)+1)
 		network_send_args(c->network, "AWAY", NULL);
 
 	return TRUE;
