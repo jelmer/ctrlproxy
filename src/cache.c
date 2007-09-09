@@ -209,7 +209,8 @@ static gboolean client_try_cache_who(struct client *c, struct line *l)
 		struct network_nick *nn = cn->global_nick;
 		char *info = g_strdup_printf("%d %s", nn->hops, nn->fullname);
 		
-		client_send_response(c, RPL_WHOREPLY, l->args[1], nn->username, nn->hostname, nn->server, nn->nick, 
+		client_send_response(c, RPL_WHOREPLY, l->args[1], nn->username, 
+							 nn->hostname, nn->server, nn->nick, 
 							 cn->last_flags, info, NULL);
 
 		g_free(info);

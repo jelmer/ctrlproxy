@@ -110,6 +110,7 @@ struct network_state
 	GList *nicks;
 	struct network_nick me;
 	struct network_info info;
+	gboolean is_away;
 };
 
 /* state.c */
