@@ -1,6 +1,6 @@
 /* 
 	ctrlproxy: A modular IRC proxy
-	(c) 2002-2006 Jelmer Vernooij <jelmer@nl.linux.org>
+	(c) 2002-2007 Jelmer Vernooij <jelmer@nl.linux.org>
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -109,9 +109,9 @@ static gboolean marshall_struct(GIOChannel *t, enum marshall_mode m, int level, 
 	}
 }
 
-
-
-static gboolean marshall_string (struct network_state *nst, const char *name, int level, enum marshall_mode m, GIOChannel *t, char **d)
+static gboolean marshall_string (struct network_state *nst, 
+								 const char *name, int level, 
+								 enum marshall_mode m, GIOChannel *t, char **d)
 {
 	if (m == MARSHALL_PUSH)
 		return marshall_set(t, level, name, *d);
@@ -119,7 +119,9 @@ static gboolean marshall_string (struct network_state *nst, const char *name, in
 		return marshall_get(t, level, name, d);
 }
 
-static gboolean marshall_bool(struct network_state *nst, const char *name, int level, enum marshall_mode m, GIOChannel *t, gboolean *n)
+static gboolean marshall_bool(struct network_state *nst, const char *name, 
+							  int level, enum marshall_mode m, GIOChannel *t, 
+							  gboolean *n)
 {
 	if (m == MARSHALL_PUSH) {
 		if (*n) return marshall_set(t, level, name, "true");
@@ -151,6 +153,25 @@ static gboolean marshall_char(struct network_state *nst, const char *name, int l
 		*n = d[0];
 
 		g_free(d);
+
+		return TRUE;
+	}
+}
+
+static gboolean marshall_long(struct network_state *nst, const char *name, int level, enum marshall_mode m, GIOChannel *t, long *n)
+{
+	if (m == MARSHALL_PUSH) {
+		char tmp[10];
+		g_snprintf(tmp, sizeof(tmp), "%ld", *n);
+		return marshall_set(t, level, name, tmp);
+	} else {
+		char *tmp;
+		gboolean ret = marshall_get(t, level, name, &tmp);
+		if (!ret) return FALSE;
+
+		*n = atol(tmp);
+
+		g_free(tmp);
 
 		return TRUE;
 	}
@@ -293,7 +314,10 @@ static gboolean marshall_banlist_entry (struct network_state *nst, const char *n
 	return ret;
 }
 
-static gboolean marshall_channel_state (struct network_state *nst, const char *name, int level, enum marshall_mode m, GIOChannel *t, struct channel_state **c)
+static gboolean marshall_channel_state (struct network_state *nst, 
+										const char *name, int level, 
+										enum marshall_mode m, GIOChannel *t, 
+										struct channel_state **c)
 {
 	gboolean ret = TRUE;
 	marshall_new(m, c);
@@ -309,11 +333,12 @@ static gboolean marshall_channel_state (struct network_state *nst, const char *n
 	ret &= marshall_string(nst, "name", level+1, m, t, &(*c)->name);
 	ret &= marshall_string(nst, "key", level+1, m, t, &(*c)->key);
 	ret &= marshall_string(nst, "topic", level+1, m, t, &(*c)->topic);
+	ret &= marshall_string(nst, "topic_set_by", level+1, m, t, &(*c)->topic_set_by);
+	ret &= marshall_long(nst, "topic_set_time", level+1, m, t, &(*c)->topic_set_time);
 	ret &= marshall_GList(nst, "banlist", level+1, m, t, &(*c)->banlist, (marshall_fn_t)marshall_banlist_entry);
 	ret &= marshall_GList(nst, "invitelist", level+1, m, t, &(*c)->invitelist, (marshall_fn_t)marshall_string);
 	ret &= marshall_GList(nst, "exceptlist", level+1, m, t, &(*c)->exceptlist, (marshall_fn_t)marshall_string);
 	(*c)->network = nst;
-
 
 	marshall_struct(t, m, level+1, "nicks");
 
@@ -372,7 +397,8 @@ static gboolean marshall_channel_state (struct network_state *nst, const char *n
 	return ret;
 }
 
-static gboolean marshall_network_state(enum marshall_mode m, GIOChannel *t, struct network_state *n)
+static gboolean marshall_network_state(enum marshall_mode m, GIOChannel *t, 
+									   struct network_state *n)
 {
 	gboolean ret = TRUE;
 
@@ -399,9 +425,12 @@ struct lf_data {
 	int lines_since_last_state;
 };
 
-static void file_insert_state(struct linestack_context *ctx, const struct network_state *state);
+static void file_insert_state(struct linestack_context *ctx, 
+							  const struct network_state *state);
 
-static gboolean file_init(struct linestack_context *ctx, const char *name, struct ctrlproxy_config *config, const struct network_state *state)
+static gboolean file_init(struct linestack_context *ctx, const char *name, 
+						  struct ctrlproxy_config *config, 
+						  const struct network_state *state)
 {
 	struct lf_data *data = g_new0(struct lf_data, 1);
 	char *parent_dir, *data_dir, *data_file;
@@ -425,6 +454,8 @@ static gboolean file_init(struct linestack_context *ctx, const char *name, struc
 	}
 	g_free(data_file);
 
+	g_io_channel_set_encoding(data->line_file, NULL, NULL);
+
 	data_file = g_build_filename(data_dir, "state", NULL);
 
 	unlink(data_file);
@@ -437,6 +468,8 @@ static gboolean file_init(struct linestack_context *ctx, const char *name, struc
 		return FALSE;
 	}
 	g_free(data_file);
+
+	g_io_channel_set_encoding(data->state_file, NULL, NULL);
 
 	g_free(data_dir);
 	ctx->backend_data = data;
@@ -461,7 +494,8 @@ static gint64 g_io_channel_tell_position(GIOChannel *gio)
 	return lseek(fd, 0, SEEK_CUR);
 }
 
-static void file_insert_state(struct linestack_context *ctx, const struct network_state *state)
+static void file_insert_state(struct linestack_context *ctx, 
+							  const struct network_state *state)
 {
 	struct lf_data *nd = ctx->backend_data;
 	GError *error = NULL;
@@ -488,7 +522,9 @@ static void file_insert_state(struct linestack_context *ctx, const struct networ
 	g_assert(status);
 }
 
-static gboolean file_insert_line(struct linestack_context *ctx, const struct line *l, const struct network_state *state)
+static gboolean file_insert_line(struct linestack_context *ctx, 
+								 const struct line *l, 
+								 const struct network_state *state)
 {
 	struct lf_data *nd = ctx->backend_data;
 	char t[20];
@@ -525,9 +561,8 @@ static void *file_get_marker(struct linestack_context *ctx)
 	return pos;
 }
 
-static struct network_state * file_get_state (
-		struct linestack_context *ctx, 
-		void *m)
+static struct network_state *file_get_state (struct linestack_context *ctx, 
+											  void *m)
 {
 	struct lf_data *nd = ctx->backend_data;
 	struct network_state *ret;
@@ -563,7 +598,7 @@ static struct network_state * file_get_state (
 
 	g_assert(status == G_IO_STATUS_NORMAL);
 
-	ret = g_new0(struct network_state, 1);
+	ret = network_state_init("", "", "");
 	if (!marshall_network_state(MARSHALL_PULL, nd->state_file, ret))
 		return NULL;
 
@@ -582,13 +617,11 @@ static struct network_state * file_get_state (
 	return ret;
 }
 
-static gboolean file_traverse(struct linestack_context *ctx,
-		void *mf,
-		void *mt,
-		linestack_traverse_fn tf, 
-		void *userdata)
+static gboolean file_traverse(struct linestack_context *ctx, void *mf,
+		void *mt, linestack_traverse_fn tf, void *userdata)
 {
 	gint64 *start_offset, *end_offset;
+	gboolean ret = TRUE;
 	struct lf_data *nd = ctx->backend_data;
 	GError *error = NULL;
 	GIOStatus status;
@@ -627,10 +660,13 @@ static gboolean file_traverse(struct linestack_context *ctx,
 		g_assert(space);
 	
 		l = irc_parse_line(space+1);
-		tf(l, atol(raw), userdata);
+		ret &= tf(l, atol(raw), userdata);
 		free_line(l);
 
 		g_free(raw);
+
+		if (ret == FALSE) 
+			break;
 	}
 
 	status = g_io_channel_seek_position(nd->line_file, 0, G_SEEK_END, 
@@ -638,7 +674,7 @@ static gboolean file_traverse(struct linestack_context *ctx,
 
 	g_assert(status == G_IO_STATUS_NORMAL);
 
-	return TRUE;
+	return ret;
 }
 
 const struct linestack_ops linestack_file = {

@@ -52,7 +52,8 @@ struct client {
 	char *hostname;
 	char *username;
 	char *charset;
-	int exit_on_close:1;
+	gboolean exit_on_close;
+	gboolean connected;
 };
 
 /**

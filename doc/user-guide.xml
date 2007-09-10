@@ -1,15 +1,7 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
-<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd" [
-<!ENTITY install SYSTEM "install.xml">
-<!ENTITY clients SYSTEM "clients.xml">
-<!ENTITY replication SYSTEM "replication.xml">
-<!ENTITY configuration SYSTEM "configuration.xml">
-<!ENTITY admin SYSTEM "admin.xml">
-<!ENTITY logging SYSTEM "logging.xml">
-<!ENTITY introduction SYSTEM "introduction.xml">
-]>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
-<book id="ctrlproxy">
+<book id="ctrlproxy" xmlns:xi="http://www.w3.org/2003/XInclude">
 	<title>The ControlProxy Manual</title>
 
 <bookinfo>
@@ -29,12 +21,13 @@
 	</abstract>
 </bookinfo>
 
-&introduction;
-&install;
-&configuration;
-&replication;
-&admin;
-&logging;
-&clients;
+<xi:include href="introduction.xml"/>
+<xi:include href="install.xml"/>
+<xi:include href="configuration.xml"/>
+<xi:include href="replication.xml"/>
+<xi:include href="admin.xml"/>
+<xi:include href="logging.xml"/>
+<xi:include href="clients.xml"/>
+<xi:include href="about.xml"/>
 
 </book>

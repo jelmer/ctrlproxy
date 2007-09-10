@@ -12,20 +12,21 @@ typedef struct admin_handle *admin_handle;
 
 typedef void (*admin_command_handler) (admin_handle, char **, void *userdata);
 
+struct admin_handle
+{
+	struct global *global;
+	struct client *client;
+	struct network *network;
+	void *user_data;
+	void (*send_fn) (struct admin_handle *, const char *data);
+};
+
 /**
  * Administration command
  */
 struct admin_command {
 	char *name;
 	admin_command_handler handler;
-	/**
-	 * One line description
-	 */
-	const char *help;
-	/**
-	 * Extended (multi-line) description
-	 */
-	const char *help_details;
 	void *userdata;
 };
 
@@ -33,11 +34,6 @@ struct admin_command {
  * Register a new administration command
  */
 G_MODULE_EXPORT void register_admin_command(const struct admin_command *cmd);
-
-/**
- * Unregister an administration command
- */
-G_MODULE_EXPORT void unregister_admin_command(const struct admin_command *cmd);
 
 /**
  * Reply to an administration command.

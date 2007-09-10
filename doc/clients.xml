@@ -9,7 +9,7 @@
 contact the mailinglist if you find that a client is not working well together 
 with ctrlproxy.</para>
 
-<sect1>
+<sect1 id="irssi">
 	<title>irssi</title>
 
 	<para>
@@ -29,7 +29,7 @@ with ctrlproxy.</para>
 	</para>
 </sect1>
 
-<sect1>
+<sect1 id="xchat">
 	<title>xchat</title>
 
 	<para>
@@ -41,7 +41,7 @@ with ctrlproxy.</para>
 	</para>
 </sect1>
 
-<sect1>
+<sect1 id="bitchx">
 	<title>BitchX</title>
 
 	<para>

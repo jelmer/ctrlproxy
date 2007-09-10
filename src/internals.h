@@ -40,11 +40,20 @@
 #include <signal.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#ifdef HAVE_NETINET_IN_H
+#include <netinet/in.h>
+#endif /* HAVE_NETINET_IN_H */
+#ifdef HAVE_NETINET_IN6_H
+#include <netinet/in6.h>
+#endif /* HAVE_NETINET_IN6_H */
 #include "ctrlproxy.h"
 #include "plugins.h"
+#include "listener.h"
+#include "local.h"
 
-#define DEFAULT_RECONNECT_INTERVAL 60
-#define MAXHOSTNAMELEN 4096
+#define DEFAULT_RECONNECT_INTERVAL 	60
+#define MIN_SILENT_TIME				60
+#define MAX_SILENT_TIME 			(2*MIN_SILENT_TIME)
 
 /* server.c */
 void fini_networks(struct global *);
@@ -79,7 +88,7 @@ void log_client_line(const struct client *c, const struct line *l, gboolean inco
 
 /* redirect.c */
 void redirect_record(const struct network *n, const struct client *c, const struct line *l);
-void redirect_response(struct network *n, struct line *l);
+gboolean redirect_response(struct network *n, struct line *l);
 void redirect_clear(const struct network *n);
 
 /* cache.c */
@@ -98,11 +107,14 @@ void client_replicate(struct client *);
 char *mode2string(char modes[255]);
 void string2mode(char *modes, char ar[255]);
 
+gboolean init_replication(void);
+
 /* main.c */
 void free_global(struct global *);
 void config_load_notify(struct global *global);
 void config_save_notify(struct global *global, const char *);
-struct global *new_global(const char *config_dir);
+struct global *load_global(const char *config_dir);
+struct global *init_global(void);
 
 /* nickserv.c */
 void init_nickserv(void);

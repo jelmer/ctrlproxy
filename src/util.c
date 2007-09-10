@@ -108,8 +108,7 @@ char *g_io_channel_ip_get_description(GIOChannel *ch)
 	return description;
 }
 
-#if GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION < 8
-gboolean    g_file_get_contents             (const gchar *filename,
+gboolean    rep_g_file_get_contents         (const gchar *filename,
                                              gchar **contents,
                                              gsize *length,
                                              GError **error)
@@ -150,7 +149,8 @@ gboolean    g_file_get_contents             (const gchar *filename,
 	}
 	p[sbuf.st_size] = 0;
 
-	if (length) *length = sbuf.st_size;
+	if (length != NULL) 
+		*length = sbuf.st_size;
 	*contents = p;
 
 	close(fd);
@@ -158,20 +158,23 @@ gboolean    g_file_get_contents             (const gchar *filename,
 	return TRUE;
 }
 
-gboolean    g_file_set_contents             (const gchar *filename,
+gboolean    rep_g_file_set_contents         (const gchar *filename,
                                              const gchar *contents,
                                              gssize length,
                                              GError **error)
 {
 	int fd, ret;
 
-	fd = open(filename, O_WRONLY | O_CREAT);
-	if (fd == -1) {
+	fd = open(filename, O_CREAT | O_TRUNC | O_WRONLY, 0644);
+	if (fd < 0) {
 		g_set_error(error, G_FILE_ERROR, 
 				g_file_error_from_errno (errno),
 				"opening file %s", filename);
 		return FALSE;
 	}
+
+	if (length == -1) 
+		length = strlen(contents);
 
 	ret = write(fd, contents, length);
 
@@ -180,6 +183,11 @@ gboolean    g_file_set_contents             (const gchar *filename,
 				g_file_error_from_errno (errno),
 				"writing file %s", filename);
 		return FALSE;
+	} else if (ret != length) {
+		g_set_error(error, G_FILE_ERROR, 
+				g_file_error_from_errno (errno),
+				"unexpected number of bytes written: %d", ret);
+		return FALSE;
 	}
 
 	close(fd);
@@ -187,4 +195,3 @@ gboolean    g_file_set_contents             (const gchar *filename,
 	return TRUE;
 }
 
-#endif

@@ -1,15 +1,18 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT(ctrlproxy, 3.0.1, [jelmer@vernstok.nl])
+AC_INIT(ctrlproxy, 3.0.4, [jelmer@vernstok.nl])
 PACKAGE=$PACKAGE_NAME
 VERSION=$PACKAGE_VERSION
 AC_DEFINE_UNQUOTED(PACKAGE,"$PACKAGE", [ Package name])
 
+AC_SUBST(BZR_CHECKOUT)
+BZR_CHECKOUT=no
 AC_MSG_CHECKING([whether this is a bzr checkout])
 if ! which bzr >/dev/null 2>/dev/null; then
 	AC_MSG_RESULT(no)
 else 
+	BZR_CHECKOUT=yes
 	REVISION="`bzr revno .`"
 	if test -n "$REVISION"; then
 		AC_MSG_RESULT($REVISION)
@@ -42,7 +45,7 @@ AC_HEADER_DIRENT
 AC_HEADER_STDC
 AC_HEADER_TIME
 AC_CHECK_HEADERS(
-[stdlib.h string.h unistd.h execinfo.h sys/time.h sys/socket.h netinet/in6.h])
+[stdlib.h string.h unistd.h execinfo.h sys/time.h sys/socket.h netinet/in.h netinet/in6.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
@@ -59,7 +62,9 @@ AC_TYPE_SIGNAL
 AC_CHECK_FUNCS([gethostbyname gethostname memset strchr strerror strstr uname backtrace_symbols gettimeofday strrchr daemon])
 
 PKG_PROG_PKG_CONFIG
-PKG_CHECK_MODULES(COMMON, glib-2.0 gmodule-2.0)
+PKG_CHECK_MODULES(COMMON, glib-2.0 >= 2.6.0 gmodule-2.0)
+
+PKG_CHECK_MODULES(CHECK, check, [], [ echo -n "" ])
 
 ###############################################################################
 # GNUTLS support
@@ -83,7 +88,9 @@ AC_CACHE_CHECK([for IPv6], ac_cv_lib_ipv6, [
 AC_LINK_IFELSE([AC_LANG_PROGRAM([[
 #include <sys/types.h>
 #include <sys/socket.h>
+#ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
+#endif
 #ifdef HAVE_NETINET_IN6_H
 #include <netinet/in6.h>
 #endif

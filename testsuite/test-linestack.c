@@ -40,48 +40,6 @@ void stack_process(struct linestack_context *ctx, struct network_state *ns, cons
 	return FALSE; \
 }
 
-struct hash_data {
-	GEqualFunc fn;
-	GHashTable *hash2;
-	gboolean success;
-};
-
-static void hash_traverse_equal(void *key, void *val1, void *userdata)
-{
-	struct hash_data *hash = userdata;
-	void *val2;
-
-	val2 = g_hash_table_lookup(hash->hash2, key);
-
-	hash->success &= hash->fn(val1, val2);
-}
-
-static gboolean hash_equal(GHashTable *hash1, GHashTable *hash2, GEqualFunc eqval)
-{
-	struct hash_data userdata;
-
-	null_equal(hash1, hash2);
-	
-	/* Traverse over all keys in hash1 and make sure they exist
-	 * with the same value in hash1 and hash2 */
-
-	userdata.fn = eqval;
-	userdata.hash2 = hash2;
-	userdata.success = TRUE;
-	g_hash_table_foreach(hash1, hash_traverse_equal, &userdata);
-	if (!userdata.success)
-		return FALSE;
-	
-	/* Traverse over all keys in hash2 and make sure 
-	 * they exist in hash1 */
-
-	userdata.fn = eqval;
-	userdata.hash2 = hash1;
-	g_hash_table_foreach(hash2, hash_traverse_equal, &userdata);
-
-	return userdata.success;
-}
-
 static gboolean list_equal(GList *list1, GList *list2, GEqualFunc eq)
 {
 	GList *gl1, *gl2;
@@ -149,12 +107,44 @@ static gboolean network_info_equal(const struct network_info *info1, const struc
 
 	return str_equal(info1->name, info2->name) &&
 		   str_equal(info1->server, info2->server) &&
-		   hash_equal(info1->features, info2->features, (GEqualFunc)str_equal) &&
 		   str_equal(info1->supported_user_modes, info2->supported_user_modes) &&
 		   str_equal(info1->supported_channel_modes, info2->supported_channel_modes) &&
-		   info1->casemapping == info2->casemapping &&
+		   str_equal(info1->prefix, info2->prefix) &&
+		   str_equal(info1->chantypes, info2->chantypes) &&
+		   str_equal(info1->charset, info2->charset) &&
+		   ((info1->chanmodes == NULL && info2->chanmodes == NULL) ||
+		   (str_equal(info1->chanmodes[0], info2->chanmodes[0]) &&
+		   str_equal(info1->chanmodes[1], info2->chanmodes[1]) &&
+		   str_equal(info1->chanmodes[2], info2->chanmodes[2]) &&
+		   str_equal(info1->chanmodes[3], info2->chanmodes[3]))) &&
+		   info1->keylen == info2->keylen &&
+		   info1->silence == info2->silence &&
 		   info1->channellen == info2->channellen &&
-		   info1->topiclen == info2->topiclen;
+		   info1->awaylen == info2->awaylen &&
+		   info1->maxtargets == info2->maxtargets &&
+		   info1->nicklen == info2->nicklen &&
+		   info1->userlen == info2->userlen &&
+		   info1->hostlen == info2->hostlen &&
+		   info1->maxchannels == info2->maxchannels &&
+		   info1->topiclen == info2->topiclen &&
+		   info1->maxbans == info2->maxbans &&
+		   info1->maxmodes == info2->maxmodes &&
+		   info1->wallchops == info2->wallchops &&
+		   info1->wallvoices == info2->wallvoices &&
+		   info1->rfc2812 == info2->rfc2812 &&
+		   info1->penalty == info2->penalty &&
+		   info1->forced_nick_changes == info2->forced_nick_changes &&
+		   info1->safelist == info2->safelist &&
+		   info1->userip == info2->userip &&
+		   info1->cprivmsg == info2->cprivmsg &&
+		   info1->cnotice == info2->cnotice &&
+		   info1->knock == info2->knock &&
+		   info1->vchannels == info2->vchannels &&
+		   info1->whox == info2->whox &&
+		   info1->callerid == info2->callerid &&
+		   info1->accept == info2->accept &&
+		   info1->capab == info2->capab &&
+		   info1->casemapping == info2->casemapping;
 }
 
 static gboolean network_nick_equal(const struct network_nick *nick1, const struct network_nick *nick2)
@@ -167,17 +157,21 @@ static gboolean network_nick_equal(const struct network_nick *nick1, const struc
 		   str_equal(nick1->username, nick2->username) &&
 		   str_equal(nick1->hostname, nick2->hostname) &&
 		   !memcmp(nick1->modes, nick2->modes, 255) &&
-		   list_equal(nick1->channel_nicks, nick2->channel_nicks, (GEqualFunc)channel_nick_equal);
+		   list_equal(nick1->channel_nicks, nick2->channel_nicks, 
+					  (GEqualFunc)channel_nick_equal);
 }
 
-static gboolean network_state_equal(const struct network_state *state1, const struct network_state *state2)
+static gboolean network_state_equal(const struct network_state *state1, 
+									const struct network_state *state2)
 {
 	null_equal(state1, state2);
 
 	return network_nick_equal(&state1->me, &state2->me) &&
-		   network_info_equal(state1->info, state2->info) &&
-		   list_equal(state1->channels, state2->channels, (GEqualFunc)channel_state_equal) &&
-		   list_equal(state1->nicks, state2->nicks, (GEqualFunc)network_nick_equal);
+		   network_info_equal(&state1->info, &state2->info) &&
+		   list_equal(state1->channels, state2->channels, 
+					  (GEqualFunc)channel_state_equal) &&
+		   list_equal(state1->nicks, state2->nicks, 
+					  (GEqualFunc)network_nick_equal);
 }
 
 static struct ctrlproxy_config *my_config;
@@ -188,12 +182,13 @@ START_TEST(test_empty)
 	struct network_state *ns1, *ns2;
 	struct linestack_context *ctx;
 	
-	ns1 = network_state_init(NULL, "bla", "Gebruikersnaam", "Computernaam");
+	ns1 = network_state_init("bla", "Gebruikersnaam", "Computernaam");
 	ctx = create_linestack(&linestack_file, "test", my_config, ns1);
 
 	ns2 = linestack_get_state(ctx, NULL);
 
-	fail_unless (network_state_equal(ns1, ns2), "Network state returned not equal");
+	fail_unless (network_state_equal(ns1, ns2), 
+				 "Network state returned not equal");
 END_TEST
 
 START_TEST(test_msg)
@@ -205,7 +200,7 @@ START_TEST(test_msg)
 	GIOChannel *ch1, *ch2;
 	char *raw;
 	
-	ns1 = network_state_init(NULL, "bla", "Gebruikersnaam", "Computernaam");
+	ns1 = network_state_init("bla", "Gebruikersnaam", "Computernaam");
 	ctx = create_linestack(&linestack_file, "test", my_config, ns1);
 
 	lm = linestack_get_marker(ctx);
@@ -219,7 +214,7 @@ START_TEST(test_msg)
 	cl = client_init(NULL, ch1, "test");
 	g_io_channel_unref(ch1);
 
-	linestack_send(ctx, lm, NULL, cl);
+	linestack_send(ctx, lm, NULL, cl, FALSE, FALSE);
 	disconnect_client(cl, "foo");
 
 	g_io_channel_read_to_end(ch2, &raw, NULL, NULL);
@@ -238,7 +233,7 @@ START_TEST(test_join_part)
 	GIOChannel *ch1, *ch2;
 	char *raw;
 	
-	ns1 = network_state_init(NULL, "bla", "Gebruikersnaam", "Computernaam");
+	ns1 = network_state_init("bla", "Gebruikersnaam", "Computernaam");
 	ctx = create_linestack(&linestack_file, "test", my_config, ns1);
 
 	lm = linestack_get_marker(ctx);
@@ -252,7 +247,7 @@ START_TEST(test_join_part)
 	cl = client_init(NULL, ch1, "test");
 	g_io_channel_unref(ch1);
 
-	linestack_send(ctx, lm, NULL, cl);
+	linestack_send(ctx, lm, NULL, cl, FALSE, FALSE);
 	disconnect_client(cl, "foo");
 
 	g_io_channel_read_to_end(ch2, &raw, NULL, NULL);
@@ -273,7 +268,7 @@ START_TEST(test_skip_msg)
 	GIOChannel *ch1, *ch2;
 	char *raw;
 	
-	ns1 = network_state_init(NULL, "bla", "Gebruikersnaam", "Computernaam");
+	ns1 = network_state_init("bla", "Gebruikersnaam", "Computernaam");
 	ctx = create_linestack(&linestack_file, "test", my_config, ns1);
 
 	stack_process(ctx, ns1, ":bloe!Gebruikersnaam@Computernaam PRIVMSG #bla :haha");
@@ -289,7 +284,7 @@ START_TEST(test_skip_msg)
 	cl = client_init(NULL, ch1, "test");
 	g_io_channel_unref(ch1);
 
-	linestack_send(ctx, lm, NULL, cl);
+	linestack_send(ctx, lm, NULL, cl, FALSE, FALSE);
 	disconnect_client(cl, "foo");
 
 	g_io_channel_read_to_end(ch2, &raw, NULL, NULL);
@@ -308,7 +303,7 @@ START_TEST(test_object_msg)
 	GIOChannel *ch1, *ch2;
 	char *raw;
 	
-	ns1 = network_state_init(NULL, "bla", "Gebruikersnaam", "Computernaam");
+	ns1 = network_state_init("bla", "Gebruikersnaam", "Computernaam");
 	ctx = create_linestack(&linestack_file, "test", my_config, ns1);
 
 	lm = linestack_get_marker(ctx);
@@ -326,7 +321,7 @@ START_TEST(test_object_msg)
 	cl = client_init(NULL, ch1, "test");
 	g_io_channel_unref(ch1);
 
-	linestack_send_object(ctx, "#bla", lm, NULL, cl);
+	linestack_send_object(ctx, "#bla", lm, NULL, cl, FALSE, FALSE);
 	disconnect_client(cl, "foo");
 
 	g_io_channel_read_to_end(ch2, &raw, NULL, NULL);
@@ -348,7 +343,7 @@ START_TEST(test_object_open)
 
 	int j;
 	
-	ns1 = network_state_init(NULL, "bla", "Gebruikersnaam", "Computernaam");
+	ns1 = network_state_init("bla", "Gebruikersnaam", "Computernaam");
 	ctx = create_linestack(&linestack_file, "test", my_config, ns1);
 
 	lm = linestack_get_marker(ctx);
@@ -367,7 +362,7 @@ START_TEST(test_object_open)
 		cl = client_init(NULL, ch1, "test");
 		g_io_channel_unref(ch1);
 
-		linestack_send_object(ctx, "#bla", NULL, NULL, cl);
+		linestack_send_object(ctx, "#bla", NULL, NULL, cl, FALSE, FALSE);
 		disconnect_client(cl, "foo");
 
 		g_io_channel_read_to_end(ch2, &raw, NULL, NULL);
@@ -382,7 +377,7 @@ START_TEST(test_join)
 	struct network_state *ns1, *ns2;
 	struct linestack_context *ctx;
 	
-	ns1 = network_state_init(NULL, "bla", "Gebruikersnaam", "Computernaam");
+	ns1 = network_state_init("bla", "Gebruikersnaam", "Computernaam");
 	ctx = create_linestack(&linestack_file, "test", my_config, ns1);
 
 	stack_process(ctx, ns1, ":bla!Gebruikersnaam@Computernaam JOIN #bla");

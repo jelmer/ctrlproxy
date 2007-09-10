@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 <!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
-<refentry id="ctrlproxy_config.5">
+<refentry id="ctrlproxy_config.5" xmlns:xi="http://www.w3.org/2003/XInclude">
 
 <refmeta>
 	<refentrytitle>ctrlproxy_config</refentrytitle>
@@ -37,59 +37,7 @@ in a standard ControlProxy installation.
 
 	<para>The [global] section contains some of the most important settings.</para>
 
-	<variablelist>
-		<varlistentry>
-			<term>replication</term>
-			<listitem><para>
-					Replication backend to use. See the section about 
-					replication below for details.
-				</para>
-			</listitem>
-		</varlistentry>
-		
-		<varlistentry>
-			<term>report-time</term>
-			<listitem><para>
-					Set to <emphasis>true</emphasis> to prefix replicated 
-					lines with the time the line was sent.
-				</para>
-			</listitem>
-		</varlistentry>
-
-		<varlistentry>
-			<term>autosave</term>
-			<listitem><para>
-					Automatically save configuration on exit</para>
-			</listitem>
-		</varlistentry>
-
-		<varlistentry>
-			<term>autoconnect</term>
-			<listitem><para>
-					Semi-colon separated list of networks or 
-					servers to connect to on startup.
-			</para></listitem>
-		</varlistentry>
-
-		<varlistentry>
-			<term>motd-file</term>
-			<listitem><para>
-					Path to the message of the day file that is sent to 
-					clients upon connect.
-			</para></listitem>
-		</varlistentry>
-
-		<varlistentry>
-			<term>match</term>
-			<listitem><para>
-				       If the replication backend is set 
-				       to <emphasis>highlight</emphasis>, this variable 
-					should contain a semicolon-separated list of 
-					words to search for.
-			</para></listitem>
-		</varlistentry>
-
-	</variablelist>
+	<xi:include href="config-reference.xml"/>
 
 </refsect2>
 

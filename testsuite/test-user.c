@@ -17,19 +17,18 @@
 	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 */
 
+#include "internals.h"
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
 #include <check.h>
-#include "internals.h"
 
 START_TEST(test_create)
 	struct global *gl;
 	
-	gl = new_global(DEFAULT_CONFIG_DIR);
+	gl = init_global();
 
-	fail_if(gl == NULL && g_file_test(DEFAULT_CONFIG_DIR, G_FILE_TEST_IS_DIR), 
-			"new_global returned NULL");
+	fail_if(gl == NULL, "load_global returned NULL");
 
 	free_global(gl);
 END_TEST
@@ -37,10 +36,10 @@ END_TEST
 START_TEST(test_create_nonexisting)
 	struct global *gl;
 	
-	gl = new_global("/some-non-existing/directory");
+	gl = load_global("/some-non-existing/directory");
 
 	fail_if(gl != NULL,
-			"new_global returned non-NULL for incorrect directory");
+			"load_global returned non-NULL for incorrect directory");
 
 	free_global(gl);
 END_TEST

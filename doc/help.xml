@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook V4.2//EN" "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<book id="CtrlProxy-Help" xmlns:xi="http://www.w3.org/2003/XInclude">
+
+<preface id="index">
+<title>CtrlProxy help system</title>
+
+<para>
+These are the available help subjects:
+</para>
+
+<variablelist>
+  <varlistentry><term>commands</term><listitem><para>All available commands and settings</para></listitem></varlistentry>
+  <varlistentry><term>clients</term><listitem><para>Using ctrlproxy with different clients</para></listitem></varlistentry>
+  <varlistentry><term>logging</term><listitem><para>Information about setting up logging</para></listitem></varlistentry>
+  <varlistentry><term>about</term><listitem><para>About information</para></listitem></varlistentry>
+</variablelist>
+
+<para>
+You can read more about them with <emphasis>help &lt;subject&gt;</emphasis>
+</para>
+
+<para>
+	For other questions about ctrlproxy, please join <emphasis>#ctrlproxy</emphasis> on Freenode (<emphasis>irc.freenode.net</emphasis>)
+</para>
+
+</preface>
+
+<xi:include href="admin.xml"/>
+<xi:include href="clients.xml"/>
+<xi:include href="commands.xml"/>
+<xi:include href="about.xml"/>
+<xi:include href="logging.xml"/>
+<xi:include href="introduction.xml"/>
+
+</book>

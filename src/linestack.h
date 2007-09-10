@@ -56,7 +56,7 @@ struct linestack_marker {
 };
 
 /* linestack.c */
-typedef void (*linestack_traverse_fn) (struct line *, time_t, void *);
+typedef gboolean (*linestack_traverse_fn) (struct line *, time_t, void *);
 /**
  * Linestack functions
  */
@@ -125,32 +125,22 @@ G_MODULE_EXPORT gboolean linestack_traverse_object (
 		linestack_traverse_fn,
 		void *userdata);
 
-/* Same as linestack_send, but prepend all lines with [HH:MM:SS] */
-G_MODULE_EXPORT gboolean linestack_send_timed (
-		struct linestack_context *,
-		struct linestack_marker *from,
-		struct linestack_marker *to, /* Can be NULL for 'now' */
-		struct client *);
-
-G_MODULE_EXPORT gboolean linestack_send_object_timed(
-		struct linestack_context *, 
-		const char *obj, 
-		struct linestack_marker *from, 
-		struct linestack_marker *to, 
-		struct client *);
-
 G_MODULE_EXPORT gboolean linestack_send (
 		struct linestack_context *,
 		struct linestack_marker *from,
 		struct linestack_marker *to, /* Can be NULL for 'now' */
-		struct client *);
+		struct client *, 
+		gboolean dataonly, 
+		gboolean timed);
 
 G_MODULE_EXPORT gboolean linestack_send_object (
 		struct linestack_context *,
 		const char *object,
 		struct linestack_marker *from,
 		struct linestack_marker *to, /* Can be NULL for 'now' */
-		struct client *);
+		struct client *,
+		gboolean dataonly,
+		gboolean timed);
 
 G_MODULE_EXPORT gboolean linestack_replay (
 		struct linestack_context *,

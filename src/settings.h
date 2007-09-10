@@ -25,7 +25,7 @@
  * @brief Settings
  */
 
-#define DEFAULT_CLIENT_CHARSET "UTF-8"
+#define DEFAULT_CLIENT_CHARSET NULL
 
 /**
  * Configuration for a particular channel
@@ -81,6 +81,22 @@ struct network_config
 	} type_settings; 
 };
 
+struct allow_rule {
+	const char *username;
+	const char *password;
+};
+
+struct listener_config {
+	gboolean ssl;
+	gpointer ssl_credentials;
+	char *password;
+	char *address;
+	char *port;
+	char *network;
+	GList *allow_rules;
+	gboolean is_default; /* Whether this is the "default" listener, stored in ~/.ctrlproxy/config */
+};
+
 /**
  * Configuration
  */
@@ -95,16 +111,22 @@ struct ctrlproxy_config {
 	char *linestack_backend;
 	char *client_charset;
 	gboolean admin_log;
-	gboolean admin_noprivmsg;
+	char *admin_user;
 	gboolean report_time;
 	int max_who_age;
 	GKeyFile *keyfile;
+	GList *listeners;
+	gboolean auto_listener;
+	int listener_autoport;
+	gboolean learn_nickserv;
+	gboolean learn_network_name;
 };
 
 /* config.c */
 G_MODULE_EXPORT struct network_config *network_config_init(struct ctrlproxy_config *cfg);
 G_MODULE_EXPORT void save_configuration(struct ctrlproxy_config *cfg, const char *name);
 G_MODULE_EXPORT struct ctrlproxy_config *load_configuration(const char *dir);
+G_MODULE_EXPORT struct ctrlproxy_config *init_configuration(void);
 G_MODULE_EXPORT void free_config(struct ctrlproxy_config *);
 G_MODULE_EXPORT void setup_configdir(const char *dir);
 G_MODULE_EXPORT gboolean g_key_file_save_to_file(GKeyFile *kf, const gchar *file, GError **error);

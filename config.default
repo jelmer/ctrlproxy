@@ -3,7 +3,6 @@
 # Please adapt to your needs!
 
 [global]
-
 # Replication mechanism to use (some other IRC proxies call this backlog)
 # Possible values: none, simple, highlight, lastdisconnect
 # Meanings:
@@ -14,12 +13,28 @@
 # 			   containing 'matches' (see below)
 replication = none
 
+# Prepend all lines in replication with the time a line was received when replicating
+report-time = false
+
+# What words to look for when remembering lines 
+# (in case "replication = highlight")
+# Seperate using semicolons
+# matches=ctrlproxy;foobar
+
+# Port at which CtrlProxy should listen for new connections
+# Connections can be plain IRC connections or using the SOCKS protocol.
+port=6680
+
+# Password for logging in to ctrlproxy
+password=
+
+# Set "bind" to make ctrlproxy only listen on a specific IP address:
+#bind=192.168.4.3
+
 # Override motd-file location
 #motd-file = /tmp/my-motd
 
-# Prepend all lines with the time a line was received when replicating
-report-time = false
-
+# Save state to configuration file on exit
 autosave = true
 
 # Networks to connect to on startup. Seperate by semicolons
@@ -27,32 +42,29 @@ autoconnect = admin
 # autoconnect = admin;irc.oftc.net;irc.freenode.net;
 
 # Support for interfacing to ctrlproxy 
-# using /MSG ctrlproxy or /CTRLPROXY -->
-[admin]
+# using /MSG ctrlproxy 
+admin-user = ctrlproxy
+
+# Send ctrlproxy log messages to the admin channel
+admin-log = true
+
+# Whether to remember passwords sent to NickServ
+#learn-nickserv = true
+
+# Whether to update a networks name based on the NETWORK= line sent when 
+# connected to it
+#learn-network-name = true
 
 # Irssi-style logging
 [log-irssi]
-# logfile = /home/jelmer/tmp/ctrlproxy
+#logfile = /home/jelmer/tmp/ctrlproxy
 
 # Work as a socks proxy
 #[socks]
-#port = 8800
 #allow = jelmer:secret, foo:bar
-
-# Make sure messages are not sent too fast after each other 
-# (prevents being kicked by the server for 'Excess flooding'
-#[antiflood]
 
 # Automatically set AWAY after a certain period of time
 #[auto-away]
 #message = I'm currently away, sorry!
 #time = 300 # in seconds
-
-#[nickserv]
-# Learn new nickserv user/password combinations by interpreting traffic to server
-#learn = true
-
-#[listen]
-# Listen for network connections start port 6667
-# auto = true
-# autoport = 6667
+#nick = jelmer|away

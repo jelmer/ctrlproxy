@@ -53,13 +53,14 @@ struct line *virc_parse_line( const char *hostmask, va_list ap)
 	l = g_new0(struct line, 1);
 	g_assert(l);
 	l->argc = 0;
-	if(hostmask)l->origin = g_strdup(hostmask);
+	if (hostmask != NULL)
+		l->origin = g_strdup(hostmask);
 	
 	l->args = g_new(char *, MAX_LINE_ARGS+2);
 	
 	while((arg = va_arg(ap, char *))) {
 		l->args[l->argc] = g_strdup(arg);
-		l->args = g_realloc(l->args, (((++l->argc)+2)* sizeof(char *)));
+		l->args = g_realloc(l->args, (((++l->argc)+2) * sizeof(char *)));
 	}
 	l->args[l->argc] = NULL;
 
@@ -80,34 +81,34 @@ struct line * irc_parse_line(const char *d)
 	l->has_endcolon = WITHOUT_COLON;
 	p = data;
 
-	if(p[0] == ':') {
+	if (p[0] == ':') {
 		p = strchr(data, ' ');
-		if(!p){ g_free(data); g_free(l); return NULL; }
+		if (!p){ g_free(data); g_free(l); return NULL; }
 		*p = '\0';
 		l->origin = g_strdup(data+1);
 		for(; *(p+1) == ' '; p++);
 		p++;
 	}
 
-	for(i = 0; p[i]; i++) if(p[i] == ' ')estimate++;
+	for(i = 0; p[i]; i++) if (p[i] == ' ')estimate++;
 
 	l->args = g_new(char *, estimate+2);
 
 	l->args[0] = p;
 
-	for(; *p; p++) {
-		if(*p == ' ' && dosplit) {
+	for (; *p; p++) {
+		if (*p == ' ' && dosplit) {
 			*p = '\0';
 			l->argc++;
 			l->args[l->argc] = p+1;
-			if(*(p+1) == ':'){ 
+			if (*(p+1) == ':'){ 
 				l->has_endcolon = WITH_COLON; 
 				dosplit = 0; 
 				l->args[l->argc]++; 
 			}
 		}
 
-		if(*p == '\r' || *p == '\n') {
+		if (*p == '\r' || *p == '\n') {
 			*p = '\0';
 			break;
 		}
@@ -162,20 +163,25 @@ char *irc_line_string_nl(const struct line *l)
 	return raw;
 }
 
-static int requires_colon(const struct line *l)
+static gboolean requires_colon(const struct line *l)
 {
 	int c;
 
 	g_assert(l);
 
-	if(l->has_endcolon == WITH_COLON) return 1;
-	else if(l->has_endcolon == WITHOUT_COLON) return 0;
+	if (l->has_endcolon == WITH_COLON)
+		return TRUE;
+	else if (l->has_endcolon == WITHOUT_COLON)
+		return FALSE;
 
 	g_assert(l->args[0]);
 
 	c = atoi(l->args[0]);
-	if(!g_strcasecmp(l->args[0], "MODE"))return 0;
-	if(!g_strcasecmp(l->args[0], "NICK"))return 0;
+	if (!g_strcasecmp(l->args[0], "MODE"))
+		return FALSE;
+
+	if (!g_strcasecmp(l->args[0], "NICK"))
+		return FALSE;
 
 	switch(c) {
 	case RPL_CHANNELMODEIS:
@@ -202,9 +208,10 @@ static int requires_colon(const struct line *l)
 	case RPL_STATSOLINE:
 	case RPL_STATSHLINE:
 	case RPL_UMODEIS:
-		return 0;
+	case RPL_TOPICWHOTIME:
+		return FALSE;
 
-	default: return 1;
+	default: return TRUE;
 	}
 }
 
@@ -216,32 +223,38 @@ char *irc_line_string(const struct line *l)
 	g_assert(l);
 
 	/* Silently ignore empty messages */
-	if(l->argc == 0) return g_strdup("");
+	if (l->argc == 0) return g_strdup("");
 
-	if(l->origin)len+=strlen(l->origin);
+	if (l->origin != NULL)
+		len+=strlen(l->origin);
 	for(i = 0; l->args[i]; i++) len+=strlen(l->args[i])+2;
 	ret = g_malloc(len+20);
 	strcpy(ret, "");
 	
-	if(l->origin) sprintf(ret, ":%s ", l->origin);
+	if (l->origin != NULL)
+		sprintf(ret, ":%s ", l->origin);
 
 	for(i = 0; i < l->argc; i++) {
-		if(i == l->argc-1 && requires_colon(l) && i != 0)
+		if (i == l->argc-1 && requires_colon(l) && i != 0)
 			strcat(ret, ":");
 		strcat(ret, l->args[i]);
-		if(i != l->argc-1)strcat(ret, " ");
+		if (i != l->argc-1)
+			strcat(ret, " ");
 	}
 
 	return ret;
 }
 
-void free_line(struct line *l) {
+void free_line(struct line *l) 
+{
 	int i;
 	if (l == NULL)
 		return;
 
-	if(l->origin)g_free(l->origin);
-	if(l->args) {
+	if (l->origin != NULL)
+		g_free(l->origin);
+	
+	if (l->args != NULL) {
 		for(i = 0; l->args[i]; i++)g_free(l->args[i]);
 		g_free(l->args);
 	}
@@ -254,13 +267,14 @@ char *line_get_nick(const struct line *l)
 {
 	char *nick = NULL;
 	char *t;
-	g_assert(l);
-	g_assert(l->origin);
+	g_assert(l != NULL);
+	g_assert(l->origin != NULL);
 
 	nick = g_strdup(l->origin);
 	t = strchr(nick, '!');
-	if(!t) 
+	if (t == NULL) 
 		return nick;
+
 	*t = '\0';
 	return nick;
 }
@@ -315,7 +329,8 @@ struct line *linedup(const struct line *l)
 
 	ret = g_memdup(l, sizeof(struct line));
 
-	if(l->origin)ret->origin = g_strdup(l->origin);
+	if (l->origin != NULL)
+		ret->origin = g_strdup(l->origin);
 	ret->args = g_new(char *, ret->argc+MAX_LINE_ARGS);
 	for(i = 0; l->args[i]; i++) {
 		ret->args[i] = g_strdup(l->args[i]);
@@ -347,9 +362,12 @@ GIOStatus irc_recv_line(GIOChannel *c, GIConv iconv,
 		cvrt = raw;
 	} else {
 		cvrt = g_convert_with_iconv(raw, -1, iconv, NULL, NULL, error);
-		if (cvrt == NULL)
-			return G_IO_STATUS_ERROR;
-		g_free(raw);
+		if (cvrt == NULL) {
+			cvrt = raw;
+			status = G_IO_STATUS_ERROR;
+		} else {
+			g_free(raw);
+		}
 	}
 
 	*l = irc_parse_line(cvrt);

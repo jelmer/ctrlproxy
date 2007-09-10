@@ -18,11 +18,6 @@
 */
 
 #include "internals.h"
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-#include <stdarg.h>
-#include <stdio.h>
 
 static const char *get_date(void)
 {
@@ -54,7 +49,7 @@ static void log_entry(enum log_level level, const struct network *n, const struc
 	fprintf(flog, "%s", data);
 
 	if (n) {
-		fprintf(flog, " (%s", n->name);
+		fprintf(flog, " (%s", n->info.name);
 
 		if (c)
 			fprintf(flog, "/%s", c->description);
@@ -123,8 +118,20 @@ void log_global(enum log_level level, const char *fmt, ...)
 
 
 
-static void log_handler(const gchar *log_domain, GLogLevelFlags flags, const gchar *message, gpointer user_data) {
-	log_global(LOG_ERROR, "[%s] %s", log_domain, message);
+static void log_handler(const gchar *log_domain, GLogLevelFlags flags, const gchar *message, gpointer user_data) 
+{
+	if (strchr(message, '\n')) {
+		char **lines = g_strsplit(message, "\n", 0);
+		int i;
+		for (i = 0; lines[i]; i++) {
+			if (strlen(lines[i]) == 0)
+				continue;
+			log_global(LOG_ERROR, "[%s] %s", log_domain, lines[i]);
+		}
+		g_strfreev(lines);
+	} else {
+		log_global(LOG_ERROR, "[%s] %s", log_domain, message);
+	}
 }
 
 static void fini_log(void)

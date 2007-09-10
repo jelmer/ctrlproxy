@@ -1,0 +1,144 @@
+<sect1 id="commands">
+	<title>Commands</title>
+
+	<para>The following commands are available:</para>
+
+	<command-list/>
+
+	<ctrlproxy-command name="addnetwork">
+		<short-description>Adds a new network</short-description>
+		<syntax>ADDNETWORK &lt;name&gt;</syntax>
+
+		<description><para>Add a new network with the specified name.</para>
+		</description>
+	</ctrlproxy-command>
+
+	<ctrlproxy-command name="addserver">
+		<short-description>Adds a new server to the specified network.</short-description>
+		<syntax>ADDSERVER &lt;network&gt; &lt;host&gt;[:&lt;port&gt;] [&lt;password&gt;]</syntax>
+
+		<description>
+			<para>Example: <command>addserver OPN irc.freenode.net:6667</command></para>
+		</description>
+	</ctrlproxy-command>
+
+	<ctrlproxy-command name="backlog">
+		<short-description>Send backlog for a single channel or network.</short-description>
+		<syntax>BACKLOG [&lt;channel&gt;]</syntax>
+		<description>
+			<para>Without any arguments, the BACKLOG command replicates all the 
+			backlogs for the current network.</para>
+
+		<para>With one argument, the name of a channel, all lines on that 
+			channel are replicated.</para>
+		</description>
+	</ctrlproxy-command>
+
+	<ctrlproxy-command name="charset">
+		<short-description>Change client charset</short-description>
+		<syntax>CHARSET &lt;charset&gt;</syntax>
+		<description><para>Change the character set that ctrlproxy 
+				should expect the client to send data in. </para>
+		
+			<para>See the output of <command>iconv -l</command> for a 
+		list of possible character sets.</para></description>
+	</ctrlproxy-command>
+
+	<ctrlproxy-command name="connect">
+		<short-description>Connect to a network</short-description>
+		<syntax>CONNECT &lt;network&gt;</syntax>
+
+		<description>
+			<para>Connect to the specified network. Ctrlproxy will connect to the first known server for this network.</para>
+		</description>
+	</ctrlproxy-command>
+
+	<ctrlproxy-command name="delnetwork">
+		<short-description>Delete a network</short-description>
+		<syntax>DELNETWORK &lt;network&gt;</syntax>
+		<description><para>Remove the specified network. The network may not be connected.</para></description>
+	</ctrlproxy-command>
+
+	<ctrlproxy-command name="die">
+		<short-description>Close ctrlproxy</short-description>
+		<syntax>DIE</syntax>
+		<description><para>Disconnect all clients and servers and exit ctrlproxy.</para></description>
+	</ctrlproxy-command>
+
+	<ctrlproxy-command name="disconnect">
+		<short-description>Disconnect from a network</short-description>
+		<syntax>DISCONNECT &lt;network&gt;</syntax>
+		<description>
+			<para>Disconnect from the specified network.</para>
+		</description>
+	</ctrlproxy-command>
+
+	<ctrlproxy-command name="detach">
+		<short-description>Detach the current client</short-description>
+		<syntax>DETACH</syntax>
+
+		<description><para>Detach client from the proxy.</para></description>
+	</ctrlproxy-command>
+
+	<ctrlproxy-command name="echo">
+		<short-description>Echo specified text</short-description>
+		<syntax>ECHO &lt;text&gt;</syntax>
+		<description><para>Repeats specified text. Useful mainly for debugging. </para></description>
+	</ctrlproxy-command>
+
+	<ctrlproxy-command name="listnetworks">
+		<short-description>Print list of networks</short-description>
+		<syntax>LISTNETWORKS</syntax>
+		<description><para>Prints out a list of all networks 
+				ctrlproxy is connected to at the moment.</para></description>
+	</ctrlproxy-command>
+
+	<ctrlproxy-command name="log_level">
+		<short-description>Change or display log level</short-description>
+		<syntax>LOG_LEVEL [&lt;level&gt;]</syntax>
+		<description>
+			<para>Change log level if specified. If not specified 
+					will print the current log level.</para></description>
+	</ctrlproxy-command>
+
+	<ctrlproxy-command name="nextserver">
+		<short-description>Connect to next server in network</short-description>
+		<syntax>NEXTSERVER [&lt;NETWORK&gt;]</syntax>
+		<description>
+			<para>Makes the specified network disconnect from the current server and go to the next one.</para></description>
+	</ctrlproxy-command>
+
+	<ctrlproxy-command name="saveconfig">
+		<short-description>Save configuration</short-description>
+		<syntax>SAVECONFIG [&lt;path&gt;]</syntax>
+		<description>
+			<para>Save the (updated) configuration to the location it was loaded from (usually <filename>$HOME/.ctrlproxy/</filename>).</para></description>
+	</ctrlproxy-command>
+
+	<ctrlproxy-command name="startlistener">
+		<short-description>Add a new listener</short-description>
+		<syntax>STARTLISTENER [&lt;address&gt;:]&lt;port&gt; &lt;password&gt; [&lt;network&gt;]</syntax>
+
+		<description><para>Add listener on specified port</para></description>
+	</ctrlproxy-command>
+
+	<ctrlproxy-command name="stoplistener">
+		<short-description>Stop listener</short-description>
+		<syntax>STOPLISTENER [&lt;address&gt;:]&lt;port&gt;</syntax>
+
+		<description><para>Stop listener on specified port</para></description>
+	</ctrlproxy-command>
+
+	<ctrlproxy-command name="listlistener">
+		<short-description>List existing listeners</short-description>
+		<syntax>LISTLISTENER</syntax>
+		<description><para>List all listeners</para></description>
+	</ctrlproxy-command>
+
+	<ctrlproxy-command name="help">
+		<short-description>Print help</short-description>
+		<syntax>HELP [&lt;topic&gt;]</syntax>
+		<description>
+			<para>Prints out list of available commands.</para></description>
+	</ctrlproxy-command>
+</sect1>

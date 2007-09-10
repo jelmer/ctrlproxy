@@ -29,7 +29,7 @@
 #include <netdb.h>
 
 /* globals */
-char my_hostname[MAXHOSTNAMELEN+2];
+char my_hostname[NI_MAXHOST+2];
 
 const char *get_my_hostname() { return my_hostname; }
 const char *ctrlproxy_version() { return PACKAGE_VERSION; }

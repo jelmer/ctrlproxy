@@ -2,7 +2,7 @@
 	ctrlproxy: A modular IRC proxy
 	admin: module for remote administration. 
 
-	(c) 2003-2006 Jelmer Vernooij <jelmer@nl.linux.org>
+	(c) 2003-2007 Jelmer Vernooij <jelmer@nl.linux.org>
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -26,20 +26,18 @@
 #include <readline/readline.h>
 #endif
 #include "admin.h"
+#include "help.h"
+#include "irc.h"
 
-#define ADMIN_CHANNEL "#ctrlproxy"
+help_t *help;
 
-static GList *commands = NULL;
-static guint longest_command = 0;
+GList *admin_commands = NULL;
+guint longest_command = 0;
 
-struct admin_handle
+static char *admin_hostmask(struct network *n)
 {
-	struct global *global;
-	struct client *client;
-	struct network *network;
-	void *user_data;
-	void (*send_fn) (struct admin_handle *, const char *data);
-};
+	return g_strdup_printf("ctrlproxy!ctrlproxy@%s", n->info.name);
+}
 
 static void privmsg_admin_out(admin_handle h, const char *data)
 {
@@ -47,8 +45,9 @@ static void privmsg_admin_out(admin_handle h, const char *data)
 	char *nick = c->nick;
 	char *hostmask;
 
-	hostmask = g_strdup_printf("ctrlproxy!ctrlproxy@%s", c->network->name);
-	if (c->network->state) nick = c->network->state->me.nick;
+	hostmask = admin_hostmask(c->network);
+	if (c->network->state != NULL) 
+		nick = c->network->state->me.nick;
 	client_send_args_ex(c, hostmask, "NOTICE", nick, data, NULL);
 
 	g_free(hostmask);
@@ -59,11 +58,34 @@ static void network_admin_out(admin_handle h, const char *data)
 	struct client *c = h->client;
 	char *hostmask;
 
-	hostmask = g_strdup_printf("ctrlproxy!ctrlproxy@%s", c->network->name);
+	hostmask = admin_hostmask(c->network);
 	virtual_network_recv_args(c->network, hostmask, "PRIVMSG", ADMIN_CHANNEL, 
 							  data, NULL);
 
 	g_free(hostmask);
+}
+
+static void cmd_help(admin_handle h, char **args, void *userdata)
+{
+	const char *s;
+
+	s = help_get(help, args[1] != NULL?args[1]:"index");
+
+	if (s == NULL) {
+		if (args[1] == NULL)
+			admin_out(h, "Sorry, help not available");
+		else
+			admin_out(h, "Sorry, no help for %s available", args[1]);
+		return;
+	}
+
+	while (strncmp(s, "%\n", 2) != 0) {
+		char *tmp;
+		admin_out(h, "%s", tmp = g_strndup(s, strchr(s, '\n')-s));
+		g_free(tmp);
+			
+		s = strchr(s, '\n')+1;
+	}
 }
 
 struct client *admin_get_client(admin_handle h)
@@ -103,6 +125,11 @@ static void add_network (admin_handle h, char **args, void *userdata)
 		return;
 	}
 
+	if (find_network(admin_get_global(h), args[1]) != NULL) {
+		admin_out(h, "Network with name `%s' already exists", args[1]);
+		return;
+	}
+
 	nc = network_config_init(admin_get_global(h)->config);
 	g_free(nc->name); nc->name = g_strdup(args[1]);
 	load_network(admin_get_global(h), nc);
@@ -127,6 +154,8 @@ static void del_network (admin_handle h, char **args, void *userdata)
 
 	disconnect_network(n);
 
+	unload_network(n);
+
 	admin_out(h, "Network `%s' deleted", args[1]);
 }
 
@@ -136,7 +165,7 @@ static void add_server (admin_handle h, char **args, void *userdata)
 	struct tcp_server_config *s;
 	char *t;
 
-	if(!args[1] || !args[2]) {
+	if (!args[1] || !args[2]) {
 		admin_out(h, "Not enough parameters");
 		return;
 	}
@@ -160,7 +189,7 @@ static void add_server (admin_handle h, char **args, void *userdata)
 		*t = '\0';
 		s->port = g_strdup(t+1);
 	} else {
-		s->port = g_strdup("6667");
+		s->port = g_strdup(DEFAULT_IRC_PORT);
 	}
 	s->ssl = FALSE;
 	s->password = args[3]?g_strdup(args[3]):NULL;
@@ -173,7 +202,7 @@ static void add_server (admin_handle h, char **args, void *userdata)
 static void com_connect_network (admin_handle h, char **args, void *userdata)
 {
 	struct network *s;
-	if(!args[1]) {
+	if (!args[1]) {
 		 admin_out(h, "No network specified");
 		 return;
 	}
@@ -213,7 +242,7 @@ static void com_disconnect_network (admin_handle h, char **args, void *userdata)
 
 	if (args[1] != NULL) {
 		n = find_network(admin_get_global(h), args[1]);
-		if(!n) {
+		if (!n) {
 			admin_out(h, "Can't find active network with that name");
 			return;
 		}
@@ -233,14 +262,14 @@ static void com_next_server (admin_handle h, char **args, void *userdata)
 	const char *name;
 
 
-	if(args[1] != NULL) {
+	if (args[1] != NULL) {
 		name = args[1];
 		n = find_network(admin_get_global(h), args[1]);
 	} else {
 		n = admin_get_network(h);
-		name = n->name;
+		name = n->info.name;
 	}
-	if(!n) {
+	if (!n) {
 		admin_out(h, "%s: Not connected", name);
 	} else {
 		admin_out(h, "%s: Reconnecting", name);
@@ -259,47 +288,7 @@ static void com_save_config (admin_handle h, char **args, void *userdata)
 	admin_out(h, "Configuration saved in %s", adm_dir);
 }
 
-static void help (admin_handle h, char **args, void *userdata)
-{
-	GList *gl = commands;
-	char *tmp;
-	char **details;
-	int i;
 
-	if(args[1]) {
-		admin_out(h, "Details for command %s:", args[1]);
-	} else {
-		admin_out(h, "The following commands are available:");
-	}
-	while(gl) {
-		struct admin_command *cmd = (struct admin_command *)gl->data;
-		if(args[1]) {
-			if(!g_strcasecmp(args[1], cmd->name)) {
-				if(cmd->help_details != NULL) {
-					details = g_strsplit(cmd->help_details, "\n", 0);
-					for(i = 0; details[i] != NULL; i++) {
-						admin_out(h, details[i]);
-					}
-					return;
-				} else {
-					admin_out(h, "Sorry, no help for %s available", args[1]);
-				}
-			}
-		} else {
-			if(cmd->help != NULL) {
-				tmp = g_strdup_printf("%s%s     %s",cmd->name,g_strnfill(longest_command - strlen(cmd->name),' '),cmd->help);
-				admin_out(h, tmp);
-				g_free(tmp);
-			} else {
-				admin_out(h, cmd->name);
-			}
-		}
-		gl = gl->next;
-	}
-	if(args[1]) {
-		admin_out(h, "Unknown command");
-	}
-}
 
 static void list_networks(admin_handle h, char **args, void *userdata)
 {
@@ -309,14 +298,18 @@ static void list_networks(admin_handle h, char **args, void *userdata)
 
 		switch (n->connection.state) {
 		case NETWORK_CONNECTION_STATE_NOT_CONNECTED:
-			admin_out(h, ("%s: Not connected"), n->name);
+			if (n->connection.data.tcp.last_disconnect_reason)
+				admin_out(h, "%s: Not connected: %s", n->info.name, 
+						  n->connection.data.tcp.last_disconnect_reason);
+			else
+				admin_out(h, "%s: Not connected", n->info.name);
 			break;
 		case NETWORK_CONNECTION_STATE_RECONNECT_PENDING:
-			admin_out(h, ("%s: Reconnecting"), n->name);
+			admin_out(h, "%s: Reconnecting", n->info.name);
 			break;
 		case NETWORK_CONNECTION_STATE_LOGIN_SENT:
 		case NETWORK_CONNECTION_STATE_MOTD_RECVD:
-			admin_out(h, ("%s: connected"), n->name);
+			admin_out(h, "%s: connected", n->info.name);
 			break;
 		}
 	}
@@ -336,7 +329,7 @@ static void dump_joined_channels(admin_handle h, char **args, void *userdata)
 
 	if (args[1] != NULL) {
 		n = find_network(admin_get_global(h), args[1]);
-		if(n == NULL) {
+		if (n == NULL) {
 			admin_out(h, "Can't find network '%s'", args[1]);
 			return;
 		}
@@ -345,7 +338,7 @@ static void dump_joined_channels(admin_handle h, char **args, void *userdata)
 	}
 
 	if (!n->state) {
-		admin_out(h, "Network '%s' not connected", n->name);
+		admin_out(h, "Network '%s' not connected", n->info.name);
 		return;
 	}
 
@@ -383,10 +376,11 @@ static void repl_command(admin_handle h, char **args, void *userdata)
 		return;
 	}
 
-	if(!args[1]) {
-		admin_out(h, "Sending backlog for network '%s'", n->name);
+	if (!args[1] || strlen(args[1]) == 0) {
+		admin_out(h, "Sending backlog for network '%s'", n->info.name);
 
-		linestack_send(n->linestack, lm, NULL, admin_get_client(h));
+		linestack_send(n->linestack, lm, NULL, admin_get_client(h),
+					   TRUE, n->global->config->report_time);
 
 		g_hash_table_replace(markers, n, linestack_get_marker(n->linestack));
 
@@ -396,31 +390,49 @@ static void repl_command(admin_handle h, char **args, void *userdata)
 	/* Backlog for specific nick/channel */
 	admin_out(h, "Sending backlog for channel %s", args[1]);
 
-	if (n->global->config->report_time)
-		linestack_send_object_timed(n->linestack, args[1], lm, NULL, 
-									admin_get_client(h));
-	else
-		linestack_send_object(n->linestack, args[1], lm, NULL, 
-							  admin_get_client(h));
+	linestack_send_object(n->linestack, args[1], lm, NULL, 
+						  admin_get_client(h), TRUE, 
+						  n->global->config->report_time);
 
 	g_hash_table_replace(markers, n, linestack_get_marker(n->linestack));
 }
 
+static void cmd_log_level(admin_handle h, char **args, void *userdata)
+{
+	extern enum log_level current_log_level;
+	
+	if (args[1] == NULL) 
+		admin_out(h, "Current log level: %d", current_log_level);
+	else {
+		int x = atoi(args[1]);
+		if (x < 0 || x > 5) 
+			admin_out(h, "Invalid log level %d", x);
+		else { 
+			current_log_level = x;
+			admin_out(h, "Log level changed to %d", x);
+		}
+	}
+}
+
 static void handle_charset(admin_handle h, char **args, void *userdata)
 {
-	GError *error = NULL;
 	struct client *c;
-
-	c = admin_get_client(h);
 
 	if (args[1] == NULL) {
 		admin_out(h, "No charset specified");
 		return;
 	}
 
+	c = admin_get_client(h);
+
 	if (!client_set_charset(c, args[1])) {
-		admin_out(h, "Error setting charset: %s", error->message);
+		admin_out(h, "Error setting charset: %s", args[1]);
 	}
+}
+
+static void cmd_echo(admin_handle h, char **args, void *userdata)
+{
+	admin_out(h, "%s", args[1]);
 }
 
 static gint cmp_cmd(gconstpointer a, gconstpointer b)
@@ -432,16 +444,16 @@ static gint cmp_cmd(gconstpointer a, gconstpointer b)
 
 void register_admin_command(const struct admin_command *cmd)
 {
-	commands = g_list_insert_sorted(commands, g_memdup(cmd, sizeof(*cmd)), cmp_cmd);
+	admin_commands = g_list_insert_sorted(admin_commands, g_memdup(cmd, sizeof(*cmd)), cmp_cmd);
 	if (strlen(cmd->name) > longest_command) longest_command = strlen(cmd->name);
 }
 
 void unregister_admin_command(const struct admin_command *cmd)
 {
-	commands = g_list_remove(commands, cmd);
+	admin_commands = g_list_remove(admin_commands, cmd);
 }
 
-static gboolean process_cmd(admin_handle h, const char *cmd)
+gboolean process_cmd(admin_handle h, const char *cmd)
 {
 	char **args = NULL;
 	GList *gl;
@@ -453,10 +465,15 @@ static gboolean process_cmd(admin_handle h, const char *cmd)
 
 	args = g_strsplit(cmd, " ", 0);
 
+	if (!args[0]) {
+		admin_out(h, "Please specify a command. Use the 'help' command to get a list of available commands");
+		return TRUE;
+	}
+
 	/* Ok, arguments are processed now. Execute the corresponding command */
-	for (gl = commands; gl; gl = gl->next) {
+	for (gl = admin_commands; gl; gl = gl->next) {
 		struct admin_command *cmd = (struct admin_command *)gl->data;
-		if(!g_strcasecmp(cmd->name, args[0])) {
+		if (!g_strcasecmp(cmd->name, args[0])) {
 			cmd->handler(h, args, cmd->userdata);
 			g_strfreev(args);
 			return TRUE;
@@ -473,9 +490,16 @@ static gboolean process_cmd(admin_handle h, const char *cmd)
 gboolean admin_process_command(struct client *c, struct line *l, int cmdoffset)
 {
 	int i;
-	char *tmp = g_strdup(l->args[cmdoffset]);
+	char *tmp;
 	gboolean ret;
 	struct admin_handle ah;
+
+	if (l->args[cmdoffset] == NULL) {
+		client_send_response(c, ERR_NEEDMOREPARAMS, l->args[0], "Not enough parameters", NULL);
+		return TRUE;
+	}
+
+	tmp = g_strdup(l->args[cmdoffset]);
 
 	/* Add everything after l->args[cmdoffset] to tmp */
 	for(i = cmdoffset+1; l->args[i]; i++) {
@@ -483,7 +507,6 @@ gboolean admin_process_command(struct client *c, struct line *l, int cmdoffset)
 		tmp = g_strdup_printf("%s %s", oldtmp, l->args[i]);
 		g_free(oldtmp);
 	}
-	l->is_private = 1;
 
 	ah.send_fn = privmsg_admin_out;
 	ah.client = c;
@@ -501,17 +524,17 @@ static gboolean admin_net_init(struct network *n)
 	char *hostmask;
 	char *nicks;
 
-	hostmask = g_strdup_printf("ctrlproxy!ctrlproxy@%s", n->name);
+	hostmask = admin_hostmask(n);
 	
 	virtual_network_recv_args(n, n->state->me.hostmask, "JOIN", ADMIN_CHANNEL, NULL);
-	virtual_network_recv_args(n, NULL, "332", n->config->nick, ADMIN_CHANNEL, 
+	virtual_network_recv_response(n, RPL_TOPIC, ADMIN_CHANNEL, 
 		"CtrlProxy administration channel | Type `help' for more information",
 							  NULL);
 	nicks = g_strdup_printf("@ctrlproxy %s", n->config->nick);
 
-	virtual_network_recv_args(n, NULL, "353", n->config->nick, "=", ADMIN_CHANNEL, nicks, NULL);
+	virtual_network_recv_response(n, RPL_NAMREPLY, "=", ADMIN_CHANNEL, nicks, NULL);
 	g_free(nicks);
-	virtual_network_recv_args(n, NULL, "366", n->config->nick, ADMIN_CHANNEL, "End of /NAMES list.", NULL);
+	virtual_network_recv_response(n, RPL_ENDOFNAMES, ADMIN_CHANNEL, "End of /NAMES list.", NULL);
 
 	g_free(hostmask);
 
@@ -520,38 +543,145 @@ static gboolean admin_net_init(struct network *n)
 
 static gboolean admin_to_server (struct network *n, struct client *c, const struct line *l)
 {
-	struct admin_handle ah;
+	if (!g_strcasecmp(l->args[0], "PRIVMSG") ||
+		!g_strcasecmp(l->args[0], "NOTICE")) {
+		struct admin_handle ah;
 
-	if (g_strcasecmp(l->args[0], "PRIVMSG") && 
-		g_strcasecmp(l->args[0], "NOTICE")) {
+		if (g_strcasecmp(l->args[0], n->state->me.nick) == 0) {
+			virtual_network_recv_args(n, n->state->me.hostmask, l->args[0], l->args[1], NULL);
+			return TRUE;
+		}
+
+		if (g_strcasecmp(l->args[1], ADMIN_CHANNEL) && 
+			g_strcasecmp(l->args[1], "ctrlproxy")) {
+			virtual_network_recv_response(n, ERR_NOSUCHNICK, l->args[1], "No such nick/channel", NULL);
+			return TRUE;
+		}
+
+		ah.send_fn = network_admin_out;
+		ah.user_data = NULL;
+		ah.client = c;
+		ah.network = n;
+		ah.global = n->global;
+
+		return process_cmd(&ah, l->args[2]);
+	} else if (!g_strcasecmp(l->args[0], "ISON")) {
+		int i;
+		char *tmp;
+		GList *gl = NULL;
+
+		if (l->args[1] == NULL) {
+			virtual_network_recv_response(n, ERR_NEEDMOREPARAMS, l->args[0], "Not enough params", NULL);
+			return TRUE;
+		}
+
+		for (i = 1; l->args[i]; i++) {
+			if (!g_strcasecmp(l->args[i], "ctrlproxy") ||
+				!g_strcasecmp(l->args[i], n->state->me.nick)) {
+				gl = g_list_append(gl, l->args[i]);
+			}
+		}
+		virtual_network_recv_response(n, RPL_ISON, tmp = list_make_string(gl), NULL);
+		g_free(tmp);
+		g_list_free(gl);
+		return TRUE;
+	} else if (!g_strcasecmp(l->args[0], "USERHOST")) {
+		GList *gl = NULL;
+		char *tmp;
+		int i;
+
+		if (l->args[1] == NULL) {
+			virtual_network_recv_response(n, ERR_NEEDMOREPARAMS, l->args[0], "Not enough params", NULL);
+			return TRUE;
+		}
+
+		for (i = 1; l->args[i]; i++) {
+			if (!g_strcasecmp(l->args[i], "ctrlproxy")) {
+				gl = g_list_append(gl, g_strdup_printf("%s=+%s", l->args[i], get_my_hostname()));
+			}
+			if (!g_strcasecmp(l->args[i], n->state->me.nick)) {
+				gl = g_list_append(gl, g_strdup_printf("%s=+%s", l->args[i], n->state->me.hostname));
+			}
+		}
+
+		virtual_network_recv_response(n, RPL_ISON, tmp = list_make_string(gl), NULL);
+		g_free(tmp);
+		while (gl) {
+			g_free(gl->data);
+			gl = g_list_remove(gl, gl->data);
+		}
+		return TRUE;
+	} else if (!g_strcasecmp(l->args[0], "QUIT")) {
+		return TRUE;
+	} else if (!g_strcasecmp(l->args[0], "MODE")) {
+		/* FIXME: Do something here ? */
+		return TRUE;
+	} else if (!g_strcasecmp(l->args[0], "WHO")) {
+		if (!strcmp(l->args[1], ADMIN_CHANNEL) || 
+			!strcmp(l->args[1], "ctrlproxy")) {
+			virtual_network_recv_response(n, RPL_WHOREPLY, ADMIN_CHANNEL, 
+									  "ctrlproxy",
+									  get_my_hostname(),
+									  get_my_hostname(),
+									  "ctrlproxy",
+									  "H",
+									  "0 CtrlProxy user",
+									  NULL);
+		}
+		if (!strcmp(l->args[1], ADMIN_CHANNEL) ||
+			!strcmp(l->args[1], n->state->me.nick)) {
+			char *fullname = g_strdup_printf("0 %s", n->state->me.fullname);
+			virtual_network_recv_response(n, RPL_WHOREPLY, ADMIN_CHANNEL, 
+									  n->state->me.username,
+									  n->state->me.hostname,
+									  get_my_hostname(),
+									  n->state->me.nick,
+									  "H",
+									  fullname,
+									  NULL);
+			g_free(fullname);
+		}
+
+		virtual_network_recv_response(n, RPL_ENDOFWHO, l->args[1], "End of /WHO list.", NULL);
+
+		return TRUE;
+	} else if (!g_strcasecmp(l->args[0], "JOIN")) {
+		if (strcmp(l->args[1], ADMIN_CHANNEL) != 0) {
+			virtual_network_recv_response(n, ERR_NOSUCHCHANNEL, l->args[1], "No such channel", NULL);
+		}
+		return TRUE;
+	} else if (!g_strcasecmp(l->args[0], "PART")) {
+		if (strcmp(l->args[1], ADMIN_CHANNEL) != 0) {
+			virtual_network_recv_response(n, ERR_NOTONCHANNEL, l->args[1], "You're not on that channel", NULL);
+		} else {
+			virtual_network_recv_args(n, n->state->me.hostmask, "PART", l->args[1], NULL);
+			admin_net_init(n);
+		}
+		return TRUE;
+	} else if (!g_strcasecmp(l->args[0], "WHOIS")) {
+		/* FIXME: Send something sensible */
+		virtual_network_recv_response(n, RPL_ENDOFWHOIS, l->args[1], 
+									  "End of /WHOIS list.", NULL);
+		return TRUE;
+	} else if (!g_strcasecmp(l->args[0], "AWAY")) {
+		if (l->args[1] != NULL && strcmp(l->args[1], "") != 0) {
+			virtual_network_recv_response(n, RPL_NOWAWAY, "You are now marked as being away", NULL);
+		} else {
+			virtual_network_recv_response(n, RPL_UNAWAY, "You are no longer marked as being away", NULL);
+		}
+		return TRUE;
+	} else {
+		virtual_network_recv_response(n, ERR_UNKNOWNCOMMAND, l->args[0], "Unknown command", NULL);
 		log_global(LOG_TRACE, "Unhandled command `%s' to admin network", 
 				   l->args[0]);
 		return TRUE;
 	}
-
-	if (g_strcasecmp(l->args[0], n->state->me.nick) == 0) {
-		virtual_network_recv_args(c->network, n->state->me.hostmask, l->args[0], l->args[1], NULL);
-		return TRUE;
-	}
-
-	if (g_strcasecmp(l->args[1], ADMIN_CHANNEL) && 
-		g_strcasecmp(l->args[1], "ctrlproxy")) {
-		virtual_network_recv_args(c->network, NULL, "401", l->args[1], "No such nick/channel", NULL);
-		return TRUE;
-	}
-
-	ah.send_fn = network_admin_out;
-	ah.user_data = NULL;
-	ah.client = c;
-	ah.network = n;
-	ah.global = n->global;
-
-	return process_cmd(&ah, l->args[2]);
 }
 
 struct virtual_network_ops admin_network = {
 	"admin", admin_net_init, admin_to_server, NULL
 };
+
 
 void admin_log(enum log_level level, const struct network *n, const struct client *c, const char *data)
 {
@@ -576,7 +706,7 @@ void admin_log(enum log_level level, const struct network *n, const struct clien
 	tmp = g_strdup_printf("%s%s%s%s%s%s", 
 						  data, 
 						  n?" (":"",
-						  n?n->name:"", 
+						  n?n->info.name:"", 
 						  c?"/":"",
 						  c?c->description:"",
 						  n?")":"");
@@ -587,7 +717,7 @@ void admin_log(enum log_level level, const struct network *n, const struct clien
 		if (network->connection.data.virtual.ops != &admin_network)
 			continue;
 
-		hostmask = g_strdup_printf("ctrlproxy!ctrlproxy@%s", network->name);
+		hostmask = admin_hostmask(network);
 		l = irc_parse_line_args(hostmask, "PRIVMSG", ADMIN_CHANNEL, tmp, NULL); 
 		g_free(hostmask);
 		
@@ -601,25 +731,127 @@ void admin_log(enum log_level level, const struct network *n, const struct clien
 	entered = FALSE;
 }
 
+static void cmd_start_listener(admin_handle h, char **args, void *userdata)
+{
+	char *b, *p;
+	struct listener_config *cfg;
+	struct listener *l;
 
+	if (!args[1]) {
+		admin_out(h, "No port specified");
+		return;
+	}
+
+	if (!args[2]) {
+		admin_out(h, "No password specified");
+		return;
+	}
+
+	cfg = g_new0(struct listener_config, 1);
+
+	b = g_strdup(args[1]);
+	if ((p = strchr(b, ':'))) {
+		*p = '\0';
+		p++;
+		cfg->address = b;
+		cfg->port = g_strdup(p);
+	} else {
+		cfg->port = g_strdup(b);
+		cfg->address = NULL;
+	}
+
+	if (args[3]) {
+		cfg->network = g_strdup(args[3]);
+		if (find_network(admin_get_global(h), args[3]) == NULL) {
+			admin_out(h, "No such network `%s`", args[3]);
+			return;
+		}
+	}
+
+	l = listener_init(admin_get_global(h), cfg);
+	l->config->password = g_strdup(args[2]);
+	l->global = admin_get_global(h);
+
+	start_listener(l);
+}
+
+static void cmd_stop_listener(admin_handle h, char **args, void *userdata)
+{
+	GList *gl;
+	char *b, *p;
+	int i = 0;
+
+	if (!args[0]) {
+		admin_out(h, "No port specified");
+		return;
+	}
+
+	b = g_strdup(args[1]);
+	if ((p = strchr(b, ':'))) {
+		*p = '\0';
+		p++;
+	} else {
+		p = b;
+		b = NULL;
+	}
+
+	for (gl = admin_get_global(h)->listeners; gl; gl = gl->next) {
+		struct listener *l = gl->data;
+
+		if (b && l->config->address == NULL)
+			continue;
+
+		if (b && l->config->address != NULL && strcmp(b, l->config->address) != 0)
+			continue;
+
+		if (strcmp(p, l->config->port) != 0)
+			continue;
+
+		stop_listener(l);
+		free_listener(l);
+		i++;
+	}
+
+	if (b) g_free(b); else g_free(p);
+
+	admin_out(h, "%d listeners stopped", i);
+}
+
+static void cmd_list_listener(admin_handle h, char **args, void *userdata)
+{
+	GList *gl;
+
+	for (gl = admin_get_global(h)->listeners; gl; gl = gl->next) {
+		struct listener *l = gl->data;
+
+		admin_out(h, "%s:%s%s%s%s", l->config->address?l->config->address:"", l->config->port, 
+				  l->network?" (":"", l->network?l->network->info.name:"", 
+				  l->network?")":"");
+	}
+}
 
 const static struct admin_command builtin_commands[] = {
-	{ "ADDNETWORK", add_network, "<name>", "Add new network with specified name" },
-	{ "ADDSERVER", add_server, "<network> <host>[:<port>] [<password>]", "Add server to network" },
-	{ "BACKLOG", repl_command, "[channel]", "Send backlogs for this network or a channel, if specified" },
-	{ "CONNECT", com_connect_network, "<network>", "Connect to specified network. Forces reconnect when waiting." },
-	{ "DELNETWORK", del_network, "<network>", "Remove specified network" },
-	{ "NEXTSERVER", com_next_server, "[network]", "Disconnect and use to the next server in the list" },
-	{ "CHARSET", handle_charset, "<charset>", "Change client charset" },
-	{ "DIE", handle_die, "", "Exit ctrlproxy" },
-	{ "DISCONNECT", com_disconnect_network, "<network>", "Disconnect specified network" },
-	{ "LISTNETWORKS", list_networks, "", "List current networks and their status" },
-	{ "SAVECONFIG", com_save_config, "<name>", "Save current XML configuration to specified file" },
-	{ "DETACH", detach_client, "", "Detach current client" },
-	{ "HELP", help, "[command]", "This help command" },
-	{ "DUMPJOINEDCHANNELS", dump_joined_channels, "[network]", NULL, NULL },
+	{ "ADDNETWORK", add_network },
+	{ "ADDSERVER", add_server },
+	{ "BACKLOG", repl_command },
+	{ "CONNECT", com_connect_network },
+	{ "DELNETWORK", del_network },
+	{ "ECHO", cmd_echo },
+	{ "LOG_LEVEL", cmd_log_level },
+	{ "NEXTSERVER", com_next_server },
+	{ "CHARSET", handle_charset },
+	{ "DIE", handle_die },
+	{ "DISCONNECT", com_disconnect_network },
+	{ "LISTNETWORKS", list_networks },
+	{ "SAVECONFIG", com_save_config },
+	{ "DETACH", detach_client },
+	{ "HELP", cmd_help },
+	{ "DUMPJOINEDCHANNELS", dump_joined_channels },
+	{ "STARTLISTENER", cmd_start_listener },
+	{ "STOPLISTENER", cmd_stop_listener },
+	{ "LISTLISTENER", cmd_list_listener },
 #ifdef DEBUG
-	{ "ABORT", do_abort, "", NULL, NULL },
+	{ "ABORT", do_abort },
 #endif
 	{ NULL }
 };

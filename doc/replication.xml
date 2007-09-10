@@ -9,7 +9,7 @@
 	administration.
 	</para>
 
-	<sect1>
+	<sect1 id="repl simple">
 		<title>Simple replication</title>
 	
 		<para>All lines that 
@@ -18,7 +18,7 @@
 		</para>
 	</sect1>
 
-	<sect1>
+	<sect1 id="repl lastdisconnect">
 		<title>Since last disconnect</title>
 
 		<para> All lines that 
@@ -26,7 +26,7 @@
 			are stored and sent to a client that connects to ctrlproxy.</para>
 	</sect1>
 
-	<sect1>
+	<sect1 id="repl timereport">
 		<title>Time reporting</title>
 
 		<para>If the <option>time_report</option> option is set to true, ctrlproxy will print the time before every message. Such 

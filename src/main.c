@@ -1,6 +1,6 @@
 /*
 	ctrlproxy: A modular IRC proxy
-	(c) 2002-2006 Jelmer Vernooij <jelmer@nl.linux.org>
+	(c) 2002-2007 Jelmer Vernooij <jelmer@nl.linux.org>
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -35,10 +35,20 @@
 
 #include <netdb.h>
 
+#include "help.h"
+
 /* globals */
 static GMainLoop *main_loop;
 extern char my_hostname[];
 extern struct global *my_global;
+extern help_t *help; 
+
+static void signal_hup(int sig)
+{
+	char *logfile;
+	logfile = g_build_filename(my_global->config->config_dir, "log", NULL);
+	init_log(logfile);
+}
 
 static void signal_crash(int sig) 
 {
@@ -93,6 +103,7 @@ static void clean_exit()
 	nickserv_save(my_global, path);
 	stop_unix_socket(my_global);
 	stop_admin_socket(my_global);
+	fini_listeners(my_global);
 
 	free_global(my_global);
 
@@ -103,7 +114,7 @@ static void signal_quit(int sig)
 {
 	static int state = 0;
 	log_global(LOG_WARNING, "Received signal %d, quitting...", sig);
-	if(state == 1) { 
+	if (state == 1) { 
 		signal(SIGINT, SIG_IGN); 
 		exit(0);
 	}
@@ -165,7 +176,7 @@ int main(int argc, char **argv)
 	char *logfile = NULL;
 	extern enum log_level current_log_level;
 	extern gboolean no_log_timestamp;
-	const char *config_dir = NULL;
+	char *config_dir = NULL;
 	char *tmp;
 	gboolean admin = FALSE;
 	gboolean init = FALSE;
@@ -191,7 +202,7 @@ int main(int argc, char **argv)
 	signal(SIGPIPE, SIG_IGN);
 #endif
 #ifdef SIGHUP
-	signal(SIGHUP, SIG_IGN);
+	signal(SIGHUP, signal_hup);
 #endif
 #ifdef SIGSEGV
 	signal(SIGSEGV, signal_crash);
@@ -205,19 +216,19 @@ int main(int argc, char **argv)
 	pc = g_option_context_new("");
 	g_option_context_add_main_entries(pc, options, NULL);
 
-	if(!g_option_context_parse(pc, &argc, &argv, NULL))
+	if (!g_option_context_parse(pc, &argc, &argv, NULL))
 		return 1;
 
 	if (version) {
 		printf("ctrlproxy %s\n", VERSION);
-		printf("(c) 2002-2006 Jelmer Vernooij et al. <jelmer@nl.linux.org>\n");
+		printf("(c) 2002-2007 Jelmer Vernooij et al. <jelmer@nl.linux.org>\n");
 		return 0;
 	}
 
 	if (config_dir == NULL) 
 		config_dir = g_build_filename(g_get_home_dir(), ".ctrlproxy", NULL);
 
-	if(isdaemon && !logfile) {
+	if (isdaemon && !logfile) {
 		logfile = g_build_filename(config_dir, "log", NULL);
 	}
 
@@ -238,12 +249,12 @@ int main(int argc, char **argv)
 
 	log_global(LOG_INFO, "CtrlProxy %s starting", VERSION);
 
-	if(gethostname(my_hostname, MAXHOSTNAMELEN) != 0) {
+	if (gethostname(my_hostname, NI_MAXHOST) != 0) {
 		log_global(LOG_WARNING, "Can't figure out hostname of local host!");
 		return 1;
 	}
 
-	if(isdaemon) {
+	if (isdaemon) {
 #ifdef HAVE_DAEMON 
 #ifdef SIGTTOU
 		signal(SIGTTOU, SIG_IGN);
@@ -269,6 +280,8 @@ int main(int argc, char **argv)
 
 	init_admin();
 	init_nickserv();
+	init_replication();
+	help = help_load_file(HELPFILE);
 
 	/* Determine correct modules directory */
 	init_plugins(getenv("CTRLPROXY_MODULESDIR")?getenv("CTRLPROXY_MODULESDIR"):MODULESDIR);
@@ -278,7 +291,7 @@ int main(int argc, char **argv)
 	if (!g_file_test(tmp, G_FILE_TEST_EXISTS)) {
 		char *rcfile = g_build_filename(g_get_home_dir(), ".ctrlproxyrc", NULL);
 		
-		if(g_file_test(rcfile, G_FILE_TEST_EXISTS)) {
+		if (g_file_test(rcfile, G_FILE_TEST_EXISTS)) {
 			log_global(LOG_INFO, "Pre-3.0 style .ctrlproxyrc found");
 			log_global(LOG_INFO, "Run ctrlproxy-upgrade to update configuration");
 			return 1;
@@ -289,7 +302,7 @@ int main(int argc, char **argv)
 
 		g_free(rcfile);
 	} else {
-		my_global = new_global(config_dir);	
+		my_global = load_global(config_dir);	
 	}
 	g_free(tmp);
 
@@ -304,6 +317,8 @@ int main(int argc, char **argv)
 	start_admin_socket(my_global);
 
 	autoconnect_networks(my_global);
+
+	init_listeners(my_global);
 
 	g_option_context_free(pc);
 
@@ -324,6 +339,8 @@ int main(int argc, char **argv)
 	}
 
 	g_main_loop_run(main_loop);
+
+	g_free(config_dir);
 
 	return 0;
 }

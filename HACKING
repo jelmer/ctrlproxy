@@ -33,40 +33,15 @@ As has been said in the introduction, ctrlproxy
 is easily extendible. At the time of writing, there 
 are nine modules available.
 
-The simplest possible module would be:
-
-#include <ctrlproxy.h>
-
-gboolean init_plugin(struct plugin *p)
-{   
-	/* Do something */
-	return TRUE;
-}
-
-gboolean fini_plugin(struct plugin *p)
-{
-	/* Free my structures here */
-	return TRUE;
-}
+The simplest possible module can be found in example/foo.c in the source 
+distribution.
 
 The init_plugin function is called when the module is loaded. 
 In this function, you should register whatever functions the module 
 provides, such as a 'message handler' or a linestack backend. You 
-can use the data member of the 
-plugin struct to store data for your plugin. This function 
-should return a boolean: false when initialisation failed 
+can use the data member of the plugin struct to store data for your plugin. 
+This function should return a boolean: false when initialisation failed 
 or true when it succeeded.
-
-The fini_plugin function is called before the module is unloaded.
-In this function, you should free the data structures your module is 
-using and make sure there are no other pointers in ctrlproxy pointing 
-to functions or data structures from your module. For example, 
-unregister hooks.
-
-The fini_plugin should return a boolean as well. This value should be 
-true if the unloading may preceed, or false if there are reasons 
-ctrlproxy should not attempt to unload the module (such as resources 
-that are currently in use, etc).
 
 Building and installing
 -----------------------
@@ -180,7 +155,6 @@ If NULL was returned, one or more directories could not be created.
 
 Debugging
 ---------
-
 Two very useful utilities are valgrind and gdb. 
 
 If you're running from gdb, make sure you have set the following: 
@@ -198,5 +172,4 @@ DUMPJOINEDCHANNELS
 	thinks it has joined on the current network.
 
 CRASH
-	Makes the current plugin crash. This is useful 
-	for testing the auto-unload-on-crash functionality.
+	Generates a crash. 

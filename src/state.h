@@ -20,6 +20,7 @@
 #ifndef __CTRLPROXY_STATE_H__
 #define __CTRLPROXY_STATE_H__
 
+#include "isupport.h"
 #include "log.h"
 
 /**
@@ -78,6 +79,8 @@ struct channel_state {
 	char *name;
 	char *key;
 	char *topic;
+	time_t topic_set_time;
+	char *topic_set_by; /* nickname */
 	char mode; /* Private, secret, etc */
 	char modes[255];
 	time_t creation_time;
@@ -94,30 +97,6 @@ struct channel_state {
 	struct network_state *network;
 };
 
-enum casemapping { 
-		CASEMAP_UNKNOWN = 0, 
-		CASEMAP_RFC1459, 
-		CASEMAP_ASCII, 
-		CASEMAP_STRICT_RFC1459 
-	};
-
-/**
- * Information about a network (doesn't change between connects or 
- * servers).
- */
-struct network_info
-{
-	char *name;
-	char *server;
-	GHashTable *features;
-	char *supported_user_modes;
-	char *supported_channel_modes;
-	enum casemapping casemapping;
-	int channellen;
-	int nicklen;
-	int topiclen;
-};
-
 /**
  * Describes the (partial) state of a network at a specific time
  */
@@ -130,25 +109,21 @@ struct network_state
 	GList *channels;
 	GList *nicks;
 	struct network_nick me;
-	struct network_info *info;
+	struct network_info info;
+	gboolean is_away;
 };
 
 /* state.c */
-G_MODULE_EXPORT struct network_state *network_state_init(struct network_info *info, const char *nick, const char *username, const char *hostname);
+G_MODULE_EXPORT struct network_state *network_state_init(const char *nick, const char *username, const char *hostname);
 G_MODULE_EXPORT void free_network_state(struct network_state *);
 G_MODULE_EXPORT gboolean state_handle_data(struct network_state *s, struct line *l);
 
 G_MODULE_EXPORT struct channel_state *find_channel(struct network_state *st, const char *name);
 G_MODULE_EXPORT struct channel_nick *find_channel_nick(struct channel_state *c, const char *name);
+G_MODULE_EXPORT struct channel_nick *find_channel_nick_hostmask(struct channel_state *c, const char *hostmask);
 G_MODULE_EXPORT struct channel_nick *find_add_channel_nick(struct channel_state *c, const char *name);
 G_MODULE_EXPORT struct network_nick *find_network_nick(struct network_state *c, const char *name);
 G_MODULE_EXPORT gboolean network_nick_set_hostmask(struct network_nick *n, const char *hm);
 G_MODULE_EXPORT gboolean client_send_state(struct client *, struct network_state *);
-G_MODULE_EXPORT gboolean is_channelname(const char *name, const struct network_info *s);
-G_MODULE_EXPORT gboolean is_prefix(char p, const struct network_info *n);
-G_MODULE_EXPORT char get_prefix_by_mode(char p, const struct network_info *n);
-G_MODULE_EXPORT int irccmp(const struct network_info *n, const char *a, const char *b);
-G_MODULE_EXPORT gboolean network_supports(const struct network_info *n, const char *fe);
-G_MODULE_EXPORT const char *get_charset(const struct network_info *n);
 
 #endif /* __CTRLPROXY_STATE_H__ */

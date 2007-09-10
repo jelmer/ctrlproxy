@@ -60,3 +60,9 @@ build-stamp
 api
 test-*
 linestack-cmd
+debian/ctrlproxy-dev
+debian/tmp
+doc/help.txt
+coverage
+ctrlproxy.info
+doc/user-guide.tmp.xml

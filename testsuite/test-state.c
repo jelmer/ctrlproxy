@@ -28,7 +28,7 @@ gboolean network_nick_set_hostmask(struct network_nick *, const char *);
 struct network_nick *find_add_network_nick(struct network_state *n, const char *name);
 
 START_TEST(state_init)
-	struct network_state *ns = network_state_init(NULL, "bla", "Gebruikersnaam", "Computernaam");
+	struct network_state *ns = network_state_init("bla", "Gebruikersnaam", "Computernaam");
 
 	fail_if(ns == NULL, "network_state_init returned NULL");
 
@@ -49,7 +49,7 @@ void state_process(struct network_state *ns, const char *line)
 }
 
 START_TEST(state_join_me)
-	struct network_state *ns = network_state_init(NULL, "bla", "Gebruikersnaam", "Computernaam");
+	struct network_state *ns = network_state_init("bla", "Gebruikersnaam", "Computernaam");
 	struct channel_state *cs;
 
 	fail_if (!ns);
@@ -64,7 +64,7 @@ START_TEST(state_join_me)
 END_TEST
 
 START_TEST(state_join_other)
-	struct network_state *ns = network_state_init(NULL, "bla", "Gebruikersnaam", "Computernaam");
+	struct network_state *ns = network_state_init("bla", "Gebruikersnaam", "Computernaam");
 	struct channel_state *cs;
 
 	fail_if (!ns);
@@ -80,22 +80,24 @@ END_TEST
 
 
 START_TEST(state_topic)
-	struct network_state *ns = network_state_init(NULL, "bla", "Gebruikersnaam", "Computernaam");
+	struct network_state *ns = network_state_init("bla", "Gebruikersnaam", "Computernaam");
 	struct channel_state *cs;
 
 	fail_if (!ns);
 
 	state_process(ns, ":bla!user@host JOIN #examplechannel");
-	state_process(ns, "TOPIC #examplechannel :This is the topic");
+	state_process(ns, ":bla!user@host TOPIC #examplechannel :This is the topic");
 
 	cs = ns->channels->data;
 
 	fail_unless (strcmp(cs->topic, "This is the topic") == 0);
+	fail_unless (abs(cs->topic_set_time - time(NULL)) < 5);
+	fail_unless (strcmp(cs->topic_set_by, "bla") == 0);
 END_TEST
 
 
 START_TEST(state_part)
-	struct network_state *ns = network_state_init(NULL, "bla", "Gebruikersnaam", "Computernaam");
+	struct network_state *ns = network_state_init("bla", "Gebruikersnaam", "Computernaam");
 	struct channel_state *cs;
 
 	fail_if (!ns);
@@ -114,7 +116,7 @@ START_TEST(state_part)
 END_TEST
 
 START_TEST(state_cycle)
-	struct network_state *ns = network_state_init(NULL, "bla", "Gebruikersnaam", "Computernaam");
+	struct network_state *ns = network_state_init("bla", "Gebruikersnaam", "Computernaam");
 	struct channel_state *cs;
 
 	fail_if (!ns);
@@ -137,7 +139,7 @@ START_TEST(state_cycle)
 END_TEST
 
 START_TEST(state_kick)
-	struct network_state *ns = network_state_init(NULL, "bla", "Gebruikersnaam", "Computernaam");
+	struct network_state *ns = network_state_init("bla", "Gebruikersnaam", "Computernaam");
 	struct channel_state *cs;
 
 	fail_if (!ns);
@@ -156,7 +158,7 @@ START_TEST(state_kick)
 END_TEST
 
 START_TEST(state_nick_change_my)
-	struct network_state *ns = network_state_init(NULL, "bla", "Gebruikersnaam", "Computernaam");
+	struct network_state *ns = network_state_init("bla", "Gebruikersnaam", "Computernaam");
 
 	fail_if(ns == NULL);
 
@@ -166,7 +168,7 @@ START_TEST(state_nick_change_my)
 END_TEST
 
 START_TEST(state_nick_change_other)
-	struct network_state *ns = network_state_init(NULL, "bla", "Gebruikersnaam", "Computernaam");
+	struct network_state *ns = network_state_init("bla", "Gebruikersnaam", "Computernaam");
 
 	fail_if(ns == NULL);
 
@@ -208,7 +210,7 @@ START_TEST(state_set_hostmask)
 END_TEST
 
 START_TEST(state_find_network_nick)
-	struct network_state *ns = network_state_init(NULL, "bla", "Gebruikersnaam", "Computernaam");
+	struct network_state *ns = network_state_init("bla", "Gebruikersnaam", "Computernaam");
 
 	fail_if(ns == NULL);
 
@@ -219,7 +221,7 @@ START_TEST(state_find_network_nick)
 END_TEST
 
 START_TEST(state_find_add_network_nick)
-	struct network_state *ns = network_state_init(NULL, "bla", "Gebruikersnaam", "Computernaam");
+	struct network_state *ns = network_state_init("bla", "Gebruikersnaam", "Computernaam");
 
 	fail_if(ns == NULL);
 
@@ -228,7 +230,7 @@ START_TEST(state_find_add_network_nick)
 END_TEST
 
 START_TEST(state_handle_state_data)
-	struct network_state *ns = network_state_init(NULL, "bla", "Gebruikersnaam", "Computernaam");
+	struct network_state *ns = network_state_init("bla", "Gebruikersnaam", "Computernaam");
 	struct line l;
 	char *args1[] = {"JOIN", "#bla", NULL};
 	char *args2[] = {"UNKNOWN", "#bla", NULL};

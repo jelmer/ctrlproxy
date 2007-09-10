@@ -1,6 +1,6 @@
 /*
 	ctrlproxy: A modular IRC proxy
-	(c) 2002-2006 Jelmer Vernooij <jelmer@nl.linux.org>
+	(c) 2002-2007 Jelmer Vernooij <jelmer@nl.linux.org>
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -19,6 +19,7 @@
 
 
 #include "internals.h"
+#include "ssl.h"
 
 #ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
@@ -29,6 +30,7 @@
 #include <glib/gstdio.h>
 
 #define DEFAULT_ADMIN_PORT 6680
+#define DEFAULT_SOCKS_PORT 1080
 
 gboolean g_key_file_save_to_file(GKeyFile *kf, const gchar *file, GError **error)
 {
@@ -66,7 +68,9 @@ static void config_save_tcp_servers(struct network_config *n, GKeyFile *kf)
 
 		values[i] = name;
 
-		g_key_file_set_boolean(kf, name, "ssl", ts->ssl);
+		if (g_key_file_has_key(kf, name, "ssl", NULL) || ts->ssl)
+			g_key_file_set_boolean(kf, name, "ssl", ts->ssl);
+
 		if (ts->password)
 			g_key_file_set_string(kf, name, "password", ts->password);
 		else
@@ -143,6 +147,71 @@ static void config_save_network(const char *dir, struct network_config *n)
 	g_free(fn);
 }
 
+static void config_save_listeners(struct ctrlproxy_config *cfg, const char *path)
+{
+	GList *gl;
+	char *filename;
+	GKeyFile *kf; 
+	GError *error = NULL;
+	gboolean empty = TRUE;
+	char *default_password;
+
+	default_password = g_key_file_get_string(cfg->keyfile, "listener", "password", NULL);
+
+	if (cfg->auto_listener) {
+		g_key_file_set_boolean(cfg->keyfile, "listener", "auto", cfg->auto_listener);
+		g_key_file_set_integer(cfg->keyfile, "listener", "autoport", cfg->listener_autoport);
+	}
+
+	filename = g_build_filename(path, "listener", NULL);
+
+	kf = g_key_file_new();
+
+	for (gl = cfg->listeners; gl; gl = gl->next) {
+		struct listener_config *l = gl->data;
+
+		if (l->is_default) {
+			g_key_file_set_string(cfg->keyfile, "global", "port", l->port);
+			if (l->address != NULL)
+				g_key_file_set_string(cfg->keyfile, "global", "bind", l->address);
+			if (l->password != NULL)
+				g_key_file_set_string(cfg->keyfile, "global", "password", l->password);
+
+			if (g_key_file_has_key(cfg->keyfile, "global", "ssl", NULL) || l->ssl)
+				g_key_file_set_boolean(cfg->keyfile, "global", "ssl", l->ssl);
+		} else {
+			char *tmp;
+			empty = FALSE;
+			if (!l->address) 
+				tmp = g_strdup(l->port);
+			else
+				tmp = g_strdup_printf("%s:%s", l->address, l->port);
+
+			if (l->password != NULL && 
+				!(default_password != NULL && strcmp(l->password, default_password) == 0)) 
+				g_key_file_set_string(kf, tmp, "password", l->password);
+
+			if (l->network != NULL) {
+				g_key_file_set_string(kf, tmp, "network", l->network);
+			}
+
+			g_key_file_set_boolean(kf, tmp, "ssl", l->ssl);
+		
+			g_free(tmp);
+		}
+	}
+
+	if (empty) {
+		unlink(filename);
+	} else { 
+		if (!g_key_file_save_to_file(kf, filename, &error)) {
+			log_global(LOG_WARNING, "Unable to save to \"%s\": %s", filename, error->message);
+		}
+	}
+	
+	g_free(filename);
+}
+
 static void config_save_networks(const char *config_dir, GList *networks)
 {
 	char *networksdir = g_build_filename(config_dir, "networks", NULL);
@@ -180,20 +249,39 @@ void save_configuration(struct ctrlproxy_config *cfg, const char *configuration_
 		cfg->keyfile = g_key_file_new();
 
 	g_key_file_set_boolean(cfg->keyfile, "global", "autosave", cfg->autosave);
-	g_key_file_set_boolean(cfg->keyfile, "admin", "without_privmsg", cfg->admin_noprivmsg);
-	g_key_file_set_boolean(cfg->keyfile, "admin", "log", cfg->admin_log);
-	g_key_file_set_integer(cfg->keyfile, "global", "max_who_age", cfg->max_who_age);
+	if (cfg->admin_user != NULL)
+		g_key_file_set_string(cfg->keyfile, "global", "admin-user", cfg->admin_user);
 
-	g_key_file_set_string(cfg->keyfile, "client", "charset", cfg->client_charset);
+	if (g_key_file_has_key(cfg->keyfile, "global", "admin-log", NULL) ||
+		!cfg->admin_log)
+		g_key_file_set_boolean(cfg->keyfile, "global", "admin-log", cfg->admin_log);
+
+	if (g_key_file_has_key(cfg->keyfile, "global", "max_who_age", NULL) ||
+		cfg->max_who_age != 0)
+		g_key_file_set_integer(cfg->keyfile, "global", "max_who_age", cfg->max_who_age);
+
+	if (g_key_file_has_key(cfg->keyfile, "global", "learn-nickserv", NULL) ||
+		!cfg->learn_nickserv)
+		g_key_file_set_boolean(cfg->keyfile, "global", "learn-nickserv", cfg->learn_nickserv);
+
+	if (g_key_file_has_key(cfg->keyfile, "global", "learn-network-name", NULL) ||
+		!cfg->learn_network_name)
+		g_key_file_set_boolean(cfg->keyfile, "global", "learn-network-name", cfg->learn_network_name);
+
+	if (cfg->client_charset != NULL)
+		g_key_file_set_string(cfg->keyfile, "global", "client-charset", cfg->client_charset);
 	if (cfg->replication)
 		g_key_file_set_string(cfg->keyfile, "global", "replication", cfg->replication);
 	if (cfg->linestack_backend) 
 		g_key_file_set_string(cfg->keyfile, "global", "linestack", cfg->linestack_backend);
-	g_key_file_set_string(cfg->keyfile, "global", "motd-file", cfg->motd_file);
+	if (cfg->motd_file != NULL)
+		g_key_file_set_string(cfg->keyfile, "global", "motd-file", cfg->motd_file);
 
 	g_key_file_set_boolean(cfg->keyfile, "global", "report-time", cfg->report_time);
 
 	config_save_networks(configuration_dir, cfg->networks);
+
+	config_save_listeners(cfg, configuration_dir);
 
 	i = 0;
 	list = g_new0(char *, g_list_length(cfg->networks)+1);
@@ -257,7 +345,7 @@ static void config_load_servers(struct network_config *n)
 		}
 		
 		s->host = servers[i];
-		s->port = g_strdup(tmp?tmp:"6667");
+		s->port = g_strdup(tmp != NULL?tmp:DEFAULT_IRC_PORT);
 		s->bind_address = g_key_file_get_string(n->keyfile, servers[i], "bind", NULL);
 		if (s->bind_address && (tmp = strchr(s->bind_address, ':'))) {
 			*tmp = '\0';
@@ -298,11 +386,15 @@ static struct network_config *config_load_network(struct ctrlproxy_config *cfg, 
 	if (g_key_file_has_key(kf, "global", "fullname", NULL)) {
 		g_free(n->fullname);
 		n->fullname = g_key_file_get_string(kf, "global", "fullname", NULL);
+		if (!strcmp(n->fullname, "") || n->fullname[0] == ' ')
+			log_global(LOG_WARNING, "Invalid fullname `%s' set for network `%s'", n->fullname, n->name);
 	}
 
 	if (g_key_file_has_key(kf, "global", "nick", NULL)) {
 		g_free(n->nick);
 		n->nick = g_key_file_get_string(kf, "global", "nick", NULL);
+		if (!strcmp(n->nick, "") || n->nick[0] == ' ')
+			log_global(LOG_WARNING, "Invalid nick name `%s' set for `%s'", n->nick, n->name);
 	}
 
 	if (g_key_file_has_key(kf, "global", "reconnect-interval", NULL)) {
@@ -316,6 +408,8 @@ static struct network_config *config_load_network(struct ctrlproxy_config *cfg, 
 	if (g_key_file_has_key(kf, "global", "username", NULL)) {
 		g_free(n->username);
 		n->username = g_key_file_get_string(kf, "global", "username", NULL);
+		if (!strcmp(n->username, "") || n->username[0] == ' ')
+			log_global(LOG_WARNING, "Invalid username `%s' set for network `%s'", n->username, n->name);
 	}
 
 	if (g_key_file_has_key(kf, "global", "ignore_first_nick", NULL)) {
@@ -408,7 +502,7 @@ static struct network_config *find_create_network_config(struct ctrlproxy_config
 		tc->port = tc->host+1;
 		*tc->port = '\0';
 	} else {
-		tc->port = g_strdup("6667");
+		tc->port = g_strdup(DEFAULT_IRC_PORT);
 	}
 
 	nc->type_settings.tcp_servers = g_list_append(nc->type_settings.tcp_servers, tc);
@@ -416,6 +510,131 @@ static struct network_config *find_create_network_config(struct ctrlproxy_config
 	cfg->networks = g_list_append(cfg->networks, nc);
 
 	return nc;
+}
+
+static void config_load_listeners_socks(struct ctrlproxy_config *cfg)
+{
+	char **allows;
+	gsize size, i;
+	GKeyFile *kf = cfg->keyfile;
+	struct listener_config *l;
+
+	allows = g_key_file_get_string_list(kf, "socks", "allow", &size, NULL);
+
+	if (allows == NULL)
+		return;
+
+	g_key_file_remove_key(kf, "socks", "allow", NULL);
+
+	l = g_new0(struct listener_config, 1);
+
+	if (g_key_file_has_key(kf, "socks", "port", NULL)) 
+		l->port = g_key_file_get_string(kf, "socks", "port", NULL);
+	else 
+		l->port = g_strdup_printf("%d", DEFAULT_SOCKS_PORT);
+
+	/* We can use the socks listener as default listener, if there was 
+	 * no default listener specified */
+	if (cfg->listeners == NULL ||
+		!((struct listener_config *)cfg->listeners->data)->is_default)
+		l->is_default = TRUE;
+
+	g_key_file_remove_key(kf, "socks", "port", NULL);
+
+	for (i = 0; i < size; i++) {
+		struct allow_rule *r = g_new0(struct allow_rule, 1);
+		char **parts = g_strsplit(allows[i], ":", 2);
+					
+		r->username = parts[0];
+		r->password = parts[1];
+
+		g_free(parts);
+		l->allow_rules = g_list_append(l->allow_rules, r);
+	}
+
+	g_strfreev(allows);
+
+	cfg->listeners = g_list_append(cfg->listeners, l);
+}
+
+static void config_load_listeners(struct ctrlproxy_config *cfg)
+{
+	char *filename = g_build_filename(cfg->config_dir, "listener", NULL);
+	int i;
+	char **groups;
+	gsize size;
+	GKeyFile *kf;
+	char *default_password;
+	GError *error = NULL;
+
+	default_password = g_key_file_get_string(cfg->keyfile, "listener", "password", NULL);
+	if (g_key_file_has_key(cfg->keyfile, "listener", "auto", NULL))
+		cfg->auto_listener = g_key_file_get_boolean(cfg->keyfile, "listener", "auto", NULL);
+
+	if (g_key_file_has_key(cfg->keyfile, "listener", "autoport", NULL))
+		cfg->listener_autoport = g_key_file_get_integer(cfg->keyfile, "listener", "autoport", NULL);
+
+	if (g_key_file_has_key(cfg->keyfile, "global", "port", NULL)) {
+		struct listener_config *l = g_new0(struct listener_config, 1);
+		l->port = g_key_file_get_string(cfg->keyfile, "global", "port", NULL);
+		l->password = g_key_file_get_string(cfg->keyfile, "global", "password", NULL);
+		l->address = g_key_file_get_string(cfg->keyfile, "global", "bind", NULL);
+		l->ssl = g_key_file_has_key(cfg->keyfile, "global", "ssl", NULL) &&
+				 g_key_file_get_boolean(cfg->keyfile, "global", "ssl", NULL);
+		l->is_default = TRUE;
+
+		cfg->listeners = g_list_append(cfg->listeners, l);
+	}
+
+	kf = g_key_file_new();
+
+	if (!g_key_file_load_from_file(kf, filename, G_KEY_FILE_KEEP_COMMENTS, &error)) {
+		if (error->code != G_FILE_ERROR_NOENT)
+			log_global(LOG_ERROR, "Can't parse configuration file '%s': %s", filename, error->message);
+		g_free(filename);
+		return;
+	}
+		
+	groups = g_key_file_get_groups(kf, &size);
+
+	for (i = 0; i < size; i++)
+	{
+		struct listener_config *l;
+		char *tmp;
+		
+		l = g_new0(struct listener_config, 1);
+
+		tmp = g_strdup(groups[i]);
+		l->port = strrchr(tmp, ':');
+		if (l->port != NULL) {
+			l->address = tmp;
+			*l->port = '\0';
+			l->port++;
+		} else {
+			l->port = tmp;
+			l->address = NULL;
+		}
+
+		l->password = g_key_file_get_string(kf, groups[i], "password", NULL);
+		if (l->password == NULL)
+			l->password = default_password;
+
+		if (g_key_file_has_key(kf, groups[i], "ssl", NULL))
+			l->ssl = g_key_file_get_boolean(kf, groups[i], "ssl", NULL);
+
+#ifdef HAVE_GNUTLS
+		if (l->ssl)
+			l->ssl_credentials = ssl_create_server_credentials(cfg, kf, groups[i]);
+#endif
+
+		if (g_key_file_has_key(kf, groups[i], "network", NULL))
+			l->network = g_key_file_get_string(kf, groups[i], "network", NULL);
+
+		cfg->listeners = g_list_append(cfg->listeners, l);
+	}
+
+	g_strfreev(groups);
+	g_free(filename);
 }
 
 static void config_load_networks(struct ctrlproxy_config *cfg)
@@ -439,6 +658,14 @@ static void config_load_networks(struct ctrlproxy_config *cfg)
 	g_dir_close(dir);
 }
 
+struct ctrlproxy_config *init_configuration(void)
+{
+	struct ctrlproxy_config *cfg;
+	cfg = g_new0(struct ctrlproxy_config, 1);
+
+	return cfg;
+}
+
 struct ctrlproxy_config *load_configuration(const char *dir) 
 {
 	GKeyFile *kf;
@@ -452,7 +679,7 @@ struct ctrlproxy_config *load_configuration(const char *dir)
 
 	file = g_build_filename(dir, "config", NULL);
 
-	cfg = g_new0(struct ctrlproxy_config, 1);
+	cfg = init_configuration();
 	cfg->config_dir = g_strdup(dir);
 	cfg->network_socket = g_build_filename(cfg->config_dir, "socket", NULL);
 	cfg->admin_socket = g_build_filename(cfg->config_dir, "admin", NULL);
@@ -488,19 +715,43 @@ struct ctrlproxy_config *load_configuration(const char *dir)
 
     if (g_key_file_has_key(kf, "client", "charset", NULL))
 		cfg->client_charset = g_key_file_get_string(kf, "client", "charset", NULL);
+	else if (g_key_file_has_key(kf, "global", "client-charset", NULL))
+		cfg->client_charset = g_key_file_get_string(kf, "global", "client-charset", NULL);
     else 
-	    cfg->client_charset = g_strdup(DEFAULT_CLIENT_CHARSET);
+	    cfg->client_charset = NULL;
 
-	if(!g_file_test(cfg->motd_file, G_FILE_TEST_EXISTS))
+    if (g_key_file_has_key(kf, "global", "learn-nickserv", NULL))
+		cfg->learn_nickserv = g_key_file_get_boolean(kf, "global", "learn-nicksev", NULL);
+    else 
+	    cfg->learn_nickserv = TRUE;
+
+    if (g_key_file_has_key(kf, "global", "learn-network-name", NULL))
+		cfg->learn_network_name = g_key_file_get_boolean(kf, "global", "learn-network-name", NULL);
+    else 
+	    cfg->learn_network_name = TRUE;
+
+	if (!g_file_test(cfg->motd_file, G_FILE_TEST_EXISTS))
 		log_global(LOG_ERROR, "Can't open MOTD file '%s' for reading", cfg->motd_file);
 
-    if (g_key_file_has_key(kf, "admin", "without_privmsg", NULL))
-        cfg->admin_noprivmsg = g_key_file_get_boolean(kf, "admin", "without_privmsg", NULL);
+    if (g_key_file_has_key(kf, "admin", "without_privmsg", NULL)) {
+		if (g_key_file_get_boolean(kf, "admin", "without_privmsg", NULL)) {
+			cfg->admin_user = NULL;
+		} else {
+			cfg->admin_user = g_strdup("ctrlproxy");
+		}
+		g_key_file_remove_key(kf, "admin", "without_privmsg", NULL);
+	}
+
+	if (g_key_file_has_key(kf, "global", "admin-user", NULL)) {
+		cfg->admin_user = g_key_file_get_string(kf, "global", "admin-user", NULL);
+	}
 
 	cfg->admin_log = TRUE;
     if (g_key_file_has_key(kf, "admin", "log", NULL) && !g_key_file_get_boolean(kf, "admin", "log", NULL))
         cfg->admin_log = FALSE;
-
+	g_key_file_remove_key(kf, "admin", "log", NULL);
+    if (g_key_file_has_key(kf, "global", "admin-log", NULL) && !g_key_file_get_boolean(kf, "global", "admin-log", NULL))
+        cfg->admin_log = FALSE;
 
 	for (gl = cfg->networks; gl; gl = gl->next) {
 		struct network_config *nc = gl->data;
@@ -509,6 +760,9 @@ struct ctrlproxy_config *load_configuration(const char *dir)
 	}
 
 	config_load_networks(cfg);
+
+	config_load_listeners(cfg);
+	config_load_listeners_socks(cfg);
 
 	size = 0;
 	autoconnect_list = g_key_file_get_string_list(kf, "global", "autoconnect", &size, NULL);
@@ -533,7 +787,13 @@ struct network_config *network_config_init(struct ctrlproxy_config *cfg)
 	s->autoconnect = FALSE;
 	s->nick = g_strdup(g_get_user_name());
 	s->username = g_strdup(g_get_user_name());
+	g_assert(s->username != NULL && strlen(s->username) > 0);
 	s->fullname = g_strdup(g_get_real_name());
+	if (s->fullname == NULL || 
+		strlen(s->fullname) == 0) {
+		g_free(s->fullname);
+		s->fullname = g_strdup(s->username);
+	}
 	s->reconnect_interval = DEFAULT_RECONNECT_INTERVAL;
 
 	if (cfg) 
@@ -580,7 +840,7 @@ void free_config(struct ctrlproxy_config *cfg)
 			break;
 		}
 		cfg->networks = g_list_remove(cfg->networks, nc);
-		g_key_file_free(nc->keyfile);
+		if (nc->keyfile) g_key_file_free(nc->keyfile);
 		g_free(nc);
 	}
 	g_free(cfg->config_dir);
@@ -589,17 +849,17 @@ void free_config(struct ctrlproxy_config *cfg)
 	g_free(cfg->replication);
 	g_free(cfg->linestack_backend);
 	g_free(cfg->motd_file);
+	g_free(cfg->admin_user);
 	g_key_file_free(cfg->keyfile);
 	g_free(cfg);
 }
 
 gboolean create_configuration(const char *config_dir)
 {
-	GKeyFile *kf;
 	struct global *global;
 	char port[250];
-	char *pass, *listenerfile;
-	GError *error = NULL;
+	struct listener_config *l;
+	char *pass;
 
 	if (g_file_test(config_dir, G_FILE_TEST_IS_DIR)) {
 		fprintf(stderr, "%s already exists\n", config_dir);
@@ -611,17 +871,19 @@ gboolean create_configuration(const char *config_dir)
 		return FALSE;
 	}
 
-	global = new_global(DEFAULT_CONFIG_DIR);	
+	global = load_global(DEFAULT_CONFIG_DIR);	
+	if (global == NULL) { 
+		fprintf(stderr, "Unable to load default configuration '%s'\n", DEFAULT_CONFIG_DIR);	
+		return FALSE;
+	}
 	global->config->config_dir = g_strdup(config_dir);
 	save_configuration(global->config, config_dir);
-
-	kf = g_key_file_new();
 
 	snprintf(port, sizeof(port), "%d", DEFAULT_ADMIN_PORT);
 	printf("Please specify port the administration interface should listen on.\n"
 		   "Prepend with a colon to listen on a specific address.\n"
 		   "Example: localhost:6668\n\nPort [%s]: ", port); fflush(stdout);
-	if (fgets(port, sizeof(port), stdin))
+	if (!fgets(port, sizeof(port), stdin))
 		snprintf(port, sizeof(port), "%d", DEFAULT_ADMIN_PORT);
 
 	if (port[strlen(port)-1] == '\n')
@@ -630,20 +892,16 @@ gboolean create_configuration(const char *config_dir)
 	if (strlen(port) == 0) 
 		snprintf(port, sizeof(port), "%d", DEFAULT_ADMIN_PORT);
 
+	l = g_new0(struct listener_config, 1);
 	pass = getpass("Please specify a password for the administration interface: "); 
-	g_key_file_set_string(kf, port, "network", "admin");
+	l->port = port;
 	if (!strcmp(pass, "")) {
 		fprintf(stderr, "Warning: no password specified. Authentication disabled!\n");
 	} else {
-		g_key_file_set_string(kf, port, "password", pass);
+		l->password = pass;
 	}
 
-	listenerfile = g_build_filename(config_dir, "listener", NULL);
-
-	if (!g_key_file_save_to_file(kf, listenerfile, &error)) {
-		fprintf(stderr, "Error saving %s: %s\n", listenerfile, error->message);
-		return FALSE;
-	}
+	global->config->listeners = g_list_append(global->config->listeners, l);
 
 	return TRUE;
 }

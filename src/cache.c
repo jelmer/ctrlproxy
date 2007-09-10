@@ -142,7 +142,7 @@ static gboolean client_try_cache_topic(struct client *c, struct line *l)
 	ch = find_channel(c->network->state, l->args[1]);
 	if (!ch) return FALSE;
 
-	if(ch->topic) {
+	if (ch->topic) {
 		client_send_response(c, RPL_TOPIC, ch->name, ch->topic, NULL);
 	} else {
 		client_send_response(c, RPL_NOTOPIC, ch->name, "No topic set", NULL);
@@ -171,6 +171,9 @@ static gboolean client_try_cache_who(struct client *c, struct line *l)
 	/* Only optimize easy queries... */
 	if (strchr(l->args[1], ',')) return FALSE;
 	if (strchr(l->args[1], '*')) return FALSE;
+
+	/* Don't cache complex requests.. for now */
+	if (l->argc > 2) return FALSE;
 
 	max_who_age = c->network->global->config->max_who_age;
 
@@ -206,7 +209,8 @@ static gboolean client_try_cache_who(struct client *c, struct line *l)
 		struct network_nick *nn = cn->global_nick;
 		char *info = g_strdup_printf("%d %s", nn->hops, nn->fullname);
 		
-		client_send_response(c, RPL_WHOREPLY, l->args[1], nn->username, nn->hostname, nn->server, nn->nick, 
+		client_send_response(c, RPL_WHOREPLY, l->args[1], nn->username, 
+							 nn->hostname, nn->server, nn->nick, 
 							 cn->last_flags, info, NULL);
 
 		g_free(info);

@@ -1,7 +1,5 @@
 -include Makefile.settings
 
-VPATH = src:testsuite
-
 MODS_SHARED_FILES = $(patsubst %,mods/lib%.$(SHLIBEXT),$(MODS_SHARED))
 
 GCOV = gcov
@@ -15,7 +13,7 @@ endif
 LIBS += $(GNUTLS_LIBS)
 CFLAGS += $(GNUTLS_CFLAGS)
 
-CFLAGS+=-DHAVE_CONFIG_H -DSHAREDIR=\"$(cdatadir)\" -DDEFAULT_CONFIG_DIR=\"$(DEFAULT_CONFIG_DIR)\"
+CFLAGS+=-DHAVE_CONFIG_H -DSHAREDIR=\"$(cdatadir)\" -DDEFAULT_CONFIG_DIR=\"$(DEFAULT_CONFIG_DIR)\" -DHELPFILE=\"$(HELPFILE)\"
 CFLAGS+=-ansi -Wall -DMODULESDIR=\"$(modulesdir)\" -DSTRICT_MEMORY_ALLOCS=
 
 .PHONY: all clean distclean install install-bin install-dirs install-doc install-data install-mods install-pkgconfig
@@ -48,6 +46,10 @@ objs = src/network.o \
 	   src/admin.o \
 	   src/user.o \
 	   src/pipes.o \
+	   src/help.o \
+	   src/repl_backends.o \
+	   src/listener.o \
+	   src/log_support.o \
 	   $(SSL_OBJS)
 
 headers = src/admin.h \
@@ -59,20 +61,22 @@ headers = src/admin.h \
 		  src/line.h \
 		  src/linestack.h \
 		  src/network.h \
+		  src/log_support.h \
 		  src/repl.h \
 		  src/settings.h \
 		  src/ssl.h \
 		  src/state.h \
+		  src/isupport.h \
 		  src/log.h
 dep_files = $(patsubst %.o, %.d, $(objs)) $(patsubst %.o, %.d, $(wildcard mods/*.o))
 
 linestack-cmd$(EXEEXT): src/linestack-cmd.o $(objs)
 	@echo Linking $@
-	@$(CC) $(LIBS) -lreadline -rdynamic -o $@ $^
+	@$(LD) $(LIBS) -lreadline -rdynamic -o $@ $^
 
 ctrlproxy$(EXEEXT): src/main.o $(objs)
 	@echo Linking $@
-	@$(CC) $(LIBS) -rdynamic -o $@ $^
+	@$(LD) $(LDFLAGS) -rdynamic -o $@ $^ $(LIBS)
 
 mods/%.o: mods/%.c
 	@echo Compiling for shared library $<
@@ -83,32 +87,57 @@ mods/%.o: mods/%.c
 	@$(CC) -I. -Isrc $(CFLAGS) $(GCOV_CFLAGS) -c $< -o $@
 
 %.d: %.c
-	@$(CC) -I. -Isrc -M -MG -MP -MT $(<:.c=.o) $(CFLAGS) $< -o $@
+	@$(CC) -I. -Isrc -M -MT $(<:.c=.o) $(CFLAGS) $< -o $@
 
+ifeq ($(BZR_CHECKOUT),yes)
 configure: autogen.sh configure.ac acinclude.m4 $(wildcard mods/*/*.m4)
 	./$<
+endif
 
 ctrlproxy.pc Makefile.settings: configure Makefile.settings.in ctrlproxy.pc.in
 	./$<
 
-install: all install-dirs install-bin install-mods install-data install-pkgconfig $(EXTRA_INSTALL_TARGETS)
+install: all install-dirs install-bin install-header install-mods install-data install-pkgconfig $(EXTRA_INSTALL_TARGETS)
 install-dirs:
-	$(INSTALL) -d $(DESTDIR)$(bindir)
-	$(INSTALL) -d $(DESTDIR)$(destincludedir)
 	$(INSTALL) -d $(DESTDIR)$(modulesdir)
-	$(INSTALL) -d $(DESTDIR)$(docdir)
-	$(INSTALL) -d $(DESTDIR)$(cdatadir)
-	$(INSTALL) -d $(DESTDIR)$(libdir)/pkgconfig
+
+uninstall: uninstall-bin uninstall-header uninstall-mods uninstall-data uninstall-pkgconfig $(patsubst install-%,uninstall-%,$(EXTRA_INSTALL_TARGETS))
+uninstall-bin:
+	-rm -f $(DESTDIR)$(bindir)/ctrlproxy$(EXEEXT)
+	-rmdir $(DESTDIR)$(bindir)
 
 install-bin:
+	$(INSTALL) -d $(DESTDIR)$(bindir)
 	$(INSTALL) ctrlproxy$(EXEEXT) $(DESTDIR)$(bindir)
 
-install-doc: doc
+uninstall-header:
+	-rm -f $(patsubst %,$(DESTDIR)$(destincludedir)/%,$(notdir $(headers)))
+	-rmdir $(DESTDIR)$(destincludedir)
+
+install-header::
+	$(INSTALL) -d $(DESTDIR)$(destincludedir)
 	$(INSTALL) -m 0644 $(headers) $(DESTDIR)$(destincludedir)
+
+install-doc:: doc
+	$(INSTALL) -d $(DESTDIR)$(docdir)
 	$(INSTALL) -m 0644 UPGRADING $(DESTDIR)$(docdir)
 	$(MAKE) -C doc install PACKAGE_VERSION=$(PACKAGE_VERSION)
 
+uninstall-doc: 
+	$(MAKE) -C doc uninstall
+	rm -f $(DESTDIR)$(docdir)/UPGRADING
+	-rmdir $(DESTDIR)$(docdir)
+
+uninstall-data::
+	-rm -f $(DESTDIR)$(cdatadir)/motd
+	-rm -f $(DESTDIR)$(DEFAULT_CONFIG_DIR)/config
+	-rm -f $(DESTDIR)$(DEFAULT_CONFIG_DIR)/networks/admin
+	-rmdir $(DESTDIR)$(DEFAULT_CONFIG_DIR)/networks
+	-rmdir $(DESTDIR)$(DEFAULT_CONFIG_DIR)
+	-rmdir $(DESTDIR)$(cdatadir)
+
 install-data:
+	$(INSTALL) -d $(DESTDIR)$(cdatadir)
 	$(INSTALL) -m 0644 motd $(DESTDIR)$(cdatadir)
 	$(INSTALL) -d $(DESTDIR)$(DEFAULT_CONFIG_DIR)
 	$(INSTALL) -d $(DESTDIR)$(DEFAULT_CONFIG_DIR)/networks
@@ -119,15 +148,28 @@ install-mods: all
 	$(INSTALL) -d $(DESTDIR)$(modulesdir)
 	$(INSTALL) $(MODS_SHARED_FILES) $(DESTDIR)$(modulesdir)
 
+uninstall-mods:
+	-rm -f $(patsubst %,$(DESTDIR)$(modulesdir)/%,$(notdir $(MODS_SHARED_FILES)))
+	-rmdir $(DESTDIR)$(modulesdir)
+
 install-pkgconfig:
+	$(INSTALL) -d $(DESTDIR)$(libdir)/pkgconfig
 	$(INSTALL) -m 0644 ctrlproxy.pc $(DESTDIR)$(libdir)/pkgconfig
 
+uninstall-pkgconfig:
+	-rm -f $(DESTDIR)$(libdir)/pkgconfig/ctrlproxy.pc
+	-rmdir $(DESTDIR)$(libdir)/pkgconfig
+
 gcov: test
-	$(GCOV) -p -o src/ src/*.c 
+	$(GCOV) -f -p -o src/ src/*.c 
+
+lcov:
+	lcov --base-directory `pwd` --directory . --capture --output-file ctrlproxy.info
+	genhtml -o coverage ctrlproxy.info
 
 mods/lib%.$(SHLIBEXT): mods/%.o
 	@echo Linking $@
-	@$(CC) $(LDFLAGS) -fPIC -shared -o $@ $^
+	@$(LD) $(LDFLAGS) -fPIC -shared -o $@ $^
 
 clean::
 	@echo Removing .so files
@@ -170,19 +212,25 @@ rfctest: testsuite/ctrlproxyrc.torture
 
 # Unit tests
 check_objs = testsuite/test-cmp.o testsuite/test-user.o \
-			 testsuite/test-isupport.o testsuite/test-parser.o \
-			 testsuite/test-state.o testsuite/test-util.o \
-			 testsuite/test-line.o testsuite/torture.o \
-			 testsuite/test-linestack.o testsuite/test-client.o \
-			 testsuite/test-network.o testsuite/test-tls.o
+			 testsuite/test-admin.o testsuite/test-isupport.o \
+			 testsuite/test-parser.o testsuite/test-state.o \
+			 testsuite/test-util.o testsuite/test-line.o \
+			 testsuite/torture.o testsuite/test-linestack.o \
+			 testsuite/test-client.o testsuite/test-network.o \
+			 testsuite/test-tls.o testsuite/test-redirect.o \
+			 testsuite/test-networkinfo.o testsuite/test-ctcp.o \
+			 testsuite/test-help.o testsuite/test-nickserv.o
+
 testsuite/check: $(check_objs) $(objs)
 	@echo Linking $@
-	@$(CC) $(LIBS) -o $@ $^ -lcheck
+	@$(CC) $(LIBS) -o $@ $^ $(CHECK_LIBS)
 
 CTRLPROXY_MODULESDIR=$(shell pwd)/mods
 
-test: testsuite/check
+test:: testsuite/check
 	@echo Running testsuite
 	@$(VALGRIND) ./testsuite/check
+
+check: test
 
 -include $(dep_files)
