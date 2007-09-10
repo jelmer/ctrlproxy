@@ -105,6 +105,11 @@ static void client_send_channel_state(struct client *c,
 		g_free(arg);
 	}
 
+	if (l != NULL) {
+		client_send_line(c, l);
+		free_line(l);
+	}
+
 	client_send_response(c, RPL_ENDOFNAMES, ch->name, "End of /NAMES list", 
 						 NULL);
 }
