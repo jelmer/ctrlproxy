@@ -53,7 +53,7 @@ static gboolean client_send_queue(struct client *c)
 		if (status == G_IO_STATUS_AGAIN)
 			return TRUE;
 
-		g_queue_pop_head(c->pending_lines);
+		g_assert(g_queue_pop_head(c->pending_lines) == l);
 
 		if (status == G_IO_STATUS_ERROR) {
 			log_client(LOG_WARNING, c, "Error sending line '%s': %s", 
@@ -253,6 +253,9 @@ gboolean client_send_line(struct client *c, const struct line *l)
 			g_queue_push_tail(c->pending_lines, linedup(l));
 		} else if (status != G_IO_STATUS_NORMAL) {
 			c->connected = FALSE;
+
+			log_client(LOG_WARNING, c, "Error sending line '%s': %s", 
+							l->args[0], error->message);
 
 			return FALSE;
 		} 
