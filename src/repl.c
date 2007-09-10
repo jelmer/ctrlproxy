@@ -96,7 +96,7 @@ static void client_send_channel_state(struct client *c,
 			}
 
 			l = irc_parse_line_args(client_get_default_origin(c), 
-									__STRING(RPL_NAMREPLY), 
+									"353",
 									client_get_default_target(c),
 									mode, ch->name, NULL);
 			g_assert(line_add_arg(l, arg));
