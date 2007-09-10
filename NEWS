@@ -32,6 +32,8 @@ Ctrlproxy 3.0.4 UNRELEASED
 
     * Add support for handling additional 005 parameters: HCN.
 
+	* Compress /NAMES lines (#123).
+
   INTERNALS
 
     * Moved some common logging code to the core.

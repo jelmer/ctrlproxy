@@ -59,8 +59,8 @@ G_MODULE_EXPORT GIOStatus irc_sendf(GIOChannel *, GIConv,
 G_MODULE_EXPORT GIOStatus irc_send_line(GIOChannel *, GIConv,
 										const struct line *l,
                                         GError **);
-G_MODULE_EXPORT struct line *irc_parse_linef( char *origin, ... );
-G_MODULE_EXPORT struct line *irc_parse_line_args( char *origin, ... );
+G_MODULE_EXPORT struct line *irc_parse_linef(const char *origin, ... );
+G_MODULE_EXPORT struct line *irc_parse_line_args(const char *origin, ... );
 
 /**
  * Read a line from an IO Channel. This will return a line _with_ UTF-8 
@@ -69,5 +69,7 @@ G_MODULE_EXPORT struct line *irc_parse_line_args( char *origin, ... );
 G_MODULE_EXPORT GIOStatus irc_recv_line(GIOChannel *c, GIConv iconv,
 										GError **err, 
 										struct line **);
+
+G_MODULE_EXPORT gboolean line_add_arg(struct line *l, const char *arg);
 
 #endif /* __CTRLPROXY_LINE_H__ */

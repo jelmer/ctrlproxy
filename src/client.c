@@ -162,7 +162,7 @@ gboolean client_send_response(struct client *c, int response, ...)
 	g_assert(response > 0);
 	
 	va_start(ap, response);
-	l = virc_parse_line(c->network?c->network->info.name:get_my_hostname(), ap);
+	l = virc_parse_line(client_get_default_origin(c), ap);
 	va_end(ap);
 
 	l->args = g_realloc(l->args, sizeof(char *) * (l->argc+4));
@@ -170,14 +170,7 @@ gboolean client_send_response(struct client *c, int response, ...)
 
 	l->args[0] = g_strdup_printf("%03d", response);
 
-	if (c->nick != NULL) 
-		l->args[1] = g_strdup(c->nick);
-	else if (c->network != NULL && 
-			 c->network->state != NULL && 
-			 c->network->state->me.nick != NULL) 
-		l->args[1] = g_strdup(c->network->state->me.nick);
-	else 
-		l->args[1] = g_strdup("*");
+	l->args[1] = g_strdup(client_get_default_target(c));
 
 	l->argc+=2;
 	l->args[l->argc] = NULL;
@@ -227,7 +220,7 @@ gboolean client_send_args(struct client *c, ...)
 	g_assert(c);
 	
 	va_start(ap, c);
-	l = virc_parse_line(get_my_hostname(), ap);
+	l = virc_parse_line(client_get_default_origin(c), ap);
 	va_end(ap);
 
 	ret = client_send_line(c, l);
@@ -563,7 +556,7 @@ static gboolean handle_pending_client_receive(GIOChannel *c,
 			} else {
 				client_send_response(client, ERR_NOTREGISTERED, 
 					"Register first", 
-					client->network?client->network->info.name:get_my_hostname(), NULL);
+					client_get_default_origin(client), NULL);
 			}
 
 			free_line(l);
@@ -723,3 +716,22 @@ gboolean client_set_charset(struct client *c, const char *name)
 
 	return TRUE;
 }
+
+const char *client_get_default_origin(struct client *c)
+{
+	return c->network?c->network->info.name:get_my_hostname();
+}
+
+const char *client_get_default_target(struct client *c)
+{
+	if (c->nick != NULL) 
+		return c->nick;
+	
+	if (c->network != NULL && 
+		c->network->state != NULL && 
+		c->network->state->me.nick != NULL) 
+		return c->network->state->me.nick;
+
+	return "*";
+}
+
