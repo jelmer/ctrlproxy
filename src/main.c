@@ -192,6 +192,7 @@ int main(int argc, char **argv)
 		{"version", 'v', 0, G_OPTION_ARG_NONE, &version, ("Show version information")},
 		{ NULL }
 	};
+	GError *error;
 
 	signal(SIGINT, signal_quit);
 	signal(SIGTERM, signal_quit);
@@ -213,8 +214,10 @@ int main(int argc, char **argv)
 	pc = g_option_context_new("");
 	g_option_context_add_main_entries(pc, options, NULL);
 
-	if (!g_option_context_parse(pc, &argc, &argv, NULL))
+	if (!g_option_context_parse(pc, &argc, &argv, &error)) {
+		fprintf(stderr, "%s\n", error->message);
 		return 1;
+	}
 
 	if (version) {
 		printf("ctrlproxy %s\n", VERSION);

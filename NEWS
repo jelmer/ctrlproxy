@@ -34,6 +34,9 @@ Ctrlproxy 3.0.4 UNRELEASED
 
 	* Compress /NAMES lines (#123).
 
+	* Bail out when invalid arguments are specified on the command-line
+	  (Emanuele Giaquinta <e.giaquinta@glauco.it>)
+
   INTERNALS
 
     * Moved some common logging code to the core.
