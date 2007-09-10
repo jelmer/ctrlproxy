@@ -39,39 +39,10 @@
 static GList *pending_clients = NULL;
 static gboolean handle_client_receive(GIOChannel *c, GIOCondition cond, 
 									  void *_client);
+static gboolean handle_client_send_queue(GIOChannel *c, GIOCondition cond, 
+									  void *_client);
 
-static gboolean client_send_queue(struct client *c)
-{
-	while (!g_queue_is_empty(c->pending_lines)) {
-		GIOStatus status;
-		GError *error = NULL;
-		struct line *l = g_queue_peek_head(c->pending_lines);
 
-		g_assert(c->incoming != NULL);
-		status = irc_send_line(c->incoming, c->outgoing_iconv, l, &error);
-
-		if (status == G_IO_STATUS_AGAIN)
-			return TRUE;
-
-		g_assert(g_queue_pop_head(c->pending_lines) == l);
-
-		if (status == G_IO_STATUS_ERROR) {
-			log_client(LOG_WARNING, c, "Error sending line '%s': %s", 
-							l->args[0], error->message);
-		} else if (status == G_IO_STATUS_EOF) {
-			disconnect_client(c, "Hangup from client");
-
-			free_line(l);
-
-			return FALSE;
-		}
-
-		free_line(l);
-	}
-
-	c->outgoing_id = 0;
-	return FALSE;
-}
 
 /**
  * Process incoming lines from a client.
@@ -249,7 +220,7 @@ gboolean client_send_line(struct client *c, const struct line *l)
 
 		if (status == G_IO_STATUS_AGAIN) {
 			c->outgoing_id = g_io_add_watch(c->incoming, G_IO_OUT, 
-											handle_client_receive, c);
+											handle_client_send_queue, c);
 			g_queue_push_tail(c->pending_lines, linedup(l));
 		} else if (status != G_IO_STATUS_NORMAL) {
 			c->connected = FALSE;
@@ -339,6 +310,46 @@ void send_motd(struct client *c)
 	client_send_response(c, RPL_ENDOFMOTD, "End of MOTD", NULL);
 }
 
+static gboolean handle_client_send_queue(GIOChannel *ioc, GIOCondition cond, 
+									  void *_client)
+{
+	struct client *c = _client;
+
+	g_assert(ioc == c->incoming);
+
+	while (!g_queue_is_empty(c->pending_lines)) {
+		GIOStatus status;
+		GError *error = NULL;
+		struct line *l = g_queue_peek_head(c->pending_lines);
+
+		g_assert(c->incoming != NULL);
+		status = irc_send_line(c->incoming, c->outgoing_iconv, l, &error);
+
+		if (status == G_IO_STATUS_AGAIN)
+			return TRUE;
+
+		g_assert(g_queue_pop_head(c->pending_lines) == l);
+
+		if (status == G_IO_STATUS_ERROR) {
+			log_client(LOG_WARNING, c, "Error sending line '%s': %s", 
+							l->args[0], error->message);
+		} else if (status == G_IO_STATUS_EOF) {
+			c->outgoing_id = 0;
+			disconnect_client(c, "Hangup from client");
+
+			free_line(l);
+
+			return FALSE;
+		}
+
+		free_line(l);
+	}
+
+	c->outgoing_id = 0;
+	return FALSE;
+}
+
+
 static gboolean handle_client_receive(GIOChannel *c, GIOCondition cond, 
 									  void *_client)
 {
@@ -392,10 +403,6 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition cond,
 				return FALSE;
 			}
 		}
-	}
-
-	if (cond & G_IO_OUT) {
-		ret &= client_send_queue(client);
 	}
 
 	return ret;
