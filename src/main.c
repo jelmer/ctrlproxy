@@ -103,7 +103,6 @@ static void clean_exit()
 	nickserv_save(my_global, path);
 	stop_unix_socket(my_global);
 	fini_listeners(my_global);
-
 	free_global(my_global);
 
 	g_main_loop_unref(main_loop);

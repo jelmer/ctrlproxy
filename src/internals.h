@@ -133,4 +133,6 @@ gboolean create_configuration(const char *config_dir);
 gboolean start_unix_socket(struct global *);
 gboolean stop_unix_socket(struct global *);
 
+void free_listeners(struct global *global);
+
 #endif /* __INTERNALS_H__ */

@@ -398,6 +398,12 @@ gboolean stop_listener(struct listener *l)
 	return TRUE;
 }
 
+void free_listeners(struct global *global)
+{
+	while (global->listeners)
+		free_listener((struct listener *)global->listeners->data);
+}
+
 void free_listener(struct listener *l)
 {
 	l->global->listeners = g_list_remove(l->global->listeners, l);
