@@ -81,7 +81,8 @@ static gboolean handle_client_line(GIOChannel *c, struct pending_client *pc, con
 			networkname = l->args[1];
 		} else if (strcmp(l->args[1], pc->listener->config->password) == 0) {
 			authenticated = TRUE;
-		} else if (strncmp(l->args[1], pc->listener->config->password, strlen(pc->listener->config->password)) == 0 &&
+		} else if (strncmp(l->args[1], pc->listener->config->password, 
+						   strlen(pc->listener->config->password)) == 0 &&
 				   l->args[1][strlen(pc->listener->config->password)] == ':') {
 			authenticated = TRUE;
 			networkname = l->args[1]+strlen(pc->listener->config->password)+1;
@@ -575,8 +576,14 @@ static gboolean pass_handle_data(struct pending_client *cl)
 		break;
 	}
 
-	if (strcmp(cl->listener->config->password, pass) == 0)
+	if (cl->listener->config->password == NULL)
+		log_network(LOG_WARNING, cl->listener->network, 
+					"No password set, allowing client _without_ authentication!");
+
+	if (cl->listener->config->password == NULL ||
+		strcmp(cl->listener->config->password, pass) == 0) {
 		header[1] = 0x0;
+	}
 
 	status = g_io_channel_write_chars(cl->connection, header, 2, &read, NULL);
 	if (status != G_IO_STATUS_NORMAL) {
