@@ -78,7 +78,7 @@ struct global {
 
 struct plugin_ops {
 	int version;
-	const char *name;
+	char *name;
 	gboolean (*init) (void);
 };
 

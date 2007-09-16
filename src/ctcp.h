@@ -30,7 +30,7 @@ struct ctcp_handle;
  * CTCP command handling
  */
 struct ctcp_handler {
-	const char *name;
+	char *name;
 	void (*fn) (struct ctcp_handle *, char **args);
 };
 

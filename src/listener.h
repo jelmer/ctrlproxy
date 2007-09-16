@@ -31,8 +31,8 @@ struct socks_method;
 
 struct pending_client {
 	GIOChannel *connection;
-	const char *user;
-	const char *password;
+	char *user;
+	char *password;
 	gint watch_id;
 	struct sockaddr *clientname;
 	socklen_t clientname_len;

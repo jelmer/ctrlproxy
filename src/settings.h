@@ -82,8 +82,8 @@ struct network_config
 };
 
 struct allow_rule {
-	const char *username;
-	const char *password;
+	char *username;
+	char *password;
 };
 
 struct listener_config {
