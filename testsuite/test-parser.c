@@ -210,7 +210,7 @@ START_TEST(send_args)
 	g_io_channel_set_encoding(ch1, NULL, NULL);
 	g_io_channel_set_encoding(ch2, NULL, NULL);
 
-	irc_send_args(ch1, (GIConv)-1, NULL, "PRIVMSG", "foo", NULL);
+	fail_unless(irc_send_args(ch1, (GIConv)-1, NULL, "PRIVMSG", "foo", NULL) == G_IO_STATUS_NORMAL);
 
 	g_io_channel_read_line(ch2, &str, NULL, NULL, NULL);
 
@@ -230,7 +230,7 @@ START_TEST(send_args_utf8)
 	g_io_channel_set_encoding(ch1, NULL, NULL);
 	g_io_channel_set_encoding(ch2, NULL, NULL);
 
-	irc_send_args(ch1, iconv, NULL, "PRIVMSG", "fooö", NULL);
+	fail_unless(irc_send_args(ch1, iconv, NULL, "PRIVMSG", "fooö", NULL) == G_IO_STATUS_NORMAL);
 
 	g_iconv_close(iconv);
 
