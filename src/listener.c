@@ -39,6 +39,12 @@
 
 #include <netdb.h>
 
+struct listener_iochannel {
+	char address[NI_MAXHOST];
+	char port[NI_MAXSERV];
+	gint watch_id;
+};
+
 static GIConv iconv = (GIConv)-1;
 
 static gboolean kill_pending_client(struct pending_client *pc)

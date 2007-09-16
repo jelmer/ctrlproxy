@@ -48,7 +48,6 @@
 #endif /* HAVE_NETINET_IN6_H */
 #include "ctrlproxy.h"
 #include "plugins.h"
-#include "listener.h"
 #include "local.h"
 
 #define DEFAULT_RECONNECT_INTERVAL 	60

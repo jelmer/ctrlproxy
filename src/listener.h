@@ -21,12 +21,6 @@ struct listener {
 	struct global *global;
 };
 
-struct listener_iochannel {
-	char address[NI_MAXHOST];
-	char port[NI_MAXSERV];
-	gint watch_id;
-};
-
 struct socks_method;
 
 struct pending_client {
