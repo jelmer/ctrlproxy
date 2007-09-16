@@ -350,7 +350,10 @@ static gboolean replay_line(struct line *l, time_t t, void *state)
 	return TRUE;
 }
 
-gboolean linestack_replay(struct linestack_context *ctx, struct linestack_marker *mf, struct linestack_marker *mt, struct network_state *st)
+gboolean linestack_replay(struct linestack_context *ctx, 
+						  struct linestack_marker *mf, 
+						  struct linestack_marker *mt, 
+						  struct network_state *st)
 {
 	return linestack_traverse(ctx, mf, mt, replay_line, st);
 }

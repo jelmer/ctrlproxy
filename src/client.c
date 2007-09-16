@@ -43,7 +43,6 @@ static gboolean handle_client_send_queue(GIOChannel *c, GIOCondition cond,
 									  void *_client);
 
 
-
 /**
  * Process incoming lines from a client.
  *
@@ -320,15 +319,15 @@ static gboolean handle_client_send_queue(GIOChannel *ioc, GIOCondition cond,
 	while (!g_queue_is_empty(c->pending_lines)) {
 		GIOStatus status;
 		GError *error = NULL;
-		struct line *l = g_queue_peek_head(c->pending_lines);
+		struct line *l = g_queue_pop_head(c->pending_lines);
 
 		g_assert(c->incoming != NULL);
 		status = irc_send_line(c->incoming, c->outgoing_iconv, l, &error);
 
-		if (status == G_IO_STATUS_AGAIN)
+		if (status == G_IO_STATUS_AGAIN) {
+			g_queue_push_head(c->pending_lines, l);
 			return TRUE;
-
-		g_assert(g_queue_pop_head(c->pending_lines) == l);
+		}
 
 		if (status == G_IO_STATUS_ERROR) {
 			log_client(LOG_WARNING, c, "Error sending line '%s': %s", 

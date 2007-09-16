@@ -11,16 +11,80 @@ static struct linestack_context *ctx = NULL;
 static struct network_state *state = NULL;
 static struct ctrlproxy_config *cfg = NULL;
 
+static void handle_help(int, char **);
+static void handle_mark(int, char **);
+static void handle_replay(int, char **);
 static void handle_exit(int, char **);
 static void handle_insert(int, char **);
+static GHashTable *markers = NULL;
 
 struct cmd {
 	const char *name;
 	void (*handler) (int argc, char **);
 } cmds[] = {
+	{ "help", handle_help },
+	{ "mark", handle_mark },
+	{ "replay", handle_replay },
 	{ "exit", handle_exit },
 	{ "insert", handle_insert },
 };
+
+
+static gboolean line_printer (struct line *l, time_t time, void *f) 
+{
+	fprintf((FILE *)f, "[%lu] %s\n", time, irc_line_string(l));
+	return TRUE;
+}
+
+static void handle_replay(int argc, char **argv)
+{
+	struct linestack_marker *from, *to = NULL;
+
+	if (argc < 2) {
+		fprintf(stderr, "Usage: replay <from> [<to>]\n");
+		return;
+	}
+
+	from = g_hash_table_lookup(markers, argv[1]);
+
+	if (from == NULL) {
+		fprintf(stderr, "Unable to find marker '%s'\n", argv[1]);
+		return;
+	}
+
+	if (argv[2] != NULL)
+		to = g_hash_table_lookup(markers, argv[2]);
+
+	linestack_traverse(ctx, from, to, line_printer, stdout);
+}
+
+static void handle_help(int argc, char **argv)
+{
+	fprintf(stderr, "Available commands:\n"
+					"help\n"
+					"insert\n"
+					"mark\n"
+					"replay\n"
+					"exit\n");
+}
+
+static void handle_mark(int argc, char **argv)
+{
+	struct linestack_marker *marker;
+
+	if (argc < 2) {
+		fprintf(stderr, "Usage: mark <name>\n");
+		return;
+	}
+
+	marker = linestack_get_marker(ctx);
+
+	g_assert(marker != NULL);
+
+	fprintf(stderr, "Marker '%s' added\n", argv[1]);
+
+	g_hash_table_insert(markers, g_strdup(argv[1]), marker);
+}
 
 static void handle_insert(int argc, char **argv)
 {
@@ -108,6 +172,9 @@ int main(int argc, char **argv)
 		fprintf(stderr, "Unable to load configuration from `%s'", config_dir);
 		return 1;
 	}
+
+	markers = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, 
+									(GDestroyNotify)linestack_free_marker);
 
 	ctx = create_linestack(ops, argv[1], cfg, state);
 
