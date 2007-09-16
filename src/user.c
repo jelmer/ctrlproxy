@@ -89,6 +89,7 @@ void free_global(struct global *global)
 {
 	if (global == NULL)
 		return;
+	free_listeners(global);
 	fini_networks(global);
 	if (global->config != NULL)
 		free_config(global->config);

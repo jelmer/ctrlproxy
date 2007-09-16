@@ -48,7 +48,6 @@
 #endif /* HAVE_NETINET_IN6_H */
 #include "ctrlproxy.h"
 #include "plugins.h"
-#include "listener.h"
 #include "local.h"
 
 #define DEFAULT_RECONNECT_INTERVAL 	60
@@ -104,7 +103,7 @@ void global_update_config(struct global *my_global);
 
 /* repl.c */
 void client_replicate(struct client *);
-char *mode2string(char modes[255]);
+G_GNUC_MALLOC char *mode2string(char modes[255]);
 void string2mode(char *modes, char ar[255]);
 
 gboolean init_replication(void);
@@ -136,5 +135,7 @@ gboolean create_configuration(const char *config_dir);
 /* pipes.c */
 gboolean start_unix_socket(struct global *);
 gboolean stop_unix_socket(struct global *);
+
+void free_listeners(struct global *global);
 
 #endif /* __INTERNALS_H__ */

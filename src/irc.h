@@ -198,4 +198,6 @@
 
 #define ALLMODES "aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPqQrRsStTuUvVwWxXyYzZ"
 
+#define IRC_MAXLINELEN	512
+
 #endif

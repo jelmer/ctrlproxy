@@ -56,7 +56,7 @@ char *mode2string(char modes[255])
 static void client_send_channel_state(struct client *c, 
 									  struct channel_state *ch)
 {
-	struct channel_nick *n;
+	struct line *l = NULL;
 	GList *nl;
 
 	g_assert(c != NULL);
@@ -80,16 +80,36 @@ static void client_send_channel_state(struct client *c,
 
 	for (nl = ch->nicks; nl; nl = nl->next) {
 		char mode[2] = { ch->mode, 0 };
-		char *tmp;
-		n = (struct channel_nick *)nl->data;
+		char *arg;
+		struct channel_nick *n = (struct channel_nick *)nl->data;
+
 		if (n->mode && n->mode != ' ') {
-			tmp = g_strdup_printf("%c%s", n->mode, n->global_nick->nick);
+			arg = g_strdup_printf("%c%s", n->mode, n->global_nick->nick);
 		} else 	{ 
-			tmp = g_strdup(n->global_nick->nick);
+			arg = g_strdup(n->global_nick->nick);
 		}
-		client_send_response(c, RPL_NAMREPLY, mode, ch->name, tmp, NULL);
-		g_free(tmp);
+
+		if (l == NULL || !line_add_arg(l, arg)) {
+			if (l != NULL) {
+				client_send_line(c, l);
+				free_line(l);
+			}
+
+			l = irc_parse_line_args(client_get_default_origin(c), 
+									"353",
+									client_get_default_target(c),
+									mode, ch->name, NULL);
+			g_assert(line_add_arg(l, arg));
+		}
+
+		g_free(arg);
 	}
+
+	if (l != NULL) {
+		client_send_line(c, l);
+		free_line(l);
+	}
+
 	client_send_response(c, RPL_ENDOFNAMES, ch->name, "End of /NAMES list", 
 						 NULL);
 }

@@ -21,18 +21,12 @@ struct listener {
 	struct global *global;
 };
 
-struct listener_iochannel {
-	char address[NI_MAXHOST];
-	char port[NI_MAXSERV];
-	gint watch_id;
-};
-
 struct socks_method;
 
 struct pending_client {
 	GIOChannel *connection;
-	const char *user;
-	const char *password;
+	char *user;
+	char *password;
 	gint watch_id;
 	struct sockaddr *clientname;
 	socklen_t clientname_len;
@@ -50,7 +44,7 @@ struct pending_client {
 	} socks;
 };
 
-G_MODULE_EXPORT struct listener *listener_init(struct global *global, struct listener_config *);
+G_GNUC_MALLOC G_MODULE_EXPORT struct listener *listener_init(struct global *global, struct listener_config *);
 G_MODULE_EXPORT gboolean start_listener(struct listener *);
 G_MODULE_EXPORT gboolean stop_listener(struct listener *);
 G_MODULE_EXPORT void fini_listeners(struct global *);

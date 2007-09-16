@@ -229,12 +229,12 @@ struct network_info
 	gboolean vbanlist;
 };
 
-G_MODULE_EXPORT char *network_info_string(struct network_info *info);
+G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT char *network_info_string(struct network_info *info);
 G_MODULE_EXPORT gboolean is_channelname(const char *name, const struct network_info *s);
 G_MODULE_EXPORT gboolean is_prefix(char p, const struct network_info *n);
 G_MODULE_EXPORT char get_prefix_by_mode(char p, const struct network_info *n);
 G_MODULE_EXPORT int irccmp(const struct network_info *n, const char *a, const char *b);
-G_MODULE_EXPORT const char *get_charset(const struct network_info *n);
+G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT const char *get_charset(const struct network_info *n);
 G_MODULE_EXPORT void network_info_parse(struct network_info *info, const char *parameter);
 G_MODULE_EXPORT int network_chanmode_type(char m, struct network_info *n);
 G_MODULE_EXPORT void network_info_init(struct network_info *info);

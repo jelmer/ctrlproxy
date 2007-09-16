@@ -22,7 +22,7 @@
 #include "internals.h"
 #include "irc.h"
 
-struct line *irc_parse_line_args( char *origin, ... )
+struct line *irc_parse_line_args(const char *origin, ...)
 {
 	va_list ap;
 	struct line *l;
@@ -32,7 +32,7 @@ struct line *irc_parse_line_args( char *origin, ... )
 	return l;
 }
 
-struct line *irc_parse_linef( char *fmt, ... )
+struct line *irc_parse_linef(const char *fmt, ...)
 {
 	va_list ap;
 	char *ret;
@@ -375,4 +375,40 @@ GIOStatus irc_recv_line(GIOChannel *c, GIConv iconv,
 	g_free(cvrt);
 
 	return status;
+}
+
+/* Estimate the length of a line */
+static int line_len(const struct line *l)
+{
+	int len = 0;
+	int i;
+
+	len = 4; /* \r\n for end of line, possibly colon before last argument and 
+				colon at start of the line */
+
+	for (i = 0; i < l->argc; i++) 
+		len += strlen(l->args[i]) + 1;
+
+	return len;
+}
+
+G_MODULE_EXPORT gboolean line_add_arg(struct line *l, const char *arg)
+{
+	if (line_len(l) + strlen(arg) + 1 > IRC_MAXLINELEN)
+		return FALSE;
+
+	/* Check to see if this argument fits on the current line */
+	l->args[l->argc] = g_strdup(arg);
+
+	if (l->args[l->argc] == NULL)
+		return FALSE;
+
+	l->args = g_realloc(l->args, (((++l->argc)+2) * sizeof(char *)));
+
+	if (l->args == NULL)
+		return FALSE;
+
+	l->args[l->argc] = NULL;
+
+	return TRUE;
 }

@@ -39,6 +39,12 @@
 
 #include <netdb.h>
 
+struct listener_iochannel {
+	char address[NI_MAXHOST];
+	char port[NI_MAXSERV];
+	gint watch_id;
+};
+
 static GIConv iconv = (GIConv)-1;
 
 static gboolean kill_pending_client(struct pending_client *pc)
@@ -56,7 +62,8 @@ static gboolean kill_pending_client(struct pending_client *pc)
 
 static gboolean handle_client_detect(GIOChannel *ioc, struct pending_client *cl);
 static gboolean handle_client_socks_data(GIOChannel *ioc, struct pending_client *cl);
-static gboolean handle_client_line(GIOChannel *c, struct pending_client *pc, const struct line *l)
+static gboolean handle_client_line(GIOChannel *c, struct pending_client *pc, 
+								   const struct line *l)
 {
 	if (l->args[0] == NULL) { 
 		return TRUE;
@@ -75,14 +82,15 @@ static gboolean handle_client_line(GIOChannel *c, struct pending_client *pc, con
 			networkname = l->args[1];
 		} else if (strcmp(l->args[1], pc->listener->config->password) == 0) {
 			authenticated = TRUE;
-		} else if (strncmp(l->args[1], pc->listener->config->password, strlen(pc->listener->config->password)) == 0 &&
+		} else if (strncmp(l->args[1], pc->listener->config->password, 
+						   strlen(pc->listener->config->password)) == 0 &&
 				   l->args[1][strlen(pc->listener->config->password)] == ':') {
 			authenticated = TRUE;
 			networkname = l->args[1]+strlen(pc->listener->config->password)+1;
 		}
 
 		if (authenticated) {
-			log_network (LOG_INFO, n, "Client successfully authenticated");
+			log_network(LOG_INFO, n, "Client successfully authenticated");
 
 			if (networkname != NULL) {
 				n = find_network_by_hostname(pc->listener->global, 
@@ -391,6 +399,12 @@ gboolean stop_listener(struct listener *l)
 	return TRUE;
 }
 
+void free_listeners(struct global *global)
+{
+	while (global->listeners)
+		free_listener((struct listener *)global->listeners->data);
+}
+
 void free_listener(struct listener *l)
 {
 	l->global->listeners = g_list_remove(l->global->listeners, l);
@@ -569,8 +583,14 @@ static gboolean pass_handle_data(struct pending_client *cl)
 		break;
 	}
 
-	if (strcmp(cl->listener->config->password, pass) == 0)
+	if (cl->listener->config->password == NULL)
+		log_network(LOG_WARNING, cl->listener->network, 
+					"No password set, allowing client _without_ authentication!");
+
+	if (cl->listener->config->password == NULL ||
+		strcmp(cl->listener->config->password, pass) == 0) {
 		header[1] = 0x0;
+	}
 
 	status = g_io_channel_write_chars(cl->connection, header, 2, &read, NULL);
 	if (status != G_IO_STATUS_NORMAL) {

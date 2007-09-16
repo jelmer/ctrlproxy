@@ -114,7 +114,7 @@ struct network_state
 };
 
 /* state.c */
-G_MODULE_EXPORT struct network_state *network_state_init(const char *nick, const char *username, const char *hostname);
+G_GNUC_MALLOC G_MODULE_EXPORT struct network_state *network_state_init(const char *nick, const char *username, const char *hostname);
 G_MODULE_EXPORT void free_network_state(struct network_state *);
 G_MODULE_EXPORT gboolean state_handle_data(struct network_state *s, struct line *l);
 

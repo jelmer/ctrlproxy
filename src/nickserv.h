@@ -29,9 +29,9 @@
  * Nickname/password combination for a particular network or globally.
  */
 struct nickserv_entry {
-	const char *network;
-	const char *nick;
-	const char *pass;
+	char *network;
+	char *nick;
+	char *pass;
 };
 
 #endif /* __CTRLPROXY_NICKSERV_H__ */

@@ -32,6 +32,11 @@ Ctrlproxy 3.0.4 UNRELEASED
 
     * Add support for handling additional 005 parameters: HCN.
 
+	* Compress /NAMES lines (#123).
+
+	* Bail out when invalid arguments are specified on the command-line
+	  (Emanuele Giaquinta <e.giaquinta@glauco.it>)
+
   INTERNALS
 
     * Moved some common logging code to the core.

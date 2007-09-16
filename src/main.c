@@ -104,7 +104,6 @@ static void clean_exit()
 	stop_unix_socket(my_global);
 	stop_admin_socket(my_global);
 	fini_listeners(my_global);
-
 	free_global(my_global);
 
 	g_main_loop_unref(main_loop);
@@ -195,6 +194,7 @@ int main(int argc, char **argv)
 		{"admin", 'a', 0, G_OPTION_ARG_NONE, &admin, "Show administration prompt" },
 		{ NULL }
 	};
+	GError *error;
 
 	signal(SIGINT, signal_quit);
 	signal(SIGTERM, signal_quit);
@@ -216,8 +216,10 @@ int main(int argc, char **argv)
 	pc = g_option_context_new("");
 	g_option_context_add_main_entries(pc, options, NULL);
 
-	if (!g_option_context_parse(pc, &argc, &argv, NULL))
+	if (!g_option_context_parse(pc, &argc, &argv, &error)) {
+		fprintf(stderr, "%s\n", error->message);
 		return 1;
+	}
 
 	if (version) {
 		printf("ctrlproxy %s\n", VERSION);
