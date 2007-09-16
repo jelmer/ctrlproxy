@@ -44,7 +44,7 @@ void register_new_network_notify(struct global *global, new_network_notify_fn fn
 
 static void state_log_helper(enum log_level l, void *userdata, const char *msg)
 {
-	log_network(l, (struct network *)userdata, msg);
+	log_network(l, (const struct network *)userdata, "%s", msg);
 }
 
 static void server_send_login (struct network *s) 
@@ -190,7 +190,9 @@ static gboolean process_from_server(struct network *n, struct line *l)
 	n->connection.last_line_recvd = time(NULL);
 
 	if (n->state == NULL) {
-		log_network(LOG_WARNING, n, "Dropping message '%s' because network is disconnected.", l->args[0]);
+		log_network(LOG_WARNING, n, 
+					"Dropping message '%s' because network is disconnected.", 
+					l->args[0]);
 		return FALSE;
 	}
 
@@ -214,7 +216,8 @@ static gboolean process_from_server(struct network *n, struct line *l)
 			  n->connection.state == NETWORK_CONNECTION_STATE_LOGIN_SENT){
 		char *tmp = g_strdup_printf("%s_", l->args[2]);
 		network_send_args(n, "NICK", tmp, NULL);
-		log_network(LOG_WARNING, n, "%s was already in use, trying %s", l->args[2], tmp);
+		log_network(LOG_WARNING, n, "%s was already in use, trying %s", 
+					l->args[2], tmp);
 		g_free(tmp);
 	} else if (atoi(l->args[0]) == RPL_ENDOFMOTD ||
 			  atoi(l->args[0]) == ERR_NOMOTD) {
@@ -224,10 +227,8 @@ static gboolean process_from_server(struct network *n, struct line *l)
 		network_set_charset(n, get_charset(&n->info));
 
 		if (error != NULL)
-			log_network(LOG_WARNING, n, 
-				"Error setting charset %s: %s", 
-				get_charset(&n->info),
-				error->message);
+			log_network(LOG_WARNING, n, "Error setting charset %s: %s", 
+				get_charset(&n->info), error->message);
 
 		log_network(LOG_INFO, n, "Successfully logged in");
 
@@ -334,7 +335,8 @@ static gboolean handle_server_receive (GIOChannel *c, GIOCondition cond, void *_
 			return FALSE;
 		case G_IO_STATUS_ERROR:
 			g_assert(err != NULL);
-			log_network(LOG_WARNING, server, "Error \"%s\" reading from server", err->message);
+			log_network(LOG_WARNING, server, 
+						"Error \"%s\" reading from server", err->message);
 			if (l != NULL) {
 				ret = process_from_server(server, l);
 
@@ -402,7 +404,7 @@ static gboolean server_send_queue(GIOChannel *ch, GIOCondition cond,
 
 		if (status != G_IO_STATUS_NORMAL) {
 			log_network(LOG_WARNING, s, "Error sending line '%s': %s",
-	           l->args[0], error?error->message:"ERROR");
+	           l->args[0], error != NULL?error->message:"ERROR");
 			free_line(l);
 
 			return FALSE;
@@ -448,7 +450,7 @@ static gboolean network_send_line_direct(struct network *s, struct client *c,
 			s->connection.outgoing_id = g_io_add_watch(s->connection.outgoing, G_IO_OUT, server_send_queue, s);
 		} else if (status != G_IO_STATUS_NORMAL) {
 			log_network(LOG_WARNING, s, "Error sending line '%s': %s",
-	           l->args[0], error?error->message:"ERROR");
+	           l->args[0], error != NULL?error->message:"ERROR");
 			return FALSE;
 		}
 

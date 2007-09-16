@@ -63,7 +63,8 @@ struct client {
  * @param io IO Channel to use for communication.
  * @param desc Description of the client.
  */
-G_MODULE_EXPORT struct client *client_init(struct network *net, 
+G_MODULE_EXPORT G_GNUC_MALLOC struct client *client_init(
+										   struct network *net, 
 										   GIOChannel *io, 
 										   const char *desc);
 
@@ -72,10 +73,10 @@ G_MODULE_EXPORT struct client *client_init(struct network *net,
  */
 G_MODULE_EXPORT void disconnect_client(struct client *c, const char *reason);
 
-G_MODULE_EXPORT gboolean client_send_args(struct client *c, ...);
-G_MODULE_EXPORT gboolean client_send_args_ex(struct client *c, 
+G_MODULE_EXPORT G_GNUC_NULL_TERMINATED gboolean client_send_args(struct client *c, ...);
+G_MODULE_EXPORT G_GNUC_NULL_TERMINATED gboolean client_send_args_ex(struct client *c, 
 											 const char *hm, ...);
-G_MODULE_EXPORT gboolean client_send_response(struct client *c, 
+G_MODULE_EXPORT G_GNUC_NULL_TERMINATED gboolean client_send_response(struct client *c, 
 											  int response, ...);
 G_MODULE_EXPORT gboolean client_send_line(struct client *c, 
 										  const struct line *);

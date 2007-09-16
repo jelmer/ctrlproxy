@@ -62,7 +62,8 @@ static gboolean kill_pending_client(struct pending_client *pc)
 
 static gboolean handle_client_detect(GIOChannel *ioc, struct pending_client *cl);
 static gboolean handle_client_socks_data(GIOChannel *ioc, struct pending_client *cl);
-static gboolean handle_client_line(GIOChannel *c, struct pending_client *pc, const struct line *l)
+static gboolean handle_client_line(GIOChannel *c, struct pending_client *pc, 
+								   const struct line *l)
 {
 	if (l->args[0] == NULL) { 
 		return TRUE;
@@ -89,7 +90,7 @@ static gboolean handle_client_line(GIOChannel *c, struct pending_client *pc, con
 		}
 
 		if (authenticated) {
-			log_network (LOG_INFO, n, "Client successfully authenticated");
+			log_network(LOG_INFO, n, "Client successfully authenticated");
 
 			if (networkname != NULL) {
 				n = find_network_by_hostname(pc->listener->global, 

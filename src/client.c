@@ -52,10 +52,10 @@ static gboolean handle_client_send_queue(GIOChannel *c, GIOCondition cond,
  */
 static gboolean process_from_client(struct client *c, struct line *l)
 {
-	g_assert(c);
-	g_assert(l);
+	g_assert(c != NULL);
+	g_assert(l != NULL);
 
-	if (c->network && c->network->state) 
+	if (c->network != NULL && c->network->state != NULL) 
 		l->origin = g_strdup(c->network->state->me.hostmask);
 	else
 		l->origin = g_strdup_printf("%s!~%s@%s", c->nick, c->username, 
@@ -111,7 +111,8 @@ static gboolean process_from_client(struct client *c, struct line *l)
 					c->network->connection.data.tcp.last_disconnect_reason);
 
 		client_send_args(c, "NOTICE", 
-						 c->nick?c->nick:c->network->state->me.nick, msg, NULL);
+						 c->nick != NULL?c->nick:c->network->state->me.nick, 
+						 msg, NULL);
 	}
 
 	return TRUE;
@@ -139,7 +140,6 @@ gboolean client_send_response(struct client *c, int response, ...)
 	memmove(&l->args[2], &l->args[0], l->argc * sizeof(char *));
 
 	l->args[0] = g_strdup_printf("%03d", response);
-
 	l->args[1] = g_strdup(client_get_default_target(c));
 
 	l->argc+=2;

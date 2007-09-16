@@ -46,27 +46,29 @@ struct line {
 /** 
  * Copy a line
  */
-G_MODULE_EXPORT struct line *linedup(const struct line *l);
-G_MODULE_EXPORT struct line *irc_parse_line(const char *data);
-G_MODULE_EXPORT struct line *virc_parse_line(const char *origin, va_list ap);
-G_MODULE_EXPORT char *irc_line_string(const struct line *l);
-G_MODULE_EXPORT char *irc_line_string_nl(const struct line *l);
-G_MODULE_EXPORT char *line_get_nick(const struct line *l);
+G_GNUC_MALLOC G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT struct line *linedup(const struct line *l);
+G_GNUC_MALLOC G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT struct line *irc_parse_line(const char *data);
+G_GNUC_MALLOC G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT struct line *virc_parse_line(const char *origin, va_list ap);
+G_GNUC_MALLOC G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT char *irc_line_string(const struct line *l);
+G_GNUC_MALLOC G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT char *irc_line_string_nl(const struct line *l);
+G_GNUC_MALLOC G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT char *line_get_nick(const struct line *l);
 G_MODULE_EXPORT void free_line(struct line *l);
-G_MODULE_EXPORT GIOStatus irc_send_args(GIOChannel *, GIConv, GError **, ...);
-G_MODULE_EXPORT GIOStatus irc_sendf(GIOChannel *, GIConv,
-									GError **, char *fmt, ...);
-G_MODULE_EXPORT GIOStatus irc_send_line(GIOChannel *, GIConv,
+G_GNUC_NULL_TERMINATED G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT GIOStatus irc_send_args(GIOChannel *, GIConv, GError **, ...);
+G_GNUC_PRINTF(4, 5) G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT GIOStatus irc_sendf(GIOChannel *, GIConv, GError **, char *fmt, ...);
+G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT GIOStatus irc_send_line(
+										GIOChannel *, GIConv,
 										const struct line *l,
                                         GError **);
-G_MODULE_EXPORT struct line *irc_parse_linef(const char *origin, ... );
-G_MODULE_EXPORT struct line *irc_parse_line_args(const char *origin, ... );
+G_GNUC_NULL_TERMINATED G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT struct line *irc_parse_linef(
+													const char *origin, ... );
+G_GNUC_NULL_TERMINATED G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT struct line *irc_parse_line_args(
+													const char *origin, ... );
 
 /**
  * Read a line from an IO Channel. This will return a line _with_ UTF-8 
  * characters only!
  */
-G_MODULE_EXPORT GIOStatus irc_recv_line(GIOChannel *c, GIConv iconv,
+G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT GIOStatus irc_recv_line(GIOChannel *c, GIConv iconv,
 										GError **err, 
 										struct line **);
 

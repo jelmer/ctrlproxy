@@ -94,17 +94,15 @@ G_MODULE_EXPORT void register_save_config_notify(config_save_notify_fn fn);
 
 /* util.c */
 G_MODULE_EXPORT char *list_make_string(GList *);
-G_MODULE_EXPORT int verify_client(const struct network *s, const struct client *c);
+G_MODULE_EXPORT int verify_client(const struct network *s, 
+								  const struct client *c);
 G_MODULE_EXPORT int str_rfc1459cmp(const char *a, const char *b);
 G_MODULE_EXPORT int str_strictrfc1459cmp(const char *a, const char *b);
 G_MODULE_EXPORT int str_asciicmp(const char *a, const char *b);
 G_MODULE_EXPORT char *g_io_channel_ip_get_description(GIOChannel *ch);
 
 /* log.c */
-G_MODULE_EXPORT void log_network(enum log_level, const struct network *, const char *fmt, ...);
-G_MODULE_EXPORT void log_client(enum log_level, const struct client *, const char *fmt, ...);
-G_MODULE_EXPORT void log_global(enum log_level, const char *fmt, ...);
-G_MODULE_EXPORT void log_network_state(enum log_level l, const struct network_state *st, const char *fmt, ...);
+G_GNUC_PRINTF(3, 4) G_MODULE_EXPORT void log_network_state(enum log_level l, const struct network_state *st, const char *fmt, ...);
 
 gboolean    rep_g_file_get_contents             (const gchar *filename,
                                              gchar **contents,
