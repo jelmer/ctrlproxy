@@ -78,6 +78,10 @@ ctrlproxy$(EXEEXT): src/main.o $(objs)
 	@echo Linking $@
 	@$(LD) $(LDFLAGS) -rdynamic -o $@ $^ $(LIBS)
 
+ctrlproxy-admin$(EXEEXT): src/admin-cmd.o
+	@echo Linking $@
+	@$(LD) $(LDFLAGS) -rdynamic -o $@ $^ $(LIBS)
+
 mods/%.o: mods/%.c
 	@echo Compiling for shared library $<
 	@$(CC) -fPIC -I. -Isrc $(CFLAGS) $(GCOV_CFLAGS) -c $< -o $@

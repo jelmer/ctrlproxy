@@ -177,7 +177,6 @@ int main(int argc, char **argv)
 	extern gboolean no_log_timestamp;
 	char *config_dir = NULL;
 	char *tmp;
-	gboolean admin = FALSE;
 	gboolean init = FALSE;
 	const char *inetd_client = NULL;
 	gboolean version = FALSE;
@@ -191,7 +190,6 @@ int main(int argc, char **argv)
 		{"log", 'l', 0, G_OPTION_ARG_STRING, &logfile, ("Log messages to specified file"), ("FILE")},
 		{"config-dir", 'c', 0, G_OPTION_ARG_STRING, &config_dir, ("Override configuration directory"), ("DIR")},
 		{"version", 'v', 0, G_OPTION_ARG_NONE, &version, ("Show version information")},
-		{"admin", 'a', 0, G_OPTION_ARG_NONE, &admin, "Show administration prompt" },
 		{ NULL }
 	};
 	GError *error;
@@ -239,12 +237,6 @@ int main(int argc, char **argv)
 			return 1;
 		printf("Configuration created in %s. \n", config_dir);
 		return 0;
-	}
-
-	if (admin) {
-		if (admin_socket_prompt(config_dir)) 
-			return 0;
-		return 1;
 	}
 
 	init_log(logfile);
