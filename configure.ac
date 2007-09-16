@@ -77,7 +77,8 @@ PKG_CHECK_MODULES(GNUTLS, gnutls, [
 
 AC_CHECK_LIB(readline, readline, [ 
 	AC_DEFINE(HAVE_READLINE, 1, [Whether readline is available])
-	BINS="$BINS linestack-cmd$ac_cv_exeext" 
+	BINS="$BINS linestack-cmd$ac_cv_exeext ctrlproxy-admin$ac_cv_exeext" 
+	LIBS="$LIBS -lreadline"
 ])
 
 ###############################################################################

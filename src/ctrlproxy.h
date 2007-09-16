@@ -75,6 +75,9 @@ struct global {
 
 	GIOChannel *unix_incoming;
 	gint unix_incoming_id;
+
+	GIOChannel *admin_incoming;
+	gint admin_incoming_id;
 };
 
 struct plugin_ops {
