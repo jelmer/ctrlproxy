@@ -3,6 +3,10 @@
 
 Ctrlproxy 3.0.4 UNRELEASED
 
+  IMPROVEMENTS
+
+    * Add ctrlproxy-admin command for command-line access to the admin network.
+
   BUG FIXES
 
     * Check for empty argument to /CTRLPROXY BACKLOG (#132)

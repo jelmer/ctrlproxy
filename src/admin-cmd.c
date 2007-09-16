@@ -38,12 +38,14 @@ gboolean admin_socket_prompt(const char *config_dir)
 	strncpy(un.sun_path, admin_dir, sizeof(un.sun_path));
 
 	if (connect(sock, (struct sockaddr *)&un, sizeof(un)) < 0) {
-		fprintf(stderr, "unable to connect to %s: %s", un.sun_path, strerror(errno));
+		fprintf(stderr, "unable to connect to %s: %s\n", un.sun_path, strerror(errno));
 		g_free(admin_dir);
 		return FALSE;
 	}
 
 	ch = g_io_channel_unix_new(sock);
+
+	g_io_channel_set_flags(ch, G_IO_FLAG_NONBLOCK, NULL);
 	
 #ifdef HAVE_READLINE
 	while (1) {
@@ -68,6 +70,8 @@ gboolean admin_socket_prompt(const char *config_dir)
 		g_io_channel_flush(ch, &error);
 
 		g_free(data);
+
+		g_usleep(G_USEC_PER_SEC / 10);
 
 		while (g_io_channel_read_line(ch, &raw, NULL, NULL, &error) == G_IO_STATUS_NORMAL) 
 		{

@@ -235,20 +235,24 @@ static void com_disconnect_network (admin_handle h, char **args, void *userdata)
 {
 	struct network *n;
 
-	n = admin_get_network(h);
-
 	if (args[1] != NULL) {
 		n = find_network(admin_get_global(h), args[1]);
 		if (!n) {
 			admin_out(h, "Can't find active network with that name");
 			return;
 		}
+	} else {
+		n = admin_get_network(h);
+		if (n == NULL) {
+			admin_out(h, "Usage: DISCONNECT <network>");
+			return;
+		}
 	}
 
 	if (n->connection.state == NETWORK_CONNECTION_STATE_NOT_CONNECTED) {
-		admin_out(h, "Already disconnected from `%s'", args[1]);
+		admin_out(h, "Already disconnected from `%s'", n->info.name);
 	} else {
-		admin_out(h, "Disconnecting from `%s'", args[1]);
+		admin_out(h, "Disconnecting from `%s'", n->info.name);
 		disconnect_network(n);
 	}
 }
@@ -315,6 +319,11 @@ static void list_networks(admin_handle h, char **args, void *userdata)
 static void detach_client(admin_handle h, char **args, void *userdata)
 {
 	struct client *c = admin_get_client(h);
+
+	if (c == NULL) {
+		admin_out(h, "No client set");
+		return;
+	}
 
 	disconnect_client(c, "Client exiting");
 }
@@ -888,6 +897,7 @@ static gboolean handle_client_data(GIOChannel *channel,
 	gsize eol;
 
 	ah.global = _global;
+	ah.client = NULL;
 	ah.user_data = channel;
 	ah.send_fn = iochannel_admin_out;
 
