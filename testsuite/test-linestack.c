@@ -387,6 +387,36 @@ START_TEST(test_join)
 	fail_unless (network_state_equal(ns1, ns2), "Network state returned not equal");
 END_TEST
 
+int seen = 0;
+
+static gboolean line_track(struct line *l, time_t t, void *data)
+{
+	fail_unless(!strcmp(l->args[0], "PRIVMSG"));
+	fail_unless(seen == atoi(l->args[1]));
+	seen++;
+	return TRUE;
+}
+
+START_TEST(bench_lots_of_lines)
+	struct network_state *ns1;
+	struct linestack_context *ctx;
+	struct linestack_marker *marker;
+	int i;
+
+	ns1 = network_state_init("bla", "Gebruikersnaam", "Computernaam");
+	ctx = create_linestack(&linestack_file, "test", my_config, ns1);
+	marker = linestack_get_marker(ctx);
+
+	seen = 0;
+
+	for (i = 0; i < 10000; i++) 
+		linestack_insert_line(ctx, irc_parse_linef("PRIVMSG :%d", i), 
+							  TO_SERVER, ns1);
+	
+
+	linestack_traverse(ctx, marker, NULL, line_track, stderr);
+END_TEST
+
 Suite *linestack_suite()
 {
 	Suite *s = suite_create("linestack");
@@ -401,5 +431,6 @@ Suite *linestack_suite()
 	tcase_add_test(tc_core, test_object_msg);
 	tcase_add_test(tc_core, test_object_open);
 	tcase_add_test(tc_core, test_join_part);
+	tcase_add_test(tc_core, bench_lots_of_lines);
 	return s;
 }

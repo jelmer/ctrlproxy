@@ -197,7 +197,9 @@ static const char *linestack_messages[] = {
 	"329", /* RPL_CREATIONTIME */
 	NULL };
 
-gboolean linestack_insert_line(struct linestack_context *ctx, const struct line *l, enum data_direction dir, const struct network_state *state)
+gboolean linestack_insert_line(struct linestack_context *ctx, 
+							   const struct line *l, enum data_direction dir, 
+							   const struct network_state *state)
 {
 	int i;
 	gboolean needed = FALSE;
