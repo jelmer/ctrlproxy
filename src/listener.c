@@ -60,8 +60,10 @@ static gboolean kill_pending_client(struct pending_client *pc)
 	return TRUE;
 }
 
-static gboolean handle_client_detect(GIOChannel *ioc, struct pending_client *cl);
-static gboolean handle_client_socks_data(GIOChannel *ioc, struct pending_client *cl);
+static gboolean handle_client_detect(GIOChannel *ioc, 
+									 struct pending_client *cl);
+static gboolean handle_client_socks_data(GIOChannel *ioc, 
+										 struct pending_client *cl);
 static gboolean handle_client_line(GIOChannel *c, struct pending_client *pc, 
 								   const struct line *l)
 {
@@ -114,8 +116,17 @@ static gboolean handle_client_line(GIOChannel *c, struct pending_client *pc,
 
 			return FALSE;
 		} else {
-			log_network(LOG_WARNING, pc->listener->network, "User tried to log in with incorrect password!");
-			irc_sendf(c, iconv, NULL, ":%s %d %s :Password mismatch", get_my_hostname(), ERR_PASSWDMISMATCH, "*");
+			GIOStatus status;
+			log_network(LOG_WARNING, pc->listener->network, 
+						"User tried to log in with incorrect password!");
+
+			status = irc_sendf(c, iconv, NULL, 
+							   ":%s %d %s :Password mismatch", 
+							   get_my_hostname(), ERR_PASSWDMISMATCH, "*");
+
+			if (status != G_IO_STATUS_NORMAL) {
+				return FALSE;
+			}
 
 			return TRUE;
 		}

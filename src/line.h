@@ -53,8 +53,8 @@ G_GNUC_MALLOC G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT char *irc_line_string(co
 G_GNUC_MALLOC G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT char *irc_line_string_nl(const struct line *l);
 G_GNUC_MALLOC G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT char *line_get_nick(const struct line *l);
 G_MODULE_EXPORT void free_line(struct line *l);
-G_GNUC_NULL_TERMINATED G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT GIOStatus irc_send_args(GIOChannel *, GIConv, GError **, ...);
-G_GNUC_PRINTF(4, 5) G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT GIOStatus irc_sendf(GIOChannel *, GIConv, GError **, char *fmt, ...);
+G_GNUC_NULL_TERMINATED G_MODULE_EXPORT GIOStatus irc_send_args(GIOChannel *, GIConv, GError **, ...);
+G_GNUC_PRINTF(4, 5) G_MODULE_EXPORT GIOStatus irc_sendf(GIOChannel *, GIConv, GError **, char *fmt, ...);
 G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT GIOStatus irc_send_line(
 										GIOChannel *, GIConv,
 										const struct line *l,
