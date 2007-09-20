@@ -59,7 +59,7 @@ G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT GIOStatus irc_send_line(
 										GIOChannel *, GIConv,
 										const struct line *l,
                                         GError **);
-G_GNUC_NULL_TERMINATED G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT struct line *irc_parse_linef(
+G_GNUC_PRINTF(1, 2) G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT struct line *irc_parse_linef(
 													const char *origin, ... );
 G_GNUC_NULL_TERMINATED G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT struct line *irc_parse_line_args(
 													const char *origin, ... );
