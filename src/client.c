@@ -1,6 +1,6 @@
 /*
 	ctrlproxy: A modular IRC proxy
-	(c) 2002-2005 Jelmer Vernooij <jelmer@nl.linux.org>
+	(c) 2002-2007 Jelmer Vernooij <jelmer@nl.linux.org>
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -113,6 +113,7 @@ static gboolean process_from_client(struct client *c, struct line *l)
 		client_send_args(c, "NOTICE", 
 						 c->nick != NULL?c->nick:c->network->state->me.nick, 
 						 msg, NULL);
+		g_free(msg);
 	}
 
 	return TRUE;
@@ -171,7 +172,7 @@ gboolean client_send_args_ex(struct client *c, const char *hm, ...)
 
 	ret = client_send_line(c, l);
 
-	free_line(l); l = NULL;
+	free_line(l);
 
 	return ret;
 }
@@ -195,7 +196,7 @@ gboolean client_send_args(struct client *c, ...)
 
 	ret = client_send_line(c, l);
 
-	free_line(l); l = NULL;
+	free_line(l); 
 
 	return ret;
 }
@@ -429,8 +430,8 @@ static gboolean welcome_client(struct client *client)
 	client_send_response(client, RPL_MYINFO, 
 		 client->network->info.name, 
 		 ctrlproxy_version(), 
-		 (client->network->state && client->network->info.supported_user_modes)?client->network->info.supported_user_modes:ALLMODES, 
-		 (client->network->state && client->network->info.supported_channel_modes)?client->network->info.supported_channel_modes:ALLMODES,
+		 (client->network->state != NULL && client->network->info.supported_user_modes)?client->network->info.supported_user_modes:ALLMODES, 
+		 (client->network->state != NULL && client->network->info.supported_channel_modes)?client->network->info.supported_channel_modes:ALLMODES,
 		 NULL);
 
 	features = network_generate_feature_string(client->network);
@@ -445,14 +446,13 @@ static gboolean welcome_client(struct client *client)
 	g_assert(client->nick);
 	g_assert(client->network);
 
-	if (client->network->state) {
-		if (g_strcasecmp(client->nick, client->network->state->me.nick)) {
+	if (client->network->state != NULL) {
+		if (g_strcasecmp(client->nick, client->network->state->me.nick) != 0) {
 			/* Tell the client our his/her real nick */
-			char *tmp = g_strdup_printf("%s!~%s@%s", 
-										client->nick, 
-										client->username, 
-										client->hostname);
-			client_send_args_ex(client, tmp, "NICK", client->network->state->me.nick, NULL); 
+			char *tmp = g_strdup_printf("%s!~%s@%s", client->nick, 
+										client->username, client->hostname);
+			client_send_args_ex(client, tmp, "NICK", 
+								client->network->state->me.nick, NULL); 
 			g_free(tmp);
 
 			/* Try to get the nick the client specified */
@@ -581,7 +581,8 @@ static gboolean handle_pending_client_receive(GIOChannel *c,
 					return FALSE;
 				}
 
-				client->incoming_id = g_io_add_watch(client->incoming, G_IO_IN | G_IO_HUP, handle_client_receive, client);
+				client->incoming_id = g_io_add_watch(client->incoming, 
+							 G_IO_IN | G_IO_HUP, handle_client_receive, client);
 
 				pending_clients = g_list_remove(pending_clients, client);
 				client->network->clients = g_list_append(client->network->clients, client);
@@ -600,7 +601,6 @@ static gboolean handle_pending_client_receive(GIOChannel *c,
 	}
 
 	return TRUE;
-
 }
 
 /**
@@ -743,4 +743,3 @@ const char *client_get_default_target(struct client *c)
 
 	return "*";
 }
-
