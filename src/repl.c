@@ -220,8 +220,6 @@ gboolean client_send_state(struct client *c, struct network_state *state)
 
 	if (strcmp(state->me.nick, c->nick) != 0) {
 		client_send_args_ex(c, c->nick, "NICK", state->me.nick, NULL);
-		g_free(c->nick);
-		c->nick = g_strdup(state->me.nick);
 	}
 
 	g_assert(c != NULL);

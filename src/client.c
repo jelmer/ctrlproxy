@@ -42,6 +42,16 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition cond,
 static gboolean handle_client_send_queue(GIOChannel *c, GIOCondition cond, 
 										 void *_client);
 
+static void change_nick(struct client *c, const char *nick)
+{
+	g_free(c->nick);
+	c->nick = g_strdup(nick);
+	g_free(c->hostmask);
+	c->hostmask = g_strdup_printf("%s!%s@%s", c->nick, c->username, 
+								  c->hostname);
+}
+
+
 
 /**
  * Process incoming lines from a client.
@@ -55,11 +65,7 @@ static gboolean process_from_client(struct client *c, struct line *l)
 	g_assert(c != NULL);
 	g_assert(l != NULL);
 
-	if (c->network != NULL && c->network->state != NULL) 
-		l->origin = g_strdup(client_get_own_hostmask(c));
-	else
-		l->origin = g_strdup_printf("%s!~%s@%s", c->nick, c->username, 
-									c->hostname);
+	l->origin = g_strdup(c->hostmask);
 
 	if (!run_client_filter(c, l, TO_SERVER)) 
 		return TRUE;
@@ -110,9 +116,7 @@ static gboolean process_from_client(struct client *c, struct line *l)
 			msg = g_strdup_printf("Currently not connected to server... (%s)",
 					c->network->connection.data.tcp.last_disconnect_reason);
 
-		client_send_args(c, "NOTICE", 
-						 c->nick != NULL?c->nick:c->network->state->me.nick, 
-						 msg, NULL);
+		client_send_args(c, "NOTICE", client_get_default_target(c), msg, NULL);
 		g_free(msg);
 	}
 
@@ -213,6 +217,10 @@ gboolean client_send_line(struct client *c, const struct line *l)
 	g_assert(l);
 	log_client_line(c, l, FALSE);
 
+	if (!g_strcasecmp(l->args[0], "NICK")) {
+		change_nick(c, l->args[1]);
+	}
+
 	if (c->outgoing_id == 0) {
 		GError *error = NULL;
 		GIOStatus status = irc_send_line(c->incoming, c->outgoing_iconv, l, 
@@ -282,7 +290,9 @@ void disconnect_client(struct client *c, const char *reason)
 	g_free(c->username);
 	g_free(c->hostname);
 	g_free(c->fullname);
+	g_free(c->hostmask);
 	g_free(c->nick);
+	g_free(c->requested_nick);
 	g_queue_foreach(c->pending_lines, free_pending_line, NULL);
 	g_queue_free(c->pending_lines);
 	g_free(c);
@@ -443,21 +453,19 @@ static gboolean welcome_client(struct client *client)
 
 	send_motd(client);
 
-	g_assert(client->nick);
-	g_assert(client->network);
+	g_assert(client->nick != NULL);
+	g_assert(client->network != NULL);
 
 	if (client->network->state != NULL) {
 		if (g_strcasecmp(client->nick, client->network->state->me.nick) != 0) {
 			/* Tell the client our his/her real nick */
-			char *tmp = g_strdup_printf("%s!~%s@%s", client->nick, 
-										client->username, client->hostname);
-			client_send_args_ex(client, tmp, "NICK", 
+			client_send_args_ex(client, client->hostmask, "NICK", 
 								client->network->state->me.nick, NULL); 
-			g_free(tmp);
 
 			/* Try to get the nick the client specified */
 			if (!client->network->config->ignore_first_nick) {
-				network_send_args(client->network, "NICK", client->nick, NULL);
+				network_send_args(client->network, "NICK", 
+								  client->requested_nick, NULL);
 			}
 		}
 	}
@@ -518,7 +526,8 @@ static gboolean handle_pending_client_receive(GIOChannel *c,
 					continue;
 				}
 
-				client->nick = g_strdup(l->args[1]); /* Save nick */
+				change_nick(client, l->args[1]); /* Save nick */
+				client->requested_nick = g_strdup(l->args[1]);
 			} else if (!g_strcasecmp(l->args[0], "USER")) {
 
 				if (l->argc < 5) {
@@ -558,7 +567,7 @@ static gboolean handle_pending_client_receive(GIOChannel *c,
 
 				if (client->network->connection.state == NETWORK_CONNECTION_STATE_NOT_CONNECTED) {
 					client_send_args(client, "NOTICE", 
-										client->nick?client->nick:"*", 
+										client_get_default_target(client),
 										"Connecting to network", NULL);
 					connect_network(client->network);
 				}
@@ -728,7 +737,7 @@ gboolean client_set_charset(struct client *c, const char *name)
 
 const char *client_get_own_hostmask(struct client *c)
 {
-	return c->network->state->me.hostmask;
+	return c->hostmask;
 }
 
 const char *client_get_default_origin(struct client *c)
@@ -741,10 +750,5 @@ const char *client_get_default_target(struct client *c)
 	if (c->nick != NULL) 
 		return c->nick;
 	
-	if (c->network != NULL && 
-		c->network->state != NULL && 
-		c->network->state->me.nick != NULL) 
-		return c->network->state->me.nick;
-
 	return "*";
 }
