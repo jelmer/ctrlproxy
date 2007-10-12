@@ -42,16 +42,22 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition cond,
 static gboolean handle_client_send_queue(GIOChannel *c, GIOCondition cond, 
 										 void *_client);
 
-static void change_nick(struct client *c, const char *nick)
+static void regenerate_hostmask(struct client *c)
 {
-	g_free(c->nick);
-	c->nick = g_strdup(nick);
+	if (c->nick == NULL || c->username == NULL || c->hostname == NULL)
+		return;
+
 	g_free(c->hostmask);
 	c->hostmask = g_strdup_printf("%s!%s@%s", c->nick, c->username, 
 								  c->hostname);
 }
 
-
+static void change_nick(struct client *c, const char *nick)
+{
+	g_free(c->nick);
+	c->nick = g_strdup(nick);
+	regenerate_hostmask(c);
+}
 
 /**
  * Process incoming lines from a client.
@@ -545,6 +551,8 @@ static gboolean handle_pending_client_receive(GIOChannel *c,
 
 				g_free(client->fullname);
 				client->fullname = g_strdup(l->args[4]);
+
+				regenerate_hostmask(client);
 
 			} else if (!g_strcasecmp(l->args[0], "PASS")) {
 				/* Silently drop... */
