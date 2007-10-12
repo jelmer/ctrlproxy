@@ -40,7 +40,7 @@ static GList *pending_clients = NULL;
 static gboolean handle_client_receive(GIOChannel *c, GIOCondition cond, 
 									  void *_client);
 static gboolean handle_client_send_queue(GIOChannel *c, GIOCondition cond, 
-									  void *_client);
+										 void *_client);
 
 
 /**

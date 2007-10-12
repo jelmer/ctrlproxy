@@ -99,6 +99,7 @@ static void client_send_channel_state(struct client *c,
 									"353",
 									client_get_default_target(c),
 									mode, ch->name, NULL);
+			l->has_endcolon = WITHOUT_COLON;
 			g_assert(line_add_arg(l, arg));
 		}
 

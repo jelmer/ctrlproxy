@@ -209,6 +209,7 @@ static gboolean requires_colon(const struct line *l)
 	case RPL_STATSHLINE:
 	case RPL_UMODEIS:
 	case RPL_TOPICWHOTIME:
+	case RPL_NAMREPLY:
 		return FALSE;
 
 	default: return TRUE;
