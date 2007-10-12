@@ -183,6 +183,9 @@ static gboolean requires_colon(const struct line *l)
 	if (!g_strcasecmp(l->args[0], "NICK"))
 		return FALSE;
 
+	if (!g_strcasecmp(l->args[0], "JOIN"))
+		return FALSE;
+
 	switch(c) {
 	case RPL_CHANNELMODEIS:
 	case RPL_INVITING:
@@ -209,7 +212,6 @@ static gboolean requires_colon(const struct line *l)
 	case RPL_STATSHLINE:
 	case RPL_UMODEIS:
 	case RPL_TOPICWHOTIME:
-	case RPL_NAMREPLY:
 		return FALSE;
 
 	default: return TRUE;

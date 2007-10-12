@@ -83,5 +83,6 @@ G_MODULE_EXPORT gboolean client_send_line(struct client *c,
 G_MODULE_EXPORT gboolean client_set_charset(struct client *c, const char *name);
 G_MODULE_EXPORT const char *client_get_default_origin(struct client *c);
 G_MODULE_EXPORT const char *client_get_default_target(struct client *c);
+G_MODULE_EXPORT const char *client_get_own_hostmask(struct client *c);
 
 #endif /* __CTRLPROXY_CLIENT_H__ */

@@ -56,7 +56,7 @@ static gboolean process_from_client(struct client *c, struct line *l)
 	g_assert(l != NULL);
 
 	if (c->network != NULL && c->network->state != NULL) 
-		l->origin = g_strdup(c->network->state->me.hostmask);
+		l->origin = g_strdup(client_get_own_hostmask(c));
 	else
 		l->origin = g_strdup_printf("%s!~%s@%s", c->nick, c->username, 
 									c->hostname);
@@ -724,6 +724,11 @@ gboolean client_set_charset(struct client *c, const char *name)
 	c->charset = g_strdup(name);
 
 	return TRUE;
+}
+
+const char *client_get_own_hostmask(struct client *c)
+{
+	return c->network->state->me.hostmask;
 }
 
 const char *client_get_default_origin(struct client *c)

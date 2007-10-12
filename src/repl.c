@@ -65,7 +65,7 @@ static void client_send_channel_state(struct client *c,
 	g_assert(c->network->state != NULL);
 	g_assert(ch->name != NULL);
 
-	client_send_args_ex(c, c->network->state->me.hostmask, "JOIN", ch->name, 
+	client_send_args_ex(c, client_get_own_hostmask(c), "JOIN", ch->name, 
 						NULL);
 
 	if (ch->topic != NULL) {
@@ -83,24 +83,26 @@ static void client_send_channel_state(struct client *c,
 		char *arg;
 		struct channel_nick *n = (struct channel_nick *)nl->data;
 
-		if (n->mode && n->mode != ' ') {
+		if (n->mode != '\0' && n->mode != ' ') {
 			arg = g_strdup_printf("%c%s", n->mode, n->global_nick->nick);
 		} else 	{ 
 			arg = g_strdup(n->global_nick->nick);
 		}
 
 		if (l == NULL || !line_add_arg(l, arg)) {
+			char *tmp;
 			if (l != NULL) {
 				client_send_line(c, l);
 				free_line(l);
 			}
 
-			l = irc_parse_line_args(client_get_default_origin(c), 
-									"353",
-									client_get_default_target(c),
-									mode, ch->name, NULL);
+			l = irc_parse_line_args(client_get_default_origin(c), "353",
+									client_get_default_target(c), mode, 
+									ch->name, NULL);
 			l->has_endcolon = WITHOUT_COLON;
-			g_assert(line_add_arg(l, arg));
+			tmp = g_strdup_printf(":%s", arg);
+			g_assert(line_add_arg(l, tmp));
+			g_free(tmp);
 		}
 
 		g_free(arg);
@@ -143,7 +145,7 @@ gboolean client_send_channel_state_diff(struct client *client,
 		on = find_channel_nick(old_state, nn->global_nick->nick);
 		if (on == NULL)
 			client_send_args_ex(client, nn->global_nick->hostmask, "JOIN", 
-								nn->global_nick->nick, NULL);
+								on->channel->name, NULL);
 	}
 
 	/* Send TOPIC if the topic is different */
@@ -186,7 +188,7 @@ gboolean client_send_state_diff(struct client *client, struct network_state *new
 		if (ns != NULL)
 			client_send_channel_state_diff(client, os, ns);
 		else
-			client_send_args_ex(client, client->network->state->me.hostmask, 
+			client_send_args_ex(client, client_get_own_hostmask(client), 
 								"PART", os->name, NULL);
 	}
 
