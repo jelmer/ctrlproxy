@@ -9,6 +9,8 @@ Ctrlproxy 3.0.4 UNRELEASED
 
   BUG FIXES
 
+    * No longer "skip" users on reconnect. (#146)
+
     * Check for empty argument to /CTRLPROXY BACKLOG (#132)
 
     * Integrate some more standard replication backends. 

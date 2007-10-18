@@ -434,7 +434,8 @@ static gboolean network_send_line_direct(struct network *s, struct client *c,
 	memcpy(l, ol, sizeof(struct line));
 	nl.origin = NULL;
 
-	g_assert(l->origin == NULL); /* origin lines should never be sent to the server */
+	/* origin lines should never be sent to the server */
+	g_assert(l->origin == NULL);
 
 	if (s->config->type == NETWORK_VIRTUAL) {
 		if (s->connection.data.virtual.ops == NULL) 
@@ -751,8 +752,8 @@ static gboolean connect_current_tcp_server(struct network *s)
 #else
 	size = sizeof(struct sockaddr_in);
 #endif
-	g_free(s->connection.data.tcp.local_name);
-	g_free(s->connection.data.tcp.remote_name);
+	g_assert(s->connection.data.tcp.local_name == NULL);
+	g_assert(s->connection.data.tcp.remote_name == NULL);
 	s->connection.data.tcp.remote_name = g_malloc(size);
 	s->connection.data.tcp.local_name = g_malloc(size);
 	s->connection.data.tcp.namelen = getsockname(sock, s->connection.data.tcp.local_name, &size);
@@ -896,6 +897,10 @@ static gboolean close_server(struct network *n)
 			n->connection.data.tcp.ping_id = 0;
 		}
 		n->connection.outgoing_id = 0;
+		g_free(n->connection.data.tcp.local_name);
+		g_free(n->connection.data.tcp.remote_name);
+		n->connection.data.tcp.local_name = NULL;
+		n->connection.data.tcp.remote_name = NULL;
 		break;
 	case NETWORK_VIRTUAL:
 		if (n->connection.data.virtual.ops && 
@@ -1184,10 +1189,6 @@ void unload_network(struct network *s)
 		s->global->networks = g_list_remove(s->global->networks, s);
 	}
 
-	if (s->config->type == NETWORK_TCP) {
-		g_free(s->connection.data.tcp.local_name);
-		g_free(s->connection.data.tcp.remote_name);
-	}
 	g_queue_foreach(s->connection.pending_lines, free_pending_line, NULL);
 	g_queue_free(s->connection.pending_lines);
 
