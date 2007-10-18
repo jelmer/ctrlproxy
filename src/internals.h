@@ -40,12 +40,6 @@
 #include <signal.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#ifdef HAVE_NETINET_IN_H
-#include <netinet/in.h>
-#endif /* HAVE_NETINET_IN_H */
-#ifdef HAVE_NETINET_IN6_H
-#include <netinet/in6.h>
-#endif /* HAVE_NETINET_IN6_H */
 #include "ctrlproxy.h"
 #include "plugins.h"
 #include "local.h"

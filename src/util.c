@@ -86,11 +86,7 @@ int str_rfc1459cmp(const char *a, const char *b)
 
 char *g_io_channel_ip_get_description(GIOChannel *ch)
 {
-#ifdef HAVE_IPv6
-	socklen_t len = sizeof(struct sockaddr_in6);
-#else
-	socklen_t len = sizeof(struct sockaddr_in);
-#endif
+	socklen_t len = sizeof(struct sockaddr_storage);
 	struct sockaddr *sa = g_malloc(len);
 	char hostname[NI_MAXHOST];
 	char service[NI_MAXSERV];

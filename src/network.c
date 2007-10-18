@@ -747,11 +747,7 @@ static gboolean connect_current_tcp_server(struct network *s)
 		return FALSE;
 	}
 
-#ifdef HAVE_IPV6
-	size = sizeof(struct sockaddr_in6);
-#else
-	size = sizeof(struct sockaddr_in);
-#endif
+	size = sizeof(struct sockaddr_storage);
 	g_assert(s->connection.data.tcp.local_name == NULL);
 	g_assert(s->connection.data.tcp.remote_name == NULL);
 	s->connection.data.tcp.remote_name = g_malloc(size);
