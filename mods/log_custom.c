@@ -355,6 +355,7 @@ static void file_write_line(struct log_custom_data *data,
 {
 	char *s;
 	char *n = NULL;
+	char *line;
 
 	custom_subst(network, &s, fmt, l, identifier, FALSE, FALSE);
 
@@ -363,10 +364,14 @@ static void file_write_line(struct log_custom_data *data,
 
 	custom_subst(network, &n, data->logfilename, l, identifier, TRUE, TRUE);
 
-	log_support_write(data->log_ctx, n, s);
+	line = g_strdup_printf("%s\n", n);
+	g_free(n);
+
+	log_support_write(data->log_ctx, line, s);
+
+	g_free(line);
 
 	g_free(s);
-	g_free(n);
 }
 
 static void file_write_line_target(struct log_custom_data *data, 
