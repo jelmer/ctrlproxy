@@ -15,7 +15,8 @@ Ctrlproxy 3.0.4 UNRELEASED
 
     * Integrate some more standard replication backends. 
 
-    * Allow specifying a network in the password, separated by a colon (:).
+    * Allow specifying a network in the password, separated by a colon (:). 
+      (#11)
 
     * Integrate listeners into the core.
 
@@ -38,10 +39,12 @@ Ctrlproxy 3.0.4 UNRELEASED
 
     * Add support for handling additional 005 parameters: HCN.
 
-	* Compress /NAMES lines (#123).
+    * Compress /NAMES lines (#123).
 
-	* Bail out when invalid arguments are specified on the command-line
-	  (Emanuele Giaquinta <e.giaquinta@glauco.it>)
+    * Bail out when invalid arguments are specified on the command-line
+      (Emanuele Giaquinta <e.giaquinta@glauco.it>)
+
+    * Make connect to networks non-blocking. (#133)
 
   INTERNALS
 

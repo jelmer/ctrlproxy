@@ -684,6 +684,7 @@ static gboolean connect_current_tcp_server(struct network *s)
 	struct addrinfo hints;
 	struct addrinfo *addrinfo = NULL;
 	int error;
+	gboolean connect_finished = TRUE;
 
 	g_assert(s != NULL);
 
@@ -700,9 +701,7 @@ static gboolean connect_current_tcp_server(struct network *s)
 		return FALSE;
 	}
 
-	log_network(LOG_INFO, s, "Connecting with %s:%s", 
-			  cs->host, 
-			  cs->port);
+	log_network(LOG_INFO, s, "Connecting with %s:%s", cs->host, cs->port);
 
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = PF_UNSPEC;
@@ -731,7 +730,12 @@ static gboolean connect_current_tcp_server(struct network *s)
 			bindsock(s, sock, res, cs->bind_address, cs->bind_port);
 
 		ioc = g_io_channel_unix_new(sock);
-		if (connect(sock, res->ai_addr, res->ai_addrlen) < 0 && errno != EINPROGRESS) {
+		g_io_channel_set_flags(ioc, G_IO_FLAG_NONBLOCK, NULL);
+		if (connect(sock, res->ai_addr, res->ai_addrlen) < 0) {
+			if (errno == EINPROGRESS) {
+				connect_finished = FALSE;
+				break;
+			}
 			g_io_channel_unref(ioc);
 			ioc = NULL;
 			continue;
@@ -774,6 +778,9 @@ static gboolean connect_current_tcp_server(struct network *s)
 		log_network(LOG_ERROR, s, "Couldn't connect via server %s:%s", cs->host, cs->port);
 		return FALSE;
 	}
+
+	if (!connect_finished)
+		s->connection.outgoing_id = g_io_add_watch(ioc, G_IO_OUT, server_send_queue, s);
 
 	network_set_iochannel(s, ioc);
 

@@ -26,6 +26,11 @@
 struct plugin *current_plugin = NULL;
 GList *plugins = NULL;
 
+/**
+ * Check whether a certain plugin has already been loaded.
+ *
+ * @param name Name of the plugin
+ */
 gboolean plugin_loaded(const char *name)
 {
 	GList *gl;
