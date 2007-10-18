@@ -118,6 +118,8 @@ gboolean    rep_g_file_set_contents             (const gchar *filename,
 #if GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION < 8
 #define g_file_get_contents rep_g_file_get_contents
 #define g_file_set_contents rep_g_file_set_contents
+#define G_GNUC_NULL_TERMINATED
+#define G_GNUC_WARN_UNUSED_RESULT
 #endif
 
 #endif /* __CTRLPROXY_H__ */
