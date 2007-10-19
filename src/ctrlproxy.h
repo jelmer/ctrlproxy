@@ -119,6 +119,8 @@ gboolean    rep_g_file_set_contents             (const gchar *filename,
 #define g_file_get_contents rep_g_file_get_contents
 #define g_file_set_contents rep_g_file_set_contents
 #define G_GNUC_NULL_TERMINATED
+#endif
+#if GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION < 10
 #define G_GNUC_WARN_UNUSED_RESULT
 #endif
 
