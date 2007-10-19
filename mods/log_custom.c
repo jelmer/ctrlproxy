@@ -364,14 +364,14 @@ static void file_write_line(struct log_custom_data *data,
 
 	custom_subst(network, &n, data->logfilename, l, identifier, TRUE, TRUE);
 
-	line = g_strdup_printf("%s\n", n);
-	g_free(n);
+	line = g_strdup_printf("%s\n", s);
+	g_free(s);
 
-	log_support_write(data->log_ctx, line, s);
+	log_support_write(data->log_ctx, n, line);
 
 	g_free(line);
 
-	g_free(s);
+	g_free(n);
 }
 
 static void file_write_line_target(struct log_custom_data *data, 
