@@ -357,10 +357,10 @@ static void file_write_line(struct log_custom_data *data,
 	char *n = NULL;
 	char *line;
 
-	custom_subst(network, &s, fmt, l, identifier, FALSE, FALSE);
-
 	if (data->logfilename == NULL) 
 		return;
+
+	custom_subst(network, &s, fmt, l, identifier, FALSE, FALSE);
 
 	custom_subst(network, &n, data->logfilename, l, identifier, TRUE, TRUE);
 
