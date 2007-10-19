@@ -249,6 +249,11 @@ void register_replication_backend(const struct replication_backend *backend)
 	backends = g_list_append(backends, g_memdup(backend, sizeof(*backend)));
 }
 
+/**
+ * Replicate the current state and backlog to the client.
+ *
+ * @param client Client to send data to.
+ */
 void client_replicate(struct client *client)
 {
 	void (*fn) (struct client *);

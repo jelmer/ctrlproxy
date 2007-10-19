@@ -258,6 +258,12 @@ static void free_pending_line(void *_line, void *userdata)
 	free_line((struct line *)_line);
 }
 
+/*
+ * Disconnect a client.
+ *
+ * @param c Client to disconnect.
+ * @param reason Reason of the disconnect. Can be NULL.
+ */
 void disconnect_client(struct client *c, const char *reason) 
 {
 	g_assert(c != NULL);
@@ -304,6 +310,11 @@ void disconnect_client(struct client *c, const char *reason)
 	g_free(c);
 }
 
+/** 
+ * Send the Message of the Day to the client.
+ *
+ * @param c Client to send to.
+ */
 void send_motd(struct client *c)
 {
 	char **lines;
