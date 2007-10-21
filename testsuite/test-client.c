@@ -66,8 +66,8 @@ START_TEST(test_login)
 				"USER a a a a\r\n", -1, NULL, NULL) == G_IO_STATUS_NORMAL);
 	fail_unless(g_io_channel_flush(ch2, NULL) == G_IO_STATUS_NORMAL);
 	g_main_iteration(FALSE);
-	fail_if(c->nick == NULL);
-	fail_unless(!strcmp(c->nick, "bla"));
+	fail_if(c->state->me.nick == NULL);
+	fail_unless(!strcmp(c->state->me.nick, "bla"));
 END_TEST
 
 START_TEST(test_read_nonutf8)
@@ -86,8 +86,8 @@ START_TEST(test_read_nonutf8)
 				"PRIVMSG foo :èeeé\\r\n", -1, NULL, NULL) == G_IO_STATUS_NORMAL);
 	fail_unless(g_io_channel_flush(ch2, NULL) == G_IO_STATUS_NORMAL);
 	g_main_iteration(FALSE);
-	fail_if(c->nick == NULL);
-	fail_unless(!strcmp(c->nick, "bla"));
+	fail_if(c->state->me.nick == NULL);
+	fail_unless(!strcmp(c->state->me.nick, "bla"));
 	client_send_args(c, "PRIVMSG", "foo", "\x024:öéé", NULL);
 END_TEST
 
@@ -117,7 +117,7 @@ START_TEST(test_login_nonetwork)
 				"USER a a a a\r\n", -1, NULL, NULL) == G_IO_STATUS_NORMAL);
 	fail_unless(g_io_channel_flush(ch2, NULL) == G_IO_STATUS_NORMAL);
 	g_main_iteration(FALSE);
-	fail_if(c->nick == NULL);
+	fail_if(c->state->me.nick == NULL);
 END_TEST
 
 
