@@ -106,6 +106,9 @@ struct network_info
 	/* Maximum key length */
 	int keylen;
 
+	/* Server supports SSL */
+	gboolean ssl;
+
 	/* The server support the SILENCE command.  */
 	gboolean silence;
 

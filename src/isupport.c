@@ -73,6 +73,9 @@ char *network_info_string(struct network_info *info)
 	if (info->map)
 		fs = g_list_append(fs, "MAP");
 
+	if (info->ssl)
+		fs = g_list_append(fs, "SSL");
+
 	if (info->charset != NULL)
 		fs = g_list_append(fs, g_strdup_printf("CHARSET=%s", info->charset));
 
@@ -314,6 +317,8 @@ void network_info_parse(struct network_info *info, const char *parameter)
 		info->wallchops = TRUE;
 	} else if (!g_strcasecmp(key, "MAP")) {
 		info->map = TRUE;
+	} else if (!g_strcasecmp(key, "SSL")) {
+		info->ssl = TRUE;
 	} else if (!g_strcasecmp(key, "WALLVOICES")) {
 		info->wallvoices = TRUE;
 	} else if (!g_strcasecmp(key, "RFC2812")) {
