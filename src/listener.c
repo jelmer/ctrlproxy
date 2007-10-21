@@ -172,7 +172,7 @@ static gboolean handle_client_detect(GIOChannel *ioc, struct pending_client *pc)
 			return status;
 		}
 
-		complete = g_malloc(in_len+2);
+		complete = g_malloc(in_len+1);
 		complete[0] = header[0];
 		memcpy(complete+1, raw, in_len);
 		g_free(raw);
@@ -180,7 +180,7 @@ static gboolean handle_client_detect(GIOChannel *ioc, struct pending_client *pc)
 		if (iconv == (GIConv)-1) {
 			cvrt = complete;
 		} else {
-			cvrt = g_convert_with_iconv(complete, -1, iconv, NULL, NULL, &error);
+			cvrt = g_convert_with_iconv(complete, in_len+1, iconv, NULL, NULL, &error);
 			if (cvrt == NULL) {
 				cvrt = complete;
 				status = G_IO_STATUS_ERROR;
