@@ -175,7 +175,7 @@ static gboolean handle_client_detect(GIOChannel *ioc, struct pending_client *pc)
 		complete = g_malloc(in_len+2);
 		complete[0] = header[0];
 		memcpy(complete+1, raw, in_len);
-		complete[in_len+2] = '\0';
+		complete[in_len+1] = '\0';
 		g_free(raw);
 
 		if (iconv == (GIConv)-1) {

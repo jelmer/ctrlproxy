@@ -711,7 +711,8 @@ static gboolean connect_current_tcp_server(struct network *s)
 	/* Lookup */
 	error = getaddrinfo(cs->host, cs->port, &hints, &addrinfo);
 	if (error) {
-		log_network(LOG_ERROR, s, "Unable to lookup %s:%s %s", cs->host, cs->port, gai_strerror(error));
+		log_network(LOG_ERROR, s, "Unable to lookup %s:%s %s", 
+					cs->host, cs->port, gai_strerror(error));
 		freeaddrinfo(addrinfo);
 		return FALSE;
 	}
