@@ -46,6 +46,10 @@ Ctrlproxy 3.0.4 UNRELEASED
 
     * Make connect to networks non-blocking. (#133)
 
+  LICENSING
+
+    * CtrlProxy is now licensed under the GNU GPLv3.
+
   INTERNALS
 
     * Moved some common logging code to the core.
