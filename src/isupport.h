@@ -103,6 +103,9 @@ struct network_info
 	 * PREFIX. */
 	char *statusmsg;
 
+	/** IRCD application used on the server */
+	char *ircd;
+
 	/* Maximum key length */
 	int keylen;
 

@@ -40,6 +40,7 @@ void free_network_info(struct network_info *info)
 	g_free(info->maxlist);
 	g_free(info->idchan);
 	g_free(info->statusmsg);
+	g_free(info->ircd);
 }
 
 char *network_info_string(struct network_info *info)
@@ -186,6 +187,9 @@ char *network_info_string(struct network_info *info)
 	if (info->chantypes != NULL)
 		fs = g_list_append(fs, g_strdup_printf("CHANTYPES=%s", info->chantypes));
 
+	if (info->ircd != NULL)
+		fs = g_list_append(fs, g_strdup_printf("IRCD=%s", info->ircd));
+
 	if (info->chanmodes != NULL) {
 		char *tmp = g_strjoinv(",", info->chanmodes);
 		fs = g_list_append(fs, g_strdup_printf("CHANMODES=%s", tmp));
@@ -281,6 +285,9 @@ void network_info_parse(struct network_info *info, const char *parameter)
 	} else if (!g_strcasecmp(key, "NETWORK")) {
 		g_free(info->name);
 		info->name = g_strdup(val);
+	} else if (!g_strcasecmp(key, "IRCD")) {
+		g_free(info->ircd);
+		info->ircd = g_strdup(val);
 	} else if (!g_strcasecmp(key, "NICKLEN") || !g_strcasecmp(key, "MAXNICKLEN")) {
 		info->nicklen = atoi(val);
 	} else if (!g_strcasecmp(key, "USERLEN")) {

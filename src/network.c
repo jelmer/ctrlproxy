@@ -1120,6 +1120,7 @@ struct network *load_network(struct global *global, struct network_config *sc)
 	s->config = sc;
 	network_info_init(&s->info);
 	s->info.name = g_strdup(s->config->name);
+	s->info.ircd = g_strdup("ctrlproxy");
 	s->connection.pending_lines = g_queue_new();
 	s->global = global;
 	s->info.forced_nick_changes = TRUE; /* Forced nick changes are done by ctrlproxy */
