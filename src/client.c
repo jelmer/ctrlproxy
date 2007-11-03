@@ -219,13 +219,15 @@ gboolean client_send_args(struct client *c, ...)
  */
 gboolean client_send_line(struct client *c, const struct line *l)
 {
-	char *line_nick;
-	g_assert(c);
-	g_assert(l);
+	if (c->connected == FALSE)
+		return FALSE;
+
+	g_assert(c != NULL);
+	g_assert(l != NULL);
 	log_client_line(c, l, FALSE);
 
 	if (!g_strcasecmp(l->args[0], "NICK")) {
-		line_nick = line_get_nick(l);
+		char *line_nick = line_get_nick(l);
 		if (!g_strcasecmp(c->nick, line_nick))
 			change_nick(c, l->args[1]);
 		g_free(line_nick);
