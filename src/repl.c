@@ -4,7 +4,7 @@
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation; either version 2 of the License, or
+	the Free Software Foundation; either version 3 of the License, or
 	(at your option) any later version.
 
 	This program is distributed in the hope that it will be useful,
@@ -56,7 +56,7 @@ char *mode2string(char modes[255])
 static void client_send_channel_state(struct client *c, 
 									  struct channel_state *ch)
 {
-	struct channel_nick *n;
+	struct line *l = NULL;
 	GList *nl;
 
 	g_assert(c != NULL);
@@ -65,7 +65,7 @@ static void client_send_channel_state(struct client *c,
 	g_assert(c->network->state != NULL);
 	g_assert(ch->name != NULL);
 
-	client_send_args_ex(c, c->network->state->me.hostmask, "JOIN", ch->name, 
+	client_send_args_ex(c, client_get_own_hostmask(c), "JOIN", ch->name, 
 						NULL);
 
 	if (ch->topic != NULL) {
@@ -80,16 +80,39 @@ static void client_send_channel_state(struct client *c,
 
 	for (nl = ch->nicks; nl; nl = nl->next) {
 		char mode[2] = { ch->mode, 0 };
-		char *tmp;
-		n = (struct channel_nick *)nl->data;
-		if (n->mode && n->mode != ' ') {
-			tmp = g_strdup_printf("%c%s", n->mode, n->global_nick->nick);
+		char *arg;
+		struct channel_nick *n = (struct channel_nick *)nl->data;
+
+		if (n->mode != '\0' && n->mode != ' ') {
+			arg = g_strdup_printf("%c%s", n->mode, n->global_nick->nick);
 		} else 	{ 
-			tmp = g_strdup(n->global_nick->nick);
+			arg = g_strdup(n->global_nick->nick);
 		}
-		client_send_response(c, RPL_NAMREPLY, mode, ch->name, tmp, NULL);
-		g_free(tmp);
+
+		if (l == NULL || !line_add_arg(l, arg)) {
+			char *tmp;
+			if (l != NULL) {
+				client_send_line(c, l);
+				free_line(l);
+			}
+
+			l = irc_parse_line_args(client_get_default_origin(c), "353",
+									client_get_default_target(c), mode, 
+									ch->name, NULL);
+			l->has_endcolon = WITHOUT_COLON;
+			tmp = g_strdup_printf(":%s", arg);
+			g_assert(line_add_arg(l, tmp));
+			g_free(tmp);
+		}
+
+		g_free(arg);
 	}
+
+	if (l != NULL) {
+		client_send_line(c, l);
+		free_line(l);
+	}
+
 	client_send_response(c, RPL_ENDOFNAMES, ch->name, "End of /NAMES list", 
 						 NULL);
 }
@@ -122,7 +145,7 @@ gboolean client_send_channel_state_diff(struct client *client,
 		on = find_channel_nick(old_state, nn->global_nick->nick);
 		if (on == NULL)
 			client_send_args_ex(client, nn->global_nick->hostmask, "JOIN", 
-								nn->global_nick->nick, NULL);
+								on->channel->name, NULL);
 	}
 
 	/* Send TOPIC if the topic is different */
@@ -165,7 +188,7 @@ gboolean client_send_state_diff(struct client *client, struct network_state *new
 		if (ns != NULL)
 			client_send_channel_state_diff(client, os, ns);
 		else
-			client_send_args_ex(client, client->network->state->me.hostmask, 
+			client_send_args_ex(client, client_get_own_hostmask(client), 
 								"PART", os->name, NULL);
 	}
 
@@ -196,9 +219,7 @@ gboolean client_send_state(struct client *c, struct network_state *state)
 	char *mode;
 
 	if (strcmp(state->me.nick, c->nick) != 0) {
-		client_send_args_ex(c, c->nick, "NICK", state->me.nick, NULL);
-		g_free(c->nick);
-		c->nick = g_strdup(state->me.nick);
+		client_send_args_ex(c, c->hostmask, "NICK", state->me.nick, NULL);
 	}
 
 	g_assert(c != NULL);
@@ -228,6 +249,11 @@ void register_replication_backend(const struct replication_backend *backend)
 	backends = g_list_append(backends, g_memdup(backend, sizeof(*backend)));
 }
 
+/**
+ * Replicate the current state and backlog to the client.
+ *
+ * @param client Client to send data to.
+ */
 void client_replicate(struct client *client)
 {
 	void (*fn) (struct client *);

@@ -4,7 +4,7 @@
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation; either version 2 of the License, or
+	the Free Software Foundation; either version 3 of the License, or
 	(at your option) any later version.
 
 	This program is distributed in the hope that it will be useful,
@@ -355,17 +355,22 @@ static void file_write_line(struct log_custom_data *data,
 {
 	char *s;
 	char *n = NULL;
-
-	custom_subst(network, &s, fmt, l, identifier, FALSE, FALSE);
+	char *line;
 
 	if (data->logfilename == NULL) 
 		return;
 
+	custom_subst(network, &s, fmt, l, identifier, FALSE, FALSE);
+
 	custom_subst(network, &n, data->logfilename, l, identifier, TRUE, TRUE);
 
-	log_support_write(data->log_ctx, n, s);
-
+	line = g_strdup_printf("%s\n", s);
 	g_free(s);
+
+	log_support_write(data->log_ctx, n, line);
+
+	g_free(line);
+
 	g_free(n);
 }
 

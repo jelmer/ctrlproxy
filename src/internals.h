@@ -4,7 +4,7 @@
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation; either version 2 of the License, or
+	the Free Software Foundation; either version 3 of the License, or
 	(at your option) any later version.
 
 	This program is distributed in the hope that it will be useful,
@@ -40,15 +40,8 @@
 #include <signal.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#ifdef HAVE_NETINET_IN_H
-#include <netinet/in.h>
-#endif /* HAVE_NETINET_IN_H */
-#ifdef HAVE_NETINET_IN6_H
-#include <netinet/in6.h>
-#endif /* HAVE_NETINET_IN6_H */
 #include "ctrlproxy.h"
 #include "plugins.h"
-#include "listener.h"
 #include "local.h"
 
 #define DEFAULT_RECONNECT_INTERVAL 	60
@@ -104,7 +97,7 @@ void global_update_config(struct global *my_global);
 
 /* repl.c */
 void client_replicate(struct client *);
-char *mode2string(char modes[255]);
+G_GNUC_MALLOC char *mode2string(char modes[255]);
 void string2mode(char *modes, char ar[255]);
 
 gboolean init_replication(void);
@@ -126,6 +119,9 @@ void nickserv_identify_me(struct network *network, char *nick);
 void init_admin(void);
 gboolean admin_process_command(struct client *c, struct line *l, int cmdoffset);
 void admin_log(enum log_level level, const struct network *n, const struct client *c, const char *data);
+gboolean start_admin_socket(struct global *global);
+gboolean stop_admin_socket(struct global *global);
+gboolean admin_socket_prompt(const char *config_dir);
 
 /* settings.c */
 gboolean create_configuration(const char *config_dir);
@@ -133,5 +129,7 @@ gboolean create_configuration(const char *config_dir);
 /* pipes.c */
 gboolean start_unix_socket(struct global *);
 gboolean stop_unix_socket(struct global *);
+
+void free_listeners(struct global *global);
 
 #endif /* __INTERNALS_H__ */

@@ -6,7 +6,7 @@
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation; either version 2 of the License, or
+	the Free Software Foundation; either version 3 of the License, or
 	(at your option) any later version.
 
 	This program is distributed in the hope that it will be useful,
@@ -39,6 +39,12 @@
 
 #include <netdb.h>
 
+struct listener_iochannel {
+	char address[NI_MAXHOST];
+	char port[NI_MAXSERV];
+	gint watch_id;
+};
+
 static GIConv iconv = (GIConv)-1;
 
 static gboolean kill_pending_client(struct pending_client *pc)
@@ -54,9 +60,12 @@ static gboolean kill_pending_client(struct pending_client *pc)
 	return TRUE;
 }
 
-static gboolean handle_client_detect(GIOChannel *ioc, struct pending_client *cl);
-static gboolean handle_client_socks_data(GIOChannel *ioc, struct pending_client *cl);
-static gboolean handle_client_line(GIOChannel *c, struct pending_client *pc, const struct line *l)
+static gboolean handle_client_detect(GIOChannel *ioc, 
+									 struct pending_client *cl);
+static gboolean handle_client_socks_data(GIOChannel *ioc, 
+										 struct pending_client *cl);
+static gboolean handle_client_line(GIOChannel *c, struct pending_client *pc, 
+								   const struct line *l)
 {
 	if (l->args[0] == NULL) { 
 		return TRUE;
@@ -75,14 +84,15 @@ static gboolean handle_client_line(GIOChannel *c, struct pending_client *pc, con
 			networkname = l->args[1];
 		} else if (strcmp(l->args[1], pc->listener->config->password) == 0) {
 			authenticated = TRUE;
-		} else if (strncmp(l->args[1], pc->listener->config->password, strlen(pc->listener->config->password)) == 0 &&
+		} else if (strncmp(l->args[1], pc->listener->config->password, 
+						   strlen(pc->listener->config->password)) == 0 &&
 				   l->args[1][strlen(pc->listener->config->password)] == ':') {
 			authenticated = TRUE;
 			networkname = l->args[1]+strlen(pc->listener->config->password)+1;
 		}
 
 		if (authenticated) {
-			log_network (LOG_INFO, n, "Client successfully authenticated");
+			log_network(LOG_INFO, n, "Client successfully authenticated");
 
 			if (networkname != NULL) {
 				n = find_network_by_hostname(pc->listener->global, 
@@ -106,8 +116,17 @@ static gboolean handle_client_line(GIOChannel *c, struct pending_client *pc, con
 
 			return FALSE;
 		} else {
-			log_network(LOG_WARNING, pc->listener->network, "User tried to log in with incorrect password!");
-			irc_sendf(c, iconv, NULL, ":%s %d %s :Password mismatch", get_my_hostname(), ERR_PASSWDMISMATCH, "*");
+			GIOStatus status;
+			log_network(LOG_WARNING, pc->listener->network, 
+						"User tried to log in with incorrect password!");
+
+			status = irc_sendf(c, iconv, NULL, 
+							   ":%s %d %s :Password mismatch", 
+							   get_my_hostname(), ERR_PASSWDMISMATCH, "*");
+
+			if (status != G_IO_STATUS_NORMAL) {
+				return FALSE;
+			}
 
 			return TRUE;
 		}
@@ -153,9 +172,10 @@ static gboolean handle_client_detect(GIOChannel *ioc, struct pending_client *pc)
 			return status;
 		}
 
-		complete = g_malloc(in_len+1);
+		complete = g_malloc(in_len+2);
 		complete[0] = header[0];
 		memcpy(complete+1, raw, in_len);
+		complete[in_len+1] = '\0';
 		g_free(raw);
 
 		if (iconv == (GIConv)-1) {
@@ -391,6 +411,12 @@ gboolean stop_listener(struct listener *l)
 	return TRUE;
 }
 
+void free_listeners(struct global *global)
+{
+	while (global->listeners)
+		free_listener((struct listener *)global->listeners->data);
+}
+
 void free_listener(struct listener *l)
 {
 	l->global->listeners = g_list_remove(l->global->listeners, l);
@@ -569,8 +595,14 @@ static gboolean pass_handle_data(struct pending_client *cl)
 		break;
 	}
 
-	if (strcmp(cl->listener->config->password, pass) == 0)
+	if (cl->listener->config->password == NULL)
+		log_network(LOG_WARNING, cl->listener->network, 
+					"No password set, allowing client _without_ authentication!");
+
+	if (cl->listener->config->password == NULL ||
+		strcmp(cl->listener->config->password, pass) == 0) {
 		header[1] = 0x0;
+	}
 
 	status = g_io_channel_write_chars(cl->connection, header, 2, &read, NULL);
 	if (status != G_IO_STATUS_NORMAL) {
@@ -718,30 +750,24 @@ static gboolean handle_client_socks_data(GIOChannel *ioc, struct pending_client 
 					}
 
 					if (result->config->type == NETWORK_TCP) {
-#ifdef HAVE_IPV6
-						struct sockaddr_in6 *name6; 
-#endif
-						struct sockaddr_in *name4; 
+						struct sockaddr *name; 
 						int atyp, len, port;
 						gchar *data;
 
-#ifdef HAVE_IPV6
-						name6 = (struct sockaddr_in6 *)result->connection.data.tcp.local_name;
-#endif
-						name4 = (struct sockaddr_in *)result->connection.data.tcp.local_name;
+						name = (struct sockaddr *)result->connection.data.tcp.local_name;
 
-						if (name4->sin_family == AF_INET) {
+						if (name->sa_family == AF_INET) {
+							struct sockaddr_in *name4 = (struct sockaddr_in *)name;
 							atyp = ATYP_IPV4;
 							data = (gchar *)&name4->sin_addr;
 							len = 4;
 							port = name4->sin_port;
-#ifdef HAVE_IPV6
-						} else if (name6->sin6_family == AF_INET6) {
+						} else if (name->sa_family == AF_INET6) {
+							struct sockaddr_in6 *name6 = (struct sockaddr_in6 *)name;
 							atyp = ATYP_IPV6;
 							data = (gchar *)&name6->sin6_addr;
 							len = 16;
 							port = name6->sin6_port;
-#endif
 						} else {
 							log_network(LOG_ERROR, result, "Unable to obtain local address for connection to server");
 							return socks_error(ioc, REP_NET_UNREACHABLE);

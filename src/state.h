@@ -4,7 +4,7 @@
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation; either version 2 of the License, or
+	the Free Software Foundation; either version 3 of the License, or
 	(at your option) any later version.
 
 	This program is distributed in the hope that it will be useful,
@@ -114,9 +114,9 @@ struct network_state
 };
 
 /* state.c */
-G_MODULE_EXPORT struct network_state *network_state_init(const char *nick, const char *username, const char *hostname);
+G_GNUC_MALLOC G_MODULE_EXPORT struct network_state *network_state_init(const char *nick, const char *username, const char *hostname);
 G_MODULE_EXPORT void free_network_state(struct network_state *);
-G_MODULE_EXPORT gboolean state_handle_data(struct network_state *s, struct line *l);
+G_MODULE_EXPORT gboolean state_handle_data(struct network_state *s, const struct line *l);
 
 G_MODULE_EXPORT struct channel_state *find_channel(struct network_state *st, const char *name);
 G_MODULE_EXPORT struct channel_nick *find_channel_nick(struct channel_state *c, const char *name);

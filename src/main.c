@@ -4,7 +4,7 @@
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation; either version 2 of the License, or
+	the Free Software Foundation; either version 3 of the License, or
 	(at your option) any later version.
 
 	This program is distributed in the hope that it will be useful,
@@ -102,8 +102,8 @@ static void clean_exit()
 		save_configuration(my_global->config, path);
 	nickserv_save(my_global, path);
 	stop_unix_socket(my_global);
+	stop_admin_socket(my_global);
 	fini_listeners(my_global);
-
 	free_global(my_global);
 
 	g_main_loop_unref(main_loop);
@@ -192,6 +192,7 @@ int main(int argc, char **argv)
 		{"version", 'v', 0, G_OPTION_ARG_NONE, &version, ("Show version information")},
 		{ NULL }
 	};
+	GError *error;
 
 	signal(SIGINT, signal_quit);
 	signal(SIGTERM, signal_quit);
@@ -213,8 +214,10 @@ int main(int argc, char **argv)
 	pc = g_option_context_new("");
 	g_option_context_add_main_entries(pc, options, NULL);
 
-	if (!g_option_context_parse(pc, &argc, &argv, NULL))
+	if (!g_option_context_parse(pc, &argc, &argv, &error)) {
+		fprintf(stderr, "%s\n", error->message);
 		return 1;
+	}
 
 	if (version) {
 		printf("ctrlproxy %s\n", VERSION);
@@ -305,6 +308,7 @@ int main(int argc, char **argv)
 	write_pidfile(my_global);
 
 	start_unix_socket(my_global);
+	start_admin_socket(my_global);
 
 	autoconnect_networks(my_global);
 

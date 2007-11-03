@@ -4,7 +4,7 @@
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation; either version 2 of the License, or
+	the Free Software Foundation; either version 3 of the License, or
 	(at your option) any later version.
 
 	This program is distributed in the hope that it will be useful,
@@ -48,10 +48,12 @@ struct client {
 	time_t last_pong;
 	time_t connect_time;
 	char *nick;
+	char *requested_nick;
 	char *fullname;
 	char *hostname;
 	char *username;
 	char *charset;
+	char *hostmask;
 	gboolean exit_on_close;
 	gboolean connected;
 };
@@ -63,7 +65,8 @@ struct client {
  * @param io IO Channel to use for communication.
  * @param desc Description of the client.
  */
-G_MODULE_EXPORT struct client *client_init(struct network *net, 
+G_MODULE_EXPORT G_GNUC_MALLOC struct client *client_init(
+										   struct network *net, 
 										   GIOChannel *io, 
 										   const char *desc);
 
@@ -72,13 +75,16 @@ G_MODULE_EXPORT struct client *client_init(struct network *net,
  */
 G_MODULE_EXPORT void disconnect_client(struct client *c, const char *reason);
 
-G_MODULE_EXPORT gboolean client_send_args(struct client *c, ...);
-G_MODULE_EXPORT gboolean client_send_args_ex(struct client *c, 
+G_MODULE_EXPORT G_GNUC_NULL_TERMINATED gboolean client_send_args(struct client *c, ...);
+G_MODULE_EXPORT G_GNUC_NULL_TERMINATED gboolean client_send_args_ex(struct client *c, 
 											 const char *hm, ...);
-G_MODULE_EXPORT gboolean client_send_response(struct client *c, 
+G_MODULE_EXPORT G_GNUC_NULL_TERMINATED gboolean client_send_response(struct client *c, 
 											  int response, ...);
 G_MODULE_EXPORT gboolean client_send_line(struct client *c, 
 										  const struct line *);
 G_MODULE_EXPORT gboolean client_set_charset(struct client *c, const char *name);
+G_MODULE_EXPORT const char *client_get_default_origin(struct client *c);
+G_MODULE_EXPORT const char *client_get_default_target(struct client *c);
+G_MODULE_EXPORT const char *client_get_own_hostmask(struct client *c);
 
 #endif /* __CTRLPROXY_CLIENT_H__ */

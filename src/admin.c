@@ -6,7 +6,7 @@
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation; either version 2 of the License, or
+	the Free Software Foundation; either version 3 of the License, or
 	(at your option) any later version.
 
 	This program is distributed in the hope that it will be useful,
@@ -21,6 +21,7 @@
 
 #include "internals.h"
 #include <string.h>
+#include <sys/un.h>
 #include "admin.h"
 #include "help.h"
 #include "irc.h"
@@ -234,20 +235,24 @@ static void com_disconnect_network (admin_handle h, char **args, void *userdata)
 {
 	struct network *n;
 
-	n = admin_get_network(h);
-
 	if (args[1] != NULL) {
 		n = find_network(admin_get_global(h), args[1]);
 		if (!n) {
 			admin_out(h, "Can't find active network with that name");
 			return;
 		}
+	} else {
+		n = admin_get_network(h);
+		if (n == NULL) {
+			admin_out(h, "Usage: DISCONNECT <network>");
+			return;
+		}
 	}
 
 	if (n->connection.state == NETWORK_CONNECTION_STATE_NOT_CONNECTED) {
-		admin_out(h, "Already disconnected from `%s'", args[1]);
+		admin_out(h, "Already disconnected from `%s'", n->info.name);
 	} else {
-		admin_out(h, "Disconnecting from `%s'", args[1]);
+		admin_out(h, "Disconnecting from `%s'", n->info.name);
 		disconnect_network(n);
 	}
 }
@@ -314,6 +319,11 @@ static void list_networks(admin_handle h, char **args, void *userdata)
 static void detach_client(admin_handle h, char **args, void *userdata)
 {
 	struct client *c = admin_get_client(h);
+
+	if (c == NULL) {
+		admin_out(h, "No client set");
+		return;
+	}
 
 	disconnect_client(c, "Client exiting");
 }
@@ -863,3 +873,125 @@ void init_admin(void)
 
 	markers = g_hash_table_new_full(NULL, NULL, NULL, (GDestroyNotify)linestack_free_marker);
 }
+
+static void iochannel_admin_out(admin_handle h, const char *data)
+{
+	gsize bytes_written;
+	GError *error = NULL;
+	GIOStatus status;
+
+	status = g_io_channel_write_chars(h->user_data, data, -1, &bytes_written, &error);
+
+	status = g_io_channel_write_chars(h->user_data, "\n", -1, &bytes_written, &error);
+
+	status = g_io_channel_flush(h->user_data, &error);
+}
+
+static gboolean handle_client_data(GIOChannel *channel, 
+								  GIOCondition condition, void *_global)
+{
+	char *raw;
+	GError *error = NULL;
+	GIOStatus status;
+	struct admin_handle ah;
+	gsize eol;
+
+	ah.global = _global;
+	ah.client = NULL;
+	ah.user_data = channel;
+	ah.send_fn = iochannel_admin_out;
+
+	if (condition & G_IO_IN) {
+		status = g_io_channel_read_line(channel, &raw, NULL, &eol, &error);
+		if (status == G_IO_STATUS_NORMAL) {
+			raw[eol] = '\0';
+			process_cmd(&ah, raw);
+			g_free(raw);
+		}
+	}
+
+	if (condition & G_IO_HUP) {
+		return FALSE;
+	}
+
+	if (condition & G_IO_ERR) {
+		log_global(LOG_WARNING, "Error from admin client");
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+static gboolean handle_new_client(GIOChannel *c_server, 
+								  GIOCondition condition, void *_global)
+{
+	GIOChannel *c;
+	int sock = accept(g_io_channel_unix_get_fd(c_server), NULL, 0);
+
+	if (sock < 0) {
+		log_global(LOG_WARNING, "Error accepting new connection: %s", strerror(errno));
+		return TRUE;
+	}
+
+	c = g_io_channel_unix_new(sock);
+
+	g_io_channel_set_close_on_unref(c, TRUE);
+	g_io_channel_set_encoding(c, NULL, NULL);
+	g_io_channel_set_flags(c, G_IO_FLAG_NONBLOCK, NULL);
+	
+	g_io_add_watch(c, G_IO_IN | G_IO_ERR | G_IO_HUP, handle_client_data, _global);
+
+	g_io_channel_unref(c);
+
+	return TRUE;
+}
+
+gboolean start_admin_socket(struct global *global)
+{
+	int sock;
+	struct sockaddr_un un;
+
+	sock = socket(PF_UNIX, SOCK_STREAM, 0);
+	if (sock < 0) {
+		log_global(LOG_ERROR, "error creating unix socket: %s", strerror(errno));
+		return FALSE;
+	}
+	
+	un.sun_family = AF_UNIX;
+	strncpy(un.sun_path, global->config->admin_socket, sizeof(un.sun_path));
+	unlink(un.sun_path);
+
+	if (bind(sock, (struct sockaddr *)&un, sizeof(un)) < 0) {
+		log_global(LOG_ERROR, "unable to bind to %s: %s", un.sun_path, strerror(errno));
+		return FALSE;
+	}
+	
+	if (listen(sock, 5) < 0) {
+		log_global(LOG_ERROR, "error listening on socket: %s", strerror(errno));
+		return FALSE;
+	}
+
+	global->admin_incoming = g_io_channel_unix_new(sock);
+
+	if (!global->admin_incoming) {
+		log_global(LOG_ERROR, "Unable to create GIOChannel for unix server socket");
+		return FALSE;
+	}
+
+	g_io_channel_set_close_on_unref(global->admin_incoming, TRUE);
+
+	g_io_channel_set_encoding(global->admin_incoming, NULL, NULL);
+	global->admin_incoming_id = g_io_add_watch(global->admin_incoming, G_IO_IN, handle_new_client, global);
+	g_io_channel_unref(global->admin_incoming);
+
+	return TRUE;
+}
+
+gboolean stop_admin_socket(struct global *global)
+{
+	if (global->admin_incoming_id > 0)
+		g_source_remove(global->admin_incoming_id);
+	unlink(global->config->admin_socket);
+	return TRUE;
+}
+

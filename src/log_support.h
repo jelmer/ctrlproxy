@@ -4,7 +4,7 @@
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation; either version 2 of the License, or
+	the Free Software Foundation; either version 3 of the License, or
 	(at your option) any later version.
 
 	This program is distributed in the hope that it will be useful,
@@ -32,13 +32,13 @@ struct log_support_context {
 	int num_opened;
 };
 
-struct log_support_context *log_support_init(void);
-gboolean log_support_write(struct log_support_context *ctx, 
+G_MODULE_EXPORT G_GNUC_MALLOC struct log_support_context *log_support_init(void);
+G_MODULE_EXPORT gboolean log_support_write(struct log_support_context *ctx, 
 					   	   const char *path,
 						   const char *text);
-void log_support_writef(struct log_support_context *ctx, 
+G_MODULE_EXPORT G_GNUC_PRINTF(3, 4) void log_support_writef(struct log_support_context *ctx, 
 					   const char *path,
 					   const char *fmt, ...);
-void free_log_support_context(struct log_support_context *);
+G_MODULE_EXPORT void free_log_support_context(struct log_support_context *);
 
 #endif /* _CTRLPROXY_LOG_SUPPORT_H_ */

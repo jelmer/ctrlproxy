@@ -78,6 +78,10 @@ ctrlproxy$(EXEEXT): src/main.o $(objs)
 	@echo Linking $@
 	@$(LD) $(LDFLAGS) -rdynamic -o $@ $^ $(LIBS)
 
+ctrlproxy-admin$(EXEEXT): src/admin-cmd.o
+	@echo Linking $@
+	@$(LD) $(LDFLAGS) -rdynamic -o $@ $^ $(LIBS)
+
 mods/%.o: mods/%.c
 	@echo Compiling for shared library $<
 	@$(CC) -fPIC -I. -Isrc $(CFLAGS) $(GCOV_CFLAGS) -c $< -o $@
@@ -178,7 +182,7 @@ clean::
 	@rm -f $(dep_files)
 	@echo Removing object files and executables
 	@rm -f src/*.o testsuite/check ctrlproxy$(EXEEXT) testsuite/*.o *~ mods/*.o
-	@rm -f linestack-cmd$(EXEEXT)
+	@rm -f linestack-cmd$(EXEEXT) ctrlproxy-admin$(EXEEXT)
 	@echo Removing gcov output
 	@rm -f *.gcov *.gcno *.gcda 
 	@echo Removing test output

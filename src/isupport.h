@@ -4,7 +4,7 @@
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation; either version 2 of the License, or
+	the Free Software Foundation; either version 3 of the License, or
 	(at your option) any later version.
 
 	This program is distributed in the hope that it will be useful,
@@ -103,8 +103,14 @@ struct network_info
 	 * PREFIX. */
 	char *statusmsg;
 
+	/** IRCD application used on the server */
+	char *ircd;
+
 	/* Maximum key length */
 	int keylen;
+
+	/* Server supports SSL */
+	gboolean ssl;
 
 	/* The server support the SILENCE command.  */
 	gboolean silence;
@@ -229,12 +235,12 @@ struct network_info
 	gboolean vbanlist;
 };
 
-G_MODULE_EXPORT char *network_info_string(struct network_info *info);
+G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT char *network_info_string(struct network_info *info);
 G_MODULE_EXPORT gboolean is_channelname(const char *name, const struct network_info *s);
 G_MODULE_EXPORT gboolean is_prefix(char p, const struct network_info *n);
 G_MODULE_EXPORT char get_prefix_by_mode(char p, const struct network_info *n);
 G_MODULE_EXPORT int irccmp(const struct network_info *n, const char *a, const char *b);
-G_MODULE_EXPORT const char *get_charset(const struct network_info *n);
+G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT const char *get_charset(const struct network_info *n);
 G_MODULE_EXPORT void network_info_parse(struct network_info *info, const char *parameter);
 G_MODULE_EXPORT int network_chanmode_type(char m, struct network_info *n);
 G_MODULE_EXPORT void network_info_init(struct network_info *info);

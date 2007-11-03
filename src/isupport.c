@@ -4,7 +4,7 @@
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation; either version 2 of the License, or
+	the Free Software Foundation; either version 3 of the License, or
 	(at your option) any later version.
 
 	This program is distributed in the hope that it will be useful,
@@ -40,6 +40,7 @@ void free_network_info(struct network_info *info)
 	g_free(info->maxlist);
 	g_free(info->idchan);
 	g_free(info->statusmsg);
+	g_free(info->ircd);
 }
 
 char *network_info_string(struct network_info *info)
@@ -72,6 +73,9 @@ char *network_info_string(struct network_info *info)
 
 	if (info->map)
 		fs = g_list_append(fs, "MAP");
+
+	if (info->ssl)
+		fs = g_list_append(fs, "SSL");
 
 	if (info->charset != NULL)
 		fs = g_list_append(fs, g_strdup_printf("CHARSET=%s", info->charset));
@@ -183,6 +187,9 @@ char *network_info_string(struct network_info *info)
 	if (info->chantypes != NULL)
 		fs = g_list_append(fs, g_strdup_printf("CHANTYPES=%s", info->chantypes));
 
+	if (info->ircd != NULL)
+		fs = g_list_append(fs, g_strdup_printf("IRCD=%s", info->ircd));
+
 	if (info->chanmodes != NULL) {
 		char *tmp = g_strjoinv(",", info->chanmodes);
 		fs = g_list_append(fs, g_strdup_printf("CHANMODES=%s", tmp));
@@ -278,6 +285,9 @@ void network_info_parse(struct network_info *info, const char *parameter)
 	} else if (!g_strcasecmp(key, "NETWORK")) {
 		g_free(info->name);
 		info->name = g_strdup(val);
+	} else if (!g_strcasecmp(key, "IRCD")) {
+		g_free(info->ircd);
+		info->ircd = g_strdup(val);
 	} else if (!g_strcasecmp(key, "NICKLEN") || !g_strcasecmp(key, "MAXNICKLEN")) {
 		info->nicklen = atoi(val);
 	} else if (!g_strcasecmp(key, "USERLEN")) {
@@ -314,6 +324,8 @@ void network_info_parse(struct network_info *info, const char *parameter)
 		info->wallchops = TRUE;
 	} else if (!g_strcasecmp(key, "MAP")) {
 		info->map = TRUE;
+	} else if (!g_strcasecmp(key, "SSL")) {
+		info->ssl = TRUE;
 	} else if (!g_strcasecmp(key, "WALLVOICES")) {
 		info->wallvoices = TRUE;
 	} else if (!g_strcasecmp(key, "RFC2812")) {
@@ -423,7 +435,7 @@ void network_info_parse(struct network_info *info, const char *parameter)
 	g_free(val);
 }
 
-void handle_005(struct network_state *s, struct line *l)
+void handle_005(struct network_state *s, const struct line *l)
 {
 	int i;
 	g_assert(s);

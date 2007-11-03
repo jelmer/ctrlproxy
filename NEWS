@@ -3,13 +3,20 @@
 
 Ctrlproxy 3.0.4 UNRELEASED
 
+  IMPROVEMENTS
+
+    * Add ctrlproxy-admin command for command-line access to the admin network.
+
   BUG FIXES
+
+    * No longer "skip" users on reconnect. (#146)
 
     * Check for empty argument to /CTRLPROXY BACKLOG (#132)
 
     * Integrate some more standard replication backends. 
 
-    * Allow specifying a network in the password, separated by a colon (:).
+    * Allow specifying a network in the password, separated by a colon (:). 
+      (#11)
 
     * Integrate listeners into the core.
 
@@ -32,6 +39,15 @@ Ctrlproxy 3.0.4 UNRELEASED
 
     * Add support for handling additional 005 parameters: HCN.
 
+    * Compress /NAMES lines (#123).
+
+    * Bail out when invalid arguments are specified on the command-line
+      (Emanuele Giaquinta <e.giaquinta@glauco.it>)
+
+    * Make connect to networks non-blocking. (#133)
+
+	* Support IRCD 005 parameter. (#160)
+
   NEW FEATURES
 
     * New configuration option for auto-away: "client_limit". If set,
@@ -39,6 +55,10 @@ Ctrlproxy 3.0.4 UNRELEASED
       than client_limit clients connected. Supersedes "only_noclient";
       to achieve the effect of only_noclient=true, set client_limit=0.
       (Adeodato Simó)
+
+  LICENSING
+
+    * CtrlProxy is now licensed under the GNU GPLv3.
 
   INTERNALS
 

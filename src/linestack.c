@@ -4,7 +4,7 @@
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation; either version 2 of the License, or
+	the Free Software Foundation; either version 3 of the License, or
 	(at your option) any later version.
 
 	This program is distributed in the hope that it will be useful,
@@ -197,7 +197,9 @@ static const char *linestack_messages[] = {
 	"329", /* RPL_CREATIONTIME */
 	NULL };
 
-gboolean linestack_insert_line(struct linestack_context *ctx, const struct line *l, enum data_direction dir, const struct network_state *state)
+gboolean linestack_insert_line(struct linestack_context *ctx, 
+							   const struct line *l, enum data_direction dir, 
+							   const struct network_state *state)
 {
 	int i;
 	gboolean needed = FALSE;
@@ -350,7 +352,10 @@ static gboolean replay_line(struct line *l, time_t t, void *state)
 	return TRUE;
 }
 
-gboolean linestack_replay(struct linestack_context *ctx, struct linestack_marker *mf, struct linestack_marker *mt, struct network_state *st)
+gboolean linestack_replay(struct linestack_context *ctx, 
+						  struct linestack_marker *mf, 
+						  struct linestack_marker *mt, 
+						  struct network_state *st)
 {
 	return linestack_traverse(ctx, mf, mt, replay_line, st);
 }

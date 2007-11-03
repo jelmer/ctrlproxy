@@ -4,7 +4,7 @@
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation; either version 2 of the License, or
+	the Free Software Foundation; either version 3 of the License, or
 	(at your option) any later version.
 
 	This program is distributed in the hope that it will be useful,
@@ -125,7 +125,7 @@ G_MODULE_EXPORT gboolean virtual_network_recv_args(struct network *l, const char
 G_MODULE_EXPORT gboolean virtual_network_recv_response(struct network *n, int num, ...);
 typedef void (*new_network_notify_fn) (struct network *, void *);
 G_MODULE_EXPORT void register_new_network_notify(struct global *, new_network_notify_fn, void *userdata);
-G_MODULE_EXPORT struct linestack_context *new_linestack(struct network *network);
-char *network_generate_feature_string(struct network *n);
+G_MODULE_EXPORT G_GNUC_MALLOC struct linestack_context *new_linestack(struct network *network);
+G_MODULE_EXPORT G_GNUC_MALLOC char *network_generate_feature_string(struct network *n);
 
 #endif /* __CTRLPROXY_NETWORK_H__ */

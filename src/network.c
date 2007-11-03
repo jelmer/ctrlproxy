@@ -4,7 +4,7 @@
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation; either version 2 of the License, or
+	the Free Software Foundation; either version 3 of the License, or
 	(at your option) any later version.
 
 	This program is distributed in the hope that it will be useful,
@@ -44,7 +44,7 @@ void register_new_network_notify(struct global *global, new_network_notify_fn fn
 
 static void state_log_helper(enum log_level l, void *userdata, const char *msg)
 {
-	log_network(l, (struct network *)userdata, msg);
+	log_network(l, (const struct network *)userdata, "%s", msg);
 }
 
 static void server_send_login (struct network *s) 
@@ -190,7 +190,9 @@ static gboolean process_from_server(struct network *n, struct line *l)
 	n->connection.last_line_recvd = time(NULL);
 
 	if (n->state == NULL) {
-		log_network(LOG_WARNING, n, "Dropping message '%s' because network is disconnected.", l->args[0]);
+		log_network(LOG_WARNING, n, 
+					"Dropping message '%s' because network is disconnected.", 
+					l->args[0]);
 		return FALSE;
 	}
 
@@ -214,7 +216,8 @@ static gboolean process_from_server(struct network *n, struct line *l)
 			  n->connection.state == NETWORK_CONNECTION_STATE_LOGIN_SENT){
 		char *tmp = g_strdup_printf("%s_", l->args[2]);
 		network_send_args(n, "NICK", tmp, NULL);
-		log_network(LOG_WARNING, n, "%s was already in use, trying %s", l->args[2], tmp);
+		log_network(LOG_WARNING, n, "%s was already in use, trying %s", 
+					l->args[2], tmp);
 		g_free(tmp);
 	} else if (atoi(l->args[0]) == RPL_ENDOFMOTD ||
 			  atoi(l->args[0]) == ERR_NOMOTD) {
@@ -224,10 +227,8 @@ static gboolean process_from_server(struct network *n, struct line *l)
 		network_set_charset(n, get_charset(&n->info));
 
 		if (error != NULL)
-			log_network(LOG_WARNING, n, 
-				"Error setting charset %s: %s", 
-				get_charset(&n->info),
-				error->message);
+			log_network(LOG_WARNING, n, "Error setting charset %s: %s", 
+				get_charset(&n->info), error->message);
 
 		log_network(LOG_INFO, n, "Successfully logged in");
 
@@ -334,7 +335,8 @@ static gboolean handle_server_receive (GIOChannel *c, GIOCondition cond, void *_
 			return FALSE;
 		case G_IO_STATUS_ERROR:
 			g_assert(err != NULL);
-			log_network(LOG_WARNING, server, "Error \"%s\" reading from server", err->message);
+			log_network(LOG_WARNING, server, 
+						"Error \"%s\" reading from server", err->message);
 			if (l != NULL) {
 				ret = process_from_server(server, l);
 
@@ -402,7 +404,7 @@ static gboolean server_send_queue(GIOChannel *ch, GIOCondition cond,
 
 		if (status != G_IO_STATUS_NORMAL) {
 			log_network(LOG_WARNING, s, "Error sending line '%s': %s",
-	           l->args[0], error?error->message:"ERROR");
+	           l->args[0], error != NULL?error->message:"ERROR");
 			free_line(l);
 
 			return FALSE;
@@ -432,7 +434,8 @@ static gboolean network_send_line_direct(struct network *s, struct client *c,
 	memcpy(l, ol, sizeof(struct line));
 	nl.origin = NULL;
 
-	g_assert(l->origin == NULL); /* origin lines should never be sent to the server */
+	/* origin lines should never be sent to the server */
+	g_assert(l->origin == NULL);
 
 	if (s->config->type == NETWORK_VIRTUAL) {
 		if (s->connection.data.virtual.ops == NULL) 
@@ -448,7 +451,7 @@ static gboolean network_send_line_direct(struct network *s, struct client *c,
 			s->connection.outgoing_id = g_io_add_watch(s->connection.outgoing, G_IO_OUT, server_send_queue, s);
 		} else if (status != G_IO_STATUS_NORMAL) {
 			log_network(LOG_WARNING, s, "Error sending line '%s': %s",
-	           l->args[0], error?error->message:"ERROR");
+	           l->args[0], error != NULL?error->message:"ERROR");
 			return FALSE;
 		}
 
@@ -681,6 +684,7 @@ static gboolean connect_current_tcp_server(struct network *s)
 	struct addrinfo hints;
 	struct addrinfo *addrinfo = NULL;
 	int error;
+	gboolean connect_finished = TRUE;
 
 	g_assert(s != NULL);
 
@@ -697,9 +701,7 @@ static gboolean connect_current_tcp_server(struct network *s)
 		return FALSE;
 	}
 
-	log_network(LOG_INFO, s, "Connecting with %s:%s", 
-			  cs->host, 
-			  cs->port);
+	log_network(LOG_INFO, s, "Connecting with %s:%s", cs->host, cs->port);
 
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = PF_UNSPEC;
@@ -709,7 +711,8 @@ static gboolean connect_current_tcp_server(struct network *s)
 	/* Lookup */
 	error = getaddrinfo(cs->host, cs->port, &hints, &addrinfo);
 	if (error) {
-		log_network(LOG_ERROR, s, "Unable to lookup %s:%s %s", cs->host, cs->port, gai_strerror(error));
+		log_network(LOG_ERROR, s, "Unable to lookup %s:%s %s", 
+					cs->host, cs->port, gai_strerror(error));
 		freeaddrinfo(addrinfo);
 		return FALSE;
 	}
@@ -728,7 +731,12 @@ static gboolean connect_current_tcp_server(struct network *s)
 			bindsock(s, sock, res, cs->bind_address, cs->bind_port);
 
 		ioc = g_io_channel_unix_new(sock);
-		if (connect(sock, res->ai_addr, res->ai_addrlen) < 0 && errno != EINPROGRESS) {
+		g_io_channel_set_flags(ioc, G_IO_FLAG_NONBLOCK, NULL);
+		if (connect(sock, res->ai_addr, res->ai_addrlen) < 0) {
+			if (errno == EINPROGRESS) {
+				connect_finished = FALSE;
+				break;
+			}
 			g_io_channel_unref(ioc);
 			ioc = NULL;
 			continue;
@@ -744,13 +752,9 @@ static gboolean connect_current_tcp_server(struct network *s)
 		return FALSE;
 	}
 
-#ifdef HAVE_IPV6
-	size = sizeof(struct sockaddr_in6);
-#else
-	size = sizeof(struct sockaddr_in);
-#endif
-	g_free(s->connection.data.tcp.local_name);
-	g_free(s->connection.data.tcp.remote_name);
+	size = sizeof(struct sockaddr_storage);
+	g_assert(s->connection.data.tcp.local_name == NULL);
+	g_assert(s->connection.data.tcp.remote_name == NULL);
 	s->connection.data.tcp.remote_name = g_malloc(size);
 	s->connection.data.tcp.local_name = g_malloc(size);
 	s->connection.data.tcp.namelen = getsockname(sock, s->connection.data.tcp.local_name, &size);
@@ -775,6 +779,9 @@ static gboolean connect_current_tcp_server(struct network *s)
 		log_network(LOG_ERROR, s, "Couldn't connect via server %s:%s", cs->host, cs->port);
 		return FALSE;
 	}
+
+	if (!connect_finished)
+		s->connection.outgoing_id = g_io_add_watch(ioc, G_IO_OUT, server_send_queue, s);
 
 	network_set_iochannel(s, ioc);
 
@@ -894,6 +901,10 @@ static gboolean close_server(struct network *n)
 			n->connection.data.tcp.ping_id = 0;
 		}
 		n->connection.outgoing_id = 0;
+		g_free(n->connection.data.tcp.local_name);
+		g_free(n->connection.data.tcp.remote_name);
+		n->connection.data.tcp.local_name = NULL;
+		n->connection.data.tcp.remote_name = NULL;
 		break;
 	case NETWORK_VIRTUAL:
 		if (n->connection.data.virtual.ops && 
@@ -1109,6 +1120,7 @@ struct network *load_network(struct global *global, struct network_config *sc)
 	s->config = sc;
 	network_info_init(&s->info);
 	s->info.name = g_strdup(s->config->name);
+	s->info.ircd = g_strdup("ctrlproxy");
 	s->connection.pending_lines = g_queue_new();
 	s->global = global;
 	s->info.forced_nick_changes = TRUE; /* Forced nick changes are done by ctrlproxy */
@@ -1182,10 +1194,6 @@ void unload_network(struct network *s)
 		s->global->networks = g_list_remove(s->global->networks, s);
 	}
 
-	if (s->config->type == NETWORK_TCP) {
-		g_free(s->connection.data.tcp.local_name);
-		g_free(s->connection.data.tcp.remote_name);
-	}
 	g_queue_foreach(s->connection.pending_lines, free_pending_line, NULL);
 	g_queue_free(s->connection.pending_lines);
 

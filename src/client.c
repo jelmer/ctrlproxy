@@ -1,10 +1,10 @@
 /*
 	ctrlproxy: A modular IRC proxy
-	(c) 2002-2005 Jelmer Vernooij <jelmer@nl.linux.org>
+	(c) 2002-2007 Jelmer Vernooij <jelmer@nl.linux.org>
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation; either version 2 of the License, or
+	the Free Software Foundation; either version 3 of the License, or
 	(at your option) any later version.
 
 	This program is distributed in the hope that it will be useful,
@@ -39,38 +39,24 @@
 static GList *pending_clients = NULL;
 static gboolean handle_client_receive(GIOChannel *c, GIOCondition cond, 
 									  void *_client);
+static gboolean handle_client_send_queue(GIOChannel *c, GIOCondition cond, 
+										 void *_client);
 
-static gboolean client_send_queue(struct client *c)
+static void regenerate_hostmask(struct client *c)
 {
-	while (!g_queue_is_empty(c->pending_lines)) {
-		GIOStatus status;
-		GError *error = NULL;
-		struct line *l = g_queue_peek_head(c->pending_lines);
+	if (c->nick == NULL || c->username == NULL || c->hostname == NULL)
+		return;
 
-		g_assert(c->incoming != NULL);
-		status = irc_send_line(c->incoming, c->outgoing_iconv, l, &error);
+	g_free(c->hostmask);
+	c->hostmask = g_strdup_printf("%s!%s@%s", c->nick, c->username, 
+								  c->hostname);
+}
 
-		if (status == G_IO_STATUS_AGAIN)
-			return TRUE;
-
-		g_queue_pop_head(c->pending_lines);
-
-		if (status == G_IO_STATUS_ERROR) {
-			log_client(LOG_WARNING, c, "Error sending line '%s': %s", 
-							l->args[0], error->message);
-		} else if (status == G_IO_STATUS_EOF) {
-			disconnect_client(c, "Hangup from client");
-
-			free_line(l);
-
-			return FALSE;
-		}
-
-		free_line(l);
-	}
-
-	c->outgoing_id = 0;
-	return FALSE;
+static void change_nick(struct client *c, const char *nick)
+{
+	g_free(c->nick);
+	c->nick = g_strdup(nick);
+	regenerate_hostmask(c);
 }
 
 /**
@@ -82,14 +68,10 @@ static gboolean client_send_queue(struct client *c)
  */
 static gboolean process_from_client(struct client *c, struct line *l)
 {
-	g_assert(c);
-	g_assert(l);
+	g_assert(c != NULL);
+	g_assert(l != NULL);
 
-	if (c->network && c->network->state) 
-		l->origin = g_strdup(c->network->state->me.hostmask);
-	else
-		l->origin = g_strdup_printf("%s!~%s@%s", c->nick, c->username, 
-									c->hostname);
+	l->origin = g_strdup(c->hostmask);
 
 	if (!run_client_filter(c, l, TO_SERVER)) 
 		return TRUE;
@@ -140,8 +122,8 @@ static gboolean process_from_client(struct client *c, struct line *l)
 			msg = g_strdup_printf("Currently not connected to server... (%s)",
 					c->network->connection.data.tcp.last_disconnect_reason);
 
-		client_send_args(c, "NOTICE", 
-						 c->nick?c->nick:c->network->state->me.nick, msg, NULL);
+		client_send_args(c, "NOTICE", client_get_default_target(c), msg, NULL);
+		g_free(msg);
 	}
 
 	return TRUE;
@@ -162,22 +144,14 @@ gboolean client_send_response(struct client *c, int response, ...)
 	g_assert(response > 0);
 	
 	va_start(ap, response);
-	l = virc_parse_line(c->network?c->network->info.name:get_my_hostname(), ap);
+	l = virc_parse_line(client_get_default_origin(c), ap);
 	va_end(ap);
 
 	l->args = g_realloc(l->args, sizeof(char *) * (l->argc+4));
 	memmove(&l->args[2], &l->args[0], l->argc * sizeof(char *));
 
 	l->args[0] = g_strdup_printf("%03d", response);
-
-	if (c->nick != NULL) 
-		l->args[1] = g_strdup(c->nick);
-	else if (c->network != NULL && 
-			 c->network->state != NULL && 
-			 c->network->state->me.nick != NULL) 
-		l->args[1] = g_strdup(c->network->state->me.nick);
-	else 
-		l->args[1] = g_strdup("*");
+	l->args[1] = g_strdup(client_get_default_target(c));
 
 	l->argc+=2;
 	l->args[l->argc] = NULL;
@@ -208,7 +182,7 @@ gboolean client_send_args_ex(struct client *c, const char *hm, ...)
 
 	ret = client_send_line(c, l);
 
-	free_line(l); l = NULL;
+	free_line(l);
 
 	return ret;
 }
@@ -227,12 +201,12 @@ gboolean client_send_args(struct client *c, ...)
 	g_assert(c);
 	
 	va_start(ap, c);
-	l = virc_parse_line(get_my_hostname(), ap);
+	l = virc_parse_line(client_get_default_origin(c), ap);
 	va_end(ap);
 
 	ret = client_send_line(c, l);
 
-	free_line(l); l = NULL;
+	free_line(l); 
 
 	return ret;
 }
@@ -245,9 +219,17 @@ gboolean client_send_args(struct client *c, ...)
  */
 gboolean client_send_line(struct client *c, const struct line *l)
 {
+	char *line_nick;
 	g_assert(c);
 	g_assert(l);
 	log_client_line(c, l, FALSE);
+
+	if (!g_strcasecmp(l->args[0], "NICK")) {
+		line_nick = line_get_nick(l);
+		if (!g_strcasecmp(c->nick, line_nick))
+			change_nick(c, l->args[1]);
+		g_free(line_nick);
+	}
 
 	if (c->outgoing_id == 0) {
 		GError *error = NULL;
@@ -256,10 +238,13 @@ gboolean client_send_line(struct client *c, const struct line *l)
 
 		if (status == G_IO_STATUS_AGAIN) {
 			c->outgoing_id = g_io_add_watch(c->incoming, G_IO_OUT, 
-											handle_client_receive, c);
+											handle_client_send_queue, c);
 			g_queue_push_tail(c->pending_lines, linedup(l));
 		} else if (status != G_IO_STATUS_NORMAL) {
 			c->connected = FALSE;
+
+			log_client(LOG_WARNING, c, "Error sending line '%s': %s", 
+							l->args[0], error->message);
 
 			return FALSE;
 		} 
@@ -277,6 +262,12 @@ static void free_pending_line(void *_line, void *userdata)
 	free_line((struct line *)_line);
 }
 
+/*
+ * Disconnect a client.
+ *
+ * @param c Client to disconnect.
+ * @param reason Reason of the disconnect. Can be NULL.
+ */
 void disconnect_client(struct client *c, const char *reason) 
 {
 	g_assert(c != NULL);
@@ -315,12 +306,19 @@ void disconnect_client(struct client *c, const char *reason)
 	g_free(c->username);
 	g_free(c->hostname);
 	g_free(c->fullname);
+	g_free(c->hostmask);
 	g_free(c->nick);
+	g_free(c->requested_nick);
 	g_queue_foreach(c->pending_lines, free_pending_line, NULL);
 	g_queue_free(c->pending_lines);
 	g_free(c);
 }
 
+/** 
+ * Send the Message of the Day to the client.
+ *
+ * @param c Client to send to.
+ */
 void send_motd(struct client *c)
 {
 	char **lines;
@@ -342,6 +340,46 @@ void send_motd(struct client *c)
 	g_free(lines);
 	client_send_response(c, RPL_ENDOFMOTD, "End of MOTD", NULL);
 }
+
+static gboolean handle_client_send_queue(GIOChannel *ioc, GIOCondition cond, 
+									  void *_client)
+{
+	struct client *c = _client;
+
+	g_assert(ioc == c->incoming);
+
+	while (!g_queue_is_empty(c->pending_lines)) {
+		GIOStatus status;
+		GError *error = NULL;
+		struct line *l = g_queue_pop_head(c->pending_lines);
+
+		g_assert(c->incoming != NULL);
+		status = irc_send_line(c->incoming, c->outgoing_iconv, l, &error);
+
+		if (status == G_IO_STATUS_AGAIN) {
+			g_queue_push_head(c->pending_lines, l);
+			return TRUE;
+		}
+
+		if (status == G_IO_STATUS_ERROR) {
+			log_client(LOG_WARNING, c, "Error sending line '%s': %s", 
+							l->args[0], error->message);
+		} else if (status == G_IO_STATUS_EOF) {
+			c->outgoing_id = 0;
+			disconnect_client(c, "Hangup from client");
+
+			free_line(l);
+
+			return FALSE;
+		}
+
+		free_line(l);
+	}
+
+	c->outgoing_id = 0;
+	return FALSE;
+}
+
 
 static gboolean handle_client_receive(GIOChannel *c, GIOCondition cond, 
 									  void *_client)
@@ -398,10 +436,6 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition cond,
 		}
 	}
 
-	if (cond & G_IO_OUT) {
-		ret &= client_send_queue(client);
-	}
-
 	return ret;
 }
 
@@ -427,8 +461,8 @@ static gboolean welcome_client(struct client *client)
 	client_send_response(client, RPL_MYINFO, 
 		 client->network->info.name, 
 		 ctrlproxy_version(), 
-		 (client->network->state && client->network->info.supported_user_modes)?client->network->info.supported_user_modes:ALLMODES, 
-		 (client->network->state && client->network->info.supported_channel_modes)?client->network->info.supported_channel_modes:ALLMODES,
+		 (client->network->state != NULL && client->network->info.supported_user_modes)?client->network->info.supported_user_modes:ALLMODES, 
+		 (client->network->state != NULL && client->network->info.supported_channel_modes)?client->network->info.supported_channel_modes:ALLMODES,
 		 NULL);
 
 	features = network_generate_feature_string(client->network);
@@ -440,22 +474,19 @@ static gboolean welcome_client(struct client *client)
 
 	send_motd(client);
 
-	g_assert(client->nick);
-	g_assert(client->network);
+	g_assert(client->nick != NULL);
+	g_assert(client->network != NULL);
 
-	if (client->network->state) {
-		if (g_strcasecmp(client->nick, client->network->state->me.nick)) {
+	if (client->network->state != NULL) {
+		if (g_strcasecmp(client->nick, client->network->state->me.nick) != 0) {
 			/* Tell the client our his/her real nick */
-			char *tmp = g_strdup_printf("%s!~%s@%s", 
-										client->nick, 
-										client->username, 
-										client->hostname);
-			client_send_args_ex(client, tmp, "NICK", client->network->state->me.nick, NULL); 
-			g_free(tmp);
+			client_send_args_ex(client, client->hostmask, "NICK", 
+								client->network->state->me.nick, NULL); 
 
 			/* Try to get the nick the client specified */
 			if (!client->network->config->ignore_first_nick) {
-				network_send_args(client->network, "NICK", client->nick, NULL);
+				network_send_args(client->network, "NICK", 
+								  client->requested_nick, NULL);
 			}
 		}
 	}
@@ -516,7 +547,8 @@ static gboolean handle_pending_client_receive(GIOChannel *c,
 					continue;
 				}
 
-				client->nick = g_strdup(l->args[1]); /* Save nick */
+				change_nick(client, l->args[1]); /* Save nick */
+				client->requested_nick = g_strdup(l->args[1]);
 			} else if (!g_strcasecmp(l->args[0], "USER")) {
 
 				if (l->argc < 5) {
@@ -534,6 +566,8 @@ static gboolean handle_pending_client_receive(GIOChannel *c,
 
 				g_free(client->fullname);
 				client->fullname = g_strdup(l->args[4]);
+
+				regenerate_hostmask(client);
 
 			} else if (!g_strcasecmp(l->args[0], "PASS")) {
 				/* Silently drop... */
@@ -556,14 +590,14 @@ static gboolean handle_pending_client_receive(GIOChannel *c,
 
 				if (client->network->connection.state == NETWORK_CONNECTION_STATE_NOT_CONNECTED) {
 					client_send_args(client, "NOTICE", 
-										client->nick?client->nick:"*", 
+										client_get_default_target(client),
 										"Connecting to network", NULL);
 					connect_network(client->network);
 				}
 			} else {
 				client_send_response(client, ERR_NOTREGISTERED, 
 					"Register first", 
-					client->network?client->network->info.name:get_my_hostname(), NULL);
+					client_get_default_origin(client), NULL);
 			}
 
 			free_line(l);
@@ -579,7 +613,8 @@ static gboolean handle_pending_client_receive(GIOChannel *c,
 					return FALSE;
 				}
 
-				client->incoming_id = g_io_add_watch(client->incoming, G_IO_IN | G_IO_HUP, handle_client_receive, client);
+				client->incoming_id = g_io_add_watch(client->incoming, 
+							 G_IO_IN | G_IO_HUP, handle_client_receive, client);
 
 				pending_clients = g_list_remove(pending_clients, client);
 				client->network->clients = g_list_append(client->network->clients, client);
@@ -598,7 +633,6 @@ static gboolean handle_pending_client_receive(GIOChannel *c,
 	}
 
 	return TRUE;
-
 }
 
 /**
@@ -722,4 +756,22 @@ gboolean client_set_charset(struct client *c, const char *name)
 	c->charset = g_strdup(name);
 
 	return TRUE;
+}
+
+const char *client_get_own_hostmask(struct client *c)
+{
+	return c->hostmask;
+}
+
+const char *client_get_default_origin(struct client *c)
+{
+	return c->network?c->network->info.name:get_my_hostname();
+}
+
+const char *client_get_default_target(struct client *c)
+{
+	if (c->nick != NULL) 
+		return c->nick;
+	
+	return "*";
 }

@@ -4,7 +4,7 @@
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation; either version 2 of the License, or
+	the Free Software Foundation; either version 3 of the License, or
 	(at your option) any later version.
 
 	This program is distributed in the hope that it will be useful,
@@ -61,6 +61,7 @@
 #include "log.h"
 #include "isupport.h"
 #include "log_support.h"
+#include "listener.h"
 
 /**
  * Global information.
@@ -74,11 +75,14 @@ struct global {
 
 	GIOChannel *unix_incoming;
 	gint unix_incoming_id;
+
+	GIOChannel *admin_incoming;
+	gint admin_incoming_id;
 };
 
 struct plugin_ops {
 	int version;
-	const char *name;
+	char *name;
 	gboolean (*init) (void);
 };
 
@@ -93,17 +97,15 @@ G_MODULE_EXPORT void register_save_config_notify(config_save_notify_fn fn);
 
 /* util.c */
 G_MODULE_EXPORT char *list_make_string(GList *);
-G_MODULE_EXPORT int verify_client(const struct network *s, const struct client *c);
+G_MODULE_EXPORT int verify_client(const struct network *s, 
+								  const struct client *c);
 G_MODULE_EXPORT int str_rfc1459cmp(const char *a, const char *b);
 G_MODULE_EXPORT int str_strictrfc1459cmp(const char *a, const char *b);
 G_MODULE_EXPORT int str_asciicmp(const char *a, const char *b);
 G_MODULE_EXPORT char *g_io_channel_ip_get_description(GIOChannel *ch);
 
 /* log.c */
-G_MODULE_EXPORT void log_network(enum log_level, const struct network *, const char *fmt, ...);
-G_MODULE_EXPORT void log_client(enum log_level, const struct client *, const char *fmt, ...);
-G_MODULE_EXPORT void log_global(enum log_level, const char *fmt, ...);
-G_MODULE_EXPORT void log_network_state(enum log_level l, const struct network_state *st, const char *fmt, ...);
+G_GNUC_PRINTF(3, 4) G_MODULE_EXPORT void log_network_state(enum log_level l, const struct network_state *st, const char *fmt, ...);
 
 gboolean    rep_g_file_get_contents             (const gchar *filename,
                                              gchar **contents,
@@ -116,6 +118,10 @@ gboolean    rep_g_file_set_contents             (const gchar *filename,
 #if GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION < 8
 #define g_file_get_contents rep_g_file_get_contents
 #define g_file_set_contents rep_g_file_set_contents
+#define G_GNUC_NULL_TERMINATED
+#endif
+#if GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION < 10
+#define G_GNUC_WARN_UNUSED_RESULT
 #endif
 
 #endif /* __CTRLPROXY_H__ */
