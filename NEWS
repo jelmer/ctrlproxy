@@ -48,6 +48,14 @@ Ctrlproxy 3.0.4 UNRELEASED
 
 	* Support IRCD 005 parameter. (#160)
 
+  NEW FEATURES
+
+    * New configuration option for auto-away: "client_limit". If set,
+      the connection will never be changed to away if there are more
+      than client_limit clients connected. Supersedes "only_noclient";
+      to achieve the effect of only_noclient=true, set client_limit=0.
+      (Adeodato Simó)
+
   LICENSING
 
     * CtrlProxy is now licensed under the GNU GPLv3.

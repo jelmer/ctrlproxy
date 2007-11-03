@@ -17,6 +17,13 @@
 	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 */
 
+/* TODO This breaks:
+ *    * One client connected. User does /AWAY msg.
+ *    * Client quits.
+ *    * Client rejoins. If client_limit=0, the connection is set as not away
+ *      => there should be distinction between auto-away and client-away?
+ */
+
 #include "ctrlproxy.h"
 #include <string.h>
 
@@ -26,7 +33,7 @@ struct auto_away_data {
  	time_t last_message;
 	time_t max_idle_time;
 	guint timeout_id;
-	gboolean only_for_noclients;
+	gint client_limit;
 	struct global *global;
 	char *message;
 	char *nick;
@@ -42,7 +49,7 @@ static gboolean check_time(gpointer user_data)
 			struct network *s = (struct network *)sl->data;
 			if (s->connection.state == NETWORK_CONNECTION_STATE_MOTD_RECVD &&
 				s->state != NULL && !s->state->is_away && 
-			    (!d->only_for_noclients || s->clients == NULL)) {
+			    (d->client_limit < 0 || g_list_length(s->clients) <= d->client_limit)) {
 				network_send_args(s, "AWAY", 
 								  d->message != NULL?d->message:"Auto Away", 
 								  NULL);
@@ -84,7 +91,7 @@ static gboolean new_client(struct client *c, void *userdata)
 {
 	struct auto_away_data *d = userdata;
 
-	if (d->only_for_noclients) 
+	if (d->client_limit >= 0 && d->client_limit < g_list_length(c->network->clients)+1)
 		network_send_args(c->network, "AWAY", NULL);
 
 	return TRUE;
@@ -108,8 +115,17 @@ static void load_config(struct global *global)
 	d->last_message = time(NULL);
 	d->message = g_key_file_get_string(kf, "auto-away", "message", NULL);
 	d->nick = g_key_file_get_string(kf, "auto-away", "nick", NULL);
-	if (g_key_file_has_key(kf, "auto-away", "only_noclient", NULL))
-		d->only_for_noclients = g_key_file_get_boolean(kf, "auto-away", "only_noclient", NULL);
+	if (g_key_file_has_key(kf, "auto-away", "client_limit", NULL)) {
+		d->client_limit = g_key_file_get_integer(kf, "auto-away", "client_limit", NULL);
+		if (g_key_file_has_key(kf, "auto-away", "only_noclient", NULL))
+			log_global(LOG_WARNING, "auto-away: not using only_noclient because client_limit is set");
+	}
+	else if (g_key_file_has_key(kf, "auto-away", "only_noclient", NULL)) {
+		d->client_limit = g_key_file_get_boolean(kf, "auto-away", "only_noclient", NULL) ? 0 : -1;
+		log_global(LOG_WARNING, "auto-away: only_noclient is deprecated, please use client_limit instead");
+	}
+	else
+		d->client_limit = -1;
 	if (g_key_file_has_key(kf, "auto-away", "time", NULL))
 		d->max_idle_time = g_key_file_get_integer(kf, "auto-away", "time", NULL);
 	else
