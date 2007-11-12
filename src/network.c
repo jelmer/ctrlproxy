@@ -4,7 +4,7 @@
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation; either version 2 of the License, or
+	the Free Software Foundation; either version 3 of the License, or
 	(at your option) any later version.
 
 	This program is distributed in the hope that it will be useful,
@@ -711,7 +711,8 @@ static gboolean connect_current_tcp_server(struct network *s)
 	/* Lookup */
 	error = getaddrinfo(cs->host, cs->port, &hints, &addrinfo);
 	if (error) {
-		log_network(LOG_ERROR, s, "Unable to lookup %s:%s %s", cs->host, cs->port, gai_strerror(error));
+		log_network(LOG_ERROR, s, "Unable to lookup %s:%s %s", 
+					cs->host, cs->port, gai_strerror(error));
 		freeaddrinfo(addrinfo);
 		return FALSE;
 	}
@@ -1119,6 +1120,7 @@ struct network *load_network(struct global *global, struct network_config *sc)
 	s->config = sc;
 	network_info_init(&s->info);
 	s->info.name = g_strdup(s->config->name);
+	s->info.ircd = g_strdup("ctrlproxy");
 	s->connection.pending_lines = g_queue_new();
 	s->global = global;
 	s->info.forced_nick_changes = TRUE; /* Forced nick changes are done by ctrlproxy */

@@ -4,7 +4,7 @@
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation; either version 2 of the License, or
+	the Free Software Foundation; either version 3 of the License, or
 	(at your option) any later version.
 
 	This program is distributed in the hope that it will be useful,
@@ -202,8 +202,11 @@ gboolean client_send_args(struct client *c, ...)
  */
 gboolean client_send_line(struct client *c, const struct line *l)
 {
-	g_assert(c);
-	g_assert(l);
+	if (c->connected == FALSE)
+		return FALSE;
+
+	g_assert(c != NULL);
+	g_assert(l != NULL);
 	log_client_line(c, l, FALSE);
 
 	state_handle_data(c->state, l);

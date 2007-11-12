@@ -69,3 +69,7 @@ Documentation
 Most documentation is in the manual and the 
 manpages: ctrlproxy(1) and ctrlproxy_config(5).
 The example config.example file might also be of some use.
+
+Reporting Bugs
+--------------
+Bugs can be reported at http://bugs.bitlbee.org/ctrlproxy/

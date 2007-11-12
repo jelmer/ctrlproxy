@@ -6,7 +6,7 @@
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation; either version 2 of the License, or
+	the Free Software Foundation; either version 3 of the License, or
 	(at your option) any later version.
 
 	This program is distributed in the hope that it will be useful,
@@ -175,7 +175,7 @@ static gboolean handle_client_detect(GIOChannel *ioc, struct pending_client *pc)
 		complete = g_malloc(in_len+2);
 		complete[0] = header[0];
 		memcpy(complete+1, raw, in_len);
-		complete[in_len+2] = '\0';
+		complete[in_len+1] = '\0';
 		g_free(raw);
 
 		if (iconv == (GIConv)-1) {
