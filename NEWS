@@ -7,6 +7,8 @@ Ctrlproxy 3.0.4 UNRELEASED
 
     * Add ctrlproxy-admin command for command-line access to the admin network.
 
+	* Send message to the client when ctrlproxy connects to the network.
+
   BUG FIXES
 
     * No longer "skip" users on reconnect. (#146)
