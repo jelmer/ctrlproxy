@@ -152,7 +152,7 @@ static gboolean log_data(struct network *n, const struct line *l,
 		} else { 
 			char *channels = g_strdup(l->args[1]);
 			char *nicks = g_strdup(l->args[1]);
-			char *p,*nx; 
+			char *p, *nx; 
 			gboolean cont = TRUE;
 			char *_nick;
 
@@ -188,7 +188,7 @@ static gboolean log_data(struct network *n, const struct line *l,
 		else 
 			target_printf(n, l->args[1], "%02d:%02d -!- %s has removed the topic\n", t->tm_hour, t->tm_min, nick);
 	} else if (!g_strcasecmp(l->args[0], "NICK") && 
-			   dir == FROM_SERVER && l->args[1]) {
+			   dir == FROM_SERVER && l->args[1] != NULL) {
 		struct network_nick *nn = find_network_nick(n->state, nick);
 		GList *gl;
 
@@ -224,7 +224,6 @@ static void load_config(struct global *global)
 	} else {
 		logbasedir = g_key_file_get_string(kf, "log-irssi", "logfile", NULL);
 	}
-	
 
 	log_ctx = log_support_init();
 

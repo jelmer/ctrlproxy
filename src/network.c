@@ -259,15 +259,19 @@ static gboolean process_from_server(struct network *n, struct line *l)
 		gboolean linestack_store = TRUE;
 		if (atoi(l->args[0])) {
 			linestack_store &= (!redirect_response(n, l));
-		} else if (!g_strcasecmp(l->args[0], "PRIVMSG") && l->argc > 2 && 
-			l->args[2][0] == '\001' && 
-			g_strncasecmp(l->args[2], "\001ACTION", 7) != 0) {
-			ctcp_process_network_request(n, l);
-		} else if (!g_strcasecmp(l->args[0], "NOTICE") && l->argc > 2 && 
-			l->args[2][0] == '\001') {
-			ctcp_process_network_reply(n, l);
-		} else if (run_server_filter(n, l, FROM_SERVER)) {
-			clients_send(n->clients, l, NULL);
+		} else {
+			if (n->clients == NULL) {
+				if (!g_strcasecmp(l->args[0], "PRIVMSG") && l->argc > 2 && 
+					l->args[2][0] == '\001' && 
+					g_strncasecmp(l->args[2], "\001ACTION", 7) != 0) {
+					ctcp_process_network_request(n, l);
+				} else if (!g_strcasecmp(l->args[0], "NOTICE") && l->argc > 2 && 
+					l->args[2][0] == '\001') {
+					ctcp_process_network_reply(n, l);
+				}
+			} else if (run_server_filter(n, l, FROM_SERVER)) {
+				clients_send(n->clients, l, NULL);
+			}
 		} 
 
 		if (linestack_store)

@@ -50,6 +50,8 @@ Ctrlproxy 3.0.4 UNRELEASED
 
 	* Support IRCD 005 parameter. (#160)
 
+	* Redirect DCC messages to clients. (#163)
+
   NEW FEATURES
 
     * New configuration option for auto-away: "client_limit". If set,
