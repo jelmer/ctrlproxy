@@ -1,6 +1,6 @@
 /* 
 	ctrlproxy: A modular IRC proxy
-	(c) 2002-2003 Jelmer Vernooij <jelmer@nl.linux.org>
+	(c) 2002-2007 Jelmer Vernooij <jelmer@nl.linux.org>
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -545,5 +545,3 @@ void log_custom_load(struct log_file_config *config)
 	data->log_ctx = log_support_init();
 	add_log_filter("log_custom", log_custom_data, data, 1000);
 }
-
-

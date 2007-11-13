@@ -681,6 +681,8 @@ static void config_load_log(struct ctrlproxy_config *config)
 		FETCH_SETTING(data, kf, kick);
 		FETCH_SETTING(data, kf, quit);
 		FETCH_SETTING(data, kf, mode);
+
+		log_custom_load(data);
 	}
 
 	if (g_key_file_has_group(kf, "log-irssi")) {
@@ -708,6 +710,8 @@ static void config_load_log(struct ctrlproxy_config *config)
 		data->logfilename = g_strdup_printf("%s/%%N/%%@", logbasedir);
 
 		g_free(logbasedir);
+
+		log_custom_load(data);
 	}
 }
 
