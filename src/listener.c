@@ -78,8 +78,12 @@ static gboolean handle_client_line(GIOChannel *c, struct pending_client *pc,
 		gboolean authenticated = FALSE;
 
 		if (pc->listener->config->password == NULL) {
-			log_network(LOG_WARNING, pc->listener->network, 
-						"No password set, allowing client _without_ authentication!");
+			if (n == NULL) 
+				log_global(LOG_WARNING, 
+						   "No password set, allowing client _without_ authentication!");
+			else
+				log_network(LOG_WARNING, n, 
+							"No password set, allowing client _without_ authentication!");
 			authenticated = TRUE;
 			networkname = l->args[1];
 		} else if (strcmp(l->args[1], pc->listener->config->password) == 0) {
@@ -92,7 +96,10 @@ static gboolean handle_client_line(GIOChannel *c, struct pending_client *pc,
 		}
 
 		if (authenticated) {
-			log_network(LOG_INFO, n, "Client successfully authenticated");
+			if (n == NULL) 
+				log_global(LOG_INFO, "Client successfully authenticated");
+			else
+				log_network(LOG_INFO, n, "Client successfully authenticated");
 
 			if (networkname != NULL) {
 				n = find_network_by_hostname(pc->listener->global, 
@@ -117,8 +124,11 @@ static gboolean handle_client_line(GIOChannel *c, struct pending_client *pc,
 			return FALSE;
 		} else {
 			GIOStatus status;
-			log_network(LOG_WARNING, pc->listener->network, 
-						"User tried to log in with incorrect password!");
+			if (n == NULL) 
+				log_global(LOG_WARNING, "User tried to log in with incorrect password!");
+			else
+				log_network(LOG_WARNING, n, 
+						    "User tried to log in with incorrect password!");
 
 			status = irc_sendf(c, iconv, NULL, 
 							   ":%s %d %s :Password mismatch", 
@@ -384,8 +394,12 @@ gboolean start_listener(struct listener *l)
 		g_io_channel_unref(ioc);
 		l->incoming = g_list_append(l->incoming, lio);
 
-		log_network( LOG_INFO, l->network, "Listening on %s:%s", 
-					 lio->address, lio->port);
+		if (l->network != NULL) 
+			log_network(LOG_INFO, l->network, "Listening on %s:%s", 
+						lio->address, lio->port);
+		else
+			log_global(LOG_INFO, "Listening on %s:%s", 
+					   lio->address, lio->port);
 		l->active = TRUE;
 	}
 
@@ -595,9 +609,14 @@ static gboolean pass_handle_data(struct pending_client *cl)
 		break;
 	}
 
-	if (cl->listener->config->password == NULL)
-		log_network(LOG_WARNING, cl->listener->network, 
-					"No password set, allowing client _without_ authentication!");
+	if (cl->listener->config->password == NULL) {
+		if (cl->listener->network == NULL)
+			log_global(LOG_WARNING, 
+					   "No password set, allowing client _without_ authentication!");
+		else
+			log_network(LOG_WARNING, cl->listener->network, 
+						"No password set, allowing client _without_ authentication!");
+	}
 
 	if (cl->listener->config->password == NULL ||
 		strcmp(cl->listener->config->password, pass) == 0) {
