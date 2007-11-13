@@ -232,9 +232,6 @@ static gboolean process_from_server(struct network *n, struct line *l)
 
 		log_network(LOG_INFO, n, "Successfully logged in");
 
-		clients_send_args_ex(n->clients, NULL, "NOTICE", "*", 
-							 "Now connected", NULL);
-
 		network_update_isupport(&n->info, &n->state->info);
 
 		nickserv_identify_me(n, n->state->me.nick);

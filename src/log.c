@@ -87,9 +87,13 @@ void log_network(enum log_level level, const struct network *n, const char *fmt,
 {
 	va_list ap;	
 	char *tmp; 
+	g_assert(n != NULL);
 	va_start(ap, fmt);
 	tmp = g_strdup_vprintf(fmt, ap);
 	log_entry(level, n, NULL, tmp);
+	if (level <= LOG_INFO)
+		clients_send_args_ex(n->clients, NULL, "NOTICE", "*", 
+						     tmp, NULL);
 	va_end(ap);
 	g_free(tmp);
 }
@@ -98,6 +102,7 @@ void log_client(enum log_level level, const struct client *c, const char *fmt, .
 {
 	va_list ap;	
 	char *tmp; 
+	g_assert(c != NULL);
 	va_start(ap, fmt);
 	tmp = g_strdup_vprintf(fmt, ap);
 	va_end(ap);
