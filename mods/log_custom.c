@@ -33,7 +33,17 @@
 
 struct log_custom_data {
     char *logfilename;
-    GKeyFile *kf;
+	const char *nickchange;
+	const char *join;
+	const char *part;
+	const char *topic;
+	const char *notopic;
+	const char *msg;
+	const char *action;
+	const char *kick;
+	const char *mode;
+	const char *quit;
+	const char *notice;
 	struct log_support_context *log_ctx;
 };
 
@@ -392,12 +402,11 @@ static void file_write_line_target(struct log_custom_data *data,
 }
 
 static void file_write_target(struct log_custom_data *data, 
-							  struct network *network, const char *n, 
+							  struct network *network, const char *fmt, 
 							  const struct line *l) 
 {
-	char *t, *fmt;
+	char *t;
 	
-	fmt = g_key_file_get_string(data->kf, "log-custom", n, NULL);
 	if (fmt == NULL) 
 		return;
 	
@@ -418,22 +427,19 @@ static void file_write_target(struct log_custom_data *data,
 }
 
 static void file_write_channel_only(struct log_custom_data *data, 
-									struct network *network, const char *n, 
+									struct network *network, const char *fmt, 
 									const struct line *l)
 {
-	char *fmt;
-
-	fmt = g_key_file_get_string(data->kf, "log-custom", n, NULL);
-	if (fmt == NULL) return;
+	if (fmt == NULL) 
+		return;
 
 	file_write_line_target(data, network, fmt, l, l->args[1], TRUE);
 }
 
 static void file_write_channel_query(struct log_custom_data *data, 
-									 struct network *network, const char *n, 
+									 struct network *network, const char *fmt, 
 									 const struct line *l)
 {
-	char *fmt;
 	char *nick;
 	GList *gl;
 	struct network_nick *nn;
@@ -441,9 +447,6 @@ static void file_write_channel_query(struct log_custom_data *data,
 	if (l->origin == NULL) 
 		return;
 
-	g_assert(n != NULL);
-
-	fmt = g_key_file_get_string(data->kf, "log-custom", n, NULL);
 	if (fmt == NULL) 
 		return;
 
@@ -485,34 +488,34 @@ static gboolean log_custom_data(struct network *network,
 	 */
 
 	if (dir == FROM_SERVER && !g_strcasecmp(l->args[0], "JOIN")) {
-		file_write_target(data, network, "join", l); 
+		file_write_target(data, network, data->join, l); 
 	} else if (dir == FROM_SERVER && !g_strcasecmp(l->args[0], "PART")) {
-		file_write_channel_only(data, network, "part", l);
+		file_write_channel_only(data, network, data->part, l);
 	} else if (!g_strcasecmp(l->args[0], "PRIVMSG")) {
 		if (l->args[2][0] == '\001') { 
 			l->args[2][strlen(l->args[2])-1] = '\0';
 			if (!g_ascii_strncasecmp(l->args[2], "\001ACTION ", 8)) { 
 				l->args[2]+=8;
-				file_write_target(data, network, "action", l);
+				file_write_target(data, network, data->action, l);
 				l->args[2]-=8;
 			}
 			l->args[2][strlen(l->args[2])] = '\001';
 			/* Ignore all other ctcp messages */
 		} else {
-			file_write_target(data, network, "msg", l);
+			file_write_target(data, network, data->msg, l);
 		}
 	} else if (!g_strcasecmp(l->args[0], "NOTICE")) {
-		file_write_target(data, network, "notice", l);
+		file_write_target(data, network, data->notice, l);
 	} else if (!g_strcasecmp(l->args[0], "MODE") && l->args[1] != NULL && 
 			  is_channelname(l->args[1], &network->state->info) && 
 			  dir == FROM_SERVER) {
-		file_write_target(data, network, "mode", l);
+		file_write_target(data, network, data->mode, l);
 	} else if (!g_strcasecmp(l->args[0], "QUIT")) {
-		file_write_channel_query(data, network, "quit", l);
+		file_write_channel_query(data, network, data->quit, l);
 	} else if (!g_strcasecmp(l->args[0], "KICK") && l->args[1] != NULL && 
 			   l->args[2] != NULL && dir == FROM_SERVER) {
 		if (strchr(l->args[1], ',') == NULL) {
-			file_write_channel_only(data, network, "kick", l);
+			file_write_channel_only(data, network, data->kick, l);
 		} else { 
 			char *channels = g_strdup(l->args[1]);
 			char *nicks = g_strdup(l->args[1]);
@@ -529,7 +532,7 @@ static gboolean log_custom_data(struct network *network,
 				else 
 					*n = '\0';
 
-				file_write_channel_only(data, network, "kick", l);
+				file_write_channel_only(data, network, data->kick, l);
 
 				p = n+1;
 				_nick = strchr(_nick, ',');
@@ -543,18 +546,20 @@ static gboolean log_custom_data(struct network *network,
 	} else if (!g_strcasecmp(l->args[0], "TOPIC") && dir == FROM_SERVER && 
 			   l->args[1] != NULL) {
 		if (l->args[2] != NULL) 
-			file_write_channel_only(data, network, "topic", l);
+			file_write_channel_only(data, network, data->topic, l);
 		else 
-			file_write_channel_only(data, network, "notopic", l);
+			file_write_channel_only(data, network, data->notopic, l);
 	} else if (!g_strcasecmp(l->args[0], "NICK") && dir == FROM_SERVER && 
 			   l->args[1] != NULL) {
-		file_write_channel_query(data, network, "nickchange", l);
+		file_write_channel_query(data, network, data->nickchange, l);
 	}
 
 	g_free(nick);
 
 	return TRUE;
 }
+
+#define FETCH_SETTING(data, kf, name) (data)->name = g_key_file_get_string((kf), "log-custom", __STRING(name), NULL)
 
 static void load_config(struct global *global)
 {
@@ -570,15 +575,65 @@ static void load_config(struct global *global)
 
 	add_log_filter("log_custom", log_custom_data, data, 1000);
 
-	data->logfilename = g_key_file_get_string(kf, "log-custom", 
-											  "logfilename", NULL);
 	data->log_ctx = log_support_init();
-	data->kf = kf;
+
+	FETCH_SETTING(data, kf, nickchange);
+	FETCH_SETTING(data, kf, logfilename);
+	FETCH_SETTING(data, kf, topic);
+	FETCH_SETTING(data, kf, notopic);
+	FETCH_SETTING(data, kf, part);
+	FETCH_SETTING(data, kf, join);
+	FETCH_SETTING(data, kf, msg);
+	FETCH_SETTING(data, kf, notice);
+	FETCH_SETTING(data, kf, action);
+	FETCH_SETTING(data, kf, kick);
+	FETCH_SETTING(data, kf, quit);
+	FETCH_SETTING(data, kf, mode);
+}
+
+static void load_config_irssi(struct global *global)
+{
+	GKeyFile *kf;
+	struct log_custom_data *data;
+	char *logbasedir;
+	
+	kf = global->config->keyfile;
+	if (!g_key_file_has_group(kf, "log-irssi")) {
+		del_log_filter("log_irssi");
+		return;
+	}
+
+	data = g_new0(struct log_custom_data, 1);
+
+	add_log_filter("log_custom", log_custom_data, data, 1000);
+
+	data->log_ctx = log_support_init();
+	data->join = "%h:%m -!- %n [%u] has joined %c";
+	data->part = "%h:%m -!- %n [%u] has left %c [%m]";
+	data->msg = "%h:%m < %n> %m";
+	data->notice = "%h:%m < %n> %m";
+	data->action = "%h:%m  * %n %m";
+	data->mode = "%h:%m -!- mode/%t [%p %c] by %n";
+	data->quit = "%h:%m -!- %n [%u] has quit [%m]";
+	data->kick = "%h:%m -!- %t has been kicked by %n [%m]";
+	data->topic = "%h:%m -!- %n has changed the topic to %t";
+	data->notopic = "%h:%m -!- %n has removed the topic";
+	data->nickchange = "%h:%m -!- %n is now known as %r";
+
+	if (!g_key_file_has_key(kf, "log-irssi", "logfile", NULL)) {
+		logbasedir = g_build_filename(global->config->config_dir, 
+									  "log_irssi", NULL);
+	} else {
+		logbasedir = g_key_file_get_string(kf, "log-irssi", "logfile", NULL);
+	}
+
+	data->logfilename = g_strdup_printf("%s/%%N/FIXME", logbasedir);
 }
 
 static gboolean init_plugin(void)
 {
 	register_load_config_notify(load_config);
+	register_load_config_notify(load_config_irssi);
 	return TRUE;
 }
 
