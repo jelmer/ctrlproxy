@@ -7,11 +7,13 @@ Ctrlproxy 3.0.4 UNRELEASED
 
     * Add ctrlproxy-admin command for command-line access to the admin network.
 
-	* Send message to the client when ctrlproxy connects to the network.
+    * Send message to the client when ctrlproxy connects to the network.
+
+    * Announce number of clients/channels during client login.
 
   BUG FIXES
 
-  	* Properly send non-data lines when using repl_lastdisconnect. (#146)
+    * Properly send non-data lines when using repl_lastdisconnect. (#146)
 
     * No longer "skip" users on reconnect. (#146)
 
