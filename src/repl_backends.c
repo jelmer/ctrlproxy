@@ -83,12 +83,12 @@ static void lastdisconnect_replicate(struct client *c)
 		return;
 
 	ns = linestack_get_state(c->network->linestack, lm);
-	if (ns) {
+	if (ns != NULL) {
 		client_send_state(c, ns);
 	}
 	free_network_state(ns);
 
-	linestack_send(c->network->linestack, lm, NULL, c, TRUE, 
+	linestack_send(c->network->linestack, lm, NULL, c, FALSE, 
 				   c->network->global->config->report_time);
 }
 

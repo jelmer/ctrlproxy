@@ -448,6 +448,14 @@ static gboolean welcome_client(struct client *client)
 
 	g_free(features);
 
+	if (client->network->state == NULL)
+		client_send_response(client, RPL_LUSERCHANNELS, g_list_length(client->network->state->channels),
+							 "channels formed", NULL);
+
+	tmp = g_strdup_printf("I have %d clients", g_list_length(client->network->clients));
+	client_send_response(client, RPL_LUSERME, tmp, NULL);
+	g_free(tmp);
+
 	send_motd(client);
 
 	g_assert(client->state != NULL);
