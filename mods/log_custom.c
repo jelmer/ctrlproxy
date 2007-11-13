@@ -627,7 +627,9 @@ static void load_config_irssi(struct global *global)
 		logbasedir = g_key_file_get_string(kf, "log-irssi", "logfile", NULL);
 	}
 
-	data->logfilename = g_strdup_printf("%s/%%N/FIXME", logbasedir);
+	data->logfilename = g_strdup_printf("%s/%%N/%%@", logbasedir);
+
+	g_free(logbasedir);
 }
 
 static gboolean init_plugin(void)
