@@ -42,23 +42,6 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition cond,
 static gboolean handle_client_send_queue(GIOChannel *c, GIOCondition cond, 
 										 void *_client);
 
-static void regenerate_hostmask(struct client *c)
-{
-	if (c->nick == NULL || c->username == NULL || c->hostname == NULL)
-		return;
-
-	g_free(c->hostmask);
-	c->hostmask = g_strdup_printf("%s!%s@%s", c->nick, c->username, 
-								  c->hostname);
-}
-
-static void change_nick(struct client *c, const char *nick)
-{
-	g_free(c->nick);
-	c->nick = g_strdup(nick);
-	regenerate_hostmask(c);
-}
-
 /**
  * Process incoming lines from a client.
  *
@@ -71,7 +54,7 @@ static gboolean process_from_client(struct client *c, struct line *l)
 	g_assert(c != NULL);
 	g_assert(l != NULL);
 
-	l->origin = g_strdup(c->hostmask);
+	l->origin = g_strdup(c->state->me.hostmask);
 
 	if (!run_client_filter(c, l, TO_SERVER)) 
 		return TRUE;
@@ -226,12 +209,7 @@ gboolean client_send_line(struct client *c, const struct line *l)
 	g_assert(l != NULL);
 	log_client_line(c, l, FALSE);
 
-	if (!g_strcasecmp(l->args[0], "NICK")) {
-		char *line_nick = line_get_nick(l);
-		if (!g_strcasecmp(c->nick, line_nick))
-			change_nick(c, l->args[1]);
-		g_free(line_nick);
-	}
+	state_handle_data(c->state, l);
 
 	if (c->outgoing_id == 0) {
 		GError *error = NULL;
@@ -305,11 +283,7 @@ void disconnect_client(struct client *c, const char *reason)
 
 	g_free(c->charset);
 	g_free(c->description);
-	g_free(c->username);
-	g_free(c->hostname);
-	g_free(c->fullname);
-	g_free(c->hostmask);
-	g_free(c->nick);
+	free_network_state(c->state);
 	g_free(c->requested_nick);
 	g_queue_foreach(c->pending_lines, free_pending_line, NULL);
 	g_queue_free(c->pending_lines);
@@ -476,13 +450,13 @@ static gboolean welcome_client(struct client *client)
 
 	send_motd(client);
 
-	g_assert(client->nick != NULL);
+	g_assert(client->state != NULL);
 	g_assert(client->network != NULL);
 
 	if (client->network->state != NULL) {
-		if (g_strcasecmp(client->nick, client->network->state->me.nick) != 0) {
+		if (g_strcasecmp(client->state->me.nick, client->network->state->me.nick) != 0) {
 			/* Tell the client our his/her real nick */
-			client_send_args_ex(client, client->hostmask, "NICK", 
+			client_send_args_ex(client, client->state->me.hostmask, "NICK", 
 								client->network->state->me.nick, NULL); 
 
 			/* Try to get the nick the client specified */
@@ -549,7 +523,6 @@ static gboolean handle_pending_client_receive(GIOChannel *c,
 					continue;
 				}
 
-				change_nick(client, l->args[1]); /* Save nick */
 				client->requested_nick = g_strdup(l->args[1]);
 			} else if (!g_strcasecmp(l->args[0], "USER")) {
 
@@ -560,16 +533,9 @@ static gboolean handle_pending_client_receive(GIOChannel *c,
 					continue;
 				}
 
-				g_free(client->username);
-				client->username = g_strdup(l->args[1]);
-
-				g_free(client->hostname);
-				client->hostname = g_strdup(l->args[2]);
-
-				g_free(client->fullname);
-				client->fullname = g_strdup(l->args[4]);
-
-				regenerate_hostmask(client);
+				client->state = network_state_init(client->requested_nick, 
+												   l->args[1], 
+												   l->args[2]);
 
 			} else if (!g_strcasecmp(l->args[0], "PASS")) {
 				/* Silently drop... */
@@ -604,7 +570,7 @@ static gboolean handle_pending_client_receive(GIOChannel *c,
 
 			free_line(l);
 
-			if (client->fullname != NULL && client->nick != NULL) {
+			if (client->state != NULL) {
 				if (client->network == NULL) {
 					disconnect_client(client, 
 						  "Please select a network first, or specify one in your configuration file");
@@ -762,7 +728,7 @@ gboolean client_set_charset(struct client *c, const char *name)
 
 const char *client_get_own_hostmask(struct client *c)
 {
-	return c->hostmask;
+	return c->state->me.hostmask;
 }
 
 const char *client_get_default_origin(struct client *c)
@@ -772,8 +738,8 @@ const char *client_get_default_origin(struct client *c)
 
 const char *client_get_default_target(struct client *c)
 {
-	if (c->nick != NULL) 
-		return c->nick;
+	if (c->state->me.nick != NULL) 
+		return c->state->me.nick;
 	
 	return "*";
 }

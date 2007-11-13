@@ -39,7 +39,7 @@ static char *admin_hostmask(struct network *n)
 static void privmsg_admin_out(admin_handle h, const char *data)
 {
 	struct client *c = h->client;
-	char *nick = c->nick;
+	char *nick = c->state->me.nick;
 	char *hostmask;
 
 	hostmask = admin_hostmask(c->network);

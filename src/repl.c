@@ -218,8 +218,8 @@ gboolean client_send_state(struct client *c, struct network_state *state)
 	struct channel_state *ch;
 	char *mode;
 
-	if (strcmp(state->me.nick, c->nick) != 0) {
-		client_send_args_ex(c, c->hostmask, "NICK", state->me.nick, NULL);
+	if (strcmp(state->me.nick, c->state->me.nick) != 0) {
+		client_send_args_ex(c, c->state->me.hostmask, "NICK", state->me.nick, NULL);
 	}
 
 	g_assert(c != NULL);
