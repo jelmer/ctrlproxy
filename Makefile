@@ -24,13 +24,13 @@ doxygen:
 	doxygen
 
 lib_objs = \
+	   lib/state.o \
 	   lib/client.o
 
 objs = src/network.o \
 	   src/posix.o \
 	   src/cache.o \
 	   src/line.o \
-	   src/state.o \
 	   src/util.o \
 	   src/hooks.o \
 	   src/linestack.o \
@@ -55,7 +55,8 @@ objs = src/network.o \
 	   $(SSL_OBJS)
 
 lib_headers = \
-		  src/client.h 
+		  lib/state.h \
+		  lib/client.h 
 
 headers = src/admin.h \
 		  src/ctcp.h \

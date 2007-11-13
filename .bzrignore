@@ -67,3 +67,4 @@ coverage
 ctrlproxy.info
 doc/user-guide.tmp.xml
 ctrlproxy-admin
+*.so.*
