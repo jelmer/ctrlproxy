@@ -60,7 +60,7 @@ static struct query queries[] = {
 		  RPL_WHOISIDLE, RPL_WHOISCHANNELS, RPL_WHOISIP,
 		  RPL_WHOISSERVER, RPL_WHOISOPERATOR, RPL_WHOISACTUALLY,
 		  RPL_WHOISACCOUNT, RPL_WHOISIDENTIFIED, 0 }, 
-		{ RPL_ENDOFWHOIS, 0 }, 
+		{ RPL_ENDOFWHOIS, RPL_TRYAGAIN, 0 }, 
 		{ ERR_NOSUCHSERVER, ERR_NONICKNAMEGIVEN, ERR_NOSUCHNICK, 0 },
 		handle_default
 	},
@@ -68,7 +68,7 @@ static struct query queries[] = {
 	/* WHO [<name> [<o>]] */
 	{"WHO", 
 	    { RPL_WHOREPLY, RPL_WHOSPCRPL, 0 }, 
-		{ RPL_ENDOFWHO, 0 },
+		{ RPL_ENDOFWHO, RPL_TRYAGAIN, 0 },
 		{ ERR_NOSUCHSERVER, 0 },
 		handle_default 
 	},
@@ -76,7 +76,7 @@ static struct query queries[] = {
 	/* NAMES [<channel>{,<channel>}]*/
 	{"NAMES", 
 		{ RPL_NAMREPLY, 0 }, 
-		{ RPL_ENDOFNAMES, 0 },
+		{ RPL_ENDOFNAMES, RPL_TRYAGAIN, 0 },
 		{ ERR_TOOMANYMATCHES, ERR_NOSUCHSERVER, 0 },
 		handle_default
 	},
@@ -84,7 +84,7 @@ static struct query queries[] = {
  /* LIST [<channel>{,<channel>} [<server>]*/
 	{"LIST", 
 		{ RPL_LIST, RPL_LISTSTART, 0 }, 
-		{ RPL_LISTEND, 0 },
+		{ RPL_LISTEND, RPL_TRYAGAIN, 0 },
 		{ ERR_TOOMANYMATCHES, ERR_NOSUCHSERVER, 0 },
 		handle_default
 	},
@@ -92,7 +92,7 @@ static struct query queries[] = {
  /* TOPIC <channel> [<topic>]*/
 	{"TOPIC", 
 		{ 0 }, 
-		{ RPL_NOTOPIC, RPL_TOPIC, 0 }, 
+		{ RPL_NOTOPIC, RPL_TOPIC, RPL_TRYAGAIN, 0 }, 
 		{ ERR_NOTONCHANNEL, ERR_NEEDMOREPARAMS, ERR_CHANOPPRIVSNEEDED, 
 			ERR_NOCHANMODES, 0 },
 		handle_topic
@@ -101,7 +101,7 @@ static struct query queries[] = {
  /* WHOWAS <nickname> [<count> [<server>]]*/
 	{"WHOWAS", 
 		{ RPL_WHOWASUSER, RPL_WHOISSERVER, RPL_WHOWAS_TIME, 0 },
-		{ RPL_ENDOFWHOWAS, 0 },
+		{ RPL_ENDOFWHOWAS, RPL_TRYAGAIN, 0 },
 		{ ERR_NONICKNAMEGIVEN, ERR_WASNOSUCHNICK, 0 },
 		handle_default
 	},
@@ -121,7 +121,7 @@ static struct query queries[] = {
  /* VERSION [<server>]*/
 	{"VERSION",
 		{ 0 },
-		{ RPL_VERSION, 0 },
+		{ RPL_VERSION, RPL_TRYAGAIN, 0 },
 		{ ERR_NOSUCHSERVER, 0 },
 		handle_default
 	}, 
@@ -129,7 +129,7 @@ static struct query queries[] = {
  /* LINKS [[<remote server>] <server mask>]*/
 	{"LINKS",
 		{ RPL_LINKS, 0 },
-		{ RPL_ENDOFLINKS, 0 },
+		{ RPL_ENDOFLINKS, RPL_TRYAGAIN, 0 },
 		{ ERR_NOSUCHSERVER, 0 },
 		handle_default
 	},
@@ -137,7 +137,7 @@ static struct query queries[] = {
  /* TIME [<server>]*/
 	{"TIME",
 		{ 0 },
-		{ RPL_TIME, 0 },
+		{ RPL_TIME, RPL_TRYAGAIN, 0 },
 		{ ERR_NOSUCHSERVER, 0 },
 		handle_default
 	},
@@ -148,7 +148,7 @@ static struct query queries[] = {
 		  RPL_TRACEUNKNOWN, RPL_TRACEUSER, RPL_TRACECLASS, 
 		  RPL_TRACEHANDSHAKE, RPL_TRACEOPERATOR,
 		  RPL_TRACESERVER, RPL_TRACENEWTYPE, 0 },
-		{ 0 },
+		{ RPL_TRYAGAIN, 0 },
 		{ ERR_NOSUCHSERVER, 0 },
 		handle_default
 	},
@@ -156,7 +156,7 @@ static struct query queries[] = {
  /* SUMMON <user> [<server>]*/
 	{"SUMMON",
 		{ 0 },
-		{ RPL_SUMMONING, 0 },
+		{ RPL_SUMMONING, RPL_TRYAGAIN, 0 },
 		{ ERR_NORECIPIENT, ERR_FILEERROR, ERR_NOLOGIN, ERR_NOSUCHSERVER, 0 },
 		handle_default
 	},
@@ -164,7 +164,7 @@ static struct query queries[] = {
  /* USERS [<server>]*/
 	{"USERS",
 		{ RPL_USERSSTART, RPL_USERS, RPL_NOUSERS, 0 },
-		{ RPL_ENDOFUSERS, 0 },
+		{ RPL_ENDOFUSERS, RPL_TRYAGAIN, 0 },
 		{ ERR_NOSUCHSERVER, ERR_FILEERROR, ERR_USERSDISABLED, 0 },
 		handle_default
 	},
@@ -172,7 +172,7 @@ static struct query queries[] = {
  /* USERHOST <nickname>{ <nickname>}{ ...}*/
 	{"USERHOST",
 		{ 0 },
-		{ RPL_USERHOST, 0 },
+		{ RPL_USERHOST, RPL_TRYAGAIN, 0 },
 		{ ERR_NEEDMOREPARAMS, 0 },
 		handle_default
 	},
@@ -180,7 +180,7 @@ static struct query queries[] = {
  /* ISON <nickname>{ <nickname>}{ ...} */
 	{"ISON",
 		{ 0 },
-		{ RPL_ISON, 0 },
+		{ RPL_ISON, RPL_TRYAGAIN, 0 },
 		{ ERR_NEEDMOREPARAMS, 0 },
 	    handle_default
 	},
@@ -188,7 +188,7 @@ static struct query queries[] = {
 /* JOIN <channel>{,<channel>} [<key>{,<key>}] */
 	{"JOIN",
 		{ 0 },
-		{ 0 },
+		{ RPL_TRYAGAIN, 0 },
 		{ ERR_NEEDMOREPARAMS, ERR_BANNEDFROMCHAN,
 		  ERR_INVITEONLYCHAN, ERR_BADCHANNELKEY,
 		  ERR_CHANNELISFULL, ERR_BADCHANMASK,
@@ -200,7 +200,7 @@ static struct query queries[] = {
  /* PART <channel> *( "," <channel> ) [ <Part Message> ] */
 	{ "PART",
 		{ 0 },
-		{ 0 },
+		{ RPL_TRYAGAIN, 0 },
 		{ ERR_NEEDMOREPARAMS, ERR_NOSUCHCHANNEL, ERR_NOTONCHANNEL, 0 },
 		handle_default
 	},
@@ -208,7 +208,7 @@ static struct query queries[] = {
  /* NICK <nickname> */
 	{ "NICK",
 		{ 0 },
-		{ 0 },
+		{ RPL_TRYAGAIN, 0 },
 		{ ERR_NONICKNAMEGIVEN, ERR_ERRONEUSNICKNAME, ERR_NICKNAMEINUSE,
 	      ERR_UNAVAILRESOURCE, ERR_RESTRICTED, ERR_NICKCOLLISION, 
 		  ERR_NICKTOOFAST, 0 },
@@ -218,7 +218,7 @@ static struct query queries[] = {
  /* USER <username> <hostname> <servername> <realname> */
 	{ "USER",
 		{ 0 },
-		{ 0 },
+		{ RPL_TRYAGAIN, 0 },
 		{ ERR_NEEDMOREPARAMS, ERR_ALREADYREGISTERED, 0 },
 		handle_default
 	},
@@ -226,7 +226,7 @@ static struct query queries[] = {
  /* QUIT [<quit message>] */
 	{ "QUIT", 
 		{ 0 },
-		{ 0 },
+		{ RPL_TRYAGAIN, 0 },
 		{ 0 },
 		handle_default
 	},
@@ -234,7 +234,7 @@ static struct query queries[] = {
  /* OPER <name> <password> */
 	{ "OPER",
 	    { 0 },
-	    { RPL_YOUREOPER, 0 },
+	    { RPL_YOUREOPER, RPL_TRYAGAIN, 0 },
 		{ ERR_NEEDMOREPARAMS, ERR_NOOPERHOST, ERR_PASSWDMISMATCH, 0 },
 		handle_default
 	},
@@ -252,6 +252,7 @@ static struct query queries[] = {
 			RPL_CHANNELMODEIS, RPL_ENDOFBANLIST, RPL_ENDOFEXCEPTLIST,
 			RPL_ENDOFINVITELIST, RPL_UNIQOPIS,
 			
+			RPL_TRYAGAIN, 
 			0 },
 		{ 
 			/* Common replies */
@@ -272,7 +273,7 @@ static struct query queries[] = {
  /* SERVICE <nick> <reserved> <distribution> <type> <reserved> <info> */
 	{ "SERVICE", 
 		{ 0 },
-		{ RPL_YOURESERVICE, RPL_YOURHOST, RPL_MYINFO, 0 },
+		{ RPL_YOURESERVICE, RPL_YOURHOST, RPL_MYINFO, RPL_TRYAGAIN, 0 },
 		{ ERR_ALREADYREGISTERED, ERR_NEEDMOREPARAMS, ERR_ERRONEUSNICKNAME, 0 },
 		handle_default
 	},
@@ -280,7 +281,7 @@ static struct query queries[] = {
  /* SQUIT <server> <comment> */
 	{ "SQUIT",
 		{ 0 },
-		{ 0 },
+		{ RPL_TRYAGAIN, 0 },
 		{ ERR_NOPRIVILEGES, ERR_NEEDMOREPARAMS, ERR_NOSUCHSERVER, 0 },
 		handle_default
 	},
@@ -288,7 +289,7 @@ static struct query queries[] = {
  /* INVITE <nick> <channel> */
 	{ "INVITE", 
 		{ 0 },
-		{ RPL_INVITING, RPL_AWAY, 0 },
+		{ RPL_INVITING, RPL_AWAY, RPL_TRYAGAIN, 0 },
 		{ ERR_NEEDMOREPARAMS, ERR_NOTONCHANNEL, ERR_NOSUCHNICK, 
 			ERR_CHANOPPRIVSNEEDED, ERR_USERONCHANNEL, 0 },
 		handle_default
@@ -297,7 +298,7 @@ static struct query queries[] = {
 /* KICK <channel> * ( "," <channel> ) <user> *( "," <user> ) [<comment>] */
 	{ "KICK",
 		{ 0 },
-		{ 0 },
+		{ RPL_TRYAGAIN, 0 },
 		{ ERR_NEEDMOREPARAMS, ERR_BADCHANMASK, ERR_USERNOTINCHANNEL,
 			ERR_NOSUCHCHANNEL, ERR_CHANOPPRIVSNEEDED, ERR_NOTONCHANNEL, 0 },
 		handle_default
@@ -306,7 +307,7 @@ static struct query queries[] = {
  /* PRIVMSG <msgtarget> <text> */
 	{ "PRIVMSG",
 		{ 0 },
-		{ RPL_AWAY, 0 },
+		{ RPL_AWAY, RPL_TRYAGAIN, 0 },
 		{ ERR_NORECIPIENT, ERR_NOTEXTTOSEND, ERR_CANNOTSENDTOCHAN, 
 			ERR_NOTOPLEVEL, ERR_TOOMANYTARGETS, ERR_WILDTOPLEVEL, 
 			ERR_NOSUCHNICK, ERR_NOSUCHCHANNEL, ERR_BLOCKING_NOTID, 0 },
@@ -316,7 +317,7 @@ static struct query queries[] = {
  /* MOTD [<target>] */
 	{ "MOTD",
 		{ RPL_MOTDSTART, RPL_MOTD, 0 },
-		{ RPL_ENDOFMOTD, 0 },
+		{ RPL_ENDOFMOTD, RPL_TRYAGAIN, 0 },
 		{ ERR_NOMOTD, 0 },
 		handle_default
 	},
@@ -325,7 +326,7 @@ static struct query queries[] = {
 	{ "LUSERS",
 		{ RPL_LUSERCLIENT, RPL_LUSEROP, RPL_LUSERUNKNOWN, RPL_LUSERCHANNELS, 
 			RPL_LUSERME, RPL_STATSTLINE, 0 },
-		{ 0 },
+		{ RPL_TRYAGAIN, 0 },
 		{ ERR_NOSUCHSERVER, 0 },
 		handle_default
 	},
@@ -333,7 +334,7 @@ static struct query queries[] = {
  /* CONNECT <target> <port> [ <remote server> ] */
 	{ "CONNECT",
 		{ 0 },
-		{ 0 },
+		{ RPL_TRYAGAIN, 0 },
 		{ ERR_NOSUCHSERVER, ERR_NEEDMOREPARAMS, ERR_NOPRIVILEGES, 0 },
 		handle_default
 	},
@@ -342,7 +343,7 @@ static struct query queries[] = {
 	{ "ADMIN",
 		{ RPL_ADMINME, RPL_ADMINLOC2, RPL_ADMINLOC1, 
 			RPL_ADMINLOC3, 0 },
-		{ 0 },
+		{ RPL_TRYAGAIN, 0 },
 		{ ERR_NOSUCHSERVER, 0 },
 		handle_default
 	},
@@ -350,7 +351,7 @@ static struct query queries[] = {
  /* INFO [ <target> ] */
 	{ "INFO",
 		{ RPL_INFO, 0 },
-		{ RPL_ENDOFINFO, 0 },
+		{ RPL_TRYAGAIN, RPL_ENDOFINFO, 0 },
 		{ ERR_NOSUCHSERVER, 0 },
 		handle_default
 	},
@@ -358,7 +359,7 @@ static struct query queries[] = {
  /* SERVLIST [ <mask> [ <type> ] ] */
 	{ "SERVLIST",
 		{ RPL_SERVLIST, 0},
-		{ RPL_SERVLISTEND, 0 },
+		{ RPL_TRYAGAIN, RPL_SERVLISTEND, 0 },
 		{ 0 },
 		handle_default
 	},
@@ -367,7 +368,7 @@ static struct query queries[] = {
 	/* Same responses as for PRIVMSG */
 	{ "SQUERY",
 		{ 0 },
-		{ RPL_AWAY, 0 },
+		{ RPL_AWAY, RPL_TRYAGAIN, 0 },
 		{ ERR_NORECIPIENT, ERR_NOTEXTTOSEND, ERR_CANNOTSENDTOCHAN, 
 			ERR_NOTOPLEVEL, ERR_TOOMANYTARGETS, ERR_WILDTOPLEVEL, 
 			ERR_NOSUCHNICK, 0 },
@@ -377,7 +378,7 @@ static struct query queries[] = {
  /* KILL <nick> <comment> */
 	{ "KILL",
 		{ 0 },
-		{ 0 },
+		{ RPL_TRYAGAIN, 0 },
 		{ ERR_NOPRIVILEGES, ERR_NEEDMOREPARAMS, ERR_NOSUCHNICK, ERR_CANTKILLSERVER, 0 },
 		handle_default
 	},
@@ -385,7 +386,7 @@ static struct query queries[] = {
  /* AWAY [ <text> ] */
 	{ "AWAY",
 		{ 0 },
-		{ RPL_UNAWAY, RPL_NOWAWAY, 0 },
+		{ RPL_UNAWAY, RPL_NOWAWAY, RPL_TRYAGAIN, 0 },
 		{ 0 },
 		handle_default
 	},
@@ -393,7 +394,7 @@ static struct query queries[] = {
  /* REHASH */
 	{ "REHASH",
 		{ 0 },
-		{ RPL_REHASHING, 0 },
+		{ RPL_REHASHING, RPL_TRYAGAIN, 0 },
 		{ ERR_NOPRIVILEGES, 0 },
 		handle_default
 	},
@@ -401,7 +402,7 @@ static struct query queries[] = {
  /* DIE */
 	{ "DIE",
 		{ 0 },
-		{ 0 },
+		{ RPL_TRYAGAIN, 0 },
 		{ ERR_NOPRIVILEGES, 0 },
 		handle_default
 	},
@@ -409,7 +410,7 @@ static struct query queries[] = {
  /* RESTART */
 	{ "RESTART",
 		{ 0 },
-		{ 0 },
+		{ RPL_TRYAGAIN, 0 },
 		{ ERR_NOPRIVILEGES, 0 },
 		handle_default
 	},
@@ -417,7 +418,7 @@ static struct query queries[] = {
 /* PING */
 	{ "PING", 
 		{ 0 },
-		{ 0 },
+		{ RPL_TRYAGAIN, 0 },
 		{ ERR_NOORIGIN, 0 },
 		handle_default
 	},
@@ -425,7 +426,7 @@ static struct query queries[] = {
  /* WALLOPS */
 	{ "WALLOPS",
 		{ 0 },
-		{ 0 },
+		{ RPL_TRYAGAIN, 0 },
 		{ ERR_NEEDMOREPARAMS, 0 },
 		handle_default
 	},
@@ -433,7 +434,7 @@ static struct query queries[] = {
 /* PONG */
 	{ "PONG",
 		{ 0 },
-		{ 0 },
+		{ RPL_TRYAGAIN, 0 },
 		{ ERR_NOORIGIN, ERR_NOSUCHSERVER, 0 },
 		handle_default
 	},
@@ -441,7 +442,7 @@ static struct query queries[] = {
 /* NOTICE */
 	{ "NOTICE",
 		{ 0 },
-		{ 0 },
+		{ RPL_TRYAGAIN, 0 },
 		{ 0 },
 		handle_default
 	},
@@ -449,7 +450,7 @@ static struct query queries[] = {
 /* AUTH */
 	{ "AUTH",
 		{ 0 },
-		{ 0 },
+		{ RPL_TRYAGAIN, 0 },
 		{ ERR_NEEDMOREPARAMS, ERR_ALREADYAUTHENTICATED, ERR_ALREADYREGISTERED,
 		  ERR_AUTHENTICATIONFAILED, ERR_AUTHENTICATIONSUSPENDED, 
 		  ERR_BADCOMMAND, ERR_UNKNOWNPACKAGE, 0 },
@@ -462,7 +463,7 @@ static struct query queries[] = {
 static struct query unknown_query = { 
 	NULL,
 	{ 0 },
-	{ 0 },
+	{ RPL_TRYAGAIN, 0 },
 	{ ERR_UNKNOWNCOMMAND, 0 },
 	handle_default
 };

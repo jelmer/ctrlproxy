@@ -13,6 +13,8 @@ Ctrlproxy 3.0.4 UNRELEASED
 
   BUG FIXES
 
+    * Handle 263 response correctly.
+
     * Properly send non-data lines when using repl_lastdisconnect. (#146)
 
     * No longer "skip" users on reconnect. (#146)
