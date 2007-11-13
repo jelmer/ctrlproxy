@@ -122,6 +122,14 @@ struct line * irc_parse_line(const char *d)
 	return l;
 }
 
+/**
+ * Send a line over an IO Channel
+ *
+ * @param c IO Channel
+ * @param iconv iconv to use, -1 for none
+ * @param l Line
+ * @param error Error
+ */
 GIOStatus irc_send_line(GIOChannel *c, GIConv iconv, 
 						const struct line *l, GError **error) 
 {
@@ -143,8 +151,12 @@ GIOStatus irc_send_line(GIOChannel *c, GIConv iconv,
 	ret = g_io_channel_write_chars(c, cvrt, -1, &bytes_written, error);
 	g_free(cvrt);
 
-	if (ret != G_IO_STATUS_NORMAL)
+	if (ret == G_IO_STATUS_AGAIN)
+		g_assert(bytes_written == 0);
+
+	if (ret != G_IO_STATUS_NORMAL) {
 		return ret;
+	}
 
 	return g_io_channel_flush(c, error);
 }
