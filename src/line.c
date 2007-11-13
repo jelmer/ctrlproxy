@@ -151,8 +151,9 @@ GIOStatus irc_send_line(GIOChannel *c, GIConv iconv,
 	ret = g_io_channel_write_chars(c, cvrt, -1, &bytes_written, error);
 	g_free(cvrt);
 
-	if (ret == G_IO_STATUS_AGAIN)
+	if (ret == G_IO_STATUS_AGAIN) {
 		g_assert(bytes_written == 0);
+	}
 
 	if (ret != G_IO_STATUS_NORMAL) {
 		return ret;
