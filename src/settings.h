@@ -81,6 +81,22 @@ struct network_config
 	} type_settings; 
 };
 
+struct log_file_config {
+	const char *logfilename;
+	const char *nickchange;
+	const char *join;
+	const char *part;
+	const char *topic;
+	const char *notopic;
+	const char *msg;
+	const char *action;
+	const char *kick;
+	const char *mode;
+	const char *quit;
+	const char *notice;
+
+};
+
 struct allow_rule {
 	char *username;
 	char *password;

@@ -658,6 +658,59 @@ static void config_load_networks(struct ctrlproxy_config *cfg)
 	g_dir_close(dir);
 }
 
+#define FETCH_SETTING(data, kf, name) (data)->name = g_key_file_get_string((kf), "log-custom", __STRING(name), NULL)
+
+static void config_load_log(struct ctrlproxy_config *config)
+{
+	GKeyFile *kf = config->keyfile;
+	struct log_file_config *data;
+	char *logbasedir;
+
+	if (g_key_file_has_group(kf, "log-custom")) {
+		data = g_new0(struct log_file_config, 1);
+
+		FETCH_SETTING(data, kf, nickchange);
+		FETCH_SETTING(data, kf, logfilename);
+		FETCH_SETTING(data, kf, topic);
+		FETCH_SETTING(data, kf, notopic);
+		FETCH_SETTING(data, kf, part);
+		FETCH_SETTING(data, kf, join);
+		FETCH_SETTING(data, kf, msg);
+		FETCH_SETTING(data, kf, notice);
+		FETCH_SETTING(data, kf, action);
+		FETCH_SETTING(data, kf, kick);
+		FETCH_SETTING(data, kf, quit);
+		FETCH_SETTING(data, kf, mode);
+	}
+
+	if (g_key_file_has_group(kf, "log-irssi")) {
+		data = g_new0(struct log_file_config, 1);
+
+		data->join = "%h:%M -!- %n [%u] has joined %c";
+		data->part = "%h:%M -!- %n [%u] has left %c [%m]";
+		data->msg = "%h:%M < %n> %m";
+		data->notice = "%h:%M < %n> %m";
+		data->action = "%h:%M  * %n %m";
+		data->mode = "%h:%M -!- mode/%t [%p %c] by %n";
+		data->quit = "%h:%M -!- %n [%u] has quit [%m]";
+		data->kick = "%h:%M -!- %t has been kicked by %n [%m]";
+		data->topic = "%h:%M -!- %n has changed the topic to %t";
+		data->notopic = "%h:%M -!- %n has removed the topic";
+		data->nickchange = "%h:%M -!- %n is now known as %r";
+
+		if (!g_key_file_has_key(kf, "log-irssi", "logfile", NULL)) {
+			logbasedir = g_build_filename(config->config_dir, 
+										  "log_irssi", NULL);
+		} else {
+			logbasedir = g_key_file_get_string(kf, "log-irssi", "logfile", NULL);
+		}
+
+		data->logfilename = g_strdup_printf("%s/%%N/%%@", logbasedir);
+
+		g_free(logbasedir);
+	}
+}
+
 struct ctrlproxy_config *init_configuration(void)
 {
 	struct ctrlproxy_config *cfg;
@@ -760,9 +813,9 @@ struct ctrlproxy_config *load_configuration(const char *dir)
 	}
 
 	config_load_networks(cfg);
-
 	config_load_listeners(cfg);
 	config_load_listeners_socks(cfg);
+	config_load_log(cfg);
 
 	size = 0;
 	autoconnect_list = g_key_file_get_string_list(kf, "global", "autoconnect", &size, NULL);
