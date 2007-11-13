@@ -23,9 +23,11 @@ all: $(BINS) $(MODS_SHARED_FILES)
 doxygen:
 	doxygen
 
+lib_objs = \
+	   lib/client.o
+
 objs = src/network.o \
 	   src/posix.o \
-	   src/client.o \
 	   src/cache.o \
 	   src/line.o \
 	   src/state.o \
@@ -52,8 +54,10 @@ objs = src/network.o \
 	   src/log_support.o \
 	   $(SSL_OBJS)
 
+lib_headers = \
+		  src/client.h 
+
 headers = src/admin.h \
-		  src/client.h \
 		  src/ctcp.h \
 		  src/ctrlproxy.h \
 		  src/hooks.h \
@@ -74,9 +78,9 @@ linestack-cmd$(EXEEXT): src/linestack-cmd.o $(objs)
 	@echo Linking $@
 	@$(LD) $(LIBS) -lreadline -rdynamic -o $@ $^
 
-ctrlproxy$(EXEEXT): src/main.o $(objs)
+ctrlproxy$(EXEEXT): src/main.o $(objs) $(LIBIRC)
 	@echo Linking $@
-	@$(LD) $(LDFLAGS) -rdynamic -o $@ $^ $(LIBS)
+	@$(LD) $(LDFLAGS) -rdynamic -o $@ $^ $(LIBS) $(LIBIRC)
 
 ctrlproxy-admin$(EXEEXT): src/admin-cmd.o
 	@echo Linking $@
@@ -174,6 +178,13 @@ lcov:
 mods/lib%.$(SHLIBEXT): mods/%.o
 	@echo Linking $@
 	@$(LD) $(LDFLAGS) -fPIC -shared -o $@ $^
+
+LIBIRC = libirc.$(SHLIBEXT).$(PACKAGE_VERSION)
+LIBIRC_SOVERSION = 3.0
+LIBIRC_SONAME = libirc.$(SHLIBEXT).$(LIBIRC_SOVERSION)
+
+$(LIBIRC): $(lib_objs)
+	$(LD) $(LDFLAGS) -Wl,-soname,$(LIBIRC_SONAME) -fPIC -shared -o $@ $^
 
 clean::
 	@echo Removing .so files
