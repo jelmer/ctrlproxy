@@ -167,12 +167,12 @@ static char *get_identifier(struct network *n, const struct line *l,
 }
 
 static char *get_modechanges(struct network *n, const struct line *l, 
-							 gboolean case_sensitive) 
+			     gboolean case_sensitive) 
 {
 	char buf[512] = "";
 	int i;
 
-	for (i = 3 ; l->args[i+1] != NULL; i++)
+	for (i = 3 ; i+1 < l->argc && l->args[i+1] != NULL; i++)
 		if (i == 3) sprintf(buf, "%s", l->args[i]);
 		else sprintf(buf, "%s %s", buf, l->args[i]);
 
