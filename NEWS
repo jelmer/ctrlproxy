@@ -28,6 +28,8 @@ Ctrlproxy 3.0.4 UNRELEASED
 
     * Integrate listeners into the core.
 
+	* Reconcile log_custom and log_irssi.
+
     * Integrate socks support into listener code. Socks connections 
       can now be accepted at the same port as other connections.
 

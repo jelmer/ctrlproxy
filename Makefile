@@ -50,6 +50,7 @@ objs = src/network.o \
 	   src/repl_backends.o \
 	   src/listener.o \
 	   src/log_support.o \
+	   src/log_custom.o \
 	   $(SSL_OBJS)
 
 headers = src/admin.h \

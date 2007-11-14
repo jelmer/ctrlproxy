@@ -1,6 +1,6 @@
 /* 
 	ctrlproxy: A modular IRC proxy
-	(c) 2002-2003 Jelmer Vernooij <jelmer@nl.linux.org>
+	(c) 2002-2007 Jelmer Vernooij <jelmer@nl.linux.org>
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -17,23 +17,12 @@
 	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 */
 
-#include "ctrlproxy.h"
-#include <stdio.h>
-#include <stdarg.h>
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <time.h>
-#include <glib.h>
-#include <glib/gstdio.h>
-#include <sys/stat.h>
-#include <sys/types.h>
+#include "internals.h"
 
 #define MAX_SUBST 256
 
 struct log_custom_data {
-    char *logfilename;
-    GKeyFile *kf;
+	struct log_file_config *config;
 	struct log_support_context *log_ctx;
 };
 
@@ -357,12 +346,12 @@ static void file_write_line(struct log_custom_data *data,
 	char *n = NULL;
 	char *line;
 
-	if (data->logfilename == NULL) 
+	if (data->config->logfilename == NULL) 
 		return;
 
 	custom_subst(network, &s, fmt, l, identifier, FALSE, FALSE);
 
-	custom_subst(network, &n, data->logfilename, l, identifier, TRUE, TRUE);
+	custom_subst(network, &n, data->config->logfilename, l, identifier, TRUE, TRUE);
 
 	line = g_strdup_printf("%s\n", s);
 	g_free(s);
@@ -392,12 +381,11 @@ static void file_write_line_target(struct log_custom_data *data,
 }
 
 static void file_write_target(struct log_custom_data *data, 
-							  struct network *network, const char *n, 
+							  struct network *network, const char *fmt, 
 							  const struct line *l) 
 {
-	char *t, *fmt;
+	char *t;
 	
-	fmt = g_key_file_get_string(data->kf, "log-custom", n, NULL);
 	if (fmt == NULL) 
 		return;
 	
@@ -418,22 +406,19 @@ static void file_write_target(struct log_custom_data *data,
 }
 
 static void file_write_channel_only(struct log_custom_data *data, 
-									struct network *network, const char *n, 
+									struct network *network, const char *fmt, 
 									const struct line *l)
 {
-	char *fmt;
-
-	fmt = g_key_file_get_string(data->kf, "log-custom", n, NULL);
-	if (fmt == NULL) return;
+	if (fmt == NULL) 
+		return;
 
 	file_write_line_target(data, network, fmt, l, l->args[1], TRUE);
 }
 
 static void file_write_channel_query(struct log_custom_data *data, 
-									 struct network *network, const char *n, 
+									 struct network *network, const char *fmt, 
 									 const struct line *l)
 {
-	char *fmt;
 	char *nick;
 	GList *gl;
 	struct network_nick *nn;
@@ -441,9 +426,6 @@ static void file_write_channel_query(struct log_custom_data *data,
 	if (l->origin == NULL) 
 		return;
 
-	g_assert(n != NULL);
-
-	fmt = g_key_file_get_string(data->kf, "log-custom", n, NULL);
 	if (fmt == NULL) 
 		return;
 
@@ -485,34 +467,34 @@ static gboolean log_custom_data(struct network *network,
 	 */
 
 	if (dir == FROM_SERVER && !g_strcasecmp(l->args[0], "JOIN")) {
-		file_write_target(data, network, "join", l); 
+		file_write_target(data, network, data->config->join, l); 
 	} else if (dir == FROM_SERVER && !g_strcasecmp(l->args[0], "PART")) {
-		file_write_channel_only(data, network, "part", l);
+		file_write_channel_only(data, network, data->config->part, l);
 	} else if (!g_strcasecmp(l->args[0], "PRIVMSG")) {
 		if (l->args[2][0] == '\001') { 
 			l->args[2][strlen(l->args[2])-1] = '\0';
 			if (!g_ascii_strncasecmp(l->args[2], "\001ACTION ", 8)) { 
 				l->args[2]+=8;
-				file_write_target(data, network, "action", l);
+				file_write_target(data, network, data->config->action, l);
 				l->args[2]-=8;
 			}
 			l->args[2][strlen(l->args[2])] = '\001';
 			/* Ignore all other ctcp messages */
 		} else {
-			file_write_target(data, network, "msg", l);
+			file_write_target(data, network, data->config->msg, l);
 		}
 	} else if (!g_strcasecmp(l->args[0], "NOTICE")) {
-		file_write_target(data, network, "notice", l);
+		file_write_target(data, network, data->config->notice, l);
 	} else if (!g_strcasecmp(l->args[0], "MODE") && l->args[1] != NULL && 
 			  is_channelname(l->args[1], &network->state->info) && 
 			  dir == FROM_SERVER) {
-		file_write_target(data, network, "mode", l);
+		file_write_target(data, network, data->config->mode, l);
 	} else if (!g_strcasecmp(l->args[0], "QUIT")) {
-		file_write_channel_query(data, network, "quit", l);
+		file_write_channel_query(data, network, data->config->quit, l);
 	} else if (!g_strcasecmp(l->args[0], "KICK") && l->args[1] != NULL && 
 			   l->args[2] != NULL && dir == FROM_SERVER) {
 		if (strchr(l->args[1], ',') == NULL) {
-			file_write_channel_only(data, network, "kick", l);
+			file_write_channel_only(data, network, data->config->kick, l);
 		} else { 
 			char *channels = g_strdup(l->args[1]);
 			char *nicks = g_strdup(l->args[1]);
@@ -529,7 +511,7 @@ static gboolean log_custom_data(struct network *network,
 				else 
 					*n = '\0';
 
-				file_write_channel_only(data, network, "kick", l);
+				file_write_channel_only(data, network, data->config->kick, l);
 
 				p = n+1;
 				_nick = strchr(_nick, ',');
@@ -543,12 +525,12 @@ static gboolean log_custom_data(struct network *network,
 	} else if (!g_strcasecmp(l->args[0], "TOPIC") && dir == FROM_SERVER && 
 			   l->args[1] != NULL) {
 		if (l->args[2] != NULL) 
-			file_write_channel_only(data, network, "topic", l);
+			file_write_channel_only(data, network, data->config->topic, l);
 		else 
-			file_write_channel_only(data, network, "notopic", l);
+			file_write_channel_only(data, network, data->config->notopic, l);
 	} else if (!g_strcasecmp(l->args[0], "NICK") && dir == FROM_SERVER && 
 			   l->args[1] != NULL) {
-		file_write_channel_query(data, network, "nickchange", l);
+		file_write_channel_query(data, network, data->config->nickchange, l);
 	}
 
 	g_free(nick);
@@ -556,34 +538,10 @@ static gboolean log_custom_data(struct network *network,
 	return TRUE;
 }
 
-static void load_config(struct global *global)
+void log_custom_load(struct log_file_config *config)
 {
-	GKeyFile *kf = global->config->keyfile;
-	struct log_custom_data *data;
-
-	if (!g_key_file_has_group(kf, "log-custom")) {
-		del_log_filter("log_custom");
-		return;
-	}
-
-	data = g_new0(struct log_custom_data, 1);
-
-	add_log_filter("log_custom", log_custom_data, data, 1000);
-
-	data->logfilename = g_key_file_get_string(kf, "log-custom", 
-											  "logfilename", NULL);
+	struct log_custom_data *data = g_new0(struct log_custom_data, 1);
+	data->config = config;
 	data->log_ctx = log_support_init();
-	data->kf = kf;
+	add_log_filter("log_custom", log_custom_data, data, 1000);
 }
-
-static gboolean init_plugin(void)
-{
-	register_load_config_notify(load_config);
-	return TRUE;
-}
-
-struct plugin_ops plugin = {
-	.name = "log_custom",
-	.version = CTRLPROXY_PLUGIN_VERSION,
-	.init = init_plugin,
-};
