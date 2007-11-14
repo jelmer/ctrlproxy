@@ -450,7 +450,7 @@ static gboolean welcome_client(struct client *client)
 
 	if (client->network->state != NULL) {
 		tmp = g_strdup_printf("%u", g_list_length(client->network->state->channels));
-		client_send_response(client, RPL_LUSERCHANNELS, 
+		client_send_response(client, RPL_LUSERCHANNELS, tmp,
 				     "channels formed", NULL);
 		g_free(tmp);
 	}
