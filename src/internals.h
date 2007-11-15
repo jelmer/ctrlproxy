@@ -133,6 +133,10 @@ gboolean stop_unix_socket(struct global *);
 /* log_custom.c */
 void log_custom_load(struct log_file_config *config);
 
+/* listener.c */
 void free_listeners(struct global *global);
+
+/* auto_away.c */
+void auto_away_add(struct global *global, struct auto_away_config *config);
 
 #endif /* __INTERNALS_H__ */

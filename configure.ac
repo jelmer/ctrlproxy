@@ -99,7 +99,6 @@ AC_SUBST(EXTRA_INSTALL_TARGETS)
 
 BINS="$BINS ctrlproxy$ac_cv_exeext"
 AC_SUBST(BINS)
-AC_SUBST(MODS_SHARED)
 
 AC_DEFINE(_GNU_SOURCE, 1, [Use GNU extensions])
 

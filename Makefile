@@ -1,7 +1,5 @@
 -include Makefile.settings
 
-MODS_SHARED_FILES = $(patsubst %,mods/lib%.$(SHLIBEXT),$(MODS_SHARED))
-
 GCOV = gcov
 
 ifeq ($(WITH_GCOV),1)
@@ -16,9 +14,9 @@ CFLAGS += $(GNUTLS_CFLAGS)
 CFLAGS+=-DHAVE_CONFIG_H -DSHAREDIR=\"$(cdatadir)\" -DDEFAULT_CONFIG_DIR=\"$(DEFAULT_CONFIG_DIR)\" -DHELPFILE=\"$(HELPFILE)\"
 CFLAGS+=-ansi -Wall -DMODULESDIR=\"$(modulesdir)\" -DSTRICT_MEMORY_ALLOCS=
 
-.PHONY: all clean distclean install install-bin install-dirs install-doc install-data install-mods install-pkgconfig
+.PHONY: all clean distclean install install-bin install-dirs install-doc install-data install-pkgconfig
 
-all: $(BINS) $(MODS_SHARED_FILES) 
+all: $(BINS)
 
 doxygen:
 	doxygen
@@ -51,6 +49,7 @@ objs = src/network.o \
 	   src/listener.o \
 	   src/log_support.o \
 	   src/log_custom.o \
+	   src/auto_away.o \
 	   $(SSL_OBJS)
 
 headers = src/admin.h \
@@ -69,7 +68,7 @@ headers = src/admin.h \
 		  src/state.h \
 		  src/isupport.h \
 		  src/log.h
-dep_files = $(patsubst %.o, %.d, $(objs)) $(patsubst %.o, %.d, $(wildcard mods/*.o))
+dep_files = $(patsubst %.o, %.d, $(objs))
 
 linestack-cmd$(EXEEXT): src/linestack-cmd.o $(objs)
 	@echo Linking $@
@@ -83,10 +82,6 @@ ctrlproxy-admin$(EXEEXT): src/admin-cmd.o
 	@echo Linking $@
 	@$(LD) $(LDFLAGS) -rdynamic -o $@ $^ $(LIBS)
 
-mods/%.o: mods/%.c
-	@echo Compiling for shared library $<
-	@$(CC) -fPIC -I. -Isrc $(CFLAGS) $(GCOV_CFLAGS) -c $< -o $@
-
 %.o: %.c
 	@echo Compiling $<
 	@$(CC) -I. -Isrc $(CFLAGS) $(GCOV_CFLAGS) -c $< -o $@
@@ -95,21 +90,22 @@ mods/%.o: mods/%.c
 	@$(CC) -I. -Isrc -M -MT $(<:.c=.o) $(CFLAGS) $< -o $@
 
 ifeq ($(BZR_CHECKOUT),yes)
-configure: autogen.sh configure.ac acinclude.m4 $(wildcard mods/*/*.m4)
+configure: autogen.sh configure.ac acinclude.m4
 	./$<
 endif
 
 ctrlproxy.pc Makefile.settings: configure Makefile.settings.in ctrlproxy.pc.in
 	./$<
 
-install: all install-dirs install-bin install-header install-mods install-data install-pkgconfig $(EXTRA_INSTALL_TARGETS)
+install: all install-dirs install-bin install-header install-data install-pkgconfig $(EXTRA_INSTALL_TARGETS)
 install-dirs:
 	$(INSTALL) -d $(DESTDIR)$(modulesdir)
 
-uninstall: uninstall-bin uninstall-header uninstall-mods uninstall-data uninstall-pkgconfig $(patsubst install-%,uninstall-%,$(EXTRA_INSTALL_TARGETS))
+uninstall: uninstall-bin uninstall-header uninstall-data uninstall-pkgconfig $(patsubst install-%,uninstall-%,$(EXTRA_INSTALL_TARGETS))
 uninstall-bin:
 	-rm -f $(DESTDIR)$(bindir)/ctrlproxy$(EXEEXT)
 	-rmdir $(DESTDIR)$(bindir)
+	-rmdir $(DESTDIR)$(modulesdir)
 
 install-bin:
 	$(INSTALL) -d $(DESTDIR)$(bindir)
@@ -149,14 +145,6 @@ install-data:
 	$(INSTALL) -m 0644 config.default $(DESTDIR)$(DEFAULT_CONFIG_DIR)/config
 	$(INSTALL) -m 0644 config.admin $(DESTDIR)$(DEFAULT_CONFIG_DIR)/networks/admin
 
-install-mods: all 
-	$(INSTALL) -d $(DESTDIR)$(modulesdir)
-	$(INSTALL) $(MODS_SHARED_FILES) $(DESTDIR)$(modulesdir)
-
-uninstall-mods:
-	-rm -f $(patsubst %,$(DESTDIR)$(modulesdir)/%,$(notdir $(MODS_SHARED_FILES)))
-	-rmdir $(DESTDIR)$(modulesdir)
-
 install-pkgconfig:
 	$(INSTALL) -d $(DESTDIR)$(libdir)/pkgconfig
 	$(INSTALL) -m 0644 ctrlproxy.pc $(DESTDIR)$(libdir)/pkgconfig
@@ -172,17 +160,11 @@ lcov:
 	lcov --base-directory `pwd` --directory . --capture --output-file ctrlproxy.info
 	genhtml -o coverage ctrlproxy.info
 
-mods/lib%.$(SHLIBEXT): mods/%.o
-	@echo Linking $@
-	@$(LD) $(LDFLAGS) -fPIC -shared -o $@ $^
-
 clean::
-	@echo Removing .so files
-	@rm -f $(MODS_SHARED_FILES)
 	@echo Removing dependency files
 	@rm -f $(dep_files)
 	@echo Removing object files and executables
-	@rm -f src/*.o testsuite/check ctrlproxy$(EXEEXT) testsuite/*.o *~ mods/*.o
+	@rm -f src/*.o testsuite/check ctrlproxy$(EXEEXT) testsuite/*.o *~
 	@rm -f linestack-cmd$(EXEEXT) ctrlproxy-admin$(EXEEXT)
 	@echo Removing gcov output
 	@rm -f *.gcov *.gcno *.gcda 
@@ -229,8 +211,6 @@ check_objs = testsuite/test-cmp.o testsuite/test-user.o \
 testsuite/check: $(check_objs) $(objs)
 	@echo Linking $@
 	@$(CC) $(LIBS) -o $@ $^ $(CHECK_LIBS)
-
-CTRLPROXY_MODULESDIR=$(shell pwd)/mods
 
 test:: testsuite/check
 	@echo Running testsuite
