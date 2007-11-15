@@ -31,11 +31,23 @@ help_t *help;
 GList *admin_commands = NULL;
 guint longest_command = 0;
 
+/**
+ * Determine the hostmask for the admin user.
+ *
+ * @param n Network for which to generate the hostmask.
+ * @return Host mask, should be freed by the caller.
+ */
 static char *admin_hostmask(struct network *n)
 {
 	return g_strdup_printf("ctrlproxy!ctrlproxy@%s", n->info.name);
 }
 
+/**
+ * Handle private message sent to the admin user.
+ *
+ * @param h Admin context handle.
+ * @param data Text sent.
+ */
 static void privmsg_admin_out(admin_handle h, const char *data)
 {
 	struct client *c = h->client;
@@ -50,6 +62,12 @@ static void privmsg_admin_out(admin_handle h, const char *data)
 	g_free(hostmask);
 }
 
+/**
+ * Sent data to the admin network channel.
+ *
+ * @param h Admin context handle
+ * @param data Text to send.
+ */
 static void network_admin_out(admin_handle h, const char *data)
 {
 	struct client *c = h->client;
@@ -62,6 +80,12 @@ static void network_admin_out(admin_handle h, const char *data)
 	g_free(hostmask);
 }
 
+/**
+ * Handles the 'help' command.
+ * @param h Admin context handle
+ * @param args Arguments
+ * @param userdata User context data (ignored)
+ */
 static void cmd_help(admin_handle h, char **args, void *userdata)
 {
 	const char *s;
@@ -85,6 +109,11 @@ static void cmd_help(admin_handle h, char **args, void *userdata)
 	}
 }
 
+/**
+ * Return the client handle associated with an admin context.
+ * @param h Admin context handle
+ * @return Client, or NULL if no client is associated.
+ */
 struct client *admin_get_client(admin_handle h)
 {
 	return h->client;
@@ -95,11 +124,22 @@ struct global *admin_get_global(admin_handle h)
 	return h->global;
 }
 
+/**
+ * Return the network handle associated with an admin context.
+ * @param Admin context handle
+ * @return Network, or NULL if no network is associated.
+ */
 struct network *admin_get_network(admin_handle h)
 {
 	return h->network;
 }
 
+/**
+ * Send data to the user from the admin user.
+ * @param h Admin context handle
+ * @param fmt Format, printf-style
+ * @param ... Format arguments
+ */
 void admin_out(admin_handle h, const char *fmt, ...)
 {
 	va_list ap;
@@ -113,6 +153,13 @@ void admin_out(admin_handle h, const char *fmt, ...)
 	g_free(msg);
 }
 
+/**
+ * Handles the 'ADDNETWORK' command.
+ *
+ * @param h Admin context handle.
+ * @param args String arguments, argv-style.
+ * @param userdata Optional user data, always NULL.
+ */
 static void add_network (admin_handle h, char **args, void *userdata)
 {
 	struct network_config *nc;
