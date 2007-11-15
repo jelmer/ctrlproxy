@@ -138,12 +138,10 @@ install-header::
 
 install-doc:: doc
 	$(INSTALL) -d $(DESTDIR)$(docdir)
-	$(INSTALL) -m 0644 UPGRADING $(DESTDIR)$(docdir)
 	$(MAKE) -C doc install PACKAGE_VERSION=$(PACKAGE_VERSION)
 
 uninstall-doc: 
 	$(MAKE) -C doc uninstall
-	rm -f $(DESTDIR)$(docdir)/UPGRADING
 	-rmdir $(DESTDIR)$(docdir)
 
 uninstall-data::
