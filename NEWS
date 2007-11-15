@@ -13,6 +13,8 @@ Ctrlproxy 3.0.4 UNRELEASED
 
   BUG FIXES
 
+    * Don't abort when sending colon to listener. (#167)
+
     * Handle 263 response correctly.
 
     * Properly send non-data lines when using repl_lastdisconnect. (#146)
@@ -28,7 +30,7 @@ Ctrlproxy 3.0.4 UNRELEASED
 
     * Integrate listeners into the core.
 
-	* Reconcile log_custom and log_irssi.
+    * Reconcile log_custom and log_irssi.
 
     * Integrate socks support into listener code. Socks connections 
       can now be accepted at the same port as other connections.
