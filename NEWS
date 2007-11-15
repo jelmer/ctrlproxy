@@ -11,7 +11,8 @@ Ctrlproxy 3.0.4 UNRELEASED
 
     * Announce number of clients/channels during client login.
 
-	* Add "set" command in the administration interface.
+	* Add "set" command in the administration interface, including 
+	  initial settings "log_level", "motd-file" and "report-time".
 
   BUG FIXES
 

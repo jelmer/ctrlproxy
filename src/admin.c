@@ -959,6 +959,35 @@ static char *motd_file_get(admin_handle h)
 	return g_strdup(g->config->motd_file);
 }
 
+static char *report_time_get(admin_handle h)
+{
+	struct global *g = admin_get_global(h);
+
+	return g_strdup(g->config->report_time?"true":"false");
+}
+
+static gboolean interpret_boolean(admin_handle h, const char *value,
+								  gboolean *ret)
+{
+	if (!g_strcasecmp(value, "true")) {
+		*ret = TRUE;
+		return TRUE;
+	} else if (!g_strcasecmp(value, "false")) {
+		*ret = FALSE;
+		return TRUE;
+	}
+
+	admin_out(h, "Invalid boolean value `%s'", value);
+	return FALSE;
+}
+
+static gboolean report_time_set(admin_handle h, const char *value)
+{
+	struct global *g = admin_get_global(h);
+
+	return interpret_boolean(h, value, &g->config->report_time);
+}
+
 static struct admin_setting {
 	const char *name;
 	char *(*get) (admin_handle h);
@@ -966,6 +995,7 @@ static struct admin_setting {
 } settings[] = {
 	{ "log_level", log_level_get, log_level_set },
 	{ "motd-file", motd_file_get, motd_file_set },
+	{ "report-time", report_time_get, report_time_set },
 };
 
 static void cmd_set(admin_handle h, char **args, void *userdata)

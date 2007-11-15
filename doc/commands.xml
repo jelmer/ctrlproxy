@@ -100,6 +100,13 @@
 			<para>View or change the CtrlProxy internal log level.</para></description>
 	</ctrlproxy-command>
 
+	<ctrlproxy-command name="set report-time">
+		<short-description>Change whether time should be printed when displaying backlog</short-description>
+		<syntax>set report-time [&lt;true|false&gt;]</syntax>
+		<description>
+			<para>Whether or not time should be displayed when sending backlog to the user.</para></description>
+	</ctrlproxy-command>
+
 	<ctrlproxy-command name="set motd-file">
 		<short-description>Change or display the MOTD path</short-description>
 		<syntax>set log_level [&lt;level&gt;]</syntax>
