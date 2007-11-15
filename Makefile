@@ -25,10 +25,12 @@ doxygen:
 
 lib_objs = \
 	   lib/state.o \
-	   lib/client.o
+	   lib/client.o \
+	   lib/line.o \
+	   src/isupport.o \
+	   src/network.o
 
-objs = src/network.o \
-	   src/posix.o \
+objs = src/posix.o \
 	   src/cache.o \
 	   src/line.o \
 	   src/util.o \
@@ -36,7 +38,6 @@ objs = src/network.o \
 	   src/linestack.o \
 	   src/plugins.o \
 	   src/settings.o \
-	   src/isupport.o \
 	   src/log.o \
 	   src/redirect.o \
 	   src/gen_config.o \
@@ -57,22 +58,21 @@ objs = src/network.o \
 
 lib_headers = \
 		  lib/state.h \
-		  lib/client.h 
+		  lib/client.h \
+		  lib/line.h \
+		  src/isupport.h \
+		  src/irc.h \
+		  src/network.h
 
 headers = src/admin.h \
 		  src/ctcp.h \
 		  src/ctrlproxy.h \
 		  src/hooks.h \
-		  src/irc.h \
-		  src/line.h \
 		  src/linestack.h \
-		  src/network.h \
 		  src/log_support.h \
 		  src/repl.h \
 		  src/settings.h \
 		  src/ssl.h \
-		  src/state.h \
-		  src/isupport.h \
 		  src/log.h
 dep_files = $(patsubst %.o, %.d, $(objs)) $(patsubst %.o, %.d, $(wildcard mods/*.o))
 
@@ -94,10 +94,10 @@ mods/%.o: mods/%.c
 
 %.o: %.c
 	@echo Compiling $<
-	@$(CC) -I. -Isrc $(CFLAGS) $(GCOV_CFLAGS) -c $< -o $@
+	@$(CC) -I. -Ilib -Isrc $(CFLAGS) $(GCOV_CFLAGS) -c $< -o $@
 
 %.d: %.c
-	@$(CC) -I. -Isrc -M -MT $(<:.c=.o) $(CFLAGS) $< -o $@
+	@$(CC) -I. -Ilib -Isrc -M -MT $(<:.c=.o) $(CFLAGS) $< -o $@
 
 ifeq ($(BZR_CHECKOUT),yes)
 configure: autogen.sh configure.ac acinclude.m4 $(wildcard mods/*/*.m4)
@@ -182,7 +182,7 @@ mods/lib%.$(SHLIBEXT): mods/%.o
 	@$(LD) $(LDFLAGS) -fPIC -shared -o $@ $^
 
 LIBIRC = libirc.$(SHLIBEXT).$(PACKAGE_VERSION)
-LIBIRC_SOVERSION = 3.0
+LIBIRC_SOVERSION = 1.0
 LIBIRC_SONAME = libirc.$(SHLIBEXT).$(LIBIRC_SOVERSION)
 
 $(LIBIRC): $(lib_objs)
