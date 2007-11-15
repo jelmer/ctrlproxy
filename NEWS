@@ -11,6 +11,8 @@ Ctrlproxy 3.0.4 UNRELEASED
 
     * Announce number of clients/channels during client login.
 
+	* Add "set" command in the administration interface.
+
   BUG FIXES
 
     * Don't abort when sending colon to listener. (#167)

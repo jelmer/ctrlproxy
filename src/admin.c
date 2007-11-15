@@ -499,21 +499,26 @@ static void cmd_backlog(admin_handle h, char **args, void *userdata)
 	g_hash_table_replace(markers, n, linestack_get_marker(n->linestack));
 }
 
-static void cmd_log_level(admin_handle h, char **args, void *userdata)
+static char *log_level_get(admin_handle h)
 {
 	extern enum log_level current_log_level;
-	
-	if (args[1] == NULL) 
-		admin_out(h, "Current log level: %d", current_log_level);
-	else {
-		int x = atoi(args[1]);
-		if (x < 0 || x > 5) 
-			admin_out(h, "Invalid log level %d", x);
-		else { 
-			current_log_level = x;
-			admin_out(h, "Log level changed to %d", x);
-		}
+
+	return g_strdup_printf("%d", current_log_level);
+}
+
+static gboolean log_level_set(admin_handle h, const char *value)
+{
+	extern enum log_level current_log_level;
+
+	int x = atoi(value);
+	if (x < 0 || x > 5) {
+		admin_out(h, "Invalid log level %d", x);
+		return FALSE;
 	}
+
+	current_log_level = x;
+	admin_out(h, "Log level changed to %d", x);
+	return TRUE;
 }
 
 static void cmd_charset(admin_handle h, char **args, void *userdata)
@@ -932,20 +937,61 @@ static void cmd_list_listener(admin_handle h, char **args, void *userdata)
 	}
 }
 
+static struct admin_setting {
+	const char *name;
+	char *(*get) (admin_handle h);
+	gboolean (*set) (admin_handle h, const char *value);
+} settings[] = {
+	{ "log_level", log_level_get, log_level_set },
+};
+
+static void cmd_set(admin_handle h, char **args, void *userdata)
+{
+	int i;
+	char *tmp;
+
+	if (args[1] == NULL) {
+		for (i = 0; settings[i].name != NULL; i++) {
+			tmp = settings[i].get(h);
+			admin_out(h, "%s = %s", settings[i].name, tmp);
+			g_free(tmp);
+		}
+	} else {
+		for (i = 0; settings[i].name; i++) {
+			if (!strcasecmp(settings[i].name, args[1])) {
+				if (args[2] != NULL) {
+					settings[i].set(h, args[2]);
+				} else {
+					tmp = settings[i].get(h);
+					admin_out(h, "%s", tmp);
+					g_free(tmp);
+				}
+				return;
+			}
+		}
+
+		admin_out(h, "Unknown setting `%s'", args[1]);
+	}
+}
+
 const static struct admin_command builtin_commands[] = {
+	/* Provided for backwards compatibility */
 	{ "ADDNETWORK", cmd_add_network },
+	{ "DELNETWORK", cmd_del_network },
+	{ "LISTNETWORKS", cmd_list_networks },
+
+	/* Commands */
+	{ "SET", cmd_set },
+
 	{ "ADDSERVER", cmd_add_server },
 	{ "BACKLOG", cmd_backlog},
 	{ "CONNECT", cmd_connect_network },
-	{ "DELNETWORK", cmd_del_network },
+	{ "DISCONNECT", cmd_disconnect_network },
 	{ "ECHO", cmd_echo },
-	{ "LOG_LEVEL", cmd_log_level },
 	{ "NEXTSERVER", cmd_next_server },
 	{ "CHARSET", cmd_charset },
 	{ "DIE", cmd_die },
-	{ "DISCONNECT", cmd_disconnect_network },
 	{ "NETWORK", cmd_network },
-	{ "LISTNETWORKS", cmd_list_networks },
 	{ "SAVECONFIG", cmd_save_config },
 	{ "DETACH", cmd_detach },
 	{ "HELP", cmd_help },
@@ -1091,4 +1137,3 @@ gboolean stop_admin_socket(struct global *global)
 	unlink(global->config->admin_socket);
 	return TRUE;
 }
-
