@@ -24,6 +24,7 @@
 #include <errno.h>
 #include <ctype.h>
 #include <fcntl.h>
+#include <glib/gstdio.h>
 
 char *list_make_string(GList *list)
 {

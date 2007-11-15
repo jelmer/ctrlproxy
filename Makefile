@@ -251,10 +251,8 @@ testsuite/check: $(check_objs) $(objs) $(LIBIRC)
 
 CTRLPROXY_MODULESDIR=$(shell pwd)/mods
 
-test:: testsuite/check
+check:: testsuite/check
 	@echo Running testsuite
 	@$(VALGRIND) ./testsuite/check
-
-check: test
 
 -include $(dep_files)
