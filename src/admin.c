@@ -184,7 +184,7 @@ static void cmd_del_network (admin_handle h, char **args, void *userdata)
 	del_network_helper(h, args[1]);
 }
 
-static void add_server (admin_handle h, char **args, void *userdata)
+static void cmd_add_server (admin_handle h, char **args, void *userdata)
 {
 	struct network *n;
 	struct tcp_server_config *s;
@@ -412,7 +412,7 @@ static void cmd_list_networks(admin_handle h, char **args, void *userdata)
 	list_networks_helper(h);
 }
 
-static void detach_client(admin_handle h, char **args, void *userdata)
+static void cmd_detach(admin_handle h, char **args, void *userdata)
 {
 	struct client *c = admin_get_client(h);
 
@@ -451,20 +451,20 @@ static void dump_joined_channels(admin_handle h, char **args, void *userdata)
 }
 
 #ifdef DEBUG
-static void do_abort(admin_handle h, char **args, void *userdata)
+static void cmd_abort(admin_handle h, char **args, void *userdata)
 {
 	abort();
 }
 #endif
 
-static void handle_die(admin_handle h, char **args, void *userdata)
+static void cmd_die(admin_handle h, char **args, void *userdata)
 {
 	exit(0);
 }
 
 static GHashTable *markers = NULL;
 
-static void repl_command(admin_handle h, char **args, void *userdata)
+static void cmd_backlog(admin_handle h, char **args, void *userdata)
 {
 	struct linestack_marker *lm;
 	struct network *n;
@@ -516,7 +516,7 @@ static void cmd_log_level(admin_handle h, char **args, void *userdata)
 	}
 }
 
-static void handle_charset(admin_handle h, char **args, void *userdata)
+static void cmd_charset(admin_handle h, char **args, void *userdata)
 {
 	struct client *c;
 
@@ -934,27 +934,27 @@ static void cmd_list_listener(admin_handle h, char **args, void *userdata)
 
 const static struct admin_command builtin_commands[] = {
 	{ "ADDNETWORK", cmd_add_network },
-	{ "ADDSERVER", add_server },
-	{ "BACKLOG", repl_command },
+	{ "ADDSERVER", cmd_add_server },
+	{ "BACKLOG", cmd_backlog},
 	{ "CONNECT", cmd_connect_network },
 	{ "DELNETWORK", cmd_del_network },
 	{ "ECHO", cmd_echo },
 	{ "LOG_LEVEL", cmd_log_level },
 	{ "NEXTSERVER", cmd_next_server },
-	{ "CHARSET", handle_charset },
-	{ "DIE", handle_die },
+	{ "CHARSET", cmd_charset },
+	{ "DIE", cmd_die },
 	{ "DISCONNECT", cmd_disconnect_network },
 	{ "NETWORK", cmd_network },
 	{ "LISTNETWORKS", cmd_list_networks },
 	{ "SAVECONFIG", cmd_save_config },
-	{ "DETACH", detach_client },
+	{ "DETACH", cmd_detach },
 	{ "HELP", cmd_help },
 	{ "DUMPJOINEDCHANNELS", dump_joined_channels },
 	{ "STARTLISTENER", cmd_start_listener },
 	{ "STOPLISTENER", cmd_stop_listener },
 	{ "LISTLISTENER", cmd_list_listener },
 #ifdef DEBUG
-	{ "ABORT", do_abort },
+	{ "ABORT", cmd_abort },
 #endif
 	{ NULL }
 };
