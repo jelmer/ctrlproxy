@@ -100,6 +100,14 @@
 			<para>View or change the CtrlProxy internal log level.</para></description>
 	</ctrlproxy-command>
 
+	<ctrlproxy-command name="set motd-file">
+		<short-description>Change or display the MOTD path</short-description>
+		<syntax>set log_level [&lt;level&gt;]</syntax>
+		<description>
+			<para>View or change the path of the message-of-the-day 
+				clients see when they log on.</para></description>
+	</ctrlproxy-command>
+
 	<ctrlproxy-command name="set">
 		<short-description>Change settings</short-description>
 		<syntax>set [&lt;name&gt; [&lt;value&gt;]]</syntax>

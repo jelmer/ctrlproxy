@@ -937,12 +937,35 @@ static void cmd_list_listener(admin_handle h, char **args, void *userdata)
 	}
 }
 
+static gboolean motd_file_set(admin_handle h, const char *name)
+{
+	struct global *g = admin_get_global(h);
+
+	if (!g_file_test(name, G_FILE_TEST_EXISTS)) {
+		admin_out(h, "%s: file does not exist", name);
+		return FALSE;
+	}
+
+	g_free(g->config->motd_file);
+	g->config->motd_file = g_strdup(name);
+
+	return TRUE;
+}
+
+static char *motd_file_get(admin_handle h)
+{
+	struct global *g = admin_get_global(h);
+
+	return g_strdup(g->config->motd_file);
+}
+
 static struct admin_setting {
 	const char *name;
 	char *(*get) (admin_handle h);
 	gboolean (*set) (admin_handle h, const char *value);
 } settings[] = {
 	{ "log_level", log_level_get, log_level_set },
+	{ "motd-file", motd_file_get, motd_file_set },
 };
 
 static void cmd_set(admin_handle h, char **args, void *userdata)
