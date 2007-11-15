@@ -14,12 +14,19 @@ connection open to an IRC server and using that connection from wherever
 you would like to use IRC, without the need to disconnect and connect to IRC 
 continuously while missing text. 
 
+Information for users upgrading from 2.6 or 2.7-preXX:
+------------------------------------------------------
+
+The configuration is now maintained as a set of flat-text files in 
+~/.ctrlproxy/. Existing configuration files can be upgraded by 
+running the experimental upgrade utility available in the directory 'scripts' 
+in the source tarball.
+
 Features
 --------
  * Connect to one server with many clients under one nick transparently
  * Connect to multiple servers using only one process
  * CTCP support when no client is attached
- * irssi-style logging support
  * Transparent detaching and attaching of clients
  * Password support
  * Replication support
@@ -33,6 +40,8 @@ Features
  * IPv6 Support
  * Automatic NickServ support
  * Low memory, CPU and bandwidth requirements
+ * Management of running instances using a command-line tool or 
+   over IRC.
 
 Requirements
 ------------
@@ -44,13 +53,17 @@ Building
 
 ctrlproxy can be installed by running:
 
-$ ./configure
-$ make
-$ make install
+::
 
+	$ ./configure
+	$ make
+	$ make install
+	
 If you have a bzr checkout, run :
 
-$ ./autogen.sh
+::
+
+	$ ./autogen.sh
 
 before you run ./configure, make and make install
 
