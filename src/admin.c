@@ -31,6 +31,10 @@ help_t *help;
 GList *admin_commands = NULL;
 guint longest_command = 0;
 
+static void add_network_helper(admin_handle h, const char *name);
+static void del_network_helper(admin_handle h, const char *name);
+static void list_networks_helper(admin_handle h);
+
 /**
  * Determine the hostmask for the admin user.
  *
@@ -160,47 +164,24 @@ void admin_out(admin_handle h, const char *fmt, ...)
  * @param args String arguments, argv-style.
  * @param userdata Optional user data, always NULL.
  */
-static void add_network (admin_handle h, char **args, void *userdata)
+static void cmd_add_network (admin_handle h, char **args, void *userdata)
 {
-	struct network_config *nc;
-
 	if (args[1] == NULL) {
 		admin_out(h, "No name specified");
 		return;
 	}
 
-	if (find_network(admin_get_global(h), args[1]) != NULL) {
-		admin_out(h, "Network with name `%s' already exists", args[1]);
-		return;
-	}
-
-	nc = network_config_init(admin_get_global(h)->config);
-	g_free(nc->name); nc->name = g_strdup(args[1]);
-	load_network(admin_get_global(h), nc);
-
-	admin_out(h, "Network `%s' added. Use ADDSERVER to add a server to this network.", args[1]);
+	add_network_helper(h, args[1]);
 }
 
-static void del_network (admin_handle h, char **args, void *userdata)
+static void cmd_del_network (admin_handle h, char **args, void *userdata)
 {
-	struct network *n;
-
 	if (args[1] == NULL) {
 		admin_out(h, "Not enough parameters");
 		return;
 	}
 
-	n = find_network(admin_get_global(h), args[1]);
-	if (n == NULL) {
-		admin_out(h, "No such network `%s'", args[1]);
-		return;
-	}
-
-	disconnect_network(n);
-
-	unload_network(n);
-
-	admin_out(h, "Network `%s' deleted", args[1]);
+	del_network_helper(h, args[1]);
 }
 
 static void add_server (admin_handle h, char **args, void *userdata)
@@ -243,7 +224,7 @@ static void add_server (admin_handle h, char **args, void *userdata)
 	admin_out(h, "Server added to `%s'", args[1]);
 }
 
-static void com_connect_network (admin_handle h, char **args, void *userdata)
+static void cmd_connect_network (admin_handle h, char **args, void *userdata)
 {
 	struct network *s;
 	if (!args[1]) {
@@ -278,7 +259,7 @@ static void com_connect_network (admin_handle h, char **args, void *userdata)
 	}
 }
 
-static void com_disconnect_network (admin_handle h, char **args, void *userdata)
+static void cmd_disconnect_network (admin_handle h, char **args, void *userdata)
 {
 	struct network *n;
 
@@ -304,7 +285,7 @@ static void com_disconnect_network (admin_handle h, char **args, void *userdata)
 	}
 }
 
-static void com_next_server (admin_handle h, char **args, void *userdata) 
+static void cmd_next_server (admin_handle h, char **args, void *userdata) 
 {
 	struct network *n;
 	const char *name;
@@ -327,7 +308,7 @@ static void com_next_server (admin_handle h, char **args, void *userdata)
 	}
 }
 
-static void com_save_config (admin_handle h, char **args, void *userdata)
+static void cmd_save_config (admin_handle h, char **args, void *userdata)
 { 
 	const char *adm_dir;
 	global_update_config(admin_get_global(h));
@@ -336,9 +317,38 @@ static void com_save_config (admin_handle h, char **args, void *userdata)
 	admin_out(h, "Configuration saved in %s", adm_dir);
 }
 
+static void add_network_helper(admin_handle h, const char *name)
+{
+	struct network_config *nc;
 
+	if (find_network(admin_get_global(h), name) != NULL) {
+		admin_out(h, "Network with name `%s' already exists", name);
+		return;
+	}
 
-static void list_networks(admin_handle h, char **args, void *userdata)
+	nc = network_config_init(admin_get_global(h)->config);
+	g_free(nc->name); nc->name = g_strdup(name);
+	load_network(admin_get_global(h), nc);
+
+	admin_out(h, "Network `%s' added. Use ADDSERVER to add a server to this network.", name);
+}
+
+static void del_network_helper(admin_handle h, const char *name)
+{
+	struct network *n = find_network(admin_get_global(h), name);
+	if (n == NULL) {
+		admin_out(h, "No such network `%s'", name);
+		return;
+	}
+
+	disconnect_network(n);
+
+	unload_network(n);
+
+	admin_out(h, "Network `%s' deleted", name);
+}
+
+static void list_networks_helper(admin_handle h)
 {
 	GList *gl;
 	for (gl = admin_get_global(h)->networks; gl; gl = gl->next) {
@@ -361,6 +371,45 @@ static void list_networks(admin_handle h, char **args, void *userdata)
 			break;
 		}
 	}
+}
+
+/* NETWORK LIST */
+/* NETWORK ADD OFTC */
+/* NETWORK DEL OFTC */
+static void cmd_network(admin_handle h, char **args, void *userdata)
+{
+	if (args[1] == NULL)
+		goto usage;
+
+	if (!strcasecmp(args[1], "list")) {
+		list_networks_helper(h);
+	} else if (!strcasecmp(args[1], "add")) {
+		if (args[2] == NULL) {
+			admin_out(h, "Usage: network add <name>");
+			return;
+		}
+		add_network_helper(h, args[2]);
+	} else if (!strcasecmp(args[1], "del") || 
+			   !strcasecmp(args[1], "delete") ||
+			   !strcasecmp(args[1], "remove")) {
+		if (args[2] == NULL) {
+			admin_out(h, "Usage: network del <name>");
+			return;
+		}
+		del_network_helper(h, args[2]);
+		return;
+	} else {
+		goto usage;
+	}
+
+	return;
+usage:
+	admin_out(h, "Usage: network [list|add <name>|del <name>]");
+}
+
+static void cmd_list_networks(admin_handle h, char **args, void *userdata)
+{
+	list_networks_helper(h);
 }
 
 static void detach_client(admin_handle h, char **args, void *userdata)
@@ -884,19 +933,20 @@ static void cmd_list_listener(admin_handle h, char **args, void *userdata)
 }
 
 const static struct admin_command builtin_commands[] = {
-	{ "ADDNETWORK", add_network },
+	{ "ADDNETWORK", cmd_add_network },
 	{ "ADDSERVER", add_server },
 	{ "BACKLOG", repl_command },
-	{ "CONNECT", com_connect_network },
-	{ "DELNETWORK", del_network },
+	{ "CONNECT", cmd_connect_network },
+	{ "DELNETWORK", cmd_del_network },
 	{ "ECHO", cmd_echo },
 	{ "LOG_LEVEL", cmd_log_level },
-	{ "NEXTSERVER", com_next_server },
+	{ "NEXTSERVER", cmd_next_server },
 	{ "CHARSET", handle_charset },
 	{ "DIE", handle_die },
-	{ "DISCONNECT", com_disconnect_network },
-	{ "LISTNETWORKS", list_networks },
-	{ "SAVECONFIG", com_save_config },
+	{ "DISCONNECT", cmd_disconnect_network },
+	{ "NETWORK", cmd_network },
+	{ "LISTNETWORKS", cmd_list_networks },
+	{ "SAVECONFIG", cmd_save_config },
 	{ "DETACH", detach_client },
 	{ "HELP", cmd_help },
 	{ "DUMPJOINEDCHANNELS", dump_joined_channels },

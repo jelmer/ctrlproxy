@@ -1,5 +1,5 @@
 include ../Makefile.settings
-DOCS = ctrlproxy.1 ctrlproxy_config.5 user-guide.html user-guide/index.html ctrlproxy.1.html ctrlproxy_config.5.html help.txt
+DOCS = ctrlproxy.1 ctrlproxy-admin.1 ctrlproxy_config.5 user-guide.html user-guide/index.html ctrlproxy.1.html ctrlproxy-admin.1.html ctrlproxy_config.5.html help.txt
 
 .PHONY: all manpages clean distclean
 
@@ -7,7 +7,7 @@ all: $(DOCS)
 
 dist: all
 
-manpages: ctrlproxy.1 ctrlproxy_config.5 
+manpages: ctrlproxy.1 ctrlproxy_config.5 ctrlproxy-admin.1
 
 %.tmp.xml: %.xml
 	$(XSLTPROC) --xinclude docbook.xsl $< > $@
