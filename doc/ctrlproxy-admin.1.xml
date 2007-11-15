@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+<refentry id="ctrlproxy.1">
+	
+<refmeta>
+	<refentrytitle>ctrlproxy-admin</refentrytitle>
+	<manvolnum>1</manvolnum>
+</refmeta>
+
+<refnamediv>
+	<refname>ctrlproxy-admin</refname>
+	<refpurpose>command-line interface for managing ctrlproxy</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+	<cmdsynopsis>
+		<command>ctrlproxy</command>
+		<arg choice="opt">-c config dir</arg>
+	</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsect1>
+	<title>DESCRIPTION</title>
+
+<para>
+	<command>ctrlproxy-admin</command> is a simple command-line 
+	tool for managing a ctrlproxy instance. It accepts the 
+	same syntax as the "admin" network in ctrlproxy.
+</para>
+
+</refsect1>
+
+<refsect1>
+	<title>OPTIONS</title>
+	
+<para><command>ctrlproxy-admin</command> recognizes the following command-line options</para>
+
+<variablelist>
+	<varlistentry><term>-c, --config-dir=DIR</term>
+		<listitem><para>Read configuration files from the specified directory <option>DIR</option> instead of from <filename>.ctrlproxy</filename> in the users' homedirectory.</para></listitem>
+	</varlistentry>
+
+	<varlistentry><term>-?, --help</term>
+	<listitem><para>Show help message with short argument information</para></listitem>
+	</varlistentry>
+
+	<varlistentry><term>--usage</term>
+	<listitem><para>Display brief usage message</para></listitem>
+	</varlistentry>
+
+</variablelist>
+
+</refsect1>
+
+<refsect1>
+	<title>SEE ALSO</title>
+
+<para>irssi(1), ctrlproxy(1), ctrlproxy_config(5), http://ctrlproxy.vernstok.nl/, config.example</para>
+
+</refsect1>
+
+<refsect1>
+	<title>BUGS</title>
+
+<para>
+Probably, but none are known at the moment. Please send 
+any you find to jelmer@nl.linux.org
+</para>
+</refsect1>
+
+<refsect1>
+	<title>LICENSE</title>
+
+<para>
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 3 of the License, or
+(at your option) any later version.
+</para>
+
+<para> 
+This program is distributed in the hope that it will be useful, but
+\fBWITHOUT ANY WARRANTY\fR; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
+General Public License for more details.
+</para>
+
+<para>
+You should have received a copy of the GNU General Public License 
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple PLace, Suite 330, Boston, MA  02111-1307  USA
+</para>
+
+</refsect1>
+
+<refsect1>
+	<title>AUTHORS</title>
+<para>
+<ulink url="mailto:jelmer@nl.linux.org">Jelmer Vernooij</ulink> (main developer)
+</para>
+
+<para>See the file AUTHORS for a full list of contributors.</para>
+</refsect1>
+</refentry>
