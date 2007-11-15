@@ -16,6 +16,15 @@ CFLAGS += $(GNUTLS_CFLAGS)
 CFLAGS+=-DHAVE_CONFIG_H -DSHAREDIR=\"$(cdatadir)\" -DDEFAULT_CONFIG_DIR=\"$(DEFAULT_CONFIG_DIR)\" -DHELPFILE=\"$(HELPFILE)\"
 CFLAGS+=-ansi -Wall -DMODULESDIR=\"$(modulesdir)\" -DSTRICT_MEMORY_ALLOCS=
 
+LIBIRC_STATIC = libirc.a
+LIBIRC = $(LIBIRC_STATIC)
+
+LIBIRC_SHARED = libirc.$(SHLIBEXT).$(PACKAGE_VERSION)
+LIBIRC_SOVERSION = 1.0
+LIBIRC_SONAME = libirc.$(SHLIBEXT).$(LIBIRC_SOVERSION)
+
+
+
 .PHONY: all clean distclean install install-bin install-dirs install-doc install-data install-mods install-pkgconfig
 
 all: $(BINS) $(MODS_SHARED_FILES) 
@@ -27,12 +36,11 @@ lib_objs = \
 	   lib/state.o \
 	   lib/client.o \
 	   lib/line.o \
-	   src/isupport.o \
-	   src/network.o
+	   lib/isupport.o \
+	   lib/network.o
 
 objs = src/posix.o \
 	   src/cache.o \
-	   src/line.o \
 	   src/util.o \
 	   src/hooks.o \
 	   src/linestack.o \
@@ -60,9 +68,9 @@ lib_headers = \
 		  lib/state.h \
 		  lib/client.h \
 		  lib/line.h \
-		  src/isupport.h \
-		  src/irc.h \
-		  src/network.h
+		  lib/isupport.h \
+		  lib/irc.h \
+		  lib/network.h
 
 headers = src/admin.h \
 		  src/ctcp.h \
@@ -76,13 +84,13 @@ headers = src/admin.h \
 		  src/log.h
 dep_files = $(patsubst %.o, %.d, $(objs)) $(patsubst %.o, %.d, $(wildcard mods/*.o))
 
-linestack-cmd$(EXEEXT): src/linestack-cmd.o $(objs)
+linestack-cmd$(EXEEXT): src/linestack-cmd.o $(objs) $(LIBIRC)
 	@echo Linking $@
 	@$(LD) $(LIBS) -lreadline -rdynamic -o $@ $^
 
 ctrlproxy$(EXEEXT): src/main.o $(objs) $(LIBIRC)
 	@echo Linking $@
-	@$(LD) $(LDFLAGS) -rdynamic -o $@ $^ $(LIBS) $(LIBIRC)
+	@$(LD) $(LDFLAGS) -rdynamic -o $@ $^ $(LIBS)
 
 ctrlproxy-admin$(EXEEXT): src/admin-cmd.o
 	@echo Linking $@
@@ -90,7 +98,7 @@ ctrlproxy-admin$(EXEEXT): src/admin-cmd.o
 
 mods/%.o: mods/%.c
 	@echo Compiling for shared library $<
-	@$(CC) -fPIC -I. -Isrc $(CFLAGS) $(GCOV_CFLAGS) -c $< -o $@
+	@$(CC) -fPIC -I. -Ilib -Isrc $(CFLAGS) $(GCOV_CFLAGS) -c $< -o $@
 
 %.o: %.c
 	@echo Compiling $<
@@ -181,12 +189,11 @@ mods/lib%.$(SHLIBEXT): mods/%.o
 	@echo Linking $@
 	@$(LD) $(LDFLAGS) -fPIC -shared -o $@ $^
 
-LIBIRC = libirc.$(SHLIBEXT).$(PACKAGE_VERSION)
-LIBIRC_SOVERSION = 1.0
-LIBIRC_SONAME = libirc.$(SHLIBEXT).$(LIBIRC_SOVERSION)
+$(LIBIRC_STATIC): $(lib_objs)
+	ar -rcs $@ $^
 
-$(LIBIRC): $(lib_objs)
-	$(LD) $(LDFLAGS) -Wl,-soname,$(LIBIRC_SONAME) -fPIC -shared -o $@ $^
+$(LIBIRC_SHARED): $(lib_objs)
+	$(LD) -shared $(LDFLAGS) -Wl,-soname,$(LIBIRC_SONAME) -o $@ $^
 
 clean::
 	@echo Removing .so files
@@ -238,7 +245,7 @@ check_objs = testsuite/test-cmp.o testsuite/test-user.o \
 			 testsuite/test-networkinfo.o testsuite/test-ctcp.o \
 			 testsuite/test-help.o testsuite/test-nickserv.o
 
-testsuite/check: $(check_objs) $(objs)
+testsuite/check: $(check_objs) $(objs) $(LIBIRC)
 	@echo Linking $@
 	@$(CC) $(LIBS) -o $@ $^ $(CHECK_LIBS)
 
