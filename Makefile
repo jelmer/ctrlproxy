@@ -16,6 +16,15 @@ CFLAGS += $(GNUTLS_CFLAGS)
 CFLAGS+=-DHAVE_CONFIG_H -DSHAREDIR=\"$(cdatadir)\" -DDEFAULT_CONFIG_DIR=\"$(DEFAULT_CONFIG_DIR)\" -DHELPFILE=\"$(HELPFILE)\"
 CFLAGS+=-ansi -Wall -DMODULESDIR=\"$(modulesdir)\" -DSTRICT_MEMORY_ALLOCS=
 
+LIBIRC_STATIC = libirc.a
+LIBIRC = $(LIBIRC_STATIC)
+
+LIBIRC_SHARED = libirc.$(SHLIBEXT).$(PACKAGE_VERSION)
+LIBIRC_SOVERSION = 1.0
+LIBIRC_SONAME = libirc.$(SHLIBEXT).$(LIBIRC_SOVERSION)
+
+
+
 .PHONY: all clean distclean install install-bin install-dirs install-doc install-data install-mods install-pkgconfig
 
 all: $(BINS) $(MODS_SHARED_FILES) 
@@ -23,18 +32,20 @@ all: $(BINS) $(MODS_SHARED_FILES)
 doxygen:
 	doxygen
 
-objs = src/network.o \
-	   src/posix.o \
-	   src/client.o \
+lib_objs = \
+	   lib/state.o \
+	   lib/client.o \
+	   lib/line.o \
+	   lib/isupport.o \
+	   lib/network.o
+
+objs = src/posix.o \
 	   src/cache.o \
-	   src/line.o \
-	   src/state.o \
 	   src/util.o \
 	   src/hooks.o \
 	   src/linestack.o \
 	   src/plugins.o \
 	   src/settings.o \
-	   src/isupport.o \
 	   src/log.o \
 	   src/redirect.o \
 	   src/gen_config.o \
@@ -53,29 +64,31 @@ objs = src/network.o \
 	   src/log_custom.o \
 	   $(SSL_OBJS)
 
+lib_headers = \
+		  lib/state.h \
+		  lib/client.h \
+		  lib/line.h \
+		  lib/isupport.h \
+		  lib/irc.h \
+		  lib/network.h
+
 headers = src/admin.h \
-		  src/client.h \
 		  src/ctcp.h \
 		  src/ctrlproxy.h \
 		  src/hooks.h \
-		  src/irc.h \
-		  src/line.h \
 		  src/linestack.h \
-		  src/network.h \
 		  src/log_support.h \
 		  src/repl.h \
 		  src/settings.h \
 		  src/ssl.h \
-		  src/state.h \
-		  src/isupport.h \
 		  src/log.h
 dep_files = $(patsubst %.o, %.d, $(objs)) $(patsubst %.o, %.d, $(wildcard mods/*.o))
 
-linestack-cmd$(EXEEXT): src/linestack-cmd.o $(objs)
+linestack-cmd$(EXEEXT): src/linestack-cmd.o $(objs) $(LIBIRC)
 	@echo Linking $@
 	@$(LD) $(LIBS) -lreadline -rdynamic -o $@ $^
 
-ctrlproxy$(EXEEXT): src/main.o $(objs)
+ctrlproxy$(EXEEXT): src/main.o $(objs) $(LIBIRC)
 	@echo Linking $@
 	@$(LD) $(LDFLAGS) -rdynamic -o $@ $^ $(LIBS)
 
@@ -85,14 +98,14 @@ ctrlproxy-admin$(EXEEXT): src/admin-cmd.o
 
 mods/%.o: mods/%.c
 	@echo Compiling for shared library $<
-	@$(CC) -fPIC -I. -Isrc $(CFLAGS) $(GCOV_CFLAGS) -c $< -o $@
+	@$(CC) -fPIC -I. -Ilib -Isrc $(CFLAGS) $(GCOV_CFLAGS) -c $< -o $@
 
 %.o: %.c
 	@echo Compiling $<
-	@$(CC) -I. -Isrc $(CFLAGS) $(GCOV_CFLAGS) -c $< -o $@
+	@$(CC) -I. -Ilib -Isrc $(CFLAGS) $(GCOV_CFLAGS) -c $< -o $@
 
 %.d: %.c
-	@$(CC) -I. -Isrc -M -MT $(<:.c=.o) $(CFLAGS) $< -o $@
+	@$(CC) -I. -Ilib -Isrc -M -MT $(<:.c=.o) $(CFLAGS) $< -o $@
 
 ifeq ($(BZR_CHECKOUT),yes)
 configure: autogen.sh configure.ac acinclude.m4 $(wildcard mods/*/*.m4)
@@ -176,6 +189,12 @@ mods/lib%.$(SHLIBEXT): mods/%.o
 	@echo Linking $@
 	@$(LD) $(LDFLAGS) -fPIC -shared -o $@ $^
 
+$(LIBIRC_STATIC): $(lib_objs)
+	ar -rcs $@ $^
+
+$(LIBIRC_SHARED): $(lib_objs)
+	$(LD) -shared $(LDFLAGS) -Wl,-soname,$(LIBIRC_SONAME) -o $@ $^
+
 clean::
 	@echo Removing .so files
 	@rm -f $(MODS_SHARED_FILES)
@@ -226,7 +245,7 @@ check_objs = testsuite/test-cmp.o testsuite/test-user.o \
 			 testsuite/test-networkinfo.o testsuite/test-ctcp.o \
 			 testsuite/test-help.o testsuite/test-nickserv.o
 
-testsuite/check: $(check_objs) $(objs)
+testsuite/check: $(check_objs) $(objs) $(LIBIRC)
 	@echo Linking $@
 	@$(CC) $(LIBS) -o $@ $^ $(CHECK_LIBS)
 
