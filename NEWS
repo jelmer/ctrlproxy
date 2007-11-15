@@ -11,7 +11,14 @@ Ctrlproxy 3.0.4 UNRELEASED
 
     * Announce number of clients/channels during client login.
 
+	* Add "set" command in the administration interface, including 
+	  initial settings "log_level", "motd-file" and "report-time".
+
   BUG FIXES
+
+    * Don't abort when sending colon to listener. (#167)
+
+    * Handle 263 response correctly.
 
     * Properly send non-data lines when using repl_lastdisconnect. (#146)
 
@@ -25,6 +32,8 @@ Ctrlproxy 3.0.4 UNRELEASED
       (#11)
 
     * Integrate listeners into the core.
+
+    * Reconcile log_custom and log_irssi.
 
     * Integrate socks support into listener code. Socks connections 
       can now be accepted at the same port as other connections.

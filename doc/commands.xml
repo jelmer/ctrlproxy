@@ -5,9 +5,9 @@
 
 	<command-list/>
 
-	<ctrlproxy-command name="addnetwork">
+	<ctrlproxy-command name="network add">
 		<short-description>Adds a new network</short-description>
-		<syntax>ADDNETWORK &lt;name&gt;</syntax>
+		<syntax>network add &lt;name&gt;</syntax>
 
 		<description><para>Add a new network with the specified name.</para>
 		</description>
@@ -53,9 +53,9 @@
 		</description>
 	</ctrlproxy-command>
 
-	<ctrlproxy-command name="delnetwork">
+	<ctrlproxy-command name="network del">
 		<short-description>Delete a network</short-description>
-		<syntax>DELNETWORK &lt;network&gt;</syntax>
+		<syntax>network del &lt;network&gt;</syntax>
 		<description><para>Remove the specified network. The network may not be connected.</para></description>
 	</ctrlproxy-command>
 
@@ -86,19 +86,43 @@
 		<description><para>Repeats specified text. Useful mainly for debugging. </para></description>
 	</ctrlproxy-command>
 
-	<ctrlproxy-command name="listnetworks">
+	<ctrlproxy-command name="network list">
 		<short-description>Print list of networks</short-description>
-		<syntax>LISTNETWORKS</syntax>
+		<syntax>network list</syntax>
 		<description><para>Prints out a list of all networks 
 				ctrlproxy is connected to at the moment.</para></description>
 	</ctrlproxy-command>
 
-	<ctrlproxy-command name="log_level">
+	<ctrlproxy-command name="set log_level">
 		<short-description>Change or display log level</short-description>
-		<syntax>LOG_LEVEL [&lt;level&gt;]</syntax>
+		<syntax>set log_level [&lt;level&gt;]</syntax>
 		<description>
-			<para>Change log level if specified. If not specified 
-					will print the current log level.</para></description>
+			<para>View or change the CtrlProxy internal log level.</para></description>
+	</ctrlproxy-command>
+
+	<ctrlproxy-command name="set report-time">
+		<short-description>Change whether time should be printed when displaying backlog</short-description>
+		<syntax>set report-time [&lt;true|false&gt;]</syntax>
+		<description>
+			<para>Whether or not time should be displayed when sending backlog to the user.</para></description>
+	</ctrlproxy-command>
+
+	<ctrlproxy-command name="set motd-file">
+		<short-description>Change or display the MOTD path</short-description>
+		<syntax>set log_level [&lt;level&gt;]</syntax>
+		<description>
+			<para>View or change the path of the message-of-the-day 
+				clients see when they log on.</para></description>
+	</ctrlproxy-command>
+
+	<ctrlproxy-command name="set">
+		<short-description>Change settings</short-description>
+		<syntax>set [&lt;name&gt; [&lt;value&gt;]]</syntax>
+		<description>
+			<para>List, view or change internal settings. </para>
+			<para>Specifying no argument will list all 
+				available settings. </para>
+		</description>
 	</ctrlproxy-command>
 
 	<ctrlproxy-command name="nextserver">

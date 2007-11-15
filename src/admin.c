@@ -31,11 +31,27 @@ help_t *help;
 GList *admin_commands = NULL;
 guint longest_command = 0;
 
+static void add_network_helper(admin_handle h, const char *name);
+static void del_network_helper(admin_handle h, const char *name);
+static void list_networks_helper(admin_handle h);
+
+/**
+ * Determine the hostmask for the admin user.
+ *
+ * @param n Network for which to generate the hostmask.
+ * @return Host mask, should be freed by the caller.
+ */
 static char *admin_hostmask(struct network *n)
 {
 	return g_strdup_printf("ctrlproxy!ctrlproxy@%s", n->info.name);
 }
 
+/**
+ * Handle private message sent to the admin user.
+ *
+ * @param h Admin context handle.
+ * @param data Text sent.
+ */
 static void privmsg_admin_out(admin_handle h, const char *data)
 {
 	struct client *c = h->client;
@@ -50,6 +66,12 @@ static void privmsg_admin_out(admin_handle h, const char *data)
 	g_free(hostmask);
 }
 
+/**
+ * Sent data to the admin network channel.
+ *
+ * @param h Admin context handle
+ * @param data Text to send.
+ */
 static void network_admin_out(admin_handle h, const char *data)
 {
 	struct client *c = h->client;
@@ -62,6 +84,12 @@ static void network_admin_out(admin_handle h, const char *data)
 	g_free(hostmask);
 }
 
+/**
+ * Handles the 'help' command.
+ * @param h Admin context handle
+ * @param args Arguments
+ * @param userdata User context data (ignored)
+ */
 static void cmd_help(admin_handle h, char **args, void *userdata)
 {
 	const char *s;
@@ -85,6 +113,11 @@ static void cmd_help(admin_handle h, char **args, void *userdata)
 	}
 }
 
+/**
+ * Return the client handle associated with an admin context.
+ * @param h Admin context handle
+ * @return Client, or NULL if no client is associated.
+ */
 struct client *admin_get_client(admin_handle h)
 {
 	return h->client;
@@ -95,11 +128,22 @@ struct global *admin_get_global(admin_handle h)
 	return h->global;
 }
 
+/**
+ * Return the network handle associated with an admin context.
+ * @param Admin context handle
+ * @return Network, or NULL if no network is associated.
+ */
 struct network *admin_get_network(admin_handle h)
 {
 	return h->network;
 }
 
+/**
+ * Send data to the user from the admin user.
+ * @param h Admin context handle
+ * @param fmt Format, printf-style
+ * @param ... Format arguments
+ */
 void admin_out(admin_handle h, const char *fmt, ...)
 {
 	va_list ap;
@@ -113,50 +157,34 @@ void admin_out(admin_handle h, const char *fmt, ...)
 	g_free(msg);
 }
 
-static void add_network (admin_handle h, char **args, void *userdata)
+/**
+ * Handles the 'ADDNETWORK' command.
+ *
+ * @param h Admin context handle.
+ * @param args String arguments, argv-style.
+ * @param userdata Optional user data, always NULL.
+ */
+static void cmd_add_network (admin_handle h, char **args, void *userdata)
 {
-	struct network_config *nc;
-
 	if (args[1] == NULL) {
 		admin_out(h, "No name specified");
 		return;
 	}
 
-	if (find_network(admin_get_global(h), args[1]) != NULL) {
-		admin_out(h, "Network with name `%s' already exists", args[1]);
-		return;
-	}
-
-	nc = network_config_init(admin_get_global(h)->config);
-	g_free(nc->name); nc->name = g_strdup(args[1]);
-	load_network(admin_get_global(h), nc);
-
-	admin_out(h, "Network `%s' added. Use ADDSERVER to add a server to this network.", args[1]);
+	add_network_helper(h, args[1]);
 }
 
-static void del_network (admin_handle h, char **args, void *userdata)
+static void cmd_del_network (admin_handle h, char **args, void *userdata)
 {
-	struct network *n;
-
 	if (args[1] == NULL) {
 		admin_out(h, "Not enough parameters");
 		return;
 	}
 
-	n = find_network(admin_get_global(h), args[1]);
-	if (n == NULL) {
-		admin_out(h, "No such network `%s'", args[1]);
-		return;
-	}
-
-	disconnect_network(n);
-
-	unload_network(n);
-
-	admin_out(h, "Network `%s' deleted", args[1]);
+	del_network_helper(h, args[1]);
 }
 
-static void add_server (admin_handle h, char **args, void *userdata)
+static void cmd_add_server (admin_handle h, char **args, void *userdata)
 {
 	struct network *n;
 	struct tcp_server_config *s;
@@ -196,7 +224,7 @@ static void add_server (admin_handle h, char **args, void *userdata)
 	admin_out(h, "Server added to `%s'", args[1]);
 }
 
-static void com_connect_network (admin_handle h, char **args, void *userdata)
+static void cmd_connect_network (admin_handle h, char **args, void *userdata)
 {
 	struct network *s;
 	if (!args[1]) {
@@ -231,7 +259,7 @@ static void com_connect_network (admin_handle h, char **args, void *userdata)
 	}
 }
 
-static void com_disconnect_network (admin_handle h, char **args, void *userdata)
+static void cmd_disconnect_network (admin_handle h, char **args, void *userdata)
 {
 	struct network *n;
 
@@ -257,7 +285,7 @@ static void com_disconnect_network (admin_handle h, char **args, void *userdata)
 	}
 }
 
-static void com_next_server (admin_handle h, char **args, void *userdata) 
+static void cmd_next_server (admin_handle h, char **args, void *userdata) 
 {
 	struct network *n;
 	const char *name;
@@ -280,7 +308,7 @@ static void com_next_server (admin_handle h, char **args, void *userdata)
 	}
 }
 
-static void com_save_config (admin_handle h, char **args, void *userdata)
+static void cmd_save_config (admin_handle h, char **args, void *userdata)
 { 
 	const char *adm_dir;
 	global_update_config(admin_get_global(h));
@@ -289,9 +317,38 @@ static void com_save_config (admin_handle h, char **args, void *userdata)
 	admin_out(h, "Configuration saved in %s", adm_dir);
 }
 
+static void add_network_helper(admin_handle h, const char *name)
+{
+	struct network_config *nc;
 
+	if (find_network(admin_get_global(h), name) != NULL) {
+		admin_out(h, "Network with name `%s' already exists", name);
+		return;
+	}
 
-static void list_networks(admin_handle h, char **args, void *userdata)
+	nc = network_config_init(admin_get_global(h)->config);
+	g_free(nc->name); nc->name = g_strdup(name);
+	load_network(admin_get_global(h), nc);
+
+	admin_out(h, "Network `%s' added. Use ADDSERVER to add a server to this network.", name);
+}
+
+static void del_network_helper(admin_handle h, const char *name)
+{
+	struct network *n = find_network(admin_get_global(h), name);
+	if (n == NULL) {
+		admin_out(h, "No such network `%s'", name);
+		return;
+	}
+
+	disconnect_network(n);
+
+	unload_network(n);
+
+	admin_out(h, "Network `%s' deleted", name);
+}
+
+static void list_networks_helper(admin_handle h)
 {
 	GList *gl;
 	for (gl = admin_get_global(h)->networks; gl; gl = gl->next) {
@@ -316,7 +373,46 @@ static void list_networks(admin_handle h, char **args, void *userdata)
 	}
 }
 
-static void detach_client(admin_handle h, char **args, void *userdata)
+/* NETWORK LIST */
+/* NETWORK ADD OFTC */
+/* NETWORK DEL OFTC */
+static void cmd_network(admin_handle h, char **args, void *userdata)
+{
+	if (args[1] == NULL)
+		goto usage;
+
+	if (!strcasecmp(args[1], "list")) {
+		list_networks_helper(h);
+	} else if (!strcasecmp(args[1], "add")) {
+		if (args[2] == NULL) {
+			admin_out(h, "Usage: network add <name>");
+			return;
+		}
+		add_network_helper(h, args[2]);
+	} else if (!strcasecmp(args[1], "del") || 
+			   !strcasecmp(args[1], "delete") ||
+			   !strcasecmp(args[1], "remove")) {
+		if (args[2] == NULL) {
+			admin_out(h, "Usage: network del <name>");
+			return;
+		}
+		del_network_helper(h, args[2]);
+		return;
+	} else {
+		goto usage;
+	}
+
+	return;
+usage:
+	admin_out(h, "Usage: network [list|add <name>|del <name>]");
+}
+
+static void cmd_list_networks(admin_handle h, char **args, void *userdata)
+{
+	list_networks_helper(h);
+}
+
+static void cmd_detach(admin_handle h, char **args, void *userdata)
 {
 	struct client *c = admin_get_client(h);
 
@@ -355,20 +451,20 @@ static void dump_joined_channels(admin_handle h, char **args, void *userdata)
 }
 
 #ifdef DEBUG
-static void do_abort(admin_handle h, char **args, void *userdata)
+static void cmd_abort(admin_handle h, char **args, void *userdata)
 {
 	abort();
 }
 #endif
 
-static void handle_die(admin_handle h, char **args, void *userdata)
+static void cmd_die(admin_handle h, char **args, void *userdata)
 {
 	exit(0);
 }
 
 static GHashTable *markers = NULL;
 
-static void repl_command(admin_handle h, char **args, void *userdata)
+static void cmd_backlog(admin_handle h, char **args, void *userdata)
 {
 	struct linestack_marker *lm;
 	struct network *n;
@@ -403,24 +499,29 @@ static void repl_command(admin_handle h, char **args, void *userdata)
 	g_hash_table_replace(markers, n, linestack_get_marker(n->linestack));
 }
 
-static void cmd_log_level(admin_handle h, char **args, void *userdata)
+static char *log_level_get(admin_handle h)
 {
 	extern enum log_level current_log_level;
-	
-	if (args[1] == NULL) 
-		admin_out(h, "Current log level: %d", current_log_level);
-	else {
-		int x = atoi(args[1]);
-		if (x < 0 || x > 5) 
-			admin_out(h, "Invalid log level %d", x);
-		else { 
-			current_log_level = x;
-			admin_out(h, "Log level changed to %d", x);
-		}
-	}
+
+	return g_strdup_printf("%d", current_log_level);
 }
 
-static void handle_charset(admin_handle h, char **args, void *userdata)
+static gboolean log_level_set(admin_handle h, const char *value)
+{
+	extern enum log_level current_log_level;
+
+	int x = atoi(value);
+	if (x < 0 || x > 5) {
+		admin_out(h, "Invalid log level %d", x);
+		return FALSE;
+	}
+
+	current_log_level = x;
+	admin_out(h, "Log level changed to %d", x);
+	return TRUE;
+}
+
+static void cmd_charset(admin_handle h, char **args, void *userdata)
 {
 	struct client *c;
 
@@ -836,28 +937,123 @@ static void cmd_list_listener(admin_handle h, char **args, void *userdata)
 	}
 }
 
+static gboolean motd_file_set(admin_handle h, const char *name)
+{
+	struct global *g = admin_get_global(h);
+
+	if (!g_file_test(name, G_FILE_TEST_EXISTS)) {
+		admin_out(h, "%s: file does not exist", name);
+		return FALSE;
+	}
+
+	g_free(g->config->motd_file);
+	g->config->motd_file = g_strdup(name);
+
+	return TRUE;
+}
+
+static char *motd_file_get(admin_handle h)
+{
+	struct global *g = admin_get_global(h);
+
+	return g_strdup(g->config->motd_file);
+}
+
+static char *report_time_get(admin_handle h)
+{
+	struct global *g = admin_get_global(h);
+
+	return g_strdup(g->config->report_time?"true":"false");
+}
+
+static gboolean interpret_boolean(admin_handle h, const char *value,
+								  gboolean *ret)
+{
+	if (!g_strcasecmp(value, "true")) {
+		*ret = TRUE;
+		return TRUE;
+	} else if (!g_strcasecmp(value, "false")) {
+		*ret = FALSE;
+		return TRUE;
+	}
+
+	admin_out(h, "Invalid boolean value `%s'", value);
+	return FALSE;
+}
+
+static gboolean report_time_set(admin_handle h, const char *value)
+{
+	struct global *g = admin_get_global(h);
+
+	return interpret_boolean(h, value, &g->config->report_time);
+}
+
+static struct admin_setting {
+	const char *name;
+	char *(*get) (admin_handle h);
+	gboolean (*set) (admin_handle h, const char *value);
+} settings[] = {
+	{ "log_level", log_level_get, log_level_set },
+	{ "motd-file", motd_file_get, motd_file_set },
+	{ "report-time", report_time_get, report_time_set },
+};
+
+static void cmd_set(admin_handle h, char **args, void *userdata)
+{
+	int i;
+	char *tmp;
+
+	if (args[1] == NULL) {
+		for (i = 0; settings[i].name != NULL; i++) {
+			tmp = settings[i].get(h);
+			admin_out(h, "%s = %s", settings[i].name, tmp);
+			g_free(tmp);
+		}
+	} else {
+		for (i = 0; settings[i].name; i++) {
+			if (!strcasecmp(settings[i].name, args[1])) {
+				if (args[2] != NULL) {
+					settings[i].set(h, args[2]);
+				} else {
+					tmp = settings[i].get(h);
+					admin_out(h, "%s", tmp);
+					g_free(tmp);
+				}
+				return;
+			}
+		}
+
+		admin_out(h, "Unknown setting `%s'", args[1]);
+	}
+}
+
 const static struct admin_command builtin_commands[] = {
-	{ "ADDNETWORK", add_network },
-	{ "ADDSERVER", add_server },
-	{ "BACKLOG", repl_command },
-	{ "CONNECT", com_connect_network },
-	{ "DELNETWORK", del_network },
+	/* Provided for backwards compatibility */
+	{ "ADDNETWORK", cmd_add_network },
+	{ "DELNETWORK", cmd_del_network },
+	{ "LISTNETWORKS", cmd_list_networks },
+
+	/* Commands */
+	{ "SET", cmd_set },
+
+	{ "ADDSERVER", cmd_add_server },
+	{ "BACKLOG", cmd_backlog},
+	{ "CONNECT", cmd_connect_network },
+	{ "DISCONNECT", cmd_disconnect_network },
 	{ "ECHO", cmd_echo },
-	{ "LOG_LEVEL", cmd_log_level },
-	{ "NEXTSERVER", com_next_server },
-	{ "CHARSET", handle_charset },
-	{ "DIE", handle_die },
-	{ "DISCONNECT", com_disconnect_network },
-	{ "LISTNETWORKS", list_networks },
-	{ "SAVECONFIG", com_save_config },
-	{ "DETACH", detach_client },
+	{ "NEXTSERVER", cmd_next_server },
+	{ "CHARSET", cmd_charset },
+	{ "DIE", cmd_die },
+	{ "NETWORK", cmd_network },
+	{ "SAVECONFIG", cmd_save_config },
+	{ "DETACH", cmd_detach },
 	{ "HELP", cmd_help },
 	{ "DUMPJOINEDCHANNELS", dump_joined_channels },
 	{ "STARTLISTENER", cmd_start_listener },
 	{ "STOPLISTENER", cmd_stop_listener },
 	{ "LISTLISTENER", cmd_list_listener },
 #ifdef DEBUG
-	{ "ABORT", do_abort },
+	{ "ABORT", cmd_abort },
 #endif
 	{ NULL }
 };
@@ -994,4 +1190,3 @@ gboolean stop_admin_socket(struct global *global)
 	unlink(global->config->admin_socket);
 	return TRUE;
 }
-

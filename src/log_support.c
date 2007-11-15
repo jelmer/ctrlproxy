@@ -47,21 +47,22 @@ void free_log_support_context(struct log_support_context *ret)
 
 #define CLEANUP_THRESHOLD (60 * 60)
 
-static void eval_remove(gpointer key, gpointer value, gpointer user_data)
+static gboolean eval_remove(gpointer key, gpointer value, gpointer user_data)
 {
 	struct log_file_info *fi = value;
 	struct log_support_context *ctx = user_data;
 
 	if (fi->last_used < time(NULL) - CLEANUP_THRESHOLD) {
-		fclose(fi->file);
 		ctx->num_opened--;
-		fi->file = NULL;
+		return TRUE;
 	}
+
+	return FALSE;
 }
 
 void log_support_cleanup(struct log_support_context *ctx)
 {
-	g_hash_table_foreach(ctx->files, eval_remove, ctx);
+	g_hash_table_foreach_remove(ctx->files, eval_remove, ctx);
 }
 
 gboolean log_support_write(struct log_support_context *ctx, 

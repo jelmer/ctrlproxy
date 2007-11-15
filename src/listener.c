@@ -67,7 +67,7 @@ static gboolean handle_client_socks_data(GIOChannel *ioc,
 static gboolean handle_client_line(GIOChannel *c, struct pending_client *pc, 
 								   const struct line *l)
 {
-	if (l->args[0] == NULL) { 
+	if (l == NULL || l->args[0] == NULL) { 
 		return TRUE;
 	}
 
@@ -231,7 +231,9 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition condition, gpo
 
 			while ((status = irc_recv_line(c, iconv, &error, &l)) == G_IO_STATUS_NORMAL) {
 				gboolean ret;
-				g_assert(l != NULL);
+
+				if (l == NULL)
+					continue;
 
 				ret = handle_client_line(c, pc, l);
 
