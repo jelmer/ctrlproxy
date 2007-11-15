@@ -64,6 +64,12 @@ START_TEST(test_null)
 				"Expected command error: %s", result);
 END_TEST
 
+START_TEST(test_set)
+	char *result;
+	result = run_cmd("set foo");
+	fail_unless(!strcmp(result, "Unknown setting `foo'"));
+END_TEST
+
 START_TEST(test_log_level)
 	char *result;
 	extern enum log_level current_log_level;
@@ -71,21 +77,21 @@ START_TEST(test_log_level)
 
 	old = current_log_level;
 	current_log_level = 1;
-	result = run_cmd("LOG_LEVEL");
-	fail_unless(!strcmp("Current log level: 1", result));
+	result = run_cmd("set log_level");
+	fail_unless(!strcmp("1", result));
 	current_log_level = 2;
-	result = run_cmd("LOG_LEVEL");
-	fail_unless(!strcmp("Current log level: 2", result));
+	result = run_cmd("set LOG_LEVEL");
+	fail_unless(!strcmp("2", result));
 
-	result = run_cmd("LOG_LEVEL 0");
+	result = run_cmd("set LOG_LEVEL 0");
 	fail_unless(current_log_level == 0);
 	fail_unless(!strcmp("Log level changed to 0", result));
 
-	result = run_cmd("LOG_LEVEL 4");
+	result = run_cmd("set LOG_LEVEL 4");
 	fail_unless(current_log_level == 4);
 	fail_unless(!strcmp("Log level changed to 4", result));
 
-	result = run_cmd("LOG_LEVEL -20");
+	result = run_cmd("set LOG_LEVEL -20");
 	fail_unless(current_log_level == 4);
 	fail_unless(!strcmp("Invalid log level -20", result));
 
@@ -103,5 +109,6 @@ Suite *admin_suite()
 	tcase_add_test(tc_core, test_null);
 	tcase_add_test(tc_core, test_empty);
 	tcase_add_test(tc_core, test_log_level);
+	tcase_add_test(tc_core, test_set);
 	return s;
 }

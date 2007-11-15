@@ -996,6 +996,7 @@ static struct admin_setting {
 	{ "log_level", log_level_get, log_level_set },
 	{ "motd-file", motd_file_get, motd_file_set },
 	{ "report-time", report_time_get, report_time_set },
+	{ NULL, NULL, NULL }
 };
 
 static void cmd_set(admin_handle h, char **args, void *userdata)
