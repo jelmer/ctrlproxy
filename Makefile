@@ -176,7 +176,7 @@ uninstall-pkgconfig:
 	-rm -f $(DESTDIR)$(libdir)/pkgconfig/ctrlproxy.pc
 	-rmdir $(DESTDIR)$(libdir)/pkgconfig
 
-gcov: test
+gcov: check
 	$(GCOV) -f -p -o src/ src/*.c 
 
 lcov:
