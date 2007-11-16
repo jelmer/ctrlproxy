@@ -121,12 +121,14 @@ install-dirs:
 
 uninstall: uninstall-bin uninstall-header uninstall-mods uninstall-data uninstall-pkgconfig $(patsubst install-%,uninstall-%,$(EXTRA_INSTALL_TARGETS))
 uninstall-bin:
-	-rm -f $(DESTDIR)$(bindir)/ctrlproxy$(EXEEXT)
+	-rm -f $(DESTDIR)$(bindir)/ctrlproxy$(EXEEXT) \
+		   $(DESTDIR)$(bindir)/ctrlproxy-admin$(EXEEXT)
 	-rmdir $(DESTDIR)$(bindir)
 
 install-bin:
 	$(INSTALL) -d $(DESTDIR)$(bindir)
 	$(INSTALL) ctrlproxy$(EXEEXT) $(DESTDIR)$(bindir)
+	$(INSTALL) ctrlproxy-admin$(EXEEXT) $(DESTDIR)$(bindir)
 
 uninstall-header:
 	-rm -f $(patsubst %,$(DESTDIR)$(destincludedir)/%,$(notdir $(headers)))
