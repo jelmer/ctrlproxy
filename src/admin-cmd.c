@@ -31,6 +31,8 @@ gboolean admin_socket_prompt(const char *config_dir)
 	int sock = socket(PF_UNIX, SOCK_STREAM, 0);
 	GIOChannel *ch;
 	struct sockaddr_un un;
+	GIOStatus status;
+	GError *error = NULL;
 
 	un.sun_family = AF_UNIX;
 	strncpy(un.sun_path, admin_dir, sizeof(un.sun_path));
@@ -45,7 +47,6 @@ gboolean admin_socket_prompt(const char *config_dir)
 
 	g_io_channel_set_flags(ch, G_IO_FLAG_NONBLOCK, NULL);
 	
-#ifdef HAVE_READLINE
 	while (1) {
 		char *data = readline("ctrlproxy> ");
 		char *raw;
@@ -76,7 +77,6 @@ gboolean admin_socket_prompt(const char *config_dir)
 			printf("%s", raw);
 		}
 	}
-#endif
 	g_free(admin_dir);
 
 	return TRUE;

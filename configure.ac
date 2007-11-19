@@ -97,7 +97,7 @@ fi
 
 AC_SUBST(EXTRA_INSTALL_TARGETS)
 
-BINS="$BINS ctrlproxy$ac_cv_exeext ctrlproxy-admin$ac_cv_exeext"
+BINS="$BINS ctrlproxy$ac_cv_exeext"
 AC_SUBST(BINS)
 AC_SUBST(MODS_SHARED)
 
