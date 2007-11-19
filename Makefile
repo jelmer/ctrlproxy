@@ -131,12 +131,12 @@ install-bin:
 	$(INSTALL) ctrlproxy-admin$(EXEEXT) $(DESTDIR)$(bindir)
 
 uninstall-header:
-	-rm -f $(patsubst %,$(DESTDIR)$(destincludedir)/%,$(notdir $(headers)))
+	-rm -f $(patsubst %,$(DESTDIR)$(destincludedir)/%,$(notdir $(headers) $(lib_headers)))
 	-rmdir $(DESTDIR)$(destincludedir)
 
 install-header::
 	$(INSTALL) -d $(DESTDIR)$(destincludedir)
-	$(INSTALL) -m 0644 $(headers) $(DESTDIR)$(destincludedir)
+	$(INSTALL) -m 0644 $(lib_headers) $(headers) $(DESTDIR)$(destincludedir)
 
 install-doc:: doc
 	$(INSTALL) -d $(DESTDIR)$(docdir)
