@@ -20,6 +20,14 @@
 #ifndef __CTRLPROXY_ISUPPORT_H__
 #define __CTRLPROXY_ISUPPORT_H__
 
+#ifndef G_GNUC_NULL_TERMINATED
+#define G_GNUC_NULL_TERMINATED
+#endif
+
+#ifndef G_GNUC_WARN_UNUSED_RESULT
+#define G_GNUC_WARN_UNUSED_RESULT
+#endif
+
 /**
  * @file
  * @brief Network information

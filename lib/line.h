@@ -26,6 +26,14 @@
 #define G_MODULE_EXPORT
 #endif
 
+#ifndef G_GNUC_WARN_UNUSED_RESULT
+#define G_GNUC_WARN_UNUSED_RESULT
+#endif
+
+#ifndef G_GNUC_NULL_TERMINATED
+#define G_GNUC_NULL_TERMINATED
+#endif
+
 /**
  * @file
  * @brief Line manipulation
