@@ -30,8 +30,6 @@ gboolean admin_socket_prompt(const char *config_dir)
 	char *admin_dir = g_build_filename(config_dir, "admin", NULL);
 	int sock = socket(PF_UNIX, SOCK_STREAM, 0);
 	GIOChannel *ch;
-	GError *error = NULL;
-	GIOStatus status;
 	struct sockaddr_un un;
 
 	un.sun_family = AF_UNIX;
