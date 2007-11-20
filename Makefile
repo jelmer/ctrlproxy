@@ -127,8 +127,7 @@ uninstall-bin:
 
 install-bin:
 	$(INSTALL) -d $(DESTDIR)$(bindir)
-	$(INSTALL) ctrlproxy$(EXEEXT) $(DESTDIR)$(bindir)
-	$(INSTALL) ctrlproxy-admin$(EXEEXT) $(DESTDIR)$(bindir)
+	$(INSTALL) $(BINS) $(DESTDIR)$(bindir)
 
 uninstall-header:
 	-rm -f $(patsubst %,$(DESTDIR)$(destincludedir)/%,$(notdir $(headers) $(lib_headers)))
