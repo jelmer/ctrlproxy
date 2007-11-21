@@ -287,6 +287,8 @@ void disconnect_client(struct client *c, const char *reason)
 	g_free(c->description);
 	free_network_state(c->state);
 	g_free(c->requested_nick);
+	g_free(c->requested_username);
+	g_free(c->requested_hostname);
 	g_queue_foreach(c->pending_lines, free_pending_line, NULL);
 	g_queue_free(c->pending_lines);
 	g_free(c);
@@ -554,9 +556,9 @@ static gboolean handle_pending_client_receive(GIOChannel *c,
 					continue;
 				}
 
-				client->state = network_state_init(client->requested_nick, 
-												   l->args[1], 
-												   l->args[2]);
+				client->requested_username = g_strdup(l->args[1]);
+				client->requested_hostname = g_strdup(l->args[2]);
+
 
 			} else if (!g_strcasecmp(l->args[0], "PASS")) {
 				/* Silently drop... */
@@ -590,6 +592,14 @@ static gboolean handle_pending_client_receive(GIOChannel *c,
 			}
 
 			free_line(l);
+
+			if (client->requested_nick != NULL &&
+				client->requested_username != NULL &&
+				client->requested_hostname != NULL) {
+				client->state = network_state_init(client->requested_nick, 
+												   client->requested_username,
+												   client->requested_hostname);
+			}
 
 			if (client->state != NULL) {
 				if (client->network == NULL) {

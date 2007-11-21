@@ -380,6 +380,8 @@ static void handle_join(struct network_state *s, const struct line *l)
 	char *nick;
 
 	CHECK_ORIGIN(s,l,"NICK");
+
+	nick = line_get_nick(l);
 	
 	channels = g_strsplit(l->args[1], ",", 0);
 

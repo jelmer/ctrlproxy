@@ -48,6 +48,8 @@ struct client {
 	time_t last_pong;
 	time_t connect_time;
 	char *requested_nick;
+	char *requested_username;
+	char *requested_hostname;
 	char *charset;
 	gboolean exit_on_close;
 	gboolean connected;
