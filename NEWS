@@ -9,10 +9,10 @@ Ctrlproxy 3.0.4 UNRELEASED
 
     * Send message to the client when ctrlproxy connects to the network.
 
-    * Announce number of clients/channels during client login.
+    * Announce number of clients/channels during client login. (#162)
 
 	* Add "set" command in the administration interface, including 
-	  initial settings "log_level", "motd-file" and "report-time".
+	  initial settings "log_level", "motd-file" and "report-time". (#6)
 
   BUG FIXES
 
@@ -37,7 +37,7 @@ Ctrlproxy 3.0.4 UNRELEASED
 
     * Integrate listeners into the core.
 
-    * Reconcile log_custom and log_irssi.
+    * Reconcile log_custom and log_irssi. (#114)
 
     * Integrate socks support into listener code. Socks connections 
       can now be accepted at the same port as other connections.
