@@ -51,7 +51,7 @@
 /* server.c */
 void fini_networks(struct global *);
 void kill_pending_clients(const char *reason);
-void network_set_iochannel(struct network *s, GIOChannel *ioc);
+gboolean network_set_iochannel(struct network *s, GIOChannel *ioc);
 
 /* state.c */
 void free_channels(struct network *s);
@@ -136,3 +136,4 @@ void log_custom_load(struct log_file_config *config);
 void free_listeners(struct global *global);
 
 #endif /* __INTERNALS_H__ */
+

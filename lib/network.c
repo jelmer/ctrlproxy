@@ -28,6 +28,8 @@ static gboolean connect_server(struct network *s);
 static gboolean close_server(struct network *s);
 static void reconnect(struct network *server);
 static void clients_send_state(GList *clients, struct network_state *s);
+static gboolean server_finish_connect(GIOChannel *ioc, GIOCondition cond, 
+								  void *data);
 
 struct new_network_notify_data {
 	new_network_notify_fn fn;
@@ -308,7 +310,8 @@ static gboolean handle_server_receive (GIOChannel *c, GIOCondition cond, void *_
 	}
 
 	if (cond & G_IO_ERR) {
-		network_report_disconnect(server, "Error from server, scheduling reconnect");
+		network_report_disconnect(server, 
+								  "Error from server: %s, scheduling reconnect", g_io_channel_unix_get_sock_error(c));
 		reconnect(server);
 		return FALSE;
 	}
@@ -684,7 +687,6 @@ static gboolean connect_current_tcp_server(struct network *s)
 {
 	struct addrinfo *res;
 	int sock = -1;
-	socklen_t size;
 	struct tcp_server_config *cs;
 	GIOChannel *ioc = NULL;
 	struct addrinfo hints;
@@ -758,44 +760,19 @@ static gboolean connect_current_tcp_server(struct network *s)
 		return FALSE;
 	}
 
-	size = sizeof(struct sockaddr_storage);
-	g_assert(s->connection.data.tcp.local_name == NULL);
-	g_assert(s->connection.data.tcp.remote_name == NULL);
-	s->connection.data.tcp.remote_name = g_malloc(size);
-	s->connection.data.tcp.local_name = g_malloc(size);
-	s->connection.data.tcp.namelen = getsockname(sock, s->connection.data.tcp.local_name, &size);
-	getpeername(sock, s->connection.data.tcp.remote_name, &size);
+	g_io_channel_set_close_on_unref(ioc, TRUE);
 
-	if (cs->ssl) {
-#ifdef HAVE_GNUTLS
-		g_io_channel_set_close_on_unref(ioc, TRUE);
-		g_io_channel_set_flags(ioc, G_IO_FLAG_NONBLOCK, NULL);
+	s->connection.state = NETWORK_CONNECTION_STATE_CONNECTING;
 
-		ioc = ssl_wrap_iochannel (ioc, SSL_TYPE_CLIENT, 
-								 s->connection.data.tcp.current_server->host,
-								 s->ssl_credentials
-								 );
-		g_assert(ioc != NULL);
-#else
-		log_network(LOG_WARNING, s, "SSL enabled for %s:%s, but no SSL support loaded", cs->host, cs->port);
-#endif
+	if (!connect_finished) {
+		s->connection.outgoing_id = g_io_add_watch(ioc, 
+												   G_IO_OUT|G_IO_ERR|G_IO_HUP, 
+												   server_finish_connect, s);
+	} else {
+		server_finish_connect(ioc, G_IO_OUT, s);
 	}
 
-	if (!ioc) {
-		log_network(LOG_ERROR, s, "Couldn't connect via server %s:%s", cs->host, cs->port);
-		return FALSE;
-	}
-
-	if (!connect_finished)
-		s->connection.outgoing_id = g_io_add_watch(ioc, G_IO_OUT, server_send_queue, s);
-
-	network_set_iochannel(s, ioc);
-
-	g_io_channel_unref(s->connection.outgoing);
-
-	s->connection.data.tcp.ping_id = g_timeout_add(5000, 
-								   (GSourceFunc) ping_server, s);
-
+	g_io_channel_unref(ioc);
 
 	return TRUE;
 }
@@ -822,6 +799,8 @@ static void reconnect(struct network *server)
 		server->config->type == NETWORK_IOCHANNEL ||
 		server->config->type == NETWORK_PROGRAM) {
 		server->connection.state = NETWORK_CONNECTION_STATE_RECONNECT_PENDING;
+		log_network(LOG_INFO, server, "Reconnecting in %d seconds", 
+					server->config->reconnect_interval);
 		server->reconnect_id = g_timeout_add(1000 * 
 								server->config->reconnect_interval, 
 								(GSourceFunc) delayed_connect_server, server);
@@ -897,16 +876,18 @@ static gboolean close_server(struct network *n)
 	case NETWORK_TCP: 
 	case NETWORK_PROGRAM: 
 	case NETWORK_IOCHANNEL:
-		g_assert(n->connection.incoming_id > 0);
-		g_source_remove(n->connection.incoming_id); 
-		n->connection.incoming_id = 0;
-		if (n->connection.outgoing_id > 0)
+		if (n->connection.incoming_id > 0) {
+			g_source_remove(n->connection.incoming_id); 
+			n->connection.incoming_id = 0;
+		}
+		if (n->connection.outgoing_id > 0) {
 			g_source_remove(n->connection.outgoing_id); 
+			n->connection.outgoing_id = 0;
+		}
 		if (n->connection.data.tcp.ping_id > 0) {
 			g_source_remove(n->connection.data.tcp.ping_id);
 			n->connection.data.tcp.ping_id = 0;
 		}
-		n->connection.outgoing_id = 0;
 		g_free(n->connection.data.tcp.local_name);
 		g_free(n->connection.data.tcp.remote_name);
 		n->connection.data.tcp.local_name = NULL;
@@ -1001,20 +982,95 @@ static pid_t piped_child(char* const command[], int *f_in)
 	return pid;
 }
 
+static gboolean server_finish_connect(GIOChannel *ioc, GIOCondition cond, 
+								  void *data)
+{
+	struct network *s = data;
+	socklen_t size;
+	int sock = g_io_channel_unix_get_fd(ioc);
+	struct tcp_server_config *cs;
+
+	if (cond & G_IO_ERR) {
+		network_report_disconnect(s, "Error connecting: %s", 
+								  g_io_channel_unix_get_sock_error(ioc));
+		reconnect(s);
+		return FALSE;
+	}
+
+	if (cond & G_IO_OUT) {
+		s->connection.state = NETWORK_CONNECTION_STATE_CONNECTED;
+
+		size = sizeof(struct sockaddr_storage);
+		g_assert(s->connection.data.tcp.local_name == NULL);
+		g_assert(s->connection.data.tcp.remote_name == NULL);
+		s->connection.data.tcp.remote_name = g_malloc(size);
+		s->connection.data.tcp.local_name = g_malloc(size);
+		s->connection.data.tcp.namelen = getsockname(sock, s->connection.data.tcp.local_name, &size);
+		getpeername(sock, s->connection.data.tcp.remote_name, &size);
+
+		cs = s->connection.data.tcp.current_server;
+		if (cs->ssl) {
+#ifdef HAVE_GNUTLS
+			g_io_channel_set_close_on_unref(ioc, TRUE);
+			g_io_channel_set_flags(ioc, G_IO_FLAG_NONBLOCK, NULL);
+
+			ioc = ssl_wrap_iochannel (ioc, SSL_TYPE_CLIENT, 
+									 s->connection.data.tcp.current_server->host,
+									 s->ssl_credentials
+									 );
+			g_assert(ioc != NULL);
+#else
+			log_network(LOG_WARNING, s, "SSL enabled for %s:%s, but no SSL support loaded", cs->host, cs->port);
+#endif
+		}
+
+		if (!ioc) {
+			network_report_disconnect(s, "Couldn't connect via server %s:%s", cs->host, cs->port);
+			reconnect(s);
+			return FALSE;
+		}
+
+		s->connection.outgoing_id = 0; /* Otherwise data will be queued */
+		network_set_iochannel(s, ioc);
+
+		s->connection.last_line_recvd = time(NULL);
+		s->connection.data.tcp.ping_id = g_timeout_add(5000, 
+									   (GSourceFunc) ping_server, s);
+
+		return FALSE;
+	}
+
+	if (cond & G_IO_HUP) {
+		network_report_disconnect(s, "Server closed connection");
+		reconnect(s);
+		return FALSE;
+	}
+
+	return FALSE;
+}
+
 /**
  * Change the IO channel used to communicate with a network.
  * @param s Network to set the IO channel for.
  * @param ioc IO channel to use
  */
-void network_set_iochannel(struct network *s, GIOChannel *ioc)
+gboolean network_set_iochannel(struct network *s, GIOChannel *ioc)
 {
+	GError *error = NULL;
 	g_assert(s->config->type != NETWORK_VIRTUAL);
-	g_io_channel_set_encoding(ioc, NULL, NULL);
+	if (g_io_channel_set_encoding(ioc, NULL, &error) != G_IO_STATUS_NORMAL) {
+		log_network(LOG_ERROR, s, "Unable to change encoding: %s", 
+					error?error->message:"unknown");
+		return FALSE;
+	}
 	g_io_channel_set_close_on_unref(ioc, TRUE);
-	g_io_channel_set_flags(ioc, G_IO_FLAG_NONBLOCK, NULL);
+	if (g_io_channel_set_flags(ioc, G_IO_FLAG_NONBLOCK, &error) != G_IO_STATUS_NORMAL) {
+		log_network(LOG_ERROR, s, "Unable to change flags: %s", 
+					error?error->message:"unknown");
+		return FALSE;
+	}
 
 	s->connection.outgoing = ioc;
-	g_io_channel_set_close_on_unref(s->connection.outgoing, TRUE);
 
 	s->connection.incoming_id = g_io_add_watch(s->connection.outgoing, 
 								G_IO_IN | G_IO_HUP | G_IO_ERR, 
@@ -1024,6 +1080,8 @@ void network_set_iochannel(struct network *s, GIOChannel *ioc)
 				  s);
 
 	server_send_login(s);
+
+	return TRUE;
 }
 
 static gboolean connect_program(struct network *s)
@@ -1045,7 +1103,6 @@ static gboolean connect_program(struct network *s)
 	network_set_iochannel(s, g_io_channel_unix_new(sock));
 
 	g_io_channel_unref(s->connection.outgoing);
-
 
 	if (s->info.name == NULL) {
 		if (strchr(s->config->type_settings.program_location, '/')) {

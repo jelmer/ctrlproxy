@@ -103,6 +103,8 @@ G_MODULE_EXPORT int str_rfc1459cmp(const char *a, const char *b);
 G_MODULE_EXPORT int str_strictrfc1459cmp(const char *a, const char *b);
 G_MODULE_EXPORT int str_asciicmp(const char *a, const char *b);
 G_MODULE_EXPORT char *g_io_channel_ip_get_description(GIOChannel *ch);
+G_MODULE_EXPORT const char *g_io_channel_unix_get_sock_error(GIOChannel *ioc);
+
 
 /* log.c */
 G_GNUC_PRINTF(3, 4) G_MODULE_EXPORT void log_network_state(enum log_level l, const struct network_state *st, const char *fmt, ...);

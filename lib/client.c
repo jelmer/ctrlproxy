@@ -506,6 +506,14 @@ static gboolean handle_pending_client_receive(GIOChannel *c,
 	g_assert(client);
 	g_assert(c);
 
+	if (cond & G_IO_ERR) {
+		char *tmp = g_strdup_printf("Error reading from client: %s", 
+						  g_io_channel_unix_get_sock_error(c));
+		disconnect_client(client, tmp);
+		g_free(tmp);
+		return FALSE;
+	}
+
 	if (cond & G_IO_HUP) {
 		disconnect_client(client, "Hangup from client");
 		return FALSE;
@@ -595,7 +603,7 @@ static gboolean handle_pending_client_receive(GIOChannel *c,
 				}
 
 				client->incoming_id = g_io_add_watch(client->incoming, 
-							 G_IO_IN | G_IO_HUP, handle_client_receive, client);
+							 G_IO_IN | G_IO_HUP | G_IO_ERR, handle_client_receive, client);
 
 				pending_clients = g_list_remove(pending_clients, client);
 				client->network->clients = g_list_append(client->network->clients, client);

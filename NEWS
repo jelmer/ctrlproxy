@@ -16,6 +16,8 @@ Ctrlproxy 3.0.4 UNRELEASED
 
   BUG FIXES
 
+    * Clearer error messages during disconnect.
+
     * Handle ping timeouts from server. (#158)
 
     * Don't crash when network of listener goes away. (#168)

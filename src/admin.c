@@ -250,6 +250,8 @@ static void cmd_connect_network (admin_handle h, char **args, void *userdata)
 			network_select_next_server(s);
 			connect_network(s);
 			break;
+		case NETWORK_CONNECTION_STATE_CONNECTED:
+		case NETWORK_CONNECTION_STATE_CONNECTING:
 		case NETWORK_CONNECTION_STATE_LOGIN_SENT:
 			admin_out(h, "Connect to `%s' already in progress", args[1]);
 			break;
@@ -355,6 +357,12 @@ static void list_networks_helper(admin_handle h)
 		struct network *n = gl->data;
 
 		switch (n->connection.state) {
+		case NETWORK_CONNECTION_STATE_CONNECTING:
+			admin_out(h, "%s: Connect in progress", n->info.name);
+			break;
+		case NETWORK_CONNECTION_STATE_CONNECTED:
+			admin_out(h, "%s: Connected, logging in", n->info.name);
+			break;
 		case NETWORK_CONNECTION_STATE_NOT_CONNECTED:
 			if (n->connection.data.tcp.last_disconnect_reason)
 				admin_out(h, "%s: Not connected: %s", n->info.name, 

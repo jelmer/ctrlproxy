@@ -25,6 +25,13 @@ static void free_channel(struct channel_state *c);
 
 enum mode_type { REMOVE = 0, ADD = 1 };
 
+#define CHECK_ORIGIN(s,l,name) \
+	if ((l)->origin == NULL) { \
+		log_network_state(LOG_WARNING, (s), \
+						  "Received "name" line without origin"); \
+		return; \
+	}
+
 void network_nick_set_data(struct network_nick *n, const char *nick, 
 						   const char *username, const char *host)
 {
@@ -372,10 +379,7 @@ static void handle_join(struct network_state *s, const struct line *l)
 	char **channels;
 	char *nick;
 
-	if ((nick = line_get_nick(l)) == NULL) {
-		log_network_state(LOG_WARNING, s, "No hostmask for JOIN line received from server");
-		return;
-	}
+	CHECK_ORIGIN(s,l,"NICK");
 	
 	channels = g_strsplit(l->args[1], ",", 0);
 
@@ -405,7 +409,11 @@ static void handle_part(struct network_state *s, const struct line *l)
 	struct channel_nick *n;
 	char **channels;
 	int i;
-	char *nick = line_get_nick(l);
+	char *nick;
+
+	CHECK_ORIGIN(s,l,"PART");
+	
+	nick = line_get_nick(l);
 
 	if (nick == NULL) 
 		return;
@@ -448,7 +456,11 @@ static void handle_kick(struct network_state *s, const struct line *l)
 	struct channel_nick *n;
 	char **channels, **nicks;
 	int i;
-	char *nick = line_get_nick(l);
+	char *nick;
+
+	CHECK_ORIGIN(s,l,"KICK");
+	
+	nick = line_get_nick(l);
 
 	channels = g_strsplit(l->args[1], ",", 0);
 	nicks = g_strsplit(l->args[2], ",", 0);
@@ -490,6 +502,9 @@ static void handle_kick(struct network_state *s, const struct line *l)
 static void handle_topic(struct network_state *s, const struct line *l) 
 {
 	struct channel_state *c = find_channel(s, l->args[1]);
+	
+	CHECK_ORIGIN(s, l, "TOPIC");
+
 	if (c->topic != NULL)
 		g_free(c->topic);
 	if (c->topic_set_by != NULL)
@@ -740,8 +755,13 @@ static void handle_unaway(struct network_state *s, const struct line *l)
 
 static void handle_quit(struct network_state *s, const struct line *l) 
 {
-	char *nick = line_get_nick(l);
-	struct network_nick *nn = find_network_nick(s, nick);
+	char *nick;
+	struct network_nick *nn;
+
+	CHECK_ORIGIN(s, l, "QUIT");
+
+	nick = line_get_nick(l);
+	nn = find_network_nick(s, nick);
 	g_free(nick);
 
 	g_assert(nn != &s->me);
@@ -861,6 +881,9 @@ static void handle_privmsg(struct network_state *s, const struct line *l)
 {
 	struct network_nick *nn;
 	char *nick;
+
+	CHECK_ORIGIN(s,l,"PRIVMSG");
+
 	if (irccmp(&s->info, l->args[1], s->me.nick) != 0) return;
 
 	nick = line_get_nick(l);
@@ -872,7 +895,11 @@ static void handle_privmsg(struct network_state *s, const struct line *l)
 static void handle_nick(struct network_state *s, const struct line *l)
 {
 	struct network_nick *nn;
-	char *nick = line_get_nick(l);
+	char *nick;
+
+	CHECK_ORIGIN(s,l,"NICK");
+	
+	nick = line_get_nick(l);
 	nn = find_add_network_nick(s, nick);
 	g_free(nick);
 	network_nick_set_nick(nn, l->args[1]);
