@@ -263,6 +263,8 @@ void disconnect_client(struct client *c, const char *reason)
 	if (c->network != NULL)
 		c->network->clients = g_list_remove(c->network->clients, c);
 
+	network_unref(c->network);
+
 	pending_clients = g_list_remove(pending_clients, c);
 
 	lose_client_hook_execute(c);
@@ -658,7 +660,7 @@ struct client *client_init(struct network *n, GIOChannel *c, const char *desc)
 	client->ping_id = g_timeout_add(1000 * 300, (GSourceFunc)client_ping, 
 									client);
 	client->incoming = c;
-	client->network = n;
+	client->network = network_ref(n);
 	client->description = g_strdup(desc);
 	client->connected = TRUE;
 	client->exit_on_close = FALSE;

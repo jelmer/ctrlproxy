@@ -27,7 +27,7 @@
 #include <glib.h>
 #include <gmodule.h>
 
-#define CTRLPROXY_PLUGIN_VERSION 1
+#define CTRLPROXY_PLUGIN_VERSION 2
 
 /**
  * @file

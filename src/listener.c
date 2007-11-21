@@ -436,6 +436,9 @@ void free_listeners(struct global *global)
 void free_listener(struct listener *l)
 {
 	l->global->listeners = g_list_remove(l->global->listeners, l);
+
+	network_unref(l->network);
+	
 	g_free(l);
 }
 
@@ -447,7 +450,7 @@ struct listener *listener_init(struct global *global, struct listener_config *cf
 	l->global = global;
 
 	if (l->config->network != NULL) {
-		l->network = find_network(global, l->config->network);
+		l->network = network_ref(find_network(global, l->config->network));
 		if (l->network == NULL) {
 			free_listener(l);
 			return NULL;
@@ -465,7 +468,6 @@ static void auto_add_listener(struct network *n, void *private_data)
 	struct listener *l;
 	struct listener_config *cfg;
 	
-
 	/* See if there is already a listener for n */
 	for (gl = n->global->listeners; gl; gl = gl->next) {
 		l = gl->data;
@@ -506,6 +508,7 @@ void fini_listeners(struct global *global)
 
 		if (l->active) 
 			stop_listener(l);
+
 	}
 }
 

@@ -16,6 +16,8 @@ Ctrlproxy 3.0.4 UNRELEASED
 
   BUG FIXES
 
+    * Don't crash when network of listener goes away. (#168)
+
     * Don't abort when sending colon to listener. (#167)
 
     * Handle 263 response correctly.

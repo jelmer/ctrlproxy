@@ -1121,6 +1121,7 @@ struct network *load_network(struct global *global, struct network_config *sc)
 	}
 
 	s = g_new0(struct network, 1);
+	s->references = 1;
 	s->config = sc;
 	network_info_init(&s->info);
 	s->info.name = g_strdup(s->config->name);
@@ -1172,32 +1173,8 @@ static void free_pending_line(void *_line, void *userdata)
 	free_line((struct line *)_line);
 }
 
-/** 
- * Unload a network from a global context.
- *
- * @param s Network to unload.
- */
-void unload_network(struct network *s)
+static void free_network(struct network *s)
 {
-	GList *l;
-	
-	g_assert(s);
-	if (s->connection.state == NETWORK_CONNECTION_STATE_MOTD_RECVD) {
-		log_network(LOG_INFO, s, "Closing connection");
-	}
-
-	l = s->clients;
-
-	while(l) {
-		struct client *c = l->data;
-		l = l->next;
-		disconnect_client(c, "Server exiting");
-	}
-
-	if (s->global != NULL) {
-		s->global->networks = g_list_remove(s->global->networks, s);
-	}
-
 	g_queue_foreach(s->connection.pending_lines, free_pending_line, NULL);
 	g_queue_free(s->connection.pending_lines);
 
@@ -1211,6 +1188,31 @@ void unload_network(struct network *s)
 	g_iconv_close(s->connection.outgoing_iconv);
 
 	g_free(s);
+}
+
+/** 
+ * Unload a network from a global context.
+ *
+ * @param s Network to unload.
+ */
+void unload_network(struct network *s)
+{
+	GList *l;
+	
+	g_assert(s);
+	l = s->clients;
+
+	while(l) {
+		struct client *c = l->data;
+		l = l->next;
+		disconnect_client(c, "Server exiting");
+	}
+
+	if (s->global != NULL) {
+		s->global->networks = g_list_remove(s->global->networks, s);
+	}
+
+	network_unref(s);
 }
 
 /** 
@@ -1447,4 +1449,22 @@ char *network_generate_feature_string(struct network *n)
 	return network_info_string(&n->info);
 }
 
+/**
+ * Increase the reference count for a network
+ */
+struct network *network_ref(struct network *n)
+{
+	if (n != NULL)
+		n->references++;
+	return n;
+}
+
+void network_unref(struct network *n)
+{
+	if (n == NULL)
+		return;
+	n->references--;
+	if (n->references == 0) 
+		free_network(n);
+}
 
