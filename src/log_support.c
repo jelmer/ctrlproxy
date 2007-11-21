@@ -24,9 +24,11 @@
 static void free_file_info(void *_data)
 {
 	struct log_file_info *data = _data;
-
-	fclose(data->file);
-	g_free(data);
+	
+	if (data != NULL) {
+		fclose(data->file);
+		g_free(data);
+	}
 }
 
 struct log_support_context *log_support_init(void)
