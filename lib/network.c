@@ -26,7 +26,7 @@ static GHashTable *virtual_network_ops = NULL;
 static gboolean delayed_connect_server(struct network *s);
 static gboolean connect_server(struct network *s);
 static gboolean close_server(struct network *s);
-static void reconnect(struct network *server, gboolean rm_source);
+static void reconnect(struct network *server);
 static void clients_send_state(GList *clients, struct network_state *s);
 
 struct new_network_notify_data {
@@ -303,13 +303,13 @@ static gboolean handle_server_receive (GIOChannel *c, GIOCondition cond, void *_
 
 	if (cond & G_IO_HUP) {
 		network_report_disconnect(server, "Hangup from server, scheduling reconnect");
-		reconnect(server, FALSE);
+		reconnect(server);
 		return FALSE;
 	}
 
 	if (cond & G_IO_ERR) {
 		network_report_disconnect(server, "Error from server, scheduling reconnect");
-		reconnect(server, FALSE);
+		reconnect(server);
 		return FALSE;
 	}
 
@@ -335,7 +335,7 @@ static gboolean handle_server_receive (GIOChannel *c, GIOCondition cond, void *_
 			return TRUE;
 		case G_IO_STATUS_EOF:
 			if (server->connection.state != NETWORK_CONNECTION_STATE_NOT_CONNECTED) 
-				reconnect(server, FALSE);
+				reconnect(server);
 			return FALSE;
 		case G_IO_STATUS_ERROR:
 			g_assert(err != NULL);
@@ -799,7 +799,7 @@ static gboolean connect_current_tcp_server(struct network *s)
 }
 
 
-static void reconnect(struct network *server, gboolean rm_source)
+static void reconnect(struct network *server)
 {
 	g_assert(server);
 
