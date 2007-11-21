@@ -672,7 +672,9 @@ static void ping_server(struct network *server, gboolean ping_source)
 {
 	gint silent_time = time(NULL) - server->connection.last_line_recvd;
 	if (silent_time > MAX_SILENT_TIME) {
-		disconnect_network(server);
+		network_report_disconnect(server, "Ping timeout (%d seconds)", 
+								  silent_time);
+		reconnect(server);
 	} else if (silent_time > MIN_SILENT_TIME) {
 		network_send_args(server, "PING", "ctrlproxy", NULL);
 	}
