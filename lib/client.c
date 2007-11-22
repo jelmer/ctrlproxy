@@ -772,7 +772,7 @@ const char *client_get_default_origin(struct client *c)
 
 const char *client_get_default_target(struct client *c)
 {
-	if (c->state->me.nick != NULL) 
+	if (c->state != NULL && c->state->me.nick != NULL) 
 		return c->state->me.nick;
 	
 	return "*";

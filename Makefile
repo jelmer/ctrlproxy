@@ -189,7 +189,8 @@ mods/lib%.$(SHLIBEXT): mods/%.o
 	@$(LD) $(LDFLAGS) -fPIC -shared -o $@ $^
 
 $(LIBIRC_STATIC): $(lib_objs)
-	ar -rcs $@ $^
+	@echo Linking $@
+	@ar -rcs $@ $^
 
 $(LIBIRC_SHARED): $(lib_objs)
 	$(LD) -shared $(LDFLAGS) -Wl,-soname,$(LIBIRC_SONAME) -o $@ $^

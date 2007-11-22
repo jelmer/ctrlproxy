@@ -388,6 +388,14 @@ static gboolean antiflood_allow_line(struct network *s)
 	return TRUE;
 }
 
+/**
+ * Actually send items from the server queue to the server.
+ * 
+ * @param ch IO Channel to use
+ * @param cond IO Condition
+ * @param user_data Network pointer
+ * @return Whether the queue still contains items
+ */
 static gboolean server_send_queue(GIOChannel *ch, GIOCondition cond, 
 								  gpointer user_data)
 {
