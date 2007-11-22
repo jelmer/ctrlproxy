@@ -3,6 +3,7 @@ Section: net
 Priority: optional
 Maintainer: Jelmer Vernooij <jelmer@samba.org>
 Uploaders: Wilmer van der Gaast <lintux@debian.org>
+Homepage: http://ctrlproxy.vernstok.nl/
 Standards-Version: 3.7.2
 Build-Depends: libglib2.0-dev, libgnutls-dev, debhelper (>> 5.0.0), check, xsltproc, libreadline-dev
 XS-Vcs-Bzr: http://people.samba.org/bzr/jelmer/ctrlproxy/debian
