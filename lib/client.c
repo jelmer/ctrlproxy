@@ -557,8 +557,6 @@ static gboolean handle_pending_client_receive(GIOChannel *c,
 
 				client->requested_username = g_strdup(l->args[1]);
 				client->requested_hostname = g_strdup(l->args[2]);
-
-
 			} else if (!g_strcasecmp(l->args[0], "PASS")) {
 				/* Silently drop... */
 			} else if (!g_strcasecmp(l->args[0], "CONNECT")) {
@@ -594,7 +592,8 @@ static gboolean handle_pending_client_receive(GIOChannel *c,
 
 			if (client->requested_nick != NULL &&
 				client->requested_username != NULL &&
-				client->requested_hostname != NULL) {
+				client->requested_hostname != NULL && 
+				client->state == NULL) {
 				client->state = network_state_init(client->requested_nick, 
 												   client->requested_username,
 												   client->requested_hostname);
@@ -669,6 +668,7 @@ struct client *client_init(struct network *n, GIOChannel *c, const char *desc)
 	g_assert(desc != NULL);
 
 	client = g_new0(struct client, 1);
+	client->references = 1;
 	g_assert(client);
 
 	g_io_channel_set_flags(c, G_IO_FLAG_NONBLOCK, NULL);
@@ -776,4 +776,17 @@ const char *client_get_default_target(struct client *c)
 		return c->state->me.nick;
 	
 	return "*";
+}
+
+struct client *client_ref(struct client *c) 
+{
+	if (c != NULL)
+		c->references++;
+	return c;
+}
+
+void client_unref(struct client *c) 
+{
+	if (c != NULL)
+		c->references--;
 }
