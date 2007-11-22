@@ -692,6 +692,7 @@ static gboolean connect_current_tcp_server(struct network *s)
 	struct addrinfo hints;
 	struct addrinfo *addrinfo = NULL;
 	int error;
+	socklen_t size;
 	gboolean connect_finished = TRUE;
 
 	g_assert(s != NULL);
@@ -740,6 +741,7 @@ static gboolean connect_current_tcp_server(struct network *s)
 
 		ioc = g_io_channel_unix_new(sock);
 		g_io_channel_set_flags(ioc, G_IO_FLAG_NONBLOCK, NULL);
+
 		if (connect(sock, res->ai_addr, res->ai_addrlen) < 0) {
 			if (errno == EINPROGRESS) {
 				connect_finished = FALSE;
@@ -752,6 +754,13 @@ static gboolean connect_current_tcp_server(struct network *s)
 
 		break; 
 	}
+
+	size = sizeof(struct sockaddr_storage);
+	g_assert(s->connection.data.tcp.local_name == NULL);
+	g_assert(s->connection.data.tcp.remote_name == NULL);
+	s->connection.data.tcp.remote_name = g_memdup(res->ai_addr, 
+												  res->ai_addrlen);
+	s->connection.data.tcp.namelen = getsockname(sock, s->connection.data.tcp.local_name, &size);
 
 	freeaddrinfo(addrinfo);
 
@@ -986,8 +995,6 @@ static gboolean server_finish_connect(GIOChannel *ioc, GIOCondition cond,
 								  void *data)
 {
 	struct network *s = data;
-	socklen_t size;
-	int sock = g_io_channel_unix_get_fd(ioc);
 	struct tcp_server_config *cs;
 
 	if (cond & G_IO_ERR) {
@@ -999,14 +1006,6 @@ static gboolean server_finish_connect(GIOChannel *ioc, GIOCondition cond,
 
 	if (cond & G_IO_OUT) {
 		s->connection.state = NETWORK_CONNECTION_STATE_CONNECTED;
-
-		size = sizeof(struct sockaddr_storage);
-		g_assert(s->connection.data.tcp.local_name == NULL);
-		g_assert(s->connection.data.tcp.remote_name == NULL);
-		s->connection.data.tcp.remote_name = g_malloc(size);
-		s->connection.data.tcp.local_name = g_malloc(size);
-		s->connection.data.tcp.namelen = getsockname(sock, s->connection.data.tcp.local_name, &size);
-		getpeername(sock, s->connection.data.tcp.remote_name, &size);
 
 		cs = s->connection.data.tcp.current_server;
 		if (cs->ssl) {
