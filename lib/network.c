@@ -760,6 +760,7 @@ static gboolean connect_current_tcp_server(struct network *s)
 	g_assert(s->connection.data.tcp.remote_name == NULL);
 	s->connection.data.tcp.remote_name = g_memdup(res->ai_addr, 
 												  res->ai_addrlen);
+	s->connection.data.tcp.local_name = g_malloc(size);
 	s->connection.data.tcp.namelen = getsockname(sock, s->connection.data.tcp.local_name, &size);
 
 	freeaddrinfo(addrinfo);
