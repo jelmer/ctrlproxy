@@ -470,7 +470,7 @@ static gboolean log_custom_data(struct network *network,
 		file_write_target(data, network, data->config->join, l); 
 	} else if (dir == FROM_SERVER && !g_strcasecmp(l->args[0], "PART")) {
 		file_write_channel_only(data, network, data->config->part, l);
-	} else if (!g_strcasecmp(l->args[0], "PRIVMSG")) {
+	} else if (!g_strcasecmp(l->args[0], "PRIVMSG") && l->args[2] != NULL) {
 		if (l->args[2][0] == '\001') { 
 			l->args[2][strlen(l->args[2])-1] = '\0';
 			if (!g_ascii_strncasecmp(l->args[2], "\001ACTION ", 8)) { 

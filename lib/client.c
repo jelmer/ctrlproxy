@@ -263,8 +263,6 @@ void disconnect_client(struct client *c, const char *reason)
 	if (c->network != NULL)
 		c->network->clients = g_list_remove(c->network->clients, c);
 
-	network_unref(c->network);
-
 	pending_clients = g_list_remove(pending_clients, c);
 
 	lose_client_hook_execute(c);
@@ -291,6 +289,7 @@ void disconnect_client(struct client *c, const char *reason)
 	g_free(c->requested_hostname);
 	g_queue_foreach(c->pending_lines, free_pending_line, NULL);
 	g_queue_free(c->pending_lines);
+	network_unref(c->network);
 	g_free(c);
 }
 

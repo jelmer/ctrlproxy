@@ -55,7 +55,7 @@ static void highlight_replicate(struct client *c)
 		return;
 
 	linestack_traverse(c->network->linestack, lm, NULL, check_highlight, c);
-	g_hash_table_replace(markers, c->network, linestack_get_marker(c->network->linestack));
+	g_hash_table_replace(markers, network_ref(c->network), linestack_get_marker(c->network->linestack));
 }
 
 static void none_replicate(struct client *c)
@@ -70,7 +70,7 @@ static void lastdisconnect_mark(struct client *c, void *userdata)
 		return;
 
 	if (c->network->linestack != NULL) 
-		g_hash_table_replace(lastdisconnect_backlog, c->network, 
+		g_hash_table_replace(lastdisconnect_backlog, network_ref(c->network), 
 							 linestack_get_marker(c->network->linestack));
 }
 
@@ -100,7 +100,8 @@ static gboolean log_data(struct network *n, const struct line *l, enum data_dire
 		g_strcasecmp(l->args[0], "NOTICE")) return TRUE;
 
 	if (n->linestack != NULL) 
-		g_hash_table_replace(simple_backlog, n, linestack_get_marker(n->linestack));
+		g_hash_table_replace(simple_backlog, network_ref(n), 
+							 linestack_get_marker(n->linestack));
 
 	return TRUE;
 }
@@ -136,7 +137,8 @@ static void load_config(struct global *global)
 {
     matches = g_key_file_get_string_list(global->config->keyfile,
                            "global", "match", NULL, NULL);
-	markers = g_hash_table_new_full(NULL, NULL, NULL, (GDestroyNotify)linestack_free_marker);
+	markers = g_hash_table_new_full(NULL, NULL, (GDestroyNotify)network_unref, 
+									(GDestroyNotify)linestack_free_marker);
 }
 
 gboolean init_replication(void)
@@ -147,8 +149,8 @@ gboolean init_replication(void)
 
 	register_load_config_notify(load_config);
 	add_lose_client_hook("repl_lastdisconnect", lastdisconnect_mark, NULL);
-	lastdisconnect_backlog = g_hash_table_new_full(NULL, NULL, NULL, (GDestroyNotify)linestack_free_marker);
-	simple_backlog = g_hash_table_new_full(NULL, NULL, NULL, (GDestroyNotify)linestack_free_marker);
+	lastdisconnect_backlog = g_hash_table_new_full(NULL, NULL, (GDestroyNotify)network_unref, (GDestroyNotify)linestack_free_marker);
+	simple_backlog = g_hash_table_new_full(NULL, NULL, (GDestroyNotify)network_unref, (GDestroyNotify)linestack_free_marker);
 	add_server_filter("repl_simple", log_data, NULL, 200);
 
 	return TRUE;
