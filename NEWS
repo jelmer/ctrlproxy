@@ -1,6 +1,12 @@
  Otherwise indicated differently, all changes made by 
      Jelmer Vernooij.
 
+Ctrlproxy 3.0.5 UNRELEASED
+
+  IMPROVEMENTS
+  
+    * Integrate auto-away module into the core.
+
 Ctrlproxy 3.0.4 UNRELEASED
 
   IMPROVEMENTS

@@ -40,6 +40,10 @@ autosave = true
 # Networks to connect to on startup. Seperate by semicolons
 autoconnect = admin
 # autoconnect = admin;irc.oftc.net;irc.freenode.net;
+#
+# Automatically set AWAY after a certain period of time
+#auto-away-message = I'm currently away, sorry!
+#auto-away-time = 300 # in seconds
 
 # Irssi-style logging
 [log-irssi]
@@ -49,7 +53,3 @@ autoconnect = admin
 #[socks]
 #allow = jelmer:secret, foo:bar
 
-# Automatically set AWAY after a certain period of time
-#[auto-away]
-#message = I'm currently away, sorry!
-#time = 300 # in seconds

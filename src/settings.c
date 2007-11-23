@@ -726,30 +726,44 @@ static void config_load_auto_away(struct ctrlproxy_config *config)
 	struct auto_away_config *d;
 	GKeyFile *kf = config->keyfile;
 
-	if (!g_key_file_has_group(kf, "auto-away")) {
-		del_server_filter("auto-away");
+	if (g_key_file_has_group(kf, "auto-away")) {
+		d = g_new0(struct auto_away_config, 1);
+		
+		d->message = g_key_file_get_string(kf, "auto-away", "message", NULL);
+		d->nick = g_key_file_get_string(kf, "auto-away", "nick", NULL);
+		if (g_key_file_has_key(kf, "auto-away", "client_limit", NULL)) {
+			d->client_limit = g_key_file_get_integer(kf, "auto-away", "client_limit", NULL);
+			if (g_key_file_has_key(kf, "auto-away", "only_noclient", NULL))
+				log_global(LOG_WARNING, "auto-away: not using only_noclient because client_limit is set");
+		}
+		else if (g_key_file_has_key(kf, "auto-away", "only_noclient", NULL)) {
+			d->client_limit = g_key_file_get_boolean(kf, "auto-away", "only_noclient", NULL) ? 0 : -1;
+			log_global(LOG_WARNING, "auto-away: only_noclient is deprecated, please use client_limit instead");
+		}
+		else
+			d->client_limit = -1;
+		if (g_key_file_has_key(kf, "auto-away", "time", NULL))
+			d->max_idle_time = g_key_file_get_integer(kf, "auto-away", "time", NULL);
+		else
+			d->max_idle_time = AUTO_AWAY_DEFAULT_TIME;
+	} else if (g_key_file_has_key(kf, "global", "auto-away-enable", NULL) &&
+			   g_key_file_get_boolean(kf, "global", "auto-away-enable", NULL)) {
+		d = g_new0(struct auto_away_config, 1);
+		
+		d->message = g_key_file_get_string(kf, "global", "auto-away-message", NULL);
+		d->nick = g_key_file_get_string(kf, "global", "auto-away-nick", NULL);
+		if (g_key_file_has_key(kf, "global", "auto-away-client-limit", NULL)) {
+			d->client_limit = g_key_file_get_integer(kf, "global", "auto-away-client-limit", NULL);
+		}
+		else
+			d->client_limit = -1;
+		if (g_key_file_has_key(kf, "global", "auto-away-time", NULL))
+			d->max_idle_time = g_key_file_get_integer(kf, "global", "auto-away-time", NULL);
+		else
+			d->max_idle_time = AUTO_AWAY_DEFAULT_TIME;
+	} else {
 		return;
 	}
-
-	d = g_new0(struct auto_away_config, 1);
-	
-	d->message = g_key_file_get_string(kf, "auto-away", "message", NULL);
-	d->nick = g_key_file_get_string(kf, "auto-away", "nick", NULL);
-	if (g_key_file_has_key(kf, "auto-away", "client_limit", NULL)) {
-		d->client_limit = g_key_file_get_integer(kf, "auto-away", "client_limit", NULL);
-		if (g_key_file_has_key(kf, "auto-away", "only_noclient", NULL))
-			log_global(LOG_WARNING, "auto-away: not using only_noclient because client_limit is set");
-	}
-	else if (g_key_file_has_key(kf, "auto-away", "only_noclient", NULL)) {
-		d->client_limit = g_key_file_get_boolean(kf, "auto-away", "only_noclient", NULL) ? 0 : -1;
-		log_global(LOG_WARNING, "auto-away: only_noclient is deprecated, please use client_limit instead");
-	}
-	else
-		d->client_limit = -1;
-	if (g_key_file_has_key(kf, "auto-away", "time", NULL))
-		d->max_idle_time = g_key_file_get_integer(kf, "auto-away", "time", NULL);
-	else
-		d->max_idle_time = AUTO_AWAY_DEFAULT_TIME;
 
 	config->auto_away = d;
 }
