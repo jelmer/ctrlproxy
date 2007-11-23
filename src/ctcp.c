@@ -22,6 +22,9 @@
 #include <sys/utsname.h>
 #endif
 
+/**
+ * Represents a CTCP request
+ */
 struct ctcp_handle 
 {
 	struct network *network;

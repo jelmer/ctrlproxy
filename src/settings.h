@@ -102,6 +102,9 @@ struct allow_rule {
 	char *password;
 };
 
+/**
+ * Configuration for a single listener
+ */
 struct listener_config {
 	gboolean ssl;
 	gpointer ssl_credentials;
