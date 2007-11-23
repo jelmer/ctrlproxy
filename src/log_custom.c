@@ -94,16 +94,12 @@ static char *get_year(struct network *n, const struct line *l,
 static char *get_user(struct network *n, const struct line *l, 
 					  gboolean case_sensitive) 
 {
-	char *nick = NULL;
 	char *user = NULL;
 
-	if (l->origin != NULL) 
-		nick = g_strdup(l->origin);
-	if (nick != NULL) 
-		user = strchr(nick, '!');
-	if (user != NULL) { 
-		*user = '\0'; 
-		user++; 
+	if (l->origin != NULL) {
+		user = strchr(l->origin, '!');
+		if (user != NULL)
+			user++; 
 	}
 
 	if (case_sensitive) 
