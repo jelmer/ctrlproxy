@@ -499,6 +499,62 @@ static gboolean welcome_client(struct client *client)
 	return TRUE;
 }
 
+static gboolean process_from_pending_client(struct client *client, 
+											const struct line *l)
+{
+	extern struct global *my_global;
+
+	if (!g_strcasecmp(l->args[0], "NICK")) {
+		if (l->argc < 2) {
+			client_send_response(client, ERR_NEEDMOREPARAMS,
+						 l->args[0], "Not enough parameters", NULL);
+			return TRUE;
+		}
+
+		client->requested_nick = g_strdup(l->args[1]);
+	} else if (!g_strcasecmp(l->args[0], "USER")) {
+
+		if (l->argc < 5) {
+			client_send_response(client, ERR_NEEDMOREPARAMS, 
+							 l->args[0], "Not enough parameters", NULL);
+			return TRUE;
+		}
+
+		client->requested_username = g_strdup(l->args[1]);
+		client->requested_hostname = g_strdup(l->args[2]);
+	} else if (!g_strcasecmp(l->args[0], "PASS")) {
+		/* Silently drop... */
+	} else if (!g_strcasecmp(l->args[0], "CONNECT")) {
+		if (l->argc < 2) {
+			client_send_response(client, ERR_NEEDMOREPARAMS,
+							 l->args[0], "Not enough parameters", NULL);
+			return TRUE;
+		}
+
+		client->network = find_network_by_hostname(my_global, 
+				l->args[1], l->args[2]?atoi(l->args[2]):6667, TRUE);
+
+		if (!client->network) {
+			log_client(LOG_ERROR, client, 
+				"Unable to connect to network with name %s", 
+				l->args[1]);
+		}
+
+		if (client->network->connection.state == NETWORK_CONNECTION_STATE_NOT_CONNECTED) {
+			client_send_args(client, "NOTICE", 
+								client_get_default_target(client),
+								"Connecting to network", NULL);
+			connect_network(client->network);
+		}
+	} else {
+		client_send_response(client, ERR_NOTREGISTERED, 
+			"Register first", 
+			client_get_default_origin(client), NULL);
+	}
+
+	return TRUE;
+}
+
 /**
  * Handles incoming messages from the client
  * @param c IO Channel to receive from
@@ -510,7 +566,6 @@ static gboolean handle_pending_client_receive(GIOChannel *c,
 {
 	struct client *client = (struct client *)_client;
 	struct line *l;
-	extern struct global *my_global;
 
 	g_assert(client);
 	g_assert(c);
@@ -544,56 +599,10 @@ static gboolean handle_pending_client_receive(GIOChannel *c,
 			}
 
 			g_assert(l->args[0]);
-
-			if (!g_strcasecmp(l->args[0], "NICK")) {
-				if (l->argc < 2) {
-					client_send_response(client, ERR_NEEDMOREPARAMS,
-								 l->args[0], "Not enough parameters", NULL);
-					free_line(l);
-					continue;
-				}
-
-				client->requested_nick = g_strdup(l->args[1]);
-			} else if (!g_strcasecmp(l->args[0], "USER")) {
-
-				if (l->argc < 5) {
-					client_send_response(client, ERR_NEEDMOREPARAMS, 
-									 l->args[0], "Not enough parameters", NULL);
-					free_line(l);
-					continue;
-				}
-
-				client->requested_username = g_strdup(l->args[1]);
-				client->requested_hostname = g_strdup(l->args[2]);
-			} else if (!g_strcasecmp(l->args[0], "PASS")) {
-				/* Silently drop... */
-			} else if (!g_strcasecmp(l->args[0], "CONNECT")) {
-				if (l->argc < 2) {
-					client_send_response(client, ERR_NEEDMOREPARAMS,
-									 l->args[0], "Not enough parameters", NULL);
-					free_line(l);
-					continue;
-				}
-
-				client->network = find_network_by_hostname(my_global, 
-						l->args[1], l->args[2]?atoi(l->args[2]):6667, TRUE);
-
-				if (!client->network) {
-					log_client(LOG_ERROR, client, 
-						"Unable to connect to network with name %s", 
-						l->args[1]);
-				}
-
-				if (client->network->connection.state == NETWORK_CONNECTION_STATE_NOT_CONNECTED) {
-					client_send_args(client, "NOTICE", 
-										client_get_default_target(client),
-										"Connecting to network", NULL);
-					connect_network(client->network);
-				}
-			} else {
-				client_send_response(client, ERR_NOTREGISTERED, 
-					"Register first", 
-					client_get_default_origin(client), NULL);
+			
+			if (!process_from_pending_client(client, l)) {
+				free_line(l);
+				return FALSE;
 			}
 
 			free_line(l);
