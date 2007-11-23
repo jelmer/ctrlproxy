@@ -11,8 +11,10 @@ Ctrlproxy 3.0.4 UNRELEASED
 
     * Announce number of clients/channels during client login. (#162)
 
-	* Add "set" command in the administration interface, including 
-	  initial settings "log_level", "motd-file" and "report-time". (#6)
+    * Add "set" command in the administration interface, including 
+      initial settings "log_level", "motd-file" and "report-time". (#6)
+
+    * Add "default-network" setting.
 
   BUG FIXES
 
@@ -67,9 +69,9 @@ Ctrlproxy 3.0.4 UNRELEASED
 
     * Make connect to networks non-blocking. (#133)
 
-	* Support IRCD 005 parameter. (#160)
+    * Support IRCD 005 parameter. (#160)
 
-	* Redirect DCC messages to clients. (#163)
+    * Redirect DCC messages to clients. (#163)
 
   NEW FEATURES
 

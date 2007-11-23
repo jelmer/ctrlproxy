@@ -31,6 +31,10 @@ password=
 # Set "bind" to make ctrlproxy only listen on a specific IP address:
 #bind=192.168.4.3
 
+# Network that will be used when simply connecting to ctrlproxy 
+# without using SOCKS or the CONNECT command
+default-network=admin
+
 # Override motd-file location
 #motd-file = /tmp/my-motd
 

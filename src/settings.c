@@ -179,6 +179,10 @@ static void config_save_listeners(struct ctrlproxy_config *cfg, const char *path
 
 			if (g_key_file_has_key(cfg->keyfile, "global", "ssl", NULL) || l->ssl)
 				g_key_file_set_boolean(cfg->keyfile, "global", "ssl", l->ssl);
+
+			if (l->network != NULL)
+				g_key_file_set_string(cfg->keyfile, "global", "default-network",
+								  l->network);
 		} else {
 			char *tmp;
 			empty = FALSE;
@@ -582,6 +586,8 @@ static void config_load_listeners(struct ctrlproxy_config *cfg)
 		l->ssl = g_key_file_has_key(cfg->keyfile, "global", "ssl", NULL) &&
 				 g_key_file_get_boolean(cfg->keyfile, "global", "ssl", NULL);
 		l->is_default = TRUE;
+
+		l->network = g_key_file_get_string(cfg->keyfile, "global", "default-network", NULL);
 
 		cfg->listeners = g_list_append(cfg->listeners, l);
 	}
