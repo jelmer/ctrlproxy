@@ -24,11 +24,13 @@
 static void free_file_info(void *_data)
 {
 	struct log_file_info *data = _data;
+
+	if (data == NULL)
+		return;
 	
-	if (data != NULL) {
+	if (data->file != NULL)
 		fclose(data->file);
-		g_free(data);
-	}
+	g_free(data);
 }
 
 struct log_support_context *log_support_init(void)
@@ -72,19 +74,21 @@ gboolean log_support_write(struct log_support_context *ctx,
 					   const char *text)
 {
 	struct log_file_info *fi;
+
+	if (ctx->num_opened > MAX_OPEN_LOGFILES)
+		log_support_cleanup(ctx);
 	
 	/* First, check if the file is still present in the hash table */
 	fi = g_hash_table_lookup(ctx->files, path);
 
 	if (fi == NULL) {
 		fi = g_new0(struct log_file_info, 1);
+		g_assert(fi != NULL);
 		g_hash_table_insert(ctx->files, g_strdup(path), fi);
 	}
 
 	if (fi->file == NULL) {
 		char *dirpath;
-		if (ctx->num_opened > MAX_OPEN_LOGFILES)
-			log_support_cleanup(ctx);
 
 		dirpath = g_path_get_dirname(path);
 		if (g_mkdir_with_parents(dirpath, 0700) == -1) {
