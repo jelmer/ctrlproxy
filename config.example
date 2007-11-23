@@ -41,10 +41,6 @@ autosave = true
 autoconnect = admin
 # autoconnect = admin;irc.oftc.net;irc.freenode.net;
 
-# Support for interfacing to ctrlproxy 
-# using /MSG ctrlproxy or /CTRLPROXY -->
-[admin]
-
 # Irssi-style logging
 [log-irssi]
 # logfile = /home/jelmer/tmp/ctrlproxy
