@@ -7,7 +7,7 @@ Ctrlproxy 3.0.5 UNRELEASED
   
     * Integrate auto-away module into the core.
 
-	* New setting ``autosave''
+	* New settings ``autosave'', ``replication''
 
 Ctrlproxy 3.0.4 UNRELEASED
 

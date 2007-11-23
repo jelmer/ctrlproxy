@@ -1017,6 +1017,28 @@ static char *autosave_get(admin_handle h)
 	return g_strdup(g->config->autosave?"true":"false");
 }
 
+static char *replication_get(admin_handle h)
+{
+	struct global *g = admin_get_global(h);
+
+	return g_strdup(g->config->replication);
+}
+
+static gboolean replication_set(admin_handle h, const char *value)
+{
+	struct global *g = admin_get_global(h);
+
+	if (repl_find_backend(value) == NULL) {
+		admin_out(h, "No such replication backend `%s'", value);
+		return FALSE;
+	}
+
+	g_free(g->config->replication);
+	g->config->replication = g_strdup(value);
+
+	return TRUE;
+}
+
 static struct admin_setting {
 	const char *name;
 	char *(*get) (admin_handle h);
@@ -1026,6 +1048,7 @@ static struct admin_setting {
 	{ "motd-file", motd_file_get, motd_file_set },
 	{ "report-time", report_time_get, report_time_set },
 	{ "autosave", autosave_get, autosave_set },
+	{ "replication", replication_get, replication_set },
 	{ NULL, NULL, NULL }
 };
 

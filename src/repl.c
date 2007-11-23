@@ -249,6 +249,22 @@ void register_replication_backend(const struct replication_backend *backend)
 	backends = g_list_append(backends, g_memdup(backend, sizeof(*backend)));
 }
 
+struct replication_backend *repl_find_backend(const char *name)
+{
+	GList *gl;
+
+	if (name == NULL)
+		name = "none";
+
+	for (gl = backends; gl; gl = gl->next) {
+		struct replication_backend *backend = gl->data;
+		if (!strcmp(backend->name, name))
+			return backend;
+	}
+
+	return NULL;
+}
+
 /**
  * Replicate the current state and backlog to the client.
  *
@@ -256,22 +272,12 @@ void register_replication_backend(const struct replication_backend *backend)
  */
 void client_replicate(struct client *client)
 {
-	void (*fn) (struct client *);
 	const char *bn = client->network->global->config->replication;
-	GList *gl;
+	struct replication_backend *backend;
 	
-	if (bn == NULL)
-		bn = "none";
+	backend = repl_find_backend(bn);
 
-	fn = NULL;
-
-	for (gl = backends; gl; gl = gl->next) {
-		struct replication_backend *backend = gl->data;
-		if (!strcmp(backend->name, bn))
-			fn = backend->replication_fn;
-	}
-
-	if (fn == NULL) {
+	if (backend == NULL) {
 		log_client(LOG_WARNING, client, 
 				   "Unable to find replication backend '%s'", bn);
 
@@ -281,5 +287,5 @@ void client_replicate(struct client *client)
 		return;
 	} 
 
-	fn(client);
+	backend->replication_fn(client);
 }

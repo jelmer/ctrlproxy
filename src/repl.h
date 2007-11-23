@@ -34,5 +34,6 @@ struct replication_backend {
 };
 
 void register_replication_backend(const struct replication_backend *);
+struct replication_backend *repl_find_backend(const char *name);
 
 #endif /* __CTRLPROXY_REPL_H__ */

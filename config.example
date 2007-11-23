@@ -42,6 +42,7 @@ autoconnect = admin
 # autoconnect = admin;irc.oftc.net;irc.freenode.net;
 #
 # Automatically set AWAY after a certain period of time
+#auto-away-enable = true
 #auto-away-message = I'm currently away, sorry!
 #auto-away-time = 300 # in seconds
 
