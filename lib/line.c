@@ -207,6 +207,7 @@ static gboolean requires_colon(const struct line *l)
 	case RPL_TRACECONNECTING:
 	case RPL_TRACEUNKNOWN:
 	case RPL_TRACEOPERATOR:
+	case RPL_CREATIONTIME:
 	case RPL_TRACEUSER:
 	case RPL_TRACESERVER:
 	case RPL_TRACENEWTYPE:
