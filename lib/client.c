@@ -627,6 +627,7 @@ static gboolean handle_pending_client_receive(GIOChannel *c,
 					return FALSE;
 				}
 
+				g_source_remove(client->incoming_id);
 				client->incoming_id = g_io_add_watch(client->incoming, 
 							 G_IO_IN | G_IO_HUP | G_IO_ERR, handle_client_receive, client);
 
