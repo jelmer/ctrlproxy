@@ -120,6 +120,7 @@ static gboolean handle_client_line(GIOChannel *c, struct pending_client *pc,
 
 			desc = g_io_channel_ip_get_description(c);
 			client_init(n, c, desc);
+			g_free(desc);
 
 			return FALSE;
 		} else {
@@ -203,6 +204,8 @@ static gboolean handle_client_detect(GIOChannel *ioc, struct pending_client *pc)
 		l = irc_parse_line(cvrt);
 
 		ret = handle_client_line(ioc, pc, l);
+
+		free_line(l);
 
 		g_free(cvrt);
 

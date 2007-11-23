@@ -251,10 +251,11 @@ static void free_pending_line(void *_line, void *userdata)
 void disconnect_client(struct client *c, const char *reason) 
 {
 	g_assert(c != NULL);
+	if (c->connected == FALSE)
+		return;
 	c->connected = FALSE;
 	g_assert(c->incoming != NULL);
 
-	g_io_channel_unref(c->incoming);
 	g_source_remove(c->incoming_id);
 	if (c->outgoing_id)
 		g_source_remove(c->outgoing_id);
@@ -622,6 +623,10 @@ static gboolean handle_pending_client_receive(GIOChannel *c,
 
 				pending_clients = g_list_remove(pending_clients, client);
 				client->network->clients = g_list_append(client->network->clients, client);
+
+				handle_client_receive(client->incoming, 
+									  g_io_channel_get_buffer_condition(client->incoming), client);
+
 				log_client(LOG_INFO, client, "New client");
 
 				return FALSE;
@@ -684,6 +689,7 @@ struct client *client_init(struct network *n, GIOChannel *c, const char *desc)
 	client->ping_id = g_timeout_add(1000 * 300, (GSourceFunc)client_ping, 
 									client);
 	client->incoming = c;
+	g_io_channel_ref(client->incoming);
 	client->network = network_ref(n);
 	client->description = g_strdup(desc);
 	client->connected = TRUE;
@@ -697,6 +703,7 @@ struct client *client_init(struct network *n, GIOChannel *c, const char *desc)
 	if (!charset_ok)
 		client_set_charset(client, DEFAULT_CLIENT_CHARSET);
 
+	pending_clients = g_list_append(pending_clients, client);
 	client->incoming_id = g_io_add_watch(client->incoming, G_IO_IN | G_IO_HUP, 
 										 handle_pending_client_receive, client);
 
@@ -704,7 +711,6 @@ struct client *client_init(struct network *n, GIOChannel *c, const char *desc)
 				  g_io_channel_get_buffer_condition(client->incoming),
 				  client);
 
-	pending_clients = g_list_append(pending_clients, client);
 	return client;
 }
 
