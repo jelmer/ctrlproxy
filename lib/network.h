@@ -80,9 +80,10 @@ struct network_connection {
 			void *private_data;
 			struct virtual_network_ops {
 				char *name;
+				gboolean not_disconnectable;
 				gboolean (*init) (struct network *);
 				gboolean (*to_server) (struct network *, struct client *c, const struct line *);
-				gboolean (*fini) (struct network *);
+				void (*fini) (struct network *);
 			} *ops;
 		} virtual;
 	} data;

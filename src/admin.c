@@ -281,6 +281,10 @@ static void cmd_disconnect_network (admin_handle h, char **args, void *userdata)
 
 	if (n->connection.state == NETWORK_CONNECTION_STATE_NOT_CONNECTED) {
 		admin_out(h, "Already disconnected from `%s'", n->info.name);
+	} else if (n->config->type == NETWORK_VIRTUAL && 
+		n->connection.data.virtual.ops->not_disconnectable) {
+		admin_out(h, "Built-in network `%s' can't be disconnected", 
+				  n->info.name);
 	} else {
 		admin_out(h, "Disconnecting from `%s'", n->info.name);
 		disconnect_network(n);
@@ -794,7 +798,10 @@ static gboolean admin_to_server (struct network *n, struct client *c, const stru
 }
 
 struct virtual_network_ops admin_network = {
-	"admin", admin_net_init, admin_to_server, NULL
+	.name = "admin", 
+	.init = admin_net_init, 
+	.to_server = admin_to_server, 
+	.not_disconnectable = TRUE,
 };
 
 

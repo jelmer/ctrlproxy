@@ -1295,6 +1295,7 @@ gboolean disconnect_network(struct network *s)
 	if (s->connection.state == NETWORK_CONNECTION_STATE_NOT_CONNECTED) {
 		return FALSE;
 	}
+
 	log_network(LOG_INFO, s, "Disconnecting");
 	return close_server(s);
 }

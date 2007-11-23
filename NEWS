@@ -17,6 +17,8 @@ Ctrlproxy 3.0.4 UNRELEASED
     * Add "default-network" setting.
 
   BUG FIXES
+    
+    * Don't allow disconnect of admin network. (#164)
 
     * Clearer error messages during disconnect.
 
