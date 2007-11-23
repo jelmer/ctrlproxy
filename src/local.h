@@ -32,5 +32,8 @@
 /* Default port that will be used if no port was specified */
 #define DEFAULT_IRC_PORT "6667"
 
+/* Standard auto-away time if auto-away is enabled but 
+ * no time was specified. In seconds. */
+#define AUTO_AWAY_DEFAULT_TIME (10 * 60)
 
 #endif /* _CTRLPROXY_LOCAL_H_ */

@@ -116,6 +116,13 @@ struct listener_config {
 	gboolean is_default; /* Whether this is the "default" listener, stored in ~/.ctrlproxy/config */
 };
 
+struct auto_away_config {
+	time_t max_idle_time;
+	gint client_limit;
+	char *message;
+	char *nick;
+};
+
 /**
  * Configuration
  */
@@ -139,6 +146,7 @@ struct ctrlproxy_config {
 	int listener_autoport;
 	gboolean learn_nickserv;
 	gboolean learn_network_name;
+	struct auto_away_config *auto_away;
 };
 
 /* config.c */

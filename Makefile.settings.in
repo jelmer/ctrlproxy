@@ -19,7 +19,6 @@ cdatadir = @datadir@/ctrlproxy
 EXEEXT = @EXEEXT@
 OBJEXT = @OBJEXT@
 CFLAGS = @CFLAGS@ @COMMON_CFLAGS@
-MODS_SHARED = auto_away @MODS_SHARED@
 LDFLAGS = @LDFLAGS@
 BINS = @BINS@
 scriptdir = $(cdatadir)/scripts
