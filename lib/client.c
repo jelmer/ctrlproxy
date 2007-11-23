@@ -531,10 +531,10 @@ static gboolean process_from_pending_client(struct client *client,
 			return TRUE;
 		}
 
-		client->network = find_network_by_hostname(my_global, 
-				l->args[1], l->args[2]?atoi(l->args[2]):6667, TRUE);
+		client->network = network_ref(find_network_by_hostname(my_global, 
+				l->args[1], l->args[2]?atoi(l->args[2]):6667, TRUE));
 
-		if (!client->network) {
+		if (client->network == NULL) {
 			log_client(LOG_ERROR, client, 
 				"Unable to connect to network with name %s", 
 				l->args[1]);
