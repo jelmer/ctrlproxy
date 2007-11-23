@@ -1003,6 +1003,20 @@ static gboolean report_time_set(admin_handle h, const char *value)
 	return interpret_boolean(h, value, &g->config->report_time);
 }
 
+static gboolean autosave_set(admin_handle h, const char *value)
+{
+	struct global *g = admin_get_global(h);
+
+	return interpret_boolean(h, value, &g->config->autosave);
+}
+
+static char *autosave_get(admin_handle h)
+{
+	struct global *g = admin_get_global(h);
+
+	return g_strdup(g->config->autosave?"true":"false");
+}
+
 static struct admin_setting {
 	const char *name;
 	char *(*get) (admin_handle h);
@@ -1011,6 +1025,7 @@ static struct admin_setting {
 	{ "log_level", log_level_get, log_level_set },
 	{ "motd-file", motd_file_get, motd_file_set },
 	{ "report-time", report_time_get, report_time_set },
+	{ "autosave", autosave_get, autosave_set },
 	{ NULL, NULL, NULL }
 };
 
