@@ -664,34 +664,59 @@ static void config_load_networks(struct ctrlproxy_config *cfg)
 	g_dir_close(dir);
 }
 
-#define FETCH_SETTING(data, kf, name) (data)->name = g_key_file_get_string((kf), "log-custom", __STRING(name), NULL)
+#define FETCH_SETTING(data, kf, section, prefix, name) (data)->name = g_key_file_get_string((kf), (section), prefix __STRING(name), NULL)
 
 static void config_load_log(struct ctrlproxy_config *config)
 {
 	GKeyFile *kf = config->keyfile;
 	struct log_file_config *data;
 	char *logbasedir;
+	char *logging = NULL;
+
+	if (g_key_file_get_string(kf, "global", "logging", NULL) != NULL) {
+		logging = g_key_file_get_string(kf, "global", "logging", NULL);
+	}
 
 	if (g_key_file_has_group(kf, "log-custom")) {
 		data = g_new0(struct log_file_config, 1);
 
-		FETCH_SETTING(data, kf, nickchange);
-		FETCH_SETTING(data, kf, logfilename);
-		FETCH_SETTING(data, kf, topic);
-		FETCH_SETTING(data, kf, notopic);
-		FETCH_SETTING(data, kf, part);
-		FETCH_SETTING(data, kf, join);
-		FETCH_SETTING(data, kf, msg);
-		FETCH_SETTING(data, kf, notice);
-		FETCH_SETTING(data, kf, action);
-		FETCH_SETTING(data, kf, kick);
-		FETCH_SETTING(data, kf, quit);
-		FETCH_SETTING(data, kf, mode);
+		FETCH_SETTING(data, kf, "log-custom", "", nickchange);
+		FETCH_SETTING(data, kf, "log-custom", "", logfilename);
+		FETCH_SETTING(data, kf, "log-custom", "", topic);
+		FETCH_SETTING(data, kf, "log-custom", "", notopic);
+		FETCH_SETTING(data, kf, "log-custom", "", part);
+		FETCH_SETTING(data, kf, "log-custom", "", join);
+		FETCH_SETTING(data, kf, "log-custom", "", msg);
+		FETCH_SETTING(data, kf, "log-custom", "", notice);
+		FETCH_SETTING(data, kf, "log-custom", "", action);
+		FETCH_SETTING(data, kf, "log-custom", "", kick);
+		FETCH_SETTING(data, kf, "log-custom", "", quit);
+		FETCH_SETTING(data, kf, "log-custom", "", mode);
 
 		log_custom_load(data);
 	}
 
-	if (g_key_file_has_group(kf, "log-irssi")) {
+	if (logging != NULL && !strcmp(logging, "custom")) {
+		data = g_new0(struct log_file_config, 1);
+
+		FETCH_SETTING(data, kf, "global", "", logfilename);
+		FETCH_SETTING(data, kf, "global", "log-format-", nickchange);
+		FETCH_SETTING(data, kf, "global", "log-format-", topic);
+		FETCH_SETTING(data, kf, "global", "log-format-", notopic);
+		FETCH_SETTING(data, kf, "global", "log-format-", part);
+		FETCH_SETTING(data, kf, "global", "log-format-", join);
+		FETCH_SETTING(data, kf, "global", "log-format-", msg);
+		FETCH_SETTING(data, kf, "global", "log-format-", notice);
+		FETCH_SETTING(data, kf, "global", "log-format-", action);
+		FETCH_SETTING(data, kf, "global", "log-format-", kick);
+		FETCH_SETTING(data, kf, "global", "log-format-", quit);
+		FETCH_SETTING(data, kf, "global", "log-format-", mode);
+
+		log_custom_load(data);
+	}
+
+	if (g_key_file_has_group(kf, "log-irssi") || 
+		(logging != NULL && !strcmp(logging, "irssi"))) {
 		data = g_new0(struct log_file_config, 1);
 
 		data->join = "%h:%M -!- %n [%u] has joined %c";
@@ -706,11 +731,13 @@ static void config_load_log(struct ctrlproxy_config *config)
 		data->notopic = "%h:%M -!- %n has removed the topic";
 		data->nickchange = "%h:%M -!- %n is now known as %r";
 
-		if (!g_key_file_has_key(kf, "log-irssi", "logfile", NULL)) {
+		if (g_key_file_has_key(kf, "log-irssi", "logfile", NULL)) {
+			logbasedir = g_key_file_get_string(kf, "log-irssi", "logfile", NULL);
+		} else if (g_key_file_has_key(kf, "global", "logfile", NULL)) {
+			logbasedir = g_key_file_get_string(kf, "global", "logfile", NULL);
+		} else {
 			logbasedir = g_build_filename(config->config_dir, 
 										  "log_irssi", NULL);
-		} else {
-			logbasedir = g_key_file_get_string(kf, "log-irssi", "logfile", NULL);
 		}
 
 		data->logfilename = g_strdup_printf("%s/%%N/%%@", logbasedir);
@@ -719,6 +746,15 @@ static void config_load_log(struct ctrlproxy_config *config)
 
 		log_custom_load(data);
 	}
+
+	if (logging != NULL && 
+			strcmp(logging, "irssi") != 0 && 
+			strcmp(logging, "custom") != 0 &&
+			strcmp(logging, "none") != 0) {
+		log_global(LOG_WARNING, "Unknown log type `%s'", logging);
+	}
+
+	g_free(logging);
 }
 
 static void config_load_auto_away(struct ctrlproxy_config *config)

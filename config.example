@@ -47,8 +47,8 @@ autoconnect = admin
 #auto-away-time = 300 # in seconds
 
 # Irssi-style logging
-[log-irssi]
-# logfile = /home/jelmer/tmp/ctrlproxy
+#logging = irssi
+#logfile = /home/jelmer/tmp/ctrlproxy
 
 # Work as a socks proxy
 #[socks]

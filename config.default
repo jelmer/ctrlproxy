@@ -65,8 +65,8 @@ admin-log = true
 #auto-away-time = 300 # in seconds
 #auto-away-nick = jelmer|away
 
-# Irssi-style logging
-[log-irssi]
+# Logging
+#logging = none|irssi|custom
 #logfile = /home/jelmer/tmp/ctrlproxy
 
 # Work as a socks proxy
