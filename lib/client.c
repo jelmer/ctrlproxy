@@ -251,9 +251,10 @@ static void free_pending_line(void *_line, void *userdata)
 void disconnect_client(struct client *c, const char *reason) 
 {
 	g_assert(c != NULL);
+	c->connected = FALSE;
 	g_assert(c->incoming != NULL);
 
-	g_io_channel_ref(c->incoming);
+	g_io_channel_unref(c->incoming);
 	g_source_remove(c->incoming_id);
 	if (c->outgoing_id)
 		g_source_remove(c->outgoing_id);
@@ -281,6 +282,12 @@ void disconnect_client(struct client *c, const char *reason)
 	if (c->exit_on_close) 
 		exit(0);
 
+	client_unref(c);
+}
+
+static void free_client(struct client *c)
+{
+	g_assert(c->connected == FALSE);
 	g_free(c->charset);
 	g_free(c->description);
 	free_network_state(c->state);
@@ -787,6 +794,10 @@ struct client *client_ref(struct client *c)
 
 void client_unref(struct client *c) 
 {
-	if (c != NULL)
-		c->references--;
+	if (c == NULL)
+		return;
+
+	c->references--;
+	if (c->references == 0)
+		free_client(c);
 }

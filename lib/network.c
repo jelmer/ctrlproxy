@@ -1300,30 +1300,6 @@ gboolean disconnect_network(struct network *s)
 }
 
 /**
- * Check whether a client is still associated with a network.
- *
- * The client pointer does not have to point to a valid piece of memory.
- *
- * @param s Network the client should be associated with.
- * @param c The client.
- * @return Whether the client is still associated with the network.
- */
-gboolean verify_client(const struct network *s, const struct client *c)
-{
-	GList *gl;
-
-	g_assert(s);
-	g_assert(c);
-	
-	for (gl = s->clients; gl; gl = gl->next) {
-		struct client *nc = (struct client *)gl->data;
-		if (c == nc) return 1;
-	}
-
-	return 0;
-}
-
-/**
  * Register a new virtual network type.
  *
  * @param ops Callback functions for the virtual network type.

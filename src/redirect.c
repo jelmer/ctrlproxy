@@ -570,7 +570,7 @@ gboolean redirect_response(struct network *network, struct line *l)
 			is_reply(s->query->end_replies, n))) {
 			
 			/* Send to client that queried, if that client still exists */
-			if (s->client != NULL && verify_client(s->network, s->client)) {
+			if (s->client != NULL) {
 				c = s->client;
 				client_send_line(s->client, l);
 			}
@@ -579,6 +579,7 @@ gboolean redirect_response(struct network *network, struct line *l)
 				/* Remove from stack */
 				if (p == NULL)stack = s->next;	
 				else p->next = s->next;
+				client_unref(s->client);
 				g_free(s);
 			}
 
@@ -635,6 +636,7 @@ void redirect_clear(const struct network *net)
 		if (p == NULL)stack = q->next;	
 		else p->next = q->next;
 		n = q->next;
+		client_unref(q->client);
 		g_free(q);
 		q = n;
 	}
@@ -674,7 +676,7 @@ static int handle_default(const struct line *l, const struct network *n,
 	g_assert(n != NULL);
 	g_assert(q != NULL);
 	s->network = n;
-	s->client = c;
+	s->client = client_ref(c);
 	s->time = time(NULL);
 	s->query = q;
 	s->next = stack;
