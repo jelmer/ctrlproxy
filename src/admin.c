@@ -130,7 +130,7 @@ struct global *admin_get_global(admin_handle h)
 
 /**
  * Return the network handle associated with an admin context.
- * @param Admin context handle
+ * @param h Admin context handle
  * @return Network, or NULL if no network is associated.
  */
 struct network *admin_get_network(admin_handle h)
@@ -1039,6 +1039,10 @@ static gboolean replication_set(admin_handle h, const char *value)
 	return TRUE;
 }
 
+/**
+ * Table of administration settings that can be
+ * viewed and changed using the SET command.
+ */
 static struct admin_setting {
 	const char *name;
 	char *(*get) (admin_handle h);

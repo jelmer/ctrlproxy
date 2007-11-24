@@ -138,8 +138,7 @@ gboolean run_client_filter(struct client *c, const struct line *l, enum data_dir
 	return TRUE;
 }
 
-/* Hooks that are called when a client is added or removed. 
- * Very useful for replication backends */
+/* Hooks that are called when a client is added or removed. */
 
 struct new_client_hook_data {
 	char *name;

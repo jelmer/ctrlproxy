@@ -22,11 +22,19 @@
 
 #include <stdio.h>
 
+/**
+ * Log file information.
+ */
 struct log_file_info {
 	FILE *file;
 	time_t last_used;
 };
 
+/**
+ * Common logging data. Contains a cache of log files that have been 
+ * written to. Will keep a limited number of file descriptors open, 
+ * for performance reasons.
+ */
 struct log_support_context {
 	GHashTable *files;
 	int num_opened;

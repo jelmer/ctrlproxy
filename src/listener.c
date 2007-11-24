@@ -647,6 +647,9 @@ static gboolean pass_handle_data(struct pending_client *cl)
 	}
 }
 
+/**
+ * Socks methods.
+ */
 static struct socks_method {
 	gint id;
 	const char *name;

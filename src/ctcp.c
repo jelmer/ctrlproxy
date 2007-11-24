@@ -169,6 +169,9 @@ void ctcp_register_handler(const struct ctcp_handler *h)
 	cmds = g_list_append(cmds, g_memdup(h, sizeof(*h)));
 }
 
+/**
+ * A CTCP request.
+ */
 struct ctcp_request {
 	struct client *client;
 	char *destination;

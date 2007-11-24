@@ -413,6 +413,9 @@ static gboolean marshall_network_state(enum marshall_mode m, GIOChannel *t,
 
 #define STATE_DUMP_INTERVAL 1000
 
+/**
+ * Linestack_file backend data
+ */
 struct lf_data {
 	GIOChannel *line_file;
 	GIOChannel *state_file;

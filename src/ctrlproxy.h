@@ -27,6 +27,9 @@
 #include <glib.h>
 #include <gmodule.h>
 
+/**
+ * Current version of the plugin API.
+ */
 #define CTRLPROXY_PLUGIN_VERSION 3
 
 /**
@@ -80,6 +83,9 @@ struct global {
 	gint admin_incoming_id;
 };
 
+/**
+ * Plugin description. Required to be defined by all plugins.
+ */
 struct plugin_ops {
 	int version;
 	char *name;

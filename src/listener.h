@@ -23,6 +23,9 @@ struct listener {
 
 struct socks_method;
 
+/**
+ * Client connection that has not been authenticated yet.
+ */
 struct pending_client {
 	GIOChannel *connection;
 	char *user;

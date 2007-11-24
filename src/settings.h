@@ -81,6 +81,11 @@ struct network_config
 	} type_settings; 
 };
 
+/**
+ * Log file configuration. Contains substitution variable for 
+ * the path of the log file and for the format used for various events 
+ * when logging.
+ */
 struct log_file_config {
 	const char *logfilename;
 	const char *nickchange;
@@ -97,6 +102,9 @@ struct log_file_config {
 
 };
 
+/**
+ * Allowed user/password combination for SOCKS.
+ */
 struct allow_rule {
 	char *username;
 	char *password;
@@ -116,6 +124,9 @@ struct listener_config {
 	gboolean is_default; /* Whether this is the "default" listener, stored in ~/.ctrlproxy/config */
 };
 
+/**
+ * Auto-away configuration.
+ */
 struct auto_away_config {
 	time_t max_idle_time;
 	gint client_limit;

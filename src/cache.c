@@ -246,6 +246,9 @@ static gboolean client_try_cache_names(struct client *c, struct line *l)
 	return TRUE;
 }
 
+/**
+ * Table of commands of which the result can be cached.
+ */
 struct cache_command {
 	const char *name;
 	/* Should return FALSE if command couldn't be cached */

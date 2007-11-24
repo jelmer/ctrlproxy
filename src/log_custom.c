@@ -26,7 +26,9 @@ struct log_custom_data {
 	struct log_support_context *log_ctx;
 };
 
-/* Translation table */
+/**
+ * Translation table
+ */
 struct log_mapping {
 	char *command;
 	char subst;

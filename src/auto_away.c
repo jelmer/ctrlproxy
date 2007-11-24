@@ -27,6 +27,9 @@
 #include "ctrlproxy.h"
 #include <string.h>
 
+/**
+ * State data for auto-away.
+ */
 struct auto_away_data {
 	struct auto_away_config *config;
  	time_t last_message;

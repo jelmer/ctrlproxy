@@ -26,6 +26,9 @@
 #ifndef _HELP_H
 #define _HELP_H
 
+/**
+ * Help file.
+ */
 typedef struct help
 {
 #if GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION >= 8

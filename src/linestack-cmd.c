@@ -18,6 +18,9 @@ static void handle_exit(int, char **);
 static void handle_insert(int, char **);
 static GHashTable *markers = NULL;
 
+/**
+ * Shell command.
+ */
 struct cmd {
 	const char *name;
 	void (*handler) (int argc, char **);
