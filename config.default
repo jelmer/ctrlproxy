@@ -1,6 +1,4 @@
-# Example RC file for ctrlproxy
-# Read the documentation for more information about specifics
-# Please adapt to your needs!
+# Read the documentation for more information about the contents of this file.
 
 [global]
 # Replication mechanism to use (some other IRC proxies call this backlog)

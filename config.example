@@ -1,6 +1,5 @@
-# Example RC file for ctrlproxy
-# Read the documentation for more information about specifics
-# Please adapt to your needs!
+# Example RC file for ctrlproxy.
+# Read the documentation for more information.
 
 [global]
 # Replication mechanism to use (some other IRC proxies call this backlog)
@@ -55,3 +54,6 @@ autoconnect = admin
 #nick = jelmer
 #autojoin = #ctrlproxy;#bzr
 #reconnect-interval = 30
+#
+#[OFTC]
+#ssl-certificate = nick.pem
