@@ -1,2 +1,2 @@
-version=3
-ftp://ctrlproxy.vernstok.nl/pub/ctrlproxy/ctrlproxy-(.*).tar.gz
+version=2
+http://ctrlproxy.vernstok.nl/ releases/ctrlproxy-(.*).tar.gz
