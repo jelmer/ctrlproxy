@@ -905,11 +905,13 @@ struct ctrlproxy_config *load_configuration(const char *dir)
 		nc->autoconnect = FALSE;
 	}
 
-	config_load_networks(cfg);
 	config_load_listeners(cfg);
 	config_load_listeners_socks(cfg);
 	config_load_log(cfg);
 	config_load_auto_away(cfg);
+	config_load_networks(cfg);
+
+	/* FIXME: Check for unknown parameters */
 
 	size = 0;
 	autoconnect_list = g_key_file_get_string_list(kf, "global", "autoconnect", &size, NULL);

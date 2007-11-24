@@ -68,7 +68,3 @@ admin-log = true
 # Logging
 #logging = none|irssi|custom
 #logfile = /home/jelmer/tmp/ctrlproxy
-
-# Work as a socks proxy
-#[socks]
-#allow = jelmer:secret, foo:bar

@@ -50,7 +50,8 @@ autoconnect = admin
 #logging = irssi
 #logfile = /home/jelmer/tmp/ctrlproxy
 
-# Work as a socks proxy
-#[socks]
-#allow = jelmer:secret, foo:bar
-
+# Network-specific settings
+#[Freenode]
+#nick = jelmer
+#autojoin = #ctrlproxy;#bzr
+#reconnect-interval = 30
