@@ -11,7 +11,7 @@ build-stamp:
 	./configure --prefix=/usr --includedir=/usr/include/ctrlproxy --mandir=/usr/share/man
 	$(MAKE)
 ifndef DEB_BUILD_OPT_NOTEST
-	$(MAKE) test
+	$(MAKE) check 
 endif
 	touch build-stamp
 
@@ -19,7 +19,7 @@ clean:
 	dh_testdir
 	dh_testroot
 	dh_clean
-	-$(MAKE) distclean
+	$(MAKE) distclean
 	rm -f build-stamp
 
 
@@ -31,6 +31,7 @@ binary-arch: build
 	dh_clean -k
 	dh_installdirs
 	$(MAKE) install DESTDIR=`pwd`/debian/tmp
+	rm -f `pwd`/debian/tmp/usr/bin/linestack-cmd
 	dh_install --sourcedir=debian/tmp -a --list-missing --fail-missing
 	dh_strip -a
 	dh_installdocs -a

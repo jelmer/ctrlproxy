@@ -1,4 +1,4 @@
-ctrlproxy (3.0.4-1) UNRELEASED; urgency=low
+ctrlproxy (3.0.4-1) unstable; urgency=low
 
   * New upstream release.
   * Set homepage field.
@@ -13,11 +13,11 @@ ctrlproxy (3.0.3-1) unstable; urgency=low
 
 ctrlproxy (3.0.2-1) unstable; urgency=low
 
- [ Jelmer Vernooij ]
-  * New upstream release.
+  [ Jelmer Vernooij ]
+   * New upstream release.
  
- [ Thijs Kinkhorst ]
-  * Add build-dep on xsltproc.
+  [ Thijs Kinkhorst ]
+   * Add build-dep on xsltproc.
 
  -- Jelmer Vernooij <jelmer@samba.org>  Tue, 24 Apr 2007 13:49:06 +0200 
 
