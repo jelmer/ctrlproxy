@@ -76,7 +76,7 @@ struct global *load_global(const char *config_dir)
 	global = init_global();
 	global->config = cfg;
 
-	load_networks(global, global->config);
+	load_networks(global, global->config, handle_network_log);
 
 	nickserv_load(global);
 

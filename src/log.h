@@ -24,7 +24,7 @@ struct network;
 struct client;
 
 enum log_level { LOG_DATA=5, LOG_TRACE=4, LOG_INFO=3, LOG_WARNING=2, LOG_ERROR=1 };
-G_GNUC_PRINTF(3, 4) G_MODULE_EXPORT void log_network(enum log_level, const struct network *, const char *fmt, ...);
+G_GNUC_PRINTF(3, 4) G_MODULE_EXPORT void network_log(enum log_level, const struct network *, const char *fmt, ...);
 G_GNUC_PRINTF(3, 4) G_MODULE_EXPORT void log_client(enum log_level, const struct client *, const char *fmt, ...);
 G_GNUC_PRINTF(2, 3) G_MODULE_EXPORT void log_global(enum log_level, const char *fmt, ...);
 

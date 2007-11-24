@@ -125,5 +125,8 @@ G_MODULE_EXPORT struct channel_nick *find_add_channel_nick(struct channel_state 
 G_MODULE_EXPORT struct network_nick *find_network_nick(struct network_state *c, const char *name);
 G_MODULE_EXPORT gboolean network_nick_set_hostmask(struct network_nick *n, const char *hm);
 G_MODULE_EXPORT gboolean client_send_state(struct client *, struct network_state *);
+G_MODULE_EXPORT void network_state_log(enum log_level l, const struct network_state *st, const char *fmt, ...);
+G_MODULE_EXPORT void network_state_set_log_fn(struct network_state *st, void (*fn) (enum log_level, void *, const char *), void *userdata);
+
 
 #endif /* __CTRLPROXY_STATE_H__ */

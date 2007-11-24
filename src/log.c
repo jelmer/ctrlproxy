@@ -68,7 +68,7 @@ void log_network_line(const struct network *n, const struct line *l, gboolean in
 		return;
 
 	raw = irc_line_string(l);
-	log_network(LOG_DATA, n, "%c %s", incoming?'<':'>', raw);
+	network_log(LOG_DATA, n, "%c %s", incoming?'<':'>', raw);
 	g_free(raw);
 }
 
@@ -83,19 +83,14 @@ void log_client_line(const struct client *n, const struct line *l, gboolean inco
 	g_free(raw);
 }
 
-void log_network(enum log_level level, const struct network *n, const char *fmt, ...)
+void handle_network_log(enum log_level level, const struct network *n, 
+						const char *msg)
 {
-	va_list ap;	
-	char *tmp; 
 	g_assert(n != NULL);
-	va_start(ap, fmt);
-	tmp = g_strdup_vprintf(fmt, ap);
-	log_entry(level, n, NULL, tmp);
+	log_entry(level, n, NULL, msg);
 	if (level <= LOG_INFO)
 		clients_send_args_ex(n->clients, NULL, "NOTICE", "*", 
-						     tmp, NULL);
-	va_end(ap);
-	g_free(tmp);
+						     msg, NULL);
 }
 
 void log_client(enum log_level level, const struct client *c, const char *fmt, ...)
@@ -120,8 +115,6 @@ void log_global(enum log_level level, const char *fmt, ...)
 	log_entry(level, NULL, NULL, tmp);
 	g_free(tmp);
 }
-
-
 
 static void log_handler(const gchar *log_domain, GLogLevelFlags flags, const gchar *message, gpointer user_data) 
 {

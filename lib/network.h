@@ -89,6 +89,8 @@ struct network_connection {
 	} data;
 };
 
+typedef void (*network_log_fn) (enum log_level, void *, const char *);
+
 /**
  * An IRC network
  */
@@ -107,12 +109,15 @@ struct network {
 	struct network_info info;
 	struct network_connection connection;
 	struct linestack_context *linestack;
+
+	void *userdata;
+	network_log_fn log;
 };
 
 /* server.c */
 G_MODULE_EXPORT gboolean network_set_charset(struct network *n, const char *name);
 G_MODULE_EXPORT struct network *find_network_by_hostname(struct global *global, const char *host, guint16 port, gboolean create);
-G_MODULE_EXPORT gboolean load_networks(struct global *, struct ctrlproxy_config *cfg);
+G_MODULE_EXPORT gboolean load_networks(struct global *, struct ctrlproxy_config *cfg, network_log_fn);
 G_MODULE_EXPORT gboolean autoconnect_networks(struct global *);
 G_MODULE_EXPORT struct network *load_network(struct global *, struct network_config *);
 G_MODULE_EXPORT void unload_network(struct network *);
@@ -134,5 +139,7 @@ G_MODULE_EXPORT G_GNUC_MALLOC struct linestack_context *new_linestack(struct net
 G_MODULE_EXPORT G_GNUC_MALLOC char *network_generate_feature_string(struct network *n);
 G_MODULE_EXPORT struct network *network_ref(struct network *);
 G_MODULE_EXPORT void network_unref(struct network *);
+G_MODULE_EXPORT void network_set_log_fn(struct network *s, 
+										network_log_fn, void *userdata);
 
 #endif /* __CTRLPROXY_NETWORK_H__ */

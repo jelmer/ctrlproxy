@@ -56,7 +56,6 @@ gboolean network_set_iochannel(struct network *s, GIOChannel *ioc);
 /* state.c */
 void free_channels(struct network *s);
 void network_nick_set_data(struct network_nick *n, const char *nick, const char *username, const char *host);
-void log_network_state(enum log_level l, const struct network_state *st, const char *fmt, ...);
 
 /* plugins.c */
 gboolean init_plugins(const char *dir);
@@ -78,6 +77,8 @@ gboolean run_replication_filter(struct network *s, const struct line *l, enum da
 gboolean init_log(const char *file);
 void log_network_line(const struct network *n, const struct line *l, gboolean incoming);
 void log_client_line(const struct client *c, const struct line *l, gboolean incoming);
+void handle_network_log(enum log_level level, const struct network *n, 
+						const char *msg);
 
 /* redirect.c */
 void redirect_record(const struct network *n, const struct client *c, const struct line *l);
@@ -138,6 +139,8 @@ void free_listeners(struct global *global);
 
 /* auto_away.c */
 void auto_away_add(struct global *global, struct auto_away_config *config);
+
+
 
 #endif /* __INTERNALS_H__ */
 

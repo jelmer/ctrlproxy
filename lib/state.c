@@ -27,7 +27,7 @@ enum mode_type { REMOVE = 0, ADD = 1 };
 
 #define CHECK_ORIGIN(s,l,name) \
 	if ((l)->origin == NULL) { \
-		log_network_state(LOG_WARNING, (s), \
+		network_state_log(LOG_WARNING, (s), \
 						  "Received "name" line without origin"); \
 		return; \
 	}
@@ -394,9 +394,9 @@ static void handle_join(struct network_state *s, const struct line *l)
 
 		/* The user is joining a channel */
 		if (!irccmp(&s->info, nick, s->me.nick)) {
-			log_network_state(LOG_INFO, s, "Joining channel %s", c->name);
+			network_state_log(LOG_INFO, s, "Joining channel %s", c->name);
 		} else {
-			log_network_state(LOG_TRACE, s, "%s joins channel %s", nick, 
+			network_state_log(LOG_TRACE, s, "%s joins channel %s", nick, 
 							  c->name);
 		}
 	}
@@ -426,7 +426,7 @@ static void handle_part(struct network_state *s, const struct line *l)
 		c = find_channel(s, channels[i]);
 
 		if (c == NULL) {
-			log_network_state(LOG_WARNING, s, 
+			network_state_log(LOG_WARNING, s, 
 					"Can't part or let other nick part %s(unknown channel)", 
 					channels[i]);
 			continue;
@@ -436,16 +436,16 @@ static void handle_part(struct network_state *s, const struct line *l)
 		if (n != NULL) {
 			free_channel_nick(n);
 		} else {
-			log_network_state(LOG_WARNING, s, 
+			network_state_log(LOG_WARNING, s, 
 				"Can't remove nick %s from channel %s: nick not on channel", 
 				nick, channels[i]);
 		}
 
 		if (!irccmp(&s->info, nick, s->me.nick) && c) {
-			log_network_state(LOG_INFO, s, "Leaving %s", channels[i]);
+			network_state_log(LOG_INFO, s, "Leaving %s", channels[i]);
 			free_channel(c);
 		} else {
-			log_network_state(LOG_TRACE, s, "%s leaves %s", nick, channels[i]);
+			network_state_log(LOG_TRACE, s, "%s leaves %s", nick, channels[i]);
 		}
 	}
 	g_free(nick);
@@ -471,28 +471,28 @@ static void handle_kick(struct network_state *s, const struct line *l)
 		c = find_channel(s, channels[i]);
 
 		if (c == NULL){
-			log_network_state(LOG_WARNING, s, "Can't kick nick %s from %s", nicks[i], channels[i]);
+			network_state_log(LOG_WARNING, s, "Can't kick nick %s from %s", nicks[i], channels[i]);
 			continue;
 		}
 
 		n = find_channel_nick(c, nicks[i]);
 		if (n == NULL) {
-			log_network_state(LOG_WARNING, s, "Can't kick nick %s from channel %s: nick not on channel", nicks[i], channels[i]);
+			network_state_log(LOG_WARNING, s, "Can't kick nick %s from channel %s: nick not on channel", nicks[i], channels[i]);
 			continue;
 		}
 
 		free_channel_nick(n);
 
 		if (!irccmp(&s->info, nicks[i], s->me.nick)) {
-			log_network_state(LOG_INFO, s, "Kicked off %s by %s", c->name, nick);
+			network_state_log(LOG_INFO, s, "Kicked off %s by %s", c->name, nick);
 			free_channel(c);
 		} else {
-			log_network_state(LOG_TRACE, s, "%s kicked off %s by %s", nicks[i], channels[i], nick);
+			network_state_log(LOG_TRACE, s, "%s kicked off %s by %s", nicks[i], channels[i], nick);
 		}
 	}
 
 	if (channels[i] != NULL || nicks[i] != NULL) {
-		log_network_state(LOG_WARNING, s, 
+		network_state_log(LOG_WARNING, s, 
 					  "KICK command has unequal number of channels and nicks");
 	}
 
@@ -521,7 +521,7 @@ static void handle_332(struct network_state *s, const struct line *l)
 	struct channel_state *c = find_channel(s, l->args[2]);
 
 	if (c == NULL) {
-		log_network_state(LOG_WARNING, s, 
+		network_state_log(LOG_WARNING, s, 
 					"Can't set topic for unknown channel '%s'!", l->args[2]);
 		return;
 	}
@@ -535,7 +535,7 @@ static void handle_333(struct network_state *s, const struct line *l)
 	struct channel_state *c = find_channel(s, l->args[2]);
 
 	if (!c) {
-		log_network_state(LOG_WARNING, s, 
+		network_state_log(LOG_WARNING, s, 
 				"Can't set topic last set time for unknown channel '%s'!", 
 				l->args[2]);
 		return;
@@ -550,7 +550,7 @@ static void handle_no_topic(struct network_state *s, const struct line *l)
 	struct channel_state *c = find_channel(s, l->args[1]);
 
 	if (c == NULL) {
-		log_network_state(LOG_WARNING, s, 
+		network_state_log(LOG_WARNING, s, 
 					"Can't unset topic for unknown channel '%s'!", l->args[2]);
 		return;
 	}
@@ -566,7 +566,7 @@ static void handle_namreply(struct network_state *s, const struct line *l)
 	struct channel_state *c = find_channel(s, l->args[3]);
 
 	if (c == NULL) {
-		log_network_state(LOG_WARNING, s, 
+		network_state_log(LOG_WARNING, s, 
 					"Can't add names to %s: channel not found", l->args[3]);
 		return;
 	}
@@ -591,7 +591,7 @@ static void handle_end_names(struct network_state *s, const struct line *l)
 	if (c != NULL)
 		c->namreply_started = FALSE;
 	else 
-		log_network_state(LOG_WARNING, s, 
+		network_state_log(LOG_WARNING, s, 
 				  "Can't end /NAMES command for %s: channel not found", 
 				  l->args[2]);
 }
@@ -601,7 +601,7 @@ static void handle_invitelist_entry(struct network_state *s, const struct line *
 	struct channel_state *c = find_channel(s, l->args[2]);
 	
 	if (c == NULL) {
-		log_network_state(LOG_WARNING, s, 
+		network_state_log(LOG_WARNING, s, 
 				"Can't add invitelist entries to %s: channel not found", 
 				l->args[2]);
 		return;
@@ -621,7 +621,7 @@ static void handle_end_invitelist(struct network_state *s, const struct line *l)
 	if (c != NULL)
 		c->invitelist_started = FALSE;
 	else 
-		log_network_state(LOG_WARNING, s, 
+		network_state_log(LOG_WARNING, s, 
 			  "Can't end invitelist for %s: channel not found", l->args[2]);
 }
 
@@ -630,7 +630,7 @@ static void handle_exceptlist_entry(struct network_state *s, const struct line *
 	struct channel_state *c = find_channel(s, l->args[2]);
 	
 	if (c == NULL) {
-		log_network_state(LOG_WARNING, s, 
+		network_state_log(LOG_WARNING, s, 
 				"Can't add exceptlist entries to %s: channel not found", 
 				l->args[2]);
 		return;
@@ -650,7 +650,7 @@ static void handle_end_exceptlist(struct network_state *s, const struct line *l)
 	if (c != NULL)
 		c->exceptlist_started = FALSE;
 	else 
-		log_network_state(LOG_WARNING, s, 
+		network_state_log(LOG_WARNING, s, 
 			"Can't end exceptlist for %s: channel not found", l->args[2]);
 }
 
@@ -662,7 +662,7 @@ static void handle_banlist_entry(struct network_state *s, const struct line *l)
 	struct banlist_entry *be;
 	
 	if (c == NULL) {
-		log_network_state(LOG_WARNING, s, 
+		network_state_log(LOG_WARNING, s, 
 					"Can't add banlist entries to %s: channel not found", 
 					l->args[2]);
 		return;
@@ -691,7 +691,7 @@ static void handle_end_banlist(struct network_state *s, const struct line *l)
 	if (c != NULL)
 		c->banlist_started = FALSE;
 	else 
-		log_network_state(LOG_WARNING, s, 
+		network_state_log(LOG_WARNING, s, 
 				"Can't end banlist for %s: channel not found", l->args[2]);
 }
 
@@ -728,7 +728,7 @@ static void handle_whoreply(struct network_state *s, const struct line *l)
 	cn = find_channel_nick(cs, nn->nick);
 	
 	if (cn == NULL) {
-		log_network_state(LOG_WARNING, 
+		network_state_log(LOG_WARNING, 
 						  s,
 						  "User %s in WHO reply not in expected channel %s!", 
 						  nn->nick, l->args[2]);
@@ -787,7 +787,7 @@ static void handle_mode(struct network_state *s, const struct line *l)
 		int arg = 2;
 
 		if (c == NULL) {
-			log_network_state(LOG_WARNING, s, 
+			network_state_log(LOG_WARNING, s, 
 				"Unable to change mode for unknown channel '%s'", l->args[1]);
 			return;
 		}
@@ -811,7 +811,7 @@ static void handle_mode(struct network_state *s, const struct line *l)
 					c->modes[(unsigned char)'l'] = t;
 				    if (t) {
 						if (!l->args[++arg]) {
-							log_network_state(LOG_WARNING, s, "Mode +l requires argument, but no argument found");
+							network_state_log(LOG_WARNING, s, "Mode +l requires argument, but no argument found");
 							break;
 						}
 						c->limit = atol(l->args[arg]);
@@ -823,7 +823,7 @@ static void handle_mode(struct network_state *s, const struct line *l)
 					c->modes[(unsigned char)'k'] = t;
 					if (t) {
 						if (!l->args[++arg]) {
-							log_network_state(LOG_WARNING, s, "Mode k requires argument, but no argument found");
+							network_state_log(LOG_WARNING, s, "Mode k requires argument, but no argument found");
 							break;
 						}
 
@@ -842,7 +842,7 @@ static void handle_mode(struct network_state *s, const struct line *l)
 					  } else {
 							n = find_channel_nick(c, l->args[++arg]);
 							if (!n) {
-								log_network_state(LOG_WARNING, s, "Can't set mode %c%c on nick %s on channel %s, because nick does not exist!", t == ADD?'+':'-', l->args[2][i], l->args[arg], l->args[1]);
+								network_state_log(LOG_WARNING, s, "Can't set mode %c%c on nick %s on channel %s, because nick does not exist!", t == ADD?'+':'-', l->args[2][i], l->args[arg], l->args[1]);
 								break;
 							}
 							n->mode = (t == ADD?p:' ');
@@ -921,7 +921,7 @@ static void handle_324(struct network_state *s, const struct line *l)
 	struct channel_state *ch = find_channel(s, l->args[2]);
 
 	if (ch == NULL) {
-		log_network_state(LOG_WARNING, s, 
+		network_state_log(LOG_WARNING, s, 
 			"Can't store modes for %s: channel not found", l->args[2]);
 		return;
 	}
@@ -936,7 +936,7 @@ static void handle_329(struct network_state *s, const struct line *l)
 	struct channel_state *ch = find_channel(s, l->args[2]);
 
 	if (ch == NULL) {
-		log_network_state(LOG_WARNING, s, 
+		network_state_log(LOG_WARNING, s, 
 			"Can't store creationtime for %s: channel not found", l->args[2]);
 		return;
 	}
@@ -1077,7 +1077,7 @@ void free_network_state(struct network_state *state)
 	g_free(state);
 }
 
-void log_network_state(enum log_level l, 
+void network_state_log(enum log_level l, 
 					   const struct network_state *st, const char *fmt, ...)
 {
 	char *ret;
@@ -1098,4 +1098,10 @@ void log_network_state(enum log_level l,
 	g_free(ret);
 }
 
-
+void network_state_set_log_fn(struct network_state *st, 
+							  void (*fn) (enum log_level, void *, const char *),
+							  void *userdata)
+{
+	st->log = fn;
+	st->userdata = userdata;
+}

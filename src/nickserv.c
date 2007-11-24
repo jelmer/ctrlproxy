@@ -69,11 +69,11 @@ void nickserv_identify_me(struct network *network, char *nick)
 		const char *nickserv_n = nickserv_nick(network);
 		char *raw;
 		raw = g_strdup_printf("IDENTIFY %s", pass);
-		log_network(LOG_INFO, network, "Sending password for %s", nickserv_n);
+		network_log(LOG_INFO, network, "Sending password for %s", nickserv_n);
 		network_send_args(network, "PRIVMSG", nickserv_n, raw, NULL);
 		g_free(raw);
 	} else {
-		log_network(LOG_INFO, network, "No password known for `%s'", nick);
+		network_log(LOG_INFO, network, "No password known for `%s'", nick);
 	}
 }
 
@@ -106,7 +106,7 @@ static void cache_nickserv_pass(struct network *n, const char *newpass)
 	if ((e->pass == NULL || 
 		strcmp(e->pass, newpass) != 0) && n->global->config->learn_nickserv) {
 		e->pass = g_strdup(newpass);
-		log_network(LOG_INFO, n, "Caching password for nick %s", e->nick);
+		network_log(LOG_INFO, n, "Caching password for nick %s", e->nick);
 	} 
 }
 
@@ -145,7 +145,7 @@ static gboolean log_data(struct network *n, const struct line *l, enum data_dire
 			const char *nickserv_n = nickserv_nick(n);
 			char *raw;
 			
-			log_network(LOG_INFO, n, "Ghosting current user using '%s'", nickattempt);
+			network_log(LOG_INFO, n, "Ghosting current user using '%s'", nickattempt);
 
 			raw = g_strdup_printf("GHOST %s %s", nickattempt, pass);
 			network_send_args(n, "PRIVMSG", nickserv_n, raw, NULL);

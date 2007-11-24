@@ -82,7 +82,7 @@ static gboolean handle_client_line(GIOChannel *c, struct pending_client *pc,
 				log_global(LOG_WARNING, 
 						   "No password set, allowing client _without_ authentication!");
 			else
-				log_network(LOG_WARNING, n, 
+				network_log(LOG_WARNING, n, 
 							"No password set, allowing client _without_ authentication!");
 			authenticated = TRUE;
 			networkname = l->args[1];
@@ -99,7 +99,7 @@ static gboolean handle_client_line(GIOChannel *c, struct pending_client *pc,
 			if (n == NULL) 
 				log_global(LOG_INFO, "Client successfully authenticated");
 			else
-				log_network(LOG_INFO, n, "Client successfully authenticated");
+				network_log(LOG_INFO, n, "Client successfully authenticated");
 
 			if (networkname != NULL) {
 				n = find_network_by_hostname(pc->listener->global, 
@@ -128,7 +128,7 @@ static gboolean handle_client_line(GIOChannel *c, struct pending_client *pc,
 			if (n == NULL) 
 				log_global(LOG_WARNING, "User tried to log in with incorrect password!");
 			else
-				log_network(LOG_WARNING, n, 
+				network_log(LOG_WARNING, n, 
 						    "User tried to log in with incorrect password!");
 
 			status = irc_sendf(c, iconv, NULL, 
@@ -400,7 +400,7 @@ gboolean start_listener(struct listener *l)
 		l->incoming = g_list_append(l->incoming, lio);
 
 		if (l->network != NULL) 
-			log_network(LOG_INFO, l->network, "Listening on %s:%s", 
+			network_log(LOG_INFO, l->network, "Listening on %s:%s", 
 						lio->address, lio->port);
 		else
 			log_global(LOG_INFO, "Listening on %s:%s", 
@@ -622,7 +622,7 @@ static gboolean pass_handle_data(struct pending_client *cl)
 			log_global(LOG_WARNING, 
 					   "No password set, allowing client _without_ authentication!");
 		else
-			log_network(LOG_WARNING, cl->listener->network, 
+			network_log(LOG_WARNING, cl->listener->network, 
 						"No password set, allowing client _without_ authentication!");
 	}
 
@@ -775,7 +775,7 @@ static gboolean handle_client_socks_data(GIOChannel *ioc, struct pending_client 
 
 					if (result->connection.state == NETWORK_CONNECTION_STATE_NOT_CONNECTED && 
 						!connect_network(result)) {
-						log_network(LOG_ERROR, result, "Unable to connect");
+						network_log(LOG_ERROR, result, "Unable to connect");
 						return socks_error(ioc, REP_NET_UNREACHABLE);
 					}
 
@@ -799,7 +799,7 @@ static gboolean handle_client_socks_data(GIOChannel *ioc, struct pending_client 
 							len = 16;
 							port = name6->sin6_port;
 						} else {
-							log_network(LOG_ERROR, result, "Unable to obtain local address for connection to server");
+							network_log(LOG_ERROR, result, "Unable to obtain local address for connection to server");
 							return socks_error(ioc, REP_NET_UNREACHABLE);
 						}
 							
