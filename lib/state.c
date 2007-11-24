@@ -1048,6 +1048,7 @@ void free_network_nick(struct network_state *st, struct network_nick *nn)
 	g_free(nn->hostmask);
 	g_free(nn->username);
 	g_free(nn->hostname);
+	g_free(nn->server);
 	g_free(nn->nick);
 	st->nicks = g_list_remove(st->nicks, nn);
 	g_free(nn);
