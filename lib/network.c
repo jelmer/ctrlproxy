@@ -1547,4 +1547,7 @@ void network_set_log_fn(struct network *s,
 {
 	s->log = fn;
 	s->userdata = userdata;
+
+	if (s->state != NULL)
+		network_state_set_log_fn(s->state, fn, userdata);
 }
