@@ -1,7 +1,11 @@
 ctrlproxy (3.0.4-1) unstable; urgency=low
 
+  [ Jelmer Vernooij ]
   * New upstream release.
   * Set homepage field.
+
+  [ Adeodato Simó ]
+  * Add a DM-Upload-Allowed: yes header.
 
  -- Jelmer Vernooij <jelmer@samba.org>  Thu, 22 Nov 2007 19:41:33 +0100
 

@@ -7,6 +7,7 @@ Homepage: http://ctrlproxy.vernstok.nl/
 Standards-Version: 3.7.2
 Build-Depends: libglib2.0-dev, libgnutls-dev, debhelper (>> 5.0.0), check, xsltproc, libreadline-dev
 XS-Vcs-Bzr: http://people.samba.org/bzr/jelmer/ctrlproxy/debian
+XS-DM-Upload-Allowed: yes
 
 Package: ctrlproxy
 Architecture: any
