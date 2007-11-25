@@ -8,18 +8,19 @@ ctrlproxy (3.0.4-1) unstable; urgency=low
 ctrlproxy (3.0.3-1) unstable; urgency=low
 
   * New upstream release.
+  * Add build-dependency on xsltproc.
 
  -- Jelmer Vernooij <jelmer@samba.org>  Mon, 23 Jul 2007 13:48:04 +0200
 
 ctrlproxy (3.0.2-1) unstable; urgency=low
 
   [ Jelmer Vernooij ]
-   * New upstream release.
- 
-  [ Thijs Kinkhorst ]
-   * Add build-dep on xsltproc.
+  * New upstream release.
 
- -- Jelmer Vernooij <jelmer@samba.org>  Tue, 24 Apr 2007 13:49:06 +0200 
+  [ Thijs Kinkhorst ]
+  * Add build-dep on xsltproc.
+
+ -- Jelmer Vernooij <jelmer@samba.org>  Tue, 24 Apr 2007 13:49:06 +0200
 
 ctrlproxy (3.0.1-2) unstable; urgency=low
 
