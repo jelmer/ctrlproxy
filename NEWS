@@ -9,6 +9,10 @@ Ctrlproxy 3.0.5 UNRELEASED
 
 	* New settings ``autosave'', ``replication''
 
+  BUG FIXES
+
+    * Handle 275 response correctly.
+
 Ctrlproxy 3.0.4 2007-11-24
 
   IMPROVEMENTS

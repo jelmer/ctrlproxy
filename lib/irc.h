@@ -176,6 +176,7 @@
 #define RPL_TRYAGAIN 263
 #define RPL_LOCALUSERS 265
 #define RPL_GLOBALUSERS 266
+#define RPL_WHOISSSL 275
 
 /* These are obsolete */
 #define RPL_STATSQLINE 217
