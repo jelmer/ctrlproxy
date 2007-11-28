@@ -976,13 +976,6 @@ static char *motd_file_get(admin_handle h)
 	return g_strdup(g->config->motd_file);
 }
 
-static char *report_time_get(admin_handle h)
-{
-	struct global *g = admin_get_global(h);
-
-	return g_strdup(g->config->report_time?"true":"false");
-}
-
 static gboolean interpret_boolean(admin_handle h, const char *value,
 								  gboolean *ret)
 {
@@ -998,26 +991,22 @@ static gboolean interpret_boolean(admin_handle h, const char *value,
 	return FALSE;
 }
 
-static gboolean report_time_set(admin_handle h, const char *value)
-{
-	struct global *g = admin_get_global(h);
-
-	return interpret_boolean(h, value, &g->config->report_time);
+#define BOOL_SETTING(name) \
+static char *name ## _get(admin_handle h) \
+{ \
+	struct global *g = admin_get_global(h); \
+	return g_strdup(g->config->name?"true":"false"); \
+} \
+static gboolean name ## _set(admin_handle h, const char *value) \
+{ \
+	struct global *g = admin_get_global(h); \
+	return interpret_boolean(h, value, &g->config->name); \
 }
 
-static gboolean autosave_set(admin_handle h, const char *value)
-{
-	struct global *g = admin_get_global(h);
-
-	return interpret_boolean(h, value, &g->config->autosave);
-}
-
-static char *autosave_get(admin_handle h)
-{
-	struct global *g = admin_get_global(h);
-
-	return g_strdup(g->config->autosave?"true":"false");
-}
+BOOL_SETTING(report_time)
+BOOL_SETTING(autosave)
+BOOL_SETTING(admin_log)
+BOOL_SETTING(learn_network_name)
 
 static char *replication_get(admin_handle h)
 {
@@ -1041,19 +1030,7 @@ static gboolean replication_set(admin_handle h, const char *value)
 	return TRUE;
 }
 
-static char *learn_nickserv_get(admin_handle h)
-{
-	struct global *g = admin_get_global(h);
-
-	return g_strdup(g->config->learn_nickserv?"true":"false");
-}
-
-static gboolean learn_nickserv_set(admin_handle h, const char *value)
-{
-	struct global *g = admin_get_global(h);
-
-	return interpret_boolean(h, value, &g->config->learn_nickserv);
-}
+BOOL_SETTING(learn_nickserv)
 
 static char *max_who_age_get(admin_handle h)
 {
@@ -1080,13 +1057,15 @@ static struct admin_setting {
 	char *(*get) (admin_handle h);
 	gboolean (*set) (admin_handle h, const char *value);
 } settings[] = {
+	{ "admin-log", admin_log_get, admin_log_set },
+	{ "autosave", autosave_get, autosave_set },
+	{ "learn-network-name", learn_network_name_get, learn_network_name_set },
+	{ "learn-nickserv", learn_nickserv_get, learn_nickserv_set },
 	{ "log_level", log_level_get, log_level_set },
+	{ "max_who_age", max_who_age_get, max_who_age_set },
 	{ "motd-file", motd_file_get, motd_file_set },
 	{ "report-time", report_time_get, report_time_set },
-	{ "autosave", autosave_get, autosave_set },
 	{ "replication", replication_get, replication_set },
-	{ "learn-nickserv", learn_nickserv_get, learn_nickserv_set },
-	{ "max_who_age", max_who_age_get, max_who_age_set },
 	{ NULL, NULL, NULL }
 };
 
