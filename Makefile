@@ -181,7 +181,7 @@ clean::
 	@echo Removing dependency files
 	@rm -f $(dep_files)
 	@echo Removing object files and executables
-	@rm -f src/*.o testsuite/check ctrlproxy$(EXEEXT) testsuite/*.o *~
+	@rm -f src/*.o lib/*.o testsuite/check ctrlproxy$(EXEEXT) testsuite/*.o *~
 	@rm -f linestack-cmd$(EXEEXT) ctrlproxy-admin$(EXEEXT)
 	@echo Removing gcov output
 	@rm -f *.gcov *.gcno *.gcda 
