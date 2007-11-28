@@ -32,6 +32,67 @@
 #define DEFAULT_ADMIN_PORT 6680
 #define DEFAULT_SOCKS_PORT 1080
 
+static GList *known_keys = NULL;
+
+static const char *builtin_known_keys[] = {
+	"autoconnect",
+	"autosave",
+	"max_who_age",
+	"replication",
+	"linestack",
+	"report-time",
+	"motd-file",
+	"default-client-charset",
+	"learn-nickserv",
+	"learn-network-name",
+	"admin-log",
+	"admin-user",
+	"password",
+	"listener-auto",
+	"listener-autoport",
+	"logging",
+	"port",
+	"bind",
+	"ssl",
+	"default-network",
+	"log-logfilename",
+	"log-format-nickchange",
+	"log-format-topic",
+	"log-format-notopic",
+	"log-format-part",
+	"log-format-join",
+	"log-format-msg",
+	"log-format-notice",
+	"log-format-action",
+	"log-format-kick",
+	"log-format-quit",
+	"log-format-mode",
+	NULL
+};
+
+static gboolean config_known_key(const char *name)
+{
+	int i;
+
+	if (g_list_find_custom(known_keys, name, (GCompareFunc)strcmp) != NULL)
+		return TRUE;
+
+	for (i = 0; builtin_known_keys[i]; i++)
+		if (!strcmp(builtin_known_keys[i], name))
+			return TRUE;
+
+	return FALSE;
+}
+
+void config_register_known_key(char *name)
+{
+	if (config_known_key(name))
+		return;
+	known_keys = g_list_insert_sorted(known_keys, g_strdup(name), (GCompareFunc)strcmp);
+}
+
+
+
 gboolean g_key_file_save_to_file(GKeyFile *kf, const gchar *file, GError **error)
 {
 	gsize length, nr;
@@ -837,6 +898,7 @@ struct ctrlproxy_config *load_configuration(const char *dir)
 	GKeyFile *kf;
 	GError *error = NULL;
 	struct ctrlproxy_config *cfg;
+	char **keys;
 	char *file;
 	char **autoconnect_list;
 	GList *gl;
@@ -865,6 +927,7 @@ struct ctrlproxy_config *load_configuration(const char *dir)
 		!g_key_file_get_boolean(kf, "global", "autosave", NULL))
 		cfg->autosave = FALSE;
 
+
 	if (g_key_file_has_key(kf, "global", "max_who_age", NULL))
 		cfg->max_who_age = g_key_file_get_integer(kf, "global", "max_who_age", NULL);
 
@@ -890,7 +953,6 @@ struct ctrlproxy_config *load_configuration(const char *dir)
 	} else {
 	    cfg->client_charset = NULL;
 	}
-
 
     if (g_key_file_has_key(kf, "global", "learn-nickserv", NULL))
 		cfg->learn_nickserv = g_key_file_get_boolean(kf, "global", "learn-nicksev", NULL);
@@ -937,7 +999,13 @@ struct ctrlproxy_config *load_configuration(const char *dir)
 	config_load_auto_away(cfg);
 	config_load_networks(cfg);
 
-	/* FIXME: Check for unknown parameters */
+	/* Check for unknown parameters */
+	keys = g_key_file_get_keys(kf, "global", NULL, NULL);
+	for (i = 0; keys[i] != NULL; i++) {
+		if (!config_known_key(keys[i])) 
+			log_global(LOG_WARNING, "Unknown setting `%s' in configuration file", keys[i]);
+	}
+	g_strfreev(keys);
 
 	size = 0;
 	autoconnect_list = g_key_file_get_string_list(kf, "global", "autoconnect", &size, NULL);

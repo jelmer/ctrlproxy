@@ -10,6 +10,8 @@ Ctrlproxy 3.0.5 UNRELEASED
 	* New settings ``autosave'', ``replication'', ``learn-nickserv'', 
 	  ``learn-network-name'', ``admin-log'', ``admin-user''.
 
+	* Warn about unknown configuration file settings. (#15)
+
   BUG FIXES
 
     * Handle 275 response correctly.
