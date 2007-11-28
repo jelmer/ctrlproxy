@@ -1041,6 +1041,20 @@ static gboolean replication_set(admin_handle h, const char *value)
 	return TRUE;
 }
 
+static char *learn_nickserv_get(admin_handle h)
+{
+	struct global *g = admin_get_global(h);
+
+	return g_strdup(g->config->learn_nickserv?"true":"false");
+}
+
+static gboolean learn_nickserv_set(admin_handle h, const char *value)
+{
+	struct global *g = admin_get_global(h);
+
+	return interpret_boolean(h, value, &g->config->learn_nickserv);
+}
+
 /**
  * Table of administration settings that can be
  * viewed and changed using the SET command.
@@ -1055,6 +1069,7 @@ static struct admin_setting {
 	{ "report-time", report_time_get, report_time_set },
 	{ "autosave", autosave_get, autosave_set },
 	{ "replication", replication_get, replication_set },
+	{ "learn-nickserv", learn_nickserv_get, learn_nickserv_set },
 	{ NULL, NULL, NULL }
 };
 

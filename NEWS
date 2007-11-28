@@ -7,7 +7,7 @@ Ctrlproxy 3.0.5 UNRELEASED
   
     * Integrate auto-away module into the core.
 
-	* New settings ``autosave'', ``replication''
+	* New settings ``autosave'', ``replication'', ``learn-nickserv''.
 
   BUG FIXES
 

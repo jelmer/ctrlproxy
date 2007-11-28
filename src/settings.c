@@ -924,6 +924,7 @@ struct ctrlproxy_config *load_configuration(const char *dir)
 	}
 
 	g_strfreev(autoconnect_list);
+
 	g_free(file);
 
 	return cfg;
