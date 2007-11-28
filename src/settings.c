@@ -273,7 +273,8 @@ void save_configuration(struct ctrlproxy_config *cfg, const char *configuration_
 		g_key_file_set_boolean(cfg->keyfile, "global", "learn-network-name", cfg->learn_network_name);
 
 	if (cfg->client_charset != NULL)
-		g_key_file_set_string(cfg->keyfile, "global", "client-charset", cfg->client_charset);
+		g_key_file_set_string(cfg->keyfile, "global", "default-client-charset", cfg->client_charset);
+	
 	if (cfg->replication)
 		g_key_file_set_string(cfg->keyfile, "global", "replication", cfg->replication);
 	if (cfg->linestack_backend) 
@@ -859,12 +860,18 @@ struct ctrlproxy_config *load_configuration(const char *dir)
     else 
 	    cfg->motd_file = g_build_filename(SHAREDIR, "motd", NULL);
 
-    if (g_key_file_has_key(kf, "client", "charset", NULL))
+    if (g_key_file_has_key(kf, "client", "charset", NULL)) {
 		cfg->client_charset = g_key_file_get_string(kf, "client", "charset", NULL);
-	else if (g_key_file_has_key(kf, "global", "client-charset", NULL))
+		g_key_file_remove_key(cfg->keyfile, "global", "charset", NULL); /* deprecated */
+	} else if (g_key_file_has_key(kf, "global", "client-charset", NULL)) {
 		cfg->client_charset = g_key_file_get_string(kf, "global", "client-charset", NULL);
-    else 
+		g_key_file_remove_key(cfg->keyfile, "global", "client-charset", NULL); /* deprecated */
+	} else if (g_key_file_has_key(kf, "global", "default-client-charset", NULL)) {
+		cfg->client_charset = g_key_file_get_string(kf, "global", "default-client-charset", NULL);
+	} else {
 	    cfg->client_charset = NULL;
+	}
+
 
     if (g_key_file_has_key(kf, "global", "learn-nickserv", NULL))
 		cfg->learn_nickserv = g_key_file_get_boolean(kf, "global", "learn-nicksev", NULL);
