@@ -1055,6 +1055,22 @@ static gboolean learn_nickserv_set(admin_handle h, const char *value)
 	return interpret_boolean(h, value, &g->config->learn_nickserv);
 }
 
+static char *max_who_age_get(admin_handle h)
+{
+	struct global *g = admin_get_global(h);
+	
+	return g_strdup_printf("%d", g->config->max_who_age);
+}
+
+static gboolean max_who_age_set(admin_handle h, const char *value)
+{
+	struct global *g = admin_get_global(h);
+
+	g->config->max_who_age = atoi(value);
+
+	return TRUE;
+}
+
 /**
  * Table of administration settings that can be
  * viewed and changed using the SET command.
@@ -1070,6 +1086,7 @@ static struct admin_setting {
 	{ "autosave", autosave_get, autosave_set },
 	{ "replication", replication_get, replication_set },
 	{ "learn-nickserv", learn_nickserv_get, learn_nickserv_set },
+	{ "max_who_age", max_who_age_get, max_who_age_set },
 	{ NULL, NULL, NULL }
 };
 
