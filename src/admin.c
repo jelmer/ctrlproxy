@@ -1030,6 +1030,27 @@ static gboolean replication_set(admin_handle h, const char *value)
 	return TRUE;
 }
 
+static char *admin_user_get(admin_handle h)
+{
+	struct global *g = admin_get_global(h);
+
+	return g_strdup(g->config->admin_user);
+}
+
+static gboolean admin_user_set(admin_handle h, const char *value)
+{
+	struct global *g = admin_get_global(h);
+
+	g_free(g->config->admin_user);
+	if (strlen(value) == 0) {
+		/* FIXME: Check whether value is a somewhat valid IRC nick? */
+		g->config->admin_user = g_strdup(value);
+	} else
+		g->config->admin_user = NULL;
+
+	return TRUE;
+}
+
 BOOL_SETTING(learn_nickserv)
 
 static char *max_who_age_get(admin_handle h)
@@ -1058,6 +1079,7 @@ static struct admin_setting {
 	gboolean (*set) (admin_handle h, const char *value);
 } settings[] = {
 	{ "admin-log", admin_log_get, admin_log_set },
+	{ "admin-user", admin_user_get, admin_user_set },
 	{ "autosave", autosave_get, autosave_set },
 	{ "learn-network-name", learn_network_name_get, learn_network_name_set },
 	{ "learn-nickserv", learn_nickserv_get, learn_nickserv_set },
