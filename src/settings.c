@@ -156,11 +156,11 @@ static void config_save_listeners(struct ctrlproxy_config *cfg, const char *path
 	gboolean empty = TRUE;
 	char *default_password;
 
-	default_password = g_key_file_get_string(cfg->keyfile, "listener", "password", NULL);
+	default_password = g_key_file_get_string(cfg->keyfile, "global", "password", NULL);
 
 	if (cfg->auto_listener) {
-		g_key_file_set_boolean(cfg->keyfile, "listener", "auto", cfg->auto_listener);
-		g_key_file_set_integer(cfg->keyfile, "listener", "autoport", cfg->listener_autoport);
+		g_key_file_set_boolean(cfg->keyfile, "global", "listener-auto", cfg->auto_listener);
+		g_key_file_set_integer(cfg->keyfile, "global", "listener-autoport", cfg->listener_autoport);
 	}
 
 	filename = g_build_filename(path, "listener", NULL);
@@ -557,6 +557,8 @@ static void config_load_listeners_socks(struct ctrlproxy_config *cfg)
 		l->allow_rules = g_list_append(l->allow_rules, r);
 	}
 
+	g_key_file_remove_group(kf, "socks", NULL);
+
 	g_strfreev(allows);
 
 	cfg->listeners = g_list_append(cfg->listeners, l);
@@ -572,12 +574,25 @@ static void config_load_listeners(struct ctrlproxy_config *cfg)
 	char *default_password;
 	GError *error = NULL;
 
-	default_password = g_key_file_get_string(cfg->keyfile, "listener", "password", NULL);
-	if (g_key_file_has_key(cfg->keyfile, "listener", "auto", NULL))
+	if (g_key_file_has_key(cfg->keyfile, "listener", "pasword", NULL)) {
+		g_key_file_remove_key(cfg->keyfile, "listener", "password", NULL);
+		g_key_file_set_string(cfg->keyfile, "global", "password", 
+							  g_key_file_get_string(cfg->keyfile, "listener", "password", NULL));
+	}
+	default_password = g_key_file_get_string(cfg->keyfile, "global", "password", NULL);
+	if (g_key_file_has_key(cfg->keyfile, "global", "listener-auto", NULL)) {
+		cfg->auto_listener = g_key_file_get_boolean(cfg->keyfile, "global", "listener-auto", NULL);
+	} else if (g_key_file_has_key(cfg->keyfile, "listener", "auto", NULL)) {
 		cfg->auto_listener = g_key_file_get_boolean(cfg->keyfile, "listener", "auto", NULL);
+		g_key_file_remove_key(cfg->keyfile, "listener", "auto", NULL);
+	}
 
-	if (g_key_file_has_key(cfg->keyfile, "listener", "autoport", NULL))
+	if (g_key_file_has_key(cfg->keyfile, "global", "listener-autoport", NULL)) {
+		cfg->listener_autoport = g_key_file_get_integer(cfg->keyfile, "global", "listener-autoport", NULL);
+	} else if (g_key_file_has_key(cfg->keyfile, "listener", "autoport", NULL)) {
 		cfg->listener_autoport = g_key_file_get_integer(cfg->keyfile, "listener", "autoport", NULL);
+		g_key_file_remove_key(cfg->keyfile, "listener", "autoport", NULL);
+	}
 
 	if (g_key_file_has_key(cfg->keyfile, "global", "port", NULL)) {
 		struct listener_config *l = g_new0(struct listener_config, 1);
@@ -680,6 +695,7 @@ static void config_load_log(struct ctrlproxy_config *config)
 
 	if (g_key_file_has_group(kf, "log-custom")) {
 		data = g_new0(struct log_file_config, 1);
+		g_key_file_remove_group(kf, "log-custom", NULL);
 
 		FETCH_SETTING(data, kf, "log-custom", "", nickchange);
 		FETCH_SETTING(data, kf, "log-custom", "", logfilename);
@@ -719,6 +735,9 @@ static void config_load_log(struct ctrlproxy_config *config)
 	if (g_key_file_has_group(kf, "log-irssi") || 
 		(logging != NULL && !strcmp(logging, "irssi"))) {
 		data = g_new0(struct log_file_config, 1);
+		data->is_irssi = TRUE;
+
+		g_key_file_remove_group(kf, "log-irssi", NULL);
 
 		data->join = "%h:%M -!- %n [%u] has joined %c";
 		data->part = "%h:%M -!- %n [%u] has left %c [%m]";
@@ -862,7 +881,7 @@ struct ctrlproxy_config *load_configuration(const char *dir)
 
     if (g_key_file_has_key(kf, "client", "charset", NULL)) {
 		cfg->client_charset = g_key_file_get_string(kf, "client", "charset", NULL);
-		g_key_file_remove_key(cfg->keyfile, "global", "charset", NULL); /* deprecated */
+		g_key_file_remove_key(cfg->keyfile, "client", "charset", NULL); /* deprecated */
 	} else if (g_key_file_has_key(kf, "global", "client-charset", NULL)) {
 		cfg->client_charset = g_key_file_get_string(kf, "global", "client-charset", NULL);
 		g_key_file_remove_key(cfg->keyfile, "global", "client-charset", NULL); /* deprecated */

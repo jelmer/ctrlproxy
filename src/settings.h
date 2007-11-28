@@ -88,6 +88,7 @@ struct network_config
  */
 struct log_file_config {
 	const char *logfilename;
+	gboolean is_irssi;
 	const char *nickchange;
 	const char *join;
 	const char *part;
