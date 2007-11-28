@@ -127,6 +127,7 @@ static void free_channel_nick(struct channel_nick *n)
 	if (g_list_length(n->global_nick->channel_nicks) == 0 && n->global_nick->query == 0) 
 		free_network_nick(n->channel->network, n->global_nick);
 
+	g_free(n->last_flags);
 	g_free(n);
 }
 
