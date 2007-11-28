@@ -187,6 +187,7 @@ static void free_channel(struct channel_state *c)
 	free_names(c);
 	g_free(c->name);
 	g_free(c->topic);
+	g_free(c->topic_set_by);
 	g_free(c->key);
 	g_assert(c->network);
 	c->network->channels = g_list_remove(c->network->channels, c);
@@ -1048,6 +1049,7 @@ void free_network_nick(struct network_state *st, struct network_nick *nn)
 	g_free(nn->hostmask);
 	g_free(nn->username);
 	g_free(nn->hostname);
+	g_free(nn->fullname);
 	g_free(nn->server);
 	g_free(nn->nick);
 	st->nicks = g_list_remove(st->nicks, nn);
