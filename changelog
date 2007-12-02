@@ -1,3 +1,9 @@
+ctrlproxy (3.0.4-2) UNRELEASED; urgency=low
+
+  * Add manual page for ctrlproxy-admin.
+
+ -- Jelmer Vernooij <jelmer@samba.org>  Sun, 02 Dec 2007 23:23:23 +0100
+
 ctrlproxy (3.0.4-1) unstable; urgency=low
 
   [ Jelmer Vernooij ]
