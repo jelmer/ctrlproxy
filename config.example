@@ -13,7 +13,8 @@
 replication = none
 
 # Prepend all lines in replication with the time a line was received when replicating
-report-time = false
+# possible settings: never|always|replication
+report-time = never
 
 # What words to look for when remembering lines 
 # (in case "replication = highlight")
