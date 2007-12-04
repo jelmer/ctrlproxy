@@ -242,22 +242,6 @@ static gboolean send_line(struct line *l, time_t t, void *_client)
 	return client_send_line(c, l);
 }
 
-struct line *line_prefix_time(struct line *l, time_t t)
-{
-	struct line *nl = linedup(l);
-	char stime[512];
-	char *tmp;
-
-	strftime(stime, sizeof(stime), "%H:%M:%S", localtime(&t));
-	tmp = g_strdup_printf("[%s] %s", stime, nl->args[2]);
-	if (tmp == NULL)
-		return NULL;
-	g_free(nl->args[2]);
-	nl->args[2] = tmp;
-
-	return nl;
-}
-
 static gboolean send_line_timed(struct line *l, time_t t, void *_client)
 {
 	struct client *c = _client;

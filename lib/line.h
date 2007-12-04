@@ -82,4 +82,6 @@ G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT GIOStatus irc_recv_line(GIOChannel *c,
 
 G_MODULE_EXPORT gboolean line_add_arg(struct line *l, const char *arg);
 
+G_MODULE_EXPORT struct line *line_prefix_time(struct line *l, time_t t);
+
 #endif /* __CTRLPROXY_LINE_H__ */
