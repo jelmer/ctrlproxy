@@ -34,6 +34,9 @@
 
 static GList *known_keys = NULL;
 
+static void config_save_log(struct log_file_config *data,
+							struct ctrlproxy_config *config);
+
 static const char *builtin_known_keys[] = {
 	"autoconnect",
 	"autosave",
@@ -348,6 +351,8 @@ void save_configuration(struct ctrlproxy_config *cfg, const char *configuration_
 	config_save_networks(configuration_dir, cfg->networks);
 
 	config_save_listeners(cfg, configuration_dir);
+
+	config_save_log(cfg->log_file, cfg);
 
 	i = 0;
 	list = g_new0(char *, g_list_length(cfg->networks)+1);
@@ -742,12 +747,39 @@ static void config_load_networks(struct ctrlproxy_config *cfg)
 }
 
 #define FETCH_SETTING(data, kf, section, prefix, name) (data)->name = g_key_file_get_string((kf), (section), prefix __STRING(name), NULL)
+#define STORE_SETTING(data, kf, section, prefix, name) g_key_file_set_string((kf), (section), prefix __STRING(name), (data)->name)
+
+static void config_save_log(struct log_file_config *data,
+							struct ctrlproxy_config *config)
+{
+	if (data == NULL) {
+		g_key_file_set_string(config->keyfile, "global", "logging", "none");
+		return;
+	}
+
+	if (data->is_irssi) {
+		g_key_file_set_string(config->keyfile, "global", "logging", "irssi");
+		g_key_file_set_string(config->keyfile, "global", "logfile", data->logbasedir);
+	} else {
+		STORE_SETTING(data, config->keyfile, "global", "", logfilename);
+		STORE_SETTING(data, config->keyfile, "global", "log-format-", nickchange);
+		STORE_SETTING(data, config->keyfile, "global", "log-format-", topic);
+		STORE_SETTING(data, config->keyfile, "global", "log-format-", notopic);
+		STORE_SETTING(data, config->keyfile, "global", "log-format-", part);
+		STORE_SETTING(data, config->keyfile, "global", "log-format-", join);
+		STORE_SETTING(data, config->keyfile, "global", "log-format-", msg);
+		STORE_SETTING(data, config->keyfile, "global", "log-format-", notice);
+		STORE_SETTING(data, config->keyfile, "global", "log-format-", action);
+		STORE_SETTING(data, config->keyfile, "global", "log-format-", kick);
+		STORE_SETTING(data, config->keyfile, "global", "log-format-", quit);
+		STORE_SETTING(data, config->keyfile, "global", "log-format-", mode);
+	}
+}
 
 static void config_load_log(struct ctrlproxy_config *config)
 {
 	GKeyFile *kf = config->keyfile;
 	struct log_file_config *data;
-	char *logbasedir;
 	char *logging = NULL;
 
 	if (g_key_file_get_string(kf, "global", "logging", NULL) != NULL) {
@@ -771,6 +803,7 @@ static void config_load_log(struct ctrlproxy_config *config)
 		FETCH_SETTING(data, kf, "log-custom", "", quit);
 		FETCH_SETTING(data, kf, "log-custom", "", mode);
 
+		config->log_file = data;
 		log_custom_load(data);
 	}
 
@@ -790,6 +823,7 @@ static void config_load_log(struct ctrlproxy_config *config)
 		FETCH_SETTING(data, kf, "global", "log-format-", quit);
 		FETCH_SETTING(data, kf, "global", "log-format-", mode);
 
+		config->log_file = data;
 		log_custom_load(data);
 	}
 
@@ -797,8 +831,6 @@ static void config_load_log(struct ctrlproxy_config *config)
 		(logging != NULL && !strcmp(logging, "irssi"))) {
 		data = g_new0(struct log_file_config, 1);
 		data->is_irssi = TRUE;
-
-		g_key_file_remove_group(kf, "log-irssi", NULL);
 
 		data->join = "%h:%M -!- %n [%u] has joined %c";
 		data->part = "%h:%M -!- %n [%u] has left %c [%m]";
@@ -813,18 +845,18 @@ static void config_load_log(struct ctrlproxy_config *config)
 		data->nickchange = "%h:%M -!- %n is now known as %r";
 
 		if (g_key_file_has_key(kf, "log-irssi", "logfile", NULL)) {
-			logbasedir = g_key_file_get_string(kf, "log-irssi", "logfile", NULL);
+			data->logbasedir = g_key_file_get_string(kf, "log-irssi", "logfile", NULL);
 		} else if (g_key_file_has_key(kf, "global", "logfile", NULL)) {
-			logbasedir = g_key_file_get_string(kf, "global", "logfile", NULL);
+			data->logbasedir = g_key_file_get_string(kf, "global", "logfile", NULL);
 		} else {
-			logbasedir = g_build_filename(config->config_dir, 
+			data->logbasedir = g_build_filename(config->config_dir, 
 										  "log_irssi", NULL);
 		}
+		g_key_file_remove_group(kf, "log-irssi", NULL);
 
-		data->logfilename = g_strdup_printf("%s/%%N/%%@", logbasedir);
+		data->logfilename = g_strdup_printf("%s/%%N/%%@", data->logbasedir);
 
-		g_free(logbasedir);
-
+		config->log_file = data;
 		log_custom_load(data);
 	}
 

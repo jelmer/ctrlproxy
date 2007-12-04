@@ -87,6 +87,7 @@ struct network_config
  * when logging.
  */
 struct log_file_config {
+	const char *logbasedir;
 	const char *logfilename;
 	gboolean is_irssi;
 	const char *nickchange;
@@ -159,6 +160,7 @@ struct ctrlproxy_config {
 	gboolean learn_nickserv;
 	gboolean learn_network_name;
 	struct auto_away_config *auto_away;
+	struct log_file_config *log_file;
 };
 
 /* config.c */
