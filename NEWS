@@ -16,6 +16,8 @@ Ctrlproxy 3.0.5 UNRELEASED
 
     * Handle 275 response correctly.
 
+	* Fix memory error. (#170)
+
 Ctrlproxy 3.0.4 2007-11-24
 
   IMPROVEMENTS

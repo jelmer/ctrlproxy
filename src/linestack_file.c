@@ -245,6 +245,7 @@ static gboolean marshall_network_nick (struct network_state *nst, const char *na
 	ret &= marshall_string(nst, "username", level+1, m, t, &n->username);
 	ret &= marshall_string(nst, "hostname", level+1, m, t, &n->hostname);
 	ret &= marshall_string(nst, "hostmask", level+1, m, t, &n->hostmask);
+	ret &= marshall_string(nst, "server", level+1, m, t, &n->server);
 	if (m == MARSHALL_PULL)
 		n->channel_nicks = NULL;
 	return ret;
