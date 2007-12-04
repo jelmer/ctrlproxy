@@ -496,7 +496,7 @@ static void cmd_backlog(admin_handle h, char **args, void *userdata)
 		admin_out(h, "Sending backlog for network '%s'", n->info.name);
 
 		linestack_send(n->linestack, lm, NULL, admin_get_client(h),
-					   TRUE, n->global->config->report_time);
+					   TRUE, n->global->config->report_time != REPORT_TIME_NEVER);
 
 		g_hash_table_replace(markers, n, linestack_get_marker(n->linestack));
 
@@ -508,7 +508,7 @@ static void cmd_backlog(admin_handle h, char **args, void *userdata)
 
 	linestack_send_object(n->linestack, args[1], lm, NULL, 
 						  admin_get_client(h), TRUE, 
-						  n->global->config->report_time);
+						  n->global->config->report_time != REPORT_TIME_NEVER);
 
 	g_hash_table_replace(markers, n, linestack_get_marker(n->linestack));
 }
