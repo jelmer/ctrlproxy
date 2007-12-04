@@ -772,7 +772,10 @@ static void config_save_log(struct log_file_config *data,
 
 	if (data->is_irssi) {
 		g_key_file_set_string(config->keyfile, "global", "logging", "irssi");
-		g_key_file_set_string(config->keyfile, "global", "logfile", data->logbasedir);
+		if (data->logbasedir)
+			g_key_file_set_string(config->keyfile, "global", "logdir", data->logbasedir);
+		else
+			g_key_file_set_string(config->keyfile, "global", "logfile", data->logfilename);
 	} else {
 		STORE_SETTING(data, config->keyfile, "global", "", logfilename);
 		STORE_SETTING(data, config->keyfile, "global", "log-format-", nickchange);
@@ -857,17 +860,21 @@ static void config_load_log(struct ctrlproxy_config *config)
 		data->notopic = "%h:%M -!- %n has removed the topic";
 		data->nickchange = "%h:%M -!- %n is now known as %r";
 
-		if (g_key_file_has_key(kf, "log-irssi", "logfile", NULL)) {
+		if (g_key_file_has_key(kf, "global", "logfile", NULL)) {
+			data->logfilename= g_key_file_get_string(kf, "global", "logfile", NULL);
+		} else if (g_key_file_has_key(kf, "global", "logdir", NULL)) {
+			data->logbasedir = g_key_file_get_string(kf, "global", "logdir", NULL);
+			data->logfilename = g_strdup_printf("%s/%%N/%%@", data->logbasedir);
+		} else if (g_key_file_has_key(kf, "log-irssi", "logfile", NULL)) {
 			data->logbasedir = g_key_file_get_string(kf, "log-irssi", "logfile", NULL);
-		} else if (g_key_file_has_key(kf, "global", "logfile", NULL)) {
-			data->logbasedir = g_key_file_get_string(kf, "global", "logfile", NULL);
+			data->logfilename = g_strdup_printf("%s/%%N/%%@", data->logbasedir);
 		} else {
 			data->logbasedir = g_build_filename(config->config_dir, 
 										  "log_irssi", NULL);
+
+			data->logfilename = g_strdup_printf("%s/%%N/%%@", data->logbasedir);
 		}
 		g_key_file_remove_group(kf, "log-irssi", NULL);
-
-		data->logfilename = g_strdup_printf("%s/%%N/%%@", data->logbasedir);
 
 		config->log_file = data;
 		log_custom_load(data);
