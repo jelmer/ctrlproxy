@@ -1050,6 +1050,7 @@ struct ctrlproxy_config *load_configuration(const char *dir)
 	g_key_file_remove_key(kf, "admin", "log", NULL);
     if (g_key_file_has_key(kf, "global", "admin-log", NULL) && !g_key_file_get_boolean(kf, "global", "admin-log", NULL))
         cfg->admin_log = FALSE;
+	g_key_file_remove_group(kf, "admin", NULL);
 
 	for (gl = cfg->networks; gl; gl = gl->next) {
 		struct network_config *nc = gl->data;
