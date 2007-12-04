@@ -432,12 +432,13 @@ static void file_write_channel_query(struct log_custom_data *data,
 	file_write_line(data, network, fmt, l, nick, FALSE);
 	
 	nn = find_network_nick(network->state, nick);
-	g_free(nick);
 	if (nn == NULL) {
 		network_log(LOG_WARNING, network, "Unable to find query with %s", 
 					nick);
-		return;;
+		g_free(nick);
+		return;
 	}
+	g_free(nick);
 
 	/* now, loop thru the users' channels */
 	for (gl = nn->channel_nicks; gl; gl = gl->next) {

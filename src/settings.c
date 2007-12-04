@@ -915,6 +915,8 @@ static void config_load_auto_away(struct ctrlproxy_config *config)
 			d->max_idle_time = g_key_file_get_integer(kf, "auto-away", "time", NULL);
 		else
 			d->max_idle_time = AUTO_AWAY_DEFAULT_TIME;
+
+		g_key_file_remove_group(kf, "auto-away", NULL);
 	} else if (g_key_file_has_key(kf, "global", "auto-away-enable", NULL) &&
 			   g_key_file_get_boolean(kf, "global", "auto-away-enable", NULL)) {
 		d = g_new0(struct auto_away_config, 1);
