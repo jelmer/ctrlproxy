@@ -987,7 +987,7 @@ struct ctrlproxy_config *load_configuration(const char *dir)
 	cfg->linestack_backend = g_key_file_get_string(kf, "global", "linestack", NULL);
 
 	if (g_key_file_has_key(kf, "global", "report-time", NULL)) {
-		const char *setting = g_key_file_get_string(kf, "global", "report-time", NULL);
+		char *setting = g_key_file_get_string(kf, "global", "report-time", NULL);
 		if (!g_strcasecmp(setting, "never") || !g_strcasecmp(setting, "false")) 
 			cfg->report_time = REPORT_TIME_NEVER;
 		else if (!g_strcasecmp(setting, "always"))
@@ -998,6 +998,7 @@ struct ctrlproxy_config *load_configuration(const char *dir)
 		else {
 			log_global(LOG_WARNING, "Unknown value `%s' for report-time in configuration file", setting);
 		}
+		g_free(setting);
 	}
 
     if (g_key_file_has_key(kf, "global", "motd-file", NULL))
