@@ -346,7 +346,20 @@ void save_configuration(struct ctrlproxy_config *cfg, const char *configuration_
 	if (cfg->motd_file != NULL)
 		g_key_file_set_string(cfg->keyfile, "global", "motd-file", cfg->motd_file);
 
-	g_key_file_set_boolean(cfg->keyfile, "global", "report-time", cfg->report_time);
+	switch (cfg->report_time) {
+	case REPORT_TIME_ALWAYS:
+		g_key_file_set_string(cfg->keyfile, "global", "report-time", 
+							  "always");
+		break;
+	case REPORT_TIME_NEVER:
+		g_key_file_set_string(cfg->keyfile, "global", "report-time", 
+							  "never");
+		break;
+	case REPORT_TIME_REPLICATION:
+		g_key_file_set_string(cfg->keyfile, "global", "report-time", 
+							  "replication");
+		break;
+	}
 
 	config_save_networks(configuration_dir, cfg->networks);
 
@@ -966,8 +979,19 @@ struct ctrlproxy_config *load_configuration(const char *dir)
 	cfg->replication = g_key_file_get_string(kf, "global", "replication", NULL);
 	cfg->linestack_backend = g_key_file_get_string(kf, "global", "linestack", NULL);
 
-	if (g_key_file_has_key(kf, "global", "report-time", NULL))
-		cfg->report_time = g_key_file_get_boolean(kf, "global", "report-time", NULL);
+	if (g_key_file_has_key(kf, "global", "report-time", NULL)) {
+		const char *setting = g_key_file_get_string(kf, "global", "report-time", NULL);
+		if (!g_strcasecmp(setting, "never") || !g_strcasecmp(setting, "false")) 
+			cfg->report_time = REPORT_TIME_NEVER;
+		else if (!g_strcasecmp(setting, "always"))
+			cfg->report_time = REPORT_TIME_ALWAYS;
+		else if  (!g_strcasecmp(setting, "replication") || 
+				  !g_strcasecmp(setting, "true"))
+			cfg->report_time = REPORT_TIME_REPLICATION;
+		else {
+			log_global(LOG_WARNING, "Unknown value `%s' for report-time in configuration file", setting);
+		}
+	}
 
     if (g_key_file_has_key(kf, "global", "motd-file", NULL))
 		cfg->motd_file = g_key_file_get_string(kf, "global", "motd-file", NULL);

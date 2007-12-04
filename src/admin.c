@@ -1003,10 +1003,43 @@ static gboolean name ## _set(admin_handle h, const char *value) \
 	return interpret_boolean(h, value, &g->config->name); \
 }
 
-BOOL_SETTING(report_time)
 BOOL_SETTING(autosave)
 BOOL_SETTING(admin_log)
 BOOL_SETTING(learn_network_name)
+
+static char *report_time_get(admin_handle h)
+{
+	struct global *g = admin_get_global(h);
+
+	switch (g->config->report_time) {
+	case REPORT_TIME_ALWAYS:
+		return g_strdup("always");
+	case REPORT_TIME_NEVER:
+		return g_strdup("never");
+	case REPORT_TIME_REPLICATION:
+		return g_strdup("replication");
+	}
+
+	return g_strdup("UNKNOWN");
+}
+
+static gboolean report_time_set(admin_handle h, const char *value)
+{
+	struct global *g = admin_get_global(h);
+	
+	if (!g_strcasecmp(value, "never") || !g_strcasecmp(value, "false")) 
+		g->config->report_time = REPORT_TIME_NEVER;
+	else if (!g_strcasecmp(value, "always"))
+		g->config->report_time = REPORT_TIME_ALWAYS;
+	else if  (!g_strcasecmp(value, "replication") || 
+			  !g_strcasecmp(value, "true"))
+		g->config->report_time = REPORT_TIME_REPLICATION;
+	else {
+		return FALSE;
+	}
+	
+	return TRUE;
+}
 
 static char *replication_get(admin_handle h)
 {

@@ -151,7 +151,11 @@ struct ctrlproxy_config {
 	char *client_charset;
 	gboolean admin_log;
 	char *admin_user;
-	gboolean report_time;
+	enum { 
+		REPORT_TIME_ALWAYS,
+		REPORT_TIME_NEVER,
+		REPORT_TIME_REPLICATION
+	} report_time;
 	int max_who_age;
 	GKeyFile *keyfile;
 	GList *listeners;
