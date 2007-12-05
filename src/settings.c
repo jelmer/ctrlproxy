@@ -718,7 +718,7 @@ static void config_load_listeners(struct ctrlproxy_config *cfg)
 
 		l->password = g_key_file_get_string(kf, groups[i], "password", NULL);
 		if (l->password == NULL)
-			l->password = default_password;
+			l->password = g_strdup(default_password);
 
 		if (g_key_file_has_key(kf, groups[i], "ssl", NULL))
 			l->ssl = g_key_file_get_boolean(kf, groups[i], "ssl", NULL);
@@ -735,6 +735,7 @@ static void config_load_listeners(struct ctrlproxy_config *cfg)
 	}
 
 	g_strfreev(groups);
+	g_free(default_password);
 	g_free(filename);
 }
 

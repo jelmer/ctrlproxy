@@ -233,9 +233,12 @@ int main(int argc, char **argv)
 	}
 
 	if (init) {
-		if (!create_configuration(config_dir))
+		if (!create_configuration(config_dir)) {
+			g_free(config_dir);
 			return 1;
+		}
 		printf("Configuration created in %s. \n", config_dir);
+		g_free(config_dir);
 		return 0;
 	}
 
@@ -245,6 +248,7 @@ int main(int argc, char **argv)
 
 	if (gethostname(my_hostname, NI_MAXHOST) != 0) {
 		log_global(LOG_WARNING, "Can't figure out hostname of local host!");
+		g_free(config_dir);
 		return 1;
 	}
 
@@ -263,11 +267,13 @@ int main(int argc, char **argv)
 #endif
 		if (daemon(1, 0) < 0) {
 			log_global(LOG_ERROR, "Unable to daemonize\n");
+			g_free(config_dir);
 			return -1;
 		}
 		isdaemon = 1;
 #else
 		log_global(LOG_ERROR, "Daemon mode not compiled in");
+		g_free(config_dir);
 		return -1;
 #endif
 	} 
@@ -283,14 +289,20 @@ int main(int argc, char **argv)
 	tmp = g_build_filename(config_dir, "config", NULL);
 
 	if (!g_file_test(tmp, G_FILE_TEST_EXISTS)) {
-		char *rcfile = g_build_filename(g_get_home_dir(), ".ctrlproxyrc", NULL);
+		char *rcfile;
+
+		rcfile = g_build_filename(g_get_home_dir(), ".ctrlproxyrc", NULL);
 		
 		if (g_file_test(rcfile, G_FILE_TEST_EXISTS)) {
 			log_global(LOG_INFO, "Pre-3.0 style .ctrlproxyrc found");
 			log_global(LOG_INFO, "Run ctrlproxy-upgrade to update configuration");
+			g_free(config_dir);
+			g_free(rcfile);
 			return 1;
 		} else {
 			log_global(LOG_INFO, "No configuration found. Maybe you would like to create one by running with --init ?");
+			g_free(config_dir);
+			g_free(rcfile);
 			return 1;
 		}
 
@@ -298,6 +310,7 @@ int main(int argc, char **argv)
 	} else {
 		my_global = load_global(config_dir);	
 	}
+	g_free(config_dir);
 	g_free(tmp);
 
 	if (my_global == NULL) {
@@ -333,7 +346,6 @@ int main(int argc, char **argv)
 
 	g_main_loop_run(main_loop);
 
-	g_free(config_dir);
 
 	return 0;
 }
