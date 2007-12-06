@@ -1254,6 +1254,8 @@ static void free_network(struct network *s)
 	g_queue_free(s->connection.pending_lines);
 
 	free_network_info(&s->info);
+	if (s->config->type == NETWORK_TCP)
+		g_free(s->connection.data.tcp.last_disconnect_reason);
 
 #ifdef HAVE_GNUTLS
 	ssl_free_client_credentials(s->ssl_credentials);

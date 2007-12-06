@@ -277,6 +277,7 @@ static void config_save_listeners(struct ctrlproxy_config *cfg, const char *path
 		}
 	}
 	
+	g_free(default_password);
 	g_free(filename);
 }
 
@@ -693,6 +694,7 @@ static void config_load_listeners(struct ctrlproxy_config *cfg)
 		if (error->code != G_FILE_ERROR_NOENT)
 			log_global(LOG_ERROR, "Can't parse configuration file '%s': %s", filename, error->message);
 		g_free(filename);
+		g_free(default_password);
 		return;
 	}
 		
