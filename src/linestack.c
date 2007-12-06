@@ -165,7 +165,6 @@ gboolean linestack_traverse_object(
 
 void linestack_free_marker(struct linestack_marker *lm)
 {
-	return;
 	if (lm == NULL)
 		return;
 
