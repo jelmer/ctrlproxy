@@ -21,6 +21,7 @@
 #define __CTRLPROXY_LINE_H__
 
 #include <gmodule.h>
+#include <time.h>
 
 #ifndef G_MODULE_EXPORT
 #define G_MODULE_EXPORT
