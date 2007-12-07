@@ -42,12 +42,14 @@ install: all
 	$(INSTALL) -d $(DESTDIR)$(mandir)/man5
 	$(INSTALL) -d $(DESTDIR)$(docdir)
 	$(INSTALL) -m 0644 ctrlproxy.1 $(DESTDIR)$(mandir)/man1
+	$(INSTALL) -m 0644 ctrlproxy-admin.1 $(DESTDIR)$(mandir)/man1
 	$(INSTALL) -m 0644 help.txt $(DESTDIR)$(HELPFILE)
 	$(INSTALL) -m 0644 ctrlproxy_config.5 $(DESTDIR)$(mandir)/man5
 	$(INSTALL) -m 0644 user-guide.html $(DESTDIR)$(docdir)
 
 uninstall: 
 	rm -f $(DESTDIR)$(mandir)/man1/ctrlproxy.1 
+	rm -f $(DESTDIR)$(mandir)/man1/ctrlproxy-admin.1 
 	rm -f $(DESTDIR)$(HELPFILE)
 	rm -f $(DESTDIR)$(mandir)/man5/ctrlproxy_config.5 
 	rm -f $(DESTDIR)$(docdir)/user-guide.html
