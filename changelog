@@ -1,8 +1,10 @@
-ctrlproxy (3.0.4-2) UNRELEASED; urgency=low
+ctrlproxy (3.0.5-1) unstable; urgency=medium
 
-  * Add manual page for ctrlproxy-admin.
+  * New upstream release.
+    + Fixes crash due to double free.
+  * Install manual page for ctrlproxy-admin
 
- -- Jelmer Vernooij <jelmer@samba.org>  Sun, 02 Dec 2007 23:23:23 +0100
+ -- Jelmer Vernooij <jelmer@samba.org>  Fri, 07 Dec 2007 16:17:16 +0100
 
 ctrlproxy (3.0.4-1) unstable; urgency=low
 

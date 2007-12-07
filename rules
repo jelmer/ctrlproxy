@@ -37,7 +37,7 @@ binary-arch: build
 	dh_installdocs -a
 	dh_installchangelogs -a 
 	dh_installexamples -a 
-	dh_installman -a
+	dh_installman -a doc/ctrlproxy-admin.1
 	dh_compress -a
 	dh_fixperms -a
 	dh_shlibdeps -a
