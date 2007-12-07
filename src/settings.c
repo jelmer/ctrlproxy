@@ -36,10 +36,17 @@ static GList *known_keys = NULL;
 
 static void config_save_log(struct log_file_config *data,
 							struct ctrlproxy_config *config);
+static void config_save_auto_away(struct auto_away_config *d, 
+								  struct ctrlproxy_config *config);
 
 static const char *builtin_known_keys[] = {
 	"autoconnect",
 	"autosave",
+	"auto-away-enable",
+	"auto-away-message",
+	"auto-away-nick",
+	"auto-away-client-limit",
+	"auto-away-time",
 	"max_who_age",
 	"replication",
 	"linestack",
@@ -367,6 +374,8 @@ void save_configuration(struct ctrlproxy_config *cfg, const char *configuration_
 	config_save_listeners(cfg, configuration_dir);
 
 	config_save_log(cfg->log_file, cfg);
+
+	config_save_auto_away(cfg->auto_away, cfg);
 
 	i = 0;
 	list = g_new0(char *, g_list_length(cfg->networks)+1);
@@ -891,6 +900,28 @@ static void config_load_log(struct ctrlproxy_config *config)
 	}
 
 	g_free(logging);
+}
+
+static void config_save_auto_away(struct auto_away_config *d, struct ctrlproxy_config *config)
+{
+	GKeyFile *kf = config->keyfile;
+
+	if (config->auto_away == NULL) {
+		g_key_file_set_boolean(kf, "global", "auto-away-enable", FALSE);
+		return;
+	}
+	g_key_file_set_boolean(kf, "global", "auto-away-enable", TRUE);
+
+	if (d->message != NULL)
+		g_key_file_set_string(kf, "global", "auto-away-message", d->message);
+
+	if (d->nick != NULL)
+		g_key_file_set_string(kf, "global", "auto-away-nick", d->nick);
+
+	if (d->client_limit != -1)
+		g_key_file_set_integer(kf, "global", "auto-away-client-limit", d->client_limit);
+
+	g_key_file_set_integer(kf, "global", "auto-away-time", d->max_idle_time);
 }
 
 static void config_load_auto_away(struct ctrlproxy_config *config)
