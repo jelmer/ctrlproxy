@@ -1,26 +1,28 @@
  Otherwise indicated differently, all changes made by 
      Jelmer Vernooij.
 
-Ctrlproxy 3.0.5 UNRELEASED
+Ctrlproxy 3.0.5 2007-12-07
 
   IMPROVEMENTS
   
     * Integrate auto-away module into the core.
 
-	* New settings ``autosave'', ``replication'', ``learn-nickserv'', 
-	  ``learn-network-name'', ``admin-log'', ``admin-user''.
+    * New settings ``autosave'', ``replication'', ``learn-nickserv'', 
+      ``learn-network-name'', ``admin-log'', ``admin-user''.
 
-	* Warn about unknown configuration file settings. (#15)
+    * Warn about unknown configuration file settings. (#15)
 
-	* Support prefixing all lines with the time ("report-time = always"). (#169)
+    * Support prefixing all lines with the time ("report-time = always"). (#169)
 
-	* Allow using expansions in log file names for irssi. (#149)
+    * Allow using expansions in log file names for irssi. (#149)
 
   BUG FIXES
 
     * Handle 275 response correctly.
 
-	* Fix memory error. (#170)
+    * Fix memory error. (#170)
+
+    * Fix several memory leaks.
 
 Ctrlproxy 3.0.4 2007-11-24
 

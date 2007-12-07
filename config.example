@@ -49,12 +49,3 @@ autoconnect = admin
 # Irssi-style logging
 #logging = irssi
 #logfile = /home/jelmer/tmp/ctrlproxy
-
-# Network-specific settings
-#[Freenode]
-#nick = jelmer
-#autojoin = #ctrlproxy;#bzr
-#reconnect-interval = 30
-#
-#[OFTC]
-#ssl-certificate = nick.pem
