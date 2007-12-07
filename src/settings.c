@@ -807,7 +807,6 @@ static void config_load_log(struct ctrlproxy_config *config)
 
 	if (g_key_file_has_group(kf, "log-custom")) {
 		data = g_new0(struct log_file_config, 1);
-		g_key_file_remove_group(kf, "log-custom", NULL);
 
 		FETCH_SETTING(data, kf, "log-custom", "", nickchange);
 		FETCH_SETTING(data, kf, "log-custom", "", logfilename);
@@ -822,6 +821,7 @@ static void config_load_log(struct ctrlproxy_config *config)
 		FETCH_SETTING(data, kf, "log-custom", "", quit);
 		FETCH_SETTING(data, kf, "log-custom", "", mode);
 
+		g_key_file_remove_group(kf, "log-custom", NULL);
 		config->log_file = data;
 		log_custom_load(data);
 	}
