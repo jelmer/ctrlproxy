@@ -405,6 +405,10 @@ static gboolean marshall_network_state(enum marshall_mode m, GIOChannel *t,
 {
 	gboolean ret = TRUE;
 
+	if (m == MARSHALL_PULL) {
+		g_free(n->me.hostmask);
+		n->me.hostmask = NULL;
+	}
 	ret &= marshall_network_nick(n, "me", 0, m, t, &n->me);
 	ret &= marshall_GList(n, "nicks", 0, m, t, &n->nicks, (marshall_fn_t)marshall_network_nick_p);
 	ret &= marshall_GList(n, "channels", 0, m, t, &n->channels, (marshall_fn_t)marshall_channel_state);
