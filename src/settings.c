@@ -904,7 +904,7 @@ static void config_load_log(struct ctrlproxy_config *config)
 	struct log_file_config *data;
 	char *logging = NULL;
 
-	if (g_key_file_get_string(kf, "global", "logging", NULL) != NULL) {
+	if (g_key_file_has_key(kf, "global", "logging", NULL)) {
 		logging = g_key_file_get_string(kf, "global", "logging", NULL);
 	}
 
