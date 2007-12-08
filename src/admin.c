@@ -533,7 +533,25 @@ static gboolean linestack_set(admin_handle h, const char *value)
 	return TRUE;
 }
 
+static char *logging_get(admin_handle h)
+{
+	struct global *g = admin_get_global(h);
 
+	if (g->config->log_file == NULL)
+		return g_strdup("none");
+
+	if (g->config->log_file->is_irssi)
+		return g_strdup("irssi");
+
+	return g_strdup("custom");
+}
+
+static gboolean logging_set(admin_handle h, const char *value)
+{
+	/* FIXME: Implement */
+
+	return FALSE;
+}
 
 static char *log_level_get(admin_handle h)
 {
@@ -1192,6 +1210,7 @@ static struct admin_setting {
 	{ "learn-nickserv", learn_nickserv_get, learn_nickserv_set },
 	{ "linestack", linestack_get, linestack_set },
 	{ "log_level", log_level_get, log_level_set },
+	{ "logging", logging_get, logging_set },
 	{ "max_who_age", max_who_age_get, max_who_age_set },
 	{ "motd-file", motd_file_get, motd_file_set },
 	{ "port", port_get, port_set },
