@@ -1193,6 +1193,41 @@ static gboolean port_set(admin_handle h, const char *value)
 	return FALSE;
 }
 
+static char *bind_get(admin_handle h)
+{
+	GList *gl;
+	struct global *g = admin_get_global(h);
+
+	for (gl = g->config->listeners; gl; gl = gl->next) {
+		struct listener_config *l = gl->data;
+
+		if (l->is_default)
+			return g_strdup_printf("%s", l->address);
+	}
+
+	return g_strdup("");
+}
+
+static gboolean bind_set(admin_handle h, const char *value)
+{
+	GList *gl;
+	struct global *g = admin_get_global(h);
+
+	/* FIXME: What if there is no default listener ? */
+	/* FIXME: Check that value is a valid service name or port number */
+
+	for (gl = g->config->listeners; gl; gl = gl->next) {
+		struct listener_config *l = gl->data;
+
+		if (l->is_default) {
+			l->address = g_strdup(value);
+			return TRUE;
+		}
+	}
+
+	return FALSE;
+}
+
 static char *password_get(admin_handle h)
 {
 	GList *gl;
@@ -1228,6 +1263,58 @@ static gboolean password_set(admin_handle h, const char *value)
 	return FALSE;
 }
 
+static char *default_network_get(admin_handle h)
+{
+	GList *gl;
+	struct global *g = admin_get_global(h);
+
+	for (gl = g->config->listeners; gl; gl = gl->next) {
+		struct listener_config *l = gl->data;
+
+		if (l->is_default)
+			return g_strdup(l->network);
+	}
+
+	return g_strdup("");
+}
+
+static gboolean default_network_set(admin_handle h, const char *value)
+{
+	GList *gl;
+	struct global *g = admin_get_global(h);
+
+	/* FIXME: What if there is no default listener ? */
+	/* FIXME: Check that value is a valid service name or port number */
+
+	for (gl = g->config->listeners; gl; gl = gl->next) {
+		struct listener_config *l = gl->data;
+
+		if (l->is_default) {
+			l->network = g_strdup(value);
+			return TRUE;
+		}
+	}
+
+	return FALSE;
+}
+
+static char *default_client_charset_get(admin_handle h)
+{
+	struct global *g = admin_get_global(h);
+
+	return g_strdup(g->config->client_charset);
+}
+
+static gboolean default_client_charset_set(admin_handle h, const char *value)
+{
+	struct global *g = admin_get_global(h);
+
+	g->config->client_charset = g_strdup(value);
+
+	return TRUE;
+}
+
+
 /**
  * Table of administration settings that can be
  * viewed and changed using the SET command.
@@ -1240,6 +1327,9 @@ static struct admin_setting {
 	{ "admin-log", admin_log_get, admin_log_set },
 	{ "admin-user", admin_user_get, admin_user_set },
 	{ "autosave", autosave_get, autosave_set },
+	{ "bind", bind_get, bind_set },
+	{ "default-client-charset", default_client_charset_get, default_client_charset_set },
+	{ "default-network", default_network_get, default_network_set },
 	{ "learn-network-name", learn_network_name_get, learn_network_name_set },
 	{ "learn-nickserv", learn_nickserv_get, learn_nickserv_set },
 	{ "linestack", linestack_get, linestack_set },
