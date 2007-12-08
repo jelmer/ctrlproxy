@@ -13,6 +13,8 @@ Ctrlproxy 3.0.6 UNRELEASED
 
 	* Don't add all existing networks to autoconnect list. (#90)
 
+	* Fix another memory leak.
+
 Ctrlproxy 3.0.5 2007-12-07
 
   IMPROVEMENTS

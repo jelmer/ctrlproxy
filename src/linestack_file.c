@@ -92,6 +92,8 @@ static gboolean marshall_get (GIOChannel *t, int level, const char *name, char *
 		*value = NULL;
 	}
 
+	g_free(line);
+
 	return TRUE;
 }
 
