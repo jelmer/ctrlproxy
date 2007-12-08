@@ -6,6 +6,8 @@ Ctrlproxy 3.0.6 UNRELEASED
   IMPROVEMENTS
 
     * Add report-time-offset setting.
+	
+	* New setting ``port''.
 
   BUG FIXES
 

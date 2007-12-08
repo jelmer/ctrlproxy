@@ -1120,6 +1120,42 @@ static gboolean report_time_offset_set(admin_handle h, const char *value)
 	return TRUE;
 }
 
+static char *port_get(admin_handle h)
+{
+	GList *gl;
+	struct global *g = admin_get_global(h);
+
+	for (gl = g->config->listeners; gl; gl = gl->next) {
+		struct listener_config *l = gl->data;
+
+		if (l->is_default)
+			return g_strdup_printf("%s", l->port);
+	}
+
+	return g_strdup("");
+}
+
+static gboolean port_set(admin_handle h, const char *value)
+{
+	GList *gl;
+	struct global *g = admin_get_global(h);
+
+	/* FIXME: What if there is no default listener ? */
+	/* FIXME: Check that value is a valid service name or port number */
+
+	for (gl = g->config->listeners; gl; gl = gl->next) {
+		struct listener_config *l = gl->data;
+
+		if (l->is_default) {
+			l->port = g_strdup(value);
+		}
+	}
+
+	return TRUE;
+}
+
+
+
 /**
  * Table of administration settings that can be
  * viewed and changed using the SET command.
@@ -1137,6 +1173,7 @@ static struct admin_setting {
 	{ "log_level", log_level_get, log_level_set },
 	{ "max_who_age", max_who_age_get, max_who_age_set },
 	{ "motd-file", motd_file_get, motd_file_set },
+	{ "port", port_get, port_set },
 	{ "report-time", report_time_get, report_time_set },
 	{ "report-time-offset", report_time_offset_get, report_time_offset_set },
 	{ "replication", replication_get, replication_set },
