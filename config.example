@@ -49,3 +49,11 @@ autoconnect = admin
 # Irssi-style logging
 #logging = irssi
 #logfile = /home/jelmer/tmp/ctrlproxy
+#
+#[OFTC]
+#nick = jelmer
+#autojoin = #bitlbee
+#
+#[Freenode]
+#nick = jelmer
+#autojoin = #ctrlproxy;#bla
