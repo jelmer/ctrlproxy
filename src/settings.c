@@ -664,9 +664,9 @@ static void config_load_listeners(struct ctrlproxy_config *cfg)
 	GError *error = NULL;
 
 	if (g_key_file_has_key(cfg->keyfile, "listener", "pasword", NULL)) {
-		g_key_file_remove_key(cfg->keyfile, "listener", "password", NULL);
 		g_key_file_set_string(cfg->keyfile, "global", "password", 
 							  g_key_file_get_string(cfg->keyfile, "listener", "password", NULL));
+		g_key_file_remove_key(cfg->keyfile, "listener", "password", NULL);
 	}
 	default_password = g_key_file_get_string(cfg->keyfile, "global", "password", NULL);
 	if (g_key_file_has_key(cfg->keyfile, "global", "listener-auto", NULL)) {
