@@ -13,6 +13,9 @@ Ctrlproxy 3.0.6 UNRELEASED
 	* Simplify files in networks/ further by storing keys in ~/.ctrlproxy/keys 
 	  and having a list of channels to autojoin. (#76)
 
+    * Only update autojoin settings when ctrlproxy is completely logged in. 
+	  (#113)
+
   BUG FIXES
 
     * Don't "forget" listener password.

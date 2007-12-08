@@ -95,6 +95,7 @@ void global_update_config(struct global *my_global)
 	
 		n->config->autoconnect = (n->connection.state != NETWORK_CONNECTION_STATE_NOT_CONNECTED);
 
-		network_update_config(n->state, n->config);
+		if (n->connection.state == NETWORK_CONNECTION_STATE_MOTD_RECVD)
+			network_update_config(n->state, n->config);
 	}
 }
