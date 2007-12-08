@@ -235,32 +235,37 @@ gboolean linestack_insert_line(struct linestack_context *ctx,
 	return ctx->ops->insert_line(ctx, l, state);
 }
 
-static gboolean send_line(struct line *l, time_t t, void *_client)
+struct send_line_privdata {
+	int time_offset;
+	struct client *client;
+};
+
+static gboolean send_line(struct line *l, time_t t, void *_privdata)
 {
-	struct client *c = _client;
-	return client_send_line(c, l);
+	struct send_line_privdata *privdata = _privdata;
+	return client_send_line(privdata->client, l);
 }
 
-static gboolean send_line_timed(struct line *l, time_t t, void *_client)
+static gboolean send_line_timed(struct line *l, time_t t, void *_privdata)
 {
-	struct client *c = _client;
+	struct send_line_privdata *privdata = _privdata;
 
 	if ((!g_strcasecmp(l->args[0], "PRIVMSG") ||
 		!g_strcasecmp(l->args[0], "NOTICE")) &&
 		l->argc > 2) {
-		struct line *nl = line_prefix_time(l, t);
+		struct line *nl = line_prefix_time(l, t+privdata->time_offset);
 		gboolean ret;
-		ret = client_send_line(c, nl);
+		ret = client_send_line(privdata->client, nl);
 		free_line(nl);
 		return ret;
 	} else {
-		return client_send_line(c, l);
+		return client_send_line(privdata->client, l);
 	}
 }
 
-static gboolean send_line_timed_dataonly(struct line *l, time_t t, void *_client)
+static gboolean send_line_timed_dataonly(struct line *l, time_t t, void *_privdata)
 {
-	struct client *c = _client;
+	struct send_line_privdata *privdata = _privdata;
 	gboolean ret;
 	struct line *nl;
 
@@ -271,15 +276,15 @@ static gboolean send_line_timed_dataonly(struct line *l, time_t t, void *_client
 	if (l->argc <= 2)
 		return TRUE;
 
-	nl = line_prefix_time(l, t);
-	ret = client_send_line(c, nl);
+	nl = line_prefix_time(l, t+privdata->time_offset);
+	ret = client_send_line(privdata->client, nl);
 	free_line(nl);
 	return ret;
 }
 
-static gboolean send_line_dataonly(struct line *l, time_t t, void *_client)
+static gboolean send_line_dataonly(struct line *l, time_t t, void *_privdata)
 {
-	struct client *c = _client;
+	struct send_line_privdata *privdata = _privdata;
 
 	if (g_strcasecmp(l->args[0], "PRIVMSG") != 0 && 
 		g_strcasecmp(l->args[0], "NOTICE") != 0)
@@ -288,12 +293,16 @@ static gboolean send_line_dataonly(struct line *l, time_t t, void *_client)
 	if (l->argc <= 2)
 		return TRUE;
 
-	return client_send_line(c, l);
+	return client_send_line(privdata->client, l);
 }
 
-gboolean linestack_send(struct linestack_context *ctx, struct linestack_marker *mf, struct linestack_marker *mt, struct client *c, gboolean dataonly, gboolean timed)
+gboolean linestack_send(struct linestack_context *ctx, struct linestack_marker *mf, struct linestack_marker *mt, struct client *c, gboolean dataonly, gboolean timed, int time_offset)
 {
+	struct send_line_privdata privdata;
 	linestack_traverse_fn trav_fn;
+
+	privdata.client = c;
+	privdata.time_offset = time_offset;
 
 	if (dataonly) {
 		if (timed) 
@@ -307,12 +316,17 @@ gboolean linestack_send(struct linestack_context *ctx, struct linestack_marker *
 			trav_fn = send_line;
 	}
 
-	return linestack_traverse(ctx, mf, mt, trav_fn, c);
+	return linestack_traverse(ctx, mf, mt, trav_fn, &privdata);
 }
 
-gboolean linestack_send_object(struct linestack_context *ctx, const char *obj, struct linestack_marker *mf, struct linestack_marker *mt, struct client *c, gboolean dataonly, gboolean timed)
+gboolean linestack_send_object(struct linestack_context *ctx, const char *obj, struct linestack_marker *mf, struct linestack_marker *mt, struct client *c, gboolean dataonly, gboolean timed, int time_offset)
 {
+	struct send_line_privdata privdata;
 	linestack_traverse_fn trav_fn;
+
+	privdata.client = c;
+	privdata.time_offset = time_offset;
+
 	if (dataonly) {
 		if (timed) 
 			trav_fn = send_line_timed_dataonly;
@@ -325,7 +339,7 @@ gboolean linestack_send_object(struct linestack_context *ctx, const char *obj, s
 			trav_fn = send_line;
 	}
 
-	return linestack_traverse_object(ctx, obj, mf, mt, trav_fn, c);
+	return linestack_traverse_object(ctx, obj, mf, mt, trav_fn, &privdata);
 }
 
 static gboolean replay_line(struct line *l, time_t t, void *state)

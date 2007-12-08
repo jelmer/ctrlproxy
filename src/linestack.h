@@ -131,7 +131,8 @@ G_MODULE_EXPORT gboolean linestack_send (
 		struct linestack_marker *to, /* Can be NULL for 'now' */
 		struct client *, 
 		gboolean dataonly, 
-		gboolean timed);
+		gboolean timed,
+		int time_offset);
 
 G_MODULE_EXPORT gboolean linestack_send_object (
 		struct linestack_context *,
@@ -140,7 +141,8 @@ G_MODULE_EXPORT gboolean linestack_send_object (
 		struct linestack_marker *to, /* Can be NULL for 'now' */
 		struct client *,
 		gboolean dataonly,
-		gboolean timed);
+		gboolean timed,
+		int time_offset);
 
 G_MODULE_EXPORT gboolean linestack_replay (
 		struct linestack_context *,

@@ -89,7 +89,8 @@ static void lastdisconnect_replicate(struct client *c)
 	free_network_state(ns);
 
 	linestack_send(c->network->linestack, lm, NULL, c, FALSE, 
-				   c->network->global->config->report_time != REPORT_TIME_NEVER);
+				   c->network->global->config->report_time != REPORT_TIME_NEVER,
+				   c->network->global->config->report_time_offset);
 }
 
 static gboolean log_data(struct network *n, const struct line *l, enum data_direction dir, void *userdata) 
@@ -122,7 +123,8 @@ static void simple_replicate(struct client *c)
 	free_network_state(ns);
 
 	linestack_send(c->network->linestack, m, NULL, c, FALSE, 
-				   c->network->global->config->report_time != REPORT_TIME_NEVER);
+				   c->network->global->config->report_time != REPORT_TIME_NEVER,
+				   c->network->global->config->report_time_offset);
 }
 
 static const struct replication_backend backends[] = {

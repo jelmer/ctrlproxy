@@ -496,7 +496,8 @@ static void cmd_backlog(admin_handle h, char **args, void *userdata)
 		admin_out(h, "Sending backlog for network '%s'", n->info.name);
 
 		linestack_send(n->linestack, lm, NULL, admin_get_client(h),
-					   TRUE, n->global->config->report_time != REPORT_TIME_NEVER);
+					   TRUE, n->global->config->report_time != REPORT_TIME_NEVER,
+					   n->global->config->report_time_offset);
 
 		g_hash_table_replace(markers, n, linestack_get_marker(n->linestack));
 
@@ -508,7 +509,8 @@ static void cmd_backlog(admin_handle h, char **args, void *userdata)
 
 	linestack_send_object(n->linestack, args[1], lm, NULL, 
 						  admin_get_client(h), TRUE, 
-						  n->global->config->report_time != REPORT_TIME_NEVER);
+						  n->global->config->report_time != REPORT_TIME_NEVER,
+						  n->global->config->report_time_offset);
 
 	g_hash_table_replace(markers, n, linestack_get_marker(n->linestack));
 }
@@ -1102,6 +1104,22 @@ static gboolean max_who_age_set(admin_handle h, const char *value)
 	return TRUE;
 }
 
+static char *report_time_offset_get(admin_handle h)
+{
+	struct global *g = admin_get_global(h);
+	
+	return g_strdup_printf("%d", g->config->report_time_offset);
+}
+
+static gboolean report_time_offset_set(admin_handle h, const char *value)
+{
+	struct global *g = admin_get_global(h);
+
+	g->config->report_time_offset = atoi(value);
+
+	return TRUE;
+}
+
 /**
  * Table of administration settings that can be
  * viewed and changed using the SET command.
@@ -1120,6 +1138,7 @@ static struct admin_setting {
 	{ "max_who_age", max_who_age_get, max_who_age_set },
 	{ "motd-file", motd_file_get, motd_file_set },
 	{ "report-time", report_time_get, report_time_set },
+	{ "report-time-offset", report_time_offset_get, report_time_offset_set },
 	{ "replication", replication_get, replication_set },
 	{ NULL, NULL, NULL }
 };

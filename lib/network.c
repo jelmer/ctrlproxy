@@ -272,7 +272,7 @@ static gboolean process_from_server(struct network *n, struct line *l)
 			} else if (run_server_filter(n, l, FROM_SERVER)) {
 				if (!strcmp(l->args[0], "PRIVMSG") && 
 					n->global->config->report_time == REPORT_TIME_ALWAYS)
-					l = line_prefix_time(l, time(NULL));
+					l = line_prefix_time(l, time(NULL)+n->global->config->report_time_offset);
 
 				clients_send(n->clients, l, NULL);
 			}
@@ -525,7 +525,7 @@ gboolean network_send_line(struct network *s, struct client *c,
 		!g_strcasecmp(l.args[0], "NOTICE"))) {
 		g_assert(l.origin);
 		if (s->global->config->report_time == REPORT_TIME_ALWAYS)
-			line_prefix_time(&l, time(NULL));
+			line_prefix_time(&l, time(NULL)+s->global->config->report_time_offset);
 
 		clients_send(s->clients, &l, c);
 	}

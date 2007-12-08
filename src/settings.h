@@ -156,6 +156,7 @@ struct ctrlproxy_config {
 		REPORT_TIME_NEVER,
 		REPORT_TIME_REPLICATION
 	} report_time;
+	int report_time_offset;
 	int max_who_age;
 	GKeyFile *keyfile;
 	GList *listeners;

@@ -51,6 +51,7 @@ static const char *builtin_known_keys[] = {
 	"replication",
 	"linestack",
 	"report-time",
+	"report-time-offset",
 	"motd-file",
 	"default-client-charset",
 	"learn-nickserv",
@@ -368,6 +369,10 @@ void save_configuration(struct ctrlproxy_config *cfg, const char *configuration_
 							  "replication");
 		break;
 	}
+
+	if (cfg->report_time_offset != 0 ||
+		g_key_file_has_key(cfg->keyfile, "global", "report-time-offset", NULL))
+		g_key_file_set_integer(cfg->keyfile, "global", "report-time-offset", cfg->report_time_offset);
 
 	config_save_networks(configuration_dir, cfg->networks);
 
@@ -1035,6 +1040,11 @@ struct ctrlproxy_config *load_configuration(const char *dir)
 			log_global(LOG_WARNING, "Unknown value `%s' for report-time in configuration file", setting);
 		}
 		g_free(setting);
+	}
+
+	cfg->report_time_offset = 0;
+	if (g_key_file_has_key(kf, "global", "report-time-offset", NULL)) {
+		cfg->report_time_offset = g_key_file_get_integer(kf, "global", "report-time-offset", NULL);
 	}
 
     if (g_key_file_has_key(kf, "global", "motd-file", NULL))

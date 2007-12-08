@@ -3,6 +3,14 @@
 
 Ctrlproxy 3.0.6 UNRELEASED
 
+  IMPROVEMENTS
+
+    * Add report-time-offset setting.
+
+  BUG FIXES
+
+    * Don't "forget" listener password.
+
 Ctrlproxy 3.0.5 2007-12-07
 
   IMPROVEMENTS
