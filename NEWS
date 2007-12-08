@@ -11,6 +11,8 @@ Ctrlproxy 3.0.6 UNRELEASED
 
     * Don't "forget" listener password.
 
+	* Don't add all existing networks to autoconnect list. (#90)
+
 Ctrlproxy 3.0.5 2007-12-07
 
   IMPROVEMENTS

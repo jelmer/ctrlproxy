@@ -803,7 +803,6 @@ static gboolean connect_current_tcp_server(struct network *s)
 	return TRUE;
 }
 
-
 static void reconnect(struct network *server)
 {
 	g_assert(server);

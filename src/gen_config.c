@@ -43,11 +43,9 @@ void network_update_config(struct network_state *ns, struct network_config *nc)
 {
 	GList *gl;
 
-	nc->autoconnect = 1;
-
 	if (ns == NULL)
 		return;
-	
+
 	/* Network name */
 	if (ns->info.name != NULL && 
 		(nc->name == NULL || strcmp(ns->info.name, nc->name) != 0)) {
@@ -62,7 +60,7 @@ void network_update_config(struct network_state *ns, struct network_config *nc)
 	for (gl = nc->channels; gl; gl = gl->next) {
 		struct channel_config *cc = gl->data;
 
-		cc->autojoin = 0;
+		cc->autojoin = FALSE;
 	}
 
 	for (gl = ns->channels; gl; gl = gl->next) {
@@ -77,7 +75,6 @@ void network_update_config(struct network_state *ns, struct network_config *nc)
 		}
 		channel_update_config(cs, cc);
 	}
-
 }
 
 void channel_update_config(struct channel_state *ns, struct channel_config *nc)
@@ -85,7 +82,7 @@ void channel_update_config(struct channel_state *ns, struct channel_config *nc)
 	g_free(nc->key); nc->key = NULL;
 	if (ns->key) 
 		nc->key = g_strdup(ns->key);
-	nc->autojoin = 1;
+	nc->autojoin = TRUE;
 	g_free(nc->name);
 	nc->name = g_strdup(ns->name);
 }
@@ -95,6 +92,9 @@ void global_update_config(struct global *my_global)
 	GList *gl;
 	for (gl = my_global->networks; gl; gl = gl->next) {
 		struct network *n = gl->data;
+	
+		n->config->autoconnect = (n->connection.state != NETWORK_CONNECTION_STATE_NOT_CONNECTED);
+
 		network_update_config(n->state, n->config);
 	}
 }
