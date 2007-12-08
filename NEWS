@@ -7,7 +7,7 @@ Ctrlproxy 3.0.6 UNRELEASED
 
     * Add report-time-offset setting.
 	
-	* New settings ``port'', ``linestack'', ``logging''.
+	* New settings ``port'', ``linestack'', ``logging'', ``password''.
 
   BUG FIXES
 
