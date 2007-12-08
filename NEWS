@@ -11,7 +11,7 @@ Ctrlproxy 3.0.6 UNRELEASED
 	  ``default-network''.
 
 	* Simplify files in networks/ further by storing keys in ~/.ctrlproxy/keys 
-	  and having a list of channels to autojoin.
+	  and having a list of channels to autojoin. (#76)
 
   BUG FIXES
 
