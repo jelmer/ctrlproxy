@@ -50,6 +50,7 @@ objs = src/posix.o \
 	   src/ctcp.o \
 	   src/motd.o \
 	   src/nickserv.o \
+	   src/keyfile.o \
 	   src/admin.o \
 	   src/user.o \
 	   src/pipes.o \

@@ -33,7 +33,7 @@
 struct channel_config {
 	char *name;
 	char *key;
-	int autojoin:1;
+	gboolean autojoin;
 };
 
 /**

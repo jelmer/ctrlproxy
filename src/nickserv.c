@@ -23,7 +23,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <errno.h>
-#include "nickserv.h"
+#include "keyfile.h"
 #include "irc.h"
 
 #define NICKSERV_FILE_HEADER "# This file contains passwords for NickServ\n" \
@@ -36,7 +36,7 @@ const char *nickserv_find_nick(struct network *n, const char *nick)
 {
 	GList *gl;
 	for (gl = n->global->nickserv_nicks; gl; gl = gl->next) {
-		struct nickserv_entry *e = gl->data;
+		struct keyfile_entry *e = gl->data;
 
 		if (g_strcasecmp(e->nick, nick)) 
 			continue;
@@ -79,7 +79,7 @@ void nickserv_identify_me(struct network *network, char *nick)
 
 static void cache_nickserv_pass(struct network *n, const char *newpass)
 {
-	struct nickserv_entry *e = NULL;
+	struct keyfile_entry *e = NULL;
 	GList *gl;
 
 	for (gl = n->global->nickserv_nicks; gl; gl = gl->next) {
@@ -97,7 +97,7 @@ static void cache_nickserv_pass(struct network *n, const char *newpass)
 	}
 
 	if (!gl) {
-		e = g_new0(struct nickserv_entry, 1);
+		e = g_new0(struct keyfile_entry, 1);
 		e->nick = g_strdup(n->state->me.nick);
 		e->network = g_strdup(n->info.name);
 		n->global->nickserv_nicks = g_list_prepend(n->global->nickserv_nicks, e);
@@ -157,117 +157,26 @@ static gboolean log_data(struct network *n, const struct line *l, enum data_dire
 	return TRUE;
 }
 
-gboolean nickserv_write_file(GList *nicks, const char *filename)
-{
-	GList *gl;
-	int fd;
-	gboolean empty = TRUE;
-
-	fd = open(filename, O_WRONLY | O_CREAT, 0600);
-
-    if (fd == -1) {
-		log_global(LOG_WARNING, "Unable to write nickserv file `%s': %s", filename, strerror(errno));
-        return FALSE;
-    }
-
-	if (write(fd, NICKSERV_FILE_HEADER, strlen(NICKSERV_FILE_HEADER)) < 0) {
-		log_global(LOG_WARNING, "error writing file header: %s", strerror(errno));
-		close(fd);
-		return FALSE;
-	}
-
-	for (gl = nicks; gl; gl = gl->next) {
-		struct nickserv_entry *n = gl->data;
-        char *line;
-
-		empty = FALSE;
-        
-        line = g_strdup_printf("%s\t%s\t%s\n", n->nick, n->pass, n->network?n->network:"*");
-		if (write(fd, line, strlen(line)) < 0) {
-			log_global(LOG_WARNING, "error writing line `%s': %s", line, strerror(errno));
-			g_free(line);
-			close(fd);
-			return FALSE;
-		}
-
-        g_free(line);
-	}
-    
-    close(fd);
-
-	return TRUE;
-}
-
 gboolean nickserv_save(struct global *global, const char *dir)
 {
     char *filename = g_build_filename(dir, "nickserv", NULL);
 	gboolean ret;
 
-	ret = nickserv_write_file(global->nickserv_nicks, filename);
+	ret = keyfile_write_file(global->nickserv_nicks, NICKSERV_FILE_HEADER, filename);
 
     g_free(filename);
 
 	return ret;
 }
 
-gboolean nickserv_read_file(const char *filename, GList **nicks)
-{
-    GIOChannel *gio;
-    char *ret;
-    gsize nr, term;
-
-    gio = g_io_channel_new_file(filename, "r", NULL);
-
-    if (gio == NULL) {
-        return FALSE;
-    }
-
-    while (G_IO_STATUS_NORMAL == g_io_channel_read_line(gio, &ret, &nr, &term, NULL))
-    {
-        char **parts; 
-		struct nickserv_entry *e;
-
-		if (ret[0] == '#') {
-        	g_free(ret);
-			continue;
-		}
-
-		ret[term] = '\0';
-
-        parts = g_strsplit(ret, "\t", 3);
-        g_free(ret);
-
-		if (!parts[0] || !parts[1]) {
-			g_strfreev(parts);
-			continue;
-		}
-			
-		e = g_new0(struct nickserv_entry, 1);
-		e->nick = parts[0];
-		e->pass = parts[1];
-		if (!parts[2] || !strcmp(parts[2], "*")) {
-			e->network = NULL;
-			g_free(parts[2]);
-		} else {
-			e->network = parts[2];
-		}
-	
-		*nicks = g_list_append(*nicks, e);   
-        g_free(parts);
-    }
-
-	g_io_channel_shutdown(gio, TRUE, NULL);
-	g_io_channel_unref(gio);
-
-	return TRUE;
-}
-
 gboolean nickserv_load(struct global *global)
 {
 	gboolean ret;
-    char *filename = g_build_filename(global->config->config_dir, "nickserv", 
+    char *filename;
+	
+	filename = g_build_filename(global->config->config_dir, "nickserv", 
 									  NULL);
-	ret = nickserv_read_file(filename, &global->nickserv_nicks);
+	ret = keyfile_read_file(filename, '#', &global->nickserv_nicks);
 	g_free(filename);
 
 	return TRUE;

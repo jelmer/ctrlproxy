@@ -10,6 +10,9 @@ Ctrlproxy 3.0.6 UNRELEASED
 	* New settings ``port'', ``linestack'', ``logging'', ``password'',
 	  ``default-network''.
 
+	* Simplify files in networks/ further by storing keys in ~/.ctrlproxy/keys 
+	  and having a list of channels to autojoin.
+
   BUG FIXES
 
     * Don't "forget" listener password.

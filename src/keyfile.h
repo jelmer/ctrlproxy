@@ -17,21 +17,25 @@
 	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 */
 
-#ifndef __CTRLPROXY_NICKSERV_H__
-#define __CTRLPROXY_NICKSERV_H__
+#ifndef __CTRLPROXY_KEYFILE_H__
+#define __CTRLPROXY_KEYFILE_H__
 
 /**
  * @file
- * @brief NickServ information maintainance
+ * @brief Key file
  */
 
 /**
- * Nickname/password combination for a particular network or globally.
+ * Name/password combination for a particular network or globally.
  */
-struct nickserv_entry {
+struct keyfile_entry {
 	char *network;
 	char *nick;
 	char *pass;
 };
 
-#endif /* __CTRLPROXY_NICKSERV_H__ */
+gboolean keyfile_read_file(const char *filename, char commentchar, GList **nicks);
+gboolean keyfile_write_file(GList *entries, const char *header, 
+							const char *filename);
+
+#endif /* __CTRLPROXY_KEYFILE_H__ */

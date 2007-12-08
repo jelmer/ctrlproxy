@@ -20,6 +20,7 @@
 
 #include "internals.h"
 #include "ssl.h"
+#include "keyfile.h"
 
 #ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
@@ -31,6 +32,13 @@
 
 #define DEFAULT_ADMIN_PORT 6680
 #define DEFAULT_SOCKS_PORT 1080
+
+#define CHANNEL_KEY_FILE_HEADER \
+	"; This file contains channel keys.\n" \
+	"; It has the same format as the ppp secrets files.\n" \
+	"; It should contain one entry per line, each entry consisting of: \n" \
+	"; a channel name, channel key and network name, separated by tabs.\n" \
+	";\n\n"
 
 static GList *known_keys = NULL;
 
@@ -173,11 +181,13 @@ static void config_save_tcp_servers(struct network_config *n, GKeyFile *kf)
 	g_strfreev(values);
 }
 
-static void config_save_network(const char *dir, struct network_config *n)
+static void config_save_network(const char *dir, struct network_config *n, GList **channel_keys)
 {
 	GList *gl;
 	GKeyFile *kf;
 	char *fn;
+	char **autojoin_list;
+	int autojoin_list_count;
 	
 	if (!n->keyfile) {
 		n->keyfile = g_key_file_new();
@@ -204,17 +214,36 @@ static void config_save_network(const char *dir, struct network_config *n)
 		break;
 	default:break;
 	}
-	
+
+	autojoin_list = g_new0(char *, g_list_length(n->channels));
+	autojoin_list_count = 0;
+
 	for (gl = n->channels; gl; gl = gl->next) {
 		struct channel_config *c = gl->data;
+		struct keyfile_entry *key;
 
-		if (c->key)
-			g_key_file_set_string(kf, c->name, "key", c->key);
-		else 
-			g_key_file_remove_key(kf, c->name, "key", NULL);
+		if (c->key) {
+			key = g_new0(struct keyfile_entry, 1);
+			key->network = n->name;
+			key->nick = c->name;
+			key->pass = c->key;
+
+			*channel_keys = g_list_append(*channel_keys, key);
+		}
 		
-		g_key_file_set_boolean(kf, c->name, "autojoin", c->autojoin);
+		autojoin_list[autojoin_list_count] = c->name;
+		autojoin_list_count++;
+
+		g_key_file_remove_group(kf, c->name, NULL);
 	}
+
+	if (autojoin_list == NULL)
+		g_key_file_remove_key(kf, "global", "autojoin", NULL);
+	else
+		g_key_file_set_string_list(kf, "global", "autojoin", (const gchar **)autojoin_list, 
+							   autojoin_list_count);
+
+	g_free(autojoin_list);
 
 	fn = g_build_filename(dir, n->name, NULL);
 	g_key_file_save_to_file(kf, fn, NULL);
@@ -291,10 +320,11 @@ static void config_save_listeners(struct ctrlproxy_config *cfg, const char *path
 	g_free(filename);
 }
 
-static void config_save_networks(const char *config_dir, GList *networks)
+static void config_save_networks(struct ctrlproxy_config *cfg, const char *config_dir, GList *networks)
 {
 	char *networksdir = g_build_filename(config_dir, "networks", NULL);
 	GList *gl;
+	GList *channel_keys = NULL;
 
 	if (!g_file_test(networksdir, G_FILE_TEST_IS_DIR)) {
 		if (g_mkdir(networksdir, 0700) != 0) {
@@ -304,8 +334,22 @@ static void config_save_networks(const char *config_dir, GList *networks)
 	}
 
 	for (gl = networks; gl; gl = gl->next) {
-		struct network_config *n = gl->data;		
-		config_save_network(networksdir, n);
+		struct network_config *n = gl->data;
+		config_save_network(networksdir, n, &channel_keys);
+	}
+
+	if (channel_keys != NULL) {
+		char *filename = g_build_filename(cfg->config_dir, "keys", 
+									  NULL);
+		keyfile_write_file(channel_keys, CHANNEL_KEY_FILE_HEADER, filename);
+		g_free(filename);
+
+		while (channel_keys) {
+			g_free(channel_keys->data);
+			channel_keys = channel_keys->next;
+		}
+
+		g_list_free(channel_keys);
 	}
 
 	g_free(networksdir);
@@ -376,7 +420,7 @@ void save_configuration(struct ctrlproxy_config *cfg, const char *configuration_
 		g_key_file_has_key(cfg->keyfile, "global", "report-time-offset", NULL))
 		g_key_file_set_integer(cfg->keyfile, "global", "report-time-offset", cfg->report_time_offset);
 
-	config_save_networks(configuration_dir, cfg->networks);
+	config_save_networks(cfg, configuration_dir, cfg->networks);
 
 	config_save_listeners(cfg, configuration_dir);
 
@@ -459,15 +503,38 @@ static void config_load_servers(struct network_config *n)
 	g_free(servers);
 }
 
-static struct network_config *config_load_network(struct ctrlproxy_config *cfg, const char *dirname, const char *name)
+static struct channel_config *config_find_add_channel(struct network_config *nc, const char *name)
+{
+	GList *gl;
+	struct channel_config *cc;
+
+	for (gl = nc->channels; gl; gl = gl->next) { 
+		cc = gl->data;
+		if (!strcasecmp(cc->name, name)) 
+			return cc;
+
+	}
+
+	cc = g_new0(struct channel_config, 1);
+	cc->name = g_strdup(name);
+
+	nc->channels = g_list_append(nc->channels, cc);
+
+	return cc;
+}
+
+static struct network_config *config_load_network(struct ctrlproxy_config *cfg, const char *dirname, 
+												  const char *name, GList *channel_keys)
 {
 	GKeyFile *kf;
 	struct network_config *n;
 	char *filename;
+	GList *gl;
 	int i;
 	char **groups;
 	GError *error = NULL;
 	gsize size;
+	char **autojoin_channels;
 
 	kf = g_key_file_new();
 
@@ -553,6 +620,26 @@ static struct network_config *config_load_network(struct ctrlproxy_config *cfg, 
 	}
 
 	g_strfreev(groups);
+
+	for (gl = channel_keys; gl; gl = gl->next) {
+		struct keyfile_entry *ke = gl->data;
+
+		if (!strcasecmp(ke->network, n->name)) {
+			struct channel_config *cc = config_find_add_channel(n, n->nick);
+
+			g_free(cc->key);
+			cc->key = g_strdup(n->password);
+		}
+	}
+
+	autojoin_channels = g_key_file_get_string_list(n->keyfile, "global", "autojoin", &size, NULL);
+	for (i = 0; i < size; i++) {
+		struct channel_config *cc = config_find_add_channel(n, autojoin_channels[i]);
+
+		cc->autojoin = TRUE;
+	}
+
+	g_strfreev(autojoin_channels);
 
 	return n;
 }
@@ -757,20 +844,20 @@ static void config_load_listeners(struct ctrlproxy_config *cfg)
 	g_free(filename);
 }
 
-static void config_load_networks(struct ctrlproxy_config *cfg)
+static void config_load_networks(struct ctrlproxy_config *cfg, GList *channel_keys)
 {
 	char *networksdir = g_build_filename(cfg->config_dir, "networks", NULL);
 	GDir *dir;
 	const char *name;
 
 	dir = g_dir_open(networksdir, 0, NULL);
-	if (!dir)
+	if (dir == NULL)
 		return;
 
 	while ((name = g_dir_read_name(dir))) {
 		if (name[0] == '.' || name[strlen(name)-1] == '~')
 			continue;
-		config_load_network(cfg, networksdir, name);
+		config_load_network(cfg, networksdir, name, channel_keys);
 	}
 
 	g_free(networksdir);
@@ -999,6 +1086,8 @@ struct ctrlproxy_config *load_configuration(const char *dir)
 	GList *gl;
 	gsize size;
 	int i;
+	GList *channel_keys = NULL;
+	char *keyfile_filename;
 
 	file = g_build_filename(dir, "config", NULL);
 
@@ -1110,7 +1199,19 @@ struct ctrlproxy_config *load_configuration(const char *dir)
 	config_load_listeners_socks(cfg);
 	config_load_log(cfg);
 	config_load_auto_away(cfg);
-	config_load_networks(cfg);
+
+	keyfile_filename = g_build_filename(cfg->config_dir, "keys", 
+									  NULL);
+
+	if (g_file_test(keyfile_filename, G_FILE_TEST_EXISTS)) {
+		if (!keyfile_read_file(keyfile_filename, ';', &channel_keys)) {
+			log_global(LOG_WARNING, "Unable to read keys file");
+		}
+	}
+
+	g_free(keyfile_filename);
+
+	config_load_networks(cfg, channel_keys);
 
 	/* Check for unknown parameters */
 	keys = g_key_file_get_keys(kf, "global", NULL, NULL);
