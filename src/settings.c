@@ -62,6 +62,8 @@ static const char *builtin_known_keys[] = {
 	"listener-auto",
 	"listener-autoport",
 	"logging",
+	"logfile",
+	"logdir",
 	"port",
 	"bind",
 	"ssl",
