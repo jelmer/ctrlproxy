@@ -522,6 +522,9 @@ static struct {
 
 /**
  * Check whether reply r is part of a specified list
+ *
+ * @param replies List of possible replies.
+ * @param r Response code.
  */
 static int is_reply(const int *replies, int r)
 {
