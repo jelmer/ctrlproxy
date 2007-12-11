@@ -71,20 +71,15 @@ void network_update_config(struct network_state *ns, struct network_config *nc)
 		cc = config_find_channel(&ns->info, nc, cs->name);
 		if (!cc) {
 			cc = g_new0(struct channel_config, 1);
+			cc->name = g_strdup(cs->name);
 			nc->channels = g_list_append(nc->channels, cc);
 		}
-		channel_update_config(cs, cc);
+		g_free(cc->key); 
+		cc->key = NULL;
+		if (cs->key) 
+			cc->key = g_strdup(cs->key);
+		cc->autojoin = TRUE;
 	}
-}
-
-void channel_update_config(struct channel_state *ns, struct channel_config *nc)
-{
-	g_free(nc->key); nc->key = NULL;
-	if (ns->key) 
-		nc->key = g_strdup(ns->key);
-	nc->autojoin = TRUE;
-	g_free(nc->name);
-	nc->name = g_strdup(ns->name);
 }
 
 void global_update_config(struct global *my_global)

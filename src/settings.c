@@ -231,8 +231,10 @@ static void config_save_network(const char *dir, struct network_config *n, GList
 			*channel_keys = g_list_append(*channel_keys, key);
 		}
 		
-		autojoin_list[autojoin_list_count] = c->name;
-		autojoin_list_count++;
+		if (c->autojoin) {
+			autojoin_list[autojoin_list_count] = c->name;
+			autojoin_list_count++;
+		}
 
 		g_key_file_remove_group(kf, c->name, NULL);
 	}
