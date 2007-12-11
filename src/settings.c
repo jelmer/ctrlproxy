@@ -200,7 +200,8 @@ static void config_save_network(const char *dir, struct network_config *n, GList
 	g_key_file_set_string(kf, "global", "username", n->username);
 	if (n->queue_speed)
 		g_key_file_set_integer(kf, "global", "queue-speed", n->queue_speed);
-	g_key_file_set_integer(kf, "global", "reconnect-interval", n->reconnect_interval);
+	if (n->reconnect_interval != -1)
+		g_key_file_set_integer(kf, "global", "reconnect-interval", n->reconnect_interval);
 
 	switch(n->type) {
 	case NETWORK_VIRTUAL:
@@ -684,7 +685,7 @@ static struct network_config *find_create_network_config(struct ctrlproxy_config
 	nc = network_config_init(cfg);
 	nc->name = g_strdup(name);
 	nc->autoconnect = FALSE;
-	nc->reconnect_interval = DEFAULT_RECONNECT_INTERVAL;
+	nc->reconnect_interval = -1;
 	nc->type = NETWORK_TCP;
 	tc = g_new0(struct tcp_server_config, 1);
 	tc->host = g_strdup(name);
@@ -1017,7 +1018,8 @@ static void config_save_auto_away(struct auto_away_config *d, struct ctrlproxy_c
 	if (d->client_limit != -1)
 		g_key_file_set_integer(kf, "global", "auto-away-client-limit", d->client_limit);
 
-	g_key_file_set_integer(kf, "global", "auto-away-time", d->max_idle_time);
+	if (d->max_idle_time != -1)
+		g_key_file_set_integer(kf, "global", "auto-away-time", d->max_idle_time);
 }
 
 static void config_load_auto_away(struct ctrlproxy_config *config)
@@ -1044,7 +1046,7 @@ static void config_load_auto_away(struct ctrlproxy_config *config)
 		if (g_key_file_has_key(kf, "auto-away", "time", NULL))
 			d->max_idle_time = g_key_file_get_integer(kf, "auto-away", "time", NULL);
 		else
-			d->max_idle_time = AUTO_AWAY_DEFAULT_TIME;
+			d->max_idle_time = -1;
 
 		g_key_file_remove_group(kf, "auto-away", NULL);
 	} else if (g_key_file_has_key(kf, "global", "auto-away-enable", NULL) &&
@@ -1061,7 +1063,7 @@ static void config_load_auto_away(struct ctrlproxy_config *config)
 		if (g_key_file_has_key(kf, "global", "auto-away-time", NULL))
 			d->max_idle_time = g_key_file_get_integer(kf, "global", "auto-away-time", NULL);
 		else
-			d->max_idle_time = AUTO_AWAY_DEFAULT_TIME;
+			d->max_idle_time = -1;
 	} else {
 		return;
 	}
@@ -1254,7 +1256,7 @@ struct network_config *network_config_init(struct ctrlproxy_config *cfg)
 		g_free(s->fullname);
 		s->fullname = g_strdup(s->username);
 	}
-	s->reconnect_interval = DEFAULT_RECONNECT_INTERVAL;
+	s->reconnect_interval = -1;
 
 	if (cfg) 
 		cfg->networks = g_list_append(cfg->networks, s);

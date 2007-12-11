@@ -130,7 +130,7 @@ struct listener_config {
  * Auto-away configuration.
  */
 struct auto_away_config {
-	time_t max_idle_time;
+	int max_idle_time;
 	gint client_limit;
 	char *message;
 	char *nick;

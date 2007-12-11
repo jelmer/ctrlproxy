@@ -825,9 +825,9 @@ static void reconnect(struct network *server)
 		server->config->type == NETWORK_PROGRAM) {
 		server->connection.state = NETWORK_CONNECTION_STATE_RECONNECT_PENDING;
 		network_log(LOG_INFO, server, "Reconnecting in %d seconds", 
-					server->config->reconnect_interval);
+					server->reconnect_interval);
 		server->reconnect_id = g_timeout_add(1000 * 
-								server->config->reconnect_interval, 
+								server->reconnect_interval, 
 								(GSourceFunc) delayed_connect_server, server);
 	} else {
 		connect_server(server);	
@@ -1197,6 +1197,7 @@ struct network *load_network(struct global *global, struct network_config *sc)
 	s = g_new0(struct network, 1);
 	s->references = 1;
 	s->config = sc;
+	s->reconnect_interval = sc->reconnect_interval == -1?DEFAULT_RECONNECT_INTERVAL:sc->reconnect_interval;
 	network_info_init(&s->info);
 	s->info.name = g_strdup(s->config->name);
 	s->info.ircd = g_strdup("ctrlproxy");

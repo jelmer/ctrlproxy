@@ -112,6 +112,8 @@ struct network {
 
 	void *userdata;
 	network_log_fn log;
+
+	int reconnect_interval;
 };
 
 /* server.c */

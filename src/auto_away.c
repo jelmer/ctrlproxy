@@ -25,6 +25,7 @@
  */
 
 #include "ctrlproxy.h"
+#include "local.h"
 #include <string.h>
 
 /**
@@ -32,6 +33,7 @@
  */
 struct auto_away_data {
 	struct auto_away_config *config;
+	int max_idle_time;
  	time_t last_message;
 	guint timeout_id;
 	struct global *global;
@@ -41,7 +43,7 @@ static gboolean check_time(gpointer user_data)
 {
 	struct auto_away_data *d = (struct auto_away_data *)user_data;
 
-	if (time(NULL) - d->last_message > d->config->max_idle_time) {
+	if (time(NULL) - d->last_message > d->max_idle_time) {
 		GList *sl;
 		for (sl = d->global->networks; sl; sl = sl->next) {
 			struct network *s = (struct network *)sl->data;
@@ -101,6 +103,7 @@ void auto_away_add(struct global *global, struct auto_away_config *config)
 
 	d->config = config;
 	d->last_message = time(NULL);
+	d->max_idle_time = config->max_idle_time != -1?config->max_idle_time:AUTO_AWAY_DEFAULT_TIME;
 	d->timeout_id = g_timeout_add(1000, check_time, d);
 	d->global = global;
 	add_new_client_hook("auto-away", new_client, d);
