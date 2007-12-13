@@ -537,7 +537,6 @@ static struct network_config *config_load_network(struct ctrlproxy_config *cfg, 
 	char **groups;
 	GError *error = NULL;
 	gsize size;
-	char **autojoin_channels;
 
 	kf = g_key_file_new();
 
@@ -635,14 +634,17 @@ static struct network_config *config_load_network(struct ctrlproxy_config *cfg, 
 		}
 	}
 
-	autojoin_channels = g_key_file_get_string_list(n->keyfile, "global", "autojoin", &size, NULL);
-	for (i = 0; i < size; i++) {
-		struct channel_config *cc = config_find_add_channel(n, autojoin_channels[i]);
+	if (g_key_file_has_key(n->keyfile, "global", "autojoin", NULL)) {
+		char **autojoin_channels;
+		autojoin_channels = g_key_file_get_string_list(n->keyfile, "global", "autojoin", &size, NULL);
+		for (i = 0; i < size; i++) {
+			struct channel_config *cc = config_find_add_channel(n, autojoin_channels[i]);
 
-		cc->autojoin = TRUE;
+			cc->autojoin = TRUE;
+		}
+
+		g_strfreev(autojoin_channels);
 	}
-
-	g_strfreev(autojoin_channels);
 
 	return n;
 }
