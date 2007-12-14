@@ -44,7 +44,7 @@ struct tcp_server_config {
 	char *port;
 	char *bind_address;
 	char *bind_port;
-	int ssl:1;
+	gboolean ssl;
 	char *password;
 };
 

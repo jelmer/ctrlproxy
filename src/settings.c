@@ -146,12 +146,9 @@ static void config_save_tcp_servers(struct network_config *n, GKeyFile *kf)
 	
 	for (gl = n->type_settings.tcp_servers; gl; gl = gl->next) {
 		struct tcp_server_config *ts = gl->data;
-		char *name = g_strdup_printf("%s:%s", ts->host, ts->port);
+		char *name = irc_create_url(ts->host, ts->port, ts->ssl);
 
 		values[i] = name;
-
-		if (g_key_file_has_key(kf, name, "ssl", NULL) || ts->ssl)
-			g_key_file_set_boolean(kf, name, "ssl", ts->ssl);
 
 		if (ts->password)
 			g_key_file_set_string(kf, name, "password", ts->password);
@@ -480,20 +477,13 @@ static void config_load_servers(struct network_config *n)
 	for (i = 0; i < size; i++) {
 		char *tmp;
 		struct tcp_server_config *s = g_new0(struct tcp_server_config, 1);
+
+		irc_parse_url(servers[i], &s->host, &s->port, &s->ssl);
 		
 		s->password = g_key_file_get_string(n->keyfile, servers[i], "password", NULL);
 		if (g_key_file_has_key(n->keyfile, servers[i], "ssl", NULL))
 			s->ssl = g_key_file_get_boolean(n->keyfile, servers[i], "ssl", NULL);
 
-		tmp = strrchr(servers[i], ':');
-
-		if (tmp) {
-			*tmp = '\0';
-			tmp++;
-		}
-		
-		s->host = servers[i];
-		s->port = g_strdup(tmp != NULL?tmp:DEFAULT_IRC_PORT);
 		s->bind_address = g_key_file_get_string(n->keyfile, servers[i], "bind", NULL);
 		if (s->bind_address && (tmp = strchr(s->bind_address, ':'))) {
 			*tmp = '\0';
@@ -501,9 +491,11 @@ static void config_load_servers(struct network_config *n)
 		}
 
 		n->type_settings.tcp_servers = g_list_append(n->type_settings.tcp_servers, s);
+
+		g_key_file_remove_group(n->keyfile, servers[i], NULL);
 	}
 
-	g_free(servers);
+	g_strfreev(servers);
 }
 
 static struct channel_config *config_find_add_channel(struct network_config *nc, const char *name)
@@ -675,7 +667,7 @@ static struct network_config *find_create_network_config(struct ctrlproxy_config
 			if (g_strncasecmp(sc->host, name, strlen(sc->host)) != 0)
 				continue;
 
-			tmp = g_strdup_printf("%s:%s", sc->host, sc->port);
+			tmp = irc_create_url(sc->host, sc->port, FALSE);
 
 			if (g_strcasecmp(tmp, name) == 0)
 				return nc;
@@ -690,14 +682,7 @@ static struct network_config *find_create_network_config(struct ctrlproxy_config
 	nc->reconnect_interval = -1;
 	nc->type = NETWORK_TCP;
 	tc = g_new0(struct tcp_server_config, 1);
-	tc->host = g_strdup(name);
-	if (strchr(tc->host, ':')) {
-		tc->port = tc->host+1;
-		*tc->port = '\0';
-	} else {
-		tc->port = g_strdup(DEFAULT_IRC_PORT);
-	}
-
+	irc_parse_url(name, &tc->host, &tc->port, &tc->ssl);
 	nc->type_settings.tcp_servers = g_list_append(nc->type_settings.tcp_servers, tc);
 
 	cfg->networks = g_list_append(cfg->networks, nc);
