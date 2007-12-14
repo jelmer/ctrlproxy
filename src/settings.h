@@ -40,11 +40,22 @@ struct channel_config {
  * TCP/IP server configuration
  */
 struct tcp_server_config {
+	/** IP Address or host. */
 	char *host;
+	
+	/** Port number or service name. */
 	char *port;
+
+	/** Adress to bind to (or NULL for default) */
 	char *bind_address;
+
+	/** Port to bind to (or NULL for assign randomly) */
 	char *bind_port;
+
+	/** Whether SSL should be used. */
 	gboolean ssl;
+
+	/** Password to send to remote host. */
 	char *password;
 };
 
@@ -60,11 +71,20 @@ struct network_config
 	char *fullname;
 	char *username;
 	char *password;
+
+	/** Whether to automatically connect to this network on startup. */
 	int autoconnect:1;
+
+	/** Whether the first NICK sent by clients to this network should be ignored. */
 	int ignore_first_nick:1;
+
+	/** Disable reply caching for this network. */
 	int disable_cache:1;
+
 	/** For flood protection */
 	int queue_speed;
+
+	/** After how much seconds to attempt to reconnect. */
 	guint reconnect_interval;
 
 	GList *channels;
@@ -103,7 +123,6 @@ struct log_file_config {
 	const char *mode;
 	const char *quit;
 	const char *notice;
-
 };
 
 /**
