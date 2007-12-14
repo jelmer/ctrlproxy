@@ -31,7 +31,7 @@ char *irc_create_url(const char *server, const char *port, gboolean ssl)
 
 gboolean irc_parse_url(const char *url, char **server, char **port, gboolean *ssl)
 {
-	char *p;
+	char *p, *q;
 
 	if (!strncmp(url, "irc://", strlen("irc://"))) {
 		*ssl = FALSE;
@@ -48,8 +48,9 @@ gboolean irc_parse_url(const char *url, char **server, char **port, gboolean *ss
 		*ssl = FALSE;
 	}
 
+	q = strchr(url, '/');
 	p = strchr(url, ':');
-	if (p != NULL) {
+	if (p != NULL && (q == NULL || p < q)) {
 		*port = g_strdup(p+1);
 		*server = g_strndup(url, p-url);
 		return TRUE;
@@ -61,7 +62,11 @@ gboolean irc_parse_url(const char *url, char **server, char **port, gboolean *ss
 		*port = g_strdup("ircd");
 	}
 
-	*server = g_strdup(url);
+	if (q != NULL) {
+		*server = g_strndup(url, q - url);
+	} else {
+		*server = g_strdup(url);
+	}
 
 	return TRUE;
 }

@@ -32,6 +32,11 @@ START_TEST(test_parse_url)
 	fail_unless(strcmp(port, "ircd") == 0);
 	fail_unless(ssl == FALSE);
 
+	fail_unless(irc_parse_url("irc://foo/", &server, &port, &ssl));
+	fail_unless(strcmp(server, "foo") == 0);
+	fail_unless(strcmp(port, "ircd") == 0);
+	fail_unless(ssl == FALSE);
+
 	fail_unless(irc_parse_url("ircs://foo", &server, &port, &ssl));
 	fail_unless(strcmp(server, "foo") == 0);
 	fail_unless(strcmp(port, "ircs") == 0);
