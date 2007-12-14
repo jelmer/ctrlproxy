@@ -33,7 +33,8 @@ lib_objs = \
 	   lib/client.o \
 	   lib/line.o \
 	   lib/isupport.o \
-	   lib/network.o
+	   lib/network.o \
+	   lib/url.o
 
 objs = src/posix.o \
 	   src/cache.o \
@@ -68,7 +69,8 @@ lib_headers = \
 		  lib/line.h \
 		  lib/isupport.h \
 		  lib/irc.h \
-		  lib/network.h
+		  lib/network.h \
+		  lib/url.h
 
 headers = src/admin.h \
 		  src/ctcp.h \
@@ -225,7 +227,8 @@ check_objs = testsuite/test-cmp.o testsuite/test-user.o \
 			 testsuite/test-client.o testsuite/test-network.o \
 			 testsuite/test-tls.o testsuite/test-redirect.o \
 			 testsuite/test-networkinfo.o testsuite/test-ctcp.o \
-			 testsuite/test-help.o testsuite/test-nickserv.o
+			 testsuite/test-help.o testsuite/test-nickserv.o \
+			 testsuite/test-url.o
 
 testsuite/check: $(check_objs) $(objs) $(LIBIRC)
 	@echo Linking $@

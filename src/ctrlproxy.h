@@ -65,6 +65,7 @@
 #include "isupport.h"
 #include "log_support.h"
 #include "listener.h"
+#include "url.h"
 
 /**
  * Global information.
