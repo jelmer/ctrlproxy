@@ -54,6 +54,7 @@ struct tcp_server_config {
 struct network_config 
 {
 	GKeyFile *keyfile;
+	/** Network name */
 	char *name;
 	char *nick;
 	char *fullname;
@@ -62,7 +63,8 @@ struct network_config
 	int autoconnect:1;
 	int ignore_first_nick:1;
 	int disable_cache:1;
-	int queue_speed; /* For flood protection */
+	/** For flood protection */
+	int queue_speed;
 	guint reconnect_interval;
 
 	GList *channels;

@@ -355,6 +355,12 @@ static void config_save_networks(struct ctrlproxy_config *cfg, const char *confi
 	g_free(networksdir);
 }
 
+/**
+ * Save configuration to a configuration directory.
+ *
+ * @param cfg The configuration to save.
+ * @param configuration_dir Directory to save to.
+ */
 void save_configuration(struct ctrlproxy_config *cfg, const char *configuration_dir)
 {
 	char *fn, **list;

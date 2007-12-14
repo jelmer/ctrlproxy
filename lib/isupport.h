@@ -46,25 +46,32 @@ enum casemapping {
  */
 struct network_info
 {
+	/** Network name. */
 	char *name;
+
 	char *server;
+
+	/** List of characters indicating supported user modes. */
 	char *supported_user_modes;
+
+	/** List of characters indicating supported channel modes. */
 	char *supported_channel_modes;
 
-	/* Case mapping used for nick- and channel name comparing */
+	/** Case mapping used for nick- and channel name comparing */
 	enum casemapping casemapping;
 
-	/* A list of channel modes a person can get and the respective 
+	/** A list of channel modes a person can get and the respective 
 	 * prefix a channel or nickname will get in case the person has it */
 	char *prefix;
 
-	/* The supported channel prefixes */
+	/** The supported channel prefixes */
 	char *chantypes;
 
-	/* Server supported character set */
+	/** Server supported character set */
 	char *charset;
 
-	/* This is a list of channel modes according to 4 types.
+	/**
+	 * This is a list of channel modes according to 4 types.
 	 * A = Mode that adds or removes a nick or address to a list. Always has a parameter.
 	 * B = Mode that changes a setting and always has a parameter.
 	 * C = Mode that changes a setting and only has a parameter when set.
@@ -80,7 +87,7 @@ struct network_info
 	/* FIXME: Should be a hash table */
 	char *maxlist;
 
-	/** The server supports extentions for the LIST command. 
+	/** The server supports extensions for the LIST command. 
 	 * The tokens specify which extention are supported. *
 	 */
 	gboolean elist_mask_search;
@@ -114,132 +121,133 @@ struct network_info
 	/** IRCD application used on the server */
 	char *ircd;
 
-	/* Maximum key length */
+	/** Maximum key length */
 	int keylen;
 
-	/* Server supports SSL */
+	/** Server supports SSL */
 	gboolean ssl;
 
-	/* The server support the SILENCE command.  */
+	/** The server support the SILENCE command.  */
 	gboolean silence;
 
-	/* Server supports HybridIRC Connection Notices */
+	/** Server supports HybridIRC Connection Notices */
 	gboolean hcn;
 
-	/* The number is the maximum number of allowed entries in the silence 
+	/**
+	 * The number is the maximum number of allowed entries in the silence 
 	 * list. */
 	int silence_limit;
 
-	/* Maximum channel name length */
+	/** Maximum channel name length */
 	int channellen;
 
-	/* The max length of an away message */
+	/** The max length of an away message */
 	int awaylen;
 
-	/* Maximum kick comment length */
+	/** Maximum kick comment length */
 	int kicklen;
 
-	/* Maximum targets allowed for PRIVMSG and NOTICE commands */
+	/** Maximum targets allowed for PRIVMSG and NOTICE commands */
 	int maxtargets;
 
-	/* Maximum nickname length */
+	/** Maximum nickname length */
 	int nicklen;
 
-	/* Maximum username length */
+	/** Maximum username length */
 	int userlen;
 
-	/* Maximum hostname length */
+	/** Maximum hostname length */
 	int hostlen;
 
-	/* Maximum number of channels allowed to join */
+	/** Maximum number of channels allowed to join */
 	int maxchannels;
 
-	/* Maximum topic length */ 
+	/** Maximum topic length */ 
 	int topiclen;
 
-	/* Maximum number of bans per channel */
+	/** Maximum number of bans per channel */
 	int maxbans;
 
-	/* Maximum number of channel modes with parameter allowed per MODE 
+	/** Maximum number of channel modes with parameter allowed per MODE 
 	 * command  */
 	int maxmodes;
 
-	/* The server supports messaging channel operators (NOTICE @#channel) */
+	/** The server supports messaging channel operators (NOTICE @#channel) */
 	gboolean wallchops;
 
-	/* Notice to +#channel goes to all voiced persons */
+	/** Notice to +#channel goes to all voiced persons */
 	gboolean wallvoices;
 
-	/* Server supports RFC 2812 features */
+	/** Server supports RFC 2812 features */
 	gboolean rfc2812;
 
-	/* Server gives extra penalty to some commands instead of the normal 2 
+	/** Server gives extra penalty to some commands instead of the normal 2 
 	 * seconds per message and 1 second for every 120 bytes in a message */
 	gboolean penalty;
 
-	/* Forced nick changes: The server may change the nickname without the 
+	/** Forced nick changes: The server may change the nickname without the 
 	 * client sending a NICK message */
 	gboolean forced_nick_changes;
 
-	/* The LIST is sent in multiple iterations so send queue won't fill and 
+	/** The LIST is sent in multiple iterations so send queue won't fill and 
 	 * kill the client connection. */
 	gboolean safelist;
 
-	/* The USERIP command exists */
+	/** The USERIP command exists */
 	gboolean userip;
 
-	/* The CPRIVMSG command exists, used for mass messaging people in specified 
+	/** The CPRIVMSG command exists, used for mass messaging people in specified 
 	 * channel (CPRIVMSG channel nick,nick2,... :text) */
 	gboolean cprivmsg;
 
-	/* The CNOTICE command exists, just like CPRIVMSG */
+	/** The CNOTICE command exists, just like CPRIVMSG */
 	gboolean cnotice;
 
-	/* The KNOCK command exists */
+	/** The KNOCK command exists */
 	gboolean knock;
 
-	/* Server supports virtual channels. See  vchans.txt for more information */
+	/** Server supports virtual channels. See  vchans.txt for more information */
 	gboolean vchannels;
 
-	/* The WHO command uses WHOX protocol */
+	/** The WHO command uses WHOX protocol */
 	gboolean whox;
 
-	/* The server supports server side ignores via the +g user mode */
+	/** The server supports server side ignores via the +g user mode */
 	gboolean callerid;
 
-	/* [Deprecated] The same as CALLERID */
+	/** [Deprecated] The same as CALLERID */
 	gboolean accept;
 
-	/* Support for CAPAB 
+	/** Support for CAPAB 
 	 * http://www3.ietf.org/proceedings/03mar/I-D/draft-baudis-irc-capab-00.txt
 	 */
 	gboolean capab;
 
-	/* Maximum number of arguments per command. */
+	/** Maximum number of arguments per command. */
 	int maxpara;
 
-	/* The NAMESX extension is supported by the server. See 
+	/** The NAMESX extension is supported by the server. See 
 	 * http://www.inspircd.org/wiki/NAMESX_Module for details */
 	gboolean namesx; 
 
-	/* This server uses SECURELIST, meaning that LIST can not be 
+	/** This server uses SECURELIST, meaning that LIST can not be 
 	 * run 60 seconds within connect. See 
 	 * http://www.inspircd.org/wiki/Secure_LIST_Module for details. */
 	gboolean securelist;
 
-	/* Number of watches allowed */
+	/** Number of watches allowed */
 	int watch;
 
-	/* Server supports /fpart or /remove command */
+	/** Server supports /fpart or /remove command */
 	gboolean remove;
 
-	/* Server supports /map command */
+	/** Server supports /map command */
 	gboolean map;
 
-	/* Server supports operoverride */
+	/** Server supports operoverride */
 	gboolean operoverride;
 
-	/* Server supports vbanlist */
+	/** Server supports vbanlist */
 	gboolean vbanlist;
 };
 
