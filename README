@@ -73,9 +73,9 @@ Quick start
 
 2. Run ctrlproxy --init 
 
-2. Run ctrlproxy --daemon or ctrlproxy
+3. Run ctrlproxy --daemon or ctrlproxy
 
-3. Connect to ctrlproxy from your IRC client.
+4. Connect to ctrlproxy from your IRC client.
 
 Documentation
 -------------
