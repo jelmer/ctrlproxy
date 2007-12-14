@@ -56,7 +56,7 @@ char ** get_motd_lines(struct client *c)
 		lines[nrlines] = NULL;
 	}
 
-	g_io_channel_close(fd);
+	g_io_channel_unref(fd);
 
 	return lines;
 }
