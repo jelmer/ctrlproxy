@@ -87,6 +87,7 @@ struct network_config
 	/** After how much seconds to attempt to reconnect. */
 	guint reconnect_interval;
 
+	/** Channels that should be joined. */
 	GList *channels;
 
 	enum { 
@@ -137,23 +138,39 @@ struct allow_rule {
  * Configuration for a single listener
  */
 struct listener_config {
+	/** Whether SSL is required */
 	gboolean ssl;
 	gpointer ssl_credentials;
+
+	/** Password */
 	char *password;
+
+	/** Address to bind to. Optional. */
 	char *address;
+
+	/** Port to listen on */
 	char *port;
+
+	/** Default network this listener is connected to. Can be NULL. */
 	char *network;
 	GList *allow_rules;
-	gboolean is_default; /* Whether this is the "default" listener, stored in ~/.ctrlproxy/config */
+	
+	/** Whether this is the "default" listener, stored in ~/.ctrlproxy/config */
+	gboolean is_default;
 };
 
 /**
  * Auto-away configuration.
  */
 struct auto_away_config {
+	/** Idle time after which to set /AWAY, in seconds. */
 	int max_idle_time;
 	gint client_limit;
+
+	/** Away message to set. */
 	char *message;
+
+	/** Nick to change to when auto away. */
 	char *nick;
 };
 
@@ -167,8 +184,13 @@ struct ctrlproxy_config {
 	char *motd_file;
 	char *network_socket;
 	char *admin_socket;
+
+	/** Name of replication backend, or NULL for default. */
 	char *replication;
+
+	/** Name of linestack backend, or NULL for default. */
 	char *linestack_backend;
+
 	char *client_charset;
 	gboolean admin_log;
 	char *admin_user;

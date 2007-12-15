@@ -56,10 +56,14 @@ enum network_connection_state {
 struct network_connection {
  	enum network_connection_state state;
 
+	/** Time the last line was sent to this network. */
 	time_t last_line_sent;
+	/** Time the last line was received from this network. */
 	time_t last_line_recvd;
+	/** Lines that are pending to be sent. */
 	GQueue *pending_lines;
 
+	/** IO Channel. */
 	GIOChannel *outgoing;
 	gint outgoing_id;
 	gint incoming_id;
@@ -96,18 +100,27 @@ typedef void (*network_log_fn) (enum log_level, void *, const char *);
  */
 struct network {
 	struct global *global;
+
+	/** Configuration. */
 	struct network_config *config;
 
+	/** Number of references that exist to this network. */
 	int references;
 
+	/** Clients connected to this network.*/
 	GList *clients;
 	guint reconnect_id;
 
 	gpointer ssl_credentials;
 
+	/** Current network state, when connected. */
 	struct network_state *state;
+
+	/** Network information. */
 	struct network_info info;
 	struct network_connection connection;
+	
+	/** Linestack context. */
 	struct linestack_context *linestack;
 
 	void *userdata;
