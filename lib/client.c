@@ -609,7 +609,7 @@ static gboolean client_ping(struct client *client)
  * @param c Channel to talk over
  * @param desc Description of the client
  */
-struct client *irc_client_new(GIOChannel *c, const char *desc, gboolean (*process_from_client) (struct client *, const struct line *))
+struct client *irc_client_new(GIOChannel *c, const char *desc, gboolean (*process_from_client) (struct client *, const struct line *), struct network *n)
 {
 	struct client *client;
 
@@ -617,8 +617,9 @@ struct client *irc_client_new(GIOChannel *c, const char *desc, gboolean (*proces
 	g_assert(desc != NULL);
 
 	client = g_new0(struct client, 1);
+	g_assert(client != NULL);
 	client->references = 1;
-	g_assert(client);
+	client->network = network_ref(n);
 
 	g_io_channel_set_flags(c, G_IO_FLAG_NONBLOCK, NULL);
 	g_io_channel_set_close_on_unref(c, TRUE);

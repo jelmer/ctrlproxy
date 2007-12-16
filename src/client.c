@@ -111,9 +111,8 @@ static gboolean process_from_client(struct client *c, const struct line *_l)
 
 struct client *client_init(struct irc_network *n, GIOChannel *c, const char *desc)
 {
-	struct client *client = irc_client_new(c, desc, process_from_client);
+	struct client *client = irc_client_new(c, desc, process_from_client, n);
 
-	client->network = network_ref(n);
 	if (n != NULL && n->global != NULL)
 		client_set_charset(client, n->global->config->client_charset);
 

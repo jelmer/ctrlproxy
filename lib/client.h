@@ -77,6 +77,6 @@ G_MODULE_EXPORT const char *client_get_own_hostmask(struct client *c);
 
 G_MODULE_EXPORT struct client *client_ref(struct client *c);
 G_MODULE_EXPORT void client_unref(struct client *c);
-G_MODULE_EXPORT struct client *irc_client_new(GIOChannel *c, const char *desc, gboolean (*process_from_client) (struct client *, const struct line *));
+G_MODULE_EXPORT struct client *irc_client_new(GIOChannel *c, const char *desc, gboolean (*process_from_client) (struct client *, const struct line *), struct irc_network *n);
 
 #endif /* __CTRLPROXY_CLIENT_H__ */

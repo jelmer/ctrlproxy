@@ -520,7 +520,6 @@ static void file_insert_state(struct linestack_context *ctx,
 		nd->state_dumps = g_realloc(nd->state_dumps, nd->num_state_dumps_alloc * sizeof(*nd->state_dumps));
 	}
 
-
 	nd->state_dumps[nd->num_state_dumps].line_offset = g_io_channel_tell_position(nd->line_file);
 	nd->state_dumps[nd->num_state_dumps].state_offset = g_io_channel_tell_position(nd->state_file);
 
@@ -529,7 +528,7 @@ static void file_insert_state(struct linestack_context *ctx,
 	marshall_network_state(MARSHALL_PUSH, nd->state_file, (struct network_state *)state);
 
 	status = g_io_channel_flush(nd->state_file, &error);
-	g_assert(status);
+	g_assert(status == G_IO_STATUS_NORMAL);
 }
 
 static gboolean file_insert_line(struct linestack_context *ctx, 
