@@ -82,6 +82,9 @@ static void cache_nickserv_pass(struct irc_network *n, const char *newpass)
 	struct keyfile_entry *e = NULL;
 	GList *gl;
 
+	if (!n->global->config->learn_nickserv)
+		return;
+
 	for (gl = n->global->nickserv_nicks; gl; gl = gl->next) {
 		e = gl->data;
 
@@ -96,15 +99,14 @@ static void cache_nickserv_pass(struct irc_network *n, const char *newpass)
 		}
 	}
 
-	if (!gl) {
+	if (gl == NULL) {
 		e = g_new0(struct keyfile_entry, 1);
 		e->nick = g_strdup(n->state->me.nick);
 		e->network = g_strdup(n->info.name);
 		n->global->nickserv_nicks = g_list_prepend(n->global->nickserv_nicks, e);
 	}
 
-	if ((e->pass == NULL || 
-		strcmp(e->pass, newpass) != 0) && n->global->config->learn_nickserv) {
+	if (e->pass == NULL || strcmp(e->pass, newpass) != 0) {
 		e->pass = g_strdup(newpass);
 		network_log(LOG_INFO, n, "Caching password for nick %s", e->nick);
 	} 
