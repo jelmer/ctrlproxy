@@ -1350,13 +1350,16 @@ gboolean create_configuration(const char *config_dir)
 	l = g_new0(struct listener_config, 1);
 	pass = getpass("Please specify a password for the administration interface: "); 
 	l->port = port;
+	l->is_default = TRUE;
 	if (!strcmp(pass, "")) {
 		fprintf(stderr, "Warning: no password specified. Authentication disabled!\n");
 	} else {
-		l->password = pass;
+		l->password = g_strdup(pass);
 	}
 
 	global->config->listeners = g_list_append(global->config->listeners, l);
+
+	save_configuration(global->config, config_dir);
 
 	return TRUE;
 }
