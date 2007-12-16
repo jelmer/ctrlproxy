@@ -104,6 +104,11 @@ void auto_away_add(struct global *global, struct auto_away_config *config)
 	d->config = config;
 	d->last_message = time(NULL);
 	d->max_idle_time = config->max_idle_time != -1?config->max_idle_time:AUTO_AWAY_DEFAULT_TIME;
+	if (d->max_idle_time < 30) {
+		log_global(LOG_WARNING, "Ignoring auto-away time %d because it is too low", d->max_idle_time);
+		g_free(d);
+		return;
+	}
 	d->timeout_id = g_timeout_add(1000, check_time, d);
 	d->global = global;
 	add_new_client_hook("auto-away", new_client, d);
