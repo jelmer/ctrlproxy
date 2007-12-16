@@ -161,21 +161,6 @@ struct listener_config {
 };
 
 /**
- * Auto-away configuration.
- */
-struct auto_away_config {
-	/** Idle time after which to set /AWAY, in seconds. */
-	int max_idle_time;
-	gint client_limit;
-
-	/** Away message to set. */
-	char *message;
-
-	/** Nick to change to when auto away. */
-	char *nick;
-};
-
-/**
  * Configuration
  */
 struct ctrlproxy_config {
@@ -208,7 +193,23 @@ struct ctrlproxy_config {
 	int listener_autoport;
 	gboolean learn_nickserv;
 	gboolean learn_network_name;
-	struct auto_away_config *auto_away;
+	/**
+	 * Auto-away configuration.
+	 */
+	struct auto_away_config {
+		/** Idle time after which to set /AWAY, in seconds. */
+		int max_idle_time;
+		gint client_limit;
+		
+		gboolean enabled;
+
+		/** Away message to set. */
+		char *message;
+
+		/** Nick to change to when auto away. */
+		char *nick;
+	} auto_away;
+
 	struct log_file_config *log_file;
 };
 

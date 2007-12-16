@@ -324,8 +324,8 @@ int main(int argc, char **argv)
 	start_admin_socket(my_global);
 	autoconnect_networks(my_global->networks);
 	init_listeners(my_global);
-	if (my_global->config->auto_away != NULL)
-		auto_away_add(my_global, my_global->config->auto_away);
+	if (my_global->config->auto_away.enabled)
+		auto_away_add(my_global, &my_global->config->auto_away);
 	g_option_context_free(pc);
 
 	atexit(clean_exit);

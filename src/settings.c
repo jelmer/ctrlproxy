@@ -432,7 +432,7 @@ void save_configuration(struct ctrlproxy_config *cfg, const char *configuration_
 
 	config_save_log(cfg->log_file, cfg);
 
-	config_save_auto_away(cfg->auto_away, cfg);
+	config_save_auto_away(&cfg->auto_away, cfg);
 
 	i = 0;
 	list = g_new0(char *, g_list_length(cfg->networks)+1);
@@ -999,12 +999,10 @@ static void config_load_log(struct ctrlproxy_config *config)
 static void config_save_auto_away(struct auto_away_config *d, struct ctrlproxy_config *config)
 {
 	GKeyFile *kf = config->keyfile;
-
-	if (config->auto_away == NULL) {
-		g_key_file_set_boolean(kf, "global", "auto-away-enable", FALSE);
-		return;
-	}
-	g_key_file_set_boolean(kf, "global", "auto-away-enable", TRUE);
+	
+	if (g_key_file_has_key(kf, "global", "auto-away-enable", NULL) ||
+		d->enabled)
+		g_key_file_set_boolean(kf, "global", "auto-away-enable", d->enabled);
 
 	if (d->message != NULL)
 		g_key_file_set_string(kf, "global", "auto-away-message", d->message);
@@ -1019,14 +1017,10 @@ static void config_save_auto_away(struct auto_away_config *d, struct ctrlproxy_c
 		g_key_file_set_integer(kf, "global", "auto-away-time", d->max_idle_time);
 }
 
-static void config_load_auto_away(struct ctrlproxy_config *config)
+static void config_load_auto_away(struct auto_away_config *d, GKeyFile *kf)
 {
-	struct auto_away_config *d;
-	GKeyFile *kf = config->keyfile;
-
 	if (g_key_file_has_group(kf, "auto-away")) {
-		d = g_new0(struct auto_away_config, 1);
-		
+		d->enabled = TRUE;
 		d->message = g_key_file_get_string(kf, "auto-away", "message", NULL);
 		d->nick = g_key_file_get_string(kf, "auto-away", "nick", NULL);
 		if (g_key_file_has_key(kf, "auto-away", "client_limit", NULL)) {
@@ -1046,26 +1040,20 @@ static void config_load_auto_away(struct ctrlproxy_config *config)
 			d->max_idle_time = -1;
 
 		g_key_file_remove_group(kf, "auto-away", NULL);
-	} else if (g_key_file_has_key(kf, "global", "auto-away-enable", NULL) &&
-			   g_key_file_get_boolean(kf, "global", "auto-away-enable", NULL)) {
-		d = g_new0(struct auto_away_config, 1);
-		
+	} else {
+		if (g_key_file_has_key(kf, "global", "auto-away-enable", NULL))
+			d->enabled = g_key_file_get_boolean(kf, "global", "auto-away-enable", NULL);
 		d->message = g_key_file_get_string(kf, "global", "auto-away-message", NULL);
 		d->nick = g_key_file_get_string(kf, "global", "auto-away-nick", NULL);
 		if (g_key_file_has_key(kf, "global", "auto-away-client-limit", NULL)) {
 			d->client_limit = g_key_file_get_integer(kf, "global", "auto-away-client-limit", NULL);
-		}
-		else
+		} else
 			d->client_limit = -1;
 		if (g_key_file_has_key(kf, "global", "auto-away-time", NULL))
 			d->max_idle_time = g_key_file_get_integer(kf, "global", "auto-away-time", NULL);
 		else
 			d->max_idle_time = -1;
-	} else {
-		return;
 	}
-
-	config->auto_away = d;
 }
 
 struct ctrlproxy_config *init_configuration(void)
@@ -1199,7 +1187,7 @@ struct ctrlproxy_config *load_configuration(const char *dir)
 	config_load_listeners(cfg);
 	config_load_listeners_socks(cfg);
 	config_load_log(cfg);
-	config_load_auto_away(cfg);
+	config_load_auto_away(&cfg->auto_away, cfg->keyfile);
 
 	keyfile_filename = g_build_filename(cfg->config_dir, "keys", 
 									  NULL);
