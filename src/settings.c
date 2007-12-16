@@ -874,10 +874,12 @@ static void config_save_log(struct log_file_config *data,
 
 	if (data->is_irssi) {
 		g_key_file_set_string(config->keyfile, "global", "logging", "irssi");
-		if (data->logbasedir)
-			g_key_file_set_string(config->keyfile, "global", "logdir", data->logbasedir);
-		else
+		if (data->logbasedir) {
+			if (!data->logbasedir_is_default)
+				g_key_file_set_string(config->keyfile, "global", "logdir", data->logbasedir);
+		} else {
 			g_key_file_set_string(config->keyfile, "global", "logfile", data->logfilename);
+		}
 	} else {
 		STORE_SETTING(data, config->keyfile, "global", "", logfilename);
 		STORE_SETTING(data, config->keyfile, "global", "log-format-", nickchange);
@@ -973,6 +975,8 @@ static void config_load_log(struct ctrlproxy_config *config)
 		} else {
 			data->logbasedir = g_build_filename(config->config_dir, 
 										  "log_irssi", NULL);
+
+			data->logbasedir_is_default = TRUE;
 
 			data->logfilename = g_strdup_printf("%s/%%N/%%@", data->logbasedir);
 		}

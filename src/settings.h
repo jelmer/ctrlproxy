@@ -110,6 +110,7 @@ struct network_config
  * when logging.
  */
 struct log_file_config {
+	gboolean logbasedir_is_default;
 	const char *logbasedir;
 	const char *logfilename;
 	gboolean is_irssi;
