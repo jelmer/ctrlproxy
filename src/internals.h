@@ -63,6 +63,14 @@ gboolean init_plugins(const char *dir);
 /* motd.c */
 char **get_motd_lines(struct client *);
 
+/* network.c */
+G_MODULE_EXPORT struct irc_network *load_network(struct global *global, struct network_config *sc);
+G_MODULE_EXPORT gboolean load_networks(struct global *, struct ctrlproxy_config *cfg, network_log_fn);
+G_MODULE_EXPORT void unload_network(struct irc_network *);
+typedef void (*new_network_notify_fn) (struct irc_network *, void *);
+G_MODULE_EXPORT struct irc_network *find_network_by_hostname(struct global *global, const char *host, guint16 port, gboolean create);
+G_MODULE_EXPORT void register_new_network_notify(struct global *, new_network_notify_fn, void *userdata);
+
 /* hooks.c */
 void server_disconnected_hook_execute(struct irc_network *);
 void server_connected_hook_execute(struct irc_network *);

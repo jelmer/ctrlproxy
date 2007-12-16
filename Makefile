@@ -61,6 +61,7 @@ objs = src/posix.o \
 	   src/log_support.o \
 	   src/log_custom.o \
 	   src/auto_away.o \
+	   src/network.o \
 	   $(SSL_OBJS)
 
 lib_headers = \
