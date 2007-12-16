@@ -53,13 +53,16 @@ static gboolean process_from_client(struct client *c, const struct line *_l)
 
 	l->origin = g_strdup(c->state->me.hostmask);
 
-	if (!run_client_filter(c, l, TO_SERVER)) 
+	if (!run_client_filter(c, l, TO_SERVER)) {
+		g_free(l->origin);
 		return TRUE;
+	}
 
 	g_assert(l->args[0] != NULL);
 
 	if (!g_strcasecmp(l->args[0], "QUIT")) {
 		disconnect_client(c, "Client exiting");
+		g_free(l->origin);
 		return FALSE;
 	} else if (!g_strcasecmp(l->args[0], "PING")) {
 		client_send_args(c, "PONG", c->network->info.name, l->args[1], NULL);
@@ -67,6 +70,7 @@ static gboolean process_from_client(struct client *c, const struct line *_l)
 		if (l->argc < 2) {
 			client_send_response(c, ERR_NEEDMOREPARAMS, l->args[0], 
 								 "Not enough parameters", NULL);
+			g_free(l->origin);
 			return TRUE;
 		}
 		c->last_pong = time(NULL);
@@ -106,6 +110,7 @@ static gboolean process_from_client(struct client *c, const struct line *_l)
 		g_free(msg);
 	}
 
+	g_free(l->origin);
 	return TRUE;
 }
 
