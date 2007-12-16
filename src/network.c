@@ -208,8 +208,11 @@ struct irc_network *find_network_by_hostname(struct global *global,
 {
 	GList *gl;
 	char *portname = g_strdup_printf("%d", port);
+	struct servent *find_servent;
+
 	g_assert(portname != NULL);
 	g_assert(hostname != NULL);
+	find_servent = getservbyport(port, "tcp");
 	
 	for (gl = global->networks; gl; gl = gl->next) {
 		GList *sv;
@@ -227,9 +230,11 @@ struct irc_network *find_network_by_hostname(struct global *global,
 			for (sv = n->config->type_settings.tcp_servers; sv; sv = sv->next)
 			{
 				struct tcp_server_config *server = sv->data;
+				struct servent *sv_serv = getservbyname(server->port, "tcp");
 
-				if (!g_strcasecmp(server->host, hostname) && 
-					!g_strcasecmp(server->port, portname)) {
+				if (!g_strcasecmp(server->host, hostname) &&
+					(!g_strcasecmp(server->port, portname) 
+					 || (sv_serv && sv_serv->s_port == port))) {
 					g_free(portname);
 					return n;
 				}
