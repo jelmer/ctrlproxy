@@ -44,6 +44,7 @@ objs = src/posix.o \
 	   src/plugins.o \
 	   src/settings.o \
 	   src/log.o \
+	   src/client.o \
 	   src/redirect.o \
 	   src/gen_config.o \
 	   src/repl.o \

@@ -81,6 +81,19 @@ gboolean run_server_filter(struct irc_network *s, const struct line *l, enum dat
 gboolean run_log_filter(struct irc_network *s, const struct line *l, enum data_direction dir);
 gboolean run_replication_filter(struct irc_network *s, const struct line *l, enum data_direction dir);
 
+/* client.c */
+/**
+ * Add a new client
+ *
+ * @param net Network this client is connected to. May be NULL.
+ * @param io IO Channel to use for communication.
+ * @param desc Description of the client.
+ */
+G_MODULE_EXPORT G_GNUC_MALLOC struct client *client_init(
+										   struct irc_network *net, 
+										   GIOChannel *io, 
+										   const char *desc);
+
 /* log.c */
 gboolean init_log(const char *file);
 void log_network_line(const struct irc_network *n, const struct line *l, gboolean incoming);

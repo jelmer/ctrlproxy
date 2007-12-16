@@ -55,19 +55,8 @@ struct client {
 	gboolean exit_on_close;
 	gboolean connected;
 	struct network_state *state;
+	gboolean (*process_from_client) (struct client *, const struct line *);
 };
-
-/**
- * Add a new client
- *
- * @param net Network this client is connected to. May be NULL.
- * @param io IO Channel to use for communication.
- * @param desc Description of the client.
- */
-G_MODULE_EXPORT G_GNUC_MALLOC struct client *client_init(
-										   struct irc_network *net, 
-										   GIOChannel *io, 
-										   const char *desc);
 
 /**
  * Disconnect a client.
@@ -88,5 +77,6 @@ G_MODULE_EXPORT const char *client_get_own_hostmask(struct client *c);
 
 G_MODULE_EXPORT struct client *client_ref(struct client *c);
 G_MODULE_EXPORT void client_unref(struct client *c);
+G_MODULE_EXPORT struct client *irc_client_new(GIOChannel *c, const char *desc, gboolean (*process_from_client) (struct client *, const struct line *));
 
 #endif /* __CTRLPROXY_CLIENT_H__ */

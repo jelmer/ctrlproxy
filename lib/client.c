@@ -43,76 +43,6 @@ static gboolean handle_client_send_queue(GIOChannel *c, GIOCondition cond,
 										 void *_client);
 
 /**
- * Process incoming lines from a client.
- *
- * @param c Client to talk to
- * @param l Line received
- * @return Whether the line was processed correctly
- */
-static gboolean process_from_client(struct client *c, struct line *l)
-{
-	g_assert(c != NULL);
-	g_assert(l != NULL);
-
-	l->origin = g_strdup(c->state->me.hostmask);
-
-	if (!run_client_filter(c, l, TO_SERVER)) 
-		return TRUE;
-
-	g_assert(l->args[0] != NULL);
-
-	if (!g_strcasecmp(l->args[0], "QUIT")) {
-		disconnect_client(c, "Client exiting");
-		return FALSE;
-	} else if (!g_strcasecmp(l->args[0], "PING")) {
-		client_send_args(c, "PONG", c->network->info.name, l->args[1], NULL);
-	} else if (!g_strcasecmp(l->args[0], "PONG")) {
-		if (l->argc < 2) {
-			client_send_response(c, ERR_NEEDMOREPARAMS, l->args[0], 
-								 "Not enough parameters", NULL);
-			return TRUE;
-		}
-		c->last_pong = time(NULL);
-	} else if (!g_strcasecmp(l->args[0], "USER") ||
-			  !g_strcasecmp(l->args[0], "PASS")) {
-		client_send_response(c, ERR_ALREADYREGISTERED,  
-						 "Please register only once per session", NULL);
-	} else if (!g_strcasecmp(l->args[0], "CTRLPROXY")) {
-		admin_process_command(c, l, 1);
-	} else if (c->network->global->config->admin_user != NULL && 
-			   !g_strcasecmp(l->args[0], "PRIVMSG") && 
-			   !g_strcasecmp(l->args[1], c->network->global->config->admin_user)) {
-		admin_process_command(c, l, 2);
-	} else if (!g_strcasecmp(l->args[0], "PRIVMSG") && l->argc > 2 && 
-			l->args[2][0] == '\001' && 
-			g_strncasecmp(l->args[2], "\001ACTION", 7) != 0) {
-		ctcp_process_client_request(c, l);
-	} else if (!g_strcasecmp(l->args[0], "NOTICE") && l->argc > 2 && 
-			l->args[2][0] == '\001') {
-		ctcp_process_client_reply(c, l);
-	} else if (!g_strcasecmp(l->args[0], "")) {
-	} else if (c->network->connection.state == NETWORK_CONNECTION_STATE_MOTD_RECVD) {
-		if (c->network->config->disable_cache || !client_try_cache(c, l)) {
-			/* Perhaps check for validity of input here ? It could save us some bandwidth 
-			 * to the server, though very unlikely to occur often */
-			network_send_line(c->network, c, l, FALSE);
-		}
-	} else if (c->network->connection.state == NETWORK_CONNECTION_STATE_NOT_CONNECTED) {
-		char *msg;
-		if (c->network->connection.data.tcp.last_disconnect_reason == NULL)
-			msg = g_strdup("Currently not connected to server...");
-		else
-			msg = g_strdup_printf("Currently not connected to server... (%s)",
-					c->network->connection.data.tcp.last_disconnect_reason);
-
-		client_send_args(c, "NOTICE", client_get_default_target(c), msg, NULL);
-		g_free(msg);
-	}
-
-	return TRUE;
-}
-
-/**
  * Send a response to a client.
  * @param c Client to send to
  * @param response Response number to send
@@ -398,7 +328,7 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition cond,
 				continue;
 			}
 
-			ret &= process_from_client(client, l);
+			ret &= client->process_from_client(client, l);
 
 			free_line(l);
 
@@ -671,20 +601,17 @@ static gboolean client_ping(struct client *client)
 	return TRUE;
 }
 
-
 /* GIOChannels passed into this function 
  * should preferably:
  *  - have no encoding set
  *  - work asynchronously
  *
- * @param n Network to use
  * @param c Channel to talk over
  * @param desc Description of the client
  */
-struct client *client_init(struct irc_network *n, GIOChannel *c, const char *desc)
+struct client *irc_client_new(GIOChannel *c, const char *desc, gboolean (*process_from_client) (struct client *, const struct line *))
 {
 	struct client *client;
-	gboolean charset_ok = FALSE;
 
 	g_assert(c != NULL);
 	g_assert(desc != NULL);
@@ -700,19 +627,14 @@ struct client *client_init(struct irc_network *n, GIOChannel *c, const char *des
 									client);
 	client->incoming = c;
 	g_io_channel_ref(client->incoming);
-	client->network = network_ref(n);
 	client->description = g_strdup(desc);
 	client->connected = TRUE;
 	client->exit_on_close = FALSE;
 	client->pending_lines = g_queue_new();
+	client->process_from_client = process_from_client;
 
 	client->outgoing_iconv = client->incoming_iconv = (GIConv)-1;
-	if (n != NULL && n->global != NULL)
-		charset_ok = client_set_charset(client, 
-										n->global->config->client_charset);
-	if (!charset_ok)
-		client_set_charset(client, DEFAULT_CLIENT_CHARSET);
-
+	client_set_charset(client, DEFAULT_CLIENT_CHARSET);
 	pending_clients = g_list_append(pending_clients, client);
 	client->incoming_id = g_io_add_watch(client->incoming, G_IO_IN | G_IO_HUP, 
 										 handle_pending_client_receive, client);
