@@ -26,6 +26,8 @@ Ctrlproxy 3.0.6 UNRELEASED
 
 	* Store CTCP ACTIONs for replication.
 
+	* Warn about unknown networks listed for listeners rather than crash.
+
 Ctrlproxy 3.0.5 2007-12-07
 
   IMPROVEMENTS

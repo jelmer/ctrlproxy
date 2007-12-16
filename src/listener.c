@@ -455,8 +455,7 @@ struct listener *listener_init(struct global *global, struct listener_config *cf
 	if (l->config->network != NULL) {
 		l->network = network_ref(find_network(global->networks, l->config->network));
 		if (l->network == NULL) {
-			free_listener(l);
-			return NULL;
+			log_global(LOG_WARNING, "Network `%s' for listener not found", l->config->network);
 		}
 	}
 
@@ -498,7 +497,9 @@ gboolean init_listeners(struct global *global)
 		struct listener_config *cfg = gl->data;
 		struct listener *l = listener_init(global, cfg);
 
-		ret &= start_listener(l);
+		if (l != NULL) {
+			ret &= start_listener(l);
+		}
 	}
 	return ret;
 }
