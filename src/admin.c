@@ -563,8 +563,12 @@ static char *log_level_get(admin_handle h)
 static gboolean log_level_set(admin_handle h, const char *value)
 {
 	extern enum log_level current_log_level;
+	int x;
 
-	int x = atoi(value);
+	if (value == NULL)
+		return FALSE;
+	
+	x = atoi(value);
 	if (x < 0 || x > 5) {
 		admin_out(h, "Invalid log level %d", x);
 		return FALSE;
@@ -1019,6 +1023,11 @@ static char *motd_file_get(admin_handle h)
 static gboolean interpret_boolean(admin_handle h, const char *value,
 								  gboolean *ret)
 {
+	if (value == NULL) {
+		admin_out(h, "Boolean settings can't be unset.");
+		return FALSE;
+	}
+
 	if (!g_strcasecmp(value, "true")) {
 		*ret = TRUE;
 		return TRUE;
@@ -1129,6 +1138,9 @@ BOOL_SETTING(learn_nickserv)
 static char *max_who_age_get(admin_handle h)
 {
 	struct global *g = admin_get_global(h);
+
+	if (g->config->max_who_age == 0)
+		return NULL;
 	
 	return g_strdup_printf("%d", g->config->max_who_age);
 }
@@ -1137,7 +1149,78 @@ static gboolean max_who_age_set(admin_handle h, const char *value)
 {
 	struct global *g = admin_get_global(h);
 
-	g->config->max_who_age = atoi(value);
+	g->config->max_who_age = (value == NULL?0:atoi(value));
+
+	return TRUE;
+}
+
+static char *auto_away_time_get(admin_handle h)
+{
+	struct global *g = admin_get_global(h);
+
+	if (g->config->auto_away.max_idle_time == 0)
+		return NULL;
+	
+	return g_strdup_printf("%d", g->config->auto_away.max_idle_time);
+}
+
+static gboolean auto_away_time_set(admin_handle h, const char *value)
+{
+	struct global *g = admin_get_global(h);
+
+	g->config->auto_away.max_idle_time = (value == NULL?-1:atoi(value));
+
+	/* FIXME: Restart auto-away */
+
+	return TRUE;
+}
+
+static char *auto_away_enable_get(admin_handle h)
+{
+	struct global *g = admin_get_global(h);
+	
+	return g_strdup(g->config->auto_away.enabled?"true":"false");
+}
+
+static gboolean auto_away_enable_set(admin_handle h, const char *value)
+{
+	struct global *g = admin_get_global(h);
+
+	return interpret_boolean(h, value, &g->config->auto_away.enabled);
+}
+
+static char *auto_away_message_get(admin_handle h)
+{
+	struct global *g = admin_get_global(h);
+	
+	return g_strdup(g->config->auto_away.message);
+}
+
+static gboolean auto_away_message_set(admin_handle h, const char *value)
+{
+	struct global *g = admin_get_global(h);
+
+	g_free(g->config->auto_away.message);
+
+	g->config->auto_away.message = g_strdup(value);
+
+	return TRUE;
+}
+
+static char *auto_away_nick_get(admin_handle h)
+{
+	struct global *g = admin_get_global(h);
+	
+	return g_strdup(g->config->auto_away.nick);
+}
+
+static gboolean auto_away_nick_set(admin_handle h, const char *value)
+{
+	struct global *g = admin_get_global(h);
+
+	g_free(g->config->auto_away.nick);
+
+	g->config->auto_away.nick = g_strdup(value);
 
 	return TRUE;
 }
@@ -1145,6 +1228,9 @@ static gboolean max_who_age_set(admin_handle h, const char *value)
 static char *report_time_offset_get(admin_handle h)
 {
 	struct global *g = admin_get_global(h);
+
+	if (g->config->report_time_offset == 0)
+		return NULL;
 	
 	return g_strdup_printf("%d", g->config->report_time_offset);
 }
@@ -1153,7 +1239,7 @@ static gboolean report_time_offset_set(admin_handle h, const char *value)
 {
 	struct global *g = admin_get_global(h);
 
-	g->config->report_time_offset = atoi(value);
+	g->config->report_time_offset = (value == NULL?0:atoi(value));
 
 	return TRUE;
 }
@@ -1170,7 +1256,7 @@ static char *port_get(admin_handle h)
 			return g_strdup_printf("%s", l->port);
 	}
 
-	return g_strdup("");
+	return NULL;
 }
 
 static gboolean port_set(admin_handle h, const char *value)
@@ -1202,10 +1288,10 @@ static char *bind_get(admin_handle h)
 		struct listener_config *l = gl->data;
 
 		if (l->is_default)
-			return g_strdup_printf("%s", l->address);
+			return g_strdup(l->address);
 	}
 
-	return g_strdup("");
+	return NULL;
 }
 
 static gboolean bind_set(admin_handle h, const char *value)
@@ -1240,7 +1326,7 @@ static char *password_get(admin_handle h)
 			return g_strdup_printf("%s", l->password);
 	}
 
-	return g_strdup("");
+	return NULL;
 }
 
 static gboolean password_set(admin_handle h, const char *value)
@@ -1275,7 +1361,7 @@ static char *default_network_get(admin_handle h)
 			return g_strdup(l->network);
 	}
 
-	return g_strdup("");
+	return NULL;
 }
 
 static gboolean default_network_set(admin_handle h, const char *value)
@@ -1326,6 +1412,10 @@ static struct admin_setting {
 } settings[] = {
 	{ "admin-log", admin_log_get, admin_log_set },
 	{ "admin-user", admin_user_get, admin_user_set },
+	{ "auto-away-enable", auto_away_enable_get, auto_away_enable_set },
+	{ "auto-away-message", auto_away_message_get, auto_away_message_set },
+	{ "auto-away-nick", auto_away_nick_get, auto_away_nick_set },
+	{ "auto-away-time", auto_away_time_get, auto_away_time_set },
 	{ "autosave", autosave_get, autosave_set },
 	{ "bind", bind_get, bind_set },
 	{ "default-client-charset", default_client_charset_get, default_client_charset_set },
@@ -1345,6 +1435,21 @@ static struct admin_setting {
 	{ NULL, NULL, NULL }
 };
 
+static void cmd_unset(admin_handle h, char **args, void *userdata)
+{
+	int i;
+	if (args[1] == NULL) {
+		admin_out(h, "Usage: unset <setting>");
+		return;
+	}
+
+	for (i = 0; settings[i].name; i++) {
+		if (!strcasecmp(settings[i].name, args[1])) {
+			settings[i].set(h, NULL);
+		}
+	}
+}
+
 static void cmd_set(admin_handle h, char **args, void *userdata)
 {
 	int i;
@@ -1353,7 +1458,10 @@ static void cmd_set(admin_handle h, char **args, void *userdata)
 	if (args[1] == NULL) {
 		for (i = 0; settings[i].name != NULL; i++) {
 			tmp = settings[i].get(h);
-			admin_out(h, "%s = %s", settings[i].name, tmp);
+			if (tmp == NULL)
+				admin_out(h, "%s is not set", settings[i]);
+			else
+				admin_out(h, "%s = %s", settings[i].name, tmp);
 			g_free(tmp);
 		}
 	} else {
@@ -1382,6 +1490,7 @@ const static struct admin_command builtin_commands[] = {
 
 	/* Commands */
 	{ "SET", cmd_set },
+	{ "UNSET", cmd_unset },
 
 	{ "ADDSERVER", cmd_add_server },
 	{ "BACKLOG", cmd_backlog},

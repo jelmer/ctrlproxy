@@ -8,7 +8,8 @@ Ctrlproxy 3.0.6 UNRELEASED
     * Add report-time-offset setting.
 	
 	* New settings ``port'', ``linestack'', ``logging'', ``password'',
-	  ``default-network''.
+	  ``default-network'', ``auto-away-message'', ``auto-away-nick'', 
+	  ``auto-away-enable'' and ``auto-away-time''.
 
 	* Simplify files in networks/ further by storing keys in ~/.ctrlproxy/keys 
 	  and having a list of channels to autojoin. (#76)
