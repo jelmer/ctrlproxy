@@ -218,7 +218,8 @@ gboolean linestack_insert_line(struct linestack_context *ctx,
 	/* No CTCP, please */
 	if ((!g_strcasecmp(l->args[0], "PRIVMSG") ||
 		!g_strcasecmp(l->args[0], "NOTICE")) && 
-		l->argc > 2 && l->args[2][0] == '\001')
+		l->argc > 2 && l->args[2][0] == '\001' && 
+		g_strcasecmp(l->args[2], "\001ACTION") != 0)
 		return FALSE;
 
 	for (i = 0; linestack_messages[i]; i++) 
