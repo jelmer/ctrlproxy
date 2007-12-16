@@ -28,7 +28,7 @@ START_TEST(test_create)
 	struct network_config nc = {
 		.name = "test"
 	};
-	struct network *n;
+	struct irc_network *n;
 	n = load_network(NULL, &nc);
 END_TEST
 
@@ -36,7 +36,7 @@ START_TEST(test_uncreate)
 	struct network_config nc = {
 		.name = "test"
 	};
-	struct network *n;
+	struct irc_network *n;
 	n = load_network(NULL, &nc);
 	unload_network(n);
 END_TEST
@@ -49,7 +49,7 @@ START_TEST(test_login)
 		.username = g_strdup("blah"),
 		.type = NETWORK_IOCHANNEL
 	};
-	struct network *n;
+	struct irc_network *n;
 	struct global *g = TORTURE_GLOBAL;
 	char *raw;
 	GError *error = NULL;

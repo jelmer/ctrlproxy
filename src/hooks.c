@@ -73,7 +73,7 @@ static GList *del_filter_ex(GList *list, const char *name)
 }
 
 
-static gboolean filter_class_execute(GList *gl, struct network *s, enum data_direction dir, const struct line *l) 
+static gboolean filter_class_execute(GList *gl, struct irc_network *s, enum data_direction dir, const struct line *l) 
 {
 	while(gl) {
 		struct filter_data *d = (struct filter_data *)gl->data;
@@ -103,7 +103,7 @@ void del_##n##_filter(const char *name)\
 {\
 	list = del_filter_ex(list, name); \
 }\
-gboolean run_##n##_filter(struct network *s, const struct line *l, enum data_direction dir)\
+gboolean run_##n##_filter(struct irc_network *s, const struct line *l, enum data_direction dir)\
 {\
 	return filter_class_execute(list, s, dir, l);\
 }
@@ -271,7 +271,7 @@ void del_server_connected_hook(const char *name)
 	}
 }
 
-void server_connected_hook_execute(struct network *c)
+void server_connected_hook_execute(struct irc_network *c)
 {
 	GList *l;
 	
@@ -316,7 +316,7 @@ void del_server_disconnected_hook(const char *name)
 	}
 }
 
-void server_disconnected_hook_execute(struct network *c)
+void server_disconnected_hook_execute(struct irc_network *c)
 {
 	GList *l;
 	for (l = server_disconnected_hooks; l; l = l->next) 

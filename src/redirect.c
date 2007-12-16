@@ -26,7 +26,7 @@
 
 struct query_stack {
 	const struct query *query;
-	const struct network *network;
+	const struct irc_network *network;
 	struct client *client;	
 	time_t time;
 	struct query_stack *next;
@@ -44,12 +44,12 @@ struct query {
 	int errors[20];
 	/* Should add this query to the stack. return TRUE if this has 
 	 * been done successfully, FALSE otherwise */
-	int (*handle) (const struct line *, const struct network *n, struct client *c, struct query *);
+	int (*handle) (const struct line *, const struct irc_network *n, struct client *c, struct query *);
 };
 
-static int handle_default(const struct line *, const struct network *n, 
+static int handle_default(const struct line *, const struct irc_network *n, 
 						  struct client *c, struct query *);
-static int handle_topic(const struct line *, const struct network *n, 
+static int handle_topic(const struct line *, const struct irc_network *n, 
 						struct client *c, struct query *);
 
 static struct query queries[] = {
@@ -468,31 +468,31 @@ static struct query unknown_query = {
 	handle_default
 };
 
-static gboolean handle_465(struct network *n, struct line *l)
+static gboolean handle_465(struct irc_network *n, struct line *l)
 {
 	network_log(LOG_ERROR, n, "Banned from server: %s", l->args[1]);
 	return TRUE;
 }
 
-static gboolean handle_451(struct network *n, struct line *l)
+static gboolean handle_451(struct irc_network *n, struct line *l)
 {
 	network_log(LOG_ERROR, n, "Not registered error, this is probably a bug...");
 	return TRUE;
 }
 
-static gboolean handle_462(struct network *n, struct line *l)
+static gboolean handle_462(struct irc_network *n, struct line *l)
 {
 	network_log(LOG_ERROR, n, "Double registration error, this is probably a bug...");
 	return TRUE;
 }
 
-static gboolean handle_463(struct network *n, struct line *l)
+static gboolean handle_463(struct irc_network *n, struct line *l)
 {
 	network_log(LOG_ERROR, n, "Host not privileged to connect");
 	return TRUE;
 }
 
-static gboolean handle_464(struct network *n, struct line *l)
+static gboolean handle_464(struct irc_network *n, struct line *l)
 {
 	network_log(LOG_ERROR, n, "Password mismatch");
 	return TRUE;
@@ -510,7 +510,7 @@ static int response_none[] = { ERR_NOMOTD, RPL_MOTDSTART, RPL_MOTD,
 	RPL_ENDOFMOTD, 0 };
 static struct {
 	int response;
-	gboolean (*handler) (struct network *n, struct line *);
+	gboolean (*handler) (struct irc_network *n, struct line *);
 } response_handler[] = {
 	{ ERR_PASSWDMISMATCH, handle_464 },
 	{ ERR_ALREADYREGISTERED, handle_462 },
@@ -553,7 +553,7 @@ static struct query *find_query(char *name)
  * @return TRUE if the message was redirected to zero or more clients, 
  *         FALSE if it was sent to all clients.
  */
-gboolean redirect_response(struct network *network, struct line *l)
+gboolean redirect_response(struct irc_network *network, struct line *l)
 {
 	struct query_stack *s, *p = NULL;
 	const struct client *c = NULL;
@@ -621,7 +621,7 @@ gboolean redirect_response(struct network *network, struct line *l)
 	return FALSE;
 }
 
-void redirect_clear(const struct network *net)
+void redirect_clear(const struct irc_network *net)
 {
 	struct query_stack *q, *p = NULL, *n;
 
@@ -645,7 +645,7 @@ void redirect_clear(const struct network *net)
 	}
 }
 
-void redirect_record(const struct network *n, struct client *c, 
+void redirect_record(const struct irc_network *n, struct client *c, 
 					 const struct line *l)
 {
 	struct query *q;
@@ -671,7 +671,7 @@ void redirect_record(const struct network *n, struct client *c,
 	q->handle(l, n, c, q);
 }
 
-static int handle_default(const struct line *l, const struct network *n, 
+static int handle_default(const struct line *l, const struct irc_network *n, 
 						  struct client *c, struct query *q)
 {
 	struct query_stack *s = g_new(struct query_stack, 1);
@@ -687,7 +687,7 @@ static int handle_default(const struct line *l, const struct network *n,
 	return 1;
 }
 
-static int handle_topic(const struct line *l, const struct network *n, struct client *c, struct query *q)
+static int handle_topic(const struct line *l, const struct irc_network *n, struct client *c, struct query *q)
 {
 	if (l->args[2] != NULL)
 		return 0;

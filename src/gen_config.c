@@ -86,7 +86,7 @@ void global_update_config(struct global *my_global)
 {
 	GList *gl;
 	for (gl = my_global->networks; gl; gl = gl->next) {
-		struct network *n = gl->data;
+		struct irc_network *n = gl->data;
 	
 		n->config->autoconnect = (n->connection.state != NETWORK_CONNECTION_STATE_NOT_CONNECTED);
 

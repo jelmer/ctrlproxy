@@ -41,7 +41,7 @@ static void list_networks_helper(admin_handle h);
  * @param n Network for which to generate the hostmask.
  * @return Host mask, should be freed by the caller.
  */
-static char *admin_hostmask(struct network *n)
+static char *admin_hostmask(struct irc_network *n)
 {
 	return g_strdup_printf("ctrlproxy!ctrlproxy@%s", n->info.name);
 }
@@ -133,7 +133,7 @@ struct global *admin_get_global(admin_handle h)
  * @param h Admin context handle
  * @return Network, or NULL if no network is associated.
  */
-struct network *admin_get_network(admin_handle h)
+struct irc_network *admin_get_network(admin_handle h)
 {
 	return h->network;
 }
@@ -186,7 +186,7 @@ static void cmd_del_network (admin_handle h, char **args, void *userdata)
 
 static void cmd_add_server (admin_handle h, char **args, void *userdata)
 {
-	struct network *n;
+	struct irc_network *n;
 	struct tcp_server_config *s;
 	char *t;
 
@@ -226,7 +226,7 @@ static void cmd_add_server (admin_handle h, char **args, void *userdata)
 
 static void cmd_connect_network (admin_handle h, char **args, void *userdata)
 {
-	struct network *s;
+	struct irc_network *s;
 	if (!args[1]) {
 		 admin_out(h, "No network specified");
 		 return;
@@ -263,7 +263,7 @@ static void cmd_connect_network (admin_handle h, char **args, void *userdata)
 
 static void cmd_disconnect_network (admin_handle h, char **args, void *userdata)
 {
-	struct network *n;
+	struct irc_network *n;
 
 	if (args[1] != NULL) {
 		n = find_network(admin_get_global(h), args[1]);
@@ -293,7 +293,7 @@ static void cmd_disconnect_network (admin_handle h, char **args, void *userdata)
 
 static void cmd_next_server (admin_handle h, char **args, void *userdata) 
 {
-	struct network *n;
+	struct irc_network *n;
 	const char *name;
 
 
@@ -326,7 +326,7 @@ static void cmd_save_config (admin_handle h, char **args, void *userdata)
 static void add_network_helper(admin_handle h, const char *name)
 {
 	struct network_config *nc;
-	struct network *n;
+	struct irc_network *n;
 
 	if (find_network(admin_get_global(h), name) != NULL) {
 		admin_out(h, "Network with name `%s' already exists", name);
@@ -343,7 +343,7 @@ static void add_network_helper(admin_handle h, const char *name)
 
 static void del_network_helper(admin_handle h, const char *name)
 {
-	struct network *n = find_network(admin_get_global(h), name);
+	struct irc_network *n = find_network(admin_get_global(h), name);
 	if (n == NULL) {
 		admin_out(h, "No such network `%s'", name);
 		return;
@@ -360,7 +360,7 @@ static void list_networks_helper(admin_handle h)
 {
 	GList *gl;
 	for (gl = admin_get_global(h)->networks; gl; gl = gl->next) {
-		struct network *n = gl->data;
+		struct irc_network *n = gl->data;
 
 		switch (n->connection.state) {
 		case NETWORK_CONNECTION_STATE_CONNECTING:
@@ -440,7 +440,7 @@ static void cmd_detach(admin_handle h, char **args, void *userdata)
 
 static void dump_joined_channels(admin_handle h, char **args, void *userdata)
 {
-	struct network *n;
+	struct irc_network *n;
 	GList *gl;
 
 	if (args[1] != NULL) {
@@ -481,7 +481,7 @@ static GHashTable *markers = NULL;
 static void cmd_backlog(admin_handle h, char **args, void *userdata)
 {
 	struct linestack_marker *lm;
-	struct network *n;
+	struct irc_network *n;
 	
 	n = admin_get_network(h);
 
@@ -680,7 +680,7 @@ gboolean admin_process_command(struct client *c, struct line *l, int cmdoffset)
 	return ret;
 }
 
-static gboolean admin_net_init(struct network *n)
+static gboolean admin_net_init(struct irc_network *n)
 {
 	char *hostmask;
 	char *nicks;
@@ -702,7 +702,7 @@ static gboolean admin_net_init(struct network *n)
 	return TRUE;
 }
 
-static gboolean admin_to_server (struct network *n, struct client *c, const struct line *l)
+static gboolean admin_to_server (struct irc_network *n, struct client *c, const struct line *l)
 {
 	if (!g_strcasecmp(l->args[0], "PRIVMSG") ||
 		!g_strcasecmp(l->args[0], "NOTICE")) {
@@ -847,7 +847,7 @@ struct virtual_network_ops admin_network = {
 };
 
 
-void admin_log(enum log_level level, const struct network *n, const struct client *c, const char *data)
+void admin_log(enum log_level level, const struct irc_network *n, const struct client *c, const char *data)
 {
 	extern struct global *my_global;
 	struct line *l;
@@ -876,7 +876,7 @@ void admin_log(enum log_level level, const struct network *n, const struct clien
 						  n?")":"");
 
 	for (gl = my_global->networks; gl; gl = gl->next) {
-		struct network *network = gl->data;
+		struct irc_network *network = gl->data;
 
 		if (network->connection.data.virtual.ops != &admin_network)
 			continue;

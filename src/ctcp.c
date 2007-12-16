@@ -27,7 +27,7 @@
  */
 struct ctcp_handle 
 {
-	struct network *network;
+	struct irc_network *network;
 	char *nick;
 };
 
@@ -72,7 +72,7 @@ void ctcp_reply(struct ctcp_handle *h, ...)
 	g_free(msg);
 }
 
-void ctcp_send(struct network *n, const char *nick, ...)
+void ctcp_send(struct irc_network *n, const char *nick, ...)
 {
 	va_list ap;
 	char *msg;
@@ -224,7 +224,7 @@ gboolean ctcp_process_client_reply (struct client *c, struct line *l)
 	return TRUE;
 }
 
-gboolean ctcp_process_network_reply (struct network *n, struct line *l) 
+gboolean ctcp_process_network_reply (struct irc_network *n, struct line *l) 
 {
 	GList *gl;
 	char *nick;
@@ -274,7 +274,7 @@ gboolean ctcp_process_network_reply (struct network *n, struct line *l)
 	return TRUE;
 }
 
-gboolean ctcp_process_network_request (struct network *n, struct line *l) 
+gboolean ctcp_process_network_request (struct irc_network *n, struct line *l) 
 {
 	GList *gl;
 	int i;

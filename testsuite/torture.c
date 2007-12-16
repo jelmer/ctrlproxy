@@ -57,12 +57,12 @@ char *torture_tempfile(const char *path)
 	return g_build_filename(test_dir, path, NULL);
 }
 
-struct network *dummy_network(void)
+struct irc_network *dummy_network(void)
 {
 	struct network_config nc = {
 		.name = "test"
 	};
-	struct network *n;
+	struct irc_network *n;
 	n = load_network(NULL, &nc);
 	
 	return n;

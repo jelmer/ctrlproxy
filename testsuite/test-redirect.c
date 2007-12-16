@@ -24,39 +24,39 @@
 #include <check.h>
 #include "torture.h"
 
-static void test_redirect_response(struct network *n, const char *line)
+static void test_redirect_response(struct irc_network *n, const char *line)
 {
 	struct line *l = irc_parse_line(line);	
 	redirect_response(n, l);
 }
 
 START_TEST(test_465)
-	struct network *n = dummy_network();
+	struct irc_network *n = dummy_network();
 	test_redirect_response(n, "465 irc.example.com :You are banned");
 END_TEST
 
 START_TEST(test_451)
-	struct network *n = dummy_network();
+	struct irc_network *n = dummy_network();
 	test_redirect_response(n, "451 nick :Not registered");
 END_TEST
 
 START_TEST(test_462)
-	struct network *n = dummy_network();
+	struct irc_network *n = dummy_network();
 	test_redirect_response(n, "462 nick :Already registered");
 END_TEST
 
 START_TEST(test_463)
-	struct network *n = dummy_network();
+	struct irc_network *n = dummy_network();
 	test_redirect_response(n, "463 hostname :Not privileged to connect");
 END_TEST
 
 START_TEST(test_464)
-	struct network *n = dummy_network();
+	struct irc_network *n = dummy_network();
 	test_redirect_response(n, "464 nick :Password mismatch");
 END_TEST
 
 START_TEST(test_topic)
-	struct network *n = dummy_network();
+	struct irc_network *n = dummy_network();
 	test_redirect_response(n, "332 #channel :Foobar");
 END_TEST
 

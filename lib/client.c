@@ -681,7 +681,7 @@ static gboolean client_ping(struct client *client)
  * @param c Channel to talk over
  * @param desc Description of the client
  */
-struct client *client_init(struct network *n, GIOChannel *c, const char *desc)
+struct client *client_init(struct irc_network *n, GIOChannel *c, const char *desc)
 {
 	struct client *client;
 	gboolean charset_ok = FALSE;

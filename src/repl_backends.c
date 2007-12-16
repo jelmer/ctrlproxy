@@ -93,7 +93,7 @@ static void lastdisconnect_replicate(struct client *c)
 				   c->network->global->config->report_time_offset);
 }
 
-static gboolean log_data(struct network *n, const struct line *l, enum data_direction dir, void *userdata) 
+static gboolean log_data(struct irc_network *n, const struct line *l, enum data_direction dir, void *userdata) 
 {
 	if(dir != TO_SERVER) return TRUE;
 

@@ -17,7 +17,7 @@ struct listener {
 	GList *incoming;
 	GList *pending;
 	struct listener_config *config;
-	struct network *network;
+	struct irc_network *network;
 	struct global *global;
 };
 

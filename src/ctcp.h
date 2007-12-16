@@ -34,12 +34,12 @@ struct ctcp_handler {
 	void (*fn) (struct ctcp_handle *, char **args);
 };
 
-gboolean ctcp_process_network_request(struct network *, struct line *);
-gboolean ctcp_process_network_reply(struct network *, struct line *);
+gboolean ctcp_process_network_request(struct irc_network *, struct line *);
+gboolean ctcp_process_network_reply(struct irc_network *, struct line *);
 gboolean ctcp_process_client_request(struct client *, struct line *);
 gboolean ctcp_process_client_reply(struct client *, struct line *);
 G_MODULE_EXPORT void ctcp_register_handler(const struct ctcp_handler *);
-G_MODULE_EXPORT G_GNUC_NULL_TERMINATED void ctcp_send(struct network *, const char *, ...);
+G_MODULE_EXPORT G_GNUC_NULL_TERMINATED void ctcp_send(struct irc_network *, const char *, ...);
 G_MODULE_EXPORT G_GNUC_NULL_TERMINATED void ctcp_reply(struct ctcp_handle *, ...);
 
 #endif /* __CTCP_H__ */

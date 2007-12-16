@@ -36,7 +36,7 @@
  */
 struct client {
 	int references;
-	struct network *network;
+	struct irc_network *network;
 	char *description;
 	GIOChannel *incoming;
 	GQueue *pending_lines;
@@ -65,7 +65,7 @@ struct client {
  * @param desc Description of the client.
  */
 G_MODULE_EXPORT G_GNUC_MALLOC struct client *client_init(
-										   struct network *net, 
+										   struct irc_network *net, 
 										   GIOChannel *io, 
 										   const char *desc);
 

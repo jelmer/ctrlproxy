@@ -332,7 +332,7 @@ int main(int argc, char **argv)
 
 	if (inetd_client) {
 		GIOChannel *io = g_io_channel_unix_new(0);
-		struct network *n = find_network(my_global, inetd_client);
+		struct irc_network *n = find_network(my_global, inetd_client);
 
 		if (!n) {
 			fprintf(stderr, "Unable to find network named '%s'\n", inetd_client);

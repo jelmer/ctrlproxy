@@ -36,7 +36,7 @@
 #define DEFAULT_NETWORK_CHARSET NULL
 
 struct global;
-struct network;
+struct irc_network;
 struct client;
 struct line;
 struct linestack_context;
@@ -85,9 +85,9 @@ struct network_connection {
 			struct virtual_network_ops {
 				char *name;
 				gboolean not_disconnectable;
-				gboolean (*init) (struct network *);
-				gboolean (*to_server) (struct network *, struct client *c, const struct line *);
-				void (*fini) (struct network *);
+				gboolean (*init) (struct irc_network *);
+				gboolean (*to_server) (struct irc_network *, struct client *c, const struct line *);
+				void (*fini) (struct irc_network *);
 			} *ops;
 		} virtual;
 	} data;
@@ -98,7 +98,7 @@ typedef void (*network_log_fn) (enum log_level, void *, const char *);
 /**
  * An IRC network
  */
-struct network {
+struct irc_network {
 	struct global *global;
 
 	/** Configuration. */
@@ -130,31 +130,31 @@ struct network {
 };
 
 /* server.c */
-G_MODULE_EXPORT gboolean network_set_charset(struct network *n, const char *name);
-G_MODULE_EXPORT struct network *find_network_by_hostname(struct global *global, const char *host, guint16 port, gboolean create);
+G_MODULE_EXPORT gboolean network_set_charset(struct irc_network *n, const char *name);
+G_MODULE_EXPORT struct irc_network *find_network_by_hostname(struct global *global, const char *host, guint16 port, gboolean create);
 G_MODULE_EXPORT gboolean load_networks(struct global *, struct ctrlproxy_config *cfg, network_log_fn);
 G_MODULE_EXPORT gboolean autoconnect_networks(struct global *);
-G_MODULE_EXPORT struct network *load_network(struct global *, struct network_config *);
-G_MODULE_EXPORT void unload_network(struct network *);
-G_MODULE_EXPORT gboolean connect_network(struct network *);
-G_MODULE_EXPORT void network_select_next_server(struct network *n);
-G_MODULE_EXPORT gboolean disconnect_network(struct network *s);
+G_MODULE_EXPORT struct irc_network *load_network(struct global *, struct network_config *);
+G_MODULE_EXPORT void unload_network(struct irc_network *);
+G_MODULE_EXPORT gboolean connect_network(struct irc_network *);
+G_MODULE_EXPORT void network_select_next_server(struct irc_network *n);
+G_MODULE_EXPORT gboolean disconnect_network(struct irc_network *s);
 G_MODULE_EXPORT void clients_send(GList *clients, struct line *, const struct client *exception);
 G_MODULE_EXPORT void clients_send_args_ex(GList *clients, const char *hostmask, ...);
-G_MODULE_EXPORT gboolean network_send_line(struct network *s, struct client *c, const struct line *, gboolean);
-G_MODULE_EXPORT gboolean network_send_args(struct network *s, ...);
+G_MODULE_EXPORT gboolean network_send_line(struct irc_network *s, struct client *c, const struct line *, gboolean);
+G_MODULE_EXPORT gboolean network_send_args(struct irc_network *s, ...);
 G_MODULE_EXPORT void register_virtual_network(struct virtual_network_ops *);
-G_MODULE_EXPORT struct network *find_network(struct global *, const char *);
-G_MODULE_EXPORT gboolean virtual_network_recv_line(struct network *l, struct line *);
-G_MODULE_EXPORT gboolean virtual_network_recv_args(struct network *l, const char *origin, ...); 
-G_MODULE_EXPORT gboolean virtual_network_recv_response(struct network *n, int num, ...);
-typedef void (*new_network_notify_fn) (struct network *, void *);
+G_MODULE_EXPORT struct irc_network *find_network(struct global *, const char *);
+G_MODULE_EXPORT gboolean virtual_network_recv_line(struct irc_network *l, struct line *);
+G_MODULE_EXPORT gboolean virtual_network_recv_args(struct irc_network *l, const char *origin, ...); 
+G_MODULE_EXPORT gboolean virtual_network_recv_response(struct irc_network *n, int num, ...);
+typedef void (*new_network_notify_fn) (struct irc_network *, void *);
 G_MODULE_EXPORT void register_new_network_notify(struct global *, new_network_notify_fn, void *userdata);
-G_MODULE_EXPORT G_GNUC_MALLOC struct linestack_context *new_linestack(struct network *network);
-G_MODULE_EXPORT G_GNUC_MALLOC char *network_generate_feature_string(struct network *n);
-G_MODULE_EXPORT struct network *network_ref(struct network *);
-G_MODULE_EXPORT void network_unref(struct network *);
-G_MODULE_EXPORT void network_set_log_fn(struct network *s, 
+G_MODULE_EXPORT G_GNUC_MALLOC struct linestack_context *new_linestack(struct irc_network *network);
+G_MODULE_EXPORT G_GNUC_MALLOC char *network_generate_feature_string(struct irc_network *n);
+G_MODULE_EXPORT struct irc_network *network_ref(struct irc_network *);
+G_MODULE_EXPORT void network_unref(struct irc_network *);
+G_MODULE_EXPORT void network_set_log_fn(struct irc_network *s, 
 										network_log_fn, void *userdata);
 
 #endif /* __CTRLPROXY_NETWORK_H__ */

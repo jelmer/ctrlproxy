@@ -31,7 +31,7 @@ gboolean no_log_timestamp = FALSE;
 enum log_level current_log_level = LOG_INFO;
 FILE *flog = NULL;
 
-static void log_entry(enum log_level level, const struct network *n, const struct client *c, const char *data)
+static void log_entry(enum log_level level, const struct irc_network *n, const struct client *c, const char *data)
 {
 	if (flog == NULL)
 		return;
@@ -61,7 +61,7 @@ static void log_entry(enum log_level level, const struct network *n, const struc
 	fflush(flog);
 }
 
-void log_network_line(const struct network *n, const struct line *l, gboolean incoming)
+void log_network_line(const struct irc_network *n, const struct line *l, gboolean incoming)
 {
 	char *raw;
 	if (current_log_level < LOG_DATA)
@@ -83,7 +83,7 @@ void log_client_line(const struct client *n, const struct line *l, gboolean inco
 	g_free(raw);
 }
 
-void handle_network_log(enum log_level level, const struct network *n, 
+void handle_network_log(enum log_level level, const struct irc_network *n, 
 						const char *msg)
 {
 	g_assert(n != NULL);

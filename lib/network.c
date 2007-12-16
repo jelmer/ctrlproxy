@@ -23,10 +23,10 @@
 
 static GHashTable *virtual_network_ops = NULL;
 
-static gboolean delayed_connect_server(struct network *s);
-static gboolean connect_server(struct network *s);
-static gboolean close_server(struct network *s);
-static void reconnect(struct network *server);
+static gboolean delayed_connect_server(struct irc_network *s);
+static gboolean connect_server(struct irc_network *s);
+static gboolean close_server(struct irc_network *s);
+static void reconnect(struct irc_network *server);
 static void clients_send_state(GList *clients, struct network_state *s);
 static gboolean server_finish_connect(GIOChannel *ioc, GIOCondition cond, 
 								  void *data);
@@ -46,10 +46,10 @@ void register_new_network_notify(struct global *global, new_network_notify_fn fn
 
 static void state_log_helper(enum log_level l, void *userdata, const char *msg)
 {
-	network_log(l, (const struct network *)userdata, "%s", msg);
+	network_log(l, (const struct irc_network *)userdata, "%s", msg);
 }
 
-static void server_send_login (struct network *s) 
+static void server_send_login (struct irc_network *s) 
 {
 	g_assert(s);
 
@@ -84,7 +84,7 @@ static void server_send_login (struct network *s)
  * @param name name of the character set to use
  * @return true if setting the charset worked
  */
-gboolean network_set_charset(struct network *n, const char *name)
+gboolean network_set_charset(struct irc_network *n, const char *name)
 {
 	GIConv tmp;
 
@@ -175,7 +175,7 @@ static gboolean network_update_isupport(struct network_info *net_info,
  * @param l Line received
  * @return Whether the message was received ok
  */
-static gboolean process_from_server(struct network *n, struct line *l)
+static gboolean process_from_server(struct irc_network *n, struct line *l)
 {
 	struct line *lc;
 	GError *error = NULL;
@@ -285,7 +285,7 @@ static gboolean process_from_server(struct network *n, struct line *l)
 	return TRUE;
 }
 
-static void network_report_disconnect(struct network *n, const char *fmt, ...)
+static void network_report_disconnect(struct irc_network *n, const char *fmt, ...)
 {
 	va_list ap;
 	char *tmp;
@@ -301,7 +301,7 @@ static void network_report_disconnect(struct network *n, const char *fmt, ...)
 
 static gboolean handle_server_receive (GIOChannel *c, GIOCondition cond, void *_server)
 {
-	struct network *server = (struct network *)_server;
+	struct irc_network *server = (struct irc_network *)_server;
 	struct line *l;
 	gboolean ret;
 
@@ -367,7 +367,7 @@ static gboolean handle_server_receive (GIOChannel *c, GIOCondition cond, void *_
 	return TRUE;
 }
 
-static struct tcp_server_config *network_get_next_tcp_server(struct network *n)
+static struct tcp_server_config *network_get_next_tcp_server(struct irc_network *n)
 {
 	GList *cur;
 	
@@ -387,7 +387,7 @@ static struct tcp_server_config *network_get_next_tcp_server(struct network *n)
 	return NULL;
 }
 
-static gboolean antiflood_allow_line(struct network *s)
+static gboolean antiflood_allow_line(struct irc_network *s)
 {
 	/* FIXME: Implement antiflood, use s->config->queue_speed */
 	return TRUE;
@@ -404,7 +404,7 @@ static gboolean antiflood_allow_line(struct network *s)
 static gboolean server_send_queue(GIOChannel *ch, GIOCondition cond, 
 								  gpointer user_data)
 {
-	struct network *s = user_data;
+	struct irc_network *s = user_data;
 	GError *error = NULL;
 	GIOStatus status;
 
@@ -438,7 +438,7 @@ static gboolean server_send_queue(GIOChannel *ch, GIOCondition cond,
 	return FALSE;
 }
 
-static gboolean network_send_line_direct(struct network *s, struct client *c, 
+static gboolean network_send_line_direct(struct irc_network *s, struct client *c, 
 										 const struct line *ol)
 {
 	struct line nl, *l;
@@ -491,7 +491,7 @@ static gboolean network_send_line_direct(struct network *s, struct client *c,
  * @param ol Line to send to the network
  * @param is_private Whether the line should not be broadcast to other clients
  */
-gboolean network_send_line(struct network *s, struct client *c, 
+gboolean network_send_line(struct irc_network *s, struct client *c, 
 						   const struct line *ol, gboolean is_private)
 {
 	struct line l;
@@ -545,7 +545,7 @@ gboolean network_send_line(struct network *s, struct client *c,
  * @param n Network to receive data
  * @param num Number of the response to receive
  */
-gboolean virtual_network_recv_response(struct network *n, int num, ...) 
+gboolean virtual_network_recv_response(struct irc_network *n, int num, ...) 
 {
 	va_list ap;
 	struct line *l;
@@ -584,7 +584,7 @@ gboolean virtual_network_recv_response(struct network *n, int num, ...)
  * @param s Network to send to.
  * @param l Line to receive.
  */
-gboolean virtual_network_recv_line(struct network *s, struct line *l)
+gboolean virtual_network_recv_line(struct irc_network *s, struct line *l)
 {
 	g_assert(s != NULL);
 	g_assert(l != NULL);
@@ -601,7 +601,7 @@ gboolean virtual_network_recv_line(struct network *s, struct line *l)
  * @param s Network to use.
  * @param origin Origin to make the data originate from
  */
-gboolean virtual_network_recv_args(struct network *s, const char *origin, ...)
+gboolean virtual_network_recv_args(struct irc_network *s, const char *origin, ...)
 {
 	va_list ap;
 	struct line *l;
@@ -626,7 +626,7 @@ gboolean virtual_network_recv_args(struct network *s, const char *origin, ...)
  * @param s Network
  * @param ... Arguments terminated by NULL
  */
-gboolean network_send_args(struct network *s, ...)
+gboolean network_send_args(struct irc_network *s, ...)
 {
 	va_list ap;
 	struct line *l;
@@ -645,7 +645,7 @@ gboolean network_send_args(struct network *s, ...)
 	return ret;
 }
 
-static gboolean bindsock(struct network *s,
+static gboolean bindsock(struct irc_network *s,
 						 int sock, struct addrinfo *res, 
 						 const char *address,
 						 const char *service)
@@ -687,7 +687,7 @@ static gboolean bindsock(struct network *s,
  * @param server network to ping
  * @param ping_source GSource id of the ping event
  */
-static void ping_server(struct network *server, gboolean ping_source)
+static void ping_server(struct irc_network *server, gboolean ping_source)
 {
 	gint silent_time = time(NULL) - server->connection.last_line_recvd;
 	if (silent_time > MAX_SILENT_TIME) {
@@ -699,7 +699,7 @@ static void ping_server(struct network *server, gboolean ping_source)
 	}
 }
 
-static gboolean connect_current_tcp_server(struct network *s) 
+static gboolean connect_current_tcp_server(struct irc_network *s) 
 {
 	struct addrinfo *res;
 	int sock = -1;
@@ -803,7 +803,7 @@ static gboolean connect_current_tcp_server(struct network *s)
 	return TRUE;
 }
 
-static void reconnect(struct network *server)
+static void reconnect(struct irc_network *server)
 {
 	g_assert(server);
 
@@ -866,7 +866,7 @@ static void clients_invalidate_state(GList *clients, struct network_state *s)
 	}
 }
 
-static gboolean close_server(struct network *n) 
+static gboolean close_server(struct irc_network *n) 
 {
 	g_assert(n);
 
@@ -1010,7 +1010,7 @@ static pid_t piped_child(char* const command[], int *f_in)
 static gboolean server_finish_connect(GIOChannel *ioc, GIOCondition cond, 
 								  void *data)
 {
-	struct network *s = data;
+	struct irc_network *s = data;
 	struct tcp_server_config *cs;
 
 	if (cond & G_IO_ERR) {
@@ -1069,7 +1069,7 @@ static gboolean server_finish_connect(GIOChannel *ioc, GIOCondition cond,
  * @param s Network to set the IO channel for.
  * @param ioc IO channel to use
  */
-gboolean network_set_iochannel(struct network *s, GIOChannel *ioc)
+gboolean network_set_iochannel(struct irc_network *s, GIOChannel *ioc)
 {
 	GError *error = NULL;
 	g_assert(s->config->type != NETWORK_VIRTUAL);
@@ -1099,7 +1099,7 @@ gboolean network_set_iochannel(struct network *s, GIOChannel *ioc)
 	return TRUE;
 }
 
-static gboolean connect_program(struct network *s)
+static gboolean connect_program(struct irc_network *s)
 {
 	int sock;
 	char *cmd[2];
@@ -1130,7 +1130,7 @@ static gboolean connect_program(struct network *s)
 	return TRUE;
 }
 
-static gboolean connect_server(struct network *s)
+static gboolean connect_server(struct irc_network *s)
 {
 	g_assert(s);
 	g_assert(s->config);
@@ -1166,7 +1166,7 @@ static gboolean connect_server(struct network *s)
 	return TRUE;
 }
 
-static gboolean delayed_connect_server(struct network *s)
+static gboolean delayed_connect_server(struct irc_network *s)
 {
 	g_assert(s);
 	connect_server(s);
@@ -1180,9 +1180,9 @@ static gboolean delayed_connect_server(struct network *s)
  * @param sc Network configuration to load form
  * @return A new network instance, already added to the global context.
  */
-struct network *load_network(struct global *global, struct network_config *sc)
+struct irc_network *load_network(struct global *global, struct network_config *sc)
 {
-	struct network *s;
+	struct irc_network *s;
 	GList *gl;
 
 	g_assert(sc);
@@ -1194,7 +1194,7 @@ struct network *load_network(struct global *global, struct network_config *sc)
 			return s;
 	}
 
-	s = g_new0(struct network, 1);
+	s = g_new0(struct irc_network, 1);
 	s->references = 1;
 	s->config = sc;
 	s->reconnect_interval = sc->reconnect_interval == -1?DEFAULT_RECONNECT_INTERVAL:sc->reconnect_interval;
@@ -1234,7 +1234,7 @@ struct network *load_network(struct global *global, struct network_config *sc)
  *
  * @param s Network to connect to
  */
-gboolean connect_network(struct network *s) 
+gboolean connect_network(struct irc_network *s) 
 {
 	g_assert(s);
 	g_assert(s->connection.state == NETWORK_CONNECTION_STATE_NOT_CONNECTED ||
@@ -1248,7 +1248,7 @@ static void free_pending_line(void *_line, void *userdata)
 	free_line((struct line *)_line);
 }
 
-static void free_network(struct network *s)
+static void free_network(struct irc_network *s)
 {
 	g_queue_foreach(s->connection.pending_lines, free_pending_line, NULL);
 	g_queue_free(s->connection.pending_lines);
@@ -1272,7 +1272,7 @@ static void free_network(struct network *s)
  *
  * @param s Network to unload.
  */
-void unload_network(struct network *s)
+void unload_network(struct irc_network *s)
 {
 	GList *l;
 	
@@ -1299,7 +1299,7 @@ void unload_network(struct network *s)
  * @param s Network to disconnect from
  * @return Whether disconnecting succeeded.
  */
-gboolean disconnect_network(struct network *s)
+gboolean disconnect_network(struct irc_network *s)
 {
 	g_assert(s);
 	if (s->connection.state == NETWORK_CONNECTION_STATE_NOT_CONNECTED) {
@@ -1334,7 +1334,7 @@ gboolean autoconnect_networks(struct global *global)
 	GList *gl;
 	for (gl = global->networks; gl; gl = gl->next)
 	{
-		struct network *n = gl->data;
+		struct irc_network *n = gl->data;
 		g_assert(n);
 		g_assert(n->config);
 		if (n->config->autoconnect)
@@ -1359,7 +1359,7 @@ gboolean load_networks(struct global *global, struct ctrlproxy_config *cfg,
 	for (gl = cfg->networks; gl; gl = gl->next)
 	{
 		struct network_config *nc = gl->data;
-		struct network *n;
+		struct irc_network *n;
 		n = load_network(global, nc);
 		if (n != NULL)
 			network_set_log_fn(n, fn, n);
@@ -1375,11 +1375,11 @@ gboolean load_networks(struct global *global, struct ctrlproxy_config *cfg,
  * @param name Name of the network to search for.
  * @return first network found or NULL
  */
-struct network *find_network(struct global *global, const char *name)
+struct irc_network *find_network(struct global *global, const char *name)
 {
 	GList *gl;
 	for (gl = global->networks; gl; gl = gl->next) {
-		struct network *n = gl->data;
+		struct irc_network *n = gl->data;
 		if (n->info.name && !g_strcasecmp(n->info.name, name)) 
 			return n;
 	}
@@ -1396,7 +1396,7 @@ struct network *find_network(struct global *global, const char *name)
  * @param create Whether to create the network if it wasn't found.
  * @return the network found or created or NULL
  */
-struct network *find_network_by_hostname(struct global *global, 
+struct irc_network *find_network_by_hostname(struct global *global, 
 										 const char *hostname, guint16 port, 
 										 gboolean create)
 {
@@ -1407,7 +1407,7 @@ struct network *find_network_by_hostname(struct global *global,
 	
 	for (gl = global->networks; gl; gl = gl->next) {
 		GList *sv;
-		struct network *n = gl->data;
+		struct irc_network *n = gl->data;
 		g_assert(n);
 
 		if (n->info.name && !g_strcasecmp(n->info.name, hostname)) {
@@ -1441,7 +1441,7 @@ struct network *find_network_by_hostname(struct global *global,
 	{
 		struct tcp_server_config *s = g_new0(struct tcp_server_config, 1);
 		struct network_config *nc;
-		struct network *n;
+		struct irc_network *n;
 		nc = network_config_init(global->config);
 
 		nc->name = g_strdup(hostname);
@@ -1470,7 +1470,7 @@ void fini_networks(struct global *global)
 {
 	GList *gl;
 	while((gl = global->networks)) {
-		struct network *n = (struct network *)gl->data;
+		struct irc_network *n = (struct irc_network *)gl->data;
 		disconnect_network(n);
 		unload_network(n);
 	}
@@ -1485,7 +1485,7 @@ void fini_networks(struct global *global)
  *
  * @param n Network
  */
-void network_select_next_server(struct network *n)
+void network_select_next_server(struct irc_network *n)
 {
 	g_assert(n);
 	g_assert(n->config);
@@ -1503,7 +1503,7 @@ void network_select_next_server(struct network *n)
  * @param n Network to generate for
  * @return An 005 string, newly allocated
  */
-char *network_generate_feature_string(struct network *n)
+char *network_generate_feature_string(struct irc_network *n)
 {
 	g_assert(n);
 
@@ -1513,14 +1513,14 @@ char *network_generate_feature_string(struct network *n)
 /**
  * Increase the reference count for a network
  */
-struct network *network_ref(struct network *n)
+struct irc_network *network_ref(struct irc_network *n)
 {
 	if (n != NULL)
 		n->references++;
 	return n;
 }
 
-void network_unref(struct network *n)
+void network_unref(struct irc_network *n)
 {
 	if (n == NULL)
 		return;
@@ -1529,7 +1529,7 @@ void network_unref(struct network *n)
 		free_network(n);
 }
 
-void network_log(enum log_level l, const struct network *s, 
+void network_log(enum log_level l, const struct irc_network *s, 
 				 const char *fmt, ...)
 {
 	char *ret;
@@ -1550,7 +1550,7 @@ void network_log(enum log_level l, const struct network *s,
 	g_free(ret);
 }
 
-void network_set_log_fn(struct network *s, 
+void network_set_log_fn(struct irc_network *s, 
 						network_log_fn fn,
 						void *userdata)
 {

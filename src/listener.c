@@ -74,7 +74,7 @@ static gboolean handle_client_line(GIOChannel *c, struct pending_client *pc,
 	if (!g_strcasecmp(l->args[0], "PASS")) {
 		char *desc;
 		const char *networkname = NULL;
-		struct network *n = pc->listener->network;
+		struct irc_network *n = pc->listener->network;
 		gboolean authenticated = FALSE;
 
 		if (pc->listener->config->password == NULL) {
@@ -465,7 +465,7 @@ struct listener *listener_init(struct global *global, struct listener_config *cf
 	return l;
 }
 
-static void auto_add_listener(struct network *n, void *private_data)
+static void auto_add_listener(struct irc_network *n, void *private_data)
 {
 	GList *gl;
 	struct listener *l;
@@ -755,7 +755,7 @@ static gboolean handle_client_socks_data(GIOChannel *ioc, struct pending_client 
 					char hostname[0x100];
 					guint16 port;
 					char *desc;
-					struct network *result;
+					struct irc_network *result;
 					
 					status = g_io_channel_read_chars(ioc, header, 1, &read, NULL);
 					status = g_io_channel_read_chars(ioc, hostname, header[0], &read, NULL);

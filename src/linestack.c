@@ -370,7 +370,7 @@ struct linestack_ops *linestack_find_ops(const char *name)
 	return NULL;
 }
 
-struct linestack_context *new_linestack(struct network *n)
+struct linestack_context *new_linestack(struct irc_network *n)
 {
 	const struct linestack_ops *current_backend = NULL;
 	struct ctrlproxy_config *cfg = NULL;

@@ -28,7 +28,7 @@
 enum data_direction { TO_SERVER = 1, FROM_SERVER = 2 };
 
 /* Returns TRUE if filter should be continued, FALSE if it should be stopped. */
-typedef gboolean (*server_filter_function) (struct network *n, const struct line *, enum data_direction, void *userdata);
+typedef gboolean (*server_filter_function) (struct irc_network *n, const struct line *, enum data_direction, void *userdata);
 G_MODULE_EXPORT void add_log_filter(const char *name, server_filter_function, void *userdata, int priority);
 G_MODULE_EXPORT void del_log_filter(const char *name);
 
@@ -50,11 +50,11 @@ typedef void (*lose_client_hook) (struct client *, void *userdata);
 G_MODULE_EXPORT void add_lose_client_hook(const char *name, lose_client_hook h, void *userdata);
 G_MODULE_EXPORT void del_lose_client_hook(const char *name);
 
-typedef void (*server_connected_hook) (struct network *, void *userdata);
+typedef void (*server_connected_hook) (struct irc_network *, void *userdata);
 G_MODULE_EXPORT void add_server_connected_hook(const char *name, server_connected_hook h, void *userdata);
 G_MODULE_EXPORT void del_server_connected_hook(const char *name);
 
-typedef void (*server_disconnected_hook) (struct network *, void *userdata);
+typedef void (*server_disconnected_hook) (struct irc_network *, void *userdata);
 G_MODULE_EXPORT void add_server_disconnected_hook(const char *name, server_disconnected_hook h, void *userdata);
 G_MODULE_EXPORT void del_server_disconnected_hook(const char *name);
 

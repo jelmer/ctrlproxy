@@ -46,7 +46,7 @@ static gboolean check_time(gpointer user_data)
 	if (time(NULL) - d->last_message > d->max_idle_time) {
 		GList *sl;
 		for (sl = d->global->networks; sl; sl = sl->next) {
-			struct network *s = (struct network *)sl->data;
+			struct irc_network *s = (struct irc_network *)sl->data;
 			if (s->connection.state == NETWORK_CONNECTION_STATE_MOTD_RECVD &&
 				s->state != NULL && !s->state->is_away && 
 			    (d->config->client_limit < 0 || g_list_length(s->clients) <= d->config->client_limit)) {
@@ -63,7 +63,7 @@ static gboolean check_time(gpointer user_data)
 	return TRUE;
 }
 
-static gboolean log_data(struct network *n, const struct line *l, 
+static gboolean log_data(struct irc_network *n, const struct line *l, 
 						 enum data_direction dir, void *userdata) 
 {
 	struct auto_away_data *d = userdata;
@@ -78,7 +78,7 @@ static gboolean log_data(struct network *n, const struct line *l,
 		!g_strcasecmp(l->args[0], "NOTICE"))) {
 		d->last_message = time(NULL);
 		for (sl = d->global->networks; sl; sl = sl->next) {
-			struct network *s = (struct network *)sl->data;
+			struct irc_network *s = (struct irc_network *)sl->data;
 			if (s->connection.state == NETWORK_CONNECTION_STATE_MOTD_RECVD &&
 				s->state != NULL && s->state->is_away)
 				network_send_args(s, "AWAY", NULL);

@@ -32,7 +32,7 @@
 	"# a nick name, password and network name, separated by tabs.\n" \
 	"#\n"
 
-const char *nickserv_find_nick(struct network *n, const char *nick)
+const char *nickserv_find_nick(struct irc_network *n, const char *nick)
 {
 	GList *gl;
 	for (gl = n->global->nickserv_nicks; gl; gl = gl->next) {
@@ -48,12 +48,12 @@ const char *nickserv_find_nick(struct network *n, const char *nick)
 	return NULL;
 }
 
-const char *nickserv_nick(struct network *n)
+const char *nickserv_nick(struct irc_network *n)
 {
 	return "NickServ";
 }
 
-void nickserv_identify_me(struct network *network, char *nick)
+void nickserv_identify_me(struct irc_network *network, char *nick)
 {
 	const char *pass;
 
@@ -77,7 +77,7 @@ void nickserv_identify_me(struct network *network, char *nick)
 	}
 }
 
-static void cache_nickserv_pass(struct network *n, const char *newpass)
+static void cache_nickserv_pass(struct irc_network *n, const char *newpass)
 {
 	struct keyfile_entry *e = NULL;
 	GList *gl;
@@ -110,7 +110,7 @@ static void cache_nickserv_pass(struct network *n, const char *newpass)
 	} 
 }
 
-static gboolean log_data(struct network *n, const struct line *l, enum data_direction dir, void *userdata) 
+static gboolean log_data(struct irc_network *n, const struct line *l, enum data_direction dir, void *userdata) 
 {
 	static char *nickattempt = NULL;
 

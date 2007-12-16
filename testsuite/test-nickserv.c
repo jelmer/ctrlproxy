@@ -25,9 +25,9 @@
 #include "torture.h"
 #include "keyfile.h"
 
-const char *nickserv_find_nick(struct network *n, char *nick);
-const char *nickserv_nick(struct network *n);
-void nickserv_identify_me(struct network *network, char *nick);
+const char *nickserv_find_nick(struct irc_network *n, char *nick);
+const char *nickserv_nick(struct irc_network *n);
+void nickserv_identify_me(struct irc_network *network, char *nick);
 
 static void strip_comments(char *str)
 {
