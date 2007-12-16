@@ -14,6 +14,7 @@ static struct ctrlproxy_config *cfg = NULL;
 static void handle_help(int, char **);
 static void handle_mark(int, char **);
 static void handle_replay(int, char **);
+static void handle_state(int, char **);
 static void handle_exit(int, char **);
 static void handle_insert(int, char **);
 static GHashTable *markers = NULL;
@@ -28,6 +29,7 @@ struct cmd {
 	{ "help", handle_help },
 	{ "mark", handle_mark },
 	{ "replay", handle_replay },
+	{ "state", handle_state },
 	{ "exit", handle_exit },
 	{ "insert", handle_insert },
 };
@@ -37,6 +39,42 @@ static gboolean line_printer (struct line *l, time_t time, void *f)
 {
 	fprintf((FILE *)f, "[%lu] %s\n", time, irc_line_string(l));
 	return TRUE;
+}
+
+static void handle_state(int argc, char **argv)
+{
+	struct linestack_marker *pos;
+	struct network_state *state;
+	GList *gl;
+
+	if (argc > 2) {
+		fprintf(stderr, "Usage: state [<pos>]\n");
+		return;
+	}
+
+	if (argv[1] != NULL) {
+		pos = g_hash_table_lookup(markers, argv[1]);
+
+		if (pos == NULL) {
+			fprintf(stderr, "Unable to find marker '%s'\n", argv[1]);
+			return;
+		}
+	} else {
+		pos = NULL;
+	}
+
+	state = linestack_get_state(ctx, pos);
+	if (state == NULL) {
+		fprintf(stderr, "Unable to retrieve network state for marker '%s'\n", argv[1]);
+		return;
+	}
+
+	printf("Channels:\n");
+
+	for (gl = state->channels; gl; gl = gl->next) {
+		struct channel_state *cs = gl->data;
+		printf("\t%s\n", cs->name);
+	}
 }
 
 static void handle_replay(int argc, char **argv)
@@ -67,6 +105,7 @@ static void handle_help(int argc, char **argv)
 					"help\n"
 					"insert\n"
 					"mark\n"
+					"state\n"
 					"replay\n"
 					"exit\n");
 }
