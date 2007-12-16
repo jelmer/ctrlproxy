@@ -175,7 +175,7 @@ static gboolean network_update_isupport(struct network_info *net_info,
  * @param l Line received
  * @return Whether the message was received ok
  */
-static gboolean process_from_server(struct irc_network *n, struct line *l)
+static gboolean process_from_server(struct irc_network *n, const struct line *l)
 {
 	struct line *lc;
 	GError *error = NULL;
@@ -330,7 +330,7 @@ static gboolean handle_server_receive (GIOChannel *c, GIOCondition cond, void *_
 		{
 			g_assert(l != NULL);
 
-			ret = process_from_server(server, l);
+			ret = server->process_from_server(server, l);
 
 			free_line(l);
 
@@ -350,7 +350,7 @@ static gboolean handle_server_receive (GIOChannel *c, GIOCondition cond, void *_
 			network_log(LOG_WARNING, server, 
 						"Error \"%s\" reading from server", err->message);
 			if (l != NULL) {
-				ret = process_from_server(server, l);
+				ret = server->process_from_server(server, l);
 
 				free_line(l);
 
@@ -592,7 +592,7 @@ gboolean virtual_network_recv_line(struct irc_network *s, struct line *l)
 	if (l->origin == NULL) 
 		l->origin = g_strdup(get_my_hostname());
 
-	return process_from_server(s, l);
+	return s->process_from_server(s, l);
 }
 
 /**
@@ -954,7 +954,7 @@ void clients_send_args_ex(GList *clients, const char *hostmask, ...)
  * @param l Line to send
  * @param exception Client to which nothing should be sent. Can be NULL.
  */
-void clients_send(GList *clients, struct line *l, 
+void clients_send(GList *clients, const struct line *l, 
 				  const struct client *exception) 
 {
 	GList *g;
@@ -1189,12 +1189,13 @@ struct irc_network *load_network(struct global *global, struct network_config *s
 
 	if (global != NULL) {
 		/* Don't connect to the same network twice */
-		s = find_network(global, sc->name);
+		s = find_network(global->networks, sc->name);
 		if (s) 
 			return s;
 	}
 
 	s = g_new0(struct irc_network, 1);
+	s->process_from_server = process_from_server;
 	s->references = 1;
 	s->config = sc;
 	s->reconnect_interval = sc->reconnect_interval == -1?DEFAULT_RECONNECT_INTERVAL:sc->reconnect_interval;
@@ -1326,13 +1327,13 @@ void register_virtual_network(struct virtual_network_ops *ops)
 /**
  * Autoconnect to all the networks in a global context.
  *
- * @param Global global context
+ * @param networks GList with networks
  * @return TRUE
  */
-gboolean autoconnect_networks(struct global *global)
+gboolean autoconnect_networks(GList *networks)
 {
 	GList *gl;
-	for (gl = global->networks; gl; gl = gl->next)
+	for (gl = networks; gl; gl = gl->next)
 	{
 		struct irc_network *n = gl->data;
 		g_assert(n);
@@ -1375,10 +1376,10 @@ gboolean load_networks(struct global *global, struct ctrlproxy_config *cfg,
  * @param name Name of the network to search for.
  * @return first network found or NULL
  */
-struct irc_network *find_network(struct global *global, const char *name)
+struct irc_network *find_network(GList *networks, const char *name)
 {
 	GList *gl;
-	for (gl = global->networks; gl; gl = gl->next) {
+	for (gl = networks; gl; gl = gl->next) {
 		struct irc_network *n = gl->data;
 		if (n->info.name && !g_strcasecmp(n->info.name, name)) 
 			return n;

@@ -453,7 +453,7 @@ struct listener *listener_init(struct global *global, struct listener_config *cf
 	l->global = global;
 
 	if (l->config->network != NULL) {
-		l->network = network_ref(find_network(global, l->config->network));
+		l->network = network_ref(find_network(global->networks, l->config->network));
 		if (l->network == NULL) {
 			free_listener(l);
 			return NULL;

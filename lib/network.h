@@ -25,6 +25,8 @@
  * @brief Network functions
  */
 
+#include <glib.h>
+
 #ifndef G_MODULE_EXPORT
 #define G_MODULE_EXPORT 
 #endif
@@ -127,24 +129,26 @@ struct irc_network {
 	network_log_fn log;
 
 	int reconnect_interval;
+
+	gboolean (*process_from_server) (struct irc_network *, const struct line *);
 };
 
 /* server.c */
 G_MODULE_EXPORT gboolean network_set_charset(struct irc_network *n, const char *name);
 G_MODULE_EXPORT struct irc_network *find_network_by_hostname(struct global *global, const char *host, guint16 port, gboolean create);
 G_MODULE_EXPORT gboolean load_networks(struct global *, struct ctrlproxy_config *cfg, network_log_fn);
-G_MODULE_EXPORT gboolean autoconnect_networks(struct global *);
+G_MODULE_EXPORT gboolean autoconnect_networks(GList *);
 G_MODULE_EXPORT struct irc_network *load_network(struct global *, struct network_config *);
 G_MODULE_EXPORT void unload_network(struct irc_network *);
 G_MODULE_EXPORT gboolean connect_network(struct irc_network *);
 G_MODULE_EXPORT void network_select_next_server(struct irc_network *n);
 G_MODULE_EXPORT gboolean disconnect_network(struct irc_network *s);
-G_MODULE_EXPORT void clients_send(GList *clients, struct line *, const struct client *exception);
+G_MODULE_EXPORT void clients_send(GList *clients, const struct line *, const struct client *exception);
 G_MODULE_EXPORT void clients_send_args_ex(GList *clients, const char *hostmask, ...);
 G_MODULE_EXPORT gboolean network_send_line(struct irc_network *s, struct client *c, const struct line *, gboolean);
 G_MODULE_EXPORT gboolean network_send_args(struct irc_network *s, ...);
 G_MODULE_EXPORT void register_virtual_network(struct virtual_network_ops *);
-G_MODULE_EXPORT struct irc_network *find_network(struct global *, const char *);
+G_MODULE_EXPORT struct irc_network *find_network(GList *gl, const char *);
 G_MODULE_EXPORT gboolean virtual_network_recv_line(struct irc_network *l, struct line *);
 G_MODULE_EXPORT gboolean virtual_network_recv_args(struct irc_network *l, const char *origin, ...); 
 G_MODULE_EXPORT gboolean virtual_network_recv_response(struct irc_network *n, int num, ...);

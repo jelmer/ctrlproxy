@@ -195,7 +195,7 @@ static void cmd_add_server (admin_handle h, char **args, void *userdata)
 		return;
 	}
 
-	n = find_network(admin_get_global(h), args[1]);
+	n = find_network(admin_get_global(h)->networks, args[1]);
 
 	if (!n) {
 		admin_out(h, "No such network '%s'", args[1]);
@@ -232,7 +232,7 @@ static void cmd_connect_network (admin_handle h, char **args, void *userdata)
 		 return;
 	}
 
-	s = find_network(admin_get_global(h), args[1]);
+	s = find_network(admin_get_global(h)->networks, args[1]);
 
 	if (!s) {
 		admin_out(h, "No such network `%s'", args[1]);
@@ -266,7 +266,7 @@ static void cmd_disconnect_network (admin_handle h, char **args, void *userdata)
 	struct irc_network *n;
 
 	if (args[1] != NULL) {
-		n = find_network(admin_get_global(h), args[1]);
+		n = find_network(admin_get_global(h)->networks, args[1]);
 		if (!n) {
 			admin_out(h, "Can't find active network with that name");
 			return;
@@ -299,7 +299,7 @@ static void cmd_next_server (admin_handle h, char **args, void *userdata)
 
 	if (args[1] != NULL) {
 		name = args[1];
-		n = find_network(admin_get_global(h), args[1]);
+		n = find_network(admin_get_global(h)->networks, args[1]);
 	} else {
 		n = admin_get_network(h);
 		name = n->info.name;
@@ -328,7 +328,7 @@ static void add_network_helper(admin_handle h, const char *name)
 	struct network_config *nc;
 	struct irc_network *n;
 
-	if (find_network(admin_get_global(h), name) != NULL) {
+	if (find_network(admin_get_global(h)->networks, name) != NULL) {
 		admin_out(h, "Network with name `%s' already exists", name);
 		return;
 	}
@@ -343,7 +343,7 @@ static void add_network_helper(admin_handle h, const char *name)
 
 static void del_network_helper(admin_handle h, const char *name)
 {
-	struct irc_network *n = find_network(admin_get_global(h), name);
+	struct irc_network *n = find_network(admin_get_global(h)->networks, name);
 	if (n == NULL) {
 		admin_out(h, "No such network `%s'", name);
 		return;
@@ -444,7 +444,7 @@ static void dump_joined_channels(admin_handle h, char **args, void *userdata)
 	GList *gl;
 
 	if (args[1] != NULL) {
-		n = find_network(admin_get_global(h), args[1]);
+		n = find_network(admin_get_global(h)->networks, args[1]);
 		if (n == NULL) {
 			admin_out(h, "Can't find network '%s'", args[1]);
 			return;
@@ -926,7 +926,7 @@ static void cmd_start_listener(admin_handle h, char **args, void *userdata)
 
 	if (args[3]) {
 		cfg->network = g_strdup(args[3]);
-		if (find_network(admin_get_global(h), args[3]) == NULL) {
+		if (find_network(admin_get_global(h)->networks, args[3]) == NULL) {
 			admin_out(h, "No such network `%s`", args[3]);
 			return;
 		}

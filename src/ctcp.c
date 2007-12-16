@@ -224,7 +224,7 @@ gboolean ctcp_process_client_reply (struct client *c, struct line *l)
 	return TRUE;
 }
 
-gboolean ctcp_process_network_reply (struct irc_network *n, struct line *l) 
+gboolean ctcp_process_network_reply (struct irc_network *n, const struct line *l) 
 {
 	GList *gl;
 	char *nick;
@@ -274,7 +274,7 @@ gboolean ctcp_process_network_reply (struct irc_network *n, struct line *l)
 	return TRUE;
 }
 
-gboolean ctcp_process_network_request (struct irc_network *n, struct line *l) 
+gboolean ctcp_process_network_request (struct irc_network *n, const struct line *l) 
 {
 	GList *gl;
 	int i;

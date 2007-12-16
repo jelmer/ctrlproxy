@@ -322,7 +322,7 @@ int main(int argc, char **argv)
 
 	start_unix_socket(my_global);
 	start_admin_socket(my_global);
-	autoconnect_networks(my_global);
+	autoconnect_networks(my_global->networks);
 	init_listeners(my_global);
 	if (my_global->config->auto_away != NULL)
 		auto_away_add(my_global, my_global->config->auto_away);
@@ -332,7 +332,7 @@ int main(int argc, char **argv)
 
 	if (inetd_client) {
 		GIOChannel *io = g_io_channel_unix_new(0);
-		struct irc_network *n = find_network(my_global, inetd_client);
+		struct irc_network *n = find_network(my_global->networks, inetd_client);
 
 		if (!n) {
 			fprintf(stderr, "Unable to find network named '%s'\n", inetd_client);

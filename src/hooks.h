@@ -25,6 +25,8 @@
  * @brief Hooks
  */
 
+#include "network.h"
+
 enum data_direction { TO_SERVER = 1, FROM_SERVER = 2 };
 
 /* Returns TRUE if filter should be continued, FALSE if it should be stopped. */

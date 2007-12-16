@@ -82,7 +82,7 @@ void handle_network_log(enum log_level level, const struct irc_network *n,
 
 /* redirect.c */
 void redirect_record(const struct irc_network *n, const struct client *c, const struct line *l);
-gboolean redirect_response(struct irc_network *n, struct line *l);
+gboolean redirect_response(struct irc_network *n, const struct line *l);
 void redirect_clear(const struct irc_network *n);
 
 /* cache.c */

@@ -34,8 +34,8 @@ struct ctcp_handler {
 	void (*fn) (struct ctcp_handle *, char **args);
 };
 
-gboolean ctcp_process_network_request(struct irc_network *, struct line *);
-gboolean ctcp_process_network_reply(struct irc_network *, struct line *);
+gboolean ctcp_process_network_request(struct irc_network *, const struct line *);
+gboolean ctcp_process_network_reply(struct irc_network *, const struct line *);
 gboolean ctcp_process_client_request(struct client *, struct line *);
 gboolean ctcp_process_client_reply(struct client *, struct line *);
 G_MODULE_EXPORT void ctcp_register_handler(const struct ctcp_handler *);
