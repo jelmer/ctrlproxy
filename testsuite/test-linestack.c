@@ -22,6 +22,7 @@
 #include <check.h>
 #include "ctrlproxy.h"
 #include "torture.h"
+#include "internals.h"
 
 void stack_process(struct linestack_context *ctx, struct network_state *ns, const char *line)
 {

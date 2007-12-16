@@ -23,6 +23,7 @@
 #include <check.h>
 #include "ctrlproxy.h"
 #include "torture.h"
+#include "internals.h"
 
 START_TEST(test_create_no_network)
 	GIOChannel *ch = g_io_channel_unix_new(0);
