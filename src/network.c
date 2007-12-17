@@ -64,6 +64,12 @@ static gboolean network_update_isupport(struct network_info *net_info,
 	return TRUE;
 }
 
+/**
+ * Send stat to a list of clients.
+ *
+ * @param clients List of clients
+ * @param s State to send
+ */
 static void clients_send_state(GList *clients, struct network_state *s)
 {
 	GList *gl;
@@ -73,8 +79,6 @@ static void clients_send_state(GList *clients, struct network_state *s)
 		client_send_state(c, s);
 	}
 }
-
-
 
 /**
  * Process a line received from the server
@@ -232,7 +236,7 @@ struct irc_network *find_network_by_hostname(struct global *global,
 
 				if (!g_strcasecmp(server->host, hostname) &&
 					(!g_strcasecmp(server->port, portname) 
-					 || (sv_serv && sv_serv->s_port == port))) {
+					 || (sv_serv && htons(sv_serv->s_port) == port))) {
 					g_free(portname);
 					return n;
 				}
@@ -275,6 +279,13 @@ struct new_network_notify_data {
 	void *data;
 };
 
+/**
+ * Register a function that should be called when a new network is added.
+ *
+ * @param global Global loadparm.
+ * @param fn Notification function
+ * @param userdata Userdata
+ */
 void register_new_network_notify(struct global *global, new_network_notify_fn fn, void *userdata)
 {
 	struct new_network_notify_data *p = g_new0(struct new_network_notify_data, 1);
