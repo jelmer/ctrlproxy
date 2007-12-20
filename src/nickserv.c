@@ -164,7 +164,10 @@ gboolean nickserv_save(struct global *global, const char *dir)
     char *filename = g_build_filename(dir, "nickserv", NULL);
 	gboolean ret;
 
-	ret = keyfile_write_file(global->nickserv_nicks, NICKSERV_FILE_HEADER, filename);
+	if (global->nickserv_nicks == NULL)
+		unlink(filename);
+	else 
+		ret = keyfile_write_file(global->nickserv_nicks, NICKSERV_FILE_HEADER, filename);
 
     g_free(filename);
 
