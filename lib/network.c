@@ -1047,8 +1047,10 @@ static void free_network(struct irc_network *s)
 	ssl_free_client_credentials(s->ssl_credentials);
 #endif
 
-	g_iconv_close(s->connection.incoming_iconv);
-	g_iconv_close(s->connection.outgoing_iconv);
+	if (s->connection.incoming_iconv != (GIConv)-1)
+		g_iconv_close(s->connection.incoming_iconv);
+	if (s->connection.outgoing_iconv != (GIConv)-1)
+		g_iconv_close(s->connection.outgoing_iconv);
 
 	g_free(s);
 }

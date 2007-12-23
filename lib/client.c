@@ -207,8 +207,10 @@ void disconnect_client(struct client *c, const char *reason)
 	
 	c->incoming = NULL;
 
-	g_iconv_close(c->outgoing_iconv);
-	g_iconv_close(c->incoming_iconv);
+	if (c->outgoing_iconv != (GIConv)-1)
+		g_iconv_close(c->outgoing_iconv);
+	if (c->incoming_iconv != (GIConv)-1)
+		g_iconv_close(c->incoming_iconv);
 
 	if (c->exit_on_close) 
 		exit(0);
