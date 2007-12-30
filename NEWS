@@ -17,6 +17,9 @@ Ctrlproxy 3.0.6 UNRELEASED
     * Only update autojoin settings when ctrlproxy is completely logged in. 
 	  (#113)
 
+    * Increase the debug level at which messages about joins/parts are 
+	  logged.
+
   BUG FIXES
 
     * Don't "forget" listener password.
@@ -28,6 +31,8 @@ Ctrlproxy 3.0.6 UNRELEASED
 	* Store CTCP ACTIONs for replication.
 
 	* Warn about unknown networks listed for listeners rather than crash.
+
+	* Fixed segfault when no conversion is being used. Patch by Ashish Shukla.
 
 Ctrlproxy 3.0.5 2007-12-07
 

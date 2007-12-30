@@ -396,7 +396,7 @@ static void handle_join(struct network_state *s, const struct line *l)
 
 		/* The user is joining a channel */
 		if (!irccmp(&s->info, nick, s->me.nick)) {
-			network_state_log(LOG_INFO, s, "Joining channel %s", c->name);
+			network_state_log(LOG_TRACE, s, "Joining channel %s", c->name);
 		} else {
 			network_state_log(LOG_TRACE, s, "%s joins channel %s", nick, 
 							  c->name);
@@ -444,7 +444,7 @@ static void handle_part(struct network_state *s, const struct line *l)
 		}
 
 		if (!irccmp(&s->info, nick, s->me.nick) && c) {
-			network_state_log(LOG_INFO, s, "Leaving %s", channels[i]);
+			network_state_log(LOG_TRACE, s, "Leaving %s", channels[i]);
 			free_channel(c);
 		} else {
 			network_state_log(LOG_TRACE, s, "%s leaves %s", nick, channels[i]);
