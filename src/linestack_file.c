@@ -563,7 +563,6 @@ static gboolean file_insert_state(struct linestack_context *ctx,
 	status = g_io_channel_flush(state_file, &error);
 	g_assert(status == G_IO_STATUS_NORMAL);
 
-	g_free(data_file);
 	g_io_channel_unref(state_file);
 
 	return TRUE;
