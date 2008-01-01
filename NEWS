@@ -20,6 +20,9 @@ Ctrlproxy 3.0.6 UNRELEASED
     * Increase the debug level at which messages about joins/parts are 
 	  logged.
 
+    * Put linestack state data in separate files. This will make it possible 
+	  in the future to remove some of the state files.
+
   BUG FIXES
 
     * Don't "forget" listener password.

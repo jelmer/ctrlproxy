@@ -425,9 +425,10 @@ static gboolean marshall_network_state(enum marshall_mode m, GIOChannel *t,
  */
 struct lf_data {
 	GIOChannel *line_file;
+	char *state_dir;
 	GIOChannel *state_file;
 	struct {
-		gint64 state_offset;
+		char *state_id;
 		gint64 line_offset;
 	} *state_dumps;
 	size_t num_state_dumps;
@@ -435,8 +436,14 @@ struct lf_data {
 	int lines_since_last_state;
 };
 
-static void file_insert_state(struct linestack_context *ctx, 
-							  const struct network_state *state);
+static char *state_path(struct lf_data *lf_data, const char *state_id)
+{
+	return g_build_filename(lf_data->state_dir, state_id, NULL);
+}
+
+static gboolean file_insert_state(struct linestack_context *ctx, 
+							  const struct network_state *state, 
+							  const char *state_id);
 
 static gboolean file_init(struct linestack_context *ctx, const char *name, 
 						  struct ctrlproxy_config *config, 
@@ -445,6 +452,8 @@ static gboolean file_init(struct linestack_context *ctx, const char *name,
 	struct lf_data *data = g_new0(struct lf_data, 1);
 	char *parent_dir, *data_dir, *data_file;
 	GError *error = NULL;
+	const char *fname;
+	GDir *dir;
 
 	parent_dir = g_build_filename(config->config_dir, "linestack_file", NULL);
 	g_mkdir(parent_dir, 0700);
@@ -466,24 +475,32 @@ static gboolean file_init(struct linestack_context *ctx, const char *name,
 
 	g_io_channel_set_encoding(data->line_file, NULL, NULL);
 
+	/* Remove old data file */
 	data_file = g_build_filename(data_dir, "state", NULL);
-
 	unlink(data_file);
-
-	data->state_file = g_io_channel_new_file(data_file, "w+", &error);
-	if (data->state_file == NULL) {
-		log_global(LOG_WARNING, "Error opening `%s': %s", 
-						  data_file, error->message);
-		g_free(data_file);
-		return FALSE;
-	}
 	g_free(data_file);
 
-	g_io_channel_set_encoding(data->state_file, NULL, NULL);
-
+	data->state_dir = g_build_filename(data_dir, "states", NULL);
 	g_free(data_dir);
+	g_mkdir(data->state_dir, 0755);
+
+	dir = g_dir_open(data->state_dir, 0, &error);
+	if (dir == NULL) {
+		log_global(LOG_WARNING, "Error opening directory `%s': %s", 
+						  data->state_dir, error->message);
+		return FALSE;
+	}
+
+	while ((fname = g_dir_read_name(dir))) {
+		char *state_file_path = state_path(data, fname);
+		g_unlink(state_file_path);
+		g_free(state_file_path);
+	}
+
+	g_dir_close(dir);
+
 	ctx->backend_data = data;
-	file_insert_state(ctx, state);
+	file_insert_state(ctx, state, "START");
 	return TRUE;
 }
 
@@ -491,7 +508,7 @@ static gboolean file_fini(struct linestack_context *ctx)
 {
 	struct lf_data *data = ctx->backend_data;
 	g_io_channel_unref(data->line_file);
-	g_io_channel_unref(data->state_file);
+	g_free(data->state_dir);
 	g_free(data->state_dumps);
 	g_free(data);
 	return TRUE;
@@ -504,14 +521,30 @@ static gint64 g_io_channel_tell_position(GIOChannel *gio)
 	return lseek(fd, 0, SEEK_CUR);
 }
 
-static void file_insert_state(struct linestack_context *ctx, 
-							  const struct network_state *state)
+static gboolean file_insert_state(struct linestack_context *ctx, 
+							  const struct network_state *state,
+							  const char *state_id)
 {
 	struct lf_data *nd = ctx->backend_data;
 	GError *error = NULL;
 	GIOStatus status;
+	GIOChannel *state_file;
+	char *data_file;
 
 	log_global(LOG_TRACE, "Inserting state");
+
+	data_file = state_path(nd, state_id);
+
+	state_file = g_io_channel_new_file(data_file, "w+", &error);
+	if (state_file == NULL) {
+		log_global(LOG_WARNING, "Error opening `%s': %s", 
+						  data_file, error->message);
+		g_free(data_file);
+		return FALSE;
+	}
+	g_free(data_file);
+
+	g_io_channel_set_encoding(state_file, NULL, NULL);
 	
 	nd->lines_since_last_state = 0;
 
@@ -521,14 +554,19 @@ static void file_insert_state(struct linestack_context *ctx,
 	}
 
 	nd->state_dumps[nd->num_state_dumps].line_offset = g_io_channel_tell_position(nd->line_file);
-	nd->state_dumps[nd->num_state_dumps].state_offset = g_io_channel_tell_position(nd->state_file);
+	nd->state_dumps[nd->num_state_dumps].state_id = g_strdup(state_id);
 
 	nd->num_state_dumps++;
 
-	marshall_network_state(MARSHALL_PUSH, nd->state_file, (struct network_state *)state);
+	marshall_network_state(MARSHALL_PUSH, state_file, (struct network_state *)state);
 
-	status = g_io_channel_flush(nd->state_file, &error);
+	status = g_io_channel_flush(state_file, &error);
 	g_assert(status == G_IO_STATUS_NORMAL);
+
+	g_free(data_file);
+	g_io_channel_unref(state_file);
+
+	return TRUE;
 }
 
 static gboolean file_insert_line(struct linestack_context *ctx, 
@@ -544,8 +582,12 @@ static gboolean file_insert_line(struct linestack_context *ctx,
 		return FALSE;
 
 	nd->lines_since_last_state++;
-	if (nd->lines_since_last_state == STATE_DUMP_INTERVAL) 
-		file_insert_state(ctx, state);
+	if (nd->lines_since_last_state == STATE_DUMP_INTERVAL) {
+		char *state_id = g_strdup_printf("%lu-%lld", time(NULL), 
+								 g_io_channel_tell_position(nd->line_file));
+		file_insert_state(ctx, state, state_id);
+		g_free(state_id);
+	}
 
 	g_snprintf(t, sizeof(t), "%ld ", time(NULL));
 
@@ -579,6 +621,8 @@ static struct network_state *file_get_state (struct linestack_context *ctx,
 	struct linestack_marker m1, m2;
 	GError *error = NULL;
 	GIOStatus status;
+	char *data_file;
+	GIOChannel *state_file;
 	int i;
 
 	if (!nd) 
@@ -593,7 +637,7 @@ static struct network_state *file_get_state (struct linestack_context *ctx,
 	else 
 		t = g_io_channel_tell_position(nd->line_file);
 
-	/* Search back from end of the state file to begin 
+	/* Search back fromend of the state file to begin 
 	 * and find the state dump with the highest offset but an offset 
 	 * below from_offset */
 	for (i = nd->num_state_dumps-1; i >= 0; i--) {
@@ -601,18 +645,22 @@ static struct network_state *file_get_state (struct linestack_context *ctx,
 			break;
 	}
 
-	status = g_io_channel_seek_position(nd->state_file, 
-										nd->state_dumps[i].state_offset, 
-										G_SEEK_SET, &error);
+	data_file = state_path(nd, nd->state_dumps[i].state_id);
 
-	g_assert(status == G_IO_STATUS_NORMAL);
+	state_file = g_io_channel_new_file(data_file, "r", &error);
+	if (state_file == NULL) {
+		log_global(LOG_WARNING, "Error opening `%s': %s", 
+						  data_file, error->message);
+		g_free(data_file);
+		return FALSE;
+	}
+	g_free(data_file);
+
+	g_io_channel_set_encoding(state_file, NULL, NULL);
 
 	ret = network_state_init("", "", "");
-	if (!marshall_network_state(MARSHALL_PULL, nd->state_file, ret))
+	if (!marshall_network_state(MARSHALL_PULL, state_file, ret))
 		return NULL;
-
-	status = g_io_channel_seek_position(nd->state_file, 0, G_SEEK_END, &error);
-	g_assert(status == G_IO_STATUS_NORMAL);
 
 	m1.free_fn = NULL;
 	m1.data = &nd->state_dumps[i].line_offset;
@@ -620,8 +668,7 @@ static struct network_state *file_get_state (struct linestack_context *ctx,
 	m2.data = to_offset;
 	linestack_replay(ctx, &m1, &m2, ret);
 
-	status = g_io_channel_seek_position(nd->line_file, 0, G_SEEK_END, &error);
-	g_assert(status == G_IO_STATUS_NORMAL);
+	g_io_channel_unref(state_file);
 	
 	return ret;
 }
