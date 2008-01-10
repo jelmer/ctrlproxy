@@ -624,7 +624,7 @@ static struct network_state *file_get_state (struct linestack_context *ctx,
 	GIOChannel *state_file;
 	int i;
 
-	if (!nd) 
+	if (nd == NULL) 
 		return NULL;
 
 	/* Flush channel before reading otherwise data corruption may occur */
