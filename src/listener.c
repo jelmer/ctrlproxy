@@ -329,7 +329,11 @@ gboolean start_listener(struct listener *l)
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = PF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
-	hints.ai_flags = AI_ADDRCONFIG | AI_PASSIVE;
+	hints.ai_flags = AI_PASSIVE;
+
+#ifdef AI_ADDRCONFIG
+	hints.ai_flags |= AI_ADDRCONFIG;
+#endif
 
 	g_assert(!l->active);
 

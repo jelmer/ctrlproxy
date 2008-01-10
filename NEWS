@@ -37,6 +37,8 @@ Ctrlproxy 3.0.6 UNRELEASED
 
 	* Fixed segfault when no conversion is being used. Patch by Ashish Shukla.
 
+	* Don't use AI_ADDRCONFIG if it's not provided by the system.  (#179)
+
 Ctrlproxy 3.0.5 2007-12-07
 
   IMPROVEMENTS
