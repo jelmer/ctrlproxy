@@ -323,7 +323,10 @@ int main(int argc, char **argv)
 	start_unix_socket(my_global);
 	start_admin_socket(my_global);
 	autoconnect_networks(my_global->networks);
-	init_listeners(my_global);
+	if (!init_listeners(my_global)) {
+		log_global(LOG_ERROR, "Failed to start one or more listeners, exiting...");
+		return 1;
+	}
 	if (my_global->config->auto_away.enabled)
 		auto_away_add(my_global, &my_global->config->auto_away);
 	g_option_context_free(pc);

@@ -42,6 +42,9 @@ Ctrlproxy 3.0.6 UNRELEASED
 	* Fix segfault when address type is not reachable at the moment. (#177)
 	  Patch by wahjava@gmail.com.
 
+	* Abort startup when one or more listener ports are already in use. 
+	  (#175)
+
 Ctrlproxy 3.0.5 2007-12-07
 
   IMPROVEMENTS
