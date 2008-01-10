@@ -39,6 +39,9 @@ Ctrlproxy 3.0.6 UNRELEASED
 
 	* Don't use AI_ADDRCONFIG if it's not provided by the system.  (#179)
 
+	* Fix segfault when address type is not reachable at the moment. (#177)
+	  Patch by wahjava@gmail.com.
+
 Ctrlproxy 3.0.5 2007-12-07
 
   IMPROVEMENTS
