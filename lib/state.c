@@ -768,9 +768,12 @@ static void handle_quit(struct network_state *s, const struct line *l)
 	nn = find_network_nick(s, nick);
 	g_free(nick);
 
-	g_assert(nn != &s->me);
-
-	if (nn != NULL) 
+	if (nn == &s->me) {
+		while (nn->channel_nicks) {
+			struct channel_nick *n = nn->channel_nicks->data;
+			free_channel_nick(n);
+		}
+	} else if (nn != NULL) 
 		free_network_nick(s, nn);
 }
 

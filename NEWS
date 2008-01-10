@@ -45,6 +45,8 @@ Ctrlproxy 3.0.6 UNRELEASED
 	* Abort startup when one or more listener ports are already in use. 
 	  (#175)
 
+	* Fix crash bug when client shuts down correctly. (#176)
+
 Ctrlproxy 3.0.5 2007-12-07
 
   IMPROVEMENTS
