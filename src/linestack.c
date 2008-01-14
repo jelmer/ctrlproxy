@@ -219,7 +219,7 @@ gboolean linestack_insert_line(struct linestack_context *ctx,
 	if ((!g_strcasecmp(l->args[0], "PRIVMSG") ||
 		!g_strcasecmp(l->args[0], "NOTICE")) && 
 		l->argc > 2 && l->args[2][0] == '\001' && 
-		g_strcasecmp(l->args[2], "\001ACTION") != 0)
+		g_strncasecmp(l->args[2], "\001ACTION", 7) != 0)
 		return FALSE;
 
 	for (i = 0; linestack_messages[i]; i++) 
