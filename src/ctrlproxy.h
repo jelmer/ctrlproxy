@@ -30,7 +30,7 @@
 /**
  * Current version of the plugin API.
  */
-#define CTRLPROXY_PLUGIN_VERSION 3
+#define CTRLPROXY_PLUGIN_VERSION 4
 
 /**
  * @file
