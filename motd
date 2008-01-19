@@ -5,7 +5,7 @@
 - This is a proxy IRC server running ctrlproxy. 
 - (C) 2002-2007 by Jelmer Vernooij <jelmer@vernstok.nl> and others.
 - For a list of contributions, see AUTHORS.
-- More information is available at http://ctrlproxy.vernstok.nl/
+- More information is available at http://www.ctrlproxy.org/
 - 
 - Use /CTRLPROXY HELP or /MSG CTRLPROXY HELP to get 
 - a list of available commands.

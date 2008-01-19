@@ -117,7 +117,7 @@ on the number of servers it is connected to.
 <refsect1>
 	<title>SEE ALSO</title>
 
-<para>irssi (1), ctrlproxy_config(5), http://ctrlproxy.vernstok.nl/, config.example</para>
+<para>irssi (1), ctrlproxy_config(5), http://www.ctrlproxy.org/, config.example</para>
 
 </refsect1>
 

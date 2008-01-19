@@ -4,9 +4,9 @@ Version: 2.7
 Release: 0
 License: GPL
 Group: Applications/Internet
-Source: http://ctrlproxy.vernstok.nl/ctrlproxy-%{version}.tar.gz
-Url: http://ctrlproxy.vernstok.nl/
-Packager: Jelmer Vernooij <jelmer@nl.linux.org>
+Source: http://www.ctrlproxy.org/releases/ctrlproxy-%{version}.tar.gz
+Url: http://www.ctrlproxy.org/
+Packager: Jelmer Vernooij <jelmer@vernstok.nl>
 BuildRoot: /var/tmp/%{name}-buildroot
 
 %description
