@@ -40,35 +40,44 @@ typedef gboolean (*marshall_fn_t) (struct network_state *, const char *name, int
 
 #define marshall_new(m,t) if ((m) == MARSHALL_PULL) *(t) = g_malloc(sizeof(**t));
 
+#define LF_CHECK_IO_STATUS(status)	if (status != G_IO_STATUS_NORMAL) { \
+		log_global(LOG_ERROR, "Unable to write to linestack file: %s", error->message); \
+		return FALSE; \
+	}
 
 static const char tabs[10] = {'\t', '\t', '\t', '\t', '\t', 
 			       '\t', '\t', '\t', '\t', '\t' };
 
-static gboolean marshall_set (GIOChannel *t, int level, const char *name, const char *value)
+
+static GIOStatus marshall_set (GIOChannel *t, int level, const char *name, const char *value, GError **error)
 {
 	GIOStatus status;
-	GError *error = NULL;
-	status = g_io_channel_write_chars(t, tabs, level, NULL, &error);
-	g_assert (status == G_IO_STATUS_NORMAL);
+	status = g_io_channel_write_chars(t, tabs, level, NULL, error);
+	if (status != G_IO_STATUS_NORMAL)
+		return status;
 
 	g_assert(!strchr(name, '\n'));
 	g_assert(value == NULL || !strchr(value, '\n'));
 
-	status = g_io_channel_write_chars(t, name, -1, NULL, &error);
-	g_assert(status == G_IO_STATUS_NORMAL);
+	status = g_io_channel_write_chars(t, name, -1, NULL, error);
+	if (status != G_IO_STATUS_NORMAL)
+		return status;
 
 	if (value) {
-		status = g_io_channel_write_chars(t, ": ", -1, NULL, &error);
-		g_assert(status == G_IO_STATUS_NORMAL);
+		status = g_io_channel_write_chars(t, ": ", -1, NULL, error);
+		if (status != G_IO_STATUS_NORMAL)
+			return status;
 
-		status = g_io_channel_write_chars(t, value, -1, NULL, &error);
-		g_assert(status == G_IO_STATUS_NORMAL);
+		status = g_io_channel_write_chars(t, value, -1, NULL, error);
+		if (status != G_IO_STATUS_NORMAL)
+			return status;
 	}
 
-	status = g_io_channel_write_chars(t, "\n", -1, NULL, &error);
-	g_assert(status == G_IO_STATUS_NORMAL);
+	status = g_io_channel_write_chars(t, "\n", -1, NULL, error);
+	if (status != G_IO_STATUS_NORMAL)
+		return status;
 
-	return TRUE;
+	return G_IO_STATUS_NORMAL;
 }
 
 static gboolean marshall_get (GIOChannel *t, int level, const char *name, char **value)
@@ -79,7 +88,7 @@ static gboolean marshall_get (GIOChannel *t, int level, const char *name, char *
 	gsize term;
 
 	status = g_io_channel_read_line(t, &line, NULL, &term, &error);
-	g_assert(status == G_IO_STATUS_NORMAL);
+	LF_CHECK_IO_STATUS(status);
 
 	line[term] = '\0';
 
@@ -101,7 +110,10 @@ static gboolean marshall_struct(GIOChannel *t, enum marshall_mode m, int level, 
 {
 	g_assert(name);
 	if (m == MARSHALL_PUSH) {
-		return marshall_set(t, level, name, NULL);
+		GIOStatus status;
+		GError *error = NULL;
+		status = marshall_set(t, level, name, NULL, &error);
+		return (status == G_IO_STATUS_NORMAL);
 	} else {
 		char *v;
 		gboolean ret = marshall_get(t, level, name, &v);
@@ -115,10 +127,14 @@ static gboolean marshall_string (struct network_state *nst,
 								 const char *name, int level, 
 								 enum marshall_mode m, GIOChannel *t, char **d)
 {
-	if (m == MARSHALL_PUSH)
-		return marshall_set(t, level, name, *d);
-	else
+	if (m == MARSHALL_PUSH) {
+		GIOStatus status;
+		GError *error = NULL;
+		status = marshall_set(t, level, name, *d, &error);
+		return (status == G_IO_STATUS_NORMAL);
+	} else {
 		return marshall_get(t, level, name, d);
+	}
 }
 
 static gboolean marshall_bool(struct network_state *nst, const char *name, 
@@ -126,8 +142,11 @@ static gboolean marshall_bool(struct network_state *nst, const char *name,
 							  gboolean *n)
 {
 	if (m == MARSHALL_PUSH) {
-		if (*n) return marshall_set(t, level, name, "true");
-		else return marshall_set(t, level, name, "false");
+		GError *error = NULL;
+		GIOStatus status;
+		if (*n) status = marshall_set(t, level, name, "true", &error);
+		else status = marshall_set(t, level, name, "false", &error);
+		return (status == G_IO_STATUS_NORMAL);
 	} else {
 		gboolean ret;
 		char *val;
@@ -145,8 +164,11 @@ static gboolean marshall_char(struct network_state *nst, const char *name, int l
 {
 	if (m == MARSHALL_PUSH) {
 		char d[2] = {*n, '\0' };
+		GError *error = NULL;
+		GIOStatus status;
 		/* FIXME: Escape \n ? */
-		return marshall_set(t, level, name, d);
+		status = marshall_set(t, level, name, d, &error);
+		return (status == G_IO_STATUS_NORMAL);
 	} else {
 		char *d;
 		gboolean ret = marshall_get(t, level, name, &d);
@@ -164,8 +186,11 @@ static gboolean marshall_long(struct network_state *nst, const char *name, int l
 {
 	if (m == MARSHALL_PUSH) {
 		char tmp[10];
+		GError *error = NULL;
+		GIOStatus status;
 		g_snprintf(tmp, sizeof(tmp), "%ld", *n);
-		return marshall_set(t, level, name, tmp);
+		status = marshall_set(t, level, name, tmp, &error);
+		return (status == G_IO_STATUS_NORMAL);
 	} else {
 		char *tmp;
 		gboolean ret = marshall_get(t, level, name, &tmp);
@@ -183,8 +208,11 @@ static gboolean marshall_int(struct network_state *nst, const char *name, int le
 {
 	if (m == MARSHALL_PUSH) {
 		char tmp[10];
+		GError *error = NULL;
+		GIOStatus status;
 		g_snprintf(tmp, sizeof(tmp), "%d", *n);
-		return marshall_set(t, level, name, tmp);
+		status = marshall_set(t, level, name, tmp, &error);
+		return (status == G_IO_STATUS_NORMAL);
 	} else {
 		char *tmp;
 		gboolean ret = marshall_get(t, level, name, &tmp);
@@ -202,8 +230,11 @@ static gboolean marshall_time(struct network_state *nst, const char *name, int l
 {
 	if (m == MARSHALL_PUSH) {
 		char tmp[10];
+		GError *error = NULL;
+		GIOStatus status;
 		g_snprintf(tmp, sizeof(tmp), "%lu", *n);
-		return marshall_set(t, level, name, tmp);
+		status = marshall_set(t, level, name, tmp, &error);
+		return (status == G_IO_STATUS_NORMAL);
 	} else {
 		char *tmp;
 		gboolean ret = marshall_get(t, level, name, &tmp);
@@ -221,10 +252,11 @@ static gboolean marshall_time(struct network_state *nst, const char *name, int l
 static gboolean marshall_modes(struct network_state *nst, const char *name, int level, enum marshall_mode m, GIOChannel *t, char n[255])
 {
 	if (m == MARSHALL_PUSH) {
+		GError *error = NULL;
 		char *tmp = mode2string(n);
-		gboolean ret = marshall_set(t, level, name, tmp);
+		GIOStatus status = marshall_set(t, level, name, tmp, &error);
 		g_free(tmp);
-		return ret;
+		return status == G_IO_STATUS_NORMAL;
 	} else {
 		char *tmp;
 		gboolean ret = marshall_get(t, level, name, &tmp);
@@ -561,7 +593,7 @@ static gboolean file_insert_state(struct linestack_context *ctx,
 	marshall_network_state(MARSHALL_PUSH, state_file, (struct network_state *)state);
 
 	status = g_io_channel_flush(state_file, &error);
-	g_assert(status == G_IO_STATUS_NORMAL);
+	LF_CHECK_IO_STATUS(status);
 
 	g_io_channel_unref(state_file);
 
@@ -591,12 +623,14 @@ static gboolean file_insert_line(struct linestack_context *ctx,
 	g_snprintf(t, sizeof(t), "%ld ", time(NULL));
 
 	status = g_io_channel_write_chars(nd->line_file, t, strlen(t), NULL, &error);
-	g_assert(status == G_IO_STATUS_NORMAL);
+	LF_CHECK_IO_STATUS(status);
 
-	status = irc_send_line(nd->line_file, (GIConv)-1, l, NULL);
+	status = irc_send_line(nd->line_file, (GIConv)-1, l, &error);
 
-	if (status != G_IO_STATUS_NORMAL)
+	if (status != G_IO_STATUS_NORMAL) {
+		log_global(LOG_ERROR, "Unable to write to linestack file: %s", error->message);
 		return FALSE;
+	}
 
 	return TRUE;
 }
@@ -629,7 +663,7 @@ static struct network_state *file_get_state (struct linestack_context *ctx,
 
 	/* Flush channel before reading otherwise data corruption may occur */
 	status = g_io_channel_flush(nd->line_file, &error);
-	g_assert(status == G_IO_STATUS_NORMAL);
+	LF_CHECK_IO_STATUS(status);
 
 	if (to_offset != NULL) 
 		t = *to_offset;
@@ -696,7 +730,7 @@ static gboolean file_traverse(struct linestack_context *ctx, void *mf,
 	status = g_io_channel_seek_position(nd->line_file, 
 			(start_offset != NULL)?(*start_offset):0, G_SEEK_SET, &error);
 
-	g_assert (status == G_IO_STATUS_NORMAL);
+	LF_CHECK_IO_STATUS(status);
 	
 	while((status = g_io_channel_read_line(nd->line_file, &raw, NULL, 
 		                          NULL, &error) != G_IO_STATUS_EOF) && 
@@ -727,7 +761,7 @@ static gboolean file_traverse(struct linestack_context *ctx, void *mf,
 	status = g_io_channel_seek_position(nd->line_file, 0, G_SEEK_END, 
 	                                    &error);
 
-	g_assert(status == G_IO_STATUS_NORMAL);
+	LF_CHECK_IO_STATUS(status);
 
 	return ret;
 }
