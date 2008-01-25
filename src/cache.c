@@ -24,36 +24,51 @@
 #include "internals.h"
 #include "irc.h"
 
-static void client_send_nameslist(struct client *client, struct channel_state *channel)
+void client_send_nameslist(struct client *c, struct channel_state *ch)
 {
-	GList *gl;
-	char cmode[2];
+	GList *nl;
+	struct line *l;
 
-	g_assert(client);
-	g_assert(channel);
+	g_assert(c != NULL);
+	g_assert(ch != NULL);
 	
-	cmode[0] = channel->mode;
-	cmode[1] = 0;
+	for (nl = ch->nicks; nl; nl = nl->next) {
+		char mode[2] = { ch->mode, 0 };
+		char *arg;
+		struct channel_nick *n = (struct channel_nick *)nl->data;
 
-	for (gl = channel->nicks; gl; gl = gl->next)
-	{
-		struct channel_nick *cn = gl->data;
-		char *tmp;
-
-		g_assert(cn->global_nick);
-
-		if (cn->mode) {
-			tmp = g_strdup_printf("%c%s", cn->mode, cn->global_nick->nick);
-		} else {
-			tmp = g_strdup(cn->global_nick->nick);
+		if (n->mode != '\0' && n->mode != ' ') {
+			arg = g_strdup_printf("%c%s", n->mode, n->global_nick->nick);
+		} else 	{ 
+			arg = g_strdup(n->global_nick->nick);
 		}
 
-		g_assert(channel->name);
-		client_send_response(client, RPL_NAMREPLY, cmode, channel->name, tmp, NULL);
-		g_free(tmp);
+		if (l == NULL || !line_add_arg(l, arg)) {
+			char *tmp;
+			if (l != NULL) {
+				client_send_line(c, l);
+				free_line(l);
+			}
+
+			l = irc_parse_line_args(client_get_default_origin(c), "353",
+									client_get_default_target(c), mode, 
+									ch->name, NULL);
+			l->has_endcolon = WITHOUT_COLON;
+			tmp = g_strdup_printf(":%s", arg);
+			g_assert(line_add_arg(l, tmp));
+			g_free(tmp);
+		}
+
+		g_free(arg);
 	}
 
-	client_send_response(client, RPL_ENDOFNAMES, channel->name, "End of /NAMES list", NULL);
+	if (l != NULL) {
+		client_send_line(c, l);
+		free_line(l);
+	}
+
+	client_send_response(c, RPL_ENDOFNAMES, ch->name, "End of /NAMES list", 
+						 NULL);
 }
 
 

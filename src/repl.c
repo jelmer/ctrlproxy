@@ -53,12 +53,10 @@ char *mode2string(char modes[255])
 	}
 }
 
+void client_send_nameslist(struct client *client, struct channel_state *ch);
 static void client_send_channel_state(struct client *c, 
 									  struct channel_state *ch)
 {
-	struct line *l = NULL;
-	GList *nl;
-
 	g_assert(c != NULL);
 	g_assert(ch != NULL);
 	g_assert(c->network != NULL);
@@ -78,43 +76,7 @@ static void client_send_channel_state(struct client *c,
 		g_free(tmp);
 	}
 
-	for (nl = ch->nicks; nl; nl = nl->next) {
-		char mode[2] = { ch->mode, 0 };
-		char *arg;
-		struct channel_nick *n = (struct channel_nick *)nl->data;
-
-		if (n->mode != '\0' && n->mode != ' ') {
-			arg = g_strdup_printf("%c%s", n->mode, n->global_nick->nick);
-		} else 	{ 
-			arg = g_strdup(n->global_nick->nick);
-		}
-
-		if (l == NULL || !line_add_arg(l, arg)) {
-			char *tmp;
-			if (l != NULL) {
-				client_send_line(c, l);
-				free_line(l);
-			}
-
-			l = irc_parse_line_args(client_get_default_origin(c), "353",
-									client_get_default_target(c), mode, 
-									ch->name, NULL);
-			l->has_endcolon = WITHOUT_COLON;
-			tmp = g_strdup_printf(":%s", arg);
-			g_assert(line_add_arg(l, tmp));
-			g_free(tmp);
-		}
-
-		g_free(arg);
-	}
-
-	if (l != NULL) {
-		client_send_line(c, l);
-		free_line(l);
-	}
-
-	client_send_response(c, RPL_ENDOFNAMES, ch->name, "End of /NAMES list", 
-						 NULL);
+	client_send_nameslist(c, ch);
 }
 
 gboolean client_send_channel_state_diff(struct client *client, 

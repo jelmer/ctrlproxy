@@ -23,6 +23,8 @@ Ctrlproxy 3.0.6 UNRELEASED
     * Put linestack state data in separate files. This will make it possible 
 	  in the future to remove some of the state files.
 
+	* Avoid data overhead when responding to /NAMES out of cache.
+
   BUG FIXES
 
     * Don't "forget" listener password.
