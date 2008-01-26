@@ -539,8 +539,11 @@ static gboolean file_init(struct linestack_context *ctx, const char *name,
 static gboolean file_fini(struct linestack_context *ctx)
 {
 	struct lf_data *data = ctx->backend_data;
+	int i;
 	g_io_channel_unref(data->line_file);
 	g_free(data->state_dir);
+	for (i = 0; i < data->num_state_dumps; i++)
+		g_free(data->state_dumps[i].state_id);
 	g_free(data->state_dumps);
 	g_free(data);
 	return TRUE;
