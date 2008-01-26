@@ -76,6 +76,7 @@
 #define RPL_CREATED 3
 #define RPL_MYINFO 4
 #define RPL_BOUNCE 5
+#define RPL_SNOMASK 8
 #define RPL_USERHOST 302
 #define RPL_ISON 303
 #define RPL_AWAY 301

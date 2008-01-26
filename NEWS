@@ -53,6 +53,8 @@ Ctrlproxy 3.0.6 UNRELEASED
 
 	* Support EXTBAN parameter in 005 lines.
 
+	* Handle 008 responses.
+
 Ctrlproxy 3.0.5 2007-12-07
 
   IMPROVEMENTS
