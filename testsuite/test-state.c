@@ -27,6 +27,29 @@ gboolean network_nick_set_nick(struct network_nick *, const char *);
 gboolean network_nick_set_hostmask(struct network_nick *, const char *);
 struct network_nick *find_add_network_nick(struct network_state *n, const char *name);
 
+START_TEST(state_prefixes_add_prefix)
+	char *in = NULL;
+	fail_unless (prefixes_add_prefix(&in, '@'));
+	fail_unless (strcmp(in, "@") == 0);
+	fail_unless (prefixes_add_prefix(&in, '%'));
+	fail_unless (strcmp(in, "@%") == 0);
+	fail_if (prefixes_add_prefix(&in, '%'));
+	fail_unless (strcmp(in, "@%") == 0);
+END_TEST
+
+START_TEST(state_prefixes_remove_prefix)
+	char *in = NULL;
+	fail_if (prefixes_del_prefix(&in, '@'));
+	fail_unless (in == NULL);
+	in = g_strdup("%@");
+	fail_unless (prefixes_del_prefix(&in, '%'));
+	fail_unless (strcmp(in, "@") == 0);
+	fail_if (prefixes_del_prefix(&in, '%'));
+	fail_unless (strcmp(in, "@") == 0);
+	fail_unless (prefixes_del_prefix(&in, '@'));
+	fail_unless (in == NULL);
+END_TEST
+
 START_TEST(state_init)
 	struct network_state *ns = network_state_init("bla", "Gebruikersnaam", "Computernaam");
 
@@ -270,5 +293,7 @@ Suite *state_suite(void)
 	tcase_add_test(tc_core, state_find_network_nick);
 	tcase_add_test(tc_core, state_find_add_network_nick);
 	tcase_add_test(tc_core, state_handle_state_data);
+	tcase_add_test(tc_core, state_prefixes_add_prefix);
+	tcase_add_test(tc_core, state_prefixes_remove_prefix);
 	return s;
 }

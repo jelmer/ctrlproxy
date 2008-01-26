@@ -127,6 +127,8 @@ G_MODULE_EXPORT gboolean network_nick_set_hostmask(struct network_nick *n, const
 G_MODULE_EXPORT gboolean client_send_state(struct client *, struct network_state *);
 G_MODULE_EXPORT void network_state_log(enum log_level l, const struct network_state *st, const char *fmt, ...);
 G_MODULE_EXPORT void network_state_set_log_fn(struct network_state *st, void (*fn) (enum log_level, void *, const char *), void *userdata);
+G_MODULE_EXPORT gboolean prefixes_add_prefix(char **prefixes, char prefix);
+G_MODULE_EXPORT gboolean prefixes_del_prefix(char **prefixes, char prefix);
 
 
 #endif /* __CTRLPROXY_STATE_H__ */

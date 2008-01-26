@@ -791,7 +791,7 @@ gboolean prefixes_add_prefix(char **prefixes, char prefix)
 		return FALSE;
 	
 	old = *prefixes;
-	*prefixes = g_strdup_printf("%s%c", *prefixes, prefix);
+	*prefixes = g_strdup_printf("%s%c", *prefixes?*prefixes:"", prefix);
 
 	g_free(old);
 	return TRUE;
@@ -809,6 +809,11 @@ gboolean prefixes_del_prefix(char **prefixes, char prefix)
 	p = strchr(*prefixes, prefix);
 
 	memmove(p, p+1, strlen(p));
+
+	if (strlen(*prefixes) == 0) {
+		g_free(*prefixes);
+		*prefixes = NULL;
+	}
 
 	return TRUE;
 }
