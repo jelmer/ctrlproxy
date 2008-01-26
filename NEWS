@@ -55,6 +55,8 @@ Ctrlproxy 3.0.6 UNRELEASED
 
 	* Handle 008 responses.
 
+	* Cache more than just the first result returned in RPL_USERHOST.
+
 Ctrlproxy 3.0.5 2007-12-07
 
   IMPROVEMENTS

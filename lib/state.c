@@ -1000,17 +1000,23 @@ static void handle_329(struct network_state *s, const struct line *l)
 
 static void handle_302(struct network_state *s, const struct line *l)
 {
-	/* We got a USERHOST response, split it into nick and user@host, and check the nick */
-	gchar** tmp302 = g_strsplit(g_strstrip(l->args[2]), "=+", 2);
-	if (g_strv_length(tmp302) > 1) {
-		char *hm;
-		struct network_nick *nn = find_add_network_nick(s, tmp302[0]);
-		
-		hm = g_strdup_printf("%s!%s", tmp302[0], tmp302[1]);
-		network_nick_set_hostmask(nn, hm);
-		g_free(hm);
+	int i;
+	gchar **users = g_strsplit(g_strstrip(l->args[2]), " ", 0);
+	for (i = 0; users[i]; i++) {
+		/* We got a USERHOST response, split it into nick and user@host, and check the nick */
+		gchar** tmp302 = g_strsplit(users[i], "=+", 2);
+		if (g_strv_length(tmp302) > 1) {
+			char *hm;
+			struct network_nick *nn = find_add_network_nick(s, tmp302[0]);
+			
+			hm = g_strdup_printf("%s!%s", tmp302[0], tmp302[1]);
+			network_nick_set_hostmask(nn, hm);
+			g_free(hm);
+		}
+		g_strfreev(tmp302);
 	}
-	g_strfreev(tmp302);
+
+	g_strfreev(users);
 }
 
 extern void handle_005(struct network_state *s, const struct line *l);
