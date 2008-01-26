@@ -57,6 +57,9 @@ Ctrlproxy 3.0.6 UNRELEASED
 
 	* Cache more than just the first result returned in RPL_USERHOST.
 
+	* Fix hostmask and response code returned by USERHOST in administration 
+	  network.
+
 Ctrlproxy 3.0.5 2007-12-07
 
   IMPROVEMENTS

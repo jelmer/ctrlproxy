@@ -35,6 +35,9 @@ static void add_network_helper(admin_handle h, const char *name);
 static void del_network_helper(admin_handle h, const char *name);
 static void list_networks_helper(admin_handle h);
 
+#define ADMIN_USERNAME "ctrlproxy"
+#define ADMIN_NICK "ctrlproxy"
+
 /**
  * Determine the hostmask for the admin user.
  *
@@ -43,7 +46,7 @@ static void list_networks_helper(admin_handle h);
  */
 static char *admin_hostmask(struct irc_network *n)
 {
-	return g_strdup_printf("ctrlproxy!ctrlproxy@%s", n->info.name);
+	return g_strdup_printf(ADMIN_NICK"!"ADMIN_USERNAME"@%s", n->info.name);
 }
 
 /**
@@ -762,14 +765,14 @@ static gboolean admin_to_server (struct irc_network *n, struct client *c, const 
 
 		for (i = 1; l->args[i]; i++) {
 			if (!g_strcasecmp(l->args[i], "ctrlproxy")) {
-				gl = g_list_append(gl, g_strdup_printf("%s=+%s", l->args[i], get_my_hostname()));
+				gl = g_list_append(gl, g_strdup_printf("%s=+%s@%s", l->args[i], ADMIN_USERNAME, get_my_hostname()));
 			}
 			if (!g_strcasecmp(l->args[i], n->state->me.nick)) {
-				gl = g_list_append(gl, g_strdup_printf("%s=+%s", l->args[i], n->state->me.hostname));
+				gl = g_list_append(gl, g_strdup_printf("%s=+%s@%s", l->args[i], n->state->me.username, n->state->me.hostname));
 			}
 		}
 
-		virtual_network_recv_response(n, RPL_ISON, tmp = list_make_string(gl), NULL);
+		virtual_network_recv_response(n, RPL_USERHOST, tmp = list_make_string(gl), NULL);
 		g_free(tmp);
 		while (gl) {
 			g_free(gl->data);
