@@ -414,6 +414,8 @@ void network_info_parse(struct network_info *info, const char *parameter)
 		else
 			info->deaf_mode = val[0];
 	} else if (!g_strcasecmp(key, "EXTBAN")) {
+		g_free(info->extban_prefix);
+		g_free(info->extban_supported);
 		if (val == NULL) {
 			info->extban_prefix = g_strdup("~");
 			info->extban_supported = g_strdup("cqr");
