@@ -27,7 +27,7 @@
 void client_send_nameslist(struct client *c, struct channel_state *ch)
 {
 	GList *nl;
-	struct line *l;
+	struct line *l = NULL;
 
 	g_assert(c != NULL);
 	g_assert(ch != NULL);
