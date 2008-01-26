@@ -734,10 +734,12 @@ static gboolean file_traverse(struct linestack_context *ctx, void *mf,
 			(start_offset != NULL)?(*start_offset):0, G_SEEK_SET, &error);
 
 	LF_CHECK_IO_STATUS(status);
+
+	raw = NULL;
 	
 	while((status = g_io_channel_read_line(nd->line_file, &raw, NULL, 
 		                          NULL, &error) != G_IO_STATUS_EOF) && 
-		(!end_offset || 
+		(end_offset == NULL || 
 		 g_io_channel_tell_position(nd->line_file) <= (*end_offset))) {
 		if (status != G_IO_STATUS_NORMAL) {
 			log_global(LOG_WARNING, "read_line() failed: %s",
@@ -756,10 +758,12 @@ static gboolean file_traverse(struct linestack_context *ctx, void *mf,
 		free_line(l);
 
 		g_free(raw);
+		raw = NULL;
 
 		if (ret == FALSE) 
 			break;
 	}
+	g_assert(raw == NULL);
 
 	status = g_io_channel_seek_position(nd->line_file, 0, G_SEEK_END, 
 	                                    &error);

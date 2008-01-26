@@ -1,2 +1,3 @@
 - interpret remaining sections in ~/.ctrlproxy/config as network configurations
-- remove any unused files in ~/.ctrlproxy/networks/
+- allow multiple connections to one network
+- allow setting network-specific configuration using <networkname>/<variable>
