@@ -60,6 +60,8 @@ Ctrlproxy 3.0.6 UNRELEASED
 	* Fix hostmask and response code returned by USERHOST in administration 
 	  network.
 
+	* Fix timestamp marshalling. (#180)
+
 Ctrlproxy 3.0.5 2007-12-07
 
   IMPROVEMENTS

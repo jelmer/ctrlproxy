@@ -229,7 +229,7 @@ static gboolean marshall_int(struct network_state *nst, const char *name, int le
 static gboolean marshall_time(struct network_state *nst, const char *name, int level, enum marshall_mode m, GIOChannel *t, time_t *n)
 {
 	if (m == MARSHALL_PUSH) {
-		char tmp[10];
+		char tmp[20];
 		GError *error = NULL;
 		GIOStatus status;
 		g_snprintf(tmp, sizeof(tmp), "%lu", *n);
@@ -240,7 +240,7 @@ static gboolean marshall_time(struct network_state *nst, const char *name, int l
 		gboolean ret = marshall_get(t, level, name, &tmp);
 		if (!ret) return FALSE;
 
-		*n = atol(tmp);
+		*n = strtoul(tmp, NULL, 10);
 
 		g_free(tmp);
 
