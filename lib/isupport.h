@@ -96,6 +96,13 @@ struct network_info
 	gboolean elist_creation_time_search;
 	gboolean elist_topic_search;
 
+	/** Specifies what extbans are supported by the server. 
+	 * The prefix defines which character indicates an extban and the types 
+	 * defines which extbans the server supports.  */
+
+	char *extban_prefix;
+	char *extban_supported;
+
 	/** The ID length for channels with an ID. The prefix says for which 
 	 * channel type it is, and the number how long it is. See RFC 2811 for 
 	 * more information. */

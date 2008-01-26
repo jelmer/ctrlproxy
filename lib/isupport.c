@@ -233,6 +233,10 @@ char *network_info_string(struct network_info *info)
 			strncat(elist, "T", sizeof(elist));
 		fs = g_list_append(fs, g_strdup_printf("ELIST=%s", elist));
 	}
+
+	if (info->extban_prefix != NULL)
+		fs = g_list_append(fs, g_strdup_printf("EXTBAN=%s,%s", 
+						   info->extban_prefix, info->extban_supported));
 	
 	if (info->deaf_mode != '\0')
 		fs = g_list_append(fs, g_strdup_printf("DEAF=%c", info->deaf_mode));
@@ -409,6 +413,16 @@ void network_info_parse(struct network_info *info, const char *parameter)
 			log_global(LOG_WARNING, "Invalid length deaf value: %s", val);
 		else
 			info->deaf_mode = val[0];
+	} else if (!g_strcasecmp(key, "EXTBAN")) {
+		if (val == NULL) {
+			info->extban_prefix = g_strdup("~");
+			info->extban_supported = g_strdup("cqr");
+		} else {
+			char **parts = g_strsplit(val, ",", 2);
+			info->extban_prefix = parts[0];
+			info->extban_supported = parts[1];
+			g_free(parts);
+		}
 	} else if (!g_strcasecmp(key, "MAXLIST")) {
 		g_free(info->maxlist);
 		info->maxlist = g_strdup(val);

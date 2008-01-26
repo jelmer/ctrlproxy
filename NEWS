@@ -51,6 +51,8 @@ Ctrlproxy 3.0.6 UNRELEASED
 
 	* Allow multi-character prefixes for users in channels.
 
+	* Support EXTBAN parameter in 005 lines.
+
 Ctrlproxy 3.0.5 2007-12-07
 
   IMPROVEMENTS
