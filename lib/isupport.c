@@ -41,6 +41,8 @@ void free_network_info(struct network_info *info)
 	g_free(info->idchan);
 	g_free(info->statusmsg);
 	g_free(info->ircd);
+	g_free(info->extban_prefix);
+	g_free(info->extban_supported);
 }
 
 char *network_info_string(struct network_info *info)
