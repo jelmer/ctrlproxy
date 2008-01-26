@@ -337,7 +337,6 @@ static void add_network_helper(admin_handle h, const char *name)
 	}
 
 	nc = network_config_init(admin_get_global(h)->config);
-	nc->save = 1;
 	g_free(nc->name); nc->name = g_strdup(name);
 	n = load_network(admin_get_global(h), nc);
 	network_set_log_fn(n, (network_log_fn)handle_network_log, n);

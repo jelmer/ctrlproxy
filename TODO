@@ -1,3 +1,2 @@
 - interpret remaining sections in ~/.ctrlproxy/config as network configurations
 - remove any unused files in ~/.ctrlproxy/networks/
-- don't add networks unless there has been a successful connection to them

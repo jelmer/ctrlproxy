@@ -335,7 +335,7 @@ static void config_save_networks(struct ctrlproxy_config *cfg, const char *confi
 
 	for (gl = networks; gl; gl = gl->next) {
 		struct network_config *n = gl->data;
-		if (n->save) 
+		if (!n->implicit) 
 			config_save_network(networksdir, n, &channel_keys);
 	}
 
@@ -548,7 +548,6 @@ static struct network_config *config_load_network(struct ctrlproxy_config *cfg, 
 	}	
 
 	n = network_config_init(cfg);
-	n->save = 1;
 	n->keyfile = kf;
 
 	g_free(filename);
@@ -685,7 +684,6 @@ static struct network_config *find_create_network_config(struct ctrlproxy_config
 	}
 
 	nc = network_config_init(cfg);
-	nc->save = 1;
 	nc->name = g_strdup(name);
 	nc->autoconnect = FALSE;
 	nc->reconnect_interval = -1;
