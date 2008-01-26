@@ -742,10 +742,12 @@ static gboolean file_traverse(struct linestack_context *ctx, void *mf,
 		 g_io_channel_tell_position(nd->line_file) <= (*end_offset))) {
 		status = g_io_channel_read_line(nd->line_file, &raw, NULL, NULL, &error);
 		if (status == G_IO_STATUS_ERROR) {
-			log_global(LOG_WARNING, "read_line() failed: %s",
-					error->message);
+			log_global(LOG_WARNING, "read_line() failed: %s", error->message);
 			return FALSE;
 		}
+
+		if (raw == NULL)
+			break;
 
 		space = strchr(raw, ' ');
 		g_assert(space);
@@ -764,8 +766,7 @@ static gboolean file_traverse(struct linestack_context *ctx, void *mf,
 			break;
 	}
 
-	status = g_io_channel_seek_position(nd->line_file, 0, G_SEEK_END, 
-	                                    &error);
+	status = g_io_channel_seek_position(nd->line_file, 0, G_SEEK_END, &error);
 
 	LF_CHECK_IO_STATUS(status);
 
