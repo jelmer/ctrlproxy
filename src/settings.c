@@ -42,6 +42,7 @@
 
 static GList *known_keys = NULL;
 
+static void config_cleanup_networks_dir(struct ctrlproxy_config *cfg);
 static void config_save_log(struct log_file_config *data,
 							struct ctrlproxy_config *config);
 static void config_save_auto_away(struct auto_away_config *d, 
@@ -338,6 +339,8 @@ static void config_save_networks(struct ctrlproxy_config *cfg, const char *confi
 		if (!n->implicit) 
 			config_save_network(networksdir, n, &channel_keys);
 	}
+
+	config_cleanup_networks_dir(cfg);
 
 	if (channel_keys != NULL) {
 		char *filename = g_build_filename(cfg->config_dir, "keys", 
@@ -841,6 +844,45 @@ static void config_load_listeners(struct ctrlproxy_config *cfg)
 	g_free(filename);
 }
 
+struct network_config *config_find_network(struct ctrlproxy_config *cfg, 
+										   const char *name)
+{
+	GList *gl;
+	for (gl = cfg->networks; gl; gl = gl->next) {
+		struct network_config *nc = gl->data;
+		if (!g_strcasecmp(nc->name, name))
+			return nc;
+	}
+	return NULL;
+}
+
+#define IS_SPECIAL_FILE(name) (name[0] == '.' || name[strlen(name)-1] == '~')
+
+static void config_cleanup_networks_dir(struct ctrlproxy_config *cfg)
+{
+	char *networksdir = g_build_filename(cfg->config_dir, "networks", NULL);
+	GDir *dir;
+	const char *name;
+
+	dir = g_dir_open(networksdir, 0, NULL);
+	if (dir == NULL)
+		return;
+
+	while ((name = g_dir_read_name(dir))) {
+		char *path;
+		if (IS_SPECIAL_FILE(name) || config_find_network(cfg, name))
+			continue;
+
+		path = g_build_filename(networksdir, name, NULL);
+		g_unlink(path);
+		g_free(path);
+	}
+
+	g_free(networksdir);
+
+	g_dir_close(dir);
+}
+
 static void config_load_networks(struct ctrlproxy_config *cfg, GList *channel_keys)
 {
 	char *networksdir = g_build_filename(cfg->config_dir, "networks", NULL);
@@ -852,7 +894,7 @@ static void config_load_networks(struct ctrlproxy_config *cfg, GList *channel_ke
 		return;
 
 	while ((name = g_dir_read_name(dir))) {
-		if (name[0] == '.' || name[strlen(name)-1] == '~')
+		if (IS_SPECIAL_FILE(name))
 			continue;
 		config_load_network(cfg, networksdir, name, channel_keys);
 	}

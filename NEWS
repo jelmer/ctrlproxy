@@ -64,6 +64,9 @@ Ctrlproxy 3.0.6 UNRELEASED
 
 	* Correctly recognize error responses to WHOIS and WHOWAS. (#136)
 
+	* Actually remove networks from disk when they have been removed in 
+	  the configuration.
+
 Ctrlproxy 3.0.5 2007-12-07
 
   IMPROVEMENTS
