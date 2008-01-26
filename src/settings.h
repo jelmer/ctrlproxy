@@ -72,6 +72,9 @@ struct network_config
 	char *username;
 	char *password;
 
+	/** Whether this network should be saved. */
+	int save:1;
+
 	/** Whether to automatically connect to this network on startup. */
 	int autoconnect:1;
 

@@ -139,6 +139,9 @@ static gboolean process_from_server(struct irc_network *n, const struct line *l)
 		GList *gl;
 		n->connection.state = NETWORK_CONNECTION_STATE_MOTD_RECVD;
 
+		/* Always save networks we've successfully connected to. */
+		n->config->save = 1;
+
 		network_set_charset(n, get_charset(&n->info));
 
 		if (error != NULL)
@@ -257,6 +260,7 @@ struct irc_network *find_network_by_hostname(struct global *global,
 		struct irc_network *n;
 		nc = network_config_init(global->config);
 
+		nc->save = 0;
 		nc->name = g_strdup(hostname);
 		nc->type = NETWORK_TCP;
 		s->host = g_strdup(hostname);
