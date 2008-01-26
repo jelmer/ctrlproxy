@@ -224,5 +224,6 @@ G_MODULE_EXPORT struct ctrlproxy_config *init_configuration(void);
 G_MODULE_EXPORT void free_config(struct ctrlproxy_config *);
 G_MODULE_EXPORT void setup_configdir(const char *dir);
 G_MODULE_EXPORT gboolean g_key_file_save_to_file(GKeyFile *kf, const gchar *file, GError **error);
+G_MODULE_EXPORT void config_del_network(struct ctrlproxy_config *cfg, const char *name);
 
 #endif /* __CTRLPROXY_SETTINGS_H__ */

@@ -844,6 +844,7 @@ static void config_load_listeners(struct ctrlproxy_config *cfg)
 	g_free(filename);
 }
 
+
 struct network_config *config_find_network(struct ctrlproxy_config *cfg, 
 										   const char *name)
 {
@@ -854,6 +855,11 @@ struct network_config *config_find_network(struct ctrlproxy_config *cfg,
 			return nc;
 	}
 	return NULL;
+}
+
+void config_del_network(struct ctrlproxy_config *cfg, const char *name)
+{
+	cfg->networks = g_list_remove(cfg->networks, config_find_network(cfg, name));
 }
 
 #define IS_SPECIAL_FILE(name) (name[0] == '.' || name[strlen(name)-1] == '~')

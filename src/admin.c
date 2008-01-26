@@ -356,6 +356,8 @@ static void del_network_helper(admin_handle h, const char *name)
 
 	unload_network(n);
 
+	config_del_network(admin_get_global(h)->config, name);
+
 	admin_out(h, "Network `%s' deleted", name);
 }
 
