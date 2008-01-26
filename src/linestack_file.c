@@ -741,7 +741,7 @@ static gboolean file_traverse(struct linestack_context *ctx, void *mf,
 		(end_offset == NULL || 
 		 g_io_channel_tell_position(nd->line_file) <= (*end_offset))) {
 		status = g_io_channel_read_line(nd->line_file, &raw, NULL, NULL, &error);
-		if (status != G_IO_STATUS_NORMAL) {
+		if (status == G_IO_STATUS_ERROR) {
 			log_global(LOG_WARNING, "read_line() failed: %s",
 					error->message);
 			return FALSE;
