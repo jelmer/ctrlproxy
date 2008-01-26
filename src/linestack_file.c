@@ -716,7 +716,7 @@ static gboolean file_traverse(struct linestack_context *ctx, void *mf,
 	gboolean ret = TRUE;
 	struct lf_data *nd = ctx->backend_data;
 	GError *error = NULL;
-	GIOStatus status;
+	GIOStatus status = G_IO_STATUS_NORMAL;
 	char *raw, *space;
 	struct line *l;
 
@@ -737,10 +737,10 @@ static gboolean file_traverse(struct linestack_context *ctx, void *mf,
 
 	raw = NULL;
 	
-	while((status = g_io_channel_read_line(nd->line_file, &raw, NULL, 
-		                          NULL, &error) != G_IO_STATUS_EOF) && 
+	while((status != G_IO_STATUS_EOF) && 
 		(end_offset == NULL || 
 		 g_io_channel_tell_position(nd->line_file) <= (*end_offset))) {
+		status = g_io_channel_read_line(nd->line_file, &raw, NULL, NULL, &error);
 		if (status != G_IO_STATUS_NORMAL) {
 			log_global(LOG_WARNING, "read_line() failed: %s",
 					error->message);
@@ -763,7 +763,6 @@ static gboolean file_traverse(struct linestack_context *ctx, void *mf,
 		if (ret == FALSE) 
 			break;
 	}
-	g_assert(raw == NULL);
 
 	status = g_io_channel_seek_position(nd->line_file, 0, G_SEEK_END, 
 	                                    &error);
