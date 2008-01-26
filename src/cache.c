@@ -37,11 +37,7 @@ void client_send_nameslist(struct client *c, struct channel_state *ch)
 		char *arg;
 		struct channel_nick *n = (struct channel_nick *)nl->data;
 
-		if (n->mode != '\0' && n->mode != ' ') {
-			arg = g_strdup_printf("%c%s", n->mode, n->global_nick->nick);
-		} else 	{ 
-			arg = g_strdup(n->global_nick->nick);
-		}
+		arg = g_strdup_printf("%s%s", n->mode, n->global_nick->nick);
 
 		if (l == NULL || !line_add_arg(l, arg)) {
 			char *tmp;

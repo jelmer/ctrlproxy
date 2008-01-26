@@ -400,7 +400,7 @@ static gboolean marshall_channel_state (struct network_state *nst,
 			cn = find_add_channel_nick(*c, nick);
 			g_assert(cn);
 
-			if (!marshall_char(nst, "mode", level+3, m, t, &cn->mode))
+			if (!marshall_string(nst, "mode", level+3, m, t, &cn->mode))
 				return FALSE;
 
 			g_free(nick);
@@ -422,7 +422,7 @@ static gboolean marshall_channel_state (struct network_state *nst,
 			if (!marshall_string(nst, "nick", level+3, m, t, &cn->global_nick->nick))
 				return FALSE;
 
-			if (!marshall_char(nst, "mode", level+3, m, t, &cn->mode))
+			if (!marshall_string(nst, "mode", level+3, m, t, &cn->mode))
 				return FALSE;
 
 			i++;

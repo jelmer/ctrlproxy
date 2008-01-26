@@ -128,6 +128,7 @@ static void free_channel_nick(struct channel_nick *n)
 		free_network_nick(n->channel->network, n->global_nick);
 
 	g_free(n->last_flags);
+	g_free(n->mode);
 	g_free(n);
 }
 
@@ -347,19 +348,23 @@ struct channel_nick *find_add_channel_nick(struct channel_state *c,
 {
 	struct channel_nick *n;
 	const char *realname = name;
-	char mymode = 0;
+	char *mymode;
+	int i;
 
 	g_assert(c);
 	g_assert(name);
 	g_assert(strlen(name) > 0);
 	g_assert(c->network);
 
-	if (is_prefix(realname[0], &c->network->info)) {
-		mymode = realname[0];
-		realname++;
+	for (i = 0; is_prefix(realname[i], &c->network->info); i++);
+
+	if (i == 0) {
+		mymode = NULL;
+	} else {
+		mymode = g_strndup(realname, i);
 	}
 
-	n = find_channel_nick(c, realname);
+	n = find_channel_nick(c, realname+i);
 	if (n != NULL) 
 		return n;
 
@@ -367,7 +372,7 @@ struct channel_nick *find_add_channel_nick(struct channel_state *c,
 	
 	n->channel = c;
 	n->mode = mymode;
-	n->global_nick = find_add_network_nick(c->network, realname);
+	n->global_nick = find_add_network_nick(c->network, realname+i);
 	c->nicks = g_list_append(c->nicks, n);
 	n->global_nick->channel_nicks = g_list_append(n->global_nick->channel_nicks, n);
 	return n;
@@ -777,6 +782,37 @@ static void handle_quit(struct network_state *s, const struct line *l)
 		free_network_nick(s, nn);
 }
 
+gboolean prefixes_add_prefix(char **prefixes, char prefix)
+{
+	char *old;
+	g_assert(prefixes != NULL);
+
+	if (*prefixes != NULL && strchr(*prefixes, prefix))
+		return FALSE;
+	
+	old = *prefixes;
+	*prefixes = g_strdup_printf("%s%c", *prefixes, prefix);
+
+	g_free(old);
+	return TRUE;
+}
+
+gboolean prefixes_del_prefix(char **prefixes, char prefix)
+{
+	char *p;
+
+	g_assert(prefixes != NULL);
+
+	if (*prefixes == NULL || strchr(*prefixes, prefix) == NULL)
+		return FALSE;
+	
+	p = strchr(*prefixes, prefix);
+
+	memmove(p, p+1, strlen(p));
+
+	return TRUE;
+}
+
 static void handle_mode(struct network_state *s, const struct line *l)
 {
 	/* Format:
@@ -850,7 +886,15 @@ static void handle_mode(struct network_state *s, const struct line *l)
 								network_state_log(LOG_WARNING, s, "Can't set mode %c%c on nick %s on channel %s, because nick does not exist!", t == ADD?'+':'-', l->args[2][i], l->args[arg], l->args[1]);
 								break;
 							}
-							n->mode = (t == ADD?p:' ');
+							if (t == ADD) {
+								if (!prefixes_add_prefix(&n->mode, p)) {
+									network_state_log(LOG_WARNING, s, "Unable to add mode '%c' to modes %s on nick %s on channel %s", p, n->mode, l->args[arg], l->args[1]);
+								}
+							} else {
+								if (!prefixes_del_prefix(&n->mode, p)) {
+									network_state_log(LOG_WARNING, s, "Unable to remove mode '%c' from modes %s on nick %s on channel %s", p, n->mode, l->args[arg], l->args[1]);
+								}
+							}
 					  }
 					  break;
 			}

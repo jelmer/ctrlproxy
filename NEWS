@@ -49,6 +49,8 @@ Ctrlproxy 3.0.6 UNRELEASED
 
 	* Fix crash bug when client shuts down correctly. (#176)
 
+	* Allow multi-character prefixes for users in channels.
+
 Ctrlproxy 3.0.5 2007-12-07
 
   IMPROVEMENTS

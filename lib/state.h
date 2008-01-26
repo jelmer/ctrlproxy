@@ -39,7 +39,7 @@ struct line;
  * Record of a nick on a channel.
  */
 struct channel_nick {
-	char mode;
+	char *mode;
 	struct network_nick *global_nick;
 	struct channel_state *channel;
 
