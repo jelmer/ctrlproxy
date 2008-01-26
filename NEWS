@@ -62,6 +62,8 @@ Ctrlproxy 3.0.6 UNRELEASED
 
 	* Fix timestamp marshalling. (#180)
 
+	* Correctly recognize error responses to WHOIS and WHOWAS. (#136)
+
 Ctrlproxy 3.0.5 2007-12-07
 
   IMPROVEMENTS

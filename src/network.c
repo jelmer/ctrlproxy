@@ -167,7 +167,7 @@ static gboolean process_from_server(struct irc_network *n, const struct line *l)
 		}
 	} 
 
-	if ( n->connection.state == NETWORK_CONNECTION_STATE_MOTD_RECVD) {
+	if (n->connection.state == NETWORK_CONNECTION_STATE_MOTD_RECVD) {
 		gboolean linestack_store = TRUE;
 		if (atoi(l->args[0])) {
 			linestack_store &= (!redirect_response(n, l));
@@ -341,6 +341,7 @@ struct irc_network *load_network(struct global *global, struct network_config *s
  *
  * @param global Global context to load networks into.
  * @param cfg Configuration to read from
+ * @param fn Function to use for logging.
  * @return TRUE
  */
 gboolean load_networks(struct global *global, struct ctrlproxy_config *cfg, 
