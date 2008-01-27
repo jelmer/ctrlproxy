@@ -6,8 +6,7 @@
 
 <para>All IRC clients should be able to work with ctrlproxy 
 (ctrlproxy acts just like any other IRC server and follows the RFC's). Please 
-contact the mailinglist if you find that a client is not working well together 
-with ctrlproxy.</para>
+let us know on the CtrlProxy IRC channel if you find a client that is not working.</para>
 
 <sect1 id="irssi">
 	<title>irssi</title>

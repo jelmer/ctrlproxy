@@ -1,24 +1,9 @@
 <chapter id="introduction">
 	<title>Introduction</title>
 
-	<sect1 id="why">
-		<title>Why ctrlproxy?</title>
-
-<para>
-CtrlProxy is a project I started because running irssi in 
-screen on my server didn't work very well over 
-high latency connections when I was away from home.
-</para>
-
-<para>
-The structure of ctrlproxy is very modular and it is easily extendible.
-</para>
-
-</sect1>
-
 <sect1 id="whatis"><title>What is ctrlproxy?</title>
 
-	<para>Ctrlproxy is a so-called IRC proxy or BNC (bouncer). It keeps a 
+	<para>Ctrlproxy is an IRC proxy or BNC (bouncer). It keeps a 
 		permanent connection to one or more IRC servers. The user can then 
 		connect and disconnect his/her IRC client to the bouncer without actually disconnecting from the 'real' IRC server.</para>
 
@@ -27,18 +12,9 @@ The structure of ctrlproxy is very modular and it is easily extendible.
 		or asks for them explicitly.
 	</para>
 
-	<para>It is also be possible to log in from multiple locations 
+	<para>It is also be possible to log into CtrlProxy from multiple locations 
 		simultaneously while using one and the same nick name on IRC. </para>
 
-	 <mediaobject>
-	    <imageobject role="html">
-		      <imagedata format="PNG" align="center" fileref="overview2.png"/>
-        </imageobject>
-		<imageobject role="fo">
-			<imagedata format="EPS" align="center" fileref="overview2.eps"/>
-		</imageobject>
-	</mediaobject>
-	
 </sect1>
 
 <sect1 id="features"><title>Features</title>

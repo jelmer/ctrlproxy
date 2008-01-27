@@ -4,12 +4,8 @@
 	<sect1>
 		<title>Precompiled packages</title>
 
-		<para>Some distributions come with a packaged version 
-			of ctrlproxy. <ulink url="mailto:lintux@debian.org">Wilmer 
-				van der Gaast</ulink> is maintaining the 
-<ulink url="http://packages.debian.org/ctrlproxy">Debian ctrlproxy package</ulink> and <ulink url="mailto:agriffis@gentoo.org">Aron Griffis</ulink> maintains the gentoo package of ctrlproxy.</para>
-
-		<para>ctrlproxy is included with the BSD ports collection.</para>
+		<para>Most Linux distributions come with a packaged version 
+			of CtrlProxy. ctrlproxy is also included in the BSD ports collection.</para>
 
 		<para>If you already have a packaged version of ctrlproxy installed, you can skip this chapter.</para>
 		
@@ -26,12 +22,12 @@
 	<sect1>
 		<title>Obtaining the source code</title>
 
-		<para>The source of ctrlproxy can be downloaded from <ulink url="http://ctrlproxy.vernstok.nl/">the ctrlproxy homepage</ulink>. The 
+		<para>The source of ctrlproxy can be downloaded from <ulink url="http://www.ctrlproxy.org/">the CtrlProxy homepage</ulink>. The 
 			source files available there can be unpacked using tar and gzip:</para>
 
 		<para><screen>
-<prompt>$ </prompt><userinput>tar xvgz ctrlproxy-3.0.tar.gz</userinput>
-ctrlproxy-3.0/AUTHORS
+<prompt>$ </prompt><userinput>tar xvgz ctrlproxy-3.0.6.tar.gz</userinput>
+ctrlproxy-3.0.6/AUTHORS
 ...
 </screen></para>
 

@@ -5,8 +5,8 @@
 	stores certain IRC lines and then sends them to the user at a certain moment.</para>
 
 	<para>
-	Additionally, there is a `BACKLOG' command available thru remote 
-	administration.
+	Additionally, there is a `BACKLOG' command available through the 
+	administration interface.
 	</para>
 
 	<sect1 id="repl simple">

@@ -44,10 +44,6 @@
 	<listitem><para>Show help message with short argument information</para></listitem>
 	</varlistentry>
 
-	<varlistentry><term>--usage</term>
-	<listitem><para>Display brief usage message</para></listitem>
-	</varlistentry>
-
 </variablelist>
 
 </refsect1>

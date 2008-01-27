@@ -16,8 +16,8 @@
 <refsect1>
 	<title>DESCRIPTION</title>
 <para>
-Ctrlproxy uses a configuration directory called <filename>.ctrlproxy</filename>
-that lives inside the users' home directory. The main configuration 
+CtrlProxy uses a configuration directory called <filename>.ctrlproxy</filename>
+that lives inside the users home directory. The main configuration 
 file lives in this directory and is called <filename>config</filename>. It 
 is an ini-style configuration file with sections and key-value pairs.
 </para>
@@ -266,7 +266,7 @@ in a standard ControlProxy installation.
 <refsect1>
 	<title>SEE ALSO</title>
 
-	<para>ctrlproxy (1), config.example, http://ctrlproxy.vernstok.nl/</para>
+	<para>ctrlproxy (1), config.example, http://www.ctrlproxy.org/</para>
 
 </refsect1>
 
