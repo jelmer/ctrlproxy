@@ -18,10 +18,10 @@ manpages: ctrlproxy.1 ctrlproxy_config.5 ctrlproxy-admin.1
 %.html: %.tmp.xml
 	$(XSLTPROC) --xinclude http://docbook.sourceforge.net/release/xsl/current/html/docbook.xsl $< > $@
 
-%.1: %.1.xml 
+%.1: %.1.tmp.xml 
 	$(XSLTPROC) http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $< > $@
 
-%.5: %.5.xml
+%.5: %.5.tmp.xml
 	$(XSLTPROC) http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $< > $@
 
 help.xml: admin.xml clients.xml
