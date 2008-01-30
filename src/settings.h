@@ -49,9 +49,6 @@ struct tcp_server_config {
 	/** Adress to bind to (or NULL for default) */
 	char *bind_address;
 
-	/** Port to bind to (or NULL for assign randomly) */
-	char *bind_port;
-
 	/** Whether SSL should be used. */
 	gboolean ssl;
 

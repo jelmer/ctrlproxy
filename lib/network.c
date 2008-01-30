@@ -585,8 +585,8 @@ static gboolean connect_current_tcp_server(struct irc_network *s)
 			continue;
 		}
 
-		if (cs->bind_address || cs->bind_port)
-			bindsock(s, sock, res, cs->bind_address, cs->bind_port);
+		if (cs->bind_address)
+			bindsock(s, sock, res, cs->bind_address, NULL);
 
 		ioc = g_io_channel_unix_new(sock);
 		g_io_channel_set_flags(ioc, G_IO_FLAG_NONBLOCK, NULL);

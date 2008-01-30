@@ -157,17 +157,7 @@ static void config_save_tcp_servers(struct network_config *n, GKeyFile *kf)
 			g_key_file_remove_key(kf, name, "password", NULL);
 
 		if (ts->bind_address) {
-			char *tmp;
-			if (ts->bind_port) 
-				tmp = g_strdup_printf("%s:%s", 
-				                      ts->bind_address,
-						      ts->bind_port);
-			else
-				tmp = g_strdup(ts->bind_address);
-
-			g_key_file_set_string(kf, name, "bind", tmp);
-
-			g_free(tmp);
+			g_key_file_set_string(kf, name, "bind", ts->bind_address);
 		} else 
 			g_key_file_remove_key(kf, name, "bind", NULL);
 
@@ -485,7 +475,6 @@ static void config_load_servers(struct network_config *n)
 		return;
 
 	for (i = 0; i < size; i++) {
-		char *tmp;
 		struct tcp_server_config *s = g_new0(struct tcp_server_config, 1);
 
 		irc_parse_url(servers[i], &s->host, &s->port, &s->ssl);
@@ -495,10 +484,6 @@ static void config_load_servers(struct network_config *n)
 			s->ssl = g_key_file_get_boolean(n->keyfile, servers[i], "ssl", NULL);
 
 		s->bind_address = g_key_file_get_string(n->keyfile, servers[i], "bind", NULL);
-		if (s->bind_address && (tmp = strchr(s->bind_address, ':'))) {
-			*tmp = '\0';
-			s->bind_port = tmp+1;
-		}
 
 		n->type_settings.tcp_servers = g_list_append(n->type_settings.tcp_servers, s);
 
