@@ -50,6 +50,17 @@ START_TEST(isupport_prefixbymode)
 	fail_if (get_prefix_by_mode('x', &ni) != ' ');
 END_TEST
 
+START_TEST(isupport_prefixfrommodes)
+	struct network_info ni = {
+		.prefix = "(ov)@+"
+	};
+	fail_unless (get_prefix_from_modes(&ni, "o") == '@');
+	fail_unless (get_prefix_from_modes(&ni, "ov") == '@');
+	fail_unless (get_prefix_from_modes(&ni, "vo") == '@');
+	fail_unless (get_prefix_from_modes(&ni, "v") == '+');
+	fail_unless (get_prefix_from_modes(&ni, "x") == 0);
+END_TEST
+
 START_TEST(isupport_info_parse_casemapping)
 	struct network_info *info = g_new0(struct network_info, 1);
 	network_info_parse(info, "CASEMAPPING=ascii");
@@ -72,6 +83,7 @@ Suite *isupport_suite(void)
 	tcase_add_test(tc_core, isupport_isprefix);
 	tcase_add_test(tc_core, isupport_ischannelname);
 	tcase_add_test(tc_core, isupport_prefixbymode);
+	tcase_add_test(tc_core, isupport_prefixfrommodes);
 	tcase_add_test(tc_core, isupport_info_parse_casemapping);
 	tcase_add_test(tc_core, isupport_info_parse_name);
 	return s;
