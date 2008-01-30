@@ -24,6 +24,17 @@
 #include <check.h>
 #include "ctrlproxy.h"
 
+START_TEST(isupport_mode_is_channelmode)
+	struct network_info ni = {
+		.supported_channel_modes = "aob"
+	};
+	fail_if (mode_is_channel_mode(&ni, 'c'));
+	fail_unless (mode_is_channel_mode(&ni, 'a'));
+	fail_unless (mode_is_channel_mode(&ni, 'b'));
+	ni.supported_channel_modes = NULL;
+	fail_if (mode_is_channel_mode(&ni, 'b'));
+END_TEST
+
 START_TEST(isupport_isprefix)
 	struct network_info ni = {
 		.prefix = "(ov)@+"
@@ -102,5 +113,6 @@ Suite *isupport_suite(void)
 	tcase_add_test(tc_core, isupport_prefixfrommodes);
 	tcase_add_test(tc_core, isupport_info_parse_casemapping);
 	tcase_add_test(tc_core, isupport_info_parse_name);
+	tcase_add_test(tc_core, isupport_mode_is_channelmode);
 	return s;
 }
