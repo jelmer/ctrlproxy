@@ -38,7 +38,11 @@ void client_send_nameslist(struct client *c, struct channel_state *ch)
 		struct channel_nick *n = (struct channel_nick *)nl->data;
 		char prefix;
 
-		prefix = get_prefix_from_modes(&c->network->info, n->modes);
+		if (n->modes != NULL) {
+			prefix = get_prefix_from_modes(&c->network->info, n->modes);
+		} else {
+			prefix = 0;
+		}
 
 		if (prefix != 0) {
 			arg = g_strdup(n->global_nick->nick);
