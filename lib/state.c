@@ -128,7 +128,7 @@ static void free_channel_nick(struct channel_nick *n)
 		free_network_nick(n->channel->network, n->global_nick);
 
 	g_free(n->last_flags);
-	g_free(n->mode);
+	g_free(n->modes);
 	g_free(n);
 }
 
@@ -371,7 +371,7 @@ struct channel_nick *find_add_channel_nick(struct channel_state *c,
 	n = g_new0(struct channel_nick,1);
 	
 	n->channel = c;
-	n->mode = mymode;
+	n->modes = mymode;
 	n->global_nick = find_add_network_nick(c->network, realname+i);
 	c->nicks = g_list_append(c->nicks, n);
 	n->global_nick->channel_nicks = g_list_append(n->global_nick->channel_nicks, n);
@@ -782,73 +782,37 @@ static void handle_quit(struct network_state *s, const struct line *l)
 		free_network_nick(s, nn);
 }
 
-gboolean prefixes_add_prefix(char **prefixes, char prefix)
+gboolean modes_set_mode(char **modes, char mode)
 {
 	char *old;
-	g_assert(prefixes != NULL);
+	g_assert(modes != NULL);
 
-	if (*prefixes != NULL && strchr(*prefixes, prefix))
+	if (*modes != NULL && strchr(*modes, mode))
 		return FALSE;
 	
-	old = *prefixes;
-	*prefixes = g_strdup_printf("%s%c", *prefixes?*prefixes:"", prefix);
+	old = *modes;
+	*modes = g_strdup_printf("%s%c", *modes?*modes:"", mode);
 
 	g_free(old);
 	return TRUE;
 }
 
-gboolean prefixes_del_prefix(char **prefixes, char prefix)
+gboolean modes_unset_mode(char **modes, char mode)
 {
 	char *p;
 
-	g_assert(prefixes != NULL);
+	g_assert(modes != NULL);
 
-	if (*prefixes == NULL || strchr(*prefixes, prefix) == NULL)
+	if (*modes == NULL || strchr(*modes, mode) == NULL)
 		return FALSE;
 	
-	p = strchr(*prefixes, prefix);
+	p = strchr(*modes, mode);
 
 	memmove(p, p+1, strlen(p));
 
-	if (strlen(*prefixes) == 0) {
-		g_free(*prefixes);
-		*prefixes = NULL;
-	}
-
-	return TRUE;
-}
-
-gboolean cnmodes_add_cnmode(char **cnmodes, char cnmode)
-{
-	char *old;
-	g_assert(cnmodes != NULL);
-
-	if (*cnmodes != NULL && strchr(*cnmodes, cnmode))
-		return FALSE;
-	
-	old = *cnmodes;
-	*cnmodes = g_strdup_printf("%s%c", *cnmodes?*cnmodes:"", cnmode);
-
-	g_free(old);
-	return TRUE;
-}
-
-gboolean cnmodes_del_cnmode(char **cnmodes, char cnmode)
-{
-	char *p;
-
-	g_assert(cnmodes != NULL);
-
-	if (*cnmodes == NULL || strchr(*cnmodes, cnmode) == NULL)
-		return FALSE;
-	
-	p = strchr(*cnmodes, cnmode);
-
-	memmove(p, p+1, strlen(p));
-
-	if (strlen(*cnmodes) == 0) {
-		g_free(*cnmodes);
-		*cnmodes = NULL;
+	if (strlen(*modes) == 0) {
+		g_free(*modes);
+		*modes = NULL;
 	}
 
 	return TRUE;
@@ -865,7 +829,6 @@ static void handle_mode(struct network_state *s, const struct line *l)
 	if (is_channelname(l->args[1], &s->info)) {
 		struct channel_state *c = find_channel(s, l->args[1]);
 		struct channel_nick *n;
-		char p;
 		int arg = 2;
 
 		if (c == NULL) {
@@ -918,26 +881,21 @@ static void handle_mode(struct network_state *s, const struct line *l)
 
 					break;
 				default:
-					  p = get_prefix_by_mode(l->args[2][i], &s->info);
-
-					  // Doesn't apply to a user - as no prefix is gained by them
-					  if (p == ' ') {
+					  if (mode_is_channel_mode(&s->info, l->args[2][i])) {
 						  c->modes[(unsigned char)l->args[2][i]] = t;
 					  } else {
 							n = find_channel_nick(c, l->args[++arg]);
 							if (!n) {
-								// Nick isn't in channel
 								network_state_log(LOG_WARNING, s, "Can't set mode %c%c on nick %s on channel %s, because nick does not exist!", t == ADD?'+':'-', l->args[2][i], l->args[arg], l->args[1]);
 								break;
 							}
 							if (t == ADD) {
-								// Adding a channel-nick mode
-								if (!cnmodes_add_cnmode(&n->mode, l->args[2][i])) {
-									network_state_log(LOG_WARNING, s, "Unable to add mode '%c' to modes %s on nick %s on channel %s", l->args[2][i], n->mode, l->args[arg], l->args[1]);
+								if (!modes_set_mode(&n->modes, l->args[2][i])) {
+									network_state_log(LOG_WARNING, s, "Unable to add mode '%c' to modes %s on nick %s on channel %s", l->args[2][i], n->modes, l->args[arg], l->args[1]);
 								}
 							} else {
-								if (!cnmodes_del_cnmode(&n->mode, l->args[2][i])) {
-									network_state_log(LOG_WARNING, s, "Unable to remove mode '%c' from modes %s on nick %s on channel %s", l->args[2][i], n->mode, l->args[arg], l->args[1]);
+								if (!modes_unset_mode(&n->modes, l->args[2][i])) {
+									network_state_log(LOG_WARNING, s, "Unable to remove mode '%c' from modes %s on nick %s on channel %s", l->args[2][i], n->modes, l->args[arg], l->args[1]);
 								}
 							}
 					  }

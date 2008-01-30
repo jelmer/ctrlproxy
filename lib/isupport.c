@@ -514,6 +514,35 @@ const char *get_charset(const struct network_info *n)
 	return n->charset;
 }
 
+gboolean mode_is_channel_mode(struct network_info *info, char mode)
+{
+	return strchr(info->supported_channel_modes, mode) != NULL;
+}
+
+char get_prefix_from_modes(struct network_info *info, const char *modes)
+{
+	int i;
+	char *pref_end;
+	const char *prefix;
+	
+	g_assert(info->prefix != NULL);
+
+	prefix = info->prefix;
+	
+	pref_end = strchr(prefix, ')');
+	if (prefix[0] != '(' || !pref_end) {
+		log_global(LOG_WARNING, "Malformed PREFIX data `%s'", prefix);
+		return 0;
+	}
+	pref_end++;
+	prefix++;
+
+	for(i = 0; pref_end[i]; i++) {
+		if (strchr(modes, prefix[i])) return pref_end[i];
+	}
+	return 0;
+}
+
 char get_prefix_by_mode(char mode, const struct network_info *n)
 {
 	int i;

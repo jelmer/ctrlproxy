@@ -24,22 +24,6 @@
 #include "internals.h"
 #include "irc.h"
 
-/*
-
-char get_prefix_from_modes(modes, network PREFIX = list)
-{
-	foreach (prefixmode in prefixmodelist)
-	{
-		foreach(nickmode in nickmodes)
-		{
-			if (nickmode == prefixmode)
-			return prefixhash[mode]; // @ for +o, + for +v etc etc
-		}
-	}
-}
-
-*/
-
 void client_send_nameslist(struct client *c, struct channel_state *ch)
 {
 	GList *nl;
@@ -52,11 +36,15 @@ void client_send_nameslist(struct client *c, struct channel_state *ch)
 		char mode[2] = { ch->mode, 0 };
 		char *arg;
 		struct channel_nick *n = (struct channel_nick *)nl->data;
+		char prefix;
 
-		// Changed this to a char for the first replacement,
-		// needs to call the get_prefix_from_modes function to get the prefix character
-		
-		arg = g_strdup_printf("%c%s", n->mode?n->mode:"", n->global_nick->nick);
+		prefix = get_prefix_from_modes(&c->network->info, n->modes);
+
+		if (prefix != 0) {
+			arg = g_strdup(n->global_nick->nick);
+		} else {
+			arg = g_strdup_printf("%c%s", prefix, n->global_nick->nick);
+		}
 
 		if (l == NULL || !line_add_arg(l, arg)) {
 			char *tmp;

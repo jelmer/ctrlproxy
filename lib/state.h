@@ -39,7 +39,7 @@ struct line;
  * Record of a nick on a channel.
  */
 struct channel_nick {
-	char *mode;
+	char *modes;
 	struct network_nick *global_nick;
 	struct channel_state *channel;
 
@@ -127,8 +127,10 @@ G_MODULE_EXPORT gboolean network_nick_set_hostmask(struct network_nick *n, const
 G_MODULE_EXPORT gboolean client_send_state(struct client *, struct network_state *);
 G_MODULE_EXPORT void network_state_log(enum log_level l, const struct network_state *st, const char *fmt, ...);
 G_MODULE_EXPORT void network_state_set_log_fn(struct network_state *st, void (*fn) (enum log_level, void *, const char *), void *userdata);
-G_MODULE_EXPORT gboolean prefixes_add_prefix(char **prefixes, char prefix);
-G_MODULE_EXPORT gboolean prefixes_del_prefix(char **prefixes, char prefix);
+G_MODULE_EXPORT gboolean modes_set_mode(char **prefixes, char prefix);
+G_MODULE_EXPORT gboolean modes_unset_mode(char **prefixes, char prefix);
+G_MODULE_EXPORT char get_prefix_from_modes(struct network_info *info, const char *modes);
+G_MODULE_EXPORT gboolean mode_is_channel_mode(struct network_info *info, char mode);
 
 
 #endif /* __CTRLPROXY_STATE_H__ */

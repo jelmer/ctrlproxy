@@ -68,7 +68,7 @@ static gboolean channel_nick_equal(const struct channel_nick *nick1, const struc
 {
 	null_equal(nick1, nick2);
 
-	return nick1->mode == nick2->mode &&
+	return str_equal(nick1->modes, nick2->modes) &&
 		   str_equal(nick1->global_nick->nick, nick2->global_nick->nick) &&
 		   str_equal(nick1->channel->name, nick2->channel->name);
 }
