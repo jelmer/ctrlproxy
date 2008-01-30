@@ -44,7 +44,7 @@ void client_send_nameslist(struct client *c, struct channel_state *ch)
 			prefix = 0;
 		}
 
-		if (prefix != 0) {
+		if (prefix == 0) {
 			arg = g_strdup(n->global_nick->nick);
 		} else {
 			arg = g_strdup_printf("%c%s", prefix, n->global_nick->nick);
