@@ -519,7 +519,7 @@ gboolean mode_is_channel_mode(struct network_info *info, char mode)
 	return strchr(info->supported_channel_modes, mode) != NULL;
 }
 
-char get_prefix_from_modes(struct network_info *info, const char *modes)
+char get_prefix_from_modes(struct network_info *info, irc_modes_t modes)
 {
 	int i;
 	char *pref_end;
@@ -538,9 +538,34 @@ char get_prefix_from_modes(struct network_info *info, const char *modes)
 	prefix++;
 
 	for(i = 0; pref_end[i]; i++) {
-		if (strchr(modes, prefix[i])) return pref_end[i];
+		if (modes[(unsigned char)prefix[i]]) return pref_end[i];
 	}
 	return 0;
+}
+
+char get_mode_by_prefix(char prefix, const struct network_info *n)
+{
+	int i;
+	char *pref_end;
+	const char *prefix_mapping;
+	
+	g_assert(n != NULL);
+	g_assert(n->prefix != NULL);
+
+	prefix_mapping = n->prefix;
+	
+	pref_end = strchr(prefix_mapping, ')');
+	if (prefix_mapping[0] != '(' || !pref_end) {
+		log_global(LOG_WARNING, "Malformed PREFIX data `%s'", prefix_mapping);
+		return ' ';
+	}
+	pref_end++;
+	prefix_mapping++;
+
+	for(i = 0; pref_end[i]; i++) {
+		if (pref_end[i] == prefix) return prefix_mapping[i];
+	}
+	return ' ';
 }
 
 char get_prefix_by_mode(char mode, const struct network_info *n)

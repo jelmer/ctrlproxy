@@ -21,38 +21,6 @@
 #include "irc.h"
 #include "repl.h"
 
-void string2mode(char *modes, char ar[255])
-{
-	memset(ar, 0, sizeof(ar));
-
-	if (modes == NULL)
-		return;
-
-	g_assert(modes[0] == '+');
-	modes++;
-	for (; *modes; modes++) {
-		ar[(int)(*modes)] = 1;
-	}
-}
-
-char *mode2string(char modes[255])
-{
-	char ret[256];
-	unsigned char i;
-	int pos = 0;
-	ret[0] = '\0';
-	for(i = 0; i < 255; i++) {
-		if (modes[i]) { ret[pos] = (char)i; pos++; }
-	}
-	ret[pos] = '\0';
-
-	if (strlen(ret) == 0) {
-		return NULL;
-	} else {
-		return g_strdup_printf("+%s", ret);
-	}
-}
-
 void client_send_nameslist(struct client *client, struct channel_state *ch);
 static void client_send_channel_state(struct client *c, 
 									  struct channel_state *ch)

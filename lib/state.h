@@ -23,6 +23,8 @@
 #include "isupport.h"
 #include "log.h"
 
+typedef gboolean irc_modes_t[255];
+
 /**
  * @file
  * @brief State information
@@ -39,7 +41,7 @@ struct line;
  * Record of a nick on a channel.
  */
 struct channel_nick {
-	char *modes;
+	irc_modes_t modes;
 	struct network_nick *global_nick;
 	struct channel_state *channel;
 
@@ -56,7 +58,7 @@ struct network_nick {
 	char *username;
 	char *hostname;
 	char *hostmask;
-	char modes[255];
+	irc_modes_t modes;
 	char *server;
 	GList *channel_nicks;
 
@@ -82,7 +84,7 @@ struct channel_state {
 	time_t topic_set_time;
 	char *topic_set_by; /* nickname */
 	char mode; /* Private, secret, etc */
-	char modes[255];
+	irc_modes_t modes;
 	time_t creation_time;
 	gboolean namreply_started;
 	gboolean banlist_started;
@@ -127,10 +129,15 @@ G_MODULE_EXPORT gboolean network_nick_set_hostmask(struct network_nick *n, const
 G_MODULE_EXPORT gboolean client_send_state(struct client *, struct network_state *);
 G_MODULE_EXPORT void network_state_log(enum log_level l, const struct network_state *st, const char *fmt, ...);
 G_MODULE_EXPORT void network_state_set_log_fn(struct network_state *st, void (*fn) (enum log_level, void *, const char *), void *userdata);
-G_MODULE_EXPORT gboolean modes_set_mode(char **prefixes, char prefix);
-G_MODULE_EXPORT gboolean modes_unset_mode(char **prefixes, char prefix);
-G_MODULE_EXPORT char get_prefix_from_modes(struct network_info *info, const char *modes);
-G_MODULE_EXPORT gboolean mode_is_channel_mode(struct network_info *info, char mode);
 
+G_MODULE_EXPORT G_GNUC_MALLOC char *mode2string(irc_modes_t modes);
+G_MODULE_EXPORT void string2mode(char *modestring, irc_modes_t modes);
+G_MODULE_EXPORT gboolean modes_change_mode(irc_modes_t modes, gboolean set, char newmode);
+#define modes_set_mode(modes, newmode) modes_change_mode(modes, TRUE, newmode)
+#define modes_unset_mode(modes, newmode) modes_change_mode(modes, FALSE, newmode)
+G_MODULE_EXPORT char get_prefix_from_modes(struct network_info *info, irc_modes_t modes);
+G_MODULE_EXPORT gboolean mode_is_channel_mode(struct network_info *info, char mode);
+G_MODULE_EXPORT char get_mode_by_prefix(char prefix, const struct network_info *n);
+G_MODULE_EXPORT char get_prefix_by_mode(char mode, const struct network_info *n);
 
 #endif /* __CTRLPROXY_STATE_H__ */

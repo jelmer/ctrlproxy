@@ -119,8 +119,6 @@ void global_update_config(struct global *my_global);
 
 /* repl.c */
 void client_replicate(struct client *);
-G_GNUC_MALLOC char *mode2string(char modes[255]);
-void string2mode(char *modes, char ar[255]);
 
 gboolean init_replication(void);
 

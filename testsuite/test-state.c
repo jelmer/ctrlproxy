@@ -28,26 +28,22 @@ gboolean network_nick_set_hostmask(struct network_nick *, const char *);
 struct network_nick *find_add_network_nick(struct network_state *n, const char *name);
 
 START_TEST(state_modes_set_mode)
-	char *in = NULL;
-	fail_unless (modes_set_mode(&in, '@'));
-	fail_unless (strcmp(in, "@") == 0);
-	fail_unless (modes_set_mode(&in, '%'));
-	fail_unless (strcmp(in, "@%") == 0);
-	fail_if (modes_set_mode(&in, '%'));
-	fail_unless (strcmp(in, "@%") == 0);
+	irc_modes_t in;
+	memset(in, 0, sizeof(in));
+	fail_unless (modes_set_mode(in, '@'));
+	fail_unless (in[(unsigned char)'@'] == TRUE);
+	fail_unless (modes_set_mode(in, '%'));
+	fail_unless (in[(unsigned char)'%'] == TRUE);
 END_TEST
 
 START_TEST(state_prefixes_remove_prefix)
-	char *in = NULL;
-	fail_if (modes_unset_mode(&in, '@'));
-	fail_unless (in == NULL);
-	in = g_strdup("%@");
-	fail_unless (modes_unset_mode(&in, '%'));
-	fail_unless (strcmp(in, "@") == 0);
-	fail_if (modes_unset_mode(&in, '%'));
-	fail_unless (strcmp(in, "@") == 0);
-	fail_unless (modes_unset_mode(&in, '@'));
-	fail_unless (in == NULL);
+	irc_modes_t in;
+	memset(in, 0, sizeof(in));
+	fail_if (modes_unset_mode(in, '@'));
+	in[(unsigned char)'%'] = TRUE;
+	fail_unless (modes_unset_mode(in, '%'));
+	fail_unless (in[(unsigned char)'%'] == FALSE);
+	fail_if (modes_unset_mode(in, '%'));
 END_TEST
 
 START_TEST(state_init)

@@ -50,15 +50,30 @@ START_TEST(isupport_prefixbymode)
 	fail_if (get_prefix_by_mode('x', &ni) != ' ');
 END_TEST
 
+START_TEST(isupport_modebyprefix)
+	struct network_info ni = {
+		.prefix = "(ov)@+"
+	};
+	fail_if (get_mode_by_prefix('@', &ni) != 'o');
+	fail_if (get_mode_by_prefix('+', &ni) != 'v');
+	fail_if (get_mode_by_prefix('%', &ni) != ' ');
+END_TEST
+
 START_TEST(isupport_prefixfrommodes)
 	struct network_info ni = {
 		.prefix = "(ov)@+"
 	};
-	fail_unless (get_prefix_from_modes(&ni, "o") == '@');
-	fail_unless (get_prefix_from_modes(&ni, "ov") == '@');
-	fail_unless (get_prefix_from_modes(&ni, "vo") == '@');
-	fail_unless (get_prefix_from_modes(&ni, "v") == '+');
-	fail_unless (get_prefix_from_modes(&ni, "x") == 0);
+	irc_modes_t modes;
+	memset(modes, 0, sizeof(modes)); modes_set_mode(modes, 'o');
+	fail_unless (get_prefix_from_modes(&ni, modes) == '@');
+	modes_set_mode(modes, 'v');
+	fail_unless (get_prefix_from_modes(&ni, modes) == '@');
+	modes_unset_mode(modes, 'o');
+	fail_unless (get_prefix_from_modes(&ni, modes) == '+');
+	modes_set_mode(modes, 'x');
+	fail_unless (get_prefix_from_modes(&ni, modes) == '+');
+	modes_unset_mode(modes, 'v');
+	fail_unless (get_prefix_from_modes(&ni, modes) == 0);
 END_TEST
 
 START_TEST(isupport_info_parse_casemapping)
@@ -83,6 +98,7 @@ Suite *isupport_suite(void)
 	tcase_add_test(tc_core, isupport_isprefix);
 	tcase_add_test(tc_core, isupport_ischannelname);
 	tcase_add_test(tc_core, isupport_prefixbymode);
+	tcase_add_test(tc_core, isupport_modebyprefix);
 	tcase_add_test(tc_core, isupport_prefixfrommodes);
 	tcase_add_test(tc_core, isupport_info_parse_casemapping);
 	tcase_add_test(tc_core, isupport_info_parse_name);

@@ -249,7 +249,7 @@ static gboolean marshall_time(struct network_state *nst, const char *name, int l
 }
 
 
-static gboolean marshall_modes(struct network_state *nst, const char *name, int level, enum marshall_mode m, GIOChannel *t, char n[255])
+static gboolean marshall_modes(struct network_state *nst, const char *name, int level, enum marshall_mode m, GIOChannel *t, irc_modes_t n)
 {
 	if (m == MARSHALL_PUSH) {
 		GError *error = NULL;
@@ -400,7 +400,7 @@ static gboolean marshall_channel_state (struct network_state *nst,
 			cn = find_add_channel_nick(*c, nick);
 			g_assert(cn);
 
-			if (!marshall_string(nst, "modes", level+3, m, t, &cn->modes))
+			if (!marshall_modes(nst, "modes", level+3, m, t, cn->modes))
 				return FALSE;
 
 			g_free(nick);
@@ -422,7 +422,7 @@ static gboolean marshall_channel_state (struct network_state *nst,
 			if (!marshall_string(nst, "nick", level+3, m, t, &cn->global_nick->nick))
 				return FALSE;
 
-			if (!marshall_string(nst, "modes", level+3, m, t, &cn->modes))
+			if (!marshall_modes(nst, "modes", level+3, m, t, cn->modes))
 				return FALSE;
 
 			i++;

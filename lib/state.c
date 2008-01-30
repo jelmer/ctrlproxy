@@ -128,7 +128,6 @@ static void free_channel_nick(struct channel_nick *n)
 		free_network_nick(n->channel->network, n->global_nick);
 
 	g_free(n->last_flags);
-	g_free(n->modes);
 	g_free(n);
 }
 
@@ -144,6 +143,7 @@ static void free_invitelist(struct channel_state *c)
 	}
 	c->invitelist = NULL;
 }
+
 
 static void free_exceptlist(struct channel_state *c)
 {
@@ -348,31 +348,30 @@ struct channel_nick *find_add_channel_nick(struct channel_state *c,
 {
 	struct channel_nick *n;
 	const char *realname = name;
-	char *mymode;
-	int i;
+	char prefix = 0;
 
 	g_assert(c);
 	g_assert(name);
 	g_assert(strlen(name) > 0);
 	g_assert(c->network);
 
-	for (i = 0; is_prefix(realname[i], &c->network->info); i++);
-
-	if (i == 0) {
-		mymode = NULL;
-	} else {
-		mymode = g_strndup(realname, i);
+	if (is_prefix(realname[0], &c->network->info)) {
+		prefix = realname[0];
+		realname++;
+		g_assert(!is_prefix(realname[1], &c->network->info));
 	}
 
-	n = find_channel_nick(c, realname+i);
+	n = find_channel_nick(c, realname);
 	if (n != NULL) 
 		return n;
 
 	n = g_new0(struct channel_nick,1);
 	
 	n->channel = c;
-	n->modes = mymode;
-	n->global_nick = find_add_network_nick(c->network, realname+i);
+	n->global_nick = find_add_network_nick(c->network, realname);
+	if (prefix != 0) {
+		modes_set_mode(n->modes, get_mode_by_prefix(prefix, &c->network->info));
+    }
 	c->nicks = g_list_append(c->nicks, n);
 	n->global_nick->channel_nicks = g_list_append(n->global_nick->channel_nicks, n);
 	return n;
@@ -782,38 +781,12 @@ static void handle_quit(struct network_state *s, const struct line *l)
 		free_network_nick(s, nn);
 }
 
-gboolean modes_set_mode(char **modes, char mode)
+gboolean modes_change_mode(irc_modes_t modes, gboolean set, char newmode)
 {
-	char *old;
-	g_assert(modes != NULL);
-
-	if (*modes != NULL && strchr(*modes, mode))
+	if (modes[(unsigned char)newmode] == set)
 		return FALSE;
-	
-	old = *modes;
-	*modes = g_strdup_printf("%s%c", *modes?*modes:"", mode);
 
-	g_free(old);
-	return TRUE;
-}
-
-gboolean modes_unset_mode(char **modes, char mode)
-{
-	char *p;
-
-	g_assert(modes != NULL);
-
-	if (*modes == NULL || strchr(*modes, mode) == NULL)
-		return FALSE;
-	
-	p = strchr(*modes, mode);
-
-	memmove(p, p+1, strlen(p));
-
-	if (strlen(*modes) == 0) {
-		g_free(*modes);
-		*modes = NULL;
-	}
+	modes[(unsigned char)newmode] = set;
 
 	return TRUE;
 }
@@ -890,11 +863,11 @@ static void handle_mode(struct network_state *s, const struct line *l)
 								break;
 							}
 							if (t == ADD) {
-								if (!modes_set_mode(&n->modes, l->args[2][i])) {
+								if (!modes_set_mode(n->modes, l->args[2][i])) {
 									network_state_log(LOG_WARNING, s, "Unable to add mode '%c' to modes %s on nick %s on channel %s", l->args[2][i], n->modes, l->args[arg], l->args[1]);
 								}
 							} else {
-								if (!modes_unset_mode(&n->modes, l->args[2][i])) {
+								if (!modes_unset_mode(n->modes, l->args[2][i])) {
 									network_state_log(LOG_WARNING, s, "Unable to remove mode '%c' from modes %s on nick %s on channel %s", l->args[2][i], n->modes, l->args[arg], l->args[1]);
 								}
 							}
@@ -911,7 +884,7 @@ static void handle_mode(struct network_state *s, const struct line *l)
 				case '+': t = ADD;break;
 				case '-': t = REMOVE; break;
 				default:
-					  nn->modes[(unsigned char)l->args[2][i]] = t;
+					  modes_change_mode(nn->modes, t, l->args[2][i]);
 					  break;
 			}
 		}
@@ -1164,3 +1137,37 @@ void network_state_set_log_fn(struct network_state *st,
 	st->log = fn;
 	st->userdata = userdata;
 }
+
+void string2mode(char *modes, irc_modes_t ar)
+{
+	memset(ar, 0, sizeof(ar));
+
+	if (modes == NULL)
+		return;
+
+	g_assert(modes[0] == '+');
+	modes++;
+	for (; *modes; modes++) {
+		ar[(unsigned char)(*modes)] = 1;
+	}
+}
+
+char *mode2string(irc_modes_t modes)
+{
+	char ret[256];
+	unsigned char i;
+	int pos = 0;
+	ret[0] = '\0';
+	for(i = 0; i < sizeof(modes); i++) {
+		if (modes[i]) { ret[pos] = (char)i; pos++; }
+	}
+	ret[pos] = '\0';
+
+	if (strlen(ret) == 0) {
+		return NULL;
+	} else {
+		return g_strdup_printf("+%s", ret);
+	}
+}
+
+
