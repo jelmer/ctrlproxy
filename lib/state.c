@@ -358,7 +358,6 @@ struct channel_nick *find_add_channel_nick(struct channel_state *c,
 	if (is_prefix(realname[0], &c->network->info)) {
 		prefix = realname[0];
 		realname++;
-		g_assert(!is_prefix(realname[1], &c->network->info));
 	}
 
 	n = find_channel_nick(c, realname);
