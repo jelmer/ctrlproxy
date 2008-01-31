@@ -949,7 +949,7 @@ static void handle_mode(struct network_state *s, const struct line *l)
 		}
 	}
 
-	if (l->args[arg] != NULL) {
+	if (l->args[arg] != NULL && strcmp(l->args[arg], "") != 0) {
 		network_state_log(LOG_WARNING, s, 
 						  "mode %s %s argument not consumed: %s", l->args[2], 
 						  l->args[1], 
