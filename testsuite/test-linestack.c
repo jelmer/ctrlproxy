@@ -57,6 +57,11 @@ static gboolean list_equal(GList *list1, GList *list2, GEqualFunc eq)
 	return TRUE;
 }
 
+static gboolean modes_equal(const irc_modes_t a, const irc_modes_t b)
+{
+	return memcmp(a, b, sizeof(a)) == 0;
+}
+
 static gboolean str_equal(const char *a, const char *b)
 {
 	null_equal(a, b);
@@ -68,7 +73,7 @@ static gboolean channel_nick_equal(const struct channel_nick *nick1, const struc
 {
 	null_equal(nick1, nick2);
 
-	return str_equal(nick1->modes, nick2->modes) &&
+	return modes_equal(nick1->modes, nick2->modes) &&
 		   str_equal(nick1->global_nick->nick, nick2->global_nick->nick) &&
 		   str_equal(nick1->channel->name, nick2->channel->name);
 }
