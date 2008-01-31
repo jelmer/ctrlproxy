@@ -806,10 +806,9 @@ gboolean modes_change_mode(irc_modes_t modes, gboolean set, char newmode)
 	return TRUE;
 }
 
-static int channel_state_change_mode(struct network_state *s, struct network_nick *by, struct channel_state *c, gboolean set, char mode, char **args)
+static int channel_state_change_mode(struct network_state *s, struct network_nick *by, struct channel_state *c, gboolean set, char mode, const char *opt_arg)
 {
 	struct network_info *info = &s->info;
-	int args_used = 0;
 
 	if (!is_channel_mode(info, mode)) {
 		network_state_log(LOG_WARNING, s, "Mode '%c' set on channel %s is not in the supported list of channel modes from the server", mode, c->name);
@@ -818,18 +817,21 @@ static int channel_state_change_mode(struct network_state *s, struct network_nic
 	if (mode == 'b') { /* Ban */
 		struct banlist_entry *be;
 
+		if (opt_arg == NULL) {
+			network_state_log(LOG_WARNING, s, "Missing argumnt for ban MODE set/unset");
+			return -1;
+		}
+
 		if (set) {
 			be = g_new0(struct banlist_entry, 1);
 			be->time_set = time(NULL);
-			be->hostmask = g_strdup(args[args_used]);
-			args_used++;
+			be->hostmask = g_strdup(opt_arg);
 			be->by = g_strdup(by->nick);
 			c->banlist = g_list_append(c->banlist, be);
 		} else {
-			be = find_banlist_entry(c->banlist, args[args_used]);
-			args_used++;
+			be = find_banlist_entry(c->banlist, opt_arg);
 			if (be == NULL) {
-				network_state_log(LOG_WARNING, s, "Unable to remove nonpresent banlist entry '%s'", args[args_used]);
+				network_state_log(LOG_WARNING, s, "Unable to remove nonpresent banlist entry '%s'", opt_arg);
 				return 1;
 			}
 			c->banlist = g_list_remove(c->banlist, be);
@@ -839,12 +841,11 @@ static int channel_state_change_mode(struct network_state *s, struct network_nic
 	} else if (mode == 'l') { /* Limit */
 		modes_change_mode(c->modes, set, 'l');
 		if (set) {
-			if (!args[args_used]) {
+			if (!opt_arg) {
 				network_state_log(LOG_WARNING, s, "Mode +l requires argument, but no argument found");
 				return -1;
 			}
-			c->limit = atol(args[args_used]);
-			args_used++;
+			c->limit = atol(opt_arg);
 		} else {
 			c->limit = 0;
 		}
@@ -852,32 +853,38 @@ static int channel_state_change_mode(struct network_state *s, struct network_nic
 	} else if (mode == 'k') {
 		modes_change_mode(c->modes, set, 'k');
 		if (set) {
-			if (!args[args_used]) {
+			if (opt_arg == NULL) {
 				network_state_log(LOG_WARNING, s, "Mode k requires argument, but no argument found");
 				return -1;
 			}
 
 			g_free(c->key);
-			c->key = g_strdup(args[args_used]);
-			args_used++;
+			c->key = g_strdup(opt_arg);
 		} else {
 			g_free(c->key);
 			c->key = NULL;
 		}
 		return 1;
 	} else if (is_prefix_mode(info, mode)) {
-		struct channel_nick *n = find_channel_nick(c, args[args_used]); args_used++;
+		struct channel_nick *n;
+		
+		if (opt_arg == NULL) {
+			network_state_log(LOG_WARNING, s, "Mode %c requires nick argument, but no argument found", mode);
+			return -1;
+		}
+
+		n = find_channel_nick(c, opt_arg); 
 		if (!n) {
-			network_state_log(LOG_WARNING, s, "Can't set mode %c%c on nick %s on channel %s, because nick does not exist!", set?'+':'-', mode, args[args_used], c->name);
+			network_state_log(LOG_WARNING, s, "Can't set mode %c%c on nick %s on channel %s, because nick does not exist!", set?'+':'-', mode, opt_arg, c->name);
 			return -1;
 		}
 		if (set) {
 			if (!modes_set_mode(n->modes, mode)) {
-				network_state_log(LOG_WARNING, s, "Unable to add mode '%c' to modes %s on nick %s on channel %s", mode, n->modes, args[args_used], c->name);
+				network_state_log(LOG_WARNING, s, "Unable to add mode '%c' to modes %s on nick %s on channel %s", mode, n->modes, opt_arg, c->name);
 			}
 		} else {
 			if (!modes_unset_mode(n->modes, mode)) {
-				network_state_log(LOG_WARNING, s, "Unable to remove mode '%c' from modes %s on nick %s on channel %s", mode, n->modes, args[args_used], c->name);
+				network_state_log(LOG_WARNING, s, "Unable to remove mode '%c' from modes %s on nick %s on channel %s", mode, n->modes, opt_arg, c->name);
 			}
 		}
 		return 1;
@@ -919,7 +926,7 @@ static void handle_mode(struct network_state *s, const struct line *l)
 				default:
 					  ret = channel_state_change_mode(s, by, c, t, 
 													  l->args[2][i],
-													  l->args+arg*sizeof(char *));
+													  l->args[arg]);
 					  if (ret == -1)
 						  return;
 					  arg += ret;
