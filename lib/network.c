@@ -748,7 +748,7 @@ static gboolean close_server(struct irc_network *n)
 			n->connection.data.virtual.ops->fini(n);
 		}
 		break;
-		default: g_assert(0);
+		default: g_assert_not_reached();
 	}
 
 	n->connection.state = NETWORK_CONNECTION_STATE_NOT_CONNECTED;
@@ -984,7 +984,7 @@ static gboolean connect_server(struct irc_network *s)
 			return s->connection.data.virtual.ops->init(s);
 
 		return TRUE;
-	default: g_assert(0);
+	default: g_assert_not_reached();
 	}
 
 	return TRUE;
