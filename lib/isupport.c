@@ -517,10 +517,16 @@ const char *get_charset(const struct network_info *n)
 	return n->charset;
 }
 
-gboolean mode_is_channel_mode(struct network_info *info, char mode)
+gboolean is_channel_mode(struct network_info *info, char mode)
 {
 	return (info->supported_channel_modes != NULL && 
 		    strchr(info->supported_channel_modes, mode) != NULL);
+}
+
+gboolean is_user_mode(struct network_info *info, char mode)
+{
+	return (info->supported_user_modes != NULL && 
+		    strchr(info->supported_user_modes, mode) != NULL);
 }
 
 char get_prefix_from_modes(struct network_info *info, irc_modes_t modes)

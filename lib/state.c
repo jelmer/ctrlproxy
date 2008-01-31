@@ -853,9 +853,9 @@ static void handle_mode(struct network_state *s, const struct line *l)
 
 					break;
 				default:
-					  if (mode_is_channel_mode(&s->info, l->args[2][i])) {
+					  if (is_channel_mode(&s->info, l->args[2][i])) {
 						  c->modes[(unsigned char)l->args[2][i]] = t;
-					  } else {
+					  } else if (is_user_mode(&s->info, l->args[2][i])) {
 							n = find_channel_nick(c, l->args[++arg]);
 							if (!n) {
 								network_state_log(LOG_WARNING, s, "Can't set mode %c%c on nick %s on channel %s, because nick does not exist!", t == ADD?'+':'-', l->args[2][i], l->args[arg], l->args[1]);

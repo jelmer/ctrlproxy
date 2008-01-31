@@ -136,7 +136,8 @@ G_MODULE_EXPORT gboolean modes_change_mode(irc_modes_t modes, gboolean set, char
 #define modes_set_mode(modes, newmode) modes_change_mode(modes, TRUE, newmode)
 #define modes_unset_mode(modes, newmode) modes_change_mode(modes, FALSE, newmode)
 G_MODULE_EXPORT char get_prefix_from_modes(struct network_info *info, irc_modes_t modes);
-G_MODULE_EXPORT gboolean mode_is_channel_mode(struct network_info *info, char mode);
+G_MODULE_EXPORT gboolean is_channel_mode(struct network_info *info, char mode);
+G_MODULE_EXPORT gboolean is_user_mode(struct network_info *info, char mode);
 G_MODULE_EXPORT char get_mode_by_prefix(char prefix, const struct network_info *n);
 G_MODULE_EXPORT char get_prefix_by_mode(char mode, const struct network_info *n);
 

@@ -28,11 +28,11 @@ START_TEST(isupport_mode_is_channelmode)
 	struct network_info ni = {
 		.supported_channel_modes = "aob"
 	};
-	fail_if (mode_is_channel_mode(&ni, 'c'));
-	fail_unless (mode_is_channel_mode(&ni, 'a'));
-	fail_unless (mode_is_channel_mode(&ni, 'b'));
+	fail_if (is_channel_mode(&ni, 'c'));
+	fail_unless (is_channel_mode(&ni, 'a'));
+	fail_unless (is_channel_mode(&ni, 'b'));
 	ni.supported_channel_modes = NULL;
-	fail_if (mode_is_channel_mode(&ni, 'b'));
+	fail_if (is_channel_mode(&ni, 'b'));
 END_TEST
 
 START_TEST(isupport_isprefix)
