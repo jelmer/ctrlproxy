@@ -497,6 +497,9 @@ gboolean is_channelname(const char *name, const struct network_info *n)
 gboolean is_prefix(char p, const struct network_info *n)
 {
 	const char *pref_end;
+
+	if (p == 0)
+		return FALSE;
 	
 	g_assert(n != NULL);
 	g_assert(n->prefix != NULL);

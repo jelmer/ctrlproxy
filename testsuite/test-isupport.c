@@ -41,6 +41,7 @@ START_TEST(isupport_isprefix)
 	};
 	fail_if (!is_prefix('@', &ni));
 	fail_if (is_prefix('a', &ni));
+	fail_if (is_prefix(0, &ni));
 END_TEST
 
 START_TEST(isupport_ischannelname)
