@@ -951,7 +951,8 @@ static void handle_mode(struct network_state *s, const struct line *l)
 
 	if (l->args[arg] != NULL) {
 		network_state_log(LOG_WARNING, s, 
-						  "mode %s argument not consumed: %s", l->args[2], 
+						  "mode %s %s argument not consumed: %s", l->args[2], 
+						  l->args[1], 
 						  l->args[arg]);
 	}
 }
