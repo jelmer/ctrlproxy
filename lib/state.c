@@ -158,6 +158,24 @@ static void free_exceptlist(struct channel_state *c)
 	c->exceptlist = NULL;
 }
 
+static void free_banlist_entry(struct banlist_entry *be)
+{
+	g_free(be->hostmask);
+	g_free(be->by);
+	g_free(be);
+}
+
+static struct banlist_entry *find_banlist_entry(GList *entries, const char *hostmask)
+{
+	GList *gl;
+	for (gl = entries; gl; gl = gl->next) {
+		struct banlist_entry *be = gl->data;
+		if (!strcmp(be->hostmask, hostmask))
+			return be;
+	}
+	return NULL;
+}
+
 static void free_banlist(struct channel_state *c)
 {
 	GList *g;
@@ -166,10 +184,8 @@ static void free_banlist(struct channel_state *c)
 	g = c->banlist;
 	while(g) {
 		struct banlist_entry *be = g->data;
-		g_free(be->hostmask);
-		g_free(be->by);
 		g = g_list_remove(g, be);
-		g_free(be);
+		free_banlist_entry(be);
 	}
 	c->banlist = NULL;
 }
@@ -790,103 +806,146 @@ gboolean modes_change_mode(irc_modes_t modes, gboolean set, char newmode)
 	return TRUE;
 }
 
+static int channel_state_change_mode(struct network_state *s, struct network_nick *by, struct channel_state *c, gboolean set, char mode, char **args)
+{
+	struct network_info *info = &s->info;
+	int args_used = 0;
+
+	if (!is_channel_mode(info, mode)) {
+		network_state_log(LOG_WARNING, s, "Mode '%c' set on channel %s is not in the supported list of channel modes from the server", mode, c->name);
+	}
+
+	if (mode == 'b') { /* Ban */
+		struct banlist_entry *be;
+
+		if (set) {
+			be = g_new0(struct banlist_entry, 1);
+			be->time_set = time(NULL);
+			be->hostmask = g_strdup(args[args_used]);
+			args_used++;
+			be->by = g_strdup(by->nick);
+			c->banlist = g_list_append(c->banlist, be);
+		} else {
+			be = find_banlist_entry(c->banlist, args[args_used]);
+			args_used++;
+			if (be == NULL) {
+				network_state_log(LOG_WARNING, s, "Unable to remove nonpresent banlist entry '%s'", args[args_used]);
+				return 1;
+			}
+			c->banlist = g_list_remove(c->banlist, be);
+			free_banlist_entry(be);
+		}
+		return 1;
+	} else if (mode == 'l') { /* Limit */
+		modes_change_mode(c->modes, set, 'l');
+		if (set) {
+			if (!args[args_used]) {
+				network_state_log(LOG_WARNING, s, "Mode +l requires argument, but no argument found");
+				return -1;
+			}
+			c->limit = atol(args[args_used]);
+			args_used++;
+		} else {
+			c->limit = 0;
+		}
+		return 1;
+	} else if (mode == 'k') {
+		modes_change_mode(c->modes, set, 'k');
+		if (set) {
+			if (!args[args_used]) {
+				network_state_log(LOG_WARNING, s, "Mode k requires argument, but no argument found");
+				return -1;
+			}
+
+			g_free(c->key);
+			c->key = g_strdup(args[args_used]);
+			args_used++;
+		} else {
+			g_free(c->key);
+			c->key = NULL;
+		}
+		return 1;
+	} else if (is_prefix_mode(info, mode)) {
+		struct channel_nick *n = find_channel_nick(c, args[args_used]); args_used++;
+		if (!n) {
+			network_state_log(LOG_WARNING, s, "Can't set mode %c%c on nick %s on channel %s, because nick does not exist!", set?'+':'-', mode, args[args_used], c->name);
+			return -1;
+		}
+		if (set) {
+			if (!modes_set_mode(n->modes, mode)) {
+				network_state_log(LOG_WARNING, s, "Unable to add mode '%c' to modes %s on nick %s on channel %s", mode, n->modes, args[args_used], c->name);
+			}
+		} else {
+			if (!modes_unset_mode(n->modes, mode)) {
+				network_state_log(LOG_WARNING, s, "Unable to remove mode '%c' from modes %s on nick %s on channel %s", mode, n->modes, args[args_used], c->name);
+			}
+		}
+		return 1;
+	} else {
+		modes_change_mode(c->modes, set, mode);
+		return 0;
+	}
+}
+
 static void handle_mode(struct network_state *s, const struct line *l)
 {
 	/* Format:
 	 * MODE %|<nick>|<channel> [<mode> [<mode parameters>]] */
-	enum mode_type t = ADD;
+	gboolean t = TRUE;
 	int i;
+	int arg = 3;
 
 	/* Channel modes */
 	if (is_channelname(l->args[1], &s->info)) {
 		struct channel_state *c = find_channel(s, l->args[1]);
-		struct channel_nick *n;
-		int arg = 2;
+		struct network_nick *by;
+		int ret;
+		char *by_name;
 
 		if (c == NULL) {
 			network_state_log(LOG_WARNING, s, 
 				"Unable to change mode for unknown channel '%s'", l->args[1]);
 			return;
 		}
+
+		by_name = line_get_nick(l);
+		by = find_network_nick(s, by_name);
+		g_free(by_name);
 		
 		for(i = 0; l->args[2][i]; i++) {
 			switch(l->args[2][i]) {
-				case '+': t = ADD; break;
-				case '-': t = REMOVE; break;
-				case 'b': /* Ban */
-						  {
-							  struct banlist_entry *be = g_new0(struct banlist_entry, 1);
-							  be->time_set = time(NULL);
-							  be->hostmask = g_strdup(l->args[arg]);
-							  be->by = line_get_nick(l);
-							  c->banlist = g_list_append(c->banlist, be);
-						  }
-												
-						  arg++;
-						  break;
-				case 'l':
-					c->modes[(unsigned char)'l'] = t;
-				    if (t) {
-						if (!l->args[++arg]) {
-							network_state_log(LOG_WARNING, s, "Mode +l requires argument, but no argument found");
-							break;
-						}
-						c->limit = atol(l->args[arg]);
-					} else {
-						c->limit = 0;
-					}
-					break;
-				case 'k':
-					c->modes[(unsigned char)'k'] = t;
-					if (t) {
-						if (!l->args[++arg]) {
-							network_state_log(LOG_WARNING, s, "Mode k requires argument, but no argument found");
-							break;
-						}
-
-						g_free(c->key);
-						c->key = g_strdup(l->args[arg]);
-					} else {
-						g_free(c->key);
-						c->key = NULL;
-					}
-
-					break;
+				case '+': t = TRUE; break;
+				case '-': t = FALSE; break;
 				default:
-					  if (is_channel_mode(&s->info, l->args[2][i])) {
-						  c->modes[(unsigned char)l->args[2][i]] = t;
-					  } else if (is_user_mode(&s->info, l->args[2][i])) {
-							n = find_channel_nick(c, l->args[++arg]);
-							if (!n) {
-								network_state_log(LOG_WARNING, s, "Can't set mode %c%c on nick %s on channel %s, because nick does not exist!", t == ADD?'+':'-', l->args[2][i], l->args[arg], l->args[1]);
-								break;
-							}
-							if (t == ADD) {
-								if (!modes_set_mode(n->modes, l->args[2][i])) {
-									network_state_log(LOG_WARNING, s, "Unable to add mode '%c' to modes %s on nick %s on channel %s", l->args[2][i], n->modes, l->args[arg], l->args[1]);
-								}
-							} else {
-								if (!modes_unset_mode(n->modes, l->args[2][i])) {
-									network_state_log(LOG_WARNING, s, "Unable to remove mode '%c' from modes %s on nick %s on channel %s", l->args[2][i], n->modes, l->args[arg], l->args[1]);
-								}
-							}
-					  }
+					  ret = channel_state_change_mode(s, by, c, t, 
+													  l->args[2][i],
+													  l->args+arg*sizeof(char *));
+					  if (ret == -1)
+						  return;
+					  arg += ret;
 					  break;
 			}
 		}
+
 		/* User modes */
 	} else {
 		struct network_nick *nn = find_add_network_nick(s, l->args[1]);
 
 		for(i = 0; l->args[2][i]; i++) {
 			switch(l->args[2][i]) {
-				case '+': t = ADD;break;
-				case '-': t = REMOVE; break;
+				case '+': t = TRUE;break;
+				case '-': t = FALSE; break;
 				default:
 					  modes_change_mode(nn->modes, t, l->args[2][i]);
 					  break;
 			}
 		}
+	}
+
+	if (l->args[arg] != NULL) {
+		network_state_log(LOG_WARNING, s, 
+						  "mode %s argument not consumed: %s", l->args[2], 
+						  l->args[arg]);
 	}
 }
 
@@ -1169,4 +1228,8 @@ char *mode2string(irc_modes_t modes)
 	}
 }
 
+gboolean is_prefix_mode(const struct network_info *info, char mode)
+{
+	return get_prefix_by_mode(mode, info) != ' ';
+}
 

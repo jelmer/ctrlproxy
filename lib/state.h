@@ -140,5 +140,6 @@ G_MODULE_EXPORT gboolean is_channel_mode(struct network_info *info, char mode);
 G_MODULE_EXPORT gboolean is_user_mode(struct network_info *info, char mode);
 G_MODULE_EXPORT char get_mode_by_prefix(char prefix, const struct network_info *n);
 G_MODULE_EXPORT char get_prefix_by_mode(char mode, const struct network_info *n);
+G_MODULE_EXPORT gboolean is_prefix_mode(const struct network_info *info, char mode);
 
 #endif /* __CTRLPROXY_STATE_H__ */

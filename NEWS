@@ -67,6 +67,8 @@ Ctrlproxy 3.0.6 UNRELEASED
 	* Actually remove networks from disk when they have been removed in 
 	  the configuration.
 
+	* Parse removals of banlist entries correctly.
+
 Ctrlproxy 3.0.5 2007-12-07
 
   IMPROVEMENTS
