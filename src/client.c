@@ -123,3 +123,19 @@ struct irc_client *client_init(struct irc_network *n, GIOChannel *c, const char 
 
 	return client;
 }
+
+/**
+ * Send stat to a list of clients.
+ *
+ * @param clients List of clients
+ * @param s State to send
+ */
+void clients_send_state(GList *clients, struct network_state *s)
+{
+	GList *gl;
+
+	for (gl = clients; gl; gl = gl->next) {
+		struct irc_client *c = gl->data;
+		client_send_state(c, s);
+	}
+}

@@ -30,7 +30,7 @@ typedef gboolean irc_modes_t[255];
  * @brief State information
  */
 
-struct network;
+struct irc_network;
 struct irc_client;
 struct irc_line;
 
