@@ -27,7 +27,7 @@ static GHashTable *simple_backlog = NULL;
 
 static gboolean check_highlight(struct line *l, time_t t, void *userdata)
 {
-	struct client *c = userdata;
+	struct irc_client *c = userdata;
     int i;
 
 	if (g_strcasecmp(l->args[0], "PRIVMSG") != 0 &&
@@ -43,7 +43,7 @@ static gboolean check_highlight(struct line *l, time_t t, void *userdata)
 	return TRUE;
 }
 
-static void highlight_replicate(struct client *c)
+static void highlight_replicate(struct irc_client *c)
 {
 	struct linestack_marker *lm = g_hash_table_lookup(markers, c->network);
 
@@ -58,13 +58,13 @@ static void highlight_replicate(struct client *c)
 	g_hash_table_replace(markers, network_ref(c->network), linestack_get_marker(c->network->linestack));
 }
 
-static void none_replicate(struct client *c)
+static void none_replicate(struct irc_client *c)
 {
 	if (c->network->state)
 		client_send_state(c, c->network->state);
 }
 
-static void lastdisconnect_mark(struct client *c, void *userdata)
+static void lastdisconnect_mark(struct irc_client *c, void *userdata)
 {
 	if (!c->network)
 		return;
@@ -74,7 +74,7 @@ static void lastdisconnect_mark(struct client *c, void *userdata)
 							 linestack_get_marker(c->network->linestack));
 }
 
-static void lastdisconnect_replicate(struct client *c)
+static void lastdisconnect_replicate(struct irc_client *c)
 {
 	struct linestack_marker *lm = g_hash_table_lookup(lastdisconnect_backlog, c->network);
 	struct network_state *ns;
@@ -107,7 +107,7 @@ static gboolean log_data(struct irc_network *n, const struct line *l, enum data_
 	return TRUE;
 }
 
-static void simple_replicate(struct client *c)
+static void simple_replicate(struct irc_client *c)
 {
 	struct linestack_marker *m;
 	struct network_state *ns;

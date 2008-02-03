@@ -87,7 +87,7 @@ static gboolean log_data(struct irc_network *n, const struct line *l,
 	return TRUE;
 }
 
-static gboolean new_client(struct client *c, void *userdata) 
+static gboolean new_client(struct irc_client *c, void *userdata) 
 {
 	struct auto_away_data *d = userdata;
 

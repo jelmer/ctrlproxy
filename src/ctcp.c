@@ -173,14 +173,14 @@ void ctcp_register_handler(const struct ctcp_handler *h)
  * A CTCP request.
  */
 struct ctcp_request {
-	struct client *client;
+	struct irc_client *client;
 	char *destination;
 	char *command;
 };
 
 static GList *ctcp_request_queue = NULL;
 
-gboolean ctcp_process_client_request (struct client *c, struct line *l)
+gboolean ctcp_process_client_request (struct irc_client *c, struct line *l)
 {
 	struct ctcp_request *req;
 	char *command = get_ctcp_command(l->args[2]);
@@ -208,7 +208,7 @@ gboolean ctcp_process_client_request (struct client *c, struct line *l)
 	return TRUE;
 }
 
-gboolean ctcp_process_client_reply (struct client *c, struct line *l)
+gboolean ctcp_process_client_reply (struct irc_client *c, struct line *l)
 {
 	char *command = get_ctcp_command(l->args[2]);
 

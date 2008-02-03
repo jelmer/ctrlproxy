@@ -122,7 +122,7 @@ void del_client_filter(const char *name)
 	client_filters = del_filter_ex(client_filters, name); 
 }
 
-gboolean run_client_filter(struct client *c, const struct line *l, enum data_direction dir)
+gboolean run_client_filter(struct irc_client *c, const struct line *l, enum data_direction dir)
 {
 	GList *gl;
 	
@@ -183,7 +183,7 @@ void del_new_client_hook(const char *name)
 	}
 }
 
-gboolean new_client_hook_execute(struct client *c)
+gboolean new_client_hook_execute(struct irc_client *c)
 {
 	GList *l;
 	
@@ -226,7 +226,7 @@ void del_lose_client_hook(const char *name)
 	}
 }
 
-void lose_client_hook_execute(struct client *c)
+void lose_client_hook_execute(struct irc_client *c)
 {
 	GList *l;
 	

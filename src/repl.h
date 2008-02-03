@@ -30,7 +30,7 @@
  */
 struct replication_backend {
 	const char *name;
-	void (*replication_fn) (struct client *);
+	void (*replication_fn) (struct irc_client *);
 };
 
 void register_replication_backend(const struct replication_backend *);

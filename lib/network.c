@@ -264,7 +264,7 @@ static gboolean server_send_queue(GIOChannel *ch, GIOCondition cond,
 	return FALSE;
 }
 
-static gboolean network_send_line_direct(struct irc_network *s, struct client *c, 
+static gboolean network_send_line_direct(struct irc_network *s, struct irc_client *c, 
 										 const struct line *ol)
 {
 	struct line nl, *l;
@@ -317,7 +317,7 @@ static gboolean network_send_line_direct(struct irc_network *s, struct client *c
  * @param ol Line to send to the network
  * @param is_private Whether the line should not be broadcast to other clients
  */
-gboolean network_send_line(struct irc_network *s, struct client *c, 
+gboolean network_send_line(struct irc_network *s, struct irc_client *c, 
 						   const struct line *ol, gboolean is_private)
 {
 	struct line l;
@@ -779,12 +779,12 @@ void clients_send_args_ex(GList *clients, const char *hostmask, ...)
  * @param exception Client to which nothing should be sent. Can be NULL.
  */
 void clients_send(GList *clients, const struct line *l, 
-				  const struct client *exception) 
+				  const struct irc_client *exception) 
 {
 	GList *g;
 
 	for (g = clients; g; g = g->next) {
-		struct client *c = (struct client *)g->data;
+		struct irc_client *c = (struct irc_client *)g->data;
 		if (c != exception) {
 			if (run_client_filter(c, l, FROM_SERVER)) { 
 				client_send_line(c, l);

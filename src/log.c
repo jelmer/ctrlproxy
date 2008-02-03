@@ -31,7 +31,7 @@ gboolean no_log_timestamp = FALSE;
 enum log_level current_log_level = LOG_INFO;
 FILE *flog = NULL;
 
-static void log_entry(enum log_level level, const struct irc_network *n, const struct client *c, const char *data)
+static void log_entry(enum log_level level, const struct irc_network *n, const struct irc_client *c, const char *data)
 {
 	if (flog == NULL)
 		return;
@@ -72,7 +72,7 @@ void log_network_line(const struct irc_network *n, const struct line *l, gboolea
 	g_free(raw);
 }
 
-void log_client_line(const struct client *n, const struct line *l, gboolean incoming)
+void log_client_line(const struct irc_client *n, const struct line *l, gboolean incoming)
 {
 	char *raw;
 	if (current_log_level < LOG_DATA)
@@ -93,7 +93,7 @@ void handle_network_log(enum log_level level, const struct irc_network *n,
 						     msg, NULL);
 }
 
-void log_client(enum log_level level, const struct client *c, const char *fmt, ...)
+void log_client(enum log_level level, const struct irc_client *c, const char *fmt, ...)
 {
 	va_list ap;	
 	char *tmp; 

@@ -39,7 +39,7 @@
 
 struct global;
 struct irc_network;
-struct client;
+struct irc_client;
 struct line;
 struct linestack_context;
 
@@ -88,7 +88,7 @@ struct network_connection {
 				char *name;
 				gboolean not_disconnectable;
 				gboolean (*init) (struct irc_network *);
-				gboolean (*to_server) (struct irc_network *, struct client *c, const struct line *);
+				gboolean (*to_server) (struct irc_network *, struct irc_client *c, const struct line *);
 				void (*fini) (struct irc_network *);
 			} *ops;
 		} virtual;
@@ -140,9 +140,9 @@ G_MODULE_EXPORT struct irc_network *irc_network_new(gboolean (*process_from_serv
 G_MODULE_EXPORT gboolean connect_network(struct irc_network *);
 G_MODULE_EXPORT void network_select_next_server(struct irc_network *n);
 G_MODULE_EXPORT gboolean disconnect_network(struct irc_network *s);
-G_MODULE_EXPORT void clients_send(GList *clients, const struct line *, const struct client *exception);
+G_MODULE_EXPORT void clients_send(GList *clients, const struct line *, const struct irc_client *exception);
 G_MODULE_EXPORT void clients_send_args_ex(GList *clients, const char *hostmask, ...);
-G_MODULE_EXPORT gboolean network_send_line(struct irc_network *s, struct client *c, const struct line *, gboolean);
+G_MODULE_EXPORT gboolean network_send_line(struct irc_network *s, struct irc_client *c, const struct line *, gboolean);
 G_MODULE_EXPORT gboolean network_send_args(struct irc_network *s, ...);
 G_MODULE_EXPORT void register_virtual_network(struct virtual_network_ops *);
 G_MODULE_EXPORT struct irc_network *find_network(GList *gl, const char *);

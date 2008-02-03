@@ -201,7 +201,7 @@ START_TEST(test_msg)
 	struct network_state *ns1;
 	struct linestack_context *ctx;
 	struct linestack_marker *lm;
-	struct client *cl;
+	struct irc_client *cl;
 
 	GIOChannel *ch1, *ch2;
 	char *raw;
@@ -234,7 +234,7 @@ START_TEST(test_join_part)
 	struct network_state *ns1;
 	struct linestack_context *ctx;
 	struct linestack_marker *lm;
-	struct client *cl;
+	struct irc_client *cl;
 
 	GIOChannel *ch1, *ch2;
 	char *raw;
@@ -269,7 +269,7 @@ START_TEST(test_skip_msg)
 	struct network_state *ns1;
 	struct linestack_context *ctx;
 	struct linestack_marker *lm;
-	struct client *cl;
+	struct irc_client *cl;
 
 	GIOChannel *ch1, *ch2;
 	char *raw;
@@ -304,7 +304,7 @@ START_TEST(test_object_msg)
 	struct network_state *ns1;
 	struct linestack_context *ctx;
 	struct linestack_marker *lm;
-	struct client *cl;
+	struct irc_client *cl;
 
 	GIOChannel *ch1, *ch2;
 	char *raw;
@@ -342,7 +342,7 @@ START_TEST(test_object_open)
 	struct network_state *ns1;
 	struct linestack_context *ctx;
 	struct linestack_marker *lm;
-	struct client *cl;
+	struct irc_client *cl;
 
 	GIOChannel *ch1, *ch2;
 	char *raw;

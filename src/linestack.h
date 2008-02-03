@@ -27,7 +27,7 @@
 
 struct line;
 struct network;
-struct client;
+struct irc_client;
 #include <sys/time.h>
 #include <gmodule.h>
 
@@ -129,7 +129,7 @@ G_MODULE_EXPORT gboolean linestack_send (
 		struct linestack_context *,
 		struct linestack_marker *from,
 		struct linestack_marker *to, /* Can be NULL for 'now' */
-		struct client *, 
+		struct irc_client *, 
 		gboolean dataonly, 
 		gboolean timed,
 		int time_offset);
@@ -139,7 +139,7 @@ G_MODULE_EXPORT gboolean linestack_send_object (
 		const char *object,
 		struct linestack_marker *from,
 		struct linestack_marker *to, /* Can be NULL for 'now' */
-		struct client *,
+		struct irc_client *,
 		gboolean dataonly,
 		gboolean timed,
 		int time_offset);

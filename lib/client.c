@@ -47,7 +47,7 @@ static gboolean handle_client_send_queue(GIOChannel *c, GIOCondition cond,
  * @param c Client to send to
  * @param response Response number to send
  */
-gboolean client_send_response(struct client *c, int response, ...)
+gboolean client_send_response(struct irc_client *c, int response, ...)
 {
 	struct line *l;
 	gboolean ret;
@@ -81,7 +81,7 @@ gboolean client_send_response(struct client *c, int response, ...)
  * @param c Client to send to
  * @param hm Hostmask to use
  */
-gboolean client_send_args_ex(struct client *c, const char *hm, ...)
+gboolean client_send_args_ex(struct irc_client *c, const char *hm, ...)
 {
 	struct line *l;
 	gboolean ret;
@@ -105,7 +105,7 @@ gboolean client_send_args_ex(struct client *c, const char *hm, ...)
  * @param c Client to send to
  * @return whether the line was send correctly
  */
-gboolean client_send_args(struct client *c, ...)
+gboolean client_send_args(struct irc_client *c, ...)
 {
 	struct line *l;
 	gboolean ret;
@@ -130,7 +130,7 @@ gboolean client_send_args(struct client *c, ...)
  * @param l Line to send
  * @return Whether the line was sent successfully
  */
-gboolean client_send_line(struct client *c, const struct line *l)
+gboolean client_send_line(struct irc_client *c, const struct line *l)
 {
 	if (c->connected == FALSE)
 		return FALSE;
@@ -178,7 +178,7 @@ static void free_pending_line(void *_line, void *userdata)
  * @param c Client to disconnect.
  * @param reason Reason of the disconnect. Can be NULL.
  */
-void disconnect_client(struct client *c, const char *reason) 
+void disconnect_client(struct irc_client *c, const char *reason) 
 {
 	g_assert(c != NULL);
 	if (c->connected == FALSE)
@@ -218,7 +218,7 @@ void disconnect_client(struct client *c, const char *reason)
 	client_unref(c);
 }
 
-static void free_client(struct client *c)
+static void free_client(struct irc_client *c)
 {
 	g_assert(c->connected == FALSE);
 	g_free(c->charset);
@@ -238,7 +238,7 @@ static void free_client(struct client *c)
  *
  * @param c Client to send to.
  */
-void send_motd(struct client *c)
+void send_motd(struct irc_client *c)
 {
 	char **lines;
 	int i;
@@ -263,7 +263,7 @@ void send_motd(struct client *c)
 static gboolean handle_client_send_queue(GIOChannel *ioc, GIOCondition cond, 
 									  void *_client)
 {
-	struct client *c = _client;
+	struct irc_client *c = _client;
 
 	g_assert(ioc == c->incoming);
 
@@ -304,7 +304,7 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition cond,
 									  void *_client)
 {
 	gboolean ret = TRUE;
-	struct client *client = (struct client *)_client;
+	struct irc_client *client = (struct irc_client *)_client;
 	struct line *l;
 
 	g_assert(client);
@@ -365,7 +365,7 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition cond,
  * @param client Client to talk to.
  * @return whether the client was accepted or refused
  */
-static gboolean welcome_client(struct client *client)
+static gboolean welcome_client(struct irc_client *client)
 {
 	char *features, *tmp;
 
@@ -431,7 +431,7 @@ static gboolean welcome_client(struct client *client)
 	return TRUE;
 }
 
-static gboolean process_from_pending_client(struct client *client, 
+static gboolean process_from_pending_client(struct irc_client *client, 
 											const struct line *l)
 {
 	extern struct global *my_global;
@@ -496,7 +496,7 @@ static gboolean process_from_pending_client(struct client *client,
 static gboolean handle_pending_client_receive(GIOChannel *c, 
 											  GIOCondition cond, void *_client)
 {
-	struct client *client = (struct client *)_client;
+	struct irc_client *client = (struct irc_client *)_client;
 	struct line *l;
 
 	g_assert(client);
@@ -593,7 +593,7 @@ static gboolean handle_pending_client_receive(GIOChannel *c,
  *
  * @return Whether to keep event around
  */
-static gboolean client_ping(struct client *client)
+static gboolean client_ping(struct irc_client *client)
 {
 	g_assert(client != NULL);
 
@@ -611,14 +611,14 @@ static gboolean client_ping(struct client *client)
  * @param c Channel to talk over
  * @param desc Description of the client
  */
-struct client *irc_client_new(GIOChannel *c, const char *desc, gboolean (*process_from_client) (struct client *, const struct line *), struct irc_network *n)
+struct irc_client *irc_client_new(GIOChannel *c, const char *desc, gboolean (*process_from_client) (struct irc_client *, const struct line *), struct irc_network *n)
 {
-	struct client *client;
+	struct irc_client *client;
 
 	g_assert(c != NULL);
 	g_assert(desc != NULL);
 
-	client = g_new0(struct client, 1);
+	client = g_new0(struct irc_client, 1);
 	g_assert(client != NULL);
 	client->references = 1;
 	client->network = network_ref(n);
@@ -666,7 +666,7 @@ void kill_pending_clients(const char *reason)
  * @param name name of the character set to change to
  * @return whether changing the character set succeeded
  */
-gboolean client_set_charset(struct client *c, const char *name)
+gboolean client_set_charset(struct irc_client *c, const char *name)
 {
 	GIConv tmp;
 
@@ -708,17 +708,17 @@ gboolean client_set_charset(struct client *c, const char *name)
 	return TRUE;
 }
 
-const char *client_get_own_hostmask(struct client *c)
+const char *client_get_own_hostmask(struct irc_client *c)
 {
 	return c->state->me.hostmask;
 }
 
-const char *client_get_default_origin(struct client *c)
+const char *client_get_default_origin(struct irc_client *c)
 {
 	return c->network?c->network->info.name:get_my_hostname();
 }
 
-const char *client_get_default_target(struct client *c)
+const char *client_get_default_target(struct irc_client *c)
 {
 	if (c->state != NULL && c->state->me.nick != NULL) 
 		return c->state->me.nick;
@@ -726,14 +726,14 @@ const char *client_get_default_target(struct client *c)
 	return "*";
 }
 
-struct client *client_ref(struct client *c) 
+struct irc_client *client_ref(struct irc_client *c) 
 {
 	if (c != NULL)
 		c->references++;
 	return c;
 }
 
-void client_unref(struct client *c) 
+void client_unref(struct irc_client *c) 
 {
 	if (c == NULL)
 		return;

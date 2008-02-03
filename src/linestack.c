@@ -238,7 +238,7 @@ gboolean linestack_insert_line(struct linestack_context *ctx,
 
 struct send_line_privdata {
 	int time_offset;
-	struct client *client;
+	struct irc_client *client;
 };
 
 static gboolean send_line(struct line *l, time_t t, void *_privdata)
@@ -297,7 +297,7 @@ static gboolean send_line_dataonly(struct line *l, time_t t, void *_privdata)
 	return client_send_line(privdata->client, l);
 }
 
-gboolean linestack_send(struct linestack_context *ctx, struct linestack_marker *mf, struct linestack_marker *mt, struct client *c, gboolean dataonly, gboolean timed, int time_offset)
+gboolean linestack_send(struct linestack_context *ctx, struct linestack_marker *mf, struct linestack_marker *mt, struct irc_client *c, gboolean dataonly, gboolean timed, int time_offset)
 {
 	struct send_line_privdata privdata;
 	linestack_traverse_fn trav_fn;
@@ -320,7 +320,7 @@ gboolean linestack_send(struct linestack_context *ctx, struct linestack_marker *
 	return linestack_traverse(ctx, mf, mt, trav_fn, &privdata);
 }
 
-gboolean linestack_send_object(struct linestack_context *ctx, const char *obj, struct linestack_marker *mf, struct linestack_marker *mt, struct client *c, gboolean dataonly, gboolean timed, int time_offset)
+gboolean linestack_send_object(struct linestack_context *ctx, const char *obj, struct linestack_marker *mf, struct linestack_marker *mt, struct irc_client *c, gboolean dataonly, gboolean timed, int time_offset)
 {
 	struct send_line_privdata privdata;
 	linestack_traverse_fn trav_fn;

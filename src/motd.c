@@ -23,7 +23,7 @@
 #include <stdio.h>
 #include "irc.h"
 
-char ** get_motd_lines(struct client *c)
+char ** get_motd_lines(struct irc_client *c)
 {
 	char **lines = NULL;
 	size_t nrlines = 0;

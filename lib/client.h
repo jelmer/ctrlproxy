@@ -34,7 +34,7 @@
 /**
  * Connection with a client.
  */
-struct client {
+struct irc_client {
 	int references;
 	struct irc_network *network;
 	char *description;
@@ -55,28 +55,28 @@ struct client {
 	gboolean exit_on_close;
 	gboolean connected;
 	struct network_state *state;
-	gboolean (*process_from_client) (struct client *, const struct line *);
+	gboolean (*process_from_client) (struct irc_client *, const struct line *);
 };
 
 /**
  * Disconnect a client.
  */
-G_MODULE_EXPORT void disconnect_client(struct client *c, const char *reason);
+G_MODULE_EXPORT void disconnect_client(struct irc_client *c, const char *reason);
 
-G_MODULE_EXPORT G_GNUC_NULL_TERMINATED gboolean client_send_args(struct client *c, ...);
-G_MODULE_EXPORT G_GNUC_NULL_TERMINATED gboolean client_send_args_ex(struct client *c, 
+G_MODULE_EXPORT G_GNUC_NULL_TERMINATED gboolean client_send_args(struct irc_client *c, ...);
+G_MODULE_EXPORT G_GNUC_NULL_TERMINATED gboolean client_send_args_ex(struct irc_client *c, 
 											 const char *hm, ...);
-G_MODULE_EXPORT G_GNUC_NULL_TERMINATED gboolean client_send_response(struct client *c, 
+G_MODULE_EXPORT G_GNUC_NULL_TERMINATED gboolean client_send_response(struct irc_client *c, 
 											  int response, ...);
-G_MODULE_EXPORT gboolean client_send_line(struct client *c, 
+G_MODULE_EXPORT gboolean client_send_line(struct irc_client *c, 
 										  const struct line *);
-G_MODULE_EXPORT gboolean client_set_charset(struct client *c, const char *name);
-G_MODULE_EXPORT const char *client_get_default_origin(struct client *c);
-G_MODULE_EXPORT const char *client_get_default_target(struct client *c);
-G_MODULE_EXPORT const char *client_get_own_hostmask(struct client *c);
+G_MODULE_EXPORT gboolean client_set_charset(struct irc_client *c, const char *name);
+G_MODULE_EXPORT const char *client_get_default_origin(struct irc_client *c);
+G_MODULE_EXPORT const char *client_get_default_target(struct irc_client *c);
+G_MODULE_EXPORT const char *client_get_own_hostmask(struct irc_client *c);
 
-G_MODULE_EXPORT struct client *client_ref(struct client *c);
-G_MODULE_EXPORT void client_unref(struct client *c);
-G_MODULE_EXPORT struct client *irc_client_new(GIOChannel *c, const char *desc, gboolean (*process_from_client) (struct client *, const struct line *), struct irc_network *n);
+G_MODULE_EXPORT struct irc_client *client_ref(struct irc_client *c);
+G_MODULE_EXPORT void client_unref(struct irc_client *c);
+G_MODULE_EXPORT struct irc_client *irc_client_new(GIOChannel *c, const char *desc, gboolean (*process_from_client) (struct irc_client *, const struct line *), struct irc_network *n);
 
 #endif /* __CTRLPROXY_CLIENT_H__ */

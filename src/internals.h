@@ -61,7 +61,7 @@ void network_nick_set_data(struct network_nick *n, const char *nick, const char 
 gboolean init_plugins(const char *dir);
 
 /* motd.c */
-char **get_motd_lines(struct client *);
+char **get_motd_lines(struct irc_client *);
 
 /* network.c */
 G_MODULE_EXPORT struct irc_network *load_network(struct global *global, struct network_config *sc);
@@ -74,9 +74,9 @@ G_MODULE_EXPORT void register_new_network_notify(struct global *, new_network_no
 /* hooks.c */
 void server_disconnected_hook_execute(struct irc_network *);
 void server_connected_hook_execute(struct irc_network *);
-gboolean new_client_hook_execute(struct client *c);
-void lose_client_hook_execute(struct client *c);
-gboolean run_client_filter(struct client *c, const struct line *l, enum data_direction dir);
+gboolean new_client_hook_execute(struct irc_client *c);
+void lose_client_hook_execute(struct irc_client *c);
+gboolean run_client_filter(struct irc_client *c, const struct line *l, enum data_direction dir);
 gboolean run_server_filter(struct irc_network *s, const struct line *l, enum data_direction dir);
 gboolean run_log_filter(struct irc_network *s, const struct line *l, enum data_direction dir);
 gboolean run_replication_filter(struct irc_network *s, const struct line *l, enum data_direction dir);
@@ -89,7 +89,7 @@ gboolean run_replication_filter(struct irc_network *s, const struct line *l, enu
  * @param io IO Channel to use for communication.
  * @param desc Description of the client.
  */
-G_MODULE_EXPORT G_GNUC_MALLOC struct client *client_init(
+G_MODULE_EXPORT G_GNUC_MALLOC struct irc_client *client_init(
 										   struct irc_network *net, 
 										   GIOChannel *io, 
 										   const char *desc);
@@ -97,17 +97,17 @@ G_MODULE_EXPORT G_GNUC_MALLOC struct client *client_init(
 /* log.c */
 gboolean init_log(const char *file);
 void log_network_line(const struct irc_network *n, const struct line *l, gboolean incoming);
-void log_client_line(const struct client *c, const struct line *l, gboolean incoming);
+void log_client_line(const struct irc_client *c, const struct line *l, gboolean incoming);
 void handle_network_log(enum log_level level, const struct irc_network *n, 
 						const char *msg);
 
 /* redirect.c */
-void redirect_record(const struct irc_network *n, const struct client *c, const struct line *l);
+void redirect_record(const struct irc_network *n, const struct irc_client *c, const struct line *l);
 gboolean redirect_response(struct irc_network *n, const struct line *l);
 void redirect_clear(const struct irc_network *n);
 
 /* cache.c */
-gboolean client_try_cache(struct client *c, struct line *l);
+gboolean client_try_cache(struct irc_client *c, struct line *l);
 
 /* linestack.c */
 void init_linestack(struct ctrlproxy_config *);
@@ -118,7 +118,7 @@ void channel_update_config(struct channel_state *ns, struct channel_config *nc);
 void global_update_config(struct global *my_global);
 
 /* repl.c */
-void client_replicate(struct client *);
+void client_replicate(struct irc_client *);
 
 gboolean init_replication(void);
 
@@ -137,8 +137,8 @@ void nickserv_identify_me(struct irc_network *network, char *nick);
 
 /* admin.c */
 void init_admin(void);
-gboolean admin_process_command(struct client *c, struct line *l, int cmdoffset);
-void admin_log(enum log_level level, const struct irc_network *n, const struct client *c, const char *data);
+gboolean admin_process_command(struct irc_client *c, struct line *l, int cmdoffset);
+void admin_log(enum log_level level, const struct irc_network *n, const struct irc_client *c, const char *data);
 gboolean start_admin_socket(struct global *global);
 gboolean stop_admin_socket(struct global *global);
 gboolean admin_socket_prompt(const char *config_dir);

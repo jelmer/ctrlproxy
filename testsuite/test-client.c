@@ -38,7 +38,7 @@ END_TEST
 
 START_TEST(test_network_first)
 	GIOChannel *ch1, *ch2;
-	struct client *c;
+	struct irc_client *c;
 	char *raw;
 	g_io_channel_pair(&ch1, &ch2);
 	c = client_init(NULL, ch1, "desc");
@@ -54,7 +54,7 @@ END_TEST
 
 START_TEST(test_login)
 	GIOChannel *ch1, *ch2;
-	struct client *c;
+	struct irc_client *c;
 	struct global *g = TORTURE_GLOBAL;
 	struct irc_network n = { 
 		.info.name = "test",
@@ -73,7 +73,7 @@ END_TEST
 
 START_TEST(test_read_nonutf8)
 	GIOChannel *ch1, *ch2;
-	struct client *c;
+	struct irc_client *c;
 	struct global *g = TORTURE_GLOBAL;
 	struct irc_network n = { 
 		.info.name = "test",
@@ -96,7 +96,7 @@ END_TEST
 
 START_TEST(test_disconnect)
 	GIOChannel *ch1, *ch2;
-	struct client *client;
+	struct irc_client *client;
 	char *raw;
 	GError *error = NULL;
 	gsize length;
@@ -110,7 +110,7 @@ END_TEST
 
 START_TEST(test_login_nonetwork)
 	GIOChannel *ch1, *ch2;
-	struct client *c;
+	struct irc_client *c;
 	g_io_channel_pair(&ch1, &ch2);
 	c = client_init(NULL, ch1, "desc");
 	g_io_channel_unref(ch1);

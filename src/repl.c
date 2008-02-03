@@ -21,8 +21,8 @@
 #include "irc.h"
 #include "repl.h"
 
-void client_send_nameslist(struct client *client, struct channel_state *ch);
-static void client_send_channel_state(struct client *c, 
+void client_send_nameslist(struct irc_client *client, struct channel_state *ch);
+static void client_send_channel_state(struct irc_client *c, 
 									  struct channel_state *ch)
 {
 	g_assert(c != NULL);
@@ -47,7 +47,7 @@ static void client_send_channel_state(struct client *c,
 	client_send_nameslist(c, ch);
 }
 
-gboolean client_send_channel_state_diff(struct client *client, 
+gboolean client_send_channel_state_diff(struct irc_client *client, 
 										struct channel_state *old_state,
 										struct channel_state *new_state)
 {
@@ -101,7 +101,7 @@ gboolean client_send_channel_state_diff(struct client *client,
  * @param state State to send
  * @return Whether the state was sent correctly
  */
-gboolean client_send_state_diff(struct client *client, struct network_state *new_state)
+gboolean client_send_state_diff(struct irc_client *client, struct network_state *new_state)
 {
 	struct network_state *old_state = client->network->state;
 	GList *gl;
@@ -142,7 +142,7 @@ gboolean client_send_state_diff(struct client *client, struct network_state *new
  * @param c Client to send to
  * @param state State to send
  */
-gboolean client_send_state(struct client *c, struct network_state *state)
+gboolean client_send_state(struct irc_client *c, struct network_state *state)
 {
 	GList *cl;
 	struct channel_state *ch;
@@ -200,7 +200,7 @@ struct replication_backend *repl_find_backend(const char *name)
  *
  * @param client Client to send data to.
  */
-void client_replicate(struct client *client)
+void client_replicate(struct irc_client *client)
 {
 	const char *bn = client->network->global->config->replication;
 	struct replication_backend *backend;

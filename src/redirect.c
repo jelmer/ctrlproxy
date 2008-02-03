@@ -27,7 +27,7 @@
 struct query_stack {
 	const struct query *query;
 	const struct irc_network *network;
-	struct client *client;	
+	struct irc_client *client;	
 	time_t time;
 	struct query_stack *next;
 };
@@ -44,13 +44,13 @@ struct query {
 	int errors[20];
 	/* Should add this query to the stack. return TRUE if this has 
 	 * been done successfully, FALSE otherwise */
-	int (*handle) (const struct line *, const struct irc_network *n, struct client *c, struct query *);
+	int (*handle) (const struct line *, const struct irc_network *n, struct irc_client *c, struct query *);
 };
 
 static int handle_default(const struct line *, const struct irc_network *n, 
-						  struct client *c, struct query *);
+						  struct irc_client *c, struct query *);
 static int handle_topic(const struct line *, const struct irc_network *n, 
-						struct client *c, struct query *);
+						struct irc_client *c, struct query *);
 
 static struct query queries[] = {
 /* Commands that get a one-client reply: 
@@ -557,7 +557,7 @@ static struct query *find_query(char *name)
 gboolean redirect_response(struct irc_network *network, const struct line *l)
 {
 	struct query_stack *s, *p = NULL;
-	const struct client *c = NULL;
+	const struct irc_client *c = NULL;
 	int n;
 	int i;
 	
@@ -646,7 +646,7 @@ void redirect_clear(const struct irc_network *net)
 	}
 }
 
-void redirect_record(const struct irc_network *n, struct client *c, 
+void redirect_record(const struct irc_network *n, struct irc_client *c, 
 					 const struct line *l)
 {
 	struct query *q;
@@ -673,7 +673,7 @@ void redirect_record(const struct irc_network *n, struct client *c,
 }
 
 static int handle_default(const struct line *l, const struct irc_network *n, 
-						  struct client *c, struct query *q)
+						  struct irc_client *c, struct query *q)
 {
 	struct query_stack *s = g_new(struct query_stack, 1);
 	g_assert(l != NULL);
@@ -688,7 +688,7 @@ static int handle_default(const struct line *l, const struct irc_network *n,
 	return 1;
 }
 
-static int handle_topic(const struct line *l, const struct irc_network *n, struct client *c, struct query *q)
+static int handle_topic(const struct line *l, const struct irc_network *n, struct irc_client *c, struct query *q)
 {
 	if (l->args[2] != NULL)
 		return 0;

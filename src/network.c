@@ -75,7 +75,7 @@ static void clients_send_state(GList *clients, struct network_state *s)
 	GList *gl;
 
 	for (gl = clients; gl; gl = gl->next) {
-		struct client *c = gl->data;
+		struct irc_client *c = gl->data;
 		client_send_state(c, s);
 	}
 }
@@ -378,7 +378,7 @@ void unload_network(struct irc_network *s)
 	l = s->clients;
 
 	while(l) {
-		struct client *c = l->data;
+		struct irc_client *c = l->data;
 		l = l->next;
 		disconnect_client(c, "Server exiting");
 	}

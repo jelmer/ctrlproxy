@@ -37,18 +37,18 @@ G_MODULE_EXPORT void del_log_filter(const char *name);
 G_MODULE_EXPORT void add_replication_filter(const char *name, server_filter_function, void *userdata, int priority);
 G_MODULE_EXPORT void del_replication_filter(const char *name);
 
-typedef gboolean (*client_filter_function) (struct client *c, const struct line *, enum data_direction, void *userdata);
+typedef gboolean (*client_filter_function) (struct irc_client *c, const struct line *, enum data_direction, void *userdata);
 G_MODULE_EXPORT void add_client_filter(const char *name, client_filter_function, void *userdata, int priority);
 G_MODULE_EXPORT void del_client_filter(const char *name);
 
 G_MODULE_EXPORT void add_server_filter(const char *name, server_filter_function, void *userdata, int priority);
 G_MODULE_EXPORT void del_server_filter(const char *name);
 
-typedef gboolean (*new_client_hook) (struct client *, void *userdata);
+typedef gboolean (*new_client_hook) (struct irc_client *, void *userdata);
 G_MODULE_EXPORT void add_new_client_hook(const char *name, new_client_hook h, void *userdata);
 G_MODULE_EXPORT void del_new_client_hook(const char *name);
 
-typedef void (*lose_client_hook) (struct client *, void *userdata);
+typedef void (*lose_client_hook) (struct irc_client *, void *userdata);
 G_MODULE_EXPORT void add_lose_client_hook(const char *name, lose_client_hook h, void *userdata);
 G_MODULE_EXPORT void del_lose_client_hook(const char *name);
 

@@ -42,7 +42,7 @@
  * @param l Line received
  * @return Whether the line was processed correctly
  */
-static gboolean process_from_client(struct client *c, const struct line *_l)
+static gboolean process_from_client(struct irc_client *c, const struct line *_l)
 {
 	struct line ol, *l;
 	g_assert(c != NULL);
@@ -114,9 +114,9 @@ static gboolean process_from_client(struct client *c, const struct line *_l)
 	return TRUE;
 }
 
-struct client *client_init(struct irc_network *n, GIOChannel *c, const char *desc)
+struct irc_client *client_init(struct irc_network *n, GIOChannel *c, const char *desc)
 {
-	struct client *client = irc_client_new(c, desc, process_from_client, n);
+	struct irc_client *client = irc_client_new(c, desc, process_from_client, n);
 
 	if (n != NULL && n->global != NULL)
 		client_set_charset(client, n->global->config->client_charset);

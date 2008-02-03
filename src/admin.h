@@ -18,7 +18,7 @@ typedef void (*admin_command_handler) (admin_handle, char **, void *userdata);
 struct admin_handle
 {
 	struct global *global;
-	struct client *client;
+	struct irc_client *client;
 	struct irc_network *network;
 	void *user_data;
 	void (*send_fn) (struct admin_handle *, const char *data);
@@ -46,7 +46,7 @@ G_MODULE_EXPORT void register_admin_command(const struct admin_command *cmd);
  */
 G_MODULE_EXPORT void admin_out(admin_handle h, const char *fmt, ...);
 
-G_MODULE_EXPORT struct client *admin_get_client(admin_handle h);
+G_MODULE_EXPORT struct irc_client *admin_get_client(admin_handle h);
 
 G_MODULE_EXPORT struct irc_network *admin_get_network(admin_handle h);
 

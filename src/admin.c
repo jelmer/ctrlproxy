@@ -57,7 +57,7 @@ static char *admin_hostmask(struct irc_network *n)
  */
 static void privmsg_admin_out(admin_handle h, const char *data)
 {
-	struct client *c = h->client;
+	struct irc_client *c = h->client;
 	char *nick = c->state->me.nick;
 	char *hostmask;
 
@@ -77,7 +77,7 @@ static void privmsg_admin_out(admin_handle h, const char *data)
  */
 static void network_admin_out(admin_handle h, const char *data)
 {
-	struct client *c = h->client;
+	struct irc_client *c = h->client;
 	char *hostmask;
 
 	hostmask = admin_hostmask(c->network);
@@ -121,7 +121,7 @@ static void cmd_help(admin_handle h, char **args, void *userdata)
  * @param h Admin context handle
  * @return Client, or NULL if no client is associated.
  */
-struct client *admin_get_client(admin_handle h)
+struct irc_client *admin_get_client(admin_handle h)
 {
 	return h->client;
 }
@@ -433,7 +433,7 @@ static void cmd_list_networks(admin_handle h, char **args, void *userdata)
 
 static void cmd_detach(admin_handle h, char **args, void *userdata)
 {
-	struct client *c = admin_get_client(h);
+	struct irc_client *c = admin_get_client(h);
 
 	if (c == NULL) {
 		admin_out(h, "No client set");
@@ -586,7 +586,7 @@ static gboolean log_level_set(admin_handle h, const char *value)
 
 static void cmd_charset(admin_handle h, char **args, void *userdata)
 {
-	struct client *c;
+	struct irc_client *c;
 
 	if (args[1] == NULL) {
 		admin_out(h, "No charset specified");
@@ -657,7 +657,7 @@ gboolean process_cmd(admin_handle h, const char *cmd)
 	return TRUE;
 }
 
-gboolean admin_process_command(struct client *c, struct line *l, int cmdoffset)
+gboolean admin_process_command(struct irc_client *c, struct line *l, int cmdoffset)
 {
 	int i;
 	char *tmp;
@@ -711,7 +711,7 @@ static gboolean admin_net_init(struct irc_network *n)
 	return TRUE;
 }
 
-static gboolean admin_to_server (struct irc_network *n, struct client *c, const struct line *l)
+static gboolean admin_to_server (struct irc_network *n, struct irc_client *c, const struct line *l)
 {
 	if (!g_strcasecmp(l->args[0], "PRIVMSG") ||
 		!g_strcasecmp(l->args[0], "NOTICE")) {
@@ -856,7 +856,7 @@ struct virtual_network_ops admin_network = {
 };
 
 
-void admin_log(enum log_level level, const struct irc_network *n, const struct client *c, const char *data)
+void admin_log(enum log_level level, const struct irc_network *n, const struct irc_client *c, const char *data)
 {
 	extern struct global *my_global;
 	struct line *l;
