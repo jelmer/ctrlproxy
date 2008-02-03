@@ -107,7 +107,7 @@ static gboolean channel_state_equal(const struct channel_state *channel1, const 
 		   list_equal(channel1->exceptlist, channel2->exceptlist, (GEqualFunc)str_equal);
 }
 
-static gboolean network_info_equal(const struct network_info *info1, const struct network_info *info2)
+static gboolean network_info_equal(const struct irc_network_info *info1, const struct irc_network_info *info2)
 {
 	null_equal(info1, info2);
 

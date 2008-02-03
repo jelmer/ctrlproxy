@@ -171,7 +171,7 @@ int main(int argc, char **argv)
 	GOptionContext *pc;
 	char *line;
 	const struct linestack_ops *ops;
-	struct network_info *info;
+	struct irc_network_info *info;
 	char *config_dir = NULL;
 	char *backend = NULL;
 	GOptionEntry options[] = {
@@ -190,7 +190,7 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
-	info = g_new0(struct network_info, 1);
+	info = g_new0(struct irc_network_info, 1);
 
 	state = network_state_init("nick", "username", "hostname");
 

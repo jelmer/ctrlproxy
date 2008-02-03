@@ -29,8 +29,8 @@
  * @param remote_info Remote information
  * @return Whether updating went ok.
  */
-static gboolean network_update_isupport(struct network_info *net_info,
-										struct network_info *remote_info)
+static gboolean network_update_isupport(struct irc_network_info *net_info,
+										struct irc_network_info *remote_info)
 {
 	if (remote_info->name != NULL) {
 		g_free(net_info->name);

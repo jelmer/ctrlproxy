@@ -19,14 +19,14 @@
 
 #include "internals.h"
 
-void network_info_init(struct network_info *info)
+void network_info_init(struct irc_network_info *info)
 {
-	memset(info, 0, sizeof(struct network_info));
+	memset(info, 0, sizeof(struct irc_network_info));
 	info->prefix = g_strdup(DEFAULT_PREFIX);
 	info->chantypes = g_strdup(DEFAULT_CHANTYPES);
 }
 
-void free_network_info(struct network_info *info)
+void free_network_info(struct irc_network_info *info)
 {
 	g_free(info->prefix);
 	g_free(info->chantypes);
@@ -45,7 +45,7 @@ void free_network_info(struct network_info *info)
 	g_free(info->extban_supported);
 }
 
-char *network_info_string(struct network_info *info)
+char *network_info_string(struct irc_network_info *info)
 {
 	char *ret = NULL;
 	GList *fs = NULL, *gl;
@@ -262,7 +262,7 @@ char *network_info_string(struct network_info *info)
 	return ret;
 }
 
-void network_info_parse(struct network_info *info, const char *parameter)
+void network_info_parse(struct irc_network_info *info, const char *parameter)
 {
 	char *sep;
 	char *key, *val;
@@ -465,7 +465,7 @@ void handle_005(struct network_state *s, const struct irc_line *l)
 		network_info_parse(&s->info, l->args[i]);
 }
 
-int irccmp(const struct network_info *n, const char *a, const char *b)
+int irccmp(const struct irc_network_info *n, const char *a, const char *b)
 {
 	switch(n != NULL?n->casemapping:CASEMAP_UNKNOWN) {
 	default:
@@ -481,7 +481,7 @@ int irccmp(const struct network_info *n, const char *a, const char *b)
 	return 0;
 }
 
-gboolean is_channelname(const char *name, const struct network_info *n)
+gboolean is_channelname(const char *name, const struct irc_network_info *n)
 {
 	g_assert(n != NULL);
 	g_assert(n->chantypes != NULL);
@@ -494,7 +494,7 @@ gboolean is_channelname(const char *name, const struct network_info *n)
 	return FALSE;
 }
 
-gboolean is_prefix(char p, const struct network_info *n)
+gboolean is_prefix(char p, const struct irc_network_info *n)
 {
 	const char *pref_end;
 
@@ -511,25 +511,25 @@ gboolean is_prefix(char p, const struct network_info *n)
 	return FALSE;
 }
 
-const char *get_charset(const struct network_info *n)
+const char *get_charset(const struct irc_network_info *n)
 {
 	g_assert(n != NULL);
 	return n->charset;
 }
 
-gboolean is_channel_mode(struct network_info *info, char mode)
+gboolean is_channel_mode(struct irc_network_info *info, char mode)
 {
 	return (info->supported_channel_modes != NULL && 
 		    strchr(info->supported_channel_modes, mode) != NULL);
 }
 
-gboolean is_user_mode(struct network_info *info, char mode)
+gboolean is_user_mode(struct irc_network_info *info, char mode)
 {
 	return (info->supported_user_modes != NULL && 
 		    strchr(info->supported_user_modes, mode) != NULL);
 }
 
-char get_prefix_from_modes(struct network_info *info, irc_modes_t modes)
+char get_prefix_from_modes(struct irc_network_info *info, irc_modes_t modes)
 {
 	int i;
 	char *pref_end;
@@ -553,7 +553,7 @@ char get_prefix_from_modes(struct network_info *info, irc_modes_t modes)
 	return 0;
 }
 
-char get_mode_by_prefix(char prefix, const struct network_info *n)
+char get_mode_by_prefix(char prefix, const struct irc_network_info *n)
 {
 	int i;
 	char *pref_end;
@@ -578,7 +578,7 @@ char get_mode_by_prefix(char prefix, const struct network_info *n)
 	return ' ';
 }
 
-char get_prefix_by_mode(char mode, const struct network_info *n)
+char get_prefix_by_mode(char mode, const struct irc_network_info *n)
 {
 	int i;
 	char *pref_end;
@@ -607,7 +607,7 @@ const static char *default_chanmodes[] = {
 	"beI", "k" , "l" , "imnpsta" 
 };
 
-int network_chanmode_type(char m, struct network_info *n)
+int network_chanmode_type(char m, struct irc_network_info *n)
 {
 	int i;
 	for (i = 0; i < 4; i++) {

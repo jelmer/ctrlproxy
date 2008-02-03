@@ -808,7 +808,7 @@ gboolean modes_change_mode(irc_modes_t modes, gboolean set, char newmode)
 
 static int channel_state_change_mode(struct network_state *s, struct network_nick *by, struct channel_state *c, gboolean set, char mode, const char *opt_arg)
 {
-	struct network_info *info = &s->info;
+	struct irc_network_info *info = &s->info;
 
 	if (!is_channel_mode(info, mode)) {
 		network_state_log(LOG_WARNING, s, "Mode '%c' set on channel %s is not in the supported list of channel modes from the server", mode, c->name);
@@ -1236,7 +1236,7 @@ char *mode2string(irc_modes_t modes)
 	}
 }
 
-gboolean is_prefix_mode(const struct network_info *info, char mode)
+gboolean is_prefix_mode(const struct irc_network_info *info, char mode)
 {
 	return get_prefix_by_mode(mode, info) != ' ';
 }

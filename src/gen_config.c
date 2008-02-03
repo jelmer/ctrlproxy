@@ -19,7 +19,7 @@
 
 #include "internals.h"
 
-static struct channel_config *config_find_channel(struct network_info *ni, struct network_config *nc, const char *name)
+static struct channel_config *config_find_channel(struct irc_network_info *ni, struct network_config *nc, const char *name)
 {
 	GList *gl;
 

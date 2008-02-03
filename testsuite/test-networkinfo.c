@@ -26,7 +26,7 @@
 #include "torture.h"
 
 START_TEST(test_is_prefix)
-	struct network_info info;
+	struct irc_network_info info;
 	memset(&info, 0, sizeof(info));
 	network_info_parse(&info, "PREFIX=(qaohv)~&@%+");
 	fail_unless(is_prefix('&', &info));
@@ -36,7 +36,7 @@ START_TEST(test_is_prefix)
 END_TEST
 
 START_TEST(test_get_prefix_by_mode)
-	struct network_info info;
+	struct irc_network_info info;
 	memset(&info, 0, sizeof(info));
 	network_info_parse(&info, "PREFIX=(qaohv)~&@%+");
 	fail_unless(get_prefix_by_mode('a', &info) == '&');
@@ -48,14 +48,14 @@ START_TEST(test_get_prefix_by_mode)
 END_TEST
 
 START_TEST(test_get_charset)
-	struct network_info info;
+	struct irc_network_info info;
 	memset(&info, 0, sizeof(info));
 	network_info_parse(&info, "CHARSET=ascii");
 	fail_unless(!strcmp(get_charset(&info), "ascii"));
 END_TEST
 
 START_TEST(test_get_charset_default)
-	struct network_info info;
+	struct irc_network_info info;
 	network_info_init(&info);
 	fail_unless(get_charset(&info) == NULL);
 END_TEST
@@ -69,7 +69,7 @@ START_TEST(test_chanmode_type_default)
 END_TEST
 
 START_TEST(test_chanmode_type_lookup)
-	struct network_info ni;
+	struct irc_network_info ni;
 	memset(&ni, 0, sizeof(ni));
 	network_info_parse(&ni, "CHANMODES=b,k,l,ciLmMnOprRst");
 	fail_unless(network_chanmode_type('I', &ni) == 3);

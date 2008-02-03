@@ -111,7 +111,7 @@ struct network_state
 	GList *channels;
 	GList *nicks;
 	struct network_nick me;
-	struct network_info info;
+	struct irc_network_info info;
 	gboolean is_away;
 };
 
@@ -135,11 +135,11 @@ G_MODULE_EXPORT void string2mode(char *modestring, irc_modes_t modes);
 G_MODULE_EXPORT gboolean modes_change_mode(irc_modes_t modes, gboolean set, char newmode);
 #define modes_set_mode(modes, newmode) modes_change_mode(modes, TRUE, newmode)
 #define modes_unset_mode(modes, newmode) modes_change_mode(modes, FALSE, newmode)
-G_MODULE_EXPORT char get_prefix_from_modes(struct network_info *info, irc_modes_t modes);
-G_MODULE_EXPORT gboolean is_channel_mode(struct network_info *info, char mode);
-G_MODULE_EXPORT gboolean is_user_mode(struct network_info *info, char mode);
-G_MODULE_EXPORT char get_mode_by_prefix(char prefix, const struct network_info *n);
-G_MODULE_EXPORT char get_prefix_by_mode(char mode, const struct network_info *n);
-G_MODULE_EXPORT gboolean is_prefix_mode(const struct network_info *info, char mode);
+G_MODULE_EXPORT char get_prefix_from_modes(struct irc_network_info *info, irc_modes_t modes);
+G_MODULE_EXPORT gboolean is_channel_mode(struct irc_network_info *info, char mode);
+G_MODULE_EXPORT gboolean is_user_mode(struct irc_network_info *info, char mode);
+G_MODULE_EXPORT char get_mode_by_prefix(char prefix, const struct irc_network_info *n);
+G_MODULE_EXPORT char get_prefix_by_mode(char mode, const struct irc_network_info *n);
+G_MODULE_EXPORT gboolean is_prefix_mode(const struct irc_network_info *info, char mode);
 
 #endif /* __CTRLPROXY_STATE_H__ */
