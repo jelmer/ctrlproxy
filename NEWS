@@ -69,6 +69,13 @@ Ctrlproxy 3.0.6 UNRELEASED
 
 	* Parse removals of banlist entries correctly.
 
+	* Correctly generate prefix when replicating users that have more 
+	  than one mode set. (Martin Meredith)
+
+  INTERNALS
+
+    * A simple, single API is now used for managing modes.
+
 Ctrlproxy 3.0.5 2007-12-07
 
   IMPROVEMENTS
