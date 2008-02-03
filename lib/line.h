@@ -45,7 +45,7 @@ enum has_endcolon { COLON_UNKNOWN = 0, WITH_COLON = 1, WITHOUT_COLON = 2 } ;
 /**
  * Line information.
  */
-struct line {
+struct irc_line {
 	char *origin;
 	char **args; /* NULL terminated */
 	size_t argc;
@@ -55,22 +55,22 @@ struct line {
 /** 
  * Copy a line
  */
-G_GNUC_MALLOC G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT struct line *linedup(const struct line *l);
-G_GNUC_MALLOC G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT struct line *irc_parse_line(const char *data);
-G_GNUC_MALLOC G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT struct line *virc_parse_line(const char *origin, va_list ap);
-G_GNUC_MALLOC G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT char *irc_line_string(const struct line *l);
-G_GNUC_MALLOC G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT char *irc_line_string_nl(const struct line *l);
-G_GNUC_MALLOC G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT char *line_get_nick(const struct line *l);
-G_MODULE_EXPORT void free_line(struct line *l);
+G_GNUC_MALLOC G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT struct irc_line *linedup(const struct irc_line *l);
+G_GNUC_MALLOC G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT struct irc_line *irc_parse_line(const char *data);
+G_GNUC_MALLOC G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT struct irc_line *virc_parse_line(const char *origin, va_list ap);
+G_GNUC_MALLOC G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT char *irc_line_string(const struct irc_line *l);
+G_GNUC_MALLOC G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT char *irc_line_string_nl(const struct irc_line *l);
+G_GNUC_MALLOC G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT char *line_get_nick(const struct irc_line *l);
+G_MODULE_EXPORT void free_line(struct irc_line *l);
 G_GNUC_NULL_TERMINATED G_MODULE_EXPORT GIOStatus irc_send_args(GIOChannel *, GIConv, GError **, ...);
 G_GNUC_PRINTF(4, 5) G_MODULE_EXPORT GIOStatus irc_sendf(GIOChannel *, GIConv, GError **, char *fmt, ...);
 G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT GIOStatus irc_send_line(
 										GIOChannel *, GIConv,
-										const struct line *l,
+										const struct irc_line *l,
                                         GError **);
-G_GNUC_PRINTF(1, 2) G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT struct line *irc_parse_linef(
+G_GNUC_PRINTF(1, 2) G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT struct irc_line *irc_parse_linef(
 													const char *origin, ... );
-G_GNUC_NULL_TERMINATED G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT struct line *irc_parse_line_args(
+G_GNUC_NULL_TERMINATED G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT struct irc_line *irc_parse_line_args(
 													const char *origin, ... );
 
 /**
@@ -79,10 +79,10 @@ G_GNUC_NULL_TERMINATED G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT struct line *ir
  */
 G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT GIOStatus irc_recv_line(GIOChannel *c, GIConv iconv,
 										GError **err, 
-										struct line **);
+										struct irc_line **);
 
-G_MODULE_EXPORT gboolean line_add_arg(struct line *l, const char *arg);
+G_MODULE_EXPORT gboolean line_add_arg(struct irc_line *l, const char *arg);
 
-G_MODULE_EXPORT struct line *line_prefix_time(struct line *l, time_t t);
+G_MODULE_EXPORT struct irc_line *line_prefix_time(struct irc_line *l, time_t t);
 
 #endif /* __CTRLPROXY_LINE_H__ */

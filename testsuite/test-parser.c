@@ -15,7 +15,7 @@ static const char *malformed[] = {
 };
 
 START_TEST(parser_empty)
-	struct line *l;
+	struct irc_line *l;
 	
 	l = irc_parse_line("");
 
@@ -27,7 +27,7 @@ START_TEST(parser_empty)
 END_TEST
 
 START_TEST(parser_malformed)
-	struct line *l;
+	struct irc_line *l;
 	char *raw;
 	int j;
 
@@ -43,7 +43,7 @@ END_TEST
 #define NUM_RUNS 200
 
 START_TEST(parser_random)
-	struct line *l;
+	struct irc_line *l;
 	char *raw;
 	char buf[4096];
 	FILE *f = fopen("/dev/urandom", "r");
@@ -65,7 +65,7 @@ START_TEST(parser_random)
 END_TEST
 
 START_TEST(parser_vargs)
-	struct line *l = irc_parse_line_args( "FOO", "x", "y", NULL);
+	struct irc_line *l = irc_parse_line_args( "FOO", "x", "y", NULL);
 
 	fail_if (!l);
 	fail_if (strcmp(l->origin, "FOO") != 0);
@@ -75,7 +75,7 @@ START_TEST(parser_vargs)
 END_TEST
 
 START_TEST( parser_stringnl)
-	struct line l;
+	struct irc_line l;
 	char *ret;
 	char *args[] = { "x", "y", "z", NULL };
 	l.origin = "foobar";
@@ -89,7 +89,7 @@ START_TEST( parser_stringnl)
 END_TEST
 
 START_TEST(parser_get_nick)
-	struct line l;
+	struct irc_line l;
 	char *nick;
 
 	l.origin = "foobar";
@@ -104,7 +104,7 @@ END_TEST
 
 START_TEST(parser_recv_line)
 	GIOChannel *ch1, *ch2;
-	struct line *l;
+	struct irc_line *l;
 	GIConv iconv;
 
 	g_io_channel_pair(&ch1, &ch2);
@@ -127,7 +127,7 @@ END_TEST
 
 START_TEST(parser_recv_line_invalid)
 	GIOChannel *ch1, *ch2;
-	struct line *l;
+	struct irc_line *l;
 	GIConv iconv;
 
 	g_io_channel_pair(&ch1, &ch2);
@@ -152,7 +152,7 @@ END_TEST
 
 START_TEST(parser_recv_line_iso8859)
 	GIOChannel *ch1, *ch2;
-	struct line *l;
+	struct irc_line *l;
 	GIConv iconv;
 
 	g_io_channel_pair(&ch1, &ch2);
@@ -180,7 +180,7 @@ END_TEST
 
 
 START_TEST(parser_dup)
-	struct line l, *m;
+	struct irc_line l, *m;
 	char *args[] = { "x", "y", "z", NULL };
 	l.origin = "bla";
 	l.argc = 3;

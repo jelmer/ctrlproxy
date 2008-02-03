@@ -40,7 +40,7 @@
 struct global;
 struct irc_network;
 struct irc_client;
-struct line;
+struct irc_line;
 struct linestack_context;
 
 enum network_connection_state { 
@@ -88,7 +88,7 @@ struct network_connection {
 				char *name;
 				gboolean not_disconnectable;
 				gboolean (*init) (struct irc_network *);
-				gboolean (*to_server) (struct irc_network *, struct irc_client *c, const struct line *);
+				gboolean (*to_server) (struct irc_network *, struct irc_client *c, const struct irc_line *);
 				void (*fini) (struct irc_network *);
 			} *ops;
 		} virtual;
@@ -130,21 +130,21 @@ struct irc_network {
 
 	int reconnect_interval;
 
-	gboolean (*process_from_server) (struct irc_network *, const struct line *);
+	gboolean (*process_from_server) (struct irc_network *, const struct irc_line *);
 };
 
 /* server.c */
 G_MODULE_EXPORT gboolean network_set_charset(struct irc_network *n, const char *name);
 G_MODULE_EXPORT gboolean autoconnect_networks(GList *);
-G_MODULE_EXPORT struct irc_network *irc_network_new(gboolean (*process_from_server) (struct irc_network *, const struct line *), struct network_config *sc);
+G_MODULE_EXPORT struct irc_network *irc_network_new(gboolean (*process_from_server) (struct irc_network *, const struct irc_line *), struct network_config *sc);
 G_MODULE_EXPORT gboolean connect_network(struct irc_network *);
 G_MODULE_EXPORT void network_select_next_server(struct irc_network *n);
 G_MODULE_EXPORT gboolean disconnect_network(struct irc_network *s);
-G_MODULE_EXPORT gboolean network_send_line(struct irc_network *s, struct irc_client *c, const struct line *, gboolean);
+G_MODULE_EXPORT gboolean network_send_line(struct irc_network *s, struct irc_client *c, const struct irc_line *, gboolean);
 G_MODULE_EXPORT gboolean network_send_args(struct irc_network *s, ...);
 G_MODULE_EXPORT void register_virtual_network(struct virtual_network_ops *);
 G_MODULE_EXPORT struct irc_network *find_network(GList *gl, const char *);
-G_MODULE_EXPORT gboolean virtual_network_recv_line(struct irc_network *l, struct line *);
+G_MODULE_EXPORT gboolean virtual_network_recv_line(struct irc_network *l, struct irc_line *);
 G_MODULE_EXPORT gboolean virtual_network_recv_args(struct irc_network *l, const char *origin, ...); 
 G_MODULE_EXPORT gboolean virtual_network_recv_response(struct irc_network *n, int num, ...);
 G_MODULE_EXPORT G_GNUC_MALLOC struct linestack_context *new_linestack(struct irc_network *network);

@@ -83,8 +83,7 @@ struct linestack_marker *linestack_get_marker_numlines (struct linestack_context
 }
 
 struct network_state *linestack_get_state(
-		struct linestack_context *ctx,
-		struct linestack_marker *lm)
+		struct linestack_context *ctx, struct linestack_marker *lm)
 {
 	struct network_state *st;
 	g_assert(ctx != NULL);
@@ -118,7 +117,7 @@ struct traverse_object_data {
 	void *userdata;
 };
 
-static gboolean traverse_object_handler(struct line *l, time_t t, void *state)
+static gboolean traverse_object_handler(struct irc_line *l, time_t t, void *state)
 {
 	struct traverse_object_data *d = state;
 	gboolean ret = TRUE;
@@ -197,7 +196,7 @@ static const char *linestack_messages[] = {
 	NULL };
 
 gboolean linestack_insert_line(struct linestack_context *ctx, 
-							   const struct line *l, enum data_direction dir, 
+							   const struct irc_line *l, enum data_direction dir, 
 							   const struct network_state *state)
 {
 	int i;
@@ -241,20 +240,20 @@ struct send_line_privdata {
 	struct irc_client *client;
 };
 
-static gboolean send_line(struct line *l, time_t t, void *_privdata)
+static gboolean send_line(struct irc_line *l, time_t t, void *_privdata)
 {
 	struct send_line_privdata *privdata = _privdata;
 	return client_send_line(privdata->client, l);
 }
 
-static gboolean send_line_timed(struct line *l, time_t t, void *_privdata)
+static gboolean send_line_timed(struct irc_line *l, time_t t, void *_privdata)
 {
 	struct send_line_privdata *privdata = _privdata;
 
 	if ((!g_strcasecmp(l->args[0], "PRIVMSG") ||
 		!g_strcasecmp(l->args[0], "NOTICE")) &&
 		l->argc > 2) {
-		struct line *nl = line_prefix_time(l, t+privdata->time_offset);
+		struct irc_line *nl = line_prefix_time(l, t+privdata->time_offset);
 		gboolean ret;
 		ret = client_send_line(privdata->client, nl);
 		free_line(nl);
@@ -264,11 +263,11 @@ static gboolean send_line_timed(struct line *l, time_t t, void *_privdata)
 	}
 }
 
-static gboolean send_line_timed_dataonly(struct line *l, time_t t, void *_privdata)
+static gboolean send_line_timed_dataonly(struct irc_line *l, time_t t, void *_privdata)
 {
 	struct send_line_privdata *privdata = _privdata;
 	gboolean ret;
-	struct line *nl;
+	struct irc_line *nl;
 
 	if (g_strcasecmp(l->args[0], "PRIVMSG") != 0 && 
 		g_strcasecmp(l->args[0], "NOTICE") != 0)
@@ -283,7 +282,7 @@ static gboolean send_line_timed_dataonly(struct line *l, time_t t, void *_privda
 	return ret;
 }
 
-static gboolean send_line_dataonly(struct line *l, time_t t, void *_privdata)
+static gboolean send_line_dataonly(struct irc_line *l, time_t t, void *_privdata)
 {
 	struct send_line_privdata *privdata = _privdata;
 
@@ -343,7 +342,7 @@ gboolean linestack_send_object(struct linestack_context *ctx, const char *obj, s
 	return linestack_traverse_object(ctx, obj, mf, mt, trav_fn, &privdata);
 }
 
-static gboolean replay_line(struct line *l, time_t t, void *state)
+static gboolean replay_line(struct irc_line *l, time_t t, void *state)
 {
 	struct network_state *st = state;
 	state_handle_data(st, l);

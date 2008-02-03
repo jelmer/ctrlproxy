@@ -603,7 +603,7 @@ static gboolean file_insert_state(struct linestack_context *ctx,
 }
 
 static gboolean file_insert_line(struct linestack_context *ctx, 
-								 const struct line *l, 
+								 const struct irc_line *l, 
 								 const struct network_state *state)
 {
 	struct lf_data *nd = ctx->backend_data;
@@ -720,7 +720,7 @@ static gboolean file_traverse(struct linestack_context *ctx, void *mf,
 	GError *error = NULL;
 	GIOStatus status = G_IO_STATUS_NORMAL;
 	char *raw, *space;
-	struct line *l;
+	struct irc_line *l;
 
 	if (nd == NULL) 
 		return FALSE;

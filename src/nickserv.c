@@ -112,7 +112,7 @@ static void cache_nickserv_pass(struct irc_network *n, const char *newpass)
 	} 
 }
 
-static gboolean log_data(struct irc_network *n, const struct line *l, enum data_direction dir, void *userdata) 
+static gboolean log_data(struct irc_network *n, const struct irc_line *l, enum data_direction dir, void *userdata) 
 {
 	static char *nickattempt = NULL;
 

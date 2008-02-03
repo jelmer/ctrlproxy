@@ -180,7 +180,7 @@ struct ctcp_request {
 
 static GList *ctcp_request_queue = NULL;
 
-gboolean ctcp_process_client_request (struct irc_client *c, struct line *l)
+gboolean ctcp_process_client_request (struct irc_client *c, struct irc_line *l)
 {
 	struct ctcp_request *req;
 	char *command = get_ctcp_command(l->args[2]);
@@ -208,7 +208,7 @@ gboolean ctcp_process_client_request (struct irc_client *c, struct line *l)
 	return TRUE;
 }
 
-gboolean ctcp_process_client_reply (struct irc_client *c, struct line *l)
+gboolean ctcp_process_client_reply (struct irc_client *c, struct irc_line *l)
 {
 	char *command = get_ctcp_command(l->args[2]);
 
@@ -224,7 +224,7 @@ gboolean ctcp_process_client_reply (struct irc_client *c, struct line *l)
 	return TRUE;
 }
 
-gboolean ctcp_process_network_reply (struct irc_network *n, const struct line *l) 
+gboolean ctcp_process_network_reply (struct irc_network *n, const struct irc_line *l) 
 {
 	GList *gl;
 	char *nick;
@@ -274,7 +274,7 @@ gboolean ctcp_process_network_reply (struct irc_network *n, const struct line *l
 	return TRUE;
 }
 
-gboolean ctcp_process_network_request (struct irc_network *n, const struct line *l) 
+gboolean ctcp_process_network_request (struct irc_network *n, const struct irc_line *l) 
 {
 	GList *gl;
 	int i;

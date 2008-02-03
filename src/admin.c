@@ -657,7 +657,7 @@ gboolean process_cmd(admin_handle h, const char *cmd)
 	return TRUE;
 }
 
-gboolean admin_process_command(struct irc_client *c, struct line *l, int cmdoffset)
+gboolean admin_process_command(struct irc_client *c, struct irc_line *l, int cmdoffset)
 {
 	int i;
 	char *tmp;
@@ -711,7 +711,7 @@ static gboolean admin_net_init(struct irc_network *n)
 	return TRUE;
 }
 
-static gboolean admin_to_server (struct irc_network *n, struct irc_client *c, const struct line *l)
+static gboolean admin_to_server (struct irc_network *n, struct irc_client *c, const struct irc_line *l)
 {
 	if (!g_strcasecmp(l->args[0], "PRIVMSG") ||
 		!g_strcasecmp(l->args[0], "NOTICE")) {
@@ -859,7 +859,7 @@ struct virtual_network_ops admin_network = {
 void admin_log(enum log_level level, const struct irc_network *n, const struct irc_client *c, const char *data)
 {
 	extern struct global *my_global;
-	struct line *l;
+	struct irc_line *l;
 	char *tmp, *hostmask;
 	GList *gl;
 	static gboolean entered = FALSE;

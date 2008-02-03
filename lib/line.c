@@ -22,21 +22,21 @@
 #include "internals.h"
 #include "irc.h"
 
-struct line *irc_parse_line_args(const char *origin, ...)
+struct irc_line *irc_parse_line_args(const char *origin, ...)
 {
 	va_list ap;
-	struct line *l;
+	struct irc_line *l;
 	va_start(ap, origin);
 	l = virc_parse_line(origin, ap);
 	va_end(ap);
 	return l;
 }
 
-struct line *irc_parse_linef(const char *fmt, ...)
+struct irc_line *irc_parse_linef(const char *fmt, ...)
 {
 	va_list ap;
 	char *ret;
-	struct line *l;
+	struct irc_line *l;
 	va_start(ap, fmt);
 	ret = g_strdup_vprintf(fmt, ap);
 	l = irc_parse_line(ret);
@@ -45,12 +45,12 @@ struct line *irc_parse_linef(const char *fmt, ...)
 	return l;
 }
 
-struct line *virc_parse_line( const char *hostmask, va_list ap)
+struct irc_line *virc_parse_line( const char *hostmask, va_list ap)
 {
 	char *arg;
-	struct line *l;
+	struct irc_line *l;
 
-	l = g_new0(struct line, 1);
+	l = g_new0(struct irc_line, 1);
 	g_assert(l);
 	l->argc = 0;
 	if (hostmask != NULL)
@@ -67,16 +67,16 @@ struct line *virc_parse_line( const char *hostmask, va_list ap)
 	return l;
 }
 
-struct line * irc_parse_line(const char *d)
+struct irc_line * irc_parse_line(const char *d)
 {
 	char *p;
 	char dosplit = 1;
 	size_t estimate = 0;
 	char *data = g_strdup(d);
 	int i;
-	struct line *l;
+	struct irc_line *l;
 
-	l = g_new0(struct line, 1);
+	l = g_new0(struct irc_line, 1);
 	g_assert(l);
 	l->has_endcolon = WITHOUT_COLON;
 	p = data;
@@ -131,7 +131,7 @@ struct line * irc_parse_line(const char *d)
  * @param error Error
  */
 GIOStatus irc_send_line(GIOChannel *c, GIConv iconv, 
-						const struct line *l, GError **error) 
+						const struct irc_line *l, GError **error) 
 {
 	char *raw, *cvrt = NULL;
 	GIOStatus ret;
@@ -163,7 +163,7 @@ GIOStatus irc_send_line(GIOChannel *c, GIConv iconv,
 }
 
 
-char *irc_line_string_nl(const struct line *l) 
+char *irc_line_string_nl(const struct irc_line *l) 
 {
 	char *raw;
 
@@ -176,7 +176,7 @@ char *irc_line_string_nl(const struct line *l)
 	return raw;
 }
 
-static gboolean requires_colon(const struct line *l)
+static gboolean requires_colon(const struct irc_line *l)
 {
 	int c;
 
@@ -232,7 +232,7 @@ static gboolean requires_colon(const struct line *l)
 	}
 }
 
-char *irc_line_string(const struct line *l)
+char *irc_line_string(const struct irc_line *l)
 {
 	size_t len = 0; unsigned int i;
 	char *ret;
@@ -262,7 +262,7 @@ char *irc_line_string(const struct line *l)
 	return ret;
 }
 
-void free_line(struct line *l) 
+void free_line(struct irc_line *l) 
 {
 	int i;
 	if (l == NULL)
@@ -280,7 +280,7 @@ void free_line(struct line *l)
 	g_free(l);
 }
 
-char *line_get_nick(const struct line *l)
+char *line_get_nick(const struct irc_line *l)
 {
 	char *nick = NULL;
 	char *t;
@@ -301,7 +301,7 @@ GIOStatus irc_sendf(GIOChannel *c, GIConv iconv,
 {
 	va_list ap;
 	char *r = NULL;
-	struct line *l;
+	struct irc_line *l;
 	GIOStatus ret;
 
 	g_assert(c);
@@ -321,7 +321,7 @@ GIOStatus irc_sendf(GIOChannel *c, GIConv iconv,
 GIOStatus irc_send_args(GIOChannel *c, GIConv iconv, 
 						GError **error, ...) 
 {
-	struct line *l;
+	struct irc_line *l;
 	GIOStatus ret;
 	va_list ap;
 
@@ -338,13 +338,13 @@ GIOStatus irc_send_args(GIOChannel *c, GIConv iconv,
 	return ret;
 }
 
-struct line *linedup(const struct line *l) 
+struct irc_line *linedup(const struct irc_line *l) 
 {
 	int i;
-	struct line *ret;
+	struct irc_line *ret;
 	g_assert(l);
 
-	ret = g_memdup(l, sizeof(struct line));
+	ret = g_memdup(l, sizeof(struct irc_line));
 
 	if (l->origin != NULL)
 		ret->origin = g_strdup(l->origin);
@@ -357,7 +357,7 @@ struct line *linedup(const struct line *l)
 }
 
 GIOStatus irc_recv_line(GIOChannel *c, GIConv iconv, 
-						GError **error, struct line **l)
+						GError **error, struct irc_line **l)
 {
 	gchar *raw = NULL, *cvrt = NULL;
 	GIOStatus status;
@@ -395,7 +395,7 @@ GIOStatus irc_recv_line(GIOChannel *c, GIConv iconv,
 }
 
 /* Estimate the length of a line */
-static int line_len(const struct line *l)
+static int line_len(const struct irc_line *l)
 {
 	int len = 0;
 	int i;
@@ -409,7 +409,7 @@ static int line_len(const struct line *l)
 	return len;
 }
 
-G_MODULE_EXPORT gboolean line_add_arg(struct line *l, const char *arg)
+G_MODULE_EXPORT gboolean line_add_arg(struct irc_line *l, const char *arg)
 {
 	if (line_len(l) + strlen(arg) + 1 > IRC_MAXLINELEN)
 		return FALSE;
@@ -430,9 +430,9 @@ G_MODULE_EXPORT gboolean line_add_arg(struct line *l, const char *arg)
 	return TRUE;
 }
 
-G_MODULE_EXPORT struct line *line_prefix_time(struct line *l, time_t t)
+G_MODULE_EXPORT struct irc_line *line_prefix_time(struct irc_line *l, time_t t)
 {
-	struct line *nl = linedup(l);
+	struct irc_line *nl = linedup(l);
 	char stime[512];
 	char *tmp;
 

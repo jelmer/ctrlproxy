@@ -392,7 +392,7 @@ struct channel_nick *find_add_channel_nick(struct channel_state *c,
 	return n;
 }
 
-static void handle_join(struct network_state *s, const struct line *l)
+static void handle_join(struct network_state *s, const struct irc_line *l)
 {
 	struct channel_state *c;
 	struct channel_nick *ni;
@@ -426,7 +426,7 @@ static void handle_join(struct network_state *s, const struct line *l)
 }
 
 
-static void handle_part(struct network_state *s, const struct line *l)
+static void handle_part(struct network_state *s, const struct irc_line *l)
 {
 	struct channel_state *c;
 	struct channel_nick *n;
@@ -473,7 +473,7 @@ static void handle_part(struct network_state *s, const struct line *l)
 	g_strfreev(channels);
 }
 
-static void handle_kick(struct network_state *s, const struct line *l) 
+static void handle_kick(struct network_state *s, const struct irc_line *l) 
 {
 	struct channel_state *c;
 	struct channel_nick *n;
@@ -522,7 +522,7 @@ static void handle_kick(struct network_state *s, const struct line *l)
 	g_strfreev(channels);
 }
 
-static void handle_topic(struct network_state *s, const struct line *l) 
+static void handle_topic(struct network_state *s, const struct irc_line *l) 
 {
 	struct channel_state *c = find_channel(s, l->args[1]);
 	
@@ -537,7 +537,7 @@ static void handle_topic(struct network_state *s, const struct line *l)
 	c->topic_set_by = line_get_nick(l);
 }
 
-static void handle_332(struct network_state *s, const struct line *l) 
+static void handle_332(struct network_state *s, const struct irc_line *l) 
 {
 	struct channel_state *c = find_channel(s, l->args[2]);
 
@@ -551,7 +551,7 @@ static void handle_332(struct network_state *s, const struct line *l)
 	c->topic = g_strdup(l->args[3]);
 }
 
-static void handle_333(struct network_state *s, const struct line *l) 
+static void handle_333(struct network_state *s, const struct irc_line *l) 
 {
 	struct channel_state *c = find_channel(s, l->args[2]);
 
@@ -566,7 +566,7 @@ static void handle_333(struct network_state *s, const struct line *l)
 	c->topic_set_by = g_strdup(l->args[3]);
 }
 
-static void handle_no_topic(struct network_state *s, const struct line *l) 
+static void handle_no_topic(struct network_state *s, const struct irc_line *l) 
 {
 	struct channel_state *c = find_channel(s, l->args[1]);
 
@@ -580,7 +580,7 @@ static void handle_no_topic(struct network_state *s, const struct line *l)
 	c->topic = NULL;
 }
 
-static void handle_namreply(struct network_state *s, const struct line *l) 
+static void handle_namreply(struct network_state *s, const struct irc_line *l) 
 {
 	gchar **names;
 	int i;
@@ -606,7 +606,7 @@ static void handle_namreply(struct network_state *s, const struct line *l)
 	g_strfreev(names);
 }
 
-static void handle_end_names(struct network_state *s, const struct line *l) 
+static void handle_end_names(struct network_state *s, const struct irc_line *l) 
 {
 	struct channel_state *c = find_channel(s, l->args[2]);
 	if (c != NULL)
@@ -617,7 +617,7 @@ static void handle_end_names(struct network_state *s, const struct line *l)
 				  l->args[2]);
 }
 
-static void handle_invitelist_entry(struct network_state *s, const struct line *l) 
+static void handle_invitelist_entry(struct network_state *s, const struct irc_line *l) 
 {
 	struct channel_state *c = find_channel(s, l->args[2]);
 	
@@ -636,7 +636,7 @@ static void handle_invitelist_entry(struct network_state *s, const struct line *
 	c->invitelist = g_list_append(c->invitelist, g_strdup(l->args[3]));
 }
 
-static void handle_end_invitelist(struct network_state *s, const struct line *l) 
+static void handle_end_invitelist(struct network_state *s, const struct irc_line *l) 
 {
 	struct channel_state *c = find_channel(s, l->args[2]);
 	if (c != NULL)
@@ -646,7 +646,7 @@ static void handle_end_invitelist(struct network_state *s, const struct line *l)
 			  "Can't end invitelist for %s: channel not found", l->args[2]);
 }
 
-static void handle_exceptlist_entry(struct network_state *s, const struct line *l) 
+static void handle_exceptlist_entry(struct network_state *s, const struct irc_line *l) 
 {
 	struct channel_state *c = find_channel(s, l->args[2]);
 	
@@ -665,7 +665,7 @@ static void handle_exceptlist_entry(struct network_state *s, const struct line *
 	c->exceptlist = g_list_append(c->exceptlist, g_strdup(l->args[3]));
 }
 
-static void handle_end_exceptlist(struct network_state *s, const struct line *l) 
+static void handle_end_exceptlist(struct network_state *s, const struct irc_line *l) 
 {
 	struct channel_state *c = find_channel(s, l->args[2]);
 	if (c != NULL)
@@ -677,7 +677,7 @@ static void handle_end_exceptlist(struct network_state *s, const struct line *l)
 
 
 
-static void handle_banlist_entry(struct network_state *s, const struct line *l) 
+static void handle_banlist_entry(struct network_state *s, const struct irc_line *l) 
 {
 	struct channel_state *c = find_channel(s, l->args[2]);
 	struct banlist_entry *be;
@@ -705,7 +705,7 @@ static void handle_banlist_entry(struct network_state *s, const struct line *l)
 	c->banlist = g_list_append(c->banlist, be);
 }
 
-static void handle_end_banlist(struct network_state *s, const struct line *l) 
+static void handle_end_banlist(struct network_state *s, const struct irc_line *l) 
 {
 	struct channel_state *c = find_channel(s, l->args[2]);
 
@@ -716,7 +716,7 @@ static void handle_end_banlist(struct network_state *s, const struct line *l)
 				"Can't end banlist for %s: channel not found", l->args[2]);
 }
 
-static void handle_whoreply(struct network_state *s, const struct line *l) 
+static void handle_whoreply(struct network_state *s, const struct irc_line *l) 
 {
 	struct channel_state *cs;
 	struct network_nick *nn;
@@ -762,21 +762,21 @@ static void handle_whoreply(struct network_state *s, const struct line *l)
 	cn->last_update = time(NULL);
 }
 
-static void handle_end_who(struct network_state *s, const struct line *l) 
+static void handle_end_who(struct network_state *s, const struct irc_line *l) 
 {
 }
 
-static void handle_nowaway(struct network_state *s, const struct line *l)
+static void handle_nowaway(struct network_state *s, const struct irc_line *l)
 {
 	s->is_away = TRUE;
 }
 
-static void handle_unaway(struct network_state *s, const struct line *l)
+static void handle_unaway(struct network_state *s, const struct irc_line *l)
 {
 	s->is_away = FALSE;
 }
 
-static void handle_quit(struct network_state *s, const struct line *l) 
+static void handle_quit(struct network_state *s, const struct irc_line *l) 
 {
 	char *nick;
 	struct network_nick *nn;
@@ -894,7 +894,7 @@ static int channel_state_change_mode(struct network_state *s, struct network_nic
 	}
 }
 
-static void handle_mode(struct network_state *s, const struct line *l)
+static void handle_mode(struct network_state *s, const struct irc_line *l)
 {
 	/* Format:
 	 * MODE %|<nick>|<channel> [<mode> [<mode parameters>]] */
@@ -957,20 +957,20 @@ static void handle_mode(struct network_state *s, const struct line *l)
 	}
 }
 
-static void handle_001(struct network_state *s, const struct line *l)
+static void handle_001(struct network_state *s, const struct irc_line *l)
 {
 	g_free(s->me.nick);
 	s->me.nick = g_strdup(l->args[1]);
 }
 
-static void handle_004(struct network_state *s, const struct line *l)
+static void handle_004(struct network_state *s, const struct irc_line *l)
 {
 	s->info.supported_user_modes = g_strdup(l->args[4]);
 	s->info.supported_channel_modes = g_strdup(l->args[5]);
 	s->info.server = g_strdup(l->args[2]);
 }
 
-static void handle_privmsg(struct network_state *s, const struct line *l)
+static void handle_privmsg(struct network_state *s, const struct irc_line *l)
 {
 	struct network_nick *nn;
 	char *nick;
@@ -985,7 +985,7 @@ static void handle_privmsg(struct network_state *s, const struct line *l)
 	g_free(nick);
 }
 
-static void handle_nick(struct network_state *s, const struct line *l)
+static void handle_nick(struct network_state *s, const struct irc_line *l)
 {
 	struct network_nick *nn;
 	char *nick;
@@ -998,7 +998,7 @@ static void handle_nick(struct network_state *s, const struct line *l)
 	network_nick_set_nick(nn, l->args[1]);
 }
 
-static void handle_umodeis(struct network_state *s, const struct line *l)
+static void handle_umodeis(struct network_state *s, const struct irc_line *l)
 {
 	int i;
 	memset(s->me.modes, 0, sizeof(s->me.modes));
@@ -1007,7 +1007,7 @@ static void handle_umodeis(struct network_state *s, const struct line *l)
 	}
 }
 
-static void handle_324(struct network_state *s, const struct line *l)
+static void handle_324(struct network_state *s, const struct irc_line *l)
 {
 	struct channel_state *ch = find_channel(s, l->args[2]);
 
@@ -1022,7 +1022,7 @@ static void handle_324(struct network_state *s, const struct line *l)
 	ch->mode_received = TRUE;
 }
 
-static void handle_329(struct network_state *s, const struct line *l)
+static void handle_329(struct network_state *s, const struct irc_line *l)
 {
 	struct channel_state *ch = find_channel(s, l->args[2]);
 
@@ -1035,7 +1035,7 @@ static void handle_329(struct network_state *s, const struct line *l)
 	ch->creation_time = atol(l->args[3]);
 }
 
-static void handle_302(struct network_state *s, const struct line *l)
+static void handle_302(struct network_state *s, const struct irc_line *l)
 {
 	int i;
 	gchar **users = g_strsplit(g_strstrip(l->args[2]), " ", 0);
@@ -1056,12 +1056,12 @@ static void handle_302(struct network_state *s, const struct line *l)
 	g_strfreev(users);
 }
 
-extern void handle_005(struct network_state *s, const struct line *l);
+extern void handle_005(struct network_state *s, const struct irc_line *l);
 
 static struct irc_command {
 	char *command;
 	int min_args;
-	void (*handler) (struct network_state *s, const struct line *l);
+	void (*handler) (struct network_state *s, const struct irc_line *l);
 } irc_commands[] = {
 	{ "JOIN", 1, handle_join },
 	{ "PART", 1, handle_part },
@@ -1096,7 +1096,7 @@ static struct irc_command {
 	{ NULL }
 };
 
-gboolean state_handle_data(struct network_state *s, const struct line *l)
+gboolean state_handle_data(struct network_state *s, const struct irc_line *l)
 {
 	int i,j;
 

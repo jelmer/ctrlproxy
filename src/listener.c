@@ -65,7 +65,7 @@ static gboolean handle_client_detect(GIOChannel *ioc,
 static gboolean handle_client_socks_data(GIOChannel *ioc, 
 										 struct pending_client *cl);
 static gboolean handle_client_line(GIOChannel *c, struct pending_client *pc, 
-								   const struct line *l)
+								   const struct irc_line *l)
 {
 	if (l == NULL || l->args[0] == NULL) { 
 		return TRUE;
@@ -165,7 +165,7 @@ static gboolean handle_client_detect(GIOChannel *ioc, struct pending_client *pc)
 		pc->socks.state = SOCKS_STATE_NEW;
 		return TRUE;
 	} else {
-		struct line *l = NULL;
+		struct irc_line *l = NULL;
 		gchar *raw = NULL, *cvrt = NULL;
 		gchar *complete;
 		GIOStatus status;
@@ -230,7 +230,7 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition condition, gpo
 		if (pc->socks.state == SOCKS_UNUSED) {
 			GIOStatus status;
 			GError *error = NULL;
-			struct line *l;
+			struct irc_line *l;
 
 			while ((status = irc_recv_line(c, iconv, &error, &l)) == G_IO_STATUS_NORMAL) {
 				gboolean ret;

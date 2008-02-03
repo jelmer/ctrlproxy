@@ -60,7 +60,7 @@ END_TEST
 
 void state_process(struct network_state *ns, const char *line)
 {
-	struct line *l;
+	struct irc_line *l;
 	l = irc_parse_line(line);
 	g_assert(l);
 	g_assert(state_handle_data(ns, l));
@@ -250,7 +250,7 @@ END_TEST
 
 START_TEST(state_handle_state_data)
 	struct network_state *ns = network_state_init("bla", "Gebruikersnaam", "Computernaam");
-	struct line l;
+	struct irc_line l;
 	char *args1[] = {"JOIN", "#bla", NULL};
 	char *args2[] = {"UNKNOWN", "#bla", NULL};
 

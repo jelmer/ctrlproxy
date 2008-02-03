@@ -42,9 +42,9 @@
  * @param l Line received
  * @return Whether the line was processed correctly
  */
-static gboolean process_from_client(struct irc_client *c, const struct line *_l)
+static gboolean process_from_client(struct irc_client *c, const struct irc_line *_l)
 {
-	struct line ol, *l;
+	struct irc_line ol, *l;
 	g_assert(c != NULL);
 	g_assert(_l != NULL);
 

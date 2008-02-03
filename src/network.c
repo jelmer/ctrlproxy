@@ -87,9 +87,9 @@ static void clients_send_state(GList *clients, struct network_state *s)
  * @param l Line received
  * @return Whether the message was received ok
  */
-static gboolean process_from_server(struct irc_network *n, const struct line *l)
+static gboolean process_from_server(struct irc_network *n, const struct irc_line *l)
 {
-	struct line *lc;
+	struct irc_line *lc;
 	GError *error = NULL;
 
 	g_assert(n);

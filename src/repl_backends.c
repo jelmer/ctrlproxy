@@ -25,7 +25,7 @@ static GHashTable *markers = NULL;
 static GHashTable *lastdisconnect_backlog = NULL;
 static GHashTable *simple_backlog = NULL;
 
-static gboolean check_highlight(struct line *l, time_t t, void *userdata)
+static gboolean check_highlight(struct irc_line *l, time_t t, void *userdata)
 {
 	struct irc_client *c = userdata;
     int i;
@@ -93,7 +93,7 @@ static void lastdisconnect_replicate(struct irc_client *c)
 				   c->network->global->config->report_time_offset);
 }
 
-static gboolean log_data(struct irc_network *n, const struct line *l, enum data_direction dir, void *userdata) 
+static gboolean log_data(struct irc_network *n, const struct irc_line *l, enum data_direction dir, void *userdata) 
 {
 	if(dir != TO_SERVER) return TRUE;
 

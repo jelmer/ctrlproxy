@@ -128,7 +128,7 @@ static void network_report_disconnect(struct irc_network *n, const char *fmt, ..
 static gboolean handle_server_receive (GIOChannel *c, GIOCondition cond, void *_server)
 {
 	struct irc_network *server = (struct irc_network *)_server;
-	struct line *l;
+	struct irc_line *l;
 	gboolean ret;
 
 	g_assert(c != NULL);
@@ -235,7 +235,7 @@ static gboolean server_send_queue(GIOChannel *ch, GIOCondition cond,
 	GIOStatus status;
 
 	while (!g_queue_is_empty(s->connection.pending_lines)) {
-		struct line *l = g_queue_peek_head(s->connection.pending_lines);
+		struct irc_line *l = g_queue_peek_head(s->connection.pending_lines);
 
 		/* Check if antiflood allows us to send a line */
 		if (!antiflood_allow_line(s)) 
@@ -265,9 +265,9 @@ static gboolean server_send_queue(GIOChannel *ch, GIOCondition cond,
 }
 
 static gboolean network_send_line_direct(struct irc_network *s, struct irc_client *c, 
-										 const struct line *ol)
+										 const struct irc_line *ol)
 {
-	struct line nl, *l;
+	struct irc_line nl, *l;
 
 	g_assert(s->config != NULL);
 
@@ -277,7 +277,7 @@ static gboolean network_send_line_direct(struct irc_network *s, struct irc_clien
 		 s->config->type == NETWORK_VIRTUAL);
 
 	l = &nl;
-	memcpy(l, ol, sizeof(struct line));
+	memcpy(l, ol, sizeof(struct irc_line));
 	nl.origin = NULL;
 
 	/* origin lines should never be sent to the server */
@@ -318,11 +318,11 @@ static gboolean network_send_line_direct(struct irc_network *s, struct irc_clien
  * @param is_private Whether the line should not be broadcast to other clients
  */
 gboolean network_send_line(struct irc_network *s, struct irc_client *c, 
-						   const struct line *ol, gboolean is_private)
+						   const struct irc_line *ol, gboolean is_private)
 {
-	struct line l;
+	struct irc_line l;
 	char *tmp = NULL;
-	struct line *lc;
+	struct irc_line *lc;
 
 	g_assert(ol);
 	g_assert(s);
@@ -374,7 +374,7 @@ gboolean network_send_line(struct irc_network *s, struct irc_client *c,
 gboolean virtual_network_recv_response(struct irc_network *n, int num, ...) 
 {
 	va_list ap;
-	struct line *l;
+	struct irc_line *l;
 	gboolean ret;
 
 	g_assert(n);
@@ -410,7 +410,7 @@ gboolean virtual_network_recv_response(struct irc_network *n, int num, ...)
  * @param s Network to send to.
  * @param l Line to receive.
  */
-gboolean virtual_network_recv_line(struct irc_network *s, struct line *l)
+gboolean virtual_network_recv_line(struct irc_network *s, struct irc_line *l)
 {
 	g_assert(s != NULL);
 	g_assert(l != NULL);
@@ -430,7 +430,7 @@ gboolean virtual_network_recv_line(struct irc_network *s, struct line *l)
 gboolean virtual_network_recv_args(struct irc_network *s, const char *origin, ...)
 {
 	va_list ap;
-	struct line *l;
+	struct irc_line *l;
 	gboolean ret;
 
 	g_assert(s);
@@ -455,7 +455,7 @@ gboolean virtual_network_recv_args(struct irc_network *s, const char *origin, ..
 gboolean network_send_args(struct irc_network *s, ...)
 {
 	va_list ap;
-	struct line *l;
+	struct irc_line *l;
 	gboolean ret;
 
 	g_assert(s);
@@ -961,7 +961,7 @@ static gboolean delayed_connect_server(struct irc_network *s)
 	return (s->connection.state == NETWORK_CONNECTION_STATE_RECONNECT_PENDING);
 }
 
-struct irc_network *irc_network_new(gboolean (*process_from_server) (struct irc_network *, const struct line *), struct network_config *sc)
+struct irc_network *irc_network_new(gboolean (*process_from_server) (struct irc_network *, const struct irc_line *), struct network_config *sc)
 {
 	struct irc_network *s;
 
@@ -1003,7 +1003,7 @@ gboolean connect_network(struct irc_network *s)
 
 static void free_pending_line(void *_line, void *userdata)
 {
-	free_line((struct line *)_line);
+	free_line((struct irc_line *)_line);
 }
 
 static void free_network(struct irc_network *s)

@@ -24,7 +24,7 @@
 #include "ctrlproxy.h"
 
 START_TEST(test_line_parse_linef)
-	struct line *l = irc_parse_linef("data");
+	struct irc_line *l = irc_parse_linef("data");
 	fail_if (l->argc != 1, "Invalid parse");
 	fail_if (strcmp(l->args[0], "data") != 0, "Invalid parse");
 	fail_if (l->origin != NULL, "Invalid origin");
@@ -43,7 +43,7 @@ START_TEST(test_line_parse_linef)
 END_TEST
 
 START_TEST(test_parse_args)
-	struct line *l = irc_parse_line_args("myorigin", "data", NULL);
+	struct irc_line *l = irc_parse_line_args("myorigin", "data", NULL);
 	fail_if (l->argc != 1, "Invalid parse");
 	fail_if (l->origin == NULL, "Invalid origin");
 	fail_if (strcmp(l->origin, "myorigin") != 0, "Invalid origin");

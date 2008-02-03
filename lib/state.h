@@ -32,7 +32,7 @@ typedef gboolean irc_modes_t[255];
 
 struct network;
 struct irc_client;
-struct line;
+struct irc_line;
 
 /* When changing one of these structs, also change the marshalling
  * function for that struct in state.c */
@@ -118,7 +118,7 @@ struct network_state
 /* state.c */
 G_GNUC_MALLOC G_MODULE_EXPORT struct network_state *network_state_init(const char *nick, const char *username, const char *hostname);
 G_MODULE_EXPORT void free_network_state(struct network_state *);
-G_MODULE_EXPORT gboolean state_handle_data(struct network_state *s, const struct line *l);
+G_MODULE_EXPORT gboolean state_handle_data(struct network_state *s, const struct irc_line *l);
 
 G_MODULE_EXPORT struct channel_state *find_channel(struct network_state *st, const char *name);
 G_MODULE_EXPORT struct channel_nick *find_channel_nick(struct channel_state *c, const char *name);

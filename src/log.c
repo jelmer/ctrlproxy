@@ -61,7 +61,7 @@ static void log_entry(enum log_level level, const struct irc_network *n, const s
 	fflush(flog);
 }
 
-void log_network_line(const struct irc_network *n, const struct line *l, gboolean incoming)
+void log_network_line(const struct irc_network *n, const struct irc_line *l, gboolean incoming)
 {
 	char *raw;
 	if (current_log_level < LOG_DATA)
@@ -72,7 +72,7 @@ void log_network_line(const struct irc_network *n, const struct line *l, gboolea
 	g_free(raw);
 }
 
-void log_client_line(const struct irc_client *n, const struct line *l, gboolean incoming)
+void log_client_line(const struct irc_client *n, const struct irc_line *l, gboolean incoming)
 {
 	char *raw;
 	if (current_log_level < LOG_DATA)

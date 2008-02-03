@@ -26,7 +26,7 @@
 
 static void test_redirect_response(struct irc_network *n, const char *line)
 {
-	struct line *l = irc_parse_line(line);	
+	struct irc_line *l = irc_parse_line(line);	
 	redirect_response(n, l);
 }
 

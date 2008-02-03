@@ -63,7 +63,7 @@ static gboolean check_time(gpointer user_data)
 	return TRUE;
 }
 
-static gboolean log_data(struct irc_network *n, const struct line *l, 
+static gboolean log_data(struct irc_network *n, const struct irc_line *l, 
 						 enum data_direction dir, void *userdata) 
 {
 	struct auto_away_data *d = userdata;

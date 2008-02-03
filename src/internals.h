@@ -76,10 +76,10 @@ void server_disconnected_hook_execute(struct irc_network *);
 void server_connected_hook_execute(struct irc_network *);
 gboolean new_client_hook_execute(struct irc_client *c);
 void lose_client_hook_execute(struct irc_client *c);
-gboolean run_client_filter(struct irc_client *c, const struct line *l, enum data_direction dir);
-gboolean run_server_filter(struct irc_network *s, const struct line *l, enum data_direction dir);
-gboolean run_log_filter(struct irc_network *s, const struct line *l, enum data_direction dir);
-gboolean run_replication_filter(struct irc_network *s, const struct line *l, enum data_direction dir);
+gboolean run_client_filter(struct irc_client *c, const struct irc_line *l, enum data_direction dir);
+gboolean run_server_filter(struct irc_network *s, const struct irc_line *l, enum data_direction dir);
+gboolean run_log_filter(struct irc_network *s, const struct irc_line *l, enum data_direction dir);
+gboolean run_replication_filter(struct irc_network *s, const struct irc_line *l, enum data_direction dir);
 
 /* client.c */
 /**
@@ -96,18 +96,18 @@ G_MODULE_EXPORT G_GNUC_MALLOC struct irc_client *client_init(
 
 /* log.c */
 gboolean init_log(const char *file);
-void log_network_line(const struct irc_network *n, const struct line *l, gboolean incoming);
-void log_client_line(const struct irc_client *c, const struct line *l, gboolean incoming);
+void log_network_line(const struct irc_network *n, const struct irc_line *l, gboolean incoming);
+void log_client_line(const struct irc_client *c, const struct irc_line *l, gboolean incoming);
 void handle_network_log(enum log_level level, const struct irc_network *n, 
 						const char *msg);
 
 /* redirect.c */
-void redirect_record(const struct irc_network *n, const struct irc_client *c, const struct line *l);
-gboolean redirect_response(struct irc_network *n, const struct line *l);
+void redirect_record(const struct irc_network *n, const struct irc_client *c, const struct irc_line *l);
+gboolean redirect_response(struct irc_network *n, const struct irc_line *l);
 void redirect_clear(const struct irc_network *n);
 
 /* cache.c */
-gboolean client_try_cache(struct irc_client *c, struct line *l);
+gboolean client_try_cache(struct irc_client *c, struct irc_line *l);
 
 /* linestack.c */
 void init_linestack(struct ctrlproxy_config *);
@@ -137,7 +137,7 @@ void nickserv_identify_me(struct irc_network *network, char *nick);
 
 /* admin.c */
 void init_admin(void);
-gboolean admin_process_command(struct irc_client *c, struct line *l, int cmdoffset);
+gboolean admin_process_command(struct irc_client *c, struct irc_line *l, int cmdoffset);
 void admin_log(enum log_level level, const struct irc_network *n, const struct irc_client *c, const char *data);
 gboolean start_admin_socket(struct global *global);
 gboolean stop_admin_socket(struct global *global);

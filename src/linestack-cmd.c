@@ -35,7 +35,7 @@ struct cmd {
 };
 
 
-static gboolean line_printer (struct line *l, time_t time, void *f) 
+static gboolean line_printer (struct irc_line *l, time_t time, void *f) 
 {
 	fprintf((FILE *)f, "[%lu] %s\n", time, irc_line_string(l));
 	return TRUE;
@@ -130,7 +130,7 @@ static void handle_mark(int argc, char **argv)
 
 static void handle_insert(int argc, char **argv)
 {
-	struct line *l;
+	struct irc_line *l;
 	enum data_direction direction;
 
 	if (argc < 2) {

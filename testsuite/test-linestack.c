@@ -26,7 +26,7 @@
 
 void stack_process(struct linestack_context *ctx, struct network_state *ns, const char *line)
 {
-	struct line *l;
+	struct irc_line *l;
 	l = irc_parse_line(line);
 	g_assert(l);
 	g_assert(state_handle_data(ns, l));
@@ -395,7 +395,7 @@ END_TEST
 
 int seen = 0;
 
-static gboolean line_track(struct line *l, time_t t, void *data)
+static gboolean line_track(struct irc_line *l, time_t t, void *data)
 {
 	fail_unless(!strcmp(l->args[0], "PRIVMSG"));
 	fail_unless(seen == atoi(l->args[1]));

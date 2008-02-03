@@ -453,7 +453,7 @@ void network_info_parse(struct network_info *info, const char *parameter)
 	g_free(val);
 }
 
-void handle_005(struct network_state *s, const struct line *l)
+void handle_005(struct network_state *s, const struct irc_line *l)
 {
 	int i;
 	g_assert(s);

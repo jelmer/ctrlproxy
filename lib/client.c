@@ -49,7 +49,7 @@ static gboolean handle_client_send_queue(GIOChannel *c, GIOCondition cond,
  */
 gboolean client_send_response(struct irc_client *c, int response, ...)
 {
-	struct line *l;
+	struct irc_line *l;
 	gboolean ret;
 	va_list ap;
 
@@ -83,7 +83,7 @@ gboolean client_send_response(struct irc_client *c, int response, ...)
  */
 gboolean client_send_args_ex(struct irc_client *c, const char *hm, ...)
 {
-	struct line *l;
+	struct irc_line *l;
 	gboolean ret;
 	va_list ap;
 
@@ -107,7 +107,7 @@ gboolean client_send_args_ex(struct irc_client *c, const char *hm, ...)
  */
 gboolean client_send_args(struct irc_client *c, ...)
 {
-	struct line *l;
+	struct irc_line *l;
 	gboolean ret;
 	va_list ap;
 
@@ -130,7 +130,7 @@ gboolean client_send_args(struct irc_client *c, ...)
  * @param l Line to send
  * @return Whether the line was sent successfully
  */
-gboolean client_send_line(struct irc_client *c, const struct line *l)
+gboolean client_send_line(struct irc_client *c, const struct irc_line *l)
 {
 	if (c->connected == FALSE)
 		return FALSE;
@@ -169,7 +169,7 @@ gboolean client_send_line(struct irc_client *c, const struct line *l)
 
 static void free_pending_line(void *_line, void *userdata)
 {
-	free_line((struct line *)_line);
+	free_line((struct irc_line *)_line);
 }
 
 /*
@@ -270,7 +270,7 @@ static gboolean handle_client_send_queue(GIOChannel *ioc, GIOCondition cond,
 	while (!g_queue_is_empty(c->pending_lines)) {
 		GIOStatus status;
 		GError *error = NULL;
-		struct line *l = g_queue_pop_head(c->pending_lines);
+		struct irc_line *l = g_queue_pop_head(c->pending_lines);
 
 		g_assert(c->incoming != NULL);
 		status = irc_send_line(c->incoming, c->outgoing_iconv, l, &error);
@@ -305,7 +305,7 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition cond,
 {
 	gboolean ret = TRUE;
 	struct irc_client *client = (struct irc_client *)_client;
-	struct line *l;
+	struct irc_line *l;
 
 	g_assert(client);
 
@@ -432,7 +432,7 @@ static gboolean welcome_client(struct irc_client *client)
 }
 
 static gboolean process_from_pending_client(struct irc_client *client, 
-											const struct line *l)
+											const struct irc_line *l)
 {
 	extern struct global *my_global;
 
@@ -497,7 +497,7 @@ static gboolean handle_pending_client_receive(GIOChannel *c,
 											  GIOCondition cond, void *_client)
 {
 	struct irc_client *client = (struct irc_client *)_client;
-	struct line *l;
+	struct irc_line *l;
 
 	g_assert(client);
 	g_assert(c);
@@ -611,7 +611,7 @@ static gboolean client_ping(struct irc_client *client)
  * @param c Channel to talk over
  * @param desc Description of the client
  */
-struct irc_client *irc_client_new(GIOChannel *c, const char *desc, gboolean (*process_from_client) (struct irc_client *, const struct line *), struct irc_network *n)
+struct irc_client *irc_client_new(GIOChannel *c, const char *desc, gboolean (*process_from_client) (struct irc_client *, const struct irc_line *), struct irc_network *n)
 {
 	struct irc_client *client;
 
@@ -750,7 +750,7 @@ void client_unref(struct irc_client *c)
  * @param l Line to send
  * @param exception Client to which nothing should be sent. Can be NULL.
  */
-void clients_send(GList *clients, const struct line *l, 
+void clients_send(GList *clients, const struct irc_line *l, 
 				  const struct irc_client *exception) 
 {
 	GList *g;
@@ -767,7 +767,7 @@ void clients_send(GList *clients, const struct line *l,
 
 void clients_send_args_ex(GList *clients, const char *hostmask, ...)
 {
-	struct line *l;
+	struct irc_line *l;
 	va_list ap;
 
 	va_start(ap, hostmask);

@@ -34,11 +34,11 @@ struct log_mapping {
 	char subst;
 	unsigned int index;
 	/* If index is -1 */
-	char *(*callback) (struct irc_network *, const struct line *l, 
+	char *(*callback) (struct irc_network *, const struct irc_line *l, 
 					   gboolean case_sensitive);
 };
 
-static char *get_hours(struct irc_network *n, const struct line *l, 
+static char *get_hours(struct irc_network *n, const struct irc_line *l, 
 					   gboolean case_sensitive) 
 { 
 	time_t ti = time(NULL);
@@ -46,7 +46,7 @@ static char *get_hours(struct irc_network *n, const struct line *l,
 	return g_strdup_printf("%02d", t->tm_hour);
 }
 
-static char *get_minutes(struct irc_network *n, const struct line *l, 
+static char *get_minutes(struct irc_network *n, const struct irc_line *l, 
 						 gboolean case_sensitive) 
 { 
 	time_t ti = time(NULL);
@@ -54,7 +54,7 @@ static char *get_minutes(struct irc_network *n, const struct line *l,
 	return g_strdup_printf("%02d", t->tm_min);
 }
 
-static char *get_seconds(struct irc_network *n, const struct line *l, 
+static char *get_seconds(struct irc_network *n, const struct irc_line *l, 
 						 gboolean case_sensitive) 
 { 
 	time_t ti = time(NULL);
@@ -62,14 +62,14 @@ static char *get_seconds(struct irc_network *n, const struct line *l,
 	return g_strdup_printf("%02d", t->tm_sec);
 }
 
-static char *get_seconds_since_1970(struct irc_network *n, const struct line *l, 
+static char *get_seconds_since_1970(struct irc_network *n, const struct irc_line *l, 
 									gboolean case_sensitive) 
 {
 	time_t ti = time(NULL);
 	return g_strdup_printf("%ld", ti);
 }
 
-static char *get_day(struct irc_network *n, const struct line *l, 
+static char *get_day(struct irc_network *n, const struct irc_line *l, 
 					 gboolean case_sensitive) 
 { 
 	time_t ti = time(NULL);
@@ -77,7 +77,7 @@ static char *get_day(struct irc_network *n, const struct line *l,
 	return g_strdup_printf("%02d", t->tm_mday);
 }
 
-static char *get_month(struct irc_network *n, const struct line *l, 
+static char *get_month(struct irc_network *n, const struct irc_line *l, 
 					   gboolean case_sensitive) 
 { 
 	time_t ti = time(NULL);
@@ -85,7 +85,7 @@ static char *get_month(struct irc_network *n, const struct line *l,
 	return g_strdup_printf("%02d", t->tm_mon + 1);
 }
 
-static char *get_year(struct irc_network *n, const struct line *l, 
+static char *get_year(struct irc_network *n, const struct irc_line *l, 
 					  gboolean case_sensitive) 
 { 
 	time_t ti = time(NULL);
@@ -93,7 +93,7 @@ static char *get_year(struct irc_network *n, const struct line *l,
 	return g_strdup_printf("%04d", t->tm_year + 1900);
 }
 
-static char *get_user(struct irc_network *n, const struct line *l, 
+static char *get_user(struct irc_network *n, const struct irc_line *l, 
 					  gboolean case_sensitive) 
 {
 	char *user = NULL;
@@ -110,7 +110,7 @@ static char *get_user(struct irc_network *n, const struct line *l,
 		return g_strdup(user);
 }
 
-static char *get_monthname(struct irc_network *n, const struct line *l, 
+static char *get_monthname(struct irc_network *n, const struct irc_line *l, 
 						   gboolean case_sensitive) 
 { 
 	char stime[512];
@@ -119,7 +119,7 @@ static char *get_monthname(struct irc_network *n, const struct line *l,
 	return g_strdup_printf("%s", stime);
 }
 
-static char *get_nick(struct irc_network *n, const struct line *l, 
+static char *get_nick(struct irc_network *n, const struct irc_line *l, 
 					  gboolean case_sensitive) 
 {
 	if (l->origin != NULL) {
@@ -135,13 +135,13 @@ static char *get_nick(struct irc_network *n, const struct line *l,
 	return g_strdup("");
 }
 
-static char *get_network(struct irc_network *n, const struct line *l, 
+static char *get_network(struct irc_network *n, const struct irc_line *l, 
 						 gboolean case_sensitive) 
 {
 	return g_strdup(n->info.name); 
 }
 
-static char *get_server(struct irc_network *n, const struct line *l, 
+static char *get_server(struct irc_network *n, const struct irc_line *l, 
 						gboolean case_sensitive)
 {
 	if (n->connection.data.tcp.current_server)
@@ -149,7 +149,7 @@ static char *get_server(struct irc_network *n, const struct line *l,
 	return g_strdup("");
 }
 
-static char *get_percent(struct irc_network *n, const struct line *l, 
+static char *get_percent(struct irc_network *n, const struct irc_line *l, 
 						 gboolean case_sensitive) 
 { 
 	return g_strdup("%"); 
@@ -157,14 +157,14 @@ static char *get_percent(struct irc_network *n, const struct line *l,
 
 static const char *identifier = NULL;
 
-static char *get_identifier(struct irc_network *n, const struct line *l, 
+static char *get_identifier(struct irc_network *n, const struct irc_line *l, 
 							gboolean case_sensitive) 
 { 
 	if (case_sensitive) return g_ascii_strdown(identifier, -1); 
 	else return g_strdup(identifier); 
 }
 
-static char *get_modechanges(struct irc_network *n, const struct line *l, 
+static char *get_modechanges(struct irc_network *n, const struct irc_line *l, 
 			     gboolean case_sensitive) 
 {
 	char buf[512] = "";
@@ -224,7 +224,7 @@ static struct log_mapping mappings[] = {
 	{ NULL }
 };
 
-static char *find_mapping(struct irc_network *network, const struct line *l, 
+static char *find_mapping(struct irc_network *network, const struct irc_line *l, 
 						  char c, gboolean case_sensitive)
 {
 	int i;
@@ -257,7 +257,7 @@ static void convertslashes(char *a)
 }
 
 static void custom_subst(struct irc_network *network, char **_new, 
-						 const char *fmt, const struct line *l, 
+						 const char *fmt, const struct irc_line *l, 
 						 const char *_identifier, 
 						 gboolean case_sensitive, gboolean noslash)
 {
@@ -337,7 +337,7 @@ If appropriate:
 
 static void file_write_line(struct log_custom_data *data, 
 							struct irc_network *network, const char *fmt, 
-							const struct line *l, const char *identifier, 
+							const struct irc_line *l, const char *identifier, 
 							gboolean create_file)
 {
 	char *s;
@@ -363,7 +363,7 @@ static void file_write_line(struct log_custom_data *data,
 
 static void file_write_line_target(struct log_custom_data *data, 
 								   struct irc_network *network, const char *fmt, 
-								   const struct line *l, const char *t, 
+								   const struct irc_line *l, const char *t, 
 								   gboolean create_file)
 {
 	if (strchr(t, ',') != NULL) {
@@ -380,7 +380,7 @@ static void file_write_line_target(struct log_custom_data *data,
 
 static void file_write_target(struct log_custom_data *data, 
 							  struct irc_network *network, const char *fmt, 
-							  const struct line *l) 
+							  const struct irc_line *l) 
 {
 	char *t;
 	
@@ -405,7 +405,7 @@ static void file_write_target(struct log_custom_data *data,
 
 static void file_write_channel_only(struct log_custom_data *data, 
 									struct irc_network *network, const char *fmt, 
-									const struct line *l)
+									const struct irc_line *l)
 {
 	if (fmt == NULL) 
 		return;
@@ -415,7 +415,7 @@ static void file_write_channel_only(struct log_custom_data *data,
 
 static void file_write_channel_query(struct log_custom_data *data, 
 									 struct irc_network *network, const char *fmt, 
-									 const struct line *l)
+									 const struct irc_line *l)
 {
 	char *nick;
 	GList *gl;
@@ -448,7 +448,7 @@ static void file_write_channel_query(struct log_custom_data *data,
 }
 
 static gboolean log_custom_data(struct irc_network *network, 
-								const struct line *l, 
+								const struct irc_line *l, 
 								enum data_direction dir, void *userdata)
 {
     struct log_custom_data *data = userdata;

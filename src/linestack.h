@@ -56,7 +56,7 @@ struct linestack_marker {
 };
 
 /* linestack.c */
-typedef gboolean (*linestack_traverse_fn) (struct line *, time_t, void *);
+typedef gboolean (*linestack_traverse_fn) (struct irc_line *, time_t, void *);
 /**
  * Linestack functions
  */
@@ -72,7 +72,7 @@ struct linestack_ops {
 	/* Add a line */
 	gboolean (*insert_line) (
 		struct linestack_context *,
-		const struct line *,
+		const struct irc_line *,
 		const struct network_state *);
 	
 	/* Get marker for current position in stream */
@@ -152,7 +152,7 @@ G_MODULE_EXPORT gboolean linestack_replay (
 
 G_MODULE_EXPORT gboolean linestack_insert_line(
 		struct linestack_context *, 
-		const struct line *l, 
+		const struct irc_line *l, 
 		enum data_direction dir, 
 		const struct network_state *);
 
