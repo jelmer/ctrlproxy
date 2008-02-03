@@ -532,8 +532,7 @@ static gboolean file_init(struct linestack_context *ctx, const char *name,
 	g_dir_close(dir);
 
 	ctx->backend_data = data;
-	file_insert_state(ctx, state, "START");
-	return TRUE;
+	return file_insert_state(ctx, state, "START");
 }
 
 static gboolean file_fini(struct linestack_context *ctx)
@@ -611,6 +610,7 @@ static gboolean file_insert_line(struct linestack_context *ctx,
 	char t[20];
 	GError *error = NULL;
 	GIOStatus status;
+	gboolean ret;
 	
 	if (nd == NULL) 
 		return FALSE;
@@ -619,8 +619,10 @@ static gboolean file_insert_line(struct linestack_context *ctx,
 	if (nd->lines_since_last_state == STATE_DUMP_INTERVAL) {
 		char *state_id = g_strdup_printf("%lu-%lld", time(NULL), 
 								 g_io_channel_tell_position(nd->line_file));
-		file_insert_state(ctx, state, state_id);
+		ret = file_insert_state(ctx, state, state_id);
 		g_free(state_id);
+		if (ret == FALSE)
+			return FALSE;
 	}
 
 	g_snprintf(t, sizeof(t), "%ld ", time(NULL));
