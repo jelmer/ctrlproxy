@@ -1,6 +1,6 @@
 /*
 	ctrlproxy: A modular IRC proxy
-	(c) 2002-2005 Jelmer Vernooij <jelmer@nl.linux.org>
+	(c) 2002-2008 Jelmer Vernooij <jelmer@nl.linux.org>
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -74,9 +74,10 @@ G_MODULE_EXPORT gboolean client_set_charset(struct irc_client *c, const char *na
 G_MODULE_EXPORT const char *client_get_default_origin(struct irc_client *c);
 G_MODULE_EXPORT const char *client_get_default_target(struct irc_client *c);
 G_MODULE_EXPORT const char *client_get_own_hostmask(struct irc_client *c);
-
 G_MODULE_EXPORT struct irc_client *client_ref(struct irc_client *c);
 G_MODULE_EXPORT void client_unref(struct irc_client *c);
 G_MODULE_EXPORT struct irc_client *irc_client_new(GIOChannel *c, const char *desc, gboolean (*process_from_client) (struct irc_client *, const struct line *), struct irc_network *n);
+G_MODULE_EXPORT void clients_send(GList *clients, const struct line *, const struct irc_client *exception);
+G_MODULE_EXPORT void clients_send_args_ex(GList *clients, const char *hostmask, ...);
 
 #endif /* __CTRLPROXY_CLIENT_H__ */

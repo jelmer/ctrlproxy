@@ -742,3 +742,40 @@ void client_unref(struct irc_client *c)
 	if (c->references == 0)
 		free_client(c);
 }
+
+/**
+ * Send a line to a list of clients.
+ *
+ * @param clients List of clients to send to
+ * @param l Line to send
+ * @param exception Client to which nothing should be sent. Can be NULL.
+ */
+void clients_send(GList *clients, const struct line *l, 
+				  const struct irc_client *exception) 
+{
+	GList *g;
+
+	for (g = clients; g; g = g->next) {
+		struct irc_client *c = (struct irc_client *)g->data;
+		if (c != exception) {
+			if (run_client_filter(c, l, FROM_SERVER)) { 
+				client_send_line(c, l);
+			}
+		}
+	}
+}
+
+void clients_send_args_ex(GList *clients, const char *hostmask, ...)
+{
+	struct line *l;
+	va_list ap;
+
+	va_start(ap, hostmask);
+	l = virc_parse_line(hostmask, ap);
+	va_end(ap);
+
+	clients_send(clients, l, NULL);
+
+	free_line(l); l = NULL;
+}
+
