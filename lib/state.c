@@ -902,6 +902,8 @@ static void handle_mode(struct network_state *s, const struct irc_line *l)
 	int i;
 	int arg = 3;
 
+	g_assert(s != NULL);
+
 	/* Channel modes */
 	if (is_channelname(l->args[1], &s->info)) {
 		struct channel_state *c = find_channel(s, l->args[1]);
