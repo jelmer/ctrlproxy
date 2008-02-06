@@ -1,0 +1,24 @@
+/* 
+ * Use /etc/ctrlproxyd.conf. Settings:
+ *  * port to listen on
+ *  * whether to use system user config files or /var/lib/ctrlproxy
+ *
+ * Wait for CONNECT / socks connection, password and username
+ *
+ * Check whether $HOME/.ctrlproxy/pid or /var/run/ctrlproxy/$USER.pid exists 
+ * and refers to a ctrlproxy instance. If so, open $HOME/.ctrlproxy/socket or /var/run/ctrlproxy/socket-$USER.
+ *
+ * If not, start ctrlproxy with the right parameters and (if it's a home directory) as the specified user.
+ *
+ * Send CONNECT <network> <port> if specified
+ * relay user data
+ * relay nick data
+ *
+ * Optional:
+ * * Allow authentication with pam or SASL
+ * * Allow starting ctrlproxy instances at startup of ctrlproxyd
+ * * Allow initializing new accounts for nss users
+ * * Allow running as non-root
+ */
+
+
