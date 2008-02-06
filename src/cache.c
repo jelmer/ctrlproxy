@@ -24,7 +24,7 @@
 #include "internals.h"
 #include "irc.h"
 
-void client_send_nameslist(struct irc_client *c, struct irc_network *net, 
+void client_send_nameslist(struct irc_client *c, struct network_state *net, 
 						   struct channel_state *ch)
 {
 	GList *nl;
@@ -40,7 +40,7 @@ void client_send_nameslist(struct irc_client *c, struct irc_network *net,
 		char prefix;
 
 		if (n->modes != NULL) {
-			prefix = get_prefix_from_modes(&c->network->info, n->modes);
+			prefix = get_prefix_from_modes(&net->info, n->modes);
 		} else {
 			prefix = 0;
 		}
@@ -80,7 +80,7 @@ void client_send_nameslist(struct irc_client *c, struct irc_network *net,
 }
 
 
-static void client_send_banlist(struct irc_client *client, struct irc_network *net, struct channel_state *channel)
+static void client_send_banlist(struct irc_client *client, struct network_state *net, struct channel_state *channel)
 {
 	GList *gl;
 
@@ -97,7 +97,7 @@ static void client_send_banlist(struct irc_client *client, struct irc_network *n
 	client_send_response(client, RPL_ENDOFBANLIST, channel->name, "End of channel ban list", NULL);
 }
 
-static gboolean client_try_cache_mode(struct irc_client *c, struct irc_network *net, struct irc_line *l)
+static gboolean client_try_cache_mode(struct irc_client *c, struct network_state *net, struct irc_line *l)
 {
 	int i;
 	char m;
@@ -113,10 +113,9 @@ static gboolean client_try_cache_mode(struct irc_client *c, struct irc_network *
 		
 	/* Queries in the form of MODE #channel mode */
 	if (l->argc == 3) {
-		g_assert(c->network);
-		g_assert(c->network->state);
+		g_assert(net);
 
-		ch = find_channel(c->network->state, l->args[1]);
+		ch = find_channel(net, l->args[1]);
 		if (!ch) return FALSE;
 
 		for (i = 0; (m = l->args[2][i]); i++) {
@@ -130,7 +129,7 @@ static gboolean client_try_cache_mode(struct irc_client *c, struct irc_network *
 	/* Queries in the form MODE #channel */
 	} else if (l->argc == 2) {
 		char *mode;
-		ch = find_channel(c->network->state, l->args[1]);
+		ch = find_channel(net, l->args[1]);
 		if (!ch) return FALSE;
 
 		if (!ch->mode_received) return FALSE;
@@ -150,7 +149,7 @@ static gboolean client_try_cache_mode(struct irc_client *c, struct irc_network *
 	return FALSE;
 }
 
-static gboolean client_try_cache_topic(struct irc_client *c, struct irc_network *net, struct irc_line *l)
+static gboolean client_try_cache_topic(struct irc_client *c, struct network_state *net, struct irc_line *l)
 {
 	struct channel_state *ch;
 
@@ -162,7 +161,7 @@ static gboolean client_try_cache_topic(struct irc_client *c, struct irc_network 
 	/* No set requests */
 	if (l->args[2]) return FALSE;
 	
-	ch = find_channel(c->network->state, l->args[1]);
+	ch = find_channel(net, l->args[1]);
 	if (!ch) return FALSE;
 
 	if (ch->topic) {
@@ -174,12 +173,12 @@ static gboolean client_try_cache_topic(struct irc_client *c, struct irc_network 
 	return TRUE;
 }
 
-static gboolean client_try_cache_userhost(struct irc_client *c, struct irc_network *net, struct irc_line *l)
+static gboolean client_try_cache_userhost(struct irc_client *c, struct network_state *net, struct irc_line *l)
 {
 	return FALSE;
 }
 
-static gboolean client_try_cache_who(struct irc_client *c, struct irc_network *net, struct irc_line *l)
+static gboolean client_try_cache_who(struct irc_client *c, struct network_state *net, struct irc_line *l)
 {
 	struct channel_state *ch;
 	int max_who_age;
@@ -207,10 +206,9 @@ static gboolean client_try_cache_who(struct irc_client *c, struct irc_network *n
 	if (l->argc != 2) 
 		return FALSE;
 
-	g_assert(c->network);
-	g_assert(c->network->state);
+	g_assert(net);
 
-	ch = find_channel(c->network->state, l->args[1]);
+	ch = find_channel(net, l->args[1]);
 	if (ch == NULL)
 		return FALSE;
 
@@ -244,7 +242,7 @@ static gboolean client_try_cache_who(struct irc_client *c, struct irc_network *n
 	return TRUE;
 }
 
-static gboolean client_try_cache_names(struct irc_client *c, struct irc_network *net, struct irc_line *l)
+static gboolean client_try_cache_names(struct irc_client *c, struct network_state *net, struct irc_line *l)
 {
 	struct channel_state *ch;
 
@@ -258,10 +256,9 @@ static gboolean client_try_cache_names(struct irc_client *c, struct irc_network 
 
 	if (l->argc != 2) return FALSE;
 
-	g_assert(c->network);
-	g_assert(c->network->state);
+	g_assert(net);
 
-	ch = find_channel(c->network->state, l->args[1]);
+	ch = find_channel(net, l->args[1]);
 	if (!ch) return FALSE;
 
 	client_send_nameslist(c, net, ch);
@@ -275,7 +272,7 @@ static gboolean client_try_cache_names(struct irc_client *c, struct irc_network 
 struct cache_command {
 	const char *name;
 	/* Should return FALSE if command couldn't be cached */
-	gboolean (*try_cache) (struct irc_client *c, struct irc_network *net, struct irc_line *l);
+	gboolean (*try_cache) (struct irc_client *c, struct network_state *net, struct irc_line *l);
 } cache_commands[] = {
 	{ "MODE", client_try_cache_mode },
 	{ "NAMES", client_try_cache_names },
@@ -286,7 +283,7 @@ struct cache_command {
 };
 
 /* Try to answer a client query from cache */
-gboolean client_try_cache(struct irc_client *c, struct irc_network *net, struct irc_line *l)
+gboolean client_try_cache(struct irc_client *c, struct network_state *net, struct irc_line *l)
 {
 	g_assert(l);
 	int i;
