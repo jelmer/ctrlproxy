@@ -287,7 +287,7 @@ static gboolean handle_new_client(GIOChannel *c_server, GIOCondition condition, 
 	int sock = accept(g_io_channel_unix_get_fd(c_server), NULL, 0);
 
 	if (sock < 0) {
-		log_global(LOG_WARNING, "Error accepting new connection: %s", strerror(errno));
+		listener_log(LOG_WARNING, listener, "Error accepting new connection: %s", strerror(errno));
 		return TRUE;
 	}
 
@@ -299,7 +299,7 @@ static gboolean handle_new_client(GIOChannel *c_server, GIOCondition condition, 
 							 NULL, listener->config->ssl_credentials);
 		g_assert(c != NULL);
 #else
-		log_global(LOG_WARNING, "SSL support not available, not listening for SSL connection");
+		listener_log(LOG_WARNING, listener, "SSL support not available, not listening for SSL connection");
 #endif
 	}
 
@@ -350,7 +350,7 @@ gboolean start_listener(struct listener *l)
 
 	error = getaddrinfo(l->config->address, l->config->port != NULL?l->config->port:DEFAULT_IRC_PORT, &hints, &all_res);
 	if (error) {
-		log_global(LOG_ERROR, "Can't get address for %s:%s", l->config->address?l->config->address:"", l->config->port);
+		listener_log(LOG_ERROR, l, "Can't get address for %s:%s", l->config->address?l->config->address:"", l->config->port);
 		return FALSE;
 	}
 
@@ -368,7 +368,8 @@ gboolean start_listener(struct listener *l)
 
 		sock = socket(PF_INET, SOCK_STREAM, 0);
 		if (sock < 0) {
-			log_global(LOG_ERROR, "error creating socket: %s", strerror(errno));
+			listener_log(LOG_ERROR, l, "error creating socket: %s", 
+						 strerror(errno));
 			close(sock);
 			g_free(lio);
 			continue;
@@ -380,7 +381,7 @@ gboolean start_listener(struct listener *l)
 			/* Don't warn when binding to the same address using IPv4 
 			 * /and/ ipv6. */
 			if (!l->active || errno != EADDRINUSE)  {
-				log_global(LOG_ERROR, "bind to %s:%s failed: %s", 
+				listener_log(LOG_ERROR, l, "bind to %s:%s failed: %s", 
 						   l->config->address, l->config->port, 
 						   strerror(errno));
 			}
@@ -390,7 +391,7 @@ gboolean start_listener(struct listener *l)
 		}
 
 		if (listen(sock, 5) < 0) {
-			log_global(LOG_ERROR, "error listening on socket: %s", 
+			listener_log(LOG_ERROR, l, "error listening on socket: %s", 
 						strerror(errno));
 			close(sock);
 			g_free(lio);
@@ -400,7 +401,7 @@ gboolean start_listener(struct listener *l)
 		ioc = g_io_channel_unix_new(sock);
 
 		if (ioc == NULL) {
-			log_global(LOG_ERROR, 
+			listener_log(LOG_ERROR, l,
 						"Unable to create GIOChannel for server socket");
 			close(sock);
 			g_free(lio);
@@ -431,7 +432,7 @@ gboolean stop_listener(struct listener *l)
 
 		g_source_remove(lio->watch_id);
 		
-		log_global(LOG_INFO, "Stopped listening at %s:%s", lio->address, 
+		listener_log(LOG_INFO, l, "Stopped listening at %s:%s", lio->address, 
 					 lio->port);
 		g_free(lio);
 
@@ -466,7 +467,7 @@ struct listener *listener_init(struct global *global, struct listener_config *cf
 	if (l->config->network != NULL) {
 		l->network = network_ref(find_network(global->networks, l->config->network));
 		if (l->network == NULL) {
-			log_global(LOG_WARNING, "Network `%s' for listener not found", l->config->network);
+			listener_log(LOG_WARNING, l, "Network `%s' for listener not found", l->config->network);
 		}
 	}
 
@@ -586,7 +587,7 @@ static gboolean pass_handle_data(struct pending_client *cl)
 	}
 
 	if (header[0] != SOCKS_VERSION && header[0] != 0x1) {
-		log_global(LOG_WARNING, "Client suddenly changed socks uname/pwd version to %x", header[0]);
+		listener_log(LOG_WARNING, cl->listener, "Client suddenly changed socks uname/pwd version to %x", header[0]);
 	 	return socks_error(cl->connection, REP_GENERAL_FAILURE);
 	}
 
@@ -649,7 +650,7 @@ static gboolean pass_handle_data(struct pending_client *cl)
 		cl->socks.state = SOCKS_STATE_NORMAL;		
 		return TRUE;
 	} else {
-		log_global(LOG_WARNING, "Password mismatch for user %s", uname);
+		listener_log(LOG_WARNING, cl->listener, "Password mismatch for user %s", uname);
 		return FALSE;
 	}
 }
@@ -716,11 +717,11 @@ static gboolean handle_client_socks_data(GIOChannel *ioc, struct pending_client 
 		g_io_channel_flush(ioc, NULL);
 
 		if (!cl->socks.method) {
-			log_global(LOG_WARNING, "Refused client because no valid method was available");
+			listener_log(LOG_WARNING, cl->listener, "Refused client because no valid method was available");
 			return FALSE;
 		}
 
-		log_global(LOG_INFO, "Accepted socks client authenticating using %s", cl->socks.method->name);
+		listener_log(LOG_INFO, cl->listener, "Accepted socks client authenticating using %s", cl->socks.method->name);
 
 		if (!cl->socks.method->handle_data) {
 			cl->socks.state = SOCKS_STATE_NORMAL;
@@ -739,12 +740,12 @@ static gboolean handle_client_socks_data(GIOChannel *ioc, struct pending_client 
 		}
 
 		if (header[0] != SOCKS_VERSION) {
-			log_global(LOG_WARNING, "Client suddenly changed socks version to %x", header[0]);
+			listener_log(LOG_WARNING, cl->listener, "Client suddenly changed socks version to %x", header[0]);
 		 	return socks_error(ioc, REP_GENERAL_FAILURE);
 		}
 
 		if (header[1] != CMD_CONNECT) {
-			log_global(LOG_WARNING, "Client used unknown command %x", header[1]);
+			listener_log(LOG_WARNING, cl->listener, "Client used unknown command %x", header[1]);
 			return socks_error(ioc, REP_CMD_NOT_SUPPORTED);
 		}
 
@@ -771,12 +772,12 @@ static gboolean handle_client_socks_data(GIOChannel *ioc, struct pending_client 
 					status = g_io_channel_read_chars(ioc, header, 2, &read, NULL);
 					port = ntohs(*(guint16 *)header);
 
-					log_global(LOG_INFO, "Request to connect to %s:%d", hostname, port);
+					listener_log(LOG_INFO, cl->listener, "Request to connect to %s:%d", hostname, port);
 
 					result = find_network_by_hostname(cl->listener->global, hostname, port, TRUE);
 
 					if (result == NULL) {
-						log_global(LOG_WARNING, "Unable to return network matching %s:%d", hostname, port);
+						listener_log(LOG_WARNING, cl->listener, "Unable to return network matching %s:%d", hostname, port);
 						return socks_error(ioc, REP_NET_UNREACHABLE);
 					} 
 
