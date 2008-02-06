@@ -108,11 +108,8 @@ static gboolean client_try_cache_topic(struct irc_client *c, struct network_stat
 	ch = find_channel(net, l->args[1]);
 	if (!ch) return FALSE;
 
-	if (ch->topic) {
-		client_send_response(c, RPL_TOPIC, ch->name, ch->topic, NULL);
-	} else {
-		client_send_response(c, RPL_NOTOPIC, ch->name, "No topic set", NULL);
-	}
+	client_send_topic(c, ch);
+
 
 	return TRUE;
 }
