@@ -54,6 +54,7 @@
 
 #include "settings.h"
 #include "network.h"
+#include "util.h"
 #include "client.h"
 #include "state.h"
 #include "linestack.h"
@@ -104,10 +105,6 @@ G_MODULE_EXPORT void register_save_config_notify(config_save_notify_fn fn);
 
 /* util.c */
 G_MODULE_EXPORT char *list_make_string(GList *);
-G_MODULE_EXPORT int str_rfc1459cmp(const char *a, const char *b);
-G_MODULE_EXPORT int str_strictrfc1459cmp(const char *a, const char *b);
-G_MODULE_EXPORT int str_asciicmp(const char *a, const char *b);
-G_MODULE_EXPORT char *g_io_channel_ip_get_description(GIOChannel *ch);
 G_MODULE_EXPORT const char *g_io_channel_unix_get_sock_error(GIOChannel *ioc);
 
 

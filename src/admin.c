@@ -908,7 +908,7 @@ static void cmd_start_listener(admin_handle h, char **args, void *userdata)
 {
 	char *b, *p;
 	struct listener_config *cfg;
-	struct listener *l;
+	struct irc_listener *l;
 
 	if (!args[1]) {
 		admin_out(h, "No port specified");
@@ -969,7 +969,7 @@ static void cmd_stop_listener(admin_handle h, char **args, void *userdata)
 	}
 
 	for (gl = admin_get_global(h)->listeners; gl; gl = gl->next) {
-		struct listener *l = gl->data;
+		struct irc_listener *l = gl->data;
 
 		if (b && l->config->address == NULL)
 			continue;
@@ -995,7 +995,7 @@ static void cmd_list_listener(admin_handle h, char **args, void *userdata)
 	GList *gl;
 
 	for (gl = admin_get_global(h)->listeners; gl; gl = gl->next) {
-		struct listener *l = gl->data;
+		struct irc_listener *l = gl->data;
 
 		admin_out(h, "%s:%s%s%s%s", l->config->address?l->config->address:"", l->config->port, 
 				  l->network?" (":"", l->network?l->network->info.name:"", 

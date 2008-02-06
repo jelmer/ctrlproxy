@@ -60,7 +60,7 @@ static gboolean kill_pending_client(struct pending_client *pc)
 	return TRUE;
 }
 
-void listener_log(enum log_level l, const struct listener *listener,
+void listener_log(enum log_level l, const struct irc_listener *listener,
 				 const char *fmt, ...)
 {
 	char *ret;
@@ -281,7 +281,7 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition condition, gpo
 
 static gboolean handle_new_client(GIOChannel *c_server, GIOCondition condition, void *_listener)
 {
-	struct listener *listener = _listener;
+	struct irc_listener *listener = _listener;
 	struct pending_client *pc;
 	GIOChannel *c;
 	int sock = accept(g_io_channel_unix_get_fd(c_server), NULL, 0);
@@ -328,7 +328,7 @@ static int next_autoport(struct global *global)
  *
  * @param l Listener to start.
  */
-gboolean start_listener(struct listener *l, const char *address, const char *port)
+gboolean start_listener(struct irc_listener *l, const char *address, const char *port)
 {
 	int sock = -1;
 	const int on = 1;
@@ -428,7 +428,7 @@ gboolean start_listener(struct listener *l, const char *address, const char *por
 	return l->active;
 }
 
-gboolean stop_listener(struct listener *l)
+gboolean stop_listener(struct irc_listener *l)
 {
 	while (l->incoming != NULL) {
 		struct listener_iochannel *lio = l->incoming->data;
@@ -448,10 +448,10 @@ gboolean stop_listener(struct listener *l)
 void free_listeners(struct global *global)
 {
 	while (global->listeners)
-		free_listener((struct listener *)global->listeners->data);
+		free_listener((struct irc_listener *)global->listeners->data);
 }
 
-void free_listener(struct listener *l)
+void free_listener(struct irc_listener *l)
 {
 	l->global->listeners = g_list_remove(l->global->listeners, l);
 
@@ -460,9 +460,9 @@ void free_listener(struct listener *l)
 	g_free(l);
 }
 
-struct listener *listener_init(struct global *global, struct listener_config *cfg)
+struct irc_listener *listener_init(struct global *global, struct listener_config *cfg)
 {
-	struct listener *l = g_new0(struct listener, 1);
+	struct irc_listener *l = g_new0(struct irc_listener, 1);
 
 	l->config = cfg;
 	l->global = global;
@@ -482,7 +482,7 @@ struct listener *listener_init(struct global *global, struct listener_config *cf
 static void auto_add_listener(struct irc_network *n, void *private_data)
 {
 	GList *gl;
-	struct listener *l;
+	struct irc_listener *l;
 	struct listener_config *cfg;
 	
 	/* See if there is already a listener for n */
@@ -510,7 +510,7 @@ gboolean init_listeners(struct global *global)
 
 	for (gl = global->config->listeners; gl; gl = gl->next) {
 		struct listener_config *cfg = gl->data;
-		struct listener *l = listener_init(global, cfg);
+		struct irc_listener *l = listener_init(global, cfg);
 
 		if (l != NULL) {
 			ret &= start_listener(l, cfg->address, cfg->port);
@@ -523,7 +523,7 @@ void fini_listeners(struct global *global)
 {
 	GList *gl;
 	for(gl = global->listeners; gl; gl = gl->next) {
-		struct listener *l = gl->data;
+		struct irc_listener *l = gl->data;
 
 		if (l->active) 
 			stop_listener(l);

@@ -12,7 +12,7 @@
 /**
  * A listener.
  */
-struct listener {
+struct irc_listener {
 	int active:1;
 	GList *incoming;
 	GList *pending;
@@ -33,7 +33,7 @@ struct pending_client {
 	gint watch_id;
 	struct sockaddr *clientname;
 	socklen_t clientname_len;
-	struct listener *listener;
+	struct irc_listener *listener;
 	struct {
 		struct socks_method *method;
 		enum state { 
@@ -47,13 +47,13 @@ struct pending_client {
 	} socks;
 };
 
-G_GNUC_MALLOC G_MODULE_EXPORT struct listener *listener_init(struct global *global, struct listener_config *);
-G_MODULE_EXPORT gboolean start_listener(struct listener *, const char *address, const char *service);
-G_MODULE_EXPORT gboolean stop_listener(struct listener *);
+G_GNUC_MALLOC G_MODULE_EXPORT struct irc_listener *listener_init(struct global *global, struct listener_config *);
+G_MODULE_EXPORT gboolean start_listener(struct irc_listener *, const char *address, const char *service);
+G_MODULE_EXPORT gboolean stop_listener(struct irc_listener *);
 G_MODULE_EXPORT void fini_listeners(struct global *);
-G_MODULE_EXPORT void free_listener(struct listener *l);
+G_MODULE_EXPORT void free_listener(struct irc_listener *l);
 G_MODULE_EXPORT gboolean init_listeners(struct global *global);
-G_MODULE_EXPORT void listener_log(enum log_level l, const struct listener *listener,
+G_MODULE_EXPORT void listener_log(enum log_level l, const struct irc_listener *listener,
 				 const char *fmt, ...);
 
 #endif
