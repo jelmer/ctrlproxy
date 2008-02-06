@@ -34,7 +34,8 @@ lib_objs = \
 	   lib/line.o \
 	   lib/isupport.o \
 	   lib/network.o \
-	   lib/url.o
+	   lib/url.o \
+	   lib/util.o
 
 objs = src/posix.o \
 	   src/cache.o \
