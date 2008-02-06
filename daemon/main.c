@@ -39,7 +39,7 @@ struct ctrlproxyd_config *read_config_file(const char *name)
 	GKeyFile *kf = g_key_file_new();
 
 	if (!g_key_file_load_from_file(kf, name, G_KEY_FILE_NONE, &error)) {
-		fprintf(stderr, "Unable to load '%s': %s", name, error->message);
+		fprintf(stderr, "Unable to load '%s': %s\n", name, error->message);
 		g_key_file_free(kf);
 		return NULL;
 	}
@@ -79,7 +79,7 @@ int main(int argc, char **argv)
 		{"version", 'v', 0, G_OPTION_ARG_NONE, &version, ("Show version information")},
 		{ NULL }
 	};
-	GError *error;
+	GError *error = NULL;
 
 	signal(SIGINT, signal_quit);
 	signal(SIGTERM, signal_quit);

@@ -192,7 +192,7 @@ int main(int argc, char **argv)
 		{"version", 'v', 0, G_OPTION_ARG_NONE, &version, ("Show version information")},
 		{ NULL }
 	};
-	GError *error;
+	GError *error = NULL;
 
 	signal(SIGINT, signal_quit);
 	signal(SIGTERM, signal_quit);
