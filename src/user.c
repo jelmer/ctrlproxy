@@ -85,6 +85,12 @@ struct global *load_global(const char *config_dir)
 	return global;
 }
 
+void free_listeners(struct global *global)
+{
+	while (global->listeners)
+		free_listener((struct irc_listener *)global->listeners->data);
+}
+
 void free_global(struct global *global)
 {
 	if (global == NULL)

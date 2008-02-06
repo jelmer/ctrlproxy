@@ -35,7 +35,8 @@ lib_objs = \
 	   lib/isupport.o \
 	   lib/network.o \
 	   lib/url.o \
-	   lib/util.o
+	   lib/util.o \
+	   lib/listener.o
 
 objs = src/posix.o \
 	   src/cache.o \
@@ -73,7 +74,8 @@ lib_headers = \
 		  lib/isupport.h \
 		  lib/irc.h \
 		  lib/network.h \
-		  lib/url.h
+		  lib/url.h \
+		  lib/listener.h
 
 headers = src/admin.h \
 		  src/ctcp.h \

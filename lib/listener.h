@@ -12,17 +12,21 @@ struct irc_listener;
 
 typedef void (*listener_log_fn) (enum log_level, const struct irc_listener *, const char *);
 
+struct pending_client;
+
 /**
  * A listener.
  */
 struct irc_listener {
 	int active:1;
+	GIConv iconv;
 	GList *incoming;
 	GList *pending;
 	struct listener_config *config;
 	struct irc_network *network;
 	struct global *global;
 	listener_log_fn log_fn;
+	gboolean (*handle_client_line) (GIOChannel *c, struct pending_client *pc, const struct irc_line *l);
 	void (*new_client)(struct irc_network *n, GIOChannel *ioc, const char *description);
 };
 
