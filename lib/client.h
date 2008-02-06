@@ -82,4 +82,16 @@ G_MODULE_EXPORT void clients_send_args_ex(GList *clients, const char *hostmask, 
 G_MODULE_EXPORT void clients_send_state(GList *clients, 
 										struct network_state *s);
 
+G_MODULE_EXPORT void client_send_nameslist(struct irc_client *client, 
+										   struct channel_state *ch);
+G_MODULE_EXPORT gboolean client_send_channel_state_diff(
+										struct irc_client *client, 
+										struct channel_state *old_state,
+										struct channel_state *new_state);
+
+G_MODULE_EXPORT gboolean client_send_state_diff(struct irc_client *client, struct network_state *old_state, struct network_state *new_state);
+
+G_MODULE_EXPORT void client_send_channel_state(struct irc_client *c, 
+							   struct channel_state *ch);
+
 #endif /* __LIBIRC_CLIENT_H__ */

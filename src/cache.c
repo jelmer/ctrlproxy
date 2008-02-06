@@ -24,62 +24,6 @@
 #include "internals.h"
 #include "irc.h"
 
-void client_send_nameslist(struct irc_client *c, struct network_state *net, 
-						   struct channel_state *ch)
-{
-	GList *nl;
-	struct irc_line *l = NULL;
-
-	g_assert(c != NULL);
-	g_assert(ch != NULL);
-	
-	for (nl = ch->nicks; nl; nl = nl->next) {
-		char mode[2] = { ch->mode, 0 };
-		char *arg;
-		struct channel_nick *n = (struct channel_nick *)nl->data;
-		char prefix;
-
-		if (n->modes != NULL) {
-			prefix = get_prefix_from_modes(&net->info, n->modes);
-		} else {
-			prefix = 0;
-		}
-
-		if (prefix == 0) {
-			arg = g_strdup(n->global_nick->nick);
-		} else {
-			arg = g_strdup_printf("%c%s", prefix, n->global_nick->nick);
-		}
-
-		if (l == NULL || !line_add_arg(l, arg)) {
-			char *tmp;
-			if (l != NULL) {
-				client_send_line(c, l);
-				free_line(l);
-			}
-
-			l = irc_parse_line_args(client_get_default_origin(c), "353",
-									client_get_default_target(c), mode, 
-									ch->name, NULL);
-			l->has_endcolon = WITHOUT_COLON;
-			tmp = g_strdup_printf(":%s", arg);
-			g_assert(line_add_arg(l, tmp));
-			g_free(tmp);
-		}
-
-		g_free(arg);
-	}
-
-	if (l != NULL) {
-		client_send_line(c, l);
-		free_line(l);
-	}
-
-	client_send_response(c, RPL_ENDOFNAMES, ch->name, "End of /NAMES list", 
-						 NULL);
-}
-
-
 static void client_send_banlist(struct irc_client *client, struct network_state *net, struct channel_state *channel)
 {
 	GList *gl;
@@ -261,7 +205,7 @@ static gboolean client_try_cache_names(struct irc_client *c, struct network_stat
 	ch = find_channel(net, l->args[1]);
 	if (!ch) return FALSE;
 
-	client_send_nameslist(c, net, ch);
+	client_send_nameslist(c, ch);
 
 	return TRUE;
 }
