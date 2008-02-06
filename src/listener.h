@@ -8,6 +8,9 @@
 #define G_MODULE_EXPORT
 #endif
 
+struct irc_listener;
+
+typedef void (*listener_log_fn) (enum log_level, const struct irc_listener *, const char *);
 
 /**
  * A listener.
@@ -19,7 +22,10 @@ struct irc_listener {
 	struct listener_config *config;
 	struct irc_network *network;
 	struct global *global;
+	listener_log_fn log_fn;
+	void (*new_client)(struct irc_network *n, GIOChannel *ioc, const char *description);
 };
+
 
 struct socks_method;
 

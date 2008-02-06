@@ -60,11 +60,22 @@ static gboolean kill_pending_client(struct pending_client *pc)
 	return TRUE;
 }
 
+static void default_log_fn(enum log_level l, const struct irc_listener *listener, const char *ret)
+{
+	if (listener->network != NULL)
+		network_log(l, listener->network, "%s", ret);
+	else
+		log_global(l, "%s", ret);
+}
+
 void listener_log(enum log_level l, const struct irc_listener *listener,
 				 const char *fmt, ...)
 {
 	char *ret;
 	va_list ap;
+
+	if (listener->log_fn == NULL)
+		return;
 
 	g_assert(listener);
 	g_assert(fmt);
@@ -73,10 +84,7 @@ void listener_log(enum log_level l, const struct irc_listener *listener,
 	ret = g_strdup_vprintf(fmt, ap);
 	va_end(ap);
 
-	if (listener->network != NULL)
-		network_log(l, listener->network, "%s", ret);
-	else
-		log_global(l, "%s", ret);
+	listener->log_fn(l, listener, ret);
 
 	g_free(ret);
 }
@@ -133,7 +141,7 @@ static gboolean handle_client_line(GIOChannel *c, struct pending_client *pc,
 			}
 
 			desc = g_io_channel_ip_get_description(c);
-			client_init(n, c, desc);
+			pc->listener->new_client(n, c, desc);
 			g_free(desc);
 
 			return FALSE;
@@ -460,12 +468,19 @@ void free_listener(struct irc_listener *l)
 	g_free(l);
 }
 
+static void listener_new_client(struct irc_network *n, GIOChannel *ioc, const char *description)
+{
+	client_init(n, ioc, description);
+}
+
 struct irc_listener *listener_init(struct global *global, struct listener_config *cfg)
 {
 	struct irc_listener *l = g_new0(struct irc_listener, 1);
 
 	l->config = cfg;
 	l->global = global;
+	l->new_client = listener_new_client;
+	l->log_fn = default_log_fn;
 
 	if (l->config->network != NULL) {
 		l->network = network_ref(find_network(global->networks, l->config->network));
