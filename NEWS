@@ -25,6 +25,8 @@ Ctrlproxy 3.0.6 UNRELEASED
 
 	* Avoid data overhead when responding to /NAMES out of cache.
 
+	* Add --check-running option.
+
   BUG FIXES
 
     * Don't "forget" listener password.

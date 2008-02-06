@@ -156,9 +156,11 @@ int main(int argc, char **argv)
 	gboolean init = FALSE;
 	const char *inetd_client = NULL;
 	char *pidfile;
+	gboolean check_running = FALSE;
 	gboolean version = FALSE;
 	GOptionContext *pc;
 	GOptionEntry options[] = {
+		{"check-running", 0, 0, G_OPTION_ARG_NONE, &check_running, "Only check whether ctrlproxy is running and exit"},
 		{"inetd-client", 'i', 0, G_OPTION_ARG_STRING, &inetd_client, "Communicate with client to NETWORK via stdio", "NETWORK" },
 		{"debug-level", 'd', 'd', G_OPTION_ARG_INT, &current_log_level, ("Debug level [0-5]"), "LEVEL" },
 		{"no-timestamp", 'n', 0, G_OPTION_ARG_NONE, &no_log_timestamp, "No timestamps in logs" },
@@ -221,8 +223,6 @@ int main(int argc, char **argv)
 
 	init_log(logfile);
 
-	log_global(LOG_INFO, "CtrlProxy %s starting", VERSION);
-
 	if (gethostname(my_hostname, NI_MAXHOST) != 0) {
 		log_global(LOG_WARNING, "Can't figure out hostname of local host!");
 		g_free(config_dir);
@@ -260,9 +260,6 @@ int main(int argc, char **argv)
 	init_replication();
 	help = help_load_file(HELPFILE);
 
-	/* Determine correct modules directory */
-	init_plugins(getenv("CTRLPROXY_MODULESDIR")?getenv("CTRLPROXY_MODULESDIR"):MODULESDIR);
-
 	tmp = g_build_filename(config_dir, "config", NULL);
 
 	if (!g_file_test(tmp, G_FILE_TEST_EXISTS)) {
@@ -295,9 +292,27 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
+	if (check_running) {
+		pid_t pid;
+		pidfile = pid_file(my_global);
+		pid = read_pidfile(pidfile);
+		if (pid == -1) {
+			printf("ctrlproxy is not running\n");
+			return -1;
+		} else {
+			printf("ctrlproxy pid is %d\n", pid);
+			return 0;
+		}
+	}
+
+	log_global(LOG_INFO, "CtrlProxy %s (pid %d) starting", VERSION, getpid());
+
 	pidfile = pid_file(my_global);
 	write_pidfile(pidfile);
 	g_free(pidfile);
+
+	/* Determine correct modules directory */
+	init_plugins(getenv("CTRLPROXY_MODULESDIR")?getenv("CTRLPROXY_MODULESDIR"):MODULESDIR);
 
 	start_unix_socket(my_global);
 	start_admin_socket(my_global);

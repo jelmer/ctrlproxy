@@ -286,7 +286,11 @@ pid_t read_pidfile(const char *path)
 	if (!g_file_get_contents(path, &contents, NULL, &error)) 
 		return -1;
 	pid = atol(contents);
-	/* FIXME: Check if pid is still running */
+
+	/* Check if process is still running */
+	if (kill(pid,0) != 0 && errno == ESRCH)
+		pid = -1;
+
 	g_free(contents);
 	return pid;
 }
