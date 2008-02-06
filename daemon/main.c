@@ -72,11 +72,14 @@ int main(int argc, char **argv)
 	const char *config_file = DEFAULT_CONFIG_FILE;
 	gboolean version = FALSE;
 	gboolean inetd = FALSE;
+	gboolean foreground = FALSE;
+	gboolean isdaemon = TRUE;
 	pid_t pid;
 	GMainLoop *main_loop;
 	GOptionEntry options[] = {
 		{"config-file", 'c', 0, G_OPTION_ARG_STRING, &config_file, "Configuration file", "CONFIGFILE"},
 		{"debug-level", 'd', 'd', G_OPTION_ARG_INT, &log_level, ("Debug level [0-5]"), "LEVEL" },
+		{"foreground", 'F', 0, G_OPTION_ARG_NONE, &foreground, ("Stay in the foreground") },
 		{"inetd", 'I', 0, G_OPTION_ARG_NONE, &inetd, ("Run in inetd mode")},
 		{"version", 'v', 0, G_OPTION_ARG_NONE, &version, ("Show version information")},
 		{ NULL }
@@ -122,26 +125,30 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
+	isdaemon = !foreground && !inetd;
+
+	if (isdaemon) {
 #ifdef HAVE_DAEMON 
 #ifdef SIGTTOU
-	signal(SIGTTOU, SIG_IGN);
+		signal(SIGTTOU, SIG_IGN);
 #endif
 
 #ifdef SIGTTIN
-	signal(SIGTTIN, SIG_IGN);
+		signal(SIGTTIN, SIG_IGN);
 #endif
 
 #ifdef SIGTSTP
-	signal(SIGTSTP, SIG_IGN);
+		signal(SIGTSTP, SIG_IGN);
 #endif
-	if (daemon(1, 0) < 0) {
-		fprintf(stderr, "Unable to daemonize\n");
-		return -1;
-	}
+		if (daemon(1, 0) < 0) {
+			fprintf(stderr, "Unable to daemonize\n");
+			return -1;
+		}
 #else
-	fprintf(stderr, "Daemon mode not compiled in\n");
-	return -1;
+		fprintf(stderr, "Daemon mode not compiled in\n");
+		return -1;
 #endif
+	}
 
 	if (inetd) {
 		/* FIXME */
