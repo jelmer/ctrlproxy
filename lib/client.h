@@ -78,7 +78,7 @@ G_MODULE_EXPORT const char *client_get_default_target(struct irc_client *c);
 G_MODULE_EXPORT const char *client_get_own_hostmask(struct irc_client *c);
 G_MODULE_EXPORT struct irc_client *client_ref(struct irc_client *c);
 G_MODULE_EXPORT void client_unref(struct irc_client *c);
-G_MODULE_EXPORT struct irc_client *irc_client_new(GIOChannel *c, const char *desc, gboolean (*process_from_client) (struct irc_client *, const struct irc_line *), struct irc_network *n);
+G_MODULE_EXPORT struct irc_client *irc_client_new(GIOChannel *c, const char *desc, gboolean (*process_from_client) (struct irc_client *, const struct irc_line *));
 G_MODULE_EXPORT void clients_send(GList *clients, const struct irc_line *, const struct irc_client *exception);
 G_MODULE_EXPORT void clients_send_args_ex(GList *clients, const char *hostmask, ...);
 G_MODULE_EXPORT void clients_send_state(GList *clients, 
@@ -99,6 +99,7 @@ G_MODULE_EXPORT void client_send_topic(struct irc_client *c, struct channel_stat
 G_MODULE_EXPORT void client_send_banlist(struct irc_client *client, struct channel_state *channel);
 G_MODULE_EXPORT void client_send_channel_mode(struct irc_client *client, struct channel_state *channel);
 G_MODULE_EXPORT void client_send_luserchannels(struct irc_client *c, int num);
-G_MODULE_EXPORT void client_send_motd(struct irc_client *c, const char **lines);
+G_MODULE_EXPORT void client_send_motd(struct irc_client *c, char **lines);
+G_MODULE_EXPORT void client_parse_buffer(struct irc_client *client);
 
 #endif /* __LIBIRC_CLIENT_H__ */

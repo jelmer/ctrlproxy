@@ -239,7 +239,7 @@ static void free_client(struct irc_client *c)
  *
  * @param c Client to send to.
  */
-void client_send_motd(struct irc_client *c, const char **lines)
+void client_send_motd(struct irc_client *c, char **lines)
 {
 	int i;
 	g_assert(c);
@@ -612,7 +612,7 @@ static gboolean client_ping(struct irc_client *client)
  * @param c Channel to talk over
  * @param desc Description of the client
  */
-struct irc_client *irc_client_new(GIOChannel *c, const char *desc, gboolean (*process_from_client) (struct irc_client *, const struct irc_line *), struct irc_network *n)
+struct irc_client *irc_client_new(GIOChannel *c, const char *desc, gboolean (*process_from_client) (struct irc_client *, const struct irc_line *))
 {
 	struct irc_client *client;
 
@@ -622,7 +622,6 @@ struct irc_client *irc_client_new(GIOChannel *c, const char *desc, gboolean (*pr
 	client = g_new0(struct irc_client, 1);
 	g_assert(client != NULL);
 	client->references = 1;
-	client->network = network_ref(n);
 
 	g_io_channel_set_flags(c, G_IO_FLAG_NONBLOCK, NULL);
 	g_io_channel_set_close_on_unref(c, TRUE);
@@ -633,7 +632,6 @@ struct irc_client *irc_client_new(GIOChannel *c, const char *desc, gboolean (*pr
 	g_io_channel_ref(client->incoming);
 	client->description = g_strdup(desc);
 	client->connected = TRUE;
-	client->exit_on_close = FALSE;
 	client->pending_lines = g_queue_new();
 	client->process_from_client = process_from_client;
 
@@ -643,11 +641,14 @@ struct irc_client *irc_client_new(GIOChannel *c, const char *desc, gboolean (*pr
 	client->incoming_id = g_io_add_watch(client->incoming, G_IO_IN | G_IO_HUP, 
 										 handle_pending_client_receive, client);
 
+	return client;
+}
+
+void client_parse_buffer(struct irc_client *client)
+{
 	handle_pending_client_receive(client->incoming, 
 				  g_io_channel_get_buffer_condition(client->incoming),
 				  client);
-
-	return client;
 }
 
 /**

@@ -114,12 +114,32 @@ static gboolean process_from_client(struct irc_client *c, const struct irc_line 
 	return TRUE;
 }
 
+static void client_free_private(struct irc_client *c)
+{
+	network_unref(c->network);
+}
+
+static void handle_client_disconnect(struct irc_client *c)
+{
+	if (c->network != NULL)
+		c->network->clients = g_list_remove(c->network->clients, c);
+}
+
 struct irc_client *client_init(struct irc_network *n, GIOChannel *c, const char *desc)
 {
-	struct irc_client *client = irc_client_new(c, desc, process_from_client, n);
+	struct irc_client *client = irc_client_new(c, desc, process_from_client);
+
+	client->network = network_ref(n);
 
 	if (n != NULL && n->global != NULL)
 		client_set_charset(client, n->global->config->client_charset);
+
+	client->disconnect = handle_client_disconnect;
+	client->free_private_data = client_free_private;
+	client->exit_on_close = FALSE;
+	
+	/* parse any data currently in the buffer */
+	client_parse_buffer(client);
 
 	return client;
 }
