@@ -192,8 +192,8 @@ void client_disconnect(struct irc_client *c, const char *reason)
 
 	g_source_remove(c->ping_id);
 
-	if (c->network != NULL)
-		c->network->clients = g_list_remove(c->network->clients, c);
+	if (c->disconnect != NULL)
+		c->disconnect(c);
 
 	pending_clients = g_list_remove(pending_clients, c);
 
@@ -229,7 +229,8 @@ static void free_client(struct irc_client *c)
 	g_free(c->requested_hostname);
 	g_queue_foreach(c->pending_lines, free_pending_line, NULL);
 	g_queue_free(c->pending_lines);
-	network_unref(c->network);
+	if (c->free_private_data)
+		c->free_private_data(c);
 	g_free(c);
 }
 
@@ -238,15 +239,12 @@ static void free_client(struct irc_client *c)
  *
  * @param c Client to send to.
  */
-void send_motd(struct irc_client *c)
+void client_send_motd(struct irc_client *c, const char **lines)
 {
-	char **lines;
 	int i;
 	g_assert(c);
 
-	lines = get_motd_lines(c);
-
-	if (!lines) {
+	if (lines == NULL) {
 		client_send_response(c, ERR_NOMOTD, "No MOTD file", NULL);
 		return;
 	}
@@ -254,9 +252,7 @@ void send_motd(struct irc_client *c)
 	client_send_response(c, RPL_MOTDSTART, "Start of MOTD", NULL);
 	for(i = 0; lines[i]; i++) {
 		client_send_response(c, RPL_MOTD, lines[i], NULL);
-		g_free(lines[i]);
 	}
-	g_free(lines);
 	client_send_response(c, RPL_ENDOFMOTD, "End of MOTD", NULL);
 }
 
@@ -376,7 +372,7 @@ static gboolean welcome_client(struct irc_client *client)
 	client_send_response(client, RPL_YOURHOST, tmp, NULL); 
 	g_free(tmp);
 	client_send_response(client, RPL_CREATED, 
-		"Ctrlproxy (c) 2002-2007 Jelmer Vernooij <jelmer@vernstok.nl>", NULL);
+		"Ctrlproxy (c) 2002-2008 Jelmer Vernooij <jelmer@vernstok.nl>", NULL);
 	client_send_response(client, RPL_MYINFO, 
 		 client->network->info.name, 
 		 ctrlproxy_version(), 
@@ -392,17 +388,22 @@ static gboolean welcome_client(struct irc_client *client)
 	g_free(features);
 
 	if (client->network->state != NULL) {
-		tmp = g_strdup_printf("%u", g_list_length(client->network->state->channels));
-		client_send_response(client, RPL_LUSERCHANNELS, tmp,
-				     "channels formed", NULL);
-		g_free(tmp);
+		client_send_luserchannels(client, g_list_length(client->network->state->channels));
 	}
 
 	tmp = g_strdup_printf("I have %d clients", g_list_length(client->network->clients));
 	client_send_response(client, RPL_LUSERME, tmp, NULL);
 	g_free(tmp);
 
-	send_motd(client);
+	if (!client->network->global->config->motd_file) {
+		client_send_motd(client, NULL);
+	} else if (!strcmp(client->network->global->config->motd_file, "")) {
+		client_send_motd(client, NULL);
+	} else {
+		char **lines = get_motd_lines(client->network->global->config->motd_file);
+		client_send_motd(client, lines);
+		g_strfreev(lines);
+	}
 
 	g_assert(client->state != NULL);
 	g_assert(client->network != NULL);
@@ -1035,3 +1036,12 @@ void client_send_channel_mode(struct irc_client *c, struct channel_state *ch)
 		}
 }
 
+void client_send_luserchannels(struct irc_client *client, int num)
+{
+	char *tmp;
+	tmp = g_strdup_printf("%u", num);
+	client_send_response(client, RPL_LUSERCHANNELS, tmp,
+				     "channels formed", NULL);
+	g_free(tmp);
+
+}

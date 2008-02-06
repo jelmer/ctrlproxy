@@ -31,7 +31,7 @@ gboolean no_log_timestamp = FALSE;
 enum log_level current_log_level = LOG_INFO;
 FILE *flog = NULL;
 
-static void log_entry(enum log_level level, const struct irc_network *n, const struct irc_client *c, const char *data)
+void log_entry(enum log_level level, const struct irc_network *n, const struct irc_client *c, const char *data)
 {
 	if (flog == NULL)
 		return;

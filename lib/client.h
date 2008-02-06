@@ -56,6 +56,8 @@ struct irc_client {
 	gboolean connected;
 	struct network_state *state;
 	gboolean (*process_from_client) (struct irc_client *, const struct irc_line *);
+	void (*disconnect) (struct irc_client *);
+	void (*free_private_data) (struct irc_client *);
 };
 
 /**
@@ -96,5 +98,7 @@ G_MODULE_EXPORT void client_send_channel_state(struct irc_client *c,
 G_MODULE_EXPORT void client_send_topic(struct irc_client *c, struct channel_state *ch);
 G_MODULE_EXPORT void client_send_banlist(struct irc_client *client, struct channel_state *channel);
 G_MODULE_EXPORT void client_send_channel_mode(struct irc_client *client, struct channel_state *channel);
+G_MODULE_EXPORT void client_send_luserchannels(struct irc_client *c, int num);
+G_MODULE_EXPORT void client_send_motd(struct irc_client *c, const char **lines);
 
 #endif /* __LIBIRC_CLIENT_H__ */

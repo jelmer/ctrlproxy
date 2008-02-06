@@ -23,22 +23,17 @@
 #include <stdio.h>
 #include "irc.h"
 
-char ** get_motd_lines(struct irc_client *c)
+char ** get_motd_lines(const char *motd_file)
 {
 	char **lines = NULL;
 	size_t nrlines = 0;
 	GIOChannel *fd;
 	GError *error = NULL;
 
-	if (!c->network->global->config->motd_file)
-		return NULL;
 
-	if (!strcmp(c->network->global->config->motd_file, ""))
-		return NULL;
-
-	fd = g_io_channel_new_file(c->network->global->config->motd_file, "r", &error);
+	fd = g_io_channel_new_file(motd_file, "r", &error);
 	if (fd == NULL) {
-		log_global(LOG_ERROR, "Can't open '%s': %s", c->network->global->config->motd_file, error?error->message:"unknown error");
+		log_global(LOG_ERROR, "Can't open '%s': %s", motd_file, error?error->message:"unknown error");
 		return NULL;
 	}
 

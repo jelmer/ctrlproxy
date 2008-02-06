@@ -61,7 +61,7 @@ void network_nick_set_data(struct network_nick *n, const char *nick, const char 
 gboolean init_plugins(const char *dir);
 
 /* motd.c */
-char **get_motd_lines(struct irc_client *);
+char **get_motd_lines(const char *motd_file);
 
 /* network.c */
 G_MODULE_EXPORT struct irc_network *load_network(struct global *global, struct network_config *sc);
