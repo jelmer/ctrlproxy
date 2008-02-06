@@ -365,7 +365,7 @@ void unload_network(struct irc_network *s)
 	while(l) {
 		struct irc_client *c = l->data;
 		l = l->next;
-		disconnect_client(c, "Server exiting");
+		client_disconnect(c, "Server exiting");
 	}
 
 	if (s->global != NULL) {

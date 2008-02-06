@@ -440,7 +440,7 @@ static void cmd_detach(admin_handle h, char **args, void *userdata)
 		return;
 	}
 
-	disconnect_client(c, "Client exiting");
+	client_disconnect(c, "Client exiting");
 }
 
 static void dump_joined_channels(admin_handle h, char **args, void *userdata)

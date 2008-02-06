@@ -178,7 +178,7 @@ static void free_pending_line(void *_line, void *userdata)
  * @param c Client to disconnect.
  * @param reason Reason of the disconnect. Can be NULL.
  */
-void disconnect_client(struct irc_client *c, const char *reason) 
+void client_disconnect(struct irc_client *c, const char *reason) 
 {
 	g_assert(c != NULL);
 	if (c->connected == FALSE)
@@ -285,7 +285,7 @@ static gboolean handle_client_send_queue(GIOChannel *ioc, GIOCondition cond,
 							l->args[0], error->message);
 		} else if (status == G_IO_STATUS_EOF) {
 			c->outgoing_id = 0;
-			disconnect_client(c, "Hangup from client");
+			client_disconnect(c, "Hangup from client");
 
 			free_line(l);
 
@@ -310,7 +310,7 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition cond,
 	g_assert(client);
 
 	if (cond & G_IO_HUP) {
-		disconnect_client(client, "Hangup from client");
+		client_disconnect(client, "Hangup from client");
 		return FALSE;
 	}
 
@@ -339,7 +339,7 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition cond,
 		}
 
 		if (status == G_IO_STATUS_EOF) {
-			disconnect_client(client, "Connection closed by client");
+			client_disconnect(client, "Connection closed by client");
 			return FALSE;
 		}
 
@@ -349,7 +349,7 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition cond,
 				client_send_response(client, ERR_BADCHARENCODING, 
 				   "*", client->charset, error->message, NULL);
 			} else {
-				disconnect_client(client, error?error->message:"Unknown error");
+				client_disconnect(client, error?error->message:"Unknown error");
 				return FALSE;
 			}
 		}
@@ -422,7 +422,7 @@ static gboolean welcome_client(struct irc_client *client)
 	}
 
 	if (!new_client_hook_execute(client)) {
-		disconnect_client(client, "Refused by client connect hook");
+		client_disconnect(client, "Refused by client connect hook");
 		return FALSE;
 	}
 
@@ -505,13 +505,13 @@ static gboolean handle_pending_client_receive(GIOChannel *c,
 	if (cond & G_IO_ERR) {
 		char *tmp = g_strdup_printf("Error reading from client: %s", 
 						  g_io_channel_unix_get_sock_error(c));
-		disconnect_client(client, tmp);
+		client_disconnect(client, tmp);
 		g_free(tmp);
 		return FALSE;
 	}
 
 	if (cond & G_IO_HUP) {
-		disconnect_client(client, "Hangup from client");
+		client_disconnect(client, "Hangup from client");
 		return FALSE;
 	}
 
@@ -550,7 +550,7 @@ static gboolean handle_pending_client_receive(GIOChannel *c,
 
 			if (client->state != NULL) {
 				if (client->network == NULL) {
-					disconnect_client(client, 
+					client_disconnect(client, 
 						  "Please select a network first, or specify one in your configuration file");
 					return FALSE;
 				}
@@ -576,7 +576,7 @@ static gboolean handle_pending_client_receive(GIOChannel *c,
 		}
 
 		if (status != G_IO_STATUS_AGAIN) {
-			disconnect_client(client, "Error receiving line from client");
+			client_disconnect(client, "Error receiving line from client");
 			return FALSE;
 		}
 
@@ -657,7 +657,7 @@ struct irc_client *irc_client_new(GIOChannel *c, const char *desc, gboolean (*pr
 void kill_pending_clients(const char *reason)
 {
 	while (pending_clients != NULL) 
-		disconnect_client(pending_clients->data, reason);
+		client_disconnect(pending_clients->data, reason);
 }
 
 /**

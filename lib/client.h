@@ -61,7 +61,7 @@ struct irc_client {
 /**
  * Disconnect a client.
  */
-G_MODULE_EXPORT void disconnect_client(struct irc_client *c, const char *reason);
+G_MODULE_EXPORT void client_disconnect(struct irc_client *c, const char *reason);
 
 G_MODULE_EXPORT G_GNUC_NULL_TERMINATED gboolean client_send_args(struct irc_client *c, ...);
 G_MODULE_EXPORT G_GNUC_NULL_TERMINATED gboolean client_send_args_ex(struct irc_client *c, 

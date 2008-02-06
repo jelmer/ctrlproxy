@@ -221,7 +221,7 @@ START_TEST(test_msg)
 	g_io_channel_unref(ch1);
 
 	linestack_send(ctx, lm, NULL, cl, FALSE, FALSE, 0);
-	disconnect_client(cl, "foo");
+	client_disconnect(cl, "foo");
 
 	g_io_channel_read_to_end(ch2, &raw, NULL, NULL);
 
@@ -254,7 +254,7 @@ START_TEST(test_join_part)
 	g_io_channel_unref(ch1);
 
 	linestack_send(ctx, lm, NULL, cl, FALSE, FALSE, 0);
-	disconnect_client(cl, "foo");
+	client_disconnect(cl, "foo");
 
 	g_io_channel_read_to_end(ch2, &raw, NULL, NULL);
 
@@ -291,7 +291,7 @@ START_TEST(test_skip_msg)
 	g_io_channel_unref(ch1);
 
 	linestack_send(ctx, lm, NULL, cl, FALSE, FALSE, 0);
-	disconnect_client(cl, "foo");
+	client_disconnect(cl, "foo");
 
 	g_io_channel_read_to_end(ch2, &raw, NULL, NULL);
 
@@ -328,7 +328,7 @@ START_TEST(test_object_msg)
 	g_io_channel_unref(ch1);
 
 	linestack_send_object(ctx, "#bla", lm, NULL, cl, FALSE, FALSE, 0);
-	disconnect_client(cl, "foo");
+	client_disconnect(cl, "foo");
 
 	g_io_channel_read_to_end(ch2, &raw, NULL, NULL);
 
@@ -369,7 +369,7 @@ START_TEST(test_object_open)
 		g_io_channel_unref(ch1);
 
 		linestack_send_object(ctx, "#bla", NULL, NULL, cl, FALSE, FALSE, 0);
-		disconnect_client(cl, "foo");
+		client_disconnect(cl, "foo");
 
 		g_io_channel_read_to_end(ch2, &raw, NULL, NULL);
 

@@ -61,7 +61,7 @@ static gboolean process_from_client(struct irc_client *c, const struct irc_line 
 	g_assert(l->args[0] != NULL);
 
 	if (!g_strcasecmp(l->args[0], "QUIT")) {
-		disconnect_client(c, "Client exiting");
+		client_disconnect(c, "Client exiting");
 		g_free(l->origin);
 		return FALSE;
 	} else if (!g_strcasecmp(l->args[0], "PING")) {
