@@ -125,12 +125,7 @@ static void handle_finger(struct ctcp_handle *h, char **args)
 
 static void handle_source(struct ctcp_handle *h, char **args)
 {
-	ctcp_reply(h, "SOURCE", "ctrlproxy.vernstok.nl:pub/ctrlproxy:ctrlproxy-latest.tar.gz", NULL);
-}
-
-static void handle_clientinfo(struct ctcp_handle *h, char **args)
-{
-	ctcp_reply(h, "CLIENTINFO", "ACTION CLIENTINFO VERSION TIME FINGER SOURCE CLIENTINFO PING", NULL);
+	ctcp_reply(h, "SOURCE", "www.ctrlproxy.org:pub/ctrlproxy:ctrlproxy-latest.tar.gz", NULL);
 }
 
 static void handle_version(struct ctcp_handle *h, char **args)
@@ -152,6 +147,8 @@ static void handle_ping(struct ctcp_handle *h, char **args)
 	ctcp_reply(h, "PING", args[1], NULL);
 }
 
+static void handle_clientinfo(struct ctcp_handle *h, char **args);
+
 static const struct ctcp_handler builtins[] = {
 	{ "VERSION", handle_version },
 	{ "CLIENTINFO", handle_clientinfo },
@@ -159,10 +156,34 @@ static const struct ctcp_handler builtins[] = {
 	{ "PING", handle_ping },
 	{ "FINGER", handle_finger },
 	{ "TIME", handle_time },
+	{ "ACTION", NULL },
 	{ NULL, NULL }
 };
 
 static GList *cmds = NULL;
+
+static void handle_clientinfo(struct ctcp_handle *h, char **args)
+{
+	char **supported = g_new0(char *, sizeof(builtins)/sizeof(builtins[0])+1+g_list_length(cmds));
+	char *tmp;
+	int i;
+	GList *gl;
+
+	for (i = 0; builtins[i].name; i++) 
+		supported[i] = builtins[i].name;
+
+	for (gl = cmds; gl; gl = gl->next) {
+		supported[i] = ((struct ctcp_handler *)gl->data)->name;
+		i++;
+	}
+
+	supported[i] = NULL;
+
+	tmp = g_strjoinv(" ", supported);
+	ctcp_reply(h, "CLIENTINFO", tmp, NULL);
+	g_free(tmp);
+	g_free(supported);
+}
 
 void ctcp_register_handler(const struct ctcp_handler *h)
 {
@@ -303,7 +324,8 @@ gboolean ctcp_process_network_request (struct irc_network *n, const struct irc_l
 		struct ctcp_handler *hl = gl->data;
 
 		if (!g_strcasecmp(hl->name, args[0])) {
-			hl->fn(&h, args);
+			if (hl->fn != NULL)
+				hl->fn(&h, args);
 			ret = TRUE;
 			break;
 		}
@@ -311,7 +333,8 @@ gboolean ctcp_process_network_request (struct irc_network *n, const struct irc_l
 
 	for (i = 0; !ret && builtins[i].name; i++) {
 		if (!g_strcasecmp(builtins[i].name, args[0])) {
-			builtins[i].fn(&h, args);
+			if (builtins[i].fn != NULL) 
+				builtins[i].fn(&h, args);
 			ret = TRUE;
 			break;
 		}
