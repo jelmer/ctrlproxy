@@ -93,7 +93,7 @@ static gboolean process_from_client(struct irc_client *c, const struct irc_line 
 		ctcp_process_client_reply(c, l);
 	} else if (!g_strcasecmp(l->args[0], "")) {
 	} else if (c->network->connection.state == NETWORK_CONNECTION_STATE_MOTD_RECVD) {
-		if (c->network->config->disable_cache || !client_try_cache(c, l)) {
+		if (c->network->config->disable_cache || !client_try_cache(c, c->network, l)) {
 			/* Perhaps check for validity of input here ? It could save us some bandwidth 
 			 * to the server, though very unlikely to occur often */
 			network_send_line(c->network, c, l, FALSE);

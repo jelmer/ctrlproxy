@@ -107,7 +107,7 @@ gboolean redirect_response(struct irc_network *n, const struct irc_line *l);
 void redirect_clear(const struct irc_network *n);
 
 /* cache.c */
-gboolean client_try_cache(struct irc_client *c, struct irc_line *l);
+gboolean client_try_cache(struct irc_client *c, struct irc_network *n, struct irc_line *l);
 
 /* linestack.c */
 void init_linestack(struct ctrlproxy_config *);

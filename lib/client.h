@@ -17,8 +17,8 @@
 	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 */
 
-#ifndef __CTRLPROXY_CLIENT_H__
-#define __CTRLPROXY_CLIENT_H__
+#ifndef __LIBIRC_CLIENT_H__
+#define __LIBIRC_CLIENT_H__
 
 /**
  * @file
@@ -82,4 +82,4 @@ G_MODULE_EXPORT void clients_send_args_ex(GList *clients, const char *hostmask, 
 G_MODULE_EXPORT void clients_send_state(GList *clients, 
 										struct network_state *s);
 
-#endif /* __CTRLPROXY_CLIENT_H__ */
+#endif /* __LIBIRC_CLIENT_H__ */
