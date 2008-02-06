@@ -94,5 +94,7 @@ G_MODULE_EXPORT gboolean client_send_state_diff(struct irc_client *client, struc
 G_MODULE_EXPORT void client_send_channel_state(struct irc_client *c, 
 							   struct channel_state *ch);
 G_MODULE_EXPORT void client_send_topic(struct irc_client *c, struct channel_state *ch);
+G_MODULE_EXPORT void client_send_banlist(struct irc_client *client, struct channel_state *channel);
+G_MODULE_EXPORT void client_send_channel_mode(struct irc_client *client, struct channel_state *channel);
 
 #endif /* __LIBIRC_CLIENT_H__ */

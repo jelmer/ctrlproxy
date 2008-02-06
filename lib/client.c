@@ -1004,3 +1004,34 @@ void clients_send_state(GList *clients, struct network_state *s)
 		client_send_state(c, s);
 	}
 }
+
+void client_send_banlist(struct irc_client *client, struct channel_state *channel)
+{
+	GList *gl;
+
+	g_assert(channel);
+	g_assert(client);
+
+	for (gl = channel->banlist; gl; gl = gl->next)
+	{
+		struct banlist_entry *be = gl->data;
+		g_assert(be);
+		client_send_response(client, RPL_BANLIST, channel->name, be->hostmask, NULL);
+	}
+
+	client_send_response(client, RPL_ENDOFBANLIST, channel->name, "End of channel ban list", NULL);
+}
+
+void client_send_channel_mode(struct irc_client *c, struct channel_state *ch)
+{
+		char *mode;
+		mode = mode2string(ch->modes);
+		client_send_response(c, RPL_CHANNELMODEIS, ch->name, mode, NULL);
+		g_free(mode);
+		if (ch->creation_time > 0) {
+			char time[20];
+			snprintf(time, sizeof(time), "%lu", ch->creation_time);
+			client_send_response(c, RPL_CREATIONTIME, ch->name, time, NULL);
+		}
+}
+

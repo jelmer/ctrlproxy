@@ -24,23 +24,6 @@
 #include "internals.h"
 #include "irc.h"
 
-static void client_send_banlist(struct irc_client *client, struct network_state *net, struct channel_state *channel)
-{
-	GList *gl;
-
-	g_assert(channel);
-	g_assert(client);
-
-	for (gl = channel->banlist; gl; gl = gl->next)
-	{
-		struct banlist_entry *be = gl->data;
-		g_assert(be);
-		client_send_response(client, RPL_BANLIST, channel->name, be->hostmask, NULL);
-	}
-
-	client_send_response(client, RPL_ENDOFBANLIST, channel->name, "End of channel ban list", NULL);
-}
-
 static gboolean client_try_cache_mode(struct irc_client *c, struct network_state *net, struct irc_line *l)
 {
 	int i;
@@ -64,7 +47,7 @@ static gboolean client_try_cache_mode(struct irc_client *c, struct network_state
 
 		for (i = 0; (m = l->args[2][i]); i++) {
 			switch (m) {
-			case 'b': client_send_banlist(c, net, ch); break;
+			case 'b': client_send_banlist(c, ch); break;
 			default: return FALSE;
 			}
 		}
@@ -72,20 +55,12 @@ static gboolean client_try_cache_mode(struct irc_client *c, struct network_state
 		return TRUE;
 	/* Queries in the form MODE #channel */
 	} else if (l->argc == 2) {
-		char *mode;
 		ch = find_channel(net, l->args[1]);
 		if (!ch) return FALSE;
 
 		if (!ch->mode_received) return FALSE;
 
-		mode = mode2string(ch->modes);
-		client_send_response(c, RPL_CHANNELMODEIS, ch->name, mode, NULL);
-		g_free(mode);
-		if (ch->creation_time > 0) {
-			char time[20];
-			snprintf(time, sizeof(time), "%lu", ch->creation_time);
-			client_send_response(c, RPL_CREATIONTIME, ch->name, time, NULL);
-		}
+		client_send_channel_mode(c, ch);
 
 		return TRUE;
 	}
