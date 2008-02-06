@@ -328,7 +328,7 @@ static int next_autoport(struct global *global)
  *
  * @param l Listener to start.
  */
-gboolean start_listener(struct listener *l)
+gboolean start_listener(struct listener *l, const char *address, const char *port)
 {
 	int sock = -1;
 	const int on = 1;
@@ -348,9 +348,12 @@ gboolean start_listener(struct listener *l)
 
 	g_assert(!l->active);
 
-	error = getaddrinfo(l->config->address, l->config->port != NULL?l->config->port:DEFAULT_IRC_PORT, &hints, &all_res);
+	if (port == NULL)
+		port = DEFAULT_IRC_PORT;
+
+	error = getaddrinfo(address, port, &hints, &all_res);
 	if (error) {
-		listener_log(LOG_ERROR, l, "Can't get address for %s:%s", l->config->address?l->config->address:"", l->config->port);
+		listener_log(LOG_ERROR, l, "Can't get address for %s:%s", address?address:"", port);
 		return FALSE;
 	}
 
@@ -382,7 +385,7 @@ gboolean start_listener(struct listener *l)
 			 * /and/ ipv6. */
 			if (!l->active || errno != EADDRINUSE)  {
 				listener_log(LOG_ERROR, l, "bind to %s:%s failed: %s", 
-						   l->config->address, l->config->port, 
+						   address?address:"", port, 
 						   strerror(errno));
 			}
 			close(sock);
@@ -494,7 +497,7 @@ static void auto_add_listener(struct irc_network *n, void *private_data)
 	cfg->network = g_strdup(n->config->name);
 	cfg->port = g_strdup_printf("%d", next_autoport(n->global));
 	l = listener_init(n->global, cfg);
-	start_listener(l);
+	start_listener(l, NULL, cfg->port);
 }
 
 gboolean init_listeners(struct global *global)
@@ -510,7 +513,7 @@ gboolean init_listeners(struct global *global)
 		struct listener *l = listener_init(global, cfg);
 
 		if (l != NULL) {
-			ret &= start_listener(l);
+			ret &= start_listener(l, cfg->address, cfg->port);
 		}
 	}
 	return ret;

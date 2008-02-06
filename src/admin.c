@@ -945,7 +945,7 @@ static void cmd_start_listener(admin_handle h, char **args, void *userdata)
 	l->config->password = g_strdup(args[2]);
 	l->global = admin_get_global(h);
 
-	start_listener(l);
+	start_listener(l, l->config->address, l->config->port);
 }
 
 static void cmd_stop_listener(admin_handle h, char **args, void *userdata)

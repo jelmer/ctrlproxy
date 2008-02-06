@@ -74,7 +74,7 @@ int main(int argc, char **argv)
 	gboolean inetd = FALSE;
 	GMainLoop *main_loop;
 	GOptionEntry options[] = {
-		{"config-file", 'c', 0, G_OPTION_ARG_STRING, &config_file, "Communicate with client to NETWORK via stdio", "NETWORK" },
+		{"config-file", 'c', 0, G_OPTION_ARG_STRING, &config_file, "Configuration file", "CONFIGFILE"},
 		{"debug-level", 'd', 'd', G_OPTION_ARG_INT, &log_level, ("Debug level [0-5]"), "LEVEL" },
 		{"inetd", 'I', 0, G_OPTION_ARG_NONE, &inetd, ("Run in inetd mode")},
 		{"version", 'v', 0, G_OPTION_ARG_NONE, &version, ("Show version information")},
@@ -137,7 +137,7 @@ int main(int argc, char **argv)
 #endif
 
 	if (inetd) {
-
+		/* FIXME */
 	} else { 
 		write_pidfile(PIDFILE);
 

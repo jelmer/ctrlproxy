@@ -48,7 +48,7 @@ struct pending_client {
 };
 
 G_GNUC_MALLOC G_MODULE_EXPORT struct listener *listener_init(struct global *global, struct listener_config *);
-G_MODULE_EXPORT gboolean start_listener(struct listener *);
+G_MODULE_EXPORT gboolean start_listener(struct listener *, const char *address, const char *service);
 G_MODULE_EXPORT gboolean stop_listener(struct listener *);
 G_MODULE_EXPORT void fini_listeners(struct global *);
 G_MODULE_EXPORT void free_listener(struct listener *l);
