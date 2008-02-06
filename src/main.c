@@ -158,6 +158,7 @@ int main(int argc, char **argv)
 	char *pidfile;
 	gboolean check_running = FALSE;
 	gboolean version = FALSE;
+	pid_t pid;
 	GOptionContext *pc;
 	GOptionEntry options[] = {
 		{"check-running", 0, 0, G_OPTION_ARG_NONE, &check_running, "Only check whether ctrlproxy is running and exit"},
@@ -229,32 +230,6 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
-	if (isdaemon) {
-#ifdef HAVE_DAEMON 
-#ifdef SIGTTOU
-		signal(SIGTTOU, SIG_IGN);
-#endif
-
-#ifdef SIGTTIN
-		signal(SIGTTIN, SIG_IGN);
-#endif
-
-#ifdef SIGTSTP
-		signal(SIGTSTP, SIG_IGN);
-#endif
-		if (daemon(1, 0) < 0) {
-			log_global(LOG_ERROR, "Unable to daemonize\n");
-			g_free(config_dir);
-			return -1;
-		}
-		isdaemon = 1;
-#else
-		log_global(LOG_ERROR, "Daemon mode not compiled in");
-		g_free(config_dir);
-		return -1;
-#endif
-	} 
-
 	init_admin();
 	init_nickserv();
 	init_replication();
@@ -292,10 +267,10 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
+	pidfile = pid_file(my_global);
+	pid = read_pidfile(pidfile);
+
 	if (check_running) {
-		pid_t pid;
-		pidfile = pid_file(my_global);
-		pid = read_pidfile(pidfile);
 		if (pid == -1) {
 			printf("ctrlproxy is not running\n");
 			return -1;
@@ -305,9 +280,39 @@ int main(int argc, char **argv)
 		}
 	}
 
+	if (pid != -1) {
+		fprintf(stderr, "ctrlproxy is already running at pid %d (from %s)\n", pid, pidfile);
+		return 1;
+	}
+
+	if (isdaemon) {
+#ifdef HAVE_DAEMON 
+#ifdef SIGTTOU
+		signal(SIGTTOU, SIG_IGN);
+#endif
+
+#ifdef SIGTTIN
+		signal(SIGTTIN, SIG_IGN);
+#endif
+
+#ifdef SIGTSTP
+		signal(SIGTSTP, SIG_IGN);
+#endif
+		if (daemon(1, 0) < 0) {
+			log_global(LOG_ERROR, "Unable to daemonize\n");
+			g_free(config_dir);
+			return -1;
+		}
+		isdaemon = 1;
+#else
+		log_global(LOG_ERROR, "Daemon mode not compiled in");
+		g_free(config_dir);
+		return -1;
+#endif
+	} 
+
 	log_global(LOG_INFO, "CtrlProxy %s (pid %d) starting", VERSION, getpid());
 
-	pidfile = pid_file(my_global);
 	write_pidfile(pidfile);
 	g_free(pidfile);
 

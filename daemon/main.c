@@ -72,6 +72,7 @@ int main(int argc, char **argv)
 	const char *config_file = DEFAULT_CONFIG_FILE;
 	gboolean version = FALSE;
 	gboolean inetd = FALSE;
+	pid_t pid;
 	GMainLoop *main_loop;
 	GOptionEntry options[] = {
 		{"config-file", 'c', 0, G_OPTION_ARG_STRING, &config_file, "Configuration file", "CONFIGFILE"},
@@ -112,6 +113,12 @@ int main(int argc, char **argv)
 
 	config = read_config_file(config_file);
 	if (config == NULL) {
+		return 1;
+	}
+
+	pid = read_pidfile(PIDFILE);
+	if (pid != -1) {
+		fprintf(stderr, "ctrlproxyd already running at pid %d!\n", pid);
 		return 1;
 	}
 

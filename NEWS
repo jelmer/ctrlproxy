@@ -27,6 +27,9 @@ Ctrlproxy 3.0.6 UNRELEASED
 
 	* Add --check-running option.
 
+	* The pid file is now read to check whether another instance of 
+	  ctrlproxy is already running.
+
   BUG FIXES
 
     * Don't "forget" listener password.
