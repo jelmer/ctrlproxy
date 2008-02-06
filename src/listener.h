@@ -53,5 +53,7 @@ G_MODULE_EXPORT gboolean stop_listener(struct listener *);
 G_MODULE_EXPORT void fini_listeners(struct global *);
 G_MODULE_EXPORT void free_listener(struct listener *l);
 G_MODULE_EXPORT gboolean init_listeners(struct global *global);
+G_MODULE_EXPORT void listener_log(enum log_level l, const struct listener *listener,
+				 const char *fmt, ...);
 
 #endif

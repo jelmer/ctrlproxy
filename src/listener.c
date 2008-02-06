@@ -60,7 +60,7 @@ static gboolean kill_pending_client(struct pending_client *pc)
 	return TRUE;
 }
 
-static void listener_log(enum log_level l, const struct listener *listener,
+void listener_log(enum log_level l, const struct listener *listener,
 				 const char *fmt, ...)
 {
 	char *ret;
