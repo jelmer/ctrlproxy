@@ -26,6 +26,7 @@
 static int log_level = 0;
 
 #define DEFAULT_CONFIG_FILE "/etc/ctrlproxyd.conf"
+#define PIDFILE "/var/run/ctrlproxyd.pid"
 
 struct ctrlproxyd_config {
 	const char *port;
@@ -45,8 +46,8 @@ struct ctrlproxyd_config *read_config_file(const char *name)
 	}
 
 	config = g_new0(struct ctrlproxyd_config, 1);
-	config->port = g_key_file_get_string(kf, "settings", "port", &error);
-	config->address = g_key_file_get_string(kf, "settings", "address", &error);
+	config->port = g_key_file_get_string(kf, "settings", "port", NULL);
+	config->address = g_key_file_get_string(kf, "settings", "address", NULL);
 
 	g_key_file_free(kf);
 
@@ -138,8 +139,7 @@ int main(int argc, char **argv)
 	if (inetd) {
 
 	} else { 
-
-		/* FIXME: Write pidfile */
+		write_pidfile(PIDFILE);
 
 		/* FIXME: Add listener */
 	}

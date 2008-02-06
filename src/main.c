@@ -50,6 +50,11 @@ static void signal_hup(int sig)
 	init_log(logfile);
 }
 
+char *pid_file(struct global *global)
+{
+	return g_build_filename(global->config->config_dir, "pid", NULL);
+}
+
 static void signal_crash(int sig) 
 {
 #ifdef HAVE_BACKTRACE_SYMBOLS
@@ -140,35 +145,6 @@ static void signal_save(int sig)
 	nickserv_save(my_global, my_global->config->config_dir);
 }
 
-static pid_t read_pidfile(struct global *global)
-{
-	char *path = g_build_filename(global->config->config_dir, "pid", NULL);
-	char *contents;
-	pid_t pid;
-	GError *error = NULL;
-	if (!g_file_get_contents(path, &contents, NULL, &error)) 
-		return -1;
-	g_free(path);
-	pid = atol(contents);
-	/* FIXME: Check if pid is still running */
-	g_free(contents);
-	return pid;
-}
-
-static gboolean write_pidfile(struct global *global)
-{
-	char *path = g_build_filename(global->config->config_dir, "pid", NULL);
-	GError *error = NULL;
-	char contents[100];
-	snprintf(contents, 100, "%u", getpid());
-	if (!g_file_set_contents(path, contents, -1, &error)) {
-		log_global(LOG_ERROR, "Unable to write pid file `%s'", path);
-		return FALSE;
-	}
-	g_free(path);
-	return TRUE;
-}
-
 int main(int argc, char **argv)
 {
 	int isdaemon = 0;
@@ -179,6 +155,7 @@ int main(int argc, char **argv)
 	char *tmp;
 	gboolean init = FALSE;
 	const char *inetd_client = NULL;
+	char *pidfile;
 	gboolean version = FALSE;
 	GOptionContext *pc;
 	GOptionEntry options[] = {
@@ -318,7 +295,9 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
-	write_pidfile(my_global);
+	pidfile = pid_file(my_global);
+	write_pidfile(pidfile);
+	g_free(pidfile);
 
 	start_unix_socket(my_global);
 	start_admin_socket(my_global);

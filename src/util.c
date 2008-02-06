@@ -277,3 +277,30 @@ const char *g_io_channel_unix_get_sock_error(GIOChannel *ioc)
 
 	return strerror(valopt);
 }
+
+pid_t read_pidfile(const char *path)
+{
+	char *contents;
+	pid_t pid;
+	GError *error = NULL;
+	if (!g_file_get_contents(path, &contents, NULL, &error)) 
+		return -1;
+	pid = atol(contents);
+	/* FIXME: Check if pid is still running */
+	g_free(contents);
+	return pid;
+}
+
+gboolean write_pidfile(const char *path)
+{
+	GError *error = NULL;
+	char contents[100];
+	snprintf(contents, 100, "%u", getpid());
+	if (!g_file_set_contents(path, contents, -1, &error)) {
+		log_global(LOG_ERROR, "Unable to write pid file `%s'", path);
+		return FALSE;
+	}
+	return TRUE;
+}
+
+
