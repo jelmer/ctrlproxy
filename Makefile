@@ -94,6 +94,10 @@ ctrlproxy$(EXEEXT): src/main.o $(objs) $(LIBIRC)
 	@echo Linking $@
 	@$(LD) $(LDFLAGS) -rdynamic -o $@ $^ $(LIBS)
 
+ctrlproxyd$(EXEEXT): daemon/main.o $(objs) $(LIBIRC)
+	@echo Linking $@
+	@$(LD) $(LDFLAGS) -rdynamic -o $@ $^ $(LIBS)
+
 ctrlproxy-admin$(EXEEXT): src/admin-cmd.o
 	@echo Linking $@
 	@$(LD) $(LDFLAGS) -rdynamic -o $@ $^ $(LIBS)

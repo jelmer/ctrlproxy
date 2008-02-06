@@ -97,7 +97,7 @@ fi
 
 AC_SUBST(EXTRA_INSTALL_TARGETS)
 
-BINS="$BINS ctrlproxy$ac_cv_exeext"
+BINS="$BINS ctrlproxy$ac_cv_exeext ctrlproxyd$ac_cv_exeext"
 AC_SUBST(BINS)
 
 AC_DEFINE(_GNU_SOURCE, 1, [Use GNU extensions])

@@ -1,7 +1,6 @@
-/* 
- * Use /etc/ctrlproxyd.conf. Settings:
- *  * port to listen on
- *  * whether to use system user config files or /var/lib/ctrlproxy
+Use /etc/ctrlproxyd.conf. Settings:
+  * port to listen on
+ *  * whether to use system er config files or /var/lib/ctrlproxy
  *
  * Wait for CONNECT / socks connection, password and username
  *

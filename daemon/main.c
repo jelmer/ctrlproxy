@@ -23,17 +23,59 @@
 #include "internals.h"
 #include <glib/gstdio.h>
 
-int current_log_level = 0;
+static int log_level = 0;
 
 #define DEFAULT_CONFIG_FILE "/etc/ctrlproxyd.conf"
 
+struct ctrlproxyd_config {
+	const char *port;
+	const char *address;
+};
+
+struct ctrlproxyd_config *read_config_file(const char *name)
+{
+	struct ctrlproxyd_config *config;
+	GError *error = NULL;
+	GKeyFile *kf = g_key_file_new();
+
+	if (!g_key_file_load_from_file(kf, name, G_KEY_FILE_NONE, &error)) {
+		fprintf(stderr, "Unable to load '%s': %s", name, error->message);
+		g_key_file_free(kf);
+		return NULL;
+	}
+
+	config = g_new0(struct ctrlproxyd_config, 1);
+	config->port = g_key_file_get_string(kf, "settings", "port", &error);
+	config->address = g_key_file_get_string(kf, "settings", "address", &error);
+
+	g_key_file_free(kf);
+
+	return config;
+}
+
+void signal_crash(int sig)
+{
+	/* FIXME */
+	exit(1);
+}
+
+void signal_quit(int sig)
+{
+	exit(0); /* FIXME */
+}
+
 int main(int argc, char **argv)
 {
+	struct ctrlproxyd_config *config;
 	GOptionContext *pc;
 	const char *config_file = DEFAULT_CONFIG_FILE;
+	gboolean version = FALSE;
+	gboolean inetd = FALSE;
+	GMainLoop *main_loop;
 	GOptionEntry options[] = {
 		{"config-file", 'c', 0, G_OPTION_ARG_STRING, &config_file, "Communicate with client to NETWORK via stdio", "NETWORK" },
-		{"debug-level", 'd', 'd', G_OPTION_ARG_INT, &current_log_level, ("Debug level [0-5]"), "LEVEL" },
+		{"debug-level", 'd', 'd', G_OPTION_ARG_INT, &log_level, ("Debug level [0-5]"), "LEVEL" },
+		{"inetd", 'I', 0, G_OPTION_ARG_NONE, &inetd, ("Run in inetd mode")},
 		{"version", 'v', 0, G_OPTION_ARG_NONE, &version, ("Show version information")},
 		{ NULL }
 	};
@@ -45,13 +87,10 @@ int main(int argc, char **argv)
 	signal(SIGPIPE, SIG_IGN);
 #endif
 #ifdef SIGHUP
-	signal(SIGHUP, signal_hup);
+	signal(SIGHUP, SIG_IGN);
 #endif
 #ifdef SIGSEGV
 	signal(SIGSEGV, signal_crash);
-#endif
-#ifdef SIGUSR1
-	signal(SIGUSR1, signal_save);
 #endif
 
 	main_loop = g_main_loop_new(NULL, FALSE);
@@ -70,37 +109,40 @@ int main(int argc, char **argv)
 		return 0;
 	}
 
-	/* FIXME: Read configuration file */
+	config = read_config_file(config_file);
+	if (config == NULL) {
+		return 1;
+	}
 
-	if (isdaemon) {
 #ifdef HAVE_DAEMON 
 #ifdef SIGTTOU
-		signal(SIGTTOU, SIG_IGN);
+	signal(SIGTTOU, SIG_IGN);
 #endif
 
 #ifdef SIGTTIN
-		signal(SIGTTIN, SIG_IGN);
+	signal(SIGTTIN, SIG_IGN);
 #endif
 
 #ifdef SIGTSTP
-		signal(SIGTSTP, SIG_IGN);
+	signal(SIGTSTP, SIG_IGN);
 #endif
-		if (daemon(1, 0) < 0) {
-			log_global(LOG_ERROR, "Unable to daemonize\n");
-			g_free(config_dir);
-			return -1;
-		}
-		isdaemon = 1;
-#else
-		log_global(LOG_ERROR, "Daemon mode not compiled in");
-		g_free(config_dir);
+	if (daemon(1, 0) < 0) {
+		fprintf(stderr, "Unable to daemonize\n");
 		return -1;
+	}
+#else
+	fprintf(stderr, "Daemon mode not compiled in\n");
+	return -1;
 #endif
-	} 
 
-	write_pidfile(my_global);
+	if (inetd) {
 
-	/* FIXME: Add listener */
+	} else { 
+
+		/* FIXME: Write pidfile */
+
+		/* FIXME: Add listener */
+	}
 
 	g_main_loop_run(main_loop);
 
