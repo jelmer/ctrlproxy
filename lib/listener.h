@@ -26,7 +26,7 @@ struct irc_listener {
 	struct irc_network *network;
 	struct global *global;
 	listener_log_fn log_fn;
-	gboolean (*handle_client_line) (GIOChannel *c, struct pending_client *pc, const struct irc_line *l);
+	gboolean (*handle_client_line) (struct pending_client *pc, const struct irc_line *l);
 	void (*new_client)(struct irc_network *n, GIOChannel *ioc, const char *description);
 };
 

@@ -57,7 +57,7 @@ void listener_log(enum log_level l, const struct irc_listener *listener,
 	g_free(ret);
 }
 
-static gboolean handle_client_line(GIOChannel *c, struct pending_client *pc, 
+static gboolean handle_client_line(struct pending_client *pc, 
 								   const struct irc_line *l)
 {
 	if (l == NULL || l->args[0] == NULL) { 
@@ -91,21 +91,21 @@ static gboolean handle_client_line(GIOChannel *c, struct pending_client *pc,
 				n = find_network_by_hostname(pc->listener->global, 
 											 networkname, 6667, TRUE);
 				if (n == NULL) {
-					irc_sendf(c, pc->listener->iconv, NULL, ":%s %d %s :Password error: unable to find network", 
+					irc_sendf(pc->connection, pc->listener->iconv, NULL, ":%s %d %s :Password error: unable to find network", 
 							  get_my_hostname(), ERR_PASSWDMISMATCH, "*");
 					return FALSE;
 				}
 
 				if (n->connection.state == NETWORK_CONNECTION_STATE_NOT_CONNECTED && 
 					!connect_network(n)) {
-					irc_sendf(c, pc->listener->iconv, NULL, ":%s %d %s :Password error: unable to connect", 
+					irc_sendf(pc->connection, pc->listener->iconv, NULL, ":%s %d %s :Password error: unable to connect", 
 							  get_my_hostname(), ERR_PASSWDMISMATCH, "*");
 					return FALSE;
 				}
 			}
 
-			desc = g_io_channel_ip_get_description(c);
-			pc->listener->new_client(n, c, desc);
+			desc = g_io_channel_ip_get_description(pc->connection);
+			pc->listener->new_client(n, pc->connection, desc);
 			g_free(desc);
 
 			return FALSE;
@@ -114,7 +114,7 @@ static gboolean handle_client_line(GIOChannel *c, struct pending_client *pc,
 			listener_log(LOG_WARNING, pc->listener, 
 						 "User tried to log in with incorrect password!");
 
-			status = irc_sendf(c, pc->listener->iconv, NULL, 
+			status = irc_sendf(pc->connection, pc->listener->iconv, NULL, 
 							   ":%s %d %s :Password mismatch", 
 							   get_my_hostname(), ERR_PASSWDMISMATCH, "*");
 
@@ -125,7 +125,7 @@ static gboolean handle_client_line(GIOChannel *c, struct pending_client *pc,
 			return TRUE;
 		}
 	} else {
-		irc_sendf(c, pc->listener->iconv, NULL, ":%s %d %s :You are not registered", get_my_hostname(), ERR_NOTREGISTERED, "*");
+		irc_sendf(pc->connection, pc->listener->iconv, NULL, ":%s %d %s :You are not registered", get_my_hostname(), ERR_NOTREGISTERED, "*");
 	}
 
 	return TRUE;

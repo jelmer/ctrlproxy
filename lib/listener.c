@@ -133,7 +133,7 @@ static gboolean handle_client_detect(GIOChannel *ioc, struct pending_client *pc)
 
 		l = irc_parse_line(cvrt);
 
-		ret = pc->listener->handle_client_line(ioc, pc, l);
+		ret = pc->listener->handle_client_line(pc, l);
 
 		free_line(l);
 
@@ -170,7 +170,7 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition condition, gpo
 				if (l == NULL)
 					continue;
 
-				ret = pc->listener->handle_client_line(c, pc, l);
+				ret = pc->listener->handle_client_line(pc, l);
 
 				free_line(l);
 
@@ -489,8 +489,6 @@ static struct socks_method {
 	{ SOCKS_METHOD_USERNAME_PW, "username/password", pass_acceptable, pass_handle_data },
 	{ -1, NULL, NULL }
 };
-
-
 
 
 static gboolean handle_client_socks_data(GIOChannel *ioc, struct pending_client *cl)
