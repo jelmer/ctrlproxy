@@ -826,7 +826,7 @@ static int channel_state_change_mode(struct network_state *s, struct network_nic
 			be = g_new0(struct banlist_entry, 1);
 			be->time_set = time(NULL);
 			be->hostmask = g_strdup(opt_arg);
-			be->by = g_strdup(by->nick);
+			be->by = (by?g_strdup(by->nick):NULL);
 			c->banlist = g_list_append(c->banlist, be);
 		} else {
 			be = find_banlist_entry(c->banlist, opt_arg);
