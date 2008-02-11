@@ -58,8 +58,8 @@ struct pending_client {
 };
 
 G_GNUC_MALLOC G_MODULE_EXPORT struct irc_listener *listener_init(struct global *global, struct listener_config *);
-G_MODULE_EXPORT gboolean start_listener(struct irc_listener *, const char *address, const char *service);
-G_MODULE_EXPORT gboolean stop_listener(struct irc_listener *);
+G_MODULE_EXPORT gboolean listener_start(struct irc_listener *, const char *address, const char *service);
+G_MODULE_EXPORT gboolean listener_stop(struct irc_listener *);
 G_MODULE_EXPORT void fini_listeners(struct global *);
 G_MODULE_EXPORT void free_listener(struct irc_listener *l);
 G_MODULE_EXPORT gboolean init_listeners(struct global *global);

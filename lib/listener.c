@@ -62,7 +62,7 @@ static gboolean kill_pending_client(struct pending_client *pc)
 
 
 
-gboolean stop_listener(struct irc_listener *l)
+gboolean listener_stop(struct irc_listener *l)
 {
 	while (l->incoming != NULL) {
 		struct listener_iochannel *lio = l->incoming->data;
@@ -248,7 +248,7 @@ static gboolean handle_new_client(GIOChannel *c_server, GIOCondition condition, 
  *
  * @param l Listener to start.
  */
-gboolean start_listener(struct irc_listener *l, const char *address, const char *port)
+gboolean listener_start(struct irc_listener *l, const char *address, const char *port)
 {
 	int sock = -1;
 	const int on = 1;

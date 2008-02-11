@@ -192,7 +192,7 @@ static void auto_add_listener(struct irc_network *n, void *private_data)
 	cfg->network = g_strdup(n->config->name);
 	cfg->port = g_strdup_printf("%d", next_autoport(n->global));
 	l = listener_init(n->global, cfg);
-	start_listener(l, NULL, cfg->port);
+	listener_start(l, NULL, cfg->port);
 }
 
 gboolean init_listeners(struct global *global)
@@ -208,7 +208,7 @@ gboolean init_listeners(struct global *global)
 		struct irc_listener *l = listener_init(global, cfg);
 
 		if (l != NULL) {
-			ret &= start_listener(l, cfg->address, cfg->port);
+			ret &= listener_start(l, cfg->address, cfg->port);
 		}
 	}
 	return ret;
@@ -221,7 +221,7 @@ void fini_listeners(struct global *global)
 		struct irc_listener *l = gl->data;
 
 		if (l->active) 
-			stop_listener(l);
+			listener_stop(l);
 
 	}
 }
