@@ -22,6 +22,15 @@
 #endif
 #include "internals.h"
 #include <glib/gstdio.h>
+#define BACKTRACE_STACK_SIZE 64
+
+#ifdef HAVE_EXECINFO_H
+#include <execinfo.h>
+#endif
+
+#ifdef HAVE_SYSLOG_H
+#include <syslog.h>
+#endif
 
 static int log_level = 0;
 
@@ -56,13 +65,39 @@ struct ctrlproxyd_config *read_config_file(const char *name)
 
 void signal_crash(int sig)
 {
-	/* FIXME */
-	exit(1);
+#ifdef HAVE_BACKTRACE_SYMBOLS
+	void *backtrace_stack[BACKTRACE_STACK_SIZE];
+	size_t backtrace_size;
+	char **backtrace_strings;
+#endif
+	syslog(LOG_ERR, "Received SIGSEGV!");
+
+#ifdef HAVE_BACKTRACE_SYMBOLS
+	/* get the backtrace (stack frames) */
+	backtrace_size = backtrace(backtrace_stack,BACKTRACE_STACK_SIZE);
+	backtrace_strings = backtrace_symbols(backtrace_stack, backtrace_size);
+
+	syslog(LOG_ALERT, "BACKTRACE: %d stack frames:", backtrace_size);
+	
+	if (backtrace_strings) {
+		int i;
+
+		for (i = 0; i < backtrace_size; i++)
+			syslog(LOG_ALERT, " #%u %s", i, backtrace_strings[i]);
+
+		g_free(backtrace_strings);
+	}
+
+#endif
+	syslog(LOG_ALERT, "Please send a bug report to jelmer@vernstok.nl.");
+	syslog(LOG_ALERT, "A gdb backtrace is appreciated if you can reproduce this bug.");
+	abort();
 }
 
 void signal_quit(int sig)
 {
-	exit(0); /* FIXME */
+	syslog(LOG_NOTICE, "Received signal %d, exiting...", sig);
+	exit(0);
 }
 
 int main(int argc, char **argv)
@@ -149,6 +184,8 @@ int main(int argc, char **argv)
 		return -1;
 #endif
 	}
+
+	openlog("ctrlproxyd", 0, LOG_DAEMON);
 
 	if (inetd) {
 		/* FIXME */
