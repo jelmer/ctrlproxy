@@ -253,6 +253,8 @@ struct irc_listener *listener_init(struct global *global, struct listener_config
 	struct irc_listener *l = g_new0(struct irc_listener, 1);
 
 	l->config = cfg;
+	l->ssl = cfg->ssl;
+	l->ssl_credentials = cfg->ssl_credentials;
 	l->global = global;
 	l->ops = &default_listener_ops;
 	l->iconv = (GIConv)-1;

@@ -29,6 +29,8 @@ struct irc_listener_ops {
 struct irc_listener {
 	int active:1;
 	GIConv iconv;
+	gboolean ssl;
+	gpointer ssl_credentials;
 	GList *incoming;
 	GList *pending;
 	struct listener_config *config;

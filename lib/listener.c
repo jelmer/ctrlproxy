@@ -130,7 +130,7 @@ static gboolean handle_client_detect(GIOChannel *ioc, struct pending_client *pc)
 
 		l = irc_parse_line(cvrt);
 
-		ret = pc->listener->handle_client_line(pc, l);
+		ret = pc->listener->ops->handle_client_line(pc, l);
 
 		free_line(l);
 
@@ -165,7 +165,7 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition condition, gpo
 				if (l == NULL)
 					continue;
 
-				ret = pc->listener->handle_client_line(pc, l);
+				ret = pc->listener->ops->handle_client_line(pc, l);
 
 				free_line(l);
 
@@ -211,10 +211,10 @@ static gboolean handle_new_client(GIOChannel *c_server, GIOCondition condition, 
 
 	c = g_io_channel_unix_new(sock);
 
-	if (listener->config->ssl) {
+	if (listener->ssl) {
 #ifdef HAVE_GNUTLS
 		c = ssl_wrap_iochannel(c, SSL_TYPE_SERVER, 
-							 NULL, listener->config->ssl_credentials);
+							 NULL, listener->ssl_credentials);
 		g_assert(c != NULL);
 #else
 		listener_log(LOG_WARNING, listener, "SSL support not available, not listening for SSL connection");
@@ -427,7 +427,7 @@ static gboolean pass_handle_data(struct pending_client *cl)
 	header[0] = 0x1;
 
 	/* set to non-zero if invalid */
-	header[1] = cl->listener->socks_auth_simple(cl, uname, pass)?0x0:0x1;
+	header[1] = cl->listener->ops->socks_auth_simple(cl, uname, pass)?0x0:0x1;
 
 	status = g_io_channel_write_chars(cl->connection, header, 2, &read, NULL);
 	if (status != G_IO_STATUS_NORMAL) {
@@ -543,14 +543,14 @@ static gboolean handle_client_socks_data(GIOChannel *ioc, struct pending_client 
 	
 		switch (header[3]) {
 			case ATYP_IPV4: 
-				if (cl->listener->socks_connect_ipv4 == NULL)
+				if (cl->listener->ops->socks_connect_ipv4 == NULL)
 					return listener_socks_error(cl, REP_ATYP_NOT_SUPPORTED);
-				return cl->listener->socks_connect_ipv4(cl);
+				return cl->listener->ops->socks_connect_ipv4(cl);
 
 			case ATYP_IPV6:
-				if (cl->listener->socks_connect_ipv6 == NULL)
+				if (cl->listener->ops->socks_connect_ipv6 == NULL)
 					return listener_socks_error(cl, REP_ATYP_NOT_SUPPORTED);
-				return cl->listener->socks_connect_ipv6(cl);
+				return cl->listener->ops->socks_connect_ipv6(cl);
 
 			case ATYP_FQDN:
 				{
@@ -563,9 +563,9 @@ static gboolean handle_client_socks_data(GIOChannel *ioc, struct pending_client 
 					status = g_io_channel_read_chars(ioc, header, 2, &read, NULL);
 					port = ntohs(*(guint16 *)header);
 
-					if (cl->listener->socks_connect_fqdn == NULL)
+					if (cl->listener->ops->socks_connect_fqdn == NULL)
 						return listener_socks_error(cl, REP_ATYP_NOT_SUPPORTED);
-					return cl->listener->socks_connect_fqdn(cl, hostname, port);
+					return cl->listener->ops->socks_connect_fqdn(cl, hostname, port);
 				}
 			default:
 				return listener_socks_error(cl, REP_ATYP_NOT_SUPPORTED);
