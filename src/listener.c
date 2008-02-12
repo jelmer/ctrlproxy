@@ -316,7 +316,6 @@ void fini_listeners(struct global *global)
 
 		if (l->active) 
 			listener_stop(l);
-
 	}
 }
 

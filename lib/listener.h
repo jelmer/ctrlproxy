@@ -15,6 +15,7 @@ typedef void (*listener_log_fn) (enum log_level, const struct irc_listener *, co
 struct pending_client;
 
 struct irc_listener_ops {
+	void (*new_client) (struct pending_client *pc);
 	gboolean (*handle_client_line) (struct pending_client *pc, const struct irc_line *l);
 	gboolean (*socks_auth_simple) (struct pending_client *pc, const char *username, const char *password);
 	gboolean (*socks_connect_ipv4) (struct pending_client *pc);

@@ -221,6 +221,9 @@ struct pending_client *listener_new_pending_client(struct irc_listener *listener
 
 	listener->pending = g_list_append(listener->pending, pc);
 
+	if (listener->ops->new_client)
+		listener->ops->new_client(pc);
+
 	return pc;
 }
 
@@ -241,8 +244,6 @@ static gboolean handle_new_client(GIOChannel *c_server, GIOCondition condition, 
 
 	return TRUE;
 }
-
-
 
 /**
  * Start a listener.

@@ -49,6 +49,13 @@ struct ctrlproxyd_config {
 struct daemon_client_data {
 	GIOChannel *connection;
 	char *password;
+	char *servername;
+	char *servicename;
+	char *nick;
+	char *username;
+	char *mode;
+	char *unused;
+	char *realname;
 };
 
 void listener_syslog(enum log_level l, const struct irc_listener *listener, const char *ret)
@@ -139,7 +146,7 @@ static GIOChannel *connect_user(const char *username)
 	g_free(path);
 
 	if (connect(sock, (struct sockaddr *)&un, sizeof(un)) < 0) {
-		fprintf(stderr, "unable to connect to %s: %s\n", un.sun_path, strerror(errno));
+		syslog(LOG_INFO, "unable to connect to %s: %s", un.sun_path, strerror(errno));
 		return FALSE;
 	}
 
@@ -150,13 +157,26 @@ static GIOChannel *connect_user(const char *username)
 	return ch;
 }
 
+static void client_done(struct pending_client *pc)
+{
+	printf("DONE!\n");
+	/* FIXME: Redirect pc->private_data->connection to pc->connection */
+
+	/* FIXME: perhaps fork() if this is not a inetd server ? */
+}
+
 static gboolean daemon_socks_auth_simple(struct pending_client *cl, const char *username, const char *password)
 {
-	GIOChannel *ioc = connect_user(username);
-	if (ioc == NULL)
+	struct daemon_client_data *cd = cl->private_data;
+	
+	cd->connection = connect_user(username);
+	if (cd->connection == NULL)
 		return FALSE;
 
-	/* FIXME: Connect to username username's and send PASS password */
+	irc_sendf(cd->connection, (GIConv)-1, NULL, "PASS %s", password);
+
+	/* FIXME: Check whether the client doesn't return anything */
+
 	return TRUE;
 }
 
@@ -164,7 +184,11 @@ static gboolean daemon_socks_connect_fqdn (struct pending_client *cl, const char
 {
 	struct daemon_client_data *cd = cl->private_data;
 
+	/* Only called after authentication */
+
 	irc_sendf(cd->connection, (GIConv)-1, NULL, "CONNECT %s %d", hostname, port);
+
+	client_done(cl);
 
 	return TRUE;
 }
@@ -179,6 +203,16 @@ static gboolean handle_client_line(struct pending_client *pc, const struct irc_l
 
 	if (!g_strcasecmp(l->args[0], "PASS")) {
 		cd->password = g_strdup(l->args[1]);
+	} else if (!g_strcasecmp(l->args[0], "CONNECT")) {
+		cd->servername = g_strdup(l->args[1]);
+		cd->servicename = g_strdup(l->args[2]);
+	} else if (!g_strcasecmp(l->args[0], "USER") && l->argc > 4) {
+		cd->username = g_strdup(l->args[1]);
+		cd->mode = g_strdup(l->args[2]);
+		cd->unused = g_strdup(l->args[3]);
+		cd->realname = g_strdup(l->args[4]);
+	} else if (!g_strcasecmp(l->args[0], "NICK")) {
+		cd->nick = g_strdup(l->args[1]);
 	} else if (!g_strcasecmp(l->args[0], "QUIT")) {
 		return FALSE;
 	} else {
@@ -186,10 +220,31 @@ static gboolean handle_client_line(struct pending_client *pc, const struct irc_l
 				  get_my_hostname(), ERR_NOTREGISTERED, "*");
 	}
 
+	if (cd->username != NULL && cd->password != NULL && cd->nick != NULL) {
+		cd->connection = connect_user(cd->username);
+		if (cd->connection == NULL)
+			return FALSE;
+		
+		irc_sendf(cd->connection, (GIConv)-1, NULL, "PASS %s", cd->password);
+		irc_sendf(cd->connection, (GIConv)-1, NULL, "CONNECT %s %s", cd->servername, cd->servicename);
+		irc_sendf(cd->connection, (GIConv)-1, NULL, "USER %s %s %s %s", cd->username, 
+				  cd->mode, cd->unused, cd->realname);
+		irc_sendf(cd->connection, (GIConv)-1, NULL, "NICK %s", cd->nick);
+		client_done(pc);
+		return FALSE;
+	}
+
 	return TRUE;
 }
 
+static void daemon_new_client(struct pending_client *pc)
+{
+	struct daemon_client_data *cd = g_new0(struct daemon_client_data, 1);
+	pc->private_data = cd;
+}
+
 struct irc_listener_ops daemon_ops = {
+	.new_client = daemon_new_client,
 	.socks_auth_simple = daemon_socks_auth_simple,
 	.socks_connect_fqdn = daemon_socks_connect_fqdn,
 	.handle_client_line = handle_client_line,
