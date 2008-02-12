@@ -149,8 +149,7 @@ void listener_log(enum log_level l, const struct irc_listener *listener,
 	g_free(ret);
 }
 
-static gboolean handle_client_line(struct pending_client *pc, 
-								   const struct irc_line *l)
+static gboolean handle_client_line(struct pending_client *pc, const struct irc_line *l)
 {
 	if (l == NULL || l->args[0] == NULL) { 
 		return TRUE;
@@ -195,7 +194,7 @@ static gboolean handle_client_line(struct pending_client *pc,
 				}
 			}
 
-			pc->listener->client_accepted_fn(pc);
+			pc->listener->ops->client_accepted(pc);
 
 			return FALSE;
 		} else {
@@ -242,18 +241,22 @@ static void listener_new_client(struct pending_client *pc)
 	g_free(desc);
 }
 
+static struct irc_listener_ops default_listener_ops = {
+	.client_accepted = listener_new_client,
+	.handle_client_line = handle_client_line,
+	.socks_auth_simple = default_socks_auth_simple,
+	.socks_connect_fqdn = default_socks_connect_fqdn,
+};
+
 struct irc_listener *listener_init(struct global *global, struct listener_config *cfg)
 {
 	struct irc_listener *l = g_new0(struct irc_listener, 1);
 
 	l->config = cfg;
 	l->global = global;
-	l->client_accepted_fn = listener_new_client;
+	l->ops = &default_listener_ops;
 	l->iconv = (GIConv)-1;
-	l->handle_client_line = handle_client_line;
 	l->log_fn = default_listener_log_fn;
-	l->socks_auth_simple = default_socks_auth_simple;
-	l->socks_connect_fqdn = default_socks_connect_fqdn;
 
 	if (l->config->network != NULL) {
 		l->network = network_ref(find_network(global->networks, l->config->network));

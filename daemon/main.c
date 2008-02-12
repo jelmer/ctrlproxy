@@ -42,6 +42,11 @@ struct ctrlproxyd_config {
 	const char *address;
 };
 
+void listener_syslog(enum log_level l, const struct irc_listener *listener, const char *ret)
+{
+	syslog(LOG_INFO, "%s", ret);
+}
+
 struct ctrlproxyd_config *read_config_file(const char *name)
 {
 	struct ctrlproxyd_config *config;
@@ -100,6 +105,13 @@ void signal_quit(int sig)
 	exit(0);
 }
 
+struct irc_listener_ops daemon_ops = {
+	.socks_auth_simple = default_socks_auth_simple,
+	.socks_connect_fqdn = default_socks_connect_fqdn,
+	.client_accepted_fn = listener_new_client,
+	.handle_client_line = handle_client_line,
+};
+
 int main(int argc, char **argv)
 {
 	struct ctrlproxyd_config *config;
@@ -120,6 +132,8 @@ int main(int argc, char **argv)
 		{ NULL }
 	};
 	GError *error = NULL;
+	struct irc_listener *l = g_new0(struct irc_listener, 1);
+
 
 	signal(SIGINT, signal_quit);
 	signal(SIGTERM, signal_quit);
@@ -187,17 +201,20 @@ int main(int argc, char **argv)
 
 	openlog("ctrlproxyd", 0, LOG_DAEMON);
 
+	l->iconv = (GIConv)-1;
+	l->log_fn = listener_syslog;
+	l->ops = &daemon_ops;
 	if (inetd) {
+		GIOChannel *io = g_io_channel_unix_new(0);
 		/* FIXME */
 	} else { 
 		write_pidfile(PIDFILE);
 
-		/* FIXME: Add listener */
+		if (!listener_start(config->address, config->port))
+			return 1;
 	}
 
 	g_main_loop_run(main_loop);
 
 	return 0;
 }
-
-

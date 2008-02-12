@@ -14,6 +14,15 @@ typedef void (*listener_log_fn) (enum log_level, const struct irc_listener *, co
 
 struct pending_client;
 
+struct irc_listener_ops {
+	gboolean (*handle_client_line) (struct pending_client *pc, const struct irc_line *l);
+	void (*client_accepted)(struct pending_client *);
+	gboolean (*socks_auth_simple) (struct pending_client *pc, const char *username, const char *password);
+	gboolean (*socks_connect_ipv4) (struct pending_client *pc);
+	gboolean (*socks_connect_ipv6) (struct pending_client *pc);
+	gboolean (*socks_connect_fqdn) (struct pending_client *pc, const char *hostname, uint16_t port);
+};
+
 /**
  * A listener.
  */
@@ -26,12 +35,8 @@ struct irc_listener {
 	struct irc_network *network;
 	struct global *global;
 	listener_log_fn log_fn;
-	gboolean (*handle_client_line) (struct pending_client *pc, const struct irc_line *l);
-	void (*client_accepted_fn)(struct pending_client *);
-	gboolean (*socks_auth_simple) (struct pending_client *pc, const char *username, const char *password);
-	gboolean (*socks_connect_ipv4) (struct pending_client *pc);
-	gboolean (*socks_connect_ipv6) (struct pending_client *pc);
-	gboolean (*socks_connect_fqdn) (struct pending_client *pc, const char *hostname, uint16_t port);
+	struct irc_listener_ops *ops;
+
 };
 
 
