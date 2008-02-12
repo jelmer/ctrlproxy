@@ -35,6 +35,38 @@ void default_listener_log_fn(enum log_level l, const struct irc_listener *listen
 		log_global(l, "%s", ret);
 }
 
+gboolean default_socks_auth_simple(struct pending_client *cl, const char *username, const char *password)
+{
+	GList *gl;
+
+	for (gl = cl->listener->config->allow_rules; gl; gl = gl->next)
+	{
+		struct allow_rule *r = gl->data;
+
+		if (r->password == NULL || r->username == NULL) 
+			continue;
+
+		if (strcmp(r->username, username)) 
+			continue;
+
+		if (strcmp(r->password, password))
+			continue;
+
+		return TRUE;
+	}
+
+	if (cl->listener->config->password == NULL) {
+		listener_log(LOG_WARNING, cl->listener, "No password set, allowing client _without_ authentication!");
+		return TRUE;
+	}
+
+	if (strcmp(cl->listener->config->password, password) == 0) {
+		return TRUE;
+	}
+
+	return FALSE;
+}
+
 void listener_log(enum log_level l, const struct irc_listener *listener,
 				 const char *fmt, ...)
 {
@@ -159,6 +191,7 @@ struct irc_listener *listener_init(struct global *global, struct listener_config
 	l->iconv = (GIConv)-1;
 	l->handle_client_line = handle_client_line;
 	l->log_fn = default_listener_log_fn;
+	l->socks_auth_simple = default_socks_auth_simple;
 
 	if (l->config->network != NULL) {
 		l->network = network_ref(find_network(global->networks, l->config->network));

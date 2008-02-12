@@ -46,7 +46,6 @@ static gboolean handle_client_detect(GIOChannel *ioc,
 static gboolean handle_client_socks_data(GIOChannel *ioc, 
 										 struct pending_client *cl);
 
-
 static gboolean kill_pending_client(struct pending_client *pc)
 {
 	pc->listener->pending = g_list_remove(pc->listener->pending, pc);
@@ -59,8 +58,6 @@ static gboolean kill_pending_client(struct pending_client *pc)
 
 	return TRUE;
 }
-
-
 
 gboolean listener_stop(struct irc_listener *l)
 {
@@ -142,8 +139,6 @@ static gboolean handle_client_detect(GIOChannel *ioc, struct pending_client *pc)
 		return ret;
 	}
 }
-
-
 
 static gboolean handle_client_receive(GIOChannel *c, GIOCondition condition, gpointer data) 
 {
@@ -395,7 +390,6 @@ static gboolean pass_acceptable(struct pending_client *cl)
 
 static gboolean pass_handle_data(struct pending_client *cl)
 {
-	GList *gl;
 	gchar header[2];
 	gsize read;
 	GIOStatus status;
@@ -431,33 +425,9 @@ static gboolean pass_handle_data(struct pending_client *cl)
 	pass[(guint8)header[0]] = '\0';
 
 	header[0] = 0x1;
-	header[1] = 0x1; /* set to non-zero if invalid */
 
-	for (gl = cl->listener->config->allow_rules; gl; gl = gl->next)
-	{
-		struct allow_rule *r = gl->data;
-
-		if (r->password == NULL || r->username == NULL) 
-			continue;
-
-		if (strcmp(r->username, uname)) 
-			continue;
-
-		if (strcmp(r->password, pass))
-			continue;
-
-		header[1] = 0x0;
-		break;
-	}
-
-	if (cl->listener->config->password == NULL) {
-		listener_log(LOG_WARNING, cl->listener, "No password set, allowing client _without_ authentication!");
-	}
-
-	if (cl->listener->config->password == NULL ||
-		strcmp(cl->listener->config->password, pass) == 0) {
-		header[1] = 0x0;
-	}
+	/* set to non-zero if invalid */
+	header[1] = cl->listener->socks_auth_simple(cl, uname, pass)?0x0:0x1;
 
 	status = g_io_channel_write_chars(cl->connection, header, 2, &read, NULL);
 	if (status != G_IO_STATUS_NORMAL) {

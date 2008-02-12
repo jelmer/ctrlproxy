@@ -28,6 +28,7 @@ struct irc_listener {
 	listener_log_fn log_fn;
 	gboolean (*handle_client_line) (struct pending_client *pc, const struct irc_line *l);
 	void (*client_accepted_fn)(struct pending_client *);
+	gboolean (*socks_auth_simple) (struct pending_client *pc, const char *username, const char *password);
 };
 
 
