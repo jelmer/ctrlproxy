@@ -21,6 +21,8 @@
 #include "config.h"
 #endif
 #include "internals.h"
+#include <sys/un.h>
+#include <pwd.h>
 #include <glib/gstdio.h>
 #define BACKTRACE_STACK_SIZE 64
 
@@ -105,10 +107,73 @@ void signal_quit(int sig)
 	exit(0);
 }
 
+static GIOChannel *connect_user(const char *username)
+{
+	char *path;
+	struct passwd *pwd;
+	int sock;
+	struct sockaddr_un un;
+	GIOChannel *ch;
+
+	pwd = getpwnam(username);
+
+	if (pwd == NULL)
+		return NULL;
+
+	path = g_build_filename(pwd->pw_dir, ".ctrlproxy", "socket", NULL);
+	if (path == NULL)
+		return NULL;
+
+	sock = socket(PF_UNIX, SOCK_STREAM, 0);
+
+	un.sun_family = AF_UNIX;
+	strncpy(un.sun_path, path, sizeof(un.sun_path));
+
+	g_free(path);
+
+	if (connect(sock, (struct sockaddr *)&un, sizeof(un)) < 0) {
+		fprintf(stderr, "unable to connect to %s: %s\n", un.sun_path, strerror(errno));
+		return FALSE;
+	}
+
+	ch = g_io_channel_unix_new(sock);
+
+	g_io_channel_set_flags(ch, G_IO_FLAG_NONBLOCK, NULL);
+
+	return ch;
+}
+
+static gboolean daemon_socks_auth_simple(struct pending_client *cl, const char *username, const char *password)
+{
+	GIOChannel *ioc = connect_user(username);
+	if (ioc == NULL)
+		return FALSE;
+
+	/* FIXME: Connect to username username's and send PASS password */
+	return TRUE;
+}
+
+static gboolean daemon_socks_connect_fqdn (struct pending_client *cl, const char *hostname, uint16_t port)
+{
+	/* FIXME: send CONNECT <hostname>:<port> */
+	return TRUE;
+}
+
+static void daemon_new_client(struct pending_client *pc)
+{
+	/* FIXME */
+}
+
+static gboolean handle_client_line(struct pending_client *pc, const struct irc_line *l)
+{
+	/* FIXME */
+	return TRUE;
+}
+
 struct irc_listener_ops daemon_ops = {
-	.socks_auth_simple = default_socks_auth_simple,
-	.socks_connect_fqdn = default_socks_connect_fqdn,
-	.client_accepted_fn = listener_new_client,
+	.socks_auth_simple = daemon_socks_auth_simple,
+	.socks_connect_fqdn = daemon_socks_connect_fqdn,
+	.client_accepted = daemon_new_client,
 	.handle_client_line = handle_client_line,
 };
 
@@ -206,11 +271,11 @@ int main(int argc, char **argv)
 	l->ops = &daemon_ops;
 	if (inetd) {
 		GIOChannel *io = g_io_channel_unix_new(0);
-		/* FIXME */
+		listener_new_pending_client(l, io);
 	} else { 
 		write_pidfile(PIDFILE);
 
-		if (!listener_start(config->address, config->port))
+		if (!listener_start(l, config->address, config->port))
 			return 1;
 	}
 

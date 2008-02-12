@@ -195,21 +195,9 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition condition, gpo
 	return TRUE;
 }
 
-
-
-static gboolean handle_new_client(GIOChannel *c_server, GIOCondition condition, void *_listener)
+struct pending_client *listener_new_pending_client(struct irc_listener *listener, GIOChannel *c)
 {
-	struct irc_listener *listener = _listener;
 	struct pending_client *pc;
-	GIOChannel *c;
-	int sock = accept(g_io_channel_unix_get_fd(c_server), NULL, 0);
-
-	if (sock < 0) {
-		listener_log(LOG_WARNING, listener, "Error accepting new connection: %s", strerror(errno));
-		return TRUE;
-	}
-
-	c = g_io_channel_unix_new(sock);
 
 	if (listener->ssl) {
 #ifdef HAVE_GNUTLS
@@ -232,6 +220,24 @@ static gboolean handle_new_client(GIOChannel *c_server, GIOCondition condition, 
 	g_io_channel_unref(c);
 
 	listener->pending = g_list_append(listener->pending, pc);
+
+	return pc;
+}
+
+static gboolean handle_new_client(GIOChannel *c_server, GIOCondition condition, void *_listener)
+{
+	struct irc_listener *listener = _listener;
+	GIOChannel *c;
+	int sock = accept(g_io_channel_unix_get_fd(c_server), NULL, 0);
+
+	if (sock < 0) {
+		listener_log(LOG_WARNING, listener, "Error accepting new connection: %s", strerror(errno));
+		return TRUE;
+	}
+
+	c = g_io_channel_unix_new(sock);
+
+	listener_new_pending_client(listener, c);
 
 	return TRUE;
 }

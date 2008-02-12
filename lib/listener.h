@@ -77,5 +77,6 @@ G_MODULE_EXPORT void listener_log(enum log_level l, const struct irc_listener *l
 				 const char *fmt, ...);
 G_MODULE_EXPORT gboolean listener_socks_error(struct pending_client *pc, guint8 err);
 G_MODULE_EXPORT gboolean listener_socks_reply(struct pending_client *pc, guint8 err, guint8 atyp, guint8 data_len, gchar *data, guint16 port);
+G_MODULE_EXPORT struct pending_client *listener_new_pending_client(struct irc_listener *listener, GIOChannel *c);
 
 #endif
