@@ -27,7 +27,7 @@ struct irc_listener {
 	struct global *global;
 	listener_log_fn log_fn;
 	gboolean (*handle_client_line) (struct pending_client *pc, const struct irc_line *l);
-	void (*new_client)(struct irc_network *n, GIOChannel *ioc, const char *description);
+	void (*client_accepted_fn)(struct pending_client *);
 };
 
 
@@ -57,7 +57,6 @@ struct pending_client {
 	} socks;
 };
 
-G_GNUC_MALLOC G_MODULE_EXPORT struct irc_listener *listener_init(struct global *global, struct listener_config *);
 G_MODULE_EXPORT gboolean listener_start(struct irc_listener *, const char *address, const char *service);
 G_MODULE_EXPORT gboolean listener_stop(struct irc_listener *);
 G_MODULE_EXPORT void fini_listeners(struct global *);

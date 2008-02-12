@@ -27,8 +27,7 @@
 #include <errno.h>
 #include <glib.h>
 
-
-static void default_log_fn(enum log_level l, const struct irc_listener *listener, const char *ret)
+void default_listener_log_fn(enum log_level l, const struct irc_listener *listener, const char *ret)
 {
 	if (listener->network != NULL)
 		network_log(l, listener->network, "%s", ret);
@@ -65,7 +64,6 @@ static gboolean handle_client_line(struct pending_client *pc,
 	}
 
 	if (!g_strcasecmp(l->args[0], "PASS")) {
-		char *desc;
 		const char *networkname = NULL;
 		struct irc_network *n = pc->listener->network;
 		gboolean authenticated = FALSE;
@@ -104,9 +102,7 @@ static gboolean handle_client_line(struct pending_client *pc,
 				}
 			}
 
-			desc = g_io_channel_ip_get_description(pc->connection);
-			pc->listener->new_client(n, pc->connection, desc);
-			g_free(desc);
+			pc->listener->client_accepted_fn(pc);
 
 			return FALSE;
 		} else {
@@ -146,9 +142,11 @@ void free_listener(struct irc_listener *l)
 	g_free(l);
 }
 
-static void listener_new_client(struct irc_network *n, GIOChannel *ioc, const char *description)
+static void listener_new_client(struct pending_client *pc)
 {
-	client_init(n, ioc, description);
+	char *desc = g_io_channel_ip_get_description(pc->connection);
+	client_init(pc->listener->network, pc->connection, desc);
+	g_free(desc);
 }
 
 struct irc_listener *listener_init(struct global *global, struct listener_config *cfg)
@@ -157,10 +155,10 @@ struct irc_listener *listener_init(struct global *global, struct listener_config
 
 	l->config = cfg;
 	l->global = global;
-	l->new_client = listener_new_client;
+	l->client_accepted_fn = listener_new_client;
 	l->iconv = (GIConv)-1;
 	l->handle_client_line = handle_client_line;
-	l->log_fn = default_log_fn;
+	l->log_fn = default_listener_log_fn;
 
 	if (l->config->network != NULL) {
 		l->network = network_ref(find_network(global->networks, l->config->network));

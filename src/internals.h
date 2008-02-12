@@ -154,6 +154,7 @@ gboolean stop_unix_socket(struct global *);
 void log_custom_load(struct log_file_config *config);
 
 /* listener.c */
+G_GNUC_MALLOC G_MODULE_EXPORT struct irc_listener *listener_init(struct global *global, struct listener_config *);
 void free_listeners(struct global *global);
 
 /* auto_away.c */
