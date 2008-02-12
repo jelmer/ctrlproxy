@@ -16,7 +16,6 @@ struct pending_client;
 
 struct irc_listener_ops {
 	gboolean (*handle_client_line) (struct pending_client *pc, const struct irc_line *l);
-	void (*client_accepted)(struct pending_client *);
 	gboolean (*socks_auth_simple) (struct pending_client *pc, const char *username, const char *password);
 	gboolean (*socks_connect_ipv4) (struct pending_client *pc);
 	gboolean (*socks_connect_ipv6) (struct pending_client *pc);
@@ -66,6 +65,7 @@ struct pending_client {
 		} state;
 		void *method_data;
 	} socks;
+	void *private_data;
 };
 
 G_MODULE_EXPORT gboolean listener_start(struct irc_listener *, const char *address, const char *service);

@@ -21,6 +21,7 @@
 #include "config.h"
 #endif
 #include "internals.h"
+#include "irc.h"
 #include <sys/un.h>
 #include <pwd.h>
 #include <glib/gstdio.h>
@@ -34,6 +35,7 @@
 #include <syslog.h>
 #endif
 
+extern char my_hostname[];
 static int log_level = 0;
 
 #define DEFAULT_CONFIG_FILE "/etc/ctrlproxyd.conf"
@@ -42,6 +44,11 @@ static int log_level = 0;
 struct ctrlproxyd_config {
 	const char *port;
 	const char *address;
+};
+
+struct daemon_client_data {
+	GIOChannel *connection;
+	char *password;
 };
 
 void listener_syslog(enum log_level l, const struct irc_listener *listener, const char *ret)
@@ -155,25 +162,36 @@ static gboolean daemon_socks_auth_simple(struct pending_client *cl, const char *
 
 static gboolean daemon_socks_connect_fqdn (struct pending_client *cl, const char *hostname, uint16_t port)
 {
-	/* FIXME: send CONNECT <hostname>:<port> */
-	return TRUE;
-}
+	struct daemon_client_data *cd = cl->private_data;
 
-static void daemon_new_client(struct pending_client *pc)
-{
-	/* FIXME */
+	irc_sendf(cd->connection, (GIConv)-1, NULL, "CONNECT %s %d", hostname, port);
+
+	return TRUE;
 }
 
 static gboolean handle_client_line(struct pending_client *pc, const struct irc_line *l)
 {
-	/* FIXME */
+	struct daemon_client_data *cd = pc->private_data;
+
+	if (l == NULL || l->args[0] == NULL) { 
+		return TRUE;
+	}
+
+	if (!g_strcasecmp(l->args[0], "PASS")) {
+		cd->password = g_strdup(l->args[1]);
+	} else if (!g_strcasecmp(l->args[0], "QUIT")) {
+		return FALSE;
+	} else {
+		irc_sendf(pc->connection, pc->listener->iconv, NULL, ":%s %d %s :You are not registered", 
+				  get_my_hostname(), ERR_NOTREGISTERED, "*");
+	}
+
 	return TRUE;
 }
 
 struct irc_listener_ops daemon_ops = {
 	.socks_auth_simple = daemon_socks_auth_simple,
 	.socks_connect_fqdn = daemon_socks_connect_fqdn,
-	.client_accepted = daemon_new_client,
 	.handle_client_line = handle_client_line,
 };
 
@@ -241,6 +259,11 @@ int main(int argc, char **argv)
 
 	isdaemon = !foreground && !inetd;
 
+	if (gethostname(my_hostname, NI_MAXHOST) != 0) {
+		fprintf(stderr, "Can't figure out hostname of local host!\n");
+		return 1;
+	}
+
 	if (isdaemon) {
 #ifdef HAVE_DAEMON 
 #ifdef SIGTTOU
@@ -269,6 +292,7 @@ int main(int argc, char **argv)
 	l->iconv = (GIConv)-1;
 	l->log_fn = listener_syslog;
 	l->ops = &daemon_ops;
+
 	if (inetd) {
 		GIOChannel *io = g_io_channel_unix_new(0);
 		listener_new_pending_client(l, io);

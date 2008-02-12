@@ -194,7 +194,11 @@ static gboolean handle_client_line(struct pending_client *pc, const struct irc_l
 				}
 			}
 
-			pc->listener->ops->client_accepted(pc);
+			{
+				char *desc = g_io_channel_ip_get_description(pc->connection);
+				client_init(pc->listener->network, pc->connection, desc);
+				g_free(desc);
+			}
 
 			return FALSE;
 		} else {
@@ -234,15 +238,7 @@ void free_listener(struct irc_listener *l)
 	g_free(l);
 }
 
-static void listener_new_client(struct pending_client *pc)
-{
-	char *desc = g_io_channel_ip_get_description(pc->connection);
-	client_init(pc->listener->network, pc->connection, desc);
-	g_free(desc);
-}
-
 static struct irc_listener_ops default_listener_ops = {
-	.client_accepted = listener_new_client,
 	.handle_client_line = handle_client_line,
 	.socks_auth_simple = default_socks_auth_simple,
 	.socks_connect_fqdn = default_socks_connect_fqdn,
