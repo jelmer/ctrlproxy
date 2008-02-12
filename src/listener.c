@@ -22,6 +22,7 @@
 #include "internals.h"
 #include "irc.h"
 #include "listener.h"
+#include "socks.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
@@ -63,6 +64,66 @@ gboolean default_socks_auth_simple(struct pending_client *cl, const char *userna
 	if (strcmp(cl->listener->config->password, password) == 0) {
 		return TRUE;
 	}
+
+	return FALSE;
+}
+
+gboolean default_socks_connect_fqdn (struct pending_client *cl, const char *hostname, uint16_t port)
+{
+	char *desc;
+	struct irc_network *result;
+	
+	listener_log(LOG_INFO, cl->listener, "Request to connect to %s:%d", hostname, port);
+
+	result = find_network_by_hostname(cl->listener->global, hostname, port, TRUE);
+
+	if (result == NULL) {
+		listener_log(LOG_WARNING, cl->listener, "Unable to return network matching %s:%d", hostname, port);
+		return listener_socks_error(cl, REP_NET_UNREACHABLE);
+	} 
+
+	if (result->connection.state == NETWORK_CONNECTION_STATE_NOT_CONNECTED && 
+		!connect_network(result)) {
+		network_log(LOG_ERROR, result, "Unable to connect");
+		return listener_socks_error(cl, REP_NET_UNREACHABLE);
+	}
+
+	if (result->config->type == NETWORK_TCP) {
+		struct sockaddr *name; 
+		int atyp, len, port;
+		gchar *data;
+
+		name = (struct sockaddr *)result->connection.data.tcp.local_name;
+
+		if (name->sa_family == AF_INET) {
+			struct sockaddr_in *name4 = (struct sockaddr_in *)name;
+			atyp = ATYP_IPV4;
+			data = (gchar *)&name4->sin_addr;
+			len = 4;
+			port = name4->sin_port;
+		} else if (name->sa_family == AF_INET6) {
+			struct sockaddr_in6 *name6 = (struct sockaddr_in6 *)name;
+			atyp = ATYP_IPV6;
+			data = (gchar *)&name6->sin6_addr;
+			len = 16;
+			port = name6->sin6_port;
+		} else {
+			network_log(LOG_ERROR, result, "Unable to obtain local address for connection to server");
+			return listener_socks_error(cl, REP_NET_UNREACHABLE);
+		}
+			
+		listener_socks_reply(cl, REP_OK, atyp, len, data, port); 
+		
+	} else {
+		gchar *data = g_strdup("xlocalhost");
+		data[0] = strlen(data+1);
+		
+		listener_socks_reply(cl, REP_OK, ATYP_FQDN, data[0]+1, data, 1025);
+	}
+
+	desc = g_io_channel_ip_get_description(cl->connection);
+	client_init(result, cl->connection, desc);
+	g_free(desc);
 
 	return FALSE;
 }
@@ -192,6 +253,7 @@ struct irc_listener *listener_init(struct global *global, struct listener_config
 	l->handle_client_line = handle_client_line;
 	l->log_fn = default_listener_log_fn;
 	l->socks_auth_simple = default_socks_auth_simple;
+	l->socks_connect_fqdn = default_socks_connect_fqdn;
 
 	if (l->config->network != NULL) {
 		l->network = network_ref(find_network(global->networks, l->config->network));

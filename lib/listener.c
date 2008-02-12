@@ -350,7 +350,7 @@ gboolean listener_start(struct irc_listener *l, const char *address, const char 
  *  - support for ident method
  */
 
-static gboolean socks_reply(GIOChannel *ioc, guint8 err, guint8 atyp, guint8 data_len, gchar *data, guint16 port)
+gboolean listener_socks_reply(struct pending_client *pc, guint8 err, guint8 atyp, guint8 data_len, gchar *data, guint16 port)
 {
 	gchar *header = g_new0(gchar, 7 + data_len);
 	GIOStatus status;
@@ -363,19 +363,19 @@ static gboolean socks_reply(GIOChannel *ioc, guint8 err, guint8 atyp, guint8 dat
 	memcpy(header+4, data, data_len);
 	*((guint16 *)(header+4+data_len)) = htons(port);
 
-	status = g_io_channel_write_chars(ioc, header, 6 + data_len, &read, NULL);
+	status = g_io_channel_write_chars(pc->connection, header, 6 + data_len, &read, NULL);
 
 	g_free(header);
 
-	g_io_channel_flush(ioc, NULL);
+	g_io_channel_flush(pc->connection, NULL);
 
 	return (err == REP_OK);
 }
 
-static gboolean socks_error(GIOChannel *ioc, guint8 err)
+gboolean listener_socks_error(struct pending_client *pc, guint8 err)
 {
 	guint8 data = 0x0;
-	return socks_reply(ioc, err, ATYP_FQDN, 1, (gchar *)&data, 0);
+	return listener_socks_reply(pc, err, ATYP_FQDN, 1, (gchar *)&data, 0);
 }
 
 static gboolean anon_acceptable(struct pending_client *cl)
@@ -402,7 +402,7 @@ static gboolean pass_handle_data(struct pending_client *cl)
 
 	if (header[0] != SOCKS_VERSION && header[0] != 0x1) {
 		listener_log(LOG_WARNING, cl->listener, "Client suddenly changed socks uname/pwd version to %x", header[0]);
-	 	return socks_error(cl->connection, REP_GENERAL_FAILURE);
+	 	return listener_socks_error(cl, REP_GENERAL_FAILURE);
 	}
 
 	status = g_io_channel_read_chars(cl->connection, uname, header[1], &read, NULL);
@@ -531,30 +531,31 @@ static gboolean handle_client_socks_data(GIOChannel *ioc, struct pending_client 
 
 		if (header[0] != SOCKS_VERSION) {
 			listener_log(LOG_WARNING, cl->listener, "Client suddenly changed socks version to %x", header[0]);
-		 	return socks_error(ioc, REP_GENERAL_FAILURE);
+		 	return listener_socks_error(cl, REP_GENERAL_FAILURE);
 		}
 
 		if (header[1] != CMD_CONNECT) {
 			listener_log(LOG_WARNING, cl->listener, "Client used unknown command %x", header[1]);
-			return socks_error(ioc, REP_CMD_NOT_SUPPORTED);
+			return listener_socks_error(cl, REP_CMD_NOT_SUPPORTED);
 		}
 
 		/* header[2] is reserved */
 	
 		switch (header[3]) {
 			case ATYP_IPV4: 
-				return socks_error(ioc, REP_ATYP_NOT_SUPPORTED);
+				if (cl->listener->socks_connect_ipv4 == NULL)
+					return listener_socks_error(cl, REP_ATYP_NOT_SUPPORTED);
+				return cl->listener->socks_connect_ipv4(cl);
 
 			case ATYP_IPV6:
-				return socks_error(ioc, REP_ATYP_NOT_SUPPORTED);
+				if (cl->listener->socks_connect_ipv6 == NULL)
+					return listener_socks_error(cl, REP_ATYP_NOT_SUPPORTED);
+				return cl->listener->socks_connect_ipv6(cl);
 
 			case ATYP_FQDN:
 				{
 					char hostname[0x100];
 					guint16 port;
-					char *desc;
-					struct irc_network *result;
-					
 					status = g_io_channel_read_chars(ioc, header, 1, &read, NULL);
 					status = g_io_channel_read_chars(ioc, hostname, header[0], &read, NULL);
 					hostname[(guint8)header[0]] = '\0';
@@ -562,62 +563,12 @@ static gboolean handle_client_socks_data(GIOChannel *ioc, struct pending_client 
 					status = g_io_channel_read_chars(ioc, header, 2, &read, NULL);
 					port = ntohs(*(guint16 *)header);
 
-					listener_log(LOG_INFO, cl->listener, "Request to connect to %s:%d", hostname, port);
-
-					result = find_network_by_hostname(cl->listener->global, hostname, port, TRUE);
-
-					if (result == NULL) {
-						listener_log(LOG_WARNING, cl->listener, "Unable to return network matching %s:%d", hostname, port);
-						return socks_error(ioc, REP_NET_UNREACHABLE);
-					} 
-
-					if (result->connection.state == NETWORK_CONNECTION_STATE_NOT_CONNECTED && 
-						!connect_network(result)) {
-						network_log(LOG_ERROR, result, "Unable to connect");
-						return socks_error(ioc, REP_NET_UNREACHABLE);
-					}
-
-					if (result->config->type == NETWORK_TCP) {
-						struct sockaddr *name; 
-						int atyp, len, port;
-						gchar *data;
-
-						name = (struct sockaddr *)result->connection.data.tcp.local_name;
-
-						if (name->sa_family == AF_INET) {
-							struct sockaddr_in *name4 = (struct sockaddr_in *)name;
-							atyp = ATYP_IPV4;
-							data = (gchar *)&name4->sin_addr;
-							len = 4;
-							port = name4->sin_port;
-						} else if (name->sa_family == AF_INET6) {
-							struct sockaddr_in6 *name6 = (struct sockaddr_in6 *)name;
-							atyp = ATYP_IPV6;
-							data = (gchar *)&name6->sin6_addr;
-							len = 16;
-							port = name6->sin6_port;
-						} else {
-							network_log(LOG_ERROR, result, "Unable to obtain local address for connection to server");
-							return socks_error(ioc, REP_NET_UNREACHABLE);
-						}
-							
-						socks_reply(ioc, REP_OK, atyp, len, data, port); 
-						
-					} else {
-						gchar *data = g_strdup("xlocalhost");
-						data[0] = strlen(data+1);
-						
-						socks_reply(ioc, REP_OK, ATYP_FQDN, data[0]+1, data, 1025);
-					}
-
-					desc = g_io_channel_ip_get_description(ioc);
-					client_init(result, ioc, desc);
-					g_free(desc);
-
-					return FALSE;
+					if (cl->listener->socks_connect_fqdn == NULL)
+						return listener_socks_error(cl, REP_ATYP_NOT_SUPPORTED);
+					return cl->listener->socks_connect_fqdn(cl, hostname, port);
 				}
 			default:
-				return socks_error(ioc, REP_ATYP_NOT_SUPPORTED);
+				return listener_socks_error(cl, REP_ATYP_NOT_SUPPORTED);
 		}
 	}
 	

@@ -29,6 +29,9 @@ struct irc_listener {
 	gboolean (*handle_client_line) (struct pending_client *pc, const struct irc_line *l);
 	void (*client_accepted_fn)(struct pending_client *);
 	gboolean (*socks_auth_simple) (struct pending_client *pc, const char *username, const char *password);
+	gboolean (*socks_connect_ipv4) (struct pending_client *pc);
+	gboolean (*socks_connect_ipv6) (struct pending_client *pc);
+	gboolean (*socks_connect_fqdn) (struct pending_client *pc, const char *hostname, uint16_t port);
 };
 
 
@@ -65,5 +68,7 @@ G_MODULE_EXPORT void free_listener(struct irc_listener *l);
 G_MODULE_EXPORT gboolean init_listeners(struct global *global);
 G_MODULE_EXPORT void listener_log(enum log_level l, const struct irc_listener *listener,
 				 const char *fmt, ...);
+G_MODULE_EXPORT gboolean listener_socks_error(struct pending_client *pc, guint8 err);
+G_MODULE_EXPORT gboolean listener_socks_reply(struct pending_client *pc, guint8 err, guint8 atyp, guint8 data_len, gchar *data, guint16 port);
 
 #endif
