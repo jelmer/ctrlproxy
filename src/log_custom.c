@@ -170,9 +170,10 @@ static char *get_modechanges(struct irc_network *n, const struct irc_line *l,
 	char buf[512] = "";
 	int i;
 
-	for (i = 3 ; i+1 < l->argc && l->args[i+1] != NULL; i++)
-		if (i == 3) sprintf(buf, "%s", l->args[i]);
-		else sprintf(buf, "%s %s", buf, l->args[i]);
+	for (i = 3 ; i+1 < l->argc && l->args[i+1] != NULL; i++) {
+		if (i > 3) strncat(buf, " ", sizeof(buf)-1);
+		strncat(buf, l->args[i], sizeof(buf)-1);
+	}
 
 	return g_strdup(buf);
 }
