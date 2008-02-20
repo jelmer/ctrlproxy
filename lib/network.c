@@ -381,7 +381,7 @@ gboolean virtual_network_recv_response(struct irc_network *n, int num, ...)
 	g_assert(n->config->type == NETWORK_VIRTUAL);
 
 	va_start(ap, num);
-	l = virc_parse_line(n->info.name, ap);
+	l = virc_parse_line(n->info->name, ap);
 	va_end(ap);
 
 	l->args = g_realloc(l->args, sizeof(char *) * (l->argc+4));
@@ -907,11 +907,11 @@ static gboolean connect_program(struct irc_network *s)
 
 	g_io_channel_unref(s->connection.outgoing);
 
-	if (s->info.name == NULL) {
+	if (s->info->name == NULL) {
 		if (strchr(s->config->type_settings.program_location, '/')) {
-			s->info.name = g_strdup(strrchr(s->config->type_settings.program_location, '/')+1);
+			s->info->name = g_strdup(strrchr(s->config->type_settings.program_location, '/')+1);
 		} else {
-			s->info.name = g_strdup(s->config->type_settings.program_location);
+			s->info->name = g_strdup(s->config->type_settings.program_location);
 		}
 	}
 
@@ -972,11 +972,11 @@ struct irc_network *irc_network_new(gboolean (*process_from_server) (struct irc_
 	s->references = 1;
 	s->config = sc;
 	s->reconnect_interval = sc->reconnect_interval == -1?DEFAULT_RECONNECT_INTERVAL:sc->reconnect_interval;
-	network_info_init(&s->info);
-	s->info.name = g_strdup(s->config->name);
-	s->info.ircd = g_strdup("ctrlproxy");
+	s->info = network_info_init();
+	s->info->name = g_strdup(s->config->name);
+	s->info->ircd = g_strdup("ctrlproxy");
 	s->connection.pending_lines = g_queue_new();
-	s->info.forced_nick_changes = TRUE; /* Forced nick changes are done by ctrlproxy */
+	s->info->forced_nick_changes = TRUE; /* Forced nick changes are done by ctrlproxy */
 	s->connection.outgoing_iconv = s->connection.incoming_iconv = (GIConv)-1;
 
 #ifdef HAVE_GNUTLS
@@ -1011,7 +1011,7 @@ static void free_network(struct irc_network *s)
 	g_queue_foreach(s->connection.pending_lines, free_pending_line, NULL);
 	g_queue_free(s->connection.pending_lines);
 
-	free_network_info(&s->info);
+	free_network_info(s->info);
 	if (s->config->type == NETWORK_TCP)
 		g_free(s->connection.data.tcp.last_disconnect_reason);
 
@@ -1092,7 +1092,7 @@ struct irc_network *find_network(GList *networks, const char *name)
 	GList *gl;
 	for (gl = networks; gl; gl = gl->next) {
 		struct irc_network *n = gl->data;
-		if (n->info.name && !g_strcasecmp(n->info.name, name)) 
+		if (n->info->name && !g_strcasecmp(n->info->name, name)) 
 			return n;
 	}
 
@@ -1145,7 +1145,7 @@ char *network_generate_feature_string(struct irc_network *n)
 {
 	g_assert(n);
 
-	return network_info_string(&n->info);
+	return network_info_string(n->info);
 }
 
 /**

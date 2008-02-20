@@ -49,7 +49,7 @@ void log_entry(enum log_level level, const struct irc_network *n, const struct i
 	fprintf(flog, "%s", data);
 
 	if (n) {
-		fprintf(flog, " (%s", n->info.name);
+		fprintf(flog, " (%s", n->info->name);
 
 		if (c)
 			fprintf(flog, "/%s", c->description);

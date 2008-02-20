@@ -47,10 +47,10 @@ void network_update_config(struct irc_network_state *ns, struct network_config *
 		return;
 
 	/* Network name */
-	if (ns->info.name != NULL && 
-		(nc->name == NULL || strcmp(ns->info.name, nc->name) != 0)) {
+	if (ns->info->name != NULL && 
+		(nc->name == NULL || strcmp(ns->info->name, nc->name) != 0)) {
 		g_free(nc->name);
-		nc->name = g_strdup(ns->info.name);
+		nc->name = g_strdup(ns->info->name);
 	}
 	
 	/* nick */
@@ -68,7 +68,7 @@ void network_update_config(struct irc_network_state *ns, struct network_config *
 		struct channel_config *cc;
 
 		/* Find channel */
-		cc = config_find_channel(&ns->info, nc, cs->name);
+		cc = config_find_channel(ns->info, nc, cs->name);
 		if (!cc) {
 			cc = g_new0(struct channel_config, 1);
 			cc->name = g_strdup(cs->name);

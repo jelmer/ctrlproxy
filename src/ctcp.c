@@ -215,7 +215,7 @@ gboolean ctcp_process_client_request (struct irc_client *c, struct irc_line *l)
 
 	/* store client and command in table */
 	req->client = c;
-	if (!is_channelname(l->args[1], &c->network->info))
+	if (!is_channelname(l->args[1], c->network->info))
 		req->destination = g_strdup(l->args[1]);
 	req->command = command;
 

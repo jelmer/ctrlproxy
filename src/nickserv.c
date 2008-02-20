@@ -42,7 +42,7 @@ const char *nickserv_find_nick(struct irc_network *n, const char *nick)
 			continue;
 
 		if (!e->network) return e->pass;
-		if (!g_strcasecmp(e->network, n->info.name)) return e->pass;
+		if (!g_strcasecmp(e->network, n->info->name)) return e->pass;
 	}
 	
 	return NULL;
@@ -88,7 +88,7 @@ static void cache_nickserv_pass(struct irc_network *n, const char *newpass)
 	for (gl = n->global->nickserv_nicks; gl; gl = gl->next) {
 		e = gl->data;
 
-		if (e->network && !g_strcasecmp(e->network, n->info.name) && 
+		if (e->network && !g_strcasecmp(e->network, n->info->name) && 
 			!g_strcasecmp(e->nick, n->state->me.nick)) {
 			break;		
 		}
@@ -102,7 +102,7 @@ static void cache_nickserv_pass(struct irc_network *n, const char *newpass)
 	if (gl == NULL) {
 		e = g_new0(struct keyfile_entry, 1);
 		e->nick = g_strdup(n->state->me.nick);
-		e->network = g_strdup(n->info.name);
+		e->network = g_strdup(n->info->name);
 		n->global->nickserv_nicks = g_list_prepend(n->global->nickserv_nicks, e);
 	}
 

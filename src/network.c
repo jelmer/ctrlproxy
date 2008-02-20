@@ -127,15 +127,15 @@ static gboolean process_from_server(struct irc_network *n, const struct irc_line
 		/* Always save networks we've successfully connected to. */
 		n->config->implicit = 0;
 
-		network_set_charset(n, get_charset(&n->info));
+		network_set_charset(n, get_charset(n->info));
 
 		if (error != NULL)
 			network_log(LOG_WARNING, n, "Error setting charset %s: %s", 
-				get_charset(&n->info), error->message);
+				get_charset(n->info), error->message);
 
 		network_log(LOG_INFO, n, "Successfully logged in");
 
-		network_update_isupport(&n->info, &n->state->info);
+		network_update_isupport(n->info, n->state->info);
 
 		nickserv_identify_me(n, n->state->me.nick);
 
@@ -209,7 +209,7 @@ struct irc_network *find_network_by_hostname(struct global *global,
 		struct irc_network *n = gl->data;
 		g_assert(n);
 
-		if (n->info.name && !g_strcasecmp(n->info.name, hostname)) {
+		if (n->info->name && !g_strcasecmp(n->info->name, hostname)) {
 			g_free(portname);
 			return n;
 		}
@@ -231,7 +231,7 @@ struct irc_network *find_network_by_hostname(struct global *global,
 			} 
 		}
 
-		if (n->info.name && !g_strcasecmp(n->info.name, hostname)) {
+		if (n->info->name && !g_strcasecmp(n->info->name, hostname)) {
 			g_free(portname);
 			return n;
 		}
@@ -308,9 +308,9 @@ struct irc_network *load_network(struct global *global, struct network_config *s
 
 	if (global != NULL) {
 		GList *gl;
-		g_free(net->info.charset);
+		g_free(net->info->charset);
 		if (net->global->config->client_charset != NULL) {
-			net->info.charset = g_strdup(net->global->config->client_charset);
+			net->info->charset = g_strdup(net->global->config->client_charset);
 		}
 
 		global->networks = g_list_append(global->networks, net);

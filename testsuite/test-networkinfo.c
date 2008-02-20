@@ -55,9 +55,9 @@ START_TEST(test_get_charset)
 END_TEST
 
 START_TEST(test_get_charset_default)
-	struct irc_network_info info;
-	network_info_init(&info);
-	fail_unless(get_charset(&info) == NULL);
+	struct irc_network_info *info;
+	info = network_info_init();
+	fail_unless(get_charset(info) == NULL);
 END_TEST
 
 START_TEST(test_chanmode_type_default)

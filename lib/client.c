@@ -374,10 +374,10 @@ static gboolean welcome_client(struct irc_client *client)
 	client_send_response(client, RPL_CREATED, 
 		"Ctrlproxy (c) 2002-2008 Jelmer Vernooij <jelmer@vernstok.nl>", NULL);
 	client_send_response(client, RPL_MYINFO, 
-		 client->network->info.name, 
+		 client->network->info->name, 
 		 ctrlproxy_version(), 
-		 (client->network->state != NULL && client->network->info.supported_user_modes)?client->network->info.supported_user_modes:ALLMODES, 
-		 (client->network->state != NULL && client->network->info.supported_channel_modes)?client->network->info.supported_channel_modes:ALLMODES,
+		 (client->network->state != NULL && client->network->info->supported_user_modes)?client->network->info->supported_user_modes:ALLMODES, 
+		 (client->network->state != NULL && client->network->info->supported_channel_modes)?client->network->info->supported_channel_modes:ALLMODES,
 		 NULL);
 
 	features = network_generate_feature_string(client->network);
@@ -599,7 +599,7 @@ static gboolean client_ping(struct irc_client *client)
 	g_assert(client != NULL);
 
 	client->last_ping = time(NULL);
-	client_send_args_ex(client, NULL, "PING", client->network->info.name, NULL);
+	client_send_args_ex(client, NULL, "PING", client->network->info->name, NULL);
 
 	return TRUE;
 }
@@ -717,7 +717,7 @@ const char *client_get_own_hostmask(struct irc_client *c)
 
 const char *client_get_default_origin(struct irc_client *c)
 {
-	return c->network?c->network->info.name:get_my_hostname();
+	return c->network?c->network->info->name:get_my_hostname();
 }
 
 const char *client_get_default_target(struct irc_client *c)
@@ -951,7 +951,7 @@ void client_send_nameslist(struct irc_client *c,
 		char prefix;
 
 		if (n->modes != NULL) {
-			prefix = get_prefix_from_modes(&ch->network->info, n->modes);
+			prefix = get_prefix_from_modes(ch->network->info, n->modes);
 		} else {
 			prefix = 0;
 		}

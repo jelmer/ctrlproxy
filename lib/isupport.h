@@ -266,7 +266,7 @@ G_MODULE_EXPORT int irccmp(const struct irc_network_info *n, const char *a, cons
 G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT const char *get_charset(const struct irc_network_info *n);
 G_MODULE_EXPORT void network_info_parse(struct irc_network_info *info, const char *parameter);
 G_MODULE_EXPORT int network_chanmode_type(char m, struct irc_network_info *n);
-G_MODULE_EXPORT void network_info_init(struct irc_network_info *info);
+G_MODULE_EXPORT struct irc_network_info *network_info_init();
 G_MODULE_EXPORT void free_network_info(struct irc_network_info *info);
 
 #endif /* __CTRLPROXY_ISUPPORT_H__ */

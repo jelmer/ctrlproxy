@@ -173,7 +173,7 @@ static gboolean network_state_equal(const struct irc_network_state *state1,
 	null_equal(state1, state2);
 
 	return network_nick_equal(&state1->me, &state2->me) &&
-		   network_info_equal(&state1->info, &state2->info) &&
+		   network_info_equal(state1->info, state2->info) &&
 		   list_equal(state1->channels, state2->channels, 
 					  (GEqualFunc)channel_state_equal) &&
 		   list_equal(state1->nicks, state2->nicks, 

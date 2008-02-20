@@ -65,7 +65,7 @@ static gboolean process_from_client(struct irc_client *c, const struct irc_line 
 		g_free(l->origin);
 		return FALSE;
 	} else if (!g_strcasecmp(l->args[0], "PING")) {
-		client_send_args(c, "PONG", c->network->info.name, l->args[1], NULL);
+		client_send_args(c, "PONG", c->network->info->name, l->args[1], NULL);
 	} else if (!g_strcasecmp(l->args[0], "PONG")) {
 		if (l->argc < 2) {
 			client_send_response(c, ERR_NEEDMOREPARAMS, l->args[0], 

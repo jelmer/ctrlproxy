@@ -220,7 +220,7 @@ struct irc_channel_state *find_channel(struct irc_network_state *st, const char 
 	for (cl = st->channels; cl; cl = cl->next) {
 		struct irc_channel_state *c = (struct irc_channel_state *)cl->data;
 
-		if (!irccmp(&st->info, c->name, name)) 
+		if (!irccmp(st->info, c->name, name)) 
 			return c;
 	}
 	return NULL;
@@ -259,12 +259,12 @@ struct channel_nick *find_channel_nick(struct irc_channel_state *c,
 	g_assert(c);
 
 	g_assert(c->network);
-	if (is_prefix(realname[0], &c->network->info))
+	if (is_prefix(realname[0], c->network->info))
 		realname++;
 
 	for (l = c->nicks; l; l = l->next) {
 		struct channel_nick *n = (struct channel_nick *)l->data;
-		if (!irccmp(&c->network->info, n->global_nick->nick, realname))
+		if (!irccmp(c->network->info, n->global_nick->nick, realname))
 			return n;
 	}
 
@@ -288,7 +288,7 @@ struct channel_nick *find_channel_nick_hostmask(struct irc_channel_state *c,
 	g_assert(c->network);
 	for (l = c->nicks; l; l = l->next) {
 		struct channel_nick *n = (struct channel_nick *)l->data;
-		if (!irccmp(&c->network->info, n->global_nick->hostmask, hm))
+		if (!irccmp(c->network->info, n->global_nick->hostmask, hm))
 			return n;
 	}
 
@@ -310,12 +310,12 @@ struct network_nick *find_network_nick(struct irc_network_state *n,
 	g_assert(name);
 	g_assert(n);
 
-	if (!irccmp(&n->info, n->me.nick, name))
+	if (!irccmp(n->info, n->me.nick, name))
 		return &n->me;
 
 	for (gl = n->nicks; gl; gl = gl->next) {
 		struct network_nick *ndd = (struct network_nick*)gl->data;
-		if (!irccmp(&n->info, ndd->nick, name)) {
+		if (!irccmp(n->info, ndd->nick, name)) {
 			return ndd;
 		}
 	}
@@ -344,7 +344,7 @@ struct network_nick *find_add_network_nick(struct irc_network_state *n,
 
 	/* create one, if it doesn't exist */
 	nd = g_new0(struct network_nick,1);
-	g_assert(!is_prefix(name[0], &n->info));
+	g_assert(!is_prefix(name[0], n->info));
 	nd->nick = g_strdup(name);
 	nd->hops = -1;
 	
@@ -371,7 +371,7 @@ struct channel_nick *find_add_channel_nick(struct irc_channel_state *c,
 	g_assert(strlen(name) > 0);
 	g_assert(c->network);
 
-	if (is_prefix(realname[0], &c->network->info)) {
+	if (is_prefix(realname[0], c->network->info)) {
 		prefix = realname[0];
 		realname++;
 	}
@@ -385,7 +385,7 @@ struct channel_nick *find_add_channel_nick(struct irc_channel_state *c,
 	n->channel = c;
 	n->global_nick = find_add_network_nick(c->network, realname);
 	if (prefix != 0) {
-		modes_set_mode(n->modes, get_mode_by_prefix(prefix, &c->network->info));
+		modes_set_mode(n->modes, get_mode_by_prefix(prefix, c->network->info));
     }
 	c->nicks = g_list_append(c->nicks, n);
 	n->global_nick->channel_nicks = g_list_append(n->global_nick->channel_nicks, n);
@@ -414,7 +414,7 @@ static void handle_join(struct irc_network_state *s, const struct irc_line *l)
 		network_nick_set_hostmask(ni->global_nick, l->origin);
 
 		/* The user is joining a channel */
-		if (!irccmp(&s->info, nick, s->me.nick)) {
+		if (!irccmp(s->info, nick, s->me.nick)) {
 			network_state_log(LOG_TRACE, s, "Joining channel %s", c->name);
 		} else {
 			network_state_log(LOG_TRACE, s, "%s joins channel %s", nick, 
@@ -462,7 +462,7 @@ static void handle_part(struct irc_network_state *s, const struct irc_line *l)
 				nick, channels[i]);
 		}
 
-		if (!irccmp(&s->info, nick, s->me.nick) && c) {
+		if (!irccmp(s->info, nick, s->me.nick) && c) {
 			network_state_log(LOG_TRACE, s, "Leaving %s", channels[i]);
 			free_channel(c);
 		} else {
@@ -504,7 +504,7 @@ static void handle_kick(struct irc_network_state *s, const struct irc_line *l)
 
 		free_channel_nick(n);
 
-		if (!irccmp(&s->info, nicks[i], s->me.nick)) {
+		if (!irccmp(s->info, nicks[i], s->me.nick)) {
 			network_state_log(LOG_INFO, s, "Kicked off %s by %s", c->name, nick);
 			free_channel(c);
 		} else {
@@ -808,7 +808,7 @@ gboolean modes_change_mode(irc_modes_t modes, gboolean set, char newmode)
 
 static int channel_state_change_mode(struct irc_network_state *s, struct network_nick *by, struct irc_channel_state *c, gboolean set, char mode, const char *opt_arg)
 {
-	struct irc_network_info *info = &s->info;
+	struct irc_network_info *info = s->info;
 
 	if (!is_channel_mode(info, mode)) {
 		network_state_log(LOG_WARNING, s, "Mode '%c' set on channel %s is not in the supported list of channel modes from the server", mode, c->name);
@@ -905,7 +905,7 @@ static void handle_mode(struct irc_network_state *s, const struct irc_line *l)
 	g_assert(s != NULL);
 
 	/* Channel modes */
-	if (is_channelname(l->args[1], &s->info)) {
+	if (is_channelname(l->args[1], s->info)) {
 		struct irc_channel_state *c = find_channel(s, l->args[1]);
 		struct network_nick *by;
 		int ret;
@@ -967,9 +967,9 @@ static void handle_001(struct irc_network_state *s, const struct irc_line *l)
 
 static void handle_004(struct irc_network_state *s, const struct irc_line *l)
 {
-	s->info.supported_user_modes = g_strdup(l->args[4]);
-	s->info.supported_channel_modes = g_strdup(l->args[5]);
-	s->info.server = g_strdup(l->args[2]);
+	s->info->supported_user_modes = g_strdup(l->args[4]);
+	s->info->supported_channel_modes = g_strdup(l->args[5]);
+	s->info->server = g_strdup(l->args[2]);
 }
 
 static void handle_privmsg(struct irc_network_state *s, const struct irc_line *l)
@@ -979,7 +979,7 @@ static void handle_privmsg(struct irc_network_state *s, const struct irc_line *l
 
 	CHECK_ORIGIN(s,l,"PRIVMSG");
 
-	if (irccmp(&s->info, l->args[1], s->me.nick) != 0) return;
+	if (irccmp(s->info, l->args[1], s->me.nick) != 0) return;
 
 	nick = line_get_nick(l);
 	nn = find_add_network_nick(s, nick);
@@ -1126,7 +1126,7 @@ struct irc_network_state *network_state_init(const char *nick,
 	struct irc_network_state *state = g_new0(struct irc_network_state, 1);
 	state->me.query = 1;
 	network_nick_set_data(&state->me, nick, username, hostname);
-	network_info_init(&state->info);
+	state->info = network_info_init();
 
 	return state;
 }
@@ -1173,7 +1173,7 @@ void free_network_state(struct irc_network_state *state)
 		free_network_nick(state, nn);
 	}
 
-	free_network_info(&state->info);
+	free_network_info(state->info);
 	g_free(state);
 }
 

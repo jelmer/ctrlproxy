@@ -138,7 +138,7 @@ static char *get_nick(struct irc_network *n, const struct irc_line *l,
 static char *get_network(struct irc_network *n, const struct irc_line *l, 
 						 gboolean case_sensitive) 
 {
-	return g_strdup(n->info.name); 
+	return g_strdup(n->info->name); 
 }
 
 static char *get_server(struct irc_network *n, const struct irc_line *l, 
@@ -393,7 +393,7 @@ static void file_write_target(struct log_custom_data *data,
 	g_assert(network->state != NULL);
 	g_assert(network->state->me.nick != NULL);
 
-	if (!irccmp(&network->state->info, network->state->me.nick, l->args[1])) {
+	if (!irccmp(network->state->info, network->state->me.nick, l->args[1])) {
 		if (l->origin != NULL)
 			t = line_get_nick(l);
 		else 
@@ -490,7 +490,7 @@ static gboolean log_custom_data(struct irc_network *network,
 	} else if (!g_strcasecmp(l->args[0], "NOTICE")) {
 		file_write_target(data, network, data->config->notice, l);
 	} else if (!g_strcasecmp(l->args[0], "MODE") && l->args[1] != NULL && 
-			  is_channelname(l->args[1], &network->state->info) && 
+			  is_channelname(l->args[1], network->state->info) && 
 			  dir == FROM_SERVER) {
 		file_write_target(data, network, data->config->mode, l);
 	} else if (!g_strcasecmp(l->args[0], "QUIT")) {

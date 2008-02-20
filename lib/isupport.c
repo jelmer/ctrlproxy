@@ -19,11 +19,12 @@
 
 #include "internals.h"
 
-void network_info_init(struct irc_network_info *info)
+struct irc_network_info *network_info_init()
 {
-	memset(info, 0, sizeof(struct irc_network_info));
+	struct irc_network_info *info = g_new0(struct irc_network_info, 1);
 	info->prefix = g_strdup(DEFAULT_PREFIX);
 	info->chantypes = g_strdup(DEFAULT_CHANTYPES);
+	return info;
 }
 
 void free_network_info(struct irc_network_info *info)
@@ -43,6 +44,7 @@ void free_network_info(struct irc_network_info *info)
 	g_free(info->ircd);
 	g_free(info->extban_prefix);
 	g_free(info->extban_supported);
+	g_free(info);
 }
 
 char *network_info_string(struct irc_network_info *info)
@@ -462,7 +464,7 @@ void handle_005(struct irc_network_state *s, const struct irc_line *l)
 	g_assert(l->argc >= 1);
 
 	for (i = 3; i < l->argc-1; i++) 
-		network_info_parse(&s->info, l->args[i]);
+		network_info_parse(s->info, l->args[i]);
 }
 
 int irccmp(const struct irc_network_info *n, const char *a, const char *b)

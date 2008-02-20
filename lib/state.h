@@ -117,7 +117,7 @@ struct irc_network_state
 	/** Information for the user itself. */
 	struct network_nick me;
 	/** Network static info. */
-	struct irc_network_info info;
+	struct irc_network_info *info;
 	/** Whether or not the user is currently away. */
 	gboolean is_away;
 };

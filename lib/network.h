@@ -131,7 +131,7 @@ struct irc_network {
 	struct irc_network_state *state;
 
 	/** Network information. */
-	struct irc_network_info info;
+	struct irc_network_info *info;
 	struct network_connection connection;
 	
 	/** Linestack context. */
