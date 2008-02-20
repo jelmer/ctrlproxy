@@ -195,6 +195,7 @@ clean::
 	@echo Removing object files and executables
 	@rm -f src/*.o lib/*.o testsuite/check ctrlproxy$(EXEEXT) testsuite/*.o *~
 	@rm -f linestack-cmd$(EXEEXT) ctrlproxy-admin$(EXEEXT)
+	@rm -f ctrlproxyd$(EXEEXT)
 	@rm -f $(LIBIRC_STATIC) $(LIBIRC_SHARED)
 	@echo Removing gcov output
 	@rm -f *.gcov *.gcno *.gcda 
