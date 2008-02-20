@@ -69,7 +69,7 @@ void state_process(struct irc_network_state *ns, const char *line)
 
 START_TEST(state_join_me)
 	struct irc_network_state *ns = network_state_init("bla", "Gebruikersnaam", "Computernaam");
-	struct channel_state *cs;
+	struct irc_channel_state *cs;
 
 	fail_if (!ns);
 
@@ -84,7 +84,7 @@ END_TEST
 
 START_TEST(state_join_other)
 	struct irc_network_state *ns = network_state_init("bla", "Gebruikersnaam", "Computernaam");
-	struct channel_state *cs;
+	struct irc_channel_state *cs;
 
 	fail_if (!ns);
 
@@ -100,7 +100,7 @@ END_TEST
 
 START_TEST(state_topic)
 	struct irc_network_state *ns = network_state_init("bla", "Gebruikersnaam", "Computernaam");
-	struct channel_state *cs;
+	struct irc_channel_state *cs;
 
 	fail_if (!ns);
 
@@ -117,7 +117,7 @@ END_TEST
 
 START_TEST(state_part)
 	struct irc_network_state *ns = network_state_init("bla", "Gebruikersnaam", "Computernaam");
-	struct channel_state *cs;
+	struct irc_channel_state *cs;
 
 	fail_if (!ns);
 
@@ -136,7 +136,7 @@ END_TEST
 
 START_TEST(state_cycle)
 	struct irc_network_state *ns = network_state_init("bla", "Gebruikersnaam", "Computernaam");
-	struct channel_state *cs;
+	struct irc_channel_state *cs;
 
 	fail_if (!ns);
 
@@ -159,7 +159,7 @@ END_TEST
 
 START_TEST(state_kick)
 	struct irc_network_state *ns = network_state_init("bla", "Gebruikersnaam", "Computernaam");
-	struct channel_state *cs;
+	struct irc_channel_state *cs;
 
 	fail_if (!ns);
 

@@ -85,19 +85,19 @@ G_MODULE_EXPORT void clients_send_state(GList *clients,
 										struct irc_network_state *s);
 
 G_MODULE_EXPORT void client_send_nameslist(struct irc_client *client, 
-										   struct channel_state *ch);
+										   struct irc_channel_state *ch);
 G_MODULE_EXPORT gboolean client_send_channel_state_diff(
 										struct irc_client *client, 
-										struct channel_state *old_state,
-										struct channel_state *new_state);
+										struct irc_channel_state *old_state,
+										struct irc_channel_state *new_state);
 
 G_MODULE_EXPORT gboolean client_send_state_diff(struct irc_client *client, struct irc_network_state *old_state, struct irc_network_state *new_state);
 
 G_MODULE_EXPORT void client_send_channel_state(struct irc_client *c, 
-							   struct channel_state *ch);
-G_MODULE_EXPORT void client_send_topic(struct irc_client *c, struct channel_state *ch);
-G_MODULE_EXPORT void client_send_banlist(struct irc_client *client, struct channel_state *channel);
-G_MODULE_EXPORT void client_send_channel_mode(struct irc_client *client, struct channel_state *channel);
+							   struct irc_channel_state *ch);
+G_MODULE_EXPORT void client_send_topic(struct irc_client *c, struct irc_channel_state *ch);
+G_MODULE_EXPORT void client_send_banlist(struct irc_client *client, struct irc_channel_state *channel);
+G_MODULE_EXPORT void client_send_channel_mode(struct irc_client *client, struct irc_channel_state *channel);
 G_MODULE_EXPORT void client_send_luserchannels(struct irc_client *c, int num);
 G_MODULE_EXPORT void client_send_motd(struct irc_client *c, char **lines);
 G_MODULE_EXPORT void client_parse_buffer(struct irc_client *client);

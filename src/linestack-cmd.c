@@ -72,7 +72,7 @@ static void handle_state(int argc, char **argv)
 	printf("Channels:\n");
 
 	for (gl = state->channels; gl; gl = gl->next) {
-		struct channel_state *cs = gl->data;
+		struct irc_channel_state *cs = gl->data;
 		printf("\t%s\n", cs->name);
 	}
 }

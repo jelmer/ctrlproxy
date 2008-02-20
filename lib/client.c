@@ -782,8 +782,8 @@ void clients_send_args_ex(GList *clients, const char *hostmask, ...)
 }
 
 gboolean client_send_channel_state_diff(struct irc_client *client, 
-										struct channel_state *old_state,
-										struct channel_state *new_state)
+										struct irc_channel_state *old_state,
+										struct irc_channel_state *new_state)
 {
 	GList *gl;
 
@@ -841,8 +841,8 @@ gboolean client_send_state_diff(struct irc_client *client, struct irc_network_st
 	 * in both states*/
 	/* Send PART for each channel that is only in old_state */
 	for (gl = old_state->channels; gl; gl = gl->next) {
-		struct channel_state *os = gl->data;
-		struct channel_state *ns;
+		struct irc_channel_state *os = gl->data;
+		struct irc_channel_state *ns;
 
 		ns = find_channel(new_state, os->name);
 
@@ -856,8 +856,8 @@ gboolean client_send_state_diff(struct irc_client *client, struct irc_network_st
 	/* Call client_send_channel_state() for each channel that is only 
 	 * in new_state */
 	for (gl = new_state->channels; gl; gl = gl->next) {
-		struct channel_state *ns = gl->data;
-		struct channel_state *os;
+		struct irc_channel_state *ns = gl->data;
+		struct irc_channel_state *os;
 
 		os = find_channel(old_state, ns->name);
 		if (os == NULL)
@@ -876,7 +876,7 @@ gboolean client_send_state_diff(struct irc_client *client, struct irc_network_st
 gboolean client_send_state(struct irc_client *c, struct irc_network_state *state)
 {
 	GList *cl;
-	struct channel_state *ch;
+	struct irc_channel_state *ch;
 	char *mode;
 
 	if (strcmp(state->me.nick, c->state->me.nick) != 0) {
@@ -890,7 +890,7 @@ gboolean client_send_state(struct irc_client *c, struct irc_network_state *state
 			   g_list_length(state->channels));
 
 	for (cl = state->channels; cl; cl = cl->next) {
-		ch = (struct channel_state *)cl->data;
+		ch = (struct irc_channel_state *)cl->data;
 
 		client_send_channel_state(c, ch);
 	}
@@ -904,7 +904,7 @@ gboolean client_send_state(struct irc_client *c, struct irc_network_state *state
 }
 
 void client_send_channel_state(struct irc_client *c, 
-							   struct channel_state *ch)
+							   struct irc_channel_state *ch)
 {
 	g_assert(c != NULL);
 	g_assert(ch != NULL);
@@ -926,7 +926,7 @@ void client_send_channel_state(struct irc_client *c,
 	client_send_nameslist(c, ch);
 }
 
-void client_send_topic(struct irc_client *c, struct channel_state *ch)
+void client_send_topic(struct irc_client *c, struct irc_channel_state *ch)
 {
 	if (ch->topic) {
 		client_send_response(c, RPL_TOPIC, ch->name, ch->topic, NULL);
@@ -936,7 +936,7 @@ void client_send_topic(struct irc_client *c, struct channel_state *ch)
 }
 
 void client_send_nameslist(struct irc_client *c, 
-						   struct channel_state *ch)
+						   struct irc_channel_state *ch)
 {
 	GList *nl;
 	struct irc_line *l = NULL;
@@ -1007,7 +1007,7 @@ void clients_send_state(GList *clients, struct irc_network_state *s)
 	}
 }
 
-void client_send_banlist(struct irc_client *client, struct channel_state *channel)
+void client_send_banlist(struct irc_client *client, struct irc_channel_state *channel)
 {
 	GList *gl;
 
@@ -1024,7 +1024,7 @@ void client_send_banlist(struct irc_client *client, struct channel_state *channe
 	client_send_response(client, RPL_ENDOFBANLIST, channel->name, "End of channel ban list", NULL);
 }
 
-void client_send_channel_mode(struct irc_client *c, struct channel_state *ch)
+void client_send_channel_mode(struct irc_client *c, struct irc_channel_state *ch)
 {
 		char *mode;
 		mode = mode2string(ch->modes);

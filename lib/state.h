@@ -43,7 +43,7 @@ struct irc_line;
 struct channel_nick {
 	irc_modes_t modes;
 	struct network_nick *global_nick;
-	struct channel_state *channel;
+	struct irc_channel_state *channel;
 
 	/* This information is not always set and may change */
 	time_t last_update; /* last time this section was updated */
@@ -77,7 +77,7 @@ struct banlist_entry {
 /**
  * The state of a particular channel.
  */
-struct channel_state {
+struct irc_channel_state {
 	char *name;
 	char *key;
 	char *topic;
@@ -127,10 +127,10 @@ G_GNUC_MALLOC G_MODULE_EXPORT struct irc_network_state *network_state_init(const
 G_MODULE_EXPORT void free_network_state(struct irc_network_state *);
 G_MODULE_EXPORT gboolean state_handle_data(struct irc_network_state *s, const struct irc_line *l);
 
-G_MODULE_EXPORT struct channel_state *find_channel(struct irc_network_state *st, const char *name);
-G_MODULE_EXPORT struct channel_nick *find_channel_nick(struct channel_state *c, const char *name);
-G_MODULE_EXPORT struct channel_nick *find_channel_nick_hostmask(struct channel_state *c, const char *hostmask);
-G_MODULE_EXPORT struct channel_nick *find_add_channel_nick(struct channel_state *c, const char *name);
+G_MODULE_EXPORT struct irc_channel_state *find_channel(struct irc_network_state *st, const char *name);
+G_MODULE_EXPORT struct channel_nick *find_channel_nick(struct irc_channel_state *c, const char *name);
+G_MODULE_EXPORT struct channel_nick *find_channel_nick_hostmask(struct irc_channel_state *c, const char *hostmask);
+G_MODULE_EXPORT struct channel_nick *find_add_channel_nick(struct irc_channel_state *c, const char *name);
 G_MODULE_EXPORT struct network_nick *find_network_nick(struct irc_network_state *c, const char *name);
 G_MODULE_EXPORT gboolean network_nick_set_hostmask(struct network_nick *n, const char *hm);
 G_MODULE_EXPORT gboolean client_send_state(struct irc_client *, struct irc_network_state *);

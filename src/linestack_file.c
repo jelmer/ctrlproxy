@@ -352,7 +352,7 @@ static gboolean marshall_banlist_entry (struct irc_network_state *nst, const cha
 static gboolean marshall_channel_state (struct irc_network_state *nst, 
 										const char *name, int level, 
 										enum marshall_mode m, GIOChannel *t, 
-										struct channel_state **c)
+										struct irc_channel_state **c)
 {
 	gboolean ret = TRUE;
 	marshall_new(m, c);

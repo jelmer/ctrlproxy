@@ -87,7 +87,7 @@ static gboolean banlist_entry_equal(const struct banlist_entry *entry1, const st
 		   entry1->time_set == entry2->time_set;
 }
 
-static gboolean channel_state_equal(const struct channel_state *channel1, const struct channel_state *channel2)
+static gboolean channel_state_equal(const struct irc_channel_state *channel1, const struct irc_channel_state *channel2)
 {
 	null_equal(channel1, channel2);
 

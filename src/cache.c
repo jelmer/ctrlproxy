@@ -28,7 +28,7 @@ static gboolean client_try_cache_mode(struct irc_client *c, struct irc_network_s
 {
 	int i;
 	char m;
-	struct channel_state *ch;
+	struct irc_channel_state *ch;
 
 	g_assert(l);
 	g_assert(c);
@@ -70,7 +70,7 @@ static gboolean client_try_cache_mode(struct irc_client *c, struct irc_network_s
 
 static gboolean client_try_cache_topic(struct irc_client *c, struct irc_network_state *net, struct irc_line *l)
 {
-	struct channel_state *ch;
+	struct irc_channel_state *ch;
 
 	if (l->argc < 2) return FALSE;
 	
@@ -96,7 +96,7 @@ static gboolean client_try_cache_userhost(struct irc_client *c, struct irc_netwo
 
 static gboolean client_try_cache_who(struct irc_client *c, struct irc_network_state *net, struct irc_line *l)
 {
-	struct channel_state *ch;
+	struct irc_channel_state *ch;
 	int max_who_age;
 	time_t now;
 	GList *gl;
@@ -160,7 +160,7 @@ static gboolean client_try_cache_who(struct irc_client *c, struct irc_network_st
 
 static gboolean client_try_cache_names(struct irc_client *c, struct irc_network_state *net, struct irc_line *l)
 {
-	struct channel_state *ch;
+	struct irc_channel_state *ch;
 
 	g_assert(l);
 	g_assert(c);

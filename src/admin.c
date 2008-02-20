@@ -464,7 +464,7 @@ static void dump_joined_channels(admin_handle h, char **args, void *userdata)
 	}
 
 	for (gl = n->state->channels; gl; gl = gl->next) {
-		struct channel_state *ch = (struct channel_state *)gl->data;
+		struct irc_channel_state *ch = (struct irc_channel_state *)gl->data;
 		admin_out(h, "%s", ch->name);
 	}
 }

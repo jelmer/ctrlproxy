@@ -64,7 +64,7 @@ void network_update_config(struct irc_network_state *ns, struct network_config *
 	}
 
 	for (gl = ns->channels; gl; gl = gl->next) {
-		struct channel_state *cs = gl->data;
+		struct irc_channel_state *cs = gl->data;
 		struct channel_config *cc;
 
 		/* Find channel */

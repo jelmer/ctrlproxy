@@ -674,7 +674,7 @@ static void clients_invalidate_state(GList *clients, struct irc_network_state *s
 
 	/* Leave channels */
 	for (gl = s->channels; gl; gl = gl->next) {
-		struct channel_state *ch = gl->data;
+		struct irc_channel_state *ch = gl->data;
 
 		clients_send_args_ex(clients, s->me.hostmask, "PART", ch->name, 
 							 "Network disconnected", NULL);
