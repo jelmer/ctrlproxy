@@ -57,6 +57,10 @@ struct pending_client {
 	/** Password the client has sent. */
 	char *password;
 
+	gint watch_id;
+	struct sockaddr *clientname;
+	socklen_t clientname_len;
+
 	/** The listener used for this pending client. */
 	struct irc_listener *listener;
 
