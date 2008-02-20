@@ -73,9 +73,13 @@ Quick start
 
 2. Run ctrlproxy --init 
 
+Enter a password and a port to ctrlproxy should listen on.
+
+CtrlProxy will write a configuration to ~/.ctrlproxy.
+
 3. Run ctrlproxy --daemon or ctrlproxy
 
-4. Connect to ctrlproxy from your IRC client.
+4. Connect to ctrlproxy from your IRC client on the port you specified earlier.
 
 Documentation
 -------------

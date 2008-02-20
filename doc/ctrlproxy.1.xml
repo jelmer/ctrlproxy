@@ -97,7 +97,7 @@ on the number of servers it is connected to.
 	<title>SIGNALS</title>
 
 <para>
-	When ctrlproxy receives a <constant>USR1</constant> signal, it will save it's current state. 
+	When ctrlproxy receives a <constant>USR1</constant> signal, it will save its current state. 
 </para>
 
 </refsect1>
@@ -126,7 +126,7 @@ on the number of servers it is connected to.
 
 <para>
 Probably, but none are known at the moment. Please send 
-any you find to jelmer@nl.linux.org
+any you find to jelmer@samba.org
 </para>
 </refsect1>
 
@@ -158,10 +158,7 @@ Foundation, Inc., 59 Temple PLace, Suite 330, Boston, MA  02111-1307  USA
 <refsect1>
 	<title>AUTHORS</title>
 <para>
-<ulink url="mailto:jelmer@nl.linux.org">Jelmer Vernooij</ulink> (main developer)
-</para>
-<para>
-	<ulink url="mailto:ctrlproxy@poelzi.org">Daniel Poelzleithner</ulink> (several major patches)
+<ulink url="mailto:jelmer@samba.org">Jelmer Vernooij</ulink> (original developer)
 </para>
 
 <para>See the file AUTHORS for a full list of contributors.</para>
