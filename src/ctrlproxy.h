@@ -112,7 +112,7 @@ G_MODULE_EXPORT const char *g_io_channel_unix_get_sock_error(GIOChannel *ioc);
 
 
 /* log.c */
-G_GNUC_PRINTF(3, 4) G_MODULE_EXPORT void log_network_state(enum log_level l, const struct network_state *st, const char *fmt, ...);
+G_GNUC_PRINTF(3, 4) G_MODULE_EXPORT void log_network_state(enum log_level l, const struct irc_network_state *st, const char *fmt, ...);
 
 gboolean    rep_g_file_get_contents             (const gchar *filename,
                                              gchar **contents,

@@ -25,7 +25,7 @@
 
 gboolean network_nick_set_nick(struct network_nick *, const char *);
 gboolean network_nick_set_hostmask(struct network_nick *, const char *);
-struct network_nick *find_add_network_nick(struct network_state *n, const char *name);
+struct network_nick *find_add_network_nick(struct irc_network_state *n, const char *name);
 
 START_TEST(state_modes_set_mode)
 	irc_modes_t in;
@@ -47,7 +47,7 @@ START_TEST(state_prefixes_remove_prefix)
 END_TEST
 
 START_TEST(state_init)
-	struct network_state *ns = network_state_init("bla", "Gebruikersnaam", "Computernaam");
+	struct irc_network_state *ns = network_state_init("bla", "Gebruikersnaam", "Computernaam");
 
 	fail_if(ns == NULL, "network_state_init returned NULL");
 
@@ -58,7 +58,7 @@ START_TEST(state_init)
 	fail_unless (g_list_length(ns->channels) == 0);
 END_TEST
 
-void state_process(struct network_state *ns, const char *line)
+void state_process(struct irc_network_state *ns, const char *line)
 {
 	struct irc_line *l;
 	l = irc_parse_line(line);
@@ -68,7 +68,7 @@ void state_process(struct network_state *ns, const char *line)
 }
 
 START_TEST(state_join_me)
-	struct network_state *ns = network_state_init("bla", "Gebruikersnaam", "Computernaam");
+	struct irc_network_state *ns = network_state_init("bla", "Gebruikersnaam", "Computernaam");
 	struct channel_state *cs;
 
 	fail_if (!ns);
@@ -83,7 +83,7 @@ START_TEST(state_join_me)
 END_TEST
 
 START_TEST(state_join_other)
-	struct network_state *ns = network_state_init("bla", "Gebruikersnaam", "Computernaam");
+	struct irc_network_state *ns = network_state_init("bla", "Gebruikersnaam", "Computernaam");
 	struct channel_state *cs;
 
 	fail_if (!ns);
@@ -99,7 +99,7 @@ END_TEST
 
 
 START_TEST(state_topic)
-	struct network_state *ns = network_state_init("bla", "Gebruikersnaam", "Computernaam");
+	struct irc_network_state *ns = network_state_init("bla", "Gebruikersnaam", "Computernaam");
 	struct channel_state *cs;
 
 	fail_if (!ns);
@@ -116,7 +116,7 @@ END_TEST
 
 
 START_TEST(state_part)
-	struct network_state *ns = network_state_init("bla", "Gebruikersnaam", "Computernaam");
+	struct irc_network_state *ns = network_state_init("bla", "Gebruikersnaam", "Computernaam");
 	struct channel_state *cs;
 
 	fail_if (!ns);
@@ -135,7 +135,7 @@ START_TEST(state_part)
 END_TEST
 
 START_TEST(state_cycle)
-	struct network_state *ns = network_state_init("bla", "Gebruikersnaam", "Computernaam");
+	struct irc_network_state *ns = network_state_init("bla", "Gebruikersnaam", "Computernaam");
 	struct channel_state *cs;
 
 	fail_if (!ns);
@@ -158,7 +158,7 @@ START_TEST(state_cycle)
 END_TEST
 
 START_TEST(state_kick)
-	struct network_state *ns = network_state_init("bla", "Gebruikersnaam", "Computernaam");
+	struct irc_network_state *ns = network_state_init("bla", "Gebruikersnaam", "Computernaam");
 	struct channel_state *cs;
 
 	fail_if (!ns);
@@ -177,7 +177,7 @@ START_TEST(state_kick)
 END_TEST
 
 START_TEST(state_nick_change_my)
-	struct network_state *ns = network_state_init("bla", "Gebruikersnaam", "Computernaam");
+	struct irc_network_state *ns = network_state_init("bla", "Gebruikersnaam", "Computernaam");
 
 	fail_if(ns == NULL);
 
@@ -187,7 +187,7 @@ START_TEST(state_nick_change_my)
 END_TEST
 
 START_TEST(state_nick_change_other)
-	struct network_state *ns = network_state_init("bla", "Gebruikersnaam", "Computernaam");
+	struct irc_network_state *ns = network_state_init("bla", "Gebruikersnaam", "Computernaam");
 
 	fail_if(ns == NULL);
 
@@ -229,7 +229,7 @@ START_TEST(state_set_hostmask)
 END_TEST
 
 START_TEST(state_find_network_nick)
-	struct network_state *ns = network_state_init("bla", "Gebruikersnaam", "Computernaam");
+	struct irc_network_state *ns = network_state_init("bla", "Gebruikersnaam", "Computernaam");
 
 	fail_if(ns == NULL);
 
@@ -240,7 +240,7 @@ START_TEST(state_find_network_nick)
 END_TEST
 
 START_TEST(state_find_add_network_nick)
-	struct network_state *ns = network_state_init("bla", "Gebruikersnaam", "Computernaam");
+	struct irc_network_state *ns = network_state_init("bla", "Gebruikersnaam", "Computernaam");
 
 	fail_if(ns == NULL);
 
@@ -249,7 +249,7 @@ START_TEST(state_find_add_network_nick)
 END_TEST
 
 START_TEST(state_handle_state_data)
-	struct network_state *ns = network_state_init("bla", "Gebruikersnaam", "Computernaam");
+	struct irc_network_state *ns = network_state_init("bla", "Gebruikersnaam", "Computernaam");
 	struct irc_line l;
 	char *args1[] = {"JOIN", "#bla", NULL};
 	char *args2[] = {"UNKNOWN", "#bla", NULL};

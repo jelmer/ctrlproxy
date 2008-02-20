@@ -35,7 +35,7 @@ void register_linestack(const struct linestack_ops *b)
 struct linestack_context *create_linestack(const struct linestack_ops *ops, 
 										   const char *name, 
 										   struct ctrlproxy_config *cfg,
-										   const struct network_state *state)
+										   const struct irc_network_state *state)
 {
 	struct linestack_context *ctx;
 
@@ -82,10 +82,10 @@ struct linestack_marker *linestack_get_marker_numlines (struct linestack_context
 	return wrap_linestack_marker(ctx, ctx->ops->get_marker_numlines(ctx, lines));
 }
 
-struct network_state *linestack_get_state(
+struct irc_network_state *linestack_get_state(
 		struct linestack_context *ctx, struct linestack_marker *lm)
 {
-	struct network_state *st;
+	struct irc_network_state *st;
 	g_assert(ctx != NULL);
 
 	if (!ctx->ops) return NULL;
@@ -197,7 +197,7 @@ static const char *linestack_messages[] = {
 
 gboolean linestack_insert_line(struct linestack_context *ctx, 
 							   const struct irc_line *l, enum data_direction dir, 
-							   const struct network_state *state)
+							   const struct irc_network_state *state)
 {
 	int i;
 	gboolean needed = FALSE;
@@ -344,7 +344,7 @@ gboolean linestack_send_object(struct linestack_context *ctx, const char *obj, s
 
 static gboolean replay_line(struct irc_line *l, time_t t, void *state)
 {
-	struct network_state *st = state;
+	struct irc_network_state *st = state;
 	state_handle_data(st, l);
 	return TRUE;
 }
@@ -352,7 +352,7 @@ static gboolean replay_line(struct irc_line *l, time_t t, void *state)
 gboolean linestack_replay(struct linestack_context *ctx, 
 						  struct linestack_marker *mf, 
 						  struct linestack_marker *mt, 
-						  struct network_state *st)
+						  struct irc_network_state *st)
 {
 	return linestack_traverse(ctx, mf, mt, replay_line, st);
 }

@@ -39,7 +39,7 @@ static struct channel_config *config_find_channel(struct irc_network_info *ni, s
 	return NULL;
 }
 
-void network_update_config(struct network_state *ns, struct network_config *nc)
+void network_update_config(struct irc_network_state *ns, struct network_config *nc)
 {
 	GList *gl;
 

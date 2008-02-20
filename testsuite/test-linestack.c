@@ -24,7 +24,7 @@
 #include "torture.h"
 #include "internals.h"
 
-void stack_process(struct linestack_context *ctx, struct network_state *ns, const char *line)
+void stack_process(struct linestack_context *ctx, struct irc_network_state *ns, const char *line)
 {
 	struct irc_line *l;
 	l = irc_parse_line(line);
@@ -167,8 +167,8 @@ static gboolean network_nick_equal(const struct network_nick *nick1, const struc
 					  (GEqualFunc)channel_nick_equal);
 }
 
-static gboolean network_state_equal(const struct network_state *state1, 
-									const struct network_state *state2)
+static gboolean network_state_equal(const struct irc_network_state *state1, 
+									const struct irc_network_state *state2)
 {
 	null_equal(state1, state2);
 
@@ -185,7 +185,7 @@ static struct ctrlproxy_config *my_config;
 extern const struct linestack_ops linestack_file;
 
 START_TEST(test_empty)
-	struct network_state *ns1, *ns2;
+	struct irc_network_state *ns1, *ns2;
 	struct linestack_context *ctx;
 	
 	ns1 = network_state_init("bla", "Gebruikersnaam", "Computernaam");
@@ -198,7 +198,7 @@ START_TEST(test_empty)
 END_TEST
 
 START_TEST(test_msg)
-	struct network_state *ns1;
+	struct irc_network_state *ns1;
 	struct linestack_context *ctx;
 	struct linestack_marker *lm;
 	struct irc_client *cl;
@@ -231,7 +231,7 @@ START_TEST(test_msg)
 END_TEST
 
 START_TEST(test_join_part)
-	struct network_state *ns1;
+	struct irc_network_state *ns1;
 	struct linestack_context *ctx;
 	struct linestack_marker *lm;
 	struct irc_client *cl;
@@ -266,7 +266,7 @@ END_TEST
 
 
 START_TEST(test_skip_msg)
-	struct network_state *ns1;
+	struct irc_network_state *ns1;
 	struct linestack_context *ctx;
 	struct linestack_marker *lm;
 	struct irc_client *cl;
@@ -301,7 +301,7 @@ START_TEST(test_skip_msg)
 END_TEST
 
 START_TEST(test_object_msg)
-	struct network_state *ns1;
+	struct irc_network_state *ns1;
 	struct linestack_context *ctx;
 	struct linestack_marker *lm;
 	struct irc_client *cl;
@@ -339,7 +339,7 @@ END_TEST
 
 
 START_TEST(test_object_open)
-	struct network_state *ns1;
+	struct irc_network_state *ns1;
 	struct linestack_context *ctx;
 	struct linestack_marker *lm;
 	struct irc_client *cl;
@@ -380,7 +380,7 @@ START_TEST(test_object_open)
 END_TEST
 
 START_TEST(test_join)
-	struct network_state *ns1, *ns2;
+	struct irc_network_state *ns1, *ns2;
 	struct linestack_context *ctx;
 	
 	ns1 = network_state_init("bla", "Gebruikersnaam", "Computernaam");
@@ -404,7 +404,7 @@ static gboolean line_track(struct irc_line *l, time_t t, void *data)
 }
 
 START_TEST(bench_lots_of_lines)
-	struct network_state *ns1;
+	struct irc_network_state *ns1;
 	struct linestack_context *ctx;
 	struct linestack_marker *marker;
 	int i;

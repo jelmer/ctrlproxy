@@ -668,7 +668,7 @@ static void reconnect(struct irc_network *server)
 	}
 }
 
-static void clients_invalidate_state(GList *clients, struct network_state *s)
+static void clients_invalidate_state(GList *clients, struct irc_network_state *s)
 {
 	GList *gl;
 

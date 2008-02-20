@@ -107,13 +107,13 @@ gboolean redirect_response(struct irc_network *n, const struct irc_line *l);
 void redirect_clear(const struct irc_network *n);
 
 /* cache.c */
-gboolean client_try_cache(struct irc_client *c, struct network_state *n, struct irc_line *l);
+gboolean client_try_cache(struct irc_client *c, struct irc_network_state *n, struct irc_line *l);
 
 /* linestack.c */
 void init_linestack(struct ctrlproxy_config *);
 
 /* gen_config.c */
-void network_update_config(struct network_state *ns, struct network_config *nc);
+void network_update_config(struct irc_network_state *ns, struct network_config *nc);
 void channel_update_config(struct channel_state *ns, struct channel_config *nc);
 void global_update_config(struct global *my_global);
 

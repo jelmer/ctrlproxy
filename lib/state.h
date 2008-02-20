@@ -96,13 +96,13 @@ struct channel_state {
 	GList *banlist;
 	GList *invitelist;
 	GList *exceptlist;
-	struct network_state *network;
+	struct irc_network_state *network;
 };
 
 /**
  * Describes the (partial) state of a network at a specific time
  */
-struct network_state 
+struct irc_network_state 
 {
 	/** Private data to be used by whatever code is using network_state. */
 	void *userdata;
@@ -123,19 +123,19 @@ struct network_state
 };
 
 /* state.c */
-G_GNUC_MALLOC G_MODULE_EXPORT struct network_state *network_state_init(const char *nick, const char *username, const char *hostname);
-G_MODULE_EXPORT void free_network_state(struct network_state *);
-G_MODULE_EXPORT gboolean state_handle_data(struct network_state *s, const struct irc_line *l);
+G_GNUC_MALLOC G_MODULE_EXPORT struct irc_network_state *network_state_init(const char *nick, const char *username, const char *hostname);
+G_MODULE_EXPORT void free_network_state(struct irc_network_state *);
+G_MODULE_EXPORT gboolean state_handle_data(struct irc_network_state *s, const struct irc_line *l);
 
-G_MODULE_EXPORT struct channel_state *find_channel(struct network_state *st, const char *name);
+G_MODULE_EXPORT struct channel_state *find_channel(struct irc_network_state *st, const char *name);
 G_MODULE_EXPORT struct channel_nick *find_channel_nick(struct channel_state *c, const char *name);
 G_MODULE_EXPORT struct channel_nick *find_channel_nick_hostmask(struct channel_state *c, const char *hostmask);
 G_MODULE_EXPORT struct channel_nick *find_add_channel_nick(struct channel_state *c, const char *name);
-G_MODULE_EXPORT struct network_nick *find_network_nick(struct network_state *c, const char *name);
+G_MODULE_EXPORT struct network_nick *find_network_nick(struct irc_network_state *c, const char *name);
 G_MODULE_EXPORT gboolean network_nick_set_hostmask(struct network_nick *n, const char *hm);
-G_MODULE_EXPORT gboolean client_send_state(struct irc_client *, struct network_state *);
-G_MODULE_EXPORT void network_state_log(enum log_level l, const struct network_state *st, const char *fmt, ...);
-G_MODULE_EXPORT void network_state_set_log_fn(struct network_state *st, void (*fn) (enum log_level, void *, const char *), void *userdata);
+G_MODULE_EXPORT gboolean client_send_state(struct irc_client *, struct irc_network_state *);
+G_MODULE_EXPORT void network_state_log(enum log_level l, const struct irc_network_state *st, const char *fmt, ...);
+G_MODULE_EXPORT void network_state_set_log_fn(struct irc_network_state *st, void (*fn) (enum log_level, void *, const char *), void *userdata);
 
 G_MODULE_EXPORT G_GNUC_MALLOC char *mode2string(irc_modes_t modes);
 G_MODULE_EXPORT void string2mode(char *modestring, irc_modes_t modes);

@@ -33,7 +33,7 @@ struct irc_client;
 
 #include "hooks.h"
 
-struct network_state;
+struct irc_network_state;
 struct linestack_marker;
 struct linestack_ops;
 struct ctrlproxy_config;
@@ -65,7 +65,7 @@ struct linestack_ops {
 	gboolean (*init) (struct linestack_context *, 
 					  const char *name,
 					  struct ctrlproxy_config *,
-					  const struct network_state *
+					  const struct irc_network_state *
 					  );
 	gboolean (*fini) (struct linestack_context *);
 
@@ -73,7 +73,7 @@ struct linestack_ops {
 	gboolean (*insert_line) (
 		struct linestack_context *,
 		const struct irc_line *,
-		const struct network_state *);
+		const struct irc_network_state *);
 	
 	/* Get marker for current position in stream */
 	void *(*get_marker) 
@@ -93,7 +93,7 @@ struct linestack_ops {
 		void *userdata);
 
 	/* Optional */
-	struct network_state *(*get_state) (
+	struct irc_network_state *(*get_state) (
 		struct linestack_context *,
 		void *);
 
@@ -106,7 +106,7 @@ G_MODULE_EXPORT struct linestack_marker *linestack_get_marker_numlines (
 		struct linestack_context *,
 		int lines);
 
-G_MODULE_EXPORT struct network_state *linestack_get_state (
+G_MODULE_EXPORT struct irc_network_state *linestack_get_state (
 		struct linestack_context *,
 		struct linestack_marker *);
 
@@ -148,13 +148,13 @@ G_MODULE_EXPORT gboolean linestack_replay (
 		struct linestack_context *,
 		struct linestack_marker *from,
 		struct linestack_marker *to,/* Can be NULL for 'now' */
-		struct network_state *st);
+		struct irc_network_state *st);
 
 G_MODULE_EXPORT gboolean linestack_insert_line(
 		struct linestack_context *, 
 		const struct irc_line *l, 
 		enum data_direction dir, 
-		const struct network_state *);
+		const struct irc_network_state *);
 
 G_MODULE_EXPORT void linestack_free_marker(struct linestack_marker *);
 G_MODULE_EXPORT struct linestack_marker *linestack_get_marker(struct linestack_context *);
@@ -167,7 +167,7 @@ G_MODULE_EXPORT struct linestack_marker *linestack_get_marker(struct linestack_c
  * @param cfg CtrlProxy configuration
  * @param state Current network state
  */
-G_MODULE_EXPORT struct linestack_context *create_linestack(const struct linestack_ops *, const char *name, struct ctrlproxy_config *, const struct network_state *);
+G_MODULE_EXPORT struct linestack_context *create_linestack(const struct linestack_ops *, const char *name, struct ctrlproxy_config *, const struct irc_network_state *);
 G_MODULE_EXPORT void free_linestack_context(struct linestack_context *);
 G_MODULE_EXPORT struct linestack_ops *linestack_find_ops(const char *name);
 

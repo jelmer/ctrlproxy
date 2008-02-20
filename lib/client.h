@@ -54,7 +54,7 @@ struct irc_client {
 	char *charset;
 	gboolean exit_on_close;
 	gboolean connected;
-	struct network_state *state;
+	struct irc_network_state *state;
 	gboolean (*process_from_client) (struct irc_client *, const struct irc_line *);
 	void (*disconnect) (struct irc_client *);
 	void (*free_private_data) (struct irc_client *);
@@ -82,7 +82,7 @@ G_MODULE_EXPORT struct irc_client *irc_client_new(GIOChannel *c, const char *des
 G_MODULE_EXPORT void clients_send(GList *clients, const struct irc_line *, const struct irc_client *exception);
 G_MODULE_EXPORT void clients_send_args_ex(GList *clients, const char *hostmask, ...);
 G_MODULE_EXPORT void clients_send_state(GList *clients, 
-										struct network_state *s);
+										struct irc_network_state *s);
 
 G_MODULE_EXPORT void client_send_nameslist(struct irc_client *client, 
 										   struct channel_state *ch);
@@ -91,7 +91,7 @@ G_MODULE_EXPORT gboolean client_send_channel_state_diff(
 										struct channel_state *old_state,
 										struct channel_state *new_state);
 
-G_MODULE_EXPORT gboolean client_send_state_diff(struct irc_client *client, struct network_state *old_state, struct network_state *new_state);
+G_MODULE_EXPORT gboolean client_send_state_diff(struct irc_client *client, struct irc_network_state *old_state, struct irc_network_state *new_state);
 
 G_MODULE_EXPORT void client_send_channel_state(struct irc_client *c, 
 							   struct channel_state *ch);

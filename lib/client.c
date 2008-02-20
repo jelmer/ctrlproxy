@@ -833,7 +833,7 @@ gboolean client_send_channel_state_diff(struct irc_client *client,
  * @param state State to send
  * @return Whether the state was sent correctly
  */
-gboolean client_send_state_diff(struct irc_client *client, struct network_state *old_state, struct network_state *new_state)
+gboolean client_send_state_diff(struct irc_client *client, struct irc_network_state *old_state, struct irc_network_state *new_state)
 {
 	GList *gl;
 
@@ -873,7 +873,7 @@ gboolean client_send_state_diff(struct irc_client *client, struct network_state 
  * @param c Client to send to
  * @param state State to send
  */
-gboolean client_send_state(struct irc_client *c, struct network_state *state)
+gboolean client_send_state(struct irc_client *c, struct irc_network_state *state)
 {
 	GList *cl;
 	struct channel_state *ch;
@@ -997,7 +997,7 @@ void client_send_nameslist(struct irc_client *c,
  * @param clients List of clients
  * @param s State to send
  */
-void clients_send_state(GList *clients, struct network_state *s)
+void clients_send_state(GList *clients, struct irc_network_state *s)
 {
 	GList *gl;
 

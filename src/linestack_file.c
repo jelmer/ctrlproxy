@@ -36,7 +36,7 @@
 
 enum marshall_mode { MARSHALL_PULL = 0, MARSHALL_PUSH = 1 };
 
-typedef gboolean (*marshall_fn_t) (struct network_state *, const char *name, int level, enum marshall_mode, GIOChannel *ch, void **data);
+typedef gboolean (*marshall_fn_t) (struct irc_network_state *, const char *name, int level, enum marshall_mode, GIOChannel *ch, void **data);
 
 #define marshall_new(m,t) if ((m) == MARSHALL_PULL) *(t) = g_malloc(sizeof(**t));
 
@@ -123,7 +123,7 @@ static gboolean marshall_struct(GIOChannel *t, enum marshall_mode m, int level, 
 	}
 }
 
-static gboolean marshall_string (struct network_state *nst, 
+static gboolean marshall_string (struct irc_network_state *nst, 
 								 const char *name, int level, 
 								 enum marshall_mode m, GIOChannel *t, char **d)
 {
@@ -137,7 +137,7 @@ static gboolean marshall_string (struct network_state *nst,
 	}
 }
 
-static gboolean marshall_bool(struct network_state *nst, const char *name, 
+static gboolean marshall_bool(struct irc_network_state *nst, const char *name, 
 							  int level, enum marshall_mode m, GIOChannel *t, 
 							  gboolean *n)
 {
@@ -160,7 +160,7 @@ static gboolean marshall_bool(struct network_state *nst, const char *name,
 	}
 }
 
-static gboolean marshall_char(struct network_state *nst, const char *name, int level, enum marshall_mode m, GIOChannel *t, char *n)
+static gboolean marshall_char(struct irc_network_state *nst, const char *name, int level, enum marshall_mode m, GIOChannel *t, char *n)
 {
 	if (m == MARSHALL_PUSH) {
 		char d[2] = {*n, '\0' };
@@ -182,7 +182,7 @@ static gboolean marshall_char(struct network_state *nst, const char *name, int l
 	}
 }
 
-static gboolean marshall_long(struct network_state *nst, const char *name, int level, enum marshall_mode m, GIOChannel *t, long *n)
+static gboolean marshall_long(struct irc_network_state *nst, const char *name, int level, enum marshall_mode m, GIOChannel *t, long *n)
 {
 	if (m == MARSHALL_PUSH) {
 		char tmp[10];
@@ -204,7 +204,7 @@ static gboolean marshall_long(struct network_state *nst, const char *name, int l
 	}
 }
 
-static gboolean marshall_int(struct network_state *nst, const char *name, int level, enum marshall_mode m, GIOChannel *t, int *n)
+static gboolean marshall_int(struct irc_network_state *nst, const char *name, int level, enum marshall_mode m, GIOChannel *t, int *n)
 {
 	if (m == MARSHALL_PUSH) {
 		char tmp[10];
@@ -226,7 +226,7 @@ static gboolean marshall_int(struct network_state *nst, const char *name, int le
 	}
 }
 
-static gboolean marshall_time(struct network_state *nst, const char *name, int level, enum marshall_mode m, GIOChannel *t, time_t *n)
+static gboolean marshall_time(struct irc_network_state *nst, const char *name, int level, enum marshall_mode m, GIOChannel *t, time_t *n)
 {
 	if (m == MARSHALL_PUSH) {
 		char tmp[20];
@@ -249,7 +249,7 @@ static gboolean marshall_time(struct network_state *nst, const char *name, int l
 }
 
 
-static gboolean marshall_modes(struct network_state *nst, const char *name, int level, enum marshall_mode m, GIOChannel *t, irc_modes_t n)
+static gboolean marshall_modes(struct irc_network_state *nst, const char *name, int level, enum marshall_mode m, GIOChannel *t, irc_modes_t n)
 {
 	if (m == MARSHALL_PUSH) {
 		GError *error = NULL;
@@ -267,7 +267,7 @@ static gboolean marshall_modes(struct network_state *nst, const char *name, int 
 	}
 }
 
-static gboolean marshall_network_nick (struct network_state *nst, const char *name, int level, enum marshall_mode m, GIOChannel *t, struct network_nick *n)
+static gboolean marshall_network_nick (struct irc_network_state *nst, const char *name, int level, enum marshall_mode m, GIOChannel *t, struct network_nick *n)
 {
 	gboolean ret = TRUE;
 	marshall_struct(t, m, level, name);
@@ -286,7 +286,7 @@ static gboolean marshall_network_nick (struct network_state *nst, const char *na
 }
 
 
-static gboolean marshall_network_nick_p (struct network_state *nst, const char *name, int level, enum marshall_mode m, GIOChannel *t, struct network_nick **n)
+static gboolean marshall_network_nick_p (struct irc_network_state *nst, const char *name, int level, enum marshall_mode m, GIOChannel *t, struct network_nick **n)
 {
 	marshall_new(m, n);
 	return marshall_network_nick(nst, name, level, m, t, *n);
@@ -297,10 +297,10 @@ struct ht_traverse_data
 	marshall_fn_t key_fn;
 	marshall_fn_t val_fn;
 	struct data_blob *data;
-	struct network_state *nst;
+	struct irc_network_state *nst;
 };
 
-static gboolean marshall_GList (struct network_state *nst, const char *name, int level, enum marshall_mode m, GIOChannel *t, GList **gl, marshall_fn_t marshall_fn)
+static gboolean marshall_GList (struct irc_network_state *nst, const char *name, int level, enum marshall_mode m, GIOChannel *t, GList **gl, marshall_fn_t marshall_fn)
 {
 	marshall_struct(t, m, level, name);
 	if (m == MARSHALL_PULL) {
@@ -338,7 +338,7 @@ static gboolean marshall_GList (struct network_state *nst, const char *name, int
 	return TRUE;
 }
 
-static gboolean marshall_banlist_entry (struct network_state *nst, const char *name, int level, enum marshall_mode m, GIOChannel *t, struct banlist_entry **d)
+static gboolean marshall_banlist_entry (struct irc_network_state *nst, const char *name, int level, enum marshall_mode m, GIOChannel *t, struct banlist_entry **d)
 {
 	gboolean ret = TRUE;
 	marshall_new(m, d);
@@ -349,7 +349,7 @@ static gboolean marshall_banlist_entry (struct network_state *nst, const char *n
 	return ret;
 }
 
-static gboolean marshall_channel_state (struct network_state *nst, 
+static gboolean marshall_channel_state (struct irc_network_state *nst, 
 										const char *name, int level, 
 										enum marshall_mode m, GIOChannel *t, 
 										struct channel_state **c)
@@ -433,7 +433,7 @@ static gboolean marshall_channel_state (struct network_state *nst,
 }
 
 static gboolean marshall_network_state(enum marshall_mode m, GIOChannel *t, 
-									   struct network_state *n)
+									   struct irc_network_state *n)
 {
 	gboolean ret = TRUE;
 
@@ -474,12 +474,12 @@ static char *state_path(struct lf_data *lf_data, const char *state_id)
 }
 
 static gboolean file_insert_state(struct linestack_context *ctx, 
-							  const struct network_state *state, 
+							  const struct irc_network_state *state, 
 							  const char *state_id);
 
 static gboolean file_init(struct linestack_context *ctx, const char *name, 
 						  struct ctrlproxy_config *config, 
-						  const struct network_state *state)
+						  const struct irc_network_state *state)
 {
 	struct lf_data *data = g_new0(struct lf_data, 1);
 	char *parent_dir, *data_dir, *data_file;
@@ -556,7 +556,7 @@ static gint64 g_io_channel_tell_position(GIOChannel *gio)
 }
 
 static gboolean file_insert_state(struct linestack_context *ctx, 
-							  const struct network_state *state,
+							  const struct irc_network_state *state,
 							  const char *state_id)
 {
 	struct lf_data *nd = ctx->backend_data;
@@ -592,7 +592,7 @@ static gboolean file_insert_state(struct linestack_context *ctx,
 
 	nd->num_state_dumps++;
 
-	marshall_network_state(MARSHALL_PUSH, state_file, (struct network_state *)state);
+	marshall_network_state(MARSHALL_PUSH, state_file, (struct irc_network_state *)state);
 
 	status = g_io_channel_flush(state_file, &error);
 	LF_CHECK_IO_STATUS(status);
@@ -604,7 +604,7 @@ static gboolean file_insert_state(struct linestack_context *ctx,
 
 static gboolean file_insert_line(struct linestack_context *ctx, 
 								 const struct irc_line *l, 
-								 const struct network_state *state)
+								 const struct irc_network_state *state)
 {
 	struct lf_data *nd = ctx->backend_data;
 	char t[20];
@@ -650,11 +650,11 @@ static void *file_get_marker(struct linestack_context *ctx)
 	return pos;
 }
 
-static struct network_state *file_get_state (struct linestack_context *ctx, 
+static struct irc_network_state *file_get_state (struct linestack_context *ctx, 
 											  void *m)
 {
 	struct lf_data *nd = ctx->backend_data;
-	struct network_state *ret;
+	struct irc_network_state *ret;
 	gint64 *to_offset = m, t;
 	struct linestack_marker m1, m2;
 	GError *error = NULL;

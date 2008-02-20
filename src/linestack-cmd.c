@@ -8,7 +8,7 @@
 #include <readline/readline.h>
 
 static struct linestack_context *ctx = NULL;
-static struct network_state *state = NULL;
+static struct irc_network_state *state = NULL;
 static struct ctrlproxy_config *cfg = NULL;
 
 static void handle_help(int, char **);
@@ -44,7 +44,7 @@ static gboolean line_printer (struct irc_line *l, time_t time, void *f)
 static void handle_state(int argc, char **argv)
 {
 	struct linestack_marker *pos;
-	struct network_state *state;
+	struct irc_network_state *state;
 	GList *gl;
 
 	if (argc > 2) {

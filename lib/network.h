@@ -128,7 +128,7 @@ struct irc_network {
 	gpointer ssl_credentials;
 
 	/** Current network state, when connected. */
-	struct network_state *state;
+	struct irc_network_state *state;
 
 	/** Network information. */
 	struct irc_network_info info;
