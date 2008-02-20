@@ -67,18 +67,29 @@ struct network_connection {
 
 	/** IO Channel. */
 	GIOChannel *outgoing;
+	/** Source id for output watch. */
 	gint outgoing_id;
+	/** Source id for input watch. */
 	gint incoming_id;
+
+	/** IConv handle used for outgoing data. */
 	GIConv outgoing_iconv;
+	/** IConv handle used for incoming data. */
 	GIConv incoming_iconv;
 
 	union { 
 		struct {
+			/** Configuration for TCP/IP server currently connected to. */
 			struct tcp_server_config *current_server;
+			/** Name of remote server. */
 			struct sockaddr *remote_name;
+			/** Name of local host used for connection. */
 			struct sockaddr *local_name;
+			/** Socket name length for remote_name and local_name. */
 			socklen_t namelen;
+			/** Last reason for disconnect. */
 			char *last_disconnect_reason;
+			/** Source ID for function that regularly pings the network. */
 			gint ping_id;
 		} tcp;
 		
@@ -101,6 +112,7 @@ typedef void (*network_log_fn) (enum log_level, void *, const char *);
  * An IRC network
  */
 struct irc_network {
+	/** Global data. */
 	struct global *global;
 
 	/** Configuration. */

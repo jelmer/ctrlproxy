@@ -104,14 +104,21 @@ struct channel_state {
  */
 struct network_state 
 {
+	/** Private data to be used by whatever code is using network_state. */
 	void *userdata;
+	/** Function to use for logging changes and abnormalities. */
 	void (*log) (enum log_level l,
 				 void *userdata,
 				 const char *msg);
+	/** List of known channels. */
 	GList *channels;
+	/** List of known nicks. */
 	GList *nicks;
+	/** Information for the user itself. */
 	struct network_nick me;
+	/** Network static info. */
 	struct irc_network_info info;
+	/** Whether or not the user is currently away. */
 	gboolean is_away;
 };
 

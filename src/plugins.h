@@ -29,7 +29,9 @@
  * A plugin.
  */
 struct plugin {
+	/** Plugin handle */
 	GModule *module;
+	/** Plugin private data. */
 	void *data;
 	/** Plugin operations */
 	struct plugin_ops *ops;

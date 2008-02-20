@@ -48,13 +48,19 @@ struct socks_method;
  * Client connection that has not been authenticated yet.
  */
 struct pending_client {
+	/** Connection to the client. */
 	GIOChannel *connection;
+
+	/** Username the client has sent. */
 	char *user;
+	
+	/** Password the client has sent. */
 	char *password;
-	gint watch_id;
-	struct sockaddr *clientname;
-	socklen_t clientname_len;
+
+	/** The listener used for this pending client. */
 	struct irc_listener *listener;
+
+	/** Socks state. */
 	struct {
 		struct socks_method *method;
 		enum state { 
@@ -66,6 +72,8 @@ struct pending_client {
 		} state;
 		void *method_data;
 	} socks;
+
+	/** Private data. */
 	void *private_data;
 };
 

@@ -29,7 +29,9 @@
  * A replication backend
  */
 struct replication_backend {
+	/** Name of the backend, as can be specified in replication=. */
 	const char *name;
+	/** Replication function. */
 	void (*replication_fn) (struct irc_client *);
 };
 

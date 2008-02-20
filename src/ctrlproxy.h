@@ -89,8 +89,11 @@ struct global {
  * Plugin description. Required to be defined by all plugins.
  */
 struct plugin_ops {
+	/** API version this plugin uses. */
 	int version;
+	/** Name of the plugin. */
 	char *name;
+	/** Function that initializes the plugin. */
 	gboolean (*init) (void);
 };
 

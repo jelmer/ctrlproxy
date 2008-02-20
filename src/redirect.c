@@ -38,12 +38,18 @@ static struct query_stack *stack = NULL;
  * IRC Query done by a client
  */
 struct query {
+	/** Command name. */
 	char *name;
+
+	/** Possible replies */
 	int replies[20];
+	/** Possible replies that are the last reply to this command. */
 	int end_replies[20];
+	/** Possible errors. */
 	int errors[20];
 	/* Should add this query to the stack. return TRUE if this has 
 	 * been done successfully, FALSE otherwise */
+	/** Function for handling the responses. */
 	int (*handle) (const struct irc_line *, const struct irc_network *n, struct irc_client *c, struct query *);
 };
 
