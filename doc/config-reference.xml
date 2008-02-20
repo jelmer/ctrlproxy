@@ -91,6 +91,7 @@
 				for new connections.</para>
 		</listitem>
 		</varlistentry>
+	</variablelist>
 
 
 	<para>If the [admin] section is present, ControlProxy will 
