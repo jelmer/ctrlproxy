@@ -202,30 +202,30 @@ gboolean linestack_insert_line(struct linestack_context *ctx,
 	int i;
 	gboolean needed = FALSE;
 
-	if (ctx == NULL) return FALSE;
+	if (ctx == NULL) return TRUE;
 
-	if (l->argc == 0) return FALSE;
+	if (l->argc == 0) return TRUE;
 
-	if (!ctx->ops) return FALSE;
+	if (!ctx->ops) return TRUE;
 	g_assert(ctx->ops->insert_line);
 
 	/* Only need PRIVMSG and NOTICE messages we send ourselves */
 	if (dir == TO_SERVER && 
 		g_strcasecmp(l->args[0], "PRIVMSG") && 
-		g_strcasecmp(l->args[0], "NOTICE")) return FALSE;
+		g_strcasecmp(l->args[0], "NOTICE")) return TRUE;
 
 	/* No CTCP, please */
 	if ((!g_strcasecmp(l->args[0], "PRIVMSG") ||
 		!g_strcasecmp(l->args[0], "NOTICE")) && 
 		l->argc > 2 && l->args[2][0] == '\001' && 
 		g_strncasecmp(l->args[2], "\001ACTION", 7) != 0)
-		return FALSE;
+		return TRUE;
 
 	for (i = 0; linestack_messages[i]; i++) 
 		if (!g_strcasecmp(linestack_messages[i], l->args[0]))
 			needed = TRUE;
 
-	if (!needed) return FALSE;
+	if (!needed) return TRUE;
 
 	for (i = 0; i < l->argc; i++) {
 		g_assert(strchr(l->args[i], '\n') == NULL);
