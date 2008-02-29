@@ -230,6 +230,9 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
+	/* Determine correct modules directory */
+	init_plugins(getenv("CTRLPROXY_MODULESDIR")?getenv("CTRLPROXY_MODULESDIR"):MODULESDIR);
+
 	init_admin();
 	init_nickserv();
 	init_replication();
@@ -315,9 +318,6 @@ int main(int argc, char **argv)
 
 	write_pidfile(pidfile);
 	g_free(pidfile);
-
-	/* Determine correct modules directory */
-	init_plugins(getenv("CTRLPROXY_MODULESDIR")?getenv("CTRLPROXY_MODULESDIR"):MODULESDIR);
 
 	start_unix_socket(my_global);
 	start_admin_socket(my_global);
