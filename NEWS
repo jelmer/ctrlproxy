@@ -32,6 +32,8 @@ Ctrlproxy 3.0.6 UNRELEASED
 
   BUG FIXES
 
+    * Improve handling of empty pid files. (#186)
+
   	* Handle out of disk space correctly. (#91)
 
     * Don't "forget" listener password.

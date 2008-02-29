@@ -227,6 +227,9 @@ pid_t read_pidfile(const char *path)
 		return -1;
 	pid = atol(contents);
 
+	if (pid == 0)
+		return -1;
+
 	/* Check if process is still running */
 	if (kill(pid,0) != 0 && errno == ESRCH)
 		pid = -1;

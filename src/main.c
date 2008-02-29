@@ -281,7 +281,7 @@ int main(int argc, char **argv)
 	}
 
 	if (pid != -1) {
-		fprintf(stderr, "ctrlproxy is already running at pid %d (from %s)\n", pid, pidfile);
+		log_global(LOG_ERROR, "ctrlproxy is already running at pid %d (from %s)", pid, pidfile);
 		return 1;
 	}
 
