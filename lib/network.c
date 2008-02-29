@@ -713,7 +713,8 @@ static gboolean close_server(struct irc_network *n)
 	}
 
 	if (n->state) {
-		free_linestack_context(n->linestack);
+		if (n->linestack != NULL)
+			free_linestack_context(n->linestack);
 		n->linestack = NULL;
 		free_network_state(n->state); 
 		n->state = NULL;

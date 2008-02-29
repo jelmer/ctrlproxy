@@ -178,8 +178,13 @@ static gboolean process_from_server(struct irc_network *n, const struct irc_line
 			}
 		} 
 
-		if (linestack_store && n->linestack != NULL)
-			linestack_insert_line(n->linestack, l, FROM_SERVER, n->state);
+		if (linestack_store && n->linestack != NULL) {
+			if (!linestack_insert_line(n->linestack, l, FROM_SERVER, n->state)) {
+				network_log(LOG_WARNING, n, "Unable to write to linestack. Disabling replication for now.");
+				free_linestack_context(n->linestack);
+				n->linestack = NULL;
+			}
+		}
 	} 
 
 	return TRUE;

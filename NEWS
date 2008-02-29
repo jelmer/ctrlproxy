@@ -32,6 +32,8 @@ Ctrlproxy 3.0.6 UNRELEASED
 
   BUG FIXES
 
+  	* Handle out of disk space correctly. (#91)
+
     * Don't "forget" listener password.
 
 	* Don't add all existing networks to autoconnect list. (#90)

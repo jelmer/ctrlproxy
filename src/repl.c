@@ -66,5 +66,12 @@ void client_replicate(struct irc_client *client)
 		return;
 	} 
 
+	if (client->network->linestack == NULL) {
+		if (client->network->state)
+			client_send_state(client, client->network->state);
+
+		return;
+	}
+
 	backend->replication_fn(client);
 }
