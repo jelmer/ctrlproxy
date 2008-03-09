@@ -201,7 +201,7 @@ clean::
 	@rm -f ctrlproxyd$(EXEEXT)
 	@rm -f $(LIBIRC_STATIC) $(LIBIRC_SHARED)
 	@echo Removing gcov output
-	@rm -f *.gcov *.gcno *.gcda 
+	@rm -f *.gcov *.gcno *.gcda  */*.gcda */*.gcno */*.gcov
 	@echo Removing test output
 	@rm -rf test-*
 
