@@ -1,6 +1,6 @@
 /*
 	ctrlproxy: A modular IRC proxy
-	(c) 2002-2007 Jelmer Vernooij <jelmer@nl.linux.org>
+	(c) 2002-2008 Jelmer Vernooij <jelmer@nl.linux.org>
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -97,7 +97,8 @@ static void clean_exit()
 
 	if (!g_file_test(path, G_FILE_TEST_IS_DIR)) {
 		if (g_mkdir(path, 0700) != 0) {
-			log_global(LOG_ERROR, "Can't create config directory '%s': %s", path, strerror(errno));
+			log_global(LOG_ERROR, "Can't create config directory '%s': %s", 
+					   path, strerror(errno));
 			return;
 		}
 	}
@@ -134,7 +135,8 @@ static void signal_save(int sig)
 	
 	if (!g_file_test(my_global->config->config_dir, G_FILE_TEST_IS_DIR)) {
 		if (g_mkdir(my_global->config->config_dir, 0700) != 0) {
-			log_global(LOG_ERROR, "Can't create config directory '%s': %s", my_global->config->config_dir, strerror(errno));
+			log_global(LOG_ERROR, "Can't create config directory '%s': %s", 
+					   my_global->config->config_dir, strerror(errno));
 			return;
 		}
 	}
@@ -161,15 +163,23 @@ int main(int argc, char **argv)
 	pid_t pid;
 	GOptionContext *pc;
 	GOptionEntry options[] = {
-		{"check-running", 0, 0, G_OPTION_ARG_NONE, &check_running, "Only check whether ctrlproxy is running and exit"},
-		{"inetd-client", 'i', 0, G_OPTION_ARG_STRING, &inetd_client, "Communicate with client to NETWORK via stdio", "NETWORK" },
-		{"debug-level", 'd', 'd', G_OPTION_ARG_INT, &current_log_level, ("Debug level [0-5]"), "LEVEL" },
-		{"no-timestamp", 'n', 0, G_OPTION_ARG_NONE, &no_log_timestamp, "No timestamps in logs" },
-		{"daemon", 'D', 0, G_OPTION_ARG_NONE, &isdaemon, ("Run in the background (as a daemon)")},
+		{"check-running", 0, 0, G_OPTION_ARG_NONE, &check_running, 
+			"Only check whether ctrlproxy is running and exit"},
+		{"inetd-client", 'i', 0, G_OPTION_ARG_STRING, &inetd_client, 
+			"Communicate with client to NETWORK via stdio", "NETWORK" },
+		{"debug-level", 'd', 'd', G_OPTION_ARG_INT, &current_log_level, 
+			"Debug level [0-5]", "LEVEL" },
+		{"no-timestamp", 'n', 0, G_OPTION_ARG_NONE, &no_log_timestamp, 
+			"No timestamps in logs" },
+		{"daemon", 'D', 0, G_OPTION_ARG_NONE, &isdaemon, 
+			"Run in the background (as a daemon)"},
 		{"init", 0, 0, G_OPTION_ARG_NONE, &init, "Create configuration" },
-		{"log", 'l', 0, G_OPTION_ARG_STRING, &logfile, ("Log messages to specified file"), ("FILE")},
-		{"config-dir", 'c', 0, G_OPTION_ARG_STRING, &config_dir, ("Override configuration directory"), ("DIR")},
-		{"version", 'v', 0, G_OPTION_ARG_NONE, &version, ("Show version information")},
+		{"log", 'l', 0, G_OPTION_ARG_STRING, &logfile, 
+			"Log messages to specified file", "FILE"},
+		{"config-dir", 'c', 0, G_OPTION_ARG_STRING, &config_dir, 
+			"Override configuration directory", "DIR"},
+		{"version", 'v', 0, G_OPTION_ARG_NONE, &version, 
+			"Show version information"},
 		{ NULL }
 	};
 	GError *error = NULL;
@@ -201,7 +211,7 @@ int main(int argc, char **argv)
 
 	if (version) {
 		printf("ctrlproxy %s\n", VERSION);
-		printf("(c) 2002-2007 Jelmer Vernooij et al. <jelmer@nl.linux.org>\n");
+		printf("(c) 2002-2008 Jelmer Vernooij et al. <jelmer@nl.linux.org>\n");
 		return 0;
 	}
 
@@ -247,7 +257,8 @@ int main(int argc, char **argv)
 		
 		if (g_file_test(rcfile, G_FILE_TEST_EXISTS)) {
 			log_global(LOG_INFO, "Pre-3.0 style .ctrlproxyrc found");
-			log_global(LOG_INFO, "Run ctrlproxy-upgrade to update configuration");
+			log_global(LOG_INFO, 
+					   "Run ctrlproxy-upgrade to update configuration");
 			g_free(config_dir);
 			g_free(rcfile);
 			return 1;
@@ -284,7 +295,9 @@ int main(int argc, char **argv)
 	}
 
 	if (pid != -1) {
-		log_global(LOG_ERROR, "ctrlproxy is already running at pid %d (from %s)", pid, pidfile);
+		log_global(LOG_ERROR, 
+				   "ctrlproxy is already running at pid %d (from %s)", 
+				   pid, pidfile);
 		return 1;
 	}
 
@@ -323,7 +336,8 @@ int main(int argc, char **argv)
 	start_admin_socket(my_global);
 	autoconnect_networks(my_global->networks);
 	if (!init_listeners(my_global)) {
-		log_global(LOG_ERROR, "Failed to start one or more listeners, exiting...");
+		log_global(LOG_ERROR, 
+				   "Failed to start one or more listeners, exiting...");
 		return 1;
 	}
 	if (my_global->config->auto_away.enabled)
@@ -337,7 +351,8 @@ int main(int argc, char **argv)
 		struct irc_network *n = find_network(my_global->networks, inetd_client);
 
 		if (!n) {
-			fprintf(stderr, "Unable to find network named '%s'\n", inetd_client);
+			fprintf(stderr, "Unable to find network named '%s'\n", 
+					inetd_client);
 			return 1;
 		} else {
 			/* Find clients network by name */
@@ -347,7 +362,6 @@ int main(int argc, char **argv)
 	}
 
 	g_main_loop_run(main_loop);
-
 
 	return 0;
 }
