@@ -7,8 +7,8 @@
 GCOV = gcov
 
 ifeq ($(WITH_GCOV),1)
-CFLAGS = --coverage
-LIBS = --coverage
+CFLAGS += --coverage
+LIBS += --coverage
 endif
 
 LIBS += $(GNUTLS_LIBS)
