@@ -225,7 +225,17 @@ static struct log_mapping mappings[] = {
 	{ NULL }
 };
 
-static char *find_mapping(struct irc_network *network, const struct irc_line *l, 
+/**
+ * Given a special character, expand it.
+ *
+ * @param network IRC Network
+ * @param l IRC Line
+ * @param c Special character
+ * @param case_sensitive Whether or not to be case sensitive
+ * @return Expanded string or an empty string if there was no expansion possible
+ */
+static char *find_mapping(struct irc_network *network, 
+						  const struct irc_line *l, 
 						  char c, gboolean case_sensitive)
 {
 	int i;
@@ -249,14 +259,25 @@ static char *find_mapping(struct irc_network *network, const struct irc_line *l,
 	return g_strdup("");
 }
 
-static void convertslashes(char *a)
+void convertslashes(char *a)
 {
-	int j;
-	for (j = 0; a[j]; j++) 
-		if (a[j] == '/') 
-			a[j] = '_';
+	while (*a) {
+		if (*a == '/') 
+			*a = '_';
+		a++;
+	}
 }
 
+/**
+ * Substitute the special characters in a string.
+ *
+ * @param network IRC Network
+ * @param _new Pointer to store expanded line
+ * @param fmt String to expand
+ * @param l IRC Line
+ * @param case_sensitive Whether or not to be case sensitive
+ * @param noslash Whether or not to avoid adding slashes from expansions
+ */
 static void custom_subst(struct irc_network *network, char **_new, 
 						 const char *fmt, const struct irc_line *l, 
 						 const char *_identifier, 

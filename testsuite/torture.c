@@ -43,6 +43,7 @@ Suite *network_suite(void);
 Suite *line_suite(void);
 Suite *parser_suite(void);
 Suite *user_suite(void);
+Suite *motd_suite(void);
 Suite *linestack_suite(void);
 Suite *redirect_suite(void);
 Suite *networkinfo_suite(void);
@@ -160,6 +161,7 @@ int main (int argc, char **argv)
 	srunner_add_suite(sr, ctcp_suite());
 	srunner_add_suite(sr, help_suite());
 	srunner_add_suite(sr, nickserv_suite());
+	srunner_add_suite(sr, motd_suite());
 	srunner_add_suite(sr, url_suite());
 	if (no_fork)
 		srunner_set_fork_status(sr, CK_NOFORK);
