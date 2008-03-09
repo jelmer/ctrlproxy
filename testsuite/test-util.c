@@ -84,6 +84,12 @@ START_TEST(test_get_set_file_contents)
 	fail_unless(9 == len);
 END_TEST
 
+START_TEST(test_pidfile)
+	fail_unless(write_pidfile("mypidfile"));
+	fail_unless(getpid() == read_pidfile("mypidfile"));
+	unlink("mypidfile");
+END_TEST
+
 Suite *util_suite(void)
 {
 	Suite *s = suite_create("util");
@@ -92,5 +98,6 @@ Suite *util_suite(void)
 	tcase_add_test(tc_core, test_get_description);
 	tcase_add_test(tc_core, test_list_make_string);
 	tcase_add_test(tc_core, test_get_set_file_contents);
+	tcase_add_test(tc_core, test_pidfile);
 	return s;
 }
