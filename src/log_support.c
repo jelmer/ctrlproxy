@@ -58,6 +58,7 @@ static gboolean eval_remove(gpointer key, gpointer value, gpointer user_data)
 
 	if (fi->last_used < time(NULL) - CLEANUP_THRESHOLD) {
 		ctx->num_opened--;
+		g_assert(ctx->num_opened >= 0);
 		return TRUE;
 	}
 
@@ -67,6 +68,20 @@ static gboolean eval_remove(gpointer key, gpointer value, gpointer user_data)
 void log_support_cleanup(struct log_support_context *ctx)
 {
 	g_hash_table_foreach_remove(ctx->files, eval_remove, ctx);
+}
+
+static gboolean unconditional_remove(gpointer key, gpointer value, 
+									 gpointer user_data)
+{
+	struct log_support_context *ctx = user_data;
+	ctx->num_opened--;
+	g_assert(ctx->num_opened >= 0);
+	return TRUE;
+}
+
+void log_support_reopen(struct log_support_context *ctx)
+{
+	g_hash_table_foreach_remove(ctx->files, unconditional_remove, ctx);
 }
 
 gboolean log_support_write(struct log_support_context *ctx, 

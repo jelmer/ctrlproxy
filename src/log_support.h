@@ -48,5 +48,6 @@ G_MODULE_EXPORT G_GNUC_PRINTF(3, 4) void log_support_writef(struct log_support_c
 					   const char *path,
 					   const char *fmt, ...);
 G_MODULE_EXPORT void free_log_support_context(struct log_support_context *);
+G_MODULE_EXPORT void log_support_reopen(struct log_support_context *);
 
 #endif /* _CTRLPROXY_LOG_SUPPORT_H_ */
