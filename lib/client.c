@@ -372,7 +372,7 @@ static gboolean welcome_client(struct irc_client *client)
 	client_send_response(client, RPL_YOURHOST, tmp, NULL); 
 	g_free(tmp);
 	client_send_response(client, RPL_CREATED, 
-		"Ctrlproxy (c) 2002-2008 Jelmer Vernooij <jelmer@vernstok.nl>", NULL);
+		"Ctrlproxy (c) 2002-2008 Jelmer Vernooij <jelmer@samba.org>", NULL);
 	client_send_response(client, RPL_MYINFO, 
 		 client->network->info->name, 
 		 ctrlproxy_version(), 

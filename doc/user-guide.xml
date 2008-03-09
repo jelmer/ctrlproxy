@@ -8,7 +8,7 @@
 	<author>
 		<firstname>Jelmer</firstname><surname>Vernooij</surname>
 		<affiliation>
-			<address><email>jelmer@vernstok.nl</email></address>
+			<address><email>jelmer@samba.org</email></address>
 		</affiliation>
 	</author>
 
@@ -16,8 +16,6 @@
 	<para>This document is still a work-in-progress. We're doing our best to 
 		keep it up-to-date and understandable, but please don't hesitate to 
 		contact us if you have comments or questions.</para>
-
-		<para>All comments, questions and updates are welcome at <ulink url="mailto:jelmer@vernstok.nl">jelmer@vernstok.nl</ulink>.</para>
 	</abstract>
 </bookinfo>
 

@@ -6,7 +6,7 @@ License: GPL
 Group: Applications/Internet
 Source: http://www.ctrlproxy.org/releases/ctrlproxy-%{version}.tar.gz
 Url: http://www.ctrlproxy.org/
-Packager: Jelmer Vernooij <jelmer@vernstok.nl>
+Packager: Jelmer Vernooij <jelmer@samba.org>
 BuildRoot: /var/tmp/%{name}-buildroot
 
 %description

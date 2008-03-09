@@ -81,7 +81,7 @@ static void signal_crash(int sig)
 	}
 
 #endif
-	log_global(LOG_ERROR, "Please send a bug report to jelmer@vernstok.nl.");
+	log_global(LOG_ERROR, "Please send a bug report to jelmer@samba.org.");
 	log_global(LOG_ERROR, "A gdb backtrace is appreciated if you can reproduce this bug.");
 	abort();
 }

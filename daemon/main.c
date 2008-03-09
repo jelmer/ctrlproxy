@@ -110,7 +110,7 @@ void signal_crash(int sig)
 	}
 
 #endif
-	syslog(LOG_ALERT, "Please send a bug report to jelmer@vernstok.nl.");
+	syslog(LOG_ALERT, "Please send a bug report to jelmer@samba.org.");
 	syslog(LOG_ALERT, "A gdb backtrace is appreciated if you can reproduce this bug.");
 	abort();
 }
