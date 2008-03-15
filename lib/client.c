@@ -48,7 +48,7 @@ void client_log(enum log_level l, const struct irc_client *client,
 	char *ret;
 	va_list ap;
 
-	if (client->log_fn == NULL)
+	if (client->callbacks->log_fn == NULL)
 		return;
 
 	g_assert(client);
@@ -58,7 +58,7 @@ void client_log(enum log_level l, const struct irc_client *client,
 	ret = g_strdup_vprintf(fmt, ap);
 	va_end(ap);
 
-	client->log_fn(l, client, ret);
+	client->callbacks->log_fn(l, client, ret);
 
 	g_free(ret);
 }
@@ -158,7 +158,8 @@ gboolean client_send_line(struct irc_client *c, const struct irc_line *l)
 
 	g_assert(c != NULL);
 	g_assert(l != NULL);
-	log_client_line(c, l, FALSE);
+	if (c->callbacks->process_to_client != NULL)
+		c->callbacks->process_to_client(c, l);
 
 	state_handle_data(c->state, l);
 
@@ -213,8 +214,8 @@ void client_disconnect(struct irc_client *c, const char *reason)
 
 	g_source_remove(c->ping_id);
 
-	if (c->disconnect != NULL)
-		c->disconnect(c);
+	if (c->callbacks->disconnect != NULL)
+		c->callbacks->disconnect(c);
 
 	pending_clients = g_list_remove(pending_clients, c);
 
@@ -251,8 +252,8 @@ static void free_client(struct irc_client *c)
 	g_queue_foreach(c->pending_lines, free_pending_line, NULL);
 	g_queue_free(c->pending_lines);
 	g_free(c->default_origin);
-	if (c->free_private_data)
-		c->free_private_data(c);
+	if (c->callbacks->free_private_data)
+		c->callbacks->free_private_data(c);
 	g_free(c);
 }
 
@@ -340,15 +341,13 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition cond,
 									   &l)) == G_IO_STATUS_NORMAL) {
 			g_assert(l);
 
-			log_client_line(client, l, TRUE);
-
 			/* Silently drop empty messages */
 			if (l->argc == 0) {
 				free_line(l);
 				continue;
 			}
 
-			ret &= client->process_from_client(client, l);
+			ret &= client->callbacks->process_from_client(client, l);
 
 			free_line(l);
 
@@ -634,7 +633,7 @@ static gboolean client_ping(struct irc_client *client)
  * @param c Channel to talk over
  * @param desc Description of the client
  */
-struct irc_client *irc_client_new(GIOChannel *c, const char *default_origin, const char *desc, gboolean (*process_from_client) (struct irc_client *, const struct irc_line *), void (*log_fn) (enum log_level l, const struct irc_client *, const char *))
+struct irc_client *irc_client_new(GIOChannel *c, const char *default_origin, const char *desc, struct irc_client_callbacks *callbacks)
 {
 	struct irc_client *client;
 
@@ -646,7 +645,7 @@ struct irc_client *irc_client_new(GIOChannel *c, const char *default_origin, con
 	client->references = 1;
 
 	client->default_origin = g_strdup(default_origin);
-	client->log_fn = log_fn;
+	client->callbacks = callbacks;
 
 	g_io_channel_set_flags(c, G_IO_FLAG_NONBLOCK, NULL);
 	g_io_channel_set_close_on_unref(c, TRUE);
@@ -658,7 +657,6 @@ struct irc_client *irc_client_new(GIOChannel *c, const char *default_origin, con
 	client->description = g_strdup(desc);
 	client->connected = TRUE;
 	client->pending_lines = g_queue_new();
-	client->process_from_client = process_from_client;
 
 	client->outgoing_iconv = client->incoming_iconv = (GIConv)-1;
 	client_set_charset(client, DEFAULT_CLIENT_CHARSET);

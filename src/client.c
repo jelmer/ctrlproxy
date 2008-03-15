@@ -34,6 +34,11 @@
 #include "internals.h"
 #include "irc.h"
 
+static gboolean process_to_client(struct irc_client *c, const struct irc_line *l)
+{
+	log_client_line(c, l, FALSE);
+	return TRUE;
+}
 
 /**
  * Process incoming lines from a client.
@@ -50,6 +55,8 @@ static gboolean process_from_client(struct irc_client *c, const struct irc_line 
 
 	ol = *_l;
 	l = &ol;
+
+	log_client_line(c, l, TRUE);
 
 	l->origin = g_strdup(c->state->me.hostmask);
 
@@ -125,18 +132,24 @@ static void handle_client_disconnect(struct irc_client *c)
 		c->network->clients = g_list_remove(c->network->clients, c);
 }
 
+void log_client(enum log_level, const struct irc_client *, const char *data);
+static struct irc_client_callbacks default_callbacks = {
+	.process_from_client = process_from_client, 
+	.process_to_client = process_to_client,
+	.log_fn = log_client,
+	.disconnect = handle_client_disconnect,
+	.free_private_data = client_free_private
+};
+
 struct irc_client *client_init(struct irc_network *n, GIOChannel *c, const char *desc)
 {
-	void log_client(enum log_level, const struct irc_client *, const char *data);
-	struct irc_client *client = irc_client_new(c, n?n->info->name:get_my_hostname(), desc, process_from_client, log_client);
+	struct irc_client *client = irc_client_new(c, n?n->info->name:get_my_hostname(), desc, &default_callbacks);
 
 	client->network = network_ref(n);
 
 	if (n != NULL && n->global != NULL)
 		client_set_charset(client, n->global->config->client_charset);
 
-	client->disconnect = handle_client_disconnect;
-	client->free_private_data = client_free_private;
 	client->exit_on_close = FALSE;
 	
 	/* parse any data currently in the buffer */
