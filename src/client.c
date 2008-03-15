@@ -127,7 +127,7 @@ static void handle_client_disconnect(struct irc_client *c)
 
 struct irc_client *client_init(struct irc_network *n, GIOChannel *c, const char *desc)
 {
-	struct irc_client *client = irc_client_new(c, desc, process_from_client);
+	struct irc_client *client = irc_client_new(c, n?n->info->name:get_my_hostname(), desc, process_from_client);
 
 	client->network = network_ref(n);
 

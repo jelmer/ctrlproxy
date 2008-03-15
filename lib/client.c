@@ -57,7 +57,7 @@ gboolean client_send_response(struct irc_client *c, int response, ...)
 	g_assert(response > 0);
 	
 	va_start(ap, response);
-	l = virc_parse_line(client_get_default_origin(c), ap);
+	l = virc_parse_line(c->default_origin, ap);
 	va_end(ap);
 
 	l->args = g_realloc(l->args, sizeof(char *) * (l->argc+4));
@@ -114,7 +114,7 @@ gboolean client_send_args(struct irc_client *c, ...)
 	g_assert(c);
 	
 	va_start(ap, c);
-	l = virc_parse_line(client_get_default_origin(c), ap);
+	l = virc_parse_line(c->default_origin, ap);
 	va_end(ap);
 
 	ret = client_send_line(c, l);
@@ -229,6 +229,7 @@ static void free_client(struct irc_client *c)
 	g_free(c->requested_hostname);
 	g_queue_foreach(c->pending_lines, free_pending_line, NULL);
 	g_queue_free(c->pending_lines);
+	g_free(c->default_origin);
 	if (c->free_private_data)
 		c->free_private_data(c);
 	g_free(c);
@@ -361,14 +362,14 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition cond,
  * @param client Client to talk to.
  * @return whether the client was accepted or refused
  */
-static gboolean welcome_client(struct irc_client *client)
+static gboolean welcome_client(struct irc_client *client, const char *hostname)
 {
 	char *features, *tmp;
 
 	g_assert(client);
 
 	client_send_response(client, RPL_WELCOME, "Welcome to the ctrlproxy", NULL);
-	tmp = g_strdup_printf("Host %s is running ctrlproxy", get_my_hostname());
+	tmp = g_strdup_printf("Host %s is running ctrlproxy", hostname);
 	client_send_response(client, RPL_YOURHOST, tmp, NULL); 
 	g_free(tmp);
 	client_send_response(client, RPL_CREATED, 
@@ -482,7 +483,7 @@ static gboolean process_from_pending_client(struct irc_client *client,
 	} else {
 		client_send_response(client, ERR_NOTREGISTERED, 
 			"Register first", 
-			client_get_default_origin(client), NULL);
+			client->default_origin, NULL);
 	}
 
 	return TRUE;
@@ -556,7 +557,7 @@ static gboolean handle_pending_client_receive(GIOChannel *c,
 					return FALSE;
 				}
 
-				if (!welcome_client(client)) {
+				if (!welcome_client(client, get_my_hostname())) {
 					return FALSE;
 				}
 
@@ -612,7 +613,7 @@ static gboolean client_ping(struct irc_client *client)
  * @param c Channel to talk over
  * @param desc Description of the client
  */
-struct irc_client *irc_client_new(GIOChannel *c, const char *desc, gboolean (*process_from_client) (struct irc_client *, const struct irc_line *))
+struct irc_client *irc_client_new(GIOChannel *c, const char *default_origin, const char *desc, gboolean (*process_from_client) (struct irc_client *, const struct irc_line *))
 {
 	struct irc_client *client;
 
@@ -622,6 +623,8 @@ struct irc_client *irc_client_new(GIOChannel *c, const char *desc, gboolean (*pr
 	client = g_new0(struct irc_client, 1);
 	g_assert(client != NULL);
 	client->references = 1;
+
+	client->default_origin = g_strdup(default_origin);
 
 	g_io_channel_set_flags(c, G_IO_FLAG_NONBLOCK, NULL);
 	g_io_channel_set_close_on_unref(c, TRUE);
@@ -713,11 +716,6 @@ gboolean client_set_charset(struct irc_client *c, const char *name)
 const char *client_get_own_hostmask(struct irc_client *c)
 {
 	return c->state->me.hostmask;
-}
-
-const char *client_get_default_origin(struct irc_client *c)
-{
-	return c->network?c->network->info->name:get_my_hostname();
 }
 
 const char *client_get_default_target(struct irc_client *c)
@@ -969,7 +967,7 @@ void client_send_nameslist(struct irc_client *c,
 				free_line(l);
 			}
 
-			l = irc_parse_line_args(client_get_default_origin(c), "353",
+			l = irc_parse_line_args(c->default_origin, "353",
 									client_get_default_target(c), mode, 
 									ch->name, NULL);
 			l->has_endcolon = WITHOUT_COLON;
