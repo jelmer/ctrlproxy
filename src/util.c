@@ -207,17 +207,6 @@ rep_g_mkdir_with_parents (const gchar *pathname,
   return 0;
 }
 
-const char *g_io_channel_unix_get_sock_error(GIOChannel *ioc)
-{
-	int valopt;
-	socklen_t valoptlen = sizeof(valopt);
-	int fd = g_io_channel_unix_get_fd(ioc);
-
-	getsockopt(fd, SOL_SOCKET, SO_ERROR, &valopt, &valoptlen);
-
-	return strerror(valopt);
-}
-
 pid_t read_pidfile(const char *path)
 {
 	char *contents;
