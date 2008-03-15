@@ -207,7 +207,7 @@ gboolean ctcp_process_client_request (struct irc_client *c, struct irc_line *l)
 	char *command = get_ctcp_command(l->args[2]);
 
 	if (command == NULL) {
-		log_client(LOG_WARNING, c, "Received mailformed CTCP request");
+		client_log(LOG_WARNING, c, "Received mailformed CTCP request");
 		return FALSE;
 	}
 
@@ -219,7 +219,7 @@ gboolean ctcp_process_client_request (struct irc_client *c, struct irc_line *l)
 		req->destination = g_strdup(l->args[1]);
 	req->command = command;
 
-	log_client(LOG_TRACE, c, "Tracking CTCP request '%s' to %s", req->command, req->destination);
+	client_log(LOG_TRACE, c, "Tracking CTCP request '%s' to %s", req->command, req->destination);
 
 	ctcp_request_queue = g_list_append(ctcp_request_queue, req);
 
@@ -234,12 +234,11 @@ gboolean ctcp_process_client_reply (struct irc_client *c, struct irc_line *l)
 	char *command = get_ctcp_command(l->args[2]);
 
 	if (command == NULL) {
-		log_client(LOG_WARNING, c, "Received mailformed CTCP reply");
+		client_log(LOG_WARNING, c, "Received mailformed CTCP reply");
 		return FALSE;
 	}
 
-
-	log_client(LOG_WARNING, c, "Received CTCP client reply '%s' from client", command);
+	client_log(LOG_WARNING, c, "Received CTCP client reply '%s' from client", command);
 	g_free(command);
 
 	return TRUE;

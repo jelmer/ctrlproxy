@@ -671,7 +671,7 @@ void redirect_record(const struct irc_network *n, struct irc_client *c,
 	q = find_query(l->args[0]);
 	if (q == NULL) {
 		if (c != NULL) {
-			log_client(LOG_WARNING, c, "Unknown command from client: %s", 
+			client_log(LOG_WARNING, c, "Unknown command from client: %s", 
 					   l->args[0]);
 		} else {
 			network_log(LOG_WARNING, n, "Sending unknown command '%s'", 

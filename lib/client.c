@@ -42,6 +42,27 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition cond,
 static gboolean handle_client_send_queue(GIOChannel *c, GIOCondition cond, 
 										 void *_client);
 
+void client_log(enum log_level l, const struct irc_client *client,
+				 const char *fmt, ...)
+{
+	char *ret;
+	va_list ap;
+
+	if (client->log_fn == NULL)
+		return;
+
+	g_assert(client);
+	g_assert(fmt);
+
+	va_start(ap, fmt);
+	ret = g_strdup_vprintf(fmt, ap);
+	va_end(ap);
+
+	client->log_fn(l, client, ret);
+
+	g_free(ret);
+}
+
 /**
  * Send a response to a client.
  * @param c Client to send to
@@ -153,7 +174,7 @@ gboolean client_send_line(struct irc_client *c, const struct irc_line *l)
 		} else if (status != G_IO_STATUS_NORMAL) {
 			c->connected = FALSE;
 
-			log_client(LOG_WARNING, c, "Error sending line '%s': %s", 
+			client_log(LOG_WARNING, c, "Error sending line '%s': %s", 
 							l->args[0], error->message);
 
 			return FALSE;
@@ -199,7 +220,7 @@ void client_disconnect(struct irc_client *c, const char *reason)
 
 	lose_client_hook_execute(c);
 
-	log_client(LOG_INFO, c, "Removed client");
+	client_log(LOG_INFO, c, "Removed client");
 
 	irc_send_args(c->incoming, c->outgoing_iconv, NULL, "ERROR", reason, NULL);
 
@@ -278,7 +299,7 @@ static gboolean handle_client_send_queue(GIOChannel *ioc, GIOCondition cond,
 		}
 
 		if (status == G_IO_STATUS_ERROR) {
-			log_client(LOG_WARNING, c, "Error sending line '%s': %s", 
+			client_log(LOG_WARNING, c, "Error sending line '%s': %s", 
 							l->args[0], error->message);
 		} else if (status == G_IO_STATUS_EOF) {
 			c->outgoing_id = 0;
@@ -469,7 +490,7 @@ static gboolean process_from_pending_client(struct irc_client *client,
 				l->args[1], l->args[2]?atoi(l->args[2]):6667, TRUE));
 
 		if (client->network == NULL) {
-			log_client(LOG_ERROR, client, 
+			client_log(LOG_ERROR, client, 
 				"Unable to connect to network with name %s", 
 				l->args[1]);
 		}
@@ -571,7 +592,7 @@ static gboolean handle_pending_client_receive(GIOChannel *c,
 				handle_client_receive(client->incoming, 
 									  g_io_channel_get_buffer_condition(client->incoming), client);
 
-				log_client(LOG_INFO, client, "New client");
+				client_log(LOG_INFO, client, "New client");
 
 				return FALSE;
 			}
@@ -613,7 +634,7 @@ static gboolean client_ping(struct irc_client *client)
  * @param c Channel to talk over
  * @param desc Description of the client
  */
-struct irc_client *irc_client_new(GIOChannel *c, const char *default_origin, const char *desc, gboolean (*process_from_client) (struct irc_client *, const struct irc_line *))
+struct irc_client *irc_client_new(GIOChannel *c, const char *default_origin, const char *desc, gboolean (*process_from_client) (struct irc_client *, const struct irc_line *), void (*log_fn) (enum log_level l, const struct irc_client *, const char *))
 {
 	struct irc_client *client;
 
@@ -625,6 +646,7 @@ struct irc_client *irc_client_new(GIOChannel *c, const char *default_origin, con
 	client->references = 1;
 
 	client->default_origin = g_strdup(default_origin);
+	client->log_fn = log_fn;
 
 	g_io_channel_set_flags(c, G_IO_FLAG_NONBLOCK, NULL);
 	g_io_channel_set_close_on_unref(c, TRUE);
@@ -679,7 +701,7 @@ gboolean client_set_charset(struct irc_client *c, const char *name)
 		tmp = g_iconv_open(name, "UTF-8");
 
 		if (tmp == (GIConv)-1) {
-			log_client(LOG_WARNING, c, "Unable to find charset `%s'", name);
+			client_log(LOG_WARNING, c, "Unable to find charset `%s'", name);
 			return FALSE;
 		}
 	} else {
@@ -695,7 +717,7 @@ gboolean client_set_charset(struct irc_client *c, const char *name)
 		tmp = g_iconv_open("UTF-8", name);
 
 		if (tmp == (GIConv)-1) {
-			log_client(LOG_WARNING, c, "Unable to find charset `%s'", name);
+			client_log(LOG_WARNING, c, "Unable to find charset `%s'", name);
 			return FALSE;
 		}
 	} else {
@@ -884,7 +906,7 @@ gboolean client_send_state(struct irc_client *c, struct irc_network_state *state
 	g_assert(c != NULL);
 	g_assert(state != NULL);
 
-    log_client(LOG_TRACE, c, "Sending state (%d channels)", 
+    client_log(LOG_TRACE, c, "Sending state (%d channels)", 
 			   g_list_length(state->channels));
 
 	for (cl = state->channels; cl; cl = cl->next) {

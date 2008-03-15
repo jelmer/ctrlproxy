@@ -57,7 +57,7 @@ void client_replicate(struct irc_client *client)
 	backend = repl_find_backend(bn);
 
 	if (backend == NULL) {
-		log_client(LOG_WARNING, client, 
+		client_log(LOG_WARNING, client, 
 				   "Unable to find replication backend '%s'", bn);
 
 		if (client->network->state)

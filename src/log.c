@@ -79,7 +79,7 @@ void log_client_line(const struct irc_client *n, const struct irc_line *l, gbool
 		return;
 
 	raw = irc_line_string(l);
-	log_client(LOG_DATA, n, "%c %s", incoming?'<':'>', raw);
+	client_log(LOG_DATA, n, "%c %s", incoming?'<':'>', raw);
 	g_free(raw);
 }
 
@@ -93,16 +93,9 @@ void handle_network_log(enum log_level level, const struct irc_network *n,
 						     msg, NULL);
 }
 
-void log_client(enum log_level level, const struct irc_client *c, const char *fmt, ...)
+void log_client(enum log_level level, const struct irc_client *c, const char *data)
 {
-	va_list ap;	
-	char *tmp; 
-	g_assert(c != NULL);
-	va_start(ap, fmt);
-	tmp = g_strdup_vprintf(fmt, ap);
-	va_end(ap);
-	log_entry(level, c->network, c, tmp);
-	g_free(tmp);
+	log_entry(level, c->network, c, data);
 }
 
 void log_global(enum log_level level, const char *fmt, ...)
