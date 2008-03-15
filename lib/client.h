@@ -37,6 +37,7 @@ struct irc_client_callbacks {
 	void (*disconnect) (struct irc_client *);
 	void (*free_private_data) (struct irc_client *);
 	void (*log_fn) (enum log_level l, const struct irc_client *, const char *data);
+	gboolean (*welcome) (struct irc_client *);
 };
 
 
@@ -86,8 +87,6 @@ G_MODULE_EXPORT const char *client_get_own_hostmask(struct irc_client *c);
 G_MODULE_EXPORT struct irc_client *client_ref(struct irc_client *c);
 G_MODULE_EXPORT void client_unref(struct irc_client *c);
 G_MODULE_EXPORT struct irc_client *irc_client_new(GIOChannel *c, const char *default_origin, const char *desc, struct irc_client_callbacks *callbacks);
-G_MODULE_EXPORT void clients_send(GList *clients, const struct irc_line *, const struct irc_client *exception);
-G_MODULE_EXPORT void clients_send_args_ex(GList *clients, const char *hostmask, ...);
 G_MODULE_EXPORT void clients_send_state(GList *clients, 
 										struct irc_network_state *s);
 

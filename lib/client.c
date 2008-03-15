@@ -375,83 +375,6 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition cond,
 	return ret;
 }
 
-/**
- * Send welcome information to a client, optionally disconnecting 
- * the client if it isn't welcome.
- *
- * @param client Client to talk to.
- * @return whether the client was accepted or refused
- */
-static gboolean welcome_client(struct irc_client *client, const char *hostname)
-{
-	char *features, *tmp;
-
-	g_assert(client);
-
-	client_send_response(client, RPL_WELCOME, "Welcome to the ctrlproxy", NULL);
-	tmp = g_strdup_printf("Host %s is running ctrlproxy", hostname);
-	client_send_response(client, RPL_YOURHOST, tmp, NULL); 
-	g_free(tmp);
-	client_send_response(client, RPL_CREATED, 
-		"Ctrlproxy (c) 2002-2008 Jelmer Vernooij <jelmer@samba.org>", NULL);
-	client_send_response(client, RPL_MYINFO, 
-		 client->network->info->name, 
-		 ctrlproxy_version(), 
-		 (client->network->state != NULL && client->network->info->supported_user_modes)?client->network->info->supported_user_modes:ALLMODES, 
-		 (client->network->state != NULL && client->network->info->supported_channel_modes)?client->network->info->supported_channel_modes:ALLMODES,
-		 NULL);
-
-	features = network_generate_feature_string(client->network);
-
-	client_send_response(client, RPL_BOUNCE, features, 
-						 "are supported on this server", NULL);
-
-	g_free(features);
-
-	if (client->network->state != NULL) {
-		client_send_luserchannels(client, g_list_length(client->network->state->channels));
-	}
-
-	tmp = g_strdup_printf("I have %d clients", g_list_length(client->network->clients));
-	client_send_response(client, RPL_LUSERME, tmp, NULL);
-	g_free(tmp);
-
-	if (!client->network->global->config->motd_file) {
-		client_send_motd(client, NULL);
-	} else if (!strcmp(client->network->global->config->motd_file, "")) {
-		client_send_motd(client, NULL);
-	} else {
-		char **lines = get_motd_lines(client->network->global->config->motd_file);
-		client_send_motd(client, lines);
-		g_strfreev(lines);
-	}
-
-	g_assert(client->state != NULL);
-	g_assert(client->network != NULL);
-
-	if (client->network->state != NULL) {
-		if (g_strcasecmp(client->state->me.nick, client->network->state->me.nick) != 0) {
-			/* Tell the client our his/her real nick */
-			client_send_args_ex(client, client->state->me.hostmask, "NICK", 
-								client->network->state->me.nick, NULL); 
-
-			/* Try to get the nick the client specified */
-			if (!client->network->config->ignore_first_nick) {
-				network_send_args(client->network, "NICK", 
-								  client->requested_nick, NULL);
-			}
-		}
-	}
-
-	if (!new_client_hook_execute(client)) {
-		client_disconnect(client, "Refused by client connect hook");
-		return FALSE;
-	}
-
-	client_replicate(client);
-
-	return TRUE;
-}
 
 static gboolean process_from_pending_client(struct irc_client *client, 
 											const struct irc_line *l)
@@ -577,7 +500,7 @@ static gboolean handle_pending_client_receive(GIOChannel *c,
 					return FALSE;
 				}
 
-				if (!welcome_client(client, get_my_hostname())) {
+				if (!client->callbacks->welcome(client)) {
 					return FALSE;
 				}
 
@@ -763,41 +686,6 @@ void client_unref(struct irc_client *c)
 		free_client(c);
 }
 
-/**
- * Send a line to a list of clients.
- *
- * @param clients List of clients to send to
- * @param l Line to send
- * @param exception Client to which nothing should be sent. Can be NULL.
- */
-void clients_send(GList *clients, const struct irc_line *l, 
-				  const struct irc_client *exception) 
-{
-	GList *g;
-
-	for (g = clients; g; g = g->next) {
-		struct irc_client *c = (struct irc_client *)g->data;
-		if (c != exception) {
-			if (run_client_filter(c, l, FROM_SERVER)) { 
-				client_send_line(c, l);
-			}
-		}
-	}
-}
-
-void clients_send_args_ex(GList *clients, const char *hostmask, ...)
-{
-	struct irc_line *l;
-	va_list ap;
-
-	va_start(ap, hostmask);
-	l = virc_parse_line(hostmask, ap);
-	va_end(ap);
-
-	clients_send(clients, l, NULL);
-
-	free_line(l); l = NULL;
-}
 
 gboolean client_send_channel_state_diff(struct irc_client *client, 
 										struct irc_channel_state *old_state,
