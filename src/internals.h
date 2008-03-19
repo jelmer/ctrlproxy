@@ -106,7 +106,7 @@ void handle_network_log(enum log_level level, const struct irc_network *n,
 						const char *msg);
 
 /* redirect.c */
-void redirect_record(const struct irc_network *n, const struct irc_client *c, const struct irc_line *l);
+void redirect_record(const struct irc_network *n, struct irc_client *c, const struct irc_line *l);
 gboolean redirect_response(struct irc_network *n, const struct irc_line *l);
 void redirect_clear(const struct irc_network *n);
 
