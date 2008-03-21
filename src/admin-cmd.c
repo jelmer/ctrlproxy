@@ -75,6 +75,7 @@ gboolean admin_socket_prompt(const char *config_dir)
 		while (g_io_channel_read_line(ch, &raw, NULL, NULL, &error) == G_IO_STATUS_NORMAL) 
 		{
 			printf("%s", raw);
+			g_free(raw);
 		}
 	}
 	g_free(admin_dir);
