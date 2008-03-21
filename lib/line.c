@@ -196,9 +196,6 @@ static gboolean requires_colon(const struct irc_line *l)
 	if (!g_strcasecmp(l->args[0], "NICK"))
 		return FALSE;
 
-	if (!g_strcasecmp(l->args[0], "JOIN"))
-		return FALSE;
-
 	switch(c) {
 	case RPL_CHANNELMODEIS:
 	case RPL_INVITING:
