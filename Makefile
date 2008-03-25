@@ -197,6 +197,9 @@ $(LIBIRC_STATIC): $(lib_objs)
 $(LIBIRC_SHARED): $(lib_objs)
 	$(LD) -shared $(LDFLAGS) -Wl,-soname,$(LIBIRC_SONAME) -o $@ $^
 
+cscope.out::
+	cscope -b -R
+
 clean::
 	@echo Removing dependency files
 	@rm -f $(dep_files)

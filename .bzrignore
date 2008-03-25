@@ -69,3 +69,4 @@ doc/user-guide.tmp.xml
 ctrlproxy-admin
 *.so.*
 ctrlproxyd
+cscope.out
