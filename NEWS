@@ -83,6 +83,8 @@ Ctrlproxy 3.0.6 UNRELEASED
 
     * Support NICKSERV command when tracking messages.
 
+	* Handle incomplete PREFIX lines. (#192)
+
   INTERNALS
 
     * A simple, single API is now used for managing modes.
