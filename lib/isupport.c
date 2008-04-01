@@ -439,7 +439,7 @@ void network_info_parse(struct irc_network_info *info, const char *parameter)
 		g_free(info->statusmsg);
 		info->statusmsg = g_strdup(val);
 	} else if (!g_strcasecmp(key, "PREFIX")) {
-		if (val[0] != '(' || !strchr(val, ')')) {
+		if (strlen(val) > 0 && (val[0] != '(' || !strchr(val, ')'))) {
 			log_global(LOG_WARNING, "Malformed PREFIX data `%s'", val);
 		} else {
 			g_free(info->prefix);

@@ -44,7 +44,7 @@ START_TEST(test_get_prefix_by_mode)
 	fail_unless(get_prefix_by_mode('h', &info) == '%');
 	fail_unless(get_prefix_by_mode('!', &info) == ' ');
 	network_info_parse(&info, "PREFIX=(qaohv~&@%+");
-	fail_unless(get_prefix_by_mode('a', &info) == ' ');
+	fail_unless(get_prefix_by_mode('a', &info) == '&');
 END_TEST
 
 START_TEST(test_get_charset)
