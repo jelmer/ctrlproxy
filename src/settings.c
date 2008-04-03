@@ -143,9 +143,9 @@ static void config_save_tcp_servers(struct network_config *n, GKeyFile *kf)
 {
 	GList *gl;
 	int i = 0; 
-	gchar **values = g_new0(gchar *, g_list_length(n->type_settings.tcp_servers)+1);
+	gchar **values = g_new0(gchar *, g_list_length(n->type_settings.tcp.servers)+1);
 	
-	for (gl = n->type_settings.tcp_servers; gl; gl = gl->next) {
+	for (gl = n->type_settings.tcp.servers; gl; gl = gl->next) {
 		struct tcp_server_config *ts = gl->data;
 		char *name = irc_create_url(ts->host, ts->port, ts->ssl);
 
@@ -200,6 +200,11 @@ static void config_save_network(const char *dir, struct network_config *n, GList
 		break;
 	case NETWORK_TCP:
 		config_save_tcp_servers(n, kf);
+		if (n->type_settings.tcp.default_bind_address != NULL)
+			g_key_file_set_string(kf, "global", "bind", 
+								  n->type_settings.tcp.default_bind_address);
+		else
+			g_key_file_remove_key(kf, "global", "bind", NULL);
 		break;
 	default:break;
 	}
@@ -485,7 +490,7 @@ static void config_load_servers(struct network_config *n)
 
 		s->bind_address = g_key_file_get_string(n->keyfile, servers[i], "bind", NULL);
 
-		n->type_settings.tcp_servers = g_list_append(n->type_settings.tcp_servers, s);
+		n->type_settings.tcp.servers = g_list_append(n->type_settings.tcp.servers, s);
 
 		g_key_file_remove_group(n->keyfile, servers[i], NULL);
 	}
@@ -589,6 +594,7 @@ static struct network_config *config_load_network(struct ctrlproxy_config *cfg, 
 
 	switch (n->type) {
 	case NETWORK_TCP:
+		n->type_settings.tcp.default_bind_address = g_key_file_get_string(kf, "global", "bind", NULL);
 		config_load_servers(n);
 		break;
 	case NETWORK_PROGRAM:
@@ -652,7 +658,7 @@ static struct network_config *find_create_network_config(struct ctrlproxy_config
 		if (nc->type != NETWORK_TCP) 
 			continue;
 
-		for (gl1 = nc->type_settings.tcp_servers; gl1; gl1 = gl1->next) {
+		for (gl1 = nc->type_settings.tcp.servers; gl1; gl1 = gl1->next) {
 			char *tmp;
 			struct tcp_server_config *sc = gl1->data;
 
@@ -678,7 +684,7 @@ static struct network_config *find_create_network_config(struct ctrlproxy_config
 	nc->type = NETWORK_TCP;
 	tc = g_new0(struct tcp_server_config, 1);
 	irc_parse_url(name, &tc->host, &tc->port, &tc->ssl);
-	nc->type_settings.tcp_servers = g_list_append(nc->type_settings.tcp_servers, tc);
+	nc->type_settings.tcp.servers = g_list_append(nc->type_settings.tcp.servers, tc);
 
 	cfg->networks = g_list_append(cfg->networks, nc);
 
@@ -1300,15 +1306,16 @@ void free_config(struct ctrlproxy_config *cfg)
 		}
 		switch (nc->type) {
 		case NETWORK_TCP: 
-			while (nc->type_settings.tcp_servers) {
-				struct tcp_server_config *tc = nc->type_settings.tcp_servers->data;
+			while (nc->type_settings.tcp.servers) {
+				struct tcp_server_config *tc = nc->type_settings.tcp.servers->data;
 				g_free(tc->host);
 				g_free(tc->port);
 				g_free(tc->bind_address);
 				g_free(tc->password);
-				nc->type_settings.tcp_servers = g_list_remove(nc->type_settings.tcp_servers, tc);
+				nc->type_settings.tcp.servers = g_list_remove(nc->type_settings.tcp.servers, tc);
 				g_free(tc);
 			}
+			g_free(nc->type_settings.tcp.default_bind_address);
 			break;
 		case NETWORK_VIRTUAL:
 			g_free(nc->type_settings.virtual_type);

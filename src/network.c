@@ -222,7 +222,7 @@ struct irc_network *find_network_by_hostname(struct global *global,
 		g_assert(n->config);
 		if (n->config->type == NETWORK_TCP) 
 		{
-			for (sv = n->config->type_settings.tcp_servers; sv; sv = sv->next)
+			for (sv = n->config->type_settings.tcp.servers; sv; sv = sv->next)
 			{
 				struct tcp_server_config *server = sv->data;
 				struct servent *sv_serv = getservbyname(server->port, "tcp");
@@ -256,7 +256,7 @@ struct irc_network *find_network_by_hostname(struct global *global,
 		s->host = g_strdup(hostname);
 		s->port = portname;
 
-		nc->type_settings.tcp_servers = g_list_append(nc->type_settings.tcp_servers, s);
+		nc->type_settings.tcp.servers = g_list_append(nc->type_settings.tcp.servers, s);
 
 		n = load_network(global, nc);
 		network_set_log_fn(n, (network_log_fn)handle_network_log, n);

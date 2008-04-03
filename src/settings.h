@@ -100,7 +100,10 @@ struct network_config
 	union {
 		char *virtual_type;
 		char *program_location;
-		GList *tcp_servers;
+		struct { 
+			char *default_bind_address;
+			GList *servers;
+		} tcp;
 	} type_settings; 
 };
 

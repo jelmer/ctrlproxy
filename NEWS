@@ -1,5 +1,4 @@
- Otherwise indicated differently, all changes made by 
-     Jelmer Vernooij.
+Unless otherwise indicated, all changes made by Jelmer Vernooij.
 
 Ctrlproxy 3.0.6 UNRELEASED
 
@@ -29,6 +28,9 @@ Ctrlproxy 3.0.6 UNRELEASED
 
 	* The pid file is now read to check whether another instance of 
 	  ctrlproxy is already running.
+
+	* ``bind'' is now also accepted in the global section of the network 
+	  configuration. (#194)
 
   BUG FIXES
 

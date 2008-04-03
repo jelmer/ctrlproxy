@@ -199,13 +199,13 @@ static struct tcp_server_config *network_get_next_tcp_server(struct irc_network 
 	
 	g_assert(n);
 	g_assert(n->config);
-	cur = g_list_find(n->config->type_settings.tcp_servers, n->connection.data.tcp.current_server);
+	cur = g_list_find(n->config->type_settings.tcp.servers, n->connection.data.tcp.current_server);
 
 	/* Get next available server */
 	if (cur != NULL && cur->next != NULL) 
 		cur = cur->next; 
 	else 
-		cur = n->config->type_settings.tcp_servers;
+		cur = n->config->type_settings.tcp.servers;
 
 	if (cur != NULL) 
 		return cur->data; 
@@ -587,6 +587,8 @@ static gboolean connect_current_tcp_server(struct irc_network *s)
 
 		if (cs->bind_address)
 			bindsock(s, sock, res, cs->bind_address, NULL);
+		else if (s->config->type_settings.tcp.default_bind_address)
+			bindsock(s, sock, res, s->config->type_settings.tcp.default_bind_address, NULL);
 
 		ioc = g_io_channel_unix_new(sock);
 		g_io_channel_set_flags(ioc, G_IO_FLAG_NONBLOCK, NULL);

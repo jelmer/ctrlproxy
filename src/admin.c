@@ -222,7 +222,7 @@ static void cmd_add_server (admin_handle h, char **args, void *userdata)
 	s->ssl = FALSE;
 	s->password = args[3]?g_strdup(args[3]):NULL;
 
-	n->config->type_settings.tcp_servers = g_list_append(n->config->type_settings.tcp_servers, s);
+	n->config->type_settings.tcp.servers = g_list_append(n->config->type_settings.tcp.servers, s);
 
 	admin_out(h, "Server added to `%s'", args[1]);
 }
