@@ -64,6 +64,18 @@ static gboolean network_update_isupport(struct irc_network_info *net_info,
 	return TRUE;
 }
 
+static gboolean network_process_ctcp_request(struct irc_network *n, const struct irc_line *l)
+{
+	/* If there are no clients connected, answer by ourselve */
+	if (g_list_length(n->clients) == 0) {
+		return ctcp_process_request(n, l);
+	} else {
+		/* otherwise, just send to all clients and hope one answers */
+		clients_send(n->clients, l, NULL);
+		return TRUE;
+	}
+}
+
 
 /**
  * Process a line received from the server
@@ -164,10 +176,10 @@ static gboolean process_from_server(struct irc_network *n, const struct irc_line
 				if (!g_strcasecmp(l->args[0], "PRIVMSG") && l->argc > 2 && 
 					l->args[2][0] == '\001' && 
 					g_strncasecmp(l->args[2], "\001ACTION", 7) != 0) {
-					ctcp_process_network_request(n, l);
+					network_process_ctcp_request(n, l);
 				} else if (!g_strcasecmp(l->args[0], "NOTICE") && l->argc > 2 && 
 					l->args[2][0] == '\001') {
-					ctcp_process_network_reply(n, l);
+					ctcp_network_redirect_response(n, l);
 				}
 			} else if (run_server_filter(n, l, FROM_SERVER)) {
 				if (!strcmp(l->args[0], "PRIVMSG") && 

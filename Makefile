@@ -54,6 +54,7 @@ objs = src/posix.o \
 	   src/gen_config.o \
 	   src/repl.o \
 	   src/linestack_file.o \
+	   src/ctcp_redirect.o \
 	   src/ctcp.o \
 	   src/motd.o \
 	   src/nickserv.o \

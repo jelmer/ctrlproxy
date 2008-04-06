@@ -84,30 +84,6 @@ void ctcp_send(struct irc_network *n, const char *nick, ...)
 	g_free(msg);
 }
 
-static char *get_ctcp_command(const char *data)
-{
-	char *tmp;
-	char *p;
-	g_assert(data[0] == '\001');
-
-	tmp = g_strdup(data+1);
-
-	p = strchr(tmp, ' ');
-	if (p) {
-		*p = '\0';
-		return tmp;
-	}
-
-	p = strrchr(tmp, '\001');
-	if (p) {
-		*p = '\0';
-		return tmp;
-	}
-
-	g_free(tmp);
-	return NULL;
-}
-
 static void handle_time(struct ctcp_handle *h, char **args)
 {
 	time_t ti = time(NULL);
@@ -190,111 +166,7 @@ void ctcp_register_handler(const struct ctcp_handler *h)
 	cmds = g_list_append(cmds, g_memdup(h, sizeof(*h)));
 }
 
-/**
- * A CTCP request.
- */
-struct ctcp_request {
-	struct irc_client *client;
-	char *destination;
-	char *command;
-};
-
-static GList *ctcp_request_queue = NULL;
-
-gboolean ctcp_process_client_request (struct irc_client *c, struct irc_line *l)
-{
-	struct ctcp_request *req;
-	char *command = get_ctcp_command(l->args[2]);
-
-	if (command == NULL) {
-		client_log(LOG_WARNING, c, "Received mailformed CTCP request");
-		return FALSE;
-	}
-
-	req = g_new0(struct ctcp_request, 1);
-
-	/* store client and command in table */
-	req->client = c;
-	if (!is_channelname(l->args[1], c->network->info))
-		req->destination = g_strdup(l->args[1]);
-	req->command = command;
-
-	client_log(LOG_TRACE, c, "Tracking CTCP request '%s' to %s", req->command, req->destination);
-
-	ctcp_request_queue = g_list_append(ctcp_request_queue, req);
-
-	/* send off to server */
-	network_send_line(c->network, c, l, TRUE);
-
-	return TRUE;
-}
-
-gboolean ctcp_process_client_reply (struct irc_client *c, struct irc_line *l)
-{
-	char *command = get_ctcp_command(l->args[2]);
-
-	if (command == NULL) {
-		client_log(LOG_WARNING, c, "Received mailformed CTCP reply");
-		return FALSE;
-	}
-
-	client_log(LOG_WARNING, c, "Received CTCP client reply '%s' from client", command);
-	g_free(command);
-
-	return TRUE;
-}
-
-gboolean ctcp_process_network_reply (struct irc_network *n, const struct irc_line *l) 
-{
-	GList *gl;
-	char *nick;
-
-	char *command = get_ctcp_command(l->args[2]);
-
-	nick = line_get_nick(l);
-
-	if (command == NULL) {
-		network_log(LOG_WARNING, n, "Received mailformed CTCP request from `%s'", nick);
-		g_free(nick);
-		return FALSE;
-	}
-
-
-	/* look in table */
-	/* if found send to specified client, remove entry from table */
-	for (gl = ctcp_request_queue; gl; gl = gl->next) {
-		struct ctcp_request *req = gl->data;
-
-		if (req->client->network != n)
-			continue;
-
-		if (req->destination && strcmp(req->destination, nick) != 0)
-			continue;
-
-		if (strcmp(req->command, command) != 0)
-			continue;
-
-		client_send_line(req->client, l);
-
-		g_free(req->command);
-		g_free(req->destination);
-		ctcp_request_queue = g_list_remove(ctcp_request_queue, req);
-		g_free(req);
-		g_free(nick);
-		g_free(command);
-
-		return TRUE;
-	}
-
-	/* otherwise, inform user */
-	network_log(LOG_WARNING, n, "Don't know where to send unknown CTCP reply '%s'", command);
-
-	g_free(command);
-
-	return TRUE;
-}
-
-gboolean ctcp_process_network_request (struct irc_network *n, const struct irc_line *l) 
+gboolean ctcp_process_request (struct irc_network *n, const struct irc_line *l) 
 {
 	GList *gl;
 	int i;
@@ -318,7 +190,6 @@ gboolean ctcp_process_network_request (struct irc_network *n, const struct irc_l
 	*t = '\0';
 
 	args = g_strsplit(data, " ", 0);
-
 	for (gl = cmds; gl; gl = gl->next) {
 		struct ctcp_handler *hl = gl->data;
 
@@ -344,6 +215,7 @@ gboolean ctcp_process_network_request (struct irc_network *n, const struct irc_l
 		network_log(LOG_WARNING, n, "Received unknown CTCP request '%s'!", data);
 		ret = FALSE;
 	}
+
 
 	g_strfreev(args);
 	g_free(data);
