@@ -569,4 +569,5 @@ void log_custom_load(struct log_file_config *config)
 	data->config = config;
 	data->log_ctx = log_support_init();
 	add_log_filter("log_custom", log_custom_data, data, 1000);
+	register_hup_handler((hup_handler_fn)log_support_reopen, data->log_ctx);
 }

@@ -106,6 +106,9 @@ typedef void (*config_save_notify_fn) (struct global *, const char *);
 G_MODULE_EXPORT void register_load_config_notify(config_load_notify_fn fn);
 G_MODULE_EXPORT void register_save_config_notify(config_save_notify_fn fn);
 
+typedef void (*hup_handler_fn) (void *);
+G_MODULE_EXPORT void register_hup_handler(hup_handler_fn, void *userdata);
+
 /* util.c */
 G_MODULE_EXPORT char *list_make_string(GList *);
 G_MODULE_EXPORT const char *g_io_channel_unix_get_sock_error(GIOChannel *ioc);

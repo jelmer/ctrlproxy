@@ -43,11 +43,30 @@ extern char my_hostname[];
 extern struct global *my_global;
 extern help_t *help; 
 
+struct hup_handler {
+	hup_handler_fn fn;
+	void *userdata;
+};
+static GList *hup_handlers = NULL;
+void register_hup_handler(hup_handler_fn fn, void *userdata)
+{
+	struct hup_handler *hh = g_new0(struct hup_handler, 1);
+	hh->fn = fn;
+	hh->userdata = userdata;
+	hup_handlers = g_list_append(hup_handlers, hh);
+}
+
 static void signal_hup(int sig)
 {
+	GList *gl;
 	char *logfile;
 	logfile = g_build_filename(my_global->config->config_dir, "log", NULL);
 	init_log(logfile);
+	for (gl = hup_handlers; gl; gl = gl->next) {
+		struct hup_handler *hh = gl->data;
+		
+		hh->fn(hh->userdata);
+	}
 }
 
 char *pid_file(struct global *global)

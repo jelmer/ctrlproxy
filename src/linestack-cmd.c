@@ -19,6 +19,9 @@ static void handle_exit(int, char **);
 static void handle_insert(int, char **);
 static GHashTable *markers = NULL;
 
+/* there are no hup signals here */
+void register_hup_handler(void *fn, void *data) {}
+
 /**
  * Shell command.
  */

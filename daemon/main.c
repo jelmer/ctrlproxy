@@ -41,6 +41,9 @@ static int log_level = 0;
 #define DEFAULT_CONFIG_FILE "/etc/ctrlproxyd.conf"
 #define PIDFILE "/var/run/ctrlproxyd.pid"
 
+/* there are no hup signals here */
+void register_hup_handler(hup_handler_fn fn, void *userdata) {}
+
 struct ctrlproxyd_config {
 	const char *port;
 	const char *address;
