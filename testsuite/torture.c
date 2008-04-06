@@ -32,6 +32,9 @@
 
 static char test_dir[PATH_MAX];
 
+/* No hup handler */
+void register_hup_handler(hup_handler_fn fn, void *userdata) {}
+
 Suite *tls_suite(void);
 Suite *util_suite(void);
 Suite *state_suite(void);
