@@ -327,6 +327,13 @@ static struct query queries[] = {
 		{ ERR_NOTEXTTOSEND, 0 },
 		handle_default
 	},
+
+	{ "CHANSERV",
+		{ 0 },
+		{ RPL_TRYAGAIN, 0 },
+		{ ERR_NOTEXTTOSEND, 0 },
+		handle_default
+	},
  
  /* MOTD [<target>] */
 	{ "MOTD",

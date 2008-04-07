@@ -83,7 +83,7 @@ Ctrlproxy 3.0.6 UNRELEASED
     * Correctly generate prefix when replicating users that have more 
       than one mode set. (Martin Meredith)
 
-    * Support NICKSERV command when tracking messages.
+    * Support NICKSERV and CHANSERV commands when tracking messages.
 
     * Handle incomplete PREFIX lines. (#192)
 
