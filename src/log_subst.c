@@ -251,9 +251,6 @@ void convertslashes(char *a)
 }
 
 
-#define MAX_SUBST 256
-
-
 /**
  * Substitute the special characters in a string.
  *
@@ -269,7 +266,7 @@ void custom_subst(struct irc_network *network, char **_new,
 						 const char *_identifier, 
 						 gboolean case_sensitive, gboolean noslash)
 {
-	char *subst[MAX_SUBST];
+	char **subst;
 	char *new;
 	size_t len, curpos = 0;
 	unsigned int i;
@@ -280,7 +277,7 @@ void custom_subst(struct irc_network *network, char **_new,
 
 	/* First, find all the mappings */
 	len = strlen(fmt);
-	memset(subst, 0, sizeof(char *) * MAX_SUBST);
+	subst = g_new0(char *, len);
 	for (i = 0; i < strlen(fmt); i++) {
 		if (fmt[i] == '%') {
 			subst[(int)fmt[i+1]] = find_mapping(&subst_ctx, l, fmt[i+1], 
@@ -308,9 +305,10 @@ void custom_subst(struct irc_network *network, char **_new,
 	}
 	new[curpos] = '\0';
 
-	for (i = 0; i < MAX_SUBST; i++) { 
+	for (i = 0; i < len; i++) { 
 		if (subst[i]) 
 			g_free(subst[i]); 
 	}
+	g_free(subst);
 	*_new = new;
 }
