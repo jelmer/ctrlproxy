@@ -267,7 +267,7 @@ char *custom_subst(struct irc_network *network,
 {
 	char **subst;
 	char *new;
-	size_t len, curpos = 0;
+	size_t len, exp_len, curpos = 0;
 	unsigned int i;
 	struct subst_context subst_ctx;
 
@@ -275,26 +275,26 @@ char *custom_subst(struct irc_network *network,
 	subst_ctx.network = network;
 
 	/* First, find all the mappings */
-	len = strlen(fmt);
+	exp_len = len = strlen(fmt);
 	subst = g_new0(char *, len);
-	for (i = 0; i < strlen(fmt); i++) {
+	for (i = 0; i < len; i++) {
 		if (fmt[i] == '%') {
 			subst[(int)fmt[i+1]] = find_mapping(&subst_ctx, l, fmt[i+1], 
 												case_sensitive);	
 			if (subst[(int)fmt[i+1]] == NULL) 
 				subst[(int)fmt[i+1]] = g_strdup("");
 			if (noslash) convertslashes(subst[(int)fmt[i+1]]);
-			len += strlen(subst[(int)fmt[i+1]]);
+			exp_len += strlen(subst[(int)fmt[i+1]]);
 		}
 	}
 
-	len++; /* newline! */
+	exp_len++; /* newline! */
 
-	new = g_new(char, len);
-	for (i = 0; i < strlen(fmt); i++) {
+	new = g_new(char, exp_len);
+	for (i = 0; i < len; i++) {
 		if (fmt[i] == '%') {
 			new[curpos] = '\0';
-			strncat(new, subst[(int)fmt[i+1]], len);
+			strncat(new, subst[(int)fmt[i+1]], exp_len);
 			curpos+=strlen(subst[(int)fmt[i+1]]);
 			i++;
 		} else {
@@ -304,10 +304,8 @@ char *custom_subst(struct irc_network *network,
 	}
 	new[curpos] = '\0';
 
-	for (i = 0; i < len; i++) { 
-		if (subst[i]) 
-			g_free(subst[i]); 
-	}
+	for (i = 0; i < len; i++)
+		g_free(subst[i]); 
 	g_free(subst);
 	return new;
 }

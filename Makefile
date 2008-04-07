@@ -255,7 +255,8 @@ check_objs = testsuite/test-cmp.o testsuite/test-user.o \
 			 testsuite/test-tls.o testsuite/test-redirect.o \
 			 testsuite/test-networkinfo.o testsuite/test-ctcp.o \
 			 testsuite/test-help.o testsuite/test-nickserv.o \
-			 testsuite/test-url.o testsuite/test-motd.o
+			 testsuite/test-url.o testsuite/test-motd.o \
+			 testsuite/test-log-subst.o
 
 testsuite/check: $(check_objs) $(objs) $(LIBIRC)
 	@echo Linking $@
@@ -263,6 +264,12 @@ testsuite/check: $(check_objs) $(objs) $(LIBIRC)
 
 check:: testsuite/check
 	@echo Running testsuite
-	@$(VALGRIND) ./testsuite/check
+	@$(DEBUGGER) ./testsuite/check $(CHECK_OPTIONS)
+
+check-nofork:: 
+	$(MAKE) check CHECK_OPTIONS=-nsv
+
+check-gdb: 
+	$(MAKE) check-nofork DEBUGGER="gdb --args"
 
 -include $(dep_files)
