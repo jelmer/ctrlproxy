@@ -4,6 +4,8 @@
 
 include Makefile.settings
 
+BINS += ctrlproxy$(EXEEXT)
+
 GCOV = gcov
 
 ifeq ($(WITH_GCOV),1)
@@ -27,6 +29,8 @@ LIBIRC_SONAME = libirc.$(SHLIBEXT).$(LIBIRC_SOVERSION)
 .PHONY: all clean distclean install install-bin install-dirs install-doc install-data install-pkgconfig
 
 all: $(BINS)
+
+experimental:: all ctrlproxyd$(EXEEXT)
 
 doxygen:
 	doxygen
