@@ -67,6 +67,7 @@ objs = src/posix.o \
 	   src/listener.o \
 	   src/log_support.o \
 	   src/log_custom.o \
+	   src/log_subst.o \
 	   src/auto_away.o \
 	   src/network.o \
 	   $(SSL_OBJS)
