@@ -157,6 +157,9 @@ install-header::
 	$(INSTALL) -d $(DESTDIR)$(destincludedir)
 	$(INSTALL) -m 0644 $(lib_headers) $(headers) $(DESTDIR)$(destincludedir)
 
+doc::
+	$(MAKE) -C doc PACKAGE_VERSION=$(PACKAGE_VERSION)
+
 install-doc:: doc
 	$(INSTALL) -d $(DESTDIR)$(docdir)
 	$(MAKE) -C doc install PACKAGE_VERSION=$(PACKAGE_VERSION)
