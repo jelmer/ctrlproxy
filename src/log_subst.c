@@ -279,12 +279,12 @@ char *custom_subst(struct irc_network *network,
 	subst = g_new0(char *, len);
 	for (i = 0; i < len; i++) {
 		if (fmt[i] == '%') {
-			subst[(int)fmt[i+1]] = find_mapping(&subst_ctx, l, fmt[i+1], 
+			subst[i] = find_mapping(&subst_ctx, l, fmt[i+1], 
 												case_sensitive);	
-			if (subst[(int)fmt[i+1]] == NULL) 
-				subst[(int)fmt[i+1]] = g_strdup("");
-			if (noslash) convertslashes(subst[(int)fmt[i+1]]);
-			exp_len += strlen(subst[(int)fmt[i+1]]);
+			if (subst[i] == NULL) 
+				subst[i] = g_strdup("");
+			if (noslash) convertslashes(subst[i]);
+			exp_len += strlen(subst[i]);
 		}
 	}
 
@@ -294,8 +294,8 @@ char *custom_subst(struct irc_network *network,
 	for (i = 0; i < len; i++) {
 		if (fmt[i] == '%') {
 			new[curpos] = '\0';
-			strncat(new, subst[(int)fmt[i+1]], exp_len);
-			curpos+=strlen(subst[(int)fmt[i+1]]);
+			strncat(new, subst[i], exp_len);
+			curpos+=strlen(subst[i]);
 			i++;
 		} else {
 			new[curpos] = fmt[i];

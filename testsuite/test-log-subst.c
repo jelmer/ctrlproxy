@@ -43,6 +43,15 @@ START_TEST(test_percent)
 	free_line(l);
 END_TEST
 
+START_TEST(test_nick)
+	char *s;
+	struct irc_line *l;
+	l = irc_parse_line(":nick!my@host PRIVMSG :");
+	s = custom_subst(NULL, "bla%n%n", l, "", FALSE, FALSE);
+	fail_if(strcmp(s, "blanicknick"));
+	free_line(l);
+END_TEST
+
 Suite *log_subst_suite()
 {
 	Suite *s = suite_create("log");
@@ -50,5 +59,6 @@ Suite *log_subst_suite()
 	suite_add_tcase(s, tc_subst);
 	tcase_add_test(tc_subst, test_no_subst);
 	tcase_add_test(tc_subst, test_percent);
+	tcase_add_test(tc_subst, test_nick);
 	return s;
 }
