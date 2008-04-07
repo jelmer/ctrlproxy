@@ -5,93 +5,93 @@ Ctrlproxy 3.0.6 UNRELEASED
   IMPROVEMENTS
 
     * Add report-time-offset setting.
-	
-	* New settings ``port'', ``linestack'', ``logging'', ``password'',
-	  ``default-network'', ``auto-away-message'', ``auto-away-nick'', 
-	  ``auto-away-enable'' and ``auto-away-time''.
+    
+    * New settings ``port'', ``linestack'', ``logging'', ``password'',
+      ``default-network'', ``auto-away-message'', ``auto-away-nick'', 
+      ``auto-away-enable'' and ``auto-away-time''.
 
-	* Simplify files in networks/ further by storing keys in ~/.ctrlproxy/keys 
-	  and having a list of channels to autojoin. (#76)
+    * Simplify files in networks/ further by storing keys in ~/.ctrlproxy/keys 
+      and having a list of channels to autojoin. (#76)
 
     * Only update autojoin settings when ctrlproxy is completely logged in. 
-	  (#113)
+      (#113)
 
     * Increase the debug level at which messages about joins/parts are 
-	  logged.
+      logged.
 
     * Put linestack state data in separate files. This will make it possible 
-	  in the future to remove some of the state files.
+      in the future to remove some of the state files.
 
-	* Avoid data overhead when responding to /NAMES out of cache.
+    * Avoid data overhead when responding to /NAMES out of cache.
 
-	* Add --check-running option.
+    * Add --check-running option.
 
-	* The pid file is now read to check whether another instance of 
-	  ctrlproxy is already running.
+    * The pid file is now read to check whether another instance of 
+      ctrlproxy is already running.
 
-	* ``bind'' is now also accepted in the global section of the network 
-	  configuration. (#194)
+    * ``bind'' is now also accepted in the global section of the network 
+      configuration. (#194)
 
   BUG FIXES
 
     * Improve handling of empty pid files. (#186)
 
-  	* Handle out of disk space correctly. (#91)
+      * Handle out of disk space correctly. (#91)
 
     * Don't "forget" listener password.
 
-	* Don't add all existing networks to autoconnect list. (#90)
+    * Don't add all existing networks to autoconnect list. (#90)
 
-	* Fix a couple of minor memory leaks.
+    * Fix a couple of minor memory leaks.
 
-	* Store CTCP ACTIONs for replication.
+    * Store CTCP ACTIONs for replication.
 
-	* Warn about unknown networks listed for listeners rather than crash.
+    * Warn about unknown networks listed for listeners rather than crash.
 
-	* Fixed segfault when no conversion is being used. Patch by Ashish Shukla.
+    * Fixed segfault when no conversion is being used. Patch by Ashish Shukla.
 
-	* Don't use AI_ADDRCONFIG if it's not provided by the system.  (#179)
+    * Don't use AI_ADDRCONFIG if it's not provided by the system.  (#179)
 
-	* Fix segfault when address type is not reachable at the moment. (#177)
-	  Patch by wahjava@gmail.com.
+    * Fix segfault when address type is not reachable at the moment. (#177)
+      Patch by wahjava@gmail.com.
 
-	* Abort startup when one or more listener ports are already in use. 
-	  (#175)
+    * Abort startup when one or more listener ports are already in use. 
+      (#175)
 
-	* Fix crash bug when client shuts down correctly. (#176)
+    * Fix crash bug when client shuts down correctly. (#176)
 
-	* Allow multi-character prefixes for users in channels.
+    * Allow multi-character prefixes for users in channels.
 
-	* Support EXTBAN parameter in 005 lines.
+    * Support EXTBAN parameter in 005 lines.
 
-	* Handle 008 responses.
+    * Handle 008 responses.
 
-	* Cache more than just the first result returned in RPL_USERHOST.
+    * Cache more than just the first result returned in RPL_USERHOST.
 
-	* Fix hostmask and response code returned by USERHOST in administration 
-	  network.
+    * Fix hostmask and response code returned by USERHOST in administration 
+      network.
 
-	* Fix timestamp marshalling. (#180)
+    * Fix timestamp marshalling. (#180)
 
-	* Correctly recognize error responses to WHOIS and WHOWAS. (#136)
+    * Correctly recognize error responses to WHOIS and WHOWAS. (#136)
 
-	* Actually remove networks from disk when they have been removed in 
-	  the configuration.
+    * Actually remove networks from disk when they have been removed in 
+      the configuration.
 
-	* Parse removals of banlist entries correctly.
+    * Parse removals of banlist entries correctly.
 
-	* Correctly generate prefix when replicating users that have more 
-	  than one mode set. (Martin Meredith)
+    * Correctly generate prefix when replicating users that have more 
+      than one mode set. (Martin Meredith)
 
     * Support NICKSERV command when tracking messages.
 
-	* Handle incomplete PREFIX lines. (#192)
+    * Handle incomplete PREFIX lines. (#192)
 
-	* Re-open log files when HUP signal is received to allow 
-	  rotation. (#183)
+    * Re-open log files when HUP signal is received to allow 
+      rotation. (#183)
 
     * Avoid writing nick changes and quits to nick-specific files
-	  when not in a query with a user. (#173)
+      when not in a query with a user. (#173)
 
   INTERNALS
 
