@@ -250,7 +250,6 @@ void convertslashes(char *a)
 	}
 }
 
-
 /**
  * Substitute the special characters in a string.
  *
@@ -261,7 +260,7 @@ void convertslashes(char *a)
  * @param case_sensitive Whether or not to be case sensitive
  * @param noslash Whether or not to avoid adding slashes from expansions
  */
-void custom_subst(struct irc_network *network, char **_new, 
+char *custom_subst(struct irc_network *network, 
 						 const char *fmt, const struct irc_line *l, 
 						 const char *_identifier, 
 						 gboolean case_sensitive, gboolean noslash)
@@ -310,5 +309,5 @@ void custom_subst(struct irc_network *network, char **_new,
 			g_free(subst[i]); 
 	}
 	g_free(subst);
-	*_new = new;
+	return new;
 }

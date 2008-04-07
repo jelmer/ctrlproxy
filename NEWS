@@ -90,6 +90,9 @@ Ctrlproxy 3.0.6 UNRELEASED
 	* Re-open log files when HUP signal is received to allow 
 	  rotation. (#183)
 
+    * Avoid writing nick changes and quits to nick-specific files
+	  when not in a query with a user. (#173)
+
   INTERNALS
 
     * A simple, single API is now used for managing modes.

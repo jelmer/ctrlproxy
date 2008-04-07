@@ -104,7 +104,7 @@ void log_network_line(const struct irc_network *n, const struct irc_line *l, gbo
 void log_client_line(const struct irc_client *c, const struct irc_line *l, gboolean incoming);
 void handle_network_log(enum log_level level, const struct irc_network *n, 
 						const char *msg);
-void custom_subst(struct irc_network *network, char **_new, 
+char *custom_subst(struct irc_network *network, 
 						 const char *fmt, const struct irc_line *l, 
 						 const char *_identifier, 
 						 gboolean case_sensitive, gboolean noslash);
