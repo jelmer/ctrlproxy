@@ -562,7 +562,7 @@ static void handle_333(struct irc_network_state *s, const struct irc_line *l)
 		return;
 	}
 
-	c->topic_set_time = atol(l->args[4]);
+	c->topic_set_time = strtoul(l->args[4], NULL, 0);
 	c->topic_set_by = g_strdup(l->args[3]);
 }
 
