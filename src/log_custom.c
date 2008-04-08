@@ -154,10 +154,11 @@ static void file_write_channel_query(struct log_custom_data *data,
 		g_free(nick);
 		return;
 	}
-	g_free(nick);
 
 	if (nn->query)
 		file_write_line(data, network, fmt, l, nick);
+
+	g_free(nick);
 
 	/* now, loop thru the users' channels */
 	for (gl = nn->channel_nicks; gl; gl = gl->next) {
