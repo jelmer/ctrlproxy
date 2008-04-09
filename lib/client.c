@@ -37,8 +37,8 @@
 /* Linked list of clients currently connected (and authenticated, but still 
  * need to send USER and NICK commands) */
 static GList *pending_clients = NULL;
-static gboolean handle_client_receive(GIOChannel *c, GIOCondition cond, 
-									  void *_client);
+static gboolean process_from_pending_client(struct irc_client *client, 
+											const struct irc_line *l);
 
 void client_log(enum log_level l, const struct irc_client *client,
 				 const char *fmt, ...)
@@ -65,6 +65,14 @@ static void on_transport_disconnect(struct irc_transport *transport)
 {
 	struct irc_client *c = transport->userdata;
 	client_disconnect(c, "Hangup from client");
+}
+
+static gboolean on_transport_error(struct irc_transport *transport,
+							   const char *message)
+{
+	struct irc_client *client = transport->userdata;
+	client_disconnect(client, message?message:"Unknown error");
+	return FALSE;
 }
 
 static void on_transport_charset_error(struct irc_transport *transport,
@@ -304,59 +312,10 @@ static gboolean on_transport_receive_line(struct irc_transport *transport,
 
 			client_log(LOG_INFO, client, "New client");
 
-			return TRUE;
 		}
 	}
+	return TRUE;
 }
-
-static gboolean handle_client_receive(GIOChannel *c, GIOCondition cond, 
-									  void *_client)
-{
-	gboolean ret = TRUE;
-	struct irc_client *client = (struct irc_client *)_client;
-	struct irc_line *l;
-
-	g_assert(client);
-
-	if (cond & G_IO_HUP) {
-		client->transport->disconnect_fn(client->transport);
-		return FALSE;
-	}
-
-	if (cond & G_IO_IN) {
-		GError *error = NULL;
-		GIOStatus status;
-		
-		while ((status = irc_recv_line(c, client->transport->incoming_iconv, &error, 
-									   &l)) == G_IO_STATUS_NORMAL) {
-
-			ret &= client->transport->recv_fn(client->transport, l);
-			free_line(l);
-
-			if (!ret)
-				return FALSE;
-		}
-
-		if (status == G_IO_STATUS_EOF) {
-			client->transport->disconnect_fn(client->transport);
-			return FALSE;
-		}
-
-		if (status != G_IO_STATUS_AGAIN) {
-			if (error->domain == G_CONVERT_ERROR &&
-				error->code == G_CONVERT_ERROR_ILLEGAL_SEQUENCE) {
-				client->transport->charset_error_fn(client->transport, 
-													error->message);
-			} else {
-				client_disconnect(client, error?error->message:"Unknown error");
-				return FALSE;
-			}
-		}
-	}
-
-	return ret;
-}
-
 
 static gboolean process_from_pending_client(struct irc_client *client, 
 											const struct irc_line *l)
@@ -415,64 +374,6 @@ static gboolean process_from_pending_client(struct irc_client *client,
 }
 
 /**
- * Handles incoming messages from the client
- * @param c IO Channel to receive from
- * @param cond condition that has been triggered
- * @param client pointer to client context
- */
-static gboolean handle_pending_client_receive(GIOChannel *c, 
-											  GIOCondition cond, void *_client)
-{
-	struct irc_client *client = (struct irc_client *)_client;
-	struct irc_line *l;
-
-	g_assert(client);
-	g_assert(c);
-
-	if (cond & G_IO_ERR) {
-		char *tmp = g_strdup_printf("Error reading from client: %s", 
-						  g_io_channel_unix_get_sock_error(c));
-		client_disconnect(client, tmp);
-		g_free(tmp);
-		return FALSE;
-	}
-
-	if (cond & G_IO_HUP) {
-		client->transport->disconnect_fn(client->transport);
-		return FALSE;
-	}
-
-	if (cond & G_IO_IN) {
-		GError *error = NULL;
-		GIOStatus status;
-		
-		while ((status = irc_recv_line(c, client->transport->incoming_iconv, 
-									   &error, &l)) == G_IO_STATUS_NORMAL) 
-		{
-			g_assert(l);
-
-			/* Silently drop empty messages */
-			if (l->argc == 0) {
-				free_line(l);
-				continue;
-			}
-
-			g_assert(l->args[0]);
-			
-		}
-
-		if (status != G_IO_STATUS_AGAIN) {
-			client_disconnect(client, "Error receiving line from client");
-			return FALSE;
-		}
-
-		return TRUE;
-	}
-
-	return TRUE;
-}
-
-/**
  * Ping a client.
  *
  * @param client Client to send ping to
@@ -520,16 +421,13 @@ struct irc_client *irc_client_new(GIOChannel *c, const char *default_origin, con
 													on_transport_disconnect,
 													on_transport_receive_line,
 													on_transport_charset_error,
+													on_transport_error,
 													client);
 	client->description = g_strdup(desc);
 	client->connected = TRUE;
 
 	client_set_charset(client, DEFAULT_CLIENT_CHARSET);
 	pending_clients = g_list_append(pending_clients, client);
-	client->transport->incoming_id = g_io_add_watch(
-							client->transport->incoming, G_IO_IN | G_IO_HUP, 
-							handle_pending_client_receive, client);
-
 	return client;
 }
 

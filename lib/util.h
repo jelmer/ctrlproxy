@@ -24,5 +24,6 @@ G_MODULE_EXPORT int str_rfc1459cmp(const char *a, const char *b);
 G_MODULE_EXPORT int str_strictrfc1459cmp(const char *a, const char *b);
 G_MODULE_EXPORT int str_asciicmp(const char *a, const char *b);
 G_MODULE_EXPORT char *g_io_channel_ip_get_description(GIOChannel *ch);
+G_MODULE_EXPORT const char *g_io_channel_unix_get_sock_error(GIOChannel *ioc);
 
 #endif /* __LIBIRC_UTIL_H__ */

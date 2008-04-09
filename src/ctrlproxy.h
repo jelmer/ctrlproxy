@@ -111,7 +111,6 @@ G_MODULE_EXPORT void register_hup_handler(hup_handler_fn, void *userdata);
 
 /* util.c */
 G_MODULE_EXPORT char *list_make_string(GList *);
-G_MODULE_EXPORT const char *g_io_channel_unix_get_sock_error(GIOChannel *ioc);
 
 
 /* log.c */

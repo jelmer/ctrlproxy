@@ -20,16 +20,74 @@
 
 #include "transport.h"
 #include "line.h"
+#include "util.h"
 #include <glib.h>
 
 static gboolean transport_send_queue(GIOChannel *c, GIOCondition cond, 
 										 void *_client);
+
+static gboolean handle_transport_receive(GIOChannel *c, GIOCondition cond, 
+									  void *_transport)
+{
+	struct irc_transport *transport = _transport;
+	struct irc_line *l;
+
+	g_assert(transport);
+
+	if (cond & G_IO_ERR) {
+		char *tmp = g_strdup_printf("Error reading from client: %s", 
+						  g_io_channel_unix_get_sock_error(c));
+		transport->error_fn(transport, tmp);
+		g_free(tmp);
+		return FALSE;
+	}
+
+	if (cond & G_IO_HUP) {
+		transport->disconnect_fn(transport);
+		return FALSE;
+	}
+
+	if (cond & G_IO_IN) {
+		GError *error = NULL;
+		GIOStatus status;
+		gboolean ret = TRUE;
+		
+		while ((status = irc_recv_line(c, transport->incoming_iconv, &error, 
+									   &l)) == G_IO_STATUS_NORMAL) {
+
+			ret &= transport->recv_fn(transport, l);
+			free_line(l);
+
+			if (!ret)
+				return FALSE;
+		}
+
+		if (status == G_IO_STATUS_EOF) {
+			transport->disconnect_fn(transport);
+			return FALSE;
+		}
+
+		if (status != G_IO_STATUS_AGAIN) {
+			if (error->domain == G_CONVERT_ERROR &&
+				error->code == G_CONVERT_ERROR_ILLEGAL_SEQUENCE) {
+				transport->charset_error_fn(transport, 
+													error->message);
+			} else {
+				return transport->error_fn(transport, error?error->message:NULL);
+			}
+		}
+		return ret;
+	}
+
+	return TRUE;
+}
 
 struct irc_transport *irc_transport_new_iochannel(GIOChannel *iochannel, 
 												  transport_log_fn log_fn,
 												  transport_disconnect_fn disconnect_fn,
 												  transport_recv_fn recv_fn,
 												  transport_charset_error_fn charset_error_fn,
+												  transport_error_fn error_fn,
 												  void *userdata)
 {
 	struct irc_transport *ret = g_new0(struct irc_transport, 1);
@@ -40,9 +98,14 @@ struct irc_transport *irc_transport_new_iochannel(GIOChannel *iochannel,
 	ret->log_fn = log_fn;
 	ret->disconnect_fn = disconnect_fn;
 	ret->recv_fn = recv_fn;
+	ret->error_fn = error_fn;
 	ret->userdata = userdata;
 	ret->charset_error_fn = charset_error_fn;
 	g_io_channel_ref(ret->incoming);
+
+	ret->incoming_id = g_io_add_watch(
+							ret->incoming, G_IO_IN | G_IO_HUP, 
+							handle_transport_receive, ret);
 
 	return ret;
 }
