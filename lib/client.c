@@ -219,7 +219,7 @@ void client_disconnect(struct irc_client *c, const char *reason)
 
 	client_log(LOG_INFO, c, "Removed client");
 
-	irc_send_args(c->transport->incoming, c->transport->outgoing_iconv, NULL, "ERROR", reason, NULL);
+	transport_send_args(c->transport, NULL, "ERROR", reason);
 
 	irc_transport_disconnect(c->transport);
 

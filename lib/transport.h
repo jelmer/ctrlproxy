@@ -65,5 +65,6 @@ void irc_transport_disconnect(struct irc_transport *transport);
 void free_irc_transport(struct irc_transport *);
 gboolean transport_set_charset(struct irc_transport *transport, const char *name);
 gboolean transport_send_line(struct irc_transport *transport, const struct irc_line *);
+gboolean transport_send_args(struct irc_transport *transport, ...);
 
 #endif /* __LIBIRC_TRANSPORT_H__ */

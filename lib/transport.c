@@ -255,3 +255,20 @@ gboolean transport_send_line(struct irc_transport *transport,
 
 	return TRUE;
 }
+
+gboolean transport_send_args(struct irc_transport *transport, ...) 
+{
+	struct irc_line *l;
+	gboolean ret;
+	va_list ap;
+
+	va_start(ap, transport);
+	l = virc_parse_line(NULL, ap);
+	va_end(ap);
+
+	ret = transport_send_line(transport, l);
+
+	free_line(l); 
+
+	return ret;
+}
