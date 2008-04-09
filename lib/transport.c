@@ -45,7 +45,13 @@ struct irc_transport *irc_transport_new_iochannel(GIOChannel *iochannel,
 
 void irc_transport_disconnect(struct irc_transport *transport)
 {
+	g_assert(transport->incoming != NULL);
+
 	g_io_channel_shutdown(transport->incoming, FALSE, NULL);
+
+	g_source_remove(transport->incoming_id);
+	if (transport->outgoing_id)
+		g_source_remove(transport->outgoing_id);
 }
 
 static void free_pending_line(void *_line, void *userdata)

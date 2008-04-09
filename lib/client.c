@@ -192,12 +192,6 @@ void client_disconnect(struct irc_client *c, const char *reason)
 	if (c->connected == FALSE)
 		return;
 	c->connected = FALSE;
-	g_assert(c->transport->incoming != NULL);
-
-	g_source_remove(c->transport->incoming_id);
-	if (c->transport->outgoing_id)
-		g_source_remove(c->transport->outgoing_id);
-
 	g_source_remove(c->ping_id);
 
 	if (c->callbacks->disconnect != NULL)
@@ -256,6 +250,22 @@ void client_send_motd(struct irc_client *c, char **lines)
 	client_send_response(c, RPL_ENDOFMOTD, "End of MOTD", NULL);
 }
 
+static gboolean on_transport_receive_line(struct irc_transport *transport,
+										  struct irc_line *l)
+{
+	struct irc_client *client = transport->userdata;
+
+	g_assert(l);
+
+	/* Silently drop empty messages */
+	if (l->argc == 0) {
+		free_line(l);
+		return TRUE;
+	}
+
+	return client->callbacks->process_from_client(client, l);
+}
+
 static gboolean handle_client_receive(GIOChannel *c, GIOCondition cond, 
 									  void *_client)
 {
@@ -266,7 +276,7 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition cond,
 	g_assert(client);
 
 	if (cond & G_IO_HUP) {
-		client_disconnect(client, "Hangup from client");
+		client->transport->disconnect_fn(client->transport);
 		return FALSE;
 	}
 
@@ -276,24 +286,16 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition cond,
 		
 		while ((status = irc_recv_line(c, client->transport->incoming_iconv, &error, 
 									   &l)) == G_IO_STATUS_NORMAL) {
-			g_assert(l);
-
-			/* Silently drop empty messages */
-			if (l->argc == 0) {
-				free_line(l);
-				continue;
-			}
-
-			ret &= client->callbacks->process_from_client(client, l);
-
 			free_line(l);
+
+			ret &= on_transport_receive_line(client->transport, l);
 
 			if (!ret)
 				return FALSE;
 		}
 
 		if (status == G_IO_STATUS_EOF) {
-			client_disconnect(client, "Connection closed by client");
+			client->transport->disconnect_fn(client->transport);
 			return FALSE;
 		}
 
@@ -393,7 +395,7 @@ static gboolean handle_pending_client_receive(GIOChannel *c,
 	}
 
 	if (cond & G_IO_HUP) {
-		client_disconnect(client, "Hangup from client");
+		client->transport->disconnect_fn(client->transport);
 		return FALSE;
 	}
 
