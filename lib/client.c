@@ -517,6 +517,7 @@ struct irc_client *irc_client_new(GIOChannel *c, const char *default_origin, con
 									client);
 	client->transport = irc_transport_new_iochannel(c, transport_log, 
 													on_transport_disconnect,
+													on_transport_receive_line,
 													client);
 	client->description = g_strdup(desc);
 	client->connected = TRUE;

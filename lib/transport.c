@@ -28,6 +28,7 @@ static gboolean transport_send_queue(GIOChannel *c, GIOCondition cond,
 struct irc_transport *irc_transport_new_iochannel(GIOChannel *iochannel, 
 												  transport_log_fn log_fn,
 												  transport_disconnect_fn disconnect_fn,
+												  transport_recv_fn recv_fn,
 												  void *userdata)
 {
 	struct irc_transport *ret = g_new0(struct irc_transport, 1);
@@ -37,6 +38,7 @@ struct irc_transport *irc_transport_new_iochannel(GIOChannel *iochannel,
 	ret->outgoing_iconv = ret->incoming_iconv = (GIConv)-1;
 	ret->log_fn = log_fn;
 	ret->disconnect_fn = disconnect_fn;
+	ret->recv_fn = recv_fn;
 	ret->userdata = userdata;
 	g_io_channel_ref(ret->incoming);
 

@@ -32,6 +32,7 @@ struct irc_transport;
 
 typedef void (*transport_log_fn)(struct irc_transport *transport, const struct irc_line *l, const GError *error);
 typedef void (*transport_disconnect_fn)(struct irc_transport *transport);
+typedef gboolean (*transport_recv_fn) (struct irc_transport *transport, const struct irc_line *line);
 
 struct irc_transport {
 	GIOChannel *incoming;
@@ -43,12 +44,14 @@ struct irc_transport {
 	char *charset;
 	transport_log_fn log_fn;
 	transport_disconnect_fn disconnect_fn;
+	transport_recv_fn recv_fn;
 	void *userdata;
 };
 
 struct irc_transport *irc_transport_new_iochannel(GIOChannel *iochannel,
 												  transport_log_fn log_fn,
 												  transport_disconnect_fn disconnect_fn,
+												  transport_recv_fn recv_fn,
 												  void *userdata);
 void irc_transport_disconnect(struct irc_transport *transport);
 void free_irc_transport(struct irc_transport *);
