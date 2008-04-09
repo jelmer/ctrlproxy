@@ -26,6 +26,7 @@
  */
 
 #include "line.h"
+#include "transport.h"
 
 #include <sys/time.h>
 #include <glib.h>
@@ -48,13 +49,8 @@ struct irc_client {
 	int references;
 	struct irc_network *network;
 	char *description;
-	GIOChannel *incoming;
 	GQueue *pending_lines;
-	gint incoming_id;
-	gint outgoing_id;
 	gint ping_id;
-	GIConv incoming_iconv;
-	GIConv outgoing_iconv;
 	time_t last_ping;
 	time_t last_pong;
 	time_t connect_time;
@@ -67,6 +63,7 @@ struct irc_client {
 	gboolean connected;
 	struct irc_network_state *state;
 	struct irc_client_callbacks *callbacks;
+	struct irc_transport *transport;
 };
 
 /**

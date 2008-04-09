@@ -163,13 +163,12 @@ gboolean client_send_line(struct irc_client *c, const struct irc_line *l)
 
 	state_handle_data(c->state, l);
 
-	if (c->outgoing_id == 0) {
+	if (c->transport->outgoing_id == 0) {
 		GError *error = NULL;
-		GIOStatus status = irc_send_line(c->incoming, c->outgoing_iconv, l, 
-										 &error);
+		GIOStatus status = irc_send_line(c->transport->incoming, c->transport->outgoing_iconv, l, &error);
 
 		if (status == G_IO_STATUS_AGAIN) {
-			c->outgoing_id = g_io_add_watch(c->incoming, G_IO_OUT, 
+			c->transport->outgoing_id = g_io_add_watch(c->transport->incoming, G_IO_OUT, 
 											handle_client_send_queue, c);
 			g_queue_push_tail(c->pending_lines, linedup(l));
 		} else if (status != G_IO_STATUS_NORMAL) {
@@ -206,11 +205,11 @@ void client_disconnect(struct irc_client *c, const char *reason)
 	if (c->connected == FALSE)
 		return;
 	c->connected = FALSE;
-	g_assert(c->incoming != NULL);
+	g_assert(c->transport->incoming != NULL);
 
-	g_source_remove(c->incoming_id);
-	if (c->outgoing_id)
-		g_source_remove(c->outgoing_id);
+	g_source_remove(c->transport->incoming_id);
+	if (c->transport->outgoing_id)
+		g_source_remove(c->transport->outgoing_id);
 
 	g_source_remove(c->ping_id);
 
@@ -223,16 +222,9 @@ void client_disconnect(struct irc_client *c, const char *reason)
 
 	client_log(LOG_INFO, c, "Removed client");
 
-	irc_send_args(c->incoming, c->outgoing_iconv, NULL, "ERROR", reason, NULL);
+	irc_send_args(c->transport->incoming, c->transport->outgoing_iconv, NULL, "ERROR", reason, NULL);
 
-	g_io_channel_unref(c->incoming);
-	
-	c->incoming = NULL;
-
-	if (c->outgoing_iconv != (GIConv)-1)
-		g_iconv_close(c->outgoing_iconv);
-	if (c->incoming_iconv != (GIConv)-1)
-		g_iconv_close(c->incoming_iconv);
+	free_irc_transport(c->transport);
 
 	if (c->exit_on_close) 
 		exit(0);
@@ -284,15 +276,16 @@ static gboolean handle_client_send_queue(GIOChannel *ioc, GIOCondition cond,
 {
 	struct irc_client *c = _client;
 
-	g_assert(ioc == c->incoming);
+	g_assert(ioc == c->transport->incoming);
 
 	while (!g_queue_is_empty(c->pending_lines)) {
 		GIOStatus status;
 		GError *error = NULL;
 		struct irc_line *l = g_queue_pop_head(c->pending_lines);
 
-		g_assert(c->incoming != NULL);
-		status = irc_send_line(c->incoming, c->outgoing_iconv, l, &error);
+		g_assert(c->transport->incoming != NULL);
+		status = irc_send_line(c->transport->incoming, 
+							   c->transport->outgoing_iconv, l, &error);
 
 		if (status == G_IO_STATUS_AGAIN) {
 			g_queue_push_head(c->pending_lines, l);
@@ -303,7 +296,7 @@ static gboolean handle_client_send_queue(GIOChannel *ioc, GIOCondition cond,
 			client_log(LOG_WARNING, c, "Error sending line '%s': %s", 
 							l->args[0], error->message);
 		} else if (status == G_IO_STATUS_EOF) {
-			c->outgoing_id = 0;
+			c->transport->outgoing_id = 0;
 			client_disconnect(c, "Hangup from client");
 
 			free_line(l);
@@ -314,7 +307,7 @@ static gboolean handle_client_send_queue(GIOChannel *ioc, GIOCondition cond,
 		free_line(l);
 	}
 
-	c->outgoing_id = 0;
+	c->transport->outgoing_id = 0;
 	return FALSE;
 }
 
@@ -337,7 +330,7 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition cond,
 		GError *error = NULL;
 		GIOStatus status;
 		
-		while ((status = irc_recv_line(c, client->incoming_iconv, &error, 
+		while ((status = irc_recv_line(c, client->transport->incoming_iconv, &error, 
 									   &l)) == G_IO_STATUS_NORMAL) {
 			g_assert(l);
 
@@ -464,7 +457,7 @@ static gboolean handle_pending_client_receive(GIOChannel *c,
 		GError *error = NULL;
 		GIOStatus status;
 		
-		while ((status = irc_recv_line(c, client->incoming_iconv, 
+		while ((status = irc_recv_line(c, client->transport->incoming_iconv, 
 									   &error, &l)) == G_IO_STATUS_NORMAL) 
 		{
 			g_assert(l);
@@ -504,15 +497,16 @@ static gboolean handle_pending_client_receive(GIOChannel *c,
 					return FALSE;
 				}
 
-				g_source_remove(client->incoming_id);
-				client->incoming_id = g_io_add_watch(client->incoming, 
+				g_source_remove(client->transport->incoming_id);
+				client->transport->incoming_id = g_io_add_watch(
+							client->transport->incoming, 
 							 G_IO_IN | G_IO_HUP | G_IO_ERR, handle_client_receive, client);
 
 				pending_clients = g_list_remove(pending_clients, client);
 				client->network->clients = g_list_append(client->network->clients, client);
 
-				handle_client_receive(client->incoming, 
-									  g_io_channel_get_buffer_condition(client->incoming), client);
+				handle_client_receive(client->transport->incoming, 
+									  g_io_channel_get_buffer_condition(client->transport->incoming), client);
 
 				client_log(LOG_INFO, client, "New client");
 
@@ -575,26 +569,26 @@ struct irc_client *irc_client_new(GIOChannel *c, const char *default_origin, con
 	client->connect_time = time(NULL);
 	client->ping_id = g_timeout_add(1000 * 300, (GSourceFunc)client_ping, 
 									client);
-	client->incoming = c;
-	g_io_channel_ref(client->incoming);
+	client->transport = irc_transport_new_iochannel(c);
 	client->description = g_strdup(desc);
 	client->connected = TRUE;
 	client->pending_lines = g_queue_new();
 
-	client->outgoing_iconv = client->incoming_iconv = (GIConv)-1;
+	client->transport->outgoing_iconv = client->transport->incoming_iconv = (GIConv)-1;
 	client_set_charset(client, DEFAULT_CLIENT_CHARSET);
 	pending_clients = g_list_append(pending_clients, client);
-	client->incoming_id = g_io_add_watch(client->incoming, G_IO_IN | G_IO_HUP, 
-										 handle_pending_client_receive, client);
+	client->transport->incoming_id = g_io_add_watch(
+							client->transport->incoming, G_IO_IN | G_IO_HUP, 
+							handle_pending_client_receive, client);
 
 	return client;
 }
 
 void client_parse_buffer(struct irc_client *client)
 {
-	handle_pending_client_receive(client->incoming, 
-				  g_io_channel_get_buffer_condition(client->incoming),
-				  client);
+	handle_pending_client_receive(client->transport->incoming, 
+			  g_io_channel_get_buffer_condition(client->transport->incoming),
+			  client);
 }
 
 /**
@@ -629,10 +623,10 @@ gboolean client_set_charset(struct irc_client *c, const char *name)
 		tmp = (GIConv)-1;
 	}
 	
-	if (c->outgoing_iconv != (GIConv)-1)
-		g_iconv_close(c->outgoing_iconv);
+	if (c->transport->outgoing_iconv != (GIConv)-1)
+		g_iconv_close(c->transport->outgoing_iconv);
 
-	c->outgoing_iconv = tmp;
+	c->transport->outgoing_iconv = tmp;
 
 	if (name != NULL) {
 		tmp = g_iconv_open("UTF-8", name);
@@ -645,10 +639,10 @@ gboolean client_set_charset(struct irc_client *c, const char *name)
 		tmp = (GIConv)-1;
 	}
 
-	if (c->incoming_iconv != (GIConv)-1)
-		g_iconv_close(c->incoming_iconv);
+	if (c->transport->incoming_iconv != (GIConv)-1)
+		g_iconv_close(c->transport->incoming_iconv);
 
-	c->incoming_iconv = tmp;
+	c->transport->incoming_iconv = tmp;
 
 	g_free(c->charset);
 	c->charset = g_strdup(name);

@@ -38,6 +38,7 @@ doxygen:
 lib_objs = \
 	   lib/state.o \
 	   lib/client.o \
+	   lib/transport.o \
 	   lib/line.o \
 	   lib/isupport.o \
 	   lib/network.o \
