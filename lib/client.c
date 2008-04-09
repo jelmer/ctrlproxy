@@ -39,8 +39,6 @@
 static GList *pending_clients = NULL;
 static gboolean handle_client_receive(GIOChannel *c, GIOCondition cond, 
 									  void *_client);
-static gboolean handle_client_send_queue(GIOChannel *c, GIOCondition cond, 
-										 void *_client);
 
 void client_log(enum log_level l, const struct irc_client *client,
 				 const char *fmt, ...)
@@ -61,6 +59,22 @@ void client_log(enum log_level l, const struct irc_client *client,
 	client->callbacks->log_fn(l, client, ret);
 
 	g_free(ret);
+}
+
+static void on_transport_disconnect(struct irc_transport *transport)
+{
+	struct irc_client *c = transport->userdata;
+	client_disconnect(c, "Hangup from client");
+}
+
+static void transport_log(struct irc_transport *transport, 
+							  const struct irc_line *l,
+							  const GError *error)
+{
+	struct irc_client *c = transport->userdata;
+	client_log(LOG_WARNING, c, 
+			"Error sending line '%s': %s", l->args[0], 
+			error->message);
 }
 
 /**
@@ -163,29 +177,7 @@ gboolean client_send_line(struct irc_client *c, const struct irc_line *l)
 
 	state_handle_data(c->state, l);
 
-	if (c->transport->outgoing_id == 0) {
-		GError *error = NULL;
-		GIOStatus status = irc_send_line(c->transport->incoming, c->transport->outgoing_iconv, l, &error);
-
-		if (status == G_IO_STATUS_AGAIN) {
-			c->transport->outgoing_id = g_io_add_watch(c->transport->incoming, G_IO_OUT, 
-											handle_client_send_queue, c);
-			g_queue_push_tail(c->transport->pending_lines, linedup(l));
-		} else if (status != G_IO_STATUS_NORMAL) {
-			c->connected = FALSE;
-
-			client_log(LOG_WARNING, c, "Error sending line '%s': %s", 
-							l->args[0], error->message);
-
-			return FALSE;
-		} 
-
-		return TRUE;
-	}
-
-	g_queue_push_tail(c->transport->pending_lines, linedup(l));
-
-	return TRUE;
+	return transport_send_line(c->transport, l);
 }
 
 /*
@@ -230,7 +222,6 @@ void client_disconnect(struct irc_client *c, const char *reason)
 static void free_client(struct irc_client *c)
 {
 	g_assert(c->connected == FALSE);
-	g_free(c->charset);
 	g_free(c->description);
 	free_network_state(c->state);
 	g_free(c->requested_nick);
@@ -264,47 +255,6 @@ void client_send_motd(struct irc_client *c, char **lines)
 	}
 	client_send_response(c, RPL_ENDOFMOTD, "End of MOTD", NULL);
 }
-
-static gboolean handle_client_send_queue(GIOChannel *ioc, GIOCondition cond, 
-									  void *_client)
-{
-	struct irc_client *c = _client;
-
-	g_assert(ioc == c->transport->incoming);
-
-	while (!g_queue_is_empty(c->transport->pending_lines)) {
-		GIOStatus status;
-		GError *error = NULL;
-		struct irc_line *l = g_queue_pop_head(c->transport->pending_lines);
-
-		g_assert(c->transport->incoming != NULL);
-		status = irc_send_line(c->transport->incoming, 
-							   c->transport->outgoing_iconv, l, &error);
-
-		if (status == G_IO_STATUS_AGAIN) {
-			g_queue_push_head(c->transport->pending_lines, l);
-			return TRUE;
-		}
-
-		if (status == G_IO_STATUS_ERROR) {
-			client_log(LOG_WARNING, c, "Error sending line '%s': %s", 
-							l->args[0], error->message);
-		} else if (status == G_IO_STATUS_EOF) {
-			c->transport->outgoing_id = 0;
-			client_disconnect(c, "Hangup from client");
-
-			free_line(l);
-
-			return FALSE;
-		}
-
-		free_line(l);
-	}
-
-	c->transport->outgoing_id = 0;
-	return FALSE;
-}
-
 
 static gboolean handle_client_receive(GIOChannel *c, GIOCondition cond, 
 									  void *_client)
@@ -351,7 +301,7 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition cond,
 			if (error->domain == G_CONVERT_ERROR &&
 				error->code == G_CONVERT_ERROR_ILLEGAL_SEQUENCE) {
 				client_send_response(client, ERR_BADCHARENCODING, 
-				   "*", client->charset, error->message, NULL);
+				   "*", client->transport->charset, error->message, NULL);
 			} else {
 				client_disconnect(client, error?error->message:"Unknown error");
 				return FALSE;
@@ -563,7 +513,9 @@ struct irc_client *irc_client_new(GIOChannel *c, const char *default_origin, con
 	client->connect_time = time(NULL);
 	client->ping_id = g_timeout_add(1000 * 300, (GSourceFunc)client_ping, 
 									client);
-	client->transport = irc_transport_new_iochannel(c);
+	client->transport = irc_transport_new_iochannel(c, transport_log, 
+													on_transport_disconnect,
+													client);
 	client->description = g_strdup(desc);
 	client->connected = TRUE;
 
@@ -602,43 +554,10 @@ void kill_pending_clients(const char *reason)
  */
 gboolean client_set_charset(struct irc_client *c, const char *name)
 {
-	GIConv tmp;
-
-	if (name != NULL) {
-		tmp = g_iconv_open(name, "UTF-8");
-
-		if (tmp == (GIConv)-1) {
-			client_log(LOG_WARNING, c, "Unable to find charset `%s'", name);
-			return FALSE;
-		}
-	} else {
-		tmp = (GIConv)-1;
+	if (!transport_set_charset(c->transport, name)) {
+		client_log(LOG_WARNING, c, "Unable to find charset `%s'", name);
+		return FALSE;
 	}
-	
-	if (c->transport->outgoing_iconv != (GIConv)-1)
-		g_iconv_close(c->transport->outgoing_iconv);
-
-	c->transport->outgoing_iconv = tmp;
-
-	if (name != NULL) {
-		tmp = g_iconv_open("UTF-8", name);
-
-		if (tmp == (GIConv)-1) {
-			client_log(LOG_WARNING, c, "Unable to find charset `%s'", name);
-			return FALSE;
-		}
-	} else {
-		tmp = (GIConv)-1;
-	}
-
-	if (c->transport->incoming_iconv != (GIConv)-1)
-		g_iconv_close(c->transport->incoming_iconv);
-
-	c->transport->incoming_iconv = tmp;
-
-	g_free(c->charset);
-	c->charset = g_strdup(name);
-
 	return TRUE;
 }
 

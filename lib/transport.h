@@ -21,11 +21,17 @@
 #define __LIBIRC_TRANSPORT_H__
 
 #include <glib.h>
+#include "line.h"
 
 /**
  * @file
  * @brief Transport functions
  */
+
+struct irc_transport;
+
+typedef void (*transport_log_fn)(struct irc_transport *transport, const struct irc_line *l, const GError *error);
+typedef void (*transport_disconnect_fn)(struct irc_transport *transport);
 
 struct irc_transport {
 	GIOChannel *incoming;
@@ -34,10 +40,19 @@ struct irc_transport {
 	GIConv incoming_iconv;
 	GIConv outgoing_iconv;
 	GQueue *pending_lines;
+	char *charset;
+	transport_log_fn log_fn;
+	transport_disconnect_fn disconnect_fn;
+	void *userdata;
 };
 
-struct irc_transport *irc_transport_new_iochannel(GIOChannel *iochannel);
+struct irc_transport *irc_transport_new_iochannel(GIOChannel *iochannel,
+												  transport_log_fn log_fn,
+												  transport_disconnect_fn disconnect_fn,
+												  void *userdata);
 void irc_transport_disconnect(struct irc_transport *transport);
 void free_irc_transport(struct irc_transport *);
+gboolean transport_set_charset(struct irc_transport *transport, const char *name);
+gboolean transport_send_line(struct irc_transport *transport, const struct irc_line *);
 
 #endif /* __LIBIRC_TRANSPORT_H__ */

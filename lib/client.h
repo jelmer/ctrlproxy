@@ -56,7 +56,6 @@ struct irc_client {
 	char *requested_nick;
 	char *requested_username;
 	char *requested_hostname;
-	char *charset;
 	char *default_origin;
 	gboolean exit_on_close;
 	gboolean connected;

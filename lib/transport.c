@@ -22,13 +22,22 @@
 #include "line.h"
 #include <glib.h>
 
-struct irc_transport *irc_transport_new_iochannel(GIOChannel *iochannel)
+static gboolean transport_send_queue(GIOChannel *c, GIOCondition cond, 
+										 void *_client);
+
+struct irc_transport *irc_transport_new_iochannel(GIOChannel *iochannel, 
+												  transport_log_fn log_fn,
+												  transport_disconnect_fn disconnect_fn,
+												  void *userdata)
 {
 	struct irc_transport *ret = g_new0(struct irc_transport, 1);
 
 	ret->incoming = iochannel;
 	ret->pending_lines = g_queue_new();
 	ret->outgoing_iconv = ret->incoming_iconv = (GIConv)-1;
+	ret->log_fn = log_fn;
+	ret->disconnect_fn = disconnect_fn;
+	ret->userdata = userdata;
 	g_io_channel_ref(ret->incoming);
 
 	return ret;
@@ -46,6 +55,7 @@ static void free_pending_line(void *_line, void *userdata)
 
 void free_irc_transport(struct irc_transport *transport)
 {
+	g_free(transport->charset);
 	g_io_channel_unref(transport->incoming);
 	
 	transport->incoming = NULL;
@@ -59,4 +69,116 @@ void free_irc_transport(struct irc_transport *transport)
 	g_queue_free(transport->pending_lines);
 
 	g_free(transport);
+}
+
+/**
+ * Change the character set used to send data to a client
+ * @param c client to change the character set for
+ * @param name name of the character set to change to
+ * @return whether changing the character set succeeded
+ */
+gboolean transport_set_charset(struct irc_transport *transport, const char *name)
+{
+	GIConv tmp;
+
+	if (name != NULL) {
+		tmp = g_iconv_open(name, "UTF-8");
+
+		if (tmp == (GIConv)-1) {
+			return FALSE;
+		}
+	} else {
+		tmp = (GIConv)-1;
+	}
+	
+	if (transport->outgoing_iconv != (GIConv)-1)
+		g_iconv_close(transport->outgoing_iconv);
+
+	transport->outgoing_iconv = tmp;
+
+	if (name != NULL) {
+		tmp = g_iconv_open("UTF-8", name);
+
+		if (tmp == (GIConv)-1) {
+			return FALSE;
+		}
+	} else {
+		tmp = (GIConv)-1;
+	}
+
+	if (transport->incoming_iconv != (GIConv)-1)
+		g_iconv_close(transport->incoming_iconv);
+
+	transport->incoming_iconv = tmp;
+
+	g_free(transport->charset);
+	transport->charset = g_strdup(name);
+
+	return TRUE;
+}
+
+static gboolean transport_send_queue(GIOChannel *ioc, GIOCondition cond, 
+									  void *_transport)
+{
+	struct irc_transport *transport = _transport;
+
+	g_assert(ioc == transport->incoming);
+
+	while (!g_queue_is_empty(transport->pending_lines)) {
+		GIOStatus status;
+		GError *error = NULL;
+		struct irc_line *l = g_queue_pop_head(transport->pending_lines);
+
+		g_assert(transport->incoming != NULL);
+		status = irc_send_line(transport->incoming, 
+							   transport->outgoing_iconv, l, &error);
+
+		if (status == G_IO_STATUS_AGAIN) {
+			g_queue_push_head(transport->pending_lines, l);
+			return TRUE;
+		}
+
+		if (status == G_IO_STATUS_ERROR) {
+			transport->log_fn(transport, l, error);
+		} else if (status == G_IO_STATUS_EOF) {
+			transport->outgoing_id = 0;
+
+			transport->disconnect_fn(transport);
+
+			free_line(l);
+
+			return FALSE;
+		}
+
+		free_line(l);
+	}
+
+	transport->outgoing_id = 0;
+	return FALSE;
+}
+
+gboolean transport_send_line(struct irc_transport *transport, 
+							 const struct irc_line *l)
+{
+	if (transport->outgoing_id == 0) {
+		GError *error = NULL;
+		GIOStatus status = irc_send_line(transport->incoming, transport->outgoing_iconv, l, &error);
+
+		if (status == G_IO_STATUS_AGAIN) {
+			transport->outgoing_id = g_io_add_watch(transport->incoming, G_IO_OUT, 
+											transport_send_queue, transport);
+			g_queue_push_tail(transport->pending_lines, linedup(l));
+		} else if (status == G_IO_STATUS_EOF) {
+			transport->disconnect_fn(transport);
+			return FALSE;
+		} else if (status == G_IO_STATUS_ERROR) {
+			transport->log_fn(transport, l, error);
+		} 
+
+		return TRUE;
+	}
+
+	g_queue_push_tail(transport->pending_lines, linedup(l));
+
+	return TRUE;
 }
