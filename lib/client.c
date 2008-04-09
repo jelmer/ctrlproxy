@@ -67,6 +67,14 @@ static void on_transport_disconnect(struct irc_transport *transport)
 	client_disconnect(c, "Hangup from client");
 }
 
+static void on_transport_charset_error(struct irc_transport *transport,
+									   const char *error_msg)
+{
+	struct irc_client *client = transport->userdata;
+	client_send_response(client, ERR_BADCHARENCODING, 
+		"*", transport->charset, error_msg, NULL);
+}
+
 static void transport_log(struct irc_transport *transport, 
 							  const struct irc_line *l,
 							  const GError *error)
@@ -251,7 +259,7 @@ void client_send_motd(struct irc_client *c, char **lines)
 }
 
 static gboolean on_transport_receive_line(struct irc_transport *transport,
-										  struct irc_line *l)
+										  const struct irc_line *l)
 {
 	struct irc_client *client = transport->userdata;
 
@@ -259,11 +267,46 @@ static gboolean on_transport_receive_line(struct irc_transport *transport,
 
 	/* Silently drop empty messages */
 	if (l->argc == 0) {
-		free_line(l);
 		return TRUE;
 	}
 
-	return client->callbacks->process_from_client(client, l);
+	if (client->authorized) {
+		return client->callbacks->process_from_client(client, l);
+	} else {
+		if (!process_from_pending_client(client, l)) {
+			return FALSE;
+		}
+
+		if (client->requested_nick != NULL &&
+			client->requested_username != NULL &&
+			client->requested_hostname != NULL && 
+			client->state == NULL) {
+			client->state = network_state_init(client->requested_nick, 
+											   client->requested_username,
+											   client->requested_hostname);
+		}
+
+		if (client->state != NULL) {
+			if (client->network == NULL) {
+				client_disconnect(client, 
+					  "Please select a network first, or specify one in your configuration file");
+				return FALSE;
+			}
+
+			if (!client->callbacks->welcome(client)) {
+				return FALSE;
+			}
+
+			pending_clients = g_list_remove(pending_clients, client);
+			client->network->clients = g_list_append(client->network->clients, client);
+
+			client->authorized = TRUE;
+
+			client_log(LOG_INFO, client, "New client");
+
+			return TRUE;
+		}
+	}
 }
 
 static gboolean handle_client_receive(GIOChannel *c, GIOCondition cond, 
@@ -286,9 +329,9 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition cond,
 		
 		while ((status = irc_recv_line(c, client->transport->incoming_iconv, &error, 
 									   &l)) == G_IO_STATUS_NORMAL) {
-			free_line(l);
 
-			ret &= on_transport_receive_line(client->transport, l);
+			ret &= client->transport->recv_fn(client->transport, l);
+			free_line(l);
 
 			if (!ret)
 				return FALSE;
@@ -302,8 +345,8 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition cond,
 		if (status != G_IO_STATUS_AGAIN) {
 			if (error->domain == G_CONVERT_ERROR &&
 				error->code == G_CONVERT_ERROR_ILLEGAL_SEQUENCE) {
-				client_send_response(client, ERR_BADCHARENCODING, 
-				   "*", client->transport->charset, error->message, NULL);
+				client->transport->charset_error_fn(client->transport, 
+													error->message);
 			} else {
 				client_disconnect(client, error?error->message:"Unknown error");
 				return FALSE;
@@ -416,48 +459,6 @@ static gboolean handle_pending_client_receive(GIOChannel *c,
 
 			g_assert(l->args[0]);
 			
-			if (!process_from_pending_client(client, l)) {
-				free_line(l);
-				return FALSE;
-			}
-
-			free_line(l);
-
-			if (client->requested_nick != NULL &&
-				client->requested_username != NULL &&
-				client->requested_hostname != NULL && 
-				client->state == NULL) {
-				client->state = network_state_init(client->requested_nick, 
-												   client->requested_username,
-												   client->requested_hostname);
-			}
-
-			if (client->state != NULL) {
-				if (client->network == NULL) {
-					client_disconnect(client, 
-						  "Please select a network first, or specify one in your configuration file");
-					return FALSE;
-				}
-
-				if (!client->callbacks->welcome(client)) {
-					return FALSE;
-				}
-
-				g_source_remove(client->transport->incoming_id);
-				client->transport->incoming_id = g_io_add_watch(
-							client->transport->incoming, 
-							 G_IO_IN | G_IO_HUP | G_IO_ERR, handle_client_receive, client);
-
-				pending_clients = g_list_remove(pending_clients, client);
-				client->network->clients = g_list_append(client->network->clients, client);
-
-				handle_client_receive(client->transport->incoming, 
-									  g_io_channel_get_buffer_condition(client->transport->incoming), client);
-
-				client_log(LOG_INFO, client, "New client");
-
-				return FALSE;
-			}
 		}
 
 		if (status != G_IO_STATUS_AGAIN) {
@@ -518,6 +519,7 @@ struct irc_client *irc_client_new(GIOChannel *c, const char *default_origin, con
 	client->transport = irc_transport_new_iochannel(c, transport_log, 
 													on_transport_disconnect,
 													on_transport_receive_line,
+													on_transport_charset_error,
 													client);
 	client->description = g_strdup(desc);
 	client->connected = TRUE;

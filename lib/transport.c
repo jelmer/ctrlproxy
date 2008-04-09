@@ -29,6 +29,7 @@ struct irc_transport *irc_transport_new_iochannel(GIOChannel *iochannel,
 												  transport_log_fn log_fn,
 												  transport_disconnect_fn disconnect_fn,
 												  transport_recv_fn recv_fn,
+												  transport_charset_error_fn charset_error_fn,
 												  void *userdata)
 {
 	struct irc_transport *ret = g_new0(struct irc_transport, 1);
@@ -40,6 +41,7 @@ struct irc_transport *irc_transport_new_iochannel(GIOChannel *iochannel,
 	ret->disconnect_fn = disconnect_fn;
 	ret->recv_fn = recv_fn;
 	ret->userdata = userdata;
+	ret->charset_error_fn = charset_error_fn;
 	g_io_channel_ref(ret->incoming);
 
 	return ret;

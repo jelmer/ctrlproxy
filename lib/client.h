@@ -59,6 +59,7 @@ struct irc_client {
 	char *default_origin;
 	gboolean exit_on_close;
 	gboolean connected;
+	gboolean authorized;
 	struct irc_network_state *state;
 	struct irc_client_callbacks *callbacks;
 	struct irc_transport *transport;
