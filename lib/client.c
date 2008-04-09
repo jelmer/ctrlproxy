@@ -390,6 +390,14 @@ static gboolean client_ping(struct irc_client *client)
 	return TRUE;
 }
 
+const struct irc_transport_callbacks client_transport_callbacks = {
+	.log = transport_log, 
+	.disconnect = on_transport_disconnect,
+	.recv = on_transport_receive_line,
+	.charset_error = on_transport_charset_error,
+	.error = on_transport_error,
+};
+
 /* GIOChannels passed into this function 
  * should preferably:
  *  - have no encoding set
@@ -417,12 +425,7 @@ struct irc_client *irc_client_new(GIOChannel *c, const char *default_origin, con
 	client->connect_time = time(NULL);
 	client->ping_id = g_timeout_add(1000 * 300, (GSourceFunc)client_ping, 
 									client);
-	client->transport = irc_transport_new_iochannel(c, transport_log, 
-													on_transport_disconnect,
-													on_transport_receive_line,
-													on_transport_charset_error,
-													on_transport_error,
-													client);
+	client->transport = irc_transport_new_iochannel(c, &client_transport_callbacks, 	client);
 	client->description = g_strdup(desc);
 	client->connected = TRUE;
 
@@ -433,9 +436,7 @@ struct irc_client *irc_client_new(GIOChannel *c, const char *default_origin, con
 
 void client_parse_buffer(struct irc_client *client)
 {
-	handle_pending_client_receive(client->transport->incoming, 
-			  g_io_channel_get_buffer_condition(client->transport->incoming),
-			  client);
+	transport_parse_buffer(client->transport);
 }
 
 /**

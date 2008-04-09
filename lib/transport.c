@@ -37,13 +37,13 @@ static gboolean handle_transport_receive(GIOChannel *c, GIOCondition cond,
 	if (cond & G_IO_ERR) {
 		char *tmp = g_strdup_printf("Error reading from client: %s", 
 						  g_io_channel_unix_get_sock_error(c));
-		transport->error_fn(transport, tmp);
+		transport->callbacks->error(transport, tmp);
 		g_free(tmp);
 		return FALSE;
 	}
 
 	if (cond & G_IO_HUP) {
-		transport->disconnect_fn(transport);
+		transport->callbacks->disconnect(transport);
 		return FALSE;
 	}
 
@@ -55,7 +55,7 @@ static gboolean handle_transport_receive(GIOChannel *c, GIOCondition cond,
 		while ((status = irc_recv_line(c, transport->incoming_iconv, &error, 
 									   &l)) == G_IO_STATUS_NORMAL) {
 
-			ret &= transport->recv_fn(transport, l);
+			ret &= transport->callbacks->recv(transport, l);
 			free_line(l);
 
 			if (!ret)
@@ -63,17 +63,17 @@ static gboolean handle_transport_receive(GIOChannel *c, GIOCondition cond,
 		}
 
 		if (status == G_IO_STATUS_EOF) {
-			transport->disconnect_fn(transport);
+			transport->callbacks->disconnect(transport);
 			return FALSE;
 		}
 
 		if (status != G_IO_STATUS_AGAIN) {
 			if (error->domain == G_CONVERT_ERROR &&
 				error->code == G_CONVERT_ERROR_ILLEGAL_SEQUENCE) {
-				transport->charset_error_fn(transport, 
+				transport->callbacks->charset_error(transport, 
 													error->message);
 			} else {
-				return transport->error_fn(transport, error?error->message:NULL);
+				return transport->callbacks->error(transport, error?error->message:NULL);
 			}
 		}
 		return ret;
@@ -83,11 +83,7 @@ static gboolean handle_transport_receive(GIOChannel *c, GIOCondition cond,
 }
 
 struct irc_transport *irc_transport_new_iochannel(GIOChannel *iochannel, 
-												  transport_log_fn log_fn,
-												  transport_disconnect_fn disconnect_fn,
-												  transport_recv_fn recv_fn,
-												  transport_charset_error_fn charset_error_fn,
-												  transport_error_fn error_fn,
+												  const struct irc_transport_callbacks *callbacks,
 												  void *userdata)
 {
 	struct irc_transport *ret = g_new0(struct irc_transport, 1);
@@ -95,12 +91,8 @@ struct irc_transport *irc_transport_new_iochannel(GIOChannel *iochannel,
 	ret->incoming = iochannel;
 	ret->pending_lines = g_queue_new();
 	ret->outgoing_iconv = ret->incoming_iconv = (GIConv)-1;
-	ret->log_fn = log_fn;
-	ret->disconnect_fn = disconnect_fn;
-	ret->recv_fn = recv_fn;
-	ret->error_fn = error_fn;
 	ret->userdata = userdata;
-	ret->charset_error_fn = charset_error_fn;
+	ret->callbacks = callbacks;
 	g_io_channel_ref(ret->incoming);
 
 	ret->incoming_id = g_io_add_watch(
@@ -212,11 +204,11 @@ static gboolean transport_send_queue(GIOChannel *ioc, GIOCondition cond,
 		}
 
 		if (status == G_IO_STATUS_ERROR) {
-			transport->log_fn(transport, l, error);
+			transport->callbacks->log(transport, l, error);
 		} else if (status == G_IO_STATUS_EOF) {
 			transport->outgoing_id = 0;
 
-			transport->disconnect_fn(transport);
+			transport->callbacks->disconnect(transport);
 
 			free_line(l);
 
@@ -242,10 +234,10 @@ gboolean transport_send_line(struct irc_transport *transport,
 											transport_send_queue, transport);
 			g_queue_push_tail(transport->pending_lines, linedup(l));
 		} else if (status == G_IO_STATUS_EOF) {
-			transport->disconnect_fn(transport);
+			transport->callbacks->disconnect(transport);
 			return FALSE;
 		} else if (status == G_IO_STATUS_ERROR) {
-			transport->log_fn(transport, l, error);
+			transport->callbacks->log(transport, l, error);
 		} 
 
 		return TRUE;
@@ -271,4 +263,11 @@ gboolean transport_send_args(struct irc_transport *transport, ...)
 	free_line(l); 
 
 	return ret;
+}
+
+void transport_parse_buffer(struct irc_transport *transport)
+{
+	handle_transport_receive(transport->incoming, 
+			  g_io_channel_get_buffer_condition(transport->incoming),
+			  transport);
 }
