@@ -19,6 +19,7 @@
 */
 
 #include "transport.h"
+#include "line.h"
 #include <glib.h>
 
 struct irc_transport *irc_transport_new_iochannel(GIOChannel *iochannel)
@@ -26,9 +27,21 @@ struct irc_transport *irc_transport_new_iochannel(GIOChannel *iochannel)
 	struct irc_transport *ret = g_new0(struct irc_transport, 1);
 
 	ret->incoming = iochannel;
+	ret->pending_lines = g_queue_new();
+	ret->outgoing_iconv = ret->incoming_iconv = (GIConv)-1;
 	g_io_channel_ref(ret->incoming);
 
 	return ret;
+}
+
+void irc_transport_disconnect(struct irc_transport *transport)
+{
+	g_io_channel_shutdown(transport->incoming, FALSE, NULL);
+}
+
+static void free_pending_line(void *_line, void *userdata)
+{
+	free_line((struct irc_line *)_line);
 }
 
 void free_irc_transport(struct irc_transport *transport)
@@ -41,6 +54,9 @@ void free_irc_transport(struct irc_transport *transport)
 		g_iconv_close(transport->outgoing_iconv);
 	if (transport->incoming_iconv != (GIConv)-1)
 		g_iconv_close(transport->incoming_iconv);
+
+	g_queue_foreach(transport->pending_lines, free_pending_line, NULL);
+	g_queue_free(transport->pending_lines);
 
 	g_free(transport);
 }

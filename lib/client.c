@@ -170,7 +170,7 @@ gboolean client_send_line(struct irc_client *c, const struct irc_line *l)
 		if (status == G_IO_STATUS_AGAIN) {
 			c->transport->outgoing_id = g_io_add_watch(c->transport->incoming, G_IO_OUT, 
 											handle_client_send_queue, c);
-			g_queue_push_tail(c->pending_lines, linedup(l));
+			g_queue_push_tail(c->transport->pending_lines, linedup(l));
 		} else if (status != G_IO_STATUS_NORMAL) {
 			c->connected = FALSE;
 
@@ -183,14 +183,9 @@ gboolean client_send_line(struct irc_client *c, const struct irc_line *l)
 		return TRUE;
 	}
 
-	g_queue_push_tail(c->pending_lines, linedup(l));
+	g_queue_push_tail(c->transport->pending_lines, linedup(l));
 
 	return TRUE;
-}
-
-static void free_pending_line(void *_line, void *userdata)
-{
-	free_line((struct irc_line *)_line);
 }
 
 /*
@@ -224,7 +219,7 @@ void client_disconnect(struct irc_client *c, const char *reason)
 
 	irc_send_args(c->transport->incoming, c->transport->outgoing_iconv, NULL, "ERROR", reason, NULL);
 
-	free_irc_transport(c->transport);
+	irc_transport_disconnect(c->transport);
 
 	if (c->exit_on_close) 
 		exit(0);
@@ -241,8 +236,7 @@ static void free_client(struct irc_client *c)
 	g_free(c->requested_nick);
 	g_free(c->requested_username);
 	g_free(c->requested_hostname);
-	g_queue_foreach(c->pending_lines, free_pending_line, NULL);
-	g_queue_free(c->pending_lines);
+	free_irc_transport(c->transport);
 	g_free(c->default_origin);
 	if (c->callbacks->free_private_data)
 		c->callbacks->free_private_data(c);
@@ -278,17 +272,17 @@ static gboolean handle_client_send_queue(GIOChannel *ioc, GIOCondition cond,
 
 	g_assert(ioc == c->transport->incoming);
 
-	while (!g_queue_is_empty(c->pending_lines)) {
+	while (!g_queue_is_empty(c->transport->pending_lines)) {
 		GIOStatus status;
 		GError *error = NULL;
-		struct irc_line *l = g_queue_pop_head(c->pending_lines);
+		struct irc_line *l = g_queue_pop_head(c->transport->pending_lines);
 
 		g_assert(c->transport->incoming != NULL);
 		status = irc_send_line(c->transport->incoming, 
 							   c->transport->outgoing_iconv, l, &error);
 
 		if (status == G_IO_STATUS_AGAIN) {
-			g_queue_push_head(c->pending_lines, l);
+			g_queue_push_head(c->transport->pending_lines, l);
 			return TRUE;
 		}
 
@@ -572,9 +566,7 @@ struct irc_client *irc_client_new(GIOChannel *c, const char *default_origin, con
 	client->transport = irc_transport_new_iochannel(c);
 	client->description = g_strdup(desc);
 	client->connected = TRUE;
-	client->pending_lines = g_queue_new();
 
-	client->transport->outgoing_iconv = client->transport->incoming_iconv = (GIConv)-1;
 	client_set_charset(client, DEFAULT_CLIENT_CHARSET);
 	pending_clients = g_list_append(pending_clients, client);
 	client->transport->incoming_id = g_io_add_watch(

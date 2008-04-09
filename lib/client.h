@@ -49,7 +49,6 @@ struct irc_client {
 	int references;
 	struct irc_network *network;
 	char *description;
-	GQueue *pending_lines;
 	gint ping_id;
 	time_t last_ping;
 	time_t last_pong;

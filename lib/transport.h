@@ -33,9 +33,11 @@ struct irc_transport {
 	gint outgoing_id;
 	GIConv incoming_iconv;
 	GIConv outgoing_iconv;
+	GQueue *pending_lines;
 };
 
 struct irc_transport *irc_transport_new_iochannel(GIOChannel *iochannel);
+void irc_transport_disconnect(struct irc_transport *transport);
 void free_irc_transport(struct irc_transport *);
 
 #endif /* __LIBIRC_TRANSPORT_H__ */
