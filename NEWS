@@ -93,6 +93,8 @@ Ctrlproxy 3.0.6 UNRELEASED
     * Avoid writing nick changes and quits to nick-specific files
       when not in a query with a user. (#173)
 
+	* Fix occasional repeating of lines. (#75)
+
   INTERNALS
 
     * A simple, single API is now used for managing modes.
