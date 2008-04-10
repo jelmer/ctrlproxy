@@ -234,6 +234,12 @@ static gboolean server_send_queue(GIOChannel *ch, GIOCondition cond,
 	GError *error = NULL;
 	GIOStatus status;
 
+	status = g_io_channel_flush(s->connection.outgoing, &error);
+
+	if (status == G_IO_STATUS_AGAIN) {
+		return TRUE;
+	}
+
 	while (!g_queue_is_empty(s->connection.pending_lines)) {
 		struct irc_line *l = g_queue_peek_head(s->connection.pending_lines);
 
