@@ -260,7 +260,7 @@ check_objs = testsuite/test-cmp.o testsuite/test-user.o \
 			 testsuite/test-networkinfo.o testsuite/test-ctcp.o \
 			 testsuite/test-help.o testsuite/test-nickserv.o \
 			 testsuite/test-url.o testsuite/test-motd.o \
-			 testsuite/test-log-subst.o
+			 testsuite/test-log-subst.o testsuite/test-transport.o
 
 testsuite/check: $(check_objs) $(objs) $(LIBIRC)
 	@echo Linking $@
