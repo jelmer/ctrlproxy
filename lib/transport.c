@@ -82,6 +82,13 @@ static gboolean handle_transport_receive(GIOChannel *c, GIOCondition cond,
 	return TRUE;
 }
 
+/* GIOChannels passed into this function 
+ * should preferably:
+ *  - have no encoding set
+ *  - work asynchronously
+ *
+ * @param iochannel Channel to talk over 
+ */
 struct irc_transport *irc_transport_new_iochannel(GIOChannel *iochannel, 
 												  const struct irc_transport_callbacks *callbacks,
 												  void *userdata)

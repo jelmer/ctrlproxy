@@ -219,7 +219,7 @@ void client_disconnect(struct irc_client *c, const char *reason)
 
 	client_log(LOG_INFO, c, "Removed client");
 
-	transport_send_args(c->transport, NULL, "ERROR", reason);
+	transport_send_args(c->transport, "ERROR", reason, NULL);
 
 	irc_transport_disconnect(c->transport);
 
@@ -398,12 +398,7 @@ const struct irc_transport_callbacks client_transport_callbacks = {
 	.error = on_transport_error,
 };
 
-/* GIOChannels passed into this function 
- * should preferably:
- *  - have no encoding set
- *  - work asynchronously
- *
- * @param c Channel to talk over
+/* 
  * @param desc Description of the client
  */
 struct irc_client *irc_client_new(GIOChannel *c, const char *default_origin, const char *desc, struct irc_client_callbacks *callbacks)
