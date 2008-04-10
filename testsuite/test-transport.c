@@ -32,11 +32,38 @@ START_TEST(test_create)
 	irc_transport_new_iochannel(ch1);
 END_TEST
 
+START_TEST(test_send)
+	GIOChannel *ch1, *ch2;
+	struct irc_transport *t;
+	int i;
+	g_io_channel_pair(&ch1, &ch2);
+	g_io_channel_set_encoding(ch1, NULL, NULL);
+	g_io_channel_set_flags(ch1, G_IO_FLAG_NONBLOCK, NULL);
+	g_io_channel_set_buffered(ch1, FALSE);
+	t = irc_transport_new_iochannel(ch1);
+	/* saturate the buffer */
+	for (i = 0; i < 10000; i++) {
+		char buf[20];
+		snprintf(buf, sizeof(buf), "bar: %d", i);
+		fail_unless(transport_send_args(t, "PRIVMSG", "foo", buf, NULL));
+	}
+	for (i = 0; i < 10000; i++) {
+		char *str;
+		char buf[120];
+		snprintf(buf, sizeof(buf), "PRIVMSG foo :bar: %d\r\n", i);
+		if (!g_queue_is_empty(t->pending_lines))
+			g_main_iteration(FALSE);
+		g_io_channel_read_line(ch2, &str, NULL, NULL, NULL);
+		fail_if(strcmp(str, buf));
+	}
+END_TEST
+
 Suite *transport_suite()
 {
 	Suite *s = suite_create("transport");
 	TCase *tc_iochannel = tcase_create("iochannel");
 	suite_add_tcase(s, tc_iochannel);
 	tcase_add_test(tc_iochannel, test_create);
+	tcase_add_test(tc_iochannel, test_send);
 	return s;
 }

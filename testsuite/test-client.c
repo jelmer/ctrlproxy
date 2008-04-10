@@ -67,7 +67,9 @@ START_TEST(test_login)
 	fail_unless(g_io_channel_write_chars(ch2, "NICK bla\r\n"
 				"USER a a a a\r\n", -1, NULL, NULL) == G_IO_STATUS_NORMAL);
 	fail_unless(g_io_channel_flush(ch2, NULL) == G_IO_STATUS_NORMAL);
+	fail_unless(g_io_channel_flush(ch1, NULL) == G_IO_STATUS_NORMAL);
 	g_main_iteration(FALSE);
+	fail_if(c->state == NULL);
 	fail_if(c->state->me.nick == NULL);
 	fail_unless(!strcmp(c->state->me.nick, "bla"));
 END_TEST
