@@ -624,6 +624,8 @@ void client_send_channel_state(struct irc_client *c,
 	client_send_topic(c, ch);
 
 	client_send_nameslist(c, ch);
+
+	client_send_channel_mode(c, ch);
 }
 
 void client_send_topic(struct irc_client *c, struct irc_channel_state *ch)
