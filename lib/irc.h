@@ -181,6 +181,7 @@
 
 /* These are obsolete */
 #define RPL_STATSQLINE 217
+#define RPL_STATSPLINE 249
 #define RPL_TRACECLASS 209
 
 /* <command> :Bad command */
