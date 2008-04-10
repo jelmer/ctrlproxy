@@ -265,6 +265,9 @@ gboolean transport_send_line(struct irc_transport *transport,
 	GError *error = NULL;
 	GIOStatus status;
 
+	if (transport->incoming == NULL)
+		return FALSE;
+
 	if (transport->outgoing_id != 0) {
 		g_queue_push_tail(transport->pending_lines, linedup(l));
 		return TRUE;
