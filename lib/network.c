@@ -243,8 +243,10 @@ static gboolean server_send_queue(GIOChannel *ch, GIOCondition cond,
 
 		status = irc_send_line(s->connection.outgoing, s->connection.outgoing_iconv, l, &error);
 
-		if (status == G_IO_STATUS_AGAIN)
+		if (status == G_IO_STATUS_AGAIN) {
+			free_line(l);
 			return TRUE;
+		}
 
 		g_queue_pop_head(s->connection.pending_lines);
 
@@ -255,6 +257,22 @@ static gboolean server_send_queue(GIOChannel *ch, GIOCondition cond,
 
 			return FALSE;
 		}
+
+		status = g_io_channel_flush(s->connection.outgoing, &error);
+
+		if (status == G_IO_STATUS_AGAIN) {
+			free_line(l);
+			return TRUE;
+		}
+
+		if (status != G_IO_STATUS_NORMAL) {
+			network_log(LOG_WARNING, s, "Error sending line '%s': %s",
+	           l->args[0], error != NULL?error->message:"ERROR");
+			free_line(l);
+
+			return FALSE;
+		}
+
 		s->connection.last_line_sent = time(NULL);
 
 		free_line(l);
@@ -294,6 +312,15 @@ static gboolean network_send_line_direct(struct irc_network *s, struct irc_clien
 
 		if (status == G_IO_STATUS_AGAIN) {
 			g_queue_push_tail(s->connection.pending_lines, linedup(l));
+			s->connection.outgoing_id = g_io_add_watch(s->connection.outgoing, G_IO_OUT, server_send_queue, s);
+		} else if (status != G_IO_STATUS_NORMAL) {
+			network_log(LOG_WARNING, s, "Error sending line '%s': %s",
+	           l->args[0], error != NULL?error->message:"ERROR");
+			return FALSE;
+		}
+
+		status = g_io_channel_flush(s->connection.outgoing, &error);
+		if (status == G_IO_STATUS_AGAIN) {
 			s->connection.outgoing_id = g_io_add_watch(s->connection.outgoing, G_IO_OUT, server_send_queue, s);
 		} else if (status != G_IO_STATUS_NORMAL) {
 			network_log(LOG_WARNING, s, "Error sending line '%s': %s",

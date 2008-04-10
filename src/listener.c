@@ -183,6 +183,7 @@ static gboolean handle_client_line(struct pending_client *pc, const struct irc_l
 				if (n == NULL) {
 					irc_sendf(pc->connection, pc->listener->iconv, NULL, ":%s %d %s :Password error: unable to find network", 
 							  get_my_hostname(), ERR_PASSWDMISMATCH, "*");
+					g_io_channel_flush(pc->connection, NULL);
 					return FALSE;
 				}
 
@@ -190,6 +191,7 @@ static gboolean handle_client_line(struct pending_client *pc, const struct irc_l
 					!connect_network(n)) {
 					irc_sendf(pc->connection, pc->listener->iconv, NULL, ":%s %d %s :Password error: unable to connect", 
 							  get_my_hostname(), ERR_PASSWDMISMATCH, "*");
+					g_io_channel_flush(pc->connection, NULL);
 					return FALSE;
 				}
 			}
@@ -218,6 +220,7 @@ static gboolean handle_client_line(struct pending_client *pc, const struct irc_l
 		}
 	} else {
 		irc_sendf(pc->connection, pc->listener->iconv, NULL, ":%s %d %s :You are not registered", get_my_hostname(), ERR_NOTREGISTERED, "*");
+		g_io_channel_flush(pc->connection, NULL);
 	}
 
 	return TRUE;

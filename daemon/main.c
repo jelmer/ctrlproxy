@@ -178,6 +178,8 @@ static gboolean daemon_socks_auth_simple(struct pending_client *cl, const char *
 
 	irc_sendf(cd->connection, (GIConv)-1, NULL, "PASS %s", password);
 
+	g_io_channel_flush(cd->connection, NULL);
+
 	/* FIXME: Check whether the client doesn't return anything */
 
 	return TRUE;
@@ -190,6 +192,7 @@ static gboolean daemon_socks_connect_fqdn (struct pending_client *cl, const char
 	/* Only called after authentication */
 
 	irc_sendf(cd->connection, (GIConv)-1, NULL, "CONNECT %s %d", hostname, port);
+	g_io_channel_flush(cd->connection, NULL);
 
 	client_done(cl);
 
@@ -221,6 +224,7 @@ static gboolean handle_client_line(struct pending_client *pc, const struct irc_l
 	} else {
 		irc_sendf(pc->connection, pc->listener->iconv, NULL, ":%s %d %s :You are not registered", 
 				  get_my_hostname(), ERR_NOTREGISTERED, "*");
+		g_io_channel_flush(pc->connection, NULL);
 	}
 
 	if (cd->username != NULL && cd->password != NULL && cd->nick != NULL) {
@@ -233,6 +237,7 @@ static gboolean handle_client_line(struct pending_client *pc, const struct irc_l
 		irc_sendf(cd->connection, (GIConv)-1, NULL, "USER %s %s %s %s", cd->username, 
 				  cd->mode, cd->unused, cd->realname);
 		irc_sendf(cd->connection, (GIConv)-1, NULL, "NICK %s", cd->nick);
+		g_io_channel_flush(cd->connection, NULL);
 		client_done(pc);
 		return FALSE;
 	}
