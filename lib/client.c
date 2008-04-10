@@ -401,11 +401,11 @@ const struct irc_transport_callbacks client_transport_callbacks = {
 /* 
  * @param desc Description of the client
  */
-struct irc_client *irc_client_new(GIOChannel *c, const char *default_origin, const char *desc, struct irc_client_callbacks *callbacks)
+struct irc_client *irc_client_new(struct irc_transport *transport, const char *default_origin, const char *desc, struct irc_client_callbacks *callbacks)
 {
 	struct irc_client *client;
 
-	g_assert(c != NULL);
+	g_assert(transport != NULL);
 	g_assert(desc != NULL);
 
 	client = g_new0(struct irc_client, 1);
@@ -415,12 +415,10 @@ struct irc_client *irc_client_new(GIOChannel *c, const char *default_origin, con
 	client->default_origin = g_strdup(default_origin);
 	client->callbacks = callbacks;
 
-	g_io_channel_set_flags(c, G_IO_FLAG_NONBLOCK, NULL);
-	g_io_channel_set_close_on_unref(c, TRUE);
 	client->connect_time = time(NULL);
 	client->ping_id = g_timeout_add(1000 * 300, (GSourceFunc)client_ping, 
 									client);
-	client->transport = irc_transport_new_iochannel(c);
+	client->transport = transport;
 	irc_transport_set_callbacks(client->transport, &client_transport_callbacks, client);
 	client->description = g_strdup(desc);
 	client->connected = TRUE;
