@@ -105,6 +105,9 @@ struct network_config
 			GList *servers;
 		} tcp;
 	} type_settings; 
+
+	/** Commands to send on connect. */
+	char **autocmd;
 };
 
 /**

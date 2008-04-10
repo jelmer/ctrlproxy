@@ -133,6 +133,7 @@ static gboolean process_from_server(struct irc_network *n, const struct irc_line
 		g_free(tmp);
 	} else if (atoi(l->args[0]) == RPL_ENDOFMOTD ||
 			  atoi(l->args[0]) == ERR_NOMOTD) {
+		int i;
 		GList *gl;
 		n->connection.state = NETWORK_CONNECTION_STATE_MOTD_RECVD;
 
@@ -156,6 +157,12 @@ static gboolean process_from_server(struct irc_network *n, const struct irc_line
 		server_connected_hook_execute(n);
 
 		network_send_args(n, "USERHOST", n->state->me.nick, NULL);
+
+		for (i = 0; n->config->autocmd && n->config->autocmd[i]; i++) {
+			struct irc_line *l = irc_parse_line(n->config->autocmd[i]);
+			network_send_line(n, NULL, l, FALSE);
+			free_line(l);
+		}
 
 		/* Rejoin channels */
 		for (gl = n->config->channels; gl; gl = gl->next) {

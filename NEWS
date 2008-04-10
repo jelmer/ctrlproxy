@@ -32,6 +32,10 @@ Ctrlproxy 3.0.6 UNRELEASED
     * ``bind'' is now also accepted in the global section of the network 
       configuration. (#194)
 
+    * New configuration variable ``autocmd'' in network configuration 
+	  can contain a list (semi-colon-seperated) of commands to send when
+	  logged in to a server. (#152)
+
   BUG FIXES
 
     * Improve handling of empty pid files. (#186)

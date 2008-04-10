@@ -186,6 +186,13 @@ static void config_save_network(const char *dir, struct network_config *n, GList
 	g_key_file_set_string(kf, "global", "fullname", n->fullname);
 	g_key_file_set_string(kf, "global", "nick", n->nick);
 	g_key_file_set_string(kf, "global", "username", n->username);
+	if (n->autocmd) {
+		g_key_file_set_string_list(kf, "global", "autocmd", n->autocmd,
+							   g_strv_length(n->autocmd));
+	} else {
+		g_key_file_remove_key(kf, "global", "autocmd", NULL);
+	}
+
 	if (n->queue_speed)
 		g_key_file_set_integer(kf, "global", "queue-speed", n->queue_speed);
 	if (n->reconnect_interval != -1)
@@ -582,6 +589,11 @@ static struct network_config *config_load_network(struct ctrlproxy_config *cfg, 
 	if (g_key_file_has_key(kf, "global", "password", NULL)) {
 		g_free(n->password);
 		n->password = g_key_file_get_string(kf, "global", "password", NULL);
+	}
+
+	if (g_key_file_has_key(kf, "global", "autocmd", NULL)) {
+		g_strfreev(n->autocmd);
+		n->autocmd = g_key_file_get_string_list(n->keyfile, "global", "autocmd", &size, NULL);
 	}
 
 	n->name = g_strdup(name);
@@ -1298,6 +1310,7 @@ void free_config(struct ctrlproxy_config *cfg)
 		g_free(nc->fullname);
 		g_free(nc->username);
 		g_free(nc->password);
+		g_strfreev(nc->autocmd);
 		while (nc->channels) {
 			struct channel_config *cc = nc->channels->data;
 			g_free(cc->name);
