@@ -43,7 +43,7 @@ static gboolean handle_transport_receive(GIOChannel *c, GIOCondition cond,
 	}
 
 	if (cond & G_IO_HUP) {
-		transport->callbacks->disconnect(transport);
+		irc_transport_disconnect(transport);
 		return FALSE;
 	}
 
@@ -63,7 +63,7 @@ static gboolean handle_transport_receive(GIOChannel *c, GIOCondition cond,
 		}
 
 		if (status == G_IO_STATUS_EOF) {
-			transport->callbacks->disconnect(transport);
+			irc_transport_disconnect(transport);
 			return FALSE;
 		}
 
@@ -114,13 +114,18 @@ struct irc_transport *irc_transport_new_iochannel(GIOChannel *iochannel)
 
 void irc_transport_disconnect(struct irc_transport *transport)
 {
-	g_assert(transport->incoming != NULL);
+	if (transport->incoming == NULL)
+		return; /* We're already disconnected */
 
-	g_io_channel_shutdown(transport->incoming, FALSE, NULL);
+	g_io_channel_unref(transport->incoming);
 
 	g_source_remove(transport->incoming_id);
 	if (transport->outgoing_id)
 		g_source_remove(transport->outgoing_id);
+
+	transport->incoming = NULL;
+
+	transport->callbacks->disconnect(transport);
 }
 
 static void free_pending_line(void *_line, void *userdata)
@@ -130,16 +135,16 @@ static void free_pending_line(void *_line, void *userdata)
 
 void free_irc_transport(struct irc_transport *transport)
 {
+	/* Should already be disconnected */
+	g_assert(transport->incoming == NULL);
 	g_free(transport->charset);
-	g_io_channel_unref(transport->incoming);
-	
-	transport->incoming = NULL;
 
 	if (transport->outgoing_iconv != (GIConv)-1)
 		g_iconv_close(transport->outgoing_iconv);
 	if (transport->incoming_iconv != (GIConv)-1)
 		g_iconv_close(transport->incoming_iconv);
 
+	g_assert(transport->pending_lines != NULL);
 	g_queue_foreach(transport->pending_lines, free_pending_line, NULL);
 	g_queue_free(transport->pending_lines);
 
@@ -199,6 +204,8 @@ static gboolean transport_send_queue(GIOChannel *ioc, GIOCondition cond,
 
 	g_assert(ioc == transport->incoming);
 
+	g_assert(transport->pending_lines != NULL);
+
 	while (!g_queue_is_empty(transport->pending_lines)) {
 		GIOStatus status;
 		GError *error = NULL;
@@ -219,7 +226,7 @@ static gboolean transport_send_queue(GIOChannel *ioc, GIOCondition cond,
 		} else if (status == G_IO_STATUS_EOF) {
 			transport->outgoing_id = 0;
 
-			transport->callbacks->disconnect(transport);
+			irc_transport_disconnect(transport);
 
 			free_line(l);
 
@@ -247,7 +254,7 @@ gboolean transport_send_line(struct irc_transport *transport,
 											transport_send_queue, transport);
 			g_queue_push_tail(transport->pending_lines, linedup(l));
 		} else if (status == G_IO_STATUS_EOF) {
-			transport->callbacks->disconnect(transport);
+			irc_transport_disconnect(transport);
 			return FALSE;
 		} else if (status == G_IO_STATUS_ERROR) {
 			transport->callbacks->log(transport, l, error);

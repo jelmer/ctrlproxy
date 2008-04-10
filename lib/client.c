@@ -225,8 +225,6 @@ void client_disconnect(struct irc_client *c, const char *reason)
 
 	if (c->exit_on_close) 
 		exit(0);
-
-	client_unref(c);
 }
 
 static void free_client(struct irc_client *c)

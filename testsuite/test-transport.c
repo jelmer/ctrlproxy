@@ -21,6 +21,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <check.h>
+#include <stdio.h>
 #include "transport.h"
 #include <ctrlproxy.h>
 #include "torture.h"
