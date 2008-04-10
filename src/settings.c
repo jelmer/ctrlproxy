@@ -536,6 +536,7 @@ static struct network_config *config_load_network(struct ctrlproxy_config *cfg, 
 
 	if (!g_key_file_load_from_file(kf, filename, G_KEY_FILE_KEEP_COMMENTS, &error)) {	
 		log_global(LOG_ERROR, "Can't parse configuration file '%s': %s", filename, error->message);
+		g_free(filename);
 		g_key_file_free(kf);
 		return NULL;
 	}	
