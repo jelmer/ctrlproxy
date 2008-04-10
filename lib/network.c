@@ -512,6 +512,26 @@ static gboolean connect_current_tcp_server(struct irc_network *s)
 
 	g_io_channel_set_close_on_unref(ioc, TRUE);
 
+	cs = s->connection.data.tcp.current_server;
+	if (cs->ssl) {
+#ifdef HAVE_GNUTLS
+		g_io_channel_set_close_on_unref(ioc, TRUE);
+		g_io_channel_set_flags(ioc, G_IO_FLAG_NONBLOCK, NULL);
+
+		ioc = ssl_wrap_iochannel (ioc, SSL_TYPE_CLIENT, 
+								 s->connection.data.tcp.current_server->host,
+								 s->ssl_credentials
+								 );
+		if (!ioc) {
+			network_report_disconnect(s, "Couldn't connect via server %s:%s", cs->host, cs->port);
+			reconnect(s);
+			return FALSE;
+		}
+#else
+		network_log(LOG_WARNING, s, "SSL enabled for %s:%s, but no SSL support loaded", cs->host, cs->port);
+#endif
+	}
+
 	s->connection.state = NETWORK_CONNECTION_STATE_CONNECTING;
 
 	if (!connect_finished) {
@@ -697,7 +717,6 @@ static gboolean server_finish_connect(GIOChannel *ioc, GIOCondition cond,
 								  void *data)
 {
 	struct irc_network *s = data;
-	struct tcp_server_config *cs;
 
 	if (cond & G_IO_ERR) {
 		network_report_disconnect(s, "Error connecting: %s", 
@@ -708,28 +727,6 @@ static gboolean server_finish_connect(GIOChannel *ioc, GIOCondition cond,
 
 	if (cond & G_IO_OUT) {
 		s->connection.state = NETWORK_CONNECTION_STATE_CONNECTED;
-
-		cs = s->connection.data.tcp.current_server;
-		if (cs->ssl) {
-#ifdef HAVE_GNUTLS
-			g_io_channel_set_close_on_unref(ioc, TRUE);
-			g_io_channel_set_flags(ioc, G_IO_FLAG_NONBLOCK, NULL);
-
-			ioc = ssl_wrap_iochannel (ioc, SSL_TYPE_CLIENT, 
-									 s->connection.data.tcp.current_server->host,
-									 s->ssl_credentials
-									 );
-			g_assert(ioc != NULL);
-#else
-			network_log(LOG_WARNING, s, "SSL enabled for %s:%s, but no SSL support loaded", cs->host, cs->port);
-#endif
-		}
-
-		if (!ioc) {
-			network_report_disconnect(s, "Couldn't connect via server %s:%s", cs->host, cs->port);
-			reconnect(s);
-			return FALSE;
-		}
 
 		s->connection.data.tcp.connect_id = 0; /* Otherwise data will be queued */
 		network_set_iochannel(s, ioc);

@@ -145,7 +145,7 @@ do_handshake (GNUTLSChannel *chan, GError **err)
 	if (result < 0) {
 		g_set_error (err, G_IO_CHANNEL_ERROR,
 			     G_IO_CHANNEL_ERROR_FAILED,
-			     "Unable to handshake");
+			     gnutls_strerror(result));
 		return G_IO_STATUS_ERROR;
 	}
 
@@ -175,6 +175,8 @@ _gnutls_read (GIOChannel   *channel,
 		    result == G_IO_STATUS_ERROR)
 			return result;
 
+		g_assert(result >= 0);
+
 		chan->established = TRUE;
 	}
 
@@ -196,7 +198,7 @@ _gnutls_read (GIOChannel   *channel,
 	} else {
 		*bytes_read = result;
 
-		return (result > 0) ? G_IO_STATUS_NORMAL : G_IO_STATUS_EOF;
+		return G_IO_STATUS_NORMAL;
 	}
 }
 
@@ -219,6 +221,9 @@ _gnutls_write (GIOChannel   *channel,
 		    result == G_IO_STATUS_ERROR)
 			return result;
 
+
+		g_assert(result >= 0);
+
 		chan->established = TRUE;
 	}
 
@@ -240,7 +245,7 @@ _gnutls_write (GIOChannel   *channel,
 	} else {
 		*bytes_written = result;
 
-		return (result > 0) ? G_IO_STATUS_NORMAL : G_IO_STATUS_EOF;
+		return G_IO_STATUS_NORMAL;
 	}
 }
 
@@ -370,6 +375,9 @@ ssl_wrap_iochannel (GIOChannel *sock, SSLType type,
 	g_return_val_if_fail (sock != NULL, NULL);
 	g_return_val_if_fail (credentials != NULL, NULL);
 
+	g_io_channel_set_encoding(sock, NULL, NULL);
+	g_io_channel_set_buffered(sock, FALSE);
+
 	sockfd = g_io_channel_unix_get_fd (sock);
 	if (!sockfd) {
 		g_warning ("Failed to get channel fd.");
@@ -406,7 +414,6 @@ ssl_wrap_iochannel (GIOChannel *sock, SSLType type,
 	gchan->funcs = &gnutls_channel_funcs;
 	g_io_channel_init (gchan);
 	gchan->is_readable = gchan->is_writeable = TRUE;
-	gchan->use_buffer = FALSE;
 
 	return gchan;
 

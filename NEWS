@@ -95,6 +95,8 @@ Ctrlproxy 3.0.6 UNRELEASED
 
     * Fix occasional repeating of lines. (#75)
 
+	* Fix outgoing SSL connections. (#128)
+
   INTERNALS
 
     * A simple, single API is now used for managing modes.
