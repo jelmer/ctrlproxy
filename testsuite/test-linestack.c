@@ -217,7 +217,7 @@ START_TEST(test_msg)
 	g_io_channel_pair(&ch1, &ch2);
 	g_io_channel_set_flags(ch1, G_IO_FLAG_NONBLOCK, NULL);
 	g_io_channel_set_flags(ch2, G_IO_FLAG_NONBLOCK, NULL);
-	cl = client_init(NULL, ch1, "test");
+	cl = client_init_iochannel(NULL, ch1, "test");
 	g_io_channel_unref(ch1);
 
 	linestack_send(ctx, lm, NULL, cl, FALSE, FALSE, 0);
@@ -250,7 +250,7 @@ START_TEST(test_join_part)
 	g_io_channel_pair(&ch1, &ch2);
 	g_io_channel_set_flags(ch1, G_IO_FLAG_NONBLOCK, NULL);
 	g_io_channel_set_flags(ch2, G_IO_FLAG_NONBLOCK, NULL);
-	cl = client_init(NULL, ch1, "test");
+	cl = client_init_iochannel(NULL, ch1, "test");
 	g_io_channel_unref(ch1);
 
 	linestack_send(ctx, lm, NULL, cl, FALSE, FALSE, 0);
@@ -287,7 +287,7 @@ START_TEST(test_skip_msg)
 	g_io_channel_pair(&ch1, &ch2);
 	g_io_channel_set_flags(ch1, G_IO_FLAG_NONBLOCK, NULL);
 	g_io_channel_set_flags(ch2, G_IO_FLAG_NONBLOCK, NULL);
-	cl = client_init(NULL, ch1, "test");
+	cl = client_init_iochannel(NULL, ch1, "test");
 	g_io_channel_unref(ch1);
 
 	linestack_send(ctx, lm, NULL, cl, FALSE, FALSE, 0);
@@ -324,7 +324,7 @@ START_TEST(test_object_msg)
 	g_io_channel_pair(&ch1, &ch2);
 	g_io_channel_set_flags(ch1, G_IO_FLAG_NONBLOCK, NULL);
 	g_io_channel_set_flags(ch2, G_IO_FLAG_NONBLOCK, NULL);
-	cl = client_init(NULL, ch1, "test");
+	cl = client_init_iochannel(NULL, ch1, "test");
 	g_io_channel_unref(ch1);
 
 	linestack_send_object(ctx, "#bla", lm, NULL, cl, FALSE, FALSE, 0);
@@ -365,7 +365,7 @@ START_TEST(test_object_open)
 		g_io_channel_pair(&ch1, &ch2);
 		g_io_channel_set_flags(ch1, G_IO_FLAG_NONBLOCK, NULL);
 		g_io_channel_set_flags(ch2, G_IO_FLAG_NONBLOCK, NULL);
-		cl = client_init(NULL, ch1, "test");
+		cl = client_init_iochannel(NULL, ch1, "test");
 		g_io_channel_unref(ch1);
 
 		linestack_send_object(ctx, "#bla", NULL, NULL, cl, FALSE, FALSE, 0);

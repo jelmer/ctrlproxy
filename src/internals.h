@@ -89,11 +89,15 @@ gboolean run_replication_filter(struct irc_network *s, const struct irc_line *l,
  * @param io IO Channel to use for communication.
  * @param desc Description of the client.
  */
-G_MODULE_EXPORT G_GNUC_MALLOC struct irc_client *client_init(
+G_MODULE_EXPORT G_GNUC_MALLOC struct irc_client *client_init_iochannel(
 										   struct irc_network *net, 
 										   GIOChannel *io, 
 										   const char *desc);
 
+G_MODULE_EXPORT G_GNUC_MALLOC struct irc_client *client_init(
+										   struct irc_network *net, 
+										   struct irc_transport *transport,
+										   const char *desc);
 
 G_MODULE_EXPORT void clients_send(GList *clients, const struct irc_line *, const struct irc_client *exception);
 G_MODULE_EXPORT void clients_send_args_ex(GList *clients, const char *hostmask, ...);

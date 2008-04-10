@@ -375,7 +375,7 @@ int main(int argc, char **argv)
 			return 1;
 		} else {
 			/* Find clients network by name */
-			struct irc_client *client = client_init(n, io, "Standard I/O");
+			struct irc_client *client = client_init_iochannel(n, io, "Standard I/O");
 			client->exit_on_close = TRUE;
 		}
 	}

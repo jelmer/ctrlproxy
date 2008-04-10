@@ -27,13 +27,13 @@
 
 START_TEST(test_create_no_network)
 	GIOChannel *ch = g_io_channel_unix_new(0);
-	client_init(NULL, ch, "desc");
+	client_init_iochannel(NULL, ch, "desc");
 END_TEST
 
 START_TEST(test_create_introduction)
 	GIOChannel *ch1, *ch2;
 	g_io_channel_pair(&ch1, &ch2);
-	client_init(NULL, ch1, "desc");
+	client_init_iochannel(NULL, ch1, "desc");
 END_TEST
 
 START_TEST(test_network_first)
@@ -41,7 +41,7 @@ START_TEST(test_network_first)
 	struct irc_client *c;
 	char *raw;
 	g_io_channel_pair(&ch1, &ch2);
-	c = client_init(NULL, ch1, "desc");
+	c = client_init_iochannel(NULL, ch1, "desc");
 	g_io_channel_unref(ch1);
 	fail_unless(g_io_channel_write_chars(ch2, "NICK bla\r\n"
 				"USER a a a a\r\n", -1, NULL, NULL) == G_IO_STATUS_NORMAL);
@@ -62,7 +62,7 @@ START_TEST(test_login)
 		.global = g,
 	};
 	g_io_channel_pair(&ch1, &ch2);
-	c = client_init(&n, ch1, "desc");
+	c = client_init_iochannel(&n, ch1, "desc");
 	g_io_channel_unref(ch1);
 	fail_unless(g_io_channel_write_chars(ch2, "NICK bla\r\n"
 				"USER a a a a\r\n", -1, NULL, NULL) == G_IO_STATUS_NORMAL);
@@ -82,7 +82,7 @@ START_TEST(test_read_nonutf8)
 		.global = g,
 	};
 	g_io_channel_pair(&ch1, &ch2);
-	c = client_init(&n, ch1, "desc");
+	c = client_init_iochannel(&n, ch1, "desc");
 	g_io_channel_unref(ch1);
 	fail_unless(g_io_channel_write_chars(ch2, "NICK bla\r\n"
 				"USER a a a a\r\n"
@@ -103,7 +103,7 @@ START_TEST(test_disconnect)
 	GError *error = NULL;
 	gsize length;
 	g_io_channel_pair(&ch1, &ch2);
-	client = client_init(NULL, ch1, "desc");
+	client = client_init_iochannel(NULL, ch1, "desc");
 	g_io_channel_unref(ch1);
 	client_disconnect(client, "Because");
 	g_io_channel_read_to_end(ch2, &raw, &length, &error);
@@ -114,7 +114,7 @@ START_TEST(test_login_nonetwork)
 	GIOChannel *ch1, *ch2;
 	struct irc_client *c;
 	g_io_channel_pair(&ch1, &ch2);
-	c = client_init(NULL, ch1, "desc");
+	c = client_init_iochannel(NULL, ch1, "desc");
 	g_io_channel_unref(ch1);
 	fail_unless(g_io_channel_write_chars(ch2, "NICK bla\r\n"
 				"USER a a a a\r\n", -1, NULL, NULL) == G_IO_STATUS_NORMAL);
