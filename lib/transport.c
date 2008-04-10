@@ -215,6 +215,7 @@ static gboolean transport_send_queue(GIOChannel *ioc, GIOCondition cond,
 
 		if (status == G_IO_STATUS_ERROR) {
 			transport->callbacks->log(transport, l, error);
+
 		} else if (status == G_IO_STATUS_EOF) {
 			transport->outgoing_id = 0;
 
@@ -223,6 +224,8 @@ static gboolean transport_send_queue(GIOChannel *ioc, GIOCondition cond,
 			free_line(l);
 
 			return FALSE;
+		} else if (status == G_IO_STATUS_NORMAL) {
+			transport->last_line_sent = time(NULL);
 		}
 
 		free_line(l);
@@ -248,7 +251,9 @@ gboolean transport_send_line(struct irc_transport *transport,
 			return FALSE;
 		} else if (status == G_IO_STATUS_ERROR) {
 			transport->callbacks->log(transport, l, error);
-		} 
+		} else if (status == G_IO_STATUS_NORMAL) {
+			transport->last_line_sent = time(NULL);
+		}
 
 		return TRUE;
 	}

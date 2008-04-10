@@ -48,6 +48,7 @@ struct irc_transport {
 	char *charset;
 	const struct irc_transport_callbacks *callbacks;
 	void *userdata;
+	time_t last_line_sent;
 };
 
 struct irc_transport *irc_transport_new_iochannel(GIOChannel *iochannel);
