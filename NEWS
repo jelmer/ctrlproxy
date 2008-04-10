@@ -36,7 +36,7 @@ Ctrlproxy 3.0.6 UNRELEASED
 
     * Improve handling of empty pid files. (#186)
 
-      * Handle out of disk space correctly. (#91)
+    * Handle out of disk space correctly. (#91)
 
     * Don't "forget" listener password.
 
@@ -93,7 +93,7 @@ Ctrlproxy 3.0.6 UNRELEASED
     * Avoid writing nick changes and quits to nick-specific files
       when not in a query with a user. (#173)
 
-	* Fix occasional repeating of lines. (#75)
+    * Fix occasional repeating of lines. (#75)
 
   INTERNALS
 
