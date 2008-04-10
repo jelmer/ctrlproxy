@@ -621,15 +621,7 @@ void client_send_channel_state(struct irc_client *c,
 	client_send_args_ex(c, client_get_own_hostmask(c), "JOIN", ch->name, 
 						NULL);
 
-	if (ch->topic != NULL) {
-		client_send_response(c, RPL_TOPIC, ch->name, ch->topic, NULL);
-	}
-	if (ch->topic_set_time != 0 && ch->topic_set_by != NULL) {
-		char *tmp = g_strdup_printf("%lu", ch->topic_set_time);
-		client_send_response(c, RPL_TOPICWHOTIME, ch->name, ch->topic_set_by, 
-							 tmp, NULL);
-		g_free(tmp);
-	}
+	client_send_topic(c, ch);
 
 	client_send_nameslist(c, ch);
 }
@@ -640,6 +632,13 @@ void client_send_topic(struct irc_client *c, struct irc_channel_state *ch)
 		client_send_response(c, RPL_TOPIC, ch->name, ch->topic, NULL);
 	} else {
 		client_send_response(c, RPL_NOTOPIC, ch->name, "No topic set", NULL);
+	}
+
+	if (ch->topic_set_time != 0 && ch->topic_set_by != NULL) {
+		char *tmp = g_strdup_printf("%lu", ch->topic_set_time);
+		client_send_response(c, RPL_TOPICWHOTIME, ch->name, ch->topic_set_by, 
+							 tmp, NULL);
+		g_free(tmp);
 	}
 }
 

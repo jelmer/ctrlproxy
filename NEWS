@@ -95,7 +95,9 @@ Ctrlproxy 3.0.6 UNRELEASED
 
     * Fix occasional repeating of lines. (#75)
 
-	* Fix outgoing SSL connections. (#128)
+    * Fix outgoing SSL connections. (#128)
+
+    * Send topic change time if known.
 
   INTERNALS
 

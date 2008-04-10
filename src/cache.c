@@ -85,7 +85,6 @@ static gboolean client_try_cache_topic(struct irc_client *c, struct irc_network_
 
 	client_send_topic(c, ch);
 
-
 	return TRUE;
 }
 
