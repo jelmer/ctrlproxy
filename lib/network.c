@@ -20,6 +20,7 @@
 #include "internals.h"
 #include "irc.h"
 #include "ssl.h"
+#include "transport.h"
 
 static GHashTable *virtual_network_ops = NULL;
 
@@ -72,42 +73,10 @@ static void server_send_login (struct irc_network *s)
  */
 gboolean network_set_charset(struct irc_network *n, const char *name)
 {
-	GIConv tmp;
-
-	if (name != NULL) {
-		tmp = g_iconv_open(name, "UTF-8");
-
-		if (tmp == (GIConv)-1) {
-			network_log(LOG_WARNING, n, "Unable to find charset `%s'", name);
-			return FALSE;
-		}
-	} else {
-		tmp = (GIConv)-1;
+	if (!transport_set_charset(n->connection.transport, name)) {
+		network_log(LOG_WARNING, n, "Unable to find charset `%s'", name);
+		return FALSE;
 	}
-	
-	if (n->connection.outgoing_iconv != (GIConv)-1)
-		g_iconv_close(n->connection.outgoing_iconv);
-
-	n->connection.outgoing_iconv = tmp;
-
-	if (name != NULL) {
-		tmp = g_iconv_open("UTF-8", name);
-		if (tmp == (GIConv)-1) {
-			network_log(LOG_WARNING, n, "Unable to find charset `%s'", name);
-			return FALSE;
-		}
-	} else {
-		tmp = (GIConv)-1;
-	}
-
-	if (n->connection.incoming_iconv != (GIConv)-1)
-		g_iconv_close(n->connection.incoming_iconv);
-
-	n->connection.incoming_iconv = tmp;
-
-	if (n->config->type == NETWORK_VIRTUAL)
-		return TRUE;
-
 	return TRUE;
 }
 
@@ -125,73 +94,62 @@ static void network_report_disconnect(struct irc_network *n, const char *fmt, ..
 	network_log(LOG_WARNING, n, "%s", tmp);
 }
 
-static gboolean handle_server_receive (GIOChannel *c, GIOCondition cond, void *_server)
+static void on_transport_disconnect(struct irc_transport *transport)
 {
-	struct irc_network *server = (struct irc_network *)_server;
-	struct irc_line *l;
-	gboolean ret;
 
-	g_assert(c != NULL);
-	g_assert(server != NULL);
-
-	if (cond & G_IO_HUP) {
-		network_report_disconnect(server, "Hangup from server, scheduling reconnect");
-		reconnect(server);
-		return FALSE;
-	}
-
-	if (cond & G_IO_ERR) {
-		network_report_disconnect(server, 
-								  "Error from server: %s, scheduling reconnect", g_io_channel_unix_get_sock_error(c));
-		reconnect(server);
-		return FALSE;
-	}
-
-	if (cond & G_IO_IN) {
-		GError *err = NULL;
-		GIOStatus status;
-		
-		while ((status = irc_recv_line(c, server->connection.incoming_iconv, 
-									   &err, &l)) == G_IO_STATUS_NORMAL) 
-		{
-			g_assert(l != NULL);
-
-			ret = server->process_from_server(server, l);
-
-			free_line(l);
-
-			if (!ret)
-				return FALSE;
-		}
-
-		switch (status) {
-		case G_IO_STATUS_AGAIN:
-			return TRUE;
-		case G_IO_STATUS_EOF:
-			if (server->connection.state != NETWORK_CONNECTION_STATE_NOT_CONNECTED) 
-				reconnect(server);
-			return FALSE;
-		case G_IO_STATUS_ERROR:
-			g_assert(err != NULL);
-			network_log(LOG_WARNING, server, 
-						"Error \"%s\" reading from server", err->message);
-			if (l != NULL) {
-				ret = server->process_from_server(server, l);
-
-				free_line(l);
-
-				return ret;
-			}
-
-			return TRUE;
-		default: abort();
-		}
-
-		return TRUE;
-	}
-
-	return TRUE;
 }
+
+static void on_transport_hup(struct irc_transport *transport)
+{
+	struct irc_network *network = transport->userdata;
+
+	network_report_disconnect(network, "Hangup from server, scheduling reconnect");
+	reconnect(network);
+}
+
+static gboolean on_transport_error(struct irc_transport *transport, const char *error_msg)
+{
+	struct irc_network *network = transport->userdata;
+
+	network_report_disconnect(network, 
+								  "Error from server: %s, scheduling reconnect", error_msg);
+	reconnect(network);
+
+	return FALSE;
+}
+
+
+static void on_transport_charset_error(struct irc_transport *transport, const char *error_msg)
+{
+	struct irc_network *network = transport->userdata;
+
+	network_log(LOG_WARNING, network, "Error while sending line with charset: %s", 
+				error_msg);
+}
+
+static gboolean on_transport_recv(struct irc_transport *transport,
+							  const struct irc_line *line)
+{
+	struct irc_network *server = transport->userdata;
+	return server->process_from_server(server, line);
+}
+
+static void on_transport_log(struct irc_transport *transport, const struct irc_line *l, const GError *error)
+{
+	struct irc_network *network = transport->userdata;
+
+	network_log(LOG_WARNING, network, "Error while sending line '%s': %s", 
+				l->args[0], error->message);
+}
+
+static const struct irc_transport_callbacks network_callbacks = {
+	.disconnect = on_transport_disconnect,
+	.hangup = on_transport_hup,
+	.error = on_transport_error,
+	.charset_error = on_transport_charset_error,
+	.recv = on_transport_recv,
+	.log = on_transport_log,
+};
 
 static struct tcp_server_config *network_get_next_tcp_server(struct irc_network *n)
 {
@@ -211,81 +169,6 @@ static struct tcp_server_config *network_get_next_tcp_server(struct irc_network 
 		return cur->data; 
 
 	return NULL;
-}
-
-static gboolean antiflood_allow_line(struct irc_network *s)
-{
-	/* FIXME: Implement antiflood, use s->config->queue_speed */
-	return TRUE;
-}
-
-/**
- * Actually send items from the server queue to the server.
- * 
- * @param ch IO Channel to use
- * @param cond IO Condition
- * @param user_data Network pointer
- * @return Whether the queue still contains items
- */
-static gboolean server_send_queue(GIOChannel *ch, GIOCondition cond, 
-								  gpointer user_data)
-{
-	struct irc_network *s = user_data;
-	GError *error = NULL;
-	GIOStatus status;
-
-	status = g_io_channel_flush(s->connection.outgoing, &error);
-
-	if (status == G_IO_STATUS_AGAIN) {
-		return TRUE;
-	}
-
-	while (!g_queue_is_empty(s->connection.pending_lines)) {
-		struct irc_line *l = g_queue_peek_head(s->connection.pending_lines);
-
-		/* Check if antiflood allows us to send a line */
-		if (!antiflood_allow_line(s)) 
-			return TRUE;
-
-		status = irc_send_line(s->connection.outgoing, s->connection.outgoing_iconv, l, &error);
-
-		if (status == G_IO_STATUS_AGAIN) {
-			free_line(l);
-			return TRUE;
-		}
-
-		g_queue_pop_head(s->connection.pending_lines);
-
-		if (status != G_IO_STATUS_NORMAL) {
-			network_log(LOG_WARNING, s, "Error sending line '%s': %s",
-	           l->args[0], error != NULL?error->message:"ERROR");
-			free_line(l);
-
-			return FALSE;
-		}
-
-		status = g_io_channel_flush(s->connection.outgoing, &error);
-
-		if (status == G_IO_STATUS_AGAIN) {
-			free_line(l);
-			return TRUE;
-		}
-
-		if (status != G_IO_STATUS_NORMAL) {
-			network_log(LOG_WARNING, s, "Error sending line '%s': %s",
-	           l->args[0], error != NULL?error->message:"ERROR");
-			free_line(l);
-
-			return FALSE;
-		}
-
-		s->connection.last_line_sent = time(NULL);
-
-		free_line(l);
-	}
-
-	s->connection.outgoing_id = 0;
-	return FALSE;
 }
 
 static gboolean network_send_line_direct(struct irc_network *s, struct irc_client *c, 
@@ -311,36 +194,8 @@ static gboolean network_send_line_direct(struct irc_network *s, struct irc_clien
 		if (s->connection.data.virtual.ops == NULL) 
 			return FALSE;
 		return s->connection.data.virtual.ops->to_server(s, c, l);
-	} else if (s->connection.outgoing_id == 0) {
-		GError *error = NULL;
-
-		GIOStatus status = irc_send_line(s->connection.outgoing, s->connection.outgoing_iconv, l, &error);
-
-		if (status == G_IO_STATUS_AGAIN) {
-			g_queue_push_tail(s->connection.pending_lines, linedup(l));
-			s->connection.outgoing_id = g_io_add_watch(s->connection.outgoing, G_IO_OUT, server_send_queue, s);
-		} else if (status != G_IO_STATUS_NORMAL) {
-			network_log(LOG_WARNING, s, "Error sending line '%s': %s",
-	           l->args[0], error != NULL?error->message:"ERROR");
-			return FALSE;
-		}
-
-		status = g_io_channel_flush(s->connection.outgoing, &error);
-		if (status == G_IO_STATUS_AGAIN) {
-			s->connection.outgoing_id = g_io_add_watch(s->connection.outgoing, G_IO_OUT, server_send_queue, s);
-		} else if (status != G_IO_STATUS_NORMAL) {
-			network_log(LOG_WARNING, s, "Error sending line '%s': %s",
-	           l->args[0], error != NULL?error->message:"ERROR");
-			return FALSE;
-		}
-
-		s->connection.last_line_sent = time(NULL);
-		return TRUE;
-	} else {
-		g_queue_push_tail(s->connection.pending_lines, linedup(l));
-	}
-
-	return TRUE;
+	} else 
+		return transport_send_line(s->connection.transport, l);
 }
 
 /**
@@ -660,7 +515,7 @@ static gboolean connect_current_tcp_server(struct irc_network *s)
 	s->connection.state = NETWORK_CONNECTION_STATE_CONNECTING;
 
 	if (!connect_finished) {
-		s->connection.outgoing_id = g_io_add_watch(ioc, 
+		s->connection.data.tcp.connect_id = g_io_add_watch(ioc, 
 												   G_IO_OUT|G_IO_ERR|G_IO_HUP, 
 												   server_finish_connect, s);
 	} else {
@@ -761,13 +616,10 @@ static gboolean close_server(struct irc_network *n)
 	case NETWORK_TCP: 
 	case NETWORK_PROGRAM: 
 	case NETWORK_IOCHANNEL:
-		if (n->connection.incoming_id > 0) {
-			g_source_remove(n->connection.incoming_id); 
-			n->connection.incoming_id = 0;
-		}
-		if (n->connection.outgoing_id > 0) {
-			g_source_remove(n->connection.outgoing_id); 
-			n->connection.outgoing_id = 0;
+		irc_transport_disconnect(n->connection.transport);
+		if (n->connection.data.tcp.connect_id > 0) {
+			g_source_remove(n->connection.data.tcp.connect_id);
+			n->connection.data.tcp.connect_id = 0;
 		}
 		if (n->connection.data.tcp.ping_id > 0) {
 			g_source_remove(n->connection.data.tcp.ping_id);
@@ -777,6 +629,7 @@ static gboolean close_server(struct irc_network *n)
 		g_free(n->connection.data.tcp.remote_name);
 		n->connection.data.tcp.local_name = NULL;
 		n->connection.data.tcp.remote_name = NULL;
+		free_irc_transport(n->connection.transport);
 		break;
 	case NETWORK_VIRTUAL:
 		if (n->connection.data.virtual.ops && 
@@ -869,7 +722,7 @@ static gboolean server_finish_connect(GIOChannel *ioc, GIOCondition cond,
 			return FALSE;
 		}
 
-		s->connection.outgoing_id = 0; /* Otherwise data will be queued */
+		s->connection.data.tcp.connect_id = 0; /* Otherwise data will be queued */
 		network_set_iochannel(s, ioc);
 
 		s->connection.last_line_recvd = time(NULL);
@@ -909,14 +762,13 @@ gboolean network_set_iochannel(struct irc_network *s, GIOChannel *ioc)
 		return FALSE;
 	}
 
-	s->connection.outgoing = ioc;
+	s->connection.transport = irc_transport_new_iochannel(ioc);
 
-	s->connection.incoming_id = g_io_add_watch(s->connection.outgoing, 
-								G_IO_IN | G_IO_HUP | G_IO_ERR, 
-								handle_server_receive, s);
-	handle_server_receive(s->connection.outgoing, 
-				  g_io_channel_get_buffer_condition(s->connection.outgoing), 
-				  s);
+	irc_transport_set_callbacks(s->connection.transport, 
+								&network_callbacks, 
+								s);
+
+	transport_parse_buffer(s->connection.transport);
 
 	server_send_login(s);
 
@@ -928,6 +780,7 @@ static gboolean connect_program(struct irc_network *s)
 	int sock;
 	char *cmd[2];
 	pid_t pid;
+	GIOChannel *ioc;
 	
 	g_assert(s);
 	g_assert(s->config);
@@ -939,9 +792,10 @@ static gboolean connect_program(struct irc_network *s)
 
 	if (pid == -1) return FALSE;
 
-	network_set_iochannel(s, g_io_channel_unix_new(sock));
+	ioc = g_io_channel_unix_new(sock);
+	network_set_iochannel(s, ioc);
 
-	g_io_channel_unref(s->connection.outgoing);
+	g_io_channel_unref(ioc);
 
 	if (s->info->name == NULL) {
 		if (strchr(s->config->type_settings.program_location, '/')) {
@@ -1011,9 +865,7 @@ struct irc_network *irc_network_new(gboolean (*process_from_server) (struct irc_
 	s->info = network_info_init();
 	s->info->name = g_strdup(s->config->name);
 	s->info->ircd = g_strdup("ctrlproxy");
-	s->connection.pending_lines = g_queue_new();
 	s->info->forced_nick_changes = TRUE; /* Forced nick changes are done by ctrlproxy */
-	s->connection.outgoing_iconv = s->connection.incoming_iconv = (GIConv)-1;
 
 #ifdef HAVE_GNUTLS
 	s->ssl_credentials = ssl_get_client_credentials(NULL);
@@ -1037,16 +889,8 @@ gboolean connect_network(struct irc_network *s)
 	return connect_server(s);
 }
 
-static void free_pending_line(void *_line, void *userdata)
-{
-	free_line((struct irc_line *)_line);
-}
-
 static void free_network(struct irc_network *s)
 {
-	g_queue_foreach(s->connection.pending_lines, free_pending_line, NULL);
-	g_queue_free(s->connection.pending_lines);
-
 	free_network_info(s->info);
 	if (s->config->type == NETWORK_TCP)
 		g_free(s->connection.data.tcp.last_disconnect_reason);
@@ -1054,11 +898,6 @@ static void free_network(struct irc_network *s)
 #ifdef HAVE_GNUTLS
 	ssl_free_client_credentials(s->ssl_credentials);
 #endif
-
-	if (s->connection.incoming_iconv != (GIConv)-1)
-		g_iconv_close(s->connection.incoming_iconv);
-	if (s->connection.outgoing_iconv != (GIConv)-1)
-		g_iconv_close(s->connection.outgoing_iconv);
 
 	g_free(s);
 }

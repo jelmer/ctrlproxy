@@ -62,21 +62,8 @@ struct network_connection {
 	time_t last_line_sent;
 	/** Time the last line was received from this network. */
 	time_t last_line_recvd;
-	/** Lines that are pending to be sent. */
-	GQueue *pending_lines;
 
-	/** IO Channel. */
-	GIOChannel *outgoing;
-	/** Source id for output watch. */
-	gint outgoing_id;
-	/** Source id for input watch. */
-	gint incoming_id;
-
-	/** IConv handle used for outgoing data. */
-	GIConv outgoing_iconv;
-	/** IConv handle used for incoming data. */
-	GIConv incoming_iconv;
-
+	struct irc_transport *transport;
 	union { 
 		struct {
 			/** Configuration for TCP/IP server currently connected to. */
@@ -91,6 +78,8 @@ struct network_connection {
 			char *last_disconnect_reason;
 			/** Source ID for function that regularly pings the network. */
 			gint ping_id;
+			/** Source ID for function that finishes connect. */
+			gint connect_id;
 		} tcp;
 		
 		struct {
