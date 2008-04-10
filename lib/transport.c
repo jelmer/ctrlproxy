@@ -82,6 +82,17 @@ static gboolean handle_transport_receive(GIOChannel *c, GIOCondition cond,
 	return TRUE;
 }
 
+void irc_transport_set_callbacks(struct irc_transport *transport, 
+								 const struct irc_transport_callbacks *callbacks, void *userdata)
+{
+	transport->userdata = userdata;
+	transport->callbacks = callbacks;
+
+	transport->incoming_id = g_io_add_watch(
+							transport->incoming, G_IO_IN | G_IO_HUP, 
+							handle_transport_receive, transport);
+}
+
 /* GIOChannels passed into this function 
  * should preferably:
  *  - have no encoding set
@@ -89,22 +100,14 @@ static gboolean handle_transport_receive(GIOChannel *c, GIOCondition cond,
  *
  * @param iochannel Channel to talk over 
  */
-struct irc_transport *irc_transport_new_iochannel(GIOChannel *iochannel, 
-												  const struct irc_transport_callbacks *callbacks,
-												  void *userdata)
+struct irc_transport *irc_transport_new_iochannel(GIOChannel *iochannel)
 {
 	struct irc_transport *ret = g_new0(struct irc_transport, 1);
 
 	ret->incoming = iochannel;
 	ret->pending_lines = g_queue_new();
 	ret->outgoing_iconv = ret->incoming_iconv = (GIConv)-1;
-	ret->userdata = userdata;
-	ret->callbacks = callbacks;
 	g_io_channel_ref(ret->incoming);
-
-	ret->incoming_id = g_io_add_watch(
-							ret->incoming, G_IO_IN | G_IO_HUP, 
-							handle_transport_receive, ret);
 
 	return ret;
 }

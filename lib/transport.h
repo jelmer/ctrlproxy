@@ -50,14 +50,14 @@ struct irc_transport {
 	void *userdata;
 };
 
-struct irc_transport *irc_transport_new_iochannel(GIOChannel *iochannel,
-												  const struct irc_transport_callbacks *callbacks,
-												  void *userdata);
+struct irc_transport *irc_transport_new_iochannel(GIOChannel *iochannel);
 void irc_transport_disconnect(struct irc_transport *transport);
 void free_irc_transport(struct irc_transport *);
 gboolean transport_set_charset(struct irc_transport *transport, const char *name);
 gboolean transport_send_line(struct irc_transport *transport, const struct irc_line *);
 gboolean transport_send_args(struct irc_transport *transport, ...);
 void transport_parse_buffer(struct irc_transport *transport);
+void irc_transport_set_callbacks(struct irc_transport *transport, 
+								 const struct irc_transport_callbacks *callbacks, void *userdata);
 
 #endif /* __LIBIRC_TRANSPORT_H__ */

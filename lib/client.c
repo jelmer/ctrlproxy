@@ -420,7 +420,8 @@ struct irc_client *irc_client_new(GIOChannel *c, const char *default_origin, con
 	client->connect_time = time(NULL);
 	client->ping_id = g_timeout_add(1000 * 300, (GSourceFunc)client_ping, 
 									client);
-	client->transport = irc_transport_new_iochannel(c, &client_transport_callbacks, 	client);
+	client->transport = irc_transport_new_iochannel(c);
+	irc_transport_set_callbacks(client->transport, &client_transport_callbacks, client);
 	client->description = g_strdup(desc);
 	client->connected = TRUE;
 
