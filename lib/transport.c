@@ -43,7 +43,7 @@ static gboolean handle_transport_receive(GIOChannel *c, GIOCondition cond,
 	}
 
 	if (cond & G_IO_HUP) {
-		irc_transport_disconnect(transport);
+		transport->callbacks->hangup(transport);
 		return FALSE;
 	}
 
@@ -63,7 +63,7 @@ static gboolean handle_transport_receive(GIOChannel *c, GIOCondition cond,
 		}
 
 		if (status == G_IO_STATUS_EOF) {
-			irc_transport_disconnect(transport);
+			transport->callbacks->hangup(transport);
 			return FALSE;
 		}
 
@@ -230,7 +230,7 @@ static gboolean transport_send_queue(GIOChannel *ioc, GIOCondition cond,
 		case G_IO_STATUS_EOF:
 			transport->outgoing_id = 0;
 
-			irc_transport_disconnect(transport);
+			transport->callbacks->hangup(transport);
 
 			free_line(l);
 
@@ -279,7 +279,7 @@ gboolean transport_send_line(struct irc_transport *transport,
 		g_queue_push_tail(transport->pending_lines, linedup(l));
 		break;
 	case G_IO_STATUS_EOF:
-		irc_transport_disconnect(transport);
+		transport->callbacks->hangup(transport);
 		return FALSE;
 	case G_IO_STATUS_ERROR:
 		transport->callbacks->log(transport, l, error);

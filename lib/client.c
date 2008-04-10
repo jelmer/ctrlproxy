@@ -394,6 +394,7 @@ const struct irc_transport_callbacks client_transport_callbacks = {
 	.recv = on_transport_receive_line,
 	.charset_error = on_transport_charset_error,
 	.error = on_transport_error,
+	.hangup = irc_transport_disconnect,
 };
 
 /* 

@@ -57,7 +57,6 @@ START_TEST(test_login)
 	fail_unless(n->connection.state == NETWORK_CONNECTION_STATE_NOT_CONNECTED);
 	g_io_channel_pair(&ch1, &ch2);
 	network_set_iochannel(n, ch1);
-	fail_unless(n->connection.outgoing == ch1);
 	fail_unless(n->connection.state == NETWORK_CONNECTION_STATE_LOGIN_SENT);
 	g_io_channel_set_close_on_unref(ch1, TRUE);
 	g_io_channel_unref(ch1);

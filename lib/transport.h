@@ -32,6 +32,7 @@ struct irc_transport;
 
 struct irc_transport_callbacks {
 	void (*log)(struct irc_transport *transport, const struct irc_line *l, const GError *error);
+	void (*hangup) (struct irc_transport *transport);
 	void (*disconnect)(struct irc_transport *transport);
 	gboolean (*recv)(struct irc_transport *transport, const struct irc_line *line);
 	void (*charset_error) (struct irc_transport *transport, const char *error_msg);
