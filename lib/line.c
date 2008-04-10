@@ -155,11 +155,7 @@ GIOStatus irc_send_line(GIOChannel *c, GIConv iconv,
 		g_assert(bytes_written == 0);
 	}
 
-	if (ret != G_IO_STATUS_NORMAL) {
-		return ret;
-	}
-
-	return g_io_channel_flush(c, error);
+	return ret;
 }
 
 
