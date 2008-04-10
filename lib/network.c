@@ -580,6 +580,14 @@ static void clients_invalidate_state(GList *clients, struct irc_network_state *s
 	}
 }
 
+static void free_tcp_names(struct irc_network *n)
+{
+	g_free(n->connection.data.tcp.local_name);
+	g_free(n->connection.data.tcp.remote_name);
+	n->connection.data.tcp.local_name = NULL;
+	n->connection.data.tcp.remote_name = NULL;
+}
+
 static gboolean close_server(struct irc_network *n) 
 {
 	g_assert(n);
@@ -588,6 +596,14 @@ static gboolean close_server(struct irc_network *n)
 		g_source_remove(n->reconnect_id);
 		n->reconnect_id = 0;
 		n->connection.state = NETWORK_CONNECTION_STATE_NOT_CONNECTED;
+	}
+
+	if (n->connection.state == NETWORK_CONNECTION_STATE_CONNECTING) {
+		g_source_remove(n->connection.data.tcp.connect_id);
+		n->connection.data.tcp.connect_id = 0;
+		n->connection.state = NETWORK_CONNECTION_STATE_NOT_CONNECTED;
+		if (n->config->type == NETWORK_TCP)
+			free_tcp_names(n);
 	}
 
 	if (n->connection.state == NETWORK_CONNECTION_STATE_NOT_CONNECTED) {
@@ -617,18 +633,11 @@ static gboolean close_server(struct irc_network *n)
 	case NETWORK_PROGRAM: 
 	case NETWORK_IOCHANNEL:
 		irc_transport_disconnect(n->connection.transport);
-		if (n->connection.data.tcp.connect_id > 0) {
-			g_source_remove(n->connection.data.tcp.connect_id);
-			n->connection.data.tcp.connect_id = 0;
-		}
 		if (n->connection.data.tcp.ping_id > 0) {
 			g_source_remove(n->connection.data.tcp.ping_id);
 			n->connection.data.tcp.ping_id = 0;
 		}
-		g_free(n->connection.data.tcp.local_name);
-		g_free(n->connection.data.tcp.remote_name);
-		n->connection.data.tcp.local_name = NULL;
-		n->connection.data.tcp.remote_name = NULL;
+		free_tcp_names(n);
 		free_irc_transport(n->connection.transport);
 		break;
 	case NETWORK_VIRTUAL:
