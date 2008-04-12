@@ -869,6 +869,7 @@ static int channel_state_change_mode(struct irc_network_state *s, struct network
 		return 1;
 	} else if (is_prefix_mode(info, mode)) {
 		struct channel_nick *n;
+		gboolean ret;
 		
 		if (opt_arg == NULL) {
 			network_state_log(LOG_WARNING, s, "Mode %c requires nick argument, but no argument found", mode);
@@ -881,13 +882,15 @@ static int channel_state_change_mode(struct irc_network_state *s, struct network
 			return -1;
 		}
 		if (set) {
-			if (!modes_set_mode(n->modes, mode)) {
-				network_state_log(LOG_WARNING, s, "Unable to add mode '%c' to modes %s on nick %s on channel %s", mode, n->modes, opt_arg, c->name);
-			}
+			ret = modes_set_mode(n->modes, mode);
 		} else {
-			if (!modes_unset_mode(n->modes, mode)) {
-				network_state_log(LOG_WARNING, s, "Unable to remove mode '%c' from modes %s on nick %s on channel %s", mode, n->modes, opt_arg, c->name);
-			}
+			ret = modes_unset_mode(n->modes, mode);
+		} 
+
+		if (!ret) {
+			char *modestr = mode2string(n->modes);
+			network_state_log(LOG_WARNING, s, "Unable to set mode %c%c to modes %s on nick %s on channel %s", set?'+':'-', mode, modestr, opt_arg, c->name);
+			g_free(modestr);
 		}
 		return 1;
 	} else {
@@ -1004,11 +1007,7 @@ static void handle_nick(struct irc_network_state *s, const struct irc_line *l)
 
 static void handle_umodeis(struct irc_network_state *s, const struct irc_line *l)
 {
-	int i;
-	memset(s->me.modes, 0, sizeof(s->me.modes));
-	for (i = 0; i < strlen(l->args[1]); i++) {
-		s->me.modes[(unsigned char)l->args[1][i]] = 1;
-	}
+	string2mode(l->args[1], s->me.modes);
 }
 
 static void handle_324(struct irc_network_state *s, const struct irc_line *l)
@@ -1210,15 +1209,19 @@ void network_state_set_log_fn(struct irc_network_state *st,
 
 void string2mode(const char *modes, irc_modes_t ar)
 {
-	memset(ar, 0, sizeof(ar));
+	gboolean action;
+	modes_clear(ar);
 
 	if (modes == NULL)
 		return;
 
-	g_assert(modes[0] == '+');
-	modes++;
+	g_assert(modes[0] == '+' || modes[0] == '-');
 	for (; *modes; modes++) {
-		ar[(unsigned char)(*modes)] = TRUE;
+		switch (*modes) {
+			case '+': action = TRUE; break;
+			case '-': action = FALSE; break;
+			default: modes_change_mode(ar, action, *modes); break;
+		}
 	}
 }
 
@@ -1228,7 +1231,7 @@ char *mode2string(irc_modes_t modes)
 	unsigned char i;
 	int pos = 0;
 	ret[0] = '\0';
-	for(i = 0; i < sizeof(modes); i++) {
+	for(i = 0; i < MAXMODES; i++) {
 		if (modes[i]) { ret[pos] = (char)i; pos++; }
 	}
 	ret[pos] = '\0';

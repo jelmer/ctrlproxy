@@ -526,7 +526,7 @@ gboolean client_send_channel_state_diff(struct irc_client *client,
 
 	/* Send MODE if the mode changed */
 	if (memcmp(old_state->modes, new_state->modes, 
-			   sizeof(old_state->modes)) != 0) {
+			   sizeof(gboolean) * MAXMODES) != 0) {
 		char *mode = mode2string(new_state->modes);
 		/* FIXME: Remove old modes */
 		client_send_args(client, "MODE", new_state->name, mode, NULL);
