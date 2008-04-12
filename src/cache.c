@@ -83,7 +83,7 @@ static gboolean client_try_cache_topic(struct irc_client *c, struct irc_network_
 	ch = find_channel(net, l->args[1]);
 	if (!ch) return FALSE;
 
-	client_send_topic(c, ch);
+	client_send_topic(c, ch, TRUE);
 
 	return TRUE;
 }

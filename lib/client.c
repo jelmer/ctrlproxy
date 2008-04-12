@@ -622,16 +622,17 @@ void client_send_channel_state(struct irc_client *c,
 	client_send_args_ex(c, client_get_own_hostmask(c), "JOIN", ch->name, 
 						NULL);
 
-	client_send_topic(c, ch);
+	client_send_topic(c, ch, FALSE);
 
 	client_send_nameslist(c, ch);
 }
 
-void client_send_topic(struct irc_client *c, struct irc_channel_state *ch)
+void client_send_topic(struct irc_client *c, struct irc_channel_state *ch, 
+					   gboolean explicit)
 {
 	if (ch->topic) {
 		client_send_response(c, RPL_TOPIC, ch->name, ch->topic, NULL);
-	} else {
+	} else if (explicit) {
 		client_send_response(c, RPL_NOTOPIC, ch->name, "No topic set", NULL);
 	}
 
