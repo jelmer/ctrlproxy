@@ -385,7 +385,9 @@ struct channel_nick *find_add_channel_nick(struct irc_channel_state *c,
 	n->channel = c;
 	n->global_nick = find_add_network_nick(c->network, realname);
 	if (prefix != 0) {
-		modes_set_mode(n->modes, get_mode_by_prefix(prefix, c->network->info));
+		char mode = get_mode_by_prefix(prefix, c->network->info);
+		if (mode) 
+			modes_set_mode(n->modes, mode);
     }
 	c->nicks = g_list_append(c->nicks, n);
 	n->global_nick->channel_nicks = g_list_append(n->global_nick->channel_nicks, n);
@@ -818,7 +820,7 @@ static int channel_state_change_mode(struct irc_network_state *s, struct network
 		struct banlist_entry *be;
 
 		if (opt_arg == NULL) {
-			network_state_log(LOG_WARNING, s, "Missing argumnt for ban MODE set/unset");
+			network_state_log(LOG_WARNING, s, "Missing argument for ban MODE set/unset");
 			return -1;
 		}
 
