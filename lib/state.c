@@ -869,7 +869,6 @@ static int channel_state_change_mode(struct irc_network_state *s, struct network
 		return 1;
 	} else if (is_prefix_mode(info, mode)) {
 		struct channel_nick *n;
-		gboolean ret;
 		
 		if (opt_arg == NULL) {
 			network_state_log(LOG_WARNING, s, "Mode %c requires nick argument, but no argument found", mode);
@@ -882,16 +881,10 @@ static int channel_state_change_mode(struct irc_network_state *s, struct network
 			return -1;
 		}
 		if (set) {
-			ret = modes_set_mode(n->modes, mode);
+			modes_set_mode(n->modes, mode);
 		} else {
-			ret = modes_unset_mode(n->modes, mode);
+			modes_unset_mode(n->modes, mode);
 		} 
-
-		if (!ret) {
-			char *modestr = mode2string(n->modes);
-			network_state_log(LOG_WARNING, s, "Unable to set mode %c%c to modes %s on nick %s on channel %s", set?'+':'-', mode, modestr, opt_arg, c->name);
-			g_free(modestr);
-		}
 		return 1;
 	} else {
 		modes_change_mode(c->modes, set, mode);
