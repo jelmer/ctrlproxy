@@ -528,6 +528,7 @@ gboolean client_send_channel_state_diff(struct irc_client *client,
 	if (memcmp(old_state->modes, new_state->modes, 
 			   sizeof(old_state->modes)) != 0) {
 		char *mode = mode2string(new_state->modes);
+		/* FIXME: Remove old modes */
 		client_send_args(client, "MODE", new_state->name, mode, NULL);
 		g_free(mode);
 	}
@@ -624,8 +625,6 @@ void client_send_channel_state(struct irc_client *c,
 	client_send_topic(c, ch);
 
 	client_send_nameslist(c, ch);
-
-	client_send_channel_mode(c, ch);
 }
 
 void client_send_topic(struct irc_client *c, struct irc_channel_state *ch)
@@ -737,7 +736,8 @@ void client_send_channel_mode(struct irc_client *c, struct irc_channel_state *ch
 {
 		char *mode;
 		mode = mode2string(ch->modes);
-		client_send_response(c, RPL_CHANNELMODEIS, ch->name, mode, NULL);
+		if (mode != NULL)
+			client_send_response(c, RPL_CHANNELMODEIS, ch->name, mode, NULL);
 		g_free(mode);
 		if (ch->creation_time > 0) {
 			char time[20];

@@ -138,7 +138,7 @@ G_MODULE_EXPORT void network_state_log(enum log_level l, const struct irc_networ
 G_MODULE_EXPORT void network_state_set_log_fn(struct irc_network_state *st, void (*fn) (enum log_level, void *, const char *), void *userdata);
 
 G_MODULE_EXPORT G_GNUC_MALLOC char *mode2string(irc_modes_t modes);
-G_MODULE_EXPORT void string2mode(char *modestring, irc_modes_t modes);
+G_MODULE_EXPORT void string2mode(const char *modestring, irc_modes_t modes);
 G_MODULE_EXPORT gboolean modes_change_mode(irc_modes_t modes, gboolean set, char newmode);
 #define modes_set_mode(modes, newmode) modes_change_mode(modes, TRUE, newmode)
 #define modes_unset_mode(modes, newmode) modes_change_mode(modes, FALSE, newmode)
