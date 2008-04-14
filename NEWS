@@ -2,6 +2,12 @@ Unless otherwise indicated, all changes made by Jelmer Vernooij.
 
 Ctrlproxy 3.0.7 UNRELEASED
 
+  BUG FIXES
+
+    * Handle client-specific admin commands being run without a client 
+      more gracefully.
+  
+
 Ctrlproxy 3.0.6 2008-04-13
 
   IMPROVEMENTS

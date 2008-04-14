@@ -305,6 +305,10 @@ static void cmd_next_server (admin_handle h, char **args, void *userdata)
 		n = find_network(admin_get_global(h)->networks, args[1]);
 	} else {
 		n = admin_get_network(h);
+		if (n == NULL) {
+			admin_out(h, "No current network");
+			return;
+		}
 		name = n->info->name;
 	}
 	if (!n) {
@@ -436,7 +440,7 @@ static void cmd_detach(admin_handle h, char **args, void *userdata)
 	struct irc_client *c = admin_get_client(h);
 
 	if (c == NULL) {
-		admin_out(h, "No client set");
+		admin_out(h, "No client to detach.");
 		return;
 	}
 
@@ -456,6 +460,10 @@ static void dump_joined_channels(admin_handle h, char **args, void *userdata)
 		}
 	} else {
 		n = admin_get_network(h);
+		if (n == NULL) {
+			admin_out(h, "No network specified and no current network.");
+			return;
+		}
 	}
 
 	if (!n->state) {
@@ -487,8 +495,18 @@ static void cmd_backlog(admin_handle h, char **args, void *userdata)
 {
 	struct linestack_marker *lm;
 	struct irc_network *n;
+
+	if (admin_get_client(h) == NULL) {
+		admin_out(h, "No client to send backlog to");
+		return;
+	}
 	
 	n = admin_get_network(h);
+
+	if (n == NULL) {
+		admin_out(h, "No network connected.");
+		return;
+	}
 
 	lm = g_hash_table_lookup(markers, n);
 
@@ -594,6 +612,10 @@ static void cmd_charset(admin_handle h, char **args, void *userdata)
 	}
 
 	c = admin_get_client(h);
+	if (c == NULL) {
+		admin_out(h, "The CHARSET command can only be used on client connections.");
+		return;
+	}
 
 	if (!client_set_charset(c, args[1])) {
 		admin_out(h, "Error setting charset: %s", args[1]);
