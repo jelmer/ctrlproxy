@@ -635,7 +635,8 @@ gboolean redirect_response(struct irc_network *network, const struct irc_line *l
 	}
 
 	if (!c) {
-		network_log(LOG_WARNING, network, "Unable to redirect response %s", l->args[0]);
+		network_log((g_list_length(network->clients) == 1)?LOG_TRACE:LOG_WARNING, 
+					network, "Unable to redirect response %s", l->args[0]);
 		clients_send(network->clients, l, NULL);
 	}
 
