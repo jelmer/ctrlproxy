@@ -125,27 +125,35 @@ verify_certificate (gnutls_session session, const char *hostname, GError **err)
 	return TRUE;
 }
 
+#define GNUTLS_CHANNEL_NONBLOCKING(chan) (fcntl ((chan)->fd, F_GETFL, 0) & O_NONBLOCK)
+
 static GIOStatus
 do_handshake (GNUTLSChannel *chan, GError **err)
 {
 	int result;
 
+again:
 	result = gnutls_handshake (chan->session);
 
 	if (result == GNUTLS_E_AGAIN ||
 	    result == GNUTLS_E_INTERRUPTED) {
-		g_set_error (err, SSL_ERROR,
-			     (gnutls_record_get_direction (chan->session) ?
-			      SSL_ERROR_HANDSHAKE_NEEDS_WRITE :
-			      SSL_ERROR_HANDSHAKE_NEEDS_READ),
-			     "Handshaking...");
-		return G_IO_STATUS_AGAIN;
+		if (GNUTLS_CHANNEL_NONBLOCKING (chan)) {
+			g_set_error (err, SSL_ERROR,
+				    (gnutls_record_get_direction (chan->session) ?
+				     SSL_ERROR_HANDSHAKE_NEEDS_WRITE :
+				     SSL_ERROR_HANDSHAKE_NEEDS_READ),
+				    "Handshaking...");
+			return G_IO_STATUS_AGAIN;
+		} else {
+			goto again;
+		}
 	}
 
 	if (result < 0) {
 		g_set_error (err, G_IO_CHANNEL_ERROR,
 			     G_IO_CHANNEL_ERROR_FAILED,
-			     gnutls_strerror(result));
+			     "Unable to handshake %s", gnutls_strerror(result));
+
 		return G_IO_STATUS_ERROR;
 	}
 
@@ -168,6 +176,7 @@ _gnutls_read (GIOChannel   *channel,
 
 	*bytes_read = 0;
 
+again:
 	if (!chan->established) {
 		result = do_handshake (chan, err);
 
@@ -184,13 +193,19 @@ _gnutls_read (GIOChannel   *channel,
 
 	if (result == GNUTLS_E_REHANDSHAKE) {
 		chan->established = FALSE;
-		return G_IO_STATUS_AGAIN;
+		goto again;
+	}
+
+	if ((result == GNUTLS_E_INTERRUPTED) ||
+	    (result == GNUTLS_E_AGAIN)) {
+		if (GNUTLS_CHANNEL_NONBLOCKING (chan)) {
+			return G_IO_STATUS_AGAIN;
+		} else {
+			goto again;
+		}
 	}
 
 	if (result < 0) {
-		if ((result == GNUTLS_E_INTERRUPTED) ||
-		    (result == GNUTLS_E_AGAIN))
-			return G_IO_STATUS_AGAIN;
 		g_set_error (err, G_IO_CHANNEL_ERROR,
 			     G_IO_CHANNEL_ERROR_FAILED,
 			     "Received corrupted data");
@@ -198,7 +213,7 @@ _gnutls_read (GIOChannel   *channel,
 	} else {
 		*bytes_read = result;
 
-		return G_IO_STATUS_NORMAL;
+		return (result > 0) ? G_IO_STATUS_NORMAL : G_IO_STATUS_EOF;
 	}
 }
 
@@ -214,6 +229,7 @@ _gnutls_write (GIOChannel   *channel,
 
 	*bytes_written = 0;
 
+again:
 	if (!chan->established) {
 		result = do_handshake (chan, err);
 
@@ -229,15 +245,23 @@ _gnutls_write (GIOChannel   *channel,
 
 	result = gnutls_record_send (chan->session, buf, count);
 
+	/* This can't actually happen in response to a write, but... */
+
 	if (result == GNUTLS_E_REHANDSHAKE) {
 		chan->established = FALSE;
-		return G_IO_STATUS_AGAIN;
+		goto again;
+	}
+
+	if ((result == GNUTLS_E_INTERRUPTED) ||
+	    (result == GNUTLS_E_AGAIN)) {
+		if (GNUTLS_CHANNEL_NONBLOCKING (chan)) {
+			return G_IO_STATUS_AGAIN;
+		} else {
+			goto again;
+		}
 	}
 
 	if (result < 0) {
-		if ((result == GNUTLS_E_INTERRUPTED) ||
-		    (result == GNUTLS_E_AGAIN))
-			return G_IO_STATUS_AGAIN;
 		g_set_error (err, G_IO_CHANNEL_ERROR,
 			     G_IO_CHANNEL_ERROR_FAILED,
 			     "Received corrupted data");
@@ -315,7 +339,7 @@ gnutls_get_flags (GIOChannel *channel)
 	return chan->real_sock->funcs->io_get_flags (channel);
 }
 
-GIOFuncs gnutls_channel_funcs = {
+static const GIOFuncs gnutls_channel_funcs = {
 	_gnutls_read,
 	_gnutls_write,
 	gnutls_seek,
@@ -368,7 +392,7 @@ ssl_wrap_iochannel (GIOChannel *sock, SSLType type,
 	GNUTLSChannel *chan = NULL;
 	GIOChannel *gchan = NULL;
 	gnutls_session session = NULL;
-	GNUTLSCred *cred = credentials;
+	GNUTLSCred *cred = (GNUTLSCred *) credentials;
 	int sockfd;
 	int ret;
 
@@ -411,7 +435,7 @@ ssl_wrap_iochannel (GIOChannel *sock, SSLType type,
 	g_io_channel_ref (sock);
 
 	gchan = (GIOChannel *) chan;
-	gchan->funcs = &gnutls_channel_funcs;
+	gchan->funcs = (GIOFuncs *) &gnutls_channel_funcs;
 	g_io_channel_init (gchan);
 	gchan->is_readable = gchan->is_writeable = TRUE;
 
@@ -428,6 +452,9 @@ static gboolean gnutls_inited = FALSE;
 static void
 _gnutls_init (void)
 {
+	/* to disallow usage of the blocking /dev/random */
+	gcry_control (GCRYCTL_ENABLE_QUICK_RANDOM, 0);
+
 	gnutls_global_init ();
 	gnutls_inited = TRUE;
 }

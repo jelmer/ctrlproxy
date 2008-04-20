@@ -8,7 +8,14 @@ Ctrlproxy 3.0.7 UNRELEASED
       more gracefully.
 
     * Be less verbose about unredirectable responses.
-  
+
+	* Avoid usage of blocking /dev/random for SSL code. (Andreas Schneider)
+
+  INTERNALS
+
+    * Import non-blocking GIOChannel improvements from libsoap into 
+	  the SSL wrapper code. (Andreas Schneider)
+
 
 Ctrlproxy 3.0.6 2008-04-13
 
