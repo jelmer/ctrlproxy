@@ -2,6 +2,10 @@ Unless otherwise indicated, all changes made by Jelmer Vernooij.
 
 Ctrlproxy 3.0.7 UNRELEASED
 
+  FEATURES
+
+    * Add 'create-implicit' option.
+
   BUG FIXES
 
     * Handle client-specific admin commands being run without a client 

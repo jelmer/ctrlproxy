@@ -56,6 +56,7 @@ static const char *builtin_known_keys[] = {
 	"auto-away-nick",
 	"auto-away-client-limit",
 	"auto-away-time",
+	"create-implicit",
 	"max_who_age",
 	"replication",
 	"linestack",
@@ -402,6 +403,9 @@ void save_configuration(struct ctrlproxy_config *cfg, const char *configuration_
 	if (g_key_file_has_key(cfg->keyfile, "global", "learn-network-name", NULL) ||
 		!cfg->learn_network_name)
 		g_key_file_set_boolean(cfg->keyfile, "global", "learn-network-name", cfg->learn_network_name);
+
+	if (g_key_file_has_key(cfg->keyfile, "global", "create-implicit", NULL) || !cfg->create_implicit)
+		g_key_file_set_boolean(cfg->keyfile, "global", "create-implicit", cfg->create_implicit);
 
 	if (cfg->client_charset != NULL)
 		g_key_file_set_string(cfg->keyfile, "global", "default-client-charset", cfg->client_charset);
@@ -1206,6 +1210,11 @@ struct ctrlproxy_config *load_configuration(const char *dir)
 		cfg->learn_network_name = g_key_file_get_boolean(kf, "global", "learn-network-name", NULL);
     else 
 	    cfg->learn_network_name = TRUE;
+
+	if (g_key_file_has_key(kf, "global", "create-implicit", NULL))
+		cfg->create_implicit = g_key_file_get_boolean(kf, "global", "create-implicit", NULL);
+	else
+		cfg->create_implicit = TRUE;
 
 	if (!g_file_test(cfg->motd_file, G_FILE_TEST_EXISTS))
 		log_global(LOG_ERROR, "Can't open MOTD file '%s' for reading", cfg->motd_file);

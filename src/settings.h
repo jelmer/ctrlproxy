@@ -177,6 +177,9 @@ struct ctrlproxy_config {
 	char *network_socket;
 	char *admin_socket;
 
+	/** Whether to create networks that don't exist yet. */
+	gboolean create_implicit;
+
 	/** Name of replication backend, or NULL for default. */
 	char *replication;
 

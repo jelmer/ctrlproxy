@@ -229,7 +229,7 @@ static gboolean marshall_int(struct irc_network_state *nst, const char *name, in
 static gboolean marshall_time(struct irc_network_state *nst, const char *name, int level, enum marshall_mode m, GIOChannel *t, time_t *n)
 {
 	if (m == MARSHALL_PUSH) {
-		char tmp[20];
+		char tmp[30];
 		GError *error = NULL;
 		GIOStatus status;
 		g_snprintf(tmp, sizeof(tmp), "%lu", *n);

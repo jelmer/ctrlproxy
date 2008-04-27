@@ -34,6 +34,11 @@ password=secret
 # Override motd-file location
 #motd-file = /tmp/my-motd
 
+# Whether or not to automatically connect to a network if a client requests
+# a connection. If disabled, it is only possible to connect to networks 
+# listed in the configuration
+# create-implicit = true
+
 # Save state to configuration file on exit
 autosave = true
 
