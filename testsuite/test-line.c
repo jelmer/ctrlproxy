@@ -70,6 +70,17 @@ START_TEST(test_parse_args)
 
 END_TEST
 
+START_TEST(test_prefix_time)
+	struct irc_line *ol, *nl;
+
+	ol = irc_parse_line(":me@host PRIVMSG to :hoi\r\n");
+
+	nl = line_prefix_time(ol, 1209309035);
+
+	fail_unless (!strcmp(nl->args[2], "[16:10:35] hoi"), "Got: %s", nl->args[2]);
+
+END_TEST
+
 START_TEST(test_free_null)
 	free_line(NULL);
 END_TEST
@@ -82,5 +93,6 @@ Suite *line_suite(void)
 	tcase_add_test(tc_core, test_line_parse_linef);
 	tcase_add_test(tc_core, test_parse_args);
 	tcase_add_test(tc_core, test_free_null);
+	tcase_add_test(tc_core, test_prefix_time);
 	return s;
 }
