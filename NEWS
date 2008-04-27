@@ -15,6 +15,8 @@ Ctrlproxy 3.0.7 UNRELEASED
 
 	* Avoid usage of blocking /dev/random for SSL code. (Andreas Schneider)
 
+	* Move time in ctcp requests. (#197)
+
   INTERNALS
 
     * Import non-blocking GIOChannel improvements from libsoap into 

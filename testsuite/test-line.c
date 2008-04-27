@@ -79,6 +79,18 @@ START_TEST(test_prefix_time)
 
 	fail_unless (!strcmp(nl->args[2], "[16:10:35] hoi"), "Got: %s", nl->args[2]);
 
+	ol = irc_parse_line(":me@host PRIVMSG to :\001ACTION bla\001\r\n");
+
+	nl = line_prefix_time(ol, 1209309035);
+
+	fail_unless (!strcmp(nl->args[2], "\001ACTION [16:10:35] bla\001"), "Got: %s", nl->args[2]);
+
+	ol = irc_parse_line(":me@host PRIVMSG to :\001FINGER bla\001\r\n");
+
+	nl = line_prefix_time(ol, 1209309035);
+
+	fail_unless (!strcmp(nl->args[2], "\001FINGER bla\001"), "Got: %s", nl->args[2]);
+
 END_TEST
 
 START_TEST(test_free_null)

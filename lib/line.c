@@ -428,9 +428,21 @@ G_MODULE_EXPORT struct irc_line *line_prefix_time(struct irc_line *l, time_t t)
 	struct irc_line *nl = linedup(l);
 	char stime[512];
 	char *tmp;
+	gboolean action = FALSE;
+
+	if (nl->args[2][0] == '\001') { /* CTCP */
+		/* Let's not touch any CTCP requests but actions */
+		if (strncmp(nl->args[2]+1, "ACTION", strlen("ACTION")) != 0)
+			return nl;
+		action = TRUE;
+	}
 
 	strftime(stime, sizeof(stime), "%H:%M:%S", localtime(&t));
-	tmp = g_strdup_printf("[%s] %s", stime, nl->args[2]);
+	if (action) {
+		tmp = g_strdup_printf("\001ACTION [%s]%s", stime, nl->args[2]+strlen(" ACTION"));
+	} else {
+		tmp = g_strdup_printf("[%s] %s", stime, nl->args[2]);
+	}
 	if (tmp == NULL)
 		return NULL;
 	g_free(nl->args[2]);
