@@ -87,10 +87,11 @@ void global_update_config(struct global *my_global)
 	GList *gl;
 	for (gl = my_global->networks; gl; gl = gl->next) {
 		struct irc_network *n = gl->data;
+		struct network_config *nc = n->private_data;
 	
-		n->config->autoconnect = (n->connection.state != NETWORK_CONNECTION_STATE_NOT_CONNECTED);
+		nc->autoconnect = (n->connection.state != NETWORK_CONNECTION_STATE_NOT_CONNECTED);
 
 		if (n->connection.state == NETWORK_CONNECTION_STATE_MOTD_RECVD)
-			network_update_config(n->state, n->config);
+			network_update_config(n->state, nc);
 	}
 }

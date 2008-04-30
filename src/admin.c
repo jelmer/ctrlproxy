@@ -191,6 +191,7 @@ static void cmd_add_server (admin_handle h, char **args, void *userdata)
 {
 	struct irc_network *n;
 	struct tcp_server_config *s;
+	struct network_config *nc;
 	char *t;
 
 	if (!args[1] || !args[2]) {
@@ -205,7 +206,9 @@ static void cmd_add_server (admin_handle h, char **args, void *userdata)
 		return;
 	}
 
-	if (n->config->type != NETWORK_TCP) {
+	nc = n->private_data;
+
+	if (nc->type != NETWORK_TCP) {
 		admin_out(h, "Not a TCP/IP network!");
 		return;
 	}
@@ -222,7 +225,7 @@ static void cmd_add_server (admin_handle h, char **args, void *userdata)
 	s->ssl = FALSE;
 	s->password = args[3]?g_strdup(args[3]):NULL;
 
-	n->config->type_settings.tcp.servers = g_list_append(n->config->type_settings.tcp.servers, s);
+	nc->type_settings.tcp.servers = g_list_append(nc->type_settings.tcp.servers, s);
 
 	admin_out(h, "Server added to `%s'", args[1]);
 }
@@ -267,6 +270,7 @@ static void cmd_connect_network (admin_handle h, char **args, void *userdata)
 static void cmd_disconnect_network (admin_handle h, char **args, void *userdata)
 {
 	struct irc_network *n;
+	struct network_config *nc;
 
 	if (args[1] != NULL) {
 		n = find_network(admin_get_global(h)->networks, args[1]);
@@ -282,9 +286,11 @@ static void cmd_disconnect_network (admin_handle h, char **args, void *userdata)
 		}
 	}
 
+	nc = n->private_data;
+
 	if (n->connection.state == NETWORK_CONNECTION_STATE_NOT_CONNECTED) {
 		admin_out(h, "Already disconnected from `%s'", n->info->name);
-	} else if (n->config->type == NETWORK_VIRTUAL && 
+	} else if (nc->type == NETWORK_VIRTUAL && 
 		n->connection.data.virtual.ops->not_disconnectable) {
 		admin_out(h, "Built-in network `%s' can't be disconnected", 
 				  n->info->name);
@@ -715,6 +721,7 @@ static gboolean admin_net_init(struct irc_network *n)
 {
 	char *hostmask;
 	char *nicks;
+	struct network_config *nc = n->private_data;
 
 	hostmask = admin_hostmask(n);
 	
@@ -722,7 +729,7 @@ static gboolean admin_net_init(struct irc_network *n)
 	virtual_network_recv_response(n, RPL_TOPIC, ADMIN_CHANNEL, 
 		"CtrlProxy administration channel | Type `help' for more information",
 							  NULL);
-	nicks = g_strdup_printf("@ctrlproxy %s", n->config->nick);
+	nicks = g_strdup_printf("@ctrlproxy %s", nc->nick);
 
 	virtual_network_recv_response(n, RPL_NAMREPLY, "=", ADMIN_CHANNEL, nicks, NULL);
 	g_free(nicks);

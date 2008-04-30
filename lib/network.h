@@ -104,8 +104,8 @@ struct irc_network {
 	/** Global data. */
 	struct global *global;
 
-	/** Configuration. */
-	struct network_config *config;
+	/** Private data */
+	void *private_data;
 
 	/** Number of references that exist to this network. */
 	int references;
@@ -137,7 +137,7 @@ struct irc_network {
 /* server.c */
 G_MODULE_EXPORT gboolean network_set_charset(struct irc_network *n, const char *name);
 G_MODULE_EXPORT gboolean autoconnect_networks(GList *);
-G_MODULE_EXPORT struct irc_network *irc_network_new(gboolean (*process_from_server) (struct irc_network *, const struct irc_line *), struct network_config *sc);
+G_MODULE_EXPORT struct irc_network *irc_network_new(gboolean (*process_from_server) (struct irc_network *, const struct irc_line *), void *private_data);
 G_MODULE_EXPORT gboolean connect_network(struct irc_network *);
 G_MODULE_EXPORT void network_select_next_server(struct irc_network *n);
 G_MODULE_EXPORT gboolean disconnect_network(struct irc_network *s);

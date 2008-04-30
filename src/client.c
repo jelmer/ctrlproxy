@@ -103,7 +103,9 @@ static gboolean process_from_client(struct irc_client *c, const struct irc_line 
 		network_send_line(c->network, c, l, TRUE);
 	} else if (!g_strcasecmp(l->args[0], "")) {
 	} else if (c->network->connection.state == NETWORK_CONNECTION_STATE_MOTD_RECVD) {
-		if (c->network->config->disable_cache || !client_try_cache(c, c->network->state, l)) {
+		struct network_config *nc = c->network->private_data;
+
+		if (nc->disable_cache || !client_try_cache(c, c->network->state, l)) {
 			/* Perhaps check for validity of input here ? It could save us some bandwidth 
 			 * to the server, though very unlikely to occur often */
 			network_send_line(c->network, c, l, FALSE);
@@ -134,6 +136,7 @@ static gboolean process_from_client(struct irc_client *c, const struct irc_line 
 static gboolean welcome_client(struct irc_client *client)
 {
 	char *features, *tmp;
+	struct network_config *nc;
 
 	g_assert(client);
 
@@ -185,7 +188,8 @@ static gboolean welcome_client(struct irc_client *client)
 								client->network->state->me.nick, NULL); 
 
 			/* Try to get the nick the client specified */
-			if (!client->network->config->ignore_first_nick) {
+			nc = client->network->private_data;
+			if (!nc->ignore_first_nick) {
 				network_send_args(client->network, "NICK", 
 								  client->requested_nick, NULL);
 			}

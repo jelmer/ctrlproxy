@@ -72,6 +72,7 @@ gboolean default_socks_connect_fqdn (struct pending_client *cl, const char *host
 {
 	char *desc;
 	struct irc_network *result;
+	struct network_config *nc;
 	
 	listener_log(LOG_INFO, cl->listener, "Request to connect to %s:%d", hostname, port);
 
@@ -89,7 +90,9 @@ gboolean default_socks_connect_fqdn (struct pending_client *cl, const char *host
 		return listener_socks_error(cl, REP_NET_UNREACHABLE);
 	}
 
-	if (result->config->type == NETWORK_TCP) {
+	nc = result->private_data;
+
+	if (nc->type == NETWORK_TCP) {
 		struct sockaddr *name; 
 		int atyp, len, port;
 		gchar *data;
@@ -277,6 +280,7 @@ static void auto_add_listener(struct irc_network *n, void *private_data)
 	GList *gl;
 	struct irc_listener *l;
 	struct listener_config *cfg;
+	struct network_config *nc = n->private_data;
 	
 	/* See if there is already a listener for n */
 	for (gl = n->global->listeners; gl; gl = gl->next) {
@@ -287,7 +291,7 @@ static void auto_add_listener(struct irc_network *n, void *private_data)
 	}
 
 	cfg = g_new0(struct listener_config, 1);
-	cfg->network = g_strdup(n->config->name);
+	cfg->network = g_strdup(nc->name);
 	cfg->port = g_strdup_printf("%d", next_autoport(n->global));
 	l = listener_init(n->global, cfg);
 	listener_start(l, NULL, cfg->port);

@@ -87,6 +87,7 @@ static gboolean network_process_ctcp_request(struct irc_network *n, const struct
 static gboolean process_from_server(struct irc_network *n, const struct irc_line *l)
 {
 	struct irc_line *lc;
+	struct network_config *nc = n->private_data;
 	GError *error = NULL;
 
 	g_assert(n);
@@ -138,7 +139,7 @@ static gboolean process_from_server(struct irc_network *n, const struct irc_line
 		n->connection.state = NETWORK_CONNECTION_STATE_MOTD_RECVD;
 
 		/* Always save networks we've successfully connected to. */
-		n->config->implicit = 0;
+		nc->implicit = 0;
 
 		network_set_charset(n, get_charset(n->info));
 
@@ -158,14 +159,14 @@ static gboolean process_from_server(struct irc_network *n, const struct irc_line
 
 		network_send_args(n, "USERHOST", n->state->me.nick, NULL);
 
-		for (i = 0; n->config->autocmd && n->config->autocmd[i]; i++) {
-			struct irc_line *l = irc_parse_line(n->config->autocmd[i]);
+		for (i = 0; nc->autocmd && nc->autocmd[i]; i++) {
+			struct irc_line *l = irc_parse_line(nc->autocmd[i]);
 			network_send_line(n, NULL, l, FALSE);
 			free_line(l);
 		}
 
 		/* Rejoin channels */
-		for (gl = n->config->channels; gl; gl = gl->next) {
+		for (gl = nc->channels; gl; gl = gl->next) {
 			struct channel_config *c = gl->data;
 
 			if (c->autojoin) {
@@ -231,6 +232,7 @@ struct irc_network *find_network_by_hostname(struct global *global,
 	for (gl = global->networks; gl; gl = gl->next) {
 		GList *sv;
 		struct irc_network *n = gl->data;
+		struct network_config *nc;
 		g_assert(n);
 
 		if (n->info->name && !g_strcasecmp(n->info->name, hostname)) {
@@ -238,10 +240,11 @@ struct irc_network *find_network_by_hostname(struct global *global,
 			return n;
 		}
 
-		g_assert(n->config);
-		if (n->config->type == NETWORK_TCP) 
+		nc = n->private_data;
+		g_assert(nc);
+		if (nc->type == NETWORK_TCP) 
 		{
-			for (sv = n->config->type_settings.tcp.servers; sv; sv = sv->next)
+			for (sv = nc->type_settings.tcp.servers; sv; sv = sv->next)
 			{
 				struct tcp_server_config *server = sv->data;
 				struct servent *sv_serv = getservbyname(server->port, "tcp");
