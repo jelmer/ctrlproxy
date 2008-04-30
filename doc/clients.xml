@@ -25,6 +25,9 @@ let us know on the CtrlProxy IRC channel if you find a client that is not workin
 		<screen>
 			/set proxy_port <replaceable>ctrlproxy-port</replaceable>
 		</screen>
+
+		You should now be able to connect to any networks as you normally would 
+		with irssi.
 	</para>
 </sect1>
 
@@ -32,11 +35,9 @@ let us know on the CtrlProxy IRC channel if you find a client that is not workin
 	<title>xchat</title>
 
 	<para>
-		Use ctrlproxy with the socks module and configure socks in xchat.
-	</para>
-
-	<para>
-		If you are using the listener module, make sure you enter a password.
+		Configure socks in xchat to point at the host and port ctrlproxy is listening on.
+		If you specified a password in the ctrlproxy configuration, specify it here as well. 
+		CtrlProxy will ignore the username that is sent by xchat.
 	</para>
 </sect1>
 
@@ -44,7 +45,7 @@ let us know on the CtrlProxy IRC channel if you find a client that is not workin
 	<title>BitchX</title>
 
 	<para>
-		Use ctrlproxy with the socks module and configure socks in BitchX.
+		Configure socks in BitchX:
 
 		<screen>
 			/SET socks_host ctrlproxy-host

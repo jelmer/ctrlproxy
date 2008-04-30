@@ -9,7 +9,7 @@ directory.</para>
 
 <para>
 
-By running ctrlproxy with the <param>--init</param> argument, you can 
+By running ctrlproxy with the <userinput>--init</userinput> argument, you can 
 quickly create a configuration file.
 </para>
 

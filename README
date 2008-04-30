@@ -75,15 +75,18 @@ Quick start
 
 Enter a password and a port to ctrlproxy should listen on.
 
-CtrlProxy will write a configuration to ~/.ctrlproxy.
+CtrlProxy will write a configuration to ~/.ctrlproxy. You may 
+want to edit ~/.ctrlproxy/config.
 
 3. Run ctrlproxy --daemon or ctrlproxy
 
-4. Connect to ctrlproxy from your IRC client on the port you specified earlier.
+4. Connect to ctrlproxy from your IRC client on the port you specified earlier. 
+For more information on connecting with your favorite IRC client, see the 
+user guide.
 
 Documentation
 -------------
-Most documentation is in the manual and the 
+Most documentation is in the user guide and the 
 manpages: ctrlproxy(1) and ctrlproxy_config(5).
 The example config.example file might also be of some use.
 

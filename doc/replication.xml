@@ -2,12 +2,17 @@
 	<title>Replication</title>
 
 	<para>Replication (short for 'backlog replication') is the system that 
-	stores certain IRC lines and then sends them to the user at a certain moment.</para>
+		stores IRC lines and then sends them to the user once they connect to the 
+		proxy.
+	</para>
 
 	<para>
 	Additionally, there is a `BACKLOG' command available through the 
 	administration interface.
 	</para>
+
+	<para>The replication setting in ctrlproxy selects what lines will be sent to the client 
+		upon connect. The following methods are available:</para>
 
 	<sect1 id="repl simple">
 		<title>Simple replication</title>

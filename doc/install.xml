@@ -65,7 +65,7 @@ ctrlproxy-3.0.6/AUTHORS
 
 		<para>After <filename>configure</filename> has finished, run <command>make</command>. </para>
 
-		<para>Now that ctrlproxy has been built, find your system administrator 
+		<para>Once ctrlproxy has been built, find your system administrator 
 			or become root yourself and run <command>make install</command>.</para>
 
 	</sect1>

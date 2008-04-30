@@ -58,9 +58,10 @@ autoconnect = admin
 #[OFTC]
 #nick = jelmer
 #autojoin = #bitlbee
-#servers = irc.oftc.net
+#servers = ircs://irc.oftc.net:6697/
 #
 #[Freenode]
 #nick = jelmer
 #autojoin = #ctrlproxy;#bla
-#servers = irc.freenode.net
+#servers = irc://irc.ipv6.freenode.net/
+#bind = ::
