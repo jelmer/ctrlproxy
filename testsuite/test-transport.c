@@ -44,13 +44,13 @@ START_TEST(test_send)
 	/* saturate the buffer */
 	for (i = 0; i < 10000; i++) {
 		char buf[20];
-		snprintf(buf, sizeof(buf), "bar: %d", i);
+		g_snprintf(buf, sizeof(buf), "bar: %d", i);
 		fail_unless(transport_send_args(t, "PRIVMSG", "foo", buf, NULL));
 	}
 	for (i = 0; i < 10000; i++) {
 		char *str;
 		char buf[120];
-		snprintf(buf, sizeof(buf), "PRIVMSG foo :bar: %d\r\n", i);
+		g_snprintf(buf, sizeof(buf), "PRIVMSG foo :bar: %d\r\n", i);
 		if (!g_queue_is_empty(t->pending_lines))
 			g_main_iteration(FALSE);
 		g_io_channel_read_line(ch2, &str, NULL, NULL, NULL);

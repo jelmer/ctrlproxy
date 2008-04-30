@@ -281,7 +281,6 @@ struct irc_network *find_network_by_hostname(struct global *global,
 		nc->type_settings.tcp.servers = g_list_append(nc->type_settings.tcp.servers, s);
 
 		n = load_network(global, nc);
-		network_set_log_fn(n, (network_log_fn)handle_network_log, n);
 		return n;
 	}
 
@@ -310,6 +309,11 @@ void register_new_network_notify(struct global *global, new_network_notify_fn fn
 	global->new_network_notifiers = g_list_append(global->new_network_notifiers, p);
 }
 
+struct irc_network_callbacks default_callbacks = {
+	.process_from_server = process_from_server,
+	.log = handle_network_log,
+};
+
 /**
  * Load a network from a configuration file specification.
  *
@@ -329,7 +333,7 @@ struct irc_network *load_network(struct global *global, struct network_config *s
 			return net;
 	}
 	
-	net = irc_network_new(process_from_server, sc);
+	net = irc_network_new(&default_callbacks, sc);
 
 	net->global = global;
 
@@ -360,8 +364,7 @@ struct irc_network *load_network(struct global *global, struct network_config *s
  * @param fn Function to use for logging.
  * @return TRUE
  */
-gboolean load_networks(struct global *global, struct ctrlproxy_config *cfg, 
-					   network_log_fn fn)
+gboolean load_networks(struct global *global, struct ctrlproxy_config *cfg)
 {
 	GList *gl;
 	g_assert(cfg);
@@ -370,8 +373,6 @@ gboolean load_networks(struct global *global, struct ctrlproxy_config *cfg,
 		struct network_config *nc = gl->data;
 		struct irc_network *n;
 		n = load_network(global, nc);
-		if (n != NULL)
-			network_set_log_fn(n, fn, n);
 	}
 
 	return TRUE;

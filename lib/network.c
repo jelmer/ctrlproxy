@@ -47,9 +47,7 @@ static void server_send_login (struct irc_network *s)
 
 	s->state = network_state_init(nc->nick, nc->username, 
 								  get_my_hostname());
-	network_state_set_log_fn(s->state, s->log, s->userdata);
-	s->state->userdata = s;
-	s->state->log = state_log_helper;
+	network_state_set_log_fn(s->state, state_log_helper, s);
 	s->linestack = new_linestack(s);
 	g_assert(s->linestack != NULL);
 
@@ -132,7 +130,7 @@ static gboolean on_transport_recv(struct irc_transport *transport,
 							  const struct irc_line *line)
 {
 	struct irc_network *server = transport->userdata;
-	return server->process_from_server(server, line);
+	return server->callbacks->process_from_server(server, line);
 }
 
 static void on_transport_log(struct irc_transport *transport, const struct irc_line *l, const GError *error)
@@ -313,7 +311,7 @@ gboolean virtual_network_recv_line(struct irc_network *s, struct irc_line *l)
 	if (l->origin == NULL) 
 		l->origin = g_strdup(get_my_hostname());
 
-	return s->process_from_server(s, l);
+	return s->callbacks->process_from_server(s, l);
 }
 
 /**
@@ -874,12 +872,12 @@ static gboolean delayed_connect_server(struct irc_network *s)
 	return (s->connection.state == NETWORK_CONNECTION_STATE_RECONNECT_PENDING);
 }
 
-struct irc_network *irc_network_new(gboolean (*process_from_server) (struct irc_network *, const struct irc_line *), void *private_data)
+struct irc_network *irc_network_new(const struct irc_network_callbacks *callbacks, void *private_data)
 {
 	struct irc_network *s;
 
 	s = g_new0(struct irc_network, 1);
-	s->process_from_server = process_from_server;
+	s->callbacks = callbacks;
 	s->references = 1;
 	s->private_data = private_data;
 	s->reconnect_interval = ((struct network_config *)private_data)->reconnect_interval == -1?DEFAULT_RECONNECT_INTERVAL:((struct network_config *)private_data)->reconnect_interval;
@@ -1076,7 +1074,7 @@ void network_log(enum log_level l, const struct irc_network *s,
 	char *ret;
 	va_list ap;
 
-	if (s->log == NULL)
+	if (s->callbacks->log == NULL)
 		return;
 
 	g_assert(s);
@@ -1086,18 +1084,8 @@ void network_log(enum log_level l, const struct irc_network *s,
 	ret = g_strdup_vprintf(fmt, ap);
 	va_end(ap);
 
-	s->log(l, s->userdata, ret);
+	s->callbacks->log(l, s, ret);
 
 	g_free(ret);
 }
 
-void network_set_log_fn(struct irc_network *s, 
-						network_log_fn fn,
-						void *userdata)
-{
-	s->log = fn;
-	s->userdata = userdata;
-
-	if (s->state != NULL)
-		network_state_set_log_fn(s->state, fn, userdata);
-}
