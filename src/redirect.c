@@ -26,13 +26,10 @@
 
 struct query_stack {
 	const struct query *query;
-	const struct irc_network *network;
 	struct irc_client *client;	
 	time_t time;
 	struct query_stack *next;
 };
-
-static struct query_stack *stack = NULL;
 
 /**
  * IRC Query done by a client
@@ -50,12 +47,12 @@ struct query {
 	/* Should add this query to the stack. return TRUE if this has 
 	 * been done successfully, FALSE otherwise */
 	/** Function for handling the responses. */
-	int (*handle) (const struct irc_line *, const struct irc_network *n, struct irc_client *c, struct query *);
+	int (*handle) (const struct irc_line *, struct query_stack **, struct irc_client *c, struct query *);
 };
 
-static int handle_default(const struct irc_line *, const struct irc_network *n, 
+static int handle_default(const struct irc_line *, struct query_stack **stack, 
 						  struct irc_client *c, struct query *);
-static int handle_topic(const struct irc_line *, const struct irc_network *n, 
+static int handle_topic(const struct irc_line *, struct query_stack **stack,
 						struct irc_client *c, struct query *);
 
 static struct query queries[] = {
@@ -574,24 +571,24 @@ static struct query *find_query(char *name)
  * @return TRUE if the message was redirected to zero or more clients, 
  *         FALSE if it was sent to all clients.
  */
-gboolean redirect_response(struct irc_network *network, const struct irc_line *l)
+gboolean redirect_response(struct query_stack *stack, 
+						   struct irc_network *network,
+						   const struct irc_line *l)
 {
 	struct query_stack *s, *p = NULL;
 	const struct irc_client *c = NULL;
 	int n;
 	int i;
 	
-	g_assert(network);
 	g_assert(l->args[0]);
 
 	n = atoi(l->args[0]);
 
 	/* Find a request that this response is a reply to */
 	for (s = stack; s; s = s->next) {
-		if (s->network == network && 
-		   (is_reply(s->query->replies, n) || 
+		if (is_reply(s->query->replies, n) || 
 			is_reply(s->query->errors, n) ||
-			is_reply(s->query->end_replies, n))) {
+			is_reply(s->query->end_replies, n)) {
 			
 			/* Send to client that queried, if that client still exists */
 			if (s->client != NULL) {
@@ -643,31 +640,23 @@ gboolean redirect_response(struct irc_network *network, const struct irc_line *l
 	return FALSE;
 }
 
-void redirect_clear(const struct irc_network *net)
+void redirect_clear(struct query_stack **stack)
 {
-	struct query_stack *q, *p = NULL, *n;
+	struct query_stack *q, *n;
 
-	g_assert(net);
-
-	q = stack;
+	q = *stack;
 	while (q != NULL) {
-		if (q->network != net) {
-			p = q;
-			q = q->next;
-			continue;
-		}
-
 		/* Remove from stack */
-		if (p == NULL)stack = q->next;	
-		else p->next = q->next;
 		n = q->next;
 		client_unref(q->client);
 		g_free(q);
 		q = n;
 	}
+	*stack = NULL;	
 }
 
-void redirect_record(const struct irc_network *n, struct irc_client *c, 
+void redirect_record(struct query_stack **stack,
+					 const struct irc_network *n, struct irc_client *c, 
 					 const struct irc_line *l)
 {
 	struct query *q;
@@ -690,28 +679,26 @@ void redirect_record(const struct irc_network *n, struct irc_client *c,
 	}
 
 	/* Push it up the stack! */
-	q->handle(l, n, c, q);
+	q->handle(l, stack, c, q);
 }
 
-static int handle_default(const struct irc_line *l, const struct irc_network *n, 
+static int handle_default(const struct irc_line *l, struct query_stack **stack,
 						  struct irc_client *c, struct query *q)
 {
 	struct query_stack *s = g_new(struct query_stack, 1);
 	g_assert(l != NULL);
-	g_assert(n != NULL);
 	g_assert(q != NULL);
-	s->network = n;
 	s->client = client_ref(c);
 	s->time = time(NULL);
 	s->query = q;
-	s->next = stack;
-	stack = s;
+	s->next = *stack;
+	*stack = s;
 	return 1;
 }
 
-static int handle_topic(const struct irc_line *l, const struct irc_network *n, struct irc_client *c, struct query *q)
+static int handle_topic(const struct irc_line *l, struct query_stack **stack, struct irc_client *c, struct query *q)
 {
 	if (l->args[2] != NULL)
 		return 0;
-	return handle_default(l,n,c,q);
+	return handle_default(l,stack,c,q);
 }

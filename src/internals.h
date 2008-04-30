@@ -42,6 +42,7 @@
 #include <fcntl.h>
 #include "ctrlproxy.h"
 #include "plugins.h"
+#include "redirect.h"
 #include "local.h"
 
 #define DEFAULT_RECONNECT_INTERVAL 	60
@@ -112,11 +113,6 @@ char *custom_subst(struct irc_network *network,
 						 const char *fmt, const struct irc_line *l, 
 						 const char *_identifier, 
 						 gboolean case_sensitive, gboolean noslash);
-
-/* redirect.c */
-void redirect_record(const struct irc_network *n, struct irc_client *c, const struct irc_line *l);
-gboolean redirect_response(struct irc_network *n, const struct irc_line *l);
-void redirect_clear(const struct irc_network *n);
 
 /* cache.c */
 gboolean client_try_cache(struct irc_client *c, struct irc_network_state *n, struct irc_line *l);

@@ -249,7 +249,7 @@ gboolean network_send_line(struct irc_network *s, struct irc_client *c,
 
 	log_network_line(s, ol, FALSE);
 
-	redirect_record(s, c, ol);
+	redirect_record(&s->queries, s, c, ol);
 
 	return network_send_line_direct(s, c, ol);
 }
@@ -623,7 +623,7 @@ static gboolean close_server(struct irc_network *n)
 
 	if (n->connection.state == NETWORK_CONNECTION_STATE_MOTD_RECVD) {
 		server_disconnected_hook_execute(n);
-		clients_invalidate_state(n->clients, n->state);
+		clients_invalidate_state(n->clients);
 		network_update_config(n->state, nc);
 	}
 
@@ -659,7 +659,7 @@ static gboolean close_server(struct irc_network *n)
 	}
 
 	n->connection.state = NETWORK_CONNECTION_STATE_NOT_CONNECTED;
-	redirect_clear(n);
+	redirect_clear(&n->queries);
 
 	return TRUE;
 }

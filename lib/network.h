@@ -134,6 +134,8 @@ struct irc_network {
 	int reconnect_interval;
 
 	const struct irc_network_callbacks *callbacks;
+
+	struct query_stack *queries;
 };
 
 /* server.c */
