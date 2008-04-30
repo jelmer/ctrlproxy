@@ -423,7 +423,7 @@ G_MODULE_EXPORT gboolean line_add_arg(struct irc_line *l, const char *arg)
 	return TRUE;
 }
 
-G_MODULE_EXPORT struct irc_line *line_prefix_time(struct irc_line *l, time_t t)
+G_MODULE_EXPORT struct irc_line *line_prefix_time(const struct irc_line *l, time_t t)
 {
 	struct irc_line *nl = linedup(l);
 	char stime[512];

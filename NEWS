@@ -13,14 +13,16 @@ Ctrlproxy 3.0.7 UNRELEASED
 
     * Be less verbose about unredirectable responses.
 
-	* Avoid usage of blocking /dev/random for SSL code. (Andreas Schneider)
+    * Avoid usage of blocking /dev/random for SSL code. (Andreas Schneider)
 
-	* Move time in ctcp requests. (#197)
+    * Move time in ctcp requests. (#197)
+
+    * Support storing exception lists.
 
   INTERNALS
 
     * Import non-blocking GIOChannel improvements from libsoap into 
-	  the SSL wrapper code. (Andreas Schneider)
+      the SSL wrapper code. (Andreas Schneider)
 
 
 Ctrlproxy 3.0.6 2008-04-13
@@ -56,8 +58,8 @@ Ctrlproxy 3.0.6 2008-04-13
       configuration. (#194)
 
     * New configuration variable ``autocmd'' in network configuration 
-	  can contain a list (semi-colon-seperated) of commands to send when
-	  logged in to a server. (#152)
+      can contain a list (semi-colon-seperated) of commands to send when
+      logged in to a server. (#152)
 
   BUG FIXES
 
@@ -126,7 +128,7 @@ Ctrlproxy 3.0.6 2008-04-13
 
     * Send topic change time if known.
 
-	* Support 249 response code.
+    * Support 249 response code.
 
   INTERNALS
 
