@@ -19,6 +19,8 @@ Ctrlproxy 3.0.7 UNRELEASED
 
     * Support storing exception lists.
 
+	* Fix handling of channel and user modes. (#196)
+
   INTERNALS
 
     * Import non-blocking GIOChannel improvements from libsoap into 
