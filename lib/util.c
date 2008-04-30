@@ -87,6 +87,28 @@ char *g_io_channel_ip_get_description(GIOChannel *ch)
 	return description;
 }
 
+char *list_make_string(GList *list)
+{
+	size_t len = 20;
+	char *ret;
+	GList *gl;
+
+	/* First, calculate the length */
+	for(gl = list; gl; gl = gl->next) len+=strlen(gl->data)+1;
+
+	ret = g_new(char,len);
+	ret[0] = '\0';
+
+	for(gl = list; gl; gl = gl->next) 
+	{ 
+		strncat(ret, gl->data, len);
+		if (gl->next) strncat(ret, " ", len); 
+	}
+
+	return ret;
+}
+
+
 const char *g_io_channel_unix_get_sock_error(GIOChannel *ioc)
 {
 	int valopt;
@@ -97,5 +119,4 @@ const char *g_io_channel_unix_get_sock_error(GIOChannel *ioc)
 
 	return strerror(valopt);
 }
-
 

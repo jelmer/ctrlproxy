@@ -109,10 +109,6 @@ G_MODULE_EXPORT void register_save_config_notify(config_save_notify_fn fn);
 typedef void (*hup_handler_fn) (void *);
 G_MODULE_EXPORT void register_hup_handler(hup_handler_fn, void *userdata);
 
-/* util.c */
-G_MODULE_EXPORT char *list_make_string(GList *);
-
-
 /* log.c */
 G_GNUC_PRINTF(3, 4) G_MODULE_EXPORT void log_network_state(enum log_level l, const struct irc_network_state *st, const char *fmt, ...);
 

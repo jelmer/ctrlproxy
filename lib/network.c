@@ -587,28 +587,6 @@ static void reconnect(struct irc_network *server)
 	}
 }
 
-static void clients_invalidate_state(GList *clients, struct irc_network_state *s)
-{
-	GList *gl;
-
-	/* Leave channels */
-	for (gl = s->channels; gl; gl = gl->next) {
-		struct irc_channel_state *ch = gl->data;
-
-		clients_send_args_ex(clients, s->me.hostmask, "PART", ch->name, 
-							 "Network disconnected", NULL);
-	}
-
-	/* private queries quit */
-	for (gl = s->nicks; gl; gl = gl->next) {
-		struct network_nick *gn = gl->data;
-
-		if (!gn->query || gn == &s->me) continue;
-
-		clients_send_args_ex(clients, gn->hostmask, "QUIT", "Network disconnected", NULL);
-	}
-}
-
 static void free_tcp_names(struct irc_network *n)
 {
 	g_free(n->connection.data.tcp.local_name);

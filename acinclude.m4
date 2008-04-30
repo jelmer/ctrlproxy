@@ -4,3 +4,5 @@ AC_MSG_CHECKING([how to build $1])
 MODS_SHARED="$MODS_SHARED $1"
 AC_MSG_RESULT(shared)
 ])
+
+

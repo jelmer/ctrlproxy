@@ -756,3 +756,37 @@ void client_send_luserchannels(struct irc_client *client, int num)
 	g_free(tmp);
 
 }
+
+void clients_invalidate_state(GList *clients)
+{
+	GList *gl;
+	for (gl = clients; gl; gl = gl->next) {
+		struct irc_client *c = gl->data;
+		client_invalidate_state(c);
+	}
+}
+
+void client_invalidate_state(struct irc_client *c)
+{
+	struct irc_network_state *s = c->state;
+	GList *gl;
+
+	/* Leave channels */
+	for (gl = s->channels; gl; gl = gl->next) {
+		struct irc_channel_state *ch = gl->data;
+
+		client_send_args_ex(c, s->me.hostmask, "PART", ch->name, 
+							 "Network disconnected", NULL);
+	}
+
+	/* private queries quit */
+	for (gl = s->nicks; gl; gl = gl->next) {
+		struct network_nick *gn = gl->data;
+
+		if (!gn->query || gn == &s->me) continue;
+
+		client_send_args_ex(c, gn->hostmask, "QUIT", "Network disconnected", NULL);
+	}
+}
+
+

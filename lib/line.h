@@ -27,6 +27,10 @@
 #define G_MODULE_EXPORT
 #endif
 
+#ifndef G_GNUC_MALLOC 
+#define G_GNUC_MALLOC
+#endif
+
 #ifndef G_GNUC_WARN_UNUSED_RESULT
 #define G_GNUC_WARN_UNUSED_RESULT
 #endif
