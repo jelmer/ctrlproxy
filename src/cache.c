@@ -97,6 +97,7 @@ static gboolean client_try_cache_who(struct irc_client *c, struct irc_network_st
 {
 	struct irc_channel_state *ch;
 	int max_who_age;
+
 	time_t now;
 	GList *gl;
 

@@ -44,6 +44,14 @@ struct irc_listener {
 
 struct socks_method;
 
+enum socks_state { 
+	SOCKS_UNUSED = -1,
+	SOCKS_UNKNOWN = 0,
+	SOCKS_STATE_NEW = 1, 
+	SOCKS_STATE_AUTH, 
+	SOCKS_STATE_NORMAL 
+};
+
 /**
  * Client connection that has not been authenticated yet.
  */
@@ -67,13 +75,7 @@ struct pending_client {
 	/** Socks state. */
 	struct {
 		struct socks_method *method;
-		enum state { 
-			SOCKS_UNUSED = -1,
-			SOCKS_UNKNOWN = 0,
-			SOCKS_STATE_NEW = 1, 
-			SOCKS_STATE_AUTH, 
-			SOCKS_STATE_NORMAL 
-		} state;
+		enum socks_state state;
 		void *method_data;
 	} socks;
 
