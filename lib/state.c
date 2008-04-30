@@ -165,6 +165,16 @@ static void free_banlist_entry(struct banlist_entry *be)
 	g_free(be);
 }
 
+static char *find_exceptlist_entry(GList *entries, const char *entry)
+{
+	GList *gl;
+	for (gl = entries; gl; gl = gl->next) {
+		if (!strcmp(gl->data, entry))
+			return gl->data;
+	}
+	return NULL;
+}
+
 static struct banlist_entry *find_banlist_entry(GList *entries, const char *hostmask)
 {
 	GList *gl;
@@ -818,7 +828,7 @@ static int channel_state_change_mode(struct irc_network_state *s, struct network
 		struct banlist_entry *be;
 
 		if (opt_arg == NULL) {
-			network_state_log(LOG_WARNING, s, "Missing argumnt for ban MODE set/unset");
+			network_state_log(LOG_WARNING, s, "Missing argument for ban MODE set/unset");
 			return -1;
 		}
 
@@ -836,6 +846,24 @@ static int channel_state_change_mode(struct irc_network_state *s, struct network
 			}
 			c->banlist = g_list_remove(c->banlist, be);
 			free_banlist_entry(be);
+		}
+		return 1;
+	} else if (mode == 'e') { /* Ban exemption */ 
+		if (opt_arg == NULL) {
+			network_state_log(LOG_WARNING, s, "Missing argument for ban exception MODE set/unset");
+			return -1;
+		}
+
+		if (set) {
+			c->exceptlist = g_list_append(c->exceptlist, g_strdup(opt_arg));
+		} else {
+			char *be = find_exceptlist_entry(c->banlist, opt_arg);
+			if (be == NULL) {
+				network_state_log(LOG_WARNING, s, "Unable to remove nonpresent ban except list entry '%s'", opt_arg);
+				return 1;
+			}
+			c->banlist = g_list_remove(c->exceptlist, be);
+			g_free(be);
 		}
 		return 1;
 	} else if (mode == 'l') { /* Limit */
