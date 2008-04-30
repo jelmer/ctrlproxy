@@ -1234,7 +1234,7 @@ void network_state_set_log_fn(struct irc_network_state *st,
 	st->userdata = userdata;
 }
 
-void string2mode(char *modes, irc_modes_t ar)
+void string2mode(const char *modes, irc_modes_t ar)
 {
 	memset(ar, 0, sizeof(ar));
 
