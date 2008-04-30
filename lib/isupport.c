@@ -573,7 +573,7 @@ char get_mode_by_prefix(char prefix, const struct irc_network_info *n)
 	pref_end = strchr(prefix_mapping, ')');
 	if (prefix_mapping[0] != '(' || !pref_end) {
 		log_global(LOG_WARNING, "Malformed PREFIX data `%s'", prefix_mapping);
-		return ' ';
+		return 0;
 	}
 	pref_end++;
 	prefix_mapping++;
@@ -581,7 +581,7 @@ char get_mode_by_prefix(char prefix, const struct irc_network_info *n)
 	for(i = 0; pref_end[i]; i++) {
 		if (pref_end[i] == prefix) return prefix_mapping[i];
 	}
-	return ' ';
+	return 0;
 }
 
 char get_prefix_by_mode(char mode, const struct irc_network_info *n)

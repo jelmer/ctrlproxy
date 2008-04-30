@@ -23,7 +23,8 @@
 #include "isupport.h"
 #include "log.h"
 
-typedef gboolean irc_modes_t[255];
+#define MAXMODES 255
+typedef gboolean irc_modes_t[MAXMODES];
 
 /**
  * @file
@@ -142,6 +143,8 @@ G_MODULE_EXPORT void string2mode(const char *modestring, irc_modes_t modes);
 G_MODULE_EXPORT gboolean modes_change_mode(irc_modes_t modes, gboolean set, char newmode);
 #define modes_set_mode(modes, newmode) modes_change_mode(modes, TRUE, newmode)
 #define modes_unset_mode(modes, newmode) modes_change_mode(modes, FALSE, newmode)
+#define modes_clear(modes) memset(modes, 0, sizeof(gboolean) * MAXMODES)
+#define modes_cmp(a,b) memcmp(a,b,sizeof(gboolean) * MAXMODES)
 G_MODULE_EXPORT char get_prefix_from_modes(struct irc_network_info *info, irc_modes_t modes);
 G_MODULE_EXPORT gboolean is_channel_mode(struct irc_network_info *info, char mode);
 G_MODULE_EXPORT gboolean is_user_mode(struct irc_network_info *info, char mode);

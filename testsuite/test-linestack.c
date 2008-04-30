@@ -59,7 +59,7 @@ static gboolean list_equal(GList *list1, GList *list2, GEqualFunc eq)
 
 static gboolean modes_equal(const irc_modes_t a, const irc_modes_t b)
 {
-	return memcmp(a, b, sizeof(a)) == 0;
+	return modes_cmp(a, b) == 0;
 }
 
 static gboolean str_equal(const char *a, const char *b)

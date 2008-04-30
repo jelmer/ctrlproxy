@@ -29,7 +29,7 @@ struct network_nick *find_add_network_nick(struct irc_network_state *n, const ch
 
 START_TEST(state_modes_set_mode)
 	irc_modes_t in;
-	memset(in, 0, sizeof(in));
+	modes_clear(in);
 	fail_unless (modes_set_mode(in, '@'));
 	fail_unless (in[(unsigned char)'@'] == TRUE);
 	fail_unless (modes_set_mode(in, '%'));
@@ -269,6 +269,35 @@ START_TEST(state_handle_state_data)
 	fail_unless (state_handle_data(ns, &l) == FALSE);
 END_TEST
 
+START_TEST(test_string2mode)
+	irc_modes_t modes;
+	modes_clear(modes);
+	string2mode("+", modes);
+	string2mode("+o-o", modes);
+	fail_unless(modes['o'] == FALSE);
+	string2mode("+o", modes);
+	fail_unless(modes['o'] == TRUE);
+	string2mode("+oa", modes);
+	fail_unless(modes['a'] == TRUE);
+	fail_unless(modes['o'] == TRUE);
+	string2mode("+o-a", modes);
+	fail_unless(modes['a'] == FALSE);
+	fail_unless(modes['o'] == TRUE);
+END_TEST
+
+START_TEST(test_mode2string)
+	char *ret;
+	irc_modes_t modes;
+	modes_clear(modes);
+	fail_unless(mode2string(modes) == NULL);
+	modes['o'] = TRUE;
+	ret = mode2string(modes);
+	fail_unless(strcmp(ret, "+o") == 0);
+	modes['k'] = TRUE;
+	ret = mode2string(modes);
+	fail_unless(strcmp(ret, "+ko") == 0);
+END_TEST
+
 Suite *state_suite(void)
 {
 	Suite *s = suite_create("state");
@@ -291,5 +320,7 @@ Suite *state_suite(void)
 	tcase_add_test(tc_core, state_handle_state_data);
 	tcase_add_test(tc_core, state_modes_set_mode);
 	tcase_add_test(tc_core, state_prefixes_remove_prefix);
+	tcase_add_test(tc_core, test_mode2string);
+	tcase_add_test(tc_core, test_string2mode);
 	return s;
 }

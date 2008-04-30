@@ -242,6 +242,8 @@ static gboolean transport_send_queue(GIOChannel *ioc, GIOCondition cond,
 
 		status = g_io_channel_flush(transport->incoming, &error);
 		switch (status) {
+		case G_IO_STATUS_EOF:
+			g_assert_not_reached();
 		case G_IO_STATUS_AGAIN:
 			free_line(l);
 			return TRUE;
@@ -250,8 +252,6 @@ static gboolean transport_send_queue(GIOChannel *ioc, GIOCondition cond,
 		case G_IO_STATUS_ERROR:
 			transport->callbacks->log(transport, l, error);
 			break;
-		case G_IO_STATUS_EOF:
-			g_assert_not_reached();
 		}
 		free_line(l);
 	}
@@ -297,6 +297,8 @@ gboolean transport_send_line(struct irc_transport *transport,
 	status = g_io_channel_flush(transport->incoming, &error);
 
 	switch (status) {
+	case G_IO_STATUS_EOF:
+		g_assert_not_reached();
 	case G_IO_STATUS_NORMAL:
 		break;
 	case G_IO_STATUS_AGAIN:
@@ -306,8 +308,6 @@ gboolean transport_send_line(struct irc_transport *transport,
 	case G_IO_STATUS_ERROR:
 		transport->callbacks->log(transport, l, error);
 		return FALSE;
-	case G_IO_STATUS_EOF:
-		g_assert_not_reached();
 	}
 
 	return TRUE;

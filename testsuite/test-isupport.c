@@ -77,7 +77,7 @@ START_TEST(isupport_modebyprefix)
 	};
 	fail_if (get_mode_by_prefix('@', &ni) != 'o');
 	fail_if (get_mode_by_prefix('+', &ni) != 'v');
-	fail_if (get_mode_by_prefix('%', &ni) != ' ');
+	fail_if (get_mode_by_prefix('%', &ni) != 0);
 END_TEST
 
 START_TEST(isupport_prefixfrommodes)
