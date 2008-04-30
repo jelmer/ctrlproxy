@@ -21,7 +21,6 @@
 #include "irc.h"
 
 static void free_network_nick(struct irc_network_state *, struct network_nick *);
-static void free_channel(struct irc_channel_state *c);
 
 enum mode_type { REMOVE = 0, ADD = 1 };
 
@@ -208,7 +207,7 @@ static void free_names(struct irc_channel_state *c)
 	c->nicks = NULL;
 }
 
-static void free_channel(struct irc_channel_state *c)
+void free_channel_state(struct irc_channel_state *c)
 {
 	if (c == NULL)
 		return;
@@ -236,6 +235,17 @@ struct irc_channel_state *find_channel(struct irc_network_state *st, const char 
 	return NULL;
 }
 
+struct irc_channel_state *irc_channel_state_new(const char *name)
+{
+	struct irc_channel_state *c;
+	g_assert(name != NULL);
+
+	c = g_new0(struct irc_channel_state ,1);
+	c->name = g_strdup(name);
+
+	return c;
+}
+
 struct irc_channel_state *find_add_channel(struct irc_network_state *st, char *name) 
 {
 	struct irc_channel_state *c;
@@ -245,10 +255,9 @@ struct irc_channel_state *find_add_channel(struct irc_network_state *st, char *n
 	c = find_channel(st, name);
 	if (c)
 		return c;
-	c = g_new0(struct irc_channel_state ,1);
+	c = irc_channel_state_new(name);
 	c->network = st;
 	st->channels = g_list_append(st->channels, c);
-	c->name = g_strdup(name);
 
 	return c;
 }
@@ -476,7 +485,7 @@ static void handle_part(struct irc_network_state *s, const struct irc_line *l)
 
 		if (!irccmp(s->info, nick, s->me.nick) && c) {
 			network_state_log(LOG_TRACE, s, "Leaving %s", channels[i]);
-			free_channel(c);
+			free_channel_state(c);
 		} else {
 			network_state_log(LOG_TRACE, s, "%s leaves %s", nick, channels[i]);
 		}
@@ -518,7 +527,7 @@ static void handle_kick(struct irc_network_state *s, const struct irc_line *l)
 
 		if (!irccmp(s->info, nicks[i], s->me.nick)) {
 			network_state_log(LOG_INFO, s, "Kicked off %s by %s", c->name, nick);
-			free_channel(c);
+			free_channel_state(c);
 		} else {
 			network_state_log(LOG_TRACE, s, "%s kicked off %s by %s", nicks[i], channels[i], nick);
 		}
@@ -1182,7 +1191,7 @@ void free_network_state(struct irc_network_state *state)
 		return;
 
 	while (state->channels != NULL)
-		free_channel((struct irc_channel_state *)state->channels->data);
+		free_channel_state((struct irc_channel_state *)state->channels->data);
 
 	g_free(state->me.nick);
 	g_free(state->me.username);
