@@ -17,8 +17,8 @@ Ctrlproxy 3.0.7 UNRELEASED
 
     * Move time in ctcp requests. (#197)
 
-    * Support storing exception lists and realname ban lists (MODE +e and MODE +d)
-      as supported by hyperion.
+    * Support storing ban exception lists, realname ban lists and 
+      join throttling (MODE +e, MODE +d and MODE +J) as supported by hyperion.
 
 	* Fix handling of channel and user modes. (#196)
 

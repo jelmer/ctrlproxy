@@ -887,6 +887,31 @@ static int channel_state_change_mode(struct irc_network_state *s, struct network
 			g_free(be);
 		}
 		return 1;
+	} else if (mode == 'J') { /* join throttling */
+		if (set) {
+			char **join_args;
+			if (opt_arg == NULL) {
+				network_state_log(LOG_WARNING, s, "Missing argument for realname ban MODE set/unset");
+				return -1;
+			}
+
+			join_args = g_strsplit(opt_arg, ",", 2);
+
+			if (join_args == NULL) {
+				network_state_log(LOG_ERROR, s, "Unable to split argument %s", opt_arg);
+				return -1;
+			}
+
+			if (join_args[0]) 
+				c->throttle_x = atoi(join_args[0]);
+			if (join_args[0] && join_args[1]) 
+				c->throttle_y = atoi(join_args[1]);
+		} else {
+			c->throttle_x = 0;
+			c->throttle_y = 0;
+		}
+
+		return 1;
 	} else if (mode == 'd') { /* Realname ban */
 		if (opt_arg == NULL) {
 			network_state_log(LOG_WARNING, s, "Missing argument for realname ban MODE set/unset");

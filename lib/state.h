@@ -98,6 +98,8 @@ struct irc_channel_state {
 	GList *invitelist;
 	GList *exceptlist;
 	GList *realnamebanlist;
+	int throttle_x; 
+	int throttle_y;
 	struct irc_network_state *network;
 };
 
