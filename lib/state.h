@@ -97,6 +97,7 @@ struct irc_channel_state {
 	GList *banlist;
 	GList *invitelist;
 	GList *exceptlist;
+	GList *realnamebanlist;
 	struct irc_network_state *network;
 };
 

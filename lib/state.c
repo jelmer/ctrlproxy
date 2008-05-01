@@ -174,6 +174,16 @@ static char *find_exceptlist_entry(GList *entries, const char *entry)
 	return NULL;
 }
 
+static char *find_realnamebanlist_entry(GList *entries, const char *entry)
+{
+	GList *gl;
+	for (gl = entries; gl; gl = gl->next) {
+		if (!strcmp(gl->data, entry))
+			return gl->data;
+	}
+	return NULL;
+}
+
 static struct banlist_entry *find_banlist_entry(GList *entries, const char *hostmask)
 {
 	GList *gl;
@@ -868,15 +878,33 @@ static int channel_state_change_mode(struct irc_network_state *s, struct network
 		if (set) {
 			c->exceptlist = g_list_append(c->exceptlist, g_strdup(opt_arg));
 		} else {
-			char *be = find_exceptlist_entry(c->banlist, opt_arg);
+			char *be = find_exceptlist_entry(c->exceptlist, opt_arg);
 			if (be == NULL) {
 				network_state_log(LOG_WARNING, s, "Unable to remove nonpresent ban except list entry '%s'", opt_arg);
 				return 1;
 			}
-			c->banlist = g_list_remove(c->exceptlist, be);
+			c->exceptlist = g_list_remove(c->exceptlist, be);
 			g_free(be);
 		}
 		return 1;
+	} else if (mode == 'd') { /* Realname ban */
+		if (opt_arg == NULL) {
+			network_state_log(LOG_WARNING, s, "Missing argument for realname ban MODE set/unset");
+			return -1;
+		}
+
+		if (set) {
+			c->realnamebanlist = g_list_append(c->realnamebanlist, g_strdup(opt_arg));
+		} else {
+			char *be = find_realnamebanlist_entry(c->realnamebanlist, opt_arg);
+			if (be == NULL) {
+				network_state_log(LOG_WARNING, s, "Unable to remove nonpresent realname ban list entry '%s'", opt_arg);
+				return 1;
+			}
+			c->realnamebanlist = g_list_remove(c->realnamebanlist, be);
+			g_free(be);
+		}
+		return 1;	
 	} else if (mode == 'l') { /* Limit */
 		modes_change_mode(c->modes, set, 'l');
 		if (set) {
