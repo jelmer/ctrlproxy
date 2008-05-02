@@ -571,7 +571,7 @@ static struct query *find_query(char *name)
  * @return TRUE if the message was redirected to zero or more clients, 
  *         FALSE if it was sent to all clients.
  */
-gboolean redirect_response(struct query_stack *stack, 
+gboolean redirect_response(struct query_stack **stack, 
 						   struct irc_network *network,
 						   const struct irc_line *l)
 {
@@ -585,7 +585,7 @@ gboolean redirect_response(struct query_stack *stack,
 	n = atoi(l->args[0]);
 
 	/* Find a request that this response is a reply to */
-	for (s = stack; s; s = s->next) {
+	for (s = *stack; s; s = s->next) {
 		if (is_reply(s->query->replies, n) || 
 			is_reply(s->query->errors, n) ||
 			is_reply(s->query->end_replies, n)) {
@@ -598,7 +598,7 @@ gboolean redirect_response(struct query_stack *stack,
 
 			if (!is_reply(s->query->replies, n)) {
 				/* Remove from stack */
-				if (p == NULL)stack = s->next;	
+				if (p == NULL)*stack = s->next;	
 				else p->next = s->next;
 				client_unref(s->client);
 				g_free(s);

@@ -24,7 +24,7 @@
 #include <check.h>
 #include "torture.h"
 
-static void test_redirect_response(struct query_stack *stack, struct irc_network *n, const char *line)
+static void test_redirect_response(struct query_stack **stack, struct irc_network *n, const char *line)
 {
 	struct irc_line *l = irc_parse_line(line);	
 	redirect_response(stack, n, l);
@@ -32,32 +32,38 @@ static void test_redirect_response(struct query_stack *stack, struct irc_network
 
 START_TEST(test_465)
 	struct irc_network *n = dummy_network();
-	test_redirect_response(NULL, n, "465 irc.example.com :You are banned");
+	struct query_stack *stack = NULL;
+	test_redirect_response(&stack, n, "465 irc.example.com :You are banned");
 END_TEST
 
 START_TEST(test_451)
 	struct irc_network *n = dummy_network();
-	test_redirect_response(NULL, n, "451 nick :Not registered");
+	struct query_stack *stack = NULL;
+	test_redirect_response(&stack, n, "451 nick :Not registered");
 END_TEST
 
 START_TEST(test_462)
 	struct irc_network *n = dummy_network();
-	test_redirect_response(NULL, n, "462 nick :Already registered");
+	struct query_stack *stack = NULL;
+	test_redirect_response(&stack, n, "462 nick :Already registered");
 END_TEST
 
 START_TEST(test_463)
 	struct irc_network *n = dummy_network();
-	test_redirect_response(NULL, n, "463 hostname :Not privileged to connect");
+	struct query_stack *stack = NULL;
+	test_redirect_response(&stack, n, "463 hostname :Not privileged to connect");
 END_TEST
 
 START_TEST(test_464)
 	struct irc_network *n = dummy_network();
-	test_redirect_response(NULL, n, "464 nick :Password mismatch");
+	struct query_stack *stack = NULL;
+	test_redirect_response(&stack, n, "464 nick :Password mismatch");
 END_TEST
 
 START_TEST(test_topic)
 	struct irc_network *n = dummy_network();
-	test_redirect_response(NULL, n, "332 #channel :Foobar");
+	struct query_stack *stack = NULL;
+	test_redirect_response(&stack, n, "332 #channel :Foobar");
 END_TEST
 
 Suite *redirect_suite()

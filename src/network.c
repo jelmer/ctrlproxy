@@ -178,7 +178,7 @@ static gboolean process_from_server(struct irc_network *n, const struct irc_line
 	if (n->connection.state == NETWORK_CONNECTION_STATE_MOTD_RECVD) {
 		gboolean linestack_store = TRUE;
 		if (atoi(l->args[0])) {
-			linestack_store &= (!redirect_response(n->queries, n, l));
+			linestack_store &= (!redirect_response(&n->queries, n, l));
 		} else {
 			if (n->clients == NULL) {
 				if (!g_strcasecmp(l->args[0], "PRIVMSG") && l->argc > 2 && 
