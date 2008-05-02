@@ -1090,7 +1090,10 @@ static void handle_nick(struct irc_network_state *s, const struct irc_line *l)
 
 static void handle_umodeis(struct irc_network_state *s, const struct irc_line *l)
 {
-	string2mode(l->args[1], s->me.modes);
+	if (!string2mode(l->args[1], s->me.modes)) {
+		network_state_log(LOG_WARNING, s, 
+						  "Invalid MODE change %s for user", l->args[1]);
+	}
 }
 
 static void handle_324(struct irc_network_state *s, const struct irc_line *l)
@@ -1103,7 +1106,10 @@ static void handle_324(struct irc_network_state *s, const struct irc_line *l)
 		return;
 	}
 
-	string2mode(l->args[3], ch->modes);
+	if (!string2mode(l->args[3], ch->modes)) {
+		network_state_log(LOG_WARNING, s, 
+						  "Invalid MODE change %s for channel %s", l->args[3], l->args[2]);
+	}
 
 	ch->mode_received = TRUE;
 }
@@ -1290,15 +1296,20 @@ void network_state_set_log_fn(struct irc_network_state *st,
 	st->userdata = userdata;
 }
 
-void string2mode(const char *modes, irc_modes_t ar)
+gboolean string2mode(const char *modes, irc_modes_t ar)
 {
 	gboolean action = TRUE;
 	modes_clear(ar);
 
 	if (modes == NULL)
-		return;
+		return TRUE;
 
-	g_assert(modes[0] == '+' || modes[0] == '-');
+	if (strlen(modes) == 0)
+		return TRUE;
+
+	if (modes[0] != '+' || modes[0] != '-')
+		return FALSE;
+
 	for (; *modes; modes++) {
 		switch (*modes) {
 			case '+': action = TRUE; break;
@@ -1306,6 +1317,8 @@ void string2mode(const char *modes, irc_modes_t ar)
 			default: modes_change_mode(ar, action, *modes); break;
 		}
 	}
+
+	return TRUE;
 }
 
 char *mode2string(irc_modes_t modes)
