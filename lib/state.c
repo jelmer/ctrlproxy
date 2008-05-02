@@ -1307,7 +1307,7 @@ gboolean string2mode(const char *modes, irc_modes_t ar)
 	if (strlen(modes) == 0)
 		return TRUE;
 
-	if (modes[0] != '+' || modes[0] != '-')
+	if (modes[0] != '+' && modes[0] != '-')
 		return FALSE;
 
 	for (; *modes; modes++) {
