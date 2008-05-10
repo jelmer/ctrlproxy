@@ -20,7 +20,10 @@ Ctrlproxy 3.0.7 UNRELEASED
     * Support storing ban exception lists, realname ban lists and 
       join throttling (MODE +e, MODE +d and MODE +J) as supported by hyperion.
 
-	* Fix handling of channel and user modes. (#196)
+    * Fix handling of channel and user modes. (#196)
+
+    * Avoid disconnecting clients that are still waiting for a connection. 
+      (#198, David Ford)
 
   INTERNALS
 

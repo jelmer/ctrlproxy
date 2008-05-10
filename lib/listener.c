@@ -84,7 +84,7 @@ static gboolean handle_client_detect(GIOChannel *ioc, struct pending_client *pc)
 
 	status = g_io_channel_read_chars(ioc, header, 1, &read, NULL);
 
-	if (status != G_IO_STATUS_NORMAL) {
+	if (status != G_IO_STATUS_NORMAL && status != G_IO_STATUS_AGAIN) {
 		return FALSE;
 	}
 
