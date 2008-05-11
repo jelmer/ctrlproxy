@@ -53,7 +53,7 @@
 #endif
 
 #include "settings.h"
-#include "network.h"
+#include "connection.h"
 #include "util.h"
 #include "client.h"
 #include "state.h"

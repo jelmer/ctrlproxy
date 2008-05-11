@@ -41,7 +41,7 @@ lib_objs = \
 	   lib/transport.o \
 	   lib/line.o \
 	   lib/isupport.o \
-	   lib/network.o \
+	   lib/connection.o \
 	   lib/url.o \
 	   lib/util.o \
 	   lib/listener.o
@@ -83,7 +83,7 @@ lib_headers = \
 		  lib/line.h \
 		  lib/isupport.h \
 		  lib/irc.h \
-		  lib/network.h \
+		  lib/connection.h \
 		  lib/url.h \
 		  lib/listener.h
 

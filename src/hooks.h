@@ -25,7 +25,7 @@
  * @brief Hooks
  */
 
-#include "network.h"
+#include "connection.h"
 
 enum data_direction { TO_SERVER = 1, FROM_SERVER = 2 };
 

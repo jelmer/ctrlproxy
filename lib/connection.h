@@ -121,6 +121,8 @@ struct irc_network {
 
 	gpointer ssl_credentials;
 
+	int reconnect_interval;
+
 	/** Current network state, when connected. */
 	struct irc_network_state *state;
 
