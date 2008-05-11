@@ -43,7 +43,7 @@ struct irc_client;
 struct irc_line;
 struct linestack_context;
 
-enum network_connection_state { 
+enum irc_network_connection_state { 
 		NETWORK_CONNECTION_STATE_NOT_CONNECTED = 0, 
 		NETWORK_CONNECTION_STATE_RECONNECT_PENDING,
 		NETWORK_CONNECTION_STATE_CONNECTING,
@@ -55,8 +55,8 @@ enum network_connection_state {
 /**
  * Information about the connection to a network.
  */
-struct network_connection {
- 	enum network_connection_state state;
+struct irc_network_connection {
+ 	enum irc_network_connection_state state;
 
 	/** Time the last line was sent to this network. */
 	time_t last_line_sent;
@@ -126,12 +126,11 @@ struct irc_network {
 
 	/** Network information. */
 	struct irc_network_info *info;
-	struct network_connection connection;
+
+	struct irc_network_connection connection;
 	
 	/** Linestack context. */
 	struct linestack_context *linestack;
-
-	int reconnect_interval;
 
 	const struct irc_network_callbacks *callbacks;
 
