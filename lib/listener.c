@@ -291,7 +291,7 @@ gboolean listener_start(struct irc_listener *l, const char *address, const char 
 			strcpy(lio->port, "");
 		}
 
-		sock = socket(PF_INET, SOCK_STREAM, 0);
+		sock = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
 		if (sock < 0) {
 			listener_log(LOG_ERROR, l, "error creating socket: %s", 
 						 strerror(errno));

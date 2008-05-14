@@ -25,6 +25,8 @@ Ctrlproxy 3.0.7 UNRELEASED
     * Avoid disconnecting clients that are still waiting for a connection. 
       (#198, David Ford)
 
+    * Support listening on IPv6.
+
   INTERNALS
 
     * Import non-blocking GIOChannel improvements from libsoap into 
