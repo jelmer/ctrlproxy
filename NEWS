@@ -25,6 +25,8 @@ Ctrlproxy 3.0.7 UNRELEASED
     * Avoid disconnecting clients that are still waiting for a connection. 
       (#198, David Ford)
 
+    * Fix parsing of ``learn-nickserv'' setting.
+
     * Support listening on IPv6.
 
   INTERNALS
