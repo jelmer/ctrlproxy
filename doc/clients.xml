@@ -12,18 +12,13 @@ let us know on the CtrlProxy IRC channel if you find a client that is not workin
 	<title>irssi</title>
 
 	<para>
-		Use ctrlproxy with the listener module and run the following commands:
+		Configure the <parameter>port</parameter> and <parameter>password</parameter> settings in <filename>~/.ctrlproxy/config</filename> and run the following commands in irssi:
 
 		<screen>
 			/set proxy_address <replaceable>ctrlproxy-host</replaceable>
 			/set proxy_password <replaceable>ctrlproxy-password</replaceable>
-			/set use_proxy ON
-		</screen>
-
-		and, if you're running ctrlproxy on a different port than 1080:
-
-		<screen>
 			/set proxy_port <replaceable>ctrlproxy-port</replaceable>
+			/set use_proxy ON
 		</screen>
 
 		You should now be able to connect to any networks as you normally would 
