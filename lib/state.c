@@ -1039,7 +1039,11 @@ static void handle_mode(struct irc_network_state *s, const struct irc_line *l)
 		}
 	}
 
-	if (l->args[arg] != NULL && strcmp(l->args[arg], "") != 0) {
+	if (arg >= l->argc) {
+		network_state_log(LOG_WARNING, s,
+						  "not enough arguments for mode change %s on %s", 
+						  l->args[2], l->args[1]);
+	} else if (l->args[arg] != NULL && strcmp(l->args[arg], "") != 0) {
 		network_state_log(LOG_WARNING, s, 
 						  "mode %s %s argument not consumed: %s", l->args[2], 
 						  l->args[1], 
