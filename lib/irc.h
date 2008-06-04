@@ -91,6 +91,7 @@
 #define RPL_WHOISCHANNELS 319
 #define RPL_WHOISIDENTIFIED 320
 #define RPL_WHOISOPERPRIVS 326
+#define RPL_WHOISLOGGEDINAS 328
 #define RPL_WHOWASUSER 314
 #define RPL_WHOWAS_TIME 330
 #define RPL_WHOISACCOUNT 330
@@ -187,6 +188,9 @@
 
 /* <command> :Bad command */
 #define ERR_BADCOMMAND				900
+
+/* <channel> :Homepage */
+#define RPL_CHANNEL_HOMEPAGE		901
 
 /* <package> :Already authenticated */
 #define ERR_ALREADYAUTHENTICATED 	909

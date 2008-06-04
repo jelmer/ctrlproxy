@@ -29,7 +29,7 @@ Ctrlproxy 3.0.7 UNRELEASED
 
     * Support listening on IPv6.
 
-	* Handle 326 WHOIS replies.
+	* Handle 326 and 328 WHOIS replies.
 
   INTERNALS
 
