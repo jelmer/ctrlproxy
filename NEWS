@@ -29,6 +29,8 @@ Ctrlproxy 3.0.7 UNRELEASED
 
     * Support listening on IPv6.
 
+	* Handle 326 WHOIS replies.
+
   INTERNALS
 
     * Import non-blocking GIOChannel improvements from libsoap into 
