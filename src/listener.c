@@ -99,13 +99,13 @@ gboolean default_socks_connect_fqdn (struct pending_client *cl, const char *host
 
 		name = (struct sockaddr *)result->connection.data.tcp.local_name;
 
-		if (name->sa_family == AF_INET) {
+		if (name != NULL && name->sa_family == AF_INET) {
 			struct sockaddr_in *name4 = (struct sockaddr_in *)name;
 			atyp = ATYP_IPV4;
 			data = (gchar *)&name4->sin_addr;
 			len = 4;
 			port = name4->sin_port;
-		} else if (name->sa_family == AF_INET6) {
+		} else if (name != NULL && name->sa_family == AF_INET6) {
 			struct sockaddr_in6 *name6 = (struct sockaddr_in6 *)name;
 			atyp = ATYP_IPV6;
 			data = (gchar *)&name6->sin6_addr;
