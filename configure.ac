@@ -1,7 +1,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT(ctrlproxy, 3.0.7, [jelmer@samba.org])
+AC_INIT(ctrlproxy, 3.0.8, [jelmer@samba.org])
 PACKAGE=$PACKAGE_NAME
 VERSION=$PACKAGE_VERSION
 AC_DEFINE_UNQUOTED(PACKAGE,"$PACKAGE", [ Package name])
