@@ -2,6 +2,11 @@ Unless otherwise indicated, all changes made by Jelmer Vernooij.
 
 Ctrlproxy 3.0.8 UNRELEASED
 
+  FEATURES
+
+    * Only warn about inconsistency in server channel modes at start-up, 
+	  rather than every time a mode is being used.
+
 Ctrlproxy 3.0.7 2008-06-14
 
   FEATURES
