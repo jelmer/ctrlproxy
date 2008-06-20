@@ -78,6 +78,10 @@ struct irc_network_info
 	 * D = Mode that changes a setting and never has a parameter.
 	 */
 	char **chanmodes;
+	char *chanmodes_a;
+	char *chanmodes_b;
+	char *chanmodes_c;
+	char *chanmodes_d;
 
 	/** Maximum number of channels allowed to join by channel prefix. */
 	/* FIXME: Should be a hash table */

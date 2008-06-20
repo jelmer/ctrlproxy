@@ -378,19 +378,26 @@ void network_info_parse(struct irc_network_info *info, const char *parameter)
 	} else if (!g_strcasecmp(key, "CHANMODES")) {
 		int i, j;
 		g_strfreev(info->chanmodes);
+		info->chanmodes_a = info->chanmodes_b = 
+			info->chanmodes_c = info->chanmodes_d = NULL;
 		info->chanmodes = g_strsplit(val, ",", 4);
 		if (g_strv_length(info->chanmodes) != 4) {
 			log_global(LOG_WARNING, "Expected 4-tuple for CHANMODES, received tuple was of size %d", g_strv_length(info->chanmodes));
-		}
-		for (i = 0; info->chanmodes[i]; i++) {
-			for (j = 0; info->chanmodes[i][j]; j++) {
-				if (!strchr(info->supported_channel_modes, info->chanmodes[i][j])) {
-					char *new_modes;
-					log_global(LOG_WARNING, 
-							   "Server reported inconsistent supported modes. %c was in CHANMODES but not in 004 line.", info->chanmodes[i][j]);
-					new_modes = g_strdup_printf("%s%c", info->supported_channel_modes, info->chanmodes[i][j]);
-					g_free(info->supported_channel_modes);
-					info->supported_channel_modes = new_modes;
+		} else {
+			info->chanmodes_a = info->chanmodes[0];
+			info->chanmodes_b = info->chanmodes[1];
+			info->chanmodes_c = info->chanmodes[2];
+			info->chanmodes_d = info->chanmodes[2];
+			for (i = 0; info->chanmodes[i]; i++) {
+				for (j = 0; info->chanmodes[i][j]; j++) {
+					if (!strchr(info->supported_channel_modes, info->chanmodes[i][j])) {
+						char *new_modes;
+						log_global(LOG_WARNING, 
+								   "Server reported inconsistent supported modes. %c was in CHANMODES but not in 004 line.", info->chanmodes[i][j]);
+						new_modes = g_strdup_printf("%s%c", info->supported_channel_modes, info->chanmodes[i][j]);
+						g_free(info->supported_channel_modes);
+						info->supported_channel_modes = new_modes;
+					}
 				}
 			}
 		}
