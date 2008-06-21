@@ -862,7 +862,7 @@ static int channel_state_change_mode(struct irc_network_state *s, struct network
 		} else {
 			be = find_banlist_entry(c->banlist, opt_arg);
 			if (be == NULL) {
-				network_state_log(LOG_WARNING, s, "Unable to remove nonpresent banlist entry '%s'", opt_arg);
+				network_state_log(LOG_WARNING, s, "Unable to remove nonpresent banlist entry '%s' on %s", opt_arg, c->name);
 				return 1;
 			}
 			c->banlist = g_list_remove(c->banlist, be);
