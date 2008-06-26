@@ -632,7 +632,7 @@ gboolean redirect_response(struct query_stack **stack,
 	}
 
 	if (!c) {
-		network_log((g_list_length(network->clients) == 1)?LOG_TRACE:LOG_WARNING, 
+		network_log((g_list_length(network->clients) <= 1)?LOG_TRACE:LOG_WARNING, 
 					network, "Unable to redirect response %s", l->args[0]);
 		clients_send(network->clients, l, NULL);
 	}
