@@ -1,69 +1,69 @@
-# Read the documentation for more information about the contents of this file.
+## Read the documentation for more information about the contents of this file.
 
 [global]
-# Replication mechanism to use (some other IRC proxies call this backlog)
-# Possible values: none, simple, highlight, lastdisconnect
-# Meanings:
-# 	none: No backlog
-# 	simple: Send backlog since the user last said something
-# 	lastdisconnect: Send backlog since the users' last disconnect
-# 	highlight: Send backlog since last connect, but only lines 
-# 			   containing 'matches' (see below)
+## Replication mechanism to use (some other IRC proxies call this backlog)
+## Possible values: none, simple, highlight, lastdisconnect
+## Meanings:
+## 	none: No backlog
+## 	simple: Send backlog since the user last said something
+## 	lastdisconnect: Send backlog since the users' last disconnect
+## 	highlight: Send backlog since last connect, but only lines 
+## 			   containing 'matches' (see below)
 replication = none
 
-# Prepend all lines in replication with the time a line was received when replicating
-# possible settings: never|always|replication
+## Prepend all lines in replication with the time a line was received when replicating
+## possible settings: never|always|replication
 report-time = never
 
-# What words to look for when remembering lines 
-# (in case "replication = highlight")
-# Seperate using semicolons
+## What words to look for when remembering lines 
+## (in case "replication = highlight")
+## Seperate using semicolons
 # matches=ctrlproxy;foobar
 
-# Port at which CtrlProxy should listen for new connections
-# Connections can be plain IRC connections or using the SOCKS protocol.
+## Port at which CtrlProxy should listen for new connections
+## Connections can be plain IRC connections or using the SOCKS protocol.
 port=6680
 
-# Password for logging in to ctrlproxy
+## Password for logging in to ctrlproxy
 password=
 
-# Set "bind" to make ctrlproxy only listen on a specific IP address:
+## Set "bind" to make ctrlproxy only listen on a specific IP address:
 #bind=192.168.4.3
 
-# Network that will be used when simply connecting to ctrlproxy 
-# without using SOCKS or the CONNECT command
+## Network that will be used when simply connecting to ctrlproxy 
+## without using SOCKS or the CONNECT command
 default-network=admin
 
-# Override motd-file location
+## Override motd-file location
 #motd-file = /tmp/my-motd
 
-# Save state to configuration file on exit
+## Save state to configuration file on exit
 autosave = true
 
-# Networks to connect to on startup. Seperate by semicolons
+## Networks to connect to on startup. Seperate by semicolons
 autoconnect = admin
-# autoconnect = admin;irc.oftc.net;irc.freenode.net;
+## autoconnect = admin;irc.oftc.net;irc.freenode.net;
 
-# Support for interfacing to ctrlproxy 
-# using /MSG ctrlproxy 
+## Support for interfacing to ctrlproxy 
+## using /MSG ctrlproxy 
 admin-user = ctrlproxy
 
-# Send ctrlproxy log messages to the admin channel
+## Send ctrlproxy log messages to the admin channel
 admin-log = true
 
-# Whether to remember passwords sent to NickServ
+## Whether to remember passwords sent to NickServ
 #learn-nickserv = true
 
-# Whether to update a networks name based on the NETWORK= line sent when 
-# connected to it
+## Whether to update a networks name based on the NETWORK= line sent when 
+## connected to it
 #learn-network-name = true
 #
-# Automatically set AWAY after a certain period of time
+## Automatically set AWAY after a certain period of time
 #auto-away-enable = true
 #auto-away-message = I'm currently away, sorry!
 #auto-away-time = 300 # in seconds
 #auto-away-nick = jelmer|away
 
-# Logging
+## Logging
 #logging = none|irssi|custom
 #logfile = /home/jelmer/tmp/ctrlproxy
