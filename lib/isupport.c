@@ -264,6 +264,27 @@ char *network_info_string(struct irc_network_info *info)
 	return ret;
 }
 
+static void check_chanmodes_inconsistency(struct irc_network_info *info)
+{
+	int i, j;
+	if (info->supported_channel_modes == NULL)
+		return;
+
+	for (i = 0; info->chanmodes[i]; i++) {
+		for (j = 0; info->chanmodes[i][j]; j++) {
+			if (!strchr(info->supported_channel_modes, info->chanmodes[i][j])) {
+				char *new_modes;
+				log_global(LOG_WARNING, 
+						   "Server reported inconsistent supported modes. %c was in CHANMODES but not in 004 line.", info->chanmodes[i][j]);
+				new_modes = g_strdup_printf("%s%c", info->supported_channel_modes, info->chanmodes[i][j]);
+				g_free(info->supported_channel_modes);
+				info->supported_channel_modes = new_modes;
+			}
+		}
+	}
+}
+
+
 void network_info_parse(struct irc_network_info *info, const char *parameter)
 {
 	char *sep;
@@ -376,7 +397,6 @@ void network_info_parse(struct irc_network_info *info, const char *parameter)
 		g_free(info->chantypes);
 		info->chantypes = g_strdup(val);
 	} else if (!g_strcasecmp(key, "CHANMODES")) {
-		int i, j;
 		g_strfreev(info->chanmodes);
 		info->chanmodes_a = info->chanmodes_b = 
 			info->chanmodes_c = info->chanmodes_d = NULL;
@@ -388,18 +408,8 @@ void network_info_parse(struct irc_network_info *info, const char *parameter)
 			info->chanmodes_b = info->chanmodes[1];
 			info->chanmodes_c = info->chanmodes[2];
 			info->chanmodes_d = info->chanmodes[2];
-			for (i = 0; info->chanmodes[i]; i++) {
-				for (j = 0; info->chanmodes[i][j]; j++) {
-					if (!strchr(info->supported_channel_modes, info->chanmodes[i][j])) {
-						char *new_modes;
-						log_global(LOG_WARNING, 
-								   "Server reported inconsistent supported modes. %c was in CHANMODES but not in 004 line.", info->chanmodes[i][j]);
-						new_modes = g_strdup_printf("%s%c", info->supported_channel_modes, info->chanmodes[i][j]);
-						g_free(info->supported_channel_modes);
-						info->supported_channel_modes = new_modes;
-					}
-				}
-			}
+
+			check_chanmodes_inconsistency(info);
 		}
 	} else if (!g_strcasecmp(key, "CHANLIMIT")) {
 		g_free(info->chanlimit);
