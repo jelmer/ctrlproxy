@@ -177,6 +177,12 @@ char *network_info_string(struct irc_network_info *info)
 	if (info->accept)
 		fs = g_list_append(fs, g_strdup("ACCEPT"));
 
+	if (info->esilence)
+		fs = g_list_append(fs, g_strdup("ESILENCE"));
+
+	if (info->uhnames)
+		fs = g_list_append(fs, g_strdup("UHNAMES"));
+
 	if (info->keylen != 0)
 		fs = g_list_append(fs, g_strdup_printf("KEYLEN=%d", info->keylen));
 
@@ -385,6 +391,10 @@ void network_info_parse(struct irc_network_info *info, const char *parameter)
 		info->callerid = TRUE;
 	} else if (!g_strcasecmp(key, "ACCEPT")) {
 		info->accept = TRUE;
+	} else if (!g_strcasecmp(key, "ESILENCE")) {
+		info->esilence = TRUE;
+	} else if (!g_strcasecmp(key, "UHNAMES")) {
+		info->uhnames = TRUE;
 	} else if (!g_strcasecmp(key, "KEYLEN")) {
 		info->keylen = atoi(val);
 	} else if (!g_strcasecmp(key, "SILENCE")) {

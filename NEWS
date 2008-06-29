@@ -13,6 +13,10 @@ Ctrlproxy 3.0.8 UNRELEASED
 
 	* Don't write to nickserv file either if autosave=false.
 
+	* Avoid unknown command warning when sending PASS.
+
+	* Recognize UHNAMES and ESILENCE 005 parameters.
+
 
 Ctrlproxy 3.0.7 2008-06-14
 

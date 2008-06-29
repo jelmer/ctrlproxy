@@ -260,6 +260,12 @@ struct irc_network_info
 
 	/** Server supports vbanlist */
 	gboolean vbanlist;
+
+	/** User host names in who list */
+	gboolean uhnames;
+
+	/** Extended silence (?) */
+	gboolean esilence;
 };
 
 G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT char *network_info_string(struct irc_network_info *info);
