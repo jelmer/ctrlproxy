@@ -162,5 +162,6 @@ G_MODULE_EXPORT gboolean is_prefix_mode(const struct irc_network_info *info, cha
 
 G_MODULE_EXPORT void free_channel_state(struct irc_channel_state *c);
 G_MODULE_EXPORT struct irc_channel_state *irc_channel_state_new(const char *name);
+G_MODULE_EXPORT gboolean network_nick_set_nick(struct network_nick *n, const char *nick);
 
 #endif /* __CTRLPROXY_STATE_H__ */

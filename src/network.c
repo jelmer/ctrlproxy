@@ -131,6 +131,7 @@ static gboolean process_from_server(struct irc_network *n, const struct irc_line
 		network_send_args(n, "NICK", tmp, NULL);
 		network_log(LOG_WARNING, n, "%s was already in use, trying %s", 
 					l->args[2], tmp);
+		network_nick_set_nick(&n->state->me, tmp);
 		g_free(tmp);
 	} else if (atoi(l->args[0]) == RPL_ENDOFMOTD ||
 			  atoi(l->args[0]) == ERR_NOMOTD) {

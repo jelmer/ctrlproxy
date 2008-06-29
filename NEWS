@@ -17,6 +17,8 @@ Ctrlproxy 3.0.8 UNRELEASED
 
 	* Recognize UHNAMES and ESILENCE 005 parameters.
 
+	* Properly track nick names when doing fallback.
+
 
 Ctrlproxy 3.0.7 2008-06-14
 
