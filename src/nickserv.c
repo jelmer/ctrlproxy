@@ -27,7 +27,6 @@
 #include "irc.h"
 
 #define NICKSERV_FILE_HEADER "# This file contains passwords for NickServ\n" \
-	"# It has the same format as the ppp secrets files.\n" \
 	"# It should contain one entry per line, each entry consisting of: \n" \
 	"# a nick name, password and network name, separated by tabs.\n" \
 	"#\n"
