@@ -31,6 +31,7 @@ gboolean keyfile_read_file(const char *filename, char commentchar, GList **nicks
     GIOChannel *gio;
     char *ret;
     gsize nr, term;
+	gsize lineno = 0;
 
     gio = g_io_channel_new_file(filename, "r", NULL);
 
@@ -42,6 +43,7 @@ gboolean keyfile_read_file(const char *filename, char commentchar, GList **nicks
     {
         char **parts; 
 		struct keyfile_entry *e;
+		lineno++;
 
 		if (ret[0] == commentchar) {
         	g_free(ret);
@@ -54,6 +56,7 @@ gboolean keyfile_read_file(const char *filename, char commentchar, GList **nicks
         g_free(ret);
 
 		if (!parts[0] || !parts[1]) {
+			log_global(LOG_WARNING, "%s:%d: Invalid syntax", filename, lineno);
 			g_strfreev(parts);
 			continue;
 		}
