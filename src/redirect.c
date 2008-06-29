@@ -219,6 +219,14 @@ static struct query queries[] = {
 		handle_default
 	},
 
+ /* PASS <password> <version> <flags> [<options>] */
+	{ "PASS",
+		{ 0 },
+		{ 0 },
+		{ ERR_NEEDMOREPARAMS, ERR_ALREADYREGISTERED, 0 },
+		handle_default
+	},
+
  /* USER <username> <hostname> <servername> <realname> */
 	{ "USER",
 		{ 0 },
