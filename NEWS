@@ -11,6 +11,8 @@ Ctrlproxy 3.0.8 UNRELEASED
    
     * Support 901 response codes.
 
+	* Don't write to nickserv file either if autosave=false.
+
 
 Ctrlproxy 3.0.7 2008-06-14
 

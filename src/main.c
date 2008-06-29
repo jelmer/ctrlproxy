@@ -123,9 +123,10 @@ static void clean_exit()
 	}
 
 	config_save_notify(my_global, path);
-	if (my_global->config->autosave)
+	if (my_global->config->autosave) {
 		save_configuration(my_global->config, path);
-	nickserv_save(my_global, path);
+		nickserv_save(my_global, path);
+	}
 	stop_unix_socket(my_global);
 	stop_admin_socket(my_global);
 	fini_listeners(my_global);
