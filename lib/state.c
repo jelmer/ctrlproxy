@@ -157,7 +157,33 @@ static void free_exceptlist(struct irc_channel_state *c)
 	c->exceptlist = NULL;
 }
 
-static void free_banlist_entry(struct nicklist_entry *be)
+gboolean nicklist_add_entry(GList **nicklist, const char *opt_arg,
+								   const char *by_nick)
+{
+	struct nicklist_entry *be;
+	be = g_new0(struct nicklist_entry, 1);
+	be->time_set = time(NULL);
+	be->hostmask = g_strdup(opt_arg);
+	be->by = (by_nick?g_strdup(by_nick):NULL);
+	*nicklist = g_list_append(*nicklist, be);
+
+	return TRUE;
+}
+
+gboolean nicklist_remove_entry(GList **nicklist, const char *hostmask)
+{
+	struct nicklist_entry *be;
+
+	be = find_nicklist_entry(*nicklist, hostmask);
+	if (be == NULL)
+		return FALSE;
+	*nicklist = g_list_remove(*nicklist, be);
+	free_nicklist_entry(be);
+	return TRUE;
+}
+
+
+void free_nicklist_entry(struct nicklist_entry *be)
 {
 	g_free(be->hostmask);
 	g_free(be->by);
@@ -184,7 +210,7 @@ static char *find_realnamebanlist_entry(GList *entries, const char *entry)
 	return NULL;
 }
 
-static struct nicklist_entry *find_banlist_entry(GList *entries, const char *hostmask)
+struct nicklist_entry *find_nicklist_entry(GList *entries, const char *hostmask)
 {
 	GList *gl;
 	for (gl = entries; gl; gl = gl->next) {
@@ -195,18 +221,18 @@ static struct nicklist_entry *find_banlist_entry(GList *entries, const char *hos
 	return NULL;
 }
 
-static void free_banlist(struct irc_channel_state *c)
+void free_nicklist(GList **nicklist)
 {
 	GList *g;
 	
-	g_assert(c);
-	g = c->banlist;
+	g = *nicklist;
 	while(g) {
 		struct nicklist_entry *be = g->data;
 		g = g_list_remove(g, be);
-		free_banlist_entry(be);
+		free_nicklist_entry(be);
 	}
-	c->banlist = NULL;
+
+	*nicklist = NULL;
 }
 
 static void free_names(struct irc_channel_state *c)
@@ -721,7 +747,7 @@ static void handle_banlist_entry(struct irc_network_state *s, const struct irc_l
 	}
 
 	if (!c->banlist_started) {
-		free_banlist(c);
+		free_nicklist(&c->banlist);
 		c->banlist_started = TRUE;
 	}
 
@@ -846,27 +872,18 @@ static int channel_state_change_mode(struct irc_network_state *s, struct network
 	}
 
 	if (mode == 'b') { /* Ban */
-		struct nicklist_entry *be;
-
 		if (opt_arg == NULL) {
 			network_state_log(LOG_WARNING, s, "Missing argument for ban MODE set/unset");
 			return -1;
 		}
 
 		if (set) {
-			be = g_new0(struct nicklist_entry, 1);
-			be->time_set = time(NULL);
-			be->hostmask = g_strdup(opt_arg);
-			be->by = (by?g_strdup(by->nick):NULL);
-			c->banlist = g_list_append(c->banlist, be);
+			nicklist_add_entry(&c->banlist, opt_arg, by?by->nick:NULL);
 		} else {
-			be = find_banlist_entry(c->banlist, opt_arg);
-			if (be == NULL) {
+			if (!nicklist_remove_entry(&c->banlist, opt_arg))  {
 				network_state_log(LOG_WARNING, s, "Unable to remove nonpresent banlist entry '%s' on %s", opt_arg, c->name);
 				return 1;
 			}
-			c->banlist = g_list_remove(c->banlist, be);
-			free_banlist_entry(be);
 		}
 		return 1;
 	} else if (mode == 'e') { /* Ban exemption */ 

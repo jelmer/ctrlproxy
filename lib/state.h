@@ -67,13 +67,17 @@ struct network_nick {
 };
 
 /**
- * An entry in the banlist of a channel.
+ * An entry in the nicklist of a channel.
  */
 struct nicklist_entry {
 	char *hostmask;
 	char *by;
 	time_t time_set;
 };
+
+struct nicklist_entry *find_nicklist_entry(GList *entries, const char *hostmask);
+void free_nicklist_entry(struct nicklist_entry *be);
+void free_nicklist(GList **nicklist);
 
 /**
  * The state of a particular channel.
