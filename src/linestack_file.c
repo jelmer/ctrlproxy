@@ -338,7 +338,7 @@ static gboolean marshall_GList (struct irc_network_state *nst, const char *name,
 	return TRUE;
 }
 
-static gboolean marshall_banlist_entry (struct irc_network_state *nst, const char *name, int level, enum marshall_mode m, GIOChannel *t, struct nicklist_entry **d)
+static gboolean marshall_nicklist_entry (struct irc_network_state *nst, const char *name, int level, enum marshall_mode m, GIOChannel *t, struct nicklist_entry **d)
 {
 	gboolean ret = TRUE;
 	marshall_new(m, d);
@@ -370,7 +370,7 @@ static gboolean marshall_channel_state (struct irc_network_state *nst,
 	ret &= marshall_string(nst, "topic", level+1, m, t, &(*c)->topic);
 	ret &= marshall_string(nst, "topic_set_by", level+1, m, t, &(*c)->topic_set_by);
 	ret &= marshall_long(nst, "topic_set_time", level+1, m, t, &(*c)->topic_set_time);
-	ret &= marshall_GList(nst, "banlist", level+1, m, t, &(*c)->banlist, (marshall_fn_t)marshall_banlist_entry);
+	ret &= marshall_GList(nst, "banlist", level+1, m, t, &(*c)->banlist, (marshall_fn_t)marshall_nicklist_entry);
 	ret &= marshall_GList(nst, "invitelist", level+1, m, t, &(*c)->invitelist, (marshall_fn_t)marshall_string);
 	ret &= marshall_GList(nst, "exceptlist", level+1, m, t, &(*c)->exceptlist, (marshall_fn_t)marshall_string);
 	(*c)->network = nst;
