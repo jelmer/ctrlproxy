@@ -290,12 +290,14 @@ START_TEST(test_nicklist)
 
 	fail_unless(nicklist_add_entry(&mylist, "user@host", "op@otherhost"));
 	fail_unless(nicklist_add_entry(&mylist, "anotheruser@host", NULL));
-	fail_unless(g_list_length(mylist) == 1);
+	fail_unless(g_list_length(mylist) == 2);
 	fail_unless(find_nicklist_entry(mylist, "user@host") != NULL);
 	fail_unless(find_nicklist_entry(mylist, "anonymous@host") == NULL);
 	fail_unless(nicklist_remove_entry(&mylist, "user@host"));
-	fail_unless(g_list_length(mylist) == 0);
+	fail_unless(g_list_length(mylist) == 1);
 	fail_unless(!nicklist_remove_entry(&mylist, "anonymous@host"));
+	free_nicklist(&mylist);
+	fail_unless(mylist == NULL);
 END_TEST
 
 START_TEST(test_mode2string)
