@@ -144,19 +144,6 @@ static void free_invitelist(struct irc_channel_state *c)
 }
 
 
-static void free_exceptlist(struct irc_channel_state *c)
-{
-	GList *g;
-	g_assert(c);
-
-	g = c->exceptlist;
-	while(g) {
-		g_free(g->data);
-		g = g_list_remove(g, g->data);
-	}
-	c->exceptlist = NULL;
-}
-
 gboolean nicklist_add_entry(GList **nicklist, const char *opt_arg,
 								   const char *by_nick)
 {
@@ -187,16 +174,6 @@ void free_nicklist_entry(struct nicklist_entry *be)
 	g_free(be->hostmask);
 	g_free(be->by);
 	g_free(be);
-}
-
-static char *find_exceptlist_entry(GList *entries, const char *entry)
-{
-	GList *gl;
-	for (gl = entries; gl; gl = gl->next) {
-		if (!strcmp(gl->data, entry))
-			return gl->data;
-	}
-	return NULL;
 }
 
 static char *find_realnamebanlist_entry(GList *entries, const char *entry)
@@ -714,11 +691,11 @@ static void handle_exceptlist_entry(struct irc_network_state *s, const struct ir
 	}
 
 	if (!c->exceptlist_started) {
-		free_exceptlist(c);
+		free_nicklist(&c->exceptlist);
 		c->exceptlist_started = TRUE;
 	}
 
-	c->exceptlist = g_list_append(c->exceptlist, g_strdup(l->args[3]));
+	nicklist_add_entry(&c->exceptlist, l->args[3], NULL);
 }
 
 static void handle_end_exceptlist(struct irc_network_state *s, const struct irc_line *l) 
@@ -872,7 +849,7 @@ static int channel_state_change_mode(struct irc_network_state *s, struct network
 
 	if (mode == 'b') { /* Ban */
 		if (opt_arg == NULL) {
-			network_state_log(LOG_WARNING, s, "Missing argument for ban MODE set/unset");
+			network_state_log(LOG_WARNING, s, "Missing argument for %c MODE set/unset", mode);
 			return -1;
 		}
 
@@ -880,7 +857,7 @@ static int channel_state_change_mode(struct irc_network_state *s, struct network
 			nicklist_add_entry(&c->banlist, opt_arg, by?by->nick:NULL);
 		} else {
 			if (!nicklist_remove_entry(&c->banlist, opt_arg))  {
-				network_state_log(LOG_WARNING, s, "Unable to remove nonpresent banlist entry '%s' on %s", opt_arg, c->name);
+				network_state_log(LOG_WARNING, s, "Unable to remove nonpresent %c MODE entry '%s' on %s", mode, opt_arg, c->name);
 				return 1;
 			}
 		}
@@ -892,15 +869,12 @@ static int channel_state_change_mode(struct irc_network_state *s, struct network
 		}
 
 		if (set) {
-			c->exceptlist = g_list_append(c->exceptlist, g_strdup(opt_arg));
+			nicklist_add_entry(&c->exceptlist, opt_arg, NULL);
 		} else {
-			char *be = find_exceptlist_entry(c->exceptlist, opt_arg);
-			if (be == NULL) {
+			if (!nicklist_remove_entry(&c->exceptlist, opt_arg)) {
 				network_state_log(LOG_WARNING, s, "Unable to remove nonpresent ban except list entry '%s'", opt_arg);
 				return 1;
 			}
-			c->exceptlist = g_list_remove(c->exceptlist, be);
-			g_free(be);
 		}
 		return 1;
 	} else if (mode == 'J') { /* join throttling */
