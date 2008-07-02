@@ -779,12 +779,12 @@ void client_send_netsplit(struct irc_client *c, const char *lost_server)
 	for (gl = s->nicks; gl; gl = gl->next) {
 		struct network_nick *gn = gl->data;
 
-		if (!gn == &s->me) continue;
+		if (gn != &s->me) continue;
 
 		client_send_args_ex(c, gn->hostmask, "QUIT", lost_server, NULL);
 	}
 
-	g_free(lost_server);
+	g_free(reason);
 }
 
 
