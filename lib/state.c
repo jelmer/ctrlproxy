@@ -162,16 +162,6 @@ void free_nicklist_entry(struct nicklist_entry *be)
 	g_free(be);
 }
 
-static char *find_realnamebanlist_entry(GList *entries, const char *entry)
-{
-	GList *gl;
-	for (gl = entries; gl; gl = gl->next) {
-		if (!strcmp(gl->data, entry))
-			return gl->data;
-	}
-	return NULL;
-}
-
 struct nicklist_entry *find_nicklist_entry(GList *entries, const char *hostmask)
 {
 	GList *gl;
@@ -895,15 +885,12 @@ static int channel_state_change_mode(struct irc_network_state *s, struct network
 		}
 
 		if (set) {
-			c->realnamebanlist = g_list_append(c->realnamebanlist, g_strdup(opt_arg));
+			nicklist_add_entry(&c->realnamebanlist, opt_arg, by?by->nick:NULL);
 		} else {
-			char *be = find_realnamebanlist_entry(c->realnamebanlist, opt_arg);
-			if (be == NULL) {
+			if (!nicklist_remove_entry(&c->realnamebanlist, opt_arg)) {
 				network_state_log(LOG_WARNING, s, "Unable to remove nonpresent realname ban list entry '%s' on %s", opt_arg, c->name);
 				return 1;
 			}
-			c->realnamebanlist = g_list_remove(c->realnamebanlist, be);
-			g_free(be);
 		}
 		return 1;	
 	} else if (mode == 'l') { /* Limit */
