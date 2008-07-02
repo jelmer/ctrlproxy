@@ -288,8 +288,8 @@ END_TEST
 START_TEST(test_nicklist)
 	GList *mylist = NULL;
 
-	fail_unless(nicklist_add_entry(&mylist, "user@host", "op@otherhost"));
-	fail_unless(nicklist_add_entry(&mylist, "anotheruser@host", NULL));
+	fail_unless(nicklist_add_entry(&mylist, "user@host", "op@otherhost", 0));
+	fail_unless(nicklist_add_entry(&mylist, "anotheruser@host", NULL, 0));
 	fail_unless(g_list_length(mylist) == 2);
 	fail_unless(find_nicklist_entry(mylist, "user@host") != NULL);
 	fail_unless(find_nicklist_entry(mylist, "anonymous@host") == NULL);

@@ -76,8 +76,8 @@ void network_update_config(struct irc_network_state *ns, struct network_config *
 		}
 		g_free(cc->key); 
 		cc->key = NULL;
-		if (cs->key) 
-			cc->key = g_strdup(cs->key);
+		if (cs->chanmode_option['k']) 
+			cc->key = g_strdup(cs->chanmode_option['k']);
 		cc->autojoin = TRUE;
 	}
 }

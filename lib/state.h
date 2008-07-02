@@ -79,15 +79,16 @@ struct nicklist_entry *find_nicklist_entry(GList *entries, const char *hostmask)
 void free_nicklist_entry(struct nicklist_entry *be);
 void free_nicklist(GList **nicklist);
 gboolean nicklist_add_entry(GList **nicklist, const char *opt_arg,
-								   const char *by_nick);
+								   const char *by_nick, time_t at);
 gboolean nicklist_remove_entry(GList **nicklist, const char *hostmask);
+#define channel_mode_nicklist(ch,mode) ((ch)->chanmode_nicklist[(unsigned char)mode])
+#define channel_mode_option(ch,mode) ((ch)->chanmode_option[(unsigned char)mode])
 
 /**
  * The state of a particular channel.
  */
 struct irc_channel_state {
 	char *name;
-	char *key;
 	char *topic;
 	time_t topic_set_time;
 	char *topic_set_by; /* nickname */
@@ -99,15 +100,12 @@ struct irc_channel_state {
 	gboolean invitelist_started;
 	gboolean exceptlist_started;
 	gboolean mode_received;
-	int limit;
 	GList *nicks;
-	GList *banlist;
-	GList *invitelist;
-	GList *exceptlist;
-	GList *realnamebanlist;
-	int throttle_x; 
-	int throttle_y;
+
 	struct irc_network_state *network;
+
+	GList *chanmode_nicklist[MAXMODES];
+	char *chanmode_option[MAXMODES];
 };
 
 /**

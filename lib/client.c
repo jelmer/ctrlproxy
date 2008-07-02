@@ -723,9 +723,9 @@ void client_send_banlist(struct irc_client *client, struct irc_channel_state *ch
 	g_assert(channel);
 	g_assert(client);
 
-	for (gl = channel->banlist; gl; gl = gl->next)
+	for (gl = channel_mode_nicklist(channel, 'b'); gl; gl = gl->next)
 	{
-		struct banlist_entry *be = gl->data;
+		struct nicklist_entry *be = gl->data;
 		g_assert(be);
 		client_send_response(client, RPL_BANLIST, channel->name, be->hostmask, NULL);
 	}

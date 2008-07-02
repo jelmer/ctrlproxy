@@ -131,11 +131,11 @@ static void free_channel_nick(struct channel_nick *n)
 }
 
 gboolean nicklist_add_entry(GList **nicklist, const char *opt_arg,
-								   const char *by_nick)
+								   const char *by_nick, time_t at)
 {
 	struct nicklist_entry *be;
 	be = g_new0(struct nicklist_entry, 1);
-	be->time_set = time(NULL);
+	be->time_set = at;
 	be->hostmask = g_strdup(opt_arg);
 	be->by = (by_nick?g_strdup(by_nick):NULL);
 	*nicklist = g_list_append(*nicklist, be);
@@ -197,15 +197,19 @@ static void free_names(struct irc_channel_state *c)
 
 void free_channel_state(struct irc_channel_state *c)
 {
+	int i;
 	if (c == NULL)
 		return;
 	free_names(c);
 	g_free(c->name);
 	g_free(c->topic);
 	g_free(c->topic_set_by);
-	g_free(c->key);
 	g_assert(c->network);
 	c->network->channels = g_list_remove(c->network->channels, c);
+	for (i = 0; i < MAXMODES; i++)
+		g_free(c->chanmode_option[i]);
+	for (i = 0; i < MAXMODES; i++)
+		free_nicklist(&c->chanmode_nicklist[i]);
 	g_free(c);
 }
 
@@ -629,6 +633,7 @@ static void handle_end_names(struct irc_network_state *s, const struct irc_line 
 static void handle_invitelist_entry(struct irc_network_state *s, const struct irc_line *l) 
 {
 	struct irc_channel_state *c = find_channel(s, l->args[2]);
+	GList **list;
 	
 	if (c == NULL) {
 		network_state_log(LOG_WARNING, s, 
@@ -637,12 +642,14 @@ static void handle_invitelist_entry(struct irc_network_state *s, const struct ir
 		return;
 	}
 
+	list = &channel_mode_nicklist(c, 'I');
+
 	if (!c->invitelist_started) {
-		free_nicklist(&c->invitelist);
+		free_nicklist(list);
 		c->invitelist_started = TRUE;
 	}
 
-	nicklist_add_entry(&c->invitelist, l->args[3], NULL);
+	nicklist_add_entry(list, l->args[3], NULL, 0);
 }
 
 static void handle_end_invitelist(struct irc_network_state *s, const struct irc_line *l) 
@@ -658,6 +665,7 @@ static void handle_end_invitelist(struct irc_network_state *s, const struct irc_
 static void handle_exceptlist_entry(struct irc_network_state *s, const struct irc_line *l) 
 {
 	struct irc_channel_state *c = find_channel(s, l->args[2]);
+	GList **list;
 	
 	if (c == NULL) {
 		network_state_log(LOG_WARNING, s, 
@@ -666,12 +674,14 @@ static void handle_exceptlist_entry(struct irc_network_state *s, const struct ir
 		return;
 	}
 
+	list = &channel_mode_nicklist(c, 'e');
+
 	if (!c->exceptlist_started) {
-		free_nicklist(&c->exceptlist);
+		free_nicklist(list);
 		c->exceptlist_started = TRUE;
 	}
 
-	nicklist_add_entry(&c->exceptlist, l->args[3], NULL);
+	nicklist_add_entry(list, l->args[3], NULL, 0);
 }
 
 static void handle_end_exceptlist(struct irc_network_state *s, const struct irc_line *l) 
@@ -689,7 +699,7 @@ static void handle_end_exceptlist(struct irc_network_state *s, const struct irc_
 static void handle_banlist_entry(struct irc_network_state *s, const struct irc_line *l) 
 {
 	struct irc_channel_state *c = find_channel(s, l->args[2]);
-	struct nicklist_entry *be;
+	GList **list;
 	
 	if (c == NULL) {
 		network_state_log(LOG_WARNING, s, 
@@ -698,20 +708,15 @@ static void handle_banlist_entry(struct irc_network_state *s, const struct irc_l
 		return;
 	}
 
+	list = &channel_mode_nicklist(c, 'b');
+
 	if (!c->banlist_started) {
-		free_nicklist(&c->banlist);
+		free_nicklist(list);
 		c->banlist_started = TRUE;
 	}
 
-	be = g_new0(struct nicklist_entry, 1);
-	be->hostmask = g_strdup(l->args[3]);
-	if (l->args[4] != NULL) {
-		be->by = g_strdup(l->args[4]);
-		if (l->args[5]) 
-			be->time_set = atol(l->args[5]);
-	}
-
-	c->banlist = g_list_append(c->banlist, be);
+	nicklist_add_entry(list, l->args[3], l->args[4], 
+					   (l->args[4] && l->args[5])?atol(l->args[5]):0);
 }
 
 static void handle_end_banlist(struct irc_network_state *s, const struct irc_line *l) 
@@ -819,106 +824,38 @@ static int channel_state_change_mode(struct irc_network_state *s, struct network
 {
 	struct irc_network_info *info = s->info;
 
-	if (!is_channel_mode(info, mode)) {
-		network_state_log(LOG_WARNING, s, "Mode '%c' set on channel %s is not in the supported list of channel modes from the server", mode, c->name);
-	}
+	enum chanmode_type cmt = network_chanmode_type(mode, s->info);
 
-	if (mode == 'b') { /* Ban */
+	if (cmt == CHANMODE_NICKLIST) {
 		if (opt_arg == NULL) {
 			network_state_log(LOG_WARNING, s, "Missing argument for %c MODE set/unset", mode);
 			return -1;
 		}
 
 		if (set) {
-			nicklist_add_entry(&c->banlist, opt_arg, by?by->nick:NULL);
+			nicklist_add_entry(&channel_mode_nicklist(c, mode), opt_arg, 
+							   by?by->nick:NULL, time(NULL));
 		} else {
-			if (!nicklist_remove_entry(&c->banlist, opt_arg))  {
+			if (!nicklist_remove_entry(&channel_mode_nicklist(c, mode), opt_arg))  {
 				network_state_log(LOG_WARNING, s, "Unable to remove nonpresent %c MODE entry '%s' on %s", mode, opt_arg, c->name);
 				return 1;
 			}
 		}
 		return 1;
-	} else if (mode == 'e') { /* Ban exemption */ 
-		if (opt_arg == NULL) {
-			network_state_log(LOG_WARNING, s, "Missing argument for ban exception MODE set/unset");
-			return -1;
-		}
-
-		if (set) {
-			nicklist_add_entry(&c->exceptlist, opt_arg, NULL);
-		} else {
-			if (!nicklist_remove_entry(&c->exceptlist, opt_arg)) {
-				network_state_log(LOG_WARNING, s, "Unable to remove nonpresent ban except list entry '%s'", opt_arg);
-				return 1;
-			}
-		}
-		return 1;
-	} else if (mode == 'J') { /* join throttling */
-		if (set) {
-			char **join_args;
-			if (opt_arg == NULL) {
-				network_state_log(LOG_WARNING, s, "Missing argument for realname ban MODE set/unset");
-				return -1;
-			}
-
-			join_args = g_strsplit(opt_arg, ",", 2);
-
-			if (join_args == NULL) {
-				network_state_log(LOG_ERROR, s, "Unable to split argument %s", opt_arg);
-				return -1;
-			}
-
-			if (join_args[0]) 
-				c->throttle_x = atoi(join_args[0]);
-			if (join_args[0] && join_args[1]) 
-				c->throttle_y = atoi(join_args[1]);
-		} else {
-			c->throttle_x = 0;
-			c->throttle_y = 0;
-		}
-
-		return 1;
-	} else if (mode == 'd') { /* Realname ban */
-		if (opt_arg == NULL) {
-			network_state_log(LOG_WARNING, s, "Missing argument for realname ban MODE set/unset");
-			return -1;
-		}
-
-		if (set) {
-			nicklist_add_entry(&c->realnamebanlist, opt_arg, by?by->nick:NULL);
-		} else {
-			if (!nicklist_remove_entry(&c->realnamebanlist, opt_arg)) {
-				network_state_log(LOG_WARNING, s, "Unable to remove nonpresent realname ban list entry '%s' on %s", opt_arg, c->name);
-				return 1;
-			}
-		}
-		return 1;	
-	} else if (mode == 'l') { /* Limit */
-		modes_change_mode(c->modes, set, 'l');
-		if (set) {
-			if (!opt_arg) {
-				network_state_log(LOG_WARNING, s, "Mode +l requires argument, but no argument found");
-				return -1;
-			}
-			c->limit = atol(opt_arg);
-		} else {
-			c->limit = 0;
-		}
-		return 1;
-	} else if (mode == 'k') {
-		modes_change_mode(c->modes, set, 'k');
+	} else if (cmt == CHANMODE_OPT_SETTING || cmt == CHANMODE_SETTING) {
 		if (set) {
 			if (opt_arg == NULL) {
-				network_state_log(LOG_WARNING, s, "Mode k requires argument, but no argument found");
+				network_state_log(LOG_WARNING, s, "Missing argument for MODE %c set", mode);
 				return -1;
 			}
 
-			g_free(c->key);
-			c->key = g_strdup(opt_arg);
+			g_free(channel_mode_option(c, mode));
+			channel_mode_option(c, mode) = g_strdup(opt_arg);
 		} else {
-			g_free(c->key);
-			c->key = NULL;
+			g_free(channel_mode_option(c, mode));
+			channel_mode_option(c, mode) = NULL;
 		}
+
 		return 1;
 	} else if (is_prefix_mode(info, mode)) {
 		struct channel_nick *n;
@@ -939,9 +876,12 @@ static int channel_state_change_mode(struct irc_network_state *s, struct network
 			modes_unset_mode(n->modes, mode);
 		} 
 		return 1;
-	} else {
+	} else if (cmt == CHANMODE_BOOL) {
 		modes_change_mode(c->modes, set, mode);
 		return 0;
+	} else {
+		network_state_log(LOG_WARNING, s, "Mode '%c' set on channel %s is not in the supported list of channel modes from the server", mode, c->name);
+		return 1;
 	}
 }
 

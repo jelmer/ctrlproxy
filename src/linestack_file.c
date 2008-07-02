@@ -354,6 +354,7 @@ static gboolean marshall_channel_state (struct irc_network_state *nst,
 										enum marshall_mode m, GIOChannel *t, 
 										struct irc_channel_state **c)
 {
+	int i;
 	gboolean ret = TRUE;
 	marshall_new(m, c);
 	marshall_struct(t, m, level, name);
@@ -364,15 +365,17 @@ static gboolean marshall_channel_state (struct irc_network_state *nst,
 	ret &= marshall_bool(nst, "banlist_started", level+1, m, t, &(*c)->banlist_started);
 	ret &= marshall_bool(nst, "invitelist_started", level+1, m, t, &(*c)->invitelist_started);
 	ret &= marshall_bool(nst, "exceptlist_started", level+1, m, t, &(*c)->exceptlist_started);
-	ret &= marshall_int(nst, "limit", level+1, m, t, &(*c)->limit);
 	ret &= marshall_string(nst, "name", level+1, m, t, &(*c)->name);
-	ret &= marshall_string(nst, "key", level+1, m, t, &(*c)->key);
 	ret &= marshall_string(nst, "topic", level+1, m, t, &(*c)->topic);
 	ret &= marshall_string(nst, "topic_set_by", level+1, m, t, &(*c)->topic_set_by);
 	ret &= marshall_long(nst, "topic_set_time", level+1, m, t, &(*c)->topic_set_time);
-	ret &= marshall_GList(nst, "banlist", level+1, m, t, &(*c)->banlist, (marshall_fn_t)marshall_nicklist_entry);
-	ret &= marshall_GList(nst, "invitelist", level+1, m, t, &(*c)->invitelist, (marshall_fn_t)marshall_string);
-	ret &= marshall_GList(nst, "exceptlist", level+1, m, t, &(*c)->exceptlist, (marshall_fn_t)marshall_string);
+	for (i = 0; i < MAXMODES; i++) {
+		char name[20];
+		g_snprintf(name, sizeof(name), "mode_nicklist[%d]", i);
+		ret &= marshall_GList(nst, name, level+1, m, t, &(*c)->chanmode_nicklist[i], (marshall_fn_t)marshall_nicklist_entry);
+		g_snprintf(name, sizeof(name), "mode_option[%d]", i);
+		ret &= marshall_string(nst, name, level+1, m, t, &(*c)->chanmode_option[i]);
+	}
 	(*c)->network = nst;
 
 	marshall_struct(t, m, level+1, "nicks");

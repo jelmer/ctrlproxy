@@ -78,7 +78,7 @@ static gboolean channel_nick_equal(const struct channel_nick *nick1, const struc
 		   str_equal(nick1->channel->name, nick2->channel->name);
 }
 
-static gboolean banlist_entry_equal(const struct banlist_entry *entry1, const struct banlist_entry *entry2)
+static gboolean banlist_entry_equal(const struct nicklist_entry *entry1, const struct nicklist_entry *entry2)
 {
 	null_equal(entry1, entry2);
 
@@ -89,10 +89,18 @@ static gboolean banlist_entry_equal(const struct banlist_entry *entry1, const st
 
 static gboolean channel_state_equal(const struct irc_channel_state *channel1, const struct irc_channel_state *channel2)
 {
+	int i;
 	null_equal(channel1, channel2);
+	
+	for (i = 0; i < MAXMODES; i++) {
+		if (!str_equal(channel1->chanmode_option[i], channel2->chanmode_option[i]))
+			return FALSE;
+
+		if (!list_equal(channel1->chanmode_nicklist[i], channel2->chanmode_nicklist[i], (GEqualFunc)banlist_entry_equal))
+			return FALSE;
+	}
 
 	return str_equal(channel1->name, channel2->name) &&
-		   str_equal(channel1->key, channel2->key) &&
 		   str_equal(channel1->topic, channel2->topic) &&
 		   channel1->mode == channel2->mode &&
 		   !memcmp(channel1->modes, channel2->modes, 255) &&
@@ -100,11 +108,7 @@ static gboolean channel_state_equal(const struct irc_channel_state *channel1, co
 		   channel1->invitelist_started == channel2->invitelist_started &&
 		   channel1->exceptlist_started == channel2->exceptlist_started &&
 		   channel1->banlist_started == channel2->banlist_started &&
-		   channel1->limit == channel2->limit &&
-		   list_equal(channel1->nicks, channel2->nicks, (GEqualFunc)channel_nick_equal) &&
-		   list_equal(channel1->banlist, channel2->banlist, (GEqualFunc)banlist_entry_equal) &&
-		   list_equal(channel1->invitelist, channel2->invitelist, (GEqualFunc)str_equal) &&
-		   list_equal(channel1->exceptlist, channel2->exceptlist, (GEqualFunc)str_equal);
+		   list_equal(channel1->nicks, channel2->nicks, (GEqualFunc)channel_nick_equal);
 }
 
 static gboolean network_info_equal(const struct irc_network_info *info1, const struct irc_network_info *info2)
