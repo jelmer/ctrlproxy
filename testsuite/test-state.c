@@ -285,6 +285,19 @@ START_TEST(test_string2mode)
 	fail_unless(modes['o'] == TRUE);
 END_TEST
 
+START_TEST(test_nicklist)
+	GList *mylist = NULL;
+
+	fail_unless(nicklist_add_entry(&mylist, "user@host", "op@otherhost"));
+	fail_unless(nicklist_add_entry(&mylist, "anotheruser@host", NULL));
+	fail_unless(g_list_length(mylist) == 1);
+	fail_unless(find_nicklist_entry(mylist, "user@host") != NULL);
+	fail_unless(find_nicklist_entry(mylist, "anonymous@host") == NULL);
+	fail_unless(nicklist_remove_entry(&mylist, "user@host"));
+	fail_unless(g_list_length(mylist) == 0);
+	fail_unless(!nicklist_remove_entry(&mylist, "anonymous@host"));
+END_TEST
+
 START_TEST(test_mode2string)
 	char *ret;
 	irc_modes_t modes;
@@ -322,5 +335,6 @@ Suite *state_suite(void)
 	tcase_add_test(tc_core, state_prefixes_remove_prefix);
 	tcase_add_test(tc_core, test_mode2string);
 	tcase_add_test(tc_core, test_string2mode);
+	tcase_add_test(tc_core, test_nicklist);
 	return s;
 }

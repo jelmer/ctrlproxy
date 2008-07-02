@@ -182,7 +182,6 @@ gboolean nicklist_remove_entry(GList **nicklist, const char *hostmask)
 	return TRUE;
 }
 
-
 void free_nicklist_entry(struct nicklist_entry *be)
 {
 	g_free(be->hostmask);

@@ -78,6 +78,9 @@ struct nicklist_entry {
 struct nicklist_entry *find_nicklist_entry(GList *entries, const char *hostmask);
 void free_nicklist_entry(struct nicklist_entry *be);
 void free_nicklist(GList **nicklist);
+gboolean nicklist_add_entry(GList **nicklist, const char *opt_arg,
+								   const char *by_nick);
+gboolean nicklist_remove_entry(GList **nicklist, const char *hostmask);
 
 /**
  * The state of a particular channel.
