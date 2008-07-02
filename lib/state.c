@@ -923,7 +923,7 @@ static int channel_state_change_mode(struct irc_network_state *s, struct network
 		} else {
 			char *be = find_realnamebanlist_entry(c->realnamebanlist, opt_arg);
 			if (be == NULL) {
-				network_state_log(LOG_WARNING, s, "Unable to remove nonpresent realname ban list entry '%s'", opt_arg);
+				network_state_log(LOG_WARNING, s, "Unable to remove nonpresent realname ban list entry '%s' on %s", opt_arg, c->name);
 				return 1;
 			}
 			c->realnamebanlist = g_list_remove(c->realnamebanlist, be);

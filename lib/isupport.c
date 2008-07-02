@@ -655,14 +655,15 @@ const static char *default_chanmodes[] = {
 	"beI", "k" , "l" , "imnpsta" 
 };
 
-int network_chanmode_type(char m, struct irc_network_info *n)
+enum chanmode_type network_chanmode_type(char m, struct irc_network_info *n)
 {
 	int i;
 	for (i = 0; i < 4; i++) {
 		if (strchr((n && n->chanmodes)?n->chanmodes[i]:default_chanmodes[i], m)) {
-			return i;
+			return i+1;
 		}
 	}
 
-	return 3;
+	return CHANMODE_UNKNOWN;
 }
+

@@ -40,6 +40,15 @@ enum casemapping {
 		CASEMAP_STRICT_RFC1459 
 	};
 
+
+enum chanmode_type { 
+	CHANMODE_UNKNOWN = 0,
+	CHANMODE_NICKLIST, 
+	CHANMODE_SETTING, 
+	CHANMODE_OPT_SETTING, 
+	CHANMODE_BOOL 
+};
+
 /**
  * Information about a network (doesn't change between connects or 
  * servers).
@@ -275,7 +284,7 @@ G_MODULE_EXPORT char get_prefix_by_mode(char p, const struct irc_network_info *n
 G_MODULE_EXPORT int irccmp(const struct irc_network_info *n, const char *a, const char *b);
 G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT const char *get_charset(const struct irc_network_info *n);
 G_MODULE_EXPORT void network_info_parse(struct irc_network_info *info, const char *parameter);
-G_MODULE_EXPORT int network_chanmode_type(char m, struct irc_network_info *n);
+G_MODULE_EXPORT enum chanmode_type network_chanmode_type(char m, struct irc_network_info *n);
 G_MODULE_EXPORT struct irc_network_info *network_info_init(void);
 G_MODULE_EXPORT void free_network_info(struct irc_network_info *info);
 

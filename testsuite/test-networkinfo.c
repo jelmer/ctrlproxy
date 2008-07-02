@@ -61,22 +61,23 @@ START_TEST(test_get_charset_default)
 END_TEST
 
 START_TEST(test_chanmode_type_default)
-	fail_unless(network_chanmode_type('I', NULL) == 0);
-	fail_unless(network_chanmode_type('k', NULL) == 1);
-	fail_unless(network_chanmode_type('z', NULL) == 3);
-	fail_unless(network_chanmode_type('m', NULL) == 3);
-	fail_unless(network_chanmode_type('l', NULL) == 2);
+	fail_unless(network_chanmode_type('I', NULL) == CHANMODE_NICKLIST);
+	fail_unless(network_chanmode_type('k', NULL) == CHANMODE_SETTING);
+	fail_unless(network_chanmode_type('z', NULL) == CHANMODE_UNKNOWN);
+	fail_unless(network_chanmode_type('m', NULL) == CHANMODE_BOOL);
+	fail_unless(network_chanmode_type('l', NULL) == CHANMODE_OPT_SETTING);
 END_TEST
 
 START_TEST(test_chanmode_type_lookup)
 	struct irc_network_info ni;
 	memset(&ni, 0, sizeof(ni));
 	network_info_parse(&ni, "CHANMODES=b,k,l,ciLmMnOprRst");
-	fail_unless(network_chanmode_type('I', &ni) == 3);
-	fail_unless(network_chanmode_type('k', &ni) == 1);
-	fail_unless(network_chanmode_type('z', &ni) == 3);
-	fail_unless(network_chanmode_type('m', &ni) == 3);
-	fail_unless(network_chanmode_type('l', &ni) == 2);
+	fail_unless(network_chanmode_type('I', &ni) == CHANMODE_UNKNOWN);
+	fail_unless(network_chanmode_type('k', &ni) == CHANMODE_SETTING);
+	fail_unless(network_chanmode_type('z', &ni) == CHANMODE_UNKNOWN);
+	fail_unless(network_chanmode_type('m', &ni) == CHANMODE_BOOL);
+	fail_unless(network_chanmode_type('l', &ni) == CHANMODE_OPT_SETTING);
+	fail_unless(network_chanmode_type('w', &ni) == CHANMODE_UNKNOWN);
 END_TEST
 
 Suite *networkinfo_suite()
