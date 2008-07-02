@@ -157,7 +157,7 @@ static void free_exceptlist(struct irc_channel_state *c)
 	c->exceptlist = NULL;
 }
 
-static void free_banlist_entry(struct banlist_entry *be)
+static void free_banlist_entry(struct nicklist_entry *be)
 {
 	g_free(be->hostmask);
 	g_free(be->by);
@@ -184,11 +184,11 @@ static char *find_realnamebanlist_entry(GList *entries, const char *entry)
 	return NULL;
 }
 
-static struct banlist_entry *find_banlist_entry(GList *entries, const char *hostmask)
+static struct nicklist_entry *find_banlist_entry(GList *entries, const char *hostmask)
 {
 	GList *gl;
 	for (gl = entries; gl; gl = gl->next) {
-		struct banlist_entry *be = gl->data;
+		struct nicklist_entry *be = gl->data;
 		if (!strcmp(be->hostmask, hostmask))
 			return be;
 	}
@@ -202,7 +202,7 @@ static void free_banlist(struct irc_channel_state *c)
 	g_assert(c);
 	g = c->banlist;
 	while(g) {
-		struct banlist_entry *be = g->data;
+		struct nicklist_entry *be = g->data;
 		g = g_list_remove(g, be);
 		free_banlist_entry(be);
 	}
@@ -711,7 +711,7 @@ static void handle_end_exceptlist(struct irc_network_state *s, const struct irc_
 static void handle_banlist_entry(struct irc_network_state *s, const struct irc_line *l) 
 {
 	struct irc_channel_state *c = find_channel(s, l->args[2]);
-	struct banlist_entry *be;
+	struct nicklist_entry *be;
 	
 	if (c == NULL) {
 		network_state_log(LOG_WARNING, s, 
@@ -725,7 +725,7 @@ static void handle_banlist_entry(struct irc_network_state *s, const struct irc_l
 		c->banlist_started = TRUE;
 	}
 
-	be = g_new0(struct banlist_entry, 1);
+	be = g_new0(struct nicklist_entry, 1);
 	be->hostmask = g_strdup(l->args[3]);
 	if (l->args[4] != NULL) {
 		be->by = g_strdup(l->args[4]);
@@ -846,7 +846,7 @@ static int channel_state_change_mode(struct irc_network_state *s, struct network
 	}
 
 	if (mode == 'b') { /* Ban */
-		struct banlist_entry *be;
+		struct nicklist_entry *be;
 
 		if (opt_arg == NULL) {
 			network_state_log(LOG_WARNING, s, "Missing argument for ban MODE set/unset");
@@ -854,7 +854,7 @@ static int channel_state_change_mode(struct irc_network_state *s, struct network
 		}
 
 		if (set) {
-			be = g_new0(struct banlist_entry, 1);
+			be = g_new0(struct nicklist_entry, 1);
 			be->time_set = time(NULL);
 			be->hostmask = g_strdup(opt_arg);
 			be->by = (by?g_strdup(by->nick):NULL);

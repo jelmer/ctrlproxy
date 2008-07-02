@@ -69,7 +69,7 @@ struct network_nick {
 /**
  * An entry in the banlist of a channel.
  */
-struct banlist_entry {
+struct nicklist_entry {
 	char *hostmask;
 	char *by;
 	time_t time_set;

@@ -338,7 +338,7 @@ static gboolean marshall_GList (struct irc_network_state *nst, const char *name,
 	return TRUE;
 }
 
-static gboolean marshall_banlist_entry (struct irc_network_state *nst, const char *name, int level, enum marshall_mode m, GIOChannel *t, struct banlist_entry **d)
+static gboolean marshall_banlist_entry (struct irc_network_state *nst, const char *name, int level, enum marshall_mode m, GIOChannel *t, struct nicklist_entry **d)
 {
 	gboolean ret = TRUE;
 	marshall_new(m, d);
