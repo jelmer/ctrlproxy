@@ -130,20 +130,6 @@ static void free_channel_nick(struct channel_nick *n)
 	g_free(n);
 }
 
-static void free_invitelist(struct irc_channel_state *c)
-{
-	GList *g;
-	g_assert(c);
-
-	g = c->invitelist;
-	while(g) {
-		g_free(g->data);
-		g = g_list_remove(g, g->data);
-	}
-	c->invitelist = NULL;
-}
-
-
 gboolean nicklist_add_entry(GList **nicklist, const char *opt_arg,
 								   const char *by_nick)
 {
@@ -662,11 +648,11 @@ static void handle_invitelist_entry(struct irc_network_state *s, const struct ir
 	}
 
 	if (!c->invitelist_started) {
-		free_invitelist(c);
+		free_nicklist(&c->invitelist);
 		c->invitelist_started = TRUE;
 	}
 
-	c->invitelist = g_list_append(c->invitelist, g_strdup(l->args[3]));
+	nicklist_add_entry(&c->invitelist, l->args[3], NULL);
 }
 
 static void handle_end_invitelist(struct irc_network_state *s, const struct irc_line *l) 
