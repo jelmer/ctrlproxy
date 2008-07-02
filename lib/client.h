@@ -105,7 +105,7 @@ G_MODULE_EXPORT void client_send_luserchannels(struct irc_client *c, int num);
 G_MODULE_EXPORT void client_send_motd(struct irc_client *c, char **lines);
 G_MODULE_EXPORT void client_parse_buffer(struct irc_client *client);
 G_MODULE_EXPORT void client_log(enum log_level, const struct irc_client *c, const char *fmt, ...);
-G_MODULE_EXPORT void client_invalidate_state(struct irc_client *c);
-G_MODULE_EXPORT void clients_invalidate_state(GList *clients);
+G_MODULE_EXPORT void client_send_netsplit(struct irc_client *c, const char *lost_server);
+G_MODULE_EXPORT void clients_send_netsplit(GList *clients, const char *lost_server);
 
 #endif /* __LIBIRC_CLIENT_H__ */

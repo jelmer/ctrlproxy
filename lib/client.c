@@ -757,36 +757,34 @@ void client_send_luserchannels(struct irc_client *client, int num)
 
 }
 
-void clients_invalidate_state(GList *clients)
+void clients_send_netsplit(GList *clients, const char *lost_server)
 {
 	GList *gl;
 	for (gl = clients; gl; gl = gl->next) {
 		struct irc_client *c = gl->data;
-		client_invalidate_state(c);
+		client_send_netsplit(c, lost_server);
 	}
 }
 
-void client_invalidate_state(struct irc_client *c)
+void client_send_netsplit(struct irc_client *c, const char *lost_server)
 {
 	struct irc_network_state *s = c->state;
+	char *reason;
 	GList *gl;
 
-	/* Leave channels */
-	for (gl = s->channels; gl; gl = gl->next) {
-		struct irc_channel_state *ch = gl->data;
-
-		client_send_args_ex(c, s->me.hostmask, "PART", ch->name, 
-							 "Network disconnected", NULL);
-	}
+	/* Spoof a netsplit */
+	reason = g_strdup_printf("%s %s", c->state->info->server, lost_server);
 
 	/* private queries quit */
 	for (gl = s->nicks; gl; gl = gl->next) {
 		struct network_nick *gn = gl->data;
 
-		if (!gn->query || gn == &s->me) continue;
+		if (!gn == &s->me) continue;
 
-		client_send_args_ex(c, gn->hostmask, "QUIT", "Network disconnected", NULL);
+		client_send_args_ex(c, gn->hostmask, "QUIT", lost_server, NULL);
 	}
+
+	g_free(lost_server);
 }
 
 
