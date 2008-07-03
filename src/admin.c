@@ -353,6 +353,27 @@ static void add_network_helper(admin_handle h, const char *name)
 	admin_out(h, "Network `%s' added. Use ADDSERVER to add a server to this network.", name);
 }
 
+static void rename_network_helper(admin_handle h, const char *oldname, 
+								  const char *newname)
+{
+	struct irc_network *n;
+
+	n = find_network(admin_get_global(h)->networks, oldname);
+
+	if (n == NULL) {
+		admin_out(h, "Network with name `%s' does not exist", oldname);
+		return;
+	}
+
+	if (find_network(admin_get_global(h)->networks, newname) != NULL) {
+		admin_out(h, "Network with name `%s' already exists", newname);
+		return;
+	}
+	
+	g_free(n->name);
+	n->name = g_strdup(newname);
+}
+
 static void del_network_helper(admin_handle h, const char *name)
 {
 	struct irc_network *n = find_network(admin_get_global(h)->networks, name);
@@ -395,7 +416,7 @@ static void list_networks_helper(admin_handle h)
 			break;
 		case NETWORK_CONNECTION_STATE_LOGIN_SENT:
 		case NETWORK_CONNECTION_STATE_MOTD_RECVD:
-			admin_out(h, "%s: connected", n->info->name);
+			admin_out(h, "%s: connected", n->name);
 			break;
 		}
 	}
@@ -417,6 +438,12 @@ static void cmd_network(admin_handle h, char **args, void *userdata)
 			return;
 		}
 		add_network_helper(h, args[2]);
+	} else if (!strcasecmp(args[1], "rename")) {
+		if (args[2] == NULL || args[3] == NULL) {
+			admin_out(h, "Usage: network rename <oldname> <newname>");
+			return;
+		}
+		rename_network_helper(h, args[2], args[3]);
 	} else if (!strcasecmp(args[1], "del") || 
 			   !strcasecmp(args[1], "delete") ||
 			   !strcasecmp(args[1], "remove")) {
