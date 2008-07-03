@@ -383,7 +383,7 @@ static gboolean client_ping(struct irc_client *client)
 	g_assert(client != NULL);
 
 	client->last_ping = time(NULL);
-	client_send_args_ex(client, NULL, "PING", client->network->info->name, NULL);
+	client_send_args_ex(client, NULL, "PING", client->network->name, NULL);
 
 	return TRUE;
 }

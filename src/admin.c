@@ -46,7 +46,7 @@ static void list_networks_helper(admin_handle h);
  */
 static char *admin_hostmask(struct irc_network *n)
 {
-	return g_strdup_printf(ADMIN_NICK"!"ADMIN_USERNAME"@%s", n->info->name);
+	return g_strdup_printf(ADMIN_NICK"!"ADMIN_USERNAME"@%s", n->name);
 }
 
 /**
@@ -289,13 +289,13 @@ static void cmd_disconnect_network (admin_handle h, char **args, void *userdata)
 	nc = n->private_data;
 
 	if (n->connection.state == NETWORK_CONNECTION_STATE_NOT_CONNECTED) {
-		admin_out(h, "Already disconnected from `%s'", n->info->name);
+		admin_out(h, "Already disconnected from `%s'", n->name);
 	} else if (nc->type == NETWORK_VIRTUAL && 
 		n->connection.data.virtual.ops->not_disconnectable) {
 		admin_out(h, "Built-in network `%s' can't be disconnected", 
-				  n->info->name);
+				  n->name);
 	} else {
-		admin_out(h, "Disconnecting from `%s'", n->info->name);
+		admin_out(h, "Disconnecting from `%s'", n->name);
 		disconnect_network(n);
 	}
 }
@@ -315,7 +315,7 @@ static void cmd_next_server (admin_handle h, char **args, void *userdata)
 			admin_out(h, "No current network");
 			return;
 		}
-		name = n->info->name;
+		name = n->name;
 	}
 	if (!n) {
 		admin_out(h, "%s: Not connected", name);
@@ -378,20 +378,20 @@ static void list_networks_helper(admin_handle h)
 
 		switch (n->connection.state) {
 		case NETWORK_CONNECTION_STATE_CONNECTING:
-			admin_out(h, "%s: Connect in progress", n->info->name);
+			admin_out(h, "%s: Connect in progress", n->name);
 			break;
 		case NETWORK_CONNECTION_STATE_CONNECTED:
-			admin_out(h, "%s: Connected, logging in", n->info->name);
+			admin_out(h, "%s: Connected, logging in", n->name);
 			break;
 		case NETWORK_CONNECTION_STATE_NOT_CONNECTED:
 			if (n->connection.data.tcp.last_disconnect_reason)
-				admin_out(h, "%s: Not connected: %s", n->info->name, 
+				admin_out(h, "%s: Not connected: %s", n->name, 
 						  n->connection.data.tcp.last_disconnect_reason);
 			else
-				admin_out(h, "%s: Not connected", n->info->name);
+				admin_out(h, "%s: Not connected", n->name);
 			break;
 		case NETWORK_CONNECTION_STATE_RECONNECT_PENDING:
-			admin_out(h, "%s: Reconnecting", n->info->name);
+			admin_out(h, "%s: Reconnecting", n->name);
 			break;
 		case NETWORK_CONNECTION_STATE_LOGIN_SENT:
 		case NETWORK_CONNECTION_STATE_MOTD_RECVD:
@@ -472,7 +472,7 @@ static void dump_joined_channels(admin_handle h, char **args, void *userdata)
 	}
 
 	if (!n->state) {
-		admin_out(h, "Network '%s' not connected", n->info->name);
+		admin_out(h, "Network '%s' not connected", n->name);
 		return;
 	}
 
@@ -521,7 +521,7 @@ static void cmd_backlog(admin_handle h, char **args, void *userdata)
 	}
 
 	if (!args[1] || strlen(args[1]) == 0) {
-		admin_out(h, "Sending backlog for network '%s'", n->info->name);
+		admin_out(h, "Sending backlog for network '%s'", n->name);
 
 		linestack_send(n->linestack, lm, NULL, admin_get_client(h),
 					   TRUE, n->global->config->report_time != REPORT_TIME_NEVER,
@@ -907,7 +907,7 @@ void admin_log(enum log_level level, const struct irc_network *n, const struct i
 	tmp = g_strdup_printf("%s%s%s%s%s%s", 
 						  data, 
 						  n?" (":"",
-						  n?n->info->name:"", 
+						  n?n->name:"", 
 						  c?"/":"",
 						  c?c->description:"",
 						  n?")":"");
@@ -1026,7 +1026,7 @@ static void cmd_list_listener(admin_handle h, char **args, void *userdata)
 		struct irc_listener *l = gl->data;
 
 		admin_out(h, "%s:%s%s%s%s", l->config->address?l->config->address:"", l->config->port, 
-				  l->network?" (":"", l->network?l->network->info->name:"", 
+				  l->network?" (":"", l->network?l->network->name:"", 
 				  l->network?")":"");
 	}
 }

@@ -236,7 +236,7 @@ struct irc_network *find_network_by_hostname(struct global *global,
 		struct network_config *nc;
 		g_assert(n);
 
-		if (n->info->name && !g_strcasecmp(n->info->name, hostname)) {
+		if (n->name && !g_strcasecmp(n->name, hostname)) {
 			g_free(portname);
 			return n;
 		}
@@ -259,7 +259,7 @@ struct irc_network *find_network_by_hostname(struct global *global,
 			} 
 		}
 
-		if (n->info->name && !g_strcasecmp(n->info->name, hostname)) {
+		if (n->name && !g_strcasecmp(n->name, hostname)) {
 			g_free(portname);
 			return n;
 		}

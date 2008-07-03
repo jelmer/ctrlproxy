@@ -72,7 +72,7 @@ static gboolean process_from_client(struct irc_client *c, const struct irc_line 
 		g_free(l->origin);
 		return FALSE;
 	} else if (!g_strcasecmp(l->args[0], "PING")) {
-		client_send_args(c, "PONG", c->network->info->name, l->args[1], NULL);
+		client_send_args(c, "PONG", c->network->name, l->args[1], NULL);
 	} else if (!g_strcasecmp(l->args[0], "PONG")) {
 		if (l->argc < 2) {
 			client_send_response(c, ERR_NEEDMOREPARAMS, l->args[0], 
@@ -147,7 +147,7 @@ static gboolean welcome_client(struct irc_client *client)
 	client_send_response(client, RPL_CREATED, 
 		"Ctrlproxy (c) 2002-2008 Jelmer Vernooij <jelmer@samba.org>", NULL);
 	client_send_response(client, RPL_MYINFO, 
-		 client->network->info->name, 
+		 client->network->name, 
 		 ctrlproxy_version(), 
 		 (client->network->state != NULL && client->network->info->supported_user_modes)?client->network->info->supported_user_modes:ALLMODES, 
 		 (client->network->state != NULL && client->network->info->supported_channel_modes)?client->network->info->supported_channel_modes:ALLMODES,
@@ -241,7 +241,7 @@ struct irc_client *client_init(struct irc_network *n, struct irc_transport *tran
 {
 	struct irc_client *client;
 
-	client = irc_client_new(transport, n?n->info->name:get_my_hostname(), desc, &default_callbacks);
+	client = irc_client_new(transport, n?n->name:get_my_hostname(), desc, &default_callbacks);
 
 	client->network = network_ref(n);
 

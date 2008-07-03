@@ -106,6 +106,8 @@ struct irc_network_callbacks {
  * An IRC network
  */
 struct irc_network {
+	char *name;
+
 	/** Global data. */
 	struct global *global;
 

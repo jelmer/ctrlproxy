@@ -45,13 +45,6 @@ void network_update_config(struct irc_network_state *ns, struct network_config *
 
 	if (ns == NULL)
 		return;
-
-	/* Network name */
-	if (ns->info->name != NULL && 
-		(nc->name == NULL || strcmp(ns->info->name, nc->name) != 0)) {
-		g_free(nc->name);
-		nc->name = g_strdup(ns->info->name);
-	}
 	
 	/* nick */
 	g_free(nc->nick);
@@ -90,6 +83,13 @@ void global_update_config(struct global *my_global)
 		struct network_config *nc = n->private_data;
 	
 		nc->autoconnect = (n->connection.state != NETWORK_CONNECTION_STATE_NOT_CONNECTED);
+
+		/* Network name */
+		if (n->name != NULL && 
+			(nc->name == NULL || strcmp(n->name, nc->name) != 0)) {
+			g_free(nc->name);
+			nc->name = g_strdup(n->name);
+		}
 
 		if (n->connection.state == NETWORK_CONNECTION_STATE_MOTD_RECVD)
 			network_update_config(n->state, nc);

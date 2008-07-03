@@ -126,7 +126,7 @@ static char *get_nick(struct subst_context *subst_ctx, const struct irc_line *li
 
 static char *get_network(struct subst_context *subst_ctx, const struct irc_line *line, gboolean case_sensitive) 
 {
-	return g_strdup(subst_ctx->network->info->name); 
+	return g_strdup(subst_ctx->network->name); 
 }
 
 static char *get_server(struct subst_context *subst_ctx, const struct irc_line *line, gboolean case_sensitive)

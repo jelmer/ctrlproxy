@@ -274,7 +274,7 @@ gboolean virtual_network_recv_response(struct irc_network *n, int num, ...)
 	g_assert(nc->type == NETWORK_VIRTUAL);
 
 	va_start(ap, num);
-	l = virc_parse_line(n->info->name, ap);
+	l = virc_parse_line(n->name, ap);
 	va_end(ap);
 
 	l->args = g_realloc(l->args, sizeof(char *) * (l->argc+4));
@@ -794,11 +794,11 @@ static gboolean connect_program(struct irc_network *s)
 
 	g_io_channel_unref(ioc);
 
-	if (s->info->name == NULL) {
+	if (s->name == NULL) {
 		if (strchr(nc->type_settings.program_location, '/')) {
-			s->info->name = g_strdup(strrchr(nc->type_settings.program_location, '/')+1);
+			s->name = g_strdup(strrchr(nc->type_settings.program_location, '/')+1);
 		} else {
-			s->info->name = g_strdup(nc->type_settings.program_location);
+			s->name = g_strdup(nc->type_settings.program_location);
 		}
 	}
 
@@ -860,7 +860,7 @@ struct irc_network *irc_network_new(const struct irc_network_callbacks *callback
 	s->private_data = private_data;
 	s->reconnect_interval = ((struct network_config *)private_data)->reconnect_interval == -1?DEFAULT_RECONNECT_INTERVAL:((struct network_config *)private_data)->reconnect_interval;
 	s->info = network_info_init();
-	s->info->name = g_strdup(((struct network_config *)private_data)->name);
+	s->name = g_strdup(((struct network_config *)private_data)->name);
 	s->info->ircd = g_strdup("ctrlproxy");
 	s->info->forced_nick_changes = TRUE; /* Forced nick changes are done by ctrlproxy */
 
@@ -900,6 +900,7 @@ static void free_network(struct irc_network *s)
 	ssl_free_client_credentials(s->ssl_credentials);
 #endif
 
+	g_free(s->name);
 	g_free(s);
 }
 
@@ -969,7 +970,7 @@ struct irc_network *find_network(GList *networks, const char *name)
 	GList *gl;
 	for (gl = networks; gl; gl = gl->next) {
 		struct irc_network *n = gl->data;
-		if (n->info->name && !g_strcasecmp(n->info->name, name)) 
+		if (n->name && !g_strcasecmp(n->name, name)) 
 			return n;
 	}
 

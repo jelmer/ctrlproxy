@@ -56,9 +56,10 @@ START_TEST(test_login)
 	GIOChannel *ch1, *ch2;
 	struct irc_client *c;
 	struct global *g = TORTURE_GLOBAL;
-	struct irc_network_info ni = { .name = "test" };
+	struct irc_network_info ni = { };
 	struct irc_network n = { 
 		.info = &ni,
+		.name = "test",
 		.global = g,
 	};
 	g_io_channel_pair(&ch1, &ch2);
