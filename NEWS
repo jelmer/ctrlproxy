@@ -21,6 +21,9 @@ Ctrlproxy 3.0.8 UNRELEASED
 
 	* Properly track nick names when doing fallback.
 
+  INTERNALS
+
+    * Use generic storage for MODEs.
 
 Ctrlproxy 3.0.7 2008-06-14
 
