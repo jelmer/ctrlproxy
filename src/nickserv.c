@@ -68,11 +68,11 @@ void nickserv_identify_me(struct irc_network *network, char *nick)
 		const char *nickserv_n = nickserv_nick(network);
 		char *raw;
 		raw = g_strdup_printf("IDENTIFY %s", pass);
-		network_log(LOG_INFO, network, "Sending password for %s", nickserv_n);
+		network_log(LOG_INFO, network, "Sending NickServ password for %s", nickserv_n);
 		network_send_args(network, "PRIVMSG", nickserv_n, raw, NULL);
 		g_free(raw);
 	} else {
-		network_log(LOG_INFO, network, "No password known for `%s'", nick);
+		network_log(LOG_TRACE, network, "No NickServ password known for `%s'", nick);
 	}
 }
 
@@ -107,7 +107,7 @@ static void cache_nickserv_pass(struct irc_network *n, const char *newpass)
 
 	if (e->pass == NULL || strcmp(e->pass, newpass) != 0) {
 		e->pass = g_strdup(newpass);
-		network_log(LOG_INFO, n, "Caching password for nick %s", e->nick);
+		network_log(LOG_INFO, n, "Caching NickServ password for nick %s", e->nick);
 	} 
 }
 
