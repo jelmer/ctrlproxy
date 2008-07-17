@@ -7,6 +7,8 @@ Ctrlproxy 3.0.8 UNRELEASED
     * Only warn about inconsistency in server channel modes at start-up, 
 	  rather than every time a mode is being used.
 
+	* Allow two connections to the same network. (#151)
+
   BUG FIXES
    
     * Support 901 response codes.
@@ -19,6 +21,9 @@ Ctrlproxy 3.0.8 UNRELEASED
 
 	* Properly track nick names when doing fallback.
 
+  INTERNALS
+
+    * Use generic storage for MODEs.
 
 Ctrlproxy 3.0.7 2008-06-14
 
