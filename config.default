@@ -38,7 +38,7 @@ default-network=admin
 #motd-file = /tmp/my-motd
 
 ## Save state to configuration file on exit
-autosave = true
+#autosave = true
 
 ## Networks to connect to on startup. Seperate by semicolons
 autoconnect = admin

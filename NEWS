@@ -21,6 +21,8 @@ Ctrlproxy 3.0.8 UNRELEASED
 
 	* Properly track nick names when doing fallback.
 
+	* Disable autosave by default.
+
   INTERNALS
 
     * Use generic storage for MODEs.
