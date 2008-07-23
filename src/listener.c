@@ -223,7 +223,7 @@ static gboolean handle_client_line(struct pending_client *pc, const struct irc_l
 			return TRUE;
 		}
 	} else {
-		irc_sendf(pc->connection, pc->listener->iconv, NULL, ":%s %d %s :You are not registered", get_my_hostname(), ERR_NOTREGISTERED, "*");
+		irc_sendf(pc->connection, pc->listener->iconv, NULL, ":%s %d %s :You are not registered. Did you specify a password?", get_my_hostname(), ERR_NOTREGISTERED, "*");
 		g_io_channel_flush(pc->connection, NULL);
 	}
 
