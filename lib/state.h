@@ -82,6 +82,7 @@ gboolean nicklist_add_entry(GList **nicklist, const char *opt_arg,
 								   const char *by_nick, time_t at);
 gboolean nicklist_remove_entry(GList **nicklist, const char *hostmask);
 #define channel_mode_nicklist(ch,mode) ((ch)->chanmode_nicklist[(unsigned char)mode])
+#define channel_mode_nicklist_present(ch,mode) ((ch)->chanmode_nicklist_present[(unsigned char)mode])
 #define channel_mode_option(ch,mode) ((ch)->chanmode_option[(unsigned char)mode])
 
 /**
@@ -105,6 +106,7 @@ struct irc_channel_state {
 	struct irc_network_state *network;
 
 	GList *chanmode_nicklist[MAXMODES];
+	gboolean chanmode_nicklist_present[MAXMODES];
 	char *chanmode_option[MAXMODES];
 };
 

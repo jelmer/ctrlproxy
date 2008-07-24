@@ -655,11 +655,14 @@ static void handle_invitelist_entry(struct irc_network_state *s, const struct ir
 static void handle_end_invitelist(struct irc_network_state *s, const struct irc_line *l) 
 {
 	struct irc_channel_state *c = find_channel(s, l->args[2]);
-	if (c != NULL)
-		c->invitelist_started = FALSE;
-	else 
+	if (c == NULL) {
 		network_state_log(LOG_WARNING, s, 
 			  "Can't end invitelist for %s: channel not found", l->args[2]);
+		return;
+	}
+
+	c->invitelist_started = FALSE;
+	channel_mode_nicklist_present(c,'I') = TRUE;
 }
 
 static void handle_exceptlist_entry(struct irc_network_state *s, const struct irc_line *l) 
@@ -687,11 +690,13 @@ static void handle_exceptlist_entry(struct irc_network_state *s, const struct ir
 static void handle_end_exceptlist(struct irc_network_state *s, const struct irc_line *l) 
 {
 	struct irc_channel_state *c = find_channel(s, l->args[2]);
-	if (c != NULL)
-		c->exceptlist_started = FALSE;
-	else 
+	if (c == NULL) {
 		network_state_log(LOG_WARNING, s, 
 			"Can't end exceptlist for %s: channel not found", l->args[2]);
+		return;
+	}
+	c->exceptlist_started = FALSE;
+	channel_mode_nicklist_present(c,'e') = TRUE;
 }
 
 
@@ -723,11 +728,14 @@ static void handle_end_banlist(struct irc_network_state *s, const struct irc_lin
 {
 	struct irc_channel_state *c = find_channel(s, l->args[2]);
 
-	if (c != NULL)
-		c->banlist_started = FALSE;
-	else 
+	if (c == NULL) {
 		network_state_log(LOG_WARNING, s, 
 				"Can't end banlist for %s: channel not found", l->args[2]);
+		return;
+	}
+
+	c->banlist_started = FALSE;
+	channel_mode_nicklist_present(c,'b') = TRUE;
 }
 
 static void handle_whoreply(struct irc_network_state *s, const struct irc_line *l) 
@@ -832,13 +840,15 @@ static int channel_state_change_mode(struct irc_network_state *s, struct network
 			return -1;
 		}
 
-		if (set) {
-			nicklist_add_entry(&channel_mode_nicklist(c, mode), opt_arg, 
-							   by?by->nick:NULL, time(NULL));
-		} else {
-			if (!nicklist_remove_entry(&channel_mode_nicklist(c, mode), opt_arg))  {
-				network_state_log(LOG_WARNING, s, "Unable to remove nonpresent %c MODE entry '%s' on %s", mode, opt_arg, c->name);
-				return 1;
+		if (channel_mode_nicklist_present(c, mode)) {
+			if (set) {
+				nicklist_add_entry(&channel_mode_nicklist(c, mode), opt_arg, 
+								   by?by->nick:NULL, time(NULL));
+			} else {
+				if (!nicklist_remove_entry(&channel_mode_nicklist(c, mode), opt_arg))  {
+					network_state_log(LOG_WARNING, s, "Unable to remove nonpresent %c MODE entry '%s' on %s", mode, opt_arg, c->name);
+					return 1;
+				}
 			}
 		}
 		return 1;
