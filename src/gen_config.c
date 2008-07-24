@@ -92,6 +92,6 @@ void global_update_config(struct global *my_global)
 		}
 
 		if (n->connection.state == NETWORK_CONNECTION_STATE_MOTD_RECVD)
-			network_update_config(n->state, nc);
+			network_update_config(n->external_state, nc);
 	}
 }

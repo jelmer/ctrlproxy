@@ -59,7 +59,7 @@ void nickserv_identify_me(struct irc_network *network, char *nick)
 	/* Don't try to identify if we're already identified */
 	/* FIXME: Apparently, +e indicates being registered on Freenode,
 	 * +R is only used on OFTC */
-	if (network->state->me.modes['R']) 
+	if (network->external_state->me.modes['R']) 
 		return;
 	
 	pass = nickserv_find_nick(network, nick);
@@ -88,11 +88,11 @@ static void cache_nickserv_pass(struct irc_network *n, const char *newpass)
 		e = gl->data;
 
 		if (e->network && !g_strcasecmp(e->network, n->name) && 
-			!g_strcasecmp(e->nick, n->state->me.nick)) {
+			!g_strcasecmp(e->nick, n->external_state->me.nick)) {
 			break;		
 		}
 
-		if (!e->network && !g_strcasecmp(e->nick, n->state->me.nick) &&
+		if (!e->network && !g_strcasecmp(e->nick, n->external_state->me.nick) &&
 			!g_strcasecmp(e->pass, newpass)) {
 			break;
 		}
@@ -100,7 +100,7 @@ static void cache_nickserv_pass(struct irc_network *n, const char *newpass)
 
 	if (gl == NULL) {
 		e = g_new0(struct keyfile_entry, 1);
-		e->nick = g_strdup(n->state->me.nick);
+		e->nick = g_strdup(n->external_state->me.nick);
 		e->network = g_strdup(n->name);
 		n->global->nickserv_nicks = g_list_prepend(n->global->nickserv_nicks, e);
 	}

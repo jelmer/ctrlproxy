@@ -125,8 +125,11 @@ struct irc_network {
 
 	int reconnect_interval;
 
-	/** Current network state, when connected. */
-	struct irc_network_state *state;
+	/** External network state, when connected. */
+	struct irc_network_state *external_state;
+
+	/** Internal network state, as used by clients */
+	struct irc_network_state *internal_state;
 
 	/** Network information. */
 	struct irc_network_info *info;

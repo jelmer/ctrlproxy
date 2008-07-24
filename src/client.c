@@ -105,7 +105,7 @@ static gboolean process_from_client(struct irc_client *c, const struct irc_line 
 	} else if (c->network->connection.state == NETWORK_CONNECTION_STATE_MOTD_RECVD) {
 		struct network_config *nc = c->network->private_data;
 
-		if (nc->disable_cache || !client_try_cache(c, c->network->state, l)) {
+		if (nc->disable_cache || !client_try_cache(c, c->network->external_state, l)) {
 			/* Perhaps check for validity of input here ? It could save us some bandwidth 
 			 * to the server, though very unlikely to occur often */
 			network_send_line(c->network, c, l, FALSE);
@@ -149,8 +149,8 @@ static gboolean welcome_client(struct irc_client *client)
 	client_send_response(client, RPL_MYINFO, 
 		 client->network->name, 
 		 ctrlproxy_version(), 
-		 (client->network->state != NULL && client->network->info->supported_user_modes)?client->network->info->supported_user_modes:ALLMODES, 
-		 (client->network->state != NULL && client->network->info->supported_channel_modes)?client->network->info->supported_channel_modes:ALLMODES,
+		 (client->network->external_state != NULL && client->network->info->supported_user_modes)?client->network->info->supported_user_modes:ALLMODES, 
+		 (client->network->external_state != NULL && client->network->info->supported_channel_modes)?client->network->info->supported_channel_modes:ALLMODES,
 		 NULL);
 
 	features = network_generate_feature_string(client->network);
@@ -160,8 +160,8 @@ static gboolean welcome_client(struct irc_client *client)
 
 	g_free(features);
 
-	if (client->network->state != NULL) {
-		client_send_luserchannels(client, g_list_length(client->network->state->channels));
+	if (client->network->external_state != NULL) {
+		client_send_luserchannels(client, g_list_length(client->network->external_state->channels));
 	}
 
 	tmp = g_strdup_printf("I have %d clients", g_list_length(client->network->clients));
@@ -181,11 +181,11 @@ static gboolean welcome_client(struct irc_client *client)
 	g_assert(client->state != NULL);
 	g_assert(client->network != NULL);
 
-	if (client->network->state != NULL) {
-		if (g_strcasecmp(client->state->me.nick, client->network->state->me.nick) != 0) {
+	if (client->network->external_state != NULL) {
+		if (g_strcasecmp(client->state->me.nick, client->network->external_state->me.nick) != 0) {
 			/* Tell the client our his/her real nick */
 			client_send_args_ex(client, client->state->me.hostmask, "NICK", 
-								client->network->state->me.nick, NULL); 
+								client->network->external_state->me.nick, NULL); 
 
 			/* Try to get the nick the client specified */
 			nc = client->network->private_data;

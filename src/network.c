@@ -102,7 +102,7 @@ static gboolean process_from_server(struct irc_network *n, const struct irc_line
 
 	n->connection.last_line_recvd = time(NULL);
 
-	if (n->state == NULL) {
+	if (n->external_state == NULL) {
 		network_log(LOG_WARNING, n, 
 					"Dropping message '%s' because network is disconnected.", 
 					l->args[0]);
@@ -112,9 +112,9 @@ static gboolean process_from_server(struct irc_network *n, const struct irc_line
 	run_log_filter(n, lc = linedup(l), FROM_SERVER); free_line(lc);
 	run_replication_filter(n, lc = linedup(l), FROM_SERVER); free_line(lc);
 
-	g_assert(n->state);
+	g_assert(n->external_state);
 
-	state_handle_data(n->state, l);
+	state_handle_data(n->external_state, l);
 
 	g_assert(l->args[0]);
 
@@ -131,7 +131,7 @@ static gboolean process_from_server(struct irc_network *n, const struct irc_line
 		network_send_args(n, "NICK", tmp, NULL);
 		network_log(LOG_WARNING, n, "%s was already in use, trying %s", 
 					l->args[2], tmp);
-		network_nick_set_nick(&n->state->me, tmp);
+		network_nick_set_nick(&n->external_state->me, tmp);
 		g_free(tmp);
 	} else if (atoi(l->args[0]) == RPL_ENDOFMOTD ||
 			  atoi(l->args[0]) == ERR_NOMOTD) {
@@ -150,15 +150,15 @@ static gboolean process_from_server(struct irc_network *n, const struct irc_line
 
 		network_log(LOG_INFO, n, "Successfully logged in");
 
-		network_update_isupport(n->info, n->state->info);
+		network_update_isupport(n->info, n->external_state->info);
 
-		nickserv_identify_me(n, n->state->me.nick);
+		nickserv_identify_me(n, n->external_state->me.nick);
 
-		clients_send_state(n->clients, n->state);
+		clients_send_state(n->clients, n->external_state);
 
 		server_connected_hook_execute(n);
 
-		network_send_args(n, "USERHOST", n->state->me.nick, NULL);
+		network_send_args(n, "USERHOST", n->external_state->me.nick, NULL);
 
 		for (i = 0; nc->autocmd && nc->autocmd[i]; i++) {
 			struct irc_line *l = irc_parse_line(nc->autocmd[i]);
@@ -200,7 +200,7 @@ static gboolean process_from_server(struct irc_network *n, const struct irc_line
 		} 
 
 		if (linestack_store && n->linestack != NULL) {
-			if (!linestack_insert_line(n->linestack, l, FROM_SERVER, n->state)) {
+			if (!linestack_insert_line(n->linestack, l, FROM_SERVER, n->external_state)) {
 				network_log(LOG_WARNING, n, "Unable to write to linestack. Disabling replication for now.");
 				free_linestack_context(n->linestack);
 				n->linestack = NULL;
