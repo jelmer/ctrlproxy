@@ -23,6 +23,9 @@ Ctrlproxy 3.0.8 UNRELEASED
 
 	* Disable autosave by default.
 
+	* Properly spoof netsplit when ctrlproxy loses the connection to the
+	  server.
+
   INTERNALS
 
     * Use generic storage for MODEs.
