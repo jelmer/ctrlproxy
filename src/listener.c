@@ -126,6 +126,7 @@ gboolean default_socks_connect_fqdn (struct pending_client *cl, const char *host
 	}
 
 	desc = g_io_channel_ip_get_description(cl->connection);
+	g_assert(desc != NULL);
 	client_init_iochannel(result, cl->connection, desc);
 	g_free(desc);
 
@@ -202,6 +203,7 @@ static gboolean handle_client_line(struct pending_client *pc, const struct irc_l
 
 			{
 				char *desc = g_io_channel_ip_get_description(pc->connection);
+				g_assert(desc != NULL);
 				client_init_iochannel(pc->listener->network, pc->connection, desc);
 				g_free(desc);
 			}

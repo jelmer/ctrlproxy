@@ -45,9 +45,9 @@ static void server_send_login (struct irc_network *s)
 
 	network_log(LOG_TRACE, s, "Sending login details");
 
-	s->state = network_state_init(nc->nick, nc->username, 
+	s->external_state = network_state_init(nc->nick, nc->username, 
 								  get_my_hostname());
-	network_state_set_log_fn(s->state, state_log_helper, s);
+	network_state_set_log_fn(s->external_state, state_log_helper, s);
 	s->linestack = new_linestack(s);
 	g_assert(s->linestack != NULL);
 
@@ -217,8 +217,8 @@ gboolean network_send_line(struct irc_network *s, struct irc_client *c,
 	g_assert(s);
 	l = *ol;
 
-	if (l.origin == NULL && s->state != NULL) {
-		tmp = l.origin = g_strdup(s->state->me.hostmask);
+	if (l.origin == NULL && s->external_state != NULL) {
+		tmp = l.origin = g_strdup(s->external_state->me.hostmask);
 	}
 
 	if (l.origin != NULL) {
@@ -229,7 +229,7 @@ gboolean network_send_line(struct irc_network *s, struct irc_client *c,
 
 		run_log_filter(s, lc = linedup(&l), TO_SERVER); free_line(lc);
 		run_replication_filter(s, lc = linedup(&l), TO_SERVER); free_line(lc);
-		linestack_insert_line(s->linestack, ol, TO_SERVER, s->state);
+		linestack_insert_line(s->linestack, ol, TO_SERVER, s->external_state);
 	}
 
 	g_assert(l.args[0] != NULL);
@@ -282,8 +282,8 @@ gboolean virtual_network_recv_response(struct irc_network *n, int num, ...)
 
 	l->args[0] = g_strdup_printf("%03d", num);
 
-	if (n->state != NULL && n->state->me.nick != NULL) 
-		l->args[1] = g_strdup(n->state->me.nick);
+	if (n->external_state != NULL && n->external_state->me.nick != NULL) 
+		l->args[1] = g_strdup(n->external_state->me.nick);
 	else 
 		l->args[1] = g_strdup("*");
 
@@ -623,16 +623,16 @@ static gboolean close_server(struct irc_network *n)
 
 	if (n->connection.state == NETWORK_CONNECTION_STATE_MOTD_RECVD) {
 		server_disconnected_hook_execute(n);
-		clients_send_netsplit(n->clients, n->state->info->server);
-		network_update_config(n->state, nc);
+		clients_send_netsplit(n->clients, n->external_state->info->server);
+		network_update_config(n->external_state, nc);
 	}
 
-	if (n->state) {
+	if (n->external_state) {
 		if (n->linestack != NULL)
 			free_linestack_context(n->linestack);
 		n->linestack = NULL;
-		free_network_state(n->state); 
-		n->state = NULL;
+		free_network_state(n->external_state); 
+		n->external_state = NULL;
 	}
 
 	g_assert(nc);
@@ -826,10 +826,10 @@ static gboolean connect_server(struct irc_network *s)
 		if (!s->connection.data.virtual.ops) 
 			return FALSE;
 
-		s->state = network_state_init(nc->nick, nc->username, 
+		s->external_state = network_state_init(nc->nick, nc->username, 
 									  get_my_hostname());
-		s->state->userdata = s;
-		s->state->log = state_log_helper;
+		s->external_state->userdata = s;
+		s->external_state->log = state_log_helper;
 		s->linestack = new_linestack(s);
 		s->connection.state = NETWORK_CONNECTION_STATE_MOTD_RECVD;
 

@@ -62,8 +62,8 @@ static void privmsg_admin_out(admin_handle h, const char *data)
 	char *hostmask;
 
 	hostmask = admin_hostmask(c->network);
-	if (c->network->state != NULL) 
-		nick = c->network->state->me.nick;
+	if (c->network->external_state != NULL) 
+		nick = c->network->external_state->me.nick;
 	client_send_args_ex(c, hostmask, "NOTICE", nick, data, NULL);
 
 	g_free(hostmask);
@@ -498,12 +498,12 @@ static void dump_joined_channels(admin_handle h, char **args, void *userdata)
 		}
 	}
 
-	if (!n->state) {
+	if (!n->external_state) {
 		admin_out(h, "Network '%s' not connected", n->name);
 		return;
 	}
 
-	for (gl = n->state->channels; gl; gl = gl->next) {
+	for (gl = n->external_state->channels; gl; gl = gl->next) {
 		struct irc_channel_state *ch = (struct irc_channel_state *)gl->data;
 		admin_out(h, "%s", ch->name);
 	}
@@ -751,7 +751,7 @@ static gboolean admin_net_init(struct irc_network *n)
 
 	hostmask = admin_hostmask(n);
 	
-	virtual_network_recv_args(n, n->state->me.hostmask, "JOIN", ADMIN_CHANNEL, NULL);
+	virtual_network_recv_args(n, n->external_state->me.hostmask, "JOIN", ADMIN_CHANNEL, NULL);
 	virtual_network_recv_response(n, RPL_TOPIC, ADMIN_CHANNEL, 
 		"CtrlProxy administration channel | Type `help' for more information",
 							  NULL);
@@ -772,8 +772,8 @@ static gboolean admin_to_server (struct irc_network *n, struct irc_client *c, co
 		!g_strcasecmp(l->args[0], "NOTICE")) {
 		struct admin_handle ah;
 
-		if (g_strcasecmp(l->args[0], n->state->me.nick) == 0) {
-			virtual_network_recv_args(n, n->state->me.hostmask, l->args[0], l->args[1], NULL);
+		if (g_strcasecmp(l->args[0], n->external_state->me.nick) == 0) {
+			virtual_network_recv_args(n, n->external_state->me.hostmask, l->args[0], l->args[1], NULL);
 			return TRUE;
 		}
 
@@ -802,7 +802,7 @@ static gboolean admin_to_server (struct irc_network *n, struct irc_client *c, co
 
 		for (i = 1; l->args[i]; i++) {
 			if (!g_strcasecmp(l->args[i], "ctrlproxy") ||
-				!g_strcasecmp(l->args[i], n->state->me.nick)) {
+				!g_strcasecmp(l->args[i], n->external_state->me.nick)) {
 				gl = g_list_append(gl, l->args[i]);
 			}
 		}
@@ -824,8 +824,8 @@ static gboolean admin_to_server (struct irc_network *n, struct irc_client *c, co
 			if (!g_strcasecmp(l->args[i], "ctrlproxy")) {
 				gl = g_list_append(gl, g_strdup_printf("%s=+%s@%s", l->args[i], ADMIN_USERNAME, get_my_hostname()));
 			}
-			if (!g_strcasecmp(l->args[i], n->state->me.nick)) {
-				gl = g_list_append(gl, g_strdup_printf("%s=+%s@%s", l->args[i], n->state->me.username, n->state->me.hostname));
+			if (!g_strcasecmp(l->args[i], n->external_state->me.nick)) {
+				gl = g_list_append(gl, g_strdup_printf("%s=+%s@%s", l->args[i], n->external_state->me.username, n->external_state->me.hostname));
 			}
 		}
 
@@ -854,13 +854,13 @@ static gboolean admin_to_server (struct irc_network *n, struct irc_client *c, co
 									  NULL);
 		}
 		if (!strcmp(l->args[1], ADMIN_CHANNEL) ||
-			!strcmp(l->args[1], n->state->me.nick)) {
-			char *fullname = g_strdup_printf("0 %s", n->state->me.fullname);
+			!strcmp(l->args[1], n->external_state->me.nick)) {
+			char *fullname = g_strdup_printf("0 %s", n->external_state->me.fullname);
 			virtual_network_recv_response(n, RPL_WHOREPLY, ADMIN_CHANNEL, 
-									  n->state->me.username,
-									  n->state->me.hostname,
+									  n->external_state->me.username,
+									  n->external_state->me.hostname,
 									  get_my_hostname(),
-									  n->state->me.nick,
+									  n->external_state->me.nick,
 									  "H",
 									  fullname,
 									  NULL);
@@ -879,7 +879,7 @@ static gboolean admin_to_server (struct irc_network *n, struct irc_client *c, co
 		if (strcmp(l->args[1], ADMIN_CHANNEL) != 0) {
 			virtual_network_recv_response(n, ERR_NOTONCHANNEL, l->args[1], "You're not on that channel", NULL);
 		} else {
-			virtual_network_recv_args(n, n->state->me.hostmask, "PART", l->args[1], NULL);
+			virtual_network_recv_args(n, n->external_state->me.hostmask, "PART", l->args[1], NULL);
 			admin_net_init(n);
 		}
 		return TRUE;

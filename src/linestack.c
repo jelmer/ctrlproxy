@@ -390,7 +390,7 @@ struct linestack_context *new_linestack(struct irc_network *n)
 		current_backend = &linestack_file;
 	}
 
-	return create_linestack(current_backend, n->name, cfg, n->state);
+	return create_linestack(current_backend, n->name, cfg, n->external_state);
 }
 
 

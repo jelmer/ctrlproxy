@@ -48,7 +48,7 @@ static gboolean check_time(gpointer user_data)
 		for (sl = d->global->networks; sl; sl = sl->next) {
 			struct irc_network *s = (struct irc_network *)sl->data;
 			if (s->connection.state == NETWORK_CONNECTION_STATE_MOTD_RECVD &&
-				s->state != NULL && !s->state->is_away && 
+				s->external_state != NULL && !s->external_state->is_away && 
 			    (d->config->client_limit < 0 || g_list_length(s->clients) <= d->config->client_limit)) {
 				network_send_args(s, "AWAY", 
 								  d->config->message != NULL?d->config->message:"Auto Away", 
@@ -80,7 +80,7 @@ static gboolean log_data(struct irc_network *n, const struct irc_line *l,
 		for (sl = d->global->networks; sl; sl = sl->next) {
 			struct irc_network *s = (struct irc_network *)sl->data;
 			if (s->connection.state == NETWORK_CONNECTION_STATE_MOTD_RECVD &&
-				s->state != NULL && s->state->is_away)
+				s->external_state != NULL && s->external_state->is_away)
 				network_send_args(s, "AWAY", NULL);
 		}
 	}

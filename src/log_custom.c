@@ -106,10 +106,10 @@ static void file_write_target(struct log_custom_data *data,
 	
 	g_assert(l->args[0] != NULL);
 	g_assert(l->args[1] != NULL);
-	g_assert(network->state != NULL);
-	g_assert(network->state->me.nick != NULL);
+	g_assert(network->external_state != NULL);
+	g_assert(network->external_state->me.nick != NULL);
 
-	if (!irccmp(network->state->info, network->state->me.nick, l->args[1])) {
+	if (!irccmp(network->external_state->info, network->external_state->me.nick, l->args[1])) {
 		if (l->origin != NULL)
 			t = line_get_nick(l);
 		else 
@@ -147,7 +147,7 @@ static void file_write_channel_query(struct log_custom_data *data,
 	/* check for the query first */
 	nick = line_get_nick(l);
 	
-	nn = find_network_nick(network->state, nick);
+	nn = find_network_nick(network->external_state, nick);
 	if (nn == NULL) {
 		network_log(LOG_WARNING, network, "Unable to find query with %s", 
 					nick);
@@ -209,7 +209,7 @@ static gboolean log_custom_data(struct irc_network *network,
 	} else if (!g_strcasecmp(l->args[0], "NOTICE")) {
 		file_write_target(data, network, data->config->notice, l);
 	} else if (!g_strcasecmp(l->args[0], "MODE") && l->args[1] != NULL && 
-			  is_channelname(l->args[1], network->state->info) && 
+			  is_channelname(l->args[1], network->external_state->info) && 
 			  dir == FROM_SERVER) {
 		file_write_target(data, network, data->config->mode, l);
 	} else if (!g_strcasecmp(l->args[0], "QUIT")) {

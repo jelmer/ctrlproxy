@@ -60,15 +60,15 @@ void client_replicate(struct irc_client *client)
 		client_log(LOG_WARNING, client, 
 				   "Unable to find replication backend '%s'", bn);
 
-		if (client->network->state)
-			client_send_state(client, client->network->state);
+		if (client->network->external_state)
+			client_send_state(client, client->network->external_state);
 
 		return;
 	} 
 
 	if (client->network->linestack == NULL) {
-		if (client->network->state)
-			client_send_state(client, client->network->state);
+		if (client->network->external_state)
+			client_send_state(client, client->network->external_state);
 
 		return;
 	}

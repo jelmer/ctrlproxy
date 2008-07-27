@@ -47,8 +47,8 @@ static void highlight_replicate(struct irc_client *c)
 {
 	struct linestack_marker *lm = g_hash_table_lookup(markers, c->network);
 
-	if (c->network->state) {
-		client_send_state(c, c->network->state);
+	if (c->network->external_state) {
+		client_send_state(c, c->network->external_state);
 	}
 
 	if (c->network->linestack == NULL)
@@ -60,8 +60,8 @@ static void highlight_replicate(struct irc_client *c)
 
 static void none_replicate(struct irc_client *c)
 {
-	if (c->network->state)
-		client_send_state(c, c->network->state);
+	if (c->network->external_state)
+		client_send_state(c, c->network->external_state);
 }
 
 static void lastdisconnect_mark(struct irc_client *c, void *userdata)

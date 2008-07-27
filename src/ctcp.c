@@ -96,7 +96,7 @@ static void handle_time(struct ctcp_handle *h, char **args)
 
 static void handle_finger(struct ctcp_handle *h, char **args)
 {
-	ctcp_reply(h, "FINGER", h->network->state->me.fullname, NULL);
+	ctcp_reply(h, "FINGER", h->network->external_state->me.fullname, NULL);
 }
 
 static void handle_source(struct ctcp_handle *h, char **args)

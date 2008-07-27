@@ -188,6 +188,7 @@ gboolean client_send_line(struct irc_client *c, const struct irc_line *l)
 
 	g_assert(c != NULL);
 	g_assert(l != NULL);
+
 	if (c->callbacks->process_to_client != NULL)
 		c->callbacks->process_to_client(c, l);
 
@@ -779,9 +780,9 @@ void client_send_netsplit(struct irc_client *c, const char *lost_server)
 	for (gl = s->nicks; gl; gl = gl->next) {
 		struct network_nick *gn = gl->data;
 
-		if (gn != &s->me) continue;
+		if (gn == &s->me) continue;
 
-		client_send_args_ex(c, gn->hostmask, "QUIT", lost_server, NULL);
+		client_send_args_ex(c, gn->hostmask, "QUIT", reason, NULL);
 	}
 
 	g_free(reason);
