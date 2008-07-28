@@ -81,6 +81,9 @@ char *g_io_channel_ip_get_description(GIOChannel *ch)
 					service, sizeof(service), NI_NOFQDN | NI_NUMERICSERV) == 0) {
 
 		description = g_strdup_printf("%s:%s", hostname, service);
+	} else {
+		log_global(LOG_WARNING, "Unable to obtain remote IP address: %s", 
+				   strerror(errno));
 	}
 
 	g_free(sa);

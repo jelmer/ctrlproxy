@@ -26,6 +26,8 @@ Ctrlproxy 3.0.8 UNRELEASED
 	* Properly spoof netsplit when ctrlproxy loses the connection to the
 	  server.
 
+	* Fail gracefully if getpeername() doesn't work.
+
   INTERNALS
 
     * Use generic storage for MODEs.
