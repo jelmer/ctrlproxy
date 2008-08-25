@@ -782,6 +782,8 @@ void client_send_netsplit(struct irc_client *c, const char *lost_server)
 
 		if (gn == &s->me) continue;
 
+		g_assert(gn->hostmask != NULL);
+
 		client_send_args_ex(c, gn->hostmask, "QUIT", reason, NULL);
 	}
 
