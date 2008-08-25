@@ -195,8 +195,11 @@ static gboolean network_send_line_direct(struct irc_network *s, struct irc_clien
 		if (s->connection.data.virtual.ops == NULL) 
 			return FALSE;
 		return s->connection.data.virtual.ops->to_server(s, c, l);
-	} else 
+	} else {
+		if (s->connection.transport == NULL)
+			return FALSE;
 		return transport_send_line(s->connection.transport, l);
+	}
 }
 
 /**
