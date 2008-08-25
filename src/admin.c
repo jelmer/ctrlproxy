@@ -1009,7 +1009,7 @@ static void cmd_stop_listener(admin_handle h, char **args, void *userdata)
 	char *b, *p;
 	int i = 0;
 
-	if (!args[0]) {
+	if (args[1] == NULL) {
 		admin_out(h, "No port specified");
 		return;
 	}

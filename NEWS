@@ -28,6 +28,8 @@ Ctrlproxy 3.0.8 UNRELEASED
 
 	* Fail gracefully if getpeername() doesn't work.
 
+	* Don't crash when no argument is specified to STOPLISTENER. (#201)
+
   INTERNALS
 
     * Use generic storage for MODEs.

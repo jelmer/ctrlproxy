@@ -98,6 +98,11 @@ START_TEST(test_log_level)
 	current_log_level = old;
 END_TEST
 
+START_TEST(test_stoplistener)
+	char *result = run_cmd("stoplistener");
+	fail_unless(!strcmp("No port specified", result));
+END_TEST
+
 Suite *admin_suite()
 {
 	Suite *s = suite_create("admin");
@@ -110,5 +115,6 @@ Suite *admin_suite()
 	tcase_add_test(tc_core, test_empty);
 	tcase_add_test(tc_core, test_log_level);
 	tcase_add_test(tc_core, test_set);
+	tcase_add_test(tc_core, test_stoplistener);
 	return s;
 }
