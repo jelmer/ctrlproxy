@@ -30,6 +30,9 @@ Ctrlproxy 3.0.8 UNRELEASED
 
 	* Don't crash when no argument is specified to STOPLISTENER. (#201)
 
+	* Fix segfault on FreeBSD because it doesn't like freeaddrinfo(NULL). 
+	  (#202)
+
   INTERNALS
 
     * Use generic storage for MODEs.

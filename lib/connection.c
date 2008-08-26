@@ -470,7 +470,8 @@ static gboolean connect_current_tcp_server(struct irc_network *s)
 	if (error) {
 		network_log(LOG_ERROR, s, "Unable to lookup %s:%s %s", 
 					cs->host, cs->port, gai_strerror(error));
-		freeaddrinfo(addrinfo);
+		if (addrinfo != NULL)
+			freeaddrinfo(addrinfo);
 		return FALSE;
 	}
 
