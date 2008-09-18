@@ -101,7 +101,7 @@ void signal_crash(int sig)
 	backtrace_size = backtrace(backtrace_stack,BACKTRACE_STACK_SIZE);
 	backtrace_strings = backtrace_symbols(backtrace_stack, backtrace_size);
 
-	syslog(LOG_ALERT, "BACKTRACE: %d stack frames:", backtrace_size);
+	syslog(LOG_ALERT, "BACKTRACE: %ld stack frames:", backtrace_size);
 	
 	if (backtrace_strings) {
 		int i;
