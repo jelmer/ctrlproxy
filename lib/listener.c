@@ -45,7 +45,6 @@ struct listener_iochannel {
 	char address[NI_MAXHOST];
 	char port[NI_MAXSERV];
 	gint watch_id;
-	char *canonname;
 #ifdef HAVE_GSSAPI
     gss_name_t authn_name;
 	gss_cred_id_t service_cred;
@@ -137,8 +136,6 @@ gboolean listener_stop(struct irc_listener *l)
 		
 		listener_log(LOG_INFO, l, "Stopped listening at %s:%s", lio->address, 
 					 lio->port);
-
-		g_free(lio->canonname);
 
 #ifdef HAVE_GSSAPI
 		if (lio->service_cred == GSS_C_NO_CREDENTIAL) {
@@ -361,7 +358,7 @@ gboolean listener_start(struct irc_listener *l, const char *address, const char 
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = PF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
-	hints.ai_flags = AI_PASSIVE | AI_CANONNAME;
+	hints.ai_flags = AI_PASSIVE;
 
 #ifdef AI_ADDRCONFIG
 	hints.ai_flags |= AI_ADDRCONFIG;
@@ -374,7 +371,8 @@ gboolean listener_start(struct irc_listener *l, const char *address, const char 
 
 	error = getaddrinfo(address, port, &hints, &all_res);
 	if (error) {
-		listener_log(LOG_ERROR, l, "Can't get address for %s:%s", address?address:"", port);
+		listener_log(LOG_ERROR, l, "Can't get address for %s:%s: %s", 
+					 address?address:"", port, gai_strerror(error));
 		return FALSE;
 	}
 
@@ -383,15 +381,18 @@ gboolean listener_start(struct irc_listener *l, const char *address, const char 
 
 		lio = g_new0(struct listener_iochannel, 1);
 		lio->listener = l;
-		lio->canonname = g_strdup(res->ai_canonname);
+
 #ifdef HAVE_GSSAPI
 		lio->authn_name = GSS_C_NO_NAME;
 		lio->service_cred = GSS_C_NO_CREDENTIAL;
 #endif
 
-		if (getnameinfo(res->ai_addr, res->ai_addrlen, 
-						lio->address, NI_MAXHOST, lio->port, NI_MAXSERV, 
-						NI_NUMERICHOST | NI_NUMERICSERV) != 0) {
+		error = getnameinfo(res->ai_addr, res->ai_addrlen, 
+							lio->address, NI_MAXHOST, 
+							lio->port, NI_MAXSERV, 0);
+		if (error < 0) {
+			listener_log(LOG_WARNING, l, "error looking up canonical name: %s", 
+						 gai_strerror(error));
 			strcpy(lio->address, "");
 			strcpy(lio->port, "");
 		}
@@ -567,7 +568,7 @@ static gboolean gssapi_acceptable (struct pending_client *pc)
 		gss_buffer_desc inbuf;
 		char *principal_name;
 		
-		principal_name = g_strdup_printf("socks@%s", pc->iochannel->canonname);
+		principal_name = g_strdup_printf("socks@%s", pc->iochannel->address);
 
 		inbuf.length = strlen(principal_name);
 		inbuf.value = principal_name;
