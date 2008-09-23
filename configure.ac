@@ -81,6 +81,16 @@ AC_CHECK_LIB(readline, readline, [
 ])
 
 ###############################################################################
+# GSSAPI support
+###############################################################################
+AC_PATH_PROG(KRB5_CONFIG, krb5-config, no)
+if test $KRB5_CONFIG != no; then
+	LIBS="$LIBS `$KRB5_CONFIG --libs gssapi`"
+	CFLAGS="$CFLAGS `$KRB5_CONFIG --cflags gssapi`"
+	AC_DEFINE(HAVE_GSSAPI, 1, [have GSSAPI])
+fi
+
+###############################################################################
 # SWIG support
 ###############################################################################
 AC_PATH_PROG(SWIG,[swig])
