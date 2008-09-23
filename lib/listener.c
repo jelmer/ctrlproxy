@@ -554,7 +554,7 @@ static gboolean gssapi_acceptable (struct pending_client *pc)
 	int fd, error;
 	char address[NI_MAXHOST];
 	struct sockaddr_storage sockaddr;
-	socklen_t sockaddr_len;
+	socklen_t sockaddr_len = sizeof(sockaddr);
 
 	fd = g_io_channel_unix_get_fd(pc->connection);
 
