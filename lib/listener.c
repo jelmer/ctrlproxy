@@ -59,6 +59,33 @@ static gboolean kill_pending_client(struct pending_client *pc)
 	return TRUE;
 }
 
+#ifdef HAVE_GSSAPI
+void log_gssapi(struct irc_listener *l, enum log_level level, const char *message, guint32 major_status, guint32 minor_status)
+{
+	guint32 err_major_status, err_minor_status;
+	guint32	msg_ctx = 0;
+	gss_buffer_desc major_status_string = GSS_C_EMPTY_BUFFER, 
+					minor_status_string = GSS_C_EMPTY_BUFFER;
+
+	err_major_status = gss_display_status( &err_minor_status, major_status, 
+										   GSS_C_GSS_CODE, GSS_C_NO_OID, 
+										   &msg_ctx, &major_status_string );
+
+	if( !GSS_ERROR( err_major_status ) )
+    	err_major_status = gss_display_status( &err_minor_status, minor_status,
+											   GSS_C_MECH_CODE, GSS_C_NULL_OID,
+											   &msg_ctx, &minor_status_string );
+
+	listener_log( level, l, "GSSAPI: %s: %s, %s", message, 
+		      (char *)major_status_string.value, 
+		      (char *)minor_status_string.value);
+
+	gss_release_buffer( &err_minor_status, &major_status_string );
+	gss_release_buffer( &err_minor_status, &minor_status_string );
+}
+#endif
+
+
 gboolean listener_stop(struct irc_listener *l)
 {
 	while (l->incoming != NULL) {
@@ -72,6 +99,19 @@ gboolean listener_stop(struct irc_listener *l)
 
 		l->incoming = g_list_remove(l->incoming, lio);
 	}
+
+#ifdef HAVE_GSSAPI
+	if (l->authn_name != GSS_C_NO_NAME) {
+		guint32 major_status, minor_status;
+		major_status = gss_release_name(&minor_status, &l->authn_name);
+
+		if (GSS_ERROR(major_status)) {
+			log_gssapi(l, LOG_WARNING, 
+					   "releasing name", major_status, minor_status);
+			return FALSE;
+		}
+	}
+#endif
 
 	return TRUE;
 }
@@ -264,6 +304,10 @@ gboolean listener_start(struct irc_listener *l, const char *address, const char 
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_flags = AI_PASSIVE;
 
+#ifdef HAVE_GSSAPI
+	l->authn_name = GSS_C_NO_NAME;
+#endif
+
 #ifdef AI_ADDRCONFIG
 	hints.ai_flags |= AI_ADDRCONFIG;
 #endif
@@ -452,6 +496,19 @@ static gboolean pass_handle_data(struct pending_client *cl)
 	}
 }
 
+#ifdef HAVE_GSSAPI
+static gboolean gssapi_acceptable (struct pending_client *pc)
+{
+
+}
+
+static gboolean gssapi_handle_data (struct pending_client *pc)
+{
+
+}
+
+#endif
+
 /**
  * Socks methods.
  */
@@ -462,7 +519,9 @@ static struct socks_method {
 	gboolean (*handle_data) (struct pending_client *cl);
 } socks_methods[] = {
 	{ SOCKS_METHOD_NOAUTH, "none", anon_acceptable, NULL },
-	{ SOCKS_METHOD_GSSAPI, "gssapi", NULL, NULL },
+#ifdef HAVE_GSSAPI
+	{ SOCKS_METHOD_GSSAPI, "gssapi", gssapi_acceptable, gssapi_handle_data },
+#endif
 	{ SOCKS_METHOD_USERNAME_PW, "username/password", pass_acceptable, pass_handle_data },
 	{ -1, NULL, NULL }
 };

@@ -4,6 +4,10 @@
 #include <netdb.h>
 #include "ctrlproxy.h"
 
+#ifdef HAVE_GSSAPI
+#include <gssapi.h>
+#endif
+
 #ifndef G_MODULE_EXPORT
 #define G_MODULE_EXPORT
 #endif
@@ -38,7 +42,10 @@ struct irc_listener {
 	struct global *global;
 	listener_log_fn log_fn;
 	struct irc_listener_ops *ops;
-
+    
+#ifdef HAVE_GSSAPI
+    gss_name_t authn_name;
+#endif
 };
 
 
