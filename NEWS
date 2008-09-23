@@ -9,6 +9,8 @@ Ctrlproxy 3.0.8 UNRELEASED
 
 	* Allow two connections to the same network. (#151)
 
+    * Support GSSAPI authentication for SOCKS.
+
   BUG FIXES
    
     * Support 901 response codes.
