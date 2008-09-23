@@ -90,6 +90,8 @@ struct pending_client {
 #ifdef HAVE_GSSAPI
 	gss_ctx_id_t gss_ctx;
 	gss_name_t authn_name;
+    gss_name_t gss_service;
+	gss_cred_id_t service_cred;
 #endif
 };
 

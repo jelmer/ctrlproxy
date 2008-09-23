@@ -45,11 +45,6 @@ struct listener_iochannel {
 	char address[NI_MAXHOST];
 	char port[NI_MAXSERV];
 	gint watch_id;
-#ifdef HAVE_GSSAPI
-    gss_name_t authn_name;
-	gss_cred_id_t service_cred;
-#endif
-
 };
 
 static gboolean handle_client_detect(GIOChannel *ioc, 
@@ -59,13 +54,16 @@ static gboolean handle_client_socks_data(GIOChannel *ioc,
 
 static gboolean kill_pending_client(struct pending_client *pc)
 {
+#ifdef HAVE_GSSAPI
+	guint32 major_status, minor_status;
+#endif
+
 	pc->listener->pending = g_list_remove(pc->listener->pending, pc);
 
 	g_source_remove(pc->watch_id);
 
 #ifdef HAVE_GSSAPI
 	if (pc->authn_name != GSS_C_NO_NAME) {
-		guint32 major_status, minor_status;
 		major_status = gss_release_name(&minor_status, &pc->authn_name);
 
 		if (GSS_ERROR(major_status)) {
@@ -75,9 +73,7 @@ static gboolean kill_pending_client(struct pending_client *pc)
 		}
 	}
 
-	/* FIXME: Release context */
 	if (pc->gss_ctx != GSS_C_NO_CONTEXT) {
-		guint32 major_status, minor_status;
 		major_status = gss_delete_sec_context(&minor_status,
 						      &pc->gss_ctx,
 						      GSS_C_NO_BUFFER);
@@ -88,6 +84,25 @@ static gboolean kill_pending_client(struct pending_client *pc)
 		}
 	}
 
+	if (pc->service_cred != GSS_C_NO_CREDENTIAL) {
+		major_status = gss_release_cred(&minor_status, &pc->service_cred);
+		if (GSS_ERROR(major_status)) {
+			log_gssapi(pc->listener, LOG_WARNING, 
+					   "releasing credentials", major_status, minor_status);
+			return FALSE;
+		}
+	}
+
+	if (pc->gss_service != GSS_C_NO_NAME) {
+		guint32 major_status, minor_status;
+		major_status = gss_release_name(&minor_status, &pc->gss_service);
+
+		if (GSS_ERROR(major_status)) {
+			log_gssapi(pc->listener, LOG_WARNING, 
+					   "releasing name", major_status, minor_status);
+			return FALSE;
+		}
+	}
 #endif
 
 	g_free(pc->clientname);
@@ -126,9 +141,6 @@ static void log_gssapi(struct irc_listener *l, enum log_level level, const char 
 
 gboolean listener_stop(struct irc_listener *l)
 {
-#ifdef HAVE_GSSAPI
-	guint32 major_status, minor_status;
-#endif
 	while (l->incoming != NULL) {
 		struct listener_iochannel *lio = l->incoming->data;
 
@@ -136,29 +148,6 @@ gboolean listener_stop(struct irc_listener *l)
 		
 		listener_log(LOG_INFO, l, "Stopped listening at %s:%s", lio->address, 
 					 lio->port);
-
-#ifdef HAVE_GSSAPI
-		if (lio->service_cred == GSS_C_NO_CREDENTIAL) {
-			major_status = gss_release_cred(&minor_status,
-							&lio->service_cred);
-			if (GSS_ERROR(major_status)) {
-				log_gssapi(l, LOG_WARNING, 
-						   "releasing credentials", major_status, minor_status);
-				return FALSE;
-			}
-		}
-
-		if (lio->authn_name != GSS_C_NO_NAME) {
-			guint32 major_status, minor_status;
-			major_status = gss_release_name(&minor_status, &lio->authn_name);
-
-			if (GSS_ERROR(major_status)) {
-				log_gssapi(l, LOG_WARNING, 
-						   "releasing name", major_status, minor_status);
-				return FALSE;
-			}
-		}
-#endif
 
 		g_free(lio);
 
@@ -308,6 +297,8 @@ struct pending_client *listener_new_pending_client(struct irc_listener *listener
 #ifdef HAVE_GSSAPI
 	pc->authn_name = GSS_C_NO_NAME;
 	pc->gss_ctx = GSS_C_NO_CONTEXT;
+	pc->gss_service = GSS_C_NO_NAME;
+	pc->service_cred = GSS_C_NO_CREDENTIAL;
 #endif
 	pc->connection = c;
 	pc->watch_id = g_io_add_watch(c, G_IO_IN | G_IO_HUP, handle_client_receive, pc);
@@ -382,14 +373,9 @@ gboolean listener_start(struct irc_listener *l, const char *address, const char 
 		lio = g_new0(struct listener_iochannel, 1);
 		lio->listener = l;
 
-#ifdef HAVE_GSSAPI
-		lio->authn_name = GSS_C_NO_NAME;
-		lio->service_cred = GSS_C_NO_CREDENTIAL;
-#endif
-
 		error = getnameinfo(res->ai_addr, res->ai_addrlen, 
 							lio->address, NI_MAXHOST, 
-							lio->port, NI_MAXSERV, 0);
+							lio->port, NI_MAXSERV, NI_NUMERICHOST|NI_NUMERICSERV);
 		if (error < 0) {
 			listener_log(LOG_WARNING, l, "error looking up canonical name: %s", 
 						 gai_strerror(error));
@@ -563,44 +549,59 @@ static gboolean gssapi_acceptable (struct pending_client *pc)
 {
 	struct irc_listener *l = pc->listener;
 	guint32 major_status, minor_status;
+	gss_buffer_desc inbuf;
+	char *principal_name;
+	int fd, error;
+	char address[NI_MAXHOST];
+	struct sockaddr_storage sockaddr;
+	socklen_t sockaddr_len;
 
-	if (pc->iochannel->authn_name == GSS_C_NO_NAME) {
-		gss_buffer_desc inbuf;
-		char *principal_name;
-		
-		principal_name = g_strdup_printf("socks@%s", pc->iochannel->address);
+	fd = g_io_channel_unix_get_fd(pc->connection);
 
-		inbuf.length = strlen(principal_name);
-		inbuf.value = principal_name;
-
-		major_status = gss_import_name(&minor_status, &inbuf, 
-						   GSS_C_NT_HOSTBASED_SERVICE,
-						   &pc->iochannel->authn_name);
-
-		g_free(principal_name);
-
-		if (GSS_ERROR(major_status)) {
-			log_gssapi(l, LOG_ERROR, "importing principal name",
-					   major_status, minor_status);
-			gssapi_fail(pc);
-			return FALSE;
-		}
+	error = getsockname(fd, (struct sockaddr *)&sockaddr, &sockaddr_len);
+	if (error < 0) {
+		listener_log(LOG_WARNING, pc->listener, 
+					 "Unable to get own socket address");
+		return FALSE;
 	}
 
-	if (pc->iochannel->service_cred == GSS_C_NO_CREDENTIAL) {
-		major_status = gss_acquire_cred(&minor_status, pc->iochannel->authn_name, 0, 
-						GSS_C_NULL_OID_SET, GSS_C_ACCEPT,
-						&pc->iochannel->service_cred, NULL, NULL);
+	error = getnameinfo((struct sockaddr *)&sockaddr, sockaddr_len, 
+						address, NI_MAXHOST, 
+						NULL, 0, NI_NAMEREQD);
+	if (error < 0) {
+		listener_log(LOG_WARNING, l, "error looking up canonical name: %s", 
+						 gai_strerror(error));
+		return FALSE;
+	}
+	
+	principal_name = g_strdup_printf("socks@%s", address);
 
-		if (GSS_ERROR(major_status)) {
-			log_gssapi(l, LOG_ERROR, "acquiring service credentials",
-					   major_status, minor_status);
-			gssapi_fail(pc);
+	inbuf.length = strlen(principal_name);
+	inbuf.value = principal_name;
 
-			return FALSE;
-		}
+	major_status = gss_import_name(&minor_status, &inbuf, 
+					   GSS_C_NT_HOSTBASED_SERVICE,
+					   &pc->gss_service);
 
-		gss_release_name(&minor_status, &pc->iochannel->authn_name);
+	g_free(principal_name);
+
+	if (GSS_ERROR(major_status)) {
+		log_gssapi(l, LOG_ERROR, "importing principal name",
+				   major_status, minor_status);
+		gssapi_fail(pc);
+		return FALSE;
+	}
+
+	major_status = gss_acquire_cred(&minor_status, pc->gss_service, 0, 
+					GSS_C_NULL_OID_SET, GSS_C_ACCEPT,
+					&pc->service_cred, NULL, NULL);
+
+	if (GSS_ERROR(major_status)) {
+		log_gssapi(l, LOG_ERROR, "acquiring service credentials",
+				   major_status, minor_status);
+		gssapi_fail(pc);
+
+		return FALSE;
 	}
 
 	return TRUE;
@@ -667,7 +668,7 @@ static gboolean gssapi_handle_data (struct pending_client *pc)
 	major_status = gss_accept_sec_context (
 		&minor_status,
 		&pc->gss_ctx,
-		pc->iochannel->service_cred,
+		pc->service_cred,
 		&inbuf,
 		GSS_C_NO_CHANNEL_BINDINGS,
 		&pc->authn_name, 
