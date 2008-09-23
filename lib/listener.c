@@ -35,10 +35,22 @@
 #include <netdb.h>
 #include "socks.h"
 
+#ifdef HAVE_GSSAPI
+static gboolean gssapi_fail(struct pending_client *pc);
+static void log_gssapi(struct irc_listener *l, enum log_level level, const char *message, guint32 major_status, guint32 minor_status);
+#endif
+
 struct listener_iochannel {
+	struct irc_listener *listener;
 	char address[NI_MAXHOST];
 	char port[NI_MAXSERV];
 	gint watch_id;
+	char *canonname;
+#ifdef HAVE_GSSAPI
+    gss_name_t authn_name;
+	gss_cred_id_t service_cred;
+#endif
+
 };
 
 static gboolean handle_client_detect(GIOChannel *ioc, 
@@ -52,6 +64,33 @@ static gboolean kill_pending_client(struct pending_client *pc)
 
 	g_source_remove(pc->watch_id);
 
+#ifdef HAVE_GSSAPI
+	if (pc->authn_name != GSS_C_NO_NAME) {
+		guint32 major_status, minor_status;
+		major_status = gss_release_name(&minor_status, &pc->authn_name);
+
+		if (GSS_ERROR(major_status)) {
+			log_gssapi(pc->listener, LOG_WARNING, 
+					   "releasing name", major_status, minor_status);
+			gssapi_fail(pc);
+		}
+	}
+
+	/* FIXME: Release context */
+	if (pc->gss_ctx != GSS_C_NO_CONTEXT) {
+		guint32 major_status, minor_status;
+		major_status = gss_delete_sec_context(&minor_status,
+						      &pc->gss_ctx,
+						      GSS_C_NO_BUFFER);
+		if (GSS_ERROR(major_status)) {
+			log_gssapi(pc->listener, LOG_WARNING, 
+					   "deleting context name", major_status, minor_status);
+			gssapi_fail(pc);
+		}
+	}
+
+#endif
+
 	g_free(pc->clientname);
 
 	g_free(pc);
@@ -60,7 +99,7 @@ static gboolean kill_pending_client(struct pending_client *pc)
 }
 
 #ifdef HAVE_GSSAPI
-void log_gssapi(struct irc_listener *l, enum log_level level, const char *message, guint32 major_status, guint32 minor_status)
+static void log_gssapi(struct irc_listener *l, enum log_level level, const char *message, guint32 major_status, guint32 minor_status)
 {
 	guint32 err_major_status, err_minor_status;
 	guint32	msg_ctx = 0;
@@ -88,6 +127,9 @@ void log_gssapi(struct irc_listener *l, enum log_level level, const char *messag
 
 gboolean listener_stop(struct irc_listener *l)
 {
+#ifdef HAVE_GSSAPI
+	guint32 major_status, minor_status;
+#endif
 	while (l->incoming != NULL) {
 		struct listener_iochannel *lio = l->incoming->data;
 
@@ -95,23 +137,36 @@ gboolean listener_stop(struct irc_listener *l)
 		
 		listener_log(LOG_INFO, l, "Stopped listening at %s:%s", lio->address, 
 					 lio->port);
+
+		g_free(lio->canonname);
+
+#ifdef HAVE_GSSAPI
+		if (lio->service_cred == GSS_C_NO_CREDENTIAL) {
+			major_status = gss_release_cred(&minor_status,
+							&lio->service_cred);
+			if (GSS_ERROR(major_status)) {
+				log_gssapi(l, LOG_WARNING, 
+						   "releasing credentials", major_status, minor_status);
+				return FALSE;
+			}
+		}
+
+		if (lio->authn_name != GSS_C_NO_NAME) {
+			guint32 major_status, minor_status;
+			major_status = gss_release_name(&minor_status, &lio->authn_name);
+
+			if (GSS_ERROR(major_status)) {
+				log_gssapi(l, LOG_WARNING, 
+						   "releasing name", major_status, minor_status);
+				return FALSE;
+			}
+		}
+#endif
+
 		g_free(lio);
 
 		l->incoming = g_list_remove(l->incoming, lio);
 	}
-
-#ifdef HAVE_GSSAPI
-	if (l->authn_name != GSS_C_NO_NAME) {
-		guint32 major_status, minor_status;
-		major_status = gss_release_name(&minor_status, &l->authn_name);
-
-		if (GSS_ERROR(major_status)) {
-			log_gssapi(l, LOG_WARNING, 
-					   "releasing name", major_status, minor_status);
-			return FALSE;
-		}
-	}
-#endif
 
 	return TRUE;
 }
@@ -253,6 +308,10 @@ struct pending_client *listener_new_pending_client(struct irc_listener *listener
 	g_io_channel_set_encoding(c, NULL, NULL);
 	g_io_channel_set_flags(c, G_IO_FLAG_NONBLOCK, NULL);
 	pc = g_new0(struct pending_client, 1);
+#ifdef HAVE_GSSAPI
+	pc->authn_name = GSS_C_NO_NAME;
+	pc->gss_ctx = GSS_C_NO_CONTEXT;
+#endif
 	pc->connection = c;
 	pc->watch_id = g_io_add_watch(c, G_IO_IN | G_IO_HUP, handle_client_receive, pc);
 	pc->listener = listener;
@@ -302,11 +361,7 @@ gboolean listener_start(struct irc_listener *l, const char *address, const char 
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = PF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
-	hints.ai_flags = AI_PASSIVE;
-
-#ifdef HAVE_GSSAPI
-	l->authn_name = GSS_C_NO_NAME;
-#endif
+	hints.ai_flags = AI_PASSIVE | AI_CANONNAME;
 
 #ifdef AI_ADDRCONFIG
 	hints.ai_flags |= AI_ADDRCONFIG;
@@ -327,6 +382,12 @@ gboolean listener_start(struct irc_listener *l, const char *address, const char 
 		GIOChannel *ioc;
 
 		lio = g_new0(struct listener_iochannel, 1);
+		lio->listener = l;
+		lio->canonname = g_strdup(res->ai_canonname);
+#ifdef HAVE_GSSAPI
+		lio->authn_name = GSS_C_NO_NAME;
+		lio->service_cred = GSS_C_NO_CREDENTIAL;
+#endif
 
 		if (getnameinfo(res->ai_addr, res->ai_addrlen, 
 						lio->address, NI_MAXHOST, lio->port, NI_MAXSERV, 
@@ -499,12 +560,165 @@ static gboolean pass_handle_data(struct pending_client *cl)
 #ifdef HAVE_GSSAPI
 static gboolean gssapi_acceptable (struct pending_client *pc)
 {
+	struct irc_listener *l = pc->listener;
+	guint32 major_status, minor_status;
 
+	if (pc->iochannel->authn_name == GSS_C_NO_NAME) {
+		gss_buffer_desc inbuf;
+		char *principal_name;
+		
+		principal_name = g_strdup_printf("socks@%s", pc->iochannel->canonname);
+
+		inbuf.length = strlen(principal_name);
+		inbuf.value = principal_name;
+
+		major_status = gss_import_name(&minor_status, &inbuf, 
+						   GSS_C_NT_HOSTBASED_SERVICE,
+						   &pc->iochannel->authn_name);
+
+		g_free(principal_name);
+
+		if (GSS_ERROR(major_status)) {
+			log_gssapi(l, LOG_ERROR, "importing principal name",
+					   major_status, minor_status);
+			gssapi_fail(pc);
+			return FALSE;
+		}
+	}
+
+	if (pc->iochannel->service_cred == GSS_C_NO_CREDENTIAL) {
+		major_status = gss_acquire_cred(&minor_status, pc->iochannel->authn_name, 0, 
+						GSS_C_NULL_OID_SET, GSS_C_ACCEPT,
+						&pc->iochannel->service_cred, NULL, NULL);
+
+		if (GSS_ERROR(major_status)) {
+			log_gssapi(l, LOG_ERROR, "acquiring service credentials",
+					   major_status, minor_status);
+			gssapi_fail(pc);
+
+			return FALSE;
+		}
+
+		gss_release_name(&minor_status, &pc->iochannel->authn_name);
+	}
+
+	return TRUE;
+}
+
+static gboolean gssapi_fail(struct pending_client *pc)
+{
+	char header[2];
+	GIOStatus status;
+	gsize read;
+
+	header[0] = 1; /* SOCKS_GSSAPI_VERSION */
+	header[1] = 0xff; /* Message abort */
+
+	status = g_io_channel_write_chars(pc->connection, header, 2, &read, NULL);
+	if (status != G_IO_STATUS_NORMAL) {
+		return FALSE;
+	} 
+
+	g_io_channel_flush(pc->connection, NULL);
+
+	return FALSE;
 }
 
 static gboolean gssapi_handle_data (struct pending_client *pc)
 {
+	guint32 major_status, minor_status;
+	gss_buffer_desc outbuf;
+	gss_buffer_desc inbuf;
+	gchar header[4];
+	gsize read;
+	GIOStatus status;
+	guint16 len;
 
+	/*
+    + ver  | mtyp | len  |       token           |
+    + 0x01 | 0x01 | 0x02 | up to 2^16 - 1 octets |
+	*/
+
+	status = g_io_channel_read_chars(pc->connection, header, 4, &read, NULL);
+	if (status != G_IO_STATUS_NORMAL) {
+		return FALSE;
+	}
+
+	if (header[0] != 1) {
+		listener_log(LOG_WARNING, pc->listener, "Invalid version %d for SOCKS/GSSAPI protocol", header[0]);
+		return FALSE;
+	}
+
+	if (header[1] != 1) {
+		listener_log(LOG_WARNING, pc->listener, "Invalid SOCKS/GSSAPI command %d", header[1]);
+		return FALSE;
+	}
+
+	len = ntohs(*((uint16_t *)header+2));
+
+	inbuf.value = g_malloc(len);
+	status = g_io_channel_read_chars(pc->connection, inbuf.value, len, &inbuf.length, 
+									 NULL);
+	if (status != G_IO_STATUS_NORMAL) {
+		return FALSE;
+	}
+
+	major_status = gss_accept_sec_context (
+		&minor_status,
+		&pc->gss_ctx,
+		pc->iochannel->service_cred,
+		&inbuf,
+		GSS_C_NO_CHANNEL_BINDINGS,
+		&pc->authn_name, 
+		NULL, /* mech_type */
+		&outbuf,
+		NULL, /* ret_flags */
+		NULL, /* time_rec */
+		NULL  /* delegated_cred_handle */
+	);
+
+	g_free(inbuf.value);
+	
+	if (GSS_ERROR(major_status)) {
+		log_gssapi(pc->listener, LOG_WARNING, "processing incoming data", 
+				   major_status, minor_status);
+		gssapi_fail(pc);
+		return FALSE;
+	} 
+
+	header[0] = 1; /* SOCKS_GSSAPI_VERSION */
+	header[1] = 0xff; /* Message abort */
+	*((uint16_t *)header+2) = htons(outbuf.length);
+
+	status = g_io_channel_write_chars(pc->connection, header, 4, &read, NULL);
+	if (status != G_IO_STATUS_NORMAL) {
+		gssapi_fail(pc);
+		return FALSE;
+	} 
+
+	if (outbuf.length > 0) {
+		status = g_io_channel_write_chars(pc->connection, outbuf.value, outbuf.length, &read, NULL);
+		if (status != G_IO_STATUS_NORMAL) {
+			gssapi_fail(pc);
+			return FALSE;
+		} 
+	}
+
+	major_status = gss_release_buffer(&minor_status, &outbuf);
+	if (GSS_ERROR(major_status)) {
+		log_gssapi(pc->listener, LOG_WARNING, "processing incoming data", 
+				   major_status, minor_status);
+		gssapi_fail(pc);
+		return FALSE;
+	} 
+
+	g_io_channel_flush(pc->connection, NULL);
+
+	if (major_status == GSS_S_CONTINUE_NEEDED) {
+		return TRUE;
+	}
+
+	return TRUE;
 }
 
 #endif

@@ -42,10 +42,6 @@ struct irc_listener {
 	struct global *global;
 	listener_log_fn log_fn;
 	struct irc_listener_ops *ops;
-    
-#ifdef HAVE_GSSAPI
-    gss_name_t authn_name;
-#endif
 };
 
 
@@ -79,6 +75,8 @@ struct pending_client {
 	/** The listener used for this pending client. */
 	struct irc_listener *listener;
 
+	struct listener_iochannel *iochannel;
+
 	/** Socks state. */
 	struct {
 		struct socks_method *method;
@@ -88,6 +86,11 @@ struct pending_client {
 
 	/** Private data. */
 	void *private_data;
+
+#ifdef HAVE_GSSAPI
+	gss_ctx_id_t gss_ctx;
+	gss_name_t authn_name;
+#endif
 };
 
 G_MODULE_EXPORT gboolean listener_start(struct irc_listener *, const char *address, const char *service);
