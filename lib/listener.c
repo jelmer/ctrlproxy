@@ -656,11 +656,10 @@ static gboolean gssapi_handle_data (struct pending_client *pc)
 		return FALSE;
 	}
 
-	len = ntohs(*((uint16_t *)header+2));
+	len = ntohs(*((uint16_t *)(header+2)));
 
 	inbuf.value = g_malloc(len);
-	status = g_io_channel_read_chars(pc->connection, inbuf.value, len, &inbuf.length, 
-									 NULL);
+	status = g_io_channel_read_chars(pc->connection, inbuf.value, len, &inbuf.length, NULL);
 	if (status != G_IO_STATUS_NORMAL) {
 		return FALSE;
 	}
@@ -689,8 +688,8 @@ static gboolean gssapi_handle_data (struct pending_client *pc)
 	} 
 
 	header[0] = 1; /* SOCKS_GSSAPI_VERSION */
-	header[1] = 0xff; /* Message abort */
-	*((uint16_t *)header+2) = htons(outbuf.length);
+	header[1] = 1; /* Authorization message */
+	*((uint16_t *)(header+2)) = htons(outbuf.length);
 
 	status = g_io_channel_write_chars(pc->connection, header, 4, &read, NULL);
 	if (status != G_IO_STATUS_NORMAL) {
@@ -715,6 +714,8 @@ static gboolean gssapi_handle_data (struct pending_client *pc)
 	} 
 
 	g_io_channel_flush(pc->connection, NULL);
+
+	g_assert(major_status == GSS_S_COMPLETE);
 
 	if (major_status == GSS_S_CONTINUE_NEEDED) {
 		return TRUE;
