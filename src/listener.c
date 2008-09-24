@@ -36,6 +36,14 @@ void default_listener_log_fn(enum log_level l, const struct irc_listener *listen
 		log_global(l, "%s", ret);
 }
 
+#ifdef HAVE_GSSAPI
+gboolean default_socks_gssapi(struct pending_client *cl, gss_name_t authn_name)
+{
+	/* FIXME: Check if principal matches own user name */
+	return FALSE;
+}
+#endif
+
 gboolean default_socks_auth_simple(struct pending_client *cl, const char *username, const char *password)
 {
 	GList *gl;
@@ -252,6 +260,9 @@ void free_listener(struct irc_listener *l)
 static struct irc_listener_ops default_listener_ops = {
 	.handle_client_line = handle_client_line,
 	.socks_auth_simple = default_socks_auth_simple,
+#ifdef HAVE_GSSAPI
+	.socks_gssapi = default_socks_gssapi,
+#endif
 	.socks_connect_fqdn = default_socks_connect_fqdn,
 };
 

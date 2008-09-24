@@ -717,6 +717,11 @@ static gboolean gssapi_handle_data (struct pending_client *pc)
 
 	g_assert(major_status == GSS_S_COMPLETE);
 
+	if (!pc->listener->ops->socks_gssapi(pc, pc->authn_name)) {
+		gssapi_fail(pc);
+		return FALSE;
+	}
+
 	if (major_status == GSS_S_CONTINUE_NEEDED) {
 		return TRUE;
 	}
