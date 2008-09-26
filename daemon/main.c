@@ -196,7 +196,7 @@ static gboolean launch_new_instance(struct ctrlproxyd_config *config,
 
 
 static GIOChannel *connect_user(struct ctrlproxyd_config *config, 
-								struct irc_listener *l,
+								struct pending_client *pc,
 								const char *username)
 {
 	char *path;
@@ -207,14 +207,16 @@ static GIOChannel *connect_user(struct ctrlproxyd_config *config,
 
 	user_configdir = user_config_path(config, username);
 	if (user_configdir == NULL) {
-		listener_log(LOG_INFO, l, "Unable to find user %s", 
+		listener_log(LOG_INFO, pc->listener, "Unable to find user %s", 
 					 username);
+		irc_sendf(pc->connection, pc->listener->iconv, NULL, "ERROR :Unknown user %s", username);
 		return NULL;
 	}
 
 	if (!user_running(user_configdir)) {
-		if (!launch_new_instance(config, l, username, user_configdir)) {
+		if (!launch_new_instance(config, pc->listener, username, user_configdir)) {
 			g_free(user_configdir);
+			irc_sendf(pc->connection, pc->listener->iconv, NULL, "ERROR :Unable to start ctrlproxy for %s", username);
 			return NULL;
 		}
 	}
@@ -230,7 +232,7 @@ static GIOChannel *connect_user(struct ctrlproxyd_config *config,
 	g_free(path);
 
 	if (connect(sock, (struct sockaddr *)&un, sizeof(un)) < 0) {
-		listener_log(LOG_INFO, l, "unable to connect to %s: %s", un.sun_path, strerror(errno));
+		listener_log(LOG_INFO, pc->listener, "unable to connect to %s: %s", un.sun_path, strerror(errno));
 		close(sock);
 		return NULL;
 	}
@@ -257,7 +259,7 @@ static gboolean daemon_socks_auth_simple(struct pending_client *cl, const char *
 {
 	struct daemon_client_data *cd = cl->private_data;
 	
-	cd->connection = connect_user(cd->config, cl->listener, username);
+	cd->connection = connect_user(cd->config, cl, username);
 	if (cd->connection == NULL) {
 		return FALSE;
 	}
@@ -314,7 +316,7 @@ static gboolean handle_client_line(struct pending_client *pc, const struct irc_l
 	}
 
 	if (cd->username != NULL && cd->password != NULL && cd->nick != NULL) {
-		cd->connection = connect_user(cd->config, pc->listener, cd->username);
+		cd->connection = connect_user(cd->config, pc, cd->username);
 		if (cd->connection == NULL) {
 			return FALSE;
 		}
