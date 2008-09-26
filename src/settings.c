@@ -77,6 +77,7 @@ static const char *builtin_known_keys[] = {
 	"port",
 	"bind",
 	"ssl",
+	"keytab",
 	"default-network",
 	"log-logfilename",
 	"log-format-nickchange",
@@ -1157,6 +1158,14 @@ struct ctrlproxy_config *load_configuration(const char *dir)
 		!g_key_file_get_boolean(kf, "global", "autosave", NULL))
 		cfg->autosave = FALSE;
 
+	if (g_key_file_has_key(kf, "global", "keytab", NULL)) {
+		char *keytab;
+		keytab = g_key_file_get_string(kf, "global", "keytab", NULL);
+#ifdef HAVE_GSSKRB5_REGISTER_ACCEPTOR_IDENTITY
+		gsskrb5_register_acceptor_identity(keytab);
+#endif
+		g_free(keytab);
+	}
 
 	if (g_key_file_has_key(kf, "global", "max_who_age", NULL))
 		cfg->max_who_age = g_key_file_get_integer(kf, "global", "max_who_age", NULL);

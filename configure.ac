@@ -88,6 +88,8 @@ if test $KRB5_CONFIG != no; then
 	LIBS="$LIBS `$KRB5_CONFIG --libs gssapi`"
 	CFLAGS="$CFLAGS `$KRB5_CONFIG --cflags gssapi`"
 	AC_DEFINE(HAVE_GSSAPI, 1, [have GSSAPI])
+	AC_CHECK_FUNC(gsskrb5_register_acceptor_identity, 
+			AC_DEFINE(HAVE_GSSKRB5_REGISTER_ACCEPTOR_IDENTITY))
 fi
 
 ###############################################################################
