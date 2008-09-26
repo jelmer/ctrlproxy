@@ -335,8 +335,15 @@ static gboolean daemon_client_recv(struct irc_transport *transport, const struct
 	return transport_send_line(cd->backend_transport, line);
 }
 
+static void daemon_client_hangup (struct irc_transport *transport)
+{
+	struct daemon_client_data *cd = transport->userdata;
+
+	daemon_client_kill(cd);
+}
+
 static const struct irc_transport_callbacks daemon_client_callbacks = {
-	.hangup = NULL,
+	.hangup = daemon_client_hangup,
 	.log = NULL,
 	.disconnect = NULL,
 	.recv = daemon_client_recv,
@@ -370,7 +377,7 @@ static gboolean daemon_backend_recv(struct irc_transport *transport, const struc
 }
 
 static const struct irc_transport_callbacks daemon_backend_callbacks = {
-	.hangup = NULL,
+	.hangup = daemon_client_hangup,
 	.log = NULL,
 	.disconnect = NULL,
 	.recv = daemon_backend_recv,
@@ -694,7 +701,7 @@ int main(int argc, char **argv)
 	} else { 
 		write_pidfile(PIDFILE);
 
-		if (!listener_start(l, config->address, config->port))
+		if (!listener_start_tcp(l, config->address, config->port))
 			return 1;
 	}
 

@@ -156,8 +156,8 @@ gboolean admin_socket_prompt(const char *config_dir);
 gboolean create_configuration(const char *config_dir);
 
 /* pipes.c */
-gboolean start_unix_socket(struct global *);
-gboolean stop_unix_socket(struct global *);
+gboolean start_unix_domain_socket_listener(struct global *);
+gboolean stop_unix_domain_socket_listener(struct global *);
 
 /* log_custom.c */
 void log_custom_load(struct log_file_config *config);

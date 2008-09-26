@@ -332,19 +332,47 @@ static gboolean handle_new_client(GIOChannel *c_server, GIOCondition condition, 
 	return TRUE;
 }
 
+void listener_add_iochannel(struct irc_listener *l, GIOChannel *ioc,
+							const char *address, const char *port)
+{
+	struct listener_iochannel *lio;
+
+	lio = g_new0(struct listener_iochannel, 1);
+	lio->listener = l;
+
+	g_io_channel_set_close_on_unref(ioc, TRUE);
+	g_io_channel_set_encoding(ioc, NULL, NULL);
+	lio->watch_id = g_io_add_watch(ioc, G_IO_IN, handle_new_client, l);
+	g_io_channel_unref(ioc);
+	l->incoming = g_list_append(l->incoming, lio);
+
+	if (address == NULL)
+		strcpy(lio->address, "");
+	else
+		strncpy(lio->address, address, NI_MAXHOST);
+	if (port == NULL)
+		strcpy(lio->address, "");
+	else 
+		strncpy(lio->port, port, NI_MAXSERV);
+
+	if (address != NULL)
+		listener_log(LOG_INFO, l, "Listening on %s:%s", 
+					 address, port);
+	l->active = TRUE;
+}
+
 /**
  * Start a listener.
  *
  * @param l Listener to start.
  */
-gboolean listener_start(struct irc_listener *l, const char *address, const char *port)
+gboolean listener_start_tcp(struct irc_listener *l, const char *address, const char *port)
 {
 	int sock = -1;
 	const int on = 1;
 	struct addrinfo *res, *all_res;
 	int error;
 	struct addrinfo hints;
-	struct listener_iochannel *lio;
 
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = PF_UNSPEC;
@@ -369,18 +397,16 @@ gboolean listener_start(struct irc_listener *l, const char *address, const char 
 
 	for (res = all_res; res; res = res->ai_next) {
 		GIOChannel *ioc;
-
-		lio = g_new0(struct listener_iochannel, 1);
-		lio->listener = l;
+		char canon_address[NI_MAXHOST], canon_port[NI_MAXSERV];
 
 		error = getnameinfo(res->ai_addr, res->ai_addrlen, 
-							lio->address, NI_MAXHOST, 
-							lio->port, NI_MAXSERV, NI_NUMERICHOST|NI_NUMERICSERV);
+							canon_address, NI_MAXHOST, 
+							canon_port, NI_MAXSERV, NI_NUMERICHOST|NI_NUMERICSERV);
 		if (error < 0) {
 			listener_log(LOG_WARNING, l, "error looking up canonical name: %s", 
 						 gai_strerror(error));
-			strcpy(lio->address, "");
-			strcpy(lio->port, "");
+			strcpy(canon_address, "");
+			strcpy(canon_port, "");
 		}
 
 		sock = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
@@ -388,7 +414,6 @@ gboolean listener_start(struct irc_listener *l, const char *address, const char 
 			listener_log(LOG_ERROR, l, "error creating socket: %s", 
 						 strerror(errno));
 			close(sock);
-			g_free(lio);
 			continue;
 		}
 
@@ -403,7 +428,6 @@ gboolean listener_start(struct irc_listener *l, const char *address, const char 
 						   strerror(errno));
 			}
 			close(sock);
-			g_free(lio);
 			continue;
 		}
 
@@ -411,7 +435,6 @@ gboolean listener_start(struct irc_listener *l, const char *address, const char 
 			listener_log(LOG_ERROR, l, "error listening on socket: %s", 
 						strerror(errno));
 			close(sock);
-			g_free(lio);
 			continue;
 		}
 
@@ -421,20 +444,10 @@ gboolean listener_start(struct irc_listener *l, const char *address, const char 
 			listener_log(LOG_ERROR, l,
 						"Unable to create GIOChannel for server socket");
 			close(sock);
-			g_free(lio);
 			continue;
 		}
 
-		g_io_channel_set_close_on_unref(ioc, TRUE);
-
-		g_io_channel_set_encoding(ioc, NULL, NULL);
-		lio->watch_id = g_io_add_watch(ioc, G_IO_IN, handle_new_client, l);
-		g_io_channel_unref(ioc);
-		l->incoming = g_list_append(l->incoming, lio);
-
-		listener_log(LOG_INFO, l, "Listening on %s:%s", 
-						lio->address, lio->port);
-		l->active = TRUE;
+		listener_add_iochannel(l, ioc, canon_address, canon_port);
 	}
 
 	freeaddrinfo(all_res);

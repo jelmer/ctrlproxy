@@ -99,11 +99,12 @@ struct pending_client {
 #endif
 };
 
-G_MODULE_EXPORT gboolean listener_start(struct irc_listener *, const char *address, const char *service);
+G_MODULE_EXPORT gboolean listener_start_tcp(struct irc_listener *, const char *address, const char *service);
 G_MODULE_EXPORT gboolean listener_stop(struct irc_listener *);
 G_MODULE_EXPORT void fini_listeners(struct global *);
 G_MODULE_EXPORT void free_listener(struct irc_listener *l);
 G_MODULE_EXPORT gboolean init_listeners(struct global *global);
+G_MODULE_EXPORT void listener_add_iochannel(struct irc_listener *l, GIOChannel *ioc, const char *host, const char *port);
 G_MODULE_EXPORT void listener_log(enum log_level l, const struct irc_listener *listener,
 				 const char *fmt, ...);
 G_MODULE_EXPORT gboolean listener_socks_error(struct pending_client *pc, guint8 err);

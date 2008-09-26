@@ -78,8 +78,7 @@ struct global {
 	GList *nickserv_nicks;
 	GList *listeners;
 
-	GIOChannel *unix_incoming;
-	gint unix_incoming_id;
+	struct irc_listener *unix_domain_socket_listener;
 
 	GIOChannel *admin_incoming;
 	gint admin_incoming_id;

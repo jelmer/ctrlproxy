@@ -66,7 +66,6 @@ objs = src/posix.o \
 	   src/keyfile.o \
 	   src/admin.o \
 	   src/user.o \
-	   src/pipes.o \
 	   src/help.o \
 	   src/repl_backends.o \
 	   src/listener.o \

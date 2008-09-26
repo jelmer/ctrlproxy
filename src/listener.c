@@ -27,6 +27,12 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <glib.h>
+#include <sys/un.h>
+
+#ifdef HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
+#endif
+
 
 void default_listener_log_fn(enum log_level l, const struct irc_listener *listener, const char *ret)
 {
@@ -320,7 +326,7 @@ static void auto_add_listener(struct irc_network *n, void *private_data)
 	cfg->network = g_strdup(nc->name);
 	cfg->port = g_strdup_printf("%d", next_autoport(n->global));
 	l = listener_init(n->global, cfg);
-	listener_start(l, NULL, cfg->port);
+	listener_start_tcp(l, NULL, cfg->port);
 }
 
 gboolean init_listeners(struct global *global)
@@ -336,7 +342,7 @@ gboolean init_listeners(struct global *global)
 		struct irc_listener *l = listener_init(global, cfg);
 
 		if (l != NULL) {
-			ret &= listener_start(l, cfg->address, cfg->port);
+			ret &= listener_start_tcp(l, cfg->address, cfg->port);
 		}
 	}
 	return ret;
@@ -353,4 +359,58 @@ void fini_listeners(struct global *global)
 	}
 }
 
+gboolean start_unix_domain_socket_listener(struct global *global)
+{
+	int sock;
+	struct sockaddr_un un;
+	struct irc_listener *l = g_new0(struct irc_listener, 1);
+	GIOChannel *ioc;
 
+	sock = socket(PF_UNIX, SOCK_STREAM, 0);
+	if (sock < 0) {
+		log_global(LOG_ERROR, "error creating unix socket: %s", strerror(errno));
+		g_free(l);
+		return FALSE;
+	}
+	
+	un.sun_family = AF_UNIX;
+	strncpy(un.sun_path, global->config->network_socket, sizeof(un.sun_path));
+	unlink(un.sun_path);
+
+	if (bind(sock, (struct sockaddr *)&un, sizeof(un)) < 0) {
+		log_global(LOG_ERROR, "unable to bind to %s: %s", un.sun_path, strerror(errno));
+		g_free(l);
+		return FALSE;
+	}
+	
+	if (listen(sock, 5) < 0) {
+		log_global(LOG_ERROR, "error listening on socket: %s", strerror(errno));
+		g_free(l);
+		return FALSE;
+	}
+
+	l->ops = &default_listener_ops;
+	l->iconv = (GIConv)-1;
+	l->ssl = FALSE;
+	l->ssl_credentials = NULL;
+	l->global = global;
+	l->log_fn = default_listener_log_fn;
+
+	ioc = g_io_channel_unix_new(sock);
+
+	if (ioc == NULL) {
+		log_global(LOG_ERROR, "Unable to create GIOChannel for unix server socket");
+		return FALSE;
+	}
+
+	listener_add_iochannel(l, ioc, NULL, NULL);
+
+	return TRUE;
+}
+
+gboolean stop_unix_domain_socket_listener(struct global *global)
+{
+	listener_stop(global->unix_domain_socket_listener);
+	unlink(global->config->network_socket);
+	return TRUE;
+}
