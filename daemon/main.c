@@ -48,7 +48,8 @@ static GList *daemon_clients = NULL;
 /* there are no hup signals here */
 void register_hup_handler(hup_handler_fn fn, void *userdata) {}
 static void daemon_client_kill(struct daemon_client_data *dc);
-static gboolean daemon_client_check_pass(struct pending_client *pc, struct daemon_client_data *cd, const char *password);
+static gboolean daemon_client_check_pass(struct pending_client *pc, struct daemon_client_data *cd, const char *password,
+										 gboolean (*) (struct pending_client *, gboolean));
 
 struct ctrlproxyd_config {
 	char *ctrlproxy_path;
@@ -68,6 +69,8 @@ struct daemon_client_user {
 struct daemon_client_data {
 	struct irc_transport *backend_transport;
 	struct irc_transport *client_transport;
+	gboolean (*pass_check_cb) (struct pending_client *, gboolean);
+	struct pending_client *pending_client;
 	struct daemon_client_user *user;
 	struct ctrlproxyd_config *config;
 	char *password;
@@ -345,6 +348,24 @@ static gboolean daemon_backend_recv(struct irc_transport *transport, const struc
 {
 	struct daemon_client_data *cd = transport->userdata;
 
+	if (cd->pass_check_cb != NULL) {
+		gboolean ok;
+		if (atoi(line->args[0]) == ERR_PASSWDMISMATCH) {
+			ok = FALSE;
+		} else if (!strcmp(line->args[0], "NOTICE") && !strcmp(line->args[1], "AUTH") && !strcmp(line->args[2], "PASS OK")) {
+			cd->pass_check_cb(cd->pending_client, TRUE);
+			ok = TRUE;
+		} else {
+			listener_log(LOG_INFO, cd->pending_client->listener, "Unexpected response %s", line->args[0]);
+			transport_send_args(cd->client_transport, "ERROR", "Internal error, unexpected response", NULL);
+			ok = FALSE;
+		}
+		cd->pass_check_cb(cd->pending_client, ok);
+		cd->pass_check_cb = NULL;
+		cd->pending_client = NULL;
+		return ok;
+	}
+
 	return transport_send_line(cd->client_transport, line);
 }
 
@@ -390,7 +411,8 @@ static gboolean daemon_socks_gssapi (struct pending_client *pc, gss_name_t usern
 }
 #endif
 
-static gboolean daemon_socks_auth_simple(struct pending_client *cl, const char *username, const char *password)
+static gboolean daemon_socks_auth_simple(struct pending_client *cl, const char *username, const char *password,
+										 gboolean (*on_finished) (struct pending_client *, gboolean))
 {
 	struct daemon_client_data *cd = cl->private_data;
 	GIOChannel *ioc;
@@ -415,7 +437,7 @@ static gboolean daemon_socks_auth_simple(struct pending_client *cl, const char *
 
 	irc_transport_set_callbacks(cd->backend_transport, &daemon_backend_callbacks, cd);
 
-	return daemon_client_check_pass(cl, cd, password);
+	return daemon_client_check_pass(cl, cd, password, on_finished);
 }
 
 static gboolean daemon_socks_connect_fqdn (struct pending_client *cl, const char *hostname, uint16_t port)
@@ -432,29 +454,29 @@ static gboolean daemon_socks_connect_fqdn (struct pending_client *cl, const char
 	return FALSE;
 }
 
-static gboolean daemon_client_check_pass(struct pending_client *cl, struct daemon_client_data *cd, const char *password)
+static gboolean daemon_client_check_pass(struct pending_client *cl, struct daemon_client_data *cd, const char *password,
+										 gboolean (*pass_check_cb) (struct pending_client *, gboolean))
 {
-	struct irc_line *l = NULL;
-	GError *error = NULL;
+	cd->pass_check_cb = pass_check_cb;
+	cd->pending_client = cl;
 
 	if (!transport_send_args(cd->backend_transport, "PASS", password, NULL))
 		return FALSE;
 
-	if (!transport_blocking_recv(cd->backend_transport, &l)) {
-		listener_log(LOG_WARNING, cl->listener, "Error reading password: %s",
-					 error->message);
-		irc_sendf(cl->connection, cl->listener->iconv, NULL, 
-			  "ERROR :Internal error, unexpected response");
-		return FALSE;
-	}
+	return TRUE; /* All good, so far */
+}
 
-	if (atoi(l->args[0]) == ERR_PASSWDMISMATCH) {
-		return FALSE;	
-	} else if (!strcmp(l->args[0], "NOTICE") && !strcmp(l->args[1], "AUTH") && !strcmp(l->args[2], "PASS OK")) {
-		return TRUE;
+static gboolean clear_handle_auth_finish(struct pending_client *pc, gboolean accepted)
+{
+	if (!accepted) {
+		irc_sendf(pc->connection, pc->listener->iconv, NULL, 
+				  ":%s %d %s :Password invalid", 
+				  get_my_hostname(), ERR_PASSWDMISMATCH, "*");
+		g_io_channel_flush(pc->connection, NULL);
+
+		return FALSE;
 	} else {
-		listener_log(LOG_INFO, cl->listener, "Unexpected response %s", l->args[0]);
-		transport_send_args(cd->client_transport, "ERROR", "Internal error, unexpected response", NULL);
+		client_done(pc, pc->private_data);
 		return FALSE;
 	}
 }
@@ -509,16 +531,7 @@ static gboolean handle_client_line(struct pending_client *pc, const struct irc_l
 		}
 		irc_transport_set_callbacks(cd->backend_transport, &daemon_backend_callbacks, cd);
 
-		if (!daemon_client_check_pass(pc, cd, cd->password)) {
-			irc_sendf(pc->connection, pc->listener->iconv, NULL, 
-					  ":%s %d %s :Password invalid", 
-					  get_my_hostname(), ERR_PASSWDMISMATCH, "*");
-			g_io_channel_flush(pc->connection, NULL);
-
-			return FALSE;
-		}
-		client_done(pc, cd);
-		return FALSE;
+		return daemon_client_check_pass(pc, cd, cd->password, clear_handle_auth_finish);
 	}
 
 	return TRUE;
@@ -544,7 +557,7 @@ struct irc_listener_ops daemon_ops = {
 static void daemon_user_start_if_exists(struct ctrlproxyd_config *config, struct irc_listener *listener, 
 										struct daemon_client_user *user)
 {
-	if (!daemon_user_running(user) && daemon_user_exists(user)) {
+	if (daemon_user_exists(user) && !daemon_user_running(user)) {
 		daemon_user_start(config, listener, user);
 	}
 }

@@ -44,7 +44,8 @@ gboolean default_socks_gssapi(struct pending_client *cl, gss_name_t authn_name)
 }
 #endif
 
-gboolean default_socks_auth_simple(struct pending_client *cl, const char *username, const char *password)
+gboolean default_socks_auth_simple(struct pending_client *cl, const char *username, const char *password,
+								   gboolean (*on_known)(struct pending_client *, gboolean))
 {
 	GList *gl;
 
@@ -61,19 +62,19 @@ gboolean default_socks_auth_simple(struct pending_client *cl, const char *userna
 		if (strcmp(r->password, password))
 			continue;
 
-		return TRUE;
+		return on_known(cl, TRUE);
 	}
 
 	if (cl->listener->config->password == NULL) {
 		listener_log(LOG_WARNING, cl->listener, "No password set, allowing client _without_ authentication!");
-		return TRUE;
+		return on_known(cl, TRUE);
 	}
 
 	if (strcmp(cl->listener->config->password, password) == 0) {
-		return TRUE;
+		return on_known(cl, TRUE);
 	}
 
-	return FALSE;
+	return on_known(cl, FALSE);
 }
 
 gboolean default_socks_connect_fqdn (struct pending_client *cl, const char *hostname, uint16_t port)

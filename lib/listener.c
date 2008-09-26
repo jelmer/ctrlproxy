@@ -549,8 +549,8 @@ static gboolean pass_handle_data(struct pending_client *cl)
 
 	pass[(guint8)header[0]] = '\0';
 
-	accepted = cl->listener->ops->socks_auth_simple(cl, uname, pass);
-	return on_socks_pass_accepted(cl, accepted);
+	accepted = cl->listener->ops->socks_auth_simple(cl, uname, pass, on_socks_pass_accepted);
+	return TRUE;
 }
 
 #ifdef HAVE_GSSAPI

@@ -21,7 +21,8 @@ struct pending_client;
 struct irc_listener_ops {
 	void (*new_client) (struct pending_client *pc);
 	gboolean (*handle_client_line) (struct pending_client *pc, const struct irc_line *l);
-	gboolean (*socks_auth_simple) (struct pending_client *pc, const char *username, const char *password);
+	gboolean (*socks_auth_simple) (struct pending_client *pc, const char *username, const char *password,
+								   gboolean (*) (struct pending_client *, gboolean pass_ok));
 #ifdef HAVE_GSSAPI
 	gboolean (*socks_gssapi) (struct pending_client *pc, gss_name_t user_name);
 #endif
