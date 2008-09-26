@@ -26,6 +26,26 @@
 static gboolean transport_send_queue(GIOChannel *c, GIOCondition cond, 
 										 void *_client);
 
+static gboolean handle_recv_status(struct irc_transport *transport, GIOStatus status, GError *error)
+{
+	if (status == G_IO_STATUS_EOF) {
+		transport->callbacks->hangup(transport);
+		return FALSE;
+	}
+
+	if (status != G_IO_STATUS_AGAIN) {
+		if (error->domain == G_CONVERT_ERROR &&
+			error->code == G_CONVERT_ERROR_ILLEGAL_SEQUENCE) {
+			transport->callbacks->charset_error(transport, 
+												error->message);
+		} else {
+			return transport->callbacks->error(transport, error?error->message:NULL);
+		}
+	}
+
+	return TRUE;
+}
+
 static gboolean handle_transport_receive(GIOChannel *c, GIOCondition cond, 
 									  void *_transport)
 {
@@ -62,21 +82,7 @@ static gboolean handle_transport_receive(GIOChannel *c, GIOCondition cond,
 				return FALSE;
 		}
 
-		if (status == G_IO_STATUS_EOF) {
-			transport->callbacks->hangup(transport);
-			return FALSE;
-		}
-
-		if (status != G_IO_STATUS_AGAIN) {
-			if (error->domain == G_CONVERT_ERROR &&
-				error->code == G_CONVERT_ERROR_ILLEGAL_SEQUENCE) {
-				transport->callbacks->charset_error(transport, 
-													error->message);
-			} else {
-				return transport->callbacks->error(transport, error?error->message:NULL);
-			}
-		}
-		return ret;
+		return ret && handle_recv_status(transport, status, error);
 	}
 
 	return TRUE;
@@ -335,4 +341,19 @@ void transport_parse_buffer(struct irc_transport *transport)
 	handle_transport_receive(transport->incoming, 
 			  g_io_channel_get_buffer_condition(transport->incoming),
 			  transport);
+}
+
+gboolean transport_blocking_recv(struct irc_transport *transport, struct irc_line **l)
+{
+	GIOFlags old_flags = g_io_channel_get_flags(transport->incoming);
+	GError *error = NULL;
+	GIOStatus status;
+
+	g_io_channel_set_flags(transport->incoming, old_flags & ~G_IO_FLAG_NONBLOCK, &error);
+
+	status = irc_recv_line(transport->incoming, transport->incoming_iconv, &error, l);
+
+	g_io_channel_set_flags(transport->incoming, old_flags, &error);
+
+	return handle_recv_status(transport, status, error);
 }

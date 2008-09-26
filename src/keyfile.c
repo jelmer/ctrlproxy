@@ -56,7 +56,7 @@ gboolean keyfile_read_file(const char *filename, char commentchar, GList **nicks
         g_free(ret);
 
 		if (!parts[0] || !parts[1]) {
-			log_global(LOG_WARNING, "%s:%ld: Invalid syntax", filename, lineno);
+			log_global(LOG_WARNING, "%s:%ld: Invalid syntax", filename, (long)lineno);
 			g_strfreev(parts);
 			continue;
 		}

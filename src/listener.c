@@ -212,6 +212,11 @@ static gboolean handle_client_line(struct pending_client *pc, const struct irc_l
 				}
 			}
 
+			irc_sendf(pc->connection, pc->listener->iconv, NULL, 
+					  "NOTICE AUTH :PASS OK");
+			g_io_channel_flush(pc->connection, NULL);
+
+
 			{
 				char *desc = g_io_channel_ip_get_description(pc->connection);
 				if (desc == NULL)
@@ -219,9 +224,6 @@ static gboolean handle_client_line(struct pending_client *pc, const struct irc_l
 				client_init_iochannel(pc->listener->network, pc->connection, desc);
 				g_free(desc);
 			}
-
-			irc_sendf(pc->connection, pc->listener->iconv, NULL, 
-					  "NOTICE AUTH :Password ok");
 
 			return FALSE;
 		} else {
@@ -232,6 +234,7 @@ static gboolean handle_client_line(struct pending_client *pc, const struct irc_l
 			status = irc_sendf(pc->connection, pc->listener->iconv, NULL, 
 							   ":%s %d %s :Password mismatch", 
 							   get_my_hostname(), ERR_PASSWDMISMATCH, "*");
+			g_io_channel_flush(pc->connection, NULL);
 
 			if (status != G_IO_STATUS_NORMAL) {
 				return FALSE;
