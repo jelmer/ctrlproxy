@@ -404,6 +404,9 @@ static gboolean daemon_socks_auth_simple(struct pending_client *cl, const char *
 	}
 
 	ioc = connect_user(cd->config, cl, cd->user);
+	if (ioc == NULL) {
+		return FALSE;
+	}
 
 	cd->backend_transport = irc_transport_new_iochannel(ioc);
 	if (cd->backend_transport == NULL) {
@@ -496,6 +499,9 @@ static gboolean handle_client_line(struct pending_client *pc, const struct irc_l
 		}
 
 		ioc = connect_user(cd->config, pc, cd->user);
+		if (ioc == NULL) {
+			return FALSE;
+		}
 
 		cd->backend_transport = irc_transport_new_iochannel(ioc);
 		if (cd->backend_transport == NULL) {

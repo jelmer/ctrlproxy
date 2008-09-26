@@ -230,11 +230,16 @@ static struct irc_client_callbacks default_callbacks = {
 struct irc_client *client_init_iochannel(struct irc_network *n, GIOChannel *c, const char *desc)
 {
 	struct irc_transport *transport;
+	struct irc_client *client;
 	g_io_channel_set_flags(c, G_IO_FLAG_NONBLOCK, NULL);
 	g_io_channel_set_close_on_unref(c, TRUE);
 	transport = irc_transport_new_iochannel(c);
 
-	return client_init(n, transport, desc);
+	client = client_init(n, transport, desc);
+
+	transport_parse_buffer(transport);
+
+	return client;
 }
 
 struct irc_client *client_init(struct irc_network *n, struct irc_transport *transport, const char *desc)
