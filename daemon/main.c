@@ -68,6 +68,11 @@ void listener_syslog(enum log_level l, const struct irc_listener *listener, cons
 	syslog(LOG_INFO, "%s", ret);
 }
 
+void listener_stderr(enum log_level l, const struct irc_listener *listener, const char *ret)
+{
+	fprintf(stderr, "[%d] %s\n",l, ret);
+}
+
 struct ctrlproxyd_config *read_config_file(const char *name)
 {
 	struct ctrlproxyd_config *config;
@@ -144,6 +149,7 @@ void signal_quit(int sig)
 }
 
 static GIOChannel *connect_user(struct ctrlproxyd_config *config, 
+								struct irc_listener *l,
 								const char *username)
 {
 	char *path;
@@ -152,8 +158,11 @@ static GIOChannel *connect_user(struct ctrlproxyd_config *config,
 	GIOChannel *ch;
 
 	path = user_socket_path(config, username);
-	if (path == NULL)
+	if (path == NULL) {
+		listener_log(LOG_INFO, l, "Unable to find user %s", 
+					 username);
 		return NULL;
+	}
 
 	sock = socket(PF_UNIX, SOCK_STREAM, 0);
 
@@ -163,8 +172,8 @@ static GIOChannel *connect_user(struct ctrlproxyd_config *config,
 	g_free(path);
 
 	if (connect(sock, (struct sockaddr *)&un, sizeof(un)) < 0) {
-		syslog(LOG_INFO, "unable to connect to %s: %s", un.sun_path, strerror(errno));
-		/* FIXME: Create new daemon ? */
+		listener_log(LOG_INFO, l, "unable to connect to %s: %s", un.sun_path, strerror(errno));
+		/* FIXME: Create new daemon instead? */
 		return FALSE;
 	}
 
@@ -178,21 +187,23 @@ static GIOChannel *connect_user(struct ctrlproxyd_config *config,
 /**
  * Callback when client is done authenticating.
  */
-static void client_done(struct pending_client *pc)
+static void client_done(struct pending_client *pc, struct daemon_client_data *cd)
 {
-	printf("DONE!\n");
-	/* FIXME: Redirect pc->private_data->connection to pc->connection */
+	char *desc = g_io_channel_ip_get_description(pc->connection);
+	listener_log(LOG_INFO, pc->listener, "Accepted new client %s", desc);
+	g_free(desc);
 
-	/* FIXME: perhaps fork() if this is not a inetd server ? */
+	/* FIXME: Redirect dc->connection to pc->connection */
 }
 
 static gboolean daemon_socks_auth_simple(struct pending_client *cl, const char *username, const char *password)
 {
 	struct daemon_client_data *cd = cl->private_data;
 	
-	cd->connection = connect_user(cd->config, username);
-	if (cd->connection == NULL)
+	cd->connection = connect_user(cd->config, cl->listener, username);
+	if (cd->connection == NULL) {
 		return FALSE;
+	}
 
 	irc_sendf(cd->connection, (GIConv)-1, NULL, "PASS %s", password);
 
@@ -212,9 +223,9 @@ static gboolean daemon_socks_connect_fqdn (struct pending_client *cl, const char
 	irc_sendf(cd->connection, (GIConv)-1, NULL, "CONNECT %s %d", hostname, port);
 	g_io_channel_flush(cd->connection, NULL);
 
-	client_done(cl);
+	client_done(cl, cd);
 
-	return TRUE;
+	return FALSE;
 }
 
 static gboolean handle_client_line(struct pending_client *pc, const struct irc_line *l)
@@ -246,9 +257,10 @@ static gboolean handle_client_line(struct pending_client *pc, const struct irc_l
 	}
 
 	if (cd->username != NULL && cd->password != NULL && cd->nick != NULL) {
-		cd->connection = connect_user(cd->config, cd->username);
-		if (cd->connection == NULL)
+		cd->connection = connect_user(cd->config, pc->listener, cd->username);
+		if (cd->connection == NULL) {
 			return FALSE;
+		}
 		
 		irc_sendf(cd->connection, (GIConv)-1, NULL, "PASS %s", cd->password);
 		irc_sendf(cd->connection, (GIConv)-1, NULL, "CONNECT %s %s", cd->servername, cd->servicename);
@@ -256,7 +268,7 @@ static gboolean handle_client_line(struct pending_client *pc, const struct irc_l
 				  cd->mode, cd->unused, cd->realname);
 		irc_sendf(cd->connection, (GIConv)-1, NULL, "NICK %s", cd->nick);
 		g_io_channel_flush(cd->connection, NULL);
-		client_done(pc);
+		client_done(pc, cd);
 		return FALSE;
 	}
 
@@ -299,7 +311,6 @@ int main(int argc, char **argv)
 	GError *error = NULL;
 	struct irc_listener *l = g_new0(struct irc_listener, 1);
 
-
 	signal(SIGINT, signal_quit);
 	signal(SIGTERM, signal_quit);
 #ifdef SIGPIPE
@@ -339,7 +350,7 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
-	isdaemon = !foreground && !inetd;
+	isdaemon = (!foreground && !inetd);
 
 	if (gethostname(my_hostname, NI_MAXHOST) != 0) {
 		fprintf(stderr, "Can't figure out hostname of local host!\n");
@@ -372,7 +383,10 @@ int main(int argc, char **argv)
 	openlog("ctrlproxyd", 0, LOG_DAEMON);
 
 	l->iconv = (GIConv)-1;
-	l->log_fn = listener_syslog;
+	if (foreground) 
+		l->log_fn = listener_stderr;
+	else 
+		l->log_fn = listener_syslog;
 	l->ops = &daemon_ops;
 
 	if (inetd) {
