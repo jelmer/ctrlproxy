@@ -49,9 +49,10 @@ void register_hup_handler(hup_handler_fn fn, void *userdata) {}
 static void daemon_client_kill(struct daemon_client_data *dc);
 
 struct ctrlproxyd_config {
-	const char *port;
-	const char *address;
-	const char *configdir;
+	char *ctrlproxy_path;
+	char *port;
+	char *address;
+	char *configdir;
 };
 
 struct daemon_client_data {
@@ -93,6 +94,7 @@ struct ctrlproxyd_config *read_config_file(const char *name)
 	}
 
 	config = g_new0(struct ctrlproxyd_config, 1);
+	config->ctrlproxy_path = g_key_file_get_string(kf, "settings", "ctrlproxy-path", NULL) || g_strdup("ctrlproxy");
 	config->configdir = g_key_file_get_string(kf, "settings", "configdir", NULL);
 	config->port = g_key_file_get_string(kf, "settings", "port", NULL);
 	config->address = g_key_file_get_string(kf, "settings", "address", NULL);
@@ -184,7 +186,7 @@ static gboolean launch_new_instance(struct ctrlproxyd_config *config,
 {
 	GPid child_pid;
 	char *command[] = {
-		"ctrlproxy",
+		config->ctrlproxy_path,
 		"--daemon",
 		"--config-dir", g_strdup(configdir),
 		NULL
