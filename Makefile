@@ -4,7 +4,7 @@
 
 include Makefile.settings
 
-BINS += ctrlproxy$(EXEEXT)
+BINS += ctrlproxy$(EXEEXT) ctrlproxyd$(EXEEXT)
 
 GCOV = gcov
 
@@ -30,7 +30,7 @@ LIBIRC_SONAME = libirc.$(SHLIBEXT).$(LIBIRC_SOVERSION)
 
 all: $(BINS)
 
-experimental:: all ctrlproxyd$(EXEEXT)
+experimental:: all 
 
 doxygen:
 	doxygen

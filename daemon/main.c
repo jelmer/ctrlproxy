@@ -404,7 +404,7 @@ static gboolean daemon_client_handle_backend_event(GIOChannel *source, GIOCondit
 static void client_done(struct pending_client *pc, struct daemon_client_data *dc)
 {
 	char *desc = g_io_channel_ip_get_description(pc->connection);
-	listener_log(LOG_INFO, pc->listener, "Accepted new client %s", desc);
+	listener_log(LOG_INFO, pc->listener, "Accepted new client %s for user %s", desc, dc->user->username);
 	g_free(desc);
 
 	dc->client_connection = g_io_channel_ref(pc->connection);

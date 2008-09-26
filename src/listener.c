@@ -220,6 +220,9 @@ static gboolean handle_client_line(struct pending_client *pc, const struct irc_l
 				g_free(desc);
 			}
 
+			irc_sendf(pc->connection, pc->listener->iconv, NULL, 
+					  "NOTICE AUTH :Password ok");
+
 			return FALSE;
 		} else {
 			GIOStatus status;
