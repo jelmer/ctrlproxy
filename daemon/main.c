@@ -51,7 +51,8 @@ struct ctrlproxyd_config {
 };
 
 struct daemon_client_data {
-	GIOChannel *connection;
+	GIOChannel *backend_connection;
+	GIOChannel *client_connection;
 	struct ctrlproxyd_config *config;
 	char *password;
 	char *servername;
@@ -61,6 +62,8 @@ struct daemon_client_data {
 	char *mode;
 	char *unused;
 	char *realname;
+	gint watch_backend;
+	gint watch_client;
 };
 
 void listener_syslog(enum log_level l, const struct irc_listener *listener, const char *ret)
@@ -109,7 +112,7 @@ void signal_crash(int sig)
 	backtrace_size = backtrace(backtrace_stack,BACKTRACE_STACK_SIZE);
 	backtrace_strings = backtrace_symbols(backtrace_stack, backtrace_size);
 
-	syslog(LOG_ALERT, "BACKTRACE: %ld stack frames:", backtrace_size);
+	syslog(LOG_ALERT, "BACKTRACE: %ld stack frames:", (long)backtrace_size);
 	
 	if (backtrace_strings) {
 		int i;
@@ -243,23 +246,102 @@ static GIOChannel *connect_user(struct ctrlproxyd_config *config,
 	return ch;
 }
 
+static void daemon_client_kill(struct daemon_client_data *dc)
+{
+	g_source_remove(dc->watch_client);
+	g_source_remove(dc->watch_backend);
+
+	g_io_channel_unref(dc->client_connection);
+	g_io_channel_unref(dc->backend_connection);
+
+	g_free(dc->nick);
+	g_free(dc->password);
+	g_free(dc->realname);
+	g_free(dc->servername);
+	g_free(dc->servicename);
+	g_free(dc->unused);
+	g_free(dc->username);
+	g_free(dc);
+}
+
+static gboolean forward_data(GIOChannel *from, GIOChannel *to)
+{
+	char buf[1024];
+	gsize bytes_read, bytes_written;
+	GIOStatus status;
+	GError *error = NULL;
+
+	status = g_io_channel_read_chars(from, buf, sizeof(buf), &bytes_read, &error);
+	switch (status) {
+		case G_IO_STATUS_NORMAL:
+		case G_IO_STATUS_AGAIN:
+		g_assert(g_io_channel_write_chars(to, buf, bytes_read, &bytes_written, &error) == G_IO_STATUS_NORMAL);
+		return TRUE;
+		case G_IO_STATUS_ERROR:
+		return FALSE;
+		case G_IO_STATUS_EOF:
+		return FALSE;
+		default:
+		g_assert_not_reached();
+	}
+}
+
+static gboolean daemon_client_handle_client_event(GIOChannel *source, GIOCondition condition, gpointer data)
+{
+	struct daemon_client_data *dc = data;
+
+	if (condition & G_IO_IN) {
+		if (!forward_data(dc->client_connection, dc->backend_connection)) {
+			daemon_client_kill(dc);
+			return FALSE;
+		}
+	}
+
+	if (condition & G_IO_HUP) {
+		daemon_client_kill(dc);
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+static gboolean daemon_client_handle_backend_event(GIOChannel *source, GIOCondition condition, gpointer data)
+{
+	struct daemon_client_data *dc = data;
+
+	if (condition & G_IO_IN) {
+		if (!forward_data(dc->backend_connection, dc->client_connection)) {
+			daemon_client_kill(dc);
+			return FALSE;
+		}
+	}
+
+	if (condition & G_IO_HUP) {
+		daemon_client_kill(dc);
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
 /**
  * Callback when client is done authenticating.
  */
-static void client_done(struct pending_client *pc, struct daemon_client_data *cd)
+static void client_done(struct pending_client *pc, struct daemon_client_data *dc)
 {
 	char *desc = g_io_channel_ip_get_description(pc->connection);
 	listener_log(LOG_INFO, pc->listener, "Accepted new client %s", desc);
 	g_free(desc);
 
-	/* FIXME: Redirect dc->connection to pc->connection */
-	/* FIXME: watch_id = g_io_add_watch(c, G_IO_IN | G_IO_HUP, handle_client_receive, pc); */
+	dc->client_connection = g_io_channel_ref(pc->connection);
+	dc->watch_client = g_io_add_watch(dc->client_connection, G_IO_IN | G_IO_HUP, daemon_client_handle_client_event, dc);
+	dc->watch_backend = g_io_add_watch(dc->backend_connection, G_IO_IN | G_IO_HUP, daemon_client_handle_backend_event, dc);
 }
 
 #ifdef HAVE_GSSAPI
 static gboolean daemon_socks_gssapi (struct pending_client *pc, gss_name_t username)
 {
-	struct daemon_client_data *cd = cl->private_data;
+	struct daemon_client_data *cd = pc->private_data;
 	return FALSE; /* FIXME */
 }
 #endif
@@ -268,14 +350,14 @@ static gboolean daemon_socks_auth_simple(struct pending_client *cl, const char *
 {
 	struct daemon_client_data *cd = cl->private_data;
 	
-	cd->connection = connect_user(cd->config, cl, username);
-	if (cd->connection == NULL) {
+	cd->backend_connection = connect_user(cd->config, cl, username);
+	if (cd->backend_connection == NULL) {
 		return FALSE;
 	}
 
-	irc_sendf(cd->connection, (GIConv)-1, NULL, "PASS %s", password);
+	irc_sendf(cd->backend_connection, (GIConv)-1, NULL, "PASS %s", password);
 
-	g_io_channel_flush(cd->connection, NULL);
+	g_io_channel_flush(cd->backend_connection, NULL);
 
 	/* FIXME: Check whether the client doesn't return anything */
 
@@ -288,8 +370,8 @@ static gboolean daemon_socks_connect_fqdn (struct pending_client *cl, const char
 
 	/* Only called after authentication */
 
-	irc_sendf(cd->connection, (GIConv)-1, NULL, "CONNECT %s %d", hostname, port);
-	g_io_channel_flush(cd->connection, NULL);
+	irc_sendf(cd->backend_connection, (GIConv)-1, NULL, "CONNECT %s %d", hostname, port);
+	g_io_channel_flush(cd->backend_connection, NULL);
 
 	client_done(cl, cd);
 
@@ -325,17 +407,17 @@ static gboolean handle_client_line(struct pending_client *pc, const struct irc_l
 	}
 
 	if (cd->username != NULL && cd->password != NULL && cd->nick != NULL) {
-		cd->connection = connect_user(cd->config, pc, cd->username);
-		if (cd->connection == NULL) {
+		cd->backend_connection = connect_user(cd->config, pc, cd->username);
+		if (cd->backend_connection == NULL) {
 			return FALSE;
 		}
 		
-		irc_sendf(cd->connection, (GIConv)-1, NULL, "PASS %s", cd->password);
-		irc_sendf(cd->connection, (GIConv)-1, NULL, "CONNECT %s %s", cd->servername, cd->servicename);
-		irc_sendf(cd->connection, (GIConv)-1, NULL, "USER %s %s %s %s", cd->username, 
+		irc_sendf(cd->backend_connection, (GIConv)-1, NULL, "PASS %s", cd->password);
+		irc_sendf(cd->backend_connection, (GIConv)-1, NULL, "CONNECT %s %s", cd->servername, cd->servicename);
+		irc_sendf(cd->backend_connection, (GIConv)-1, NULL, "USER %s %s %s %s", cd->username, 
 				  cd->mode, cd->unused, cd->realname);
-		irc_sendf(cd->connection, (GIConv)-1, NULL, "NICK %s", cd->nick);
-		g_io_channel_flush(cd->connection, NULL);
+		irc_sendf(cd->backend_connection, (GIConv)-1, NULL, "NICK %s", cd->nick);
+		g_io_channel_flush(cd->backend_connection, NULL);
 		client_done(pc, cd);
 		return FALSE;
 	}
