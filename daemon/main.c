@@ -35,8 +35,11 @@
 #include <syslog.h>
 #endif
 
+struct ctrlproxyd_config;
 extern char my_hostname[];
 static int log_level = 0;
+
+static struct ctrlproxyd_config *global_daemon_config;
 
 /* there are no hup signals here */
 void register_hup_handler(hup_handler_fn fn, void *userdata) {}
@@ -44,10 +47,12 @@ void register_hup_handler(hup_handler_fn fn, void *userdata) {}
 struct ctrlproxyd_config {
 	const char *port;
 	const char *address;
+	const char *configdir;
 };
 
 struct daemon_client_data {
 	GIOChannel *connection;
+	struct ctrlproxyd_config *config;
 	char *password;
 	char *servername;
 	char *servicename;
@@ -76,6 +81,7 @@ struct ctrlproxyd_config *read_config_file(const char *name)
 	}
 
 	config = g_new0(struct ctrlproxyd_config, 1);
+	config->configdir = g_key_file_get_string(kf, "settings", "configdir", NULL);
 	config->port = g_key_file_get_string(kf, "settings", "port", NULL);
 	config->address = g_key_file_get_string(kf, "settings", "address", NULL);
 
@@ -115,16 +121,20 @@ void signal_crash(int sig)
 	abort();
 }
 
-char *user_socket_path(const char *username)
+char *user_socket_path(struct ctrlproxyd_config *config, const char *username)
 {
 	struct passwd *pwd;
 
-	pwd = getpwnam(username);
+	if (config->configdir != NULL) {
+		return g_build_filename(config->configdir, username, "socket", NULL);
+	} else {
+		pwd = getpwnam(username);
 
-	if (pwd == NULL)
-		return NULL;
+		if (pwd == NULL)
+			return NULL;
 
-	return g_build_filename(pwd->pw_dir, ".ctrlproxy", "socket", NULL);
+		return g_build_filename(pwd->pw_dir, ".ctrlproxy", "socket", NULL);
+	}
 }
 
 void signal_quit(int sig)
@@ -133,14 +143,15 @@ void signal_quit(int sig)
 	exit(0);
 }
 
-static GIOChannel *connect_user(const char *username)
+static GIOChannel *connect_user(struct ctrlproxyd_config *config, 
+								const char *username)
 {
 	char *path;
 	int sock;
 	struct sockaddr_un un;
 	GIOChannel *ch;
 
-	path = user_socket_path(username);
+	path = user_socket_path(config, username);
 	if (path == NULL)
 		return NULL;
 
@@ -179,7 +190,7 @@ static gboolean daemon_socks_auth_simple(struct pending_client *cl, const char *
 {
 	struct daemon_client_data *cd = cl->private_data;
 	
-	cd->connection = connect_user(username);
+	cd->connection = connect_user(cd->config, username);
 	if (cd->connection == NULL)
 		return FALSE;
 
@@ -235,7 +246,7 @@ static gboolean handle_client_line(struct pending_client *pc, const struct irc_l
 	}
 
 	if (cd->username != NULL && cd->password != NULL && cd->nick != NULL) {
-		cd->connection = connect_user(cd->username);
+		cd->connection = connect_user(cd->config, cd->username);
 		if (cd->connection == NULL)
 			return FALSE;
 		
@@ -255,6 +266,7 @@ static gboolean handle_client_line(struct pending_client *pc, const struct irc_l
 static void daemon_new_client(struct pending_client *pc)
 {
 	struct daemon_client_data *cd = g_new0(struct daemon_client_data, 1);
+	cd->config = global_daemon_config;
 	pc->private_data = cd;
 }
 
@@ -316,7 +328,7 @@ int main(int argc, char **argv)
 		return 0;
 	}
 
-	config = read_config_file(config_file);
+	global_daemon_config = config = read_config_file(config_file);
 	if (config == NULL) {
 		return 1;
 	}
