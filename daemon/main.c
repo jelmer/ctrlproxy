@@ -253,7 +253,16 @@ static void client_done(struct pending_client *pc, struct daemon_client_data *cd
 	g_free(desc);
 
 	/* FIXME: Redirect dc->connection to pc->connection */
+	/* FIXME: watch_id = g_io_add_watch(c, G_IO_IN | G_IO_HUP, handle_client_receive, pc); */
 }
+
+#ifdef HAVE_GSSAPI
+static gboolean daemon_socks_gssapi (struct pending_client *pc, gss_name_t username)
+{
+	struct daemon_client_data *cd = cl->private_data;
+	return FALSE; /* FIXME */
+}
+#endif
 
 static gboolean daemon_socks_auth_simple(struct pending_client *cl, const char *username, const char *password)
 {
@@ -345,6 +354,9 @@ struct irc_listener_ops daemon_ops = {
 	.new_client = daemon_new_client,
 	.socks_auth_simple = daemon_socks_auth_simple,
 	.socks_connect_fqdn = daemon_socks_connect_fqdn,
+#ifdef HAVE_GSSAPI
+	.socks_gssapi = daemon_socks_gssapi,
+#endif
 	.handle_client_line = handle_client_line,
 };
 
