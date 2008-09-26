@@ -487,10 +487,36 @@ static gboolean pass_acceptable(struct pending_client *cl)
 	return TRUE; /* FIXME: Check whether there is a password specified */
 }
 
+static gboolean on_socks_pass_accepted(struct pending_client *cl, gboolean accepted)
+{
+	gchar header[2];
+	GIOStatus status;
+	gsize read;
+
+	header[0] = 0x1;
+	/* set to non-zero if invalid */
+	header[1] = accepted?0x0:0x1;
+
+	status = g_io_channel_write_chars(cl->connection, header, 2, &read, NULL);
+	if (status != G_IO_STATUS_NORMAL) {
+		return FALSE;
+	} 
+
+	g_io_channel_flush(cl->connection, NULL);
+
+	if (header[1] == 0x0) {
+		cl->socks.state = SOCKS_STATE_NORMAL;		
+		return TRUE;
+	} else {
+		return FALSE;
+	}
+}
+
 static gboolean pass_handle_data(struct pending_client *cl)
 {
 	gchar header[2];
 	gsize read;
+	gboolean accepted;
 	GIOStatus status;
 	gchar uname[0x100], pass[0x100];
 
@@ -523,25 +549,8 @@ static gboolean pass_handle_data(struct pending_client *cl)
 
 	pass[(guint8)header[0]] = '\0';
 
-	header[0] = 0x1;
-
-	/* set to non-zero if invalid */
-	header[1] = cl->listener->ops->socks_auth_simple(cl, uname, pass)?0x0:0x1;
-
-	status = g_io_channel_write_chars(cl->connection, header, 2, &read, NULL);
-	if (status != G_IO_STATUS_NORMAL) {
-		return FALSE;
-	} 
-
-	g_io_channel_flush(cl->connection, NULL);
-
-	if (header[1] == 0x0) {
-		cl->socks.state = SOCKS_STATE_NORMAL;		
-		return TRUE;
-	} else {
-		listener_log(LOG_WARNING, cl->listener, "Password mismatch for user %s", uname);
-		return FALSE;
-	}
+	accepted = cl->listener->ops->socks_auth_simple(cl, uname, pass);
+	return on_socks_pass_accepted(cl, accepted);
 }
 
 #ifdef HAVE_GSSAPI
