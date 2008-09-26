@@ -126,19 +126,36 @@ void signal_crash(int sig)
 	abort();
 }
 
-char *user_socket_path(struct ctrlproxyd_config *config, const char *username)
+gboolean user_running(const char *configdir)
+{
+	char *path;
+	pid_t pid;
+	
+	path = g_build_filename(configdir, "pid", NULL);
+
+	if (path == NULL)
+		return FALSE;
+
+	pid = read_pidfile(path);
+
+	g_free(path);
+	
+	return (pid != -1);
+}
+
+char *user_config_path(struct ctrlproxyd_config *config, const char *username)
 {
 	struct passwd *pwd;
 
 	if (config->configdir != NULL) {
-		return g_build_filename(config->configdir, username, "socket", NULL);
+		return g_build_filename(config->configdir, username, NULL);
 	} else {
 		pwd = getpwnam(username);
 
 		if (pwd == NULL)
 			return NULL;
 
-		return g_build_filename(pwd->pw_dir, ".ctrlproxy", "socket", NULL);
+		return g_build_filename(pwd->pw_dir, ".ctrlproxy", NULL);
 	}
 }
 
@@ -148,6 +165,36 @@ void signal_quit(int sig)
 	exit(0);
 }
 
+static gboolean launch_new_instance(struct ctrlproxyd_config *config, 
+								struct irc_listener *l,
+								const char *username,
+								const char *configdir)
+{
+	GPid child_pid;
+	char *command[] = {
+		"ctrlproxy",
+		"--daemon",
+		"--config-dir", g_strdup(configdir),
+		NULL
+	};
+	GError *error = NULL;
+
+	if (!g_spawn_async(NULL, command, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL,
+				  &child_pid, &error)) {
+		listener_log(LOG_WARNING, l, "Unable to start ctrlproxy for %s: %s", configdir, 
+					 error->message);
+		return FALSE;
+	}
+
+	listener_log(LOG_INFO, l, "Launched new ctrlproxy instance for %s at %s", 
+				 username, configdir);
+
+	g_spawn_close_pid(child_pid);
+
+	return TRUE;
+}
+
+
 static GIOChannel *connect_user(struct ctrlproxyd_config *config, 
 								struct irc_listener *l,
 								const char *username)
@@ -156,29 +203,39 @@ static GIOChannel *connect_user(struct ctrlproxyd_config *config,
 	int sock;
 	struct sockaddr_un un;
 	GIOChannel *ch;
+	char *user_configdir;
 
-	path = user_socket_path(config, username);
-	if (path == NULL) {
+	user_configdir = user_config_path(config, username);
+	if (user_configdir == NULL) {
 		listener_log(LOG_INFO, l, "Unable to find user %s", 
 					 username);
 		return NULL;
 	}
+
+	if (!user_running(user_configdir)) {
+		if (!launch_new_instance(config, l, username, user_configdir)) {
+			g_free(user_configdir);
+			return NULL;
+		}
+	}
+
+	path = g_build_filename(user_configdir, "socket", NULL);
 
 	sock = socket(PF_UNIX, SOCK_STREAM, 0);
 
 	un.sun_family = AF_UNIX;
 	strncpy(un.sun_path, path, sizeof(un.sun_path));
 
+	g_free(user_configdir);
 	g_free(path);
 
 	if (connect(sock, (struct sockaddr *)&un, sizeof(un)) < 0) {
 		listener_log(LOG_INFO, l, "unable to connect to %s: %s", un.sun_path, strerror(errno));
-		/* FIXME: Create new daemon instead? */
-		return FALSE;
+		close(sock);
+		return NULL;
 	}
 
 	ch = g_io_channel_unix_new(sock);
-
 	g_io_channel_set_flags(ch, G_IO_FLAG_NONBLOCK, NULL);
 
 	return ch;
