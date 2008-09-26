@@ -36,13 +36,17 @@
 #endif
 
 struct ctrlproxyd_config;
+struct daemon_client_data;
 extern char my_hostname[];
 static int log_level = 0;
 
 static struct ctrlproxyd_config *global_daemon_config;
 
+static GList *daemon_clients = NULL;
+
 /* there are no hup signals here */
 void register_hup_handler(hup_handler_fn fn, void *userdata) {}
+static void daemon_client_kill(struct daemon_client_data *dc);
 
 struct ctrlproxyd_config {
 	const char *port;
@@ -165,6 +169,11 @@ char *user_config_path(struct ctrlproxyd_config *config, const char *username)
 void signal_quit(int sig)
 {
 	syslog(LOG_NOTICE, "Received signal %d, exiting...", sig);
+	while (daemon_clients != NULL) {
+		struct daemon_client_data *dc = daemon_clients->data;
+		irc_sendf(dc->client_connection, (GIConv)-1, NULL, "ERROR :Server exiting");
+		daemon_client_kill(dc);
+	}
 	exit(0);
 }
 
@@ -242,12 +251,16 @@ static GIOChannel *connect_user(struct ctrlproxyd_config *config,
 
 	ch = g_io_channel_unix_new(sock);
 	g_io_channel_set_flags(ch, G_IO_FLAG_NONBLOCK, NULL);
+	g_io_channel_set_encoding(ch, NULL, NULL);
+	g_io_channel_set_buffered(ch, FALSE);
 
 	return ch;
 }
 
 static void daemon_client_kill(struct daemon_client_data *dc)
 {
+	daemon_clients = g_list_remove(daemon_clients, dc);
+
 	g_source_remove(dc->watch_client);
 	g_source_remove(dc->watch_backend);
 
@@ -275,8 +288,7 @@ static gboolean forward_data(GIOChannel *from, GIOChannel *to)
 	switch (status) {
 		case G_IO_STATUS_NORMAL:
 		case G_IO_STATUS_AGAIN:
-		g_assert(g_io_channel_write_chars(to, buf, bytes_read, &bytes_written, &error) == G_IO_STATUS_NORMAL);
-		return TRUE;
+			break;
 		case G_IO_STATUS_ERROR:
 		return FALSE;
 		case G_IO_STATUS_EOF:
@@ -284,6 +296,21 @@ static gboolean forward_data(GIOChannel *from, GIOChannel *to)
 		default:
 		g_assert_not_reached();
 	}
+
+	status = g_io_channel_write_chars(to, buf, bytes_read, &bytes_written, &error);
+	switch (status) {
+		case G_IO_STATUS_NORMAL:
+		case G_IO_STATUS_AGAIN:
+			break;
+		case G_IO_STATUS_ERROR:
+		return FALSE;
+		case G_IO_STATUS_EOF:
+		return FALSE;
+		default:
+		g_assert_not_reached();
+	}
+	g_assert(bytes_read == bytes_written);
+	return TRUE;
 }
 
 static gboolean daemon_client_handle_client_event(GIOChannel *source, GIOCondition condition, gpointer data)
@@ -334,8 +361,20 @@ static void client_done(struct pending_client *pc, struct daemon_client_data *dc
 	g_free(desc);
 
 	dc->client_connection = g_io_channel_ref(pc->connection);
+	g_io_channel_set_encoding(dc->client_connection, NULL, NULL);
+	while (g_io_channel_get_buffer_condition(dc->client_connection) & G_IO_IN) {
+		if (!daemon_client_handle_client_event(dc->client_connection, 
+									  g_io_channel_get_buffer_condition(dc->client_connection), dc)) {
+			daemon_client_kill(dc);
+			return;
+		}
+	}
+	g_io_channel_set_buffered(dc->client_connection, FALSE);
+	g_io_channel_set_flags(dc->client_connection, G_IO_FLAG_NONBLOCK, NULL);
 	dc->watch_client = g_io_add_watch(dc->client_connection, G_IO_IN | G_IO_HUP, daemon_client_handle_client_event, dc);
 	dc->watch_backend = g_io_add_watch(dc->backend_connection, G_IO_IN | G_IO_HUP, daemon_client_handle_backend_event, dc);
+
+	daemon_clients = g_list_append(daemon_clients, dc);
 }
 
 #ifdef HAVE_GSSAPI
