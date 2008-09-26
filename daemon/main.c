@@ -515,7 +515,8 @@ static gboolean handle_client_line(struct pending_client *pc, const struct irc_l
 		}
 		
 		irc_sendf(cd->backend_connection, (GIConv)-1, NULL, "PASS %s", cd->password);
-		irc_sendf(cd->backend_connection, (GIConv)-1, NULL, "CONNECT %s %s", cd->servername, cd->servicename);
+		if (cd->servername != NULL && cd->servicename != NULL)
+			irc_sendf(cd->backend_connection, (GIConv)-1, NULL, "CONNECT %s %s", cd->servername, cd->servicename);
 		irc_sendf(cd->backend_connection, (GIConv)-1, NULL, "USER %s %s %s %s", cd->username, 
 				  cd->mode, cd->unused, cd->realname);
 		irc_sendf(cd->backend_connection, (GIConv)-1, NULL, "NICK %s", cd->nick);

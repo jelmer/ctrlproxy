@@ -30,6 +30,7 @@ static gboolean handle_new_client(GIOChannel *c_server, GIOCondition condition, 
 {
 	GIOChannel *c;
 	int sock = accept(g_io_channel_unix_get_fd(c_server), NULL, 0);
+	struct irc_client *client;
 
 	if (sock < 0) {
 		log_global(LOG_WARNING, "Error accepting new connection: %s", strerror(errno));
@@ -42,7 +43,7 @@ static gboolean handle_new_client(GIOChannel *c_server, GIOCondition condition, 
 	g_io_channel_set_encoding(c, NULL, NULL);
 	g_io_channel_set_flags(c, G_IO_FLAG_NONBLOCK, NULL);
 
-	client_init_iochannel(NULL, c, "Client on unix socket");
+	client = client_init_iochannel(NULL, c, "Client on unix socket");
 	g_io_channel_unref(c);
 
 	return TRUE;
