@@ -149,6 +149,11 @@ void signal_crash(int sig)
 	abort();
 }
 
+gboolean daemon_user_exists(struct daemon_client_user *user)
+{
+	return g_file_test(user->configdir, G_FILE_TEST_IS_DIR);
+}
+
 gboolean daemon_user_running(struct daemon_client_user *user)
 {
 	pid_t pid;
@@ -529,6 +534,41 @@ struct irc_listener_ops daemon_ops = {
 	.handle_client_line = handle_client_line,
 };
 
+static void daemon_user_start_if_exists(struct ctrlproxyd_config *config, struct irc_listener *listener, 
+										struct daemon_client_user *user)
+{
+	if (!daemon_user_running(user) && daemon_user_exists(user)) {
+		daemon_user_start(config, listener, user);
+	}
+}
+
+
+static void foreach_daemon_user(struct ctrlproxyd_config *config, struct irc_listener *listener, 
+								void (*fn) (struct ctrlproxyd_config *config, struct irc_listener *l, struct daemon_client_user *user))
+{
+	struct daemon_client_user *user;
+
+	if (config->configdir == NULL) {
+		struct passwd *pwent;
+		setpwent();
+		while ((pwent = getpwent()) != NULL) {
+			user = daemon_user(config, pwent->pw_name);
+			fn(config, listener, user);
+		}
+		endpwent();
+	} else {
+		const char *name;
+		GDir *dir = g_dir_open(config->configdir, 0, NULL);
+		if (dir == NULL)
+			return;
+		while ((name = g_dir_read_name(dir)) != NULL) {
+			user = daemon_user(config, name);
+			fn(config, listener, user);
+		}
+		g_dir_close(dir);
+	}
+}
+
 int main(int argc, char **argv)
 {
 	struct ctrlproxyd_config *config;
@@ -637,6 +677,8 @@ int main(int argc, char **argv)
 		if (!listener_start(l, config->address, config->port))
 			return 1;
 	}
+
+	foreach_daemon_user(config, l, daemon_user_start_if_exists);
 
 	g_main_loop_run(main_loop);
 
