@@ -83,7 +83,17 @@ struct daemon_client_data {
 
 void listener_syslog(enum log_level l, const struct irc_listener *listener, const char *ret)
 {
-	syslog(LOG_INFO, "%s", ret);
+	int syslog_level = -1;
+	switch (l) {
+	case 5: break;
+	case 4: l = LOG_DEBUG; break;
+	case 3: l = LOG_INFO; break;
+	case 2: l = LOG_WARNING; break;
+	case 1: l = LOG_ERR; break;
+	}
+	if (syslog_level == -1)
+		return;
+	syslog(syslog_level, "%s", ret);
 }
 
 void listener_stderr(enum log_level l, const struct irc_listener *listener, const char *ret)
