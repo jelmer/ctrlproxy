@@ -41,7 +41,6 @@ static gboolean handle_new_client(GIOChannel *c_server, GIOCondition condition, 
 
 	g_io_channel_set_close_on_unref(c, TRUE);
 	g_io_channel_set_encoding(c, NULL, NULL);
-	g_io_channel_set_flags(c, G_IO_FLAG_NONBLOCK, NULL);
 
 	client = client_init_iochannel(NULL, c, "Client on unix socket");
 	g_io_channel_unref(c);

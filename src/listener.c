@@ -166,37 +166,39 @@ void listener_log(enum log_level l, const struct irc_listener *listener,
 
 static gboolean handle_client_line(struct pending_client *pc, const struct irc_line *l)
 {
+	struct irc_listener *listener = pc->listener;
+
 	if (l == NULL || l->args[0] == NULL) { 
 		return TRUE;
 	}
 
 	if (!g_strcasecmp(l->args[0], "PASS")) {
 		const char *networkname = NULL;
-		struct irc_network *n = pc->listener->network;
+		struct irc_network *n = listener->network;
 		gboolean authenticated = FALSE;
 
-		if (pc->listener->config->password == NULL) {
-			listener_log(LOG_WARNING, pc->listener,
+		if (listener->config->password == NULL) {
+			listener_log(LOG_WARNING, listener,
 							"No password set, allowing client _without_ authentication!");
 			authenticated = TRUE;
 			networkname = l->args[1];
-		} else if (strcmp(l->args[1], pc->listener->config->password) == 0) {
+		} else if (strcmp(l->args[1], listener->config->password) == 0) {
 			authenticated = TRUE;
-		} else if (strncmp(l->args[1], pc->listener->config->password, 
-						   strlen(pc->listener->config->password)) == 0 &&
-				   l->args[1][strlen(pc->listener->config->password)] == ':') {
+		} else if (strncmp(l->args[1], listener->config->password, 
+						   strlen(listener->config->password)) == 0 &&
+				   l->args[1][strlen(listener->config->password)] == ':') {
 			authenticated = TRUE;
-			networkname = l->args[1]+strlen(pc->listener->config->password)+1;
+			networkname = l->args[1]+strlen(listener->config->password)+1;
 		}
 
 		if (authenticated) {
-			listener_log(LOG_INFO, pc->listener, "Client successfully authenticated");
+			listener_log(LOG_INFO, listener, "Client successfully authenticated");
 
 			if (networkname != NULL) {
-				n = find_network_by_hostname(pc->listener->global, 
-											 networkname, 6667, pc->listener->global->config->create_implicit);
+				n = find_network_by_hostname(listener->global, 
+											 networkname, 6667, listener->global->config->create_implicit);
 				if (n == NULL) {
-					irc_sendf(pc->connection, pc->listener->iconv, NULL, 
+					irc_sendf(pc->connection, listener->iconv, NULL, 
 							  ":%s %d %s :Password error: unable to find network", 
 							  get_my_hostname(), ERR_PASSWDMISMATCH, "*");
 					g_io_channel_flush(pc->connection, NULL);
@@ -205,7 +207,7 @@ static gboolean handle_client_line(struct pending_client *pc, const struct irc_l
 
 				if (n->connection.state == NETWORK_CONNECTION_STATE_NOT_CONNECTED && 
 					!connect_network(n)) {
-					irc_sendf(pc->connection, pc->listener->iconv, NULL, 
+					irc_sendf(pc->connection, listener->iconv, NULL, 
 							  ":%s %d %s :Password error: unable to connect", 
 							  get_my_hostname(), ERR_PASSWDMISMATCH, "*");
 					g_io_channel_flush(pc->connection, NULL);
@@ -213,7 +215,7 @@ static gboolean handle_client_line(struct pending_client *pc, const struct irc_l
 				}
 			}
 
-			irc_sendf(pc->connection, pc->listener->iconv, NULL, 
+			irc_sendf(pc->connection, listener->iconv, NULL, 
 					  "NOTICE AUTH :PASS OK");
 			g_io_channel_flush(pc->connection, NULL);
 
@@ -222,17 +224,17 @@ static gboolean handle_client_line(struct pending_client *pc, const struct irc_l
 				char *desc = g_io_channel_ip_get_description(pc->connection);
 				if (desc == NULL)
 					desc = g_strdup("");
-				client_init_iochannel(pc->listener->network, pc->connection, desc);
+				client_init_iochannel(listener->network, pc->connection, desc);
 				g_free(desc);
 			}
 
 			return FALSE;
 		} else {
 			GIOStatus status;
-			listener_log(LOG_WARNING, pc->listener, 
+			listener_log(LOG_WARNING, listener, 
 						 "User tried to log in with incorrect password!");
 
-			status = irc_sendf(pc->connection, pc->listener->iconv, NULL, 
+			status = irc_sendf(pc->connection, listener->iconv, NULL, 
 							   ":%s %d %s :Password mismatch", 
 							   get_my_hostname(), ERR_PASSWDMISMATCH, "*");
 			g_io_channel_flush(pc->connection, NULL);
@@ -244,7 +246,7 @@ static gboolean handle_client_line(struct pending_client *pc, const struct irc_l
 			return TRUE;
 		}
 	} else {
-		irc_sendf(pc->connection, pc->listener->iconv, NULL, ":%s %d %s :You are not registered. Did you specify a password?", get_my_hostname(), ERR_NOTREGISTERED, "*");
+		irc_sendf(pc->connection, listener->iconv, NULL, ":%s %d %s :You are not registered. Did you specify a password?", get_my_hostname(), ERR_NOTREGISTERED, "*");
 		g_io_channel_flush(pc->connection, NULL);
 	}
 
