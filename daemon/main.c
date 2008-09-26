@@ -104,7 +104,11 @@ struct ctrlproxyd_config *read_config_file(const char *name)
 	}
 
 	config = g_new0(struct ctrlproxyd_config, 1);
-	config->ctrlproxy_path = (g_key_file_get_string(kf, "settings", "ctrlproxy-path", NULL) || g_strdup("ctrlproxy"));
+	if (g_key_file_has_key(kf, "settings", "ctrlproxy-path", NULL)) {
+		config->ctrlproxy_path = g_key_file_get_string(kf, "settings", "ctrlproxy-path", NULL);
+	} else {
+		config->ctrlproxy_path = g_strdup("ctrlproxy");
+	}
 	config->configdir = g_key_file_get_string(kf, "settings", "configdir", NULL);
 	config->port = g_key_file_get_string(kf, "settings", "port", NULL);
 	config->address = g_key_file_get_string(kf, "settings", "address", NULL);
@@ -145,7 +149,7 @@ void signal_crash(int sig)
 	abort();
 }
 
-gboolean user_running(struct daemon_client_user *user)
+gboolean daemon_user_running(struct daemon_client_user *user)
 {
 	pid_t pid;
 	
@@ -200,7 +204,23 @@ void signal_quit(int sig)
 	g_main_loop_quit(main_loop);
 }
 
-static gboolean launch_new_instance(struct ctrlproxyd_config *config, 
+struct spawn_data {
+	struct daemon_client_user *user;
+	struct irc_listener *listener;
+};
+
+static void user_setup(gpointer user_data)
+{
+	struct spawn_data *data = user_data;
+	if (seteuid(data->user->uid) < 0) {
+		listener_log(LOG_WARNING, data->listener, "Unable to change effective user id to %s (%d): %s", 
+					 data->user->username, data->user->uid, 
+					 strerror(errno));
+		exit(1);
+	}	
+}
+
+static gboolean daemon_user_start(struct ctrlproxyd_config *config, 
 								struct irc_listener *l,
 								struct daemon_client_user *user)
 {
@@ -212,10 +232,11 @@ static gboolean launch_new_instance(struct ctrlproxyd_config *config,
 		NULL
 	};
 	GError *error = NULL;
+	struct spawn_data spawn_data;
+	spawn_data.listener = l;
+	spawn_data.user = user;
 
-	/* FIXME: change user id if uid != -1 ? */
-
-	if (!g_spawn_async(NULL, command, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL,
+	if (!g_spawn_async(NULL, command, NULL, G_SPAWN_SEARCH_PATH, user_setup, &spawn_data,
 				  &child_pid, &error)) {
 		listener_log(LOG_WARNING, l, "Unable to start ctrlproxy for %s (%s): %s", user->username, 
 					 user->configdir, error->message);
@@ -239,8 +260,8 @@ static GIOChannel *connect_user(struct ctrlproxyd_config *config,
 	struct sockaddr_un un;
 	GIOChannel *ch;
 
-	if (!user_running(user)) {
-		if (!launch_new_instance(config, pc->listener, user)) {
+	if (!daemon_user_running(user)) {
+		if (!daemon_user_start(config, pc->listener, user)) {
 			daemon_user_free(user);
 			irc_sendf(pc->connection, pc->listener->iconv, NULL, "ERROR :Unable to start ctrlproxy for %s", 
 					  user->username);
