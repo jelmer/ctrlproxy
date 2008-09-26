@@ -38,9 +38,6 @@
 extern char my_hostname[];
 static int log_level = 0;
 
-#define DEFAULT_CONFIG_FILE "/etc/ctrlproxyd.conf"
-#define PIDFILE "/var/run/ctrlproxyd.pid"
-
 /* there are no hup signals here */
 void register_hup_handler(hup_handler_fn fn, void *userdata) {}
 
@@ -118,6 +115,18 @@ void signal_crash(int sig)
 	abort();
 }
 
+char *user_socket_path(const char *username)
+{
+	struct passwd *pwd;
+
+	pwd = getpwnam(username);
+
+	if (pwd == NULL)
+		return NULL;
+
+	return g_build_filename(pwd->pw_dir, ".ctrlproxy", "socket", NULL);
+}
+
 void signal_quit(int sig)
 {
 	syslog(LOG_NOTICE, "Received signal %d, exiting...", sig);
@@ -127,17 +136,11 @@ void signal_quit(int sig)
 static GIOChannel *connect_user(const char *username)
 {
 	char *path;
-	struct passwd *pwd;
 	int sock;
 	struct sockaddr_un un;
 	GIOChannel *ch;
 
-	pwd = getpwnam(username);
-
-	if (pwd == NULL)
-		return NULL;
-
-	path = g_build_filename(pwd->pw_dir, ".ctrlproxy", "socket", NULL);
+	path = user_socket_path(username);
 	if (path == NULL)
 		return NULL;
 
@@ -150,6 +153,7 @@ static GIOChannel *connect_user(const char *username)
 
 	if (connect(sock, (struct sockaddr *)&un, sizeof(un)) < 0) {
 		syslog(LOG_INFO, "unable to connect to %s: %s", un.sun_path, strerror(errno));
+		/* FIXME: Create new daemon ? */
 		return FALSE;
 	}
 
@@ -160,6 +164,9 @@ static GIOChannel *connect_user(const char *username)
 	return ch;
 }
 
+/**
+ * Callback when client is done authenticating.
+ */
 static void client_done(struct pending_client *pc)
 {
 	printf("DONE!\n");
