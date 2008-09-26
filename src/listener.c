@@ -195,7 +195,8 @@ static gboolean handle_client_line(struct pending_client *pc, const struct irc_l
 				n = find_network_by_hostname(pc->listener->global, 
 											 networkname, 6667, pc->listener->global->config->create_implicit);
 				if (n == NULL) {
-					irc_sendf(pc->connection, pc->listener->iconv, NULL, ":%s %d %s :Password error: unable to find network", 
+					irc_sendf(pc->connection, pc->listener->iconv, NULL, 
+							  ":%s %d %s :Password error: unable to find network", 
 							  get_my_hostname(), ERR_PASSWDMISMATCH, "*");
 					g_io_channel_flush(pc->connection, NULL);
 					return FALSE;
@@ -203,7 +204,8 @@ static gboolean handle_client_line(struct pending_client *pc, const struct irc_l
 
 				if (n->connection.state == NETWORK_CONNECTION_STATE_NOT_CONNECTED && 
 					!connect_network(n)) {
-					irc_sendf(pc->connection, pc->listener->iconv, NULL, ":%s %d %s :Password error: unable to connect", 
+					irc_sendf(pc->connection, pc->listener->iconv, NULL, 
+							  ":%s %d %s :Password error: unable to connect", 
 							  get_my_hostname(), ERR_PASSWDMISMATCH, "*");
 					g_io_channel_flush(pc->connection, NULL);
 					return FALSE;

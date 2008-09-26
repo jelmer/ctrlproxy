@@ -277,7 +277,7 @@ static gboolean on_transport_receive_line(struct irc_transport *transport,
 		return TRUE;
 	}
 
-	if (client->authorized) {
+	if (client->authenticated) {
 		return client->callbacks->process_from_client(client, l);
 	} else {
 		if (!process_from_pending_client(client, l)) {
@@ -307,10 +307,9 @@ static gboolean on_transport_receive_line(struct irc_transport *transport,
 			pending_clients = g_list_remove(pending_clients, client);
 			client->network->clients = g_list_append(client->network->clients, client);
 
-			client->authorized = TRUE;
+			client->authenticated = TRUE;
 
 			client_log(LOG_INFO, client, "New client");
-
 		}
 	}
 	return TRUE;
