@@ -533,109 +533,86 @@ static struct channel_config *config_find_add_channel(struct network_config *nc,
 	return cc;
 }
 
-static struct network_config *config_load_network(struct ctrlproxy_config *cfg, const char *dirname, 
-												  const char *name, GList *channel_keys)
+static struct network_config *config_load_network_keyfile_group(struct ctrlproxy_config *cfg, 
+																const char *networkname,
+																GKeyFile *kf, 
+																const char *groupname, GList *channel_keys)
 {
-	GKeyFile *kf;
 	struct network_config *n;
-	char *filename;
 	GList *gl;
-	int i;
-	char **groups;
-	GError *error = NULL;
 	gsize size;
-
-	kf = g_key_file_new();
-
-	filename = g_build_filename(dirname, name, NULL);
-
-	if (!g_key_file_load_from_file(kf, filename, G_KEY_FILE_KEEP_COMMENTS, &error)) {	
-		log_global(LOG_ERROR, "Can't parse configuration file '%s': %s", filename, error->message);
-		g_free(filename);
-		g_key_file_free(kf);
-		return NULL;
-	}	
 
 	n = network_config_init(cfg);
 	n->keyfile = kf;
+	n->groupname = g_strdup(groupname);
 
-	g_free(filename);
-
-	if (g_key_file_has_key(kf, "global", "fullname", NULL)) {
+	if (g_key_file_has_key(kf, groupname, "fullname", NULL)) {
 		g_free(n->fullname);
-		n->fullname = g_key_file_get_string(kf, "global", "fullname", NULL);
+		n->fullname = g_key_file_get_string(kf, groupname, "fullname", NULL);
 		if (!strcmp(n->fullname, "") || n->fullname[0] == ' ')
 			log_global(LOG_WARNING, "Invalid fullname `%s' set for network `%s'", n->fullname, n->name);
 	}
 
-	if (g_key_file_has_key(kf, "global", "nick", NULL)) {
+	if (g_key_file_has_key(kf, groupname, "nick", NULL)) {
 		g_free(n->nick);
-		n->nick = g_key_file_get_string(kf, "global", "nick", NULL);
+		n->nick = g_key_file_get_string(kf, groupname, "nick", NULL);
 		if (!strcmp(n->nick, "") || n->nick[0] == ' ')
 			log_global(LOG_WARNING, "Invalid nick name `%s' set for `%s'", n->nick, n->name);
 	}
 
-	if (g_key_file_has_key(kf, "global", "reconnect-interval", NULL)) {
-		n->reconnect_interval = g_key_file_get_integer(kf, "global", "reconnect-interval", NULL);
+	if (g_key_file_has_key(kf, groupname, "reconnect-interval", NULL)) {
+		n->reconnect_interval = g_key_file_get_integer(kf, groupname, "reconnect-interval", NULL);
 	}
 
-	if (g_key_file_has_key(kf, "global", "queue-speed", NULL)) {
-		n->queue_speed = g_key_file_get_integer(kf, "global", "queue-speed", NULL);
+	if (g_key_file_has_key(kf, groupname, "queue-speed", NULL)) {
+		n->queue_speed = g_key_file_get_integer(kf, groupname, "queue-speed", NULL);
 	}
 
-	if (g_key_file_has_key(kf, "global", "username", NULL)) {
+	if (g_key_file_has_key(kf, groupname, "username", NULL)) {
 		g_free(n->username);
-		n->username = g_key_file_get_string(kf, "global", "username", NULL);
+		n->username = g_key_file_get_string(kf, groupname, "username", NULL);
 		if (!strcmp(n->username, "") || n->username[0] == ' ')
 			log_global(LOG_WARNING, "Invalid username `%s' set for network `%s'", n->username, n->name);
 	}
 
-	if (g_key_file_has_key(kf, "global", "ignore_first_nick", NULL)) {
-		n->ignore_first_nick = g_key_file_get_boolean(kf, "global", "ignore_first_nick", NULL);
+	if (g_key_file_has_key(kf, groupname, "ignore_first_nick", NULL)) {
+		n->ignore_first_nick = g_key_file_get_boolean(kf, groupname, "ignore_first_nick", NULL);
 	}
 
-	if (g_key_file_has_key(kf, "global", "password", NULL)) {
+	if (g_key_file_has_key(kf, groupname, "password", NULL)) {
 		g_free(n->password);
-		n->password = g_key_file_get_string(kf, "global", "password", NULL);
+		n->password = g_key_file_get_string(kf, groupname, "password", NULL);
 	}
 
-	if (g_key_file_has_key(kf, "global", "autocmd", NULL)) {
+	if (g_key_file_has_key(kf, groupname, "autocmd", NULL)) {
 		g_strfreev(n->autocmd);
-		n->autocmd = g_key_file_get_string_list(n->keyfile, "global", "autocmd", &size, NULL);
+		n->autocmd = g_key_file_get_string_list(n->keyfile, groupname, "autocmd", &size, NULL);
 	}
 
-	n->name = g_strdup(name);
+	n->name = g_strdup(networkname);
 
-	if (g_key_file_has_key(kf, "global", "program", NULL)) 
+	if (g_key_file_has_key(kf, groupname, "program", NULL)) 
 		n->type = NETWORK_PROGRAM;
-	else if (g_key_file_has_key(kf, "global", "virtual", NULL)) 
+	else if (g_key_file_has_key(kf, groupname, "virtual", NULL)) 
 		n->type = NETWORK_VIRTUAL;
 	else 
 		n->type = NETWORK_TCP;
 
 	switch (n->type) {
 	case NETWORK_TCP:
-		n->type_settings.tcp.default_bind_address = g_key_file_get_string(kf, "global", "bind", NULL);
+		n->type_settings.tcp.default_bind_address = g_key_file_get_string(kf, groupname, "bind", NULL);
 		config_load_servers(n);
 		break;
 	case NETWORK_PROGRAM:
-		n->type_settings.program_location = g_key_file_get_string(kf, "global", "program", NULL);
+		n->type_settings.program_location = g_key_file_get_string(kf, groupname, "program", NULL);
 		break;
 	case NETWORK_VIRTUAL:
-		n->type_settings.virtual_type = g_key_file_get_string(kf, "global", "virtual", NULL);
+		n->type_settings.virtual_type = g_key_file_get_string(kf, groupname, "virtual", NULL);
 		break;
 	case NETWORK_IOCHANNEL:
 		/* Don't store */
 		break;
 	}
-
-	groups = g_key_file_get_groups(kf, &size);
-	for (i = 0; i < size; i++) {
-		if (!g_ascii_isalpha(groups[i][0]))
-			config_load_channel(n, kf, groups[i]);
-	}
-
-	g_strfreev(groups);
 
 	for (gl = channel_keys; gl; gl = gl->next) {
 		struct keyfile_entry *ke = gl->data;
@@ -648,9 +625,10 @@ static struct network_config *config_load_network(struct ctrlproxy_config *cfg, 
 		}
 	}
 
-	if (g_key_file_has_key(n->keyfile, "global", "autojoin", NULL)) {
+	if (g_key_file_has_key(n->keyfile, groupname, "autojoin", NULL)) {
 		char **autojoin_channels;
-		autojoin_channels = g_key_file_get_string_list(n->keyfile, "global", "autojoin", &size, NULL);
+		gsize i;
+		autojoin_channels = g_key_file_get_string_list(n->keyfile, groupname, "autojoin", &size, NULL);
 		for (i = 0; i < size; i++) {
 			struct channel_config *cc = config_find_add_channel(n, autojoin_channels[i]);
 
@@ -659,6 +637,43 @@ static struct network_config *config_load_network(struct ctrlproxy_config *cfg, 
 
 		g_strfreev(autojoin_channels);
 	}
+
+	return n;
+}
+
+static struct network_config *config_load_network_file(struct ctrlproxy_config *cfg, const char *dirname, 
+												  const char *name, GList *channel_keys)
+{
+	GKeyFile *kf;
+	char *filename;
+	int i;
+	char **groups;
+	GError *error = NULL;
+	gsize size;
+	struct network_config *n;
+
+	kf = g_key_file_new();
+
+	filename = g_build_filename(dirname, name, NULL);
+
+	if (!g_key_file_load_from_file(kf, filename, G_KEY_FILE_KEEP_COMMENTS, &error)) {	
+		log_global(LOG_ERROR, "Can't parse configuration file '%s': %s", filename, error->message);
+		g_free(filename);
+		g_key_file_free(kf);
+		return NULL;
+	}	
+
+	n = config_load_network_keyfile_group(cfg, name, kf, name, channel_keys);
+
+	g_free(filename);
+
+	groups = g_key_file_get_groups(n->keyfile, &size);
+	for (i = 0; i < size; i++) {
+		if (!g_ascii_isalpha(groups[i][0]))
+			config_load_channel(n, n->keyfile, groups[i]);
+	}
+
+	g_strfreev(groups);
 
 	return n;
 }
@@ -910,7 +925,7 @@ static void config_load_networks(struct ctrlproxy_config *cfg, GList *channel_ke
 	while ((name = g_dir_read_name(dir))) {
 		if (IS_SPECIAL_FILE(name))
 			continue;
-		config_load_network(cfg, networksdir, name, channel_keys);
+		config_load_network_file(cfg, networksdir, name, channel_keys);
 	}
 
 	g_free(networksdir);

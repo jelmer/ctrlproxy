@@ -62,6 +62,7 @@ struct tcp_server_config {
 struct network_config 
 {
 	GKeyFile *keyfile;
+	char *groupname; /* name of the keyfile group in keyfile */
 	/** Network name */
 	char *name;
 	char *nick;
