@@ -189,8 +189,8 @@ static void config_save_network(struct ctrlproxy_config *cfg,
 	g_key_file_set_string(kf, n->groupname, "fullname", n->fullname);
 	g_key_file_set_string(kf, n->groupname, "nick", n->nick);
 	g_key_file_set_string(kf, n->groupname, "username", n->username);
-	if (n->autocmd) {
-		g_key_file_set_string_list(kf, n->groupname, "autocmd", n->autocmd,
+	if (n->autocmd != NULL) {
+		g_key_file_set_string_list(kf, n->groupname, "autocmd", (const char *const*)n->autocmd,
 							   g_strv_length(n->autocmd));
 	} else {
 		g_key_file_remove_key(kf, n->groupname, "autocmd", NULL);

@@ -88,7 +88,7 @@ static void signal_crash(int sig)
 	backtrace_size = backtrace(backtrace_stack,BACKTRACE_STACK_SIZE);
 	backtrace_strings = backtrace_symbols(backtrace_stack, backtrace_size);
 
-	log_global(LOG_ERROR, "BACKTRACE: %ld stack frames:", backtrace_size);
+	log_global(LOG_ERROR, "BACKTRACE: %ld stack frames:", (long)backtrace_size);
 	
 	if (backtrace_strings) {
 		int i;
