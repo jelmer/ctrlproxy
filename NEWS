@@ -13,6 +13,7 @@ Ctrlproxy 3.0.8 UNRELEASED
 
 	* Support for multiple users using a system-wide daemon
 	  (ctrlproxyd) that can be started at system start-up. 
+	  (#25)
 	
 	* Network configuration can now also be specified in 
 	  ~/.ctrlproxy/config.
