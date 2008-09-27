@@ -62,7 +62,8 @@ struct daemon_client_user {
 	 char *pidpath;
 	 char *socketpath;
 	 char *username;
-	 uid_t uid;
+	 uid_t uid; /* -1 if not a system user */
+	 pid_t pid;
 };
 
 struct daemon_client_data {
@@ -170,11 +171,9 @@ gboolean daemon_user_exists(struct daemon_client_user *user)
 
 gboolean daemon_user_running(struct daemon_client_user *user)
 {
-	pid_t pid;
+	user->pid = read_pidfile(user->pidpath);
 	
-	pid = read_pidfile(user->pidpath);
-	
-	return (pid != -1);
+	return (user->pid != -1);
 }
 
 void daemon_user_free(struct daemon_client_user *user)
@@ -193,6 +192,7 @@ struct daemon_client_user *daemon_user(struct ctrlproxyd_config *config, const c
 	struct daemon_client_user *user = g_new0(struct daemon_client_user, 1);
 	struct passwd *pwd;
 
+	user->pid = -1;
 	user->username = g_strdup(username);
 
 	if (config->configdir != NULL) {
