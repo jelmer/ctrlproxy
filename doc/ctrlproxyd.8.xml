@@ -15,7 +15,7 @@
 <refsynopsisdiv>
 	<cmdsynopsis>
 		<command>ctrlproxy</command>
-		<arg choice="opt">-d file</arg>
+		<arg choice="opt">-c file</arg>
 		<arg choice="opt">-I</arg>
 		<arg choice="opt">-F</arg>
 		<arg choice="opt">-v</arg>
@@ -29,6 +29,11 @@
 		<command>ctrlproxyd</command> is a helper daemon for ctrlproxy that 
 		authenticates incoming connections and connects to a ctrlproxy 
 		instance or starts ctrlproxy for the user that connected.
+	</para>
+
+	<para>
+		Log messages will be written to syslog, unless ctrlproxyd is running in 
+		the foreground, in which case they will be written to standard error.
 	</para>
 </refsect1>
 

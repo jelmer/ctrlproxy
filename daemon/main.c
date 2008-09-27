@@ -38,8 +38,8 @@
 struct ctrlproxyd_config;
 struct daemon_client_data;
 extern char my_hostname[];
-static int log_level = 0;
 static GMainLoop *main_loop;
+static struct irc_listener *daemon_listener;
 
 static struct ctrlproxyd_config *global_daemon_config;
 
@@ -218,7 +218,7 @@ struct daemon_client_user *daemon_user(struct ctrlproxyd_config *config, const c
 
 void signal_quit(int sig)
 {
-	syslog(LOG_NOTICE, "Received signal %d, exiting...", sig);
+	listener_log(LOG_NOTICE, daemon_listener, "Received signal %d, exiting...", sig);
 
 	g_main_loop_quit(main_loop);
 }
@@ -656,14 +656,13 @@ int main(int argc, char **argv)
 	pid_t pid;
 	GOptionEntry options[] = {
 		{"config-file", 'c', 0, G_OPTION_ARG_STRING, &config_file, "Configuration file", "CONFIGFILE"},
-		{"debug-level", 'd', 'd', G_OPTION_ARG_INT, &log_level, ("Debug level [0-5]"), "LEVEL" },
 		{"foreground", 'F', 0, G_OPTION_ARG_NONE, &foreground, ("Stay in the foreground") },
 		{"inetd", 'I', 0, G_OPTION_ARG_NONE, &inetd, ("Run in inetd mode")},
 		{"version", 'v', 0, G_OPTION_ARG_NONE, &version, ("Show version information")},
 		{ NULL }
 	};
 	GError *error = NULL;
-	struct irc_listener *l = g_new0(struct irc_listener, 1);
+	daemon_listener = g_new0(struct irc_listener, 1);
 
 	signal(SIGINT, signal_quit);
 	signal(SIGTERM, signal_quit);
@@ -736,24 +735,24 @@ int main(int argc, char **argv)
 
 	openlog("ctrlproxyd", 0, LOG_DAEMON);
 
-	l->iconv = (GIConv)-1;
+	daemon_listener->iconv = (GIConv)-1;
 	if (foreground) 
-		l->log_fn = listener_stderr;
+		daemon_listener->log_fn = listener_stderr;
 	else 
-		l->log_fn = listener_syslog;
-	l->ops = &daemon_ops;
+		daemon_listener->log_fn = listener_syslog;
+	daemon_listener->ops = &daemon_ops;
 
 	if (inetd) {
 		GIOChannel *io = g_io_channel_unix_new(0);
-		listener_new_pending_client(l, io);
+		listener_new_pending_client(daemon_listener, io);
 	} else { 
 		write_pidfile(PIDFILE);
 
-		if (!listener_start_tcp(l, config->address, config->port))
+		if (!listener_start_tcp(daemon_listener, config->address, config->port))
 			return 1;
 	}
 
-	foreach_daemon_user(config, l, daemon_user_start_if_exists);
+	foreach_daemon_user(config, daemon_listener, daemon_user_start_if_exists);
 
 	g_main_loop_run(main_loop);
 
