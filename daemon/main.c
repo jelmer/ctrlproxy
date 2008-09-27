@@ -300,6 +300,8 @@ static GIOChannel *connect_user(struct ctrlproxyd_config *config,
 
 	ch = g_io_channel_unix_new(sock);
 
+	g_io_channel_set_flags(ch, G_IO_FLAG_NONBLOCK, NULL);
+
 	return ch;
 }
 
