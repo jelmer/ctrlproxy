@@ -35,7 +35,6 @@
 
 #define CHANNEL_KEY_FILE_HEADER \
 	"; This file contains channel keys.\n" \
-	"; It has the same format as the ppp secrets files.\n" \
 	"; It should contain one entry per line, each entry consisting of: \n" \
 	"; a channel name, channel key and network name, separated by tabs.\n" \
 	";\n\n"

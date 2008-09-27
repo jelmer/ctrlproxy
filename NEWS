@@ -11,6 +11,9 @@ Ctrlproxy 3.0.8 UNRELEASED
 
     * Support GSSAPI authentication for SOCKS.
 
+	* Support for multiple users using a system-wide daemon
+	  (ctrlproxyd) that can be started at system start-up. 
+
   BUG FIXES
    
     * Support 901 response codes.

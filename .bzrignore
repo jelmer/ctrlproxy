@@ -70,3 +70,4 @@ ctrlproxy-admin
 *.so.*
 ctrlproxyd
 cscope.out
+ctrlproxyd.8

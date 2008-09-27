@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+<refentry id="ctrlproxyd.8">
+	
+<refmeta>
+	<refentrytitle>ctrlproxyd</refentrytitle>
+	<manvolnum>8</manvolnum>
+</refmeta>
+
+<refnamediv>
+	<refname>ctrlproxyd</refname>
+	<refpurpose>ctrlproxy multi-user daemon</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+	<cmdsynopsis>
+		<command>ctrlproxy</command>
+		<arg choice="opt">-d file</arg>
+		<arg choice="opt">-I</arg>
+		<arg choice="opt">-F</arg>
+		<arg choice="opt">-v</arg>
+	</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsect1>
+	<title>DESCRIPTION</title>
+
+	<para>
+		<command>ctrlproxyd</command> is a helper daemon for ctrlproxy that 
+		authenticates incoming connections and connects to a ctrlproxy 
+		instance or starts ctrlproxy for the user that connected.
+	</para>
+</refsect1>
+
+<refsect1>
+	<title>OPTIONS</title>
+	
+<para><command>ctrlproxy</command> recognizes the following command-line options</para>
+
+<variablelist>
+	<varlistentry><term>-I</term>
+		<listitem><para>Communicate on standard input/output - for use with the internet superserver (inetd).</para></listitem>
+	</varlistentry>
+
+	<varlistentry><term>-c, --config-file=FILE</term>
+		<listitem><para>Read the configuration file from the specified <option>FILE</option> instead of from <filename>/etc/ctrlproxyd.conf</filename>.</para></listitem>
+	</varlistentry>
+
+	<varlistentry><term>-F, --foreground</term>
+		<listitem><para>Stay in the foreground.</para></listitem>
+	</varlistentry>
+
+	<varlistentry><term>-v, --version</term>
+	<listitem><para>Show copyright and version information</para></listitem>
+	</varlistentry>
+
+	<varlistentry><term>-?, --help</term>
+	<listitem><para>Show help message with short argument information</para></listitem>
+	</varlistentry>
+
+	<varlistentry><term>-l, --log=FILE</term>
+	<listitem><para>Log ctrlproxy messages to specified file.</para></listitem>
+	</varlistentry>
+
+	<varlistentry><term>--usage</term>
+	<listitem><para>Display brief usage message</para></listitem>
+	</varlistentry>
+
+</variablelist>
+
+</refsect1>
+
+<refsect1>
+	<title>SEE ALSO</title>
+
+<para>ctrlproxy (1), ctrlproxy_config(5), http://www.ctrlproxy.org/, ctrlproxyd.conf.example</para>
+
+</refsect1>
+
+<refsect1>
+	<title>BUGS</title>
+
+<para>
+Probably, but none are known at the moment. Please send 
+any you find to jelmer@samba.org
+</para>
+</refsect1>
+
+<refsect1>
+	<title>LICENSE</title>
+
+<para>
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 3 of the License, or
+(at your option) any later version.
+</para>
+
+<para> 
+This program is distributed in the hope that it will be useful, but
+\fBWITHOUT ANY WARRANTY\fR; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
+General Public License for more details.
+</para>
+
+<para>
+You should have received a copy of the GNU General Public License 
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple PLace, Suite 330, Boston, MA  02111-1307  USA
+</para>
+
+</refsect1>
+
+<refsect1>
+	<title>AUTHORS</title>
+<para>
+<ulink url="mailto:jelmer@samba.org">Jelmer Vernooij</ulink> (original developer)
+</para>
+
+<para>See the file AUTHORS for a full list of contributors.</para>
+</refsect1>
+</refentry>
