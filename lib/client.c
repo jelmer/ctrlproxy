@@ -108,17 +108,8 @@ gboolean client_send_response(struct irc_client *c, int response, ...)
 	g_assert(response > 0);
 	
 	va_start(ap, response);
-	l = virc_parse_line(c->default_origin, ap);
+	l = virc_parse_response(c->default_origin, client_get_default_target(c), response, ap);
 	va_end(ap);
-
-	l->args = g_realloc(l->args, sizeof(char *) * (l->argc+4));
-	memmove(&l->args[2], &l->args[0], l->argc * sizeof(char *));
-
-	l->args[0] = g_strdup_printf("%03d", response);
-	l->args[1] = g_strdup(client_get_default_target(c));
-
-	l->argc+=2;
-	l->args[l->argc] = NULL;
 
 	ret = client_send_line(c, l);
 

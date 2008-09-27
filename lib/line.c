@@ -45,6 +45,25 @@ struct irc_line *irc_parse_linef(const char *fmt, ...)
 	return l;
 }
 
+struct irc_line *virc_parse_response(const char *from, const char *to, int response, va_list ap)
+{
+	struct irc_line *l;
+	g_assert(response > 0);
+	
+	l = virc_parse_line(from, ap);
+
+	l->args = g_realloc(l->args, sizeof(char *) * (l->argc+4));
+	memmove(&l->args[2], &l->args[0], l->argc * sizeof(char *));
+
+	l->args[0] = g_strdup_printf("%03d", response);
+	l->args[1] = g_strdup(to);
+
+	l->argc+=2;
+	l->args[l->argc] = NULL;
+
+	return l;
+}
+
 struct irc_line *virc_parse_line( const char *hostmask, va_list ap)
 {
 	char *arg;

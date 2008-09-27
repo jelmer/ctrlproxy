@@ -58,6 +58,7 @@ void free_irc_transport(struct irc_transport *);
 gboolean transport_set_charset(struct irc_transport *transport, const char *name);
 gboolean transport_send_line(struct irc_transport *transport, const struct irc_line *);
 gboolean transport_send_args(struct irc_transport *transport, ...);
+gboolean transport_send_response(struct irc_transport *transport, const char *from, const char *to, int response, ...);
 void transport_parse_buffer(struct irc_transport *transport);
 gboolean transport_blocking_recv(struct irc_transport *transport, struct irc_line **l);
 void irc_transport_set_callbacks(struct irc_transport *transport, 

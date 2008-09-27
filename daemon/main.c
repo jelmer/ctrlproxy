@@ -40,6 +40,7 @@ struct daemon_client_data;
 extern char my_hostname[];
 static GMainLoop *main_loop;
 static struct irc_listener *daemon_listener;
+static gboolean inetd = FALSE;
 
 static struct ctrlproxyd_config *global_daemon_config;
 
@@ -84,6 +85,7 @@ struct daemon_client_data {
 	char *unused;
 	char *realname;
 	char *description;
+	gboolean freed;
 };
 
 void listener_syslog(enum log_level l, const struct irc_listener *listener, const char *ret)
@@ -310,14 +312,21 @@ static void daemon_client_kill(struct daemon_client_data *dc)
 {
 	daemon_clients = g_list_remove(daemon_clients, dc);
 
+	if (dc->freed)
+		return;
+
+	dc->freed = TRUE;
+
 	if (dc->backend_transport != NULL) {
 		irc_transport_disconnect(dc->backend_transport);
 		free_irc_transport(dc->backend_transport);
+		dc->backend_transport = NULL;
 	}
 
 	if (dc->client_transport != NULL) {
 		irc_transport_disconnect(dc->client_transport);
 		free_irc_transport(dc->client_transport);
+		dc->client_transport = NULL;
 	}
 
 	daemon_user_free(dc->user);
@@ -330,6 +339,9 @@ static void daemon_client_kill(struct daemon_client_data *dc)
 	g_free(dc->username);
 	g_free(dc->description);
 	g_free(dc);
+
+	if (inetd)
+		g_main_loop_quit(main_loop);
 }
 
 static void charset_error_not_called(struct irc_transport *transport, const char *error_msg)
@@ -347,7 +359,7 @@ static gboolean daemon_client_recv(struct irc_transport *transport, const struct
 		return TRUE;
 }
 
-static void daemon_client_hangup (struct irc_transport *transport)
+static void on_daemon_client_disconnect(struct irc_transport *transport)
 {
 	struct daemon_client_data *cd = transport->userdata;
 
@@ -356,14 +368,10 @@ static void daemon_client_hangup (struct irc_transport *transport)
 	daemon_client_kill(cd);
 }
 
-static void daemon_client_disconnect(struct irc_transport *transport)
-{
-}
-
 static const struct irc_transport_callbacks daemon_client_callbacks = {
-	.hangup = daemon_client_hangup,
+	.hangup = irc_transport_disconnect,
 	.log = NULL,
-	.disconnect = daemon_client_disconnect,
+	.disconnect = on_daemon_client_disconnect,
 	.recv = daemon_client_recv,
 	.charset_error = charset_error_not_called,
 	.error = NULL,
@@ -400,10 +408,19 @@ static gboolean daemon_backend_recv(struct irc_transport *transport, const struc
 	return transport_send_line(cd->client_transport, line);
 }
 
+static void on_daemon_backend_disconnect(struct irc_transport *transport)
+{
+	struct daemon_client_data *cd = transport->userdata;
+
+	listener_log(LOG_INFO, cd->listener, "Backend of %s disconnected", cd->description);
+
+	daemon_client_kill(cd);
+}
+
 static const struct irc_transport_callbacks daemon_backend_callbacks = {
-	.hangup = daemon_client_hangup,
+	.hangup = irc_transport_disconnect,
 	.log = NULL,
-	.disconnect = daemon_client_disconnect,
+	.disconnect = on_daemon_backend_disconnect,
 	.recv = daemon_backend_recv,
 	.charset_error = charset_error_not_called,
 	.error = NULL,
@@ -420,10 +437,6 @@ static void client_done(struct daemon_client_data *dc)
 		transport_send_args(dc->backend_transport, "CONNECT", dc->servername, dc->servicename, NULL);
 	transport_send_args(dc->backend_transport, "USER", dc->username, dc->mode, dc->unused, dc->realname, NULL);
 	transport_send_args(dc->backend_transport, "NICK", dc->nick, NULL);
-
-	irc_transport_set_callbacks(dc->client_transport, &daemon_client_callbacks, dc);
-
-	transport_parse_buffer(dc->client_transport);
 
 	daemon_clients = g_list_append(daemon_clients, dc);
 }
@@ -519,6 +532,9 @@ static gboolean daemon_socks_connect_fqdn (struct pending_client *cl, const char
 	listener_log(LOG_INFO, cl->listener, "Accepted new client %s for user %s", cd->description, cd->user->username);
 
 	cd->client_transport = irc_transport_new_iochannel(cl->connection);
+	irc_transport_set_callbacks(cd->client_transport, &daemon_client_callbacks, cd);
+
+	transport_parse_buffer(cd->client_transport);
 
 	client_done(cd);
 
@@ -530,8 +546,8 @@ static gboolean plain_handle_auth_finish(gpointer userdata, gboolean accepted)
 	struct daemon_client_data *dc = (struct daemon_client_data *)userdata;
 
 	if (!accepted) {
-		transport_send_args(dc->client_transport, __STRING(ERR_PASSWDMISMATCH), 
-							"*", "Password invalid", NULL);
+		transport_send_response(dc->client_transport, get_my_hostname(), "*", 
+								ERR_PASSWDMISMATCH, "Password invalid", NULL);
 		return FALSE;
 	} else {
 		client_done(dc);
@@ -584,6 +600,10 @@ static gboolean handle_client_line(struct pending_client *pc, const struct irc_l
 
 		if (!transport_send_args(cd->backend_transport, "PASS", cd->password, NULL))
 			return FALSE;
+
+		irc_transport_set_callbacks(cd->client_transport, &daemon_client_callbacks, cd);
+
+		transport_parse_buffer(cd->client_transport);
 
 		return FALSE;
 	}
@@ -650,7 +670,6 @@ int main(int argc, char **argv)
 	GOptionContext *pc;
 	const char *config_file = DEFAULT_CONFIG_FILE;
 	gboolean version = FALSE;
-	gboolean inetd = FALSE;
 	gboolean foreground = FALSE;
 	gboolean isdaemon = TRUE;
 	pid_t pid;

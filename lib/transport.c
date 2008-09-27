@@ -319,6 +319,25 @@ gboolean transport_send_line(struct irc_transport *transport,
 	return TRUE;
 }
 
+gboolean transport_send_response(struct irc_transport *transport, const char *from, const char *to, int response, ...) 
+{
+	struct irc_line *l;
+	gboolean ret;
+	va_list ap;
+
+	g_assert(transport != NULL);
+
+	va_start(ap, response);
+	l = virc_parse_response(from, to, response, ap);
+	va_end(ap);
+
+	ret = transport_send_line(transport, l);
+
+	free_line(l); 
+
+	return ret;
+}
+
 gboolean transport_send_args(struct irc_transport *transport, ...) 
 {
 	struct irc_line *l;

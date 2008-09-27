@@ -62,6 +62,7 @@ struct irc_line {
 G_GNUC_MALLOC G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT struct irc_line *linedup(const struct irc_line *l);
 G_GNUC_MALLOC G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT struct irc_line *irc_parse_line(const char *data);
 G_GNUC_MALLOC G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT struct irc_line *virc_parse_line(const char *origin, va_list ap);
+G_GNUC_MALLOC G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT struct irc_line *virc_parse_response(const char *from, const char *to, int response, va_list ap);
 G_GNUC_MALLOC G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT char *irc_line_string(const struct irc_line *l);
 G_GNUC_MALLOC G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT char *irc_line_string_nl(const struct irc_line *l);
 G_GNUC_MALLOC G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT char *line_get_nick(const struct irc_line *l);
