@@ -85,11 +85,19 @@ virtual = admin
 # [Freenode]
 # servers = irc://irc.freenode.net/
 # autojoin = #ctrlproxy
-#
-## Example configuration for OFTC
+
+## Somewhat more complex configuration for OFTC
 # [OFTC]
-# servers = irc://irc.ipv6.oftc.net/;irc://irc.freenode.net/
+# servers = irc://irc.ipv6.oftc.net/;ircs://irc.freenode.net/
+# autojoin = #bitlbee
 ## Bind to a specific address locally:
 # bind = 2001::dead:beef:cafe
 ## Custom nick, different from default configuration
 # nick = somenick
+## Fullname sent to server
+# fullname=Somebody
+## Username sent to server (used in hostmask)
+# username=myuser
+## How many seconds to wait between tries to reconnect
+## to the server.
+# reconnect-interval=60
