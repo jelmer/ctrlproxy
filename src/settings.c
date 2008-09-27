@@ -172,49 +172,55 @@ static void config_save_tcp_servers(struct network_config *n, GKeyFile *kf)
 	g_strfreev(values);
 }
 
-static void config_save_network(const char *dir, struct network_config *n, GList **channel_keys)
+static void config_save_network(struct ctrlproxy_config *cfg, 
+								const char *dir, struct network_config *n, GList **channel_keys)
 {
 	GList *gl;
 	GKeyFile *kf;
-	char *fn;
 	char **autojoin_list;
 	int autojoin_list_count;
 	
-	if (!n->keyfile) {
+	if (n->keyfile == NULL) {
+		/* FIXME: 
+		n->keyfile = cfg->keyfile;
+		n->groupname = g_strdup(n->name);
+		*/
 		n->keyfile = g_key_file_new();
+		n->groupname = g_strdup("global");
+		n->filename = g_build_filename(dir, n->name, NULL);
 	}
 
 	kf = n->keyfile;
 
-	g_key_file_set_string(kf, "global", "fullname", n->fullname);
-	g_key_file_set_string(kf, "global", "nick", n->nick);
-	g_key_file_set_string(kf, "global", "username", n->username);
+	g_key_file_set_string(kf, n->groupname, "fullname", n->fullname);
+	g_key_file_set_string(kf, n->groupname, "nick", n->nick);
+	g_key_file_set_string(kf, n->groupname, "username", n->username);
 	if (n->autocmd) {
-		g_key_file_set_string_list(kf, "global", "autocmd", n->autocmd,
+		g_key_file_set_string_list(kf, n->groupname, "autocmd", n->autocmd,
 							   g_strv_length(n->autocmd));
 	} else {
-		g_key_file_remove_key(kf, "global", "autocmd", NULL);
+		g_key_file_remove_key(kf, n->groupname, "autocmd", NULL);
 	}
 
 	if (n->queue_speed)
-		g_key_file_set_integer(kf, "global", "queue-speed", n->queue_speed);
+		g_key_file_set_integer(kf, n->groupname, "queue-speed", n->queue_speed);
 	if (n->reconnect_interval != -1)
-		g_key_file_set_integer(kf, "global", "reconnect-interval", n->reconnect_interval);
+		g_key_file_set_integer(kf, n->groupname, "reconnect-interval", n->reconnect_interval);
 
 	switch(n->type) {
 	case NETWORK_VIRTUAL:
-		g_key_file_set_string(kf, "global", "virtual", n->type_settings.virtual_type);
+		g_key_file_set_string(kf, n->groupname, "virtual", n->type_settings.virtual_type);
 		break;
 	case NETWORK_PROGRAM:
-		g_key_file_set_string(kf, "global", "program", n->type_settings.program_location);
+		g_key_file_set_string(kf, n->groupname, "program", n->type_settings.program_location);
 		break;
 	case NETWORK_TCP:
 		config_save_tcp_servers(n, kf);
 		if (n->type_settings.tcp.default_bind_address != NULL)
-			g_key_file_set_string(kf, "global", "bind", 
+			g_key_file_set_string(kf, n->groupname, "bind", 
 								  n->type_settings.tcp.default_bind_address);
 		else
-			g_key_file_remove_key(kf, "global", "bind", NULL);
+			g_key_file_remove_key(kf, n->groupname, "bind", NULL);
 		break;
 	default:break;
 	}
@@ -244,16 +250,16 @@ static void config_save_network(const char *dir, struct network_config *n, GList
 	}
 
 	if (autojoin_list == NULL)
-		g_key_file_remove_key(kf, "global", "autojoin", NULL);
+		g_key_file_remove_key(kf, n->groupname, "autojoin", NULL);
 	else
-		g_key_file_set_string_list(kf, "global", "autojoin", (const gchar **)autojoin_list, 
+		g_key_file_set_string_list(kf, n->groupname, "autojoin", (const gchar **)autojoin_list, 
 							   autojoin_list_count);
 
 	g_free(autojoin_list);
 
-	fn = g_build_filename(dir, n->name, NULL);
-	g_key_file_save_to_file(kf, fn, NULL);
-	g_free(fn);
+	if (n->filename != NULL) {
+		g_key_file_save_to_file(kf, n->filename, NULL);
+	}
 }
 
 static void config_save_listeners(struct ctrlproxy_config *cfg, const char *path)
@@ -341,7 +347,7 @@ static void config_save_networks(struct ctrlproxy_config *cfg, const char *confi
 	for (gl = networks; gl; gl = gl->next) {
 		struct network_config *n = gl->data;
 		if (!n->implicit) 
-			config_save_network(networksdir, n, &channel_keys);
+			config_save_network(cfg, networksdir, n, &channel_keys);
 	}
 
 	config_cleanup_networks_dir(cfg);
@@ -664,8 +670,7 @@ static struct network_config *config_load_network_file(struct ctrlproxy_config *
 	}	
 
 	n = config_load_network_keyfile_group(cfg, name, kf, name, channel_keys);
-
-	g_free(filename);
+	n->filename = filename;
 
 	groups = g_key_file_get_groups(n->keyfile, &size);
 	for (i = 0; i < size; i++) {

@@ -63,6 +63,7 @@ struct network_config
 {
 	GKeyFile *keyfile;
 	char *groupname; /* name of the keyfile group in keyfile */
+	char *filename; /* filename of the keyfile, if different from global */
 	/** Network name */
 	char *name;
 	char *nick;
