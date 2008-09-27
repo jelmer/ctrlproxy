@@ -306,11 +306,15 @@ static void daemon_client_kill(struct daemon_client_data *dc)
 {
 	daemon_clients = g_list_remove(daemon_clients, dc);
 
-	irc_transport_disconnect(dc->backend_transport);
-	free_irc_transport(dc->backend_transport);
+	if (dc->backend_transport != NULL) {
+		irc_transport_disconnect(dc->backend_transport);
+		free_irc_transport(dc->backend_transport);
+	}
 
-	irc_transport_disconnect(dc->client_transport);
-	free_irc_transport(dc->client_transport);
+	if (dc->client_transport != NULL) {
+		irc_transport_disconnect(dc->client_transport);
+		free_irc_transport(dc->client_transport);
+	}
 
 	daemon_user_free(dc->user);
 	g_free(dc->nick);
@@ -342,10 +346,14 @@ static void daemon_client_hangup (struct irc_transport *transport)
 	daemon_client_kill(cd);
 }
 
+static void daemon_client_disconnect(struct irc_transport *transport)
+{
+}
+
 static const struct irc_transport_callbacks daemon_client_callbacks = {
 	.hangup = daemon_client_hangup,
 	.log = NULL,
-	.disconnect = NULL,
+	.disconnect = daemon_client_disconnect,
 	.recv = daemon_client_recv,
 	.charset_error = charset_error_not_called,
 	.error = NULL,
@@ -379,7 +387,7 @@ static gboolean daemon_backend_recv(struct irc_transport *transport, const struc
 static const struct irc_transport_callbacks daemon_backend_callbacks = {
 	.hangup = daemon_client_hangup,
 	.log = NULL,
-	.disconnect = NULL,
+	.disconnect = daemon_client_disconnect,
 	.recv = daemon_backend_recv,
 	.charset_error = charset_error_not_called,
 	.error = NULL,

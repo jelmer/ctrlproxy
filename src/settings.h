@@ -176,6 +176,7 @@ struct ctrlproxy_config {
 	char *motd_file;
 	char *network_socket;
 	char *admin_socket;
+	char *password;
 
 	/** Whether to create networks that don't exist yet. */
 	gboolean create_implicit;
@@ -198,6 +199,8 @@ struct ctrlproxy_config {
 	int max_who_age;
 	GKeyFile *keyfile;
 	GList *listeners;
+	/** Default listener */
+	struct listener_config *default_listener;
 	gboolean auto_listener;
 	int listener_autoport;
 	gboolean learn_nickserv;

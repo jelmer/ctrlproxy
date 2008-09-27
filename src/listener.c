@@ -50,35 +50,47 @@ gboolean default_socks_gssapi(struct pending_client *cl, gss_name_t authn_name)
 }
 #endif
 
-gboolean default_socks_auth_simple(struct pending_client *cl, const char *username, const char *password,
-								   gboolean (*on_known)(struct pending_client *, gboolean))
+static gboolean listener_check_username_password(struct irc_listener *listener, 
+												 const char *username, const char *password)
 {
 	GList *gl;
 
-	for (gl = cl->listener->config->allow_rules; gl; gl = gl->next)
-	{
-		struct allow_rule *r = gl->data;
+	if (listener->config != NULL) {
+		for (gl = listener->config->allow_rules; gl; gl = gl->next)
+		{
+			struct allow_rule *r = gl->data;
 
-		if (r->password == NULL || r->username == NULL) 
-			continue;
+			if (r->password == NULL || r->username == NULL) 
+				continue;
 
-		if (strcmp(r->username, username)) 
-			continue;
+			if (strcmp(r->username, username)) 
+				continue;
 
-		if (strcmp(r->password, password))
-			continue;
+			if (strcmp(r->password, password))
+				continue;
 
-		return on_known(cl, TRUE);
+			return TRUE;
+		}
+
+		if (listener->config->password != NULL) {
+			return (strcmp(listener->config->password, password) == 0);
+		}
 	}
 
-	if (cl->listener->config->password == NULL) {
-		listener_log(LOG_WARNING, cl->listener, "No password set, allowing client _without_ authentication!");
-		return on_known(cl, TRUE);
+	if (listener->global->config->password != NULL) {
+		return (strcmp(listener->global->config->password, password) == 0);
 	}
 
-	if (strcmp(cl->listener->config->password, password) == 0) {
+	listener_log(LOG_WARNING, listener, "No password set, allowing client _without_ authentication!");
+	return TRUE;
+}
+
+
+gboolean default_socks_auth_simple(struct pending_client *cl, const char *username, const char *password,
+								   gboolean (*on_known)(struct pending_client *, gboolean))
+{
+	if (listener_check_username_password(cl->listener, username, password))
 		return on_known(cl, TRUE);
-	}
 
 	return on_known(cl, FALSE);
 }
@@ -182,20 +194,20 @@ static gboolean handle_client_line(struct pending_client *pc, const struct irc_l
 		const char *networkname = NULL;
 		struct irc_network *n = listener->network;
 		gboolean authenticated = FALSE;
+		char *actual_password;
 
-		if (listener->config->password == NULL) {
-			listener_log(LOG_WARNING, listener,
-							"No password set, allowing client _without_ authentication!");
-			authenticated = TRUE;
-			networkname = l->args[1];
-		} else if (strcmp(l->args[1], listener->config->password) == 0) {
-			authenticated = TRUE;
-		} else if (strncmp(l->args[1], listener->config->password, 
-						   strlen(listener->config->password)) == 0 &&
-				   l->args[1][strlen(listener->config->password)] == ':') {
-			authenticated = TRUE;
-			networkname = l->args[1]+strlen(listener->config->password)+1;
+		if (strchr(l->args[1], ':') != NULL) {
+			char *p = strchr(l->args[1], ':');
+			actual_password = g_strndup(l->args[1], p-l->args[1]);
+			networkname = p+1;
+		} else {
+			actual_password = g_strdup(l->args[1]);
+			networkname = NULL;
 		}
+
+		authenticated = listener_check_username_password(listener, NULL, actual_password);
+
+		g_free(actual_password);
 
 		if (authenticated) {
 			listener_log(LOG_INFO, listener, "Client successfully authenticated");
@@ -390,6 +402,7 @@ gboolean start_unix_domain_socket_listener(struct global *global)
 	}
 
 	l->ops = &default_listener_ops;
+	l->config = NULL;
 	l->iconv = (GIConv)-1;
 	l->ssl = FALSE;
 	l->ssl_credentials = NULL;

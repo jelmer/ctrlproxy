@@ -262,9 +262,9 @@ static void config_save_listeners(struct ctrlproxy_config *cfg, const char *path
 	GKeyFile *kf; 
 	GError *error = NULL;
 	gboolean empty = TRUE;
-	char *default_password;
 
-	default_password = g_key_file_get_string(cfg->keyfile, "global", "password", NULL);
+	if (cfg->password != NULL)
+		g_key_file_set_string(cfg->keyfile, "global", "password", cfg->password);
 
 	if (cfg->auto_listener) {
 		g_key_file_set_boolean(cfg->keyfile, "global", "listener-auto", cfg->auto_listener);
@@ -291,6 +291,7 @@ static void config_save_listeners(struct ctrlproxy_config *cfg, const char *path
 			if (l->network != NULL)
 				g_key_file_set_string(cfg->keyfile, "global", "default-network",
 								  l->network);
+			cfg->default_listener = l;
 		} else {
 			char *tmp;
 			empty = FALSE;
@@ -299,8 +300,7 @@ static void config_save_listeners(struct ctrlproxy_config *cfg, const char *path
 			else
 				tmp = g_strdup_printf("%s:%s", l->address, l->port);
 
-			if (l->password != NULL && 
-				!(default_password != NULL && strcmp(l->password, default_password) == 0)) 
+			if (l->password != NULL)
 				g_key_file_set_string(kf, tmp, "password", l->password);
 
 			if (l->network != NULL) {
@@ -321,7 +321,6 @@ static void config_save_listeners(struct ctrlproxy_config *cfg, const char *path
 		}
 	}
 	
-	g_free(default_password);
 	g_free(filename);
 }
 
@@ -763,7 +762,6 @@ static void config_load_listeners(struct ctrlproxy_config *cfg)
 	char **groups;
 	gsize size;
 	GKeyFile *kf;
-	char *default_password;
 	GError *error = NULL;
 
 	if (g_key_file_has_key(cfg->keyfile, "listener", "pasword", NULL)) {
@@ -771,7 +769,8 @@ static void config_load_listeners(struct ctrlproxy_config *cfg)
 							  g_key_file_get_string(cfg->keyfile, "listener", "password", NULL));
 		g_key_file_remove_key(cfg->keyfile, "listener", "password", NULL);
 	}
-	default_password = g_key_file_get_string(cfg->keyfile, "global", "password", NULL);
+	cfg->password = g_key_file_get_string(cfg->keyfile, "global", "password", NULL);
+
 	if (g_key_file_has_key(cfg->keyfile, "global", "listener-auto", NULL)) {
 		cfg->auto_listener = g_key_file_get_boolean(cfg->keyfile, "global", "listener-auto", NULL);
 	} else if (g_key_file_has_key(cfg->keyfile, "listener", "auto", NULL)) {
@@ -806,7 +805,6 @@ static void config_load_listeners(struct ctrlproxy_config *cfg)
 		if (error->code != G_FILE_ERROR_NOENT)
 			log_global(LOG_ERROR, "Can't parse configuration file '%s': %s", filename, error->message);
 		g_free(filename);
-		g_free(default_password);
 		return;
 	}
 		
@@ -831,8 +829,6 @@ static void config_load_listeners(struct ctrlproxy_config *cfg)
 		}
 
 		l->password = g_key_file_get_string(kf, groups[i], "password", NULL);
-		if (l->password == NULL)
-			l->password = g_strdup(default_password);
 
 		if (g_key_file_has_key(kf, groups[i], "ssl", NULL))
 			l->ssl = g_key_file_get_boolean(kf, groups[i], "ssl", NULL);
@@ -849,7 +845,6 @@ static void config_load_listeners(struct ctrlproxy_config *cfg)
 	}
 
 	g_strfreev(groups);
-	g_free(default_password);
 	g_free(filename);
 }
 
@@ -1421,6 +1416,8 @@ gboolean create_configuration(const char *config_dir)
 	} else {
 		l->password = g_strdup(pass);
 	}
+
+	global->config->default_listener = l;
 
 	global->config->listeners = g_list_append(global->config->listeners, l);
 
