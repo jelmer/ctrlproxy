@@ -325,6 +325,8 @@ gboolean transport_send_args(struct irc_transport *transport, ...)
 	gboolean ret;
 	va_list ap;
 
+	g_assert(transport != NULL);
+
 	va_start(ap, transport);
 	l = virc_parse_line(NULL, ap);
 	va_end(ap);

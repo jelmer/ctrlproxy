@@ -367,8 +367,9 @@ static gboolean daemon_backend_recv(struct irc_transport *transport, const struc
 		gboolean ok;
 		if (atoi(line->args[0]) == ERR_PASSWDMISMATCH) {
 			ok = FALSE;
-		} else if (!strcmp(line->args[0], "NOTICE") && !strcmp(line->args[1], "AUTH") && !strcmp(line->args[2], "PASS OK")) {
-			cd->pass_check_cb(cd->pending_client, TRUE);
+		} else if (!strcmp(line->args[0], "NOTICE") && 
+				   !strcmp(line->args[1], "AUTH") && 
+				   !strcmp(line->args[2], "PASS OK")) {
 			ok = TRUE;
 		} else {
 			listener_log(LOG_INFO, cd->pending_client->listener, "Unexpected response %s", line->args[0]);
@@ -399,6 +400,8 @@ static const struct irc_transport_callbacks daemon_backend_callbacks = {
 static void client_done(struct pending_client *pc, struct daemon_client_data *dc)
 {
 	char *desc;
+
+	g_assert(dc->backend_transport != NULL);
 	
 	if (dc->servername != NULL && dc->servicename != NULL)
 		transport_send_args(dc->backend_transport, "CONNECT", dc->servername, dc->servicename, NULL);
@@ -472,6 +475,8 @@ static gboolean daemon_socks_connect_fqdn (struct pending_client *cl, const char
 static gboolean daemon_client_check_pass(struct pending_client *cl, struct daemon_client_data *cd, const char *password,
 										 gboolean (*pass_check_cb) (struct pending_client *, gboolean))
 {
+	g_assert(cd->pass_check_cb == NULL);
+
 	cd->pass_check_cb = pass_check_cb;
 	cd->pending_client = cl;
 
@@ -481,7 +486,7 @@ static gboolean daemon_client_check_pass(struct pending_client *cl, struct daemo
 	return TRUE; /* All good, so far */
 }
 
-static gboolean clear_handle_auth_finish(struct pending_client *pc, gboolean accepted)
+static gboolean plain_handle_auth_finish(struct pending_client *pc, gboolean accepted)
 {
 	if (!accepted) {
 		irc_sendf(pc->connection, pc->listener->iconv, NULL, 
@@ -546,7 +551,9 @@ static gboolean handle_client_line(struct pending_client *pc, const struct irc_l
 		}
 		irc_transport_set_callbacks(cd->backend_transport, &daemon_backend_callbacks, cd);
 
-		return daemon_client_check_pass(pc, cd, cd->password, clear_handle_auth_finish);
+		daemon_client_check_pass(pc, cd, cd->password, plain_handle_auth_finish);
+
+		return TRUE;
 	}
 
 	return TRUE;
