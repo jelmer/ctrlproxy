@@ -174,8 +174,6 @@ uninstall-doc:
 uninstall-data::
 	-rm -f $(DESTDIR)$(cdatadir)/motd
 	-rm -f $(DESTDIR)$(DEFAULT_CONFIG_DIR)/config
-	-rm -f $(DESTDIR)$(DEFAULT_CONFIG_DIR)/networks/admin
-	-rmdir $(DESTDIR)$(DEFAULT_CONFIG_DIR)/networks
 	-rmdir $(DESTDIR)$(DEFAULT_CONFIG_DIR)
 	-rmdir $(DESTDIR)$(cdatadir)
 
@@ -185,7 +183,6 @@ install-data:
 	$(INSTALL) -d $(DESTDIR)$(DEFAULT_CONFIG_DIR)
 	$(INSTALL) -d $(DESTDIR)$(DEFAULT_CONFIG_DIR)/networks
 	$(INSTALL) -m 0644 config.default $(DESTDIR)$(DEFAULT_CONFIG_DIR)/config
-	$(INSTALL) -m 0644 config.admin $(DESTDIR)$(DEFAULT_CONFIG_DIR)/networks/admin
 
 install-pkgconfig:
 	$(INSTALL) -d $(DESTDIR)$(libdir)/pkgconfig

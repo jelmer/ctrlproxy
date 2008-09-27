@@ -67,3 +67,24 @@ admin-log = true
 ## Logging
 #logging = none|irssi|custom
 #logfile = /home/jelmer/tmp/ctrlproxy
+
+## -------------- Networks -------------------
+
+## The Administration network 
+## This is a virtual network that provides a administration 
+## interface to ctrlproxy.
+[admin]
+virtual = admin
+
+## Example configuration for Freenode
+# [Freenode]
+# servers = irc://irc.freenode.net/
+# autojoin = #ctrlproxy
+#
+## Example configuration for OFTC
+# [OFTC]
+# servers = irc://irc.ipv6.oftc.net/;irc://irc.freenode.net/
+## Bind to a specific address locally:
+# bind = 2001::dead:beef:cafe
+## Custom nick, different from default configuration
+# nick = somenick

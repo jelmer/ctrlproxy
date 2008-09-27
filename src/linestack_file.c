@@ -251,7 +251,7 @@ static gboolean marshall_time(struct irc_network_state *nst, const char *name, i
 		gboolean ret = marshall_get(t, level, name, &tmp);
 		if (!ret) return FALSE;
 
-		*n = strtoul(tmp, NULL, 10);
+		*n = strtoul(tmp, NULL, 0);
 
 		g_free(tmp);
 
