@@ -654,6 +654,7 @@ static gboolean gssapi_handle_data (struct pending_client *pc)
 	gss_buffer_desc outbuf;
 	gss_buffer_desc inbuf;
 	gchar header[4];
+	gchar *packet;
 	gsize read;
 	GIOStatus status;
 	guint16 len;
@@ -709,23 +710,20 @@ static gboolean gssapi_handle_data (struct pending_client *pc)
 		return FALSE;
 	} 
 
-	header[0] = 1; /* SOCKS_GSSAPI_VERSION */
-	header[1] = 1; /* Authorization message */
-	*((uint16_t *)(header+2)) = htons(outbuf.length);
+	packet = g_malloc(4+outbuf.length);
+	packet[0] = SOCKS_VERSION; /* SOCKS_GSSAPI_VERSION */
+	packet[1] = 1; /* Authorization message */
+	*((uint16_t *)(packet+2)) = htons(outbuf.length);
+	
+	memcpy(packet+4, outbuf.value, outbuf.length);
 
-	status = g_io_channel_write_chars(pc->connection, header, 4, &read, NULL);
+	status = g_io_channel_write_chars(pc->connection, packet, 4+outbuf.length, &read, NULL);
+	g_free(packet);
+
 	if (status != G_IO_STATUS_NORMAL) {
 		gssapi_fail(pc);
 		return FALSE;
 	} 
-
-	if (outbuf.length > 0) {
-		status = g_io_channel_write_chars(pc->connection, outbuf.value, outbuf.length, &read, NULL);
-		if (status != G_IO_STATUS_NORMAL) {
-			gssapi_fail(pc);
-			return FALSE;
-		} 
-	}
 
 	major_status = gss_release_buffer(&minor_status, &outbuf);
 	if (GSS_ERROR(major_status)) {
