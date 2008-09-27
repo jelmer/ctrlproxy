@@ -17,7 +17,7 @@ endif
 LIBS += $(GNUTLS_LIBS)
 CFLAGS += $(GNUTLS_CFLAGS)
 
-CFLAGS+=-DHAVE_CONFIG_H -DSHAREDIR=\"$(cdatadir)\" -DDEFAULT_CONFIG_DIR=\"$(DEFAULT_CONFIG_DIR)\" -DHELPFILE=\"$(HELPFILE)\"
+CFLAGS+=-DHAVE_CONFIG_H -DDEFAULT_CONFIG_DIR=\"$(DEFAULT_CONFIG_DIR)\" -DHELPFILE=\"$(HELPFILE)\"
 CFLAGS+=-ansi -Wall -DMODULESDIR=\"$(modulesdir)\" -DSTRICT_MEMORY_ALLOCS=
 
 LIBIRC_STATIC = libirc.a
@@ -107,6 +107,8 @@ ctrlproxy$(EXEEXT): src/main.o $(objs) $(LIBIRC)
 	@echo Linking $@
 	@$(LD) $(LDFLAGS) -rdynamic -o $@ $^ $(LIBS)
 
+src/settings.o: CFLAGS+=-DSYSCONFDIR=\"${sysconfdir}\"
+
 daemon/main.o: CFLAGS+=-DDEFAULT_CONFIG_FILE=\"${sysconfdir}/ctrlproxyd.conf\" \
 					   -DPIDFILE=\"${localstatedir}/run/ctrlproxyd.pid\"
 
@@ -177,16 +179,15 @@ uninstall-doc:
 	-rmdir $(DESTDIR)$(docdir)
 
 uninstall-data::
-	-rm -f $(DESTDIR)$(cdatadir)/motd
+	-rm -f $(DESTDIR)$(DEFAULT_CONFIG_DIR)/motd
 	-rm -f $(DESTDIR)$(DEFAULT_CONFIG_DIR)/config
 	-rmdir $(DESTDIR)$(DEFAULT_CONFIG_DIR)
-	-rmdir $(DESTDIR)$(cdatadir)
+	-rmdir $(DESTDIR)$(sysconfdir)
 
 install-data:
-	$(INSTALL) -d $(DESTDIR)$(cdatadir)
-	$(INSTALL) -m 0644 motd $(DESTDIR)$(cdatadir)
+	$(INSTALL) -d $(DESTDIR)$(sysconfdir)
 	$(INSTALL) -d $(DESTDIR)$(DEFAULT_CONFIG_DIR)
-	$(INSTALL) -d $(DESTDIR)$(DEFAULT_CONFIG_DIR)/networks
+	$(INSTALL) -m 0644 motd $(DESTDIR)$(DEFAULT_CONFIG_DIR)
 	$(INSTALL) -m 0644 config.default $(DESTDIR)$(DEFAULT_CONFIG_DIR)/config
 
 install-pkgconfig:

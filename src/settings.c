@@ -1235,7 +1235,7 @@ struct ctrlproxy_config *load_configuration(const char *dir)
     if (g_key_file_has_key(kf, "global", "motd-file", NULL))
 		cfg->motd_file = g_key_file_get_string(kf, "global", "motd-file", NULL);
     else 
-	    cfg->motd_file = g_build_filename(SHAREDIR, "motd", NULL);
+	    cfg->motd_file = g_build_filename(SYSCONFDIR, "ctrlproxy", "motd", NULL);
 
     if (g_key_file_has_key(kf, "client", "charset", NULL)) {
 		cfg->client_charset = g_key_file_get_string(kf, "client", "charset", NULL);
