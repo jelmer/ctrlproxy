@@ -146,8 +146,9 @@ gboolean listener_stop(struct irc_listener *l)
 
 		g_source_remove(lio->watch_id);
 		
-		listener_log(LOG_INFO, l, "Stopped listening at %s:%s", lio->address, 
-					 lio->port);
+		if (strcmp(lio->address, "") == 0)
+			listener_log(LOG_INFO, l, "Stopped listening at %s:%s", lio->address, 
+						 lio->port);
 
 		g_free(lio);
 

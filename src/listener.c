@@ -418,12 +418,15 @@ gboolean start_unix_domain_socket_listener(struct global *global)
 
 	listener_add_iochannel(l, ioc, NULL, NULL);
 
+	global->unix_domain_socket_listener = l;
+
 	return TRUE;
 }
 
 gboolean stop_unix_domain_socket_listener(struct global *global)
 {
-	listener_stop(global->unix_domain_socket_listener);
+	if (global->unix_domain_socket_listener != NULL)
+		listener_stop(global->unix_domain_socket_listener);
 	unlink(global->config->network_socket);
 	return TRUE;
 }

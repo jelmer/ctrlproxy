@@ -342,7 +342,7 @@ void transport_parse_buffer(struct irc_transport *transport)
 			  g_io_channel_get_buffer_condition(transport->incoming) & G_IO_IN,
 			  transport);
 
-	g_assert(g_io_channel_get_buffer_condition(transport->incoming) == 0);
+	/* g_assert(g_io_channel_get_buffer_condition(transport->incoming) == 0); */
 }
 
 gboolean transport_blocking_recv(struct irc_transport *transport, struct irc_line **l)

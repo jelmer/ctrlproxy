@@ -70,23 +70,26 @@ int str_rfc1459cmp(const char *a, const char *b)
 char *g_io_channel_ip_get_description(GIOChannel *ch)
 {
 	socklen_t len = sizeof(struct sockaddr_storage);
-	struct sockaddr *sa = g_malloc(len);
+	struct sockaddr_storage sa;
 	char hostname[NI_MAXHOST];
 	char service[NI_MAXSERV];
 	char *description = NULL;
 	int fd = g_io_channel_unix_get_fd(ch);
 
-	if (getpeername (fd, sa, &len) == 0 &&
-		getnameinfo(sa, len, hostname, sizeof(hostname),
-					service, sizeof(service), NI_NOFQDN | NI_NUMERICSERV) == 0) {
-
-		description = g_strdup_printf("%s:%s", hostname, service);
-	} else {
+	if (getpeername (fd, (struct sockaddr *)&sa, &len) < 0) {
 		log_global(LOG_WARNING, "Unable to obtain remote IP address: %s", 
 				   strerror(errno));
+		return NULL;
 	}
 
-	g_free(sa);
+	if (sa.ss_family != AF_INET && sa.ss_family != AF_INET6)
+		return NULL;
+
+	if (getnameinfo((struct sockaddr *)&sa, len, hostname, sizeof(hostname),
+					service, sizeof(service), NI_NOFQDN | NI_NUMERICSERV) == 0) {
+		description = g_strdup_printf("%s:%s", hostname, service);
+	} 
+
 	return description;
 }
 
