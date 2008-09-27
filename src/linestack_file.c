@@ -30,6 +30,17 @@
 #include <glib/gstdio.h>
 #include <sys/stat.h>
 
+#define README_CONTENTS  \
+"This directory contains the history information that ctrlproxy uses\n" \
+"when sending backlogs.\n" \
+"\n" \
+"It is safe to remove this data while ctrlproxy is not running and \n" \
+"will not break your configuration. \n" \
+"\n" \
+"If you delete it while ctrlproxy is running, you will lose the ability \n" \
+"to use any backlog functionality during the current session.\n"
+
+
 /*
  * Marshall/unmarshall functions
  */
@@ -480,6 +491,22 @@ static gboolean file_insert_state(struct linestack_context *ctx,
 							  const struct irc_network_state *state, 
 							  const char *state_id);
 
+static char *global_init(struct ctrlproxy_config *config)
+{
+	char *parent_dir, *readme_file;;
+	parent_dir = g_build_filename(config->config_dir, "linestack_file", NULL);
+	if (g_file_test(parent_dir, G_FILE_TEST_IS_DIR))
+		return parent_dir;
+	g_mkdir(parent_dir, 0700);
+	readme_file = g_build_filename(parent_dir, "README", NULL);
+	if (!g_file_test(readme_file, G_FILE_TEST_EXISTS)) {
+		g_file_set_contents(readme_file, README_CONTENTS, 
+							-1, NULL);
+	}
+	g_free(readme_file);
+	return parent_dir;
+}
+
 static gboolean file_init(struct linestack_context *ctx, const char *name, 
 						  struct ctrlproxy_config *config, 
 						  const struct irc_network_state *state)
@@ -490,8 +517,8 @@ static gboolean file_init(struct linestack_context *ctx, const char *name,
 	const char *fname;
 	GDir *dir;
 
-	parent_dir = g_build_filename(config->config_dir, "linestack_file", NULL);
-	g_mkdir(parent_dir, 0700);
+	parent_dir = global_init(config);
+
 	data_dir = g_build_filename(parent_dir, name, NULL);
 	g_free(parent_dir);
 	g_mkdir(data_dir, 0700);
