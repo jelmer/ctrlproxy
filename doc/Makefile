@@ -42,6 +42,7 @@ install: all
 	$(INSTALL) -m 0644 ctrlproxy.1 $(DESTDIR)$(mandir)/man1
 	$(INSTALL) -m 0644 ctrlproxyd.8 $(DESTDIR)$(mandir)/man8
 	$(INSTALL) -m 0644 ctrlproxy-admin.1 $(DESTDIR)$(mandir)/man1
+	$(INSTALL) -d $(DESTDIR)$(cdatadir)
 	$(INSTALL) -m 0644 help.txt $(DESTDIR)$(HELPFILE)
 	$(INSTALL) -m 0644 ctrlproxy_config.5 $(DESTDIR)$(mandir)/man5
 	$(INSTALL) -m 0644 user-guide.html $(DESTDIR)$(docdir)
