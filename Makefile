@@ -153,6 +153,7 @@ uninstall-bin:
 
 install-bin:
 	$(INSTALL) -d $(DESTDIR)$(bindir)
+	$(INSTALL) -d $(DESTDIR)$(sbindir)
 	$(INSTALL) $(BINS) $(DESTDIR)$(bindir)
 	$(INSTALL) $(SBINS) $(DESTDIR)$(sbindir)
 
