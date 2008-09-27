@@ -924,18 +924,17 @@ static void config_load_networks(struct ctrlproxy_config *cfg, GList *channel_ke
 	/* Load networks from files */
 
 	dir = g_dir_open(networksdir, 0, NULL);
-	if (dir == NULL)
-		return;
+	if (dir != NULL) {
+		while ((name = g_dir_read_name(dir))) {
+			if (IS_SPECIAL_FILE(name))
+				continue;
+			n = config_load_network_file(cfg, networksdir, name, channel_keys);
+		}
 
-	while ((name = g_dir_read_name(dir))) {
-		if (IS_SPECIAL_FILE(name))
-			continue;
-		n = config_load_network_file(cfg, networksdir, name, channel_keys);
+		g_free(networksdir);
+
+		g_dir_close(dir);
 	}
-
-	g_free(networksdir);
-
-	g_dir_close(dir);
 
 	/* Load other networks in configuration file */
 	groups = g_key_file_get_groups(cfg->keyfile, &size);
@@ -1287,7 +1286,6 @@ struct ctrlproxy_config *load_configuration(const char *dir)
 	g_key_file_remove_key(kf, "admin", "log", NULL);
     if (g_key_file_has_key(kf, "global", "admin-log", NULL) && !g_key_file_get_boolean(kf, "global", "admin-log", NULL))
         cfg->admin_log = FALSE;
-	g_key_file_remove_group(kf, "admin", NULL);
 
 	for (gl = cfg->networks; gl; gl = gl->next) {
 		struct network_config *nc = gl->data;

@@ -2,8 +2,10 @@
 
 [global]
 ## Replication mechanism to use (some other IRC proxies call this backlog)
-## Possible values: none, simple, highlight, lastdisconnect
-## Meanings:
+## This determines what lines are repeated when a client 
+## connects to ctrlproxy.
+##
+## Possible values:
 ## 	none: No backlog
 ## 	simple: Send backlog since the user last said something
 ## 	lastdisconnect: Send backlog since the users' last disconnect
@@ -11,8 +13,11 @@
 ## 			   containing 'matches' (see below)
 replication = none
 
-## Prepend all lines in replication with the time a line was received when replicating
-## possible settings: never|always|replication
+## Prefix all lines in replication with the time a line was received
+## Possible values: 
+##   never: Never prefix with time
+##   always: Always prefix with time
+##   replication: Only prefix when sending replication/backlog
 report-time = never
 
 ## What words to look for when remembering lines 
