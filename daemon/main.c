@@ -48,8 +48,6 @@ static GList *daemon_clients = NULL;
 /* there are no hup signals here */
 void register_hup_handler(hup_handler_fn fn, void *userdata) {}
 static void daemon_client_kill(struct daemon_client_data *dc);
-static gboolean daemon_client_check_pass(struct pending_client *pc, struct daemon_client_data *cd, const char *password,
-										 gboolean (*) (struct pending_client *, gboolean));
 
 struct ctrlproxyd_config {
 	char *ctrlproxy_path;
@@ -69,8 +67,10 @@ struct daemon_client_user {
 struct daemon_client_data {
 	struct irc_transport *backend_transport;
 	struct irc_transport *client_transport;
-	gboolean (*pass_check_cb) (struct pending_client *, gboolean);
-	struct pending_client *pending_client;
+	struct irc_listener *listener;
+	gboolean authenticated;
+	gboolean (*pass_check_cb) (gpointer, gboolean);
+	gpointer pass_check_data;
 	struct daemon_client_user *user;
 	struct ctrlproxyd_config *config;
 	char *password;
@@ -81,6 +81,7 @@ struct daemon_client_data {
 	char *mode;
 	char *unused;
 	char *realname;
+	char *description;
 };
 
 void listener_syslog(enum log_level l, const struct irc_listener *listener, const char *ret)
@@ -324,6 +325,7 @@ static void daemon_client_kill(struct daemon_client_data *dc)
 	g_free(dc->servicename);
 	g_free(dc->unused);
 	g_free(dc->username);
+	g_free(dc->description);
 	g_free(dc);
 }
 
@@ -336,12 +338,17 @@ static gboolean daemon_client_recv(struct irc_transport *transport, const struct
 {
 	struct daemon_client_data *cd = transport->userdata;
 
-	return transport_send_line(cd->backend_transport, line);
+	if (cd->authenticated) 
+		return transport_send_line(cd->backend_transport, line);
+	else
+		return TRUE;
 }
 
 static void daemon_client_hangup (struct irc_transport *transport)
 {
 	struct daemon_client_data *cd = transport->userdata;
+
+	listener_log(LOG_INFO, cd->listener, "Client %s disconnected", cd->description);
 
 	daemon_client_kill(cd);
 }
@@ -363,7 +370,7 @@ static gboolean daemon_backend_recv(struct irc_transport *transport, const struc
 {
 	struct daemon_client_data *cd = transport->userdata;
 
-	if (cd->pass_check_cb != NULL) {
+	if (!cd->authenticated) {
 		gboolean ok;
 		if (atoi(line->args[0]) == ERR_PASSWDMISMATCH) {
 			ok = FALSE;
@@ -372,13 +379,18 @@ static gboolean daemon_backend_recv(struct irc_transport *transport, const struc
 				   !strcmp(line->args[2], "PASS OK")) {
 			ok = TRUE;
 		} else {
-			listener_log(LOG_INFO, cd->pending_client->listener, "Unexpected response %s", line->args[0]);
+			listener_log(LOG_INFO, cd->listener, "Unexpected response %s", line->args[0]);
 			transport_send_args(cd->client_transport, "ERROR", "Internal error, unexpected response", NULL);
 			ok = FALSE;
 		}
-		cd->pass_check_cb(cd->pending_client, ok);
-		cd->pass_check_cb = NULL;
-		cd->pending_client = NULL;
+		if (cd->pass_check_cb != NULL) {
+			cd->pass_check_cb(cd->pass_check_data, ok);
+			cd->pass_check_cb = NULL;
+			cd->pass_check_data = NULL;
+		}
+		cd->authenticated = ok;
+		if (!ok)
+			daemon_client_kill(cd);
 		return ok;
 	}
 
@@ -397,22 +409,14 @@ static const struct irc_transport_callbacks daemon_backend_callbacks = {
 /**
  * Callback when client is done authenticating.
  */
-static void client_done(struct pending_client *pc, struct daemon_client_data *dc)
+static void client_done(struct daemon_client_data *dc)
 {
-	char *desc;
-
 	g_assert(dc->backend_transport != NULL);
 	
 	if (dc->servername != NULL && dc->servicename != NULL)
 		transport_send_args(dc->backend_transport, "CONNECT", dc->servername, dc->servicename, NULL);
 	transport_send_args(dc->backend_transport, "USER", dc->username, dc->mode, dc->unused, dc->realname, NULL);
 	transport_send_args(dc->backend_transport, "NICK", dc->nick, NULL);
-
-	desc = g_io_channel_ip_get_description(pc->connection);
-	listener_log(LOG_INFO, pc->listener, "Accepted new client %s for user %s", desc, dc->user->username);
-	g_free(desc);
-
-	dc->client_transport = irc_transport_new_iochannel(pc->connection);
 
 	irc_transport_set_callbacks(dc->client_transport, &daemon_client_callbacks, dc);
 
@@ -455,7 +459,16 @@ static gboolean daemon_socks_auth_simple(struct pending_client *cl, const char *
 
 	irc_transport_set_callbacks(cd->backend_transport, &daemon_backend_callbacks, cd);
 
-	return daemon_client_check_pass(cl, cd, password, on_finished);
+	g_assert(cd->pass_check_cb == NULL);
+
+	cd->authenticated = FALSE;
+	cd->pass_check_cb = (gboolean (*)(gpointer, gboolean))on_finished;
+	cd->pass_check_data = cl;
+
+	if (!transport_send_args(cd->backend_transport, "PASS", password, NULL))
+		return FALSE;
+
+	return TRUE; /* All good, so far */
 }
 
 static gboolean daemon_socks_connect_fqdn (struct pending_client *cl, const char *hostname, uint16_t port)
@@ -467,36 +480,26 @@ static gboolean daemon_socks_connect_fqdn (struct pending_client *cl, const char
 	cd->servername = g_strdup(hostname);
 	cd->servicename = g_strdup_printf("%d", port);
 
-	client_done(cl, cd);
+	cd->description = g_io_channel_ip_get_description(cl->connection);
+	listener_log(LOG_INFO, cl->listener, "Accepted new client %s for user %s", cd->description, cd->user->username);
+
+	cd->client_transport = irc_transport_new_iochannel(cl->connection);
+
+	client_done(cd);
 
 	return FALSE;
 }
 
-static gboolean daemon_client_check_pass(struct pending_client *cl, struct daemon_client_data *cd, const char *password,
-										 gboolean (*pass_check_cb) (struct pending_client *, gboolean))
+static gboolean plain_handle_auth_finish(gpointer userdata, gboolean accepted)
 {
-	g_assert(cd->pass_check_cb == NULL);
+	struct daemon_client_data *dc = (struct daemon_client_data *)userdata;
 
-	cd->pass_check_cb = pass_check_cb;
-	cd->pending_client = cl;
-
-	if (!transport_send_args(cd->backend_transport, "PASS", password, NULL))
-		return FALSE;
-
-	return TRUE; /* All good, so far */
-}
-
-static gboolean plain_handle_auth_finish(struct pending_client *pc, gboolean accepted)
-{
 	if (!accepted) {
-		irc_sendf(pc->connection, pc->listener->iconv, NULL, 
-				  ":%s %d %s :Password invalid", 
-				  get_my_hostname(), ERR_PASSWDMISMATCH, "*");
-		g_io_channel_flush(pc->connection, NULL);
-
+		transport_send_args(dc->client_transport, __STRING(ERR_PASSWDMISMATCH), 
+							"*", "Password invalid", NULL);
 		return FALSE;
 	} else {
-		client_done(pc, pc->private_data);
+		client_done(dc);
 		return FALSE;
 	}
 }
@@ -551,9 +554,21 @@ static gboolean handle_client_line(struct pending_client *pc, const struct irc_l
 		}
 		irc_transport_set_callbacks(cd->backend_transport, &daemon_backend_callbacks, cd);
 
-		daemon_client_check_pass(pc, cd, cd->password, plain_handle_auth_finish);
+		cd->description = g_io_channel_ip_get_description(pc->connection);
+		listener_log(LOG_INFO, pc->listener, "Accepted new client %s for user %s", cd->description, cd->user->username);
 
-		return TRUE;
+		cd->client_transport = irc_transport_new_iochannel(pc->connection);
+
+		g_assert(cd->pass_check_cb == NULL);
+		cd->pass_check_cb = plain_handle_auth_finish;
+		cd->pass_check_data = cd;
+
+		cd->authenticated = FALSE;
+
+		if (!transport_send_args(cd->backend_transport, "PASS", cd->password, NULL))
+			return FALSE;
+
+		return FALSE;
 	}
 
 	return TRUE;
@@ -562,6 +577,7 @@ static gboolean handle_client_line(struct pending_client *pc, const struct irc_l
 static void daemon_new_client(struct pending_client *pc)
 {
 	struct daemon_client_data *cd = g_new0(struct daemon_client_data, 1);
+	cd->listener = pc->listener;
 	cd->config = global_daemon_config;
 	pc->private_data = cd;
 }
