@@ -130,6 +130,15 @@ struct ctrlproxyd_config *read_config_file(const char *name)
 	config->port = g_key_file_get_string(kf, "settings", "port", NULL);
 	config->address = g_key_file_get_string(kf, "settings", "address", NULL);
 
+	if (g_key_file_has_key(kf, "settings", "keytab", NULL)) {
+		char *keytab;
+		keytab = g_key_file_get_string(kf, "settings", "keytab", NULL);
+#ifdef HAVE_GSSKRB5_REGISTER_ACCEPTOR_IDENTITY
+		gsskrb5_register_acceptor_identity(keytab);
+#endif
+		g_free(keytab);
+	}
+
 	g_key_file_free(kf);
 
 	return config;
