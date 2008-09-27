@@ -391,6 +391,34 @@ static void del_network_helper(admin_handle h, const char *name)
 	admin_out(h, "Network `%s' deleted", name);
 }
 
+static void info_network_helper(admin_handle h, const char *name)
+{
+	struct irc_network *n = find_network(admin_get_global(h)->networks, name);
+	struct network_config *nc;
+	if (n == NULL) {
+		admin_out(h, "No such network `%s'", name);
+		return;
+	}
+	nc = n->private_data;
+	if (nc->type == NETWORK_TCP) {
+		GList *gl;
+		admin_out(h, "Servers:");
+		for (gl = nc->type_settings.tcp.servers; gl; gl = gl->next) {
+			struct tcp_server_config *server = gl->data;
+			admin_out(h, "  %s:%s%s", server->host, server->port, 
+					  (server == n->connection.data.tcp.current_server?" (Current)":""));
+		}
+	} else if (nc->type == NETWORK_VIRTUAL) {
+		admin_out(h, "Virtual network");
+	} else if (nc->type == NETWORK_PROGRAM) {
+		admin_out(h, "Interface to %s", nc->type_settings.program_location);
+	}
+
+	admin_out(h, "%d clients connected", g_list_length(n->clients));
+}
+
+
+
 static void list_networks_helper(admin_handle h)
 {
 	GList *gl;
@@ -425,6 +453,7 @@ static void list_networks_helper(admin_handle h)
 /* NETWORK LIST */
 /* NETWORK ADD OFTC */
 /* NETWORK DEL OFTC */
+/* NETWORK INFO OFTC */
 static void cmd_network(admin_handle h, char **args, void *userdata)
 {
 	if (args[1] == NULL)
@@ -452,6 +481,13 @@ static void cmd_network(admin_handle h, char **args, void *userdata)
 			return;
 		}
 		del_network_helper(h, args[2]);
+		return;
+	} else if (!strcasecmp(args[1], "info")) {
+		if (args[2] == NULL) {
+			admin_out(h, "Usage: network info <name>");
+			return;
+		}
+		info_network_helper(h, args[2]);
 		return;
 	} else {
 		goto usage;

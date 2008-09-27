@@ -141,7 +141,7 @@ gboolean g_key_file_save_to_file(GKeyFile *kf, const gchar *file, GError **error
 	return TRUE;
 }
 
-static void config_save_tcp_servers(struct network_config *n, GKeyFile *kf)
+static void config_save_tcp_servers(struct network_config *n, GKeyFile *kf, const char *groupname)
 {
 	GList *gl;
 	int i = 0; 
@@ -166,7 +166,7 @@ static void config_save_tcp_servers(struct network_config *n, GKeyFile *kf)
 		i++;
 	}
 
-	g_key_file_set_string_list(kf, "global", "servers", (const gchar **)values, i);
+	g_key_file_set_string_list(kf, groupname, "servers", (const gchar **)values, i);
 
 	g_strfreev(values);
 }
@@ -214,7 +214,7 @@ static void config_save_network(struct ctrlproxy_config *cfg,
 		g_key_file_set_string(kf, n->groupname, "program", n->type_settings.program_location);
 		break;
 	case NETWORK_TCP:
-		config_save_tcp_servers(n, kf);
+		config_save_tcp_servers(n, kf, n->groupname);
 		if (n->type_settings.tcp.default_bind_address != NULL)
 			g_key_file_set_string(kf, n->groupname, "bind", 
 								  n->type_settings.tcp.default_bind_address);
@@ -494,7 +494,7 @@ static void config_load_servers(struct network_config *n)
 	char **servers;
 	int i;
 	
-	servers = g_key_file_get_string_list(n->keyfile, "global", "servers", &size, NULL);
+	servers = g_key_file_get_string_list(n->keyfile, n->groupname, "servers", &size, NULL);
 
 	if (!servers)
 		return;
@@ -668,7 +668,7 @@ static struct network_config *config_load_network_file(struct ctrlproxy_config *
 		return NULL;
 	}	
 
-	n = config_load_network_keyfile_group(cfg, name, kf, name, channel_keys);
+	n = config_load_network_keyfile_group(cfg, name, kf, "global", channel_keys);
 	n->filename = filename;
 
 	groups = g_key_file_get_groups(n->keyfile, &size);
@@ -921,6 +921,11 @@ static void config_load_networks(struct ctrlproxy_config *cfg, GList *channel_ke
 	char *networksdir = g_build_filename(cfg->config_dir, "networks", NULL);
 	GDir *dir;
 	const char *name;
+	char **groups;
+	gsize size, i;
+	struct network_config *n;
+
+	/* Load networks from files */
 
 	dir = g_dir_open(networksdir, 0, NULL);
 	if (dir == NULL)
@@ -929,12 +934,30 @@ static void config_load_networks(struct ctrlproxy_config *cfg, GList *channel_ke
 	while ((name = g_dir_read_name(dir))) {
 		if (IS_SPECIAL_FILE(name))
 			continue;
-		config_load_network_file(cfg, networksdir, name, channel_keys);
+		n = config_load_network_file(cfg, networksdir, name, channel_keys);
 	}
 
 	g_free(networksdir);
 
 	g_dir_close(dir);
+
+	/* Load other networks in configuration file */
+	groups = g_key_file_get_groups(cfg->keyfile, &size);
+	for (i = 0; i < size; i++) {
+		if (!strcmp(groups[i], "global"))
+			continue;
+
+		if (!strncasecmp(groups[i], "irc://", strlen("irc://")) || 
+			!strncasecmp(groups[i], "ircs://", strlen("ircs://")))
+			continue;
+
+		if (groups[i][0] == '#' || groups[i][0] == '&')
+			continue;
+
+		n = config_load_network_keyfile_group(cfg, groups[i], cfg->keyfile, groups[i], channel_keys);
+	}
+
+	g_strfreev(groups);
 }
 
 #define FETCH_SETTING(data, kf, section, prefix, name) (data)->name = g_key_file_get_string((kf), (section), prefix __STRING(name), NULL)
@@ -1381,7 +1404,10 @@ void free_config(struct ctrlproxy_config *cfg)
 			break;
 		}
 		cfg->networks = g_list_remove(cfg->networks, nc);
-		if (nc->keyfile) g_key_file_free(nc->keyfile);
+		if (nc->keyfile != NULL && nc->filename != NULL) 
+			g_key_file_free(nc->keyfile);
+		g_free(nc->filename);
+		g_free(nc->groupname);
 		g_free(nc);
 	}
 	g_free(cfg->config_dir);
