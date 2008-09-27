@@ -180,13 +180,8 @@ static void config_save_network(struct ctrlproxy_config *cfg,
 	int autojoin_list_count;
 	
 	if (n->keyfile == NULL) {
-		/* FIXME: 
 		n->keyfile = cfg->keyfile;
 		n->groupname = g_strdup(n->name);
-		*/
-		n->keyfile = g_key_file_new();
-		n->groupname = g_strdup("global");
-		n->filename = g_build_filename(dir, n->name, NULL);
 	}
 
 	kf = n->keyfile;
@@ -336,15 +331,16 @@ static void config_save_networks(struct ctrlproxy_config *cfg, const char *confi
 	GList *gl;
 	GList *channel_keys = NULL;
 
-	if (!g_file_test(networksdir, G_FILE_TEST_IS_DIR)) {
-		if (g_mkdir(networksdir, 0700) != 0) {
-			log_global(LOG_ERROR, "Can't create networks directory '%s': %s", networksdir, strerror(errno));
-			return;
-		}
-	}
-
 	for (gl = networks; gl; gl = gl->next) {
 		struct network_config *n = gl->data;
+		if (n->filename != NULL && !g_file_test(networksdir, G_FILE_TEST_IS_DIR)) {
+			if (g_mkdir(networksdir, 0700) != 0) {
+				log_global(LOG_ERROR, "Can't create networks directory '%s': %s", networksdir, strerror(errno));
+				return;
+			}
+		}
+
+
 		if (!n->implicit) 
 			config_save_network(cfg, networksdir, n, &channel_keys);
 	}
