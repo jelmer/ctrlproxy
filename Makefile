@@ -4,7 +4,8 @@
 
 include Makefile.settings
 
-BINS += ctrlproxy$(EXEEXT) ctrlproxyd$(EXEEXT)
+BINS += ctrlproxy$(EXEEXT)
+SBINS += ctrlproxyd$(EXEEXT)
 
 GCOV = gcov
 
@@ -28,7 +29,7 @@ LIBIRC_SONAME = libirc.$(SHLIBEXT).$(LIBIRC_SOVERSION)
 
 .PHONY: all clean distclean install install-bin install-dirs install-doc install-data install-pkgconfig
 
-all: $(BINS)
+all: $(BINS) $(SBINS)
 
 experimental:: all 
 
@@ -144,13 +145,16 @@ install-dirs:
 uninstall: uninstall-bin uninstall-header uninstall-data uninstall-pkgconfig $(patsubst install-%,uninstall-%,$(EXTRA_INSTALL_TARGETS))
 uninstall-bin:
 	-rm -f $(DESTDIR)$(bindir)/ctrlproxy$(EXEEXT) \
-		   $(DESTDIR)$(bindir)/ctrlproxy-admin$(EXEEXT)
+		   $(DESTDIR)$(bindir)/ctrlproxy-admin$(EXEEXT) \
+		   $(DESTDIR)$(sbindir)/ctrlproxyd$(EXEEXT)
 	-rmdir $(DESTDIR)$(bindir)
+	-rmdir $(DESTDIR)$(sbindir)
 	-rmdir $(DESTDIR)$(modulesdir)
 
 install-bin:
 	$(INSTALL) -d $(DESTDIR)$(bindir)
 	$(INSTALL) $(BINS) $(DESTDIR)$(bindir)
+	$(INSTALL) $(SBINS) $(DESTDIR)$(sbindir)
 
 uninstall-header:
 	-rm -f $(patsubst %,$(DESTDIR)$(destincludedir)/%,$(notdir $(headers) $(lib_headers)))

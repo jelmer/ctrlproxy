@@ -9,6 +9,7 @@ datarootdir = @datarootdir@
 localedir = @datadir@/locale
 INSTALL = @INSTALL@
 bindir = @bindir@
+sbindir = @sbindir@
 docdir = @prefix@/share/doc/ctrlproxy
 modulesdir = @libdir@/ctrlproxy
 libdir = @libdir@
