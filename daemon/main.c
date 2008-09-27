@@ -48,6 +48,7 @@ static GList *daemon_clients = NULL;
 /* there are no hup signals here */
 void register_hup_handler(hup_handler_fn fn, void *userdata) {}
 static void daemon_client_kill(struct daemon_client_data *dc);
+static gboolean daemon_client_connect_user(struct daemon_client_data *cd, struct pending_client *clm, const char *username);
 
 struct ctrlproxyd_config {
 	char *ctrlproxy_path;
@@ -431,16 +432,37 @@ static void client_done(struct daemon_client_data *dc)
 static gboolean daemon_socks_gssapi (struct pending_client *pc, gss_name_t username)
 {
 	struct daemon_client_data *cd = pc->private_data;
-	return FALSE; /* FIXME */
+	guint32 major_status, minor_status;
+	gss_buffer_desc namebuf;
+
+	namebuf.value = NULL;
+	namebuf.length = 0;
+
+	major_status = gss_export_name(&minor_status, username, &namebuf);
+	if (GSS_ERROR(major_status)) {
+		log_gssapi(pc->listener, LOG_WARNING, 
+				   "releasing name", major_status, minor_status);
+		return FALSE;
+	}
+
+	if (!daemon_client_connect_user(cd, pc, namebuf.value))
+		return FALSE;
+	major_status = gss_release_buffer(&minor_status, &namebuf);
+
+	g_assert(cd->pass_check_cb == NULL);
+
+	cd->authenticated = TRUE;
+
+	/* FIXME: Let the backend know somehow authentication is already done */
+
+	return TRUE; 
 }
 #endif
 
-static gboolean daemon_socks_auth_simple(struct pending_client *cl, const char *username, const char *password,
-										 gboolean (*on_finished) (struct pending_client *, gboolean))
+static gboolean daemon_client_connect_user(struct daemon_client_data *cd, struct pending_client *cl, const char *username)
 {
-	struct daemon_client_data *cd = cl->private_data;
 	GIOChannel *ioc;
-	
+
 	daemon_user_free(cd->user);
 	cd->user = daemon_user(cd->config, username);
 	if (cd->user == NULL) {
@@ -460,6 +482,17 @@ static gboolean daemon_socks_auth_simple(struct pending_client *cl, const char *
 	}
 
 	irc_transport_set_callbacks(cd->backend_transport, &daemon_backend_callbacks, cd);
+
+	return TRUE;
+}
+
+static gboolean daemon_socks_auth_simple(struct pending_client *cl, const char *username, const char *password,
+										 gboolean (*on_finished) (struct pending_client *, gboolean))
+{
+	struct daemon_client_data *cd = cl->private_data;
+	
+	if (!daemon_client_connect_user(cd, cl, username))
+		return FALSE;
 
 	g_assert(cd->pass_check_cb == NULL);
 
@@ -509,7 +542,6 @@ static gboolean plain_handle_auth_finish(gpointer userdata, gboolean accepted)
 static gboolean handle_client_line(struct pending_client *pc, const struct irc_line *l)
 {
 	struct daemon_client_data *cd = pc->private_data;
-	GIOChannel *ioc;
 
 	if (l == NULL || l->args[0] == NULL) { 
 		return TRUE;
@@ -536,25 +568,8 @@ static gboolean handle_client_line(struct pending_client *pc, const struct irc_l
 	}
 
 	if (cd->username != NULL && cd->password != NULL && cd->nick != NULL) {
-		daemon_user_free(cd->user);
-		cd->user = daemon_user(cd->config, cd->username);
-		if (cd->user == NULL) {
-			listener_log(LOG_INFO, pc->listener, "Unable to find user %s", 
-						 cd->username);
-			irc_sendf(pc->connection, pc->listener->iconv, NULL, "ERROR :Unknown user %s", cd->username);
+		if (!daemon_client_connect_user(cd, pc, cd->username))
 			return FALSE;
-		}
-
-		ioc = connect_user(cd->config, pc, cd->user);
-		if (ioc == NULL) {
-			return FALSE;
-		}
-
-		cd->backend_transport = irc_transport_new_iochannel(ioc);
-		if (cd->backend_transport == NULL) {
-			return FALSE;
-		}
-		irc_transport_set_callbacks(cd->backend_transport, &daemon_backend_callbacks, cd);
 
 		cd->description = g_io_channel_ip_get_description(pc->connection);
 		listener_log(LOG_INFO, pc->listener, "Accepted new client %s for user %s", cd->description, cd->user->username);

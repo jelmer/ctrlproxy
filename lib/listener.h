@@ -111,4 +111,8 @@ G_MODULE_EXPORT gboolean listener_socks_error(struct pending_client *pc, guint8 
 G_MODULE_EXPORT gboolean listener_socks_reply(struct pending_client *pc, guint8 err, guint8 atyp, guint8 data_len, gchar *data, guint16 port);
 G_MODULE_EXPORT struct pending_client *listener_new_pending_client(struct irc_listener *listener, GIOChannel *c);
 
+#ifdef HAVE_GSSAPI
+void log_gssapi(struct irc_listener *l, enum log_level level, const char *message, guint32 major_status, guint32 minor_status);
+#endif
+
 #endif

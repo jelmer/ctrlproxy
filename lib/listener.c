@@ -37,7 +37,6 @@
 
 #ifdef HAVE_GSSAPI
 static gboolean gssapi_fail(struct pending_client *pc);
-static void log_gssapi(struct irc_listener *l, enum log_level level, const char *message, guint32 major_status, guint32 minor_status);
 #endif
 
 struct listener_iochannel {
@@ -113,7 +112,7 @@ static gboolean kill_pending_client(struct pending_client *pc)
 }
 
 #ifdef HAVE_GSSAPI
-static void log_gssapi(struct irc_listener *l, enum log_level level, const char *message, guint32 major_status, guint32 minor_status)
+void log_gssapi(struct irc_listener *l, enum log_level level, const char *message, guint32 major_status, guint32 minor_status)
 {
 	guint32 err_major_status, err_minor_status;
 	guint32	msg_ctx = 0;
