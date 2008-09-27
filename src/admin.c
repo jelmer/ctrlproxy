@@ -414,9 +414,17 @@ static void info_network_helper(admin_handle h, const char *name)
 		admin_out(h, "Interface to %s", nc->type_settings.program_location);
 	}
 
-	admin_out(h, "%d clients connected", g_list_length(n->clients));
+	if (n->clients == NULL) {
+		admin_out(h, "No clients connected");
+	} else {
+		GList *gl;
+		admin_out(h, "Clients:");
+		for (gl = n->clients; gl; gl = gl->next) {
+			struct irc_client *cl = gl->data;
+			admin_out(h, "  %s", cl->description);
+		}
+	}
 }
-
 
 
 static void list_networks_helper(admin_handle h)

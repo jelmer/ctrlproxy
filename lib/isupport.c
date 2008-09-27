@@ -280,8 +280,12 @@ static void check_chanmodes_inconsistency(struct irc_network_info *info)
 		for (j = 0; info->chanmodes[i][j]; j++) {
 			if (!strchr(info->supported_channel_modes, info->chanmodes[i][j])) {
 				char *new_modes;
-				log_global(LOG_WARNING, 
+				if (info->name != NULL) 
+					log_global(LOG_WARNING, 
 						   "Server for %s reported inconsistent supported modes. %c was in CHANMODES but not in 004 line.", info->name, info->chanmodes[i][j]);
+				else
+					log_global(LOG_WARNING, 
+						   "Server reported inconsistent supported modes. %c was in CHANMODES but not in 004 line.", info->chanmodes[i][j]);
 				new_modes = g_strdup_printf("%s%c", info->supported_channel_modes, info->chanmodes[i][j]);
 				g_free(info->supported_channel_modes);
 				info->supported_channel_modes = new_modes;
