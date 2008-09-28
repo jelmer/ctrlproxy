@@ -1,3 +1,4 @@
-- interpret remaining sections in ~/.ctrlproxy/config as network configurations
-- allow multiple connections to one network
 - allow setting network-specific configuration using <networkname>/<variable>
+- allow using system authentication (PAM/GSSAPI) in ctrlproxyd
+ - how to pass on "User ok" information to ctrlproxy?
+- allow registering new users?
