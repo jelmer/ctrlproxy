@@ -807,6 +807,34 @@ static gboolean connect_program(struct irc_network *s)
 	return TRUE;
 }
 
+static gboolean connect_virtual(struct irc_network *s)
+{
+	struct irc_login_details *details;
+	struct network_config *nc = s->private_data;
+
+	s->connection.data.virtual.ops = g_hash_table_lookup(
+							virtual_network_ops, 
+							nc->type_settings.virtual_type);
+	if (!s->connection.data.virtual.ops) 
+		return FALSE;
+
+	details = s->callbacks->get_login_details(s);
+
+	s->external_state = network_state_init(details->nick, details->username, 
+								  get_my_hostname());
+
+	free_login_details(details);
+	s->external_state->userdata = s;
+	s->external_state->log = state_log_helper;
+	s->linestack = new_linestack(s);
+	s->connection.state = NETWORK_CONNECTION_STATE_MOTD_RECVD;
+
+	if (s->connection.data.virtual.ops->init)
+		return s->connection.data.virtual.ops->init(s);
+
+	return TRUE;
+}
+
 static gboolean connect_server(struct irc_network *s)
 {
 	struct network_config *nc = s->private_data;
@@ -822,23 +850,7 @@ static gboolean connect_server(struct irc_network *s)
 		return connect_program(s);
 
 	case NETWORK_VIRTUAL:
-		s->connection.data.virtual.ops = g_hash_table_lookup(
-								virtual_network_ops, 
-								nc->type_settings.virtual_type);
-		if (!s->connection.data.virtual.ops) 
-			return FALSE;
-
-		s->external_state = network_state_init(nc->nick, nc->username, 
-									  get_my_hostname());
-		s->external_state->userdata = s;
-		s->external_state->log = state_log_helper;
-		s->linestack = new_linestack(s);
-		s->connection.state = NETWORK_CONNECTION_STATE_MOTD_RECVD;
-
-		if (s->connection.data.virtual.ops->init)
-			return s->connection.data.virtual.ops->init(s);
-
-		return TRUE;
+		return connect_virtual(s);
 	default: g_assert_not_reached();
 	}
 
