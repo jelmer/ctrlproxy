@@ -396,6 +396,7 @@ void free_login_details(struct irc_login_details *details)
 	g_free(details->realname);
 	g_free(details->unused);
 	g_free(details->username);
+	g_free(details->mode);
 	g_free(details);
 }
 

@@ -956,10 +956,10 @@ static void config_load_networks(struct ctrlproxy_config *cfg, GList *channel_ke
 			n = config_load_network_file(cfg, networksdir, name, channel_keys);
 		}
 
-		g_free(networksdir);
-
 		g_dir_close(dir);
 	}
+	g_free(networksdir);
+
 
 	/* Load other networks in configuration file */
 	groups = g_key_file_get_groups(cfg->keyfile, &size);
