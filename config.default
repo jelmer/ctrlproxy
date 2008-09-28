@@ -101,3 +101,7 @@ virtual = admin
 ## How many seconds to wait between tries to reconnect
 ## to the server.
 # reconnect-interval=60
+
+## Interfacing with a local inetd-style program
+[BitlBee]
+program = /usr/sbin/bitlbee

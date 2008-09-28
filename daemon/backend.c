@@ -78,8 +78,9 @@ static const struct irc_transport_callbacks daemon_backend_callbacks = {
 };
 
 struct daemon_backend *daemon_backend_open(const char *socketpath,
-											   const struct daemon_backend_callbacks *callbacks,
-											   gpointer userdata)
+											const struct daemon_backend_callbacks *callbacks,
+											gpointer userdata,
+											struct irc_listener *listener)
 {
 	struct daemon_backend *backend;
 	int sock;
@@ -92,7 +93,7 @@ struct daemon_backend *daemon_backend_open(const char *socketpath,
 	strncpy(un.sun_path, socketpath, sizeof(un.sun_path));
 
 	if (connect(sock, (struct sockaddr *)&un, sizeof(un)) < 0) {
-		/* FIXME: listener_log(LOG_INFO, pc->listener, "unable to connect to %s: %s", un.sun_path, strerror(errno)); */
+		listener_log(LOG_INFO, listener, "unable to connect to %s: %s", un.sun_path, strerror(errno));
 		close(sock);
 		return NULL;
 	}

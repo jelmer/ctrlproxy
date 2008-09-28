@@ -355,6 +355,9 @@ static struct irc_login_details *get_login_details(struct irc_network *s)
 		ret->password = g_strdup(nc->password);
 	}
 
+	ret->mode = g_strdup("a"); /* FIXME: Should this perhaps be set to something else ? */
+	ret->unused = g_strdup("a"); /* FIXME: Should this perhaps be set to something else ? */
+
 	return ret;
 }
 

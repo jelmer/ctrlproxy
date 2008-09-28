@@ -263,7 +263,9 @@ static gboolean daemon_client_connect_backend(struct daemon_client *cd, struct p
 		}
 	}
 
-	cd->backend = daemon_backend_open(cd->user->socketpath, &backend_callbacks, cd);
+	cd->backend = daemon_backend_open(cd->user->socketpath, &backend_callbacks, cd, cl->listener);
+	if (cd->backend == NULL)
+		return FALSE;
 
 	return TRUE;
 }

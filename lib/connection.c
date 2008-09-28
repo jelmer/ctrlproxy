@@ -54,7 +54,12 @@ static void server_send_login (struct irc_network *s)
 	if (login_details->password != NULL) {
 		network_send_args(s, "PASS", login_details->password, NULL);
 	}
+	g_assert(login_details->nick != NULL && strlen(login_details->nick) > 0);
 	network_send_args(s, "NICK", login_details->nick, NULL);
+	g_assert(login_details->username != NULL && strlen(login_details->username) > 0);
+	g_assert(login_details->mode != NULL && strlen(login_details->mode) > 0);
+	g_assert(login_details->unused != NULL && strlen(login_details->unused) > 0);
+	g_assert(login_details->realname != NULL && strlen(login_details->realname) > 0);
 	network_send_args(s, "USER", login_details->username, login_details->mode, 
 					  login_details->unused, login_details->realname, NULL);
 

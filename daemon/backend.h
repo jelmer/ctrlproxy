@@ -41,7 +41,8 @@ struct daemon_backend_callbacks {
 
 struct daemon_backend *daemon_backend_open(const char *socketpath,
 											   const struct daemon_backend_callbacks *callbacks,
-											   gpointer userdata);
+											   gpointer userdata,
+											   struct irc_listener *listener);
 gboolean daemon_backend_authenticate(struct daemon_backend *backend,
 									 const char *password,
 									 void (*callback) (struct daemon_backend *backend, gboolean));
