@@ -30,7 +30,7 @@ struct ctcp_handle;
  * CTCP command handling
  */
 struct ctcp_handler {
-	char *name;
+	const char *name;
 	void (*fn) (struct ctcp_handle *, const char **args);
 };
 
@@ -40,5 +40,8 @@ gboolean ctcp_process_request(struct irc_network *, const struct irc_line *);
 G_MODULE_EXPORT void ctcp_register_handler(const struct ctcp_handler *);
 G_MODULE_EXPORT G_GNUC_NULL_TERMINATED void ctcp_send(struct irc_network *, const char *, ...);
 G_MODULE_EXPORT G_GNUC_NULL_TERMINATED void ctcp_reply(struct ctcp_handle *, ...);
+struct irc_network *ctcp_get_network(struct ctcp_handle *h);
+struct network_nick *ctcp_get_network_nick(struct ctcp_handle *h);
+const char *ctcp_get_nick(struct ctcp_handle *h);
 
 #endif /* __CTCP_H__ */

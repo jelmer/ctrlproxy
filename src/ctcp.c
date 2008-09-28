@@ -140,7 +140,7 @@ static GList *cmds = NULL;
 
 static void handle_clientinfo(struct ctcp_handle *h, const char **args)
 {
-	char **supported = g_new0(char *, sizeof(builtins)/sizeof(builtins[0])+1+g_list_length(cmds));
+	const char * *supported = g_new0(const char *, sizeof(builtins)/sizeof(builtins[0])+1+g_list_length(cmds));
 	char *tmp;
 	int i;
 	GList *gl;
@@ -155,7 +155,7 @@ static void handle_clientinfo(struct ctcp_handle *h, const char **args)
 
 	supported[i] = NULL;
 
-	tmp = g_strjoinv(" ", supported);
+	tmp = g_strjoinv(" ", (char **)supported);
 	ctcp_reply(h, "CLIENTINFO", tmp, NULL);
 	g_free(tmp);
 	g_free(supported);
@@ -223,3 +223,19 @@ gboolean ctcp_process_request (struct irc_network *n, const struct irc_line *l)
 
 	return ret;
 }
+
+struct irc_network *ctcp_get_network(struct ctcp_handle *h)
+{
+       return h->network;
+}
+
+struct network_nick *ctcp_get_network_nick(struct ctcp_handle *h)
+{
+       return find_network_nick(h->network->external_state, h->nick);
+}
+
+const char *ctcp_get_nick(struct ctcp_handle *h)
+{
+       return h->nick;
+}
+
