@@ -47,6 +47,7 @@ START_TEST(test_login)
 		.name = "test",
 		.nick = g_strdup("foo"),
 		.username = g_strdup("blah"),
+		.fullname = g_strdup("bloeh "),
 		.type = NETWORK_IOCHANNEL
 	};
 	struct irc_network *n;
@@ -63,7 +64,7 @@ START_TEST(test_login)
 	disconnect_network(n);
 	g_io_channel_read_to_end(ch2, &raw, NULL, &error);
 	fail_unless(error == NULL);
-	fail_unless(!strcmp(raw, "NICK foo\r\nUSER blah blah :test\r\nQUIT\r\n"));
+	fail_unless(!strcmp(raw, "NICK foo\r\nUSER blah a a :bloeh \r\nQUIT\r\n"), raw);
 END_TEST
 
 Suite *network_suite()
