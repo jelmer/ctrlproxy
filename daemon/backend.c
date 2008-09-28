@@ -100,6 +100,7 @@ struct daemon_backend *daemon_backend_open(const char *socketpath,
 	backend = g_new0(struct daemon_backend, 1);
 	ch = g_io_channel_unix_new(sock);
 
+	g_io_channel_set_encoding(ch, NULL, NULL);
 	g_io_channel_set_flags(ch, G_IO_FLAG_NONBLOCK, NULL);
 
 	backend->transport = irc_transport_new_iochannel(ch);
