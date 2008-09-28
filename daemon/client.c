@@ -22,6 +22,7 @@
 #endif
 #include <pwd.h>
 #include "internals.h"
+#include "daemon/daemon.h"
 #include "daemon/client.h"
 #include "daemon/user.h"
 #include "daemon/backend.h"
@@ -48,28 +49,30 @@ void daemon_client_kill(struct daemon_client *dc)
 	}
 
 	daemon_user_free(dc->user);
-	g_free(dc->credentials.nick);
-	g_free(dc->credentials.password);
-	g_free(dc->credentials.realname);
-	g_free(dc->credentials.servername);
-	g_free(dc->credentials.servicename);
-	g_free(dc->credentials.unused);
-	g_free(dc->credentials.username);
+	g_free(dc->login_details->nick);
+	g_free(dc->login_details->password);
+	g_free(dc->login_details->realname);
+	g_free(dc->login_details->servername);
+	g_free(dc->login_details->servicename);
+	g_free(dc->login_details->unused);
+	g_free(dc->login_details->username);
+	g_free(dc->login_details);
 	g_free(dc->description);
 	g_free(dc);
 
-	if (dc->inetd)
+	if (dc->inetd) {
 		exit(0);
+	}
 }
 
 void daemon_client_forward_credentials(struct daemon_client *dc)
 {
 	g_assert(dc->backend != NULL);
 
-	if (dc->credentials.servername != NULL && dc->credentials.servicename != NULL)
-		transport_send_args(dc->backend->transport, "CONNECT", dc->credentials.servername, dc->credentials.servicename, NULL);
-	transport_send_args(dc->backend->transport, "USER", dc->credentials.username, dc->credentials.mode, dc->credentials.unused, dc->credentials.realname, NULL);
-	transport_send_args(dc->backend->transport, "NICK", dc->credentials.nick, NULL);
+	if (dc->login_details->servername != NULL)
+		transport_send_args(dc->backend->transport, "CONNECT", dc->login_details->servername, dc->login_details->servicename, NULL);
+	transport_send_args(dc->backend->transport, "USER", dc->login_details->username, dc->login_details->mode, dc->login_details->unused, dc->login_details->realname, NULL);
+	transport_send_args(dc->backend->transport, "NICK", dc->login_details->nick, NULL);
 
 	daemon_clients = g_list_append(daemon_clients, dc);
 }

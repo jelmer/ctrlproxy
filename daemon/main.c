@@ -186,7 +186,7 @@ static gboolean daemon_socks_gssapi (struct pending_client *pc, gss_name_t usern
 	gss_buffer_desc namebuf;
 
 	namebuf.value = NULL;
-	namebuf.length = 0;
+	namebuf.length = 0
 
 	major_status = gss_export_name(&minor_status, username, &namebuf);
 	if (GSS_ERROR(major_status)) {
@@ -217,6 +217,7 @@ static gboolean backend_error(struct daemon_backend *backend, const char *error_
 static void backend_disconnect(struct daemon_backend *backend)
 {
 	struct daemon_client *cd = backend->userdata;
+
 	listener_log(LOG_INFO, cd->listener, "Backend of %s disconnected", cd->description);
 
 	daemon_client_kill(cd);
@@ -225,6 +226,7 @@ static void backend_disconnect(struct daemon_backend *backend)
 static gboolean backend_recv(struct daemon_backend *backend, const struct irc_line *line)
 {
 	struct daemon_client *cd = backend->userdata;
+
 	return transport_send_line(cd->client_transport, line);
 }
 
@@ -284,8 +286,8 @@ static gboolean daemon_socks_connect_fqdn (struct pending_client *cl, const char
 
 	/* Only called after authentication */
 
-	cd->credentials.servername = g_strdup(hostname);
-	cd->credentials.servicename = g_strdup_printf("%d", port);
+	cd->login_details->servername = g_strdup(hostname);
+	cd->login_details->servicename = g_strdup_printf("%d", port);
 
 	cd->description = g_io_channel_ip_get_description(cl->connection);
 	listener_log(LOG_INFO, cl->listener, "Accepted new client %s for user %s", cd->description, cd->user->username);
@@ -322,17 +324,17 @@ static gboolean handle_client_line(struct pending_client *pc, const struct irc_l
 	}
 
 	if (!g_strcasecmp(l->args[0], "PASS")) {
-		cd->credentials.password = g_strdup(l->args[1]);
+		cd->login_details->password = g_strdup(l->args[1]);
 	} else if (!g_strcasecmp(l->args[0], "CONNECT")) {
-		cd->credentials.servername = g_strdup(l->args[1]);
-		cd->credentials.servicename = g_strdup(l->args[2]);
+		cd->login_details->servername = g_strdup(l->args[1]);
+		cd->login_details->servicename = g_strdup(l->args[2]);
 	} else if (!g_strcasecmp(l->args[0], "USER") && l->argc > 4) {
-		cd->credentials.username = g_strdup(l->args[1]);
-		cd->credentials.mode = g_strdup(l->args[2]);
-		cd->credentials.unused = g_strdup(l->args[3]);
-		cd->credentials.realname = g_strdup(l->args[4]);
+		cd->login_details->username = g_strdup(l->args[1]);
+		cd->login_details->mode = g_strdup(l->args[2]);
+		cd->login_details->unused = g_strdup(l->args[3]);
+		cd->login_details->realname = g_strdup(l->args[4]);
 	} else if (!g_strcasecmp(l->args[0], "NICK")) {
-		cd->credentials.nick = g_strdup(l->args[1]);
+		cd->login_details->nick = g_strdup(l->args[1]);
 	} else if (!g_strcasecmp(l->args[0], "QUIT")) {
 		return FALSE;
 	} else {
@@ -341,8 +343,8 @@ static gboolean handle_client_line(struct pending_client *pc, const struct irc_l
 		g_io_channel_flush(pc->connection, NULL);
 	}
 
-	if (cd->credentials.username != NULL && cd->credentials.password != NULL && cd->credentials.nick != NULL) {
-		if (!daemon_client_connect_backend(cd, pc, cd->credentials.username))
+	if (cd->login_details->username != NULL && cd->login_details->password != NULL && cd->login_details->nick != NULL) {
+		if (!daemon_client_connect_backend(cd, pc, cd->login_details->username))
 			return FALSE;
 
 		cd->description = g_io_channel_ip_get_description(pc->connection);
@@ -350,7 +352,7 @@ static gboolean handle_client_line(struct pending_client *pc, const struct irc_l
 
 		cd->client_transport = irc_transport_new_iochannel(pc->connection);
 
-		daemon_backend_authenticate(cd->backend, cd->credentials.password, plain_handle_auth_finish);
+		daemon_backend_authenticate(cd->backend, cd->login_details->password, plain_handle_auth_finish);
 
 		irc_transport_set_callbacks(cd->client_transport, &daemon_client_callbacks, cd);
 
@@ -365,6 +367,7 @@ static gboolean handle_client_line(struct pending_client *pc, const struct irc_l
 static void daemon_new_client(struct pending_client *pc)
 {
 	struct daemon_client *cd = g_new0(struct daemon_client, 1);
+	cd->login_details = g_new0(struct login_details, 1);
 	cd->listener = pc->listener;
 	cd->config = global_daemon_config;
 	pc->private_data = cd;

@@ -27,4 +27,15 @@ struct ctrlproxyd_config {
 	char *configdir;
 };
 
+struct login_details {
+	char *password;
+	char *servername;
+	char *servicename;
+	char *nick;
+	char *username;
+	char *mode;
+	char *unused;
+	char *realname;
+};
+
 #endif

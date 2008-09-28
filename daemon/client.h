@@ -28,16 +28,7 @@ struct daemon_client {
 	struct ctrlproxyd_config *config;
 	gboolean (*socks_accept_fn) (struct pending_client *, gboolean);
 	struct pending_client *pending_client;
-	struct {
-		char *password;
-		char *servername;
-		char *servicename;
-		char *nick;
-		char *username;
-		char *mode;
-		char *unused;
-		char *realname;
-	} credentials;
+	struct login_details *login_details;
 	char *description;
 	gboolean freed;
 	gboolean inetd;
