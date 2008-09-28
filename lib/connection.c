@@ -626,7 +626,7 @@ static gboolean close_server(struct irc_network *n)
 	if (n->connection.state == NETWORK_CONNECTION_STATE_MOTD_RECVD) {
 		server_disconnected_hook_execute(n);
 		clients_send_netsplit(n->clients, n->external_state->info->server);
-		network_update_config(n->external_state, nc);
+		network_update_config(n->external_state, nc, n->global->config);
 	}
 
 	if (n->external_state) {

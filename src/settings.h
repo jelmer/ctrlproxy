@@ -180,6 +180,10 @@ struct ctrlproxy_config {
 	char *admin_socket;
 	char *password;
 
+	char *default_nick;
+	char *default_username;
+	char *default_realname;
+
 	/** Whether to create networks that don't exist yet. */
 	gboolean create_implicit;
 

@@ -39,7 +39,8 @@ static struct channel_config *config_find_channel(struct irc_network_info *ni, s
 	return NULL;
 }
 
-void network_update_config(struct irc_network_state *ns, struct network_config *nc)
+void network_update_config(struct irc_network_state *ns, struct network_config *nc,
+						   struct ctrlproxy_config *cfg)
 {
 	GList *gl;
 
@@ -47,8 +48,10 @@ void network_update_config(struct irc_network_state *ns, struct network_config *
 		return;
 	
 	/* nick */
-	g_free(nc->nick);
-	nc->nick = g_strdup(ns->me.nick);
+	if (cfg->default_nick == NULL || nc->nick != NULL || strcmp(cfg->default_nick, ns->me.nick) != 0) {
+		g_free(nc->nick);
+		nc->nick = g_strdup(ns->me.nick);
+	}
 
 	for (gl = nc->channels; gl; gl = gl->next) {
 		struct channel_config *cc = gl->data;
@@ -92,6 +95,6 @@ void global_update_config(struct global *my_global)
 		}
 
 		if (n->connection.state == NETWORK_CONNECTION_STATE_MOTD_RECVD)
-			network_update_config(n->external_state, nc);
+			network_update_config(n->external_state, nc, my_global->config);
 	}
 }

@@ -446,6 +446,19 @@ void save_configuration(struct ctrlproxy_config *cfg, const char *configuration_
 		break;
 	}
 
+	if (cfg->default_realname != NULL)
+		g_key_file_set_string(cfg->keyfile, "global", "default-fullname", cfg->default_realname);
+	else 
+		g_key_file_remove_key(cfg->keyfile, "global", "default-fullname", NULL);
+	if (cfg->default_nick != NULL)
+		g_key_file_set_string(cfg->keyfile, "global", "default-nick", cfg->default_nick);
+	else 
+		g_key_file_remove_key(cfg->keyfile, "global", "default-nick", NULL);
+	if (cfg->default_username != NULL)
+		g_key_file_set_string(cfg->keyfile, "global", "default-username", cfg->default_username);
+	else
+		g_key_file_remove_key(cfg->keyfile, "global", "default-username", NULL);
+
 	if (cfg->report_time_offset != 0 ||
 		g_key_file_has_key(cfg->keyfile, "global", "report-time-offset", NULL))
 		g_key_file_set_integer(cfg->keyfile, "global", "report-time-offset", cfg->report_time_offset);
@@ -1272,6 +1285,27 @@ struct ctrlproxy_config *load_configuration(const char *dir)
 		cfg->create_implicit = g_key_file_get_boolean(kf, "global", "create-implicit", NULL);
 	else
 		cfg->create_implicit = TRUE;
+
+	if (g_key_file_has_key(kf, "global", "default-username", NULL)) {
+		g_free(cfg->default_username);
+		cfg->default_username = g_key_file_get_string(kf, "global", "default-username", NULL);
+		if (!strcmp(cfg->default_username, "") || cfg->default_username[0] == ' ')
+			log_global(LOG_WARNING, "Invalid default username `%s' set", cfg->default_username);
+	}
+
+	if (g_key_file_has_key(kf, "global", "default-fullname", NULL)) {
+		g_free(cfg->default_realname);
+		cfg->default_realname = g_key_file_get_string(kf, "global", "default-fullname", NULL);
+		if (!strcmp(cfg->default_realname, "") || cfg->default_realname[0] == ' ')
+			log_global(LOG_WARNING, "Invalid default fullname `%s' set", cfg->default_realname);
+	}
+
+	if (g_key_file_has_key(kf, "global", "nick", NULL)) {
+		g_free(cfg->default_nick);
+		cfg->default_nick = g_key_file_get_string(kf, "global", "nick", NULL);
+		if (!strcmp(cfg->default_nick, "") || cfg->default_nick[0] == ' ')
+			log_global(LOG_WARNING, "Invalid nick name `%s' set", cfg->default_nick);
+	}
 
 	if (!g_file_test(cfg->motd_file, G_FILE_TEST_EXISTS))
 		log_global(LOG_ERROR, "Can't open MOTD file '%s' for reading", cfg->motd_file);

@@ -122,7 +122,7 @@ gboolean client_try_cache(struct irc_client *c, struct irc_network_state *n, str
 void init_linestack(struct ctrlproxy_config *);
 
 /* gen_config.c */
-void network_update_config(struct irc_network_state *ns, struct network_config *nc);
+void network_update_config(struct irc_network_state *ns, struct network_config *nc, struct ctrlproxy_config *);
 void channel_update_config(struct irc_channel_state *ns, struct channel_config *nc);
 void global_update_config(struct global *my_global);
 
