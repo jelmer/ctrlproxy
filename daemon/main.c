@@ -186,7 +186,7 @@ static gboolean daemon_socks_gssapi (struct pending_client *pc, gss_name_t usern
 	gss_buffer_desc namebuf;
 
 	namebuf.value = NULL;
-	namebuf.length = 0
+	namebuf.length = 0;
 
 	major_status = gss_export_name(&minor_status, username, &namebuf);
 	if (GSS_ERROR(major_status)) {

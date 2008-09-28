@@ -62,10 +62,6 @@ static gboolean handle_transport_receive(GIOChannel *c, GIOCondition cond,
 		return FALSE;
 	}
 
-	if (cond & G_IO_HUP) {
-		transport->callbacks->hangup(transport);
-		return FALSE;
-	}
 
 	if (cond & G_IO_IN) {
 		GError *error = NULL;
@@ -84,6 +80,12 @@ static gboolean handle_transport_receive(GIOChannel *c, GIOCondition cond,
 
 		return ret && handle_recv_status(transport, status, error);
 	}
+
+	if (cond & G_IO_HUP) {
+		transport->callbacks->hangup(transport);
+		return FALSE;
+	}
+
 
 	return TRUE;
 }
