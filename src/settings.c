@@ -1303,9 +1303,9 @@ struct ctrlproxy_config *load_configuration(const char *dir)
 			log_global(LOG_WARNING, "Invalid default fullname `%s' set", cfg->default_realname);
 	}
 
-	if (g_key_file_has_key(kf, "global", "nick", NULL)) {
+	if (g_key_file_has_key(kf, "global", "default-nick", NULL)) {
 		g_free(cfg->default_nick);
-		cfg->default_nick = g_key_file_get_string(kf, "global", "nick", NULL);
+		cfg->default_nick = g_key_file_get_string(kf, "global", "default-nick", NULL);
 		if (!strcmp(cfg->default_nick, "") || cfg->default_nick[0] == ' ')
 			log_global(LOG_WARNING, "Invalid nick name `%s' set", cfg->default_nick);
 	}
