@@ -10,7 +10,7 @@ struct admin_handle;
 
 typedef struct admin_handle *admin_handle;
 
-typedef void (*admin_command_handler) (admin_handle, char **, void *userdata);
+typedef void (*admin_command_handler) (admin_handle, const char * const*, void *userdata);
 
 /**
  * Handle used in the administration subsystem.

@@ -93,7 +93,7 @@ static void network_admin_out(admin_handle h, const char *data)
  * @param args Arguments
  * @param userdata User context data (ignored)
  */
-static void cmd_help(admin_handle h, char **args, void *userdata)
+static void cmd_help(admin_handle h, const char * const *args, void *userdata)
 {
 	const char *s;
 
@@ -167,7 +167,7 @@ void admin_out(admin_handle h, const char *fmt, ...)
  * @param args String arguments, argv-style.
  * @param userdata Optional user data, always NULL.
  */
-static void cmd_add_network (admin_handle h, char **args, void *userdata)
+static void cmd_add_network (admin_handle h, const char * const *args, void *userdata)
 {
 	if (args[1] == NULL) {
 		admin_out(h, "No name specified");
@@ -177,7 +177,7 @@ static void cmd_add_network (admin_handle h, char **args, void *userdata)
 	add_network_helper(h, args[1]);
 }
 
-static void cmd_del_network (admin_handle h, char **args, void *userdata)
+static void cmd_del_network (admin_handle h, const char * const *args, void *userdata)
 {
 	if (args[1] == NULL) {
 		admin_out(h, "Not enough parameters");
@@ -187,7 +187,7 @@ static void cmd_del_network (admin_handle h, char **args, void *userdata)
 	del_network_helper(h, args[1]);
 }
 
-static void cmd_add_server (admin_handle h, char **args, void *userdata)
+static void cmd_add_server (admin_handle h, const char * const *args, void *userdata)
 {
 	struct irc_network *n;
 	struct tcp_server_config *s;
@@ -230,7 +230,7 @@ static void cmd_add_server (admin_handle h, char **args, void *userdata)
 	admin_out(h, "Server added to `%s'", args[1]);
 }
 
-static void cmd_connect_network (admin_handle h, char **args, void *userdata)
+static void cmd_connect_network (admin_handle h, const char * const *args, void *userdata)
 {
 	struct irc_network *s;
 	if (!args[1]) {
@@ -267,7 +267,7 @@ static void cmd_connect_network (admin_handle h, char **args, void *userdata)
 	}
 }
 
-static void cmd_disconnect_network (admin_handle h, char **args, void *userdata)
+static void cmd_disconnect_network (admin_handle h, const char * const *args, void *userdata)
 {
 	struct irc_network *n;
 	struct network_config *nc;
@@ -300,7 +300,7 @@ static void cmd_disconnect_network (admin_handle h, char **args, void *userdata)
 	}
 }
 
-static void cmd_next_server (admin_handle h, char **args, void *userdata) 
+static void cmd_next_server (admin_handle h, const char * const *args, void *userdata) 
 {
 	struct irc_network *n;
 	const char *name;
@@ -327,7 +327,7 @@ static void cmd_next_server (admin_handle h, char **args, void *userdata)
 	}
 }
 
-static void cmd_save_config (admin_handle h, char **args, void *userdata)
+static void cmd_save_config (admin_handle h, const char * const *args, void *userdata)
 { 
 	const char *adm_dir;
 	struct global *global = admin_get_global(h);
@@ -466,7 +466,7 @@ static void list_networks_helper(admin_handle h)
 /* NETWORK ADD OFTC */
 /* NETWORK DEL OFTC */
 /* NETWORK INFO OFTC */
-static void cmd_network(admin_handle h, char **args, void *userdata)
+static void cmd_network(admin_handle h, const char * const *args, void *userdata)
 {
 	if (args[1] == NULL)
 		goto usage;
@@ -510,12 +510,12 @@ usage:
 	admin_out(h, "Usage: network [list|add <name>|del <name>]");
 }
 
-static void cmd_list_networks(admin_handle h, char **args, void *userdata)
+static void cmd_list_networks(admin_handle h, const char * const *args, void *userdata)
 {
 	list_networks_helper(h);
 }
 
-static void cmd_detach(admin_handle h, char **args, void *userdata)
+static void cmd_detach(admin_handle h, const char * const *args, void *userdata)
 {
 	struct irc_client *c = admin_get_client(h);
 
@@ -527,7 +527,7 @@ static void cmd_detach(admin_handle h, char **args, void *userdata)
 	client_disconnect(c, "Client exiting");
 }
 
-static void dump_joined_channels(admin_handle h, char **args, void *userdata)
+static void dump_joined_channels(admin_handle h, const char * const *args, void *userdata)
 {
 	struct irc_network *n;
 	GList *gl;
@@ -558,20 +558,20 @@ static void dump_joined_channels(admin_handle h, char **args, void *userdata)
 }
 
 #ifdef DEBUG
-static void cmd_abort(admin_handle h, char **args, void *userdata)
+static void cmd_abort(admin_handle h, const char * const *args, void *userdata)
 {
 	abort();
 }
 #endif
 
-static void cmd_die(admin_handle h, char **args, void *userdata)
+static void cmd_die(admin_handle h, const char * const *args, void *userdata)
 {
 	exit(0);
 }
 
 static GHashTable *markers = NULL;
 
-static void cmd_backlog(admin_handle h, char **args, void *userdata)
+static void cmd_backlog(admin_handle h, const char * const *args, void *userdata)
 {
 	struct linestack_marker *lm;
 	struct irc_network *n;
@@ -682,7 +682,7 @@ static gboolean log_level_set(admin_handle h, const char *value)
 	return TRUE;
 }
 
-static void cmd_charset(admin_handle h, char **args, void *userdata)
+static void cmd_charset(admin_handle h, const char * const *args, void *userdata)
 {
 	struct irc_client *c;
 
@@ -702,7 +702,7 @@ static void cmd_charset(admin_handle h, char **args, void *userdata)
 	}
 }
 
-static void cmd_echo(admin_handle h, char **args, void *userdata)
+static void cmd_echo(admin_handle h, const char * const *args, void *userdata)
 {
 	admin_out(h, "%s", args[1]);
 }
@@ -746,7 +746,7 @@ gboolean process_cmd(admin_handle h, const char *cmd)
 	for (gl = admin_commands; gl; gl = gl->next) {
 		struct admin_command *cmd = (struct admin_command *)gl->data;
 		if (!g_strcasecmp(cmd->name, args[0])) {
-			cmd->handler(h, args, cmd->userdata);
+			cmd->handler(h, (const char * const *)args, cmd->userdata);
 			g_strfreev(args);
 			return TRUE;
 		}
@@ -1006,7 +1006,7 @@ void admin_log(enum log_level level, const struct irc_network *n, const struct i
 	entered = FALSE;
 }
 
-static void cmd_start_listener(admin_handle h, char **args, void *userdata)
+static void cmd_start_listener(admin_handle h, const char * const *args, void *userdata)
 {
 	char *b, *p;
 	struct listener_config *cfg;
@@ -1050,7 +1050,7 @@ static void cmd_start_listener(admin_handle h, char **args, void *userdata)
 	listener_start_tcp(l, l->config->address, l->config->port);
 }
 
-static void cmd_stop_listener(admin_handle h, char **args, void *userdata)
+static void cmd_stop_listener(admin_handle h, const char * const *args, void *userdata)
 {
 	GList *gl;
 	char *b, *p;
@@ -1092,7 +1092,7 @@ static void cmd_stop_listener(admin_handle h, char **args, void *userdata)
 	admin_out(h, "%d listeners stopped", i);
 }
 
-static void cmd_list_listener(admin_handle h, char **args, void *userdata)
+static void cmd_list_listener(admin_handle h, const char * const *args, void *userdata)
 {
 	GList *gl;
 
@@ -1620,7 +1620,7 @@ static struct admin_setting {
 	{ NULL, NULL, NULL }
 };
 
-static void cmd_unset(admin_handle h, char **args, void *userdata)
+static void cmd_unset(admin_handle h, const char * const *args, void *userdata)
 {
 	int i;
 	if (args[1] == NULL) {
@@ -1635,7 +1635,7 @@ static void cmd_unset(admin_handle h, char **args, void *userdata)
 	}
 }
 
-static void cmd_set(admin_handle h, char **args, void *userdata)
+static void cmd_set(admin_handle h, const char * const *args, void *userdata)
 {
 	int i;
 	char *tmp;
