@@ -38,6 +38,8 @@
 #include "daemon/client.h"
 #include "daemon/backend.h"
 
+#include "lib/socks.h"
+
 struct ctrlproxyd_config;
 extern char my_hostname[];
 static GMainLoop *main_loop;
@@ -169,13 +171,20 @@ static void on_daemon_client_disconnect(struct irc_transport *transport)
 	daemon_client_kill(cd);
 }
 
+static gboolean daemon_client_error(struct irc_transport *transport, const char *message)
+{
+	struct daemon_client *dc = transport->userdata;
+	daemon_client_kill(dc);
+	return FALSE;
+}
+
 static const struct irc_transport_callbacks daemon_client_callbacks = {
 	.hangup = irc_transport_disconnect,
 	.log = NULL,
 	.disconnect = on_daemon_client_disconnect,
 	.recv = daemon_client_recv,
 	.charset_error = charset_error_not_called,
-	.error = NULL,
+	.error = daemon_client_error,
 };
 
 #ifdef HAVE_GSSAPI
@@ -283,22 +292,28 @@ static gboolean daemon_socks_auth_simple(struct pending_client *cl, const char *
 static gboolean daemon_socks_connect_fqdn (struct pending_client *cl, const char *hostname, uint16_t port)
 {
 	struct daemon_client *cd = cl->private_data;
+	char portstr[20];
+	char data[0x200];
 
 	/* Only called after authentication */
 
-	cd->login_details->servername = g_strdup(hostname);
-	cd->login_details->servicename = g_strdup_printf("%d", port);
-
 	cd->description = g_io_channel_ip_get_description(cl->connection);
-	listener_log(LOG_INFO, cl->listener, "Accepted new client %s for user %s", cd->description, cd->user->username);
+	listener_log(LOG_INFO, cl->listener, "Accepted new socks client %s for user %s", cd->description, cd->user->username);
 
 	cd->client_transport = irc_transport_new_iochannel(cl->connection);
 	irc_transport_set_callbacks(cd->client_transport, &daemon_client_callbacks, cd);
 
 	transport_parse_buffer(cd->client_transport);
 
-	daemon_client_forward_credentials(cd);
+	snprintf(portstr, sizeof(portstr), "%d", port);
+	transport_send_args(cd->backend->transport, "CONNECT", hostname, portstr, NULL);
 
+	g_assert(strlen(hostname) < 0x100);
+
+	data[0] = strlen(hostname);
+	strncpy(data+1, hostname, data[0]);
+
+	listener_socks_reply(cl, REP_OK, ATYP_FQDN, strlen(hostname)+2, data, port); 
 	return FALSE;
 }
 
@@ -368,6 +383,7 @@ static void daemon_new_client(struct pending_client *pc)
 {
 	struct daemon_client *cd = g_new0(struct daemon_client, 1);
 	cd->login_details = g_new0(struct login_details, 1);
+	cd->pending_client = pc;
 	cd->listener = pc->listener;
 	cd->config = global_daemon_config;
 	pc->private_data = cd;
