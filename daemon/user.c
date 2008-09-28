@@ -93,9 +93,7 @@ static void user_setup(gpointer user_data)
 	}	
 }
 
-gboolean daemon_user_start(struct daemon_user *user,
-						   const char *ctrlproxy_path,
-						   struct irc_listener *l)
+gboolean daemon_user_start(struct daemon_user *user, const char *ctrlproxy_path, struct irc_listener *l)
 {
 	GPid child_pid;
 	char *command[] = {

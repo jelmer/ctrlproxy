@@ -22,7 +22,6 @@
 #endif
 #include "internals.h"
 #include "irc.h"
-#include <sys/un.h>
 #include <glib/gstdio.h>
 #define BACKTRACE_STACK_SIZE 64
 
@@ -37,6 +36,7 @@
 #include "daemon/daemon.h"
 #include "daemon/user.h"
 #include "daemon/client.h"
+#include "daemon/backend.h"
 
 struct ctrlproxyd_config;
 extern char my_hostname[];
@@ -48,7 +48,7 @@ static struct ctrlproxyd_config *global_daemon_config;
 
 /* there are no hup signals here */
 void register_hup_handler(hup_handler_fn fn, void *userdata) {}
-static gboolean daemon_client_connect_user(struct daemon_client *cd, struct pending_client *clm, const char *username);
+static gboolean daemon_client_connect_backend(struct daemon_client *cd, struct pending_client *cl, const char *username);
 
 void listener_syslog(enum log_level l, const struct irc_listener *listener, const char *ret)
 {
@@ -144,40 +144,6 @@ void signal_quit(int sig)
 	g_main_loop_quit(main_loop);
 }
 
-static GIOChannel *connect_user(struct ctrlproxyd_config *config, 
-								struct pending_client *pc,
-								struct daemon_user *user)
-{
-	int sock;
-	struct sockaddr_un un;
-	GIOChannel *ch;
-
-	if (!daemon_user_running(user)) {
-		if (!daemon_user_start(user, config->ctrlproxy_path, pc->listener)) {
-			daemon_user_free(user);
-			irc_sendf(pc->connection, pc->listener->iconv, NULL, "ERROR :Unable to start ctrlproxy for %s", 
-					  user->username);
-			return NULL;
-		}
-	}
-
-	sock = socket(PF_UNIX, SOCK_STREAM, 0);
-
-	un.sun_family = AF_UNIX;
-	strncpy(un.sun_path, user->socketpath, sizeof(un.sun_path));
-
-	if (connect(sock, (struct sockaddr *)&un, sizeof(un)) < 0) {
-		listener_log(LOG_INFO, pc->listener, "unable to connect to %s: %s", un.sun_path, strerror(errno));
-		close(sock);
-		return NULL;
-	}
-
-	ch = g_io_channel_unix_new(sock);
-
-	g_io_channel_set_flags(ch, G_IO_FLAG_NONBLOCK, NULL);
-
-	return ch;
-}
 
 static void charset_error_not_called(struct irc_transport *transport, const char *error_msg)
 {
@@ -188,8 +154,8 @@ static gboolean daemon_client_recv(struct irc_transport *transport, const struct
 {
 	struct daemon_client *cd = transport->userdata;
 
-	if (cd->authenticated) 
-		return transport_send_line(cd->backend_transport, line);
+	if (cd->backend->authenticated) 
+		return transport_send_line(cd->backend->transport, line);
 	else
 		return TRUE;
 }
@@ -212,55 +178,6 @@ static const struct irc_transport_callbacks daemon_client_callbacks = {
 	.error = NULL,
 };
 
-static gboolean daemon_backend_recv(struct irc_transport *transport, const struct irc_line *line)
-{
-	struct daemon_client *cd = transport->userdata;
-
-	if (!cd->authenticated) {
-		gboolean ok;
-		if (atoi(line->args[0]) == ERR_PASSWDMISMATCH) {
-			ok = FALSE;
-		} else if (!strcmp(line->args[0], "NOTICE") && 
-				   !strcmp(line->args[1], "AUTH") && 
-				   !strcmp(line->args[2], "PASS OK")) {
-			ok = TRUE;
-		} else {
-			listener_log(LOG_INFO, cd->listener, "Unexpected response %s", line->args[0]);
-			transport_send_args(cd->client_transport, "ERROR", "Internal error, unexpected response", NULL);
-			ok = FALSE;
-		}
-		if (cd->pass_check_cb != NULL) {
-			cd->pass_check_cb(cd->pass_check_data, ok);
-			cd->pass_check_cb = NULL;
-			cd->pass_check_data = NULL;
-		}
-		cd->authenticated = ok;
-		if (!ok)
-			daemon_client_kill(cd);
-		return ok;
-	}
-
-	return transport_send_line(cd->client_transport, line);
-}
-
-static void on_daemon_backend_disconnect(struct irc_transport *transport)
-{
-	struct daemon_client *cd = transport->userdata;
-
-	listener_log(LOG_INFO, cd->listener, "Backend of %s disconnected", cd->description);
-
-	daemon_client_kill(cd);
-}
-
-static const struct irc_transport_callbacks daemon_backend_callbacks = {
-	.hangup = irc_transport_disconnect,
-	.log = NULL,
-	.disconnect = on_daemon_backend_disconnect,
-	.recv = daemon_backend_recv,
-	.charset_error = charset_error_not_called,
-	.error = NULL,
-};
-
 #ifdef HAVE_GSSAPI
 static gboolean daemon_socks_gssapi (struct pending_client *pc, gss_name_t username)
 {
@@ -278,13 +195,9 @@ static gboolean daemon_socks_gssapi (struct pending_client *pc, gss_name_t usern
 		return FALSE;
 	}
 
-	if (!daemon_client_connect_user(cd, pc, namebuf.value))
+	if (!daemon_client_connect_backend(cd, pc, namebuf.value))
 		return FALSE;
 	major_status = gss_release_buffer(&minor_status, &namebuf);
-
-	g_assert(cd->pass_check_cb == NULL);
-
-	cd->authenticated = TRUE;
 
 	/* FIXME: Let the backend know somehow authentication is already done */
 
@@ -292,10 +205,37 @@ static gboolean daemon_socks_gssapi (struct pending_client *pc, gss_name_t usern
 }
 #endif
 
+static gboolean backend_error(struct daemon_backend *backend, const char *error_message)
+{
+	struct daemon_client *cd = backend->userdata;
+	listener_log(LOG_INFO, cd->listener, "%s", error_message);
+	transport_send_args(cd->client_transport, "ERROR", error_message, NULL);
+	daemon_client_kill(cd);
+	return FALSE;
+}
+
+static void backend_disconnect(struct daemon_backend *backend)
+{
+	struct daemon_client *cd = backend->userdata;
+	listener_log(LOG_INFO, cd->listener, "Backend of %s disconnected", cd->description);
+
+	daemon_client_kill(cd);
+}
+
+static gboolean backend_recv(struct daemon_backend *backend, const struct irc_line *line)
+{
+	struct daemon_client *cd = backend->userdata;
+	return transport_send_line(cd->client_transport, line);
+}
+
+const static struct daemon_backend_callbacks backend_callbacks = {
+	.disconnect = backend_disconnect,
+	.error = backend_error,
+	.recv = backend_recv,
+};
+
 static gboolean daemon_client_connect_backend(struct daemon_client *cd, struct pending_client *cl, const char *username)
 {
-	GIOChannel *ioc;
-
 	daemon_user_free(cd->user);
 	cd->user = get_daemon_user(cd->config, username);
 	if (cd->user == NULL) {
@@ -304,17 +244,15 @@ static gboolean daemon_client_connect_backend(struct daemon_client *cd, struct p
 		return FALSE;
 	}
 
-	ioc = connect_user(cd->config, cl, cd->user);
-	if (ioc == NULL) {
-		return FALSE;
+	if (!daemon_user_running(cd->user)) {
+		if (!daemon_user_start(cd->user, cd->config->ctrlproxy_path, cl->listener)) {
+			irc_sendf(cl->connection, cl->listener->iconv, NULL, "ERROR :Unable to start ctrlproxy for %s", 
+					  cd->user->username);
+			return FALSE;
+		}
 	}
 
-	cd->backend_transport = irc_transport_new_iochannel(ioc);
-	if (cd->backend_transport == NULL) {
-		return FALSE;
-	}
-
-	irc_transport_set_callbacks(cd->backend_transport, &daemon_backend_callbacks, cd);
+	cd->backend = daemon_backend_open(cd->user->socketpath, &backend_callbacks, cd);
 
 	return TRUE;
 }
@@ -324,19 +262,10 @@ static gboolean daemon_socks_auth_simple(struct pending_client *cl, const char *
 {
 	struct daemon_client *cd = cl->private_data;
 	
-	if (!daemon_client_connect_user(cd, cl, username))
+	if (!daemon_client_connect_backend(cd, cl, username))
 		return FALSE;
 
-	g_assert(cd->pass_check_cb == NULL);
-
-	cd->authenticated = FALSE;
-	cd->pass_check_cb = (gboolean (*)(gpointer, gboolean))on_finished;
-	cd->pass_check_data = cl;
-
-	if (!transport_send_args(cd->backend_transport, "PASS", password, NULL))
-		return FALSE;
-
-	return TRUE; /* All good, so far */
+	return daemon_backend_authenticate(cd->backend, password, on_finished);
 }
 
 static gboolean daemon_socks_connect_fqdn (struct pending_client *cl, const char *hostname, uint16_t port)
@@ -404,7 +333,7 @@ static gboolean handle_client_line(struct pending_client *pc, const struct irc_l
 	}
 
 	if (cd->username != NULL && cd->password != NULL && cd->nick != NULL) {
-		if (!daemon_client_connect_user(cd, pc, cd->username))
+		if (!daemon_client_connect_backend(cd, pc, cd->username))
 			return FALSE;
 
 		cd->description = g_io_channel_ip_get_description(pc->connection);
@@ -412,14 +341,7 @@ static gboolean handle_client_line(struct pending_client *pc, const struct irc_l
 
 		cd->client_transport = irc_transport_new_iochannel(pc->connection);
 
-		g_assert(cd->pass_check_cb == NULL);
-		cd->pass_check_cb = plain_handle_auth_finish;
-		cd->pass_check_data = cd;
-
-		cd->authenticated = FALSE;
-
-		if (!transport_send_args(cd->backend_transport, "PASS", cd->password, NULL))
-			return FALSE;
+		daemon_backend_authenticate(cd->backend, cd->password, plain_handle_auth_finish);
 
 		irc_transport_set_callbacks(cd->client_transport, &daemon_client_callbacks, cd);
 

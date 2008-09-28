@@ -21,13 +21,10 @@
 #define HAVE_DAEMON_CLIENT_H
 
 struct daemon_client {
-	struct irc_transport *backend_transport;
 	struct irc_transport *client_transport;
 	struct irc_listener *listener;
-	gboolean authenticated;
-	gboolean (*pass_check_cb) (gpointer, gboolean);
-	gpointer pass_check_data;
 	struct daemon_user *user;
+	struct daemon_backend *backend;
 	struct ctrlproxyd_config *config;
 	char *password;
 	char *servername;
