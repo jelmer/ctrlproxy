@@ -96,16 +96,23 @@ static void user_setup(gpointer user_data)
 gboolean daemon_user_start(struct daemon_user *user, const char *ctrlproxy_path, struct irc_listener *l)
 {
 	GPid child_pid;
-	char *command[] = {
-		g_strdup(ctrlproxy_path),
-		"--daemon",
-		"--config-dir", g_strdup(user->configdir),
-		NULL
-	};
 	GError *error = NULL;
 	struct spawn_data spawn_data;
+	char **command;
 	spawn_data.listener = l;
 	spawn_data.user = user;
+
+	command = g_new0(char *, 6);
+	command[0] = g_strdup(ctrlproxy_path);
+	command[1] = g_strdup("--daemon");
+	command[2] = g_strdup("--config-dir");
+	command[3] = g_strdup(user->configdir);
+	if (user->uid == (uid_t)-1) {
+		command[4] = g_strdup("--restricted");
+		command[5] = NULL;
+	} else {
+		command[4] = NULL;
+	}
 
 	if (!g_spawn_async(NULL, command, NULL, G_SPAWN_SEARCH_PATH, user_setup, &spawn_data,
 				  &child_pid, &error)) {
@@ -113,11 +120,15 @@ gboolean daemon_user_start(struct daemon_user *user, const char *ctrlproxy_path,
 					 user->configdir, error->message);
 		return FALSE;
 	}
+	g_strfreev(command);
 
 	listener_log(LOG_INFO, l, "Launched new ctrlproxy instance for %s at %s", 
 				 user->username, user->configdir);
 
 	g_spawn_close_pid(child_pid);
+
+	/* FIXME: What if the process hasn't started up completely while we try to 
+	 * connect to the socket? */
 
 	return TRUE;
 }

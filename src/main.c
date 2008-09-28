@@ -179,6 +179,7 @@ int main(int argc, char **argv)
 	const char *inetd_client = NULL;
 	char *pidfile;
 	gboolean check_running = FALSE;
+	gboolean restricted = FALSE;
 	gboolean version = FALSE;
 	pid_t pid;
 	GOptionContext *pc;
@@ -200,6 +201,8 @@ int main(int argc, char **argv)
 			"Override configuration directory", "DIR"},
 		{"version", 'v', 0, G_OPTION_ARG_NONE, &version, 
 			"Show version information"},
+		{"restricted", 0, 0, G_OPTION_ARG_NONE, &restricted,
+			"Restrict what user can do"},
 		{ NULL }
 	};
 	GError *error = NULL;
@@ -292,6 +295,7 @@ int main(int argc, char **argv)
 		g_free(rcfile);
 	} else {
 		my_global = load_global(config_dir);	
+		my_global->restricted = restricted;
 	}
 	g_free(config_dir);
 	g_free(tmp);

@@ -330,9 +330,13 @@ static void cmd_next_server (admin_handle h, char **args, void *userdata)
 static void cmd_save_config (admin_handle h, char **args, void *userdata)
 { 
 	const char *adm_dir;
-	global_update_config(admin_get_global(h));
-	adm_dir = args[1]?args[1]:admin_get_global(h)->config->config_dir; 
-	save_configuration(admin_get_global(h)->config, adm_dir);
+	struct global *global = admin_get_global(h);
+	global_update_config(global);
+	if (global->restricted)
+		adm_dir = global->config->config_dir; 
+	else
+		adm_dir = args[1]?args[1]:global->config->config_dir; 
+	save_configuration(global->config, adm_dir);
 	admin_out(h, "Configuration saved in %s", adm_dir);
 }
 

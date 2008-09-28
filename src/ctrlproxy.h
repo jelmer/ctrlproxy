@@ -82,6 +82,7 @@ struct global {
 
 	GIOChannel *admin_incoming;
 	gint admin_incoming_id;
+	gboolean restricted;
 };
 
 /**
