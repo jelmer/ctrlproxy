@@ -49,14 +49,7 @@ void daemon_client_kill(struct daemon_client *dc)
 	}
 
 	daemon_user_free(dc->user);
-	g_free(dc->login_details->nick);
-	g_free(dc->login_details->password);
-	g_free(dc->login_details->realname);
-	g_free(dc->login_details->servername);
-	g_free(dc->login_details->servicename);
-	g_free(dc->login_details->unused);
-	g_free(dc->login_details->username);
-	g_free(dc->login_details);
+	free_login_details(dc->login_details);
 	g_free(dc->description);
 	g_free(dc);
 

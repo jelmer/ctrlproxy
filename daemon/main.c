@@ -382,7 +382,7 @@ static gboolean handle_client_line(struct pending_client *pc, const struct irc_l
 static void daemon_new_client(struct pending_client *pc)
 {
 	struct daemon_client *cd = g_new0(struct daemon_client, 1);
-	cd->login_details = g_new0(struct login_details, 1);
+	cd->login_details = g_new0(struct irc_login_details, 1);
 	cd->pending_client = pc;
 	cd->listener = pc->listener;
 	cd->config = global_daemon_config;

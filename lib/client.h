@@ -42,6 +42,18 @@ struct irc_client_callbacks {
 	gboolean (*welcome) (struct irc_client *);
 };
 
+struct irc_login_details {
+	char *password;
+	char *servername;
+	char *servicename;
+	char *nick;
+	char *username;
+	char *mode;
+	char *unused;
+	char *realname;
+};
+
+
 
 /**
  * Connection with a client.
@@ -54,9 +66,8 @@ struct irc_client {
 	time_t last_ping;
 	time_t last_pong;
 	time_t connect_time;
-	char *requested_nick;
-	char *requested_username;
-	char *requested_hostname;
+	struct irc_login_details *login_details;
+	char *client_hostname;
 	char *default_origin;
 	gboolean exit_on_close;
 	gboolean connected;
@@ -107,5 +118,6 @@ G_MODULE_EXPORT void client_parse_buffer(struct irc_client *client);
 G_MODULE_EXPORT void client_log(enum log_level, const struct irc_client *c, const char *fmt, ...);
 G_MODULE_EXPORT void client_send_netsplit(struct irc_client *c, const char *lost_server);
 G_MODULE_EXPORT void clients_send_netsplit(GList *clients, const char *lost_server);
+G_MODULE_EXPORT void free_login_details(struct irc_login_details *details);
 
 #endif /* __LIBIRC_CLIENT_H__ */

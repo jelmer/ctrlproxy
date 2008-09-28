@@ -191,7 +191,7 @@ static gboolean welcome_client(struct irc_client *client)
 			nc = client->network->private_data;
 			if (!nc->ignore_first_nick) {
 				network_send_args(client->network, "NICK", 
-								  client->requested_nick, NULL);
+								  client->login_details->nick, NULL);
 			}
 		}
 	}

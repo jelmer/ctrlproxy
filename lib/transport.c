@@ -18,10 +18,15 @@
 	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 */
 
+#include "internals.h"
 #include "transport.h"
 #include "line.h"
 #include "util.h"
 #include <glib.h>
+#include <sys/socket.h>
+#include <ctype.h>
+#include <fcntl.h>
+#include <netdb.h>
 
 static gboolean transport_send_queue(GIOChannel *c, GIOCondition cond, 
 										 void *_client);
@@ -381,4 +386,29 @@ gboolean transport_blocking_recv(struct irc_transport *transport, struct irc_lin
 	g_io_channel_set_flags(transport->incoming, old_flags, &error);
 
 	return handle_recv_status(transport, status, error);
+}
+
+char *transport_get_peer_hostname(struct irc_transport *transport)
+{
+	int fd;
+	socklen_t len = sizeof(struct sockaddr_storage);
+	struct sockaddr_storage sa;
+	char hostname[NI_MAXHOST];
+
+	fd = g_io_channel_unix_get_fd(transport->incoming);
+
+	if (getpeername (fd, (struct sockaddr *)&sa, &len) < 0) {
+		return NULL;
+	}
+
+	if (sa.ss_family == AF_INET || sa.ss_family == AF_INET6) {
+		if (getnameinfo((struct sockaddr *)&sa, len, hostname, sizeof(hostname),
+						NULL, 0, 0) == 0) {
+			return g_strdup(hostname);
+		} 
+	} else if (sa.ss_family == AF_UNIX) {
+		return g_strdup("localhost");
+	}
+
+	return NULL;
 }

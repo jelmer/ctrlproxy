@@ -63,5 +63,6 @@ void transport_parse_buffer(struct irc_transport *transport);
 gboolean transport_blocking_recv(struct irc_transport *transport, struct irc_line **l);
 void irc_transport_set_callbacks(struct irc_transport *transport, 
 								 const struct irc_transport_callbacks *callbacks, void *userdata);
+char *transport_get_peer_hostname(struct irc_transport *transport);
 
 #endif /* __LIBIRC_TRANSPORT_H__ */

@@ -224,9 +224,8 @@ static void free_client(struct irc_client *c)
 	g_assert(c->connected == FALSE);
 	g_free(c->description);
 	free_network_state(c->state);
-	g_free(c->requested_nick);
-	g_free(c->requested_username);
-	g_free(c->requested_hostname);
+	free_login_details(c->login_details);
+	g_free(c->client_hostname);
 	free_irc_transport(c->transport);
 	g_free(c->default_origin);
 	if (c->callbacks->free_private_data)
@@ -275,13 +274,12 @@ static gboolean on_transport_receive_line(struct irc_transport *transport,
 			return FALSE;
 		}
 
-		if (client->requested_nick != NULL &&
-			client->requested_username != NULL &&
-			client->requested_hostname != NULL && 
+		if (client->login_details->nick != NULL &&
+			client->login_details->username != NULL &&
 			client->state == NULL) {
-			client->state = network_state_init(client->requested_nick, 
-											   client->requested_username,
-											   client->requested_hostname);
+			client->state = network_state_init(client->login_details->nick, 
+											   client->login_details->username,
+											   client->client_hostname);
 		}
 
 		if (client->state != NULL) {
@@ -318,7 +316,7 @@ static gboolean process_from_pending_client(struct irc_client *client,
 			return TRUE;
 		}
 
-		client->requested_nick = g_strdup(l->args[1]);
+		client->login_details->nick = g_strdup(l->args[1]);
 	} else if (!g_strcasecmp(l->args[0], "USER")) {
 
 		if (l->argc < 5) {
@@ -327,8 +325,10 @@ static gboolean process_from_pending_client(struct irc_client *client,
 			return TRUE;
 		}
 
-		client->requested_username = g_strdup(l->args[1]);
-		client->requested_hostname = g_strdup(l->args[2]);
+		client->login_details->username = g_strdup(l->args[1]);
+		client->login_details->mode = g_strdup(l->args[2]);
+		client->login_details->unused = g_strdup(l->args[3]);
+		client->login_details->realname = g_strdup(l->args[4]);
 	} else if (!g_strcasecmp(l->args[0], "PASS")) {
 		/* Silently drop... */
 	} else if (!g_strcasecmp(l->args[0], "CONNECT")) {
@@ -388,6 +388,18 @@ const struct irc_transport_callbacks client_transport_callbacks = {
 	.hangup = irc_transport_disconnect,
 };
 
+void free_login_details(struct irc_login_details *details)
+{
+	g_free(details->nick);
+	g_free(details->password);
+	g_free(details->realname);
+	g_free(details->servername);
+	g_free(details->servicename);
+	g_free(details->unused);
+	g_free(details->username);
+	g_free(details);
+}
+
 /* 
  * @param desc Description of the client
  */
@@ -401,6 +413,11 @@ struct irc_client *irc_client_new(struct irc_transport *transport, const char *d
 	client = g_new0(struct irc_client, 1);
 	g_assert(client != NULL);
 	client->references = 1;
+
+	client->login_details = g_new0(struct irc_login_details, 1);
+	client->client_hostname = transport_get_peer_hostname(transport);
+	if (client->client_hostname == NULL)
+		client->client_hostname = g_strdup("UNKNOWN");
 
 	client->default_origin = g_strdup(default_origin);
 	client->callbacks = callbacks;
