@@ -36,9 +36,9 @@
 
 #include "daemon/daemon.h"
 #include "daemon/user.h"
+#include "daemon/client.h"
 
 struct ctrlproxyd_config;
-struct daemon_client_data;
 extern char my_hostname[];
 static GMainLoop *main_loop;
 static struct irc_listener *daemon_listener;
@@ -46,33 +46,9 @@ static gboolean inetd = FALSE;
 
 static struct ctrlproxyd_config *global_daemon_config;
 
-static GList *daemon_clients = NULL;
-
 /* there are no hup signals here */
 void register_hup_handler(hup_handler_fn fn, void *userdata) {}
-static void daemon_client_kill(struct daemon_client_data *dc);
-static gboolean daemon_client_connect_user(struct daemon_client_data *cd, struct pending_client *clm, const char *username);
-
-struct daemon_client_data {
-	struct irc_transport *backend_transport;
-	struct irc_transport *client_transport;
-	struct irc_listener *listener;
-	gboolean authenticated;
-	gboolean (*pass_check_cb) (gpointer, gboolean);
-	gpointer pass_check_data;
-	struct daemon_user *user;
-	struct ctrlproxyd_config *config;
-	char *password;
-	char *servername;
-	char *servicename;
-	char *nick;
-	char *username;
-	char *mode;
-	char *unused;
-	char *realname;
-	char *description;
-	gboolean freed;
-};
+static gboolean daemon_client_connect_user(struct daemon_client *cd, struct pending_client *clm, const char *username);
 
 void listener_syslog(enum log_level l, const struct irc_listener *listener, const char *ret)
 {
@@ -203,42 +179,6 @@ static GIOChannel *connect_user(struct ctrlproxyd_config *config,
 	return ch;
 }
 
-static void daemon_client_kill(struct daemon_client_data *dc)
-{
-	daemon_clients = g_list_remove(daemon_clients, dc);
-
-	if (dc->freed)
-		return;
-
-	dc->freed = TRUE;
-
-	if (dc->backend_transport != NULL) {
-		irc_transport_disconnect(dc->backend_transport);
-		free_irc_transport(dc->backend_transport);
-		dc->backend_transport = NULL;
-	}
-
-	if (dc->client_transport != NULL) {
-		irc_transport_disconnect(dc->client_transport);
-		free_irc_transport(dc->client_transport);
-		dc->client_transport = NULL;
-	}
-
-	daemon_user_free(dc->user);
-	g_free(dc->nick);
-	g_free(dc->password);
-	g_free(dc->realname);
-	g_free(dc->servername);
-	g_free(dc->servicename);
-	g_free(dc->unused);
-	g_free(dc->username);
-	g_free(dc->description);
-	g_free(dc);
-
-	if (inetd)
-		g_main_loop_quit(main_loop);
-}
-
 static void charset_error_not_called(struct irc_transport *transport, const char *error_msg)
 {
 	g_assert_not_reached();
@@ -246,7 +186,7 @@ static void charset_error_not_called(struct irc_transport *transport, const char
 
 static gboolean daemon_client_recv(struct irc_transport *transport, const struct irc_line *line)
 {
-	struct daemon_client_data *cd = transport->userdata;
+	struct daemon_client *cd = transport->userdata;
 
 	if (cd->authenticated) 
 		return transport_send_line(cd->backend_transport, line);
@@ -256,7 +196,7 @@ static gboolean daemon_client_recv(struct irc_transport *transport, const struct
 
 static void on_daemon_client_disconnect(struct irc_transport *transport)
 {
-	struct daemon_client_data *cd = transport->userdata;
+	struct daemon_client *cd = transport->userdata;
 
 	listener_log(LOG_INFO, cd->listener, "Client %s disconnected", cd->description);
 
@@ -274,7 +214,7 @@ static const struct irc_transport_callbacks daemon_client_callbacks = {
 
 static gboolean daemon_backend_recv(struct irc_transport *transport, const struct irc_line *line)
 {
-	struct daemon_client_data *cd = transport->userdata;
+	struct daemon_client *cd = transport->userdata;
 
 	if (!cd->authenticated) {
 		gboolean ok;
@@ -305,7 +245,7 @@ static gboolean daemon_backend_recv(struct irc_transport *transport, const struc
 
 static void on_daemon_backend_disconnect(struct irc_transport *transport)
 {
-	struct daemon_client_data *cd = transport->userdata;
+	struct daemon_client *cd = transport->userdata;
 
 	listener_log(LOG_INFO, cd->listener, "Backend of %s disconnected", cd->description);
 
@@ -321,25 +261,10 @@ static const struct irc_transport_callbacks daemon_backend_callbacks = {
 	.error = NULL,
 };
 
-/**
- * Callback when client is done authenticating.
- */
-static void client_done(struct daemon_client_data *dc)
-{
-	g_assert(dc->backend_transport != NULL);
-	
-	if (dc->servername != NULL && dc->servicename != NULL)
-		transport_send_args(dc->backend_transport, "CONNECT", dc->servername, dc->servicename, NULL);
-	transport_send_args(dc->backend_transport, "USER", dc->username, dc->mode, dc->unused, dc->realname, NULL);
-	transport_send_args(dc->backend_transport, "NICK", dc->nick, NULL);
-
-	daemon_clients = g_list_append(daemon_clients, dc);
-}
-
 #ifdef HAVE_GSSAPI
 static gboolean daemon_socks_gssapi (struct pending_client *pc, gss_name_t username)
 {
-	struct daemon_client_data *cd = pc->private_data;
+	struct daemon_client *cd = pc->private_data;
 	guint32 major_status, minor_status;
 	gss_buffer_desc namebuf;
 
@@ -367,7 +292,7 @@ static gboolean daemon_socks_gssapi (struct pending_client *pc, gss_name_t usern
 }
 #endif
 
-static gboolean daemon_client_connect_user(struct daemon_client_data *cd, struct pending_client *cl, const char *username)
+static gboolean daemon_client_connect_backend(struct daemon_client *cd, struct pending_client *cl, const char *username)
 {
 	GIOChannel *ioc;
 
@@ -397,7 +322,7 @@ static gboolean daemon_client_connect_user(struct daemon_client_data *cd, struct
 static gboolean daemon_socks_auth_simple(struct pending_client *cl, const char *username, const char *password,
 										 gboolean (*on_finished) (struct pending_client *, gboolean))
 {
-	struct daemon_client_data *cd = cl->private_data;
+	struct daemon_client *cd = cl->private_data;
 	
 	if (!daemon_client_connect_user(cd, cl, username))
 		return FALSE;
@@ -416,7 +341,7 @@ static gboolean daemon_socks_auth_simple(struct pending_client *cl, const char *
 
 static gboolean daemon_socks_connect_fqdn (struct pending_client *cl, const char *hostname, uint16_t port)
 {
-	struct daemon_client_data *cd = cl->private_data;
+	struct daemon_client *cd = cl->private_data;
 
 	/* Only called after authentication */
 
@@ -431,28 +356,28 @@ static gboolean daemon_socks_connect_fqdn (struct pending_client *cl, const char
 
 	transport_parse_buffer(cd->client_transport);
 
-	client_done(cd);
+	daemon_client_send_credentials(cd);
 
 	return FALSE;
 }
 
 static gboolean plain_handle_auth_finish(gpointer userdata, gboolean accepted)
 {
-	struct daemon_client_data *dc = (struct daemon_client_data *)userdata;
+	struct daemon_client *dc = (struct daemon_client *)userdata;
 
 	if (!accepted) {
 		transport_send_response(dc->client_transport, get_my_hostname(), "*", 
 								ERR_PASSWDMISMATCH, "Password invalid", NULL);
 		return FALSE;
 	} else {
-		client_done(dc);
+		daemon_client_send_credentials(dc);
 		return FALSE;
 	}
 }
 
 static gboolean handle_client_line(struct pending_client *pc, const struct irc_line *l)
 {
-	struct daemon_client_data *cd = pc->private_data;
+	struct daemon_client *cd = pc->private_data;
 
 	if (l == NULL || l->args[0] == NULL) { 
 		return TRUE;
@@ -508,7 +433,7 @@ static gboolean handle_client_line(struct pending_client *pc, const struct irc_l
 
 static void daemon_new_client(struct pending_client *pc)
 {
-	struct daemon_client_data *cd = g_new0(struct daemon_client_data, 1);
+	struct daemon_client *cd = g_new0(struct daemon_client, 1);
 	cd->listener = pc->listener;
 	cd->config = global_daemon_config;
 	pc->private_data = cd;
@@ -644,11 +569,7 @@ int main(int argc, char **argv)
 
 	g_main_loop_run(main_loop);
 
-	while (daemon_clients != NULL) {
-		struct daemon_client_data *dc = daemon_clients->data;
-		transport_send_args(dc->client_transport, "ERROR", "Server exiting", NULL);
-		daemon_client_kill(dc);
-	}
+	daemon_clients_exit();
 
 	return 0;
 }
