@@ -239,13 +239,13 @@ static gboolean daemon_client_connect_backend(struct daemon_client *cd, struct p
 	daemon_user_free(cd->user);
 	cd->user = get_daemon_user(cd->config, username);
 	if (cd->user == NULL) {
-		listener_log(LOG_INFO, cl->listener, "Unable to find user %s", username);
+		listener_log(LOG_INFO, cd->listener, "Unable to find user %s", username);
 		irc_sendf(cl->connection, cl->listener->iconv, NULL, "ERROR :Unknown user %s", username);
 		return FALSE;
 	}
 
 	if (!daemon_user_running(cd->user)) {
-		if (!daemon_user_start(cd->user, cd->config->ctrlproxy_path, cl->listener)) {
+		if (!daemon_user_start(cd->user, cd->config->ctrlproxy_path, cd->listener)) {
 			irc_sendf(cl->connection, cl->listener->iconv, NULL, "ERROR :Unable to start ctrlproxy for %s", 
 					  cd->user->username);
 			return FALSE;
@@ -257,6 +257,14 @@ static gboolean daemon_client_connect_backend(struct daemon_client *cd, struct p
 	return TRUE;
 }
 
+static void daemon_backend_pass_checked(struct daemon_backend *backend, gboolean accepted)
+{
+	struct daemon_client *cd = backend->userdata;
+
+	cd->socks_accept_fn(cd->pending_client, accepted);
+}
+
+
 static gboolean daemon_socks_auth_simple(struct pending_client *cl, const char *username, const char *password,
 										 gboolean (*on_finished) (struct pending_client *, gboolean))
 {
@@ -265,7 +273,9 @@ static gboolean daemon_socks_auth_simple(struct pending_client *cl, const char *
 	if (!daemon_client_connect_backend(cd, cl, username))
 		return FALSE;
 
-	return daemon_backend_authenticate(cd->backend, password, on_finished);
+	cd->socks_accept_fn = on_finished;
+
+	return daemon_backend_authenticate(cd->backend, password, daemon_backend_pass_checked);
 }
 
 static gboolean daemon_socks_connect_fqdn (struct pending_client *cl, const char *hostname, uint16_t port)
@@ -274,8 +284,8 @@ static gboolean daemon_socks_connect_fqdn (struct pending_client *cl, const char
 
 	/* Only called after authentication */
 
-	cd->servername = g_strdup(hostname);
-	cd->servicename = g_strdup_printf("%d", port);
+	cd->credentials.servername = g_strdup(hostname);
+	cd->credentials.servicename = g_strdup_printf("%d", port);
 
 	cd->description = g_io_channel_ip_get_description(cl->connection);
 	listener_log(LOG_INFO, cl->listener, "Accepted new client %s for user %s", cd->description, cd->user->username);
@@ -285,22 +295,21 @@ static gboolean daemon_socks_connect_fqdn (struct pending_client *cl, const char
 
 	transport_parse_buffer(cd->client_transport);
 
-	daemon_client_send_credentials(cd);
+	daemon_client_forward_credentials(cd);
 
 	return FALSE;
 }
 
-static gboolean plain_handle_auth_finish(gpointer userdata, gboolean accepted)
+static void plain_handle_auth_finish(struct daemon_backend *backend, gboolean accepted)
 {
-	struct daemon_client *dc = (struct daemon_client *)userdata;
+	struct daemon_client *dc = (struct daemon_client *)backend->userdata;
 
 	if (!accepted) {
 		transport_send_response(dc->client_transport, get_my_hostname(), "*", 
 								ERR_PASSWDMISMATCH, "Password invalid", NULL);
-		return FALSE;
+		daemon_client_kill(dc);
 	} else {
-		daemon_client_send_credentials(dc);
-		return FALSE;
+		daemon_client_forward_credentials(dc);
 	}
 }
 
@@ -313,17 +322,17 @@ static gboolean handle_client_line(struct pending_client *pc, const struct irc_l
 	}
 
 	if (!g_strcasecmp(l->args[0], "PASS")) {
-		cd->password = g_strdup(l->args[1]);
+		cd->credentials.password = g_strdup(l->args[1]);
 	} else if (!g_strcasecmp(l->args[0], "CONNECT")) {
-		cd->servername = g_strdup(l->args[1]);
-		cd->servicename = g_strdup(l->args[2]);
+		cd->credentials.servername = g_strdup(l->args[1]);
+		cd->credentials.servicename = g_strdup(l->args[2]);
 	} else if (!g_strcasecmp(l->args[0], "USER") && l->argc > 4) {
-		cd->username = g_strdup(l->args[1]);
-		cd->mode = g_strdup(l->args[2]);
-		cd->unused = g_strdup(l->args[3]);
-		cd->realname = g_strdup(l->args[4]);
+		cd->credentials.username = g_strdup(l->args[1]);
+		cd->credentials.mode = g_strdup(l->args[2]);
+		cd->credentials.unused = g_strdup(l->args[3]);
+		cd->credentials.realname = g_strdup(l->args[4]);
 	} else if (!g_strcasecmp(l->args[0], "NICK")) {
-		cd->nick = g_strdup(l->args[1]);
+		cd->credentials.nick = g_strdup(l->args[1]);
 	} else if (!g_strcasecmp(l->args[0], "QUIT")) {
 		return FALSE;
 	} else {
@@ -332,8 +341,8 @@ static gboolean handle_client_line(struct pending_client *pc, const struct irc_l
 		g_io_channel_flush(pc->connection, NULL);
 	}
 
-	if (cd->username != NULL && cd->password != NULL && cd->nick != NULL) {
-		if (!daemon_client_connect_backend(cd, pc, cd->username))
+	if (cd->credentials.username != NULL && cd->credentials.password != NULL && cd->credentials.nick != NULL) {
+		if (!daemon_client_connect_backend(cd, pc, cd->credentials.username))
 			return FALSE;
 
 		cd->description = g_io_channel_ip_get_description(pc->connection);
@@ -341,7 +350,7 @@ static gboolean handle_client_line(struct pending_client *pc, const struct irc_l
 
 		cd->client_transport = irc_transport_new_iochannel(pc->connection);
 
-		daemon_backend_authenticate(cd->backend, cd->password, plain_handle_auth_finish);
+		daemon_backend_authenticate(cd->backend, cd->credentials.password, plain_handle_auth_finish);
 
 		irc_transport_set_callbacks(cd->client_transport, &daemon_client_callbacks, cd);
 
@@ -359,6 +368,7 @@ static void daemon_new_client(struct pending_client *pc)
 	cd->listener = pc->listener;
 	cd->config = global_daemon_config;
 	pc->private_data = cd;
+	cd->inetd = inetd;
 }
 
 struct irc_listener_ops daemon_ops = {

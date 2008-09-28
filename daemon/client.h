@@ -26,21 +26,25 @@ struct daemon_client {
 	struct daemon_user *user;
 	struct daemon_backend *backend;
 	struct ctrlproxyd_config *config;
-	char *password;
-	char *servername;
-	char *servicename;
-	char *nick;
-	char *username;
-	char *mode;
-	char *unused;
-	char *realname;
+	gboolean (*socks_accept_fn) (struct pending_client *, gboolean);
+	struct pending_client *pending_client;
+	struct {
+		char *password;
+		char *servername;
+		char *servicename;
+		char *nick;
+		char *username;
+		char *mode;
+		char *unused;
+		char *realname;
+	} credentials;
 	char *description;
 	gboolean freed;
 	gboolean inetd;
 };
 
 void daemon_client_kill(struct daemon_client *dc);
-void daemon_client_send_credentials(struct daemon_client *dc);
+void daemon_client_forward_credentials(struct daemon_client *dc);
 void daemon_clients_exit(void);
 
 #endif

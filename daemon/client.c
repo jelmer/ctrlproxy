@@ -48,13 +48,13 @@ void daemon_client_kill(struct daemon_client *dc)
 	}
 
 	daemon_user_free(dc->user);
-	g_free(dc->nick);
-	g_free(dc->password);
-	g_free(dc->realname);
-	g_free(dc->servername);
-	g_free(dc->servicename);
-	g_free(dc->unused);
-	g_free(dc->username);
+	g_free(dc->credentials.nick);
+	g_free(dc->credentials.password);
+	g_free(dc->credentials.realname);
+	g_free(dc->credentials.servername);
+	g_free(dc->credentials.servicename);
+	g_free(dc->credentials.unused);
+	g_free(dc->credentials.username);
 	g_free(dc->description);
 	g_free(dc);
 
@@ -62,14 +62,14 @@ void daemon_client_kill(struct daemon_client *dc)
 		exit(0);
 }
 
-void daemon_client_send_credentials(struct daemon_client *dc)
+void daemon_client_forward_credentials(struct daemon_client *dc)
 {
 	g_assert(dc->backend != NULL);
 
-	if (dc->servername != NULL && dc->servicename != NULL)
-		transport_send_args(dc->backend->transport, "CONNECT", dc->servername, dc->servicename, NULL);
-	transport_send_args(dc->backend->transport, "USER", dc->username, dc->mode, dc->unused, dc->realname, NULL);
-	transport_send_args(dc->backend->transport, "NICK", dc->nick, NULL);
+	if (dc->credentials.servername != NULL && dc->credentials.servicename != NULL)
+		transport_send_args(dc->backend->transport, "CONNECT", dc->credentials.servername, dc->credentials.servicename, NULL);
+	transport_send_args(dc->backend->transport, "USER", dc->credentials.username, dc->credentials.mode, dc->credentials.unused, dc->credentials.realname, NULL);
+	transport_send_args(dc->backend->transport, "NICK", dc->credentials.nick, NULL);
 
 	daemon_clients = g_list_append(daemon_clients, dc);
 }
