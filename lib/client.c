@@ -394,8 +394,6 @@ void free_login_details(struct irc_login_details *details)
 	g_free(details->nick);
 	g_free(details->password);
 	g_free(details->realname);
-	g_free(details->servername);
-	g_free(details->servicename);
 	g_free(details->unused);
 	g_free(details->username);
 	g_free(details);

@@ -29,6 +29,8 @@ struct daemon_client {
 	gboolean (*socks_accept_fn) (struct pending_client *, gboolean);
 	struct pending_client *pending_client;
 	struct irc_login_details *login_details;
+	char *servername;
+	char *servicename;
 	char *description;
 	gboolean freed;
 	gboolean inetd;

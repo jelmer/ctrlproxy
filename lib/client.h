@@ -44,8 +44,6 @@ struct irc_client_callbacks {
 
 struct irc_login_details {
 	char *password;
-	char *servername;
-	char *servicename;
 	char *nick;
 	char *username;
 	char *mode;

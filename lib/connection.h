@@ -99,6 +99,7 @@ typedef void (*network_log_fn) (enum log_level, const struct irc_network *, cons
 
 struct irc_network_callbacks {
 	network_log_fn log;
+	struct irc_login_details *(*get_login_details) (struct irc_network *);
 	gboolean (*process_from_server) (struct irc_network *, const struct irc_line *);
 };
 

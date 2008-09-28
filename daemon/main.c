@@ -341,8 +341,8 @@ static gboolean handle_client_line(struct pending_client *pc, const struct irc_l
 	if (!g_strcasecmp(l->args[0], "PASS")) {
 		cd->login_details->password = g_strdup(l->args[1]);
 	} else if (!g_strcasecmp(l->args[0], "CONNECT")) {
-		cd->login_details->servername = g_strdup(l->args[1]);
-		cd->login_details->servicename = g_strdup(l->args[2]);
+		cd->servername = g_strdup(l->args[1]);
+		cd->servicename = g_strdup(l->args[2]);
 	} else if (!g_strcasecmp(l->args[0], "USER") && l->argc > 4) {
 		cd->login_details->username = g_strdup(l->args[1]);
 		cd->login_details->mode = g_strdup(l->args[2]);
