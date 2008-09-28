@@ -130,7 +130,7 @@ gboolean daemon_backend_authenticate(struct daemon_backend *backend,
 	if (!transport_send_args(backend->transport, "PASS", password, NULL))
 		return FALSE;
 
-	/* FIXME: Register timeout and raise error if backend didn't respond in time */
+	/* TODO: Register timeout and raise error if backend didn't respond in time */
 
 	return TRUE;
 }

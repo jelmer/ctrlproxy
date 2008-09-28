@@ -1503,6 +1503,81 @@ static gboolean default_client_charset_set(admin_handle h, const char *value)
 	return TRUE;
 }
 
+static char *default_nick_get(admin_handle h)
+{
+	struct global *g = admin_get_global(h);
+	return g_strdup(g->config->default_nick);
+}
+
+static gboolean default_nick_set(admin_handle h, const char *value)
+{
+	struct global *g = admin_get_global(h);
+	if (strlen(value) == 0) {
+		admin_out(h, "Nick name can't be empty.");
+		return FALSE;
+	}
+	if (strchr(value, ' ') != NULL) {
+		admin_out(h, "Nick name can't contain spaces.");
+		return FALSE;
+	}
+	if (value[0] == ':') {
+		admin_out(h, "Nick name can't start with semicolon.");
+		return FALSE;
+	}
+
+	g_free(g->config->default_nick);
+	g->config->default_nick = g_strdup(value);
+	return TRUE;
+}
+
+
+static char *default_username_get(admin_handle h)
+{
+	struct global *g = admin_get_global(h);
+	return g_strdup(g->config->default_username);
+}
+
+static gboolean default_username_set(admin_handle h, const char *value)
+{
+	struct global *g = admin_get_global(h);
+	if (strlen(value) == 0) {
+		admin_out(h, "Username can't be empty.");
+		return FALSE;
+	}
+	if (strchr(value, ' ') != NULL) {
+		admin_out(h, "Username can't contain spaces.");
+		return FALSE;
+	}
+	if (value[0] == ':') {
+		admin_out(h, "Username can't start with semicolon.");
+		return FALSE;
+	}
+
+	g_free(g->config->default_username);
+	g->config->default_username = g_strdup(value);
+	return TRUE;
+}
+
+
+static char *default_fullname_get(admin_handle h)
+{
+	struct global *g = admin_get_global(h);
+	return g_strdup(g->config->default_realname);
+}
+
+static gboolean default_fullname_set(admin_handle h, const char *value)
+{
+	struct global *g = admin_get_global(h);
+
+	if (strlen(value) == 0) {
+		admin_out(h, "Fullname can't be empty");
+		return FALSE;
+	}
+
+	g_free(g->config->default_realname);
+	g->config->default_realname = g_strdup(value);
+	return TRUE;
+}
 
 /**
  * Table of administration settings that can be
@@ -1535,6 +1610,9 @@ static struct admin_setting {
 	{ "report-time", report_time_get, report_time_set },
 	{ "report-time-offset", report_time_offset_get, report_time_offset_set },
 	{ "replication", replication_get, replication_set },
+	{ "default-nick", default_nick_get, default_nick_set },
+	{ "default-username", default_username_get, default_username_set },
+	{ "default-fullname", default_fullname_get, default_fullname_set },
 	{ NULL, NULL, NULL }
 };
 
