@@ -153,8 +153,12 @@ gboolean default_socks_connect_fqdn (struct pending_client *cl, const char *host
 	}
 
 	desc = g_io_channel_ip_get_description(cl->connection);
-	if (desc == NULL) 
-		desc = g_strdup("socks client");
+	if (desc == NULL) {
+		if (cl->listener == cl->listener->global->unix_domain_socket_listener) 
+			desc = g_strdup("Unix domain socket socks client");
+		else
+			desc = g_strdup("socks client");
+	}
 	client_init_iochannel(result, cl->connection, desc);
 	g_free(desc);
 
@@ -241,7 +245,9 @@ static gboolean handle_client_line(struct pending_client *pc, const struct irc_l
 
 			{
 				char *desc = g_io_channel_ip_get_description(pc->connection);
-				if (desc == NULL)
+				if (pc->listener == pc->listener->global->unix_domain_socket_listener) 
+					desc = g_strdup("Unix domain socket client");
+				else if (desc == NULL)
 					desc = g_strdup("");
 				client_init_iochannel(listener->network, pc->connection, desc);
 				g_free(desc);
