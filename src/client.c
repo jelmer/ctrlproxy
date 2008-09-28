@@ -217,6 +217,33 @@ static void handle_client_disconnect(struct irc_client *c)
 		c->network->clients = g_list_remove(c->network->clients, c);
 }
 
+static struct irc_network *client_connect_command(struct irc_client *client, const char *hostname, guint16 port)
+{
+	extern struct global *my_global;
+
+	struct irc_network *network;
+
+	network = network_ref(find_network_by_hostname(my_global, 
+												   hostname, port, my_global->config->create_implicit, 
+												   client->login_details));
+
+	if (network == NULL) {
+		client_log(LOG_ERROR, client, 
+			"Unable to connect to network with name %s", 
+			hostname);
+		return NULL;
+	}
+
+	if (network->connection.state == NETWORK_CONNECTION_STATE_NOT_CONNECTED) {
+		client_send_args(client, "NOTICE", 
+							client_get_default_target(client),
+							"Connecting to network", NULL);
+		connect_network(network);
+	}
+
+	return network;
+}
+
 void log_client(enum log_level, const struct irc_client *, const char *data);
 static struct irc_client_callbacks default_callbacks = {
 	.process_from_client = process_from_client, 
@@ -225,6 +252,7 @@ static struct irc_client_callbacks default_callbacks = {
 	.disconnect = handle_client_disconnect,
 	.free_private_data = client_free_private,
 	.welcome = welcome_client,
+	.on_connect = client_connect_command,
 };
 
 struct irc_client *client_init_iochannel(struct irc_network *n, GIOChannel *c, const char *desc)

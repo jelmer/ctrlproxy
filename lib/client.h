@@ -40,6 +40,7 @@ struct irc_client_callbacks {
 	void (*free_private_data) (struct irc_client *);
 	void (*log_fn) (enum log_level l, const struct irc_client *, const char *data);
 	gboolean (*welcome) (struct irc_client *);
+	struct irc_network *(*on_connect) (struct irc_client *, const char *hostname, guint16 port);
 };
 
 struct irc_login_details {

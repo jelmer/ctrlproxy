@@ -2,3 +2,4 @@
 - allow using system authentication (PAM/GSSAPI) in ctrlproxyd
  - how to pass on "User ok" information to ctrlproxy?
 - allow registering new users?
+- support forward auth - ctrlproxy asks a backend to do the authentication for it

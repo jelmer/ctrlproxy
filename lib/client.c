@@ -307,8 +307,6 @@ static gboolean on_transport_receive_line(struct irc_transport *transport,
 static gboolean process_from_pending_client(struct irc_client *client, 
 											const struct irc_line *l)
 {
-	extern struct global *my_global;
-
 	if (!g_strcasecmp(l->args[0], "NICK")) {
 		if (l->argc < 2) {
 			client_send_response(client, ERR_NEEDMOREPARAMS,
@@ -338,22 +336,7 @@ static gboolean process_from_pending_client(struct irc_client *client,
 			return TRUE;
 		}
 
-		client->network = network_ref(find_network_by_hostname(my_global, 
-				l->args[1], l->args[2]?atoi(l->args[2]):6667, my_global->config->create_implicit, 
-				client->login_details));
-
-		if (client->network == NULL) {
-			client_log(LOG_ERROR, client, 
-				"Unable to connect to network with name %s", 
-				l->args[1]);
-		}
-
-		if (client->network->connection.state == NETWORK_CONNECTION_STATE_NOT_CONNECTED) {
-			client_send_args(client, "NOTICE", 
-								client_get_default_target(client),
-								"Connecting to network", NULL);
-			connect_network(client->network);
-		}
+		client->network = client->callbacks->on_connect(client, l->args[1], l->args[2]?atoi(l->args[2]):6667);
 	} else {
 		client_send_response(client, ERR_NOTREGISTERED, 
 			"Register first", 
