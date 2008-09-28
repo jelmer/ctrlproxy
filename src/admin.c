@@ -791,7 +791,6 @@ static gboolean admin_net_init(struct irc_network *n)
 {
 	char *hostmask;
 	char *nicks;
-	struct network_config *nc = n->private_data;
 
 	hostmask = admin_hostmask(n);
 	
@@ -799,7 +798,7 @@ static gboolean admin_net_init(struct irc_network *n)
 	virtual_network_recv_response(n, RPL_TOPIC, ADMIN_CHANNEL, 
 		"CtrlProxy administration channel | Type `help' for more information",
 							  NULL);
-	nicks = g_strdup_printf("@ctrlproxy %s", nc->nick);
+	nicks = g_strdup_printf("@ctrlproxy %s", n->external_state->me.nick);
 
 	virtual_network_recv_response(n, RPL_NAMREPLY, "=", ADMIN_CHANNEL, nicks, NULL);
 	g_free(nicks);
