@@ -316,7 +316,44 @@ void register_new_network_notify(struct global *global, new_network_notify_fn fn
 	global->new_network_notifiers = g_list_append(global->new_network_notifiers, p);
 }
 
+static struct irc_login_details *get_login_details(struct irc_network *s)
+{
+	struct irc_login_details *ret = g_new0(struct irc_login_details, 1);
+	struct network_config *nc = s->private_data;
+
+	if (nc->username != NULL)
+		ret->username = g_strdup(nc->username);
+	else /* FIXME: Allow global username setting */
+		ret->username = g_strdup(g_get_user_name());
+
+	if (nc->fullname != NULL)
+		ret->realname = g_strdup(nc->fullname);
+	else { /* FIXME: Allow global realname setting */
+		ret->realname = g_strdup(g_get_real_name());
+		if (ret->realname == NULL || 
+			strlen(ret->realname) == 0) {
+			g_free(ret->realname);
+			ret->realname = g_strdup(ret->username);
+		}
+	}
+
+	if (nc->nick != NULL)
+		ret->nick = g_strdup(nc->nick);
+	else /* FIXME: Allow global nick setting */
+		ret->nick = g_strdup(g_get_user_name());
+
+	if (nc->type == NETWORK_TCP && 
+	   s->connection.data.tcp.current_server->password) { 
+		ret->password = g_strdup(s->connection.data.tcp.current_server->password);
+	} else {
+		ret->password = g_strdup(nc->password);
+	}
+
+	return ret;
+}
+
 struct irc_network_callbacks default_callbacks = {
+	.get_login_details = get_login_details,
 	.process_from_server = process_from_server,
 	.log = handle_network_log,
 };

@@ -186,9 +186,18 @@ static void config_save_network(struct ctrlproxy_config *cfg,
 
 	kf = n->keyfile;
 
-	g_key_file_set_string(kf, n->groupname, "fullname", n->fullname);
-	g_key_file_set_string(kf, n->groupname, "nick", n->nick);
-	g_key_file_set_string(kf, n->groupname, "username", n->username);
+	if (n->fullname != NULL)
+		g_key_file_set_string(kf, n->groupname, "fullname", n->fullname);
+	else 
+		g_key_file_remove_key(kf, n->groupname, "fullname", NULL);
+	if (n->nick != NULL)
+		g_key_file_set_string(kf, n->groupname, "nick", n->nick);
+	else 
+		g_key_file_remove_key(kf, n->groupname, "nick", NULL);
+	if (n->username != NULL)
+		g_key_file_set_string(kf, n->groupname, "username", n->username);
+	else
+		g_key_file_remove_key(kf, n->groupname, "username", NULL);
 	if (n->autocmd != NULL) {
 		g_key_file_set_string_list(kf, n->groupname, "autocmd", (const char *const*)n->autocmd,
 							   g_strv_length(n->autocmd));
@@ -1341,15 +1350,6 @@ struct network_config *network_config_init(struct ctrlproxy_config *cfg)
 	struct network_config *s = g_new0(struct network_config, 1);
 
 	s->autoconnect = FALSE;
-	s->nick = g_strdup(g_get_user_name());
-	s->username = g_strdup(g_get_user_name());
-	g_assert(s->username != NULL && strlen(s->username) > 0);
-	s->fullname = g_strdup(g_get_real_name());
-	if (s->fullname == NULL || 
-		strlen(s->fullname) == 0) {
-		g_free(s->fullname);
-		s->fullname = g_strdup(s->username);
-	}
 	s->reconnect_interval = -1;
 
 	if (cfg) 

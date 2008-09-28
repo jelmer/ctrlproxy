@@ -38,29 +38,27 @@ static void state_log_helper(enum log_level l, void *userdata, const char *msg)
 
 static void server_send_login (struct irc_network *s) 
 {
-	struct network_config *nc = s->private_data;
+	struct irc_login_details *login_details = s->callbacks->get_login_details(s);
 	g_assert(s);
 
 	s->connection.state = NETWORK_CONNECTION_STATE_LOGIN_SENT;
 
 	network_log(LOG_TRACE, s, "Sending login details");
 
-	s->external_state = network_state_init(nc->nick, nc->username, 
+	s->external_state = network_state_init(login_details->nick, login_details->username, 
 								  get_my_hostname());
 	network_state_set_log_fn(s->external_state, state_log_helper, s);
 	s->linestack = new_linestack(s);
 	g_assert(s->linestack != NULL);
 
-	if (nc->type == NETWORK_TCP && 
-	   s->connection.data.tcp.current_server->password) { 
-		network_send_args(s, "PASS", 
-					s->connection.data.tcp.current_server->password, NULL);
-	} else if (nc->password) {
-		network_send_args(s, "PASS", nc->password, NULL);
+	if (login_details->password != NULL) {
+		network_send_args(s, "PASS", login_details->password, NULL);
 	}
-	network_send_args(s, "NICK", nc->nick, NULL);
-	network_send_args(s, "USER", nc->username, nc->username, 
-					  nc->name, nc->fullname, NULL);
+	network_send_args(s, "NICK", login_details->nick, NULL);
+	network_send_args(s, "USER", login_details->username, login_details->mode, 
+					  login_details->unused, login_details->realname, NULL);
+
+	free_login_details(login_details);
 }
 
 /**
