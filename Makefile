@@ -112,7 +112,9 @@ src/settings.o: CFLAGS+=-DSYSCONFDIR=\"${sysconfdir}\"
 daemon/main.o: CFLAGS+=-DDEFAULT_CONFIG_FILE=\"${sysconfdir}/ctrlproxyd.conf\" \
 					   -DPIDFILE=\"${localstatedir}/run/ctrlproxyd.pid\"
 
-ctrlproxyd$(EXEEXT): daemon/main.o $(objs) $(LIBIRC)
+daemon_objs += daemon/main.o daemon/user.o
+
+ctrlproxyd$(EXEEXT): $(daemon_objs) $(objs) $(LIBIRC)
 	@echo Linking $@
 	@$(LD) $(LDFLAGS) -rdynamic -o $@ $^ $(LIBS)
 

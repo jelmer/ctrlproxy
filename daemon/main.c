@@ -23,7 +23,6 @@
 #include "internals.h"
 #include "irc.h"
 #include <sys/un.h>
-#include <pwd.h>
 #include <glib/gstdio.h>
 #define BACKTRACE_STACK_SIZE 64
 
@@ -34,6 +33,9 @@
 #ifdef HAVE_SYSLOG_H
 #include <syslog.h>
 #endif
+
+#include "daemon/daemon.h"
+#include "daemon/user.h"
 
 struct ctrlproxyd_config;
 struct daemon_client_data;
@@ -51,22 +53,6 @@ void register_hup_handler(hup_handler_fn fn, void *userdata) {}
 static void daemon_client_kill(struct daemon_client_data *dc);
 static gboolean daemon_client_connect_user(struct daemon_client_data *cd, struct pending_client *clm, const char *username);
 
-struct ctrlproxyd_config {
-	char *ctrlproxy_path;
-	char *port;
-	char *address;
-	char *configdir;
-};
-
-struct daemon_client_user {
-	 char *configdir;
-	 char *pidpath;
-	 char *socketpath;
-	 char *username;
-	 uid_t uid; /* -1 if not a system user */
-	 pid_t pid;
-};
-
 struct daemon_client_data {
 	struct irc_transport *backend_transport;
 	struct irc_transport *client_transport;
@@ -74,7 +60,7 @@ struct daemon_client_data {
 	gboolean authenticated;
 	gboolean (*pass_check_cb) (gpointer, gboolean);
 	gpointer pass_check_data;
-	struct daemon_client_user *user;
+	struct daemon_user *user;
 	struct ctrlproxyd_config *config;
 	char *password;
 	char *servername;
@@ -175,58 +161,6 @@ void signal_crash(int sig)
 	abort();
 }
 
-gboolean daemon_user_exists(struct daemon_client_user *user)
-{
-	return g_file_test(user->configdir, G_FILE_TEST_IS_DIR);
-}
-
-gboolean daemon_user_running(struct daemon_client_user *user)
-{
-	user->pid = read_pidfile(user->pidpath);
-	
-	return (user->pid != -1);
-}
-
-void daemon_user_free(struct daemon_client_user *user)
-{
-	if (user == NULL)
-		return;
-	g_free(user->pidpath);
-	g_free(user->socketpath);
-	g_free(user->configdir);
-	g_free(user->username);
-	g_free(user);
-}
-
-struct daemon_client_user *daemon_user(struct ctrlproxyd_config *config, const char *username)
-{
-	struct daemon_client_user *user = g_new0(struct daemon_client_user, 1);
-	struct passwd *pwd;
-
-	user->pid = -1;
-	user->username = g_strdup(username);
-
-	if (config->configdir != NULL) {
-		user->configdir = g_build_filename(config->configdir, username, NULL);
-		user->uid = -1;
-	} else {
-		pwd = getpwnam(username);
-
-		if (pwd == NULL) {
-			g_free(user->username);
-			g_free(user);
-			return NULL;
-		}
-
-		user->configdir = g_build_filename(pwd->pw_dir, ".ctrlproxy", NULL);
-		user->uid = pwd->pw_uid;
-	}
-
-	user->socketpath = g_build_filename(user->configdir, "socket", NULL);
-	user->pidpath = g_build_filename(user->configdir, "pid", NULL);
-	return user;
-}
-
 void signal_quit(int sig)
 {
 	listener_log(LOG_NOTICE, daemon_listener, "Received signal %d, exiting...", sig);
@@ -234,64 +168,16 @@ void signal_quit(int sig)
 	g_main_loop_quit(main_loop);
 }
 
-struct spawn_data {
-	struct daemon_client_user *user;
-	struct irc_listener *listener;
-};
-
-static void user_setup(gpointer user_data)
-{
-	struct spawn_data *data = user_data;
-	if (seteuid(data->user->uid) < 0) {
-		listener_log(LOG_WARNING, data->listener, "Unable to change effective user id to %s (%d): %s", 
-					 data->user->username, data->user->uid, 
-					 strerror(errno));
-		exit(1);
-	}	
-}
-
-static gboolean daemon_user_start(struct ctrlproxyd_config *config, 
-								struct irc_listener *l,
-								struct daemon_client_user *user)
-{
-	GPid child_pid;
-	char *command[] = {
-		config->ctrlproxy_path,
-		"--daemon",
-		"--config-dir", g_strdup(user->configdir),
-		NULL
-	};
-	GError *error = NULL;
-	struct spawn_data spawn_data;
-	spawn_data.listener = l;
-	spawn_data.user = user;
-
-	if (!g_spawn_async(NULL, command, NULL, G_SPAWN_SEARCH_PATH, user_setup, &spawn_data,
-				  &child_pid, &error)) {
-		listener_log(LOG_WARNING, l, "Unable to start ctrlproxy for %s (%s): %s", user->username, 
-					 user->configdir, error->message);
-		return FALSE;
-	}
-
-	listener_log(LOG_INFO, l, "Launched new ctrlproxy instance for %s at %s", 
-				 user->username, user->configdir);
-
-	g_spawn_close_pid(child_pid);
-
-	return TRUE;
-}
-
-
 static GIOChannel *connect_user(struct ctrlproxyd_config *config, 
 								struct pending_client *pc,
-								struct daemon_client_user *user)
+								struct daemon_user *user)
 {
 	int sock;
 	struct sockaddr_un un;
 	GIOChannel *ch;
 
 	if (!daemon_user_running(user)) {
-		if (!daemon_user_start(config, pc->listener, user)) {
+		if (!daemon_user_start(user, config->ctrlproxy_path, pc->listener)) {
 			daemon_user_free(user);
 			irc_sendf(pc->connection, pc->listener->iconv, NULL, "ERROR :Unable to start ctrlproxy for %s", 
 					  user->username);
@@ -486,7 +372,7 @@ static gboolean daemon_client_connect_user(struct daemon_client_data *cd, struct
 	GIOChannel *ioc;
 
 	daemon_user_free(cd->user);
-	cd->user = daemon_user(cd->config, username);
+	cd->user = get_daemon_user(cd->config, username);
 	if (cd->user == NULL) {
 		listener_log(LOG_INFO, cl->listener, "Unable to find user %s", username);
 		irc_sendf(cl->connection, cl->listener->iconv, NULL, "ERROR :Unknown user %s", username);
@@ -638,40 +524,14 @@ struct irc_listener_ops daemon_ops = {
 	.handle_client_line = handle_client_line,
 };
 
-static void daemon_user_start_if_exists(struct ctrlproxyd_config *config, struct irc_listener *listener, 
-										struct daemon_client_user *user)
+static void daemon_user_start_if_exists(struct daemon_user *user, const char *ctrlproxy_path, 
+										struct irc_listener *listener)
 {
 	if (daemon_user_exists(user) && !daemon_user_running(user)) {
-		daemon_user_start(config, listener, user);
+		daemon_user_start(user, ctrlproxy_path, listener);
 	}
 }
 
-
-static void foreach_daemon_user(struct ctrlproxyd_config *config, struct irc_listener *listener, 
-								void (*fn) (struct ctrlproxyd_config *config, struct irc_listener *l, struct daemon_client_user *user))
-{
-	struct daemon_client_user *user;
-
-	if (config->configdir == NULL) {
-		struct passwd *pwent;
-		setpwent();
-		while ((pwent = getpwent()) != NULL) {
-			user = daemon_user(config, pwent->pw_name);
-			fn(config, listener, user);
-		}
-		endpwent();
-	} else {
-		const char *name;
-		GDir *dir = g_dir_open(config->configdir, 0, NULL);
-		if (dir == NULL)
-			return;
-		while ((name = g_dir_read_name(dir)) != NULL) {
-			user = daemon_user(config, name);
-			fn(config, listener, user);
-		}
-		g_dir_close(dir);
-	}
-}
 
 int main(int argc, char **argv)
 {
