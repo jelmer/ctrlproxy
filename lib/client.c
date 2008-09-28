@@ -788,9 +788,15 @@ void client_send_netsplit(struct irc_client *c, const char *lost_server)
 
 		if (gn == &s->me) continue;
 
-		g_assert(gn->hostmask != NULL);
-
-		client_send_args_ex(c, gn->hostmask, "QUIT", reason, NULL);
+		if (gn->hostmask == NULL) {
+			/* Make up a fake hostmask. The user hasn't seen the original hostmask 
+			 * of this nick anyway, otherwise we would've known it already. */
+			char *fake_hostmask = g_strdup_printf("%s!~UNKNOWN@UNKNOWN", gn->nick);
+			client_send_args_ex(c, fake_hostmask, "QUIT", reason, NULL);
+			g_free(fake_hostmask);
+		} else {
+			client_send_args_ex(c, gn->hostmask, "QUIT", reason, NULL);
+		}
 	}
 
 	g_free(reason);
