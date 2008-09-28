@@ -85,7 +85,7 @@ struct spawn_data {
 static void user_setup(gpointer user_data)
 {
 	struct spawn_data *data = user_data;
-	if (seteuid(data->user->uid) < 0) {
+	if (setuid(data->user->uid) < 0) {
 		listener_log(LOG_WARNING, data->listener, "Unable to change effective user id to %s (%d): %s", 
 					 data->user->username, data->user->uid, 
 					 strerror(errno));
