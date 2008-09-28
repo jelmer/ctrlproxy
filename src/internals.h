@@ -70,7 +70,7 @@ G_MODULE_EXPORT struct irc_network *load_network(struct global *global, struct n
 G_MODULE_EXPORT gboolean load_networks(struct global *, struct ctrlproxy_config *cfg);
 G_MODULE_EXPORT void unload_network(struct irc_network *);
 typedef void (*new_network_notify_fn) (struct irc_network *, void *);
-G_MODULE_EXPORT struct irc_network *find_network_by_hostname(struct global *global, const char *host, guint16 port, gboolean create);
+G_MODULE_EXPORT struct irc_network *find_network_by_hostname(struct global *global, const char *host, guint16 port, gboolean create, struct irc_login_details *login_details);
 G_MODULE_EXPORT void register_new_network_notify(struct global *, new_network_notify_fn, void *userdata);
 
 /* hooks.c */

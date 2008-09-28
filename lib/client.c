@@ -339,7 +339,8 @@ static gboolean process_from_pending_client(struct irc_client *client,
 		}
 
 		client->network = network_ref(find_network_by_hostname(my_global, 
-				l->args[1], l->args[2]?atoi(l->args[2]):6667, my_global->config->create_implicit));
+				l->args[1], l->args[2]?atoi(l->args[2]):6667, my_global->config->create_implicit, 
+				client->login_details));
 
 		if (client->network == NULL) {
 			client_log(LOG_ERROR, client, 
@@ -796,5 +797,4 @@ void client_send_netsplit(struct irc_client *c, const char *lost_server)
 
 	g_free(reason);
 }
-
 

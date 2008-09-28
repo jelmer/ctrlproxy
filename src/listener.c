@@ -104,7 +104,7 @@ gboolean default_socks_connect_fqdn (struct pending_client *cl, const char *host
 	listener_log(LOG_INFO, cl->listener, "Request to connect to %s:%d", hostname, port);
 
 	result = find_network_by_hostname(cl->listener->global, hostname, port, 
-									  cl->listener->global->config->create_implicit);
+									  cl->listener->global->config->create_implicit, NULL);
 
 	if (result == NULL) {
 		listener_log(LOG_WARNING, cl->listener, "Unable to return network matching %s:%d", hostname, port);
@@ -214,7 +214,8 @@ static gboolean handle_client_line(struct pending_client *pc, const struct irc_l
 
 			if (networkname != NULL) {
 				n = find_network_by_hostname(listener->global, 
-											 networkname, 6667, listener->global->config->create_implicit);
+											 networkname, 6667, listener->global->config->create_implicit,
+											 NULL);
 				if (n == NULL) {
 					irc_sendf(pc->connection, listener->iconv, NULL, 
 							  ":%s %d %s :Password error: unable to find network", 

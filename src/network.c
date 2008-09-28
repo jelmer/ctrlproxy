@@ -222,7 +222,8 @@ static gboolean process_from_server(struct irc_network *n, const struct irc_line
  */
 struct irc_network *find_network_by_hostname(struct global *global, 
 										 const char *hostname, guint16 port, 
-										 gboolean create)
+										 gboolean create,
+										 struct irc_login_details *login_details)
 {
 	GList *gl;
 	char *portname = g_strdup_printf("%d", port);
@@ -275,6 +276,11 @@ struct irc_network *find_network_by_hostname(struct global *global,
 
 		nc->implicit = 1;
 		nc->name = g_strdup(hostname);
+		if (login_details != NULL) {
+			nc->nick = g_strdup(login_details->nick);
+			nc->username = g_strdup(login_details->username);
+			nc->fullname = g_strdup(login_details->realname);
+		}
 		nc->type = NETWORK_TCP;
 		s->host = g_strdup(hostname);
 		s->port = portname;
