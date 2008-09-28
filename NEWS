@@ -18,6 +18,9 @@ Ctrlproxy 3.0.8 UNRELEASED
 	* Network configuration can now also be specified in 
 	  ~/.ctrlproxy/config.
 
+	* Allow setting default-nick, default-username and 
+	  default-fullname in [global] section.
+
   BUG FIXES
    
     * Support 901 response codes.
