@@ -137,3 +137,8 @@ void daemon_backend_kill(struct daemon_backend *backend)
 	free_irc_transport(backend->transport);
 	backend->transport = NULL;
 }
+
+gboolean daemon_backend_send_line (struct daemon_backend *backend, const struct irc_line *line)
+{
+	return transport_send_line(backend->transport, line);
+}

@@ -155,7 +155,7 @@ static gboolean daemon_client_recv(struct irc_transport *transport, const struct
 	struct daemon_client *cd = transport->userdata;
 
 	if (cd->backend->authenticated) 
-		return transport_send_line(cd->backend->transport, line);
+		return daemon_backend_send_line(cd->backend, line);
 	else
 		return TRUE;
 }

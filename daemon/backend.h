@@ -46,5 +46,6 @@ gboolean daemon_backend_authenticate(struct daemon_backend *backend,
 									 const char *password,
 									 void (*callback) (struct daemon_backend *backend, gboolean));
 void daemon_backend_kill(struct daemon_backend *backend);
+gboolean daemon_backend_send_line(struct daemon_backend *backend, const struct irc_line *line);
 
 #endif
