@@ -150,4 +150,9 @@ void foreach_daemon_user(struct ctrlproxyd_config *config, struct irc_listener *
 	}
 }
 
+struct daemon_user *domain_user_init(struct ctrlproxyd_config *config, const char *username)
+{
+	/* FIXME: */
+	return NULL;
+}
 
