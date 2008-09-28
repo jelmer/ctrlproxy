@@ -84,7 +84,7 @@ void ctcp_send(struct irc_network *n, const char *nick, ...)
 	g_free(msg);
 }
 
-static void handle_time(struct ctcp_handle *h, char **args)
+static void handle_time(struct ctcp_handle *h, const char **args)
 {
 	time_t ti = time(NULL);
 	char *t, *msg = g_strdup(ctime(&ti));
@@ -94,17 +94,17 @@ static void handle_time(struct ctcp_handle *h, char **args)
 	g_free(msg);
 }
 
-static void handle_finger(struct ctcp_handle *h, char **args)
+static void handle_finger(struct ctcp_handle *h, const char **args)
 {
 	ctcp_reply(h, "FINGER", h->network->external_state->me.fullname, NULL);
 }
 
-static void handle_source(struct ctcp_handle *h, char **args)
+static void handle_source(struct ctcp_handle *h, const char **args)
 {
 	ctcp_reply(h, "SOURCE", "www.ctrlproxy.org:pub/ctrlproxy:ctrlproxy-latest.tar.gz", NULL);
 }
 
-static void handle_version(struct ctcp_handle *h, char **args)
+static void handle_version(struct ctcp_handle *h, const char **args)
 {
 	char *msg;
 #ifndef _WIN32
@@ -118,12 +118,12 @@ static void handle_version(struct ctcp_handle *h, char **args)
 	g_free(msg);
 }
 
-static void handle_ping(struct ctcp_handle *h, char **args)
+static void handle_ping(struct ctcp_handle *h, const char **args)
 {
 	ctcp_reply(h, "PING", args[1], NULL);
 }
 
-static void handle_clientinfo(struct ctcp_handle *h, char **args);
+static void handle_clientinfo(struct ctcp_handle *h, const char **args);
 
 static const struct ctcp_handler builtins[] = {
 	{ "VERSION", handle_version },
@@ -138,7 +138,7 @@ static const struct ctcp_handler builtins[] = {
 
 static GList *cmds = NULL;
 
-static void handle_clientinfo(struct ctcp_handle *h, char **args)
+static void handle_clientinfo(struct ctcp_handle *h, const char **args)
 {
 	char **supported = g_new0(char *, sizeof(builtins)/sizeof(builtins[0])+1+g_list_length(cmds));
 	char *tmp;
@@ -195,7 +195,7 @@ gboolean ctcp_process_request (struct irc_network *n, const struct irc_line *l)
 
 		if (!g_strcasecmp(hl->name, args[0])) {
 			if (hl->fn != NULL)
-				hl->fn(&h, args);
+				hl->fn(&h, (const char **)args);
 			ret = TRUE;
 			break;
 		}
@@ -204,7 +204,7 @@ gboolean ctcp_process_request (struct irc_network *n, const struct irc_line *l)
 	for (i = 0; !ret && builtins[i].name; i++) {
 		if (!g_strcasecmp(builtins[i].name, args[0])) {
 			if (builtins[i].fn != NULL) 
-				builtins[i].fn(&h, args);
+				builtins[i].fn(&h, (const char **)args);
 			ret = TRUE;
 			break;
 		}

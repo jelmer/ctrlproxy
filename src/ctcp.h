@@ -31,7 +31,7 @@ struct ctcp_handle;
  */
 struct ctcp_handler {
 	char *name;
-	void (*fn) (struct ctcp_handle *, char **args);
+	void (*fn) (struct ctcp_handle *, const char **args);
 };
 
 gboolean ctcp_network_redirect_response(struct irc_network *, const struct irc_line *);
