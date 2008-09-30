@@ -355,10 +355,18 @@ static gboolean process_from_pending_client(struct irc_client *client,
  */
 static gboolean client_ping(struct irc_client *client)
 {
+	const char *name;
 	g_assert(client != NULL);
 
 	client->last_ping = time(NULL);
-	client_send_args_ex(client, NULL, "PING", client->network->name, NULL);
+
+	if (client->state != NULL && client->state->info->name != NULL) {
+		name = client->state->info->name;
+	} else {
+		name = "PinglCtrlproxy";
+	}
+
+	client_send_args_ex(client, NULL, "PING", name, NULL);
 
 	return TRUE;
 }
@@ -650,8 +658,9 @@ void client_send_nameslist(struct irc_client *c,
 		struct channel_nick *n = (struct channel_nick *)nl->data;
 		char prefix;
 
+		g_assert(c->state != NULL && c->state->info != NULL);
 		if (n->modes != NULL) {
-			prefix = get_prefix_from_modes(ch->network->info, n->modes);
+			prefix = get_prefix_from_modes(c->state->info, n->modes);
 		} else {
 			prefix = 0;
 		}
