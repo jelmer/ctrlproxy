@@ -30,7 +30,7 @@
 #include <sys/socket.h>
 #include <glib/gstdio.h>
 
-#define DEFAULT_ADMIN_PORT 6680
+#define DEFAULT_ADMIN_PORT 57000
 #define DEFAULT_SOCKS_PORT 1080
 
 #define CHANNEL_KEY_FILE_HEADER \

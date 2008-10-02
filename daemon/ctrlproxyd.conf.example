@@ -6,7 +6,7 @@
 # address = 127.0.0.1
 #
 ## Port to listen on
-# port = 6680
+# port = 57000 (dircproxy)
 port = dircproxy
 
 ## To allow non-system users, set this:
