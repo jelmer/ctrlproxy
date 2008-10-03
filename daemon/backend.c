@@ -109,6 +109,8 @@ struct daemon_backend *daemon_backend_open(const char *socketpath,
 		return FALSE;
 	}
 
+	g_io_channel_unref(ch);
+
 	irc_transport_set_callbacks(backend->transport, &daemon_backend_callbacks, backend);
 
 	backend->userdata = userdata;
