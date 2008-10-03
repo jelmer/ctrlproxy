@@ -53,11 +53,12 @@ void daemon_client_kill(struct daemon_client *dc)
 	g_free(dc->servername);
 	g_free(dc->servicename);
 	g_free(dc->description);
-	g_free(dc);
 
 	if (dc->inetd) {
 		exit(0);
 	}
+
+	g_free(dc);
 }
 
 void daemon_client_forward_credentials(struct daemon_client *dc)
