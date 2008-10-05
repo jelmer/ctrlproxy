@@ -18,7 +18,6 @@
 */
 
 #include <stdio.h>
-#include <unistd.h>
 #include <string.h>
 #include <check.h>
 #include <stdio.h>
