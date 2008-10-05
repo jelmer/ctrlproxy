@@ -19,7 +19,6 @@
 
 #include "internals.h"
 #include <stdio.h>
-#include <unistd.h>
 #include <string.h>
 #include <check.h>
 #include <stdbool.h>

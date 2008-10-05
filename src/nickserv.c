@@ -19,10 +19,11 @@
 
 #include "ctrlproxy.h"
 #include <string.h>
-#include <unistd.h>
 #include <sys/stat.h>
+#include <glib/gstdio.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <glib.h>
 #include "keyfile.h"
 #include "irc.h"
 
@@ -164,7 +165,7 @@ gboolean nickserv_save(struct global *global, const char *dir)
 	gboolean ret;
 
 	if (global->nickserv_nicks == NULL) {
-		if (unlink(filename) == 0)
+		if (g_unlink(filename) == 0)
 			ret = TRUE;
 		else if (errno == ENOENT)
 			ret = TRUE;

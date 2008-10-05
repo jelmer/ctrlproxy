@@ -21,10 +21,6 @@
 #include "config.h"
 #endif
 
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
-
 #include <netinet/in.h>
 #include <errno.h>
 #include <sys/types.h>
