@@ -23,6 +23,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <glib/gstdio.h>
+#include <unistd.h>
 #include "ctrlproxy.h"
 #include "torture.h"
 
