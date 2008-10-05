@@ -23,7 +23,7 @@ report-time = never
 
 ## Port at which CtrlProxy should listen for new connections
 ## Connections can be plain IRC connections or using the SOCKS protocol.
-port=6680
+port=57000
 
 ## Password for logging in to ctrlproxy
 password=secret

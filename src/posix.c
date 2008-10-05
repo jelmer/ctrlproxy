@@ -22,10 +22,6 @@
 #endif
 #include "internals.h"
 
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
-
 #include <netdb.h>
 
 /* globals */

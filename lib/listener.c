@@ -475,7 +475,8 @@ gboolean listener_socks_reply(struct pending_client *pc, guint8 err, guint8 atyp
 	memcpy(header+4, data, data_len);
 	*((guint16 *)(header+4+data_len)) = htons(port);
 
-	status = g_io_channel_write_chars(pc->connection, header, 6 + data_len, &read, NULL);
+	status = g_io_channel_write_chars(pc->connection, header, 
+									  6 + data_len, &read, NULL);
 
 	g_free(header);
 

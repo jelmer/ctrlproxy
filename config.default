@@ -28,9 +28,10 @@ report-time = never
 ## Port at which CtrlProxy should listen for new connections
 ## Connections can be plain IRC connections or using the SOCKS protocol.
 ## This does not have to be set when using ctrlproxy through ctrlproxyd.
-port=6680
+port=57000
 
 ## Password for logging in to ctrlproxy
+## When using SOCKS any username will be accepted
 password=
 
 ## Set "bind" to make ctrlproxy only listen on a specific IP address:

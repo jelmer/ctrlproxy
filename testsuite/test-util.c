@@ -17,13 +17,13 @@
 */
 
 #include <stdio.h>
-#include <unistd.h>
 #include <string.h>
 #include <glib.h>
 #include <check.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <glib/gstdio.h>
+#include <unistd.h>
 #include "ctrlproxy.h"
 #include "torture.h"
 

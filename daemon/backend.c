@@ -26,6 +26,13 @@
 #include "irc.h"
 #include <sys/un.h>
 
+static gboolean daemon_backend_error(struct irc_transport *transport, const char *message)
+{
+	struct daemon_backend *backend = transport->userdata;
+
+	return backend->callbacks->error(backend, message);
+}
+
 static gboolean daemon_backend_recv(struct irc_transport *transport, const struct irc_line *line)
 {
 	struct daemon_backend *backend = transport->userdata;
@@ -74,7 +81,7 @@ static const struct irc_transport_callbacks daemon_backend_callbacks = {
 	.disconnect = on_daemon_backend_disconnect,
 	.recv = daemon_backend_recv,
 	.charset_error = charset_error_not_called,
-	.error = NULL,
+	.error = daemon_backend_error,
 };
 
 struct daemon_backend *daemon_backend_open(const char *socketpath,
@@ -108,6 +115,8 @@ struct daemon_backend *daemon_backend_open(const char *socketpath,
 	if (backend->transport == NULL) {
 		return FALSE;
 	}
+
+	g_io_channel_unref(ch);
 
 	irc_transport_set_callbacks(backend->transport, &daemon_backend_callbacks, backend);
 

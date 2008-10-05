@@ -19,7 +19,7 @@ Please specify port the administration interface should listen on.
 Prepend with a colon to listen on a specific address.
 Example: localhost:6668
 
-Port [6680]: <userinput>6680</userinput>
+Port [57000]: <userinput>57000</userinput>
 Please specify a password for the administration interface:
 Configuration created in /home/jelmer/.ctrlproxy.
 </screen>

@@ -452,6 +452,8 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
+	g_option_context_free(pc);
+
 	if (version) {
 		printf("ctrlproxy %s\n", VERSION);
 		printf("(c) 2002-2008 Jelmer Vernooij et al. <jelmer@nl.linux.org>\n");

@@ -696,7 +696,7 @@ static void handle_end_exceptlist(struct irc_network_state *s, const struct irc_
 		return;
 	}
 	c->exceptlist_started = FALSE;
-	channel_mode_nicklist_present(c,'e') = TRUE;
+	channel_mode_nicklist_present(c, 'e') = TRUE;
 }
 
 
