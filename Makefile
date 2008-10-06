@@ -110,6 +110,7 @@ ctrlproxy$(EXEEXT): src/main.o $(objs) $(LIBIRC)
 src/settings.o: CFLAGS+=-DSYSCONFDIR=\"${sysconfdir}\"
 
 daemon/main.o: CFLAGS+=-DDEFAULT_CONFIG_FILE=\"${sysconfdir}/ctrlproxyd.conf\" \
+	                   -DSSL_CREDENTIALS_DIR=\"${sysconfdir}/ctrlproxy/ssl\" \
 					   -DPIDFILE=\"${localstatedir}/run/ctrlproxyd.pid\"
 
 daemon_objs += daemon/main.o daemon/user.o daemon/client.o daemon/backend.o

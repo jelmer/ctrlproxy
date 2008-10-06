@@ -38,6 +38,8 @@
 #include "daemon/client.h"
 #include "daemon/backend.h"
 
+#include "ssl.h"
+
 #include "lib/socks.h"
 
 struct ctrlproxyd_config;
@@ -102,6 +104,10 @@ struct ctrlproxyd_config *read_config_file(const char *name)
 #endif
 		g_free(keytab);
 	}
+
+#ifdef HAVE_GNUTLS
+	config->ssl_credentials = ssl_create_server_credentials(SSL_CREDENTIALS_DIR, kf, "ssl");
+#endif
 
 	g_key_file_free(kf);
 

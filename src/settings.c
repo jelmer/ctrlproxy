@@ -839,7 +839,7 @@ static void config_load_listeners(struct ctrlproxy_config *cfg)
 		
 #ifdef HAVE_GNUTLS
 		if (l->ssl)
-			l->ssl_credentials = ssl_create_server_credentials(cfg, cfg->keyfile, "global");
+			l->ssl_credentials = ssl_create_server_credentials(cfg->config_dir, cfg->keyfile, "global");
 #endif
 		l->is_default = TRUE;
 
@@ -884,7 +884,7 @@ static void config_load_listeners(struct ctrlproxy_config *cfg)
 
 #ifdef HAVE_GNUTLS
 		if (l->ssl)
-			l->ssl_credentials = ssl_create_server_credentials(cfg, kf, groups[i]);
+			l->ssl_credentials = ssl_create_server_credentials(cfg->config_dir, kf, groups[i]);
 #endif
 
 		if (g_key_file_has_key(kf, groups[i], "network", NULL))
