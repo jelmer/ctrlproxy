@@ -236,7 +236,9 @@ static gboolean backend_recv(struct daemon_backend *backend, const struct irc_li
 {
 	struct daemon_client *cd = backend->userdata;
 
-	return transport_send_line(cd->client_transport, line);
+	if (cd->client_transport != NULL)
+		return transport_send_line(cd->client_transport, line);
+	return TRUE;
 }
 
 const static struct daemon_backend_callbacks backend_callbacks = {
