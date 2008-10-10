@@ -109,7 +109,8 @@ struct ctrlproxyd_config *read_config_file(const char *name)
 		config->ssl = g_key_file_get_boolean(kf, "settings", "ssl", NULL);
 
 #ifdef HAVE_GNUTLS
-	config->ssl_credentials = ssl_create_server_credentials(SSL_CREDENTIALS_DIR, kf, "ssl");
+	if (config->ssl)
+		config->ssl_credentials = ssl_create_server_credentials(SSL_CREDENTIALS_DIR, kf, "ssl");
 #endif
 
 	g_key_file_free(kf);
