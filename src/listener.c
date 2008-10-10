@@ -309,6 +309,7 @@ struct irc_listener *listener_init(struct global *global, struct listener_config
 	l->config = cfg;
 	l->ssl = cfg->ssl;
 	l->ssl_credentials = cfg->ssl_credentials;
+	g_assert(!l->ssl || l->ssl_credentials != NULL);
 	l->global = global;
 	l->ops = &default_listener_ops;
 	l->iconv = (GIConv)-1;

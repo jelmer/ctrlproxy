@@ -49,7 +49,7 @@ typedef enum {
 void ssl_cert_generate(const char *keyfile, const char *certfile,
 		       const char *cafile);
 
-gpointer ssl_create_server_credentials(struct ctrlproxy_config *cfg, 
+gpointer ssl_create_server_credentials(const char *config_dir,
 									   GKeyFile *kf, const char *group);
 
 #endif /* SSL_H */
