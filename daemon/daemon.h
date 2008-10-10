@@ -25,6 +25,7 @@ struct ctrlproxyd_config {
 	char *port;
 	char *address;
 	char *configdir;
+	gboolean ssl;
 	gpointer ssl_credentials;
 };
 
