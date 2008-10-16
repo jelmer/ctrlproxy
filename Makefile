@@ -96,7 +96,8 @@ headers = src/admin.h \
 		  src/repl.h \
 		  src/settings.h \
 		  src/ssl.h \
-		  src/log.h
+		  src/log.h \
+		  src/cache.h
 dep_files = $(patsubst %.o, %.d, $(objs))
 
 linestack-cmd$(EXEEXT): src/linestack-cmd.o $(objs) $(LIBIRC)
