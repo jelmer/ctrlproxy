@@ -128,7 +128,7 @@ static gboolean process_from_server(struct irc_network *n, const struct irc_line
 		return TRUE;
 	} else if (!g_strcasecmp(l->args[0], "ERROR")) {
 		network_log(LOG_ERROR, n, "error: %s", l->args[1]);
-	} else if (response == 433 && 
+	} else if (response == ERR_NICKNAMEINUSE && 
 			  n->connection.state == NETWORK_CONNECTION_STATE_LOGIN_SENT){
 		char *tmp = g_strdup_printf("%s_", l->args[2]);
 		network_send_args(n, "NICK", tmp, NULL);
