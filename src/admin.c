@@ -1246,17 +1246,17 @@ static char *max_who_age_get(admin_handle h)
 {
 	struct global *g = admin_get_global(h);
 
-	if (g->config->max_who_age == 0)
+	if (g->config->cache.max_who_age == 0)
 		return NULL;
 	
-	return g_strdup_printf("%d", g->config->max_who_age);
+	return g_strdup_printf("%d", g->config->cache.max_who_age);
 }
 
 static gboolean max_who_age_set(admin_handle h, const char *value)
 {
 	struct global *g = admin_get_global(h);
 
-	g->config->max_who_age = (value == NULL?0:atoi(value));
+	g->config->cache.max_who_age = (value == NULL?0:atoi(value));
 
 	return TRUE;
 }

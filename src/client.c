@@ -116,7 +116,7 @@ static gboolean process_from_client(struct irc_client *c, const struct irc_line 
 	} else if (c->network->connection.state == NETWORK_CONNECTION_STATE_MOTD_RECVD) {
 		struct network_config *nc = c->network->private_data;
 
-		if (nc->disable_cache || !client_try_cache(c, c->network->external_state, l)) {
+		if (nc->disable_cache || !client_try_cache(c, c->network->external_state, l, &c->network->global->config->cache)) {
 			/* Perhaps check for validity of input here ? It could save us some bandwidth 
 			 * to the server, though unlikely to occur often */
 			network_send_line(c->network, c, l, FALSE);
