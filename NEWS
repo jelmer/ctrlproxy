@@ -48,6 +48,8 @@ Ctrlproxy 3.0.8 UNRELEASED
 	* Fix segfault on FreeBSD because it doesn't like freeaddrinfo(NULL). 
 	  (#202)
 
+    * Support 290 (CAPAB) response codes.
+
   INTERNALS
 
     * Use generic storage for MODEs.

@@ -483,6 +483,13 @@ static struct query queries[] = {
 		handle_default
 	},
 
+	{ "CAPAB", 
+		{ 0 },
+		{ RPL_CAPAB, 0 },
+		{ ERR_NEEDMOREPARAMS, 0 },
+		handle_default
+	},
+
 	{ NULL }
 };
 
