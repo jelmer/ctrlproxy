@@ -110,6 +110,8 @@ struct network_config
 
 	/** Commands to send on connect. */
 	char **autocmd;
+
+	struct ctrlproxy_config *global;
 };
 
 /**

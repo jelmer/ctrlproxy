@@ -1391,6 +1391,8 @@ struct network_config *network_config_init(struct ctrlproxy_config *cfg)
 {
 	struct network_config *s = g_new0(struct network_config, 1);
 
+	s->global = cfg;
+
 	s->autoconnect = FALSE;
 	s->reconnect_interval = -1;
 
