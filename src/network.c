@@ -328,15 +328,15 @@ static struct irc_login_details *get_login_details(struct irc_network *s)
 
 	if (nc->username != NULL)
 		ret->username = g_strdup(nc->username);
-	else if (s->global->config->default_username != NULL) 
-		ret->username = g_strdup(s->global->config->default_username);
+	else if (nc->global->default_username != NULL) 
+		ret->username = g_strdup(nc->global->default_username);
 	else 
 		ret->username = g_strdup(g_get_user_name());
 
 	if (nc->fullname != NULL)
 		ret->realname = g_strdup(nc->fullname);
-	else if (s->global->config->default_realname != NULL) {
-		ret->realname = g_strdup(s->global->config->default_realname);
+	else if (nc->global->default_realname != NULL) {
+		ret->realname = g_strdup(nc->global->default_realname);
 	} else { 
 		ret->realname = g_strdup(g_get_real_name());
 		if (ret->realname == NULL || 
@@ -348,8 +348,8 @@ static struct irc_login_details *get_login_details(struct irc_network *s)
 
 	if (nc->nick != NULL)
 		ret->nick = g_strdup(nc->nick);
-	else if (s->global->config->default_nick != NULL) 
-		ret->nick = g_strdup(s->global->config->default_nick);
+	else if (nc->global->default_nick != NULL) 
+		ret->nick = g_strdup(nc->global->default_nick);
 	else
 		ret->nick = g_strdup(g_get_user_name());
 

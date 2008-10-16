@@ -48,7 +48,7 @@ static void server_send_login (struct irc_network *s)
 	s->external_state = network_state_init(login_details->nick, login_details->username, 
 								  get_my_hostname());
 	network_state_set_log_fn(s->external_state, state_log_helper, s);
-	s->linestack = new_linestack(s);
+	s->linestack = new_linestack(s, s->global->config);
 	g_assert(s->linestack != NULL);
 
 	if (login_details->password != NULL) {
@@ -831,7 +831,7 @@ static gboolean connect_virtual(struct irc_network *s)
 	free_login_details(details);
 	s->external_state->userdata = s;
 	s->external_state->log = state_log_helper;
-	s->linestack = new_linestack(s);
+	s->linestack = new_linestack(s, s->global->config);
 	s->connection.state = NETWORK_CONNECTION_STATE_MOTD_RECVD;
 
 	if (s->connection.data.virtual.ops->init)
