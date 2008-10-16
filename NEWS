@@ -21,6 +21,9 @@ Ctrlproxy 3.0.8 UNRELEASED
 	* Allow setting default-nick, default-username and 
 	  default-fullname in [global] section.
 
+	* Linestack is not disabled completely after a single 
+	  write fails.
+
   BUG FIXES
    
     * Support 901 response codes.
