@@ -407,10 +407,10 @@ void save_configuration(struct ctrlproxy_config *cfg, const char *configuration_
 		g_key_file_set_boolean(cfg->keyfile, "global", "admin-log", cfg->admin_log);
 
 	if (g_key_file_has_key(cfg->keyfile, "global", "max_who_age", NULL)) {
-		g_key_file_set_integer(cfg->keyfile, "global", "max_who_age", cfg->max_who_age);
+		g_key_file_set_integer(cfg->keyfile, "global", "max_who_age", cfg->cache.max_who_age);
 	} else if (g_key_file_has_key(cfg->keyfile, "global", "max-who-age", NULL) ||
-			 cfg->max_who_age != 0) {
-		g_key_file_set_integer(cfg->keyfile, "global", "max-who-age", cfg->max_who_age);
+			 cfg->cache.max_who_age != 0) {
+		g_key_file_set_integer(cfg->keyfile, "global", "max-who-age", cfg->cache.max_who_age);
 	}
 
 	if (g_key_file_has_key(cfg->keyfile, "global", "learn-nickserv", NULL) ||
@@ -1234,9 +1234,9 @@ struct ctrlproxy_config *load_configuration(const char *dir)
 	}
 
 	if (g_key_file_has_key(kf, "global", "max_who_age", NULL))
-		cfg->max_who_age = g_key_file_get_integer(kf, "global", "max_who_age", NULL);
+		cfg->cache.max_who_age = g_key_file_get_integer(kf, "global", "max_who_age", NULL);
 	else if (g_key_file_has_key(kf, "global", "max-who-age", NULL))
-		cfg->max_who_age = g_key_file_get_integer(kf, "global", "max-who-age", NULL);
+		cfg->cache.max_who_age = g_key_file_get_integer(kf, "global", "max-who-age", NULL);
 
 
 	cfg->replication = g_key_file_get_string(kf, "global", "replication", NULL);

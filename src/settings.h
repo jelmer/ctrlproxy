@@ -202,7 +202,7 @@ struct ctrlproxy_config {
 		REPORT_TIME_REPLICATION
 	} report_time;
 	int report_time_offset;
-	int max_who_age;
+	struct cache_settings cache;
 	GKeyFile *keyfile;
 	GList *listeners;
 	/** Default listener */

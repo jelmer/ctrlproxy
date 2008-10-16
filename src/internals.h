@@ -115,9 +115,6 @@ char *custom_subst(struct irc_network *network,
 						 const char *_identifier, 
 						 gboolean case_sensitive, gboolean noslash);
 
-/* cache.c */
-gboolean client_try_cache(struct irc_client *c, struct irc_network_state *n, struct irc_line *l);
-
 /* linestack.c */
 void init_linestack(struct ctrlproxy_config *);
 

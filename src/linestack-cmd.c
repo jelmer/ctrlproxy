@@ -3,6 +3,7 @@
 #include <string.h>
 #include "line.h"
 #include "linestack.h"
+#include "cache.h"
 #include "settings.h"
 #include "state.h"
 #include <readline/readline.h>

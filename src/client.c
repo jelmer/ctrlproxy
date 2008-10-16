@@ -36,6 +36,21 @@ static gboolean process_to_client(struct irc_client *c, const struct irc_line *l
 	return TRUE;
 }
 
+static void handle_offline_command(struct irc_client *c, const struct irc_line *l, const char *offline_reason)
+{
+	if (!g_strcasecmp(l->args[0], "PRIVMSG") || !g_strcasecmp(l->args[0], "NOTICE")) {
+		client_send_response(c, ERR_NOSUCHNICK, l->args[1], offline_reason, NULL);
+	} else if (!g_strcasecmp(l->args[0], "JOIN")) {
+		/* Make network->internal_state join channel */
+		client_send_response(c, ERR_NOSUCHCHANNEL, l->args[1], offline_reason, NULL);
+	} else if (!g_strcasecmp(l->args[0], "PART")) {
+		/* Make network->internal_state part channel */
+		client_send_response(c, ERR_NOTONCHANNEL, l->args[1], offline_reason, NULL);
+	} else {
+		client_send_response(c, ERR_UNKNOWNCOMMAND, l->args[0], offline_reason, NULL);
+	}
+}
+
 /**
  * Process incoming lines from a client.
  *
@@ -101,9 +116,9 @@ static gboolean process_from_client(struct irc_client *c, const struct irc_line 
 	} else if (c->network->connection.state == NETWORK_CONNECTION_STATE_MOTD_RECVD) {
 		struct network_config *nc = c->network->private_data;
 
-		if (nc->disable_cache || !client_try_cache(c, c->network->external_state, l)) {
+		if (nc->disable_cache || !client_try_cache(c, c->network->external_state, l, &c->network->global->config->cache)) {
 			/* Perhaps check for validity of input here ? It could save us some bandwidth 
-			 * to the server, though very unlikely to occur often */
+			 * to the server, though unlikely to occur often */
 			network_send_line(c->network, c, l, FALSE);
 		}
 	} else if (c->network->connection.state == NETWORK_CONNECTION_STATE_NOT_CONNECTED) {
@@ -114,7 +129,8 @@ static gboolean process_from_client(struct irc_client *c, const struct irc_line 
 			msg = g_strdup_printf("Currently not connected to server... (%s)",
 					c->network->connection.data.tcp.last_disconnect_reason);
 
-		client_send_args(c, "NOTICE", client_get_default_target(c), msg, NULL);
+		handle_offline_command(c, l, msg);
+
 		g_free(msg);
 	}
 
