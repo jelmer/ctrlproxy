@@ -38,6 +38,8 @@
 #include "daemon/client.h"
 #include "daemon/backend.h"
 
+#include "ssl.h"
+
 #include "lib/socks.h"
 
 struct ctrlproxyd_config;
@@ -102,6 +104,14 @@ struct ctrlproxyd_config *read_config_file(const char *name)
 #endif
 		g_free(keytab);
 	}
+
+	if (g_key_file_has_key(kf, "settings", "ssl", NULL))
+		config->ssl = g_key_file_get_boolean(kf, "settings", "ssl", NULL);
+
+#ifdef HAVE_GNUTLS
+	if (config->ssl)
+		config->ssl_credentials = ssl_create_server_credentials(SSL_CREDENTIALS_DIR, kf, "ssl");
+#endif
 
 	g_key_file_free(kf);
 
@@ -511,6 +521,8 @@ int main(int argc, char **argv)
 	else 
 		daemon_listener->log_fn = listener_syslog;
 	daemon_listener->ops = &daemon_ops;
+	daemon_listener->ssl = config->ssl;
+	daemon_listener->ssl_credentials = config->ssl_credentials;
 
 	if (inetd) {
 		GIOChannel *io = g_io_channel_unix_new(0);

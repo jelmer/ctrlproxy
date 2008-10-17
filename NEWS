@@ -21,6 +21,9 @@ Ctrlproxy 3.0.8 UNRELEASED
 	* Allow setting default-nick, default-username and 
 	  default-fullname in [global] section.
 
+	* Linestack is not disabled completely after a single 
+	  write fails.
+
   BUG FIXES
    
     * Support 901 response codes.
@@ -44,6 +47,8 @@ Ctrlproxy 3.0.8 UNRELEASED
 
 	* Fix segfault on FreeBSD because it doesn't like freeaddrinfo(NULL). 
 	  (#202)
+
+    * Support 290 (CAPAB) response codes.
 
   INTERNALS
 

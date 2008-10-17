@@ -52,6 +52,7 @@
 #define G_MODULE_EXPORT 
 #endif
 
+#include "cache.h"
 #include "settings.h"
 #include "connection.h"
 #include "util.h"

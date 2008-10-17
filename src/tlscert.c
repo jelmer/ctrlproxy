@@ -146,18 +146,18 @@ failed:
 	log_global(LOG_WARNING, "TLS certificate generation failed");
 }
 
-gpointer ssl_create_server_credentials(struct ctrlproxy_config *config,
+gpointer ssl_create_server_credentials(const char *config_dir,
 									   GKeyFile *kf, const char *group)
 {
 	if (!g_key_file_has_key(kf, group, "keyfile", NULL) &&
 		!g_key_file_has_key(kf, group, "certfile", NULL)) {
-		char *keyfile = g_build_filename(config->config_dir, "key.pem", NULL);
-		char *certfile = g_build_filename(config->config_dir, "cert.pem", NULL);
+		char *keyfile = g_build_filename(config_dir, "key.pem", NULL);
+		char *certfile = g_build_filename(config_dir, "cert.pem", NULL);
 		g_key_file_set_string(kf, group, "keyfile", keyfile);
 		g_key_file_set_string(kf, group, "certfile", certfile);
 		if (!g_file_test(keyfile, G_FILE_TEST_EXISTS) && 
 			!g_file_test(certfile, G_FILE_TEST_EXISTS)) {
-			char *cafile = g_build_filename(config->config_dir, "ca.pem", NULL);
+			char *cafile = g_build_filename(config_dir, "ca.pem", NULL);
 			ssl_cert_generate(keyfile, certfile, cafile);
 			g_free(cafile);
 		}

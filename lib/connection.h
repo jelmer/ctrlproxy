@@ -140,6 +140,9 @@ struct irc_network {
 	/** Linestack context. */
 	struct linestack_context *linestack;
 
+	/** How many linestack errors have occurred so far */
+	guint linestack_errors;
+
 	const struct irc_network_callbacks *callbacks;
 
 	struct query_stack *queries;

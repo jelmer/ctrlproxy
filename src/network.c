@@ -89,6 +89,7 @@ static gboolean process_from_server(struct irc_network *n, const struct irc_line
 	struct irc_line *lc;
 	struct network_config *nc = n->private_data;
 	GError *error = NULL;
+	int response;
 
 	g_assert(n);
 	g_assert(l);
@@ -112,11 +113,13 @@ static gboolean process_from_server(struct irc_network *n, const struct irc_line
 	run_log_filter(n, lc = linedup(l), FROM_SERVER); free_line(lc);
 	run_replication_filter(n, lc = linedup(l), FROM_SERVER); free_line(lc);
 
-	g_assert(n->external_state);
+	g_assert(n->external_state != NULL);
 
 	state_handle_data(n->external_state, l);
 
 	g_assert(l->args[0]);
+
+	response = atoi(l->args[0]);
 
 	if (!g_strcasecmp(l->args[0], "PING")){
 		network_send_args(n, "PONG", l->args[1], NULL);
@@ -125,7 +128,7 @@ static gboolean process_from_server(struct irc_network *n, const struct irc_line
 		return TRUE;
 	} else if (!g_strcasecmp(l->args[0], "ERROR")) {
 		network_log(LOG_ERROR, n, "error: %s", l->args[1]);
-	} else if (!g_strcasecmp(l->args[0], "433") && 
+	} else if (response == ERR_NICKNAMEINUSE && 
 			  n->connection.state == NETWORK_CONNECTION_STATE_LOGIN_SENT){
 		char *tmp = g_strdup_printf("%s_", l->args[2]);
 		network_send_args(n, "NICK", tmp, NULL);
@@ -133,8 +136,7 @@ static gboolean process_from_server(struct irc_network *n, const struct irc_line
 					l->args[2], tmp);
 		network_nick_set_nick(&n->external_state->me, tmp);
 		g_free(tmp);
-	} else if (atoi(l->args[0]) == RPL_ENDOFMOTD ||
-			  atoi(l->args[0]) == ERR_NOMOTD) {
+	} else if (response == RPL_ENDOFMOTD || response == ERR_NOMOTD) {
 		int i;
 		GList *gl;
 		n->connection.state = NETWORK_CONNECTION_STATE_MOTD_RECVD;
@@ -201,9 +203,12 @@ static gboolean process_from_server(struct irc_network *n, const struct irc_line
 
 		if (linestack_store && n->linestack != NULL) {
 			if (!linestack_insert_line(n->linestack, l, FROM_SERVER, n->external_state)) {
-				network_log(LOG_WARNING, n, "Unable to write to linestack. Disabling replication for now.");
-				free_linestack_context(n->linestack);
-				n->linestack = NULL;
+				if (n->linestack_errors == 0)
+					network_log(LOG_WARNING, n, "Unable to write to linestack. Disabling replication for now.");
+				n->linestack_errors++;
+			} else if (n->linestack_errors > 0) {
+				network_log(LOG_WARNING, n, "Linestack re-enabled, but inconsistent. %d lines were not written.", n->linestack_errors);
+				n->linestack_errors = 0;
 			}
 		}
 	} 

@@ -96,7 +96,8 @@ headers = src/admin.h \
 		  src/repl.h \
 		  src/settings.h \
 		  src/ssl.h \
-		  src/log.h
+		  src/log.h \
+		  src/cache.h
 dep_files = $(patsubst %.o, %.d, $(objs))
 
 linestack-cmd$(EXEEXT): src/linestack-cmd.o $(objs) $(LIBIRC)
@@ -110,6 +111,7 @@ ctrlproxy$(EXEEXT): src/main.o $(objs) $(LIBIRC)
 src/settings.o: CFLAGS+=-DSYSCONFDIR=\"${sysconfdir}\"
 
 daemon/main.o: CFLAGS+=-DDEFAULT_CONFIG_FILE=\"${sysconfdir}/ctrlproxyd.conf\" \
+	                   -DSSL_CREDENTIALS_DIR=\"${sysconfdir}/ctrlproxy/ssl\" \
 					   -DPIDFILE=\"${localstatedir}/run/ctrlproxyd.pid\"
 
 daemon_objs += daemon/main.o daemon/user.o daemon/client.o daemon/backend.o

@@ -24,7 +24,7 @@
 #include "internals.h"
 #include "irc.h"
 
-static gboolean client_try_cache_mode(struct irc_client *c, struct irc_network_state *net, struct irc_line *l)
+static gboolean client_try_cache_mode(struct irc_client *c, struct irc_network_state *net, struct irc_line *l, const struct cache_settings *settings)
 {
 	int i;
 	char m;
@@ -68,7 +68,7 @@ static gboolean client_try_cache_mode(struct irc_client *c, struct irc_network_s
 	return FALSE;
 }
 
-static gboolean client_try_cache_topic(struct irc_client *c, struct irc_network_state *net, struct irc_line *l)
+static gboolean client_try_cache_topic(struct irc_client *c, struct irc_network_state *net, struct irc_line *l, const struct cache_settings *settings)
 {
 	struct irc_channel_state *ch;
 
@@ -88,12 +88,12 @@ static gboolean client_try_cache_topic(struct irc_client *c, struct irc_network_
 	return TRUE;
 }
 
-static gboolean client_try_cache_userhost(struct irc_client *c, struct irc_network_state *net, struct irc_line *l)
+static gboolean client_try_cache_userhost(struct irc_client *c, struct irc_network_state *net, struct irc_line *l, const struct cache_settings *settings)
 {
 	return FALSE;
 }
 
-static gboolean client_try_cache_who(struct irc_client *c, struct irc_network_state *net, struct irc_line *l)
+static gboolean client_try_cache_who(struct irc_client *c, struct irc_network_state *net, struct irc_line *l, const struct cache_settings *settings)
 {
 	struct irc_channel_state *ch;
 	int max_who_age;
@@ -113,7 +113,7 @@ static gboolean client_try_cache_who(struct irc_client *c, struct irc_network_st
 	/* Don't cache complex requests.. for now */
 	if (l->argc > 2) return FALSE;
 
-	max_who_age = c->network->global->config->max_who_age;
+	max_who_age = settings->max_who_age;
 
 	/* Never cache when max_who_age is set to 0 */
 	if (max_who_age == 0)
@@ -158,7 +158,7 @@ static gboolean client_try_cache_who(struct irc_client *c, struct irc_network_st
 	return TRUE;
 }
 
-static gboolean client_try_cache_names(struct irc_client *c, struct irc_network_state *net, struct irc_line *l)
+static gboolean client_try_cache_names(struct irc_client *c, struct irc_network_state *net, struct irc_line *l, const struct cache_settings *settings)
 {
 	struct irc_channel_state *ch;
 
@@ -188,7 +188,7 @@ static gboolean client_try_cache_names(struct irc_client *c, struct irc_network_
 struct cache_command {
 	const char *name;
 	/* Should return FALSE if command couldn't be cached */
-	gboolean (*try_cache) (struct irc_client *c, struct irc_network_state *net, struct irc_line *l);
+	gboolean (*try_cache) (struct irc_client *c, struct irc_network_state *net, struct irc_line *l, const struct cache_settings *settings);
 } cache_commands[] = {
 	{ "MODE", client_try_cache_mode },
 	{ "NAMES", client_try_cache_names },
@@ -199,7 +199,7 @@ struct cache_command {
 };
 
 /* Try to answer a client query from cache */
-gboolean client_try_cache(struct irc_client *c, struct irc_network_state *net, struct irc_line *l)
+gboolean client_try_cache(struct irc_client *c, struct irc_network_state *net, struct irc_line *l, const struct cache_settings *settings)
 {
 	g_assert(l);
 	int i;
@@ -209,7 +209,7 @@ gboolean client_try_cache(struct irc_client *c, struct irc_network_state *net, s
 
 	for (i = 0; cache_commands[i].name; i++) {
 		if (!g_strcasecmp(l->args[0], cache_commands[i].name))
-			return cache_commands[i].try_cache(c, net, l);
+			return cache_commands[i].try_cache(c, net, l, settings);
 	}
 	
 	return FALSE;
