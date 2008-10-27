@@ -772,7 +772,7 @@ void client_send_netsplit(struct irc_client *c, const char *lost_server)
 	reason = g_strdup_printf("%s %s", get_my_hostname(), lost_server);
 
 	/* all nicks known quit */
-	for (gl = s->nicks; gl; gl = gl->next) {
+	for (gl = s->nicks; gl != NULL; gl = gl->next) {
 		struct network_nick *gn = gl->data;
 
 		if (gn == &s->me) continue;
