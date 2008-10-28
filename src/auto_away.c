@@ -97,6 +97,16 @@ static gboolean new_client(struct irc_client *c, void *userdata)
 	return TRUE;
 }
 
+static void lose_client(struct irc_client *c, void *userdata) 
+{
+	struct auto_away_data *d = userdata;
+
+	if (d->config->client_limit >= 0 && d->config->client_limit >= g_list_length(c->network->clients))
+		network_send_args(c->network, "AWAY", 
+								  d->config->message != NULL?d->config->message:"Auto Away", 
+								  NULL);
+}
+
 void auto_away_add(struct global *global, struct auto_away_config *config)
 {
 	struct auto_away_data *d = g_new0(struct auto_away_data, 1);
@@ -112,5 +122,6 @@ void auto_away_add(struct global *global, struct auto_away_config *config)
 	d->timeout_id = g_timeout_add(1000, check_time, d);
 	d->global = global;
 	add_new_client_hook("auto-away", new_client, d);
+	add_lose_client_hook("auto-away", lose_client, d);
 	add_server_filter("auto-away", log_data, d, -1);
 }
