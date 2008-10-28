@@ -126,3 +126,29 @@ const char *g_io_channel_unix_get_sock_error(GIOChannel *ioc)
 	return strerror(valopt);
 }
 
+gsize i_convert(const char *str, gsize len, GIConv cd, GString *out)
+{
+	gsize ret;
+	char *outbuf;
+	gsize outbytes_left;
+	char *inbuf = (char *)str;
+	gsize inbytes_left = len;
+	int done = 0;
+
+	do {
+		outbytes_left = MAX(inbytes_left, out->allocated_len - out->len - 1);
+		/* ensure there is available space for at least one character */
+		outbytes_left = MAX(outbytes_left, 10);
+		g_string_set_size(out, out->len + outbytes_left);
+		outbuf = out->str + out->len - outbytes_left;
+		ret = g_iconv(cd, &inbuf, &inbytes_left, &outbuf, &outbytes_left);
+		g_string_truncate(out, out->len - outbytes_left);
+		done = 1;
+		if (ret == (gsize)-1) {
+			if (errno == E2BIG)
+				done = 0;
+		}
+	} while (!done);
+	return len - inbytes_left;
+}
+
