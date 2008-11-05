@@ -256,10 +256,8 @@ static gboolean on_transport_receive_line(struct irc_transport *transport,
 {
 	struct irc_client *client = transport->userdata;
 
-	g_assert(l);
-
 	/* Silently drop empty messages */
-	if (l->argc == 0) {
+	if (l == NULL || l->argc == 0) {
 		return TRUE;
 	}
 
