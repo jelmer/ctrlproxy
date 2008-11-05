@@ -733,9 +733,28 @@ void client_send_channel_mode(struct irc_client *c, struct irc_channel_state *ch
 {
 		char *mode;
 		mode = mode2string(ch->modes);
-		if (mode != NULL)
-			client_send_response(c, RPL_CHANNELMODEIS, ch->name, mode, NULL);
-		g_free(mode);
+		if (mode != NULL) {
+			struct irc_line l;
+			int i, j = 0;
+			l.args = g_new0(char *, 260);
+			l.origin = g_strdup(c->default_origin);
+			l.args[0] = g_strdup_printf("%03d", RPL_CHANNELMODEIS);
+			l.args[1] = g_strdup(client_get_default_target(c));
+			l.args[2] = g_strdup(ch->name);
+			l.args[3] = mode;
+			for (i = 0; mode[i]; i++) {
+				if (network_chanmode_type(mode[i], c->state->info) == CHANMODE_OPT_SETTING && 
+					channel_mode_option(ch, mode[i])) {
+					l.args[4+j] = g_strdup(channel_mode_option(ch, mode[i]));
+					j++;
+				}
+				l.args[4+j] = NULL;
+			}
+			l.argc = 4+j;
+			client_send_line(c, &l);
+			free_line(&l);
+		}
+
 		if (ch->creation_time > 0) {
 			char time[20];
 			snprintf(time, sizeof(time), "%lu", ch->creation_time);
