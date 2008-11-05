@@ -50,6 +50,8 @@ Ctrlproxy 3.0.8 UNRELEASED
 
     * Support 290 (CAPAB) response codes.
 
+	* Fix client-limit for auto-away. (Alex Stansfield)
+
   INTERNALS
 
     * Use generic storage for MODEs.
