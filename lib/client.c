@@ -630,7 +630,7 @@ void client_send_topic(struct irc_client *c, struct irc_channel_state *ch,
 	}
 
 	if (ch->topic_set_time != 0 && ch->topic_set_by != NULL) {
-		char *tmp = g_strdup_printf("%lu", ch->topic_set_time);
+		char *tmp = g_strdup_printf("%ld", ch->topic_set_time);
 		client_send_response(c, RPL_TOPICWHOTIME, ch->name, ch->topic_set_by, 
 							 tmp, NULL);
 		g_free(tmp);
