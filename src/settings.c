@@ -321,6 +321,16 @@ static void config_save_listeners(struct ctrlproxy_config *cfg, const char *path
 			}
 
 			g_key_file_set_boolean(kf, tmp, "ssl", l->ssl);
+
+			if (l->ssl) {
+				if (l->certfile != NULL) {
+					g_key_file_set_string(kf, tmp, "certfile", l->certfile);
+				}
+				if (l->keyfile != NULL) {
+					g_key_file_set_string(kf, tmp, "keyfile", l->keyfile);
+				}
+			}
+
 		
 			g_free(tmp);
 		}
@@ -838,8 +848,15 @@ static void config_load_listeners(struct ctrlproxy_config *cfg)
 				 g_key_file_get_boolean(cfg->keyfile, "global", "ssl", NULL);
 		
 #ifdef HAVE_GNUTLS
-		if (l->ssl)
+		if (l->ssl) {
 			l->ssl_credentials = ssl_create_server_credentials(cfg->config_dir, cfg->keyfile, "global");
+			if (g_key_file_has_key(cfg->keyfile, "global", "certfile", NULL)) {
+				l->certfile = g_key_file_get_string(cfg->keyfile, "global", "certfile", NULL);
+			}
+			if (g_key_file_has_key(cfg->keyfile, "global", "keyfile", NULL)) {
+				l->keyfile = g_key_file_get_string(cfg->keyfile, "global", "keyfile", NULL);
+			}
+		}
 #endif
 		l->is_default = TRUE;
 
@@ -883,8 +900,15 @@ static void config_load_listeners(struct ctrlproxy_config *cfg)
 			l->ssl = g_key_file_get_boolean(kf, groups[i], "ssl", NULL);
 
 #ifdef HAVE_GNUTLS
-		if (l->ssl)
+		if (l->ssl) {
 			l->ssl_credentials = ssl_create_server_credentials(cfg->config_dir, kf, groups[i]);
+			if (g_key_file_has_key(kf, groups[i], "certfile", NULL)) {
+				l->certfile = g_key_file_get_string(kf, groups[i], "certfile", NULL);
+			}
+			if (g_key_file_has_key(kf, groups[i], "keyfile", NULL)) {
+				l->keyfile = g_key_file_get_string(kf, groups[i], "keyfile", NULL);
+			}
+		}
 #endif
 
 		if (g_key_file_has_key(kf, groups[i], "network", NULL))

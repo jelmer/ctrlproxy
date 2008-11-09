@@ -152,6 +152,10 @@ struct listener_config {
 	/** Whether SSL is required */
 	gboolean ssl;
 	gpointer ssl_credentials;
+	/* SSL certificate file */
+	char *certfile;
+	/* SSL key file */
+	char *keyfile;
 
 	/** Password */
 	char *password;
