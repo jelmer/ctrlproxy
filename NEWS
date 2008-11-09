@@ -52,6 +52,10 @@ Ctrlproxy 3.0.8 UNRELEASED
 
 	* Fix client-limit for auto-away. (Alex Stansfield)
 
+    * Send channel limits in mode. (#200)
+
+    * Don't crash on empty messages from client. (#206)
+
   INTERNALS
 
     * Use generic storage for MODEs.
