@@ -189,28 +189,6 @@ static gboolean marshall_char(struct irc_network_state *nst, const char *name, i
 	}
 }
 
-static gboolean marshall_long(struct irc_network_state *nst, const char *name, int level, enum marshall_mode m, GIOChannel *t, long *n)
-{
-	if (m == MARSHALL_PUSH) {
-		char tmp[10];
-		GError *error = NULL;
-		GIOStatus status;
-		g_snprintf(tmp, sizeof(tmp), "%ld", *n);
-		status = marshall_set(t, level, name, tmp, &error);
-		return (status == G_IO_STATUS_NORMAL);
-	} else {
-		char *tmp;
-		gboolean ret = marshall_get(t, level, name, &tmp);
-		if (!ret) return FALSE;
-
-		*n = atol(tmp);
-
-		g_free(tmp);
-
-		return TRUE;
-	}
-}
-
 static gboolean marshall_int(struct irc_network_state *nst, const char *name, int level, enum marshall_mode m, GIOChannel *t, int *n)
 {
 	if (m == MARSHALL_PUSH) {
@@ -239,7 +217,7 @@ static gboolean marshall_time(struct irc_network_state *nst, const char *name, i
 		char tmp[30];
 		GError *error = NULL;
 		GIOStatus status;
-		g_snprintf(tmp, sizeof(tmp), "%lu", *n);
+		g_snprintf(tmp, sizeof(tmp), "%ld", *n);
 		status = marshall_set(t, level, name, tmp, &error);
 		return (status == G_IO_STATUS_NORMAL);
 	} else {
@@ -247,7 +225,7 @@ static gboolean marshall_time(struct irc_network_state *nst, const char *name, i
 		gboolean ret = marshall_get(t, level, name, &tmp);
 		if (!ret) return FALSE;
 
-		*n = strtoul(tmp, NULL, 0);
+		*n = strtol(tmp, NULL, 0);
 
 		g_free(tmp);
 
@@ -375,7 +353,7 @@ static gboolean marshall_channel_state (struct irc_network_state *nst,
 	ret &= marshall_string(nst, "name", level+1, m, t, &(*c)->name);
 	ret &= marshall_string(nst, "topic", level+1, m, t, &(*c)->topic);
 	ret &= marshall_string(nst, "topic_set_by", level+1, m, t, &(*c)->topic_set_by);
-	ret &= marshall_long(nst, "topic_set_time", level+1, m, t, &(*c)->topic_set_time);
+	ret &= marshall_time(nst, "topic_set_time", level+1, m, t, &(*c)->topic_set_time);
 	for (i = 0; i < MAXMODES; i++) {
 		char name[20];
 		g_snprintf(name, sizeof(name), "mode_nicklist[%d]", i);

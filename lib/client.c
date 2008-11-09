@@ -256,10 +256,8 @@ static gboolean on_transport_receive_line(struct irc_transport *transport,
 {
 	struct irc_client *client = transport->userdata;
 
-	g_assert(l);
-
 	/* Silently drop empty messages */
-	if (l->argc == 0) {
+	if (l == NULL || l->argc == 0) {
 		return TRUE;
 	}
 
@@ -632,7 +630,7 @@ void client_send_topic(struct irc_client *c, struct irc_channel_state *ch,
 	}
 
 	if (ch->topic_set_time != 0 && ch->topic_set_by != NULL) {
-		char *tmp = g_strdup_printf("%lu", ch->topic_set_time);
+		char *tmp = g_strdup_printf("%ld", ch->topic_set_time);
 		client_send_response(c, RPL_TOPICWHOTIME, ch->name, ch->topic_set_by, 
 							 tmp, NULL);
 		g_free(tmp);
@@ -733,9 +731,28 @@ void client_send_channel_mode(struct irc_client *c, struct irc_channel_state *ch
 {
 		char *mode;
 		mode = mode2string(ch->modes);
-		if (mode != NULL)
-			client_send_response(c, RPL_CHANNELMODEIS, ch->name, mode, NULL);
-		g_free(mode);
+		if (mode != NULL) {
+			struct irc_line l;
+			int i, j = 0;
+			l.args = g_new0(char *, 260);
+			l.origin = g_strdup(c->default_origin);
+			l.args[0] = g_strdup_printf("%03d", RPL_CHANNELMODEIS);
+			l.args[1] = g_strdup(client_get_default_target(c));
+			l.args[2] = g_strdup(ch->name);
+			l.args[3] = mode;
+			for (i = 0; mode[i]; i++) {
+				if (network_chanmode_type(mode[i], c->state->info) == CHANMODE_OPT_SETTING && 
+					channel_mode_option(ch, mode[i])) {
+					l.args[4+j] = g_strdup(channel_mode_option(ch, mode[i]));
+					j++;
+				}
+				l.args[4+j] = NULL;
+			}
+			l.argc = 4+j;
+			client_send_line(c, &l);
+			free_line(&l);
+		}
+
 		if (ch->creation_time > 0) {
 			char time[20];
 			snprintf(time, sizeof(time), "%lu", ch->creation_time);

@@ -1332,6 +1332,22 @@ static gboolean auto_away_nick_set(admin_handle h, const char *value)
 	return TRUE;
 }
 
+static char *auto_away_client_limit_get(admin_handle h)
+{
+	struct global *g = admin_get_global(h);
+	
+	return g_strdup_printf("%d", g->config->auto_away.client_limit);
+}
+
+static gboolean auto_away_client_limit_set(admin_handle h, const char *value)
+{
+	struct global *g = admin_get_global(h);
+
+	g->config->auto_away.client_limit = (value == NULL?-1:atoi(value));
+
+	return TRUE;
+}
+
 static char *report_time_offset_get(admin_handle h)
 {
 	struct global *g = admin_get_global(h);
@@ -1595,6 +1611,7 @@ static struct admin_setting {
 	{ "admin-log", admin_log_get, admin_log_set },
 	{ "admin-user", admin_user_get, admin_user_set },
 	{ "auto-away-enable", auto_away_enable_get, auto_away_enable_set },
+	{ "auto-away-client-limit", auto_away_client_limit_get, auto_away_client_limit_set },
 	{ "auto-away-message", auto_away_message_get, auto_away_message_set },
 	{ "auto-away-nick", auto_away_nick_get, auto_away_nick_set },
 	{ "auto-away-time", auto_away_time_get, auto_away_time_set },
