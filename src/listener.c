@@ -249,7 +249,7 @@ static gboolean handle_client_line(struct pending_client *pc, const struct irc_l
 					desc = g_strdup("Unix domain socket client");
 				else if (desc == NULL)
 					desc = g_strdup("");
-				client_init_iochannel(listener->network, pc->connection, desc);
+				client_init_iochannel(n, pc->connection, desc);
 				g_free(desc);
 			}
 
