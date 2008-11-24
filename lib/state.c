@@ -861,12 +861,14 @@ static int channel_state_change_mode(struct irc_network_state *s, struct network
 
 			g_free(channel_mode_option(c, mode));
 			channel_mode_option(c, mode) = g_strdup(opt_arg);
+
+			return 1;
 		} else {
 			g_free(channel_mode_option(c, mode));
 			channel_mode_option(c, mode) = NULL;
-		}
 
-		return 1;
+			return 0;
+		}
 	} else if (is_prefix_mode(info, mode)) {
 		struct channel_nick *n;
 		
