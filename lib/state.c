@@ -932,7 +932,9 @@ static void handle_mode(struct irc_network_state *s, const struct irc_line *l)
 													  l->args[arg]);
 					  if (ret == -1)
 						  return;
-					  arg += ret;
+					  g_assert(!(ret > 1));
+					  if (l->args[arg] != NULL)
+						  arg += ret;
 					  break;
 			}
 		}
