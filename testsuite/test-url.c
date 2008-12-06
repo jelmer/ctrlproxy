@@ -28,17 +28,17 @@ START_TEST(test_parse_url)
 	gboolean ssl;
 	fail_unless(irc_parse_url("irc://foo", &server, &port, &ssl));
 	fail_unless(strcmp(server, "foo") == 0);
-	fail_unless(strcmp(port, "ircd") == 0);
+	fail_unless(strcmp(port, IRC_PORT) == 0);
 	fail_unless(ssl == FALSE);
 
 	fail_unless(irc_parse_url("irc://foo/", &server, &port, &ssl));
 	fail_unless(strcmp(server, "foo") == 0);
-	fail_unless(strcmp(port, "ircd") == 0);
+	fail_unless(strcmp(port, IRC_PORT) == 0);
 	fail_unless(ssl == FALSE);
 
 	fail_unless(irc_parse_url("ircs://foo", &server, &port, &ssl));
 	fail_unless(strcmp(server, "foo") == 0);
-	fail_unless(strcmp(port, "ircs") == 0);
+	fail_unless(strcmp(port, IRCS_PORT) == 0);
 	fail_unless(ssl == TRUE);
 
 	fail_unless(irc_parse_url("ircs://foo:5000", &server, &port, &ssl));
@@ -55,13 +55,13 @@ START_TEST(test_parse_url)
 
 	fail_unless(irc_parse_url("foo", &server, &port, &ssl));
 	fail_unless(strcmp(server, "foo") == 0);
-	fail_unless(strcmp(port, "ircd") == 0);
+	fail_unless(strcmp(port, IRC_PORT) == 0);
 	fail_unless(ssl == FALSE);
 END_TEST
 
 START_TEST(test_create_url)
-	fail_unless(strcmp(irc_create_url("foo", "ircd", FALSE), "irc://foo") == 0);
-	fail_unless(strcmp(irc_create_url("foo", "ircs", TRUE), "ircs://foo") == 0);
+	fail_unless(strcmp(irc_create_url("foo", IRC_PORT, FALSE), "irc://foo") == 0);
+	fail_unless(strcmp(irc_create_url("foo", IRCS_PORT, TRUE), "ircs://foo") == 0);
 	fail_unless(strcmp(irc_create_url("foo", "ircd", TRUE), "ircs://foo:ircd") == 0);
 	fail_unless(strcmp(irc_create_url("foo", "ircd", TRUE), "ircs://foo:ircd") == 0);
 	fail_unless(strcmp(irc_create_url("foo", "ircs", FALSE), "irc://foo:ircs") == 0);
