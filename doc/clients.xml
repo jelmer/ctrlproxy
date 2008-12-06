@@ -1,5 +1,5 @@
 <chapter id="clients">
-<title>Clients</title>
+<title>Connecting to CtrlProxy</title>
 
 <para>This chapter contains some brief information on how to configure 
 	various IRC clients for use with CtrlProxy.</para>
@@ -53,4 +53,32 @@ let us know on the CtrlProxy IRC channel if you find a client that is not workin
 		</screen>
 	</para>
 </sect1>
+
+<sect1 id="other-socks-clients">
+	<title>Other clients with SOCKS support</title>
+
+	<para>Clients with SOCKS support can simply configure ctrlproxy as 
+		if it was an ordinary SOCKS proxy. The username sent by the 
+		client is ignored by CtrlProxy, the password has to match the 
+		password configured in ctrlproxy's configuration.</para>
+
+</sect1>
+
+<sect1 id="other-clients">
+	<title>Other clients</title>
+
+	<para>Other clients can connect to ctrlproxy as if they were connecting 
+		to a standard IRC server. </para>
+
+	<para>The client should log in with the password that was configured in 
+		the configuration file, followed by a colon and the name of the 
+		network to connect to.
+	</para>
+
+	<para>For example, the password to use to login to the network Freenode 
+		with the ctrlproxy password set to <constant>geheim</constant> would be:
+		<constant>geheim:Freenode</constant>.
+	</para>
+</sect1>
+
 </chapter>
