@@ -22,6 +22,7 @@
 #endif
 #include "internals.h"
 #include "irc.h"
+#include <stdio.h>
 #include <glib/gstdio.h>
 #define BACKTRACE_STACK_SIZE 64
 

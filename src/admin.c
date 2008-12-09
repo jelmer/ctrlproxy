@@ -20,6 +20,7 @@
 */
 
 #include "internals.h"
+#include <strings.h>
 #include <string.h>
 #include <sys/un.h>
 #include "admin.h"

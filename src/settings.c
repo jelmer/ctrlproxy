@@ -26,8 +26,11 @@
 #include <sys/socket.h>
 #endif
 
+#include <strings.h>
 #include <netdb.h>
 #include <sys/socket.h>
+#include <stdlib.h>
+#include <stdio.h>
 #include <glib/gstdio.h>
 
 #define DEFAULT_ADMIN_PORT 57000
@@ -1009,8 +1012,8 @@ static void config_load_networks(struct ctrlproxy_config *cfg, GList *channel_ke
 	g_strfreev(groups);
 }
 
-#define FETCH_SETTING(data, kf, section, prefix, name) (data)->name = g_key_file_get_string((kf), (section), prefix __STRING(name), NULL)
-#define STORE_SETTING(data, kf, section, prefix, name) g_key_file_set_string((kf), (section), prefix __STRING(name), (data)->name)
+#define FETCH_SETTING(data, kf, section, prefix, name) (data)->name = g_key_file_get_string((kf), (section), prefix #name, NULL)
+#define STORE_SETTING(data, kf, section, prefix, name) g_key_file_set_string((kf), (section), prefix #name, (data)->name)
 
 static void config_save_log(struct log_file_config *data,
 							struct ctrlproxy_config *config)

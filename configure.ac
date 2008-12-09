@@ -59,7 +59,10 @@ AC_FUNC_MALLOC
 AC_FUNC_REALLOC
 AC_TYPE_SIGNAL
 
-AC_CHECK_FUNCS([gethostbyname gethostname memset strchr strerror strstr uname backtrace_symbols gettimeofday strrchr daemon])
+AC_CHECK_FUNC(gethostbyname, , AC_CHECK_LIB(nsl, gethostbyname))
+AC_CHECK_FUNC(setsockopt, , AC_CHECK_LIB(socket, setsockopt))
+AC_CHECK_FUNCS([gethostname memset strchr strerror strstr uname backtrace_symbols gettimeofday strrchr daemon])
+AC_CHECK_FUNC(gcry_control, , AC_CHECK_LIB(gcrypt, gcry_control))
 
 PKG_PROG_PKG_CONFIG
 PKG_CHECK_MODULES(COMMON, glib-2.0 >= 2.6.0 gmodule-2.0)
@@ -84,13 +87,16 @@ AC_CHECK_LIB(readline, readline, [
 # GSSAPI support
 ###############################################################################
 AC_PATH_PROG(KRB5_CONFIG, krb5-config, no)
-if test $KRB5_CONFIG != no; then
+if test $KRB5_CONFIG != no -a $KRB5_CONFIG --libs gssapi >/dev/null 2>&1; then
 	LIBS="$LIBS `$KRB5_CONFIG --libs gssapi`"
 	CFLAGS="$CFLAGS `$KRB5_CONFIG --cflags gssapi`"
-	AC_DEFINE(HAVE_GSSAPI, 1, [have GSSAPI])
-	AC_CHECK_FUNC(gsskrb5_register_acceptor_identity, 
-			AC_DEFINE(HAVE_GSSKRB5_REGISTER_ACCEPTOR_IDENTITY, 1, [Whether gsskrb5_register_acceptor_identity is provided by the GSSAPI library]))
 fi
+AC_CHECK_FUNC(gss_display_status,
+		AC_DEFINE(HAVE_GSSAPI, 1, [have GSSAPI]),
+		AC_CHECK_LIB(gss, gss_display_status,
+				LIBS="$LIBS -lgss"; AC_DEFINE(HAVE_GSSAPI, 1, [have GSSAPI])))
+AC_CHECK_FUNC(gsskrb5_register_acceptor_identity, 
+		AC_DEFINE(HAVE_GSSKRB5_REGISTER_ACCEPTOR_IDENTITY, 1, [Whether gsskrb5_register_acceptor_identity is provided by the GSSAPI library]))
 
 ###############################################################################
 # SWIG support
