@@ -22,6 +22,7 @@
 #include <check.h>
 #include "ctrlproxy.h"
 #include "torture.h"
+#include "irc.h"
 
 START_TEST(test_parse_url)
 	char *server, *port;
