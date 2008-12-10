@@ -9,6 +9,8 @@ Ctrlproxy 3.0.9 UNRELEASED
 
     * Fix compilation on Solaris. (#210)
 
+    * Provide replacement for daemon() on Solaris. (#213)
+
 Ctrlproxy 3.0.8 2008-12-06
 
   FEATURES

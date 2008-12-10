@@ -133,6 +133,10 @@ int rep_g_mkdir_with_parents (const gchar *pathname, int mode);
 #if GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION < 10
 #define G_GNUC_WARN_UNUSED_RESULT
 #endif
+
+#ifndef HAVE_DAEMON
+int daemon(int nochdir, int noclose);
+#endif
 gboolean write_pidfile(const char *filename);
 pid_t read_pidfile(const char *filename);
 

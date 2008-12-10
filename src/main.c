@@ -31,14 +31,6 @@
 
 #include <netdb.h>
 
-#ifndef HAVE_DAEMON
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <unistd.h>
-static int daemon(int nochdir, int noclose);
-#endif
-
 #include "help.h"
 
 /* globals */
@@ -170,44 +162,6 @@ static void signal_save(int sig)
 	save_configuration(my_global->config, my_global->config->config_dir);
 	nickserv_save(my_global, my_global->config->config_dir);
 }
-
-#ifndef HAVE_DAEMON
-int daemon(int nochdir, int noclose)
-{
-	int fd, i;
-
-	switch (fork()) {
-		case 0:
-			break;
-		case -1:
-			return -1;
-		default:
-			_exit(0);
-	}
-
-	if (!nochdir) {
-		chdir("/");
-	}
-
-	if (setsid() < 0) {
-		return -1;
-	}
-	
-	if (!noclose) {
-		if (fd = open("/dev/null", O_RDWR) >= 0) {
-			for (i = 0; i < 3; i++) {
-				dup2(fd, i);
-			}
-			if (fd > 2) {
-				close(fd);
-			}
-		}
-	}
-
-	return 0;
-}
-#endif
-
 
 int main(int argc, char **argv)
 {
@@ -368,6 +322,7 @@ int main(int argc, char **argv)
 	}
 
 	if (isdaemon) {
+#if defined(HAVE_DAEMON) || defined(HAVE_FORK)
 #ifdef SIGTTOU
 		signal(SIGTTOU, SIG_IGN);
 #endif
@@ -385,6 +340,11 @@ int main(int argc, char **argv)
 			return -1;
 		}
 		isdaemon = 1;
+#else
+		log_global(LOG_ERROR, "Daemon mode not compiled in");
+		g_free(config_dir);
+		return -1;
+#endif
 	} 
 
 	log_global(LOG_INFO, "CtrlProxy %s (pid %d) starting", VERSION, getpid());
