@@ -39,7 +39,6 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
-static int daemon(int nochdir, int noclose);
 #endif
 
 #include "daemon/daemon.h"
@@ -431,44 +430,6 @@ static void daemon_user_start_if_exists(struct daemon_user *user, const char *ct
 	}
 }
 
-#ifndef HAVE_DAEMON
-int daemon(int nochdir, int noclose)
-{
-	int fd, i;
-
-	switch (fork()) {
-		case 0:
-			break;
-		case -1:
-			return -1;
-		default:
-			_exit(0);
-	}
-
-	if (!nochdir) {
-		chdir("/");
-	}
-
-	if (setsid() < 0) {
-		return -1;
-	}
-	
-	if (!noclose) {
-		if (fd = open("/dev/null", O_RDWR) >= 0) {
-			for (i = 0; i < 3; i++) {
-				dup2(fd, i);
-			}
-			if (fd > 2) {
-				close(fd);
-			}
-		}
-	}
-
-	return 0;
-}
-#endif	
-
-
 int main(int argc, char **argv)
 {
 	struct ctrlproxyd_config *config;
@@ -537,6 +498,7 @@ int main(int argc, char **argv)
 	}
 
 	if (isdaemon) {
+#if defined(HAVE_DAEMON) || defined(HAVE_FORK)
 #ifdef SIGTTOU
 		signal(SIGTTOU, SIG_IGN);
 #endif
@@ -552,6 +514,10 @@ int main(int argc, char **argv)
 			fprintf(stderr, "Unable to daemonize\n");
 			return -1;
 		}
+#else
+		fprintf(stderr, "Daemon mode not compiled in\n");
+		return -1;
+#endif
 	}
 
 	openlog("ctrlproxyd", 0, LOG_DAEMON);
