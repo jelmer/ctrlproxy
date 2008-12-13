@@ -100,6 +100,11 @@ G_MODULE_EXPORT G_GNUC_MALLOC struct irc_client *client_init(
 										   struct irc_network *net, 
 										   struct irc_transport *transport,
 										   const char *desc);
+G_MODULE_EXPORT struct irc_line *irc_line_replace_hostmask(
+										   const struct irc_line *l, 
+										   const struct irc_network_info *info,
+										   const struct network_nick *,
+										   const struct network_nick *);
 
 G_MODULE_EXPORT void clients_send(GList *clients, const struct irc_line *, const struct irc_client *exception);
 G_MODULE_EXPORT void clients_send_args_ex(GList *clients, const char *hostmask, ...);

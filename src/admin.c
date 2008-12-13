@@ -20,6 +20,7 @@
 */
 
 #include "internals.h"
+#include <strings.h>
 #include <string.h>
 #include <sys/un.h>
 #include "admin.h"
@@ -1043,8 +1044,9 @@ static void cmd_start_listener(admin_handle h, const char * const *args, void *u
 		}
 	}
 
+	cfg->password = g_strdup(args[2]);
+
 	l = listener_init(admin_get_global(h), cfg);
-	l->config->password = g_strdup(args[2]);
 	l->global = admin_get_global(h);
 
 	listener_start_tcp(l, l->config->address, l->config->port);

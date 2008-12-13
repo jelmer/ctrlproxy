@@ -21,6 +21,9 @@
 #include "irc.h"
 #include "ssl.h"
 #include "transport.h"
+#ifndef AF_LOCAL
+#define AF_LOCAL AF_UNIX
+#endif
 
 static GHashTable *virtual_network_ops = NULL;
 

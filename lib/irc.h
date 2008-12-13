@@ -208,4 +208,7 @@
 
 #define IRC_MAXLINELEN	512
 
+#define IRC_PORT "6667"
+#define IRCS_PORT "994"
+
 #endif

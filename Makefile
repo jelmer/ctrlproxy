@@ -85,7 +85,8 @@ lib_headers = \
 		  lib/irc.h \
 		  lib/connection.h \
 		  lib/url.h \
-		  lib/listener.h
+		  lib/listener.h \
+		  lib/util.h
 
 headers = src/admin.h \
 		  src/ctcp.h \

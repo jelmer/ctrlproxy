@@ -19,6 +19,7 @@
 
 
 #include "internals.h"
+#include "irc.h"
 
 char *irc_create_url(const char *server, const char *port, gboolean ssl)
 {
@@ -57,9 +58,9 @@ gboolean irc_parse_url(const char *url, char **server, char **port, gboolean *ss
 	} 
 	
 	if (*ssl) {
-		*port = g_strdup("ircs");
+		*port = g_strdup(IRCS_PORT);
 	} else {
-		*port = g_strdup("ircd");
+		*port = g_strdup(IRC_PORT);
 	}
 
 	if (q != NULL) {

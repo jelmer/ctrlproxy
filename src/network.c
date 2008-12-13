@@ -119,7 +119,7 @@ static gboolean process_from_server(struct irc_network *n, const struct irc_line
 
 	g_assert(l->args[0]);
 
-	response = atoi(l->args[0]);
+	response = irc_line_respcode(l);
 
 	if (!g_strcasecmp(l->args[0], "PING")){
 		network_send_args(n, "PONG", l->args[1], NULL);
@@ -180,7 +180,7 @@ static gboolean process_from_server(struct irc_network *n, const struct irc_line
 
 	if (n->connection.state == NETWORK_CONNECTION_STATE_MOTD_RECVD) {
 		gboolean linestack_store = TRUE;
-		if (atoi(l->args[0])) {
+		if (irc_line_respcode(l)) {
 			linestack_store &= (!redirect_response(&n->queries, n, l));
 		} else {
 			if (n->clients == NULL) {

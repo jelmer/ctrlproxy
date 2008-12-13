@@ -26,6 +26,13 @@
 #include <fcntl.h>
 #include <glib/gstdio.h>
 
+#ifndef HAVE_DAEMON
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
+#endif
+
 static inline int str_cmphelper(const char *a, const char *b, char sh, char sl, char eh, char el)
 {
 	int i;
@@ -151,4 +158,45 @@ gsize i_convert(const char *str, gsize len, GIConv cd, GString *out)
 	} while (!done);
 	return len - inbytes_left;
 }
+
+#ifndef HAVE_DAEMON
+#ifdef HAVE_FORK
+int daemon(int nochdir, int noclose)
+{
+	int fd, i;
+
+	switch (fork()) {
+		case 0:
+			break;
+		case -1:
+			return -1;
+		default:
+			_exit(0);
+	}
+
+	if (!nochdir) {
+		chdir("/");
+	}
+
+	if (setsid() < 0) {
+		return -1;
+	}
+	
+	if (!noclose) {
+		if (fd = open("/dev/null", O_RDWR) >= 0) {
+			for (i = 0; i < 3; i++) {
+				dup2(fd, i);
+			}
+			if (fd > 2) {
+				close(fd);
+			}
+		}
+	}
+
+	return 0;
+}
+#endif
+#endif
+
+
 

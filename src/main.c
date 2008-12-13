@@ -322,7 +322,7 @@ int main(int argc, char **argv)
 	}
 
 	if (isdaemon) {
-#ifdef HAVE_DAEMON 
+#if defined(HAVE_DAEMON) || defined(HAVE_FORK)
 #ifdef SIGTTOU
 		signal(SIGTTOU, SIG_IGN);
 #endif

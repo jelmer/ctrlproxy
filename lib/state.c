@@ -861,12 +861,14 @@ static int channel_state_change_mode(struct irc_network_state *s, struct network
 
 			g_free(channel_mode_option(c, mode));
 			channel_mode_option(c, mode) = g_strdup(opt_arg);
+
+			return 1;
 		} else {
 			g_free(channel_mode_option(c, mode));
 			channel_mode_option(c, mode) = NULL;
-		}
 
-		return 1;
+			return 0;
+		}
 	} else if (is_prefix_mode(info, mode)) {
 		struct channel_nick *n;
 		
@@ -932,7 +934,9 @@ static void handle_mode(struct irc_network_state *s, const struct irc_line *l)
 													  l->args[arg]);
 					  if (ret == -1)
 						  return;
-					  arg += ret;
+					  g_assert(!(ret > 1));
+					  if (l->args[arg] != NULL)
+						  arg += ret;
 					  break;
 			}
 		}
@@ -1050,12 +1054,13 @@ static void handle_302(struct irc_network_state *s, const struct irc_line *l)
 	gchar **users = g_strsplit(g_strstrip(l->args[2]), " ", 0);
 	for (i = 0; users[i]; i++) {
 		/* We got a USERHOST response, split it into nick and user@host, and check the nick */
-		gchar** tmp302 = g_strsplit(users[i], "=+", 2);
+		gchar** tmp302 = g_strsplit(users[i], "=", 2);
 		if (g_strv_length(tmp302) > 1) {
 			char *hm;
-			struct network_nick *nn = find_add_network_nick(s, tmp302[0]);
-			
-			hm = g_strdup_printf("%s!%s", tmp302[0], tmp302[1]);
+			struct network_nick *nn;
+			/* FIXME: Strip *'s from the end of tmp302[0]*/
+			nn = find_add_network_nick(s, tmp302[0]);
+			hm = g_strdup_printf("%s!%s", tmp302[0], tmp302[1]+1);
 			network_nick_set_hostmask(nn, hm);
 			g_free(hm);
 		}

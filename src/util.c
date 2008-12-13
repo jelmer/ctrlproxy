@@ -21,9 +21,11 @@
 */
 
 #include "internals.h"
+#include <sys/types.h>
 #include <errno.h>
 #include <ctype.h>
 #include <fcntl.h>
+#include <stdio.h>
 #include <glib/gstdio.h>
 
 

@@ -22,6 +22,7 @@
 #endif
 #include "internals.h"
 #include "irc.h"
+#include <stdio.h>
 #include <glib/gstdio.h>
 #define BACKTRACE_STACK_SIZE 64
 
@@ -31,6 +32,13 @@
 
 #ifdef HAVE_SYSLOG_H
 #include <syslog.h>
+#endif
+
+#ifndef HAVE_DAEMON
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
 #endif
 
 #include "daemon/daemon.h"
@@ -424,7 +432,6 @@ static void daemon_user_start_if_exists(struct daemon_user *user, const char *ct
 	}
 }
 
-
 int main(int argc, char **argv)
 {
 	struct ctrlproxyd_config *config;
@@ -493,7 +500,7 @@ int main(int argc, char **argv)
 	}
 
 	if (isdaemon) {
-#ifdef HAVE_DAEMON 
+#if defined(HAVE_DAEMON) || defined(HAVE_FORK)
 #ifdef SIGTTOU
 		signal(SIGTTOU, SIG_IGN);
 #endif

@@ -597,7 +597,7 @@ gboolean redirect_response(struct query_stack **stack,
 	
 	g_assert(l->args[0]);
 
-	n = atoi(l->args[0]);
+	n = irc_line_respcode(l);
 
 	/* Find a request that this response is a reply to */
 	for (s = *stack; s; s = s->next) {

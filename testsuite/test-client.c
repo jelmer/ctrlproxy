@@ -112,6 +112,37 @@ START_TEST(test_disconnect)
 	fail_unless(!strcmp(raw, "ERROR :Because\r\n"));
 END_TEST
 
+START_TEST(test_replace_hostmask)
+	struct irc_line *nl, *l;
+	struct network_nick old = { 
+		.nick = "foo", 
+		.hostname = "foohost", 
+		.username = "foouser", 
+		.hostmask = "foo!foouser@foohost"
+	};
+	struct network_nick new = { 
+		.nick = "foo", 
+		.hostname = "barhost", 
+		.username = "baruser", 
+		.hostmask = "foo!baruser@barhost"
+	};
+	l = irc_parse_line(":foo!foouser@foohost JOIN #bar");
+	fail_unless(NULL == irc_line_replace_hostmask(l, NULL, &old, &old));
+	nl = irc_line_replace_hostmask(l, NULL, &old, &new);
+	fail_if(nl == NULL);
+	fail_unless(!strcmp(irc_line_string(nl), ":foo!baruser@barhost JOIN #bar"));
+	l = irc_parse_line(":bar!lala@host JOIN #bar");
+	fail_unless(NULL == irc_line_replace_hostmask(l, NULL, &old, &new));
+	l = irc_parse_line(":server 302 foo :unused=+unused@host foo=+foouser@foohost");
+	nl = irc_line_replace_hostmask(l, NULL, &old, &new);
+	fail_if(nl == NULL);
+	fail_unless(!strcmp(irc_line_string(nl), ":server 302 foo :unused=+unused@host foo=+baruser@barhost"), "was %s", irc_line_string(nl));
+	l = irc_parse_line(":server 311 foo foo foouser foohost :someinfo");
+	nl = irc_line_replace_hostmask(l, NULL, &old, &new);
+	fail_if(nl == NULL);
+	fail_unless(!strcmp(irc_line_string(nl), ":server 311 foo foo baruser barhost :someinfo"), "was %s", irc_line_string(nl));
+END_TEST
+
 START_TEST(test_login_nonetwork)
 	GIOChannel *ch1, *ch2;
 	struct irc_client *c;
@@ -139,5 +170,6 @@ Suite *client_suite()
 	tcase_add_test(tc_core, test_login_nonetwork);
 	tcase_add_test(tc_core, test_network_first);
 	tcase_add_test(tc_core, test_read_nonutf8);
+	tcase_add_test(tc_core, test_replace_hostmask);
 	return s;
 }

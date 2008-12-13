@@ -5,7 +5,12 @@
 #include "ctrlproxy.h"
 
 #ifdef HAVE_GSSAPI
+#ifdef HAVE_GSSAPI_H
 #include <gssapi.h>
+#endif
+#ifdef HAVE_GSSAPI_GSSAPI_H
+#include <gssapi/gssapi.h>
+#endif
 #endif
 
 #ifndef G_MODULE_EXPORT

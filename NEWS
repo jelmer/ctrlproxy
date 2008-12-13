@@ -1,6 +1,20 @@
 Unless otherwise indicated, all changes made by Jelmer Vernooij.
 
-Ctrlproxy 3.0.8 UNRELEASED
+Ctrlproxy 3.0.9 UNRELEASED
+
+  BUG FIXES
+
+    * Use port numbers rather than service names because not all 
+	  systems have ircd and ircs defined. (#209)
+
+    * Fix compilation on Solaris. (#210)
+
+    * Provide replacement for daemon() on Solaris. (#213)
+
+    * Return hostmask of client itself rather than hostmask of 
+	  server when referring to the user. (#214, #166, #69)
+
+Ctrlproxy 3.0.8 2008-12-06
 
   FEATURES
 
