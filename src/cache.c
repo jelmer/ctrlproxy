@@ -90,6 +90,7 @@ static gboolean client_try_cache_topic(struct irc_client *c, struct irc_network_
 
 static gboolean client_try_cache_userhost(struct irc_client *c, struct irc_network_state *net, struct irc_line *l, const struct cache_settings *settings)
 {
+	/* TODO */
 	return FALSE;
 }
 
