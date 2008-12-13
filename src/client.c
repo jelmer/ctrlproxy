@@ -302,6 +302,99 @@ struct irc_client *client_init(struct irc_network *n, struct irc_transport *tran
 	return client;
 }
 
+struct irc_line *irc_line_replace_hostmask(const struct irc_line *l, 
+							   const struct irc_network_info *info,
+							   const struct network_nick *old,
+							   const struct network_nick *new)
+{
+	struct irc_line *ret;
+
+	if (irccmp(info, old->hostmask, new->hostmask) == 0)
+		return NULL; /* No need to replace anything */
+
+	/* Replace lines "faked" to be from the user itself */
+	if (irccmp(info, l->origin, old->hostmask) == 0) {
+		ret = linedup(l);
+		g_free(ret->origin);
+		ret->origin = g_strdup(new->hostmask);
+		return ret;
+	}
+	switch (irc_line_respcode(l)) {
+		case RPL_USERHOST:
+		if (strstr(l->args[2], old->hostname)) {
+			int i;
+			gchar **users = g_strsplit(g_strstrip(l->args[2]), " ", 0);
+			for (i = 0; users[i]; i++) {
+				gchar** tmp302 = g_strsplit(users[i], "=", 2);
+				if (g_strv_length(tmp302) > 1) {
+					/* FIXME: strip *'s from the end of tmp302[0] */
+					if (!irccmp(info, tmp302[0], old->nick)) {
+						g_free(users[i]);
+						users[i] = g_strdup_printf("%s=%c%s@%s", 
+								tmp302[0], tmp302[1][0], 
+								new->username, new->hostname);
+					}
+				}
+				g_strfreev(tmp302);
+			}
+			ret = linedup(l);
+			g_free(ret->args[2]);
+			ret->args[2] = g_strjoinv(" ", users);
+			g_strfreev(users);
+			return ret;
+		}
+		break;
+		case RPL_WHOREPLY:
+		if (l->argc >= 6) {
+			if (!irccmp(info, l->args[6], old->nick)) {
+				ret = linedup(l);
+				g_free(ret->args[4]);
+				ret->args[4] = g_strdup(new->hostname);
+				g_free(ret->args[3]);
+				ret->args[3] = g_strdup(new->username);
+				return ret;
+			}
+		}
+		break;
+		case RPL_WHOISUSER:
+		case RPL_WHOWASUSER:
+		if (l->argc >= 4) {
+			if (!irccmp(info, l->args[2], old->nick)) {
+				ret = linedup(l);
+				g_free(ret->args[4]);
+				ret->args[4] = g_strdup(new->hostname);
+				g_free(ret->args[3]);
+				ret->args[3] = g_strdup(new->username);
+				return ret;
+			}
+		}
+	}
+	return NULL;
+}
+
+/**
+ * Forward a server line to a client.
+ * This will optionally make sure the local hostmask is sent.
+ */
+static gboolean client_forward_from_server(struct irc_client *c, const struct irc_line *l)
+{
+	struct irc_line *nl;
+	gboolean ret;
+
+	/* Make sure the client only sees its only hostmask */
+	nl = irc_line_replace_hostmask(l, 
+							  c->network->info, 
+							  &c->network->internal_state->me, 
+							  &c->state->me);
+
+	if (nl != NULL)
+		l = nl;
+
+	ret = client_send_line(c, l);
+	free_line(nl);
+	return ret;
+}
+
 /**
  * Send a line to a list of clients.
  *
@@ -316,14 +409,14 @@ void clients_send(GList *clients, const struct irc_line *l,
 
 	for (g = clients; g; g = g->next) {
 		struct irc_client *c = (struct irc_client *)g->data;
-		if (c != exception) {
-			if (run_client_filter(c, l, FROM_SERVER)) { 
-				client_send_line(c, l);
-			}
+		if (c == exception)
+			continue;
+
+		if (run_client_filter(c, l, FROM_SERVER)) { 
+			client_forward_from_server(c, l);
 		}
 	}
 }
-
 
 void clients_send_args_ex(GList *clients, const char *hostmask, ...)
 {
@@ -338,6 +431,3 @@ void clients_send_args_ex(GList *clients, const char *hostmask, ...)
 
 	free_line(l); l = NULL;
 }
-
-
-

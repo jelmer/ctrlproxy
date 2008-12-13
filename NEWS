@@ -11,6 +11,9 @@ Ctrlproxy 3.0.9 UNRELEASED
 
     * Provide replacement for daemon() on Solaris. (#213)
 
+    * Return hostmask of client itself rather than hostmask of 
+	  server when referring to the user. (#214, #166, #69)
+
 Ctrlproxy 3.0.8 2008-12-06
 
   FEATURES
