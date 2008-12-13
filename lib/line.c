@@ -470,4 +470,3 @@ G_MODULE_EXPORT struct irc_line *line_prefix_time(const struct irc_line *l, time
 	return nl;
 }
 
-
