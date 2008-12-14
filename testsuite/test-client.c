@@ -141,6 +141,9 @@ START_TEST(test_replace_hostmask)
 	nl = irc_line_replace_hostmask(l, NULL, &old, &new);
 	fail_if(nl == NULL);
 	fail_unless(!strcmp(irc_line_string(nl), ":server 311 foo foo baruser barhost :someinfo"), "was %s", irc_line_string(nl));
+	l = irc_parse_line("NOTICE * boe");
+	nl = irc_line_replace_hostmask(l, NULL, &old, &new);
+	fail_unless(nl == NULL);
 END_TEST
 
 START_TEST(test_login_nonetwork)
