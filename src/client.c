@@ -382,10 +382,10 @@ static gboolean client_forward_from_server(struct irc_client *c, const struct ir
 	gboolean ret;
 
 	/* Make sure the client only sees its only hostmask */
-	if (c->network->internal_state != NULL) {
+	if (c->network->external_state != NULL) {
 		nl = irc_line_replace_hostmask(l, 
 								  c->network->info, 
-								  &c->network->internal_state->me, 
+								  &c->network->external_state->me, 
 								  &c->state->me);
 		if (nl != NULL)
 			l = nl;
