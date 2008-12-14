@@ -389,6 +389,8 @@ static gboolean client_forward_from_server(struct irc_client *c, const struct ir
 								  &c->state->me);
 		if (nl != NULL)
 			l = nl;
+	} else {
+		nl = NULL;
 	}
 
 	ret = client_send_line(c, l);
