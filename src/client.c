@@ -313,7 +313,7 @@ struct irc_line *irc_line_replace_hostmask(const struct irc_line *l,
 		return NULL; /* No need to replace anything */
 
 	/* Replace lines "faked" to be from the user itself */
-	if (l->origin != NULL && irccmp(info, l->origin, old->hostmask) == 0) {
+	if (l->origin != NULL && line_from_nick(info, l, old->nick)) {
 		ret = linedup(l);
 		g_free(ret->origin);
 		ret->origin = g_strdup(new->hostmask);

@@ -1266,3 +1266,14 @@ gboolean is_prefix_mode(const struct irc_network_info *info, char mode)
 	return get_prefix_by_mode(mode, info) != ' ';
 }
 
+gboolean line_from_nick(const struct irc_network_info *info, const struct irc_line *l, const char *nick)
+{
+	char *line_nick = line_get_nick(l);
+	gboolean ret;
+
+	ret = (irccmp(info, nick, line_nick) == 0);
+
+	g_free(line_nick);
+
+	return ret;
+}
