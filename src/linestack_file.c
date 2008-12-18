@@ -49,6 +49,7 @@ typedef gboolean (*marshall_fn_t) (struct irc_network_state *, const char *name,
 
 #define LF_CHECK_IO_STATUS(status)	if (status != G_IO_STATUS_NORMAL) { \
 		log_global(LOG_ERROR, "Unable to write to linestack file: %s", error->message); \
+		g_error_free(error); \
 		return FALSE; \
 	}
 
@@ -504,6 +505,7 @@ static gboolean file_init(struct linestack_context *ctx, const char *name,
 	if (data->line_file == NULL) {
 		log_global(LOG_WARNING, "Error opening `%s': %s", 
 						  data_file, error->message);
+		g_error_free(error);
 		g_free(data_file);
 		return FALSE;
 	}
@@ -524,6 +526,7 @@ static gboolean file_init(struct linestack_context *ctx, const char *name,
 	if (dir == NULL) {
 		log_global(LOG_WARNING, "Error opening directory `%s': %s", 
 						  data->state_dir, error->message);
+		g_error_free(error);
 		return FALSE;
 	}
 
@@ -577,6 +580,7 @@ static gboolean file_insert_state(struct linestack_context *ctx,
 	if (state_file == NULL) {
 		log_global(LOG_WARNING, "Error opening `%s': %s", 
 						  data_file, error->message);
+		g_error_free(error);
 		g_free(data_file);
 		return FALSE;
 	}
@@ -638,6 +642,7 @@ static gboolean file_insert_line(struct linestack_context *ctx,
 
 	if (status != G_IO_STATUS_NORMAL) {
 		log_global(LOG_ERROR, "Unable to write to linestack file: %s", error->message);
+		g_error_free(error);
 		return FALSE;
 	}
 
@@ -693,6 +698,7 @@ static struct irc_network_state *file_get_state (struct linestack_context *ctx,
 	if (state_file == NULL) {
 		log_global(LOG_WARNING, "Error opening `%s': %s", 
 						  data_file, error->message);
+		g_error_free(error);
 		g_free(data_file);
 		return FALSE;
 	}
@@ -749,6 +755,7 @@ static gboolean file_traverse(struct linestack_context *ctx, void *mf,
 		status = g_io_channel_read_line(nd->line_file, &raw, NULL, NULL, &error);
 		if (status == G_IO_STATUS_ERROR) {
 			log_global(LOG_WARNING, "read_line() failed: %s", error->message);
+			g_error_free(error);
 			return FALSE;
 		}
 

@@ -225,6 +225,7 @@ int main(int argc, char **argv)
 
 	if (!g_option_context_parse(pc, &argc, &argv, &error)) {
 		fprintf(stderr, "%s\n", error->message);
+		g_error_free(error);
 		return 1;
 	}
 

@@ -34,6 +34,7 @@ char ** get_motd_lines(const char *motd_file)
 	fd = g_io_channel_new_file(motd_file, "r", &error);
 	if (fd == NULL) {
 		log_global(LOG_ERROR, "Can't open '%s': %s", motd_file, error?error->message:"unknown error");
+		g_error_free(error);
 		return NULL;
 	}
 
@@ -43,6 +44,11 @@ char ** get_motd_lines(const char *motd_file)
 		gsize eol;
 
 		status = g_io_channel_read_line(fd, &buf, NULL, &eol, &error);
+		if (status == G_IO_STATUS_ERROR) {
+			log_global(LOG_ERROR, "Error while reading '%s': %s", motd_file, error->message);
+			g_error_free(error);
+			break;
+		}
 		if (status == G_IO_STATUS_EOF) break;
 		if (buf[eol] == '\n' || buf[eol] == '\r') buf[eol] = '\0';
 		lines = g_realloc(lines, (nrlines+2) * sizeof(char *));

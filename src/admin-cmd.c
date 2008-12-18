@@ -57,12 +57,16 @@ gboolean admin_socket_prompt(const char *config_dir)
 		status = g_io_channel_write_chars(ch, data, -1, NULL, &error);
 		if (status != G_IO_STATUS_NORMAL) {
 			fprintf(stderr, "Error writing to admin socket: %s\n", error->message);
+			if (error != NULL)
+				g_error_free(error);
 			return FALSE;
 		}
 
 		status = g_io_channel_write_chars(ch, "\n", -1, NULL, &error);
 		if (status != G_IO_STATUS_NORMAL) {
 			fprintf(stderr, "Error writing to admin socket: %s\n", error->message);
+			if (error != NULL)
+				g_error_free(error);
 			return FALSE;
 		}
 
@@ -77,6 +81,8 @@ gboolean admin_socket_prompt(const char *config_dir)
 			printf("%s", raw);
 			g_free(raw);
 		}
+		if (error != NULL)
+			g_error_free(error);
 	}
 	g_free(admin_dir);
 
@@ -97,6 +103,7 @@ int main(int argc, char **argv)
 	g_option_context_add_main_entries(pc, options, NULL);
 	if (!g_option_context_parse(pc, &argc, &argv, &error)) {
 		fprintf(stderr, "%s\n", error->message);
+		g_error_free(error);
 		return 1;
 	}
 

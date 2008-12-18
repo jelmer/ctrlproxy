@@ -90,6 +90,7 @@ struct ctrlproxyd_config *read_config_file(const char *name)
 
 	if (!g_key_file_load_from_file(kf, name, G_KEY_FILE_NONE, &error)) {
 		fprintf(stderr, "Unable to load '%s': %s\n", name, error->message);
+		g_error_free(error);
 		g_key_file_free(kf);
 		return NULL;
 	}
@@ -470,6 +471,7 @@ int main(int argc, char **argv)
 
 	if (!g_option_context_parse(pc, &argc, &argv, &error)) {
 		fprintf(stderr, "%s\n", error->message);
+		g_error_free(error);
 		return 1;
 	}
 

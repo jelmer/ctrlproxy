@@ -244,6 +244,7 @@ int main(int argc, char **argv)
 
 		if (!g_shell_parse_argv(line, &cargc, &cargv, &error)) {
 			fprintf(stderr, "Error parsing: %s\n", error->message);
+			g_error_free(error);
 			goto next;
 		}
 

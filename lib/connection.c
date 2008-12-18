@@ -759,12 +759,16 @@ gboolean network_set_iochannel(struct irc_network *s, GIOChannel *ioc)
 	if (g_io_channel_set_encoding(ioc, NULL, &error) != G_IO_STATUS_NORMAL) {
 		network_log(LOG_ERROR, s, "Unable to change encoding: %s", 
 					error?error->message:"unknown");
+		if (error != NULL)
+			g_error_free(error);
 		return FALSE;
 	}
 	g_io_channel_set_close_on_unref(ioc, TRUE);
 	if (g_io_channel_set_flags(ioc, G_IO_FLAG_NONBLOCK, &error) != G_IO_STATUS_NORMAL) {
 		network_log(LOG_ERROR, s, "Unable to change flags: %s", 
 					error?error->message:"unknown");
+		if (error != NULL)
+			g_error_free(error);
 		return FALSE;
 	}
 

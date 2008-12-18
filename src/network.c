@@ -146,9 +146,12 @@ static gboolean process_from_server(struct irc_network *n, const struct irc_line
 
 		network_set_charset(n, get_charset(n->info));
 
-		if (error != NULL)
+		if (error != NULL) {
 			network_log(LOG_WARNING, n, "Error setting charset %s: %s", 
 				get_charset(n->info), error->message);
+			g_error_free(error);
+			error = NULL;
+		}
 
 		network_log(LOG_INFO, n, "Successfully logged in");
 

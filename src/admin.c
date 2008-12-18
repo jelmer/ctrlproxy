@@ -1741,6 +1741,9 @@ static void iochannel_admin_out(admin_handle h, const char *data)
 	status = g_io_channel_write_chars(h->user_data, "\n", -1, &bytes_written, &error);
 
 	status = g_io_channel_flush(h->user_data, &error);
+	
+	if (error != NULL)
+		g_error_free(error);
 }
 
 static gboolean handle_client_data(GIOChannel *channel, 
@@ -1763,7 +1766,10 @@ static gboolean handle_client_data(GIOChannel *channel,
 			raw[eol] = '\0';
 			process_cmd(&ah, raw);
 			g_free(raw);
-		}
+		} 
+
+		if (error != NULL)
+			g_error_free(error);
 	}
 
 	if (condition & G_IO_HUP) {

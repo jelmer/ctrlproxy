@@ -188,6 +188,7 @@ static gboolean handle_client_detect(GIOChannel *ioc, struct pending_client *pc)
 		status = g_io_channel_read_line(ioc, &raw, &in_len, NULL, &error);
 		if (status != G_IO_STATUS_NORMAL) {
 			g_free(raw);
+			g_error_free(error);
 			return status;
 		}
 
@@ -204,6 +205,8 @@ static gboolean handle_client_detect(GIOChannel *ioc, struct pending_client *pc)
 			if (cvrt == NULL) {
 				cvrt = complete;
 				status = G_IO_STATUS_ERROR;
+				if (error != NULL) 
+					g_error_free(error);
 			} else {
 				g_free(complete);
 			}
@@ -258,6 +261,8 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition condition, gpo
 
 			if (status != G_IO_STATUS_AGAIN) {
 				kill_pending_client(pc);
+				if (error != NULL)
+					g_error_free(error);
 				return FALSE;
 			}
 		} else {

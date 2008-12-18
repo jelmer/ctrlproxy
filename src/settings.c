@@ -344,6 +344,7 @@ static void config_save_listeners(struct ctrlproxy_config *cfg, const char *path
 	} else { 
 		if (!g_key_file_save_to_file(kf, filename, &error)) {
 			log_global(LOG_WARNING, "Unable to save to \"%s\": %s", filename, error->message);
+			g_error_free(error);
 		}
 	}
 	
@@ -699,6 +700,7 @@ static struct network_config *config_load_network_file(struct ctrlproxy_config *
 		log_global(LOG_ERROR, "Can't parse configuration file '%s': %s", filename, error->message);
 		g_free(filename);
 		g_key_file_free(kf);
+		g_error_free(error);
 		return NULL;
 	}	
 
@@ -873,6 +875,7 @@ static void config_load_listeners(struct ctrlproxy_config *cfg)
 	if (!g_key_file_load_from_file(kf, filename, G_KEY_FILE_KEEP_COMMENTS, &error)) {
 		if (error->code != G_FILE_ERROR_NOENT)
 			log_global(LOG_ERROR, "Can't parse configuration file '%s': %s", filename, error->message);
+		g_error_free(error);
 		g_free(filename);
 		return;
 	}
@@ -1240,6 +1243,7 @@ struct ctrlproxy_config *load_configuration(const char *dir)
 
 	if (!g_key_file_load_from_file(kf, file, G_KEY_FILE_KEEP_COMMENTS, &error)) {
 		log_global(LOG_ERROR, "Can't parse configuration file '%s': %s", file, error->message);
+		g_error_free(error);
 		g_key_file_free(kf);
 		g_free(file);
 		g_free(cfg);

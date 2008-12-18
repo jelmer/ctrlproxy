@@ -83,7 +83,10 @@ static gboolean handle_transport_receive(GIOChannel *c, GIOCondition cond,
 				return FALSE;
 		}
 
-		return ret && handle_recv_status(transport, status, error);
+		ret &= handle_recv_status(transport, status, error);
+		if (error != NULL)
+			g_error_free(error);
+		return ret;
 	}
 
 	if (cond & G_IO_HUP) {
@@ -239,6 +242,7 @@ static gboolean transport_send_queue(GIOChannel *ioc, GIOCondition cond,
 			return TRUE;
 		case G_IO_STATUS_ERROR:
 			transport->callbacks->log(transport, l, error);
+			g_error_free(error);
 			break;
 		case G_IO_STATUS_EOF:
 			transport->outgoing_id = 0;
@@ -264,6 +268,7 @@ static gboolean transport_send_queue(GIOChannel *ioc, GIOCondition cond,
 			break;
 		case G_IO_STATUS_ERROR:
 			transport->callbacks->log(transport, l, error);
+			g_error_free(error);
 			break;
 		}
 		free_line(l);
@@ -301,6 +306,7 @@ gboolean transport_send_line(struct irc_transport *transport,
 		return FALSE;
 	case G_IO_STATUS_ERROR:
 		transport->callbacks->log(transport, l, error);
+		g_error_free(error);
 		return FALSE;
 	case G_IO_STATUS_NORMAL:
 		transport->last_line_sent = time(NULL);
@@ -320,6 +326,7 @@ gboolean transport_send_line(struct irc_transport *transport,
 		break;
 	case G_IO_STATUS_ERROR:
 		transport->callbacks->log(transport, l, error);
+		g_error_free(error);
 		return FALSE;
 	}
 
@@ -378,6 +385,7 @@ gboolean transport_blocking_recv(struct irc_transport *transport, struct irc_lin
 	GIOFlags old_flags = g_io_channel_get_flags(transport->incoming);
 	GError *error = NULL;
 	GIOStatus status;
+	gboolean ret;
 
 	g_io_channel_set_flags(transport->incoming, old_flags & ~G_IO_FLAG_NONBLOCK, &error);
 
@@ -385,7 +393,12 @@ gboolean transport_blocking_recv(struct irc_transport *transport, struct irc_lin
 
 	g_io_channel_set_flags(transport->incoming, old_flags, &error);
 
-	return handle_recv_status(transport, status, error);
+	ret = handle_recv_status(transport, status, error);
+
+	if (error != NULL)
+		g_error_free(error);
+
+	return ret;
 }
 
 char *transport_get_peer_hostname(struct irc_transport *transport)

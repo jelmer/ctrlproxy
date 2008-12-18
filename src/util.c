@@ -193,8 +193,11 @@ pid_t read_pidfile(const char *path)
 	char *contents;
 	pid_t pid;
 	GError *error = NULL;
-	if (!g_file_get_contents(path, &contents, NULL, &error)) 
+	if (!g_file_get_contents(path, &contents, NULL, &error)) {
+		if (error != NULL)
+			g_error_free(error);
 		return -1;
+	}
 	pid = atol(contents);
 
 	if (pid == 0)
@@ -214,7 +217,8 @@ gboolean write_pidfile(const char *path)
 	char contents[100];
 	snprintf(contents, 100, "%u", getpid());
 	if (!g_file_set_contents(path, contents, -1, &error)) {
-		log_global(LOG_ERROR, "Unable to write pid file `%s'", path);
+		log_global(LOG_ERROR, "Unable to write pid file `%s': %s", path, error->message);
+		g_error_free(error);
 		return FALSE;
 	}
 	return TRUE;

@@ -93,6 +93,7 @@ help_t *help_load_file( const char *helpfile )
 	if (h->file == NULL) {
 		log_global(LOG_WARNING, "Unable to open help file `%s': %s", helpfile, 
 				  error->message);
+		g_error_free(error);
 		help_free( h );
 		return NULL;
 	}
@@ -100,6 +101,7 @@ help_t *help_load_file( const char *helpfile )
 	if (!g_file_get_contents(helpfile, &h->file, &len, &error)) {
 		log_global(LOG_WARNING, "Unable to open help file `%s': %s", helpfile, 
 				  error->message);
+		g_error_free(error);
 		help_free( h );
 		return NULL;
 	} 

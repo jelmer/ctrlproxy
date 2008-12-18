@@ -118,6 +118,7 @@ gboolean daemon_user_start(struct daemon_user *user, const char *ctrlproxy_path,
 				  &child_pid, &error)) {
 		listener_log(LOG_WARNING, l, "Unable to start ctrlproxy for %s (%s): %s", user->username, 
 					 user->configdir, error->message);
+		g_error_free(error);
 		return FALSE;
 	}
 	g_strfreev(command);
