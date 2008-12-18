@@ -237,7 +237,8 @@ static gboolean backend_error(struct daemon_backend *backend, const char *error_
 {
 	struct daemon_client *cd = backend->userdata;
 	listener_log(LOG_INFO, cd->listener, "%s", error_message);
-	transport_send_args(cd->client_transport, "ERROR", error_message, NULL);
+	if (cd->client_transport != NULL)
+		transport_send_args(cd->client_transport, "ERROR", error_message, NULL);
 	daemon_client_kill(cd);
 	return FALSE;
 }

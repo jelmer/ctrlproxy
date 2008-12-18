@@ -162,10 +162,13 @@ static gboolean handle_client_detect(GIOChannel *ioc, struct pending_client *pc)
 	GIOStatus status;
 	gsize read;
 	gchar header[2];
+	GError *error = NULL;
 
-	status = g_io_channel_read_chars(ioc, header, 1, &read, NULL);
+	status = g_io_channel_read_chars(ioc, header, 1, &read, &error);
 
 	if (status != G_IO_STATUS_NORMAL && status != G_IO_STATUS_AGAIN) {
+		if (error != NULL) 
+			g_error_free(error);
 		return FALSE;
 	}
 
@@ -178,7 +181,6 @@ static gboolean handle_client_detect(GIOChannel *ioc, struct pending_client *pc)
 		gchar *complete;
 		GIOStatus status;
 		gboolean ret;
-		GError *error = NULL;
 		gsize in_len;
 
 		pc->socks.state = SOCKS_UNUSED;
