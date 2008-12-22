@@ -323,7 +323,7 @@ static gboolean process_from_pending_client(struct irc_client *client,
 		client->login_details->unused = g_strdup(l->args[3]);
 		client->login_details->realname = g_strdup(l->args[4]);
 	} else if (!g_strcasecmp(l->args[0], "PASS")) {
-		/* Silently drop... */
+		client->login_details->password = g_strdup(l->args[1]);
 	} else if (!g_strcasecmp(l->args[0], "CONNECT")) {
 		if (l->argc < 2) {
 			client_send_response(client, ERR_NEEDMOREPARAMS,

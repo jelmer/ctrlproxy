@@ -288,6 +288,7 @@ struct irc_network *find_network_by_hostname(struct global *global,
 			nc->nick = g_strdup(login_details->nick);
 			nc->username = g_strdup(login_details->username);
 			nc->fullname = g_strdup(login_details->realname);
+			nc->password = g_strdup(login_details->password);
 		}
 		nc->type = NETWORK_TCP;
 		s->host = g_strdup(hostname);
