@@ -254,7 +254,7 @@ static void cmd_connect_network (admin_handle h, const char * const *args, void 
 		case NETWORK_CONNECTION_STATE_RECONNECT_PENDING:
 			admin_out(h, "Forcing reconnect to `%s'", args[1]);
 			disconnect_network(s);
-			network_select_next_server(s);
+			irc_network_select_next_server(s);
 			connect_network(s);
 			break;
 		case NETWORK_CONNECTION_STATE_CONNECTED:
@@ -323,7 +323,7 @@ static void cmd_next_server (admin_handle h, const char * const *args, void *use
 	} else {
 		admin_out(h, "%s: Reconnecting", name);
 		disconnect_network(n);
-		network_select_next_server(n);
+		irc_network_select_next_server(n);
 		connect_network(n);
 	}
 }

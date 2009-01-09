@@ -153,7 +153,7 @@ G_MODULE_EXPORT gboolean network_set_charset(struct irc_network *n, const char *
 G_MODULE_EXPORT gboolean autoconnect_networks(GList *);
 G_MODULE_EXPORT struct irc_network *irc_network_new(const struct irc_network_callbacks *callbacks, void *private_data);
 G_MODULE_EXPORT gboolean connect_network(struct irc_network *);
-G_MODULE_EXPORT void network_select_next_server(struct irc_network *n);
+G_MODULE_EXPORT void irc_network_select_next_server(struct irc_network *n);
 G_MODULE_EXPORT gboolean disconnect_network(struct irc_network *s);
 G_MODULE_EXPORT gboolean network_send_line(struct irc_network *s, struct irc_client *c, const struct irc_line *, gboolean);
 G_MODULE_EXPORT gboolean network_send_args(struct irc_network *s, ...);

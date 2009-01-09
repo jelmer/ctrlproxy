@@ -1029,7 +1029,7 @@ void fini_networks(struct global *global)
  *
  * @param n Network
  */
-void network_select_next_server(struct irc_network *n)
+void irc_network_select_next_server(struct irc_network *n)
 {
 	struct network_config *nc = n->private_data;
 
