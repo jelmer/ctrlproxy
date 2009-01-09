@@ -99,11 +99,6 @@ AC_CHECK_FUNC(gsskrb5_register_acceptor_identity,
 		AC_DEFINE(HAVE_GSSKRB5_REGISTER_ACCEPTOR_IDENTITY, 1, [Whether gsskrb5_register_acceptor_identity is provided by the GSSAPI library]))
 AC_CHECK_HEADERS([gssapi.h gssapi/gssapi.h])
 
-###############################################################################
-# SWIG support
-###############################################################################
-AC_PATH_PROG(SWIG,[swig])
-
 AC_PATH_PROG(XSLTPROC, xsltproc)
 
 AC_SUBST(XSLTPROC)
