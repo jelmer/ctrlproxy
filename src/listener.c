@@ -288,7 +288,7 @@ void free_listener(struct irc_listener *l)
 {
 	l->global->listeners = g_list_remove(l->global->listeners, l);
 
-	network_unref(l->network);
+	irc_network_unref(l->network);
 	
 	g_free(l);
 }

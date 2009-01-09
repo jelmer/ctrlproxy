@@ -167,6 +167,6 @@ struct ctrlproxy_config;
 G_MODULE_EXPORT G_GNUC_MALLOC struct linestack_context *new_linestack(struct irc_network *network, struct ctrlproxy_config *settings);
 G_MODULE_EXPORT G_GNUC_MALLOC char *network_generate_feature_string(struct irc_network *n);
 G_MODULE_EXPORT struct irc_network *network_ref(struct irc_network *);
-G_MODULE_EXPORT void network_unref(struct irc_network *);
+G_MODULE_EXPORT void irc_network_unref(struct irc_network *);
 
 #endif /* __CTRLPROXY_NETWORK_H__ */

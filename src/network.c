@@ -462,7 +462,7 @@ void unload_network(struct irc_network *s)
 		s->global->networks = g_list_remove(s->global->networks, s);
 	}
 
-	network_unref(s);
+	irc_network_unref(s);
 }
 
 

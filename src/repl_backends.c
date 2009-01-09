@@ -139,7 +139,8 @@ static void load_config(struct global *global)
 {
     matches = g_key_file_get_string_list(global->config->keyfile,
                            "global", "match", NULL, NULL);
-	markers = g_hash_table_new_full(NULL, NULL, (GDestroyNotify)network_unref, 
+	markers = g_hash_table_new_full(NULL, NULL, 
+									(GDestroyNotify)irc_network_unref, 
 									(GDestroyNotify)linestack_free_marker);
 }
 
@@ -151,8 +152,12 @@ gboolean init_replication(void)
 
 	register_load_config_notify(load_config);
 	add_lose_client_hook("repl_lastdisconnect", lastdisconnect_mark, NULL);
-	lastdisconnect_backlog = g_hash_table_new_full(NULL, NULL, (GDestroyNotify)network_unref, (GDestroyNotify)linestack_free_marker);
-	simple_backlog = g_hash_table_new_full(NULL, NULL, (GDestroyNotify)network_unref, (GDestroyNotify)linestack_free_marker);
+	lastdisconnect_backlog = g_hash_table_new_full(NULL, NULL, 
+		(GDestroyNotify)irc_network_unref, 
+		(GDestroyNotify)linestack_free_marker);
+	simple_backlog = g_hash_table_new_full(NULL, NULL, 
+		(GDestroyNotify)irc_network_unref, 
+		(GDestroyNotify)linestack_free_marker);
 	add_server_filter("repl_simple", log_data, NULL, 200);
 
 	return TRUE;

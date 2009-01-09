@@ -1066,7 +1066,7 @@ struct irc_network *network_ref(struct irc_network *n)
 	return n;
 }
 
-void network_unref(struct irc_network *n)
+void irc_network_unref(struct irc_network *n)
 {
 	if (n == NULL)
 		return;

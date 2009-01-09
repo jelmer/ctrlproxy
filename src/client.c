@@ -220,7 +220,7 @@ static gboolean welcome_client(struct irc_client *client)
 
 static void client_free_private(struct irc_client *c)
 {
-	network_unref(c->network);
+	irc_network_unref(c->network);
 }
 
 static void handle_client_disconnect(struct irc_client *c)
