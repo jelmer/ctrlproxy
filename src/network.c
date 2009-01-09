@@ -464,3 +464,5 @@ void unload_network(struct irc_network *s)
 
 	network_unref(s);
 }
+
+

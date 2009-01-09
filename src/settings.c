@@ -218,7 +218,7 @@ static void config_save_network(struct ctrlproxy_config *cfg,
 
 	switch(n->type) {
 	case NETWORK_VIRTUAL:
-		g_key_file_set_string(kf, n->groupname, "virtual", n->type_settings.virtual_type);
+		g_key_file_set_string(kf, n->groupname, "virtual", n->type_settings.virtual_ops->name);
 		break;
 	case NETWORK_PROGRAM:
 		g_key_file_set_string(kf, n->groupname, "program", n->type_settings.program_location);
@@ -647,7 +647,11 @@ static struct network_config *config_load_network_keyfile_group(struct ctrlproxy
 		n->type_settings.program_location = g_key_file_get_string(kf, groupname, "program", NULL);
 		break;
 	case NETWORK_VIRTUAL:
-		n->type_settings.virtual_type = g_key_file_get_string(kf, groupname, "virtual", NULL);
+		{
+			char *type = g_key_file_get_string(kf, groupname, "virtual", NULL);
+			n->type_settings.virtual_ops = find_virtual_network(type);
+			g_free(type);
+		}
 		break;
 	case NETWORK_IOCHANNEL:
 		/* Don't store */
@@ -1463,7 +1467,6 @@ void free_config(struct ctrlproxy_config *cfg)
 			g_free(nc->type_settings.tcp.default_bind_address);
 			break;
 		case NETWORK_VIRTUAL:
-			g_free(nc->type_settings.virtual_type);
 			break;
 		case NETWORK_PROGRAM:
 			g_free(nc->type_settings.program_location);

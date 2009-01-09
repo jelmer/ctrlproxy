@@ -158,6 +158,7 @@ G_MODULE_EXPORT gboolean disconnect_network(struct irc_network *s);
 G_MODULE_EXPORT gboolean network_send_line(struct irc_network *s, struct irc_client *c, const struct irc_line *, gboolean);
 G_MODULE_EXPORT gboolean network_send_args(struct irc_network *s, ...);
 G_MODULE_EXPORT void register_virtual_network(struct virtual_network_ops *);
+G_MODULE_EXPORT struct virtual_network_ops *find_virtual_network(const char *name);
 G_MODULE_EXPORT struct irc_network *find_network(GList *gl, const char *);
 G_MODULE_EXPORT gboolean virtual_network_recv_line(struct irc_network *l, struct irc_line *);
 G_MODULE_EXPORT gboolean virtual_network_recv_args(struct irc_network *l, const char *origin, ...); 

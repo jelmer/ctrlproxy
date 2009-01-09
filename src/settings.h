@@ -100,7 +100,7 @@ struct network_config
 	} type;
 
 	union {
-		char *virtual_type;
+		struct virtual_network_ops *virtual_ops;
 		char *program_location;
 		struct { 
 			char *default_bind_address;
