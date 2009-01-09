@@ -33,6 +33,8 @@
  * @brief Network information
  */
 
+enum log_level;
+
 enum casemapping { 
 		CASEMAP_UNKNOWN = 0, 
 		CASEMAP_RFC1459, 
@@ -287,5 +289,7 @@ G_MODULE_EXPORT void network_info_parse(struct irc_network_info *info, const cha
 G_MODULE_EXPORT enum chanmode_type network_chanmode_type(char m, struct irc_network_info *n);
 G_MODULE_EXPORT struct irc_network_info *network_info_init(void);
 G_MODULE_EXPORT void free_network_info(struct irc_network_info *info);
+G_MODULE_EXPORT void network_info_log(enum log_level l, 
+				const struct irc_network_info *info, const char *fmt, ...);
 
 #endif /* __CTRLPROXY_ISUPPORT_H__ */

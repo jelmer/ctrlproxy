@@ -27,6 +27,21 @@ struct irc_network_info *network_info_init()
 	return info;
 }
 
+void network_info_log(enum log_level l, 
+					  const struct irc_network_info *info, const char *fmt, ...)
+{
+	va_list ap;
+	char *ret;
+
+	va_start(ap, fmt);
+	ret = g_strdup_vprintf(fmt, ap);
+	va_end(ap);
+
+	log_global(l, "%s", ret);
+
+	g_free(ret);
+}	
+
 void free_network_info(struct irc_network_info *info)
 {
 	g_free(info->prefix);
@@ -281,10 +296,10 @@ static void check_chanmodes_inconsistency(struct irc_network_info *info)
 			if (!strchr(info->supported_channel_modes, info->chanmodes[i][j])) {
 				char *new_modes;
 				if (info->name != NULL) 
-					log_global(LOG_WARNING, 
+					network_info_log(LOG_WARNING, info,
 						   "Server for %s reported inconsistent supported modes. %c was in CHANMODES but not in 004 line.", info->name, info->chanmodes[i][j]);
 				else
-					log_global(LOG_WARNING, 
+					network_info_log(LOG_WARNING, info,
 						   "Server reported inconsistent supported modes. %c was in CHANMODES but not in 004 line.", info->chanmodes[i][j]);
 				new_modes = g_strdup_printf("%s%c", info->supported_channel_modes, info->chanmodes[i][j]);
 				g_free(info->supported_channel_modes);
@@ -319,7 +334,8 @@ void network_info_parse(struct irc_network_info *info, const char *parameter)
 			info->casemapping = CASEMAP_ASCII;
 		} else {
 			info->casemapping = CASEMAP_UNKNOWN;
-			log_global(LOG_WARNING, "Unknown CASEMAPPING value '%s'", val);
+			network_info_log(LOG_WARNING, info,
+							 "Unknown CASEMAPPING value '%s'", val);
 		}
 	} else if (!g_strcasecmp(key, "NETWORK")) {
 		g_free(info->name);
@@ -416,7 +432,7 @@ void network_info_parse(struct irc_network_info *info, const char *parameter)
 			info->chanmodes_c = info->chanmodes_d = NULL;
 		info->chanmodes = g_strsplit(val, ",", 4);
 		if (g_strv_length(info->chanmodes) != 4) {
-			log_global(LOG_WARNING, "Expected 4-tuple for CHANMODES, received tuple was of size %d", g_strv_length(info->chanmodes));
+			network_info_log(LOG_WARNING, info, "Expected 4-tuple for CHANMODES, received tuple was of size %d", g_strv_length(info->chanmodes));
 		} else {
 			info->chanmodes_a = info->chanmodes[0];
 			info->chanmodes_b = info->chanmodes[1];
@@ -432,14 +448,16 @@ void network_info_parse(struct irc_network_info *info, const char *parameter)
 		if (val == NULL) 
 			info->excepts_mode = 'e';
 		else if (strlen(val) > 1)
-			log_global(LOG_WARNING, "Invalid length excepts value: %s", val);
+			network_info_log(LOG_WARNING, info, 
+							 "Invalid length excepts value: %s", val);
 		else
 			info->excepts_mode = val[0];
 	} else if (!g_strcasecmp(key, "INVEX")) {
 		if (val == NULL) 
 			info->invex_mode = 'I';
 		else if (strlen(val) > 1)
-			log_global(LOG_WARNING, "Invalid length invex value: %s", val);
+			network_info_log(LOG_WARNING, info, 
+							 "Invalid length invex value: %s", val);
 		else
 			info->invex_mode = val[0];
 	} else if (!g_strcasecmp(key, "ELIST")) {
@@ -452,7 +470,8 @@ void network_info_parse(struct irc_network_info *info, const char *parameter)
 			case 'U': info->elist_usercount_search = TRUE; break;
 			case 'C': info->elist_creation_time_search = TRUE; break;
 			default:
-				  log_global(LOG_WARNING, "Unknown ELIST parameter '%c'", val[i]);
+				  network_info_log(LOG_WARNING, info, 
+								   "Unknown ELIST parameter '%c'", val[i]);
 				  break;
 			}
 		}
@@ -460,7 +479,8 @@ void network_info_parse(struct irc_network_info *info, const char *parameter)
 		if (val == NULL) 
 			info->deaf_mode = 'D';
 		else if (strlen(val) > 1)
-			log_global(LOG_WARNING, "Invalid length deaf value: %s", val);
+			network_info_log(LOG_WARNING, info,
+							 "Invalid length deaf value: %s", val);
 		else
 			info->deaf_mode = val[0];
 	} else if (!g_strcasecmp(key, "EXTBAN")) {
@@ -486,7 +506,8 @@ void network_info_parse(struct irc_network_info *info, const char *parameter)
 		info->statusmsg = g_strdup(val);
 	} else if (!g_strcasecmp(key, "PREFIX")) {
 		if (strlen(val) > 0 && (val[0] != '(' || !strchr(val, ')'))) {
-			log_global(LOG_WARNING, "Malformed PREFIX data `%s'", val);
+			network_info_log(LOG_WARNING, info,
+							 "Malformed PREFIX data `%s'", val);
 		} else {
 			g_free(info->prefix);
 			info->prefix = g_strdup(val);
@@ -499,7 +520,8 @@ void network_info_parse(struct irc_network_info *info, const char *parameter)
 	} else if (!g_strcasecmp(key, "SECURELIST")) {
 		info->securelist = TRUE;
 	} else {
-		log_global(LOG_WARNING, "Unknown 005 parameter `%s'", key);
+		network_info_log(LOG_WARNING, info,
+						 "Unknown 005 parameter `%s'", key);
 	}
 	g_free(key);
 	g_free(val);
@@ -593,7 +615,8 @@ char get_prefix_from_modes(struct irc_network_info *info, irc_modes_t modes)
 	
 	pref_end = strchr(prefix, ')');
 	if (prefix[0] != '(' || !pref_end) {
-		log_global(LOG_WARNING, "Malformed PREFIX data `%s'", prefix);
+		network_info_log(LOG_WARNING, info,
+						 "Malformed PREFIX data `%s'", prefix);
 		return 0;
 	}
 	pref_end++;
@@ -618,7 +641,8 @@ char get_mode_by_prefix(char prefix, const struct irc_network_info *n)
 	
 	pref_end = strchr(prefix_mapping, ')');
 	if (prefix_mapping[0] != '(' || !pref_end) {
-		log_global(LOG_WARNING, "Malformed PREFIX data `%s'", prefix_mapping);
+		network_info_log(LOG_WARNING, n,
+						 "Malformed PREFIX data `%s'", prefix_mapping);
 		return 0;
 	}
 	pref_end++;
@@ -643,7 +667,8 @@ char get_prefix_by_mode(char mode, const struct irc_network_info *n)
 	
 	pref_end = strchr(prefix, ')');
 	if (prefix[0] != '(' || !pref_end) {
-		log_global(LOG_WARNING, "Malformed PREFIX data `%s'", prefix);
+		network_info_log(LOG_WARNING, n, 
+						 "Malformed PREFIX data `%s'", prefix);
 		return ' ';
 	}
 	pref_end++;
