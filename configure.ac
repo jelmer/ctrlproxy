@@ -84,6 +84,20 @@ AC_CHECK_LIB(readline, readline, [
 ])
 
 ###############################################################################
+# Python support
+###############################################################################
+AC_PATH_PROG(PYTHON, python)
+AC_PATH_PROG(PYTHON_CONFIG, python-config)
+
+HAVE_PYTHON=no
+AC_SUBST(HAVE_PYTHON)
+if test -z "$PYTHON_CONFIG"; then
+	AC_MSG_WARN([Python not found, not building python module])
+else
+	DEFMODULE(python, `$PYTHON_CONFIG --libs`)
+	HAVE_PYTHON=yes
+fi
+###############################################################################
 # GSSAPI support
 ###############################################################################
 AC_PATH_PROG(KRB5_CONFIG, krb5-config, no)

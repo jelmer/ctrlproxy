@@ -29,7 +29,12 @@ LIBIRC_SONAME = libirc.$(SHLIBEXT).$(LIBIRC_SOVERSION)
 
 .PHONY: all clean distclean install install-bin install-dirs install-doc install-data install-pkgconfig
 
-all: $(BINS) $(SBINS)
+all:: $(BINS) $(SBINS)
+
+ifeq ($(HAVE_PYTHON),yes)
+check:: check-python
+all:: python
+endif
 
 experimental:: all 
 
@@ -46,6 +51,7 @@ lib_objs = \
 	   lib/url.o \
 	   lib/util.o \
 	   lib/listener.o
+all_objs += $(lib_objs)
 
 objs = src/posix.o \
 	   src/cache.o \
@@ -76,6 +82,7 @@ objs = src/posix.o \
 	   src/auto_away.o \
 	   src/network.o \
 	   $(SSL_OBJS)
+all_objs += $(objs)
 
 lib_headers = \
 		  lib/state.h \
@@ -130,7 +137,7 @@ ctrlproxy-admin$(EXEEXT): src/admin-cmd.o
 	@$(CC) -I. -Ilib -Isrc $(CFLAGS) $(GCOV_CFLAGS) -c $< -o $@
 
 %.d: %.c config.h
-	@$(CC) -I. -Ilib -Isrc -M -MT $(<:.c=.o) $(CFLAGS) $< -o $@
+	@$(CC) -I. -Ilib -Isrc -M -MT $(<:.c=.o) $(CFLAGS) $(PYTHON_CFLAGS) $< -o $@
 
 # This looks a bit weird but is here to ensure that we never try to 
 # run ./autogen.sh outside of bzr checkouts
@@ -217,12 +224,13 @@ $(LIBIRC_STATIC): $(lib_objs)
 $(LIBIRC_SHARED): $(lib_objs)
 	$(LD) -shared $(LDFLAGS) -Wl,-soname,$(LIBIRC_SONAME) -o $@ $^
 
+%.$(SHLIBEXT):
+	$(LD) -shared $(LDFLAGS) -o $@ $^
+
 cscope.out::
 	cscope -b -R
 
 clean::
-	@echo Removing dependency files
-	@rm -f $(dep_files)
 	@echo Removing object files and executables
 	@rm -f src/*.o lib/*.o daemon/*.o testsuite/check ctrlproxy$(EXEEXT) testsuite/*.o *~
 	@rm -f linestack-cmd$(EXEEXT) ctrlproxy-admin$(EXEEXT)
@@ -247,6 +255,35 @@ realclean:: distclean
 
 ctags:
 	ctags -R .
+
+# Python specific stuff below this line
+mods/python.o python/ctrlproxy.o: CFLAGS+=$(PYTHON_CFLAGS)
+mods/libpython.so: mods/python.o python/ctrlproxy.o python/irc.o
+mods/libpython.so: LDFLAGS+=$(PYTHON_LDFLAGS)
+
+.PRECIOUS: python/irc.c python/ctrlproxy.c
+
+python/irc.o: CFLAGS+=$(PYTHON_CFLAGS)
+python/irc.$(SHLIBEXT): python/irc.o $(LIBIRC)
+python/irc.$(SHLIBEXT): LDFLAGS+=$(PYTHON_LDFLAGS) $(LIBS)
+
+ifeq ($(HAVE_PYTHON),yes)
+all_objs += python/irc.o mods/python.o python/ctrlproxy.o
+endif
+
+python:: python/irc.$(SHLIBEXT) mods/libpython.$(SHLIBEXT)
+
+check-python:: python/irc.$(SHLIBEXT)
+	PYTHONPATH=python trial tests.test_irc
+
+install-python: all
+	$(PYTHON) setup.py install --root="$(DESTDIR)"
+
+clean::
+	rm -f *.pyc
+	rm -f ctrlproxy.py listener.py
+#	$(PYTHON) setup.py clean
+	rm -rf build/
 
 # RFC compliance testing using ircdtorture
 
@@ -286,4 +323,8 @@ check-nofork::
 check-gdb: 
 	$(MAKE) check-nofork DEBUGGER="gdb --args"
 
+dep_files = $(patsubst %.o,%d,$(all_objs))
+clean::
+	@echo Removing dependency files
+	@rm -f $(dep_files)
 -include $(dep_files)
