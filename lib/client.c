@@ -199,12 +199,10 @@ void client_disconnect(struct irc_client *c, const char *reason)
 	c->connected = FALSE;
 	g_source_remove(c->ping_id);
 
-	if (c->callbacks->disconnect != NULL)
-		c->callbacks->disconnect(c);
-
 	pending_clients = g_list_remove(pending_clients, c);
 
-	lose_client_hook_execute(c);
+	if (c->callbacks->disconnect != NULL)
+		c->callbacks->disconnect(c);
 
 	client_log(LOG_INFO, c, "Removed client");
 
