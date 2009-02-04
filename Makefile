@@ -286,4 +286,14 @@ check-nofork::
 check-gdb: 
 	$(MAKE) check-nofork DEBUGGER="gdb --args"
 
+examples:: example/libfoo.$(SHLIBEXT) example/libirc-simple
+
+example/libfoo.$(SHLIBEXT): example/foo.o
+example/foo.o: CFLAGS+=-Ilib
+
+example/libirc-simple: example/irc_simple.o $(LIBIRC)
+	$(CC) -o $@ $^
+
+example/irc_simple.o: CFLAGS+=-Ilib
+
 -include $(dep_files)
