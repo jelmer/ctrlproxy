@@ -20,7 +20,7 @@
 */
 
 #include "internals.h"
-#include "lib/listener.h"
+#include "libirc/listener.h"
 #include "ssl.h"
 
 #include <sys/stat.h>

@@ -48,7 +48,7 @@
 
 #include "ssl.h"
 
-#include "lib/socks.h"
+#include "libirc/socks.h"
 
 struct ctrlproxyd_config;
 extern char my_hostname[];
