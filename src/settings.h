@@ -100,8 +100,11 @@ struct network_config
 	} type;
 
 	union {
-		struct virtual_network_ops *virtual_ops;
 		char *program_location;
+		struct {
+			char *name;
+			struct virtual_network_ops *ops;
+		} virtual;
 		struct { 
 			char *default_bind_address;
 			GList *servers;

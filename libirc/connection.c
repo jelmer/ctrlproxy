@@ -824,7 +824,7 @@ static gboolean connect_virtual(struct irc_network *s)
 	struct irc_login_details *details;
 	struct network_config *nc = s->private_data;
 
-	if (!nc->type_settings.virtual_ops)
+	if (nc->type_settings.virtual.ops == NULL)
 		return FALSE;
 
 	details = s->callbacks->get_login_details(s);
@@ -838,8 +838,8 @@ static gboolean connect_virtual(struct irc_network *s)
 	s->linestack = new_linestack(s, s->global->config);
 	s->connection.state = NETWORK_CONNECTION_STATE_MOTD_RECVD;
 
-	if (nc->type_settings.virtual_ops->init)
-		return nc->type_settings.virtual_ops->init(s);
+	if (nc->type_settings.virtual.ops->init)
+		return nc->type_settings.virtual.ops->init(s);
 
 	return TRUE;
 }
@@ -961,6 +961,8 @@ void register_virtual_network(struct virtual_network_ops *ops)
 
 struct virtual_network_ops *find_virtual_network(const char *name)
 {
+	if (virtual_network_ops == NULL)
+		return NULL;
 	return g_hash_table_lookup(virtual_network_ops, name);
 }
 
