@@ -1010,25 +1010,6 @@ struct irc_network *find_network(GList *networks, const char *name)
 }
 
 /**
- * Disconnect from and unload all networks.
- *
- * @param global Global context
- */
-void fini_networks(struct global *global)
-{
-	GList *gl;
-	while((gl = global->networks)) {
-		struct irc_network *n = (struct irc_network *)gl->data;
-		disconnect_network(n);
-		unload_network(n);
-	}
-
-	if (virtual_network_ops != NULL)
-		g_hash_table_destroy(virtual_network_ops);
-	virtual_network_ops = NULL;
-}
-
-/**
  * Switch to the next server listed for a network.
  *
  * @param n Network
@@ -1100,3 +1081,9 @@ void network_log(enum log_level l, const struct irc_network *s,
 	g_free(ret);
 }
 
+void unregister_virtual_networks(void)
+{
+	if (virtual_network_ops != NULL)
+		g_hash_table_destroy(virtual_network_ops);
+	virtual_network_ops = NULL;
+}
