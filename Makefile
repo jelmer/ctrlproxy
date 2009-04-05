@@ -71,7 +71,7 @@ objs = src/posix.o \
 	   src/log_subst.o \
 	   src/auto_away.o \
 	   src/network.o \
-	   $(SSL_OBJS)
+	   $(CTRLPROXY_SSL_OBJS)
 all_objs += $(objs)
 
 libirc_objs = \
@@ -83,7 +83,8 @@ libirc_objs = \
 	   $(libircdir)/connection.o \
 	   $(libircdir)/url.o \
 	   $(libircdir)/util.o \
-	   $(libircdir)/listener.o
+	   $(libircdir)/listener.o \
+	   $(LIBIRC_SSL_OBJS)
 
 libirc_headers = \
 		  $(libircdir)/state.h \

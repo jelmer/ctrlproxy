@@ -73,8 +73,10 @@ PKG_CHECK_MODULES(CHECK, check, [], [ echo -n "" ])
 ###############################################################################
 PKG_CHECK_MODULES(GNUTLS, gnutls, [
 		AC_DEFINE(HAVE_GNUTLS, 1, [Whether GNUTLS is available])
-		SSL_OBJS="src/gnutls.o src/tlscert.o"
-		AC_SUBST(SSL_OBJS)
+		LIBIRC_SSL_OBJS="libirc/gnutls.o"
+		CTRLPROXY_SSL_OBJS="src/tlscert.o"
+		AC_SUBST(LIBIRC_SSL_OBJS)
+		AC_SUBST(CTRLPROXY_SSL_OBJS)
 		], [ AC_MSG_WARN([GNUTLS not found, SSL will not be available]) ])
 
 AC_CHECK_LIB(readline, readline, [ 
