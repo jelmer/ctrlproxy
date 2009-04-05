@@ -237,6 +237,7 @@ static gboolean requires_colon(const struct irc_line *l)
 	case RPL_STATSOLINE:
 	case RPL_STATSHLINE:
 	case RPL_UMODEIS:
+	case RPL_MYINFO:
 	case RPL_TOPICWHOTIME:
 		return FALSE;
 

@@ -5,68 +5,70 @@ Ctrlproxy 3.0.9 UNRELEASED
   BUG FIXES
 
     * Use port numbers rather than service names because not all 
-	  systems have ircd and ircs defined. (#209)
+      systems have ircd and ircs defined. (#209)
 
     * Fix compilation on Solaris. (#210)
 
     * Provide replacement for daemon() on Solaris. (#213)
 
     * Return hostmask of client itself rather than hostmask of 
-	  server when referring to the user. (#214, #166, #69)
+      server when referring to the user. (#214, #166, #69)
 
     * Handle 308 and 309 replies.
+
+    * Don't send : for last argument in RPL_MYINFO, consistent with IRC servers.
 
 Ctrlproxy 3.0.8 2008-12-06
 
   FEATURES
 
     * Only warn about inconsistency in server channel modes at start-up, 
-	  rather than every time a mode is being used.
+      rather than every time a mode is being used.
 
-	* Allow two connections to the same network. (#151)
+    * Allow two connections to the same network. (#151)
 
     * Support GSSAPI authentication for SOCKS.
 
-	* Support for multiple users using a system-wide daemon
-	  (ctrlproxyd) that can be started at system start-up. 
-	  (#25)
-	
-	* Network configuration can now also be specified in 
-	  ~/.ctrlproxy/config.
+    * Support for multiple users using a system-wide daemon
+      (ctrlproxyd) that can be started at system start-up. 
+      (#25)
+    
+    * Network configuration can now also be specified in 
+      ~/.ctrlproxy/config.
 
-	* Allow setting default-nick, default-username and 
-	  default-fullname in [global] section.
+    * Allow setting default-nick, default-username and 
+      default-fullname in [global] section.
 
-	* Linestack is not disabled completely after a single 
-	  write fails.
+    * Linestack is not disabled completely after a single 
+      write fails.
 
   BUG FIXES
    
     * Support 901 response codes.
 
-	* Don't write to nickserv file either if autosave=false.
+    * Don't write to nickserv file either if autosave=false.
 
-	* Avoid unknown command warning when sending PASS.
+    * Avoid unknown command warning when sending PASS.
 
-	* Recognize UHNAMES and ESILENCE 005 parameters.
+    * Recognize UHNAMES and ESILENCE 005 parameters.
 
-	* Properly track nick names when doing fallback.
+    * Properly track nick names when doing fallback.
 
-	* Disable autosave by default.
+    * Disable autosave by default.
 
-	* Properly spoof netsplit when ctrlproxy loses the connection to the
-	  server.
+    * Properly spoof netsplit when ctrlproxy loses the connection to the
+      server.
 
-	* Fail gracefully if getpeername() doesn't work.
+    * Fail gracefully if getpeername() doesn't work.
 
-	* Don't crash when no argument is specified to STOPLISTENER. (#201)
+    * Don't crash when no argument is specified to STOPLISTENER. (#201)
 
-	* Fix segfault on FreeBSD because it doesn't like freeaddrinfo(NULL). 
-	  (#202)
+    * Fix segfault on FreeBSD because it doesn't like freeaddrinfo(NULL). 
+      (#202)
 
     * Support 290 (CAPAB) response codes.
 
-	* Fix client-limit for auto-away. (Alex Stansfield)
+    * Fix client-limit for auto-away. (Alex Stansfield)
 
     * Send channel limits in mode. (#200)
 
@@ -105,7 +107,7 @@ Ctrlproxy 3.0.7 2008-06-14
 
     * Support listening on IPv6.
 
-	* Handle 326 and 328 WHOIS replies.
+    * Handle 326 and 328 WHOIS replies.
 
   INTERNALS
 
