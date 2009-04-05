@@ -669,7 +669,9 @@ static gboolean close_server(struct irc_network *n)
 	}
 
 	n->connection.state = NETWORK_CONNECTION_STATE_NOT_CONNECTED;
-	redirect_clear(&n->queries);
+
+	if (n->callbacks->disconnect != NULL)
+		n->callbacks->disconnect(n);
 
 	return TRUE;
 }

@@ -370,10 +370,17 @@ static struct irc_login_details *get_login_details(struct irc_network *s)
 	return ret;
 }
 
+
+static void handle_network_disconnect(struct irc_network *n)
+{
+	redirect_clear(&n->queries);
+}
+
 struct irc_network_callbacks default_callbacks = {
 	.get_login_details = get_login_details,
 	.process_from_server = process_from_server,
 	.log = handle_network_log,
+	.disconnect = handle_network_disconnect,
 };
 
 /**
