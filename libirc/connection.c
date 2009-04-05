@@ -631,11 +631,8 @@ static gboolean close_server(struct irc_network *n)
 
 	network_send_args(n, "QUIT", NULL);
 
-	if (n->connection.state == NETWORK_CONNECTION_STATE_MOTD_RECVD) {
-		server_disconnected_hook_execute(n);
-		clients_send_netsplit(n->clients, n->external_state->info->server);
-		network_update_config(n->external_state, nc, n->global->config);
-	}
+	if (n->callbacks->disconnect != NULL)
+		n->callbacks->disconnect(n);
 
 	if (n->external_state) {
 		n->linestack = NULL;
@@ -667,9 +664,6 @@ static gboolean close_server(struct irc_network *n)
 	}
 
 	n->connection.state = NETWORK_CONNECTION_STATE_NOT_CONNECTED;
-
-	if (n->callbacks->disconnect != NULL)
-		n->callbacks->disconnect(n);
 
 	return TRUE;
 }
