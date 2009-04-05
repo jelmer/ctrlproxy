@@ -373,6 +373,14 @@ static struct irc_login_details *get_login_details(struct irc_network *s)
 
 static void handle_network_disconnect(struct irc_network *n)
 {
+	struct network_config *nc = n->private_data;
+
+	if (n->connection.state == NETWORK_CONNECTION_STATE_MOTD_RECVD) {
+		server_disconnected_hook_execute(n);
+		clients_send_netsplit(n->clients, n->external_state->info->server);
+		network_update_config(n->external_state, nc, n->global->config);
+	}
+
 	redirect_clear(&n->queries);
 	if (n->linestack != NULL)
 		free_linestack_context(n->linestack);
