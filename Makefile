@@ -218,6 +218,8 @@ lcov:
 	lcov --base-directory `pwd` --directory . --capture --output-file ctrlproxy.info
 	genhtml -o coverage ctrlproxy.info
 
+$(libirc_objs): CFLAGS+=-fPIC
+
 $(LIBIRC_STATIC): $(libirc_objs)
 	@echo Linking $@
 	@ar -rcs $@ $^
@@ -259,12 +261,13 @@ ctags:
 
 # Python specific stuff below this line
 mods/python.o python/ctrlproxy.o: CFLAGS+=$(PYTHON_CFLAGS)
+mods/python.o python/ctrlproxy.o: CFLAGS+=-fPIC
 mods/libpython.so: mods/python.o python/ctrlproxy.o python/irc.o
 mods/libpython.so: LDFLAGS+=$(PYTHON_LDFLAGS)
 
 .PRECIOUS: python/irc.c python/ctrlproxy.c
 
-python/irc.o: CFLAGS+=$(PYTHON_CFLAGS)
+python/irc.o: CFLAGS+=$(PYTHON_CFLAGS) -fPIC
 python/irc.$(SHLIBEXT): python/irc.o $(LIBIRC)
 python/irc.$(SHLIBEXT): LDFLAGS+=$(PYTHON_LDFLAGS) $(LIBS)
 
