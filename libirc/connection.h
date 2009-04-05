@@ -101,6 +101,7 @@ struct irc_network_callbacks {
 	network_log_fn log;
 	struct irc_login_details *(*get_login_details) (struct irc_network *);
 	gboolean (*process_from_server) (struct irc_network *, const struct irc_line *);
+	void (*disconnect) (struct irc_network *);
 };
 
 /**
@@ -168,5 +169,6 @@ G_MODULE_EXPORT G_GNUC_MALLOC struct linestack_context *new_linestack(struct irc
 G_MODULE_EXPORT G_GNUC_MALLOC char *network_generate_feature_string(struct irc_network *n);
 G_MODULE_EXPORT struct irc_network *network_ref(struct irc_network *);
 G_MODULE_EXPORT void irc_network_unref(struct irc_network *);
+G_MODULE_EXPORT void unregister_virtual_networks(void);
 
 #endif /* __CTRLPROXY_NETWORK_H__ */

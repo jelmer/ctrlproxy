@@ -370,10 +370,19 @@ static struct irc_login_details *get_login_details(struct irc_network *s)
 	return ret;
 }
 
+
+static void handle_network_disconnect(struct irc_network *n)
+{
+	redirect_clear(&n->queries);
+	if (n->linestack != NULL)
+		free_linestack_context(n->linestack);
+}
+
 struct irc_network_callbacks default_callbacks = {
 	.get_login_details = get_login_details,
 	.process_from_server = process_from_server,
 	.log = handle_network_log,
+	.disconnect = handle_network_disconnect,
 };
 
 /**
@@ -463,6 +472,22 @@ void unload_network(struct irc_network *s)
 	}
 
 	irc_network_unref(s);
+}
+
+/**
+ * Disconnect from and unload all networks.
+ *
+ * @param global Global context
+ */
+void fini_networks(struct global *global)
+{
+	GList *gl;
+	while((gl = global->networks)) {
+		struct irc_network *n = (struct irc_network *)gl->data;
+		disconnect_network(n);
+		unload_network(n);
+	}
+	unregister_virtual_networks();
 }
 
 

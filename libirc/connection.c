@@ -638,8 +638,6 @@ static gboolean close_server(struct irc_network *n)
 	}
 
 	if (n->external_state) {
-		if (n->linestack != NULL)
-			free_linestack_context(n->linestack);
 		n->linestack = NULL;
 		free_network_state(n->external_state); 
 		n->external_state = NULL;
@@ -669,7 +667,9 @@ static gboolean close_server(struct irc_network *n)
 	}
 
 	n->connection.state = NETWORK_CONNECTION_STATE_NOT_CONNECTED;
-	redirect_clear(&n->queries);
+
+	if (n->callbacks->disconnect != NULL)
+		n->callbacks->disconnect(n);
 
 	return TRUE;
 }
@@ -1008,25 +1008,6 @@ struct irc_network *find_network(GList *networks, const char *name)
 }
 
 /**
- * Disconnect from and unload all networks.
- *
- * @param global Global context
- */
-void fini_networks(struct global *global)
-{
-	GList *gl;
-	while((gl = global->networks)) {
-		struct irc_network *n = (struct irc_network *)gl->data;
-		disconnect_network(n);
-		unload_network(n);
-	}
-
-	if (virtual_network_ops != NULL)
-		g_hash_table_destroy(virtual_network_ops);
-	virtual_network_ops = NULL;
-}
-
-/**
  * Switch to the next server listed for a network.
  *
  * @param n Network
@@ -1098,3 +1079,9 @@ void network_log(enum log_level l, const struct irc_network *s,
 	g_free(ret);
 }
 
+void unregister_virtual_networks(void)
+{
+	if (virtual_network_ops != NULL)
+		g_hash_table_destroy(virtual_network_ops);
+	virtual_network_ops = NULL;
+}

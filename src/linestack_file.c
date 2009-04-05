@@ -25,6 +25,7 @@
 
 #include <glib/gstdio.h>
 #include <sys/stat.h>
+#include <inttypes.h>
 
 #define README_CONTENTS  \
 "This directory contains the history information that ctrlproxy uses\n" \
@@ -625,7 +626,7 @@ static gboolean file_insert_line(struct linestack_context *ctx,
 
 	nd->lines_since_last_state++;
 	if (nd->lines_since_last_state == STATE_DUMP_INTERVAL) {
-		char *state_id = g_strdup_printf("%lu-%lld", time(NULL), 
+		char *state_id = g_strdup_printf("%lu-%"PRIi64, time(NULL), 
 								 g_io_channel_tell_position(nd->line_file));
 		ret = file_insert_state(ctx, state, state_id);
 		g_free(state_id);
