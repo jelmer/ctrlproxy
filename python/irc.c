@@ -1,5 +1,5 @@
 /*    ctrlproxy: A modular IRC proxy
- *    (c) 2002-2007 Jelmer Vernooij <jelmer@nl.linux.org>
+ *    (c) 2002-2009 Jelmer Vernooij <jelmer@nl.linux.org>
  *     vim: expandtab
  *
  *    This program is free software; you can redistribute it and/or modify

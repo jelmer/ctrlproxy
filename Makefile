@@ -233,7 +233,7 @@ cscope.out::
 
 clean::
 	@echo Removing object files and executables
-	@rm -f src/*.o $(libircdir)/*.o daemon/*.o testsuite/check ctrlproxy$(EXEEXT) testsuite/*.o *~
+	@rm -f src/*.o $(libircdir)/*.o daemon/*.o python/*.o testsuite/check ctrlproxy$(EXEEXT) testsuite/*.o *~
 	@rm -f linestack-cmd$(EXEEXT) ctrlproxy-admin$(EXEEXT)
 	@rm -f ctrlproxyd$(EXEEXT)
 	@rm -f $(LIBIRC_STATIC) $(LIBIRC_SHARED)
