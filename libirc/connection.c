@@ -573,10 +573,6 @@ static void reconnect(struct irc_network *server)
 
 	g_assert(server->connection.state != NETWORK_CONNECTION_STATE_RECONNECT_PENDING);
 
-	if (server->connection.state == NETWORK_CONNECTION_STATE_MOTD_RECVD) {
-		server_disconnected_hook_execute(server);
-	}
-
 	close_server(server);
 
 	g_assert(nc);
