@@ -472,4 +472,20 @@ void unload_network(struct irc_network *s)
 	irc_network_unref(s);
 }
 
+/**
+ * Disconnect from and unload all networks.
+ *
+ * @param global Global context
+ */
+void fini_networks(struct global *global)
+{
+	GList *gl;
+	while((gl = global->networks)) {
+		struct irc_network *n = (struct irc_network *)gl->data;
+		disconnect_network(n);
+		unload_network(n);
+	}
+	unregister_virtual_networks();
+}
+
 
