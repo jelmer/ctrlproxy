@@ -386,11 +386,17 @@ static void handle_network_disconnect(struct irc_network *n)
 		free_linestack_context(n->linestack);
 }
 
+static void handle_network_state_set(struct irc_network *s)
+{
+	s->linestack = new_linestack(s, s->global->config);
+}
+
 struct irc_network_callbacks default_callbacks = {
 	.get_login_details = get_login_details,
 	.process_from_server = process_from_server,
 	.log = handle_network_log,
 	.disconnect = handle_network_disconnect,
+	.state_set = handle_network_state_set,
 };
 
 /**

@@ -102,6 +102,7 @@ struct irc_network_callbacks {
 	struct irc_login_details *(*get_login_details) (struct irc_network *);
 	gboolean (*process_from_server) (struct irc_network *, const struct irc_line *);
 	void (*disconnect) (struct irc_network *);
+	void (*state_set) (struct irc_network *);
 };
 
 /**
