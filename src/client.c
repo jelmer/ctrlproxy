@@ -108,10 +108,10 @@ static gboolean process_from_client(struct irc_client *c, const struct irc_line 
 		ctcp_client_request_record(c, l);
 
 		/* send off to server */
-		network_send_line(c->network, c, l, TRUE);
+		network_forward_line(c->network, c, l, TRUE);
 	} else if (!g_strcasecmp(l->args[0], "NOTICE") && l->argc > 2 && 
 			l->args[2][0] == '\001') {
-		network_send_line(c->network, c, l, TRUE);
+		network_forward_line(c->network, c, l, TRUE);
 	} else if (!g_strcasecmp(l->args[0], "")) {
 	} else if (c->network->connection.state == NETWORK_CONNECTION_STATE_MOTD_RECVD) {
 		struct network_config *nc = c->network->private_data;
@@ -119,7 +119,7 @@ static gboolean process_from_client(struct irc_client *c, const struct irc_line 
 		if (nc->disable_cache || !client_try_cache(c, c->network->external_state, l, &c->network->global->config->cache)) {
 			/* Perhaps check for validity of input here ? It could save us some bandwidth 
 			 * to the server, though unlikely to occur often */
-			network_send_line(c->network, c, l, FALSE);
+			network_forward_line(c->network, c, l, FALSE);
 		}
 	} else if (c->network->connection.state == NETWORK_CONNECTION_STATE_NOT_CONNECTED) {
 		char *msg;

@@ -504,4 +504,16 @@ void fini_networks(struct global *global)
 	unregister_virtual_networks();
 }
 
+/**
+ * Forward a line received from a client.
+ * @param s Network to send the line to
+ * @param l Line to send
+ * @param c Client that originally sent the line
+ * @param is_private Whether the line should not be broadcast to other clients
+ */
+gboolean network_forward_line(struct irc_network *s, struct irc_client *c, const struct irc_line *l, 
+							  gboolean is_private)
+{
+	return network_send_line(s, c, l, is_private);
+}
 

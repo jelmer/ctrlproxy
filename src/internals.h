@@ -72,6 +72,7 @@ G_MODULE_EXPORT void unload_network(struct irc_network *);
 typedef void (*new_network_notify_fn) (struct irc_network *, void *);
 G_MODULE_EXPORT struct irc_network *find_network_by_hostname(struct global *global, const char *host, guint16 port, gboolean create, struct irc_login_details *login_details);
 G_MODULE_EXPORT void register_new_network_notify(struct global *, new_network_notify_fn, void *userdata);
+gboolean network_forward_line(struct irc_network *s, struct irc_client *c, const struct irc_line *l, gboolean is_private);
 
 /* hooks.c */
 void server_disconnected_hook_execute(struct irc_network *);
