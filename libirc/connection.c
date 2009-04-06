@@ -221,7 +221,6 @@ gboolean network_send_line(struct irc_network *s, struct irc_client *c,
 {
 	struct irc_line l;
 	char *tmp = NULL;
-	struct irc_line *lc;
 
 	g_assert(ol);
 	g_assert(s);
@@ -232,14 +231,10 @@ gboolean network_send_line(struct irc_network *s, struct irc_client *c,
 	}
 
 	if (l.origin != NULL) {
-		if (!run_server_filter(s, &l, TO_SERVER)) {
+		if (!s->callbacks->process_to_server(s, &l)) {
 			g_free(tmp);
 			return TRUE;
 		}
-
-		run_log_filter(s, lc = linedup(&l), TO_SERVER); free_line(lc);
-		run_replication_filter(s, lc = linedup(&l), TO_SERVER); free_line(lc);
-		linestack_insert_line(s->linestack, ol, TO_SERVER, s->external_state);
 	}
 
 	g_assert(l.args[0] != NULL);
@@ -256,8 +251,6 @@ gboolean network_send_line(struct irc_network *s, struct irc_client *c,
 	}
 
 	g_free(tmp);
-
-	log_network_line(s, ol, FALSE);
 
 	redirect_record(&s->queries, s, c, ol);
 
