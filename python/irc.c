@@ -28,10 +28,31 @@ typedef struct {
     PyObject_HEAD
     const struct irc_line *line;
 } PyLineObject;
+static struct irc_line *PyObject_AsLine(PyObject *obj);
 
 PyObject *py_line_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 {
-    return NULL; /* FIXME */
+    PyObject *arg;
+    PyLineObject *self;
+    struct irc_line *l;
+    char *kwnames[] = { "data", NULL };
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O", kwnames, &arg))
+        return NULL;
+
+    l = PyObject_AsLine(arg);
+    if (l == NULL)
+        return NULL;
+
+    self = (PyLineObject *)type->tp_alloc(type, 0);
+    if (self == NULL) {
+        PyErr_NoMemory();
+        return NULL;
+    }
+
+    self->line = l;
+
+    return (PyObject *)self;
 }
 
 static void py_line_dealloc(PyLineObject *self)
@@ -54,7 +75,7 @@ static PyObject *py_line_repr(PyLineObject *self)
     char *str;
     PyObject *ret;
     str = irc_line_string(self->line);
-    ret = PyString_FromFormat("Line(%s)", str);
+    ret = PyString_FromFormat("Line('%s')", str);
     g_free(str);
     return ret;
 }
@@ -105,13 +126,13 @@ static PyTypeObject PyLineType = {
     .tp_as_sequence = &py_line_sequence,
 };
 
-static const struct irc_line *PyObject_AsLine(PyObject *obj)
+static struct irc_line *PyObject_AsLine(PyObject *obj)
 {
     if (PyString_Check(obj))
         return irc_parse_line(PyString_AsString(obj));
 
     if (PyObject_TypeCheck(obj, &PyLineType))
-        return ((PyLineObject *)obj)->line;
+        return linedup(((PyLineObject *)obj)->line);
 
     PyErr_SetString(PyExc_TypeError, "Expected line");
     return NULL;
@@ -183,8 +204,33 @@ static PyMethodDef py_networkinfo_methods[] = {
     { NULL }
 };
 
+static PyObject *py_network_info_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
+{
+    PyNetworkInfoObject *self;
+    char *kwnames[] = { NULL };
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "", kwnames))
+        return NULL;
+
+    self = (PyNetworkInfoObject *)type->tp_alloc(type, 0);
+    if (self == NULL) {
+        PyErr_NoMemory();
+        return NULL;
+    }
+
+    self->parent = NULL;
+    self->info = network_info_init();
+    if (self->info == NULL) {
+        PyErr_NoMemory();
+        return NULL;
+    }
+
+    return (PyObject *)self;
+}
+
 PyTypeObject PyNetworkInfoType = {
     .tp_name = "NetworkInfo",
+    .tp_new = py_network_info_new,
     .tp_flags = Py_TPFLAGS_DEFAULT,
     .tp_methods = py_networkinfo_methods,
     .tp_basicsize = sizeof(PyNetworkInfoObject)
@@ -195,6 +241,30 @@ typedef struct {
     struct irc_channel_state *state;
     PyObject *parent;
 } PyChannelStateObject;
+
+static PyObject *py_channel_state_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
+{
+    char *name;
+    char *kwnames[] = { "name", NULL };
+    PyChannelStateObject *self;
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "s", kwnames, &name))
+        return NULL;
+
+    self = (PyChannelStateObject*)type->tp_alloc(type, 0);
+    if (self == NULL) {
+        PyErr_NoMemory();
+        return NULL;
+    }
+
+    self->parent = NULL;
+    self->state = irc_channel_state_new(name);
+    if (self->state == NULL) {
+        PyErr_NoMemory();
+        return NULL;
+    }
+
+    return (PyObject *)self;
+}
 
 static PyObject *py_channel_state_get_name(PyChannelStateObject *self, void *closure)
 {
@@ -220,6 +290,21 @@ static PyObject *py_channel_state_get_modes(PyChannelStateObject *self, void *cl
     return py_ret;
 }
 
+static PyObject *py_channel_state_get_mode_option(PyChannelStateObject *self, void *closure)
+{
+    PyObject *ret = PyDict_New();
+    int i;
+
+    for (i = 0; i < MAXMODES; i++) {
+        char mode[2] = { i, '\0' };
+        if (self->state->chanmode_option[i] != NULL)
+            PyDict_SetItemString(ret, mode, 
+                PyString_FromString(self->state->chanmode_option[i]));
+    }
+
+    return ret;
+}
+
 static PyGetSetDef py_channel_state_getset[] = {
     { "name", (getter)py_channel_state_get_name, NULL, 
         "Name of the channel." },
@@ -227,11 +312,14 @@ static PyGetSetDef py_channel_state_getset[] = {
         "Topic of the channel." },
     { "modes", (getter)py_channel_state_get_modes, NULL,
         "Modes" },
+    { "mode_option", (getter)py_channel_state_get_mode_option, NULL,
+        "Mode options" },
     { NULL }
 };
 
 PyTypeObject PyChannelStateType = {
     .tp_name = "ChannelState",
+    .tp_new = py_channel_state_new,
     .tp_flags = Py_TPFLAGS_DEFAULT,
     .tp_getset = py_channel_state_getset,
     .tp_basicsize = sizeof(PyChannelStateObject)
@@ -243,29 +331,65 @@ typedef struct {
     PyObject *parent;
 } PyNetworkStateObject;
 
-static PyObject *py_network_state_handle_line(PyNetworkStateObject *self, PyObject *args)
+static PyObject *py_network_state_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 {
-    PyObject *py_line;
-    const struct irc_line *l;
-
-    if (!PyArg_ParseTuple(args, "O", &py_line))
+    char *username = NULL, *nick = NULL, *hostname = NULL;
+    char *kwnames[] = { "nick", "username", "hostname", NULL };
+    PyNetworkStateObject *self;
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "|zzz", kwnames, &nick, &username, &hostname))
         return NULL;
-    
+
+    self = (PyNetworkStateObject*)type->tp_alloc(type, 0);
+    if (self == NULL) {
+        PyErr_NoMemory();
+        return NULL;
+    }
+
+    self->parent = NULL;
+    self->state = network_state_init(nick, username, hostname);
+    if (self->state == NULL) {
+        PyErr_NoMemory();
+        return NULL;
+    }
+
+    return (PyObject *)self;
+}
+
+static PyObject *py_network_state_handle_line(PyNetworkStateObject *self, PyObject *py_line)
+{
+    struct irc_line *l;
+    PyObject *ret;
+
     l = PyObject_AsLine(py_line);
     if (l == NULL)
         return NULL;
-    return PyInt_FromLong(state_handle_data(self->state, l));
+
+    ret = PyInt_FromLong(state_handle_data(self->state, l));
+
+    free_line(l);
+
+    return ret;
 }
 
 static PyMethodDef py_network_state_methods[] = {
-    { "handle_line", (PyCFunction)py_network_state_handle_line, METH_VARARGS,
+    { "handle_line", (PyCFunction)py_network_state_handle_line, METH_O,
         "Process a line." },
     { NULL }
 };
 
 static PyObject *py_network_state_info(PyNetworkStateObject *self, void *closure)
 {
-    return NULL; /* FIXME */
+    PyNetworkInfoObject *pyinfo = (PyNetworkInfoObject *)PyNetworkInfoType.tp_alloc(&PyNetworkInfoType, 0);
+
+    if (pyinfo == NULL) {
+        PyErr_NoMemory();
+        return NULL;
+    }
+
+    pyinfo->parent = NULL;
+    pyinfo->info = self->state->info;
+
+    return (PyObject *)pyinfo;
 }
 
 static PyGetSetDef py_network_state_getset[] = {
@@ -276,6 +400,7 @@ static PyGetSetDef py_network_state_getset[] = {
 PyTypeObject PyNetworkStateType = {
     .tp_name = "NetworkState",
     .tp_flags = Py_TPFLAGS_DEFAULT,
+    .tp_new = py_network_state_new,
     .tp_methods = py_network_state_methods,
     .tp_getset = py_network_state_getset,
     .tp_basicsize = sizeof(PyNetworkStateObject)
@@ -321,7 +446,7 @@ static PyObject *py_client_set_charset(PyClientObject *self, PyObject *args)
 static PyObject *py_client_send_line(PyClientObject *self, PyObject *args)
 {
     PyObject *py_line;
-    const struct irc_line *l;
+    struct irc_line *l;
     if (!PyArg_ParseTuple(args, "O", &py_line))
         return NULL;
 
@@ -331,8 +456,10 @@ static PyObject *py_client_send_line(PyClientObject *self, PyObject *args)
 
     if (!client_send_line(self->client, l)) {
         PyErr_SetString(PyExc_RuntimeError, "Error while sending line");
+        free_line(l);
         return NULL;
     }
+    free_line(l);
 
     Py_RETURN_NONE;
 }
@@ -390,7 +517,7 @@ static PyObject *py_network_disconnect(PyNetworkObject *self)
 static PyObject *py_network_send_line(PyNetworkObject *self, PyObject *args)
 {
     PyObject *py_line, *py_client = Py_None;
-    const struct irc_line *l;
+    struct irc_line *l;
 
     if (!PyArg_ParseTuple(args, "O|O", &py_line, &py_client))
         return NULL;
@@ -398,10 +525,13 @@ static PyObject *py_network_send_line(PyNetworkObject *self, PyObject *args)
     l = PyObject_AsLine(py_line);
     if (l == NULL)
         return NULL;
-    if (!network_send_line(self->network, NULL, l, TRUE)) {
+
+    if (!network_send_line(self->network, l)) {
         PyErr_SetString(PyExc_RuntimeError, "Error sending line to network");
+        free_line(l);
         return NULL;
     }
+    free_line(l);
     Py_RETURN_NONE;
 }
 

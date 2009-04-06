@@ -17,6 +17,7 @@ import irc
 import unittest
 
 class LineTestCase(unittest.TestCase):
+
     def test_create_str(self):
         l = irc.Line(":origin PRIVMSG bla")
         self.assertTrue(l is not None)
@@ -27,7 +28,7 @@ class LineTestCase(unittest.TestCase):
         self.assertEquals(str(l), str(newl))
 
     def test_create_inval(self):
-        self.assertRaises(ValueError, irc.Line, 1)
+        self.assertRaises(TypeError, irc.Line, 1)
 
     def test__str__(self):
         l = irc.Line(":origin PRIVMSG bla")
@@ -60,15 +61,15 @@ class ChannelStateTests(unittest.TestCase):
 
     def test_set_key(self):
         s = irc.ChannelState("#foo")
-        self.assertEquals(None, s.key)
-        s.key = "bar"
-        self.assertEquals("bar", s.key)
+        self.assertEquals(None, s.mode_option['k'])
+        s.mode_option['k'] = "bar"
+        self.assertEquals("bar", s.mode_option['k'])
 
     def test_limit(self):
         s = irc.ChannelState("#foo")
-        self.assertEquals(0, s.limit)
-        s.limit = 42
-        self.assertEquals(42, s.limit)
+        self.assertEquals("0", s.mode_option['l'])
+        s.chanmode_option['l'] = "42"
+        self.assertEquals("42", s.mode_option['l'])
 
     def test_get_modes(self):
         s = irc.ChannelState("#foo")
