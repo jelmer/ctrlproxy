@@ -28,6 +28,14 @@ typedef struct {
     PyObject_HEAD
     const struct irc_line *line;
 } PyLineObject;
+
+
+typedef struct {
+    PyObject_HEAD
+    struct irc_network_state *state;
+    PyObject *parent;
+} PyNetworkStateObject;
+
 static struct irc_line *PyObject_AsLine(PyObject *obj);
 
 PyObject *py_line_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
@@ -290,19 +298,96 @@ static PyObject *py_channel_state_get_modes(PyChannelStateObject *self, void *cl
     return py_ret;
 }
 
-static PyObject *py_channel_state_get_mode_option(PyChannelStateObject *self, void *closure)
-{
-    PyObject *ret = PyDict_New();
-    int i;
+typedef struct {
+    PyObject_HEAD
+    PyChannelStateObject *parent;
+} PyChannelModeDictObject;
 
-    for (i = 0; i < MAXMODES; i++) {
-        char mode[2] = { i, '\0' };
-        if (self->state->chanmode_option[i] != NULL)
-            PyDict_SetItemString(ret, mode, 
-                PyString_FromString(self->state->chanmode_option[i]));
+static int py_channel_mode_dict_dealloc(PyChannelModeDictObject *self)
+{
+    Py_XDECREF(self->parent);
+    PyObject_DEL(self);
+    return 0;
+}
+
+static PyObject *py_channel_mode_dict_get(PyChannelModeDictObject *self, PyObject *py_name)
+{
+    char mode;
+
+    if (!PyString_Check(py_name) || PyString_Size(py_name) != 1) {
+        PyErr_SetNone(PyExc_KeyError);
+        return NULL;
     }
 
-    return ret;
+    mode = PyString_AsString(py_name)[0];
+    if (mode > MAXMODES || mode < 0) {
+        PyErr_SetNone(PyExc_KeyError);
+        return NULL;
+    }
+    
+    if (self->parent->state->chanmode_option[(uint8_t)mode] == NULL) {
+        PyErr_SetNone(PyExc_KeyError);
+        return NULL;
+    }
+
+    return PyString_FromString(self->parent->state->chanmode_option[(uint8_t)mode]);
+}
+
+static int py_channel_mode_dict_set(PyChannelModeDictObject *self, PyObject *py_name, PyObject *py_value)
+{
+    char mode;
+
+    if (!PyString_Check(py_name) || PyString_Size(py_name) != 1) {
+        PyErr_SetNone(PyExc_KeyError);
+        return -1;
+    }
+
+    mode = PyString_AsString(py_name)[0];
+    if (mode > MAXMODES || mode < 0) {
+        PyErr_SetNone(PyExc_KeyError);
+        return -1;
+    }
+
+    if (!PyString_Check(py_value)) {
+        PyErr_SetNone(PyExc_TypeError);
+        return -1;
+    }
+    
+    if (self->parent->state->chanmode_option[(uint8_t)mode] != NULL) {
+        g_free(self->parent->state->chanmode_option[(uint8_t)mode]);
+    }
+
+    self->parent->state->chanmode_option[(uint8_t)mode] = PyString_AsString(py_value);
+
+    return 0;
+}
+
+static PyMappingMethods py_channel_mode_dict_mapping = {
+    .mp_subscript = (binaryfunc)py_channel_mode_dict_get,
+    .mp_ass_subscript = (objobjargproc)py_channel_mode_dict_set,
+};
+
+PyTypeObject PyChannelModeDictType = {
+    .tp_name = "ChannelModeDict",
+    .tp_flags = Py_TPFLAGS_DEFAULT,
+    .tp_dealloc = (destructor)py_channel_mode_dict_dealloc,
+    .tp_basicsize = sizeof(PyChannelModeDictObject),
+    .tp_as_mapping = &py_channel_mode_dict_mapping,
+};
+
+static PyObject *py_channel_state_get_mode_option(PyChannelStateObject *self, void *closure)
+{
+    PyChannelModeDictObject *ret = (PyChannelModeDictObject *)PyChannelModeDictType.tp_alloc(&PyChannelModeDictType, 0);
+
+    if (ret == NULL) {
+        PyErr_NoMemory();
+        return NULL;
+    }
+
+    Py_INCREF(self);
+    ret->parent = self;
+
+    return (PyObject *)ret;
 }
 
 static PyGetSetDef py_channel_state_getset[] = {
@@ -325,11 +410,33 @@ PyTypeObject PyChannelStateType = {
     .tp_basicsize = sizeof(PyChannelStateObject)
 };
 
-typedef struct {
-    PyObject_HEAD
-    struct irc_network_state *state;
-    PyObject *parent;
-} PyNetworkStateObject;
+static PyObject *py_network_channels_getitem(PyNetworkStateObject *self, PyObject *py_name)
+{
+    char *name = PyString_AsString(py_name);
+    struct irc_channel_state *channel;
+    PyChannelStateObject *ret;
+
+    channel = find_channel(self->state, name);
+    if (channel == NULL) {
+        return NULL;
+    }
+
+    ret = (PyChannelStateObject *)PyChannelStateType.tp_alloc(&PyChannelStateType, 0);
+    if (ret == NULL) {
+        PyErr_NoMemory();
+        return NULL;
+    }
+
+    ret->parent = NULL;
+    ret->state = channel;
+
+    return (PyObject *)ret;
+}
+
+static PyMappingMethods py_network_channels_mapping = {
+    .mp_subscript = (binaryfunc)py_network_channels_getitem,
+};
+
 
 static PyObject *py_network_state_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 {
@@ -403,7 +510,7 @@ PyTypeObject PyNetworkStateType = {
     .tp_new = py_network_state_new,
     .tp_methods = py_network_state_methods,
     .tp_getset = py_network_state_getset,
-    .tp_basicsize = sizeof(PyNetworkStateObject)
+    .tp_basicsize = sizeof(PyNetworkStateObject),
 };
 
 typedef struct {
@@ -842,6 +949,9 @@ void initirc(void)
         return;
 
     if (PyType_Ready(&PyChannelStateType) < 0)
+        return;
+
+    if (PyType_Ready(&PyChannelModeDictType) < 0)
         return;
 
     m = Py_InitModule3("irc", irc_methods, 

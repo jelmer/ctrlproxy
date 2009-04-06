@@ -54,6 +54,7 @@ class LineTestCase(unittest.TestCase):
 
 
 class ChannelStateTests(unittest.TestCase):
+
     def test_create(self):
         s = irc.ChannelState("#foo")
         self.assertTrue(s is not None)
@@ -61,14 +62,14 @@ class ChannelStateTests(unittest.TestCase):
 
     def test_set_key(self):
         s = irc.ChannelState("#foo")
-        self.assertEquals(None, s.mode_option['k'])
+        self.assertRaises(KeyError, lambda:s.mode_option['k'])
         s.mode_option['k'] = "bar"
         self.assertEquals("bar", s.mode_option['k'])
 
     def test_limit(self):
         s = irc.ChannelState("#foo")
-        self.assertEquals("0", s.mode_option['l'])
-        s.chanmode_option['l'] = "42"
+        self.assertRaises(KeyError, lambda:s.mode_option['l'])
+        s.mode_option['l'] = "42"
         self.assertEquals("42", s.mode_option['l'])
 
     def test_get_modes(self):
