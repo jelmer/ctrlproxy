@@ -391,9 +391,26 @@ static void handle_network_state_set(struct irc_network *s)
 	s->linestack = new_linestack(s, s->global->config);
 }
 
+static gboolean process_to_server(struct irc_network *s, const struct irc_line *l)
+{
+	struct irc_line *lc;
+	if (!run_server_filter(s, l, TO_SERVER)) {
+		return FALSE;
+	}
+
+	run_log_filter(s, lc = linedup(l), TO_SERVER); free_line(lc);
+	run_replication_filter(s, lc = linedup(l), TO_SERVER); free_line(lc);
+	linestack_insert_line(s->linestack, l, TO_SERVER, s->external_state);
+
+	log_network_line(s, l, FALSE);
+
+	return TRUE;
+}
+
 struct irc_network_callbacks default_callbacks = {
 	.get_login_details = get_login_details,
 	.process_from_server = process_from_server,
+	.process_to_server = process_to_server,
 	.log = handle_network_log,
 	.disconnect = handle_network_disconnect,
 	.state_set = handle_network_state_set,
