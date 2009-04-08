@@ -18,6 +18,12 @@ Ctrlproxy 3.0.9 UNRELEASED
 
     * Don't send : for last argument in RPL_MYINFO, consistent with IRC servers.
 
+  FEATURES
+
+    * Provide Python bindings for the main library code. Mainly used for 
+	  unit testing at the moment, but will also become available to 
+	  ctrlproxy users at some point.
+
 Ctrlproxy 3.0.8 2008-12-06
 
   FEATURES
