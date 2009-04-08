@@ -72,3 +72,5 @@ ctrlproxyd
 cscope.out
 ctrlproxyd.8
 example/libirc-simple
+_trial_temp
+_trial_temp.lock

@@ -74,6 +74,7 @@ struct irc_client {
 	struct irc_network_state *state;
 	struct irc_client_callbacks *callbacks;
 	struct irc_transport *transport;
+	void *private_data;
 };
 
 /**

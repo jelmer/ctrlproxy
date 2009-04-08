@@ -20,8 +20,6 @@
 #include "internals.h"
 #include "irc.h"
 
-static void free_network_nick(struct irc_network_state *, struct network_nick *);
-
 enum mode_type { REMOVE = 0, ADD = 1 };
 
 #define CHECK_ORIGIN(s,l,name) \
@@ -75,6 +73,40 @@ gboolean network_nick_set_nick(struct network_nick *n, const char *nick)
 	
 	g_free(n->hostmask);
 	n->hostmask = g_strdup_printf("%s!%s@%s", nick, n->username, n->hostname);
+
+	return TRUE;
+}
+
+gboolean network_nick_set_username(struct network_nick *n, const char *username)
+{
+	if (n == NULL)
+		return FALSE;
+
+	if (n->username != NULL && !strcmp(username, n->username)) 
+		return TRUE;
+
+	g_free(n->username);
+	n->username = g_strdup(username);
+	
+	g_free(n->hostmask);
+	n->hostmask = g_strdup_printf("%s!%s@%s", n->nick, n->username, n->hostname);
+
+	return TRUE;
+}
+
+gboolean network_nick_set_hostname(struct network_nick *n, const char *hostname)
+{
+	if (n == NULL)
+		return FALSE;
+
+	if (n->hostname != NULL && !strcmp(hostname, n->hostname)) 
+		return TRUE;
+
+	g_free(n->hostname);
+	n->hostname = g_strdup(hostname);
+	
+	g_free(n->hostmask);
+	n->hostmask = g_strdup_printf("%s!%s@%s", n->nick, n->username, n->hostname);
 
 	return TRUE;
 }
@@ -1156,7 +1188,7 @@ struct irc_network_state *network_state_init(const char *nick,
 
 void free_network_nick(struct irc_network_state *st, struct network_nick *nn)
 {
-	g_assert(nn != &st->me);
+	g_assert(st == NULL || nn != &st->me);
 	g_assert(nn);
 
 	/* No recursion please... */
@@ -1173,7 +1205,8 @@ void free_network_nick(struct irc_network_state *st, struct network_nick *nn)
 	g_free(nn->fullname);
 	g_free(nn->server);
 	g_free(nn->nick);
-	st->nicks = g_list_remove(st->nicks, nn);
+	if (st != NULL)
+		st->nicks = g_list_remove(st->nicks, nn);
 	g_free(nn);
 }
 

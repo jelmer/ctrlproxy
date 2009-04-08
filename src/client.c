@@ -225,6 +225,7 @@ static void client_free_private(struct irc_client *c)
 
 static void handle_client_disconnect(struct irc_client *c)
 {
+	lose_client_hook_execute(c);
 	if (c->network != NULL)
 		c->network->clients = g_list_remove(c->network->clients, c);
 }

@@ -29,7 +29,12 @@ LIBIRC_SONAME = libirc.$(SHLIBEXT).$(LIBIRC_SOVERSION)
 
 .PHONY: all clean distclean install install-bin install-dirs install-doc install-data install-pkgconfig
 
-all: $(BINS) $(SBINS)
+all:: $(BINS) $(SBINS)
+
+ifeq ($(HAVE_PYTHON),yes)
+check:: check-python
+all:: python
+endif
 
 experimental:: all 
 
@@ -67,6 +72,7 @@ objs = src/posix.o \
 	   src/auto_away.o \
 	   src/network.o \
 	   $(CTRLPROXY_SSL_OBJS)
+all_objs += $(objs)
 
 libirc_objs = \
 	   $(libircdir)/state.o \
@@ -133,7 +139,7 @@ ctrlproxy-admin$(EXEEXT): src/admin-cmd.o
 	@$(CC) -I. -I$(libircdir) -Isrc $(CFLAGS) $(GCOV_CFLAGS) -c $< -o $@
 
 %.d: %.c config.h
-	@$(CC) -I. -I$(libircdir) -Isrc -M -MT $(<:.c=.o) $(CFLAGS) $< -o $@
+	@$(CC) -I. -I$(libircdir) -Isrc -M -MT $(<:.c=.o) $(CFLAGS) $(PYTHON_CFLAGS) $< -o $@
 
 # This looks a bit weird but is here to ensure that we never try to 
 # run ./autogen.sh outside of bzr checkouts
@@ -213,6 +219,8 @@ lcov:
 	lcov --base-directory `pwd` --directory . --capture --output-file ctrlproxy.info
 	genhtml -o coverage ctrlproxy.info
 
+$(libirc_objs): CFLAGS+=-fPIC
+
 $(LIBIRC_STATIC): $(libirc_objs)
 	@echo Linking $@
 	@ar -rcs $@ $^
@@ -220,14 +228,15 @@ $(LIBIRC_STATIC): $(libirc_objs)
 $(LIBIRC_SHARED): $(libirc_objs)
 	$(LD) -shared $(LDFLAGS) -Wl,-soname,$(LIBIRC_SONAME) -o $@ $^
 
+%.$(SHLIBEXT):
+	$(LD) -shared $(LDFLAGS) -o $@ $^
+
 cscope.out::
 	cscope -b -R
 
 clean::
-	@echo Removing dependency files
-	@rm -f $(dep_files)
 	@echo Removing object files and executables
-	@rm -f src/*.o $(libircdir)/*.o daemon/*.o testsuite/check ctrlproxy$(EXEEXT) testsuite/*.o *~
+	@rm -f src/*.o $(libircdir)/*.o daemon/*.o python/*.o testsuite/check ctrlproxy$(EXEEXT) testsuite/*.o *~
 	@rm -f linestack-cmd$(EXEEXT) ctrlproxy-admin$(EXEEXT)
 	@rm -f ctrlproxyd$(EXEEXT)
 	@rm -f $(LIBIRC_STATIC) $(LIBIRC_SHARED)
@@ -250,6 +259,36 @@ realclean:: distclean
 
 ctags:
 	ctags -R .
+
+# Python specific stuff below this line
+mods/python.o python/ctrlproxy.o: CFLAGS+=$(PYTHON_CFLAGS)
+mods/python.o python/ctrlproxy.o: CFLAGS+=-fPIC
+mods/libpython.so: mods/python.o python/ctrlproxy.o python/irc.o
+mods/libpython.so: LDFLAGS+=$(PYTHON_LDFLAGS)
+
+.PRECIOUS: python/irc.c python/ctrlproxy.c
+
+python/irc.o: CFLAGS+=$(PYTHON_CFLAGS) -fPIC
+python/irc.$(SHLIBEXT): python/irc.o $(LIBIRC)
+python/irc.$(SHLIBEXT): LDFLAGS+=$(PYTHON_LDFLAGS) $(LIBS)
+
+ifeq ($(HAVE_PYTHON),yes)
+all_objs += python/irc.o mods/python.o python/ctrlproxy.o
+endif
+
+python:: python/irc.$(SHLIBEXT) mods/libpython.$(SHLIBEXT)
+
+check-python:: python/irc.$(SHLIBEXT)
+	PYTHONPATH=python trial tests.test_irc
+
+install-python: all
+	$(PYTHON) setup.py install --root="$(DESTDIR)"
+
+clean::
+	rm -f *.pyc
+	rm -f ctrlproxy.py listener.py
+#	$(PYTHON) setup.py clean
+	rm -rf build/
 
 # RFC compliance testing using ircdtorture
 
@@ -288,6 +327,10 @@ check-nofork::
 
 check-gdb: 
 	$(MAKE) check-nofork DEBUGGER="gdb --args"
+
+clean::
+	@echo Removing dependency files
+	@rm -f $(dep_files)
 
 examples:: example/libfoo.$(SHLIBEXT) example/libirc-simple
 
