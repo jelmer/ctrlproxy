@@ -633,7 +633,7 @@ static PyObject *py_network_send_line(PyNetworkObject *self, PyObject *args)
     if (l == NULL)
         return NULL;
 
-    if (!network_send_line(self->network, l)) {
+    if (!network_send_line(self->network, NULL, l)) {
         PyErr_SetString(PyExc_RuntimeError, "Error sending line to network");
         free_line(l);
         return NULL;
