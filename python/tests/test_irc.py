@@ -21,6 +21,25 @@ class LineTestCase(unittest.TestCase):
     def test_create_str(self):
         l = irc.Line(":origin PRIVMSG bla")
         self.assertTrue(l is not None)
+        self.assertEquals(str(l), ":origin PRIVMSG bla")
+
+    def test_create_list_origin(self):
+        l = irc.Line([":origin", "PRIVMSG", "bla"])
+        self.assertTrue(l is not None)
+        self.assertEquals("origin", l.origin)
+        self.assertEquals(2, len(l))
+        self.assertEquals("PRIVMSG", l[0])
+        self.assertEquals("bla", l[1])
+        self.assertEqual(str(l), ":origin PRIVMSG :bla")
+
+    def test_create_list_no_origin(self):
+        l = irc.Line(["PRIVMSG", "bla"])
+        self.assertTrue(l is not None)
+        self.assertEquals(None, l.origin)
+        self.assertEquals(2, len(l))
+        self.assertEquals("PRIVMSG", l[0])
+        self.assertEquals("bla", l[1])
+        self.assertEqual(str(l), "PRIVMSG :bla")
 
     def test_create_other(self):
         l = irc.Line(":origin PRIVMSG bla")
@@ -82,6 +101,7 @@ class ChannelStateTests(unittest.TestCase):
 
 
 class NetworkStateTests(unittest.TestCase):
+
     def test_create(self):
         s = irc.NetworkState("nick", "user", "host")
         self.assertTrue(s is not None)
@@ -96,18 +116,20 @@ class NetworkStateTests(unittest.TestCase):
 
     def test_channels_empty(self):
         s = irc.NetworkState("nick", "user", "host")
-        self.assertEquals([], s.channels)
+        self.assertEquals([], list(s.channels))
         
     def test_channels(self):
         s = irc.NetworkState("nick", "user", "host")
-        s.handle_line(irc.Line(":nick!user@host JOIN #foo"))
+        s.handle_line(":nick!user@host JOIN #foo")
+        self.assertEquals(1, len(s.channels))
         channels = s.channels
         self.assertEquals(1, len(channels))
-        self.assertEquals("#foo", channels[0].name)
+        self.assertEquals(1, len(s.channels))
+        self.assertEquals("#foo", channels["#foo"].name)
 
     def test_get_channel(self):
         s = irc.NetworkState("nick", "user", "host")
-        s.handle_line(irc.Line(":nick!user@host JOIN #foo"))
+        s.handle_line(":nick!user@host JOIN #foo")
         self.assertEquals(s["#foo"].name, "#foo")
 
 

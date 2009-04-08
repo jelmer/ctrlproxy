@@ -26,6 +26,13 @@ void log_global(enum log_level ll, const char *fmt, ...) { /* FIXME */}
 
 typedef struct {
     PyObject_HEAD
+    GList *iter;
+    PyObject *(*converter) (PyObject *parent, void *);
+    PyObject *parent;
+} PyGListIterObject;
+
+typedef struct {
+    PyObject_HEAD
     const struct irc_line *line;
 } PyLineObject;
 
@@ -121,6 +128,20 @@ static PySequenceMethods py_line_sequence = {
     .sq_item = (ssizeargfunc)py_line_item,
 };
 
+static PyObject *py_line_get_origin(PyLineObject *self, void *closure)
+{
+    if (self->line->origin != NULL) {
+        return PyString_FromString(self->line->origin);
+    } else {
+        Py_RETURN_NONE;
+    }
+}
+
+static PyGetSetDef py_line_getsetters[] = {
+    { "origin", (getter)py_line_get_origin, NULL, "Sender of line" },
+    { NULL }
+};
+
 static PyTypeObject PyLineType = {
     .tp_name = "Line",
     .tp_new = py_line_new,
@@ -131,6 +152,7 @@ static PyTypeObject PyLineType = {
     .tp_repr = (reprfunc)py_line_repr,
     .tp_methods = py_line_methods,
     .tp_doc = "A RFC2459-compatible line.",
+    .tp_getset = py_line_getsetters,
     .tp_as_sequence = &py_line_sequence,
 };
 
@@ -141,6 +163,32 @@ static struct irc_line *PyObject_AsLine(PyObject *obj)
 
     if (PyObject_TypeCheck(obj, &PyLineType))
         return linedup(((PyLineObject *)obj)->line);
+    
+    if (PyList_Check(obj)) {
+        struct irc_line *l = g_new0(struct irc_line, 1);
+        int offset = 0;
+        int i;
+        if (PyList_Size(obj) > 0) {
+            PyObject *item0 = PyList_GetItem(obj, offset);
+            if (PyString_Check(item0) && PyString_AsString(item0)[0] == ':') {
+                l->origin = g_strdup(PyString_AsString(item0)+1);
+                offset++;
+            }
+        }
+        l->argc = PyList_Size(obj) - offset;
+        l->args = g_new0(char *, l->argc + 1);
+        for (i = 0; i < l->argc; i++) {
+            PyObject *item = PyList_GetItem(obj, offset+i);
+            if (!PyString_Check(item)) {
+                PyErr_SetNone(PyExc_TypeError);
+                free_line(l);
+                return NULL;
+            }
+            l->args[i] = g_strdup(PyString_AsString(item));
+        }
+        l->args[i] = NULL;
+        return l;
+    }   
 
     PyErr_SetString(PyExc_TypeError, "Expected line");
     return NULL;
@@ -236,10 +284,18 @@ static PyObject *py_network_info_new(PyTypeObject *type, PyObject *args, PyObjec
     return (PyObject *)self;
 }
 
+static int py_network_info_dealloc(PyNetworkInfoObject *self)
+{
+    Py_XDECREF(self->parent);
+    PyObject_Del(self);
+    return 0;
+}
+
 PyTypeObject PyNetworkInfoType = {
     .tp_name = "NetworkInfo",
     .tp_new = py_network_info_new,
     .tp_flags = Py_TPFLAGS_DEFAULT,
+    .tp_dealloc = (destructor)py_network_info_dealloc,
     .tp_methods = py_networkinfo_methods,
     .tp_basicsize = sizeof(PyNetworkInfoObject)
 };
@@ -306,7 +362,7 @@ typedef struct {
 static int py_channel_mode_dict_dealloc(PyChannelModeDictObject *self)
 {
     Py_XDECREF(self->parent);
-    PyObject_DEL(self);
+    PyObject_Del(self);
     return 0;
 }
 
@@ -357,7 +413,7 @@ static int py_channel_mode_dict_set(PyChannelModeDictObject *self, PyObject *py_
         g_free(self->parent->state->chanmode_option[(uint8_t)mode]);
     }
 
-    self->parent->state->chanmode_option[(uint8_t)mode] = PyString_AsString(py_value);
+    self->parent->state->chanmode_option[(uint8_t)mode] = g_strdup(PyString_AsString(py_value));
 
     return 0;
 }
@@ -402,39 +458,70 @@ static PyGetSetDef py_channel_state_getset[] = {
     { NULL }
 };
 
+static int py_channel_state_dealloc(PyChannelStateObject *self)
+{
+    if (self->parent != NULL) {
+        Py_DECREF(self->parent);
+    } else {
+        free_channel_state(self->state);
+    }
+
+    PyObject_Del(self);
+    return 0;
+}
+
 PyTypeObject PyChannelStateType = {
     .tp_name = "ChannelState",
     .tp_new = py_channel_state_new,
+    .tp_dealloc = (destructor)py_channel_state_dealloc,
     .tp_flags = Py_TPFLAGS_DEFAULT,
     .tp_getset = py_channel_state_getset,
     .tp_basicsize = sizeof(PyChannelStateObject)
 };
 
-static PyObject *py_network_channels_getitem(PyNetworkStateObject *self, PyObject *py_name)
+static PyChannelStateObject *py_channel_state_from_ptr(PyObject *parent, struct irc_channel_state *channel)
 {
-    char *name = PyString_AsString(py_name);
-    struct irc_channel_state *channel;
     PyChannelStateObject *ret;
-
-    channel = find_channel(self->state, name);
-    if (channel == NULL) {
-        return NULL;
-    }
-
     ret = (PyChannelStateObject *)PyChannelStateType.tp_alloc(&PyChannelStateType, 0);
     if (ret == NULL) {
         PyErr_NoMemory();
         return NULL;
     }
 
-    ret->parent = NULL;
+    ret->parent = parent;
     ret->state = channel;
-
-    return (PyObject *)ret;
+    return ret;
 }
 
-static PyMappingMethods py_network_channels_mapping = {
-    .mp_subscript = (binaryfunc)py_network_channels_getitem,
+static PyObject *py_network_state_getitem(PyNetworkStateObject *self, PyObject *py_name)
+{
+    char *name;
+    struct irc_channel_state *channel;
+
+    if (!PyString_Check(py_name)) {
+        PyErr_SetNone(PyExc_KeyError);
+        return NULL;
+    }
+
+    name = PyString_AsString(py_name);
+
+    channel = find_channel(self->state, name);
+    if (channel != NULL) {
+        return (PyObject *)py_channel_state_from_ptr((PyObject *)self, channel);
+    }
+
+    PyErr_SetNone(PyExc_KeyError);
+    return NULL;
+}
+
+static Py_ssize_t py_network_state_len(PyNetworkStateObject *self)
+{
+    return g_list_length(self->state->channels) + g_list_length(self->state->nicks);
+}
+
+static PyMappingMethods py_network_state_mapping = {
+    .mp_subscript = (binaryfunc)py_network_state_getitem,
+    .mp_length = (lenfunc)py_network_state_len,
 };
 
 
@@ -493,16 +580,148 @@ static PyObject *py_network_state_info(PyNetworkStateObject *self, void *closure
         return NULL;
     }
 
-    pyinfo->parent = NULL;
+    Py_INCREF(self);
+    pyinfo->parent = (PyObject *)self;
     pyinfo->info = self->state->info;
 
     return (PyObject *)pyinfo;
 }
 
+typedef struct {
+    PyObject_HEAD
+    PyNetworkStateObject *parent;
+} PyNetworkChannelDictObject;
+
+static PyObject *py_network_channel_dict_get(PyNetworkStateObject *self, PyObject *py_name)
+{
+    char *name;
+    struct irc_channel_state *channel;
+
+    if (!PyString_Check(py_name)) {
+        PyErr_SetNone(PyExc_KeyError);
+        return NULL;
+    }
+
+    name = PyString_AsString(py_name);
+
+    channel = find_channel(self->state, name);
+    if (channel == NULL) {
+        return NULL;
+    }
+
+    return (PyObject *)py_channel_state_from_ptr(self->parent, channel);
+}
+
+static int py_network_channel_dict_dealloc(PyNetworkChannelDictObject *self)
+{
+    Py_DECREF(self->parent);
+    PyObject_Del(self);
+    return 0;
+}
+
+static Py_ssize_t py_network_channel_dict_len(PyNetworkChannelDictObject *self)
+{
+    return g_list_length(self->parent->state->channels);
+}
+
+static PyMappingMethods py_network_channel_dict_mapping = {
+    .mp_subscript = (binaryfunc)py_network_channel_dict_get,
+    .mp_length = (lenfunc)py_network_channel_dict_len,
+};
+
+static int py_g_list_iter_dealloc(PyGListIterObject *self)
+{
+    Py_XDECREF(self->parent);
+    PyObject_Del(self);
+    return 0;
+}
+
+static PyObject *py_g_list_iter_next(PyGListIterObject *self)
+{
+    PyObject *ret;
+
+    if (self->iter == NULL) {
+        PyErr_SetNone(PyExc_StopIteration);
+        return NULL;
+    }
+    
+    ret = self->converter(self->parent, self->iter->data);
+
+    self->iter = g_list_next(self->iter);
+
+    return ret;
+}
+
+static PyTypeObject PyGListIterType = {
+    .tp_name = "GListIter",
+    .tp_dealloc = (destructor)py_g_list_iter_dealloc,
+    .tp_flags = Py_TPFLAGS_DEFAULT,
+    .tp_basicsize = sizeof(PyGListIterObject),
+    .tp_iternext = (iternextfunc)py_g_list_iter_next,
+};
+
+static PyObject *py_g_list_iter(GList *list, PyObject *parent, PyObject *(*converter) (PyObject *parent, void *))
+{
+    PyGListIterObject *ret = (PyGListIterObject *)PyGListIterType.tp_alloc(&PyGListIterType, 0);
+
+    if (ret == NULL) {
+        PyErr_NoMemory();
+        return NULL;
+    }
+
+    ret->iter = list;
+    ret->converter = converter;
+    if (parent != NULL)
+        Py_INCREF(parent);
+    ret->parent = parent;
+    return (PyObject *)ret;
+}   
+
+static PyObject *py_network_channel_dict_iter(PyNetworkChannelDictObject *self)
+{
+    return py_g_list_iter(self->parent->state->channels, (PyObject *)self, 
+                          (PyObject *(*)(PyObject *, void *))py_channel_state_from_ptr);
+}
+
+PyTypeObject PyNetworkChannelDictType = {
+    .tp_name = "NetworkChannelDict",
+    .tp_flags = Py_TPFLAGS_DEFAULT,
+    .tp_dealloc = (destructor)py_network_channel_dict_dealloc,
+    .tp_basicsize = sizeof(PyNetworkChannelDictObject),
+    .tp_as_mapping = &py_network_channel_dict_mapping,
+    .tp_iter = (getiterfunc)py_network_channel_dict_iter,
+};
+
+static PyObject *py_network_state_channels(PyNetworkStateObject *self, void *closure)
+{
+    PyNetworkChannelDictObject *ret = (PyNetworkChannelDictObject *)PyNetworkChannelDictType.tp_alloc(&PyNetworkChannelDictType, 0);
+    
+    if (ret == NULL) {
+        PyErr_NoMemory();
+        return NULL;
+    }
+
+    Py_INCREF(self);
+    ret->parent = self;
+    return (PyObject *)ret;
+}
+
 static PyGetSetDef py_network_state_getset[] = {
     { "info", (getter)py_network_state_info, NULL, "Network information" },
+    { "channels", (getter)py_network_state_channels, NULL, "Channels" },
     { NULL }
 };
+
+static int py_network_state_dealloc(PyNetworkStateObject *self)
+{
+    if (self->parent != NULL) {
+        Py_DECREF(self->parent);
+    } else {
+        free_network_state(self->state);
+    }
+    PyObject_Del(self);
+    return 0;
+}
 
 PyTypeObject PyNetworkStateType = {
     .tp_name = "NetworkState",
@@ -511,6 +730,8 @@ PyTypeObject PyNetworkStateType = {
     .tp_methods = py_network_state_methods,
     .tp_getset = py_network_state_getset,
     .tp_basicsize = sizeof(PyNetworkStateObject),
+    .tp_dealloc = (destructor)py_network_state_dealloc,
+    .tp_as_mapping = &py_network_state_mapping,
 };
 
 typedef struct {
@@ -952,6 +1173,12 @@ void initirc(void)
         return;
 
     if (PyType_Ready(&PyChannelModeDictType) < 0)
+        return;
+
+    if (PyType_Ready(&PyNetworkChannelDictType) < 0)
+        return;
+
+    if (PyType_Ready(&PyGListIterType) < 0)
         return;
 
     m = Py_InitModule3("irc", irc_methods, 
