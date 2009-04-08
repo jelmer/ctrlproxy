@@ -178,8 +178,7 @@ static struct tcp_server_config *network_get_next_tcp_server(struct irc_network 
 	return NULL;
 }
 
-static gboolean network_send_line_direct(struct irc_network *s, struct irc_client *c, 
-										 const struct irc_line *ol)
+static gboolean network_send_line_direct(struct irc_network *s, const struct irc_line *ol)
 {
 	struct irc_line nl, *l;
 	struct network_config *nc = s->private_data;
@@ -201,7 +200,7 @@ static gboolean network_send_line_direct(struct irc_network *s, struct irc_clien
 	if (nc->type == NETWORK_VIRTUAL) {
 		if (s->connection.data.virtual.ops == NULL) 
 			return FALSE;
-		return s->connection.data.virtual.ops->to_server(s, c, l);
+		return s->connection.data.virtual.ops->to_server(s, NULL, l);
 	} else {
 		if (s->connection.transport == NULL)
 			return FALSE;
@@ -212,12 +211,9 @@ static gboolean network_send_line_direct(struct irc_network *s, struct irc_clien
 /**
  * Send a line to the network.
  * @param s Network to send to.
- * @param c Client the line was sent by originally.
  * @param ol Line to send to the network
- * @param is_private Whether the line should not be broadcast to other clients
  */
-gboolean network_send_line(struct irc_network *s, struct irc_client *c, 
-						   const struct irc_line *ol, gboolean is_private)
+gboolean network_send_line(struct irc_network *s, const struct irc_line *ol)
 {
 	struct irc_line l;
 	char *tmp = NULL;
@@ -235,26 +231,10 @@ gboolean network_send_line(struct irc_network *s, struct irc_client *c,
 			g_free(tmp);
 			return TRUE;
 		}
+		g_free(tmp);
 	}
 
-	g_assert(l.args[0] != NULL);
-
-	/* Also write this message to all other clients currently connected */
-	if (!is_private && 
-	   (!g_strcasecmp(l.args[0], "PRIVMSG") || 
-		!g_strcasecmp(l.args[0], "NOTICE"))) {
-		g_assert(l.origin);
-		if (s->global->config->report_time == REPORT_TIME_ALWAYS)
-			line_prefix_time(&l, time(NULL)+s->global->config->report_time_offset);
-
-		clients_send(s->clients, &l, c);
-	}
-
-	g_free(tmp);
-
-	redirect_record(&s->queries, s, c, ol);
-
-	return network_send_line_direct(s, c, ol);
+	return network_send_line_direct(s, ol);
 }
 
 /**
@@ -360,7 +340,7 @@ gboolean network_send_args(struct irc_network *s, ...)
 	l = virc_parse_line(NULL, ap);
 	va_end(ap);
 
-	ret = network_send_line(s, NULL, l, TRUE);
+	ret = network_send_line(s, l);
 
 	free_line(l);
 

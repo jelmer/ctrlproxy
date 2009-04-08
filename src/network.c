@@ -167,7 +167,7 @@ static gboolean process_from_server(struct irc_network *n, const struct irc_line
 
 		for (i = 0; nc->autocmd && nc->autocmd[i]; i++) {
 			struct irc_line *l = irc_parse_line(nc->autocmd[i]);
-			network_send_line(n, NULL, l, FALSE);
+			network_send_line(n, l);
 			free_line(l);
 		}
 
@@ -403,7 +403,6 @@ static gboolean process_to_server(struct irc_network *s, const struct irc_line *
 	linestack_insert_line(s->linestack, l, TO_SERVER, s->external_state);
 
 	log_network_line(s, l, FALSE);
-
 	return TRUE;
 }
 
@@ -531,6 +530,18 @@ void fini_networks(struct global *global)
 gboolean network_forward_line(struct irc_network *s, struct irc_client *c, const struct irc_line *l, 
 							  gboolean is_private)
 {
-	return network_send_line(s, c, l, is_private);
-}
+	/* Also write this message to all other clients currently connected */
+	if (!is_private && 
+	   (!g_strcasecmp(l->args[0], "PRIVMSG") || 
+		!g_strcasecmp(l->args[0], "NOTICE"))) {
+		g_assert(l->origin != NULL);
+		if (s->global->config->report_time == REPORT_TIME_ALWAYS)
+			line_prefix_time(l, time(NULL)+s->global->config->report_time_offset);
 
+		clients_send(s->clients, l, c);
+	}
+
+	redirect_record(&s->queries, s, c, l);
+
+	return network_send_line(s, l);
+}
