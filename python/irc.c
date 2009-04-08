@@ -813,10 +813,31 @@ static PyMethodDef py_client_methods[] = {
     { NULL }
 };
 
+static PyObject *py_client_get_state(PyClientObject *self, void *closure)
+{
+    PyNetworkStateObject *ret = (PyNetworkStateObject*)PyNetworkStateType.tp_alloc(&PyNetworkStateType, 0);
+    if (ret == NULL) {
+        PyErr_NoMemory();
+        return NULL;
+    }
+
+    Py_INCREF(self);
+    ret->parent = (PyObject *)self;
+    ret->state = self->client->state;
+
+    return (PyObject *)ret;
+}
+
+static PyGetSetDef py_client_getsetters[] = {
+    { "state", (getter)py_client_get_state, NULL, "State" },
+    { NULL }
+};
+
 PyTypeObject PyClientType = {
     .tp_name = "Client",
     .tp_flags = Py_TPFLAGS_DEFAULT,
     .tp_methods = py_client_methods,
+    .tp_getset = py_client_getsetters,
     .tp_basicsize = sizeof(PyClientObject)
 };
 
@@ -971,180 +992,6 @@ static const struct irc_client_callbacks py_client_callbacks = {
     .process_to_client = py_process_to_client,
     .welcome = py_welcome_client
 };
-
-#if 0
-cdef class Line:
-    def __init__(self, data):
-        if isinstance(data, str):
-            self.line = irc_parse_line(data)
-        elif isinstance(data, Line):
-            self.line = linedup((<Line>data).line)
-        elif isinstance(data, list):
-            raise NotImplementedError
-        else:
-            raise ValueError
-
-    cdef void set_line(self, irc_line *line):
-        self.line = line
-
-
-
-cdef class NetworkInfo:
-    """Static network information."""
-    def __init__(self):
-        self.info = network_info_init(NULL)
-        self.parent = None
-
-    cdef void set_network_info(self, irc_network_info *info, parent):
-        self._free()
-        self.info = info
-        self.parent = parent
-        Py_INCREF(self.parent)
-
-    def _free(self):
-        if self.parent is None:
-            free_network_info(self.info)
-        else:
-            Py_DECREF(self.parent)
-
-    def __dealloc__(self):
-        self._free()
-
-
-cdef class ChannelState:
-    def __init__(self, name):
-        self.state = irc_channel_state_new(name)
-        self.parent = None
-
-    cdef void set_channel_state(self, irc_channel_state *cs, parent):
-        self._free()
-        self.state = cs
-        self.parent = parent
-        Py_INCREF(self.parent)
-
-    def _free(self):
-        if self.parent is None:
-            free_channel_state(self.state)
-        else:
-            Py_DECREF(self.parent)
- 
-    def __dealloc__(self):
-        self._free()
-
-
-cdef class GListIter:
-    cdef GList *list
-    cdef object (*convert_fn) (void *, object)
-    def __init__(self):
-        self.list = NULL
-        self.convert_fn = NULL
-
-    def __iter__(self):
-        return self
-
-    def __next__(self):
-        if self.list == NULL:
-            raise StopIteration
-        ret = self.convert_fn(self.list.data, self)
-        self.list = self.list.next
-        return ret
-
-
-cdef new_channel_state(void *cs, parent):
-    cdef ChannelState ret
-    ret = ChannelState("")
-    ret.set_channel_state(<irc_channel_state *>cs, parent)
-    return ret
-
-
-cdef class NetworkState:
-    def __init__(self, char *nick, char *username, char *hostname):
-        self.state = network_state_init(nick, username, hostname)
-        self.parent = None
-
-    cdef void set_network_state(self, irc_network_state *state, parent):
-        self._free()
-        self.state = state
-        self.parent = parent
-        Py_INCREF(self.parent)
-
-    def __dealloc__(self):
-        self._free()
-
-    def _free(self):
-        if self.parent is None:
-            free_network_state(self.state)
-        else:
-            Py_DECREF(self.parent)
-
-    def iter_channels(self):
-        """Iterate over the known channels."""
-        cdef GListIter ret
-        ret = GListIter()
-        ret.list = self.state.channels
-        ret.convert_fn = new_channel_state
-        return ret
-
-    def __getitem__(self, name):
-        for c in self.iter_channels():
-            if c.name == name:
-                return c
-        raise KeyError
-
-    property channels:
-        """List of known channels."""
-        def __get__(self):
-            return list(self.iter_channels())
-
-class Listener:
-    pass
-
-cdef irc_transport *new_transport(object o):
-    return NULL #FIXME
-
-cdef class Client:
-    """An IRC client."""
-    def __init__(self, transport, default_origin, description=None):
-        """Create a new IRC client.
-
-        :param transport: file-like Python object used for communication
-        :param default_origin: Default origin
-        :param description: Optional description for this client
-        """
-        self.client = irc_client_new(new_transport(transport),
-                                     default_origin, description,
-                                     &py_client_callbacks,
-                                     <void *>self)
-        if self.client == NULL:
-            raise Exception("Unable to create client")
-
-    property state:
-        def __get__(self):
-            cdef NetworkState ret
-            ret = NetworkState("", "", "")
-            ret.set_network_state(self.client.state, self)
-            return ret
-
-    def process_from_client(self, line):
-        """Called for each line sent by the client."""
-        raise NotImplementedError
-
-    def process_to_client(self, line):
-        """Called for each line sent to the client."""
-        raise NotImplementedError
-
-    def welcome(self):
-        """Called when the client is authenticated. """
-        pass
-
-    def log(self, level, text):
-        """Called for each log event.
-        
-        :param level: The log level associated with the event.
-        :param text: Log message.
-        """
-        raise NotImplementedError
-#endif
 
 static PyMethodDef irc_methods[] = { 
     { NULL }
