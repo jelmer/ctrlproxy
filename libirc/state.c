@@ -138,6 +138,7 @@ gboolean nicklist_add_entry(GList **nicklist, const char *opt_arg,
 	be->time_set = at;
 	be->hostmask = g_strdup(opt_arg);
 	be->by = (by_nick?g_strdup(by_nick):NULL);
+	g_assert(be != NULL);
 	*nicklist = g_list_append(*nicklist, be);
 
 	return TRUE;
@@ -165,7 +166,7 @@ void free_nicklist_entry(struct nicklist_entry *be)
 struct nicklist_entry *find_nicklist_entry(GList *entries, const char *hostmask)
 {
 	GList *gl;
-	for (gl = entries; gl; gl = gl->next) {
+	for (gl = entries; gl; gl = g_list_next(gl)) {
 		struct nicklist_entry *be = gl->data;
 		if (!strcmp(be->hostmask, hostmask))
 			return be;
@@ -204,8 +205,10 @@ void free_channel_state(struct irc_channel_state *c)
 	g_free(c->name);
 	g_free(c->topic);
 	g_free(c->topic_set_by);
-	g_assert(c->network);
-	c->network->channels = g_list_remove(c->network->channels, c);
+	if (c->network != NULL) {
+		c->network->channels = g_list_remove(c->network->channels, c);
+		c->network = NULL;
+	}
 	for (i = 0; i < MAXMODES; i++)
 		g_free(c->chanmode_option[i]);
 	for (i = 0; i < MAXMODES; i++)
@@ -218,7 +221,7 @@ struct irc_channel_state *find_channel(struct irc_network_state *st, const char 
 	GList *cl;
 	g_assert(st);
 	g_assert(name);
-	for (cl = st->channels; cl; cl = cl->next) {
+	for (cl = st->channels; cl; cl = g_list_next(cl)) {
 		struct irc_channel_state *c = (struct irc_channel_state *)cl->data;
 
 		if (!irccmp(st->info, c->name, name)) 
@@ -245,10 +248,11 @@ struct irc_channel_state *find_add_channel(struct irc_network_state *st, char *n
 	g_assert(name);
 	
 	c = find_channel(st, name);
-	if (c)
+	if (c != NULL)
 		return c;
 	c = irc_channel_state_new(name);
 	c->network = st;
+	g_assert(c != NULL);
 	st->channels = g_list_append(st->channels, c);
 
 	return c;
@@ -267,13 +271,13 @@ struct channel_nick *find_channel_nick(struct irc_channel_state *c,
 	GList *l;
 	const char *realname = name;
 	g_assert(name);
-	g_assert(c);
+	g_assert(c != NULL);
 
 	g_assert(c->network);
 	if (is_prefix(realname[0], c->network->info))
 		realname++;
 
-	for (l = c->nicks; l; l = l->next) {
+	for (l = c->nicks; l; l = g_list_next(l)) {
 		struct channel_nick *n = (struct channel_nick *)l->data;
 		if (!irccmp(c->network->info, n->global_nick->nick, realname))
 			return n;
@@ -294,10 +298,10 @@ struct channel_nick *find_channel_nick_hostmask(struct irc_channel_state *c,
 {
 	GList *l;
 	g_assert(hm);
-	g_assert(c);
+	g_assert(c != NULL);
 
 	g_assert(c->network);
-	for (l = c->nicks; l; l = l->next) {
+	for (l = c->nicks; l; l = g_list_next(l)) {
 		struct channel_nick *n = (struct channel_nick *)l->data;
 		if (!irccmp(c->network->info, n->global_nick->hostmask, hm))
 			return n;
@@ -324,7 +328,7 @@ struct network_nick *find_network_nick(struct irc_network_state *n,
 	if (!irccmp(n->info, n->me.nick, name))
 		return &n->me;
 
-	for (gl = n->nicks; gl; gl = gl->next) {
+	for (gl = n->nicks; gl; gl = g_list_next(gl)) {
 		struct network_nick *ndd = (struct network_nick*)gl->data;
 		if (!irccmp(n->info, ndd->nick, name)) {
 			return ndd;
@@ -355,6 +359,7 @@ struct network_nick *find_add_network_nick(struct irc_network_state *n,
 
 	/* create one, if it doesn't exist */
 	nd = g_new0(struct network_nick,1);
+	g_assert(nd != NULL);
 	g_assert(!is_prefix(name[0], n->info));
 	nd->nick = g_strdup(name);
 	nd->hops = -1;
@@ -392,6 +397,7 @@ struct channel_nick *find_add_channel_nick(struct irc_channel_state *c,
 		return n;
 
 	n = g_new0(struct channel_nick,1);
+	g_assert(n != NULL);
 	
 	n->channel = c;
 	n->global_nick = find_add_network_nick(c->network, realname);
@@ -416,8 +422,13 @@ static void handle_join(struct irc_network_state *s, const struct irc_line *l)
 	CHECK_ORIGIN(s,l,"NICK");
 
 	nick = line_get_nick(l);
+
+	g_assert(nick != NULL);
 	
 	channels = g_strsplit(l->args[1], ",", 0);
+
+	g_assert(channels != NULL);
+	
 
 	for (i = 0; channels[i]; i++) {
 		/* Someone is joining a channel the user is on */
@@ -505,7 +516,7 @@ static void handle_kick(struct irc_network_state *s, const struct irc_line *l)
 		c = find_channel(s, channels[i]);
 
 		if (c == NULL){
-			network_state_log(LOG_WARNING, s, "Can't kick nick %s from %s", nicks[i], channels[i]);
+			network_state_log(LOG_WARNING, s, "Can't kick nick %s from unknown channel %s", nicks[i], channels[i]);
 			continue;
 		}
 

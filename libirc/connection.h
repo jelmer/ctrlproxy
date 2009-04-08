@@ -158,7 +158,7 @@ G_MODULE_EXPORT struct irc_network *irc_network_new(const struct irc_network_cal
 G_MODULE_EXPORT gboolean connect_network(struct irc_network *);
 G_MODULE_EXPORT void irc_network_select_next_server(struct irc_network *n);
 G_MODULE_EXPORT gboolean disconnect_network(struct irc_network *s);
-G_MODULE_EXPORT gboolean network_send_line(struct irc_network *s, struct irc_client *c, const struct irc_line *, gboolean);
+G_MODULE_EXPORT gboolean network_send_line(struct irc_network *s, struct irc_client *c, const struct irc_line *);
 G_MODULE_EXPORT gboolean network_send_args(struct irc_network *s, ...);
 G_MODULE_EXPORT void register_virtual_network(struct virtual_network_ops *);
 G_MODULE_EXPORT struct virtual_network_ops *find_virtual_network(const char *name);
