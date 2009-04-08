@@ -24,6 +24,8 @@
 const char *get_my_hostname() { return NULL; /* FIXME */ }
 void log_global(enum log_level ll, const char *fmt, ...) { /* FIXME */}
 
+static PyObject *py_g_list_iter(GList *list, PyObject *parent, PyObject *(*converter) (PyObject *parent, void *));
+
 typedef struct {
     PyObject_HEAD
     GList *iter;
@@ -497,10 +499,189 @@ static PyChannelStateObject *py_channel_state_from_ptr(PyObject *parent, struct 
     return ret;
 }
 
+typedef struct {
+    PyObject_HEAD
+    PyObject *parent;
+    struct network_nick *nick;
+} PyNetworkNickObject;
+
+static int py_network_nick_dealloc(PyNetworkNickObject *self)
+{
+    if (self->parent == NULL)
+        free_network_nick(NULL, self->nick);
+    else
+        Py_DECREF(self->parent);
+    PyObject_Del(self);
+    return 0;
+}
+
+static PyObject *py_network_nick_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
+{
+    char *nick, *username, *host, *hostmask;
+    char *kwnames3[] = { "nick", "username", "host", NULL };
+    char *kwnames1[] = { "hostmask", NULL };
+    PyNetworkNickObject *ret;
+
+    ret = (PyNetworkNickObject *)type->tp_alloc(type, 0);
+    if (ret == NULL) {
+        PyErr_NoMemory();
+        return NULL;
+    }
+
+    ret->parent = NULL;
+    ret->nick = g_new0(struct network_nick, 1);
+
+    if (PyArg_ParseTupleAndKeywords(args, kwargs, "sss", kwnames3, &nick, &username, &host)) {
+       network_nick_set_data(ret->nick, nick, username, host);
+    } else if (PyArg_ParseTupleAndKeywords(args, kwargs, "s", kwnames1, &hostmask)) {
+       network_nick_set_hostmask(ret->nick, hostmask);
+    } else {
+        g_free(ret->nick);
+        type->tp_free(ret);
+    }
+
+   return (PyObject *)ret;
+}
+
+static PyObject *py_network_nick_get_hostmask(PyNetworkNickObject *self, void *closure)
+{
+    if (self->nick->hostmask == NULL)
+        Py_RETURN_NONE;
+    return PyString_FromString(self->nick->hostmask);
+}
+
+static int py_network_nick_set_hostmask(PyNetworkNickObject *self, PyObject *value, void *closure)
+{
+    if (!PyString_Check(value)) {
+        PyErr_SetNone(PyExc_TypeError);
+        return -1;
+    }
+
+    if (!network_nick_set_hostmask(self->nick, PyString_AsString(value))) {
+        PyErr_SetNone(PyExc_ValueError);
+        return -1;
+    }
+
+    return 0;
+}
+
+
+
+static PyObject *py_network_nick_get_nick(PyNetworkNickObject *self, void *closure)
+{
+    if (self->nick->nick == NULL)
+        Py_RETURN_NONE;
+    return PyString_FromString(self->nick->nick);
+}
+
+static int py_network_nick_set_nick(PyNetworkNickObject *self, PyObject *value, void *closure)
+{
+    if (!PyString_Check(value)) {
+        PyErr_SetNone(PyExc_TypeError);
+        return -1;
+    }
+
+    if (!network_nick_set_nick(self->nick, PyString_AsString(value))) {
+        PyErr_SetNone(PyExc_ValueError);
+        return -1;
+    }
+
+    return 0;
+}
+
+static PyObject *py_network_nick_get_username(PyNetworkNickObject *self, void *closure)
+{
+    if (self->nick->username == NULL)
+        Py_RETURN_NONE;
+    return PyString_FromString(self->nick->username);
+}
+
+static int py_network_nick_set_username(PyNetworkNickObject *self, PyObject *value, void *closure)
+{
+    if (!PyString_Check(value)) {
+        PyErr_SetNone(PyExc_TypeError);
+        return -1;
+    }
+
+    if (!network_nick_set_username(self->nick, PyString_AsString(value))) {
+        PyErr_SetNone(PyExc_ValueError);
+        return -1;
+    }
+
+    return 0;
+}
+
+static PyObject *py_network_nick_get_hostname(PyNetworkNickObject *self, void *closure)
+{
+    if (self->nick->hostname == NULL)
+        Py_RETURN_NONE;
+    return PyString_FromString(self->nick->hostname);
+}
+
+static int py_network_nick_set_hostname(PyNetworkNickObject *self, PyObject *value, void *closure)
+{
+    if (!PyString_Check(value)) {
+        PyErr_SetNone(PyExc_TypeError);
+        return -1;
+    }
+
+    if (!network_nick_set_hostname(self->nick, PyString_AsString(value))) {
+        PyErr_SetNone(PyExc_ValueError);
+        return -1;
+    }
+
+    return 0;
+}
+
+static PyObject *py_network_nick_channel(PyNetworkNickObject *self, struct channel_nick *cn)
+{
+    return PyString_FromString(cn->channel->name);
+}
+
+static PyObject *py_network_nick_channels(PyNetworkNickObject *self, void *closure)
+{
+    return py_g_list_iter(self->nick->channel_nicks, (PyObject *)self, 
+        (PyObject *(*)(PyObject *, void *))py_network_nick_channel);
+}
+
+static PyGetSetDef py_network_nick_getsetters[] = {
+    { "hostmask", (getter)py_network_nick_get_hostmask, (setter)py_network_nick_set_hostmask, "Hostmask" },
+    { "nick", (getter)py_network_nick_get_nick, (setter)py_network_nick_set_nick, "Nick" },
+    { "username", (getter)py_network_nick_get_username, (setter)py_network_nick_set_username, "Username" },
+    { "hostname", (getter)py_network_nick_get_hostname, (setter)py_network_nick_set_hostname, "Hostname" },
+    { "channels", (getter)py_network_nick_channels, NULL, "Channels" },
+    { NULL }
+};
+
+PyTypeObject PyNetworkNickType = {
+    .tp_name = "Nick",
+    .tp_new = py_network_nick_new,
+    .tp_dealloc = (destructor)py_network_nick_dealloc,
+    .tp_flags = Py_TPFLAGS_DEFAULT,
+    .tp_getset = py_network_nick_getsetters,
+    .tp_basicsize = sizeof(PyNetworkNickObject)
+};
+
+static PyNetworkNickObject *py_network_nick_from_ptr(PyObject *parent, struct network_nick *nn)
+{
+    PyNetworkNickObject *ret;
+    ret = PyObject_New(PyNetworkNickObject, &PyNetworkNickType);
+    if (ret == NULL) {
+        PyErr_NoMemory();
+        return NULL;
+    }
+
+    Py_INCREF(parent);
+    ret->parent = parent;
+    ret->nick = nn;
+    return ret;
+}
+
 static PyObject *py_network_state_getitem(PyNetworkStateObject *self, PyObject *py_name)
 {
     char *name;
     struct irc_channel_state *channel;
+    struct network_nick *nick;
 
     if (!PyString_Check(py_name)) {
         PyErr_SetNone(PyExc_KeyError);
@@ -512,6 +693,11 @@ static PyObject *py_network_state_getitem(PyNetworkStateObject *self, PyObject *
     channel = find_channel(self->state, name);
     if (channel != NULL) {
         return (PyObject *)py_channel_state_from_ptr((PyObject *)self, channel);
+    }
+
+    nick = find_network_nick(self->state, name);
+    if (nick != NULL) {
+        return (PyObject *)py_network_nick_from_ptr((PyObject *)self, nick);
     }
 
     PyErr_SetNone(PyExc_KeyError);
@@ -659,6 +845,7 @@ static PyObject *py_g_list_iter_next(PyGListIterObject *self)
 static PyTypeObject PyGListIterType = {
     .tp_name = "GListIter",
     .tp_dealloc = (destructor)py_g_list_iter_dealloc,
+    .tp_iter = PyObject_SelfIter,
     .tp_flags = Py_TPFLAGS_DEFAULT,
     .tp_basicsize = sizeof(PyGListIterObject),
     .tp_iternext = (iternextfunc)py_g_list_iter_next,
@@ -1022,6 +1209,9 @@ void initirc(void)
     if (PyType_Ready(&PyChannelStateType) < 0)
         return;
 
+    if (PyType_Ready(&PyNetworkNickType) < 0)
+        return;
+
     if (PyType_Ready(&PyChannelModeDictType) < 0)
         return;
 
@@ -1044,6 +1234,8 @@ void initirc(void)
     PyModule_AddObject(m, "NetworkState", (PyObject *)&PyNetworkStateType);
     Py_INCREF(&PyChannelStateType);
     PyModule_AddObject(m, "ChannelState", (PyObject *)&PyChannelStateType);
+    Py_INCREF(&PyNetworkNickType);
+    PyModule_AddObject(m, "Nick", (PyObject *)&PyNetworkNickType);
     Py_INCREF(&PyClientType);
     PyModule_AddObject(m, "Client", (PyObject *)&PyClientType);
     Py_INCREF(&PyNetworkType);

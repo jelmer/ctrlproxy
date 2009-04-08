@@ -100,7 +100,7 @@ class ChannelStateTests(unittest.TestCase):
         self.assertEquals(None, s.topic)
 
 
-class NetworkStateTests(unittest.TestCase):
+class BaseNetworkStateTests(unittest.TestCase):
 
     def test_create(self):
         s = irc.NetworkState("nick", "user", "host")
@@ -110,31 +110,66 @@ class NetworkStateTests(unittest.TestCase):
         s = irc.NetworkState("nick", "user", "host")
         self.assertTrue(s.info is not None)
 
+
+class NetworkStateTestCase(unittest.TestCase):
+
+    def setUp(self):
+        super(NetworkStateTestCase, self).setUp()
+        self.state = irc.NetworkState("nick", "user", "host")
+
     def test_handle_line(self):
-        s = irc.NetworkState("nick", "user", "host")
-        s.handle_line(":nick!user@host JOIN #foo")
+        self.state.handle_line(":nick!user@host JOIN #foo")
 
     def test_channels_empty(self):
-        s = irc.NetworkState("nick", "user", "host")
-        self.assertEquals([], list(s.channels))
+        self.assertEquals([], list(self.state.channels))
         
     def test_channels(self):
-        s = irc.NetworkState("nick", "user", "host")
-        s.handle_line(":nick!user@host JOIN #foo")
-        self.assertEquals(1, len(s.channels))
-        self.assertEquals("#foo", list(s.channels)[0].name)
-        channels = s.channels
+        self.state.handle_line(":nick!user@host JOIN #foo")
+        channels = self.state.channels
         self.assertEquals(1, len(channels))
-        self.assertEquals(1, len(s.channels))
+        self.assertEquals("#foo", list(channels)[0].name)
         self.assertEquals("#foo", channels["#foo"].name)
 
     def test_get_channel(self):
-        s = irc.NetworkState("nick", "user", "host")
-        s.handle_line(":nick!user@host JOIN #foo")
-        self.assertEquals(s["#foo"].name, "#foo")
+        self.state.handle_line(":nick!user@host JOIN #foo")
+        self.assertEquals(self.state["#foo"].name, "#foo")
+
+    def test_leave_channel(self):
+        self.state.handle_line(":nick!user@host JOIN #foo")
+        self.assertEquals(["#foo"], [c.name for c in self.state.channels])
+        self.state.handle_line(":nick!user@host PART #foo")
+        self.assertEquals([], [c.name for c in self.state.channels])
+        self.state.handle_line(":nick!user@host PART #ba")
+
+    def test_kicked_off_channel(self):
+        self.state.handle_line(":nick!user@host JOIN #foo")
+        self.assertEquals(["#foo"], [c.name for c in self.state.channels])
+        self.state.handle_line(":othernick!user@host KICK #foo :nick")
+        self.assertEquals([], [c.name for c in self.state.channels])
+
+    def test_channel_mode_option(self):
+        self.state.handle_line(":nick!user@host JOIN #foo")
+        self.state.handle_line(":somenick MODE #foo +l 42")
+        self.assertEquals("42", self.state["#foo"].mode_option["l"])
+
+    def test_channel_mode_two_options(self):
+        self.state.handle_line(":nick!user@host JOIN #foo")
+        self.state.handle_line(":somenick MODE #foo +kl bla 42")
+        self.assertEquals("42", self.state["#foo"].mode_option["l"])
+        self.assertEquals("bla", self.state["#foo"].mode_option["k"])
+
+    def test_channel_topic(self):
+        self.state.handle_line(":nick!user@host JOIN #foo")
+        self.state.handle_line(":someserver 332 nick #foo :The TOPIC")
+        self.assertEquals("The TOPIC", self.state["#foo"].topic)
+
+    def test_nick_channels(self):
+        self.state.handle_line(":nick!user@host JOIN #foo")
+        self.assertEquals(["#foo"], list(self.state["nick"].channels))
 
 
 class NetworkInfoTests(unittest.TestCase):
+
     def test_create(self):
         s = irc.NetworkInfo()
         self.assertTrue(s is not None)
@@ -164,3 +199,13 @@ class NetworkInfoTests(unittest.TestCase):
         s = irc.NetworkInfo()
         self.assertTrue(s.is_channelname("#bla"))
         self.assertFalse(s.is_channelname("nietchannel"))
+
+
+class NetworkNickTests(unittest.TestCase):
+
+    def test_create(self):
+        nick = irc.Nick("nick", "user", "host")
+        self.assertEquals("nick", nick.nick)
+        self.assertEquals("user", nick.username)
+        self.assertEquals("host", nick.hostname)
+        self.assertEquals("nick!user@host", nick.hostmask)

@@ -118,9 +118,7 @@ struct irc_network_state
 	/** Private data to be used by whatever code is using network_state. */
 	void *userdata;
 	/** Function to use for logging changes and abnormalities. */
-	void (*log) (enum log_level l,
-				 void *userdata,
-				 const char *msg);
+	void (*log) (enum log_level l, void *userdata, const char *msg);
 	/** List of known channels. */
 	GList *channels;
 	/** List of known nicks. */
@@ -144,6 +142,8 @@ G_MODULE_EXPORT struct channel_nick *find_channel_nick_hostmask(struct irc_chann
 G_MODULE_EXPORT struct channel_nick *find_add_channel_nick(struct irc_channel_state *c, const char *name);
 G_MODULE_EXPORT struct network_nick *find_network_nick(struct irc_network_state *c, const char *name);
 G_MODULE_EXPORT gboolean network_nick_set_hostmask(struct network_nick *n, const char *hm);
+G_MODULE_EXPORT void network_nick_set_data(struct network_nick *n, const char *nick, 
+						   const char *username, const char *host);
 G_MODULE_EXPORT gboolean client_send_state(struct irc_client *, struct irc_network_state *);
 G_MODULE_EXPORT void network_state_log(enum log_level l, const struct irc_network_state *st, const char *fmt, ...);
 G_MODULE_EXPORT void network_state_set_log_fn(struct irc_network_state *st, void (*fn) (enum log_level, void *, const char *), void *userdata);
@@ -165,6 +165,9 @@ G_MODULE_EXPORT gboolean is_prefix_mode(const struct irc_network_info *info, cha
 G_MODULE_EXPORT void free_channel_state(struct irc_channel_state *c);
 G_MODULE_EXPORT struct irc_channel_state *irc_channel_state_new(const char *name);
 G_MODULE_EXPORT gboolean network_nick_set_nick(struct network_nick *n, const char *nick);
+G_MODULE_EXPORT gboolean network_nick_set_hostname(struct network_nick *n, const char *hostname);
+G_MODULE_EXPORT gboolean network_nick_set_username(struct network_nick *n, const char *username);
 G_MODULE_EXPORT gboolean line_from_nick(const struct irc_network_info *info, const struct irc_line *l, const char *nick);
+G_MODULE_EXPORT void free_network_nick(struct irc_network_state *st, struct network_nick *nn);
 
 #endif /* __CTRLPROXY_STATE_H__ */
