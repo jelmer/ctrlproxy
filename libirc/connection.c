@@ -214,45 +214,25 @@ static gboolean network_send_line_direct(struct irc_network *s, struct irc_clien
  * @param s Network to send to.
  * @param c Client the line was sent by originally.
  * @param ol Line to send to the network
- * @param is_private Whether the line should not be broadcast to other clients
  */
 gboolean network_send_line(struct irc_network *s, struct irc_client *c, 
-						   const struct irc_line *ol, gboolean is_private)
+						   const struct irc_line *ol)
 {
 	struct irc_line l;
-	char *tmp = NULL;
 
 	g_assert(ol);
 	g_assert(s);
 	l = *ol;
 
 	if (l.origin == NULL && s->external_state != NULL) {
-		tmp = l.origin = g_strdup(s->external_state->me.hostmask);
+		l.origin = s->external_state->me.hostmask;
 	}
 
 	if (l.origin != NULL) {
 		if (!s->callbacks->process_to_server(s, &l)) {
-			g_free(tmp);
 			return TRUE;
 		}
 	}
-
-	g_assert(l.args[0] != NULL);
-
-	/* Also write this message to all other clients currently connected */
-	if (!is_private && 
-	   (!g_strcasecmp(l.args[0], "PRIVMSG") || 
-		!g_strcasecmp(l.args[0], "NOTICE"))) {
-		g_assert(l.origin);
-		if (s->global->config->report_time == REPORT_TIME_ALWAYS)
-			line_prefix_time(&l, time(NULL)+s->global->config->report_time_offset);
-
-		clients_send(s->clients, &l, c);
-	}
-
-	g_free(tmp);
-
-	redirect_record(&s->queries, s, c, ol);
 
 	return network_send_line_direct(s, c, ol);
 }
@@ -360,7 +340,7 @@ gboolean network_send_args(struct irc_network *s, ...)
 	l = virc_parse_line(NULL, ap);
 	va_end(ap);
 
-	ret = network_send_line(s, NULL, l, TRUE);
+	ret = network_send_line(s, NULL, l);
 
 	free_line(l);
 
