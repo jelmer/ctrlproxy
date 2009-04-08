@@ -306,30 +306,7 @@ typedef struct {
     PyObject *parent;
 } PyChannelStateObject;
 
-static PyObject *py_channel_state_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
-{
-    char *name;
-    char *kwnames[] = { "name", NULL };
-    PyChannelStateObject *self;
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "s", kwnames, &name))
-        return NULL;
-
-    self = (PyChannelStateObject*)type->tp_alloc(type, 0);
-    if (self == NULL) {
-        PyErr_NoMemory();
-        return NULL;
-    }
-
-    self->parent = NULL;
-    self->state = irc_channel_state_new(name);
-    if (self->state == NULL) {
-        PyErr_NoMemory();
-        return NULL;
-    }
-
-    return (PyObject *)self;
-}
-
+static PyObject *py_channel_state_new(PyTypeObject *type, PyObject *args, PyObject *kwargs);
 static PyObject *py_channel_state_get_name(PyChannelStateObject *self, void *closure)
 {
     return PyString_FromString(self->state->name);
@@ -433,7 +410,7 @@ PyTypeObject PyChannelModeDictType = {
 
 static PyObject *py_channel_state_get_mode_option(PyChannelStateObject *self, void *closure)
 {
-    PyChannelModeDictObject *ret = (PyChannelModeDictObject *)PyChannelModeDictType.tp_alloc(&PyChannelModeDictType, 0);
+    PyChannelModeDictObject *ret = PyObject_New(PyChannelModeDictObject, &PyChannelModeDictType);
 
     if (ret == NULL) {
         PyErr_NoMemory();
@@ -479,15 +456,42 @@ PyTypeObject PyChannelStateType = {
     .tp_basicsize = sizeof(PyChannelStateObject)
 };
 
+static PyObject *py_channel_state_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
+{
+    char *name;
+    char *kwnames[] = { "name", NULL };
+    PyChannelStateObject *self;
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "s", kwnames, &name))
+        return NULL;
+
+    self = PyObject_New(PyChannelStateObject, &PyChannelStateType);
+    if (self == NULL) {
+        PyErr_NoMemory();
+        return NULL;
+    }
+
+    self->parent = NULL;
+    self->state = irc_channel_state_new(name);
+    if (self->state == NULL) {
+        PyErr_NoMemory();
+        return NULL;
+    }
+
+    return (PyObject *)self;
+}
+
+
+
 static PyChannelStateObject *py_channel_state_from_ptr(PyObject *parent, struct irc_channel_state *channel)
 {
     PyChannelStateObject *ret;
-    ret = (PyChannelStateObject *)PyChannelStateType.tp_alloc(&PyChannelStateType, 0);
+    ret = PyObject_New(PyChannelStateObject, &PyChannelStateType);
     if (ret == NULL) {
         PyErr_NoMemory();
         return NULL;
     }
 
+    Py_INCREF(parent);
     ret->parent = parent;
     ret->state = channel;
     return ret;
@@ -573,7 +577,7 @@ static PyMethodDef py_network_state_methods[] = {
 
 static PyObject *py_network_state_info(PyNetworkStateObject *self, void *closure)
 {
-    PyNetworkInfoObject *pyinfo = (PyNetworkInfoObject *)PyNetworkInfoType.tp_alloc(&PyNetworkInfoType, 0);
+    PyNetworkInfoObject *pyinfo = PyObject_New(PyNetworkInfoObject, &PyNetworkInfoType);
 
     if (pyinfo == NULL) {
         PyErr_NoMemory();
@@ -592,7 +596,7 @@ typedef struct {
     PyNetworkStateObject *parent;
 } PyNetworkChannelDictObject;
 
-static PyObject *py_network_channel_dict_get(PyNetworkStateObject *self, PyObject *py_name)
+static PyObject *py_network_channel_dict_get(PyNetworkChannelDictObject *self, PyObject *py_name)
 {
     char *name;
     struct irc_channel_state *channel;
@@ -604,12 +608,12 @@ static PyObject *py_network_channel_dict_get(PyNetworkStateObject *self, PyObjec
 
     name = PyString_AsString(py_name);
 
-    channel = find_channel(self->state, name);
+    channel = find_channel(self->parent->state, name);
     if (channel == NULL) {
         return NULL;
     }
 
-    return (PyObject *)py_channel_state_from_ptr(self->parent, channel);
+    return (PyObject *)py_channel_state_from_ptr((PyObject *)self->parent, channel);
 }
 
 static int py_network_channel_dict_dealloc(PyNetworkChannelDictObject *self)
@@ -662,7 +666,7 @@ static PyTypeObject PyGListIterType = {
 
 static PyObject *py_g_list_iter(GList *list, PyObject *parent, PyObject *(*converter) (PyObject *parent, void *))
 {
-    PyGListIterObject *ret = (PyGListIterObject *)PyGListIterType.tp_alloc(&PyGListIterType, 0);
+    PyGListIterObject *ret = PyObject_New(PyGListIterObject, &PyGListIterType);
 
     if (ret == NULL) {
         PyErr_NoMemory();
@@ -671,8 +675,7 @@ static PyObject *py_g_list_iter(GList *list, PyObject *parent, PyObject *(*conve
 
     ret->iter = list;
     ret->converter = converter;
-    if (parent != NULL)
-        Py_INCREF(parent);
+    Py_INCREF(parent);
     ret->parent = parent;
     return (PyObject *)ret;
 }   
@@ -694,7 +697,7 @@ PyTypeObject PyNetworkChannelDictType = {
 
 static PyObject *py_network_state_channels(PyNetworkStateObject *self, void *closure)
 {
-    PyNetworkChannelDictObject *ret = (PyNetworkChannelDictObject *)PyNetworkChannelDictType.tp_alloc(&PyNetworkChannelDictType, 0);
+    PyNetworkChannelDictObject *ret = PyObject_New(PyNetworkChannelDictObject, &PyNetworkChannelDictType);
     
     if (ret == NULL) {
         PyErr_NoMemory();
@@ -815,7 +818,7 @@ static PyMethodDef py_client_methods[] = {
 
 static PyObject *py_client_get_state(PyClientObject *self, void *closure)
 {
-    PyNetworkStateObject *ret = (PyNetworkStateObject*)PyNetworkStateType.tp_alloc(&PyNetworkStateType, 0);
+    PyNetworkStateObject *ret = PyObject_New(PyNetworkStateObject, &PyNetworkStateType);
     if (ret == NULL) {
         PyErr_NoMemory();
         return NULL;

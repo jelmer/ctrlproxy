@@ -112,7 +112,7 @@ class NetworkStateTests(unittest.TestCase):
 
     def test_handle_line(self):
         s = irc.NetworkState("nick", "user", "host")
-        s.handle_line(irc.Line(":nick!user@host JOIN #foo"))
+        s.handle_line(":nick!user@host JOIN #foo")
 
     def test_channels_empty(self):
         s = irc.NetworkState("nick", "user", "host")
@@ -122,6 +122,7 @@ class NetworkStateTests(unittest.TestCase):
         s = irc.NetworkState("nick", "user", "host")
         s.handle_line(":nick!user@host JOIN #foo")
         self.assertEquals(1, len(s.channels))
+        self.assertEquals("#foo", list(s.channels)[0].name)
         channels = s.channels
         self.assertEquals(1, len(channels))
         self.assertEquals(1, len(s.channels))
