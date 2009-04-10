@@ -25,9 +25,9 @@ struct query_stack;
 gboolean redirect_response(struct query_stack *stack, 
 						   struct irc_network *network,
 						   const struct irc_line *l);
-struct irc_client *query_stack_match_response(struct query_stack *stack, const struct irc_line *l);
-gboolean query_stack_record(struct query_stack *stack, struct irc_client *c, const struct irc_line *l);
-struct query_stack *new_query_stack(void);
+void *query_stack_match_response(struct query_stack *stack, const struct irc_line *l);
+gboolean query_stack_record(struct query_stack *stack, void *c, const struct irc_line *l);
+struct query_stack *new_query_stack(void *(*ref_userdata) (void *), void (*unref_userdata) (void *));
 void query_stack_clear(struct query_stack *n);
 void query_stack_free(struct query_stack *n);
 
