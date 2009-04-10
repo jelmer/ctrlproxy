@@ -605,7 +605,6 @@ static gboolean close_server(struct irc_network *n)
 		n->callbacks->disconnect(n);
 
 	if (n->external_state) {
-		n->linestack = NULL;
 		free_network_state(n->external_state); 
 		n->external_state = NULL;
 	}

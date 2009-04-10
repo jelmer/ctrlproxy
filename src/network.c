@@ -184,7 +184,7 @@ static gboolean process_from_server(struct irc_network *n, const struct irc_line
 	if (n->connection.state == NETWORK_CONNECTION_STATE_MOTD_RECVD) {
 		gboolean linestack_store = TRUE;
 		if (irc_line_respcode(l)) {
-			linestack_store &= (!redirect_response(&n->queries, n, l));
+			linestack_store &= (!redirect_response(n->queries, n, l));
 		} else {
 			if (n->clients == NULL) {
 				if (!g_strcasecmp(l->args[0], "PRIVMSG") && l->argc > 2 && 
@@ -381,14 +381,20 @@ static void handle_network_disconnect(struct irc_network *n)
 		network_update_config(n->external_state, nc, n->global->config);
 	}
 
-	redirect_clear(&n->queries);
-	if (n->linestack != NULL)
+	if (n->queries != NULL) {
+		redirect_free(n->queries);
+		n->queries = NULL;
+	}
+	if (n->linestack != NULL) {
 		free_linestack_context(n->linestack);
+		n->linestack = NULL;
+	}
 }
 
 static void handle_network_state_set(struct irc_network *s)
 {
 	s->linestack = new_linestack(s, s->global->config);
+	s->queries = new_query_stack();
 }
 
 static gboolean process_to_server(struct irc_network *s, const struct irc_line *l)
@@ -544,7 +550,7 @@ gboolean network_forward_line(struct irc_network *s, struct irc_client *c,
 		free_line(nl);
 	}
 
-	redirect_record(&s->queries, s, c, l);
+	redirect_record(s->queries, s, c, l);
 
 	return network_send_line(s, NULL, l);
 }
