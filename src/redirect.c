@@ -533,16 +533,16 @@ static gboolean handle_464(struct irc_network *n, const struct irc_line *l)
 }
 
 /* List of responses that should be sent to all clients */
-static int response_all[] = { RPL_NOWAWAY, RPL_UNAWAY, 
+static const int response_all[] = { RPL_NOWAWAY, RPL_UNAWAY, 
 	ERR_NO_OP_SPLIT, RPL_HIDINGHOST,
 	ERR_NEEDREGGEDNICK, RPL_UMODEIS, RPL_SNOMASK,
 	RPL_LUSERCLIENT, RPL_LUSEROP, RPL_LUSERUNKNOWN, RPL_LUSERCHANNELS,
 	RPL_LUSERME, ERR_NO_OP_SPLIT, RPL_LOCALUSERS, RPL_GLOBALUSERS, 
 	RPL_NAMREPLY, RPL_ENDOFNAMES, RPL_TOPIC, RPL_TOPICWHOTIME, 
 	RPL_CHANNEL_HOMEPAGE, RPL_CREATIONTIME, RPL_LOGGEDINAS, 0 };
-static int response_none[] = { ERR_NOMOTD, RPL_MOTDSTART, RPL_MOTD, 
+static const int response_none[] = { ERR_NOMOTD, RPL_MOTDSTART, RPL_MOTD, 
 	RPL_ENDOFMOTD, 0 };
-static struct {
+static const struct {
 	int response;
 	gboolean (*handler) (struct irc_network *n, const struct irc_line *);
 } response_handler[] = {
