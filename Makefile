@@ -44,6 +44,7 @@ doxygen:
 libircdir = libirc
 
 objs = src/posix.o \
+	   src/redirect.o \
 	   src/cache.o \
 	   src/util.o \
 	   src/hooks.o \

@@ -463,6 +463,11 @@ const char *client_get_default_target(struct irc_client *c)
 	return "*";
 }
 
+void client_ref_void(struct irc_client *c) 
+{
+	client_ref(c);
+}
+
 struct irc_client *client_ref(struct irc_client *c) 
 {
 	if (c != NULL)

@@ -24,12 +24,28 @@
 
 /* TODO: Clean up stack occasionally */
 
-struct query_stack {
+struct query_stack_entry {
 	const struct query *query;
-	struct irc_client *client;	
+	void *userdata;
 	time_t time;
-	struct query_stack *next;
 };
+
+struct query_stack {
+	GList *entries;
+	void (*unref_userdata) (void *);
+	void (*ref_userdata) (void *);
+};
+
+struct query_stack *new_query_stack(void (*ref_userdata) (void *), void (*unref_userdata) (void *))
+{
+	struct query_stack *stack = g_new0(struct query_stack, 1);
+	if (stack == NULL) {
+		return NULL;
+	}
+	stack->ref_userdata = ref_userdata;
+	stack->unref_userdata = unref_userdata;
+	return stack;
+}
 
 /**
  * IRC Query done by a client
@@ -47,13 +63,13 @@ struct query {
 	/* Should add this query to the stack. return TRUE if this has 
 	 * been done successfully, FALSE otherwise */
 	/** Function for handling the responses. */
-	int (*handle) (const struct irc_line *, struct query_stack **, struct irc_client *c, struct query *);
+	int (*handle) (const struct irc_line *, struct query_stack *, void *userdata, struct query *);
 };
 
-static int handle_default(const struct irc_line *, struct query_stack **stack, 
-						  struct irc_client *c, struct query *);
-static int handle_topic(const struct irc_line *, struct query_stack **stack,
-						struct irc_client *c, struct query *);
+static int handle_default(const struct irc_line *, struct query_stack *stack, 
+						  void *userdata, struct query *);
+static int handle_topic(const struct irc_line *, struct query_stack *stack,
+						void *userdata, struct query *);
 
 static struct query queries[] = {
 /* Commands that get a one-client reply: 
@@ -502,58 +518,6 @@ static struct query unknown_query = {
 	handle_default
 };
 
-static gboolean handle_465(struct irc_network *n, const struct irc_line *l)
-{
-	network_log(LOG_ERROR, n, "Banned from server: %s", l->args[1]);
-	return TRUE;
-}
-
-static gboolean handle_451(struct irc_network *n, const struct irc_line *l)
-{
-	network_log(LOG_ERROR, n, "Not registered error, this is probably a bug...");
-	return TRUE;
-}
-
-static gboolean handle_462(struct irc_network *n, const struct irc_line *l)
-{
-	network_log(LOG_ERROR, n, "Double registration error, this is probably a bug...");
-	return TRUE;
-}
-
-static gboolean handle_463(struct irc_network *n, const struct irc_line *l)
-{
-	network_log(LOG_ERROR, n, "Host not privileged to connect");
-	return TRUE;
-}
-
-static gboolean handle_464(struct irc_network *n, const struct irc_line *l)
-{
-	network_log(LOG_ERROR, n, "Password mismatch");
-	return TRUE;
-}
-
-/* List of responses that should be sent to all clients */
-static int response_all[] = { RPL_NOWAWAY, RPL_UNAWAY, 
-	ERR_NO_OP_SPLIT, RPL_HIDINGHOST,
-	ERR_NEEDREGGEDNICK, RPL_UMODEIS, RPL_SNOMASK,
-	RPL_LUSERCLIENT, RPL_LUSEROP, RPL_LUSERUNKNOWN, RPL_LUSERCHANNELS,
-	RPL_LUSERME, ERR_NO_OP_SPLIT, RPL_LOCALUSERS, RPL_GLOBALUSERS, 
-	RPL_NAMREPLY, RPL_ENDOFNAMES, RPL_TOPIC, RPL_TOPICWHOTIME, 
-	RPL_CHANNEL_HOMEPAGE, RPL_CREATIONTIME, RPL_LOGGEDINAS, 0 };
-static int response_none[] = { ERR_NOMOTD, RPL_MOTDSTART, RPL_MOTD, 
-	RPL_ENDOFMOTD, 0 };
-static struct {
-	int response;
-	gboolean (*handler) (struct irc_network *n, const struct irc_line *);
-} response_handler[] = {
-	{ ERR_PASSWDMISMATCH, handle_464 },
-	{ ERR_ALREADYREGISTERED, handle_462 },
-	{ ERR_NOPERMFORHOST, handle_463 },
-	{ ERR_NOTREGISTERED, handle_451 },
-	{ ERR_YOUREBANNEDCREEP, handle_465 },
-	{ 0, NULL }
-};
-
 /**
  * Check whether reply r is part of a specified list
  *
@@ -581,140 +545,97 @@ static struct query *find_query(char *name)
 	return NULL;
 }
 
-/**
- * Redirect a response received from the server.
- *
- * @return TRUE if the message was redirected to zero or more clients, 
- *         FALSE if it was sent to all clients.
- */
-gboolean redirect_response(struct query_stack **stack, 
-						   struct irc_network *network,
-						   const struct irc_line *l)
+static void query_stack_free_entry(struct query_stack *stack, struct query_stack_entry *s)
 {
-	struct query_stack *s, *p = NULL;
-	const struct irc_client *c = NULL;
+	stack->unref_userdata(s->userdata);
+	g_free(s);
+}
+
+void *query_stack_match_response(struct query_stack *stack, const struct irc_line *l)
+{
 	int n;
-	int i;
-	
+	void *ret = NULL;
+	GList *gl;
+
 	g_assert(l->args[0]);
 
 	n = irc_line_respcode(l);
 
 	/* Find a request that this response is a reply to */
-	for (s = *stack; s; s = s->next) {
+	for (gl = stack->entries; gl; gl = gl->next) {
+		struct query_stack_entry *s = gl->data;
 		if (is_reply(s->query->replies, n) || 
 			is_reply(s->query->errors, n) ||
 			is_reply(s->query->end_replies, n)) {
 			
-			/* Send to client that queried, if that client still exists */
-			if (s->client != NULL) {
-				c = s->client;
-				client_send_line(s->client, l);
-			}
+			ret = s->userdata;
 
+			/* Not a valid in-between reply ? Remove from stack */
 			if (!is_reply(s->query->replies, n)) {
 				/* Remove from stack */
-				if (p == NULL)*stack = s->next;	
-				else p->next = s->next;
-				client_unref(s->client);
-				g_free(s);
+				stack->entries = g_list_remove(stack->entries, s);
+				query_stack_free_entry(stack, s);
 			}
 
-			return TRUE;
-		}
-		p = s; 
-	}
-
-	/* See if this is a response that should be sent to all clients */
-	for (i = 0; response_all[i]; i++) {
-		if (response_all[i] == n) {
-			clients_send(network->clients, l, c);
-			return FALSE;
+			return ret;
 		}
 	}
 
-	/* See if this is a response that shouldn't be sent to clients at all */
-	for (i = 0; response_none[i]; i++) {
-		if (response_none[i] == n) {
-			return TRUE;
-		}
-	}
-
-	/* Handle response using custom function */
-	for (i = 0; response_handler[i].handler; i++) {
-		if (response_handler[i].response == n) {
-			return response_handler[i].handler(network, l);
-		}
-	}
-
-	if (!c) {
-		network_log((g_list_length(network->clients) <= 1)?LOG_TRACE:LOG_WARNING, 
-					network, "Unable to redirect response %s", l->args[0]);
-		clients_send(network->clients, l, NULL);
-	}
-
-	return FALSE;
+	return NULL;
 }
 
-void redirect_clear(struct query_stack **stack)
+void query_stack_clear(struct query_stack *stack)
 {
-	struct query_stack *q, *n;
-
-	q = *stack;
-	while (q != NULL) {
-		/* Remove from stack */
-		n = q->next;
-		client_unref(q->client);
-		g_free(q);
-		q = n;
+	while (stack->entries != NULL) {
+		struct query_stack_entry *e = stack->entries->data;
+		stack->entries = g_list_remove(stack->entries, e);
+		query_stack_free_entry(stack, e);
 	}
-	*stack = NULL;	
 }
 
-void redirect_record(struct query_stack **stack,
-					 const struct irc_network *n, struct irc_client *c, 
-					 const struct irc_line *l)
+void query_stack_free(struct query_stack *stack)
+{
+	query_stack_clear(stack);
+	g_free(stack);
+}
+
+gboolean query_stack_record(struct query_stack *stack, void *userdata, const struct irc_line *l)
 {
 	struct query *q;
+	gboolean ret = TRUE;
 
-	g_assert(n);
 	g_assert(l);
 	g_assert(l->args[0]);
 
 	q = find_query(l->args[0]);
 	if (q == NULL) {
-		if (c != NULL) {
-			client_log(LOG_WARNING, c, "Unknown command from client: %s", 
-					   l->args[0]);
-		} else {
-			network_log(LOG_WARNING, n, "Sending unknown command '%s'", 
-						l->args[0]);
-		}
-
+		ret = FALSE;
 		q = &unknown_query;
 	}
 
 	/* Push it up the stack! */
-	q->handle(l, stack, c, q);
+	q->handle(l, stack, userdata, q);
+
+	return ret;
 }
 
-static int handle_default(const struct irc_line *l, struct query_stack **stack,
-						  struct irc_client *c, struct query *q)
+static int handle_default(const struct irc_line *l, struct query_stack *stack,
+						  void *userdata, struct query *q)
 {
-	struct query_stack *s = g_new(struct query_stack, 1);
+	struct query_stack_entry *s = g_new(struct query_stack_entry, 1);
 	g_assert(l != NULL);
 	g_assert(q != NULL);
-	s->client = client_ref(c);
+	stack->ref_userdata(userdata);
+	s->userdata = userdata;
 	s->time = time(NULL);
 	s->query = q;
-	s->next = *stack;
-	*stack = s;
+	stack->entries = g_list_append(stack->entries, s);
 	return 1;
 }
 
-static int handle_topic(const struct irc_line *l, struct query_stack **stack, struct irc_client *c, struct query *q)
+static int handle_topic(const struct irc_line *l, struct query_stack *stack, void *userdata, struct query *q)
 {
 	if (l->args[2] != NULL)
 		return 0;
-	return handle_default(l,stack,c,q);
+	return handle_default(l,stack,userdata,q);
 }

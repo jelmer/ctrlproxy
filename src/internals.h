@@ -55,6 +55,11 @@ void fini_networks(struct global *);
 void kill_pending_clients(const char *reason);
 gboolean network_set_iochannel(struct irc_network *s, GIOChannel *ioc);
 
+/* redirect.c */
+gboolean redirect_response(struct query_stack *stack, 
+						   struct irc_network *network,
+						   const struct irc_line *l);
+
 /* state.c */
 void free_channels(struct irc_network *s);
 void network_nick_set_data(struct network_nick *n, const char *nick, const char *username, const char *host);

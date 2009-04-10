@@ -1192,41 +1192,24 @@ typedef struct {
 
 static PyObject *py_query_stack_record(PyQueryStackObject *self, PyObject *args)
 {
-    PyObject *py_network, *py_client, *py_line;
+    PyObject *py_token, *py_line;
     struct irc_line *line;
-    struct irc_network *network;
-    struct irc_client *client;
 
-    if (!PyArg_ParseTuple(args, "OOO", &py_network, &py_client, &py_line))
+    if (!PyArg_ParseTuple(args, "OO", &py_token, &py_line))
         return NULL;
 
     line = PyObject_AsLine(py_line);
     if (line == NULL)
         return NULL;
 
-    if (PyObject_TypeCheck(py_network, &PyNetworkType)) {
-        PyErr_SetNone(PyExc_TypeError);
-        return NULL;
-    }
-
-    if (PyObject_TypeCheck(py_client, &PyClientType)) {
-        PyErr_SetNone(PyExc_TypeError);
-        return NULL;
-    }
-
-    network = ((PyNetworkObject *)py_network)->network;
-    client = ((PyClientObject *)py_client)->client;
-
-    redirect_record(&self->stack, network, client, line);
-
-    Py_RETURN_NONE;
+    return PyBool_FromLong(query_stack_record(self->stack, py_token, line));
 }
 
 static PyObject *py_query_stack_redirect(PyQueryStackObject *self, PyObject *args)
 {
     PyObject *py_network, *py_line;
     struct irc_line *line;
-    struct irc_network *network;
+    PyObject *ret;
 
     if (!PyArg_ParseTuple(args, "OO", &py_network, &py_line))
         return NULL;
@@ -1240,20 +1223,31 @@ static PyObject *py_query_stack_redirect(PyQueryStackObject *self, PyObject *arg
         return NULL;
     }
 
-    network = ((PyNetworkObject *)py_network)->network;
+    ret = (PyObject *)query_stack_match_response(self->stack, line);
+    if (ret == NULL) {
+        Py_RETURN_NONE;
+    } else {
+        Py_INCREF(ret);
+        return ret;
+    }
+}
 
-    return PyBool_FromLong(redirect_response(&self->stack, network, line));
+static PyObject *py_query_stack_clear(PyQueryStackObject *self)
+{
+    query_stack_clear(self->stack);
+    Py_RETURN_NONE;
 }
 
 static PyMethodDef py_query_stack_methods[] = {
     { "record", (PyCFunction)py_query_stack_record, METH_VARARGS, NULL },
     { "response", (PyCFunction)py_query_stack_redirect, METH_VARARGS, NULL },
+    { "clear", (PyCFunction)py_query_stack_clear, METH_NOARGS, NULL },
     { NULL }
 };
 
 static int py_query_stack_dealloc(PyQueryStackObject *self)
 {
-    redirect_clear(&self->stack);
+    query_stack_free(self->stack);
     PyObject_Del(self);
     return 0;
 }
@@ -1266,7 +1260,7 @@ static PyObject *py_query_stack_new(PyTypeObject *type, PyObject *args, PyObject
         return NULL;
     }
 
-    self->stack = NULL;
+    self->stack = new_query_stack((void (*)(void *))Py_IncRef, (void (*)(void *))Py_DecRef);
 
     return (PyObject *)self;
 }
