@@ -93,6 +93,7 @@ G_MODULE_EXPORT gboolean client_set_charset(struct irc_client *c, const char *na
 G_MODULE_EXPORT const char *client_get_default_target(struct irc_client *c);
 G_MODULE_EXPORT const char *client_get_own_hostmask(struct irc_client *c);
 G_MODULE_EXPORT struct irc_client *client_ref(struct irc_client *c);
+G_MODULE_EXPORT void client_ref_void(struct irc_client *c);
 G_MODULE_EXPORT void client_unref(struct irc_client *c);
 G_MODULE_EXPORT struct irc_client *irc_client_new(struct irc_transport *transport, const char *default_origin, const char *desc, struct irc_client_callbacks *callbacks);
 G_MODULE_EXPORT void clients_send_state(GList *clients, 

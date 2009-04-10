@@ -394,7 +394,7 @@ static void handle_network_disconnect(struct irc_network *n)
 static void handle_network_state_set(struct irc_network *s)
 {
 	s->linestack = new_linestack(s, s->global->config);
-	s->queries = new_query_stack((void *(*)(void *))client_ref, (void (*)(void *))client_unref);
+	s->queries = new_query_stack((void (*)(void *))client_ref_void, (void (*)(void *))client_unref);
 }
 
 static gboolean process_to_server(struct irc_network *s, const struct irc_line *l)

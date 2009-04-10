@@ -44,6 +44,7 @@ doxygen:
 libircdir = libirc
 
 objs = src/posix.o \
+	   src/redirect.o \
 	   src/cache.o \
 	   src/util.o \
 	   src/hooks.o \
@@ -52,7 +53,6 @@ objs = src/posix.o \
 	   src/settings.o \
 	   src/log.o \
 	   src/client.o \
-	   src/redirect.o \
 	   src/gen_config.o \
 	   src/repl.o \
 	   src/linestack_file.o \
@@ -81,6 +81,7 @@ libirc_objs = \
 	   $(libircdir)/line.o \
 	   $(libircdir)/isupport.o \
 	   $(libircdir)/connection.o \
+	   $(libircdir)/redirect.o \
 	   $(libircdir)/url.o \
 	   $(libircdir)/util.o \
 	   $(libircdir)/listener.o \
@@ -93,6 +94,7 @@ libirc_headers = \
 		  $(libircdir)/isupport.h \
 		  $(libircdir)/irc.h \
 		  $(libircdir)/connection.h \
+		  $(libircdir)/redirect.h \
 		  $(libircdir)/url.h \
 		  $(libircdir)/listener.h \
 		  $(libircdir)/util.h

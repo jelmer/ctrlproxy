@@ -20,6 +20,8 @@
 #include <Python.h>
 #include <stdbool.h>
 #include "ctrlproxy.h"
+#include "redirect.h"
+
 
 const char *get_my_hostname() { return NULL; /* FIXME */ }
 void log_global(enum log_level ll, const char *fmt, ...) { /* FIXME */}
@@ -1183,6 +1185,101 @@ static const struct irc_client_callbacks py_client_callbacks = {
     .welcome = py_welcome_client
 };
 
+typedef struct {
+    PyObject_HEAD
+    struct query_stack *stack;
+} PyQueryStackObject;
+
+static PyObject *py_query_stack_record(PyQueryStackObject *self, PyObject *args)
+{
+    PyObject *py_token, *py_line;
+    struct irc_line *line;
+
+    if (!PyArg_ParseTuple(args, "OO", &py_token, &py_line))
+        return NULL;
+
+    line = PyObject_AsLine(py_line);
+    if (line == NULL)
+        return NULL;
+
+    return PyBool_FromLong(query_stack_record(self->stack, py_token, line));
+}
+
+static PyObject *py_query_stack_redirect(PyQueryStackObject *self, PyObject *args)
+{
+    PyObject *py_line;
+    struct irc_line *line;
+    PyObject *ret;
+
+    if (!PyArg_ParseTuple(args, "O", &py_line))
+        return NULL;
+
+    line = PyObject_AsLine(py_line);
+    if (line == NULL)
+        return NULL;
+
+    ret = (PyObject *)query_stack_match_response(self->stack, line);
+    if (ret == NULL) {
+        Py_RETURN_NONE;
+    } else {
+        Py_INCREF(ret);
+        return ret;
+    }
+}
+
+static PyObject *py_query_stack_clear(PyQueryStackObject *self)
+{
+    query_stack_clear(self->stack);
+    Py_RETURN_NONE;
+}
+
+static PyMethodDef py_query_stack_methods[] = {
+    { "record", (PyCFunction)py_query_stack_record, METH_VARARGS, NULL },
+    { "response", (PyCFunction)py_query_stack_redirect, METH_VARARGS, NULL },
+    { "clear", (PyCFunction)py_query_stack_clear, METH_NOARGS, NULL },
+    { NULL }
+};
+
+static int py_query_stack_dealloc(PyQueryStackObject *self)
+{
+    query_stack_free(self->stack);
+    PyObject_Del(self);
+    return 0;
+}
+
+static PyObject *py_query_stack_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
+{
+    PyQueryStackObject *self = (PyQueryStackObject *)type->tp_alloc(type, 0);
+    if (self == NULL) {
+        PyErr_NoMemory();
+        return NULL;
+    }
+
+    self->stack = new_query_stack((void (*)(void *))Py_IncRef, (void (*)(void *))Py_DecRef);
+
+    return (PyObject *)self;
+}
+
+static PyObject *py_query_stack_entry_from_ptr(PyQueryStackObject *parent, struct query_stack_entry *e)
+{
+    return Py_BuildValue("(Osl)", e->userdata, e->query->name, e->time);
+}
+
+static PyObject *py_query_stack_iter(PyQueryStackObject *self)
+{
+    return py_g_list_iter(self->stack->entries, (PyObject *)self, (PyObject *(*)(PyObject *, void*))py_query_stack_entry_from_ptr);
+}
+
+PyTypeObject PyQueryStackType = {
+    .tp_name = "QueryStack",
+    .tp_flags = Py_TPFLAGS_DEFAULT,
+    .tp_new = py_query_stack_new,
+    .tp_methods = py_query_stack_methods,
+    .tp_iter = (getiterfunc)py_query_stack_iter,
+    .tp_basicsize = sizeof(PyQueryStackObject),
+    .tp_dealloc = (destructor)py_query_stack_dealloc,
+};
+
 static PyMethodDef irc_methods[] = { 
     { NULL }
 };
@@ -1221,6 +1318,9 @@ void initirc(void)
     if (PyType_Ready(&PyGListIterType) < 0)
         return;
 
+    if (PyType_Ready(&PyQueryStackType) < 0)
+        return;
+
     m = Py_InitModule3("irc", irc_methods, 
                        "Simple IRC protocol module for Python.");
     if (m == NULL)
@@ -1240,5 +1340,7 @@ void initirc(void)
     PyModule_AddObject(m, "Client", (PyObject *)&PyClientType);
     Py_INCREF(&PyNetworkType);
     PyModule_AddObject(m, "Network", (PyObject *)&PyNetworkType);
+    Py_INCREF(&PyQueryStackType);
+    PyModule_AddObject(m, "QueryStack", (PyObject *)&PyQueryStackType);
 }
 

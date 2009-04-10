@@ -20,14 +20,44 @@
 #ifndef __REDIRECT_H__
 #define __REDIRECT_H__
 
-struct query_stack;
+/**
+ * IRC Query done by a client
+ */
+struct query {
+	/** Command name. */
+	char *name;
 
-gboolean redirect_response(struct query_stack *stack, 
-						   struct irc_network *network,
-						   const struct irc_line *l);
+	/** Possible replies */
+	int replies[20];
+	/** Possible replies that are the last reply to this command. */
+	int end_replies[20];
+	/** Possible errors. */
+	int errors[20];
+	/* Should add this query to the stack. return TRUE if this has 
+	 * been done successfully, FALSE otherwise */
+	/** Function for handling the responses. */
+	int (*handle) (const struct irc_line *, struct query_stack *, void *userdata, struct query *);
+};
+
+
+
+struct query_stack_entry {
+	const struct query *query;
+	void *userdata;
+	time_t time;
+};
+
+struct query_stack {
+	GList *entries;
+	void (*unref_userdata) (void *);
+	void (*ref_userdata) (void *);
+};
+
+
+
 void *query_stack_match_response(struct query_stack *stack, const struct irc_line *l);
 gboolean query_stack_record(struct query_stack *stack, void *c, const struct irc_line *l);
-struct query_stack *new_query_stack(void *(*ref_userdata) (void *), void (*unref_userdata) (void *));
+struct query_stack *new_query_stack(void (*ref_userdata) (void *), void (*unref_userdata) (void *));
 void query_stack_clear(struct query_stack *n);
 void query_stack_free(struct query_stack *n);
 
