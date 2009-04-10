@@ -595,21 +595,12 @@ static void query_stack_free_entry(struct query_stack_entry *s)
 	g_free(s);
 }
 
-/**
- * Redirect a response received from the server.
- *
- * @return TRUE if the message was redirected to zero or more clients, 
- *         FALSE if it was sent to all clients.
- */
-gboolean redirect_response(struct query_stack *stack, 
-						   struct irc_network *network,
-						   const struct irc_line *l)
+struct irc_client *query_stack_match_response(struct query_stack *stack, const struct irc_line *l)
 {
-	GList *gl;
-	const struct irc_client *c = NULL;
 	int n;
-	int i;
-	
+	struct irc_client *ret = NULL;
+	GList *gl;
+
 	g_assert(l->args[0]);
 
 	n = irc_line_respcode(l);
@@ -623,8 +614,7 @@ gboolean redirect_response(struct query_stack *stack,
 			
 			/* Send to client that queried, if that client still exists */
 			if (s->client != NULL) {
-				c = s->client;
-				client_send_line(s->client, l);
+				ret = s->client;
 			}
 
 			/* Not a valid in-between reply ? Remove from stack */
@@ -634,9 +624,34 @@ gboolean redirect_response(struct query_stack *stack,
 				query_stack_free_entry(s);
 			}
 
-			return TRUE;
+			return ret;
 		}
 	}
+
+	return NULL;
+}
+
+/**
+ * Redirect a response received from the server.
+ *
+ * @return TRUE if the message was redirected to zero or more clients, 
+ *         FALSE if it was sent to all clients.
+ */
+gboolean redirect_response(struct query_stack *stack, 
+						   struct irc_network *network,
+						   const struct irc_line *l)
+{
+	struct irc_client *c = NULL;
+	int n;
+	int i;
+
+	c = query_stack_match_response(stack, l);
+	if (c != NULL) {
+		client_send_line(c, l);
+		return TRUE;
+	}
+	
+	n = irc_line_respcode(l);
 
 	/* See if this is a response that should be sent to all clients */
 	for (i = 0; response_all[i]; i++) {
@@ -669,7 +684,7 @@ gboolean redirect_response(struct query_stack *stack,
 	return FALSE;
 }
 
-void redirect_clear(struct query_stack *stack)
+void query_stack_clear(struct query_stack *stack)
 {
 	while (stack->entries != NULL) {
 		struct query_stack_entry *e = stack->entries->data;
@@ -678,9 +693,9 @@ void redirect_clear(struct query_stack *stack)
 	}
 }
 
-void redirect_free(struct query_stack *stack)
+void query_stack_free(struct query_stack *stack)
 {
-	redirect_clear(stack);
+	query_stack_clear(stack);
 	g_free(stack);
 }
 

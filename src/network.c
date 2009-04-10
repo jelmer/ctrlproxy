@@ -382,7 +382,7 @@ static void handle_network_disconnect(struct irc_network *n)
 	}
 
 	if (n->queries != NULL) {
-		redirect_free(n->queries);
+		query_stack_free(n->queries);
 		n->queries = NULL;
 	}
 	if (n->linestack != NULL) {

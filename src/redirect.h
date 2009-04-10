@@ -28,8 +28,10 @@ void redirect_record(struct query_stack *stack,
 gboolean redirect_response(struct query_stack *stack, 
 						   struct irc_network *network,
 						   const struct irc_line *l);
-void redirect_clear(struct query_stack *n);
-void redirect_free(struct query_stack *n);
+struct irc_client *query_stack_match_response(struct query_stack *stack, const struct irc_line *l);
 struct query_stack *new_query_stack(void);
+void query_stack_clear(struct query_stack *n);
+void query_stack_free(struct query_stack *n);
+
 
 #endif /* __REDIRECT_H__ */
