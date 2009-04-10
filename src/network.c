@@ -550,7 +550,15 @@ gboolean network_forward_line(struct irc_network *s, struct irc_client *c,
 		free_line(nl);
 	}
 
-	redirect_record(s->queries, s, c, l);
+	if (!query_stack_record(s->queries, c, l)) {
+		if (c != NULL) {
+			client_log(LOG_WARNING, c, "Unknown command from client: %s", 
+					   l->args[0]);
+		} else {
+			network_log(LOG_WARNING, s, "Sending unknown command '%s'", 
+						l->args[0]);
+		}
+	}
 
 	return network_send_line(s, NULL, l);
 }

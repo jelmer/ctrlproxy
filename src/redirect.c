@@ -699,31 +699,24 @@ void query_stack_free(struct query_stack *stack)
 	g_free(stack);
 }
 
-void redirect_record(struct query_stack *stack,
-					 const struct irc_network *n, struct irc_client *c, 
-					 const struct irc_line *l)
+gboolean query_stack_record(struct query_stack *stack, struct irc_client *c, const struct irc_line *l)
 {
 	struct query *q;
+	gboolean ret = TRUE;
 
-	g_assert(n);
 	g_assert(l);
 	g_assert(l->args[0]);
 
 	q = find_query(l->args[0]);
 	if (q == NULL) {
-		if (c != NULL) {
-			client_log(LOG_WARNING, c, "Unknown command from client: %s", 
-					   l->args[0]);
-		} else {
-			network_log(LOG_WARNING, n, "Sending unknown command '%s'", 
-						l->args[0]);
-		}
-
+		ret = FALSE;
 		q = &unknown_query;
 	}
 
 	/* Push it up the stack! */
 	q->handle(l, stack, c, q);
+
+	return ret;
 }
 
 static int handle_default(const struct irc_line *l, struct query_stack *stack,
