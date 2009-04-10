@@ -24,18 +24,6 @@
 
 /* TODO: Clean up stack occasionally */
 
-struct query_stack_entry {
-	const struct query *query;
-	void *userdata;
-	time_t time;
-};
-
-struct query_stack {
-	GList *entries;
-	void (*unref_userdata) (void *);
-	void (*ref_userdata) (void *);
-};
-
 struct query_stack *new_query_stack(void (*ref_userdata) (void *), void (*unref_userdata) (void *))
 {
 	struct query_stack *stack = g_new0(struct query_stack, 1);
@@ -46,25 +34,6 @@ struct query_stack *new_query_stack(void (*ref_userdata) (void *), void (*unref_
 	stack->unref_userdata = unref_userdata;
 	return stack;
 }
-
-/**
- * IRC Query done by a client
- */
-struct query {
-	/** Command name. */
-	char *name;
-
-	/** Possible replies */
-	int replies[20];
-	/** Possible replies that are the last reply to this command. */
-	int end_replies[20];
-	/** Possible errors. */
-	int errors[20];
-	/* Should add this query to the stack. return TRUE if this has 
-	 * been done successfully, FALSE otherwise */
-	/** Function for handling the responses. */
-	int (*handle) (const struct irc_line *, struct query_stack *, void *userdata, struct query *);
-};
 
 static int handle_default(const struct irc_line *, struct query_stack *stack, 
 						  void *userdata, struct query *);

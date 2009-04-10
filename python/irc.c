@@ -1207,21 +1207,16 @@ static PyObject *py_query_stack_record(PyQueryStackObject *self, PyObject *args)
 
 static PyObject *py_query_stack_redirect(PyQueryStackObject *self, PyObject *args)
 {
-    PyObject *py_network, *py_line;
+    PyObject *py_line;
     struct irc_line *line;
     PyObject *ret;
 
-    if (!PyArg_ParseTuple(args, "OO", &py_network, &py_line))
+    if (!PyArg_ParseTuple(args, "O", &py_line))
         return NULL;
 
     line = PyObject_AsLine(py_line);
     if (line == NULL)
         return NULL;
-
-    if (PyObject_TypeCheck(py_network, &PyNetworkStateType)) {
-        PyErr_SetNone(PyExc_TypeError);
-        return NULL;
-    }
 
     ret = (PyObject *)query_stack_match_response(self->stack, line);
     if (ret == NULL) {
@@ -1265,11 +1260,22 @@ static PyObject *py_query_stack_new(PyTypeObject *type, PyObject *args, PyObject
     return (PyObject *)self;
 }
 
+static PyObject *py_query_stack_entry_from_ptr(PyQueryStackObject *parent, struct query_stack_entry *e)
+{
+    return Py_BuildValue("(Osl)", e->userdata, e->query->name, e->time);
+}
+
+static PyObject *py_query_stack_iter(PyQueryStackObject *self)
+{
+    return py_g_list_iter(self->stack->entries, (PyObject *)self, (PyObject *(*)(PyObject *, void*))py_query_stack_entry_from_ptr);
+}
+
 PyTypeObject PyQueryStackType = {
     .tp_name = "QueryStack",
     .tp_flags = Py_TPFLAGS_DEFAULT,
     .tp_new = py_query_stack_new,
     .tp_methods = py_query_stack_methods,
+    .tp_iter = (getiterfunc)py_query_stack_iter,
     .tp_basicsize = sizeof(PyQueryStackObject),
     .tp_dealloc = (destructor)py_query_stack_dealloc,
 };

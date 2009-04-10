@@ -209,3 +209,50 @@ class NetworkNickTests(unittest.TestCase):
         self.assertEquals("user", nick.username)
         self.assertEquals("host", nick.hostname)
         self.assertEquals("nick!user@host", nick.hostmask)
+
+
+class QueryStackTests(unittest.TestCase):
+
+    def setUp(self):
+        self.stack = irc.QueryStack()
+
+    def test_empty(self):
+        self.assertEquals([], list(self.stack))
+
+    def test_privmsg(self):
+        self.stack.record("token", "PRIVMSG joe :bla")
+        entries = list(self.stack)
+        self.assertEquals(1, len(entries))
+        self.assertEquals("token", entries[0][0])
+        self.assertEquals("PRIVMSG", entries[0][1])
+
+    def test_privmsg2(self):
+        self.stack.record("token", "PRIVMSG joe :bla")
+        self.stack.record("token", "PRIVMSG bla :bar")
+        entries = list(self.stack)
+        self.assertEquals(2, len(entries))
+        self.assertEquals("token", entries[0][0])
+        self.assertEquals("PRIVMSG", entries[0][1])
+        self.assertEquals("token", entries[1][0])
+        self.assertEquals("PRIVMSG", entries[1][1])
+
+    def test_unknown_command(self):
+        self.stack.record("token", "IDONTKNOW joe :bla")
+        entries = list(self.stack)
+        self.assertEquals(1, len(entries))
+        self.assertEquals("token", entries[0][0])
+        self.assertEquals(None, entries[0][1])
+        self.assertEquals("token",
+            self.stack.response(":server 421 user :No such command"))
+        self.assertEquals([], list(self.stack))
+
+    def test_removes_old_unreplied(self):
+        self.stack.record("token1", "PRIVMSG joe :bla")
+        self.stack.record("token2", "UNKNOWN joe :bla")
+        entries = list(self.stack)
+        self.assertEquals(2, len(entries))
+        self.assertEquals("token1", entries[0][0])
+        self.assertEquals("token2", entries[1][0])
+        self.assertEquals("token2",
+            self.stack.response(":server 421 user :No such command"))
+        # FIXME: self.assertEquals([], list(self.stack))
