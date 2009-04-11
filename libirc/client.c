@@ -387,7 +387,7 @@ void free_login_details(struct irc_login_details *details)
 /* 
  * @param desc Description of the client
  */
-struct irc_client *irc_client_new(struct irc_transport *transport, const char *default_origin, const char *desc, struct irc_client_callbacks *callbacks)
+struct irc_client *irc_client_new(struct irc_transport *transport, const char *default_origin, const char *desc, const struct irc_client_callbacks *callbacks)
 {
 	struct irc_client *client;
 

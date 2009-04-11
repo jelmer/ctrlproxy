@@ -262,3 +262,16 @@ class TransportTests(unittest.TestCase):
 
     def test_create(self):
         t = irc.Transport()
+
+
+class DummyTransport(object):
+    """Trivial Transport."""
+
+    def send_line(self, line):
+        self._sent_lines.append(line)
+
+
+class ClientTests(unittest.TestCase):
+
+    def test_create(self):
+        c = irc.Client(DummyTransport(), "myorigin", "description")

@@ -22,7 +22,8 @@
 #include "ctrlproxy.h"
 #include "redirect.h"
 
-
+static const struct irc_client_callbacks py_client_callbacks;
+static struct irc_transport *wrap_py_transport(PyObject *obj);
 const char *get_my_hostname() { return NULL; /* FIXME */ }
 void log_global(enum log_level ll, const char *fmt, ...) { /* FIXME */}
 
@@ -1025,9 +1026,35 @@ static PyGetSetDef py_client_getsetters[] = {
     { NULL }
 };
 
+static PyObject *py_client_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
+{
+    PyClientObject *ret;
+    PyObject *py_transport;
+    struct irc_transport *transport;
+    char *default_origin, *desc;
+    char *kwnames[] = { "transport", "default_origin", "desc", NULL };
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "Oss", kwnames, &py_transport, &default_origin, &desc))
+        return NULL;
+    
+    ret = (PyClientObject *)type->tp_alloc(type, 0);
+    if (ret == NULL) {
+        PyErr_NoMemory();
+        return NULL;
+    }
+
+    transport = wrap_py_transport(py_transport);
+
+    ret->client = irc_client_new(transport, default_origin, desc, &py_client_callbacks);
+    ret->client->private_data = ret;
+
+    return (PyObject *)ret;
+}
+
 PyTypeObject PyClientType = {
     .tp_name = "Client",
     .tp_flags = Py_TPFLAGS_DEFAULT,
+    .tp_new = py_client_new,
     .tp_methods = py_client_methods,
     .tp_getset = py_client_getsetters,
     .tp_basicsize = sizeof(PyClientObject)
@@ -1137,6 +1164,7 @@ static int py_process_from_client(struct irc_client *client, const struct irc_li
 {
     PyObject *self, *ret;
     PyLineObject *py_line;
+    self = client->private_data;
     py_line = PyObject_New(PyLineObject, &PyLineType);
     py_line->line = linedup(line);
     ret = PyObject_CallMethod(self, "process_from_client", "O", py_line);
@@ -1165,6 +1193,8 @@ static int py_process_to_client(struct irc_client *client, const struct irc_line
     ret = PyObject_CallMethod(self, "process_to_client", "O", py_line);
     Py_DECREF(py_line);
     Py_XDECREF(ret);
+
+    return 0;
 }
 
 static int py_welcome_client(struct irc_client *client)
@@ -1371,6 +1401,20 @@ static void py_transport_activate(struct irc_transport *transport)
     Py_XDECREF(ret);
 }
 
+static gboolean py_transport_set_charset(struct irc_transport *transport, const char *charsetname)
+{
+    PyObject *obj = (PyObject *)transport->backend_data, *ret;
+
+    ret = PyObject_CallMethod(obj, "set_charset", "s", charsetname);
+    if (ret == NULL) {
+        return FALSE;
+    }
+
+    Py_DECREF(ret);
+    return TRUE;
+}
+
+
 static struct irc_transport_ops py_transport_ops = {
     .free_data = (void (*) (void *))Py_DecRef,
     .is_connected = py_transport_is_connected,
@@ -1378,6 +1422,7 @@ static struct irc_transport_ops py_transport_ops = {
     .send_line = py_transport_send_line,
     .get_peer_name = py_transport_get_peer_name,
     .activate = py_transport_activate,
+    .set_charset = py_transport_set_charset,
 };
 
 static PyObject *py_transport_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
@@ -1397,7 +1442,20 @@ static PyObject *py_transport_new(PyTypeObject *type, PyObject *args, PyObject *
 	self->transport->pending_lines = g_queue_new();
     self->transport->backend_data = self;
     self->transport->backend_ops = &py_transport_ops;
+
     return (PyObject *)self;
+}
+
+static struct irc_transport *wrap_py_transport(PyObject *obj)
+{
+    struct irc_transport *transport;
+
+    transport = g_new0(struct irc_transport, 1);
+	transport->pending_lines = g_queue_new();
+    transport->backend_data = obj;
+    transport->backend_ops = &py_transport_ops;
+
+    return transport;
 }
 
 static PyMethodDef py_transport_methods[] = {
