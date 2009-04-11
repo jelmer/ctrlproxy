@@ -39,12 +39,16 @@ struct irc_transport_callbacks {
 	gboolean (*error) (struct irc_transport *transport, const char *error_msg);
 };
 
-struct irc_transport {
+struct irc_transport_data_iochannel {
 	GIOChannel *incoming;
 	gint incoming_id;
 	gint outgoing_id;
 	GIConv incoming_iconv;
 	GIConv outgoing_iconv;
+};
+
+struct irc_transport {
+	void *backend_data;
 	GQueue *pending_lines;
 	char *charset;
 	const struct irc_transport_callbacks *callbacks;
