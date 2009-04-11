@@ -1293,14 +1293,34 @@ static int py_transport_dealloc(PyTransportObject *self)
     return 0;
 }
 
-static gboolean py_transport_is_connected(void *user_data)
+static gboolean py_transport_is_connected(void *data)
 {
-    return TRUE;
+    PyObject *obj = (PyObject *)data, *ret;
+    gboolean boolret;
+
+    ret = PyObject_CallMethod(obj, "is_connected", "");
+    if (ret == NULL) {
+        return FALSE;
+    }
+
+    if (!PyBool_Check(ret)) {
+        PyErr_SetString(PyExc_TypeError, "is_connected didn't return a boolean");
+        Py_DECREF(ret);
+        return FALSE;
+    }
+
+    boolret = (obj == Py_True);
+
+    Py_DECREF(ret);
+    return boolret;
 }
 
 static void py_transport_disconnect(void *data)
 {
+    PyObject *obj = (PyObject *)data, *ret;
     /* Nothing */
+    ret = PyObject_CallMethod(obj, "disconnect", "");
+    Py_XDECREF(ret);
 }
 
 static gboolean py_transport_send_line(struct irc_transport *transport, const struct irc_line *l)
@@ -1325,13 +1345,30 @@ static gboolean py_transport_send_line(struct irc_transport *transport, const st
 
 static char *py_transport_get_peer_name(void *data)
 {
-    PyObject *py_obj = (PyObject *)data;
+    PyObject *obj = (PyObject *)data, *ret;
+    char *strret;
 
-    return g_strdup(PyString_AsString(PyObject_Str(py_obj)));
+    ret = PyObject_Str(obj);
+    if (ret == NULL) {
+        return NULL;
+    }
+    if (!PyString_Check(ret)) {
+        PyErr_SetNone(PyExc_TypeError);
+        Py_DECREF(ret);
+        return NULL;
+    }
+    strret = g_strdup(PyString_AsString(ret));
+    Py_DECREF(ret);
+
+    return strret;
 }
 
 static void py_transport_activate(struct irc_transport *transport)
 {
+    PyObject *obj = (PyObject *)transport->backend_data, *ret;
+
+    ret = PyObject_CallMethod(obj, "activate", "");
+    Py_XDECREF(ret);
 }
 
 static struct irc_transport_ops py_transport_ops = {
@@ -1360,7 +1397,6 @@ static PyObject *py_transport_new(PyTypeObject *type, PyObject *args, PyObject *
 	self->transport->pending_lines = g_queue_new();
     self->transport->backend_data = self;
     self->transport->backend_ops = &py_transport_ops;
-    /* FIXME: Contents */
     return (PyObject *)self;
 }
 
