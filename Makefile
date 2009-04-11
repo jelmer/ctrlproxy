@@ -287,10 +287,8 @@ install-python: all
 	$(PYTHON) setup.py install --root="$(DESTDIR)"
 
 clean::
-	rm -f *.pyc
-	rm -f ctrlproxy.py listener.py
+	@rm -f python/tests/*.pyc
 #	$(PYTHON) setup.py clean
-	rm -rf build/
 
 # RFC compliance testing using ircdtorture
 
