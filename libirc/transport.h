@@ -39,6 +39,10 @@ struct irc_transport_callbacks {
 	gboolean (*error) (struct irc_transport *transport, const char *error_msg);
 };
 
+struct irc_transport_ops {
+	void (*free_data) (void *data);
+};
+
 struct irc_transport_data_iochannel {
 	GIOChannel *incoming;
 	gint incoming_id;
@@ -48,6 +52,7 @@ struct irc_transport_data_iochannel {
 };
 
 struct irc_transport {
+	const struct irc_transport_ops *backend_ops;
 	void *backend_data;
 	GQueue *pending_lines;
 	char *charset;

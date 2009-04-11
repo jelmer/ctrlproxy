@@ -28,6 +28,25 @@
 #include <fcntl.h>
 #include <netdb.h>
 
+static void irc_transport_iochannel_free_data(void *data)
+{
+	struct irc_transport_data_iochannel *backend_data = (struct irc_transport_data_iochannel *)data;
+
+	/* Should already be disconnected */
+	g_assert(backend_data->incoming == NULL);
+
+	if (backend_data->outgoing_iconv != (GIConv)-1)
+		g_iconv_close(backend_data->outgoing_iconv);
+	if (backend_data->incoming_iconv != (GIConv)-1)
+		g_iconv_close(backend_data->incoming_iconv);
+
+	g_free(backend_data);
+}
+
+static const struct irc_transport_ops irc_transport_iochannel_ops = {
+	.free_data = irc_transport_iochannel_free_data,
+};
+
 static gboolean transport_send_queue(GIOChannel *c, GIOCondition cond, 
 										 void *_client);
 
@@ -122,7 +141,8 @@ struct irc_transport *irc_transport_new_iochannel(GIOChannel *iochannel)
 {
 	struct irc_transport *ret = g_new0(struct irc_transport, 1);
 	struct irc_transport_data_iochannel *backend_data = g_new0(struct irc_transport_data_iochannel, 1);
-
+	
+	ret->backend_ops = &irc_transport_iochannel_ops;
 	ret->backend_data = backend_data;
 	backend_data->incoming = iochannel;
 	ret->pending_lines = g_queue_new();
@@ -155,23 +175,18 @@ static void free_pending_line(void *_line, void *userdata)
 	free_line((struct irc_line *)_line);
 }
 
+
 void free_irc_transport(struct irc_transport *transport)
 {
-	struct irc_transport_data_iochannel *backend_data = (struct irc_transport_data_iochannel *)transport->backend_data;
-	/* Should already be disconnected */
-	g_assert(backend_data->incoming == NULL);
-	g_free(transport->charset);
+	transport->backend_ops->free_data(transport->backend_data);
+	transport->backend_data = NULL;
 
-	if (backend_data->outgoing_iconv != (GIConv)-1)
-		g_iconv_close(backend_data->outgoing_iconv);
-	if (backend_data->incoming_iconv != (GIConv)-1)
-		g_iconv_close(backend_data->incoming_iconv);
+	g_free(transport->charset);
 
 	g_assert(transport->pending_lines != NULL);
 	g_queue_foreach(transport->pending_lines, free_pending_line, NULL);
 	g_queue_free(transport->pending_lines);
 
-	g_free(backend_data);
 	g_free(transport);
 }
 
