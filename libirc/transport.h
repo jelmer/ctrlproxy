@@ -41,6 +41,9 @@ struct irc_transport_callbacks {
 
 struct irc_transport_ops {
 	void (*free_data) (void *data);
+	gboolean (*is_connected) (void *data);
+	void (*disconnect) (void *data);
+	gboolean (*send_line) (struct irc_transport *, const struct irc_line *);
 };
 
 struct irc_transport_data_iochannel {

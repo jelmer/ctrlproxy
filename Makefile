@@ -78,6 +78,7 @@ libirc_objs = \
 	   $(libircdir)/state.o \
 	   $(libircdir)/client.o \
 	   $(libircdir)/transport.o \
+	   $(libircdir)/transport_ioc.o \
 	   $(libircdir)/line.o \
 	   $(libircdir)/isupport.o \
 	   $(libircdir)/connection.o \

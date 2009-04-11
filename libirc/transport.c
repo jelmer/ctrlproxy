@@ -28,28 +28,6 @@
 #include <fcntl.h>
 #include <netdb.h>
 
-static void irc_transport_iochannel_free_data(void *data)
-{
-	struct irc_transport_data_iochannel *backend_data = (struct irc_transport_data_iochannel *)data;
-
-	/* Should already be disconnected */
-	g_assert(backend_data->incoming == NULL);
-
-	if (backend_data->outgoing_iconv != (GIConv)-1)
-		g_iconv_close(backend_data->outgoing_iconv);
-	if (backend_data->incoming_iconv != (GIConv)-1)
-		g_iconv_close(backend_data->incoming_iconv);
-
-	g_free(backend_data);
-}
-
-static const struct irc_transport_ops irc_transport_iochannel_ops = {
-	.free_data = irc_transport_iochannel_free_data,
-};
-
-static gboolean transport_send_queue(GIOChannel *c, GIOCondition cond, 
-										 void *_client);
-
 static gboolean handle_recv_status(struct irc_transport *transport, GIOStatus status, GError *error)
 {
 	if (status == G_IO_STATUS_EOF) {
@@ -130,43 +108,12 @@ void irc_transport_set_callbacks(struct irc_transport *transport,
 							handle_transport_receive, transport);
 }
 
-/* GIOChannels passed into this function 
- * should preferably:
- *  - have no encoding set
- *  - work asynchronously
- *
- * @param iochannel Channel to talk over 
- */
-struct irc_transport *irc_transport_new_iochannel(GIOChannel *iochannel)
-{
-	struct irc_transport *ret = g_new0(struct irc_transport, 1);
-	struct irc_transport_data_iochannel *backend_data = g_new0(struct irc_transport_data_iochannel, 1);
-	
-	ret->backend_ops = &irc_transport_iochannel_ops;
-	ret->backend_data = backend_data;
-	backend_data->incoming = iochannel;
-	ret->pending_lines = g_queue_new();
-	backend_data->outgoing_iconv = backend_data->incoming_iconv = (GIConv)-1;
-	g_io_channel_ref(backend_data->incoming);
-
-	return ret;
-}
-
 void irc_transport_disconnect(struct irc_transport *transport)
 {
-	struct irc_transport_data_iochannel *backend_data = (struct irc_transport_data_iochannel *)transport->backend_data;
-
-	if (backend_data->incoming == NULL)
+	if (!transport->backend_ops->is_connected(transport->backend_data))
 		return; /* We're already disconnected */
 
-	g_io_channel_unref(backend_data->incoming);
-
-	g_source_remove(backend_data->incoming_id);
-	if (backend_data->outgoing_id)
-		g_source_remove(backend_data->outgoing_id);
-
-	backend_data->incoming = NULL;
-
+	transport->backend_ops->disconnect(transport->backend_data);
 	transport->callbacks->disconnect(transport);
 }
 
@@ -178,6 +125,9 @@ static void free_pending_line(void *_line, void *userdata)
 
 void free_irc_transport(struct irc_transport *transport)
 {
+	/* Should already be disconnected */
+	g_assert(!transport->backend_ops->is_connected(transport->backend_data));
+
 	transport->backend_ops->free_data(transport->backend_data);
 	transport->backend_data = NULL;
 
@@ -237,126 +187,14 @@ gboolean transport_set_charset(struct irc_transport *transport, const char *name
 	return TRUE;
 }
 
-static gboolean transport_send_queue(GIOChannel *ioc, GIOCondition cond, 
-									  void *_transport)
-{
-	gboolean ret = FALSE;
-	struct irc_transport *transport = _transport;
-	struct irc_transport_data_iochannel *backend_data = (struct irc_transport_data_iochannel *)transport->backend_data;
-	GIOStatus status;
-
-	g_assert(ioc == backend_data->incoming);
-
-	status = g_io_channel_flush(backend_data->incoming, NULL);
-	if (status == G_IO_STATUS_AGAIN)
-		ret = TRUE;
-
-	g_assert(transport->pending_lines != NULL);
-
-	while (!g_queue_is_empty(transport->pending_lines)) {
-		GError *error = NULL;
-		struct irc_line *l = g_queue_pop_head(transport->pending_lines);
-
-		g_assert(backend_data->incoming != NULL);
-		status = irc_send_line(backend_data->incoming, 
-							   backend_data->outgoing_iconv, l, &error);
-
-		switch (status) {
-		case G_IO_STATUS_AGAIN:
-			g_queue_push_head(transport->pending_lines, l);
-			return TRUE;
-		case G_IO_STATUS_ERROR:
-			transport->callbacks->log(transport, l, error);
-			g_error_free(error);
-			break;
-		case G_IO_STATUS_EOF:
-			backend_data->outgoing_id = 0;
-
-			transport->callbacks->hangup(transport);
-
-			free_line(l);
-
-			return FALSE;
-		case G_IO_STATUS_NORMAL:
-			transport->last_line_sent = time(NULL);
-			break;
-		}
-
-		status = g_io_channel_flush(backend_data->incoming, &error);
-		switch (status) {
-		case G_IO_STATUS_EOF:
-			g_assert_not_reached();
-		case G_IO_STATUS_AGAIN:
-			free_line(l);
-			return TRUE;
-		case G_IO_STATUS_NORMAL:
-			break;
-		case G_IO_STATUS_ERROR:
-			transport->callbacks->log(transport, l, error);
-			g_error_free(error);
-			break;
-		}
-		free_line(l);
-	}
-
-	if (!ret)
-		backend_data->outgoing_id = 0;
-	return ret;
-}
-
 gboolean transport_send_line(struct irc_transport *transport, 
 							 const struct irc_line *l)
 {
-	struct irc_transport_data_iochannel *backend_data = (struct irc_transport_data_iochannel *)transport->backend_data;
-	GError *error = NULL;
-	GIOStatus status;
-
-	if (backend_data->incoming == NULL)
+	if (!transport->backend_ops->is_connected(transport->backend_data))
 		return FALSE;
 
-	if (backend_data->outgoing_id != 0) {
-		g_queue_push_tail(transport->pending_lines, linedup(l));
-		return TRUE;
-	}
+	return transport->backend_ops->send_line(transport, l);
 
-	status = irc_send_line(backend_data->incoming, backend_data->outgoing_iconv, l, &error);
-
-	switch (status) {
-	case G_IO_STATUS_AGAIN:
-		backend_data->outgoing_id = g_io_add_watch(backend_data->incoming, G_IO_OUT, 
-										transport_send_queue, transport);
-		g_queue_push_tail(transport->pending_lines, linedup(l));
-		break;
-	case G_IO_STATUS_EOF:
-		transport->callbacks->hangup(transport);
-		return FALSE;
-	case G_IO_STATUS_ERROR:
-		transport->callbacks->log(transport, l, error);
-		g_error_free(error);
-		return FALSE;
-	case G_IO_STATUS_NORMAL:
-		transport->last_line_sent = time(NULL);
-		break;
-	}
-
-	status = g_io_channel_flush(backend_data->incoming, &error);
-
-	switch (status) {
-	case G_IO_STATUS_EOF:
-		g_assert_not_reached();
-	case G_IO_STATUS_NORMAL:
-		break;
-	case G_IO_STATUS_AGAIN:
-		backend_data->outgoing_id = g_io_add_watch(backend_data->incoming, G_IO_OUT, 
-										transport_send_queue, transport);
-		break;
-	case G_IO_STATUS_ERROR:
-		transport->callbacks->log(transport, l, error);
-		g_error_free(error);
-		return FALSE;
-	}
-
-	return TRUE;
 }
 
 gboolean transport_send_response(struct irc_transport *transport, const char *from, const char *to, int response, ...) 
