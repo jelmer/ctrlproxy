@@ -256,3 +256,9 @@ class QueryStackTests(unittest.TestCase):
         self.assertEquals("token2",
             self.stack.response(":server 421 user :No such command"))
         # FIXME: self.assertEquals([], list(self.stack))
+
+
+class TransportTests(unittest.TestCase):
+
+    def test_create(self):
+        t = irc.Transport()

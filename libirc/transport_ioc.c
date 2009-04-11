@@ -43,6 +43,8 @@ static void irc_transport_iochannel_free_data(void *data)
 {
 	struct irc_transport_data_iochannel *backend_data = (struct irc_transport_data_iochannel *)data;
 
+	g_assert(backend_data->incoming == NULL);
+
 	if (backend_data->outgoing_iconv != (GIConv)-1)
 		g_iconv_close(backend_data->outgoing_iconv);
 	if (backend_data->incoming_iconv != (GIConv)-1)
@@ -77,7 +79,43 @@ static char *irc_transport_iochannel_get_peer_name(void *data)
 	return NULL;
 }
 
+static gboolean irc_transport_iochannel_set_charset(struct irc_transport *transport, const char *name)
+{
+	GIConv tmp;
+	struct irc_transport_data_iochannel *backend_data = (struct irc_transport_data_iochannel *)transport->backend_data;
 
+	if (name != NULL) {
+		tmp = g_iconv_open(name, "UTF-8");
+
+		if (tmp == (GIConv)-1) {
+			return FALSE;
+		}
+	} else {
+		tmp = (GIConv)-1;
+	}
+	
+	if (backend_data->outgoing_iconv != (GIConv)-1)
+		g_iconv_close(backend_data->outgoing_iconv);
+
+	backend_data->outgoing_iconv = tmp;
+
+	if (name != NULL) {
+		tmp = g_iconv_open("UTF-8", name);
+
+		if (tmp == (GIConv)-1) {
+			return FALSE;
+		}
+	} else {
+		tmp = (GIConv)-1;
+	}
+
+	if (backend_data->incoming_iconv != (GIConv)-1)
+		g_iconv_close(backend_data->incoming_iconv);
+
+	backend_data->incoming_iconv = tmp;
+
+	return TRUE;
+}
 
 static void irc_transport_iochannel_disconnect(void *data)
 {
@@ -246,6 +284,7 @@ static const struct irc_transport_ops irc_transport_iochannel_ops = {
 	.send_line = irc_transport_iochannel_send_line,
 	.get_peer_name = irc_transport_iochannel_get_peer_name,
 	.activate = irc_transport_iochannel_activate,
+	.set_charset = irc_transport_iochannel_set_charset,
 };
 
 /* GIOChannels passed into this function 

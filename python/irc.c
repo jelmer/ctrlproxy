@@ -1138,10 +1138,11 @@ static int py_process_from_client(struct irc_client *client, const struct irc_li
     PyObject *self, *ret;
     PyLineObject *py_line;
     py_line = PyObject_New(PyLineObject, &PyLineType);
-    py_line->line = line;
+    py_line->line = linedup(line);
     ret = PyObject_CallMethod(self, "process_from_client", "O", py_line);
     Py_DECREF(py_line);
     Py_XDECREF(ret);
+    return 0;
 }
 
 static void py_log_client(enum log_level level, const struct irc_client *client, const char *text)
@@ -1159,7 +1160,7 @@ static int py_process_to_client(struct irc_client *client, const struct irc_line
 
     self = client->private_data;
     py_line = PyObject_New(PyLineObject, &PyLineType);
-    py_line->line = line;
+    py_line->line = linedup(line);
 
     ret = PyObject_CallMethod(self, "process_to_client", "O", py_line);
     Py_DECREF(py_line);
@@ -1292,6 +1293,56 @@ static int py_transport_dealloc(PyTransportObject *self)
     return 0;
 }
 
+static gboolean py_transport_is_connected(void *user_data)
+{
+    return TRUE;
+}
+
+static void py_transport_disconnect(void *data)
+{
+    /* Nothing */
+}
+
+static gboolean py_transport_send_line(struct irc_transport *transport, const struct irc_line *l)
+{
+    PyObject *ret;
+    PyLineObject *py_line;
+
+    py_line = (PyLineObject *)PyObject_New(PyLineObject, &PyLineType);
+    py_line->line = linedup(l);
+
+    ret = PyObject_CallMethod(transport->backend_data, "send_line", "O", py_line);
+    Py_DECREF(py_line);
+
+    if (ret == NULL) {
+        return FALSE;
+    }
+
+    Py_DECREF(ret);
+
+    return TRUE;
+}
+
+static char *py_transport_get_peer_name(void *data)
+{
+    PyObject *py_obj = (PyObject *)data;
+
+    return g_strdup(PyString_AsString(PyObject_Str(py_obj)));
+}
+
+static void py_transport_activate(struct irc_transport *transport)
+{
+}
+
+static struct irc_transport_ops py_transport_ops = {
+    .free_data = (void (*) (void *))Py_DecRef,
+    .is_connected = py_transport_is_connected,
+    .disconnect = py_transport_disconnect,
+    .send_line = py_transport_send_line,
+    .get_peer_name = py_transport_get_peer_name,
+    .activate = py_transport_activate,
+};
+
 static PyObject *py_transport_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 {
     char *kwnames[] = { NULL };
@@ -1306,6 +1357,9 @@ static PyObject *py_transport_new(PyTypeObject *type, PyObject *args, PyObject *
     }
 
     self->transport = g_new0(struct irc_transport, 1);
+	self->transport->pending_lines = g_queue_new();
+    self->transport->backend_data = self;
+    self->transport->backend_ops = &py_transport_ops;
     /* FIXME: Contents */
     return (PyObject *)self;
 }

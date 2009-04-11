@@ -46,6 +46,7 @@ struct irc_transport_ops {
 	gboolean (*send_line) (struct irc_transport *, const struct irc_line *);
 	char *(*get_peer_name)(void *data);
 	void (*activate) (struct irc_transport *);
+	gboolean (*set_charset) (struct irc_transport *, const char *);
 };
 
 struct irc_transport {
