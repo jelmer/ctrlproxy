@@ -1280,6 +1280,49 @@ PyTypeObject PyQueryStackType = {
     .tp_dealloc = (destructor)py_query_stack_dealloc,
 };
 
+typedef struct {
+    PyObject_HEAD
+    struct irc_transport *transport;
+} PyTransportObject;
+
+static int py_transport_dealloc(PyTransportObject *self)
+{
+    free_irc_transport(self->transport);
+    PyObject_Del((PyObject *)self);
+    return 0;
+}
+
+static PyObject *py_transport_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
+{
+    char *kwnames[] = { NULL };
+    PyTransportObject *self;
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "", kwnames))
+        return NULL;
+
+    self = (PyTransportObject *)type->tp_alloc(type, 0);
+    if (self == NULL) {
+        PyErr_NoMemory();
+        return NULL;
+    }
+
+    self->transport = g_new0(struct irc_transport, 1);
+    /* FIXME: Contents */
+    return (PyObject *)self;
+}
+
+static PyMethodDef py_transport_methods[] = {
+    { NULL }
+};
+
+PyTypeObject PyTransportType = {
+    .tp_name = "Transport",
+    .tp_flags = Py_TPFLAGS_DEFAULT,
+    .tp_new = py_transport_new,
+    .tp_methods = py_transport_methods,
+    .tp_basicsize = sizeof(PyTransportObject),
+    .tp_dealloc = (destructor)py_transport_dealloc,
+};
+
 static PyMethodDef irc_methods[] = { 
     { NULL }
 };
@@ -1321,6 +1364,9 @@ void initirc(void)
     if (PyType_Ready(&PyQueryStackType) < 0)
         return;
 
+    if (PyType_Ready(&PyTransportType) < 0)
+        return;
+
     m = Py_InitModule3("irc", irc_methods, 
                        "Simple IRC protocol module for Python.");
     if (m == NULL)
@@ -1342,5 +1388,7 @@ void initirc(void)
     PyModule_AddObject(m, "Network", (PyObject *)&PyNetworkType);
     Py_INCREF(&PyQueryStackType);
     PyModule_AddObject(m, "QueryStack", (PyObject *)&PyQueryStackType);
+    Py_INCREF(&PyTransportType);
+    PyModule_AddObject(m, "Transport", (PyObject *)&PyTransportType);
 }
 
