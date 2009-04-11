@@ -27,6 +27,18 @@
 #include <fcntl.h>
 #include <netdb.h>
 
+struct irc_transport_data_iochannel {
+	GIOChannel *incoming;
+	gint incoming_id;
+	gint outgoing_id;
+	GIConv incoming_iconv;
+	GIConv outgoing_iconv;
+};
+
+
+static gboolean handle_transport_receive(GIOChannel *c, GIOCondition cond, 
+									  void *_transport);
+
 static void irc_transport_iochannel_free_data(void *data)
 {
 	struct irc_transport_data_iochannel *backend_data = (struct irc_transport_data_iochannel *)data;
@@ -38,6 +50,34 @@ static void irc_transport_iochannel_free_data(void *data)
 
 	g_free(backend_data);
 }
+
+static char *irc_transport_iochannel_get_peer_name(void *data)
+{
+	int fd;
+	socklen_t len = sizeof(struct sockaddr_storage);
+	struct sockaddr_storage sa;
+	char hostname[NI_MAXHOST];
+	struct irc_transport_data_iochannel *backend_data = (struct irc_transport_data_iochannel *)data;
+
+	fd = g_io_channel_unix_get_fd(backend_data->incoming);
+
+	if (getpeername (fd, (struct sockaddr *)&sa, &len) < 0) {
+		return NULL;
+	}
+
+	if (sa.ss_family == AF_INET || sa.ss_family == AF_INET6) {
+		if (getnameinfo((struct sockaddr *)&sa, len, hostname, sizeof(hostname),
+						NULL, 0, 0) == 0) {
+			return g_strdup(hostname);
+		} 
+	} else if (sa.ss_family == AF_UNIX) {
+		return g_strdup("localhost");
+	}
+
+	return NULL;
+}
+
+
 
 static void irc_transport_iochannel_disconnect(void *data)
 {
@@ -106,6 +146,92 @@ static gboolean irc_transport_iochannel_send_line(struct irc_transport *transpor
 
 }
 
+static void irc_transport_iochannel_activate(struct irc_transport *transport)
+{
+	struct irc_transport_data_iochannel *backend_data = (struct irc_transport_data_iochannel *)transport->backend_data;
+	backend_data->incoming_id = g_io_add_watch(
+							backend_data->incoming, G_IO_IN | G_IO_HUP, 
+							handle_transport_receive, transport);
+
+	handle_transport_receive(backend_data->incoming, 
+			  g_io_channel_get_buffer_condition(backend_data->incoming) & G_IO_IN,
+			  transport);
+}
+
+
+
+static gboolean handle_recv_status(struct irc_transport *transport, GIOStatus status, GError *error)
+{
+	if (status == G_IO_STATUS_EOF) {
+		transport->callbacks->hangup(transport);
+		return FALSE;
+	}
+
+	if (status != G_IO_STATUS_AGAIN) {
+		if (error->domain == G_CONVERT_ERROR &&
+			error->code == G_CONVERT_ERROR_ILLEGAL_SEQUENCE) {
+			transport->callbacks->charset_error(transport, 
+												error->message);
+		} else {
+			return transport->callbacks->error(transport, error?error->message:NULL);
+		}
+	}
+
+	return TRUE;
+}
+
+
+
+static gboolean handle_transport_receive(GIOChannel *c, GIOCondition cond, 
+									  void *_transport)
+{
+	struct irc_transport *transport = _transport;
+	struct irc_transport_data_iochannel *backend_data = (struct irc_transport_data_iochannel *)transport->backend_data;
+	struct irc_line *l;
+
+	g_assert(transport);
+
+	if (cond & G_IO_ERR) {
+		char *tmp = g_strdup_printf("Error reading from client: %s", 
+						  g_io_channel_unix_get_sock_error(c));
+		transport->callbacks->error(transport, tmp);
+		g_free(tmp);
+		return FALSE;
+	}
+
+
+	if (cond & G_IO_IN) {
+		GError *error = NULL;
+		GIOStatus status;
+		gboolean ret = TRUE;
+		
+		while ((status = irc_recv_line(c, backend_data->incoming_iconv, &error, 
+									   &l)) == G_IO_STATUS_NORMAL) {
+
+			ret &= transport->callbacks->recv(transport, l);
+			free_line(l);
+
+			if (!ret)
+				return FALSE;
+		}
+
+		ret &= handle_recv_status(transport, status, error);
+		if (error != NULL)
+			g_error_free(error);
+		return ret;
+	}
+
+	if (cond & G_IO_HUP) {
+		transport->callbacks->hangup(transport);
+		return FALSE;
+	}
+
+
+	return TRUE;
+}
+
+
+
 static gboolean irc_transport_iochannel_is_connected(void *data)
 {
 	struct irc_transport_data_iochannel *backend_data = (struct irc_transport_data_iochannel *)data;
@@ -118,6 +244,8 @@ static const struct irc_transport_ops irc_transport_iochannel_ops = {
 	.is_connected = irc_transport_iochannel_is_connected,
 	.disconnect = irc_transport_iochannel_disconnect,
 	.send_line = irc_transport_iochannel_send_line,
+	.get_peer_name = irc_transport_iochannel_get_peer_name,
+	.activate = irc_transport_iochannel_activate,
 };
 
 /* GIOChannels passed into this function 

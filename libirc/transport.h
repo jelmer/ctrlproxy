@@ -44,14 +44,8 @@ struct irc_transport_ops {
 	gboolean (*is_connected) (void *data);
 	void (*disconnect) (void *data);
 	gboolean (*send_line) (struct irc_transport *, const struct irc_line *);
-};
-
-struct irc_transport_data_iochannel {
-	GIOChannel *incoming;
-	gint incoming_id;
-	gint outgoing_id;
-	GIConv incoming_iconv;
-	GIConv outgoing_iconv;
+	char *(*get_peer_name)(void *data);
+	void (*activate) (struct irc_transport *);
 };
 
 struct irc_transport {
@@ -65,6 +59,7 @@ struct irc_transport {
 };
 
 struct irc_transport *irc_transport_new_iochannel(GIOChannel *iochannel);
+void irc_transport_set_callbacks(struct irc_transport *transport, const struct irc_transport_callbacks *callbacks, void *userdata);
 void irc_transport_disconnect(struct irc_transport *transport);
 void free_irc_transport(struct irc_transport *);
 gboolean transport_set_charset(struct irc_transport *transport, const char *name);
@@ -72,7 +67,6 @@ gboolean transport_send_line(struct irc_transport *transport, const struct irc_l
 gboolean transport_send_args(struct irc_transport *transport, ...);
 gboolean transport_send_response(struct irc_transport *transport, const char *from, const char *to, int response, ...);
 void transport_parse_buffer(struct irc_transport *transport);
-gboolean transport_blocking_recv(struct irc_transport *transport, struct irc_line **l);
 void irc_transport_set_callbacks(struct irc_transport *transport, 
 								 const struct irc_transport_callbacks *callbacks, void *userdata);
 char *transport_get_peer_hostname(struct irc_transport *transport);

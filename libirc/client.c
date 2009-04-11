@@ -419,11 +419,6 @@ struct irc_client *irc_client_new(struct irc_transport *transport, const char *d
 	return client;
 }
 
-void client_parse_buffer(struct irc_client *client)
-{
-	transport_parse_buffer(client->transport);
-}
-
 /**
  * Kill all current pending clients (not authenticated yet).
  *

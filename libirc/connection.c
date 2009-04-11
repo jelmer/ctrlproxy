@@ -741,8 +741,6 @@ gboolean network_set_iochannel(struct irc_network *s, GIOChannel *ioc)
 								&network_callbacks, 
 								s);
 
-	transport_parse_buffer(s->connection.transport);
-
 	server_send_login(s);
 
 	return TRUE;

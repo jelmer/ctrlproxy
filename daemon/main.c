@@ -329,8 +329,6 @@ static gboolean daemon_socks_connect_fqdn (struct pending_client *cl, const char
 	cd->client_transport = irc_transport_new_iochannel(cl->connection);
 	irc_transport_set_callbacks(cd->client_transport, &daemon_client_callbacks, cd);
 
-	transport_parse_buffer(cd->client_transport);
-
 	snprintf(portstr, sizeof(portstr), "%d", port);
 	transport_send_args(cd->backend->transport, "CONNECT", hostname, portstr, NULL);
 
@@ -396,8 +394,6 @@ static gboolean handle_client_line(struct pending_client *pc, const struct irc_l
 		daemon_backend_authenticate(cd->backend, cd->login_details->password, plain_handle_auth_finish);
 
 		irc_transport_set_callbacks(cd->client_transport, &daemon_client_callbacks, cd);
-
-		transport_parse_buffer(cd->client_transport);
 
 		return FALSE;
 	}

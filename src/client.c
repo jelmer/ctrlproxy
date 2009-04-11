@@ -278,8 +278,6 @@ struct irc_client *client_init_iochannel(struct irc_network *n, GIOChannel *c, c
 
 	client = client_init(n, transport, desc);
 
-	transport_parse_buffer(transport);
-
 	return client;
 }
 
@@ -297,9 +295,6 @@ struct irc_client *client_init(struct irc_network *n, struct irc_transport *tran
 
 	client->exit_on_close = FALSE;
 	
-	/* parse any data currently in the buffer */
-	client_parse_buffer(client);
-
 	return client;
 }
 
