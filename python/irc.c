@@ -1025,6 +1025,18 @@ static PyObject *py_client_send_motd(PyClientObject *self, PyObject *py_motd)
     Py_RETURN_NONE;
 }
 
+static PyObject *py_client_send_channel_mode(PyClientObject *self, PyChannelStateObject *py_channel)
+{
+    if (!PyObject_TypeCheck(py_channel, &PyChannelStateType)) {
+        PyErr_SetNone(PyExc_TypeError);
+        return NULL;
+    }
+
+    client_send_channel_mode(self->client, py_channel->state);
+
+    Py_RETURN_NONE;
+}
+
 static PyObject *py_client_send_luserchannels(PyClientObject *self, PyObject *arg)
 {
     if (!PyInt_Check(arg)) {
@@ -1064,6 +1076,9 @@ static PyMethodDef py_client_methods[] = {
     { "send_motd", (PyCFunction)py_client_send_motd,
         METH_O,
         "Send a MOTD to a client." },
+    { "send_channel_mode", (PyCFunction)py_client_send_channel_mode,
+        METH_O,
+        "Send the mode for a channel to a client." },
     { "send_luserchannels", (PyCFunction)py_client_send_luserchannels,
         METH_O,
         "Send number of user channels to client." },

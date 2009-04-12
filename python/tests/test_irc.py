@@ -331,6 +331,13 @@ class ClientTests(unittest.TestCase):
         c.send_netsplit("myserver")
         self.assertEquals([], t.str_lines())
 
+    def test_send_channel_mode_none(self):
+        t = DummyTransport()
+        c = irc.Client(t, "myorigin", "description")
+        ch = irc.ChannelState("#ch")
+        c.send_channel_mode(ch)
+        self.assertEquals([], t.str_lines())
+
 
 class ClientSendStateTests(unittest.TestCase):
 
