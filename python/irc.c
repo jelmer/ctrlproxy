@@ -1244,6 +1244,11 @@ static PyObject *py_client_get_last_pong(PyClientObject *self, void *closure)
     return PyLong_FromLong(self->client->last_pong);
 }
 
+static PyObject *py_client_get_description(PyClientObject *self, void *closure)
+{
+    return PyString_FromString(self->client->description);
+}
+
 static PyGetSetDef py_client_getsetters[] = {
     { "state", (getter)py_client_get_state, NULL, "State" },
     { "default_target", (getter)py_client_get_default_target, NULL, "Default target" },
@@ -1254,6 +1259,8 @@ static PyGetSetDef py_client_getsetters[] = {
         "Timestamp of the last moment this client pinged the server." },
     { "last_pong", (getter)py_client_get_last_pong, NULL,
         "Timestamp of the last pong that was received." },
+    { "description", (getter)py_client_get_description, NULL,
+        "Description of the client" },
     { NULL }
 };
 

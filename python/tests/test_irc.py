@@ -391,6 +391,11 @@ class ClientTests(unittest.TestCase):
         c = irc.Client(t, "myorigin", "description")
         self.assertEquals(0, c.last_pong)
 
+    def test_description(self):
+        t = DummyTransport()
+        c = irc.Client(t, "myorigin", "description")
+        self.assertEquals("description", c.description)
+
 
 class ClientSendStateTests(unittest.TestCase):
 
