@@ -450,6 +450,8 @@ gboolean client_set_charset(struct irc_client *c, const char *name)
 
 const char *client_get_own_hostmask(struct irc_client *c)
 {
+	if (c->state == NULL)
+		return NULL;
 	return c->state->me.hostmask;
 }
 

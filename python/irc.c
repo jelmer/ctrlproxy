@@ -943,21 +943,6 @@ typedef struct {
     struct irc_client *client;
 } PyClientObject;
 
-static PyObject *py_client_get_default_target(PyClientObject *self)
-{
-    return PyString_FromString(client_get_default_target(self->client));
-}
-
-static PyObject *py_client_get_own_hostmask(PyClientObject *self)
-{
-    return PyString_FromString(client_get_own_hostmask(self->client));
-}
-
-static PyObject *py_client_get_default_origin(PyClientObject *self)
-{
-    return PyString_FromString(self->client->default_origin);
-}
-
 static PyObject *py_client_set_charset(PyClientObject *self, PyObject *args)
 {
     bool ret;
@@ -999,15 +984,6 @@ static PyObject *py_client_send_line(PyClientObject *self, PyObject *args)
 }
 
 static PyMethodDef py_client_methods[] = {
-    { "get_default_target", (PyCFunction)py_client_get_default_target,
-        METH_NOARGS, 
-        "Returns the default target name used for this client." },
-    { "get_own_hostmask", (PyCFunction)py_client_get_own_hostmask,
-        METH_NOARGS,
-        "Returns the hostmask of the client." },
-    { "get_default_origin", (PyCFunction)py_client_get_default_origin,
-        METH_NOARGS,
-        "Returns the default origin that is used to send lines to this client." },
     { "set_charset", (PyCFunction)py_client_set_charset, 
         METH_VARARGS,
         "Change the character set."  
@@ -1034,8 +1010,30 @@ static PyObject *py_client_get_state(PyClientObject *self, void *closure)
     return (PyObject *)ret;
 }
 
+static PyObject *py_client_get_default_target(PyClientObject *self, void *closure)
+{
+    return PyString_FromString(client_get_default_target(self->client));
+}
+
+static PyObject *py_client_get_own_hostmask(PyClientObject *self, void *closure)
+{
+    const char *hostmask = client_get_own_hostmask(self->client);
+    if (hostmask == NULL)
+        Py_RETURN_NONE;
+    return PyString_FromString(hostmask);
+}
+
+static PyObject *py_client_get_default_origin(PyClientObject *self, void *closure)
+{
+    return PyString_FromString(self->client->default_origin);
+}
+
 static PyGetSetDef py_client_getsetters[] = {
     { "state", (getter)py_client_get_state, NULL, "State" },
+    { "default_target", (getter)py_client_get_default_target, NULL, "Default target" },
+    { "own_hostmask", (getter)py_client_get_own_hostmask, NULL, "Own hostmask" },
+    { "default_origin", (getter)py_client_get_default_origin, NULL,
+        "Default origin that is used to send lines to this client." },
     { NULL }
 };
 
@@ -1352,7 +1350,7 @@ static gboolean py_transport_is_connected(void *data)
         return FALSE;
     }
 
-    boolret = (obj == Py_True);
+    boolret = (ret == Py_True);
 
     Py_DECREF(ret);
     return boolret;

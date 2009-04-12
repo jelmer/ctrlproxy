@@ -273,6 +273,9 @@ class DummyTransport(object):
     def send_line(self, line):
         self._sent_lines.append(line)
 
+    def is_connected(self):
+        return True
+
 
 class ClientTests(unittest.TestCase):
 
@@ -288,3 +291,16 @@ class ClientTests(unittest.TestCase):
         c = irc.Client(t, "myorigin", "description")
         c.send_line(":server NOTICE mynick :bla")
         self.assertEquals(1, len(t._sent_lines))
+        self.assertEquals(":server NOTICE mynick :bla", str(t._sent_lines[0]))
+
+    def test_default_target(self):
+        c = irc.Client(DummyTransport(), "myorigin", "description")
+        self.assertEquals("*", c.default_target)
+
+    def test_default_origin(self):
+        c = irc.Client(DummyTransport(), "myorigin", "description")
+        self.assertEquals("myorigin", c.default_origin)
+
+    def test_own_hostmask_not_known(self):
+        c = irc.Client(DummyTransport(), "myorigin", "description")
+        self.assertEquals(None, c.own_hostmask)

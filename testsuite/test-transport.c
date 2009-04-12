@@ -44,7 +44,7 @@ START_TEST(test_send)
 	for (i = 0; i < 10000; i++) {
 		char buf[20];
 		g_snprintf(buf, sizeof(buf), "bar: %d", i);
-		fail_unless(transport_send_args(t, "PRIVMSG", "foo", buf, NULL));
+		fail_unless(transport_send_args(t, NULL, "PRIVMSG", "foo", buf, NULL));
 	}
 	for (i = 0; i < 10000; i++) {
 		char *str;
