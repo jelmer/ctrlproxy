@@ -1025,6 +1025,18 @@ static PyObject *py_client_send_motd(PyClientObject *self, PyObject *py_motd)
     Py_RETURN_NONE;
 }
 
+static PyObject *py_client_send_luserchannels(PyClientObject *self, PyObject *arg)
+{
+    if (!PyInt_Check(arg)) {
+        PyErr_SetNone(PyExc_TypeError);
+        return NULL;
+    }
+
+    client_send_luserchannels(self->client, PyInt_AsLong(arg));
+
+    Py_RETURN_NONE;
+}
+
 static PyMethodDef py_client_methods[] = {
     { "set_charset", (PyCFunction)py_client_set_charset, 
         METH_VARARGS,
@@ -1040,6 +1052,9 @@ static PyMethodDef py_client_methods[] = {
     { "send_motd", (PyCFunction)py_client_send_motd,
         METH_O,
         "Send a MOTD to a client." },
+    { "send_luserchannels", (PyCFunction)py_client_send_luserchannels,
+        METH_O,
+        "Send number of user channels to client." },
     { NULL }
 };
 

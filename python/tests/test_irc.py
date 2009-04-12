@@ -318,6 +318,13 @@ class ClientTests(unittest.TestCase):
             ':myorigin 372 * :blie bloe',
             ':myorigin 376 * :End of MOTD'], t.str_lines())
 
+    def test_send_luserchannels(self):
+        t = DummyTransport()
+        c = irc.Client(t, "myorigin", "description")
+        c.send_luserchannels(42)
+        self.assertEquals([':myorigin 254 * 42 :channels formed'],
+                t.str_lines())
+
 
 class ClientSendStateTests(unittest.TestCase):
 
