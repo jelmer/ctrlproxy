@@ -30,7 +30,7 @@ static void g_error_set_python(GError **error)
 
     PyErr_Fetch(&exception_type, &exception_value, &exception_tb);
 
-    g_set_error(error, g_quark_from_static_string("libirc-python-error"), 1, PyString_AsString(exception_value));
+    g_set_error_literal(error, g_quark_from_static_string("libirc-python-error"), 1, PyString_AsString(exception_value));
 }
 
 static const struct irc_client_callbacks py_client_callbacks;
