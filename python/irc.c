@@ -547,6 +547,31 @@ static struct channel_nick *py_channel_nick_dict_find_pyobject(PyChannelNickDict
     return cn;
 }
 
+static PyObject *py_channel_nick_dict_get_nick_mode(PyChannelNickDictObject *self, PyObject *py_name)
+{
+    struct channel_nick *cn;
+    char *modestr;
+    PyObject *ret;
+
+    cn = py_channel_nick_dict_find_pyobject(self, py_name);
+    if (cn == NULL) {
+        /* py_channel_nick_dict_find_pyobject already sets error */
+        return NULL;
+    }
+
+    modestr = mode2string(cn->modes);
+
+    if (modestr == NULL) {
+        Py_RETURN_NONE;
+    }
+
+    ret = PyString_FromString(modestr);
+
+    g_free(modestr);
+
+    return ret;
+}
+
 static PyObject *py_channel_nick_dict_subscript(PyChannelNickDictObject *self, PyObject *py_name)
 {
     PyNetworkNickObject *ret;
@@ -576,12 +601,19 @@ static PyMappingMethods py_channel_nick_dict_mapping = {
     .mp_subscript = (binaryfunc)py_channel_nick_dict_subscript,
 };
 
+static PyMethodDef py_channel_nick_dict_methods[] = {
+    { "nick_mode", (PyCFunction)py_channel_nick_dict_get_nick_mode,
+        METH_O, "Get nick mode" },
+    { NULL }
+};
+
 PyTypeObject PyChannelNickDictType = {
     .tp_name = "ChannelNickDict",
     .tp_dealloc = (destructor)py_channel_nick_dict_dealloc,
     .tp_flags = Py_TPFLAGS_DEFAULT,
     .tp_basicsize = sizeof(PyChannelNickDictObject),
     .tp_as_mapping = &py_channel_nick_dict_mapping,
+    .tp_methods = py_channel_nick_dict_methods,
 };
 
 static PyObject *py_channel_state_get_nicks(PyChannelStateObject *self, void *closure)
