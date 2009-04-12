@@ -439,11 +439,25 @@ static PyObject *py_channel_state_get_mode_option(PyChannelStateObject *self, vo
     return (PyObject *)ret;
 }
 
+static PyObject *py_channel_state_get_topic_time(PyChannelStateObject *self, void *closure)
+{
+    return PyLong_FromLong(self->state->topic_set_time);
+}
+
+static PyObject *py_channel_state_get_time(PyChannelStateObject *self, void *closure)
+{
+    return PyLong_FromLong(self->state->creation_time);
+}
+
 static PyGetSetDef py_channel_state_getset[] = {
     { "name", (getter)py_channel_state_get_name, NULL, 
         "Name of the channel." },
     { "topic", (getter)py_channel_state_get_topic, NULL,
         "Topic of the channel." },
+    { "topic_set_time", (getter)py_channel_state_get_topic_time, NULL,
+        "Time the topic was set." },
+    { "creation_time", (getter)py_channel_state_get_time, NULL,
+        "Timestamp when the channel was created" },
     { "modes", (getter)py_channel_state_get_modes, NULL,
         "Modes" },
     { "mode_option", (getter)py_channel_state_get_mode_option, NULL,
