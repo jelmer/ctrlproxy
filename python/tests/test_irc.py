@@ -265,6 +265,20 @@ class NetworkNickTests(unittest.TestCase):
         self.assertEquals("host", nick.hostname)
         self.assertEquals("nick!uname@host", nick.hostmask)
 
+    def test_default_mode(self):
+        nick = irc.Nick("nick", "user", "host")
+        self.assertEquals(None, nick.modes)
+
+    def test_set_mode(self):
+        nick = irc.Nick("nick", "user", "host")
+        nick.modes = "+o"
+        self.assertEquals("+o", nick.modes)
+
+    def test_remove_mode(self):
+        nick = irc.Nick("nick", "user", "host")
+        nick.modes = ""
+        self.assertEquals(None, nick.modes)
+
 
 class QueryStackTests(unittest.TestCase):
 

@@ -66,8 +66,6 @@ typedef struct {
     struct network_nick *nick;
 } PyNetworkNickObject;
 
-
-
 static struct irc_line *PyObject_AsLine(PyObject *obj);
 
 PyObject *py_line_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
@@ -852,12 +850,43 @@ static PyObject *py_network_nick_channels(PyNetworkNickObject *self, void *closu
         (PyObject *(*)(PyObject *, void *))py_network_nick_channel);
 }
 
+static PyObject *py_network_nick_get_modes(PyNetworkNickObject *self, void *closure)
+{
+    char *modestr;
+    PyObject *ret;
+
+    modestr = mode2string(self->nick->modes);
+    if (modestr == NULL)
+        Py_RETURN_NONE;
+
+    ret = PyString_FromString(modestr);
+
+    g_free(modestr);
+
+    return ret;
+}
+
+static int py_network_nick_set_modes(PyNetworkNickObject *self, PyObject *value, void *closure)
+{
+    if (!PyString_Check(value)) {
+        PyErr_SetNone(PyExc_TypeError);
+        return -1;
+    }
+    if (!string2mode(PyString_AsString(value), self->nick->modes)) {
+        PyErr_SetNone(PyExc_ValueError);
+        return -1;
+    }
+    return 0;
+}
+
 static PyGetSetDef py_network_nick_getsetters[] = {
     { "hostmask", (getter)py_network_nick_get_hostmask, (setter)py_network_nick_set_hostmask, "Hostmask" },
     { "nick", (getter)py_network_nick_get_nick, (setter)py_network_nick_set_nick, "Nick" },
     { "username", (getter)py_network_nick_get_username, (setter)py_network_nick_set_username, "Username" },
     { "hostname", (getter)py_network_nick_get_hostname, (setter)py_network_nick_set_hostname, "Hostname" },
     { "channels", (getter)py_network_nick_channels, NULL, "Channels" },
+    { "modes", (getter)py_network_nick_get_modes, 
+        (setter)py_network_nick_set_modes, "Modes" },
     { NULL }
 };
 
