@@ -500,6 +500,38 @@ static PyObject *py_channel_state_get_time(PyChannelStateObject *self, void *clo
     return PyLong_FromLong(self->state->creation_time);
 }
 
+typedef struct {
+    PyObject_HEAD
+    PyChannelStateObject *parent;
+} PyChannelNickDictObject;
+
+static int py_channel_nick_dict_dealloc(PyChannelNickDictObject *self)
+{
+    Py_DECREF(self->parent);
+    PyObject_Del(self);
+    return 0;
+}
+
+PyTypeObject PyChannelNickDictType = {
+    .tp_name = "ChannelNickDict",
+    .tp_dealloc = (destructor)py_channel_nick_dict_dealloc,
+    .tp_flags = Py_TPFLAGS_DEFAULT,
+    .tp_basicsize = sizeof(PyChannelNickDictObject)
+};
+
+static PyObject *py_channel_state_get_nicks(PyChannelStateObject *self, void *closure)
+{
+    PyChannelNickDictObject *ret = PyObject_New(PyChannelNickDictObject, &PyChannelNickDictType);
+    if (ret == NULL) {
+        PyErr_NoMemory();
+        return NULL;
+    }
+
+    Py_INCREF(self);
+    ret->parent = self;
+    return (PyObject *)ret;
+}
+
 static PyGetSetDef py_channel_state_getset[] = {
     { "name", (getter)py_channel_state_get_name, NULL, 
         "Name of the channel." },
@@ -517,6 +549,8 @@ static PyGetSetDef py_channel_state_getset[] = {
         "Modes" },
     { "mode_option", (getter)py_channel_state_get_mode_option, NULL,
         "Mode options" },
+    { "nicks", (getter)py_channel_state_get_nicks, NULL,
+        "Nicks on this channel" },
     { NULL }
 };
 
@@ -1829,6 +1863,9 @@ void initirc(void)
         return;
 
     if (PyType_Ready(&PyTransportType) < 0)
+        return;
+
+    if (PyType_Ready(&PyChannelModeDictType) < 0)
         return;
 
     m = Py_InitModule3("irc", irc_methods, 
