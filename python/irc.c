@@ -1056,6 +1056,24 @@ static PyObject *py_client_send_channel_mode(PyClientObject *self, PyChannelStat
 }
 
 
+static PyObject *py_client_send_topic(PyClientObject *self, PyObject *args)
+{
+    PyChannelStateObject *py_channel;
+    int explicit = FALSE;  
+
+    if (!PyArg_ParseTuple(args, "O|i", &py_channel, &explicit))
+        return NULL;
+
+    if (!PyObject_TypeCheck(py_channel, &PyChannelStateType)) {
+        PyErr_SetNone(PyExc_TypeError);
+        return NULL;
+    }
+
+    client_send_topic(self->client, py_channel->state, explicit);
+
+    Py_RETURN_NONE;
+}
+
 static PyObject *py_client_send_banlist(PyClientObject *self, PyChannelStateObject *py_channel)
 {
     if (!PyObject_TypeCheck(py_channel, &PyChannelStateType)) {
@@ -1151,6 +1169,9 @@ static PyMethodDef py_client_methods[] = {
     { "send_state", (PyCFunction)py_client_send_state,
         METH_O,
         "Send a network state to a client." },
+    { "send_topic", (PyCFunction)py_client_send_topic,
+        METH_VARARGS,
+        "Send the topic of a channel to the client." },
     { "send_state_diff", (PyCFunction)py_client_send_state_diff,
         METH_VARARGS,
         "Send the diff between two states to a client." },

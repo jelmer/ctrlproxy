@@ -372,6 +372,14 @@ class ClientTests(unittest.TestCase):
         c.send_channel_state_diff(ch1, ch2)
         self.assertEquals([], t.str_lines())
 
+    def test_send_topic(self):
+        t = DummyTransport()
+        c = irc.Client(t, "myorigin", "description")
+        ch = irc.ChannelState("#ch")
+        c.send_topic(ch, False)
+        self.assertEquals([], t.str_lines())
+        c.send_topic(ch, True)
+        self.assertEquals([':myorigin 331 * #ch :No topic set'], t.str_lines())
 
 
 class ClientSendStateTests(unittest.TestCase):
