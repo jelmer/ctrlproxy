@@ -1037,6 +1037,18 @@ static PyObject *py_client_send_luserchannels(PyClientObject *self, PyObject *ar
     Py_RETURN_NONE;
 }
 
+static PyObject *py_client_send_netsplit(PyClientObject *self, PyObject *py_server)
+{
+    if (!PyString_Check(py_server)) {
+        PyErr_SetNone(PyExc_TypeError);
+        return NULL;
+    }
+
+    client_send_netsplit(self->client, PyString_AsString(py_server));
+
+    Py_RETURN_NONE;
+}
+
 static PyMethodDef py_client_methods[] = {
     { "set_charset", (PyCFunction)py_client_set_charset, 
         METH_VARARGS,
@@ -1055,6 +1067,8 @@ static PyMethodDef py_client_methods[] = {
     { "send_luserchannels", (PyCFunction)py_client_send_luserchannels,
         METH_O,
         "Send number of user channels to client." },
+    { "send_netsplit", (PyCFunction)py_client_send_netsplit,
+        METH_O, "Send netsplit to a client." },
     { NULL }
 };
 
@@ -1252,7 +1266,11 @@ static void py_log_client(enum log_level level, const struct irc_client *client,
     PyObject *self, *ret;
     self = client->private_data;
     ret = PyObject_CallMethod(self, "log", "is", level, text);
-    Py_XDECREF(ret);
+    if (ret == NULL) {
+        PyErr_Clear(); /* FIXME */
+        return;
+    }
+    Py_DECREF(ret);
 }
 
 static int py_process_to_client(struct irc_client *client, const struct irc_line *line)

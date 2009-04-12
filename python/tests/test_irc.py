@@ -325,6 +325,12 @@ class ClientTests(unittest.TestCase):
         self.assertEquals([':myorigin 254 * 42 :channels formed'],
                 t.str_lines())
 
+    def test_send_netsplit_none(self):
+        t = DummyTransport()
+        c = irc.Client(t, "myorigin", "description")
+        c.send_netsplit("myserver")
+        self.assertEquals([], t.str_lines())
+
 
 class ClientSendStateTests(unittest.TestCase):
 
@@ -334,6 +340,9 @@ class ClientSendStateTests(unittest.TestCase):
         self.client = irc.Client(self.transport, "myorigin", "description")
         self.state = irc.NetworkState("nick", "user", "host")
 
+    def assertLines(self, lines):
+        self.assertEquals(lines, self.transport.str_lines())
+
     def test_empty(self):
         self.client.send_state(self.state)
-        self.assertEquals([], self.transport._sent_lines)
+        self.assertLines([])

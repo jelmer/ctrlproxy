@@ -790,6 +790,9 @@ void client_send_netsplit(struct irc_client *c, const char *lost_server)
 	char *reason;
 	GList *gl;
 
+	if (s == NULL)
+		return;
+
 	/* Spoof a netsplit */
 	reason = g_strdup_printf("%s %s", get_my_hostname(), lost_server);
 
