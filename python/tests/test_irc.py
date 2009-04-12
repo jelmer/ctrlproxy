@@ -346,6 +346,14 @@ class ClientTests(unittest.TestCase):
         self.assertEquals([':myorigin 368 * #ch :End of channel ban list'],
             t.str_lines())
 
+    def test_send_nameslist(self):
+        t = DummyTransport()
+        c = irc.Client(t, "myorigin", "description")
+        ch = irc.ChannelState("#ch")
+        c.send_nameslist(ch)
+        self.assertEquals([':myorigin 366 * #ch :End of /NAMES list'],
+            t.str_lines())
+
 
 class ClientSendStateTests(unittest.TestCase):
 
