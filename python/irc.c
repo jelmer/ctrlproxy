@@ -369,6 +369,22 @@ static int py_channel_state_set_topic_time(PyChannelStateObject *self, PyObject 
     return 0;
 }
 
+static int py_channel_state_set_time(PyChannelStateObject *self, PyObject *value, void *closure)
+{
+    if (!PyInt_Check(value) && !PyLong_Check(value)) {
+        PyErr_SetNone(PyExc_TypeError);
+        return -1;
+    }
+
+    if (PyInt_Check(value))
+        self->state->creation_time = PyInt_AsLong(value);
+    if (PyLong_Check(value))
+        self->state->creation_time = PyLong_AsLong(value);
+
+    return 0;
+}
+
+
 
 static PyObject *py_channel_state_get_modes(PyChannelStateObject *self, void *closure)
 {
@@ -493,7 +509,9 @@ static PyGetSetDef py_channel_state_getset[] = {
     { "topic_set_time", (getter)py_channel_state_get_topic_time, 
         (setter)py_channel_state_set_topic_time,
         "Time the topic was set." },
-    { "creation_time", (getter)py_channel_state_get_time, NULL,
+    { "creation_time", 
+        (getter)py_channel_state_get_time, 
+        (setter)py_channel_state_set_time,
         "Timestamp when the channel was created" },
     { "modes", (getter)py_channel_state_get_modes, NULL,
         "Modes" },
