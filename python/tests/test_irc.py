@@ -364,6 +364,15 @@ class ClientTests(unittest.TestCase):
             ':myorigin 366 * #ch :End of /NAMES list'],
             t.str_lines())
 
+    def test_send_channel_state_diff(self):
+        t = DummyTransport()
+        c = irc.Client(t, "myorigin", "description")
+        ch1 = irc.ChannelState("#ch")
+        ch2 = irc.ChannelState("#ch")
+        c.send_channel_state_diff(ch1, ch2)
+        self.assertEquals([], t.str_lines())
+
+
 
 class ClientSendStateTests(unittest.TestCase):
 
@@ -378,4 +387,8 @@ class ClientSendStateTests(unittest.TestCase):
 
     def test_empty(self):
         self.client.send_state(self.state)
+        self.assertLines([])
+
+    def test_empty_diff(self):
+        self.client.send_state_diff(self.state, self.state)
         self.assertLines([])

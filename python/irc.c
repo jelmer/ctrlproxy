@@ -995,6 +995,24 @@ static PyObject *py_client_send_state(PyClientObject *self, PyNetworkStateObject
     Py_RETURN_NONE;
 }
 
+static PyObject *py_client_send_state_diff(PyClientObject *self, PyObject *args)
+{
+    PyNetworkStateObject *state1, *state2;
+
+    if (!PyArg_ParseTuple(args, "OO", &state1, &state2))
+        return NULL;
+
+    if (!PyObject_TypeCheck(state1, &PyNetworkStateType) || 
+        !PyObject_TypeCheck(state2, &PyNetworkStateType)) {
+        PyErr_SetNone(PyExc_TypeError);
+        return NULL;
+    }
+
+    client_send_state_diff(self->client, state1->state, state2->state);
+
+    Py_RETURN_NONE;
+}
+
 static PyObject *py_client_send_motd(PyClientObject *self, PyObject *py_motd)
 {
     char **motd;
@@ -1062,6 +1080,27 @@ static PyObject *py_client_send_channel_state(PyClientObject *self, PyChannelSta
     Py_RETURN_NONE;
 }
 
+static PyObject *py_client_send_channel_state_diff(PyClientObject *self, PyObject *args)
+{
+    PyChannelStateObject *py_channel1, *py_channel2;
+
+    if (!PyArg_ParseTuple(args, "OO", &py_channel1, &py_channel2))
+        return NULL;
+
+    if (!PyObject_TypeCheck(py_channel1, &PyChannelStateType) || 
+        !PyObject_TypeCheck(py_channel2, &PyChannelStateType)) {
+        PyErr_SetNone(PyExc_TypeError);
+        return NULL;
+    }
+
+    client_send_channel_state_diff(self->client, py_channel1->state,
+                                   py_channel2->state);
+
+    Py_RETURN_NONE;
+}
+
+
+
 static PyObject *py_client_send_nameslist(PyClientObject *self, PyChannelStateObject *py_channel)
 {
     if (!PyObject_TypeCheck(py_channel, &PyChannelStateType)) {
@@ -1112,6 +1151,9 @@ static PyMethodDef py_client_methods[] = {
     { "send_state", (PyCFunction)py_client_send_state,
         METH_O,
         "Send a network state to a client." },
+    { "send_state_diff", (PyCFunction)py_client_send_state_diff,
+        METH_VARARGS,
+        "Send the diff between two states to a client." },
     { "send_motd", (PyCFunction)py_client_send_motd,
         METH_O,
         "Send a MOTD to a client." },
@@ -1124,6 +1166,9 @@ static PyMethodDef py_client_methods[] = {
     { "send_channel_state", (PyCFunction)py_client_send_channel_state,
         METH_O,
         "Send the state of a channel to a client." },
+    { "send_channel_state_diff", (PyCFunction)py_client_send_channel_state_diff,
+        METH_VARARGS,
+        "Send the diff between two channel states to a client." },
     { "send_nameslist", (PyCFunction)py_client_send_nameslist,
         METH_O,
         "Send the names for a channel to a client." },
