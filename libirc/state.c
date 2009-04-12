@@ -302,16 +302,21 @@ struct channel_nick *find_channel_nick(struct irc_channel_state *c,
 {
 	GList *l;
 	const char *realname = name;
+	const struct irc_network_info *info;
+
 	g_assert(name);
 	g_assert(c != NULL);
+	if (c->network == NULL)
+		info = NULL;
+	else
+		info = c->network->info;
 
-	g_assert(c->network);
-	if (is_prefix(realname[0], c->network->info))
+	if (is_prefix(realname[0], info))
 		realname++;
 
 	for (l = c->nicks; l; l = g_list_next(l)) {
 		struct channel_nick *n = (struct channel_nick *)l->data;
-		if (!irccmp(c->network->info, n->global_nick->nick, realname))
+		if (!irccmp(info, n->global_nick->nick, realname))
 			return n;
 	}
 

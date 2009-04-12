@@ -571,15 +571,18 @@ gboolean is_channelname(const char *name, const struct irc_network_info *n)
 gboolean is_prefix(char p, const struct irc_network_info *n)
 {
 	const char *pref_end;
+	const char *prefix;
 
 	if (p == 0)
 		return FALSE;
 	
-	g_assert(n != NULL);
-	g_assert(n->prefix != NULL);
+	if (n == NULL)
+		prefix = DEFAULT_PREFIX;
+	else
+		prefix = n->prefix;
 
-	pref_end = strchr(n->prefix, ')');
-	if (!pref_end)pref_end = n->prefix; else pref_end++;
+	pref_end = strchr(prefix, ')');
+	if (!pref_end)pref_end = prefix; else pref_end++;
 
 	if (strchr(pref_end, p)) return TRUE;
 	return FALSE;

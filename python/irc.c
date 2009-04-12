@@ -34,6 +34,7 @@ static void g_error_set_python(GError **error)
 }
 
 static const struct irc_client_callbacks py_client_callbacks;
+static PyTypeObject PyNetworkNickType;
 static struct irc_transport *wrap_py_transport(PyObject *obj);
 const char *get_my_hostname() { return NULL; /* FIXME */ }
 void log_global(enum log_level ll, const char *fmt, ...) { /* FIXME */}
@@ -58,6 +59,14 @@ typedef struct {
     struct irc_network_state *state;
     PyObject *parent;
 } PyNetworkStateObject;
+
+typedef struct {
+    PyObject_HEAD
+    PyObject *parent;
+    struct network_nick *nick;
+} PyNetworkNickObject;
+
+
 
 static struct irc_line *PyObject_AsLine(PyObject *obj);
 
@@ -512,11 +521,67 @@ static int py_channel_nick_dict_dealloc(PyChannelNickDictObject *self)
     return 0;
 }
 
+static Py_ssize_t py_channel_nick_dict_len(PyChannelNickDictObject *self)
+{
+    return g_list_length(self->parent->state->nicks);
+}
+
+static struct channel_nick *py_channel_nick_dict_find_pyobject(PyChannelNickDictObject *self, PyObject *py_name)
+{
+    struct channel_nick *cn;
+    char *name;
+    if (!PyString_Check(py_name)) {
+        PyErr_SetNone(PyExc_KeyError);
+        return NULL;
+    }
+
+    name = PyString_AsString(py_name);
+
+    cn = find_channel_nick(self->parent->state, name);
+
+    if (cn == NULL) {
+        PyErr_SetNone(PyExc_KeyError);
+        return NULL;
+    }
+
+    return cn;
+}
+
+static PyObject *py_channel_nick_dict_subscript(PyChannelNickDictObject *self, PyObject *py_name)
+{
+    PyNetworkNickObject *ret;
+    struct channel_nick *cn;
+
+    cn = py_channel_nick_dict_find_pyobject(self, py_name);
+    if (cn == NULL) {
+        /* py_channel_nick_dict_find_pyobject already sets error */
+        return NULL;
+    }
+
+    ret = PyObject_New(PyNetworkNickObject, &PyNetworkNickType);
+    if (ret == NULL) {
+        PyErr_NoMemory();
+        return NULL;
+    }
+
+    Py_INCREF(self->parent);
+    ret->parent = (PyObject *)self->parent;
+    ret->nick = cn->global_nick;
+
+    return (PyObject *)ret;
+}
+
+static PyMappingMethods py_channel_nick_dict_mapping = {
+    .mp_length = (lenfunc)py_channel_nick_dict_len,
+    .mp_subscript = (binaryfunc)py_channel_nick_dict_subscript,
+};
+
 PyTypeObject PyChannelNickDictType = {
     .tp_name = "ChannelNickDict",
     .tp_dealloc = (destructor)py_channel_nick_dict_dealloc,
     .tp_flags = Py_TPFLAGS_DEFAULT,
-    .tp_basicsize = sizeof(PyChannelNickDictObject)
+    .tp_basicsize = sizeof(PyChannelNickDictObject),
+    .tp_as_mapping = &py_channel_nick_dict_mapping,
 };
 
 static PyObject *py_channel_state_get_nicks(PyChannelStateObject *self, void *closure)
@@ -615,12 +680,6 @@ static PyChannelStateObject *py_channel_state_from_ptr(PyObject *parent, struct 
     ret->state = channel;
     return ret;
 }
-
-typedef struct {
-    PyObject_HEAD
-    PyObject *parent;
-    struct network_nick *nick;
-} PyNetworkNickObject;
 
 static int py_network_nick_dealloc(PyNetworkNickObject *self)
 {
@@ -770,7 +829,7 @@ static PyGetSetDef py_network_nick_getsetters[] = {
     { NULL }
 };
 
-PyTypeObject PyNetworkNickType = {
+static PyTypeObject PyNetworkNickType = {
     .tp_name = "Nick",
     .tp_new = py_network_nick_new,
     .tp_dealloc = (destructor)py_network_nick_dealloc,
