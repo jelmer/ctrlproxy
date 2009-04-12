@@ -1234,12 +1234,26 @@ static PyObject *py_client_get_default_origin(PyClientObject *self, void *closur
     return PyString_FromString(self->client->default_origin);
 }
 
+static PyObject *py_client_get_last_ping(PyClientObject *self, void *closure)
+{
+    return PyLong_FromLong(self->client->last_ping);
+}
+
+static PyObject *py_client_get_last_pong(PyClientObject *self, void *closure)
+{
+    return PyLong_FromLong(self->client->last_pong);
+}
+
 static PyGetSetDef py_client_getsetters[] = {
     { "state", (getter)py_client_get_state, NULL, "State" },
     { "default_target", (getter)py_client_get_default_target, NULL, "Default target" },
     { "own_hostmask", (getter)py_client_get_own_hostmask, NULL, "Own hostmask" },
     { "default_origin", (getter)py_client_get_default_origin, NULL,
         "Default origin that is used to send lines to this client." },
+    { "last_ping", (getter)py_client_get_last_ping, NULL,
+        "Timestamp of the last moment this client pinged the server." },
+    { "last_pong", (getter)py_client_get_last_pong, NULL,
+        "Timestamp of the last pong that was received." },
     { NULL }
 };
 

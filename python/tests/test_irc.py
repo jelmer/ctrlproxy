@@ -381,6 +381,16 @@ class ClientTests(unittest.TestCase):
         c.send_topic(ch, True)
         self.assertEquals([':myorigin 331 * #ch :No topic set'], t.str_lines())
 
+    def test_last_ping(self):
+        t = DummyTransport()
+        c = irc.Client(t, "myorigin", "description")
+        self.assertEquals(0, c.last_ping)
+
+    def test_last_pong(self):
+        t = DummyTransport()
+        c = irc.Client(t, "myorigin", "description")
+        self.assertEquals(0, c.last_pong)
+
 
 class ClientSendStateTests(unittest.TestCase):
 
