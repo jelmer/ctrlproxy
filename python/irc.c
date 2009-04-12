@@ -22,6 +22,17 @@
 #include "ctrlproxy.h"
 #include "redirect.h"
 
+static void g_error_set_python(GError **error)
+{
+    PyObject *exception_type, *exception_value, *exception_tb;
+
+    /* FIXME */
+
+    PyErr_Fetch(&exception_type, &exception_value, &exception_tb);
+
+    g_set_error(error, g_quark_from_static_string("libirc-python-error"), 1, PyString_AsString(exception_value));
+}
+
 static const struct irc_client_callbacks py_client_callbacks;
 static struct irc_transport *wrap_py_transport(PyObject *obj);
 const char *get_my_hostname() { return NULL; /* FIXME */ }
@@ -968,6 +979,7 @@ static PyObject *py_client_send_line(PyClientObject *self, PyObject *args)
 {
     PyObject *py_line;
     struct irc_line *l;
+    GError *error = NULL;
     if (!PyArg_ParseTuple(args, "O", &py_line))
         return NULL;
 
@@ -975,8 +987,9 @@ static PyObject *py_client_send_line(PyClientObject *self, PyObject *args)
     if (l == NULL)
         return NULL;
 
-    if (!client_send_line(self->client, l)) {
-        PyErr_SetString(PyExc_RuntimeError, "Error while sending line");
+    if (!client_send_line(self->client, l, &error)) {
+        PyErr_Format(PyExc_RuntimeError, "Error while sending line: %s", error->message);
+        g_error_free(error);
         free_line(l);
         return NULL;
     }
@@ -1353,7 +1366,7 @@ static void py_transport_disconnect(void *data)
     Py_XDECREF(ret);
 }
 
-static gboolean py_transport_send_line(struct irc_transport *transport, const struct irc_line *l)
+static gboolean py_transport_send_line(struct irc_transport *transport, const struct irc_line *l, GError **error)
 {
     PyObject *ret;
     PyLineObject *py_line;
@@ -1365,6 +1378,7 @@ static gboolean py_transport_send_line(struct irc_transport *transport, const st
     Py_DECREF(py_line);
 
     if (ret == NULL) {
+        g_error_set_python(error);
         return FALSE;
     }
 

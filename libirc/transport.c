@@ -78,16 +78,18 @@ gboolean transport_set_charset(struct irc_transport *transport, const char *name
 }
 
 gboolean transport_send_line(struct irc_transport *transport, 
-							 const struct irc_line *l)
+							 const struct irc_line *l, GError **error)
 {
-	if (!transport->backend_ops->is_connected(transport->backend_data))
+	if (!transport->backend_ops->is_connected(transport->backend_data)) {
+		g_set_error_literal(error, IRC_TRANSPORT_ERROR, IRC_TRANSPORT_ERROR_DISCONNECTED,
+							"Transport is disconnected");
 		return FALSE;
+	}
 
-	return transport->backend_ops->send_line(transport, l);
-
+	return transport->backend_ops->send_line(transport, l, error);
 }
 
-gboolean transport_send_response(struct irc_transport *transport, const char *from, const char *to, int response, ...) 
+gboolean transport_send_response(struct irc_transport *transport, GError **error, const char *from, const char *to, int response, ...) 
 {
 	struct irc_line *l;
 	gboolean ret;
@@ -99,14 +101,14 @@ gboolean transport_send_response(struct irc_transport *transport, const char *fr
 	l = virc_parse_response(from, to, response, ap);
 	va_end(ap);
 
-	ret = transport_send_line(transport, l);
+	ret = transport_send_line(transport, l, error);
 
 	free_line(l); 
 
 	return ret;
 }
 
-gboolean transport_send_args(struct irc_transport *transport, ...) 
+gboolean transport_send_args(struct irc_transport *transport, GError **error, ...) 
 {
 	struct irc_line *l;
 	gboolean ret;
@@ -114,11 +116,11 @@ gboolean transport_send_args(struct irc_transport *transport, ...)
 
 	g_assert(transport != NULL);
 
-	va_start(ap, transport);
+	va_start(ap, error);
 	l = virc_parse_line(NULL, ap);
 	va_end(ap);
 
-	ret = transport_send_line(transport, l);
+	ret = transport_send_line(transport, l, error);
 
 	free_line(l); 
 
@@ -136,4 +138,9 @@ void irc_transport_set_callbacks(struct irc_transport *transport, const struct i
 	transport->callbacks = callbacks;
 
 	transport->backend_ops->activate(transport);
+}
+
+GQuark irc_transport_error_quark(void)
+{
+	return g_quark_from_static_string("irc-transport-error-quark");
 }

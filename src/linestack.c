@@ -243,7 +243,7 @@ struct send_line_privdata {
 static gboolean send_line(struct irc_line *l, time_t t, void *_privdata)
 {
 	struct send_line_privdata *privdata = _privdata;
-	return client_send_line(privdata->client, l);
+	return client_send_line(privdata->client, l, NULL);
 }
 
 static gboolean send_line_timed(struct irc_line *l, time_t t, void *_privdata)
@@ -255,11 +255,11 @@ static gboolean send_line_timed(struct irc_line *l, time_t t, void *_privdata)
 		l->argc > 2) {
 		struct irc_line *nl = line_prefix_time(l, t+privdata->time_offset);
 		gboolean ret;
-		ret = client_send_line(privdata->client, nl);
+		ret = client_send_line(privdata->client, nl, NULL);
 		free_line(nl);
 		return ret;
 	} else {
-		return client_send_line(privdata->client, l);
+		return client_send_line(privdata->client, l, NULL);
 	}
 }
 
@@ -277,7 +277,7 @@ static gboolean send_line_timed_dataonly(struct irc_line *l, time_t t, void *_pr
 		return TRUE;
 
 	nl = line_prefix_time(l, t+privdata->time_offset);
-	ret = client_send_line(privdata->client, nl);
+	ret = client_send_line(privdata->client, nl, NULL);
 	free_line(nl);
 	return ret;
 }
@@ -293,7 +293,7 @@ static gboolean send_line_dataonly(struct irc_line *l, time_t t, void *_privdata
 	if (l->argc <= 2)
 		return TRUE;
 
-	return client_send_line(privdata->client, l);
+	return client_send_line(privdata->client, l, NULL);
 }
 
 gboolean linestack_send(struct linestack_context *ctx, struct linestack_marker *mf, struct linestack_marker *mt, struct irc_client *c, gboolean dataonly, gboolean timed, int time_offset)

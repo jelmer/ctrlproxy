@@ -108,7 +108,7 @@ gboolean client_send_response(struct irc_client *c, int response, ...)
 	l = virc_parse_response(c->default_origin, client_get_default_target(c), response, ap);
 	va_end(ap);
 
-	ret = client_send_line(c, l);
+	ret = client_send_line(c, l, NULL);
 
 	free_line(l);
 
@@ -132,7 +132,7 @@ gboolean client_send_args_ex(struct irc_client *c, const char *hm, ...)
 	l = virc_parse_line(hm, ap);
 	va_end(ap);
 
-	ret = client_send_line(c, l);
+	ret = client_send_line(c, l, NULL);
 
 	free_line(l);
 
@@ -156,7 +156,7 @@ gboolean client_send_args(struct irc_client *c, ...)
 	l = virc_parse_line(c->default_origin, ap);
 	va_end(ap);
 
-	ret = client_send_line(c, l);
+	ret = client_send_line(c, l, NULL);
 
 	free_line(l); 
 
@@ -169,10 +169,13 @@ gboolean client_send_args(struct irc_client *c, ...)
  * @param l Line to send
  * @return Whether the line was sent successfully
  */
-gboolean client_send_line(struct irc_client *c, const struct irc_line *l)
+gboolean client_send_line(struct irc_client *c, const struct irc_line *l, GError **error)
 {
-	if (c->connected == FALSE)
+	if (c->connected == FALSE) {
+		g_set_error_literal(error, IRC_CLIENT_ERROR, IRC_CLIENT_ERROR_DISCONNECTED, 
+							"Not connected.");
 		return FALSE;
+	}
 
 	g_assert(c != NULL);
 	g_assert(l != NULL);
@@ -182,7 +185,7 @@ gboolean client_send_line(struct irc_client *c, const struct irc_line *l)
 
 	state_handle_data(c->state, l);
 
-	return transport_send_line(c->transport, l);
+	return transport_send_line(c->transport, l, error);
 }
 
 /*
@@ -206,7 +209,7 @@ void client_disconnect(struct irc_client *c, const char *reason)
 
 	client_log(LOG_INFO, c, "Removed client");
 
-	transport_send_args(c->transport, "ERROR", reason, NULL);
+	transport_send_args(c->transport, NULL, "ERROR", reason, NULL);
 
 	irc_transport_disconnect(c->transport);
 
@@ -667,7 +670,7 @@ void client_send_nameslist(struct irc_client *c,
 		if (l == NULL || !line_add_arg(l, arg)) {
 			char *tmp;
 			if (l != NULL) {
-				client_send_line(c, l);
+				client_send_line(c, l, NULL);
 				free_line(l);
 			}
 
@@ -684,7 +687,7 @@ void client_send_nameslist(struct irc_client *c,
 	}
 
 	if (l != NULL) {
-		client_send_line(c, l);
+		client_send_line(c, l, NULL);
 		free_line(l);
 	}
 
@@ -749,7 +752,7 @@ void client_send_channel_mode(struct irc_client *c, struct irc_channel_state *ch
 				l->args[4+j] = NULL;
 			}
 			l->argc = 4+j;
-			client_send_line(c, l);
+			client_send_line(c, l, NULL);
 			free_line(l);
 		}
 
@@ -806,5 +809,10 @@ void client_send_netsplit(struct irc_client *c, const char *lost_server)
 	}
 
 	g_free(reason);
+}
+
+GQuark irc_client_error_quark (void)
+{
+  return g_quark_from_static_string ("irc-client-error-quark");
 }
 

@@ -136,7 +136,7 @@ gboolean daemon_backend_authenticate(struct daemon_backend *backend,
 
 	backend->authenticated = FALSE;
 
-	if (!transport_send_args(backend->transport, "PASS", password, NULL))
+	if (!transport_send_args(backend->transport, NULL, "PASS", password, NULL))
 		return FALSE;
 
 	/* TODO: Register timeout and raise error if backend didn't respond in time */
@@ -153,5 +153,5 @@ void daemon_backend_kill(struct daemon_backend *backend)
 
 gboolean daemon_backend_send_line (struct daemon_backend *backend, const struct irc_line *line)
 {
-	return transport_send_line(backend->transport, line);
+	return transport_send_line(backend->transport, line, NULL);
 }

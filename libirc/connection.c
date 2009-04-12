@@ -179,7 +179,7 @@ static struct tcp_server_config *network_get_next_tcp_server(struct irc_network 
 }
 
 static gboolean network_send_line_direct(struct irc_network *s, struct irc_client *c, 
-										 const struct irc_line *ol)
+										 const struct irc_line *ol, GError **error)
 {
 	struct irc_line nl, *l;
 	struct network_config *nc = s->private_data;
@@ -205,7 +205,7 @@ static gboolean network_send_line_direct(struct irc_network *s, struct irc_clien
 	} else {
 		if (s->connection.transport == NULL)
 			return FALSE;
-		return transport_send_line(s->connection.transport, l);
+		return transport_send_line(s->connection.transport, l, error);
 	}
 }
 
@@ -234,7 +234,7 @@ gboolean network_send_line(struct irc_network *s, struct irc_client *c,
 		}
 	}
 
-	return network_send_line_direct(s, c, ol);
+	return network_send_line_direct(s, c, ol, NULL);
 }
 
 /**

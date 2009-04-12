@@ -66,9 +66,9 @@ void daemon_client_forward_credentials(struct daemon_client *dc)
 	g_assert(dc->backend != NULL);
 
 	if (dc->servername != NULL)
-		transport_send_args(dc->backend->transport, "CONNECT", dc->servername, dc->servicename, NULL);
-	transport_send_args(dc->backend->transport, "USER", dc->login_details->username, dc->login_details->mode, dc->login_details->unused, dc->login_details->realname, NULL);
-	transport_send_args(dc->backend->transport, "NICK", dc->login_details->nick, NULL);
+		transport_send_args(dc->backend->transport, NULL, "CONNECT", dc->servername, dc->servicename, NULL);
+	transport_send_args(dc->backend->transport, NULL, "USER", dc->login_details->username, dc->login_details->mode, dc->login_details->unused, dc->login_details->realname, NULL);
+	transport_send_args(dc->backend->transport, NULL, "NICK", dc->login_details->nick, NULL);
 
 	daemon_clients = g_list_append(daemon_clients, dc);
 }
@@ -77,7 +77,7 @@ void daemon_clients_exit()
 {
 	while (daemon_clients != NULL) {
 		struct daemon_client *dc = daemon_clients->data;
-		transport_send_args(dc->client_transport, "ERROR", "Server exiting", NULL);
+		transport_send_args(dc->client_transport, NULL, "ERROR", "Server exiting", NULL);
 		daemon_client_kill(dc);
 	}
 }

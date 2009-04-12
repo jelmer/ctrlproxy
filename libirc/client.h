@@ -87,8 +87,7 @@ G_MODULE_EXPORT G_GNUC_NULL_TERMINATED gboolean client_send_args_ex(struct irc_c
 											 const char *hm, ...);
 G_MODULE_EXPORT G_GNUC_NULL_TERMINATED gboolean client_send_response(struct irc_client *c, 
 											  int response, ...);
-G_MODULE_EXPORT gboolean client_send_line(struct irc_client *c, 
-										  const struct irc_line *);
+G_MODULE_EXPORT gboolean client_send_line(struct irc_client *c, const struct irc_line *, GError **error);
 G_MODULE_EXPORT gboolean client_set_charset(struct irc_client *c, const char *name);
 G_MODULE_EXPORT const char *client_get_default_target(struct irc_client *c);
 G_MODULE_EXPORT const char *client_get_own_hostmask(struct irc_client *c);
@@ -119,5 +118,9 @@ G_MODULE_EXPORT void client_log(enum log_level, const struct irc_client *c, cons
 G_MODULE_EXPORT void client_send_netsplit(struct irc_client *c, const char *lost_server);
 G_MODULE_EXPORT void clients_send_netsplit(GList *clients, const char *lost_server);
 G_MODULE_EXPORT void free_login_details(struct irc_login_details *details);
+
+#define IRC_CLIENT_ERROR irc_client_error_quark()
+#define IRC_CLIENT_ERROR_DISCONNECTED 1
+GQuark irc_client_error_quark (void);
 
 #endif /* __LIBIRC_CLIENT_H__ */

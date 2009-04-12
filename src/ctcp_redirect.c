@@ -109,7 +109,7 @@ gboolean ctcp_network_redirect_response(struct irc_network *n, const struct irc_
 		if (strcmp(req->command, command) != 0)
 			continue;
 
-		client_send_line(req->client, l);
+		client_send_line(req->client, l, NULL);
 
 		g_free(req->command);
 		g_free(req->destination);

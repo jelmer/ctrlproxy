@@ -267,6 +267,9 @@ class TransportTests(unittest.TestCase):
 class DummyTransport(object):
     """Trivial Transport."""
 
+    def __init__(self):
+        self._sent_lines = []
+
     def send_line(self, line):
         self._sent_lines.append(line)
 
@@ -275,3 +278,13 @@ class ClientTests(unittest.TestCase):
 
     def test_create(self):
         c = irc.Client(DummyTransport(), "myorigin", "description")
+
+    def test_state(self):
+        c = irc.Client(DummyTransport(), "myorigin", "description")
+        self.assertTrue(c.state is not None)
+
+    def test_send_line(self):
+        t = DummyTransport()
+        c = irc.Client(t, "myorigin", "description")
+        c.send_line(":server NOTICE mynick :bla")
+        self.assertEquals(1, len(t._sent_lines))

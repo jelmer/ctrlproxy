@@ -238,7 +238,7 @@ static gboolean backend_error(struct daemon_backend *backend, const char *error_
 	struct daemon_client *cd = backend->userdata;
 	listener_log(LOG_INFO, cd->listener, "%s", error_message);
 	if (cd->client_transport != NULL)
-		transport_send_args(cd->client_transport, "ERROR", error_message, NULL);
+		transport_send_args(cd->client_transport, NULL, "ERROR", error_message, NULL);
 	daemon_client_kill(cd);
 	return FALSE;
 }
@@ -259,7 +259,7 @@ static gboolean backend_recv(struct daemon_backend *backend, const struct irc_li
 	g_assert(line != NULL);
 
 	if (cd->client_transport != NULL)
-		return transport_send_line(cd->client_transport, line);
+		return transport_send_line(cd->client_transport, line, NULL);
 	return TRUE;
 }
 
@@ -330,7 +330,7 @@ static gboolean daemon_socks_connect_fqdn (struct pending_client *cl, const char
 	irc_transport_set_callbacks(cd->client_transport, &daemon_client_callbacks, cd);
 
 	snprintf(portstr, sizeof(portstr), "%d", port);
-	transport_send_args(cd->backend->transport, "CONNECT", hostname, portstr, NULL);
+	transport_send_args(cd->backend->transport, NULL, "CONNECT", hostname, portstr, NULL);
 
 	g_assert(strlen(hostname) < 0x100);
 
@@ -346,7 +346,7 @@ static void plain_handle_auth_finish(struct daemon_backend *backend, gboolean ac
 	struct daemon_client *dc = (struct daemon_client *)backend->userdata;
 
 	if (!accepted) {
-		transport_send_response(dc->client_transport, get_my_hostname(), "*", 
+		transport_send_response(dc->client_transport, NULL, get_my_hostname(), "*", 
 								ERR_PASSWDMISMATCH, "Password invalid", NULL);
 		daemon_client_kill(dc);
 	} else {

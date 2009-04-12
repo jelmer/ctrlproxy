@@ -36,7 +36,7 @@ static gboolean check_highlight(struct irc_line *l, time_t t, void *userdata)
 	
 	for (i = 0; matches && matches[i]; i++) {
 		if (strstr(l->args[2], matches[i]) != NULL) {
-			return client_send_line(c, l);
+			return client_send_line(c, l, NULL);
 		}
 	}
 

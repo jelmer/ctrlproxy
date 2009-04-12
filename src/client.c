@@ -389,7 +389,7 @@ static gboolean client_forward_from_server(struct irc_client *c, const struct ir
 		nl = NULL;
 	}
 
-	ret = client_send_line(c, l);
+	ret = client_send_line(c, l, NULL);
 	free_line(nl);
 	return ret;
 }

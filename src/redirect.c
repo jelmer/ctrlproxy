@@ -90,7 +90,7 @@ gboolean redirect_response(struct query_stack *stack,
 
 	c = (struct irc_client *)query_stack_match_response(stack, l);
 	if (c != NULL) {
-		client_send_line(c, l);
+		client_send_line(c, l, NULL);
 		return TRUE;
 	}
 	
