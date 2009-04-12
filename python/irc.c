@@ -1037,6 +1037,19 @@ static PyObject *py_client_send_channel_mode(PyClientObject *self, PyChannelStat
     Py_RETURN_NONE;
 }
 
+
+static PyObject *py_client_send_banlist(PyClientObject *self, PyChannelStateObject *py_channel)
+{
+    if (!PyObject_TypeCheck(py_channel, &PyChannelStateType)) {
+        PyErr_SetNone(PyExc_TypeError);
+        return NULL;
+    }
+
+    client_send_banlist(self->client, py_channel->state);
+
+    Py_RETURN_NONE;
+}
+
 static PyObject *py_client_send_luserchannels(PyClientObject *self, PyObject *arg)
 {
     if (!PyInt_Check(arg)) {
@@ -1079,6 +1092,9 @@ static PyMethodDef py_client_methods[] = {
     { "send_channel_mode", (PyCFunction)py_client_send_channel_mode,
         METH_O,
         "Send the mode for a channel to a client." },
+    { "send_banlist", (PyCFunction)py_client_send_banlist,
+        METH_O,
+        "Send the banlist for a channel to a client." },
     { "send_luserchannels", (PyCFunction)py_client_send_luserchannels,
         METH_O,
         "Send number of user channels to client." },

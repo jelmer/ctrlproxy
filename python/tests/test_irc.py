@@ -338,6 +338,14 @@ class ClientTests(unittest.TestCase):
         c.send_channel_mode(ch)
         self.assertEquals([], t.str_lines())
 
+    def test_send_banlist(self):
+        t = DummyTransport()
+        c = irc.Client(t, "myorigin", "description")
+        ch = irc.ChannelState("#ch")
+        c.send_banlist(ch)
+        self.assertEquals([':myorigin 368 * #ch :End of channel ban list'],
+            t.str_lines())
+
 
 class ClientSendStateTests(unittest.TestCase):
 
