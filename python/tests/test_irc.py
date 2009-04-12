@@ -99,6 +99,12 @@ class ChannelStateTests(unittest.TestCase):
         s = irc.ChannelState("#foo")
         self.assertEquals(None, s.topic)
 
+    def test_set_topic(self):
+        s = irc.ChannelState("#foo")
+        s.topic = None
+        s.topic = "BLA"
+        self.assertEquals("BLA", s.topic)
+
     def test_get_topic_time(self):
         s = irc.ChannelState("#foo")
         self.assertEquals(0, s.topic_set_time)
@@ -389,6 +395,10 @@ class ClientTests(unittest.TestCase):
         self.assertEquals([], t.str_lines())
         c.send_topic(ch, True)
         self.assertEquals([':myorigin 331 * #ch :No topic set'], t.str_lines())
+        t._sent_lines = []
+        ch.topic = "LALALA"
+        c.send_topic(ch)
+        self.assertEquals([':myorigin 332 * #ch :LALALA'], t.str_lines())
 
     def test_last_ping(self):
         t = DummyTransport()

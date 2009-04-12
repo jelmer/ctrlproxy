@@ -335,6 +335,25 @@ static PyObject *py_channel_state_get_topic(PyChannelStateObject *self, void *cl
     return PyString_FromString(self->state->topic);
 }
 
+static int py_channel_state_set_topic(PyChannelStateObject *self, PyObject *value, void *closure)
+{
+    if (value != Py_None && !PyString_Check(value)) {
+        PyErr_SetNone(PyExc_TypeError);
+        return -1;
+    }
+
+    if (self->state->topic == NULL)
+        g_free(self->state->topic);
+
+    if (value == Py_None) {
+        self->state->topic = NULL;
+    } else {
+        self->state->topic = g_strdup(PyString_AsString(value));
+    }
+
+    return 0;
+}
+
 static PyObject *py_channel_state_get_modes(PyChannelStateObject *self, void *closure)
 {
     char *ret;
@@ -452,7 +471,8 @@ static PyObject *py_channel_state_get_time(PyChannelStateObject *self, void *clo
 static PyGetSetDef py_channel_state_getset[] = {
     { "name", (getter)py_channel_state_get_name, NULL, 
         "Name of the channel." },
-    { "topic", (getter)py_channel_state_get_topic, NULL,
+    { "topic", (getter)py_channel_state_get_topic, 
+               (setter)py_channel_state_set_topic,
         "Topic of the channel." },
     { "topic_set_time", (getter)py_channel_state_get_topic_time, NULL,
         "Time the topic was set." },
