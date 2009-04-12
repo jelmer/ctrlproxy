@@ -15,12 +15,17 @@
 <refsynopsisdiv>
 	<cmdsynopsis>
 		<command>ctrlproxy</command>
-		<arg choice="opt">-d file</arg>
-		<arg choice="opt">-l file</arg>
-		<arg choice="opt">-D</arg>
+		<arg choice="opt">-c, --config-dir=FILE</arg>
+		<arg choice="opt">--check-running</arg>
+		<arg choice="opt">-d, --debug-level=LEVEL</arg>
+		<arg choice="opt">-D, --daemon</arg>
+		<arg choice="opt">-i, --inetd-client=NETWORK</arg>
 		<arg choice="opt">--init</arg>
-		<arg choice="opt">-r file</arg>
-		<arg choice="opt">-v</arg>
+		<arg choice="opt">-l, --log=FILE</arg>
+		<arg choice="opt">-n, --no-timestamp</arg>
+		<arg choice="opt">--restricted</arg>
+		<arg choice="opt">-v, --version</arg>
+		<arg choice="opt">-?, --help</arg>
 	</cmdsynopsis>
 </refsynopsisdiv>
 
@@ -49,15 +54,16 @@ on the number of servers it is connected to.
 <para><command>ctrlproxy</command> recognizes the following command-line options</para>
 
 <variablelist>
-	<varlistentry><term>-i, --inetd-client=NETWORK</term>
-	<listitem><para>Add incoming client on stdin/stdout, connected
-	to the specified network. This can be used for inetd-like communication 
-	and testing.
-	</para></listitem>
+	<varlistentry><term>-c, --config-dir=DIR</term>
+	<listitem><para>Read configuration files from the specified directory <option>DIR</option> instead of from <filename>.ctrlproxy</filename> in the users' homedirectory.</para></listitem>
 	</varlistentry>
-		
-	<varlistentry><term>-d, --debugfile=FILE</term>
-	<listitem><para>Dump IRC traffic to specified file. 
+
+	<varlistentry><term>--check-running</term>
+	<listitem><para>Check whether ctrlproxy is running and exit</para></listitem>
+	</varlistentry>
+
+	<varlistentry><term>-d, --debug-level=LEVEL</term>
+	<listitem><para>Set the debug level to <option>LEVEL</option> 0-5.  5 is the most verbose.
 	Only useful for debugging purposes.</para></listitem>
 	</varlistentry>
 
@@ -65,12 +71,24 @@ on the number of servers it is connected to.
 	<listitem><para>Go to the background after the program has been started (daemon mode).</para></listitem>
 	</varlistentry>
 
-	<varlistentry><term>-c, --config-dir=DIR</term>
-		<listitem><para>Read configuration files from the specified directory <option>DIR</option> instead of from <filename>.ctrlproxy</filename> in the users' homedirectory.</para></listitem>
+	<varlistentry><term>-i, --inetd-client=NETWORK</term>
+	<listitem><para>Add incoming client on stdin/stdout, connected to the specified network <option>NETWORK</option>. This can be used for inetd-like communication and testing.</para></listitem>
+	</varlistentry>
+		
+	<varlistentry><term>--init</term>
+	<listitem><para>Create a new configuration file.</para></listitem>
 	</varlistentry>
 
-	<varlistentry><term>--init</term>
-		<listitem><para>Create a new configuration file.</para></listitem>
+	<varlistentry><term>-l, --log=FILE</term>
+	<listitem><para>Log ctrlproxy messages to specified file <option>FILE</option>.</para></listitem>
+	</varlistentry>
+
+	<varlistentry><term>-n, --no-timestamp</term>
+	<listitem><para>No timestamps in the logs.</para></listitem>
+	</varlistentry>
+
+	<varlistentry><term>--restricted</term>
+	<listitem><para>Restrict what a user can do</para></listitem>
 	</varlistentry>
 
 	<varlistentry><term>-v, --version</term>
@@ -79,14 +97,6 @@ on the number of servers it is connected to.
 
 	<varlistentry><term>-?, --help</term>
 	<listitem><para>Show help message with short argument information</para></listitem>
-	</varlistentry>
-
-	<varlistentry><term>-l, --log=FILE</term>
-	<listitem><para>Log ctrlproxy messages to specified file.</para></listitem>
-	</varlistentry>
-
-	<varlistentry><term>--usage</term>
-	<listitem><para>Display brief usage message</para></listitem>
 	</varlistentry>
 
 </variablelist>
