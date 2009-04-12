@@ -354,6 +354,16 @@ class ClientTests(unittest.TestCase):
         self.assertEquals([':myorigin 366 * #ch :End of /NAMES list'],
             t.str_lines())
 
+    def test_send_channel_state(self):
+        t = DummyTransport()
+        c = irc.Client(t, "myorigin", "description")
+        ch = irc.ChannelState("#ch")
+        c.send_channel_state(ch)
+        self.assertEquals([
+            'JOIN #ch', 
+            ':myorigin 366 * #ch :End of /NAMES list'],
+            t.str_lines())
+
 
 class ClientSendStateTests(unittest.TestCase):
 

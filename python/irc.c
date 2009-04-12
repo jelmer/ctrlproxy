@@ -1050,6 +1050,18 @@ static PyObject *py_client_send_banlist(PyClientObject *self, PyChannelStateObje
     Py_RETURN_NONE;
 }
 
+static PyObject *py_client_send_channel_state(PyClientObject *self, PyChannelStateObject *py_channel)
+{
+    if (!PyObject_TypeCheck(py_channel, &PyChannelStateType)) {
+        PyErr_SetNone(PyExc_TypeError);
+        return NULL;
+    }
+
+    client_send_channel_state(self->client, py_channel->state);
+
+    Py_RETURN_NONE;
+}
+
 static PyObject *py_client_send_nameslist(PyClientObject *self, PyChannelStateObject *py_channel)
 {
     if (!PyObject_TypeCheck(py_channel, &PyChannelStateType)) {
@@ -1109,6 +1121,9 @@ static PyMethodDef py_client_methods[] = {
     { "send_banlist", (PyCFunction)py_client_send_banlist,
         METH_O,
         "Send the banlist for a channel to a client." },
+    { "send_channel_state", (PyCFunction)py_client_send_channel_state,
+        METH_O,
+        "Send the state of a channel to a client." },
     { "send_nameslist", (PyCFunction)py_client_send_nameslist,
         METH_O,
         "Send the names for a channel to a client." },
