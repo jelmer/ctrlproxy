@@ -304,3 +304,16 @@ class ClientTests(unittest.TestCase):
     def test_own_hostmask_not_known(self):
         c = irc.Client(DummyTransport(), "myorigin", "description")
         self.assertEquals(None, c.own_hostmask)
+
+
+class ClientSendStateTests(unittest.TestCase):
+
+    def setUp(self):
+        super(ClientSendStateTests, self).setUp()
+        self.transport = DummyTransport()
+        self.client = irc.Client(self.transport, "myorigin", "description")
+        self.state = irc.NetworkState("nick", "user", "host")
+
+    def test_empty(self):
+        self.client.send_state(self.state)
+        self.assertEquals([], self.transport._sent_lines)

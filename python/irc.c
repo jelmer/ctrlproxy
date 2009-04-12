@@ -983,6 +983,18 @@ static PyObject *py_client_send_line(PyClientObject *self, PyObject *args)
     Py_RETURN_NONE;
 }
 
+static PyObject *py_client_send_state(PyClientObject *self, PyNetworkStateObject *state)
+{
+    if (!PyObject_TypeCheck(state, &PyNetworkStateType)) {
+        PyErr_SetNone(PyExc_TypeError);
+        return NULL;
+    }
+
+    client_send_state(self->client, state->state);
+
+    Py_RETURN_NONE;
+}
+
 static PyMethodDef py_client_methods[] = {
     { "set_charset", (PyCFunction)py_client_set_charset, 
         METH_VARARGS,
@@ -992,6 +1004,9 @@ static PyMethodDef py_client_methods[] = {
     { "send_line", (PyCFunction)py_client_send_line,
         METH_VARARGS,
         "Send a line to this client." },
+    { "send_state", (PyCFunction)py_client_send_state,
+        METH_O,
+        "Send a network state to a client." },
     { NULL }
 };
 

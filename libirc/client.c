@@ -585,7 +585,7 @@ gboolean client_send_state(struct irc_client *c, struct irc_network_state *state
 	struct irc_channel_state *ch;
 	char *mode;
 
-	if (strcmp(state->me.nick, c->state->me.nick) != 0) {
+	if (c->state != NULL && strcmp(state->me.nick, c->state->me.nick) != 0) {
 		client_send_args_ex(c, c->state->me.hostmask, "NICK", state->me.nick, NULL);
 	}
 
