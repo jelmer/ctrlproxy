@@ -109,6 +109,11 @@ class ChannelStateTests(unittest.TestCase):
         s = irc.ChannelState("#foo")
         self.assertEquals(0, s.topic_set_time)
 
+    def test_get_topic_time_set(self):
+        s = irc.ChannelState("#foo")
+        s.topic_set_time = 42
+        self.assertEquals(42, s.topic_set_time)
+
     def test_creationtime(self):
         s = irc.ChannelState("#foo")
         self.assertEquals(0, s.creation_time)
