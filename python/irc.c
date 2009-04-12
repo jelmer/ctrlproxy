@@ -995,6 +995,36 @@ static PyObject *py_client_send_state(PyClientObject *self, PyNetworkStateObject
     Py_RETURN_NONE;
 }
 
+static PyObject *py_client_send_motd(PyClientObject *self, PyObject *py_motd)
+{
+    char **motd;
+    int i;
+    if (!PyList_Check(py_motd)) {
+        PyErr_SetNone(PyExc_TypeError);
+        return NULL;
+    }
+
+    motd = g_new0(char *, PyList_Size(py_motd) + 1);
+
+    for (i = 0; i < PyList_Size(py_motd); i++) {
+        PyObject *item = PyList_GetItem(py_motd, i);
+        if (!PyString_Check(item)) {
+            PyErr_SetNone(PyExc_TypeError);
+            g_free(motd);
+            return NULL;
+        }
+
+        motd[i] = PyString_AsString(item);
+    }
+    motd[i] = NULL;
+
+    client_send_motd(self->client, motd);
+
+    g_free(motd);
+
+    Py_RETURN_NONE;
+}
+
 static PyMethodDef py_client_methods[] = {
     { "set_charset", (PyCFunction)py_client_set_charset, 
         METH_VARARGS,
@@ -1007,6 +1037,9 @@ static PyMethodDef py_client_methods[] = {
     { "send_state", (PyCFunction)py_client_send_state,
         METH_O,
         "Send a network state to a client." },
+    { "send_motd", (PyCFunction)py_client_send_motd,
+        METH_O,
+        "Send a MOTD to a client." },
     { NULL }
 };
 
@@ -1218,7 +1251,11 @@ static int py_process_to_client(struct irc_client *client, const struct irc_line
 
     ret = PyObject_CallMethod(self, "process_to_client", "O", py_line);
     Py_DECREF(py_line);
-    Py_XDECREF(ret);
+    if (ret == NULL) {
+        PyErr_Clear(); /* FIXME: */
+        return -1;
+    }
+    Py_DECREF(ret);
 
     return 0;
 }

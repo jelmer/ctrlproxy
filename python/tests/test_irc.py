@@ -270,6 +270,9 @@ class DummyTransport(object):
     def __init__(self):
         self._sent_lines = []
 
+    def str_lines(self):
+        return [str(l) for l in self._sent_lines]
+
     def send_line(self, line):
         self._sent_lines.append(line)
 
@@ -304,6 +307,16 @@ class ClientTests(unittest.TestCase):
     def test_own_hostmask_not_known(self):
         c = irc.Client(DummyTransport(), "myorigin", "description")
         self.assertEquals(None, c.own_hostmask)
+
+    def test_send_motd(self):
+        t = DummyTransport()
+        c = irc.Client(t, "myorigin", "description")
+        c.send_motd(["bla", "blie bloe"])
+        self.assertEquals([
+            ':myorigin 375 * :Start of MOTD',
+            ':myorigin 372 * :bla',
+            ':myorigin 372 * :blie bloe',
+            ':myorigin 376 * :End of MOTD'], t.str_lines())
 
 
 class ClientSendStateTests(unittest.TestCase):
