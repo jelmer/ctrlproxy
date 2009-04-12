@@ -241,6 +241,30 @@ class NetworkNickTests(unittest.TestCase):
         self.assertEquals("host", nick.hostname)
         self.assertEquals("nick!user@host", nick.hostmask)
 
+    def test_set_hostmask(self):
+        nick = irc.Nick("nick", "user", "host")
+        nick.hostmask = "my!new@mask"
+        self.assertEquals("my", nick.nick)
+        self.assertEquals("new", nick.username)
+        self.assertEquals("mask", nick.hostname)
+        self.assertEquals("my!new@mask", nick.hostmask)
+
+    def test_set_nick(self):
+        nick = irc.Nick("nick", "user", "host")
+        nick.nick = "my"
+        self.assertEquals("my", nick.nick)
+        self.assertEquals("user", nick.username)
+        self.assertEquals("host", nick.hostname)
+        self.assertEquals("my!user@host", nick.hostmask)
+
+    def test_set_username(self):
+        nick = irc.Nick("nick", "user", "host")
+        nick.username = "uname"
+        self.assertEquals("nick", nick.nick)
+        self.assertEquals("uname", nick.username)
+        self.assertEquals("host", nick.hostname)
+        self.assertEquals("nick!uname@host", nick.hostmask)
+
 
 class QueryStackTests(unittest.TestCase):
 
