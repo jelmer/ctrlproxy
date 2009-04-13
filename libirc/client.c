@@ -332,7 +332,7 @@ static gboolean process_from_pending_client(struct irc_client *client,
 			return TRUE;
 		}
 
-		client->network = client->callbacks->on_connect(client, l->args[1], l->args[2]?atoi(l->args[2]):6667);
+		client->callbacks->on_connect(client, l->args[1], l->args[2]?atoi(l->args[2]):6667);
 	} else {
 		client_send_response(client, ERR_NOTREGISTERED, 
 			"Register first", 

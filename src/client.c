@@ -230,7 +230,7 @@ static void handle_client_disconnect(struct irc_client *c)
 		c->network->clients = g_list_remove(c->network->clients, c);
 }
 
-static struct irc_network *client_connect_command(struct irc_client *client, const char *hostname, guint16 port)
+static void client_connect_command(struct irc_client *client, const char *hostname, guint16 port)
 {
 	extern struct global *my_global;
 
@@ -244,7 +244,8 @@ static struct irc_network *client_connect_command(struct irc_client *client, con
 		client_log(LOG_ERROR, client, 
 			"Unable to connect to network with name %s", 
 			hostname);
-		return NULL;
+		client->network = NULL;
+		return;
 	}
 
 	if (network->connection.state == NETWORK_CONNECTION_STATE_NOT_CONNECTED) {
@@ -254,7 +255,7 @@ static struct irc_network *client_connect_command(struct irc_client *client, con
 		connect_network(network);
 	}
 
-	return network;
+	client->network = network;
 }
 
 void log_client(enum log_level, const struct irc_client *, const char *data);
