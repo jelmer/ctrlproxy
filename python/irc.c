@@ -992,9 +992,39 @@ static PyObject *py_network_state_handle_line(PyNetworkStateObject *self, PyObje
     return ret;
 }
 
+static PyObject *py_network_state_add(PyNetworkStateObject *self, PyObject *obj)
+{
+    if (PyObject_TypeCheck(obj, &PyChannelStateType)) {
+        PyChannelStateObject *chobj = (PyChannelStateObject *)obj;
+
+        if (find_channel(self->state, chobj->state->name) != NULL) {
+            PyErr_SetString(PyExc_KeyError, "Key already exists");
+            return NULL;
+        }
+
+        if (chobj->parent != NULL) {
+            PyErr_SetString(PyExc_KeyError, "Channel is already linked to a state");
+            return NULL;
+        }
+
+        self->state->channels = g_list_append(self->state->channels, chobj->state);
+
+        Py_INCREF(self);
+        chobj->state->network = self->state;
+        chobj->parent = (PyObject *)self;
+
+        Py_RETURN_NONE;
+    } else {
+        PyErr_SetNone(PyExc_TypeError);
+        return NULL;
+    }
+}
+
 static PyMethodDef py_network_state_methods[] = {
     { "handle_line", (PyCFunction)py_network_state_handle_line, METH_O,
         "Process a line." },
+    { "add", (PyCFunction)py_network_state_add, METH_O,
+        "Add a channel or nick" },
     { NULL }
 };
 

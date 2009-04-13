@@ -148,6 +148,11 @@ class NetworkStateTestCase(unittest.TestCase):
         super(NetworkStateTestCase, self).setUp()
         self.state = irc.NetworkState("nick", "user", "host")
 
+    def test_add_channel(self):
+        c = irc.ChannelState("#foo")
+        self.state.add(c)
+        self.assertEquals(c.name, self.state["#foo"].name)
+
     def test_handle_line(self):
         self.state.handle_line(":nick!user@host JOIN #foo")
 
