@@ -524,16 +524,33 @@ class ClientSendStateTests(unittest.TestCase):
             ':myorigin 332 * #foo :bla la', 
             ':myorigin 366 * #foo :End of /NAMES list'])
 
-    def test_diff_with_channel(self):
-        ch1 = irc.ChannelState("#foo")
-        ch2 = irc.ChannelState("#foo")
-        ch2.topic = "bla la"
-        self.state.add(ch1)
-        state2 = irc.NetworkState("nick", "user", "host")
-        state2.add(ch2)
-        self.client.send_state_diff(self.state, state2)
-        self.assertLines(['TOPIC #foo :bla la'])
-
     def test_empty_diff(self):
         self.client.send_state_diff(self.state, self.state)
         self.assertLines([])
+
+
+class ChannelStateDiffTests(unittest.TestCase):
+
+    def setUp(self):
+        super(ChannelStateDiffTests, self).setUp()
+        self.transport = DummyTransport()
+        self.client = irc.Client(self.transport, "myorigin", "description")
+        self.state1 = irc.NetworkState("nick", "user", "host")
+        self.state2 = irc.NetworkState("nick", "user", "host")
+        self.channel1 = irc.ChannelState("#foo")
+        self.channel2 = irc.ChannelState("#foo")
+        self.state1.add(self.channel1)
+        self.state2.add(self.channel2)
+
+    def assertLines(self, lines):
+        self.assertEquals(lines, self.transport.str_lines())
+
+    def test_diff_topic_set(self):
+        self.channel2.topic = "bla la"
+        self.client.send_state_diff(self.state1, self.state2)
+        self.assertLines(['TOPIC #foo :bla la'])
+
+    def test_diff_topic_unset(self):
+        self.channel1.topic = "bla la"
+        self.client.send_state_diff(self.state1, self.state2)
+        self.assertLines(['TOPIC #foo'])

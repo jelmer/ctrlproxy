@@ -214,8 +214,9 @@ static gboolean requires_colon(const struct irc_line *l)
 	if (!g_strcasecmp(l->args[0], "JOIN"))
 		return FALSE;
 
-	if (!g_strcasecmp(l->args[0], "PART"))
-		return FALSE;
+	if (!g_strcasecmp(l->args[0], "PART") || !g_strcasecmp(l->args[0], "TOPIC")) {
+        return (strchr(l->args[l->argc-1], ' ') != NULL);
+    }
 
 	switch(c) {
 	case RPL_CHANNELMODEIS:
