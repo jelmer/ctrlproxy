@@ -215,7 +215,7 @@ static gboolean requires_colon(const struct irc_line *l)
 		return FALSE;
 
 	if (!g_strcasecmp(l->args[0], "PART") || !g_strcasecmp(l->args[0], "TOPIC")) {
-        return (strchr(l->args[l->argc-1], ' ') != NULL);
+		return (l->argc > 2);
     }
 
 	switch(c) {
