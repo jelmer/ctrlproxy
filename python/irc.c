@@ -1014,6 +1014,25 @@ static PyObject *py_network_state_add(PyNetworkStateObject *self, PyObject *obj)
         chobj->parent = (PyObject *)self;
 
         Py_RETURN_NONE;
+    } else if (PyObject_TypeCheck(obj, &PyNetworkNickType)) {
+        PyNetworkNickObject *nickobj = (PyNetworkNickObject *)obj;
+
+        if (find_network_nick(self->state, nickobj->nick->nick) != NULL) {
+            PyErr_SetString(PyExc_KeyError, "Key already exists");
+            return NULL;
+        }
+
+        if (nickobj->parent != NULL) {
+            PyErr_SetString(PyExc_KeyError, "Nick is already linked to a state");
+            return NULL;
+        }
+
+        self->state->nicks = g_list_append(self->state->nicks, nickobj->nick);
+
+        Py_INCREF(self);
+        nickobj->parent = (PyObject *)self;
+
+        Py_RETURN_NONE;
     } else {
         PyErr_SetNone(PyExc_TypeError);
         return NULL;

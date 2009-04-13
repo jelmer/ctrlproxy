@@ -153,6 +153,11 @@ class NetworkStateTestCase(unittest.TestCase):
         self.state.add(c)
         self.assertEquals(c.name, self.state["#foo"].name)
 
+    def test_add_nick(self):
+        n = irc.Nick("me!user@host")
+        self.state.add(n)
+        self.assertEquals(n.nick, self.state["me"].nick)
+
     def test_handle_line(self):
         self.state.handle_line(":nick!user@host JOIN #foo")
 
