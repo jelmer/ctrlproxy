@@ -101,6 +101,11 @@ class ChannelStateTests(unittest.TestCase):
         s = irc.ChannelState("#foo")
         self.assertEquals("", s.modes)
 
+    def test_set_modes(self):
+        s = irc.ChannelState("#foo")
+        s.modes = "+n"
+        self.assertEquals("+n", s.modes)
+
     def test_get_topic(self):
         s = irc.ChannelState("#foo")
         self.assertEquals(None, s.topic)

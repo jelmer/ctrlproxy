@@ -405,6 +405,28 @@ static PyObject *py_channel_state_get_modes(PyChannelStateObject *self, void *cl
     return py_ret;
 }
 
+static int py_channel_state_set_modes(PyChannelStateObject *self, PyObject *value, void *closure)
+{
+    char *modestr;
+
+    if (!PyString_Check(value) && value != Py_None) {
+        PyErr_SetNone(PyExc_TypeError);
+        return -1;
+    }
+
+    if (value == Py_None)
+        modestr = NULL;
+    else
+        modestr = PyString_AsString(value);
+
+    if (!string2mode(modestr, self->state->modes)) {
+        PyErr_SetNone(PyExc_ValueError);
+        return -1;
+    }
+
+    return 0;
+}
+
 typedef struct {
     PyObject_HEAD
     PyChannelStateObject *parent;
@@ -640,7 +662,8 @@ static PyGetSetDef py_channel_state_getset[] = {
         (getter)py_channel_state_get_time, 
         (setter)py_channel_state_set_time,
         "Timestamp when the channel was created" },
-    { "modes", (getter)py_channel_state_get_modes, NULL,
+    { "modes", (getter)py_channel_state_get_modes, 
+        (setter)py_channel_state_set_modes,
         "Modes" },
     { "mode_option", (getter)py_channel_state_get_mode_option, NULL,
         "Mode options" },
