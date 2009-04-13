@@ -529,6 +529,30 @@ class ClientSendStateTests(unittest.TestCase):
         self.assertLines([])
 
 
+class NetworkStateDiffTests(unittest.TestCase):
+
+    def setUp(self):
+        super(NetworkStateDiffTests, self).setUp()
+        self.transport = DummyTransport()
+        self.client = irc.Client(self.transport, "myorigin", "description")
+        self.state1 = irc.NetworkState("nick", "user", "host")
+        self.state2 = irc.NetworkState("nick", "user", "host")
+
+    def assertLines(self, lines):
+        self.assertEquals(lines, self.transport.str_lines())
+
+    def test_new_channel(self):
+        self.state2.add(irc.ChannelState("#foo"))
+        self.client.send_state_diff(self.state1, self.state2)
+        self.assertLines(['JOIN #foo', 
+            ':myorigin 366 * #foo :End of /NAMES list'])
+
+    def test_leave_channel(self):
+        self.state1.add(irc.ChannelState("#foo"))
+        self.client.send_state_diff(self.state1, self.state2)
+        self.assertLines(['PART #foo'])
+
+
 class ChannelStateDiffTests(unittest.TestCase):
 
     def setUp(self):
