@@ -521,7 +521,7 @@ gboolean client_send_channel_state_diff(struct irc_client *client,
 	if (old_state->topic != new_state->topic && (
 			old_state->topic == NULL || new_state->topic == NULL ||
 			strcmp(old_state->topic, new_state->topic) != 0)) 
-		client_send_args_ex(client, new_state->topic_set_by, "TOPIC", new_state->topic, NULL);
+		client_send_args_ex(client, new_state->topic_set_by, "TOPIC", new_state->name, new_state->topic, NULL);
 
 	/* Send MODE if the mode changed */
 	if (memcmp(old_state->modes, new_state->modes, 

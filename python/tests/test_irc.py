@@ -496,6 +496,26 @@ class ClientSendStateTests(unittest.TestCase):
         self.client.send_state(self.state)
         self.assertLines([])
 
+    def test_with_channel(self):
+        ch = irc.ChannelState("#foo")
+        ch.topic = "bla la"
+        self.state.add(ch)
+        self.client.send_state(self.state)
+        self.assertLines([
+            'JOIN #foo', 
+            ':myorigin 332 * #foo :bla la', 
+            ':myorigin 366 * #foo :End of /NAMES list'])
+
+    def test_diff_with_channel(self):
+        ch1 = irc.ChannelState("#foo")
+        ch2 = irc.ChannelState("#foo")
+        ch2.topic = "bla la"
+        self.state.add(ch1)
+        state2 = irc.NetworkState("nick", "user", "host")
+        state2.add(ch2)
+        self.client.send_state_diff(self.state, state2)
+        self.assertLines(['TOPIC #foo :bla la'])
+
     def test_empty_diff(self):
         self.client.send_state_diff(self.state, self.state)
         self.assertLines([])
