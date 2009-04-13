@@ -22,6 +22,8 @@ Ctrlproxy 3.0.9 UNRELEASED
 
 	* Fix crash in on_transport_log when no error is set. (#219)
 
+    * Fix crash in log_custom when the network is disconnected. (#212)
+
   FEATURES
 
     * Provide Python bindings for the main library code. Mainly used for 

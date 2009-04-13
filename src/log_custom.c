@@ -19,6 +19,15 @@
 
 #include "internals.h"
 
+static struct irc_network_info *network_get_info(struct irc_network *network)
+{
+
+	if (network->external_state == NULL || network->external_state->info == NULL)
+		return NULL;
+	else
+		return network->external_state->info;
+}
+
 struct log_custom_data {
 	struct log_file_config *config;
 	struct log_support_context *log_ctx;
@@ -100,16 +109,19 @@ static void file_write_target(struct log_custom_data *data,
 							  const struct irc_line *l) 
 {
 	char *t;
+	struct irc_network_info *info;
 	
 	if (fmt == NULL) 
 		return;
 	
 	g_assert(l->args[0] != NULL);
 	g_assert(l->args[1] != NULL);
-	g_assert(network->external_state != NULL);
+	info = network_get_info(network);
 	g_assert(network->external_state->me.nick != NULL);
 
-	if (!irccmp(network->external_state->info, network->external_state->me.nick, l->args[1])) {
+	if (network->external_state != NULL && 
+		network->external_state->me.nick != NULL &&
+		!irccmp(info, network->external_state->me.nick, l->args[1])) {
 		if (l->origin != NULL)
 			t = line_get_nick(l);
 		else 
@@ -142,6 +154,9 @@ static void file_write_channel_query(struct log_custom_data *data,
 		return;
 
 	if (fmt == NULL) 
+		return;
+
+	if (network->external_state == NULL)
 		return;
 
 	/* check for the query first */
@@ -209,7 +224,7 @@ static gboolean log_custom_data(struct irc_network *network,
 	} else if (!g_strcasecmp(l->args[0], "NOTICE")) {
 		file_write_target(data, network, data->config->notice, l);
 	} else if (!g_strcasecmp(l->args[0], "MODE") && l->args[1] != NULL && 
-			  is_channelname(l->args[1], network->external_state->info) && 
+			  is_channelname(l->args[1], network_get_info(network)) && 
 			  dir == FROM_SERVER) {
 		file_write_target(data, network, data->config->mode, l);
 	} else if (!g_strcasecmp(l->args[0], "QUIT")) {
