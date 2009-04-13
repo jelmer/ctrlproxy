@@ -143,9 +143,14 @@ static gboolean on_transport_recv(struct irc_transport *transport,
 static void on_transport_log(struct irc_transport *transport, const struct irc_line *l, const GError *error)
 {
 	struct irc_network *network = transport->userdata;
+	const char *errmsg = (error == NULL)?"UNKNOWN":error->message;
 
-	network_log(LOG_WARNING, network, "Error while sending line '%s': %s", 
-				l->args[0], error->message);
+	if (l->argc == 0)
+		network_log(LOG_WARNING, network, "Error while sending empty line: %s", 
+				 errmsg);
+	else
+		network_log(LOG_WARNING, network, "Error while sending line '%s': %s", 
+				l->args[0], errmsg);
 }
 
 static const struct irc_transport_callbacks network_callbacks = {

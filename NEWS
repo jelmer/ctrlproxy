@@ -20,6 +20,8 @@ Ctrlproxy 3.0.9 UNRELEASED
 
 	* Fix netsplits generated when connection to a network is lost.
 
+	* Fix crash in on_transport_log when no error is set. (#219)
+
   FEATURES
 
     * Provide Python bindings for the main library code. Mainly used for 
