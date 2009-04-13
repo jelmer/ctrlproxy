@@ -484,6 +484,7 @@ static char *global_init(struct ctrlproxy_config *config)
 }
 
 static gboolean file_init(struct linestack_context *ctx, const char *name, 
+						  gboolean truncate,
 						  struct ctrlproxy_config *config, 
 						  const struct irc_network_state *state)
 {
@@ -492,17 +493,26 @@ static gboolean file_init(struct linestack_context *ctx, const char *name,
 	GError *error = NULL;
 	const char *fname;
 	GDir *dir;
+	const char *mode;
 
 	parent_dir = global_init(config);
 
 	data_dir = g_build_filename(parent_dir, name, NULL);
+	g_assert(data_dir != NULL);
+
 	g_free(parent_dir);
 	g_mkdir(data_dir, 0700);
 	data_file = g_build_filename(data_dir, "lines", NULL);
+	g_assert(data_file != NULL);
 
 	unlink(data_file);
 
-	data->line_file = g_io_channel_new_file(data_file, "w+", &error);
+	if (truncate)
+		mode = "w+";
+	else
+		mode = "a+";
+
+	data->line_file = g_io_channel_new_file(data_file, mode, &error);
 	if (data->line_file == NULL) {
 		log_global(LOG_WARNING, "Error opening `%s': %s", 
 						  data_file, error->message);

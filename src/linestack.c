@@ -34,6 +34,7 @@ void register_linestack(const struct linestack_ops *b)
 
 struct linestack_context *create_linestack(const struct linestack_ops *ops, 
 										   const char *name, 
+										   gboolean truncate,
 										   struct ctrlproxy_config *cfg,
 										   const struct irc_network_state *state)
 {
@@ -45,7 +46,7 @@ struct linestack_context *create_linestack(const struct linestack_ops *ops,
 
 	ctx = g_new0(struct linestack_context, 1);
 	ctx->ops = ops;
-	ops->init(ctx, name, cfg, state);
+	ops->init(ctx, name, truncate, cfg, state);
 
 	return ctx;
 }
@@ -385,7 +386,7 @@ struct linestack_context *new_linestack(struct irc_network *n, struct ctrlproxy_
 		current_backend = &linestack_file;
 	}
 
-	return create_linestack(current_backend, n->name, cfg, n->external_state);
+	return create_linestack(current_backend, n->name, TRUE, cfg, n->external_state);
 }
 
 

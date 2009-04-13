@@ -192,7 +192,7 @@ START_TEST(test_empty)
 	struct linestack_context *ctx;
 	
 	ns1 = network_state_init("bla", "Gebruikersnaam", "Computernaam");
-	ctx = create_linestack(&linestack_file, "test", my_config, ns1);
+	ctx = create_linestack(&linestack_file, "test", TRUE, my_config, ns1);
 
 	ns2 = linestack_get_state(ctx, NULL);
 
@@ -210,7 +210,7 @@ START_TEST(test_msg)
 	char *raw;
 	
 	ns1 = network_state_init("bla", "Gebruikersnaam", "Computernaam");
-	ctx = create_linestack(&linestack_file, "test", my_config, ns1);
+	ctx = create_linestack(&linestack_file, "test", TRUE, my_config, ns1);
 
 	lm = linestack_get_marker(ctx);
 
@@ -243,7 +243,7 @@ START_TEST(test_join_part)
 	char *raw;
 	
 	ns1 = network_state_init("bla", "Gebruikersnaam", "Computernaam");
-	ctx = create_linestack(&linestack_file, "test", my_config, ns1);
+	ctx = create_linestack(&linestack_file, "test", TRUE, my_config, ns1);
 
 	lm = linestack_get_marker(ctx);
 
@@ -278,7 +278,7 @@ START_TEST(test_skip_msg)
 	char *raw;
 	
 	ns1 = network_state_init("bla", "Gebruikersnaam", "Computernaam");
-	ctx = create_linestack(&linestack_file, "test", my_config, ns1);
+	ctx = create_linestack(&linestack_file, "test", TRUE, my_config, ns1);
 
 	stack_process(ctx, ns1, ":bloe!Gebruikersnaam@Computernaam PRIVMSG #bla :haha");
 
@@ -313,7 +313,7 @@ START_TEST(test_object_msg)
 	char *raw;
 	
 	ns1 = network_state_init("bla", "Gebruikersnaam", "Computernaam");
-	ctx = create_linestack(&linestack_file, "test", my_config, ns1);
+	ctx = create_linestack(&linestack_file, "test", TRUE, my_config, ns1);
 
 	lm = linestack_get_marker(ctx);
 
@@ -353,7 +353,7 @@ START_TEST(test_object_open)
 	int j;
 	
 	ns1 = network_state_init("bla", "Gebruikersnaam", "Computernaam");
-	ctx = create_linestack(&linestack_file, "test", my_config, ns1);
+	ctx = create_linestack(&linestack_file, "test", TRUE, my_config, ns1);
 
 	lm = linestack_get_marker(ctx);
 
@@ -387,7 +387,7 @@ START_TEST(test_join)
 	struct linestack_context *ctx;
 	
 	ns1 = network_state_init("bla", "Gebruikersnaam", "Computernaam");
-	ctx = create_linestack(&linestack_file, "test", my_config, ns1);
+	ctx = create_linestack(&linestack_file, "test", TRUE, my_config, ns1);
 
 	stack_process(ctx, ns1, ":bla!Gebruikersnaam@Computernaam JOIN #bla");
 
@@ -413,7 +413,7 @@ START_TEST(bench_lots_of_lines)
 	int i;
 
 	ns1 = network_state_init("bla", "Gebruikersnaam", "Computernaam");
-	ctx = create_linestack(&linestack_file, "test", my_config, ns1);
+	ctx = create_linestack(&linestack_file, "test", TRUE, my_config, ns1);
 	marker = linestack_get_marker(ctx);
 
 	seen = 0;

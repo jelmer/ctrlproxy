@@ -64,6 +64,7 @@ struct linestack_ops {
 	char *name;
 	gboolean (*init) (struct linestack_context *, 
 					  const char *name,
+					  gboolean truncate,
 					  struct ctrlproxy_config *,
 					  const struct irc_network_state *
 					  );
@@ -167,7 +168,7 @@ G_MODULE_EXPORT struct linestack_marker *linestack_get_marker(struct linestack_c
  * @param cfg CtrlProxy configuration
  * @param state Current network state
  */
-G_MODULE_EXPORT struct linestack_context *create_linestack(const struct linestack_ops *, const char *name, struct ctrlproxy_config *, const struct irc_network_state *);
+G_MODULE_EXPORT struct linestack_context *create_linestack(const struct linestack_ops *, const char *name, gboolean truncate, struct ctrlproxy_config *, const struct irc_network_state *);
 G_MODULE_EXPORT void free_linestack_context(struct linestack_context *);
 G_MODULE_EXPORT struct linestack_ops *linestack_find_ops(const char *name);
 
