@@ -15,10 +15,11 @@
 <refsynopsisdiv>
 	<cmdsynopsis>
 		<command>ctrlproxy</command>
-		<arg choice="opt">-c file</arg>
-		<arg choice="opt">-I</arg>
-		<arg choice="opt">-F</arg>
-		<arg choice="opt">-v</arg>
+		<arg choice="opt">-c, --config-file=FILE</arg>
+		<arg choice="opt">-F, --foreground</arg>
+		<arg choice="opt">-I, --inetd</arg>
+		<arg choice="opt">-v, --version</arg>
+		<arg choice="opt">-? --help</arg>
 	</cmdsynopsis>
 </refsynopsisdiv>
 
@@ -43,10 +44,6 @@
 <para><command>ctrlproxy</command> recognizes the following command-line options</para>
 
 <variablelist>
-	<varlistentry><term>-I</term>
-		<listitem><para>Communicate on standard input/output - for use with the internet superserver (inetd).</para></listitem>
-	</varlistentry>
-
 	<varlistentry><term>-c, --config-file=FILE</term>
 		<listitem><para>Read the configuration file from the specified <option>FILE</option> instead of from <filename>/etc/ctrlproxyd.conf</filename>.</para></listitem>
 	</varlistentry>
@@ -55,20 +52,16 @@
 		<listitem><para>Stay in the foreground.</para></listitem>
 	</varlistentry>
 
+	<varlistentry><term>-I, --inetd</term>
+		<listitem><para>Communicate on standard input/output - for use with the internet superserver (inetd).</para></listitem>
+	</varlistentry>
+
 	<varlistentry><term>-v, --version</term>
-	<listitem><para>Show copyright and version information</para></listitem>
+		<listitem><para>Show copyright and version information</para></listitem>
 	</varlistentry>
 
 	<varlistentry><term>-?, --help</term>
-	<listitem><para>Show help message with short argument information</para></listitem>
-	</varlistentry>
-
-	<varlistentry><term>-l, --log=FILE</term>
-	<listitem><para>Log ctrlproxy messages to specified file.</para></listitem>
-	</varlistentry>
-
-	<varlistentry><term>--usage</term>
-	<listitem><para>Display brief usage message</para></listitem>
+		<listitem><para>Show help message with short argument information</para></listitem>
 	</varlistentry>
 
 </variablelist>
