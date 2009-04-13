@@ -1557,7 +1557,12 @@ static PyMethodDef py_client_methods[] = {
 
 static PyObject *py_client_get_state(PyClientObject *self, void *closure)
 {
-    PyNetworkStateObject *ret = PyObject_New(PyNetworkStateObject, &PyNetworkStateType);
+    PyNetworkStateObject *ret;
+
+    if (self->client->state == NULL)
+        Py_RETURN_NONE;
+    
+    ret = PyObject_New(PyNetworkStateObject, &PyNetworkStateType);
     if (ret == NULL) {
         PyErr_NoMemory();
         return NULL;
