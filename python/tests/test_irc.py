@@ -83,7 +83,13 @@ class ChannelStateTests(unittest.TestCase):
         s = irc.ChannelState("#foo")
         self.assertTrue(s.nicks is not None)
         self.assertEquals(0, len(s.nicks))
-        self.assertRaises(KeyError, lambda: s.nicks["#foo"])
+        self.assertRaises(KeyError, lambda: s.nicks["nick"])
+
+    def test_add_nick(self):
+        s = irc.ChannelState("#foo")
+        s.nicks.add(irc.Nick("me!foo@bar"))
+        self.assertEquals(1, len(s.nicks))
+        self.assertEquals("me", s.nicks["me"].nick)
 
     def test_set_key(self):
         s = irc.ChannelState("#foo")

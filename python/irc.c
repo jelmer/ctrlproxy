@@ -621,9 +621,41 @@ static PyMappingMethods py_channel_nick_dict_mapping = {
     .mp_subscript = (binaryfunc)py_channel_nick_dict_subscript,
 };
 
+static PyObject *py_channel_nick_dict_add(PyChannelNickDictObject *self, PyObject *args)
+{
+    struct channel_nick *cn;
+    PyNetworkNickObject *py_nick;
+
+    if (!PyArg_ParseTuple(args, "O", &py_nick))
+        return NULL;
+
+    if (!PyObject_TypeCheck(py_nick, &PyNetworkNickType)) {
+        PyErr_SetNone(PyExc_TypeError);
+        return NULL;
+    }
+
+    cn = find_channel_nick(self->parent->state, py_nick->nick->nick);
+    if (cn != NULL) {
+        PyErr_SetNone(PyExc_KeyError);
+        return NULL;
+    }
+
+   	cn = g_new0(struct channel_nick,1);
+	g_assert(cn != NULL);
+	
+	cn->channel = self->parent->state;
+	cn->global_nick = py_nick->nick;
+	cn->channel->nicks = g_list_append(cn->channel->nicks, cn);
+    cn->global_nick->channel_nicks = g_list_append(cn->global_nick->channel_nicks, cn);
+
+    Py_RETURN_NONE;
+}
+
 static PyMethodDef py_channel_nick_dict_methods[] = {
     { "nick_mode", (PyCFunction)py_channel_nick_dict_get_nick_mode,
         METH_O, "Get nick mode" },
+    { "add", (PyCFunction)py_channel_nick_dict_add,
+        METH_VARARGS, "Add a nick" },
     { NULL }
 };
 
@@ -750,24 +782,40 @@ static PyObject *py_network_nick_new(PyTypeObject *type, PyObject *args, PyObjec
     char *kwnames3[] = { "nick", "username", "host", NULL };
     char *kwnames1[] = { "hostmask", NULL };
     PyNetworkNickObject *ret;
+    struct network_nick *nn;
+
+    int len = ((args == NULL)?0:PyTuple_Size(args)) + 
+              ((kwargs == NULL)?0:PyDict_Size(kwargs));
+
+    if (len == 1) {
+        if (!PyArg_ParseTupleAndKeywords(args, kwargs, "s", kwnames1, &hostmask)) 
+            return NULL;
+        nn = g_new0(struct network_nick, 1);
+
+        if (!network_nick_set_hostmask(nn, hostmask)) {
+            g_free(nn);
+            PyErr_SetNone(PyExc_ValueError);
+            return NULL;
+        }
+    } else if (len == 3) {
+        if (!PyArg_ParseTupleAndKeywords(args, kwargs, "sss", kwnames3, &nick, &username, &host))
+            return NULL;
+       nn = g_new0(struct network_nick, 1);
+       network_nick_set_data(nn, nick, username, host);
+    } else {
+        PyErr_SetNone(PyExc_ValueError);
+        return NULL;
+    }
 
     ret = (PyNetworkNickObject *)type->tp_alloc(type, 0);
     if (ret == NULL) {
+        g_free(nn);
         PyErr_NoMemory();
         return NULL;
     }
 
     ret->parent = NULL;
-    ret->nick = g_new0(struct network_nick, 1);
-
-    if (PyArg_ParseTupleAndKeywords(args, kwargs, "sss", kwnames3, &nick, &username, &host)) {
-       network_nick_set_data(ret->nick, nick, username, host);
-    } else if (PyArg_ParseTupleAndKeywords(args, kwargs, "s", kwnames1, &hostmask)) {
-       network_nick_set_hostmask(ret->nick, hostmask);
-    } else {
-        g_free(ret->nick);
-        type->tp_free(ret);
-    }
+    ret->nick = nn;
 
    return (PyObject *)ret;
 }
@@ -2058,6 +2106,9 @@ void initirc(void)
         return;
 
     if (PyType_Ready(&PyChannelModeDictType) < 0)
+        return;
+
+    if (PyType_Ready(&PyChannelNickDictType) < 0)
         return;
 
     m = Py_InitModule3("irc", irc_methods, 
