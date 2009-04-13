@@ -640,6 +640,15 @@ static PyObject *py_channel_nick_dict_add(PyChannelNickDictObject *self, PyObjec
         return NULL;
     }
 
+    if (py_nick->parent == NULL) {
+        Py_INCREF(self->parent);
+        py_nick->parent = (PyObject *)self->parent;
+    } else {
+        /* FIXME: What if we're adding the same nick to multiple channels ? */
+        PyErr_SetNone(PyExc_TypeError);
+        return NULL;
+    }
+
    	cn = g_new0(struct channel_nick,1);
 	g_assert(cn != NULL);
 	
