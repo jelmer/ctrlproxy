@@ -33,7 +33,9 @@ static void g_error_set_python(GError **error)
     g_set_error_literal(error, g_quark_from_static_string("libirc-python-error"), 1, PyString_AsString(exception_value));
 }
 
+static struct irc_transport_ops py_transport_ops;
 static const struct irc_client_callbacks py_client_callbacks;
+static PyTypeObject PyTransportType;
 static PyTypeObject PyNetworkNickType;
 static struct irc_transport *wrap_py_transport(PyObject *obj);
 const char *get_my_hostname() { return NULL; /* FIXME */ }
@@ -53,6 +55,11 @@ typedef struct {
     const struct irc_line *line;
 } PyLineObject;
 
+typedef struct {
+    PyObject_HEAD
+    struct irc_transport *transport;
+    PyObject *parent;
+} PyTransportObject;
 
 typedef struct {
     PyObject_HEAD
@@ -1511,6 +1518,29 @@ static PyObject *py_client_send_netsplit(PyClientObject *self, PyObject *py_serv
     Py_RETURN_NONE;
 }
 
+static PyObject *py_client_inject_line(PyClientObject *self, PyObject *line)
+{
+    struct irc_line *l;
+    gboolean ret;
+
+    if (self->client->transport == NULL || self->client->transport->callbacks == NULL || self->client->transport->callbacks->recv == NULL) {
+        PyErr_SetNone(PyExc_AttributeError);
+        return NULL;
+    }
+
+    l = PyObject_AsLine(line);
+    if (l == NULL) {
+        return NULL;
+    }
+
+    ret = self->client->transport->callbacks->recv(self->client->transport, l);
+    free_line(l);
+
+    return PyBool_FromLong(ret);
+}
+
+
+
 static PyMethodDef py_client_methods[] = {
     { "set_charset", (PyCFunction)py_client_set_charset, 
         METH_VARARGS,
@@ -1552,6 +1582,8 @@ static PyMethodDef py_client_methods[] = {
         "Send number of user channels to client." },
     { "send_netsplit", (PyCFunction)py_client_send_netsplit,
         METH_O, "Send netsplit to a client." },
+    { "inject_line", (PyCFunction)py_client_inject_line,
+        METH_O, "Inject a line." },
     { NULL }
 };
 
@@ -1608,6 +1640,35 @@ static PyObject *py_client_get_description(PyClientObject *self, void *closure)
     return PyString_FromString(self->client->description);
 }
 
+static PyObject *py_client_get_authenticated(PyClientObject *self, void *closure)
+{
+    return PyBool_FromLong(self->client->authenticated);
+}
+
+static PyObject *py_client_get_transport(PyClientObject *self, void *closure)
+{
+    if (self->client->transport == NULL)
+        Py_RETURN_NONE;
+
+    if (self->client->transport->backend_ops == &py_transport_ops) {
+        PyObject *ret = (PyObject *)self->client->transport->backend_data;
+        Py_INCREF(ret);
+        return ret;
+    } else {
+        PyTransportObject *ret;
+        ret = PyObject_New(PyTransportObject, &PyTransportType);
+        if (ret == NULL) {
+            PyErr_NoMemory();
+            return NULL;
+        }
+
+        Py_INCREF(self);
+        ret->parent = (PyObject *)self;
+        ret->transport = self->client->transport;
+        return (PyObject *)ret;
+    }
+}
+
 static PyGetSetDef py_client_getsetters[] = {
     { "state", (getter)py_client_get_state, NULL, "State" },
     { "default_target", (getter)py_client_get_default_target, NULL, "Default target" },
@@ -1620,6 +1681,10 @@ static PyGetSetDef py_client_getsetters[] = {
         "Timestamp of the last pong that was received." },
     { "description", (getter)py_client_get_description, NULL,
         "Description of the client" },
+    { "authenticated", (getter)py_client_get_authenticated, NULL,
+        "Authenticated" },
+    { "transport", (getter)py_client_get_transport, NULL,
+        "Transport" },
     { NULL }
 };
 
@@ -1916,14 +1981,13 @@ PyTypeObject PyQueryStackType = {
     .tp_dealloc = (destructor)py_query_stack_dealloc,
 };
 
-typedef struct {
-    PyObject_HEAD
-    struct irc_transport *transport;
-} PyTransportObject;
 
 static int py_transport_dealloc(PyTransportObject *self)
 {
-    free_irc_transport(self->transport);
+    if (self->parent != NULL)
+        Py_DECREF(self->parent);
+    else
+        free_irc_transport(self->transport);
     PyObject_Del((PyObject *)self);
     return 0;
 }
@@ -1955,7 +2019,11 @@ static void py_transport_disconnect(void *data)
     PyObject *obj = (PyObject *)data, *ret;
     /* Nothing */
     ret = PyObject_CallMethod(obj, "disconnect", "");
-    Py_XDECREF(ret);
+    if (ret == NULL) {
+        PyErr_Clear();
+        return;
+    }
+    Py_DECREF(ret);
 }
 
 static gboolean py_transport_send_line(struct irc_transport *transport, const struct irc_line *l, GError **error)
@@ -2044,6 +2112,7 @@ static PyObject *py_transport_new(PyTypeObject *type, PyObject *args, PyObject *
         return NULL;
     }
 
+    self->parent = NULL;
     self->transport = g_new0(struct irc_transport, 1);
 	self->transport->pending_lines = g_queue_new();
     self->transport->backend_data = self;
@@ -2058,17 +2127,41 @@ static struct irc_transport *wrap_py_transport(PyObject *obj)
 
     transport = g_new0(struct irc_transport, 1);
 	transport->pending_lines = g_queue_new();
+    Py_INCREF(obj);
     transport->backend_data = obj;
     transport->backend_ops = &py_transport_ops;
 
     return transport;
 }
 
+static PyObject *py_transport_inject_line(PyTransportObject *self, PyObject *line)
+{
+    struct irc_line *l;
+    gboolean ret;
+
+    if (self->transport->callbacks == NULL || self->transport->callbacks->recv == NULL) {
+        PyErr_SetNone(PyExc_AttributeError);
+        return NULL;
+    }
+
+    l = PyObject_AsLine(line);
+    if (l == NULL) {
+        return NULL;
+    }
+
+    ret = self->transport->callbacks->recv(self->transport, l);
+    free_line(l);
+
+    return PyBool_FromLong(ret);
+}
+
 static PyMethodDef py_transport_methods[] = {
+    { "inject_line", (PyCFunction)py_transport_inject_line, 
+        METH_O, "Inject line" },
     { NULL }
 };
 
-PyTypeObject PyTransportType = {
+static PyTypeObject PyTransportType = {
     .tp_name = "Transport",
     .tp_flags = Py_TPFLAGS_DEFAULT,
     .tp_new = py_transport_new,
