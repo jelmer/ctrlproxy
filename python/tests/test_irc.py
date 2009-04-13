@@ -554,3 +554,21 @@ class ChannelStateDiffTests(unittest.TestCase):
         self.channel1.topic = "bla la"
         self.client.send_state_diff(self.state1, self.state2)
         self.assertLines(['TOPIC #foo'])
+
+    def test_diff_nicks_leave(self):
+        self.channel1.nicks.add(irc.Nick("me!foo@bar"))
+        self.channel1.nicks.add(irc.Nick("you!foo@bar"))
+        self.client.send_state_diff(self.state1, self.state2)
+        self.assertLines([':me!foo@bar PART #foo', ':you!foo@bar PART #foo'])
+
+    def test_diff_nicks_join(self):
+        self.channel2.nicks.add(irc.Nick("me!foo@bar"))
+        self.channel2.nicks.add(irc.Nick("you!foo@bar"))
+        self.client.send_state_diff(self.state1, self.state2)
+        self.assertLines([':me!foo@bar JOIN #foo', ':you!foo@bar JOIN #foo'])
+
+    def test_diff_nick_change(self):
+        self.channel1.nicks.add(irc.Nick("me!foo@bar"))
+        self.channel2.nicks.add(irc.Nick("you!foo@bar"))
+        self.client.send_state_diff(self.state1, self.state2)
+        # FIXME: self.assertLines([':me!foo@bar NICK you'])

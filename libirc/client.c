@@ -500,7 +500,7 @@ gboolean client_send_channel_state_diff(struct irc_client *client,
 		nn = find_channel_nick_hostmask(new_state, on->global_nick->hostmask);
 		if (nn == NULL)
 			client_send_args_ex(client, on->global_nick->hostmask, 
-								"PART", on->global_nick->nick, NULL);
+								"PART", new_state->name, NULL);
 		else
 			client_send_args_ex(client, on->global_nick->hostmask,
 								"NICK", nn->global_nick->nick, NULL);
@@ -514,7 +514,7 @@ gboolean client_send_channel_state_diff(struct irc_client *client,
 		on = find_channel_nick(old_state, nn->global_nick->nick);
 		if (on == NULL)
 			client_send_args_ex(client, nn->global_nick->hostmask, "JOIN", 
-								on->channel->name, NULL);
+								nn->channel->name, NULL);
 	}
 
 	/* Send TOPIC if the topic is different */
