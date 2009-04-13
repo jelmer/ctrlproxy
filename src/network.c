@@ -377,7 +377,7 @@ static void handle_network_disconnect(struct irc_network *n)
 
 	if (n->connection.state == NETWORK_CONNECTION_STATE_MOTD_RECVD) {
 		server_disconnected_hook_execute(n);
-		clients_send_netsplit(n->clients, n->external_state->info->server);
+		clients_send_netsplit(n->clients, get_my_hostname(), n->external_state->info->server);
 		network_update_config(n->external_state, nc, n->global->config);
 	}
 

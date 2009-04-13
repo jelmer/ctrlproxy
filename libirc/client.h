@@ -115,8 +115,8 @@ G_MODULE_EXPORT void client_send_channel_mode(struct irc_client *client, struct 
 G_MODULE_EXPORT void client_send_luserchannels(struct irc_client *c, int num);
 G_MODULE_EXPORT void client_send_motd(struct irc_client *c, char **lines);
 G_MODULE_EXPORT void client_log(enum log_level, const struct irc_client *c, const char *fmt, ...);
-G_MODULE_EXPORT void client_send_netsplit(struct irc_client *c, const char *lost_server);
-G_MODULE_EXPORT void clients_send_netsplit(GList *clients, const char *lost_server);
+G_MODULE_EXPORT void client_send_netsplit(struct irc_client *c, const char *my_name, const char *lost_server);
+G_MODULE_EXPORT void clients_send_netsplit(GList *clients, const char *my_name, const char *lost_server);
 G_MODULE_EXPORT void free_login_details(struct irc_login_details *details);
 
 #define IRC_CLIENT_ERROR irc_client_error_quark()

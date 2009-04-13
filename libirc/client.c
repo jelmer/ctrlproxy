@@ -279,21 +279,13 @@ static gboolean on_transport_receive_line(struct irc_transport *transport,
 		}
 
 		if (client->state != NULL) {
-			if (client->network == NULL) {
-				client_disconnect(client, 
-					  "Please select a network first, or specify one in your configuration file");
-				return FALSE;
-			}
+			pending_clients = g_list_remove(pending_clients, client);
 
 			if (!client->callbacks->welcome(client)) {
 				return FALSE;
 			}
 
-			pending_clients = g_list_remove(pending_clients, client);
-			client->network->clients = g_list_append(client->network->clients, client);
-
 			client->authenticated = TRUE;
-
 			client_log(LOG_INFO, client, "New client");
 		}
 	}
@@ -777,42 +769,53 @@ void client_send_luserchannels(struct irc_client *client, int num)
 
 }
 
-void clients_send_netsplit(GList *clients, const char *lost_server)
+void clients_send_netsplit(GList *clients, const char *my_name, const char *lost_server)
 {
 	GList *gl;
 	for (gl = clients; gl; gl = gl->next) {
 		struct irc_client *c = gl->data;
-		client_send_netsplit(c, lost_server);
+		client_send_netsplit(c, my_name, lost_server);
 	}
 }
 
-void client_send_netsplit(struct irc_client *c, const char *lost_server)
+gboolean client_send_nick_quit(struct irc_client *c, struct network_nick *gn, const char *reason)
+{
+	gboolean ret;
+	if (gn->hostmask == NULL) {
+		/* Make up a fake hostmask. The user hasn't seen the original hostmask 
+		 * of this nick anyway, otherwise we would've known it already. */
+		char *fake_hostmask = g_strdup_printf("%s!~UNKNOWN@UNKNOWN", gn->nick);
+		ret = client_send_args_ex(c, fake_hostmask, "QUIT", reason, NULL);
+		g_free(fake_hostmask);
+	} else {
+		ret = client_send_args_ex(c, gn->hostmask, "QUIT", reason, NULL);
+	}
+	return ret;
+}
+
+void client_send_netsplit(struct irc_client *c, const char *my_name, const char *lost_server)
 {
 	struct irc_network_state *s = c->state;
 	char *reason;
-	GList *gl;
 
 	if (s == NULL)
 		return;
 
 	/* Spoof a netsplit */
-	reason = g_strdup_printf("%s %s", get_my_hostname(), lost_server);
+	reason = g_strdup_printf("%s %s", my_name, lost_server);
 
-	/* all nicks known quit */
-	for (gl = s->nicks; gl != NULL; gl = gl->next) {
+	while (s->nicks != NULL) {
+		GList *gl = s->nicks;
 		struct network_nick *gn = gl->data;
 
-		if (gn == &s->me) continue;
-
-		if (gn->hostmask == NULL) {
-			/* Make up a fake hostmask. The user hasn't seen the original hostmask 
-			 * of this nick anyway, otherwise we would've known it already. */
-			char *fake_hostmask = g_strdup_printf("%s!~UNKNOWN@UNKNOWN", gn->nick);
-			client_send_args_ex(c, fake_hostmask, "QUIT", reason, NULL);
-			g_free(fake_hostmask);
-		} else {
-			client_send_args_ex(c, gn->hostmask, "QUIT", reason, NULL);
+		/* Skip self */
+		if (gn == &s->me) {
+			gl = gl->next;
+			if (gl == NULL)
+				break;
+			gn = gl->data;
 		}
+		client_send_nick_quit(c, gn, reason);
 	}
 
 	g_free(reason);

@@ -633,6 +633,7 @@ static PyObject *py_channel_nick_dict_add(PyChannelNickDictObject *self, PyObjec
     struct channel_nick *cn;
     PyNetworkNickObject *py_nick;
     char *modestr = NULL;
+    struct irc_channel_state *cs;
 
     if (!PyArg_ParseTuple(args, "O|s", &py_nick, &modestr))
         return NULL;
@@ -642,7 +643,9 @@ static PyObject *py_channel_nick_dict_add(PyChannelNickDictObject *self, PyObjec
         return NULL;
     }
 
-    cn = find_channel_nick(self->parent->state, py_nick->nick->nick);
+    cs = self->parent->state;
+
+    cn = find_channel_nick(cs, py_nick->nick->nick);
     if (cn != NULL) {
         PyErr_SetNone(PyExc_KeyError);
         return NULL;
@@ -651,6 +654,8 @@ static PyObject *py_channel_nick_dict_add(PyChannelNickDictObject *self, PyObjec
     if (py_nick->parent == NULL) {
         Py_INCREF(self->parent);
         py_nick->parent = (PyObject *)self->parent;
+        if (cs->network != NULL)
+            cs->network->nicks = g_list_append(cs->network->nicks, py_nick->nick);
     } else {
         /* FIXME: What if we're adding the same nick to multiple channels ? */
         PyErr_SetNone(PyExc_TypeError);
@@ -661,9 +666,9 @@ static PyObject *py_channel_nick_dict_add(PyChannelNickDictObject *self, PyObjec
 	g_assert(cn != NULL);
 	
     string2mode(modestr, cn->modes);
-	cn->channel = self->parent->state;
+	cn->channel = cs;
 	cn->global_nick = py_nick->nick;
-	cn->channel->nicks = g_list_append(cn->channel->nicks, cn);
+	cs->nicks = g_list_append(cs->nicks, cn);
     cn->global_nick->channel_nicks = g_list_append(cn->global_nick->channel_nicks, cn);
 
     Py_RETURN_NONE;
@@ -1085,6 +1090,7 @@ static PyObject *py_network_state_add(PyNetworkStateObject *self, PyObject *obj)
 {
     if (PyObject_TypeCheck(obj, &PyChannelStateType)) {
         PyChannelStateObject *chobj = (PyChannelStateObject *)obj;
+        GList *gl;
 
         if (find_channel(self->state, chobj->state->name) != NULL) {
             PyErr_SetString(PyExc_KeyError, "Key already exists");
@@ -1101,6 +1107,12 @@ static PyObject *py_network_state_add(PyNetworkStateObject *self, PyObject *obj)
         Py_INCREF(self);
         chobj->state->network = self->state;
         chobj->parent = (PyObject *)self;
+
+        for (gl = chobj->state->nicks; gl != NULL; gl = gl->next) {
+            struct channel_nick *cn = gl->data;
+
+            self->state->nicks = g_list_append(self->state->nicks, cn->global_nick);
+        }
 
         Py_RETURN_NONE;
     } else if (PyObject_TypeCheck(obj, &PyNetworkNickType)) {
@@ -1506,14 +1518,14 @@ static PyObject *py_client_send_luserchannels(PyClientObject *self, PyObject *ar
     Py_RETURN_NONE;
 }
 
-static PyObject *py_client_send_netsplit(PyClientObject *self, PyObject *py_server)
+static PyObject *py_client_send_netsplit(PyClientObject *self, PyObject *args)
 {
-    if (!PyString_Check(py_server)) {
-        PyErr_SetNone(PyExc_TypeError);
-        return NULL;
-    }
+    char *own_name, *other_name;
 
-    client_send_netsplit(self->client, PyString_AsString(py_server));
+    if (!PyArg_ParseTuple(args, "ss", &own_name, &other_name))
+        return NULL;
+
+    client_send_netsplit(self->client, own_name, other_name);
 
     Py_RETURN_NONE;
 }
@@ -1539,7 +1551,10 @@ static PyObject *py_client_inject_line(PyClientObject *self, PyObject *line)
     return PyBool_FromLong(ret);
 }
 
-
+static PyObject *py_client_welcome(PyClientObject *self)
+{
+    Py_RETURN_NONE;
+}
 
 static PyMethodDef py_client_methods[] = {
     { "set_charset", (PyCFunction)py_client_set_charset, 
@@ -1581,9 +1596,11 @@ static PyMethodDef py_client_methods[] = {
         METH_O,
         "Send number of user channels to client." },
     { "send_netsplit", (PyCFunction)py_client_send_netsplit,
-        METH_O, "Send netsplit to a client." },
+        METH_VARARGS, "Send netsplit to a client." },
     { "inject_line", (PyCFunction)py_client_inject_line,
         METH_O, "Inject a line." },
+    { "welcome", (PyCFunction)py_client_welcome,
+        METH_NOARGS, "Dummy function, meant to be overridden" },
     { NULL }
 };
 
@@ -1874,7 +1891,7 @@ static int py_welcome_client(struct irc_client *client)
     ret = PyObject_CallMethod(self, "welcome", "");
     if (ret == NULL)
         return false;
-    if (ret == Py_True)
+    if (ret == Py_True || ret == Py_None)
         return true;
     return false;
 }

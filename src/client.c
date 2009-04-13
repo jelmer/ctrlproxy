@@ -152,6 +152,13 @@ static gboolean welcome_client(struct irc_client *client)
 
 	g_assert(client);
 
+	if (client->network == NULL) {
+		client_disconnect(client, 
+			  "Please select a network first, or specify one in your configuration file");
+		return FALSE;
+	}
+
+	client->network->clients = g_list_append(client->network->clients, client);
 	client_send_response(client, RPL_WELCOME, "Welcome to the ctrlproxy", NULL);
 	tmp = g_strdup_printf("Host %s is running ctrlproxy", client->default_origin);
 	client_send_response(client, RPL_YOURHOST, tmp, NULL); 
@@ -214,7 +221,6 @@ static gboolean welcome_client(struct irc_client *client)
 	}
 
 	client_replicate(client);
-
 	return TRUE;
 }
 

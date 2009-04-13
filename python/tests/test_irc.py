@@ -382,9 +382,26 @@ class ClientTests(unittest.TestCase):
     def test_create(self):
         c = irc.Client(DummyTransport(), "myorigin", "description")
 
+    def test_transport(self):
+        t = DummyTransport()
+        c = irc.Client(t, "myorigin", "description")
+        self.assertEquals(t, c.transport)
+
+    def test_authenticate(self):
+        c = irc.Client(DummyTransport(), "myorigin", "description")
+        self.assertEquals(False, c.authenticated)
+        c.inject_line("NICK mynick")
+        c.inject_line("USER a a a a")
+        self.assertTrue(c.state is not None)
+        self.assertEquals(True, c.authenticated)
+
+    def test_authenticated(self):
+        c = irc.Client(DummyTransport(), "myorigin", "description")
+        self.assertEquals(False, c.authenticated)
+
     def test_state(self):
         c = irc.Client(DummyTransport(), "myorigin", "description")
-        self.assertTrue(c.state is not None)
+        self.assertEquals(None, c.state)
 
     def test_send_line(self):
         t = DummyTransport()
@@ -425,7 +442,7 @@ class ClientTests(unittest.TestCase):
     def test_send_netsplit_none(self):
         t = DummyTransport()
         c = irc.Client(t, "myorigin", "description")
-        c.send_netsplit("myserver")
+        c.send_netsplit("us", "myserver")
         self.assertEquals([], t.str_lines())
 
     def test_send_channel_mode_none(self):
@@ -607,3 +624,39 @@ class ChannelStateDiffTests(unittest.TestCase):
         self.channel2.modes = "+r"
         self.client.send_state_diff(self.state1, self.state2)
         #FIXME: self.assertLines([':myorigin MODE #foo -p+r'])
+
+
+class NetsplitTests(unittest.TestCase):
+
+    def setUp(self):
+        super(NetsplitTests, self).setUp()
+        self.transport = DummyTransport()
+        self.client = irc.Client(self.transport, "myserverorigin", 
+                "description")
+        self.client.inject_line("NICK mynick")
+        self.client.inject_line("USER a a a a")
+        self.assertEquals(True, self.client.authenticated)
+
+    def assertLines(self, lines):
+        self.client.send_netsplit("us", "upstream")
+        self.assertEquals(lines, self.transport.str_lines())
+
+    def test_no_channels(self):
+        self.assertLines([])
+
+    def test_channel_no_nicks(self):
+        self.client.state.add(irc.ChannelState("#foo"))
+        self.assertLines([])
+
+    def test_channel_one_nick(self):
+        c = irc.ChannelState("#foo")
+        c.nicks.add(irc.Nick("somebody!someuser@somehost"))
+        self.client.state.add(c)
+        self.assertLines([":somebody!someuser@somehost QUIT :us upstream"])
+
+    def test_channel_lots_of_nicks(self):
+        c = irc.ChannelState("#foo")
+        for i in range(10):
+            c.nicks.add(irc.Nick("some%d!someuser@somehost" % i))
+        self.client.state.add(c)
+        self.assertLines([":some%d!someuser@somehost QUIT :us upstream" % i for i in range(10)])
