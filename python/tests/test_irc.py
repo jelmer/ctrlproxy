@@ -596,3 +596,14 @@ class ChannelStateDiffTests(unittest.TestCase):
         self.channel2.nicks.add(irc.Nick("you!foo@bar"))
         self.client.send_state_diff(self.state1, self.state2)
         # FIXME: self.assertLines([':me!foo@bar NICK you'])
+
+    def test_diff_mode(self):
+        self.channel2.modes = "+r"
+        self.client.send_state_diff(self.state1, self.state2)
+        self.assertLines([':myorigin MODE #foo +r'])
+
+    def test_diff_mode_remove(self):
+        self.channel1.modes = "+p"
+        self.channel2.modes = "+r"
+        self.client.send_state_diff(self.state1, self.state2)
+        #FIXME: self.assertLines([':myorigin MODE #foo -p+r'])
