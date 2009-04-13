@@ -18,6 +18,8 @@ Ctrlproxy 3.0.9 UNRELEASED
 
     * Don't send : for last argument in RPL_MYINFO, consistent with IRC servers.
 
+	* Fix netsplits generated when connection to a network is lost.
+
   FEATURES
 
     * Provide Python bindings for the main library code. Mainly used for 
