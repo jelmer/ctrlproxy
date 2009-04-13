@@ -91,6 +91,13 @@ class ChannelStateTests(unittest.TestCase):
         self.assertEquals(1, len(s.nicks))
         self.assertEquals("me", s.nicks["me"].nick)
 
+    def test_add_nick_mode(self):
+        s = irc.ChannelState("#foo")
+        s.nicks.add(irc.Nick("me!foo@bar"), "+o")
+        self.assertEquals(1, len(s.nicks))
+        self.assertEquals("me", s.nicks["me"].nick)
+        self.assertEquals("+o", s.nicks.nick_mode("me"))
+
     def test_set_key(self):
         s = irc.ChannelState("#foo")
         self.assertRaises(KeyError, lambda:s.mode_option['k'])

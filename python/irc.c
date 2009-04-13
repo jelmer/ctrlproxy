@@ -625,8 +625,9 @@ static PyObject *py_channel_nick_dict_add(PyChannelNickDictObject *self, PyObjec
 {
     struct channel_nick *cn;
     PyNetworkNickObject *py_nick;
+    char *modestr = NULL;
 
-    if (!PyArg_ParseTuple(args, "O", &py_nick))
+    if (!PyArg_ParseTuple(args, "O|s", &py_nick, &modestr))
         return NULL;
 
     if (!PyObject_TypeCheck(py_nick, &PyNetworkNickType)) {
@@ -652,6 +653,7 @@ static PyObject *py_channel_nick_dict_add(PyChannelNickDictObject *self, PyObjec
    	cn = g_new0(struct channel_nick,1);
 	g_assert(cn != NULL);
 	
+    string2mode(modestr, cn->modes);
 	cn->channel = self->parent->state;
 	cn->global_nick = py_nick->nick;
 	cn->channel->nicks = g_list_append(cn->channel->nicks, cn);
