@@ -222,7 +222,7 @@ int main(int argc, char **argv)
 	markers = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, 
 									(GDestroyNotify)linestack_free_marker);
 
-	ctx = create_linestack(ops, argv[1], cfg, state);
+	ctx = create_linestack(ops, argv[1], TRUE, cfg, state);
 
 	atexit(freels);
 
