@@ -30,6 +30,9 @@ Ctrlproxy 3.0.9 UNRELEASED
 	  unit testing at the moment, but will also become available to 
 	  ctrlproxy users at some point.
 
+	* Processes started by ctrlproxyd are now watched, and their status 
+	  is reported when they exit.
+
 Ctrlproxy 3.0.8 2008-12-06
 
   FEATURES

@@ -27,8 +27,11 @@ struct daemon_user {
 	 char *pidpath;
 	 char *socketpath;
 	 char *username;
+	 gint last_status;
+	 gint child_watch;
 	 uid_t uid; /* -1 if not a system user */
-	 pid_t pid;
+	 GPid pid;
+	 struct irc_listener *listener;
 };
 
 gboolean daemon_user_exists(struct daemon_user *user);

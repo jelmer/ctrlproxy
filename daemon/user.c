@@ -53,8 +53,8 @@ struct daemon_user *get_daemon_user(struct ctrlproxyd_config *config, const char
 	struct daemon_user *user = g_new0(struct daemon_user, 1);
 	struct passwd *pwd;
 
-	user->pid = -1;
 	user->username = g_strdup(username);
+	user->child_watch = -1;
 
 	if (config->configdir != NULL) {
 		user->configdir = g_build_filename(config->configdir, username, NULL);
@@ -93,29 +93,46 @@ static void user_setup(gpointer user_data)
 	}	
 }
 
+static void daemon_user_exits(GPid pid, gint status, gpointer data)
+{
+	struct daemon_user *user = (struct daemon_user *)data;
+
+	listener_log((status == 0)?LOG_INFO:LOG_WARNING, user->listener,
+					 "ctrlproxy instance for '%s' exited with status %d", 
+					 user->configdir, status);
+
+	user->last_status = status;
+
+	g_spawn_close_pid(pid);
+	user->pid = -1;
+	user->child_watch = -1;
+}
+
+
 gboolean daemon_user_start(struct daemon_user *user, const char *ctrlproxy_path, struct irc_listener *l)
 {
-	GPid child_pid;
 	GError *error = NULL;
 	struct spawn_data spawn_data;
 	char **command;
+	int child_stdin, child_stdout, child_stderr;
 	spawn_data.listener = l;
 	spawn_data.user = user;
 
+	user->listener = l;
+
 	command = g_new0(char *, 6);
 	command[0] = g_strdup(ctrlproxy_path);
-	command[1] = g_strdup("--daemon");
-	command[2] = g_strdup("--config-dir");
-	command[3] = g_strdup(user->configdir);
+	command[1] = g_strdup("--config-dir");
+	command[2] = g_strdup(user->configdir);
 	if (user->uid == (uid_t)-1) {
-		command[4] = g_strdup("--restricted");
-		command[5] = NULL;
-	} else {
+		command[3] = g_strdup("--restricted");
 		command[4] = NULL;
+	} else {
+		command[3] = NULL;
 	}
 
-	if (!g_spawn_async(NULL, command, NULL, G_SPAWN_SEARCH_PATH, user_setup, &spawn_data,
-				  &child_pid, &error)) {
+	if (!g_spawn_async_with_pipes(NULL, command, NULL, G_SPAWN_SEARCH_PATH|G_SPAWN_DO_NOT_REAP_CHILD, user_setup, &spawn_data,
+				  &user->pid, &child_stdin, &child_stdout, &child_stderr, &error)) {
 		listener_log(LOG_WARNING, l, "Unable to start ctrlproxy for %s (%s): %s", user->username, 
 					 user->configdir, error->message);
 		g_error_free(error);
@@ -125,8 +142,7 @@ gboolean daemon_user_start(struct daemon_user *user, const char *ctrlproxy_path,
 
 	listener_log(LOG_INFO, l, "Launched new ctrlproxy instance for %s at %s", 
 				 user->username, user->configdir);
-
-	g_spawn_close_pid(child_pid);
+	user->child_watch = g_child_watch_add(user->pid, daemon_user_exits, user);
 
 	/* FIXME: What if the process hasn't started up completely while we try to 
 	 * connect to the socket? */
