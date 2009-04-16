@@ -100,6 +100,9 @@ libirc_headers = \
 		  $(libircdir)/listener.h \
 		  $(libircdir)/util.h
 
+pyirc_objs = $(libircdir)/python/irc.o \
+			 $(libircdir)/python/transport.o
+
 headers = src/admin.h \
 		  src/ctcp.h \
 		  src/ctrlproxy.h \
@@ -266,17 +269,17 @@ ctags:
 # Python specific stuff below this line
 mods/python.o python/ctrlproxy.o: CFLAGS+=$(PYTHON_CFLAGS)
 mods/python.o python/ctrlproxy.o: CFLAGS+=-fPIC
-mods/libpython.so: mods/python.o python/ctrlproxy.o libirc/python/irc.o
+mods/libpython.so: mods/python.o python/ctrlproxy.o $(pyirc_objs)
 mods/libpython.so: LDFLAGS+=$(PYTHON_LDFLAGS)
 
 .PRECIOUS: python/irc.c python/ctrlproxy.c
 
-libirc/python/irc.o: CFLAGS+=$(PYTHON_CFLAGS) -fPIC
-python/irc.$(SHLIBEXT): libirc/python/irc.o $(LIBIRC)
+$(pyirc_objs): CFLAGS+=$(PYTHON_CFLAGS) -fPIC
+python/irc.$(SHLIBEXT): $(pyirc_objs) $(LIBIRC)
 python/irc.$(SHLIBEXT): LDFLAGS+=$(PYTHON_LDFLAGS) $(LIBS)
 
 ifeq ($(HAVE_PYTHON),yes)
-all_objs += libirc/python/irc.o mods/python.o python/ctrlproxy.o
+all_objs += $(pyirc_objs) mods/python.o python/ctrlproxy.o
 endif
 
 python:: python/irc.$(SHLIBEXT) mods/libpython.$(SHLIBEXT)

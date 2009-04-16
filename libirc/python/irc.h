@@ -43,6 +43,8 @@ typedef struct {
     PyObject *parent;
 } PyTransportObject;PyTypeObject PyTransportType;
 struct irc_transport *wrap_py_transport(PyObject *obj);
+struct irc_transport_ops py_transport_ops;
+
 
 /* GList iterator */
 PyObject *py_g_list_iter(GList *list, PyObject *parent, PyObject *(*converter) (PyObject *parent, void *));
@@ -55,7 +57,7 @@ typedef struct {
 } PyGListIterObject;
 
 /* line */
-
+PyTypeObject PyLineType;
 typedef struct {
     PyObject_HEAD
     const struct irc_line *line;
@@ -71,5 +73,6 @@ typedef struct {
     PyObject *parent;
 } PyNetworkStateObject;
 
+void g_error_set_python(GError **error);
 
 #endif
