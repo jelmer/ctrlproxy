@@ -33,6 +33,8 @@ typedef struct {
 
 /* network info */
 PyTypeObject PyNetworkInfoType;
+PyTypeObject PyNetworkChannelDictType;
+PyTypeObject PyChannelNickDictType;
 PyTypeObject PyChannelModeDictType;
 
 /* transport */
@@ -66,12 +68,20 @@ typedef struct {
 struct irc_line *PyObject_AsLine(PyObject *obj);
 
 /* network state */
-
+PyTypeObject PyNetworkStateType;
 typedef struct {
     PyObject_HEAD
     struct irc_network_state *state;
     PyObject *parent;
 } PyNetworkStateObject;
+
+PyTypeObject PyChannelStateType;
+
+typedef struct {
+    PyObject_HEAD
+    struct irc_channel_state *state;
+    PyObject *parent;
+} PyChannelStateObject;
 
 void g_error_set_python(GError **error);
 

@@ -101,7 +101,8 @@ libirc_headers = \
 		  $(libircdir)/util.h
 
 pyirc_objs = $(libircdir)/python/irc.o \
-			 $(libircdir)/python/transport.o
+			 $(libircdir)/python/transport.o \
+			 $(libircdir)/python/state.o
 
 headers = src/admin.h \
 		  src/ctcp.h \
