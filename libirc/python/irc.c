@@ -21,6 +21,7 @@
 #include <stdbool.h>
 #include "ctrlproxy.h"
 #include "redirect.h"
+#include "libirc/python/irc.h"
 
 static void g_error_set_python(GError **error)
 {
@@ -35,45 +36,8 @@ static void g_error_set_python(GError **error)
 
 static struct irc_transport_ops py_transport_ops;
 static const struct irc_client_callbacks py_client_callbacks;
-static PyTypeObject PyTransportType;
-static PyTypeObject PyNetworkNickType;
-static struct irc_transport *wrap_py_transport(PyObject *obj);
 const char *get_my_hostname() { return NULL; /* FIXME */ }
 void log_global(enum log_level ll, const char *fmt, ...) { /* FIXME */}
-
-static PyObject *py_g_list_iter(GList *list, PyObject *parent, PyObject *(*converter) (PyObject *parent, void *));
-
-typedef struct {
-    PyObject_HEAD
-    GList *iter;
-    PyObject *(*converter) (PyObject *parent, void *);
-    PyObject *parent;
-} PyGListIterObject;
-
-typedef struct {
-    PyObject_HEAD
-    const struct irc_line *line;
-} PyLineObject;
-
-typedef struct {
-    PyObject_HEAD
-    struct irc_transport *transport;
-    PyObject *parent;
-} PyTransportObject;
-
-typedef struct {
-    PyObject_HEAD
-    struct irc_network_state *state;
-    PyObject *parent;
-} PyNetworkStateObject;
-
-typedef struct {
-    PyObject_HEAD
-    PyObject *parent;
-    struct network_nick *nick;
-} PyNetworkNickObject;
-
-static struct irc_line *PyObject_AsLine(PyObject *obj);
 
 PyObject *py_line_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 {
@@ -186,7 +150,7 @@ static PyTypeObject PyLineType = {
     .tp_as_sequence = &py_line_sequence,
 };
 
-static struct irc_line *PyObject_AsLine(PyObject *obj)
+struct irc_line *PyObject_AsLine(PyObject *obj)
 {
     if (PyString_Check(obj))
         return irc_parse_line(PyString_AsString(obj));
@@ -984,7 +948,7 @@ static PyGetSetDef py_network_nick_getsetters[] = {
     { NULL }
 };
 
-static PyTypeObject PyNetworkNickType = {
+PyTypeObject PyNetworkNickType = {
     .tp_name = "Nick",
     .tp_new = py_network_nick_new,
     .tp_dealloc = (destructor)py_network_nick_dealloc,
@@ -1238,7 +1202,7 @@ static PyTypeObject PyGListIterType = {
     .tp_iternext = (iternextfunc)py_g_list_iter_next,
 };
 
-static PyObject *py_g_list_iter(GList *list, PyObject *parent, PyObject *(*converter) (PyObject *parent, void *))
+PyObject *py_g_list_iter(GList *list, PyObject *parent, PyObject *(*converter) (PyObject *parent, void *))
 {
     PyGListIterObject *ret = PyObject_New(PyGListIterObject, &PyGListIterType);
 
@@ -2138,7 +2102,7 @@ static PyObject *py_transport_new(PyTypeObject *type, PyObject *args, PyObject *
     return (PyObject *)self;
 }
 
-static struct irc_transport *wrap_py_transport(PyObject *obj)
+struct irc_transport *wrap_py_transport(PyObject *obj)
 {
     struct irc_transport *transport;
 
@@ -2178,7 +2142,7 @@ static PyMethodDef py_transport_methods[] = {
     { NULL }
 };
 
-static PyTypeObject PyTransportType = {
+PyTypeObject PyTransportType = {
     .tp_name = "Transport",
     .tp_flags = Py_TPFLAGS_DEFAULT,
     .tp_new = py_transport_new,
