@@ -266,17 +266,17 @@ ctags:
 # Python specific stuff below this line
 mods/python.o python/ctrlproxy.o: CFLAGS+=$(PYTHON_CFLAGS)
 mods/python.o python/ctrlproxy.o: CFLAGS+=-fPIC
-mods/libpython.so: mods/python.o python/ctrlproxy.o python/irc.o
+mods/libpython.so: mods/python.o python/ctrlproxy.o libirc/python/irc.o
 mods/libpython.so: LDFLAGS+=$(PYTHON_LDFLAGS)
 
 .PRECIOUS: python/irc.c python/ctrlproxy.c
 
-python/irc.o: CFLAGS+=$(PYTHON_CFLAGS) -fPIC
-python/irc.$(SHLIBEXT): python/irc.o $(LIBIRC)
+libirc/python/irc.o: CFLAGS+=$(PYTHON_CFLAGS) -fPIC
+python/irc.$(SHLIBEXT): libirc/python/irc.o $(LIBIRC)
 python/irc.$(SHLIBEXT): LDFLAGS+=$(PYTHON_LDFLAGS) $(LIBS)
 
 ifeq ($(HAVE_PYTHON),yes)
-all_objs += python/irc.o mods/python.o python/ctrlproxy.o
+all_objs += libirc/python/irc.o mods/python.o python/ctrlproxy.o
 endif
 
 python:: python/irc.$(SHLIBEXT) mods/libpython.$(SHLIBEXT)
