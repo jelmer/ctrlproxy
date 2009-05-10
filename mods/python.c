@@ -116,6 +116,7 @@ static PyTypeObject AdminOutputType = {
 
 static void handle_python_admin(admin_handle h, const char * const *args, void *userdata)
 {
+	char *text;
 	PyObject *old_stdout, *old_stderr;
 	AdminOutputObject *admin_stdout;
 
@@ -124,6 +125,8 @@ static void handle_python_admin(admin_handle h, const char * const *args, void *
 		return;
 	}
 
+	text = g_strjoinv(" ", (char **)args+1);
+
 	old_stdout = PySys_GetObject("stdout");
 	old_stderr = PySys_GetObject("stderr");
 	admin_stdout = PyObject_New(AdminOutputObject, &AdminOutputType);
@@ -131,7 +134,8 @@ static void handle_python_admin(admin_handle h, const char * const *args, void *
 	admin_stdout->buffer = NULL;
 	PySys_SetObject("stdout", (PyObject *)admin_stdout);
 	PySys_SetObject("stderr", (PyObject *)admin_stdout);
-	PyRun_SimpleString(args[1]);
+	PyRun_SimpleString(text);
+	g_free(text);
 	PySys_SetObject("stdout", old_stdout);
 	PySys_SetObject("stderr", old_stderr);
 	Py_DECREF(admin_stdout);

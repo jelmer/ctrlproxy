@@ -74,6 +74,7 @@ gboolean admin_socket_prompt(const char *config_dir)
 
 		g_free(data);
 
+		/* A bit ugly, but it works.. */
 		g_usleep(G_USEC_PER_SEC / 10);
 
 		while (g_io_channel_read_line(ch, &raw, NULL, NULL, &error) == G_IO_STATUS_NORMAL) 
