@@ -970,6 +970,7 @@ static PyObject *py_network_channel_dict_get(PyNetworkChannelDictObject *self, P
 
     channel = find_channel(self->parent->state, name);
     if (channel == NULL) {
+        PyErr_SetNone(PyExc_KeyError);
         return NULL;
     }
 
