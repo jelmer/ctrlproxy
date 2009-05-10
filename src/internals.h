@@ -158,7 +158,7 @@ gboolean admin_process_command(struct irc_client *c, struct irc_line *l, int cmd
 void admin_log(enum log_level level, const struct irc_network *n, const struct irc_client *c, const char *data);
 gboolean start_admin_socket(struct global *global);
 gboolean stop_admin_socket(struct global *global);
-gboolean admin_socket_prompt(const char *config_dir);
+gboolean admin_socket_prompt(const char *config_dir, gboolean python);
 
 /* settings.c */
 gboolean create_configuration(const char *config_dir);

@@ -148,14 +148,6 @@ struct new_client_hook_data {
 
 GList *new_client_hooks = NULL;
 
-struct lose_client_hook_data {
-	char *name;
-	lose_client_hook hook;
-	void *userdata;
-};
-
-GList *lose_client_hooks = NULL;
-
 void add_new_client_hook(const char *name, new_client_hook h, void *userdata)
 {
 	struct new_client_hook_data *d;
@@ -200,42 +192,6 @@ gboolean new_client_hook_execute(struct irc_client *c)
 	return TRUE;
 }
 
-void add_lose_client_hook(const char *name, lose_client_hook h, void *userdata)
-{
-	struct lose_client_hook_data *d;
-	
-	d = g_malloc(sizeof(struct lose_client_hook_data));
-	d->name = g_strdup(name);
-	d->hook = h;
-	d->userdata = userdata;
-	lose_client_hooks = g_list_append(lose_client_hooks, d);
-}
-
-void del_lose_client_hook(const char *name)
-{
-	GList *l;
-	for (l = lose_client_hooks; l; l = l->next)
-	{
-		struct lose_client_hook_data *d = (struct lose_client_hook_data *)l->data;
-		if (!strcmp(d->name, name)) {
-			g_free(d->name);
-			lose_client_hooks = g_list_remove(lose_client_hooks, d);
-			g_free(d);
-			return;
-		}
-	}
-}
-
-void lose_client_hook_execute(struct irc_client *c)
-{
-	GList *l;
-	
-	for (l = lose_client_hooks; l; l = l->next)
-	{
-		struct lose_client_hook_data *d = (struct lose_client_hook_data *)l->data;
-		d->hook(c, d->userdata);
-	}
-}
 
 struct server_connected_hook_data {
 	char *name;

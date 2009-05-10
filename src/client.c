@@ -229,9 +229,51 @@ static void client_free_private(struct irc_client *c)
 	irc_network_unref(c->network);
 }
 
+struct lose_client_hook_data {
+	char *name;
+	lose_client_hook hook;
+	void *userdata;
+};
+
+GList *lose_client_hooks = NULL;
+
+
+void add_lose_client_hook(const char *name, lose_client_hook h, void *userdata)
+{
+	struct lose_client_hook_data *d;
+	
+	d = g_malloc(sizeof(struct lose_client_hook_data));
+	d->name = g_strdup(name);
+	d->hook = h;
+	d->userdata = userdata;
+	lose_client_hooks = g_list_append(lose_client_hooks, d);
+}
+
+void del_lose_client_hook(const char *name)
+{
+	GList *l;
+	for (l = lose_client_hooks; l; l = l->next)
+	{
+		struct lose_client_hook_data *d = (struct lose_client_hook_data *)l->data;
+		if (!strcmp(d->name, name)) {
+			g_free(d->name);
+			lose_client_hooks = g_list_remove(lose_client_hooks, d);
+			g_free(d);
+			return;
+		}
+	}
+}
+
 static void handle_client_disconnect(struct irc_client *c)
 {
-	lose_client_hook_execute(c);
+	GList *l;
+	
+	for (l = lose_client_hooks; l; l = l->next)
+	{
+		struct lose_client_hook_data *d = (struct lose_client_hook_data *)l->data;
+		d->hook(c, d->userdata);
+	}
+
 	if (c->network != NULL)
 		c->network->clients = g_list_remove(c->network->clients, c);
 }
