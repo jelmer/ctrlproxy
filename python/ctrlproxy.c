@@ -76,7 +76,8 @@ static PyObject *py_network_dict_get(PyNetworkDictObject *self, PyObject *py_nam
 		PyErr_NoMemory();
 		return NULL;
 	}
-	ret->network = n;
+	Py_INCREF(self);
+	ret->network = irc_network_ref(n);
 	return (PyObject *)ret;
 }	
 

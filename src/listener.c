@@ -316,7 +316,7 @@ struct irc_listener *listener_init(struct global *global, struct listener_config
 	l->log_fn = default_listener_log_fn;
 
 	if (l->config->network != NULL) {
-		l->network = network_ref(find_network(global->networks, l->config->network));
+		l->network = irc_network_ref(find_network(global->networks, l->config->network));
 		if (l->network == NULL) {
 			listener_log(LOG_WARNING, l, "Network `%s' for listener not found", l->config->network);
 		}

@@ -747,6 +747,7 @@ static PyMethodDef py_network_methods[] = {
 static void py_network_dealloc(PyNetworkObject *self)
 {
     irc_network_unref(self->network);
+    PyObject_Del(self);
 }
 
 static PyObject *py_network_repr(PyNetworkObject *self)
@@ -754,10 +755,144 @@ static PyObject *py_network_repr(PyNetworkObject *self)
     return PyString_FromFormat("<Network '%s'>", self->network->name);
 }
 
+static PyObject *py_network_get_name(PyNetworkObject *self, void *closure)
+{
+    return PyString_FromString(self->network->name);
+}
+
+static PyObject *py_network_get_reconnect_interval(PyNetworkObject *self, void *closure)
+{
+    return PyInt_FromLong(self->network->reconnect_interval);
+}   
+
+static int py_network_set_reconnect_interval(PyNetworkObject *self, PyObject *value, void *closure)
+{
+    if (!PyInt_Check(value)) {
+        PyErr_SetNone(PyExc_TypeError);
+        return -1;
+    }
+
+    self->network->reconnect_interval = PyInt_AsLong(value);
+    return 0;
+}
+
+static PyObject *py_network_get_info(PyNetworkObject *self, void *closure)
+{
+    PyNetworkInfoObject *pyinfo = PyObject_New(PyNetworkInfoObject, &PyNetworkInfoType);
+
+    if (pyinfo == NULL) {
+        PyErr_NoMemory();
+        return NULL;
+    }
+
+    Py_INCREF(self);
+    pyinfo->parent = (PyObject *)self;
+    pyinfo->info = self->network->info;
+
+    return (PyObject *)pyinfo;
+}
+
+static PyObject *py_network_get_internal_state(PyNetworkObject *self, void *closure)
+{
+    PyNetworkStateObject *ret;
+
+    if (self->network->internal_state == NULL)
+        Py_RETURN_NONE;
+    
+    ret = PyObject_New(PyNetworkStateObject, &PyNetworkStateType);
+    if (ret == NULL) {
+        PyErr_NoMemory();
+        return NULL;
+    }
+
+    Py_INCREF(self);
+    ret->parent = (PyObject *)self;
+    ret->state = self->network->internal_state;
+
+    return (PyObject *)ret;
+}
+
+static PyObject *py_network_get_external_state(PyNetworkObject *self, void *closure)
+{
+    PyNetworkStateObject *ret;
+
+    if (self->network->external_state == NULL)
+        Py_RETURN_NONE;
+    
+    ret = PyObject_New(PyNetworkStateObject, &PyNetworkStateType);
+    if (ret == NULL) {
+        PyErr_NoMemory();
+        return NULL;
+    }
+
+    Py_INCREF(self);
+    ret->parent = (PyObject *)self;
+    ret->state = self->network->external_state;
+
+    return (PyObject *)ret;
+}
+
+static PyObject *py_network_get_linestack_errors(PyNetworkObject *self, void *closure)
+{
+    return PyInt_FromLong(self->network->linestack_errors);
+}
+
+static PyObject *PyClientFromPtr(struct irc_client *c)
+{
+    PyClientObject *ret = PyObject_New(PyClientObject, &PyClientType);
+    if (ret == NULL) {
+        PyErr_NoMemory();
+        return NULL;
+    }
+    
+    ret->client = c;
+    client_ref(c);
+    return (PyObject *)ret;
+}
+
+static void *PyPtrFromClient(PyObject *obj)
+{
+    if (!PyObject_TypeCheck(obj, &PyClientType)) {
+        PyErr_SetNone(PyExc_TypeError);
+        return NULL;
+    }
+
+    return ((PyClientObject *)obj)->client;
+}   
+
+static PyObject *py_network_get_query_stack(PyNetworkObject *self, void *closure)
+{
+    PyQueryStackObject *ret = PyObject_New(PyQueryStackObject, &PyQueryStackType);
+    if (ret == NULL) {
+        PyErr_NoMemory();
+        return NULL;
+    }
+
+    ret->stack = self->network->queries;
+    ret->import_userdata = (PyObject *(*)(void *))PyClientFromPtr;
+    ret->export_userdata = PyPtrFromClient;
+    Py_INCREF(self);
+    ret->parent = (PyObject *)self;
+
+    return (PyObject *)ret;
+}
+
+static PyGetSetDef py_network_getsetters[] = {
+    { "name", (getter)py_network_get_name, NULL, "Name of the network" },
+    { "reconnect_interval", (getter)py_network_get_reconnect_interval, (setter)py_network_set_reconnect_interval, "Reconnect interval" },
+    { "info", (getter)py_network_get_info, NULL, "Info" },
+    { "internal_state", (getter) py_network_get_internal_state, NULL, "Internal state" },
+    { "external_state", (getter) py_network_get_external_state, NULL, "External state" },
+    { "linestack_errors", (getter) py_network_get_linestack_errors, NULL, "Number of linestack errors that has occurred so far" },
+    { "query_stack", (getter)py_network_get_query_stack, NULL, "Query stack" },
+    { NULL }
+};
+
 PyTypeObject PyNetworkType = {
     .tp_name = "Network",
     .tp_flags = Py_TPFLAGS_DEFAULT,
     .tp_methods = py_network_methods,
+    .tp_getset = py_network_getsetters,
     .tp_repr = (reprfunc)py_network_repr,
     .tp_basicsize = sizeof(PyNetworkObject),
     .tp_dealloc = (destructor)py_network_dealloc,
@@ -827,14 +962,10 @@ static const struct irc_client_callbacks py_client_callbacks = {
     .welcome = py_welcome_client
 };
 
-typedef struct {
-    PyObject_HEAD
-    struct query_stack *stack;
-} PyQueryStackObject;
-
 static PyObject *py_query_stack_record(PyQueryStackObject *self, PyObject *args)
 {
     PyObject *py_token, *py_line;
+    void *userdata;
     struct irc_line *line;
 
     if (!PyArg_ParseTuple(args, "OO", &py_token, &py_line))
@@ -844,7 +975,16 @@ static PyObject *py_query_stack_record(PyQueryStackObject *self, PyObject *args)
     if (line == NULL)
         return NULL;
 
-    return PyBool_FromLong(query_stack_record(self->stack, py_token, line));
+    if (self->export_userdata == NULL) {
+        userdata = py_token;
+    } else {
+        userdata = self->export_userdata(py_token);
+        if (userdata == NULL) {
+            free_line(line);
+            return NULL;
+        }
+    }
+    return PyBool_FromLong(query_stack_record(self->stack, userdata, line));
 }
 
 static PyObject *py_query_stack_redirect(PyQueryStackObject *self, PyObject *args)
@@ -884,9 +1024,18 @@ static PyMethodDef py_query_stack_methods[] = {
 
 static int py_query_stack_dealloc(PyQueryStackObject *self)
 {
-    query_stack_free(self->stack);
+    if (self->parent != NULL) {
+        Py_DECREF(self->parent);
+    } else {
+        query_stack_free(self->stack);
+    }
     PyObject_Del(self);
     return 0;
+}
+
+static PyObject *Py_Id(void *obj)
+{
+    return obj;
 }
 
 static PyObject *py_query_stack_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
@@ -898,19 +1047,31 @@ static PyObject *py_query_stack_new(PyTypeObject *type, PyObject *args, PyObject
     }
 
     self->stack = new_query_stack((void (*)(void *))Py_IncRef, (void (*)(void *))Py_DecRef);
+    self->import_userdata = Py_Id;
+    self->export_userdata = NULL;
+    self->parent = NULL;
 
     return (PyObject *)self;
 }
 
 static PyObject *py_query_stack_entry_from_ptr(PyQueryStackObject *parent, struct query_stack_entry *e)
 {
-    return Py_BuildValue("(Osl)", e->userdata, e->query->name, e->time);
+    return Py_BuildValue("(O&sl)", parent->import_userdata, e->userdata, e->query->name, e->time);
 }
 
 static PyObject *py_query_stack_iter(PyQueryStackObject *self)
 {
     return py_g_list_iter(self->stack->entries, (PyObject *)self, (PyObject *(*)(PyObject *, void*))py_query_stack_entry_from_ptr);
 }
+
+static Py_ssize_t py_query_stack_len(PyQueryStackObject *self)
+{
+    return g_list_length(self->stack->entries);
+}
+
+static PySequenceMethods py_query_stack_sequence = {
+    .sq_length = (lenfunc)py_query_stack_len,
+};
 
 PyTypeObject PyQueryStackType = {
     .tp_name = "QueryStack",
@@ -920,6 +1081,7 @@ PyTypeObject PyQueryStackType = {
     .tp_iter = (getiterfunc)py_query_stack_iter,
     .tp_basicsize = sizeof(PyQueryStackObject),
     .tp_dealloc = (destructor)py_query_stack_dealloc,
+    .tp_as_sequence = &py_query_stack_sequence,
 };
 
 

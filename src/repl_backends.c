@@ -55,7 +55,7 @@ static void highlight_replicate(struct irc_client *c)
 		return;
 
 	linestack_traverse(c->network->linestack, lm, NULL, check_highlight, c);
-	g_hash_table_replace(markers, network_ref(c->network), linestack_get_marker(c->network->linestack));
+	g_hash_table_replace(markers, irc_network_ref(c->network), linestack_get_marker(c->network->linestack));
 }
 
 static void none_replicate(struct irc_client *c)
@@ -70,7 +70,7 @@ static void lastdisconnect_mark(struct irc_client *c, void *userdata)
 		return;
 
 	if (c->network->linestack != NULL) 
-		g_hash_table_replace(lastdisconnect_backlog, network_ref(c->network), 
+		g_hash_table_replace(lastdisconnect_backlog, irc_network_ref(c->network), 
 							 linestack_get_marker(c->network->linestack));
 }
 
@@ -101,7 +101,7 @@ static gboolean log_data(struct irc_network *n, const struct irc_line *l, enum d
 		g_strcasecmp(l->args[0], "NOTICE")) return TRUE;
 
 	if (n->linestack != NULL) 
-		g_hash_table_replace(simple_backlog, network_ref(n), 
+		g_hash_table_replace(simple_backlog, irc_network_ref(n), 
 							 linestack_get_marker(n->linestack));
 
 	return TRUE;

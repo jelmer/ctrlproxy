@@ -284,7 +284,7 @@ static void client_connect_command(struct irc_client *client, const char *hostna
 
 	struct irc_network *network;
 
-	network = network_ref(find_network_by_hostname(my_global, 
+	network = irc_network_ref(find_network_by_hostname(my_global, 
 												   hostname, port, my_global->config->create_implicit, 
 												   client->login_details));
 
@@ -337,7 +337,7 @@ struct irc_client *client_init(struct irc_network *n, struct irc_transport *tran
 	client = irc_client_new(transport, n?n->name:get_my_hostname(), desc, &default_callbacks);
 	client->authenticated = FALSE;
 
-	client->network = network_ref(n);
+	client->network = irc_network_ref(n);
 
 	if (n != NULL && n->global != NULL)
 		client_set_charset(client, n->global->config->client_charset);

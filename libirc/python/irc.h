@@ -33,6 +33,13 @@ typedef struct {
 
 /* network info */
 PyTypeObject PyNetworkInfoType;
+typedef struct {
+    PyObject_HEAD
+    struct irc_network_info *info;
+    PyObject *parent;
+} PyNetworkInfoObject;
+
+
 PyTypeObject PyNetworkChannelDictType;
 PyTypeObject PyChannelNickDictType;
 PyTypeObject PyChannelModeDictType;
@@ -91,5 +98,16 @@ typedef struct {
     PyObject_HEAD
     struct irc_network *network;
 } PyNetworkObject;
+
+/* query stack */
+typedef struct {
+    PyObject_HEAD
+    struct query_stack *stack;
+    PyObject *parent;
+    void *(*export_userdata) (PyObject *);
+    PyObject *(*import_userdata) (void *);
+} PyQueryStackObject;
+PyTypeObject PyQueryStackType;
+
 
 #endif

@@ -1009,7 +1009,7 @@ char *network_generate_feature_string(struct irc_network *n)
 /**
  * Increase the reference count for a network
  */
-struct irc_network *network_ref(struct irc_network *n)
+struct irc_network *irc_network_ref(struct irc_network *n)
 {
 	if (n != NULL)
 		n->references++;

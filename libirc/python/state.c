@@ -22,12 +22,6 @@
 #include "redirect.h"
 #include "libirc/python/irc.h"
 
-typedef struct {
-    PyObject_HEAD
-    struct irc_network_info *info;
-    PyObject *parent;
-} PyNetworkInfoObject;
-
 static PyObject *py_networkinfo_is_prefix(PyNetworkInfoObject *self, PyObject *args)
 {
     char *prefix;
@@ -1055,5 +1049,3 @@ PyTypeObject PyNetworkStateType = {
     .tp_dealloc = (destructor)py_network_state_dealloc,
     .tp_as_mapping = &py_network_state_mapping,
 };
-
-
