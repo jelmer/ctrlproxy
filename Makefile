@@ -276,23 +276,24 @@ mods/libpython.so: LDFLAGS+=$(PYTHON_LDFLAGS)
 .PRECIOUS: python/irc.c python/ctrlproxy.c
 
 $(pyirc_objs): CFLAGS+=$(PYTHON_CFLAGS) -fPIC
-python/irc.$(SHLIBEXT): $(pyirc_objs) $(LIBIRC)
-python/irc.$(SHLIBEXT): LDFLAGS+=$(PYTHON_LDFLAGS) $(LIBS)
+libirc/python/irc.$(SHLIBEXT): $(pyirc_objs) $(LIBIRC)
+libirc/python/irc.$(SHLIBEXT): LDFLAGS+=$(PYTHON_LDFLAGS) $(LIBS)
 
 ifeq ($(HAVE_PYTHON),yes)
 all_objs += $(pyirc_objs) mods/python.o python/ctrlproxy.o
 endif
 
-python:: python/irc.$(SHLIBEXT) mods/libpython.$(SHLIBEXT)
+python:: libirc/python/irc.$(SHLIBEXT) mods/libpython.$(SHLIBEXT)
 
-check-python:: python/irc.$(SHLIBEXT)
-	PYTHONPATH=python trial tests.test_irc
+check-python:: libirc/python/irc.$(SHLIBEXT)
+	PYTHONPATH=libirc/python trial tests.test_irc
 
 install-python: all
 	$(PYTHON) setup.py install --root="$(DESTDIR)"
 
 clean::
 	@rm -f python/tests/*.pyc
+	@rm -f libirc/python/tests/*.pyc
 #	$(PYTHON) setup.py clean
 
 # RFC compliance testing using ircdtorture
