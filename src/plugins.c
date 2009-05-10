@@ -100,6 +100,8 @@ struct plugin *load_plugin(const char *modulesdir, const char *name)
 		return NULL;
 	}
 
+	log_global(LOG_INFO, "Plugin '%s' loaded", ops->name);
+
 	plugins = g_list_append(plugins, p);
 
 	return p;
