@@ -25,7 +25,7 @@
 #include <readline/readline.h>
 #endif
 
-gboolean admin_socket_prompt(const char *config_dir)
+gboolean admin_socket_prompt(const char *config_dir, gboolean python)
 {
 	char *admin_dir = g_build_filename(config_dir, "admin", NULL);
 	int sock = socket(PF_UNIX, SOCK_STREAM, 0);
@@ -48,21 +48,21 @@ gboolean admin_socket_prompt(const char *config_dir)
 	g_io_channel_set_flags(ch, G_IO_FLAG_NONBLOCK, NULL);
 	
 	while (1) {
-		char *data = readline("ctrlproxy> ");
-		char *raw;
+		char *raw = readline("ctrlproxy> ");
+		char *data;
 
-		if (data == NULL)
+		if (raw == NULL)
 			break;
-		
-		status = g_io_channel_write_chars(ch, data, -1, NULL, &error);
-		if (status != G_IO_STATUS_NORMAL) {
-			fprintf(stderr, "Error writing to admin socket: %s\n", error->message);
-			if (error != NULL)
-				g_error_free(error);
-			return FALSE;
+
+		if (python) {
+			data = g_strdup_printf("python %s\n", raw);
+		} else {
+			data = g_strdup_printf("%s\n", raw);
 		}
 
-		status = g_io_channel_write_chars(ch, "\n", -1, NULL, &error);
+		g_free(raw);
+	
+		status = g_io_channel_write_chars(ch, data, -1, NULL, &error);
 		if (status != G_IO_STATUS_NORMAL) {
 			fprintf(stderr, "Error writing to admin socket: %s\n", error->message);
 			if (error != NULL)
@@ -94,9 +94,11 @@ int main(int argc, char **argv)
 {
 	char *config_dir = NULL;
 	GError *error = NULL;
+	int python = 0;
 	GOptionContext *pc;
 	GOptionEntry options[] = {
 		{"config-dir", 'c', 0, G_OPTION_ARG_STRING, &config_dir, ("Override configuration directory"), ("DIR")},
+		{"python", 0, 0, G_OPTION_ARG_NONE, &python, ("Python interpreter")},
 		{ NULL }
 	};
 
@@ -113,7 +115,7 @@ int main(int argc, char **argv)
 
 	g_option_context_free(pc);
 
-	if (admin_socket_prompt(config_dir)) 
+	if (admin_socket_prompt(config_dir, python)) 
 		return 0;
 
 	return 1;
