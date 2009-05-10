@@ -73,6 +73,54 @@ static void load_config(struct global *global)
 	g_dir_close(dir);
 }
 
+typedef struct {
+	PyObject_HEAD
+	admin_handle h;
+} AdminOutputObject;
+
+static PyObject *py_admin_write(AdminOutputObject *self, PyObject *args)
+{
+	char *text;
+	if (!PyArg_ParseTuple(args, "s", &text))
+		return NULL;
+
+	admin_out(self->h, "%s", text);
+
+	Py_RETURN_NONE;
+}
+
+static PyMethodDef py_admin_output_methods[] = {
+	{ "write", (PyCFunction)py_admin_write, METH_VARARGS, "Write" },
+	{ NULL }
+};
+
+static PyTypeObject AdminOutputType = {
+	.tp_name = "AdminOutput",
+	.tp_dealloc = (destructor)PyObject_Del,
+	.tp_flags = Py_TPFLAGS_DEFAULT,
+	.tp_basicsize = sizeof(AdminOutputObject),
+	.tp_methods = py_admin_output_methods,
+};
+
+static void handle_python_admin(admin_handle h, const char * const *args, void *userdata)
+{
+	PyObject *old_stdout;
+	AdminOutputObject *admin_stdout;
+
+	old_stdout = PySys_GetObject("stdout");
+	admin_stdout = PyObject_New(AdminOutputObject, &AdminOutputType);
+	admin_stdout->h = h;
+	PySys_SetObject("stdout", (PyObject *)admin_stdout);
+	PyRun_SimpleString(args[1]);
+	PySys_SetObject("stdout", old_stdout);
+	Py_DECREF(admin_stdout);
+}
+
+static const struct admin_command python_cmd = {
+	.name = "python",
+	.handler = handle_python_admin,
+};
+
 static gboolean init_plugin(void)
 {
 	Py_Initialize();
@@ -80,7 +128,11 @@ static gboolean init_plugin(void)
 	initirc();
 	initctrlproxy();
 
+	if (PyType_Ready(&AdminOutputType) < 0)
+		return FALSE;
+
 	register_load_config_notify(load_config);
+	register_admin_command(&python_cmd);
 	atexit(Py_Finalize);
 	return TRUE;
 }
