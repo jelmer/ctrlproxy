@@ -662,11 +662,6 @@ PyTypeObject PyClientType = {
     .tp_basicsize = sizeof(PyClientObject)
 };
 
-typedef struct {
-    PyObject_HEAD
-    struct irc_network *network;
-} PyNetworkObject;
-
 static PyObject *py_network_connect(PyNetworkObject *self)
 {
     if (!connect_network(self->network)) {
@@ -754,10 +749,16 @@ static void py_network_dealloc(PyNetworkObject *self)
     irc_network_unref(self->network);
 }
 
+static PyObject *py_network_repr(PyNetworkObject *self)
+{
+    return PyString_FromFormat("<Network '%s'>", self->network->name);
+}
+
 PyTypeObject PyNetworkType = {
     .tp_name = "Network",
     .tp_flags = Py_TPFLAGS_DEFAULT,
     .tp_methods = py_network_methods,
+    .tp_repr = (reprfunc)py_network_repr,
     .tp_basicsize = sizeof(PyNetworkObject),
     .tp_dealloc = (destructor)py_network_dealloc,
 };

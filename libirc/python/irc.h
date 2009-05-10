@@ -85,4 +85,11 @@ typedef struct {
 
 void g_error_set_python(GError **error);
 
+/* network */
+PyTypeObject PyNetworkType;
+typedef struct {
+    PyObject_HEAD
+    struct irc_network *network;
+} PyNetworkObject;
+
 #endif

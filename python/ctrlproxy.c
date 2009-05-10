@@ -20,6 +20,10 @@
 #include <Python.h>
 #include "ctrlproxy.h"
 
+#include "libirc/python/irc.h"
+
+extern struct global *my_global;
+
 static PyObject *py_log_global(PyObject *self, PyObject *args)
 {
 	int level;
@@ -39,9 +43,72 @@ static PyMethodDef ctrlproxy_methods[] = {
 	{ NULL }
 };
 
+typedef struct {
+	PyObject_HEAD
+} PyNetworkDictObject;
+
+static Py_ssize_t py_network_dict_length(PyNetworkDictObject *self)
+{
+	return g_list_length(my_global->networks);
+}
+
+static PyObject *py_network_dict_get(PyNetworkDictObject *self, PyObject *py_name)
+{
+	struct irc_network *n;
+	char *name;
+	PyNetworkObject *ret;
+
+	if (!PyString_Check(py_name)) {
+		PyErr_SetNone(PyExc_KeyError);
+		return NULL;
+	}
+
+	name = PyString_AsString(py_name);
+
+	n = find_network(my_global->networks, name);
+	if (n == NULL) {
+		PyErr_SetNone(PyExc_KeyError);
+		return NULL;
+	}
+
+	ret = PyObject_New(PyNetworkObject, &PyNetworkType);
+	if (ret == NULL) {
+		PyErr_NoMemory();
+		return NULL;
+	}
+	ret->network = n;
+	return (PyObject *)ret;
+}	
+
+static PyMappingMethods py_network_dict_mapping = {
+	.mp_length = (lenfunc)py_network_dict_length,
+	.mp_subscript = (binaryfunc)py_network_dict_get,
+};
+
+static PyTypeObject PyNetworkDictType = {
+	.tp_name = "NetworkDict",
+	.tp_basicsize = sizeof(PyNetworkDictObject),
+	.tp_dealloc = (destructor)PyObject_Del,
+	.tp_flags = Py_TPFLAGS_DEFAULT,
+	.tp_as_mapping = &py_network_dict_mapping,
+};
+
+static PyObject *PyNetworkDict_New(void)
+{
+	PyNetworkDictObject *ret = PyObject_New(PyNetworkDictObject, &PyNetworkDictType);
+	if (ret == NULL) {
+		PyErr_NoMemory();
+		return NULL;
+	}
+	return (PyObject *)ret;
+}
+
 void initctrlproxy(void)
 {
-	PyObject *m;
+	PyObject *m, *networkdict;
+
+	if (PyType_Ready(&PyNetworkDictType) < 0)
+		return;
 
 	m = Py_InitModule3("ctrlproxy", ctrlproxy_methods, 
 					   "ControlProxy");
@@ -53,4 +120,9 @@ void initctrlproxy(void)
 	PyModule_AddIntConstant(m, "LOG_INFO", LOG_INFO);
 	PyModule_AddIntConstant(m, "LOG_WARNING", LOG_WARNING);
 	PyModule_AddIntConstant(m, "LOG_ERROR", LOG_ERROR);
+	networkdict = PyNetworkDict_New();
+	if (networkdict == NULL) {
+		return;
+	}
+	PyModule_AddObject(m, "networks", networkdict);
 }
