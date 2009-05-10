@@ -43,10 +43,11 @@ Features
  * Management of running instances using a command-line tool or 
    over IRC.
 
-Requirements
+Dependencies
 ------------
  * GNU glib
- * GNU TLS (optional)
+ * GNU TLS (optional, for SSL support)
+ * Python (optional, for Python scripting)
  
 Building
 --------
