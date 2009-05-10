@@ -294,6 +294,7 @@ install-python: all
 clean::
 	@rm -f python/tests/*.pyc
 	@rm -f libirc/python/tests/*.pyc
+	@rm -f libirc/python/*.$(SHLIBEXT) libirc/python/*.o
 #	$(PYTHON) setup.py clean
 
 # RFC compliance testing using ircdtorture
