@@ -247,6 +247,7 @@ clean::
 	@rm -f linestack-cmd$(EXEEXT) ctrlproxy-admin$(EXEEXT)
 	@rm -f ctrlproxyd$(EXEEXT)
 	@rm -f $(LIBIRC_STATIC) $(LIBIRC_SHARED)
+	@rm -f mods/*.$(SHLIBEXT) mods/*.o
 	@echo Removing gcov output
 	@rm -f *.gcov *.gcno *.gcda  */*.gcda */*.gcno */*.gcov
 	@echo Removing test output
