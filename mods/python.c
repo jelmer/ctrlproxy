@@ -76,15 +76,27 @@ static void load_config(struct global *global)
 typedef struct {
 	PyObject_HEAD
 	admin_handle h;
+	char *buffer;
 } AdminOutputObject;
 
 static PyObject *py_admin_write(AdminOutputObject *self, PyObject *args)
 {
 	char *text;
+	char **lines;
+	int i;
 	if (!PyArg_ParseTuple(args, "s", &text))
 		return NULL;
 
-	admin_out(self->h, "%s", text);
+	lines = g_strsplit(text, "\n", 0);
+	for (i = 0; lines[i+1]; i++) {
+		admin_out(self->h, "%s%s", (self->buffer != NULL)?self->buffer:"", lines[i]);
+		g_free(self->buffer);
+		self->buffer = NULL;
+	}
+
+	self->buffer = g_strdup(lines[i]);
+
+	g_strfreev(lines);
 
 	Py_RETURN_NONE;
 }
@@ -104,15 +116,24 @@ static PyTypeObject AdminOutputType = {
 
 static void handle_python_admin(admin_handle h, const char * const *args, void *userdata)
 {
-	PyObject *old_stdout;
+	PyObject *old_stdout, *old_stderr;
 	AdminOutputObject *admin_stdout;
 
+	if (args[1] == NULL) {
+		/* Silently ignore */
+		return;
+	}
+
 	old_stdout = PySys_GetObject("stdout");
+	old_stderr = PySys_GetObject("stderr");
 	admin_stdout = PyObject_New(AdminOutputObject, &AdminOutputType);
 	admin_stdout->h = h;
+	admin_stdout->buffer = NULL;
 	PySys_SetObject("stdout", (PyObject *)admin_stdout);
+	PySys_SetObject("stderr", (PyObject *)admin_stdout);
 	PyRun_SimpleString(args[1]);
 	PySys_SetObject("stdout", old_stdout);
+	PySys_SetObject("stderr", old_stderr);
 	Py_DECREF(admin_stdout);
 }
 
