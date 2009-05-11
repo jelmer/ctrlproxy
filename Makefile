@@ -233,10 +233,12 @@ $(LIBIRC_STATIC): $(libirc_objs)
 	@ar -rcs $@ $^
 
 $(LIBIRC_SHARED): $(libirc_objs)
-	$(LD) -shared $(LDFLAGS) -Wl,-soname,$(LIBIRC_SONAME) -o $@ $^
+	@echo Linking $@
+	@$(LD) -shared $(LDFLAGS) -Wl,-soname,$(LIBIRC_SONAME) -o $@ $^
 
 %.$(SHLIBEXT):
-	$(LD) -shared $(LDFLAGS) -o $@ $^
+	@echo Linking $@
+	@$(LD) -shared $(LDFLAGS) -o $@ $^
 
 cscope.out::
 	cscope -b -R
@@ -346,7 +348,8 @@ example/libfoo.$(SHLIBEXT): example/foo.o
 example/foo.o: CFLAGS+=-I$(libircdir)
 
 example/libirc-simple: example/irc_simple.o $(LIBIRC)
-	$(CC) -o $@ $^
+	@Linking $@
+	@$(CC) -o $@ $^
 
 example/irc_simple.o: CFLAGS+=-I$(libircdir)
 
