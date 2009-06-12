@@ -289,7 +289,7 @@ endif
 python:: libirc/python/irc.$(SHLIBEXT) mods/libpython.$(SHLIBEXT)
 
 check-python:: libirc/python/irc.$(SHLIBEXT)
-	PYTHONPATH=libirc/python trial tests.test_irc
+	PYTHONPATH=libirc/python nosetests tests.test_irc
 
 install-python: all
 	$(PYTHON) setup.py install --root="$(DESTDIR)"
