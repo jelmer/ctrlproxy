@@ -170,6 +170,8 @@ int main(int argc, char **argv)
 	extern enum log_level current_log_level;
 	extern gboolean no_log_timestamp;
 	char *config_dir = NULL;
+	const char *plugindir;
+	const char *helpfile;
 	char *tmp;
 	gboolean init = FALSE;
 	const char *inetd_client = NULL;
@@ -177,6 +179,7 @@ int main(int argc, char **argv)
 	gboolean check_running = FALSE;
 	gboolean restricted = FALSE;
 	gboolean version = FALSE;
+	gboolean from_sourcedir = FALSE;
 	pid_t pid;
 	GOptionContext *pc;
 	GOptionEntry options[] = {
@@ -260,13 +263,28 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
-	/* Determine correct modules directory */
-	init_plugins(getenv("CTRLPROXY_MODULESDIR")?getenv("CTRLPROXY_MODULESDIR"):MODULESDIR);
+	from_sourcedir = !strcmp(argv[0], "./ctrlproxy") && g_file_test("./mods", G_FILE_TEST_IS_DIR);
 
+	/* Determine correct modules directory */
+	if (getenv("CTRLPROXY_MODULESDIR") != NULL) {
+		plugindir = getenv("CTRLPROXY_MODULESDIR");
+	} else if (from_sourcedir) {
+		plugindir = "./mods";
+	} else {
+		plugindir = MODULESDIR;
+	}
+
+	if (from_sourcedir) {
+		helpfile = "doc/help.txt";
+	} else {
+		helpfile = HELPFILE;
+	}
+
+	init_plugins(plugindir);
 	init_admin();
 	init_nickserv();
 	init_replication();
-	help = help_load_file(HELPFILE);
+	help = help_load_file(helpfile);
 
 	tmp = g_build_filename(config_dir, "config", NULL);
 
