@@ -64,11 +64,11 @@ struct global *init_global(void)
 	return global;
 }
 
-struct global *load_global(const char *config_dir)
+struct global *load_global(const char *config_dir, gboolean from_source)
 {
 	struct global *global;
 	struct ctrlproxy_config *cfg;
-	cfg = load_configuration(config_dir);
+	cfg = load_configuration(config_dir, from_source);
 
 	if (cfg == NULL)
 		return NULL;

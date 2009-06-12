@@ -1219,7 +1219,8 @@ struct ctrlproxy_config *init_configuration(void)
 	return cfg;
 }
 
-struct ctrlproxy_config *load_configuration(const char *dir) 
+struct ctrlproxy_config *load_configuration(const char *dir, 
+											gboolean from_source) 
 {
 	GKeyFile *kf;
 	GError *error = NULL;
@@ -1296,7 +1297,9 @@ struct ctrlproxy_config *load_configuration(const char *dir)
 
     if (g_key_file_has_key(kf, "global", "motd-file", NULL))
 		cfg->motd_file = g_key_file_get_string(kf, "global", "motd-file", NULL);
-    else 
+	else if (from_source)
+		cfg->motd_file = g_strdup("motd");
+	else
 	    cfg->motd_file = g_build_filename(SYSCONFDIR, "ctrlproxy", "motd", NULL);
 
     if (g_key_file_has_key(kf, "client", "charset", NULL)) {
@@ -1491,7 +1494,7 @@ void free_config(struct ctrlproxy_config *cfg)
 	g_free(cfg);
 }
 
-gboolean create_configuration(const char *config_dir)
+gboolean create_configuration(const char *config_dir, gboolean from_source)
 {
 	struct global *global;
 	char port[250];
@@ -1508,7 +1511,7 @@ gboolean create_configuration(const char *config_dir)
 		return FALSE;
 	}
 
-	global = load_global(DEFAULT_CONFIG_DIR);	
+	global = load_global(DEFAULT_CONFIG_DIR, from_source);
 	if (global == NULL) { 
 		fprintf(stderr, "Unable to load default configuration '%s'\n", DEFAULT_CONFIG_DIR);	
 		return FALSE;

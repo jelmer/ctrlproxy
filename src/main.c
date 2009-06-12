@@ -246,7 +246,7 @@ int main(int argc, char **argv)
 	}
 
 	if (init) {
-		if (!create_configuration(config_dir)) {
+		if (!create_configuration(config_dir, from_sourcedir)) {
 			g_free(config_dir);
 			return 1;
 		}
@@ -309,7 +309,7 @@ int main(int argc, char **argv)
 
 		g_free(rcfile);
 	} else {
-		my_global = load_global(config_dir);	
+		my_global = load_global(config_dir, from_sourcedir);
 		my_global->restricted = restricted;
 	}
 	g_free(config_dir);

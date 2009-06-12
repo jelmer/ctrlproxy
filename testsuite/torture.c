@@ -87,7 +87,7 @@ struct global *torture_global(const char *name)
 
 	free_global(g);
 
-	g = load_global(config_dir);
+	g = load_global(config_dir, TRUE);
 	g_assert(g != NULL);
 
 	g_free(config_dir);

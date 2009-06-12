@@ -35,7 +35,7 @@ END_TEST
 START_TEST(test_create_nonexisting)
 	struct global *gl;
 	
-	gl = load_global("/some-non-existing/directory");
+	gl = load_global("/some-non-existing/directory", TRUE);
 
 	fail_if(gl != NULL,
 			"load_global returned non-NULL for incorrect directory");

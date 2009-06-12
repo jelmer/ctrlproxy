@@ -213,7 +213,7 @@ int main(int argc, char **argv)
 	if (config_dir == NULL) 
 		config_dir = g_build_filename(g_get_home_dir(), ".ctrlproxy", NULL);
 
-	cfg = load_configuration(config_dir);
+	cfg = load_configuration(config_dir, FALSE);
 	if (cfg == NULL) {
 		fprintf(stderr, "Unable to load configuration from `%s'", config_dir);
 		return 1;

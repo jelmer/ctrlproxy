@@ -143,7 +143,7 @@ gboolean init_replication(void);
 void free_global(struct global *);
 void config_load_notify(struct global *global);
 void config_save_notify(struct global *global, const char *);
-struct global *load_global(const char *config_dir);
+struct global *load_global(const char *config_dir, gboolean from_source);
 struct global *init_global(void);
 
 /* nickserv.c */
@@ -161,7 +161,7 @@ gboolean stop_admin_socket(struct global *global);
 gboolean admin_socket_prompt(const char *config_dir, gboolean python);
 
 /* settings.c */
-gboolean create_configuration(const char *config_dir);
+gboolean create_configuration(const char *config_dir, gboolean from_source);
 
 /* pipes.c */
 gboolean start_unix_domain_socket_listener(struct global *);
