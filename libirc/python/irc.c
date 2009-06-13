@@ -134,6 +134,11 @@ static PyGetSetDef py_line_getsetters[] = {
     { NULL }
 };
 
+static int py_line_cmp(PyLineObject *a, PyLineObject *b)
+{
+    return irc_line_cmp(a->line, b->line);
+}
+
 PyTypeObject PyLineType = {
     .tp_name = "Line",
     .tp_new = py_line_new,
@@ -146,6 +151,7 @@ PyTypeObject PyLineType = {
     .tp_doc = "A RFC2459-compatible line.",
     .tp_getset = py_line_getsetters,
     .tp_as_sequence = &py_line_sequence,
+    .tp_compare = (cmpfunc)py_line_cmp,
 };
 
 struct irc_line *PyObject_AsLine(PyObject *obj)
@@ -1142,6 +1148,9 @@ void initirc(void)
     if (PyType_Ready(&PyLinestackType) < 0)
         return;
 
+    if (PyType_Ready(&PyLinestackIterType) < 0)
+        return;
+
     if (PyType_Ready(&PyChannelModeDictType) < 0)
         return;
 
@@ -1173,6 +1182,7 @@ void initirc(void)
     PyModule_AddObject(m, "Transport", (PyObject *)&PyTransportType);
     Py_INCREF(&PyLinestackType);
     PyModule_AddObject(m, "Linestack", (PyObject *)&PyLinestackType);
+    Py_INCREF(&PyLinestackIterType);
     PyModule_AddIntConstant(m, "TO_SERVER", TO_SERVER);
     PyModule_AddIntConstant(m, "FROM_SERVER", FROM_SERVER);
 }

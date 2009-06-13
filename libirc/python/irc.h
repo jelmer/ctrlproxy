@@ -63,6 +63,7 @@ typedef struct {
     PyObject *parent;
 } PyLinestackObject;
 PyTypeObject PyLinestackType;
+PyTypeObject PyLinestackIterType;
 
 /* GList iterator */
 PyObject *py_g_list_iter(GList *list, PyObject *parent, PyObject *(*converter) (PyObject *parent, void *));

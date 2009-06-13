@@ -107,4 +107,11 @@ G_MODULE_EXPORT linestack_marker linestack_get_marker(struct linestack_context *
 G_MODULE_EXPORT struct linestack_context *create_linestack(const char *name, gboolean truncate, const char *basedir, const struct irc_network_state *);
 G_MODULE_EXPORT void free_linestack_context(struct linestack_context *);
 
+G_MODULE_EXPORT gboolean linestack_read_entry(struct linestack_context *nd, 
+							  guint64 i,
+							  struct irc_line **line,
+							  time_t *time
+							 );
+
+
 #endif /* __CTRLPROXY_LINESTACK_H__ */

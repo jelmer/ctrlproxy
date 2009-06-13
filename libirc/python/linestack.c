@@ -161,6 +161,76 @@ static PyObject *py_linestack_send(PyLinestackObject *self, PyObject *args)
     Py_RETURN_NONE;
 }
 
+typedef struct {
+    PyObject_HEAD
+    PyLinestackObject *parent;
+    guint64 from, to;
+} PyLinestackIterObject;
+
+static int py_linestack_iter_dealloc(PyLinestackIterObject *self)
+{
+    Py_DECREF(self->parent);
+    PyObject_Del(self);
+    return 0;
+}
+
+static PyObject *py_linestack_iter_next(PyLinestackIterObject *self)
+{
+    time_t time;
+    struct irc_line *line = NULL;
+    gboolean ret;
+    PyLineObject *py_line;
+    PyObject *py_ret;
+    if (self->from == self->to) {
+        PyErr_SetNone(PyExc_StopIteration);
+        return NULL;
+    }
+
+    ret = linestack_read_entry(self->parent->linestack, self->from, 
+                         &line, &time);
+    if (ret == FALSE) {
+        PyErr_SetNone(PyExc_RuntimeError);
+        return NULL;
+    }
+
+    py_line = PyObject_New(PyLineObject, &PyLineType);
+    py_line->line = line;
+
+    py_ret = Py_BuildValue("(Nl)", py_line, time);
+
+    self->from++;
+    return py_ret;
+}
+
+PyTypeObject PyLinestackIterType = {
+    .tp_name = "LinestackIter",
+    .tp_flags = Py_TPFLAGS_DEFAULT,
+    .tp_basicsize = sizeof(PyLinestackIterObject),
+    .tp_iter = PyObject_SelfIter,
+    .tp_iternext = (iternextfunc)py_linestack_iter_next,
+    .tp_dealloc = (destructor)py_linestack_iter_dealloc,
+};
+
+static PyObject *py_linestack_traverse(PyLinestackObject *self, PyObject *args)
+{
+    PyLinestackIterObject *ret;
+    ret = PyObject_New(PyLinestackIterObject, &PyLinestackIterType);
+    if (ret == NULL) {
+        PyErr_NoMemory();
+        return NULL;
+    }
+
+    Py_INCREF(self);
+    ret->parent = self;
+
+    if (!PyArg_ParseTuple(args, "LL", &ret->from, &ret->to)) {
+        Py_DECREF(ret);
+        return NULL;
+    }
+
+    return (PyObject *)ret;
+}
+
 static PyMethodDef py_linestack_methods[] = {
     { "insert_line", (PyCFunction)py_linestack_insert_line, 
         METH_VARARGS, "Insert line" },
@@ -170,6 +240,8 @@ static PyMethodDef py_linestack_methods[] = {
         METH_NOARGS, "Get marker" },
     { "send", (PyCFunction)py_linestack_send, METH_VARARGS, 
         "Send" },
+    { "traverse", (PyCFunction)py_linestack_traverse, METH_VARARGS,
+        "Traverse" },
     { NULL }
 };
 

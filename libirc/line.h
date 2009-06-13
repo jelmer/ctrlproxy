@@ -91,4 +91,6 @@ G_MODULE_EXPORT gboolean line_add_arg(struct irc_line *l, const char *arg);
 G_MODULE_EXPORT struct irc_line *line_prefix_time(const struct irc_line *l, time_t t);
 #define irc_line_respcode(l) (((l)->argc == 0)?0:atoi((l)->args[0]))
 
+G_MODULE_EXPORT int irc_line_cmp(const struct irc_line *a, const struct irc_line *b);
+
 #endif /* __CTRLPROXY_LINE_H__ */

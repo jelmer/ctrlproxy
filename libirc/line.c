@@ -478,3 +478,29 @@ G_MODULE_EXPORT struct irc_line *line_prefix_time(const struct irc_line *l, time
 	return nl;
 }
 
+int irc_line_cmp(const struct irc_line *a, const struct irc_line *b)
+{
+	int i;
+	int ret;
+
+	if (a->origin != NULL && b->origin == NULL)
+		return 1;
+
+	if (a->origin == NULL && b->origin != NULL)
+		return -1;
+
+	if (a->origin == NULL && b->origin == NULL)
+		ret = 0;
+	else
+		ret = strcmp(a->origin, b->origin);
+	if (ret != 0)
+		return ret;
+
+	for (i = 0; i < MIN(a->argc, b->argc); i++) {
+		ret = strcmp(a->args[i], b->args[i]);
+		if (ret != 0)
+			return ret;
+	}
+
+	return a->argc - b->argc;
+}
