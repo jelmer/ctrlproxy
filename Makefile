@@ -20,13 +20,6 @@ CFLAGS += $(GNUTLS_CFLAGS)
 CFLAGS+=-DHAVE_CONFIG_H -DDEFAULT_CONFIG_DIR=\"$(DEFAULT_CONFIG_DIR)\" -DHELPFILE=\"$(HELPFILE)\"
 CFLAGS+=-ansi -Wall -DMODULESDIR=\"$(modulesdir)\" -DSTRICT_MEMORY_ALLOCS=
 
-LIBIRC_STATIC = libirc.a
-LIBIRC = $(LIBIRC_STATIC)
-
-LIBIRC_SHARED = libirc.$(SHLIBEXT).$(PACKAGE_VERSION)
-LIBIRC_SOVERSION = 1.0
-LIBIRC_SONAME = libirc.$(SHLIBEXT).$(LIBIRC_SOVERSION)
-
 .PHONY: all clean distclean install install-bin install-dirs install-doc install-data install-pkgconfig
 
 all:: $(BINS) $(SBINS)
@@ -42,6 +35,7 @@ doxygen:
 	doxygen
 
 libircdir = libirc
+include $(libircdir)/Makefile
 
 objs = src/posix.o \
 	   src/redirect.o \
@@ -73,36 +67,6 @@ objs = src/posix.o \
 	   src/network.o \
 	   $(CTRLPROXY_SSL_OBJS)
 all_objs += $(objs)
-
-libirc_objs = \
-	   $(libircdir)/state.o \
-	   $(libircdir)/client.o \
-	   $(libircdir)/transport.o \
-	   $(libircdir)/transport_ioc.o \
-	   $(libircdir)/line.o \
-	   $(libircdir)/isupport.o \
-	   $(libircdir)/connection.o \
-	   $(libircdir)/redirect.o \
-	   $(libircdir)/url.o \
-	   $(libircdir)/util.o \
-	   $(libircdir)/listener.o \
-	   $(LIBIRC_SSL_OBJS)
-
-libirc_headers = \
-		  $(libircdir)/state.h \
-		  $(libircdir)/client.h \
-		  $(libircdir)/line.h \
-		  $(libircdir)/isupport.h \
-		  $(libircdir)/irc.h \
-		  $(libircdir)/connection.h \
-		  $(libircdir)/redirect.h \
-		  $(libircdir)/url.h \
-		  $(libircdir)/listener.h \
-		  $(libircdir)/util.h
-
-pyirc_objs = $(libircdir)/python/irc.o \
-			 $(libircdir)/python/transport.o \
-			 $(libircdir)/python/state.o
 
 headers = src/admin.h \
 		  src/ctcp.h \
@@ -226,16 +190,6 @@ lcov:
 	lcov --base-directory `pwd` --directory . --capture --output-file ctrlproxy.info
 	genhtml -o coverage ctrlproxy.info
 
-$(libirc_objs): CFLAGS+=-fPIC
-
-$(LIBIRC_STATIC): $(libirc_objs)
-	@echo Linking $@
-	@ar -rcs $@ $^
-
-$(LIBIRC_SHARED): $(libirc_objs)
-	@echo Linking $@
-	@$(LD) -shared $(LDFLAGS) -Wl,-soname,$(LIBIRC_SONAME) -o $@ $^
-
 %.$(SHLIBEXT):
 	@echo Linking $@
 	@$(LD) -shared $(LDFLAGS) -o $@ $^
@@ -245,10 +199,9 @@ cscope.out::
 
 clean::
 	@echo Removing object files and executables
-	@rm -f src/*.o $(libircdir)/*.o daemon/*.o python/*.o testsuite/check ctrlproxy$(EXEEXT) testsuite/*.o *~
+	@rm -f src/*.o daemon/*.o python/*.o testsuite/check ctrlproxy$(EXEEXT) testsuite/*.o *~
 	@rm -f linestack-cmd$(EXEEXT) ctrlproxy-admin$(EXEEXT)
 	@rm -f ctrlproxyd$(EXEEXT)
-	@rm -f $(LIBIRC_STATIC) $(LIBIRC_SHARED)
 	@rm -f mods/*.$(SHLIBEXT) mods/*.o
 	@echo Removing gcov output
 	@rm -f *.gcov *.gcno *.gcda  */*.gcda */*.gcno */*.gcov
@@ -276,28 +229,17 @@ mods/python.o python/ctrlproxy.o: CFLAGS+=-fPIC
 mods/libpython.so: mods/python.o python/ctrlproxy.o $(pyirc_objs)
 mods/libpython.so: LDFLAGS+=$(PYTHON_LDFLAGS)
 
-.PRECIOUS: python/irc.c python/ctrlproxy.c
-
-$(pyirc_objs): CFLAGS+=$(PYTHON_CFLAGS) -fPIC
-libirc/python/irc.$(SHLIBEXT): $(pyirc_objs) $(LIBIRC)
-libirc/python/irc.$(SHLIBEXT): LDFLAGS+=$(PYTHON_LDFLAGS) $(LIBS)
-
 ifeq ($(HAVE_PYTHON),yes)
 all_objs += $(pyirc_objs) mods/python.o python/ctrlproxy.o
 endif
 
-python:: libirc/python/irc.$(SHLIBEXT) mods/libpython.$(SHLIBEXT)
-
-check-python:: libirc/python/irc.$(SHLIBEXT)
-	PYTHONPATH=libirc/python nosetests tests.test_irc
+python:: mods/libpython.$(SHLIBEXT)
 
 install-python: all
 	$(PYTHON) setup.py install --root="$(DESTDIR)"
 
 clean::
 	@rm -f python/tests/*.pyc
-	@rm -f libirc/python/tests/*.pyc
-	@rm -f libirc/python/*.$(SHLIBEXT) libirc/python/*.o
 #	$(PYTHON) setup.py clean
 
 # RFC compliance testing using ircdtorture
