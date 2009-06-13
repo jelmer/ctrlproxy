@@ -487,7 +487,7 @@ static gboolean file_insert_state(struct linestack_context *ctx,
 							  const struct irc_network_state *state, 
 							  guint64 state_id);
 
-static char *global_init(const char *basedir)
+static const char *global_init(const char *basedir)
 {
 	char *readme_file;;
 	if (g_file_test(basedir, G_FILE_TEST_IS_DIR))
@@ -508,19 +508,19 @@ static gboolean file_init(struct linestack_context *ctx, const char *name,
 						  const struct irc_network_state *state)
 {
 	struct lf_data *data = g_new0(struct lf_data, 1);
-	char *parent_dir, *data_dir, *data_file;
+	char *data_dir, *data_file;
 	char *index_file, *state_file;
 	GError *error = NULL;
 	const char *fname;
 	GDir *dir;
 	const char *mode;
 
-	parent_dir = global_init(basedir);
+	if (!global_init(basedir)) 
+		return FALSE;
 
-	data_dir = g_build_filename(parent_dir, name, NULL);
+	data_dir = g_build_filename(basedir, name, NULL);
 	g_assert(data_dir != NULL);
 
-	g_free(parent_dir);
 	g_mkdir(data_dir, 0700);
 	data_file = g_build_filename(data_dir, "lines", NULL);
 	g_assert(data_file != NULL);

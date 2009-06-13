@@ -10,6 +10,7 @@
 
 static struct linestack_context *ctx = NULL;
 static struct irc_network_state *state = NULL;
+void log_global(enum log_level ll, const char *fmt, ...) { /* FIXME */}
 
 static void handle_help(int, char **);
 static void handle_mark(int, char **);

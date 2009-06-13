@@ -17,6 +17,8 @@ libirc_objs = \
 	   $(libircdir)/url.o \
 	   $(libircdir)/util.o \
 	   $(libircdir)/listener.o \
+	   $(libircdir)/linestack_file.o \
+	   $(libircdir)/linestack.o \
 	   $(LIBIRC_SSL_OBJS)
 
 libirc_headers = \
@@ -29,7 +31,8 @@ libirc_headers = \
 		  $(libircdir)/redirect.h \
 		  $(libircdir)/url.h \
 		  $(libircdir)/listener.h \
-		  $(libircdir)/util.h
+		  $(libircdir)/util.h \
+		  $(libircdir)/linestack.h \
 
 pyirc_objs = $(libircdir)/python/irc.o \
 			 $(libircdir)/python/transport.o \
@@ -52,6 +55,14 @@ clean::
 $(pyirc_objs): CFLAGS+=$(PYTHON_CFLAGS) -fPIC
 $(libircdir)/python/irc.$(SHLIBEXT): $(pyirc_objs) $(LIBIRC)
 $(libircdir)/python/irc.$(SHLIBEXT): LDFLAGS+=$(PYTHON_LDFLAGS) $(LIBS)
+
+$(libircdir)/tools/linestack-cmd$(EXEEXT): $(libircdir)/tools/linestack-cmd.o \
+	                                       $(LIBIRC)
+	@echo Linking $@
+	@$(LD) $(LIBS) -lreadline -rdynamic -o $@ $^
+
+clean::
+	@rm -f linestack-cmd$(EXEEXT) 
 
 python:: $(libircdir)/python/irc.$(SHLIBEXT) 
 

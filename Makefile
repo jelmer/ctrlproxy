@@ -42,14 +42,12 @@ objs = src/posix.o \
 	   src/cache.o \
 	   src/util.o \
 	   src/hooks.o \
-	   src/linestack.o \
 	   src/plugins.o \
 	   src/settings.o \
 	   src/log.o \
 	   src/client.o \
 	   src/gen_config.o \
 	   src/repl.o \
-	   src/linestack_file.o \
 	   src/ctcp_redirect.o \
 	   src/ctcp.o \
 	   src/motd.o \
@@ -72,7 +70,6 @@ headers = src/admin.h \
 		  src/ctcp.h \
 		  src/ctrlproxy.h \
 		  src/hooks.h \
-		  src/linestack.h \
 		  src/log_support.h \
 		  src/repl.h \
 		  src/settings.h \
@@ -80,10 +77,6 @@ headers = src/admin.h \
 		  src/log.h \
 		  src/cache.h
 dep_files = $(patsubst %.o, %.d, $(objs))
-
-linestack-cmd$(EXEEXT): src/linestack-cmd.o $(objs) $(LIBIRC)
-	@echo Linking $@
-	@$(LD) $(LIBS) -lreadline -rdynamic -o $@ $^
 
 ctrlproxy$(EXEEXT): src/main.o $(objs) $(LIBIRC)
 	@echo Linking $@
@@ -200,7 +193,7 @@ cscope.out::
 clean::
 	@echo Removing object files and executables
 	@rm -f src/*.o daemon/*.o python/*.o testsuite/check ctrlproxy$(EXEEXT) testsuite/*.o *~
-	@rm -f linestack-cmd$(EXEEXT) ctrlproxy-admin$(EXEEXT)
+	@rm -f ctrlproxy-admin$(EXEEXT)
 	@rm -f ctrlproxyd$(EXEEXT)
 	@rm -f mods/*.$(SHLIBEXT) mods/*.o
 	@echo Removing gcov output
