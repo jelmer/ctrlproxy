@@ -1129,6 +1129,9 @@ void initirc(void)
     if (PyType_Ready(&PyTransportType) < 0)
         return;
 
+    if (PyType_Ready(&PyLinestackType) < 0)
+        return;
+
     if (PyType_Ready(&PyChannelModeDictType) < 0)
         return;
 
@@ -1158,5 +1161,9 @@ void initirc(void)
     PyModule_AddObject(m, "QueryStack", (PyObject *)&PyQueryStackType);
     Py_INCREF(&PyTransportType);
     PyModule_AddObject(m, "Transport", (PyObject *)&PyTransportType);
+    Py_INCREF(&PyLinestackType);
+    PyModule_AddObject(m, "Linestack", (PyObject *)&PyLinestackType);
+    PyModule_AddIntConstant(m, "TO_SERVER", TO_SERVER);
+    PyModule_AddIntConstant(m, "FROM_SERVER", FROM_SERVER);
 }
 

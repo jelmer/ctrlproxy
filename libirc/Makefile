@@ -36,6 +36,7 @@ libirc_headers = \
 
 pyirc_objs = $(libircdir)/python/irc.o \
 			 $(libircdir)/python/transport.o \
+			 $(libircdir)/python/linestack.o \
 			 $(libircdir)/python/state.o
 
 $(libirc_objs): CFLAGS+=-fPIC

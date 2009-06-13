@@ -660,3 +660,22 @@ class NetsplitTests(unittest.TestCase):
             c.nicks.add(irc.Nick("some%d!someuser@somehost" % i))
         self.client.state.add(c)
         self.assertLines([":some%d!someuser@somehost QUIT :us upstream" % i for i in range(10)])
+
+
+class LinestackTests(unittest.TestCase):
+
+    def get_basedir(self):
+        return "/tmp"
+
+    def get_state(self):
+        return irc.NetworkState("nick", "user", "host")
+
+    def test_create(self):
+        ls = irc.Linestack("network", True, self.get_basedir(), self.get_state())
+        self.assertTrue(ls is not None)
+
+    def test_insert_line(self):
+        state = self.get_state()
+        ls = irc.Linestack("insert_line", True, self.get_basedir(), state)
+        ls.insert_line(":somebody!some@host PRIVMSG #bla :BAR!", 
+                       irc.TO_SERVER, state)

@@ -22,6 +22,16 @@
 #include "redirect.h"
 #include "libirc/python/irc.h"
 
+struct irc_network_state *PyObject_AsNetworkState(PyObject *obj)
+{
+    if (!PyObject_TypeCheck(obj, &PyNetworkStateType)) {
+        PyErr_SetNone(PyExc_TypeError);
+        return NULL;
+    }
+
+    return ((PyNetworkStateObject *)obj)->state;
+}
+
 static PyObject *py_networkinfo_is_prefix(PyNetworkInfoObject *self, PyObject *args)
 {
     char *prefix;
