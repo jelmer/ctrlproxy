@@ -1010,11 +1010,33 @@ static PyObject *py_network_channel_dict_iter(PyNetworkChannelDictObject *self)
                           (PyObject *(*)(PyObject *, void *))py_channel_state_from_ptr);
 }
 
+static PyObject *py_network_channel_dict_keys(PyNetworkChannelDictObject *self)
+{
+    GList *gl;
+    int i = 0;
+    PyObject *ret = PyList_New(g_list_length(self->parent->state->channels));
+
+    for (gl = self->parent->state->channels; gl; gl = gl->next) {
+        struct irc_channel_state *cs = gl->data;
+        PyList_SetItem(ret, i, PyString_FromString(cs->name));
+        i++;
+    }
+
+    return ret;
+}
+
+static PyMethodDef py_network_channel_dict_methods[] = {
+    { "keys", (PyCFunction)py_network_channel_dict_keys, 
+        METH_NOARGS, "Keys" },
+    { NULL }
+};
+
 PyTypeObject PyNetworkChannelDictType = {
     .tp_name = "NetworkChannelDict",
     .tp_flags = Py_TPFLAGS_DEFAULT,
     .tp_dealloc = (destructor)py_network_channel_dict_dealloc,
     .tp_basicsize = sizeof(PyNetworkChannelDictObject),
+    .tp_methods = py_network_channel_dict_methods,
     .tp_as_mapping = &py_network_channel_dict_mapping,
     .tp_iter = (getiterfunc)py_network_channel_dict_iter,
 };
