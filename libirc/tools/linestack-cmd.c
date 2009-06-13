@@ -47,7 +47,7 @@ static gboolean line_printer (struct irc_line *l, time_t time, void *f)
 
 static void handle_state(int argc, char **argv)
 {
-	struct linestack_marker *pos;
+	linestack_marker pos;
 	struct irc_network_state *state;
 	GList *gl;
 
@@ -83,7 +83,7 @@ static void handle_state(int argc, char **argv)
 
 static void handle_replay(int argc, char **argv)
 {
-	struct linestack_marker *from, *to = NULL;
+	linestack_marker from, to = NULL;
 
 	if (argc < 2) {
 		fprintf(stderr, "Usage: replay <from> [<to>]\n");
@@ -116,7 +116,7 @@ static void handle_help(int argc, char **argv)
 
 static void handle_mark(int argc, char **argv)
 {
-	struct linestack_marker *marker;
+	linestack_marker marker;
 
 	if (argc < 2) {
 		fprintf(stderr, "Usage: mark <name>\n");
@@ -175,6 +175,7 @@ int main(int argc, char **argv)
 	GOptionContext *pc;
 	char *line;
 	struct irc_network_info *info;
+	char *path;
 	GOptionEntry options[] = {
 		{ NULL }
 	};
@@ -198,7 +199,11 @@ int main(int argc, char **argv)
 	markers = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, 
 									(GDestroyNotify)linestack_free_marker);
 
-	ctx = create_linestack(argv[2], TRUE, argv[1], state);
+	path = g_build_filename(argv[1], argv[2], NULL);
+
+	ctx = create_linestack(path, TRUE, state);
+
+	g_free(path);
 
 	atexit(freels);
 
