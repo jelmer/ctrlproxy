@@ -27,6 +27,14 @@
 #include <sys/stat.h>
 #include <inttypes.h>
 
+/* Index file format
+ * 8 bytes - offset of line
+ * 8 bytes - current time
+ * 8 bytes - index of the last line with state printed
+ */
+
+#define INDEX_RECORD_SIZE (sizeof(guint64) + sizeof(time_t) + sizeof(guint64))
+
 #define README_CONTENTS  \
 "This directory contains the history information that ctrlproxy uses\n" \
 "when sending backlogs.\n" \
@@ -49,8 +57,9 @@ typedef gboolean (*marshall_fn_t) (struct irc_network_state *, const char *name,
 #define marshall_new(m,t) if ((m) == MARSHALL_PULL) *(t) = g_malloc(sizeof(**t));
 
 #define LF_CHECK_IO_STATUS(status)	if (status != G_IO_STATUS_NORMAL) { \
-		log_global(LOG_ERROR, "Unable to write to linestack file: %s", error->message); \
-		g_error_free(error); \
+		log_global(LOG_ERROR, "%s:%d: Unable to write to linestack file: %s", \
+				   __FILE__, __LINE__, error != NULL?error->message:"Unknown"); \
+		if (error != NULL) g_error_free(error); \
 		return FALSE; \
 	}
 
@@ -449,23 +458,26 @@ struct lf_data {
 	GIOChannel *line_file;
 	char *state_dir;
 	GIOChannel *state_file;
-	struct {
-		char *state_id;
-		gint64 line_offset;
-	} *state_dumps;
-	size_t num_state_dumps;
-	size_t num_state_dumps_alloc;
-	int lines_since_last_state;
+	GIOChannel *index_file;
+	int count;
+	int last_line_with_state;
 };
 
-static char *state_path(struct lf_data *lf_data, const char *state_id)
+static char *state_path(struct lf_data *lf_data, guint64 state_id)
 {
-	return g_build_filename(lf_data->state_dir, state_id, NULL);
+	char *state_id_str;
+	char *ret;
+	state_id_str = g_strdup_printf("%"PRIi64, state_id);
+	if (state_id_str == NULL)
+		return NULL;
+	ret = g_build_filename(lf_data->state_dir, state_id_str, NULL);
+	g_free(state_id_str);
+	return ret;
 }
 
 static gboolean file_insert_state(struct linestack_context *ctx, 
 							  const struct irc_network_state *state, 
-							  const char *state_id);
+							  guint64 state_id);
 
 static char *global_init(struct ctrlproxy_config *config)
 {
@@ -490,6 +502,7 @@ static gboolean file_init(struct linestack_context *ctx, const char *name,
 {
 	struct lf_data *data = g_new0(struct lf_data, 1);
 	char *parent_dir, *data_dir, *data_file;
+	char *index_file, *state_file;
 	GError *error = NULL;
 	const char *fname;
 	GDir *dir;
@@ -504,8 +517,6 @@ static gboolean file_init(struct linestack_context *ctx, const char *name,
 	g_mkdir(data_dir, 0700);
 	data_file = g_build_filename(data_dir, "lines", NULL);
 	g_assert(data_file != NULL);
-
-	unlink(data_file);
 
 	if (truncate)
 		mode = "w+";
@@ -524,10 +535,24 @@ static gboolean file_init(struct linestack_context *ctx, const char *name,
 
 	g_io_channel_set_encoding(data->line_file, NULL, NULL);
 
-	/* Remove old data file */
-	data_file = g_build_filename(data_dir, "state", NULL);
-	unlink(data_file);
-	g_free(data_file);
+	index_file = g_build_filename(data_dir, "index", NULL);
+	g_assert(index_file != NULL);
+
+	data->index_file = g_io_channel_new_file(index_file, mode, &error);
+	if (data->index_file == NULL) {
+		log_global(LOG_WARNING, "Error opening `%s': %s", 
+						  index_file, error->message);
+		g_error_free(error);
+		g_free(index_file);
+		return FALSE;
+	}
+	g_free(index_file);
+
+	g_io_channel_set_encoding(data->index_file, NULL, NULL);
+
+	state_file = g_build_filename(data_dir, "state", NULL);
+	unlink(state_file);
+	g_free(state_file);
 
 	data->state_dir = g_build_filename(data_dir, "states", NULL);
 	g_free(data_dir);
@@ -542,7 +567,7 @@ static gboolean file_init(struct linestack_context *ctx, const char *name,
 	}
 
 	while ((fname = g_dir_read_name(dir))) {
-		char *state_file_path = state_path(data, fname);
+		char *state_file_path = g_build_filename(data->state_dir, fname, NULL);
 		g_unlink(state_file_path);
 		g_free(state_file_path);
 	}
@@ -550,18 +575,15 @@ static gboolean file_init(struct linestack_context *ctx, const char *name,
 	g_dir_close(dir);
 
 	ctx->backend_data = data;
-	return file_insert_state(ctx, state, "START");
+	return file_insert_state(ctx, state, 0);
 }
 
 static gboolean file_fini(struct linestack_context *ctx)
 {
 	struct lf_data *data = ctx->backend_data;
-	int i;
 	g_io_channel_unref(data->line_file);
+	g_io_channel_unref(data->index_file);
 	g_free(data->state_dir);
-	for (i = 0; i < data->num_state_dumps; i++)
-		g_free(data->state_dumps[i].state_id);
-	g_free(data->state_dumps);
 	g_free(data);
 	return TRUE;
 }
@@ -575,7 +597,7 @@ static gint64 g_io_channel_tell_position(GIOChannel *gio)
 
 static gboolean file_insert_state(struct linestack_context *ctx, 
 							  const struct irc_network_state *state,
-							  const char *state_id)
+							  guint64 state_id)
 {
 	struct lf_data *nd = ctx->backend_data;
 	GError *error = NULL;
@@ -599,17 +621,7 @@ static gboolean file_insert_state(struct linestack_context *ctx,
 
 	g_io_channel_set_encoding(state_file, NULL, NULL);
 	
-	nd->lines_since_last_state = 0;
-
-	if (nd->num_state_dumps >= nd->num_state_dumps_alloc) {
-		nd->num_state_dumps_alloc += 1000;
-		nd->state_dumps = g_realloc(nd->state_dumps, nd->num_state_dumps_alloc * sizeof(*nd->state_dumps));
-	}
-
-	nd->state_dumps[nd->num_state_dumps].line_offset = g_io_channel_tell_position(nd->line_file);
-	nd->state_dumps[nd->num_state_dumps].state_id = g_strdup(state_id);
-
-	nd->num_state_dumps++;
+	nd->last_line_with_state = nd->count;
 
 	marshall_network_state(MARSHALL_PUSH, state_file, (struct irc_network_state *)state);
 
@@ -621,12 +633,31 @@ static gboolean file_insert_state(struct linestack_context *ctx,
 	return TRUE;
 }
 
+gboolean write_index_entry(GIOChannel *ioc, guint64 line_offset, time_t time,
+					   guint64 state_line_index)
+{
+	GError *error = NULL;
+	GIOStatus status;
+
+	status = g_io_channel_write_chars(ioc, (void *)&line_offset, sizeof(guint64), NULL, 
+									  &error);
+	LF_CHECK_IO_STATUS(status);
+
+	status = g_io_channel_write_chars(ioc, (void *)&time, sizeof(time_t), NULL, &error);
+	LF_CHECK_IO_STATUS(status);
+
+	status = g_io_channel_write_chars(ioc, (void *)&state_line_index, sizeof(guint64),
+									  NULL, &error);
+	LF_CHECK_IO_STATUS(status);
+
+	return TRUE;
+}
+
 static gboolean file_insert_line(struct linestack_context *ctx, 
 								 const struct irc_line *l, 
 								 const struct irc_network_state *state)
 {
 	struct lf_data *nd = ctx->backend_data;
-	char t[20];
 	GError *error = NULL;
 	GIOStatus status;
 	gboolean ret;
@@ -634,20 +665,17 @@ static gboolean file_insert_line(struct linestack_context *ctx,
 	if (nd == NULL) 
 		return FALSE;
 
-	nd->lines_since_last_state++;
-	if (nd->lines_since_last_state == STATE_DUMP_INTERVAL) {
-		char *state_id = g_strdup_printf("%lu-%"PRIi64, time(NULL), 
-								 g_io_channel_tell_position(nd->line_file));
-		ret = file_insert_state(ctx, state, state_id);
-		g_free(state_id);
+	if (nd->count >= nd->last_line_with_state + STATE_DUMP_INTERVAL) {
+		ret = file_insert_state(ctx, state, nd->count);
 		if (ret == FALSE)
 			return FALSE;
 	}
 
-	g_snprintf(t, sizeof(t), "%ld ", time(NULL));
-
-	status = g_io_channel_write_chars(nd->line_file, t, strlen(t), NULL, &error);
-	LF_CHECK_IO_STATUS(status);
+	if (!write_index_entry(nd->index_file, 
+					  g_io_channel_tell_position(nd->line_file),
+					  time(NULL),
+					  nd->last_line_with_state))
+		return FALSE;
 
 	status = irc_send_line(nd->line_file, (GIConv)-1, l, &error);
 
@@ -657,6 +685,7 @@ static gboolean file_insert_line(struct linestack_context *ctx,
 		return FALSE;
 	}
 
+	nd->count++;
 	return TRUE;
 }
 
@@ -666,7 +695,7 @@ static void *file_get_marker(struct linestack_context *ctx)
 	struct lf_data *nd = ctx->backend_data;
 
 	pos = g_new0(gint64, 1);
-	(*pos) = g_io_channel_tell_position(nd->line_file);
+	(*pos) = nd->count;
 	return pos;
 }
 
@@ -675,13 +704,12 @@ static struct irc_network_state *file_get_state (struct linestack_context *ctx,
 {
 	struct lf_data *nd = ctx->backend_data;
 	struct irc_network_state *ret;
-	gint64 *to_offset = m, t;
+	gint64 *to_index = m, t, state_index;
 	struct linestack_marker m1, m2;
 	GError *error = NULL;
 	GIOStatus status;
 	char *data_file;
 	GIOChannel *state_file;
-	int i;
 
 	if (nd == NULL) 
 		return NULL;
@@ -690,20 +718,33 @@ static struct irc_network_state *file_get_state (struct linestack_context *ctx,
 	status = g_io_channel_flush(nd->line_file, &error);
 	LF_CHECK_IO_STATUS(status);
 
-	if (to_offset != NULL) 
-		t = *to_offset;
-	else 
-		t = g_io_channel_tell_position(nd->line_file);
+	if (to_index != NULL) {
+		t = (*to_index)-1;
+		status = g_io_channel_seek_position(nd->index_file, 
+			t * INDEX_RECORD_SIZE + sizeof(guint64) + sizeof(time_t),
+			G_SEEK_SET, &error);
+		LF_CHECK_IO_STATUS(status);
+		status = g_io_channel_read_chars(nd->index_file, (void *)&state_index, 
+										 sizeof(guint64), NULL, &error);
+		if (status == G_IO_STATUS_ERROR) {
+			log_global(LOG_ERROR, "Unable to ready entry %"PRIi64" in index: %s",
+					   t, error->message);
+			g_error_free(error);
+			return FALSE;
+		} else if (status == G_IO_STATUS_EOF) {
+			log_global(LOG_ERROR, "EOF reading entry %"PRIi64" in index", t);
+			return FALSE;
+		}
 
-	/* Search back fromend of the state file to begin 
-	 * and find the state dump with the highest offset but an offset 
-	 * below from_offset */
-	for (i = nd->num_state_dumps-1; i >= 0; i--) {
-		if (nd->state_dumps[i].line_offset <= t)
-			break;
+		/* Go back to the end of the index file */
+		status = g_io_channel_seek_position(nd->index_file, 0, G_SEEK_END,
+											&error);
+		LF_CHECK_IO_STATUS(status);
+	} else {
+		state_index = nd->last_line_with_state;
 	}
 
-	data_file = state_path(nd, nd->state_dumps[i].state_id);
+	data_file = state_path(nd, state_index);
 
 	state_file = g_io_channel_new_file(data_file, "r", &error);
 	if (state_file == NULL) {
@@ -722,9 +763,9 @@ static struct irc_network_state *file_get_state (struct linestack_context *ctx,
 		return NULL;
 
 	m1.free_fn = NULL;
-	m1.data = &nd->state_dumps[i].line_offset;
+	m1.data = &state_index;
 	m2.free_fn = NULL;
-	m2.data = to_offset;
+	m2.data = to_index;
 	linestack_replay(ctx, &m1, &m2, ret);
 
 	g_io_channel_unref(state_file);
@@ -735,13 +776,14 @@ static struct irc_network_state *file_get_state (struct linestack_context *ctx,
 static gboolean file_traverse(struct linestack_context *ctx, void *mf,
 		void *mt, linestack_traverse_fn tf, void *userdata)
 {
-	gint64 *start_offset, *end_offset;
+	gint64 start_index, end_index;
 	gboolean ret = TRUE;
 	struct lf_data *nd = ctx->backend_data;
 	GError *error = NULL;
 	GIOStatus status = G_IO_STATUS_NORMAL;
-	char *raw, *space;
+	char *raw;
 	struct irc_line *l;
+	guint64 i;
 
 	if (nd == NULL) 
 		return FALSE;
@@ -749,38 +791,75 @@ static gboolean file_traverse(struct linestack_context *ctx, void *mf,
 	/* Flush channel before reading otherwise data corruption may occur */
 	g_io_channel_flush(nd->line_file, &error);
 	
-	start_offset = mf;
-	end_offset = mt;
-
-	/* Go back to begin of file */
-	status = g_io_channel_seek_position(nd->line_file, 
-			(start_offset != NULL)?(*start_offset):0, G_SEEK_SET, &error);
-
-	LF_CHECK_IO_STATUS(status);
+	if (mf == NULL) {
+		start_index = 0;
+	} else {
+		start_index = *((guint64 *)mf);
+	}
+	
+	if (mt == NULL) {
+		end_index = nd->count;
+	} else {
+		end_index = *((guint64 *)mt);
+	}
 
 	raw = NULL;
-	
-	while((status != G_IO_STATUS_EOF) && 
-		(end_offset == NULL || 
-		 g_io_channel_tell_position(nd->line_file) <= (*end_offset))) {
+
+	for (i = start_index; i < end_index; i++) {
+		guint64 offset;
+		time_t time;
+
+		status = g_io_channel_seek_position(nd->index_file, 
+											i * INDEX_RECORD_SIZE, 
+											G_SEEK_SET, &error);
+		if (status != G_IO_STATUS_NORMAL) {
+			log_global(LOG_WARNING, "seeking line %"PRIi64" in index failed: %s", i, 
+					   error->message);
+			g_error_free(error);
+			ret = FALSE;
+			goto cleanup;
+		}
+
+		status = g_io_channel_read_chars(nd->index_file, (void *)&offset, 
+										 sizeof(guint64), NULL, &error);
+		if (status != G_IO_STATUS_NORMAL) {
+			log_global(LOG_WARNING, "reading line %"PRIi64" in index failed: %s", i, 
+					   error->message);
+			g_error_free(error);
+			ret = FALSE;
+			goto cleanup;
+		}
+
+		status = g_io_channel_read_chars(nd->index_file, (void *)&time, 
+										 sizeof(time_t), NULL, &error);
+		if (status != G_IO_STATUS_NORMAL) {
+			log_global(LOG_WARNING, "reading time %"PRIi64" in index failed: %s", i, 
+					   error->message);
+			g_error_free(error);
+			ret = FALSE;
+			goto cleanup;
+		}
+
+		status = g_io_channel_seek_position(nd->line_file, offset, G_SEEK_SET, 
+											&error);
+		if (status != G_IO_STATUS_NORMAL) {
+			log_global(LOG_WARNING, "seeking line %"PRIi64" (%"PRIi64") in data failed: %s",
+					   i, offset, error->message);
+			g_error_free(error);
+			ret = FALSE;
+			goto cleanup;
+		}
+
 		status = g_io_channel_read_line(nd->line_file, &raw, NULL, NULL, &error);
 		if (status == G_IO_STATUS_ERROR) {
 			log_global(LOG_WARNING, "read_line() failed: %s", error->message);
 			g_error_free(error);
-			return FALSE;
+			ret = FALSE;
+			goto cleanup;
 		}
 
-		if (raw == NULL)
-			break;
-
-		space = strchr(raw, ' ');
-		g_assert(space);
-		*space = '\0';
-
-		g_assert(space);
-	
-		l = irc_parse_line(space+1);
-		ret &= tf(l, atol(raw), userdata);
+		l = irc_parse_line(raw);
+		ret &= tf(l, time, userdata);
 		free_line(l);
 
 		g_free(raw);
@@ -790,8 +869,11 @@ static gboolean file_traverse(struct linestack_context *ctx, void *mf,
 			break;
 	}
 
+cleanup:
 	status = g_io_channel_seek_position(nd->line_file, 0, G_SEEK_END, &error);
+	LF_CHECK_IO_STATUS(status);
 
+	status = g_io_channel_seek_position(nd->index_file, 0, G_SEEK_END, &error);
 	LF_CHECK_IO_STATUS(status);
 
 	return ret;

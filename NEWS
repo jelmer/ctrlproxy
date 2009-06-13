@@ -24,6 +24,8 @@ Ctrlproxy 3.0.9 UNRELEASED
 
     * Fix crash in log_custom when the network is disconnected. (#212)
 
+    * Reduce memory usage by storing index for linestacks.
+
   FEATURES
 
     * Provide Python bindings for the main library code. Mainly used for 

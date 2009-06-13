@@ -422,7 +422,6 @@ START_TEST(bench_lots_of_lines)
 		linestack_insert_line(ctx, irc_parse_linef("PRIVMSG :%d", i), 
 							  TO_SERVER, ns1);
 	
-
 	linestack_traverse(ctx, marker, NULL, line_track, stderr);
 END_TEST
 
