@@ -193,8 +193,7 @@ START_TEST(test_empty)
 	struct linestack_context *ctx;
 	
 	ns1 = network_state_init("bla", "Gebruikersnaam", "Computernaam");
-	ctx = create_linestack("test", TRUE, 
-						   get_linestack_tempdir("test_empty"), ns1);
+	ctx = create_linestack(get_linestack_tempdir("test_empty"), TRUE, ns1);
 
 	ns2 = linestack_get_state(ctx, NULL);
 
@@ -212,7 +211,7 @@ START_TEST(test_msg)
 	char *raw;
 	
 	ns1 = network_state_init("bla", "Gebruikersnaam", "Computernaam");
-	ctx = create_linestack("test", TRUE, get_linestack_tempdir("msg"), ns1);
+	ctx = create_linestack(get_linestack_tempdir("msg"), TRUE, ns1);
 
 	lm = linestack_get_marker(ctx);
 
@@ -245,7 +244,7 @@ START_TEST(test_join_part)
 	char *raw;
 	
 	ns1 = network_state_init("bla", "Gebruikersnaam", "Computernaam");
-	ctx = create_linestack("test", TRUE, get_linestack_tempdir("join_part"), ns1);
+	ctx = create_linestack(get_linestack_tempdir("join_part"), TRUE, ns1);
 
 	lm = linestack_get_marker(ctx);
 
@@ -280,7 +279,7 @@ START_TEST(test_skip_msg)
 	char *raw;
 	
 	ns1 = network_state_init("bla", "Gebruikersnaam", "Computernaam");
-	ctx = create_linestack("test", TRUE, get_linestack_tempdir("skip_msg"), ns1);
+	ctx = create_linestack(get_linestack_tempdir("skip_msg"), TRUE, ns1);
 
 	stack_process(ctx, ns1, ":bloe!Gebruikersnaam@Computernaam PRIVMSG #bla :haha");
 
@@ -315,7 +314,7 @@ START_TEST(test_object_msg)
 	char *raw;
 	
 	ns1 = network_state_init("bla", "Gebruikersnaam", "Computernaam");
-	ctx = create_linestack("test", TRUE, get_linestack_tempdir("get_object_msg"), ns1);
+	ctx = create_linestack(get_linestack_tempdir("get_object_msg"), TRUE, ns1);
 
 	lm = linestack_get_marker(ctx);
 
@@ -355,7 +354,7 @@ START_TEST(test_object_open)
 	int j;
 	
 	ns1 = network_state_init("bla", "Gebruikersnaam", "Computernaam");
-	ctx = create_linestack("test", TRUE, get_linestack_tempdir("test_object_open"), ns1);
+	ctx = create_linestack(get_linestack_tempdir("test_object_open"), TRUE, ns1);
 
 	lm = linestack_get_marker(ctx);
 
@@ -389,7 +388,7 @@ START_TEST(test_join)
 	struct linestack_context *ctx;
 	
 	ns1 = network_state_init("bla", "Gebruikersnaam", "Computernaam");
-	ctx = create_linestack("test", TRUE, get_linestack_tempdir("test_join"), ns1);
+	ctx = create_linestack(get_linestack_tempdir("test_join"), TRUE, ns1);
 
 	stack_process(ctx, ns1, ":bla!Gebruikersnaam@Computernaam JOIN #bla");
 
@@ -415,7 +414,7 @@ START_TEST(bench_lots_of_lines)
 	int i;
 
 	ns1 = network_state_init("bla", "Gebruikersnaam", "Computernaam");
-	ctx = create_linestack("test", TRUE, get_linestack_tempdir("base"), ns1);
+	ctx = create_linestack(get_linestack_tempdir("lots of lines"), TRUE, ns1);
 	marker = linestack_get_marker(ctx);
 
 	seen = 0;

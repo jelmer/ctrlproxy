@@ -47,17 +47,6 @@ struct linestack_context
 
 };
 
-#define README_CONTENTS  \
-"This directory contains the history information that ctrlproxy uses\n" \
-"when sending backlogs.\n" \
-"\n" \
-"It is safe to remove this data while ctrlproxy is not running and \n" \
-"will not break your configuration. \n" \
-"\n" \
-"If you delete it while ctrlproxy is running, you will lose the ability \n" \
-"to use any backlog functionality during the current session.\n"
-
-
 /* Index file format
  * 8 bytes - offset of line
  * 8 bytes - current time
@@ -102,44 +91,17 @@ static gint64 g_io_channel_tell_position(GIOChannel *gio)
 	return lseek(fd, 0, SEEK_CUR);
 }
 
-
-
-
-static const char *global_init(const char *basedir)
-{
-	char *readme_file;;
-	if (g_file_test(basedir, G_FILE_TEST_IS_DIR))
-		return basedir;
-	g_mkdir(basedir, 0700);
-	readme_file = g_build_filename(basedir, "README", NULL);
-	if (!g_file_test(readme_file, G_FILE_TEST_EXISTS)) {
-		g_file_set_contents(readme_file, README_CONTENTS, 
-							-1, NULL);
-	}
-	g_free(readme_file);
-	return basedir;
-}
-
-
-
-struct linestack_context *create_linestack(const char *name, 
+struct linestack_context *create_linestack(const char *data_dir, 
 										   gboolean truncate,
-										   const char *basedir,
 										   const struct irc_network_state *state)
 {
 	struct linestack_context *data = g_new0(struct linestack_context, 1);
-	char *data_dir, *data_file;
+	char *data_file;
 	char *index_file, *state_file;
 	GError *error = NULL;
 	const char *fname;
 	GDir *dir;
 	const char *mode;
-
-	if (!global_init(basedir)) 
-		return FALSE;
-
-	data_dir = g_build_filename(basedir, name, NULL);
-	g_assert(data_dir != NULL);
 
 	g_mkdir(data_dir, 0700);
 	data_file = g_build_filename(data_dir, "lines", NULL);
@@ -184,7 +146,6 @@ struct linestack_context *create_linestack(const char *name,
 	g_free(state_file);
 
 	data->state_dir = g_build_filename(data_dir, "states", NULL);
-	g_free(data_dir);
 	g_mkdir(data->state_dir, 0755);
 
 	if (!truncate) {
@@ -720,10 +681,6 @@ gboolean linestack_replay(struct linestack_context *ctx,
 	return linestack_traverse(ctx, mf, mt, replay_line, st);
 }
 
-struct linestack_context *new_linestack(struct irc_network *n, const char *basedir)
-{
-	return create_linestack(n->name, TRUE, basedir, n->external_state);
-}
 
 #define marshall_new(m,t) if ((m) == MARSHALL_PULL) *(t) = g_malloc(sizeof(**t));
 

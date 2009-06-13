@@ -14,6 +14,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import irc
+import os
 import unittest
 
 class LineTestCase(unittest.TestCase):
@@ -664,25 +665,25 @@ class NetsplitTests(unittest.TestCase):
 
 class LinestackTests(unittest.TestCase):
 
-    def get_basedir(self):
-        return "/tmp"
+    def get_path(self, name):
+        return os.path.join("/tmp", name)
 
     def get_state(self):
         return irc.NetworkState("nick", "user", "host")
 
     def test_create(self):
-        ls = irc.Linestack("network", True, self.get_basedir(), self.get_state())
+        ls = irc.Linestack(self.get_path("network"), True, self.get_state())
         self.assertTrue(ls is not None)
 
     def test_insert_line(self):
         state = self.get_state()
-        ls = irc.Linestack("insert_line", True, self.get_basedir(), state)
+        ls = irc.Linestack(self.get_path("insert_line"), True, state)
         ls.insert_line(":somebody!some@host PRIVMSG #bla :BAR!", 
                        irc.TO_SERVER, state)
 
     def test_replay_simple(self):
         state1 = self.get_state()
-        ls = irc.Linestack("insert_line", True, self.get_basedir(), state1)
+        ls = irc.Linestack(self.get_path("insert_line"), True, state1)
         m = ls.get_marker()
         ls.insert_line(":somebody!some@host JOIN #bla", irc.FROM_SERVER, state1)
         state2 = self.get_state()
@@ -691,7 +692,7 @@ class LinestackTests(unittest.TestCase):
 
     def test_traverse(self):
         state = self.get_state()
-        ls = irc.Linestack("insert_line", True, self.get_basedir(), state)
+        ls = irc.Linestack(self.get_path("insert_line"), True, state)
         m1 = ls.get_marker()
         ls.insert_line(":somebody!some@host JOIN #bla", irc.FROM_SERVER, state)
         ls.insert_line(":somebody!some@host PRIVMSG #bla :BAR!", 

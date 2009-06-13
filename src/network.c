@@ -19,6 +19,7 @@
 
 #include "internals.h"
 #include "irc.h"
+#include <glib/gstdio.h>
 #include "ssl.h"
 
 /**
@@ -561,4 +562,34 @@ gboolean network_forward_line(struct irc_network *s, struct irc_client *c,
 	}
 
 	return network_send_line(s, NULL, l);
+}
+
+#define LINESTACK_README_CONTENTS  \
+"This directory contains the history information that ctrlproxy uses\n" \
+"when sending backlogs.\n" \
+"\n" \
+"It is safe to remove this data while ctrlproxy is not running and \n" \
+"will not break your configuration. \n" \
+"\n" \
+"If you delete it while ctrlproxy is running, you will lose the ability \n" \
+"to use any backlog functionality during the current session.\n"
+
+struct linestack_context *new_linestack(struct irc_network *n, const char *basedir)
+{
+	char *readme_file;
+	char *data_dir;
+	struct linestack_context *ret;
+	if (!g_file_test(basedir, G_FILE_TEST_IS_DIR)) {
+		g_mkdir(basedir, 0700);
+		readme_file = g_build_filename(basedir, "README", NULL);
+		if (!g_file_test(readme_file, G_FILE_TEST_EXISTS)) {
+			g_file_set_contents(readme_file, LINESTACK_README_CONTENTS, -1, NULL);
+		}
+		g_free(readme_file);
+	}
+	data_dir = g_build_filename(basedir, n->name, NULL);
+	g_assert(data_dir != NULL);
+	ret = create_linestack(data_dir, TRUE, n->external_state);
+	g_free(data_dir);
+	return ret;
 }

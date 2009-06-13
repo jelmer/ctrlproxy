@@ -104,7 +104,7 @@ G_MODULE_EXPORT linestack_marker linestack_get_marker(struct linestack_context *
  * @param cfg CtrlProxy configuration
  * @param state Current network state
  */
-G_MODULE_EXPORT struct linestack_context *create_linestack(const char *name, gboolean truncate, const char *basedir, const struct irc_network_state *);
+G_MODULE_EXPORT struct linestack_context *create_linestack(const char *data_dir, gboolean truncate, const struct irc_network_state *);
 G_MODULE_EXPORT void free_linestack_context(struct linestack_context *);
 
 G_MODULE_EXPORT gboolean linestack_read_entry(struct linestack_context *nd, 
