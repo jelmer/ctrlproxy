@@ -17,7 +17,6 @@ libirc_objs = \
 	   $(libircdir)/url.o \
 	   $(libircdir)/util.o \
 	   $(libircdir)/listener.o \
-	   $(libircdir)/linestack_file.o \
 	   $(libircdir)/linestack.o \
 	   $(LIBIRC_SSL_OBJS)
 

@@ -35,17 +35,7 @@ struct irc_client;
 
 struct irc_network_state;
 struct linestack_marker;
-struct linestack_ops;
 struct ctrlproxy_config;
-
-/**
- * A linestack instance.
- */
-struct linestack_context
-{
-	void *backend_data;
-	const struct linestack_ops *ops;
-};
 
 /**
  * Mark set a specific point in time in a linestack.
@@ -57,50 +47,6 @@ struct linestack_marker {
 
 /* linestack.c */
 typedef gboolean (*linestack_traverse_fn) (struct irc_line *, time_t, void *);
-/**
- * Linestack functions
- */
-struct linestack_ops {
-	char *name;
-	gboolean (*init) (struct linestack_context *, 
-					  const char *name,
-					  gboolean truncate,
-					  const char *basedir,
-					  const struct irc_network_state *
-					  );
-	gboolean (*fini) (struct linestack_context *);
-
-	/* Add a line */
-	gboolean (*insert_line) (
-		struct linestack_context *,
-		const struct irc_line *,
-		const struct irc_network_state *);
-	
-	/* Get marker for current position in stream */
-	void *(*get_marker) 
-		(struct linestack_context *);
-
-	/* Optional */
-	void *(*get_marker_numlines) 
-		(struct linestack_context *, int numlines);
-
-	void (*free_marker) (void *);
-	
-	gboolean (*traverse) (
-		struct linestack_context *,
-		void *from,
-		void *to,
-		linestack_traverse_fn, 
-		void *userdata);
-
-	/* Optional */
-	struct irc_network_state *(*get_state) (
-		struct linestack_context *,
-		void *);
-
-	/* Perhaps add other (optional) functions here such as searching for 
-	 * a specific keyword ? */
-};
 
 G_MODULE_EXPORT struct linestack_marker *linestack_get_marker_numlines (
 		struct linestack_context *,
@@ -169,7 +115,5 @@ G_MODULE_EXPORT struct linestack_marker *linestack_get_marker(struct linestack_c
  */
 G_MODULE_EXPORT struct linestack_context *create_linestack(const char *name, gboolean truncate, const char *basedir, const struct irc_network_state *);
 G_MODULE_EXPORT void free_linestack_context(struct linestack_context *);
-
-extern const struct linestack_ops linestack_file;
 
 #endif /* __CTRLPROXY_LINESTACK_H__ */
