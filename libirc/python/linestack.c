@@ -85,12 +85,54 @@ static PyObject *py_linestack_insert_line(PyLinestackObject *self, PyObject *arg
     ret = linestack_insert_line(self->linestack, l, dir, state);
     free_line(l);
 
-    return PyBool_FromLong(ret);
+    if (!ret) {
+        PyErr_SetNone(PyExc_RuntimeError);
+        return NULL;
+    }
+
+    Py_RETURN_NONE;
+}
+
+static PyObject *py_linestack_replay(PyLinestackObject *self, PyObject *args)
+{
+    guint64 from, to;
+    PyObject *py_state;
+    gboolean ret;
+    struct irc_network_state *state;
+    if (!PyArg_ParseTuple(args, "OLL", &py_state, &from, &to))
+        return NULL;
+
+    state = PyObject_AsNetworkState(py_state);
+    if (state == NULL) {
+        return NULL;
+    }
+
+    ret = linestack_replay(self->linestack, &from, &to, state);
+    if (ret == FALSE) {
+        PyErr_SetNone(PyExc_RuntimeError);
+        return NULL;
+    }
+
+    Py_RETURN_NONE;
+}
+
+static PyObject *py_linestack_get_marker(PyLinestackObject *self)
+{
+    linestack_marker m = linestack_get_marker(self->linestack);
+    if (m == NULL) {
+        PyErr_SetNone(PyExc_RuntimeError);
+        return NULL;
+    }
+    return PyLong_FromLong(*m);
 }
 
 static PyMethodDef py_linestack_methods[] = {
     { "insert_line", (PyCFunction)py_linestack_insert_line, 
         METH_VARARGS, "Insert line" },
+    { "replay", (PyCFunction)py_linestack_replay,
+        METH_VARARGS, "Replay" },
+    { "get_marker", (PyCFunction)py_linestack_get_marker,
+        METH_NOARGS, "Get marker" },
     { NULL }
 };
 
@@ -102,5 +144,3 @@ PyTypeObject PyLinestackType = {
     .tp_basicsize = sizeof(PyLinestackObject),
     .tp_dealloc = (destructor)py_linestack_dealloc,
 };
-
-

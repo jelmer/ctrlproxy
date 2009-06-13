@@ -679,3 +679,12 @@ class LinestackTests(unittest.TestCase):
         ls = irc.Linestack("insert_line", True, self.get_basedir(), state)
         ls.insert_line(":somebody!some@host PRIVMSG #bla :BAR!", 
                        irc.TO_SERVER, state)
+
+    def test_replay_simple(self):
+        state1 = self.get_state()
+        ls = irc.Linestack("insert_line", True, self.get_basedir(), state1)
+        m = ls.get_marker()
+        ls.insert_line(":somebody!some@host JOIN #bla", irc.FROM_SERVER, state1)
+        state2 = self.get_state()
+        ls.replay(state2, m, ls.get_marker())
+        self.assertEquals(["#bla"], state2.channels.keys())
