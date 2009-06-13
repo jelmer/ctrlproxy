@@ -45,6 +45,14 @@
 "If you delete it while ctrlproxy is running, you will lose the ability \n" \
 "to use any backlog functionality during the current session.\n"
 
+static gint64 g_io_channel_tell_position(GIOChannel *gio)
+{
+	int fd = g_io_channel_unix_get_fd(gio);
+	g_io_channel_flush(gio, NULL);
+	return lseek(fd, 0, SEEK_CUR);
+}
+
+
 
 /*
  * Marshall/unmarshall functions
@@ -575,6 +583,33 @@ static gboolean file_init(struct linestack_context *ctx, const char *name,
 	g_dir_close(dir);
 
 	ctx->backend_data = data;
+
+	if (!truncate) {
+		GIOStatus status;
+		status = g_io_channel_seek_position(data->index_file, 0, G_SEEK_END,
+											&error);
+		if (status != G_IO_STATUS_NORMAL) {
+			log_global(LOG_WARNING, "Error seeking end of index file: %s", 
+						  error->message);
+			g_error_free(error);
+			return FALSE;
+		}
+
+		status = g_io_channel_seek_position(data->line_file, 0, G_SEEK_END,
+											&error);
+		if (status != G_IO_STATUS_NORMAL) {
+			log_global(LOG_WARNING, "Error seeking end of line file: %s", 
+						  error->message);
+			g_error_free(error);
+			return FALSE;
+		}
+
+		data->count = g_io_channel_tell_position(data->index_file) / INDEX_RECORD_SIZE;
+
+		/* FIXME: Write the diff between the previously stored state and 
+		 * the state to store now. */
+	}
+
 	return file_insert_state(ctx, state, 0);
 }
 
@@ -586,13 +621,6 @@ static gboolean file_fini(struct linestack_context *ctx)
 	g_free(data->state_dir);
 	g_free(data);
 	return TRUE;
-}
-
-static gint64 g_io_channel_tell_position(GIOChannel *gio)
-{
-	int fd = g_io_channel_unix_get_fd(gio);
-	g_io_channel_flush(gio, NULL);
-	return lseek(fd, 0, SEEK_CUR);
 }
 
 static gboolean file_insert_state(struct linestack_context *ctx, 
