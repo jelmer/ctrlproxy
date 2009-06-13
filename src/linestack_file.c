@@ -718,6 +718,9 @@ static struct irc_network_state *file_get_state (struct linestack_context *ctx,
 	status = g_io_channel_flush(nd->line_file, &error);
 	LF_CHECK_IO_STATUS(status);
 
+	status = g_io_channel_flush(nd->index_file, &error);
+	LF_CHECK_IO_STATUS(status);
+
 	if (to_index != NULL) {
 		t = (*to_index)-1;
 		status = g_io_channel_seek_position(nd->index_file, 
@@ -790,6 +793,8 @@ static gboolean file_traverse(struct linestack_context *ctx, void *mf,
 
 	/* Flush channel before reading otherwise data corruption may occur */
 	g_io_channel_flush(nd->line_file, &error);
+
+	g_io_channel_flush(nd->index_file, &error);
 	
 	if (mf == NULL) {
 		start_index = 0;
