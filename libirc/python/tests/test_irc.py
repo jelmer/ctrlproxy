@@ -672,18 +672,18 @@ class LinestackTests(unittest.TestCase):
         return irc.NetworkState("nick", "user", "host")
 
     def test_create(self):
-        ls = irc.Linestack(self.get_path("network"), True, self.get_state())
+        ls = irc.Linestack(self.get_path("network"), self.get_state(), True)
         self.assertTrue(ls is not None)
 
     def test_insert_line(self):
         state = self.get_state()
-        ls = irc.Linestack(self.get_path("insert_line"), True, state)
+        ls = irc.Linestack(self.get_path("insert_line"), state, True)
         ls.insert_line(":somebody!some@host PRIVMSG #bla :BAR!", 
                        irc.TO_SERVER, state)
 
     def test_replay_simple(self):
         state1 = self.get_state()
-        ls = irc.Linestack(self.get_path("insert_line"), True, state1)
+        ls = irc.Linestack(self.get_path("insert_line"), state1, True)
         m = ls.get_marker()
         ls.insert_line(":somebody!some@host JOIN #bla", irc.FROM_SERVER, state1)
         state2 = self.get_state()
@@ -692,7 +692,7 @@ class LinestackTests(unittest.TestCase):
 
     def test_traverse(self):
         state = self.get_state()
-        ls = irc.Linestack(self.get_path("insert_line"), True, state)
+        ls = irc.Linestack(self.get_path("insert_line"), state, True)
         m1 = ls.get_marker()
         ls.insert_line(":somebody!some@host JOIN #bla", irc.FROM_SERVER, state)
         ls.insert_line(":somebody!some@host PRIVMSG #bla :BAR!", 

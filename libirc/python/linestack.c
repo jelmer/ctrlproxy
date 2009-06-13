@@ -34,14 +34,14 @@ static int py_linestack_dealloc(PyLinestackObject *self)
 
 static PyObject *py_linestack_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 {
-    char *kwnames[] = { "path", "truncate", "state", NULL };
+    char *kwnames[] = { "path", "state", "truncate", NULL };
     PyLinestackObject *self;
 	char *data_dir;
-	int truncate;
+	int truncate = FALSE;
 	PyObject *py_state;
     struct irc_network_state *state;
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "siO", kwnames, 
-                                     &data_dir, &truncate, &py_state))
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "sO|i", kwnames, 
+                                     &data_dir, &py_state, &truncate))
         return NULL;
 
     self = (PyLinestackObject *)type->tp_alloc(type, 0);
