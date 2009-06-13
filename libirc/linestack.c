@@ -324,6 +324,67 @@ struct irc_network_state *linestack_get_state(
 	return ret;
 }
 
+gboolean linestack_read_entry(struct linestack_context *nd, 
+							  guint64 i,
+							  struct irc_line **line,
+							  time_t *time
+							 )
+{
+	guint64 offset;
+	GError *error = NULL;
+	gchar *raw = NULL;
+	GIOStatus status;
+
+	status = g_io_channel_seek_position(nd->index_file, 
+										i * INDEX_RECORD_SIZE, 
+										G_SEEK_SET, &error);
+	if (status != G_IO_STATUS_NORMAL) {
+		log_global(LOG_WARNING, "seeking line %"PRIi64" in index failed: %s", i, 
+				   error->message);
+		g_error_free(error);
+		return FALSE;
+	}
+
+	status = g_io_channel_read_chars(nd->index_file, (void *)&offset, 
+									 sizeof(guint64), NULL, &error);
+	if (status != G_IO_STATUS_NORMAL) {
+		log_global(LOG_WARNING, "reading line %"PRIi64" in index failed: %s", i, 
+				   error->message);
+		g_error_free(error);
+		return FALSE;
+	}
+
+	status = g_io_channel_read_chars(nd->index_file, (void *)time, 
+									 sizeof(time_t), NULL, &error);
+	if (status != G_IO_STATUS_NORMAL) {
+		log_global(LOG_WARNING, "reading time %"PRIi64" in index failed: %s", i, 
+				   error->message);
+		g_error_free(error);
+		return FALSE;
+	}
+
+	status = g_io_channel_seek_position(nd->line_file, offset, G_SEEK_SET, 
+										&error);
+	if (status != G_IO_STATUS_NORMAL) {
+		log_global(LOG_WARNING, "seeking line %"PRIi64" (%"PRIi64") in data failed: %s",
+				   i, offset, error->message);
+		g_error_free(error);
+		return FALSE;
+	}
+
+	status = g_io_channel_read_line(nd->line_file, &raw, NULL, NULL, &error);
+	if (status == G_IO_STATUS_ERROR) {
+		log_global(LOG_WARNING, "read_line() failed: %s", error->message);
+		g_error_free(error);
+		return FALSE;
+	}
+
+	*line = irc_parse_line(raw);
+	g_free(raw);
+	
+	return TRUE;
+}
+
 gboolean linestack_traverse(struct linestack_context *nd,
 		linestack_marker lm_from, linestack_marker lm_to,
 		linestack_traverse_fn handler, void *userdata)
@@ -334,6 +395,7 @@ gboolean linestack_traverse(struct linestack_context *nd,
 	GIOStatus status = G_IO_STATUS_NORMAL;
 	char *raw;
 	struct irc_line *l;
+	time_t time;
 	guint64 i;
 
 	if (nd == NULL) 
@@ -359,70 +421,14 @@ gboolean linestack_traverse(struct linestack_context *nd,
 	raw = NULL;
 
 	for (i = start_index; i < end_index; i++) {
-		guint64 offset;
-		time_t time;
-
-		status = g_io_channel_seek_position(nd->index_file, 
-											i * INDEX_RECORD_SIZE, 
-											G_SEEK_SET, &error);
-		if (status != G_IO_STATUS_NORMAL) {
-			log_global(LOG_WARNING, "seeking line %"PRIi64" in index failed: %s", i, 
-					   error->message);
-			g_error_free(error);
-			ret = FALSE;
-			goto cleanup;
-		}
-
-		status = g_io_channel_read_chars(nd->index_file, (void *)&offset, 
-										 sizeof(guint64), NULL, &error);
-		if (status != G_IO_STATUS_NORMAL) {
-			log_global(LOG_WARNING, "reading line %"PRIi64" in index failed: %s", i, 
-					   error->message);
-			g_error_free(error);
-			ret = FALSE;
-			goto cleanup;
-		}
-
-		status = g_io_channel_read_chars(nd->index_file, (void *)&time, 
-										 sizeof(time_t), NULL, &error);
-		if (status != G_IO_STATUS_NORMAL) {
-			log_global(LOG_WARNING, "reading time %"PRIi64" in index failed: %s", i, 
-					   error->message);
-			g_error_free(error);
-			ret = FALSE;
-			goto cleanup;
-		}
-
-		status = g_io_channel_seek_position(nd->line_file, offset, G_SEEK_SET, 
-											&error);
-		if (status != G_IO_STATUS_NORMAL) {
-			log_global(LOG_WARNING, "seeking line %"PRIi64" (%"PRIi64") in data failed: %s",
-					   i, offset, error->message);
-			g_error_free(error);
-			ret = FALSE;
-			goto cleanup;
-		}
-
-		status = g_io_channel_read_line(nd->line_file, &raw, NULL, NULL, &error);
-		if (status == G_IO_STATUS_ERROR) {
-			log_global(LOG_WARNING, "read_line() failed: %s", error->message);
-			g_error_free(error);
-			ret = FALSE;
-			goto cleanup;
-		}
-
-		l = irc_parse_line(raw);
-		ret &= handler(l, time, userdata);
+		l = NULL;
+		ret = linestack_read_entry(nd, i, &l, &time);
+		if (ret) 
+			ret &= handler(l, time, userdata);
 		free_line(l);
-
-		g_free(raw);
-		raw = NULL;
-
-		if (ret == FALSE) 
-			break;
+		if (!ret) break;
 	}
 
-cleanup:
 	status = g_io_channel_seek_position(nd->line_file, 0, G_SEEK_END, &error);
 	LF_CHECK_IO_STATUS(status);
 
