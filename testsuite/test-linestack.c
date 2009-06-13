@@ -205,7 +205,7 @@ END_TEST
 START_TEST(test_msg)
 	struct irc_network_state *ns1;
 	struct linestack_context *ctx;
-	struct linestack_marker *lm;
+	linestack_marker lm;
 	struct irc_client *cl;
 
 	GIOChannel *ch1, *ch2;
@@ -238,7 +238,7 @@ END_TEST
 START_TEST(test_join_part)
 	struct irc_network_state *ns1;
 	struct linestack_context *ctx;
-	struct linestack_marker *lm;
+	linestack_marker lm;
 	struct irc_client *cl;
 
 	GIOChannel *ch1, *ch2;
@@ -273,7 +273,7 @@ END_TEST
 START_TEST(test_skip_msg)
 	struct irc_network_state *ns1;
 	struct linestack_context *ctx;
-	struct linestack_marker *lm;
+	linestack_marker lm;
 	struct irc_client *cl;
 
 	GIOChannel *ch1, *ch2;
@@ -308,7 +308,7 @@ END_TEST
 START_TEST(test_object_msg)
 	struct irc_network_state *ns1;
 	struct linestack_context *ctx;
-	struct linestack_marker *lm;
+	linestack_marker lm;
 	struct irc_client *cl;
 
 	GIOChannel *ch1, *ch2;
@@ -346,7 +346,7 @@ END_TEST
 START_TEST(test_object_open)
 	struct irc_network_state *ns1;
 	struct linestack_context *ctx;
-	struct linestack_marker *lm;
+	linestack_marker lm;
 	struct irc_client *cl;
 
 	GIOChannel *ch1, *ch2;
@@ -411,7 +411,7 @@ static gboolean line_track(struct irc_line *l, time_t t, void *data)
 START_TEST(bench_lots_of_lines)
 	struct irc_network_state *ns1;
 	struct linestack_context *ctx;
-	struct linestack_marker *marker;
+	linestack_marker marker;
 	int i;
 
 	ns1 = network_state_init("bla", "Gebruikersnaam", "Computernaam");

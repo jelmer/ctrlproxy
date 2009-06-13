@@ -34,47 +34,42 @@ struct irc_client;
 #include "hooks.h"
 
 struct irc_network_state;
-struct linestack_marker;
-struct ctrlproxy_config;
-
 /**
  * Mark set a specific point in time in a linestack.
  */
-struct linestack_marker {
-	void *data;
-	void (*free_fn) (void *);
-};
+typedef guint64 *linestack_marker;
+struct ctrlproxy_config;
 
 /* linestack.c */
 typedef gboolean (*linestack_traverse_fn) (struct irc_line *, time_t, void *);
 
-G_MODULE_EXPORT struct linestack_marker *linestack_get_marker_numlines (
+G_MODULE_EXPORT linestack_marker linestack_get_marker_numlines (
 		struct linestack_context *,
 		int lines);
 
 G_MODULE_EXPORT struct irc_network_state *linestack_get_state (
 		struct linestack_context *,
-		struct linestack_marker *);
+		linestack_marker );
 
 G_MODULE_EXPORT gboolean linestack_traverse (
 		struct linestack_context *,
-		struct linestack_marker *from,
-		struct linestack_marker *to, /* Can be NULL for 'now' */
+		linestack_marker from,
+		linestack_marker to, /* Can be NULL for 'now' */
 		linestack_traverse_fn, 
 		void *userdata);
 
 G_MODULE_EXPORT gboolean linestack_traverse_object (
 		struct linestack_context *,
 		const char *object,
-		struct linestack_marker *from,
-		struct linestack_marker *to, /* Can be NULL for 'now' */
+		linestack_marker from,
+		linestack_marker to, /* Can be NULL for 'now' */
 		linestack_traverse_fn,
 		void *userdata);
 
 G_MODULE_EXPORT gboolean linestack_send (
 		struct linestack_context *,
-		struct linestack_marker *from,
-		struct linestack_marker *to, /* Can be NULL for 'now' */
+		linestack_marker from,
+		linestack_marker to, /* Can be NULL for 'now' */
 		struct irc_client *, 
 		gboolean dataonly, 
 		gboolean timed,
@@ -83,8 +78,8 @@ G_MODULE_EXPORT gboolean linestack_send (
 G_MODULE_EXPORT gboolean linestack_send_object (
 		struct linestack_context *,
 		const char *object,
-		struct linestack_marker *from,
-		struct linestack_marker *to, /* Can be NULL for 'now' */
+		linestack_marker from,
+		linestack_marker to, /* Can be NULL for 'now' */
 		struct irc_client *,
 		gboolean dataonly,
 		gboolean timed,
@@ -92,8 +87,8 @@ G_MODULE_EXPORT gboolean linestack_send_object (
 
 G_MODULE_EXPORT gboolean linestack_replay (
 		struct linestack_context *,
-		struct linestack_marker *from,
-		struct linestack_marker *to,/* Can be NULL for 'now' */
+		linestack_marker from,
+		linestack_marker to,/* Can be NULL for 'now' */
 		struct irc_network_state *st);
 
 G_MODULE_EXPORT gboolean linestack_insert_line(
@@ -102,8 +97,8 @@ G_MODULE_EXPORT gboolean linestack_insert_line(
 		enum data_direction dir, 
 		const struct irc_network_state *);
 
-G_MODULE_EXPORT void linestack_free_marker(struct linestack_marker *);
-G_MODULE_EXPORT struct linestack_marker *linestack_get_marker(struct linestack_context *);
+G_MODULE_EXPORT void linestack_free_marker(linestack_marker );
+G_MODULE_EXPORT linestack_marker linestack_get_marker(struct linestack_context *);
 
 /**
  * Create a new linestack context

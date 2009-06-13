@@ -248,24 +248,12 @@ void free_linestack_context(struct linestack_context *data)
 	g_free(data);
 }
 
-static struct linestack_marker *wrap_linestack_marker(struct linestack_context *ctx, void *data)
-{
-	struct linestack_marker *mrk;
-	if (data == NULL)
-		return NULL;
-
-	mrk = g_new0(struct linestack_marker, 1);
-	mrk->data = data;
-	mrk->free_fn = g_free;
-	return mrk;
-}
-
 struct irc_network_state *linestack_get_state(
-		struct linestack_context *nd, struct linestack_marker *lm)
+		struct linestack_context *nd, linestack_marker to_index)
 {
 	struct irc_network_state *ret;
-	gint64 *to_index, t, state_index;
-	struct linestack_marker m1, m2;
+	gint64 t;
+	guint64 state_index;
 	GError *error = NULL;
 	GIOStatus status;
 	char *data_file;
@@ -273,7 +261,6 @@ struct irc_network_state *linestack_get_state(
 
 	g_assert(nd != NULL);
 
-	to_index = lm?lm->data:NULL;
 	if (nd == NULL) 
 		return NULL;
 
@@ -328,11 +315,7 @@ struct irc_network_state *linestack_get_state(
 	if (!marshall_network_state(MARSHALL_PULL, state_file, ret))
 		return NULL;
 
-	m1.free_fn = NULL;
-	m1.data = &state_index;
-	m2.free_fn = NULL;
-	m2.data = to_index;
-	linestack_replay(nd, &m1, &m2, ret);
+	linestack_replay(nd, &state_index, to_index, ret);
 
 	g_io_channel_unref(state_file);
 	
@@ -342,7 +325,7 @@ struct irc_network_state *linestack_get_state(
 }
 
 gboolean linestack_traverse(struct linestack_context *nd,
-		struct linestack_marker *lm_from, struct linestack_marker *lm_to,
+		linestack_marker lm_from, linestack_marker lm_to,
 		linestack_traverse_fn handler, void *userdata)
 {
 	gint64 start_index, end_index;
@@ -352,10 +335,7 @@ gboolean linestack_traverse(struct linestack_context *nd,
 	char *raw;
 	struct irc_line *l;
 	guint64 i;
-	void *mf, *mt;
 
-	mf = lm_from?lm_from->data:NULL;
-	mt = lm_to?lm_to->data:NULL;
 	if (nd == NULL) 
 		return FALSE;
 
@@ -364,16 +344,16 @@ gboolean linestack_traverse(struct linestack_context *nd,
 
 	g_io_channel_flush(nd->index_file, &error);
 	
-	if (mf == NULL) {
+	if (lm_from == NULL) {
 		start_index = 0;
 	} else {
-		start_index = *((guint64 *)mf);
+		start_index = *lm_from;
 	}
 	
-	if (mt == NULL) {
+	if (lm_to == NULL) {
 		end_index = nd->count;
 	} else {
-		end_index = *((guint64 *)mt);
+		end_index = *((guint64 *)lm_to);
 	}
 
 	raw = NULL;
@@ -488,8 +468,8 @@ static gboolean traverse_object_handler(struct irc_line *l, time_t t, void *stat
 gboolean linestack_traverse_object(
 			struct linestack_context *ctx,
 			const char *obj, 
-			struct linestack_marker *lm_from, 
-			struct linestack_marker *lm_to, linestack_traverse_fn hl,
+			linestack_marker lm_from, 
+			linestack_marker lm_to, linestack_traverse_fn hl,
 			void *userdata)
 {
 	struct traverse_object_data d;
@@ -502,25 +482,20 @@ gboolean linestack_traverse_object(
 	return linestack_traverse(ctx, lm_from, lm_to, traverse_object_handler, &d);
 }
 
-void linestack_free_marker(struct linestack_marker *lm)
+void linestack_free_marker(linestack_marker lm)
 {
-	if (lm == NULL)
-		return;
-
-	if (lm->free_fn != NULL) 
-		lm->free_fn(lm->data);
 	g_free(lm);
 }
 
-struct linestack_marker *linestack_get_marker(struct linestack_context *nd)
+linestack_marker linestack_get_marker(struct linestack_context *nd)
 {
-	gint64 *pos;
+	guint64 *pos;
 	if (nd == NULL)
 		return NULL;
 
-	pos = g_new0(gint64, 1);
+	pos = g_new0(guint64, 1);
 	(*pos) = nd->count;
-	return wrap_linestack_marker(nd, pos);
+	return pos;
 }
 
 static const char *linestack_messages[] = { 
@@ -678,7 +653,7 @@ static gboolean send_line_dataonly(struct irc_line *l, time_t t, void *_privdata
 	return client_send_line(privdata->client, l, NULL);
 }
 
-gboolean linestack_send(struct linestack_context *ctx, struct linestack_marker *mf, struct linestack_marker *mt, struct irc_client *c, gboolean dataonly, gboolean timed, int time_offset)
+gboolean linestack_send(struct linestack_context *ctx, linestack_marker mf, linestack_marker mt, struct irc_client *c, gboolean dataonly, gboolean timed, int time_offset)
 {
 	struct send_line_privdata privdata;
 	linestack_traverse_fn trav_fn;
@@ -701,7 +676,7 @@ gboolean linestack_send(struct linestack_context *ctx, struct linestack_marker *
 	return linestack_traverse(ctx, mf, mt, trav_fn, &privdata);
 }
 
-gboolean linestack_send_object(struct linestack_context *ctx, const char *obj, struct linestack_marker *mf, struct linestack_marker *mt, struct irc_client *c, gboolean dataonly, gboolean timed, int time_offset)
+gboolean linestack_send_object(struct linestack_context *ctx, const char *obj, linestack_marker mf, linestack_marker mt, struct irc_client *c, gboolean dataonly, gboolean timed, int time_offset)
 {
 	struct send_line_privdata privdata;
 	linestack_traverse_fn trav_fn;
@@ -732,8 +707,8 @@ static gboolean replay_line(struct irc_line *l, time_t t, void *state)
 }
 
 gboolean linestack_replay(struct linestack_context *ctx, 
-						  struct linestack_marker *mf, 
-						  struct linestack_marker *mt, 
+						  linestack_marker mf, 
+						  linestack_marker mt, 
 						  struct irc_network_state *st)
 {
 	return linestack_traverse(ctx, mf, mt, replay_line, st);

@@ -574,7 +574,7 @@ static GHashTable *markers = NULL;
 
 static void cmd_backlog(admin_handle h, const char * const *args, void *userdata)
 {
-	struct linestack_marker *lm;
+	linestack_marker lm;
 	struct irc_network *n;
 
 	if (admin_get_client(h) == NULL) {
