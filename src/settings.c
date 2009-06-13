@@ -62,7 +62,6 @@ static const char *builtin_known_keys[] = {
 	"max-who-age",
 	"max_who_age",
 	"replication",
-	"linestack",
 	"report-time",
 	"report-time-offset",
 	"motd-file",
@@ -443,8 +442,6 @@ void save_configuration(struct ctrlproxy_config *cfg, const char *configuration_
 	
 	if (cfg->replication)
 		g_key_file_set_string(cfg->keyfile, "global", "replication", cfg->replication);
-	if (cfg->linestack_backend) 
-		g_key_file_set_string(cfg->keyfile, "global", "linestack", cfg->linestack_backend);
 	if (cfg->motd_file != NULL)
 		g_key_file_set_string(cfg->keyfile, "global", "motd-file", cfg->motd_file);
 
@@ -1238,6 +1235,7 @@ struct ctrlproxy_config *load_configuration(const char *dir,
 
 	cfg = init_configuration();
 	cfg->config_dir = g_strdup(dir);
+	cfg->linestack_dir = g_build_filename(dir, "linestack", NULL);
 	cfg->network_socket = g_build_filename(cfg->config_dir, "socket", NULL);
 	cfg->admin_socket = g_build_filename(cfg->config_dir, "admin", NULL);
 
@@ -1273,7 +1271,6 @@ struct ctrlproxy_config *load_configuration(const char *dir,
 
 
 	cfg->replication = g_key_file_get_string(kf, "global", "replication", NULL);
-	cfg->linestack_backend = g_key_file_get_string(kf, "global", "linestack", NULL);
 
 	if (g_key_file_has_key(kf, "global", "report-time", NULL)) {
 		char *setting = g_key_file_get_string(kf, "global", "report-time", NULL);
@@ -1485,9 +1482,9 @@ void free_config(struct ctrlproxy_config *cfg)
 	}
 	g_free(cfg->config_dir);
 	g_free(cfg->network_socket);
+	g_free(cfg->linestack_dir);
 	g_free(cfg->admin_socket);
 	g_free(cfg->replication);
-	g_free(cfg->linestack_backend);
 	g_free(cfg->motd_file);
 	g_free(cfg->admin_user);
 	g_key_file_free(cfg->keyfile);

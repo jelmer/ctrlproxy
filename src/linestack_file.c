@@ -487,25 +487,24 @@ static gboolean file_insert_state(struct linestack_context *ctx,
 							  const struct irc_network_state *state, 
 							  guint64 state_id);
 
-static char *global_init(struct ctrlproxy_config *config)
+static char *global_init(const char *basedir)
 {
-	char *parent_dir, *readme_file;;
-	parent_dir = g_build_filename(config->config_dir, "linestack_file", NULL);
-	if (g_file_test(parent_dir, G_FILE_TEST_IS_DIR))
-		return parent_dir;
-	g_mkdir(parent_dir, 0700);
-	readme_file = g_build_filename(parent_dir, "README", NULL);
+	char *readme_file;;
+	if (g_file_test(basedir, G_FILE_TEST_IS_DIR))
+		return basedir;
+	g_mkdir(basedir, 0700);
+	readme_file = g_build_filename(basedir, "README", NULL);
 	if (!g_file_test(readme_file, G_FILE_TEST_EXISTS)) {
 		g_file_set_contents(readme_file, README_CONTENTS, 
 							-1, NULL);
 	}
 	g_free(readme_file);
-	return parent_dir;
+	return basedir;
 }
 
 static gboolean file_init(struct linestack_context *ctx, const char *name, 
 						  gboolean truncate,
-						  struct ctrlproxy_config *config, 
+						  const char *basedir,
 						  const struct irc_network_state *state)
 {
 	struct lf_data *data = g_new0(struct lf_data, 1);
@@ -516,7 +515,7 @@ static gboolean file_init(struct linestack_context *ctx, const char *name,
 	GDir *dir;
 	const char *mode;
 
-	parent_dir = global_init(config);
+	parent_dir = global_init(basedir);
 
 	data_dir = g_build_filename(parent_dir, name, NULL);
 	g_assert(data_dir != NULL);

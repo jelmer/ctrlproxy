@@ -619,24 +619,6 @@ static void cmd_backlog(admin_handle h, const char * const *args, void *userdata
 	g_hash_table_replace(markers, n, linestack_get_marker(n->linestack));
 }
 
-static char *linestack_get(admin_handle h)
-{
-	struct global *g = admin_get_global(h);
-
-	return g_strdup(g->config->linestack_backend);
-}
-
-static gboolean linestack_set(admin_handle h, const char *value)
-{
-	struct global *g = admin_get_global(h);
-
-	g_free(g->config->linestack_backend);
-	/* FIXME: Check if this is a valid linestack backend name */
-	g->config->linestack_backend = g_strdup(g->config->linestack_backend);
-
-	return TRUE;
-}
-
 static char *logging_get(admin_handle h)
 {
 	struct global *g = admin_get_global(h);
@@ -1623,7 +1605,6 @@ static struct admin_setting {
 	{ "default-network", default_network_get, default_network_set },
 	{ "learn-network-name", learn_network_name_get, learn_network_name_set },
 	{ "learn-nickserv", learn_nickserv_get, learn_nickserv_set },
-	{ "linestack", linestack_get, linestack_set },
 	{ "log_level", log_level_get, log_level_set },
 	{ "logging", logging_get, logging_set },
 	{ "max_who_age", max_who_age_get, max_who_age_set },

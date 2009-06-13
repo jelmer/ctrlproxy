@@ -10,7 +10,6 @@
 
 static struct linestack_context *ctx = NULL;
 static struct irc_network_state *state = NULL;
-static struct ctrlproxy_config *cfg = NULL;
 
 static void handle_help(int, char **);
 static void handle_mark(int, char **);
@@ -174,13 +173,8 @@ int main(int argc, char **argv)
 {
 	GOptionContext *pc;
 	char *line;
-	const struct linestack_ops *ops;
 	struct irc_network_info *info;
-	char *config_dir = NULL;
-	char *backend = NULL;
 	GOptionEntry options[] = {
-		{"backend", 'b', 0, G_OPTION_ARG_STRING, &backend, "Backend to use [default: file]" },
-		{"config-dir", 'c', 0, G_OPTION_ARG_STRING, &config_dir, ("Override configuration directory"), ("DIR")},
 		{ NULL }
 	};
 
@@ -189,8 +183,8 @@ int main(int argc, char **argv)
 	if(!g_option_context_parse(pc, &argc, &argv, NULL))
 		return 1;
 
-	if (argc < 2) {
-		fprintf(stderr, "Usage: %s <name>\n", argv[0]);
+	if (argc < 3) {
+		fprintf(stderr, "Usage: %s <directory> <name>\n", argv[0]);
 		return 1;
 	}
 
@@ -200,29 +194,10 @@ int main(int argc, char **argv)
 
 	g_assert(state != NULL);
 
-	if (backend != NULL) {
-		ops = linestack_find_ops(backend);
-		if (ops == NULL) {
-			fprintf(stderr, "No such backend `%s'\n", backend);
-			return 1;
-		}
-	} else {
-		ops = &linestack_file;
-	}
-
-	if (config_dir == NULL) 
-		config_dir = g_build_filename(g_get_home_dir(), ".ctrlproxy", NULL);
-
-	cfg = load_configuration(config_dir, FALSE);
-	if (cfg == NULL) {
-		fprintf(stderr, "Unable to load configuration from `%s'", config_dir);
-		return 1;
-	}
-
 	markers = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, 
 									(GDestroyNotify)linestack_free_marker);
 
-	ctx = create_linestack(ops, argv[1], TRUE, cfg, state);
+	ctx = create_linestack(argv[2], TRUE, argv[1], state);
 
 	atexit(freels);
 

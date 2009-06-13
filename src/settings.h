@@ -186,6 +186,7 @@ struct ctrlproxy_config {
 	gboolean autosave;
 	char *motd_file;
 	char *network_socket;
+	char *linestack_dir;
 	char *admin_socket;
 	char *password;
 
@@ -198,9 +199,6 @@ struct ctrlproxy_config {
 
 	/** Name of replication backend, or NULL for default. */
 	char *replication;
-
-	/** Name of linestack backend, or NULL for default. */
-	char *linestack_backend;
 
 	char *client_charset;
 	gboolean admin_log;

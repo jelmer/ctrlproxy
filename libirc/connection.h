@@ -167,7 +167,7 @@ G_MODULE_EXPORT gboolean virtual_network_recv_line(struct irc_network *l, struct
 G_MODULE_EXPORT gboolean virtual_network_recv_args(struct irc_network *l, const char *origin, ...); 
 G_MODULE_EXPORT gboolean virtual_network_recv_response(struct irc_network *n, int num, ...);
 struct ctrlproxy_config;
-G_MODULE_EXPORT G_GNUC_MALLOC struct linestack_context *new_linestack(struct irc_network *network, struct ctrlproxy_config *settings);
+G_MODULE_EXPORT G_GNUC_MALLOC struct linestack_context *new_linestack(struct irc_network *network, const char *basedir);
 G_MODULE_EXPORT G_GNUC_MALLOC char *network_generate_feature_string(struct irc_network *n);
 G_MODULE_EXPORT struct irc_network *irc_network_ref(struct irc_network *);
 G_MODULE_EXPORT void irc_network_unref(struct irc_network *);

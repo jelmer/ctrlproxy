@@ -25,28 +25,19 @@
 
 #include "irc.h"
 
-static GSList *linestack_backends = NULL;
-
-void register_linestack(const struct linestack_ops *b)
-{
-	linestack_backends = g_slist_append(linestack_backends, g_memdup(b, sizeof(*b)));
-}
-
-struct linestack_context *create_linestack(const struct linestack_ops *ops, 
-										   const char *name, 
+struct linestack_context *create_linestack(const char *name, 
 										   gboolean truncate,
-										   struct ctrlproxy_config *cfg,
+										   const char *basedir,
 										   const struct irc_network_state *state)
 {
 	struct linestack_context *ctx;
 
 	g_assert(name);
 	g_assert(state);
-	g_assert(cfg);
 
 	ctx = g_new0(struct linestack_context, 1);
-	ctx->ops = ops;
-	ops->init(ctx, name, truncate, cfg, state);
+	ctx->ops = &linestack_file;
+	ctx->ops->init(ctx, name, truncate, basedir, state);
 
 	return ctx;
 }
@@ -358,35 +349,7 @@ gboolean linestack_replay(struct linestack_context *ctx,
 	return linestack_traverse(ctx, mf, mt, replay_line, st);
 }
 
-struct linestack_ops *linestack_find_ops(const char *name)
+struct linestack_context *new_linestack(struct irc_network *n, const char *basedir)
 {
-	GSList *gl;
-	for (gl = linestack_backends; gl ; gl = gl->next) {
-		struct linestack_ops *ops = gl->data;
-		if (!strcmp(ops->name, name))
-			return ops;
-	}
-
-	return NULL;
+	return create_linestack(n->name, TRUE, basedir, n->external_state);
 }
-
-struct linestack_context *new_linestack(struct irc_network *n, struct ctrlproxy_config *cfg)
-{
-	const struct linestack_ops *current_backend = NULL;
-	register_linestack(&linestack_file);
-
-	if (cfg && cfg->linestack_backend) {
-		current_backend = linestack_find_ops(cfg->linestack_backend);
-
-		if (!current_backend) 
-			log_global(LOG_WARNING, "Unable to find linestack backend %s: falling back to default", cfg->linestack_backend);
-	}
-
-	if (!current_backend) {
-		current_backend = &linestack_file;
-	}
-
-	return create_linestack(current_backend, n->name, TRUE, cfg, n->external_state);
-}
-
-
