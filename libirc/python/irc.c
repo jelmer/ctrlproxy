@@ -662,6 +662,16 @@ PyTypeObject PyClientType = {
     .tp_basicsize = sizeof(PyClientObject)
 };
 
+struct irc_client *PyObject_AsClient(PyObject *obj)
+{
+    if (!PyObject_TypeCheck(obj, &PyClientType)) {
+        PyErr_SetNone(PyExc_TypeError);
+        return NULL;
+    }
+
+    return ((PyClientObject *)obj)->client;
+}
+
 static PyObject *py_network_connect(PyNetworkObject *self)
 {
     if (!connect_network(self->network)) {

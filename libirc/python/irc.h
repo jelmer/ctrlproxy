@@ -120,5 +120,7 @@ typedef struct {
 } PyQueryStackObject;
 PyTypeObject PyQueryStackType;
 
+/* client */
+struct irc_client *PyObject_AsClient(PyObject *obj);
 
 #endif

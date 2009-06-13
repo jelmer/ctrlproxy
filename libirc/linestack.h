@@ -43,10 +43,6 @@ struct ctrlproxy_config;
 /* linestack.c */
 typedef gboolean (*linestack_traverse_fn) (struct irc_line *, time_t, void *);
 
-G_MODULE_EXPORT linestack_marker linestack_get_marker_numlines (
-		struct linestack_context *,
-		int lines);
-
 G_MODULE_EXPORT struct irc_network_state *linestack_get_state (
 		struct linestack_context *,
 		linestack_marker );

@@ -126,6 +126,41 @@ static PyObject *py_linestack_get_marker(PyLinestackObject *self)
     return PyLong_FromLong(*m);
 }
 
+static PyObject *py_linestack_send(PyLinestackObject *self, PyObject *args)
+{
+    int time_offset = 0;
+    gboolean dataonly = FALSE;
+    gboolean timed = FALSE;
+    guint64 from, to;
+    PyObject *py_client;
+    struct irc_client *client;
+    gboolean ret;
+    char *object = NULL;
+
+    if (!PyArg_ParseTuple(args, "LLO|ziii", &from, &to, &py_client,
+                          &object, &dataonly, &timed, &time_offset))
+        return NULL;
+
+    client = PyObject_AsClient(py_client);
+    if (client == NULL) {
+        return NULL;
+    }
+
+    if (object != NULL) {
+        ret = linestack_send_object(self->linestack, object, &from, &to, client,
+                                    dataonly, timed, time_offset);
+    } else {
+        ret = linestack_send(self->linestack, &from, &to, client, dataonly, 
+                             timed, time_offset);
+    }
+    if (!ret) {
+        PyErr_SetNone(PyExc_RuntimeError);
+        return NULL;
+    }
+
+    Py_RETURN_NONE;
+}
+
 static PyMethodDef py_linestack_methods[] = {
     { "insert_line", (PyCFunction)py_linestack_insert_line, 
         METH_VARARGS, "Insert line" },
@@ -133,6 +168,8 @@ static PyMethodDef py_linestack_methods[] = {
         METH_VARARGS, "Replay" },
     { "get_marker", (PyCFunction)py_linestack_get_marker,
         METH_NOARGS, "Get marker" },
+    { "send", (PyCFunction)py_linestack_send, METH_VARARGS, 
+        "Send" },
     { NULL }
 };
 
