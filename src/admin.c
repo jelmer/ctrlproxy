@@ -59,12 +59,13 @@ static char *admin_hostmask(struct irc_network *n)
 static void privmsg_admin_out(admin_handle h, const char *data)
 {
 	struct irc_client *c = h->client;
+	struct irc_network *n = h->network;
 	char *nick = c->state->me.nick;
 	char *hostmask;
 
-	hostmask = admin_hostmask(c->network);
-	if (c->network->external_state != NULL) 
-		nick = c->network->external_state->me.nick;
+	hostmask = admin_hostmask(n);
+	if (n->external_state != NULL) 
+		nick = n->external_state->me.nick;
 	client_send_args_ex(c, hostmask, "NOTICE", nick, data, NULL);
 
 	g_free(hostmask);

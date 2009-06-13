@@ -204,8 +204,7 @@ static gboolean network_send_line_direct(struct irc_network *s, struct irc_clien
 	g_assert(l->origin == NULL);
 
 	if (nc->type == NETWORK_VIRTUAL) {
-		if (s->connection.data.virtual.ops == NULL) 
-			return FALSE;
+		g_assert (s->connection.data.virtual.ops != NULL) ;
 		return s->connection.data.virtual.ops->to_server(s, c, l);
 	} else {
 		if (s->connection.transport == NULL)
@@ -790,8 +789,14 @@ static gboolean connect_virtual(struct irc_network *s)
 	struct irc_login_details *details;
 	struct network_config *nc = s->private_data;
 
-	if (nc->type_settings.virtual.ops == NULL)
+	g_assert(nc->type_settings.virtual_name != NULL);
+
+	s->connection.data.virtual.ops = find_virtual_network(nc->type_settings.virtual_name);
+	if (s->connection.data.virtual.ops == NULL) {
+		log_global(LOG_WARNING, "Unable to find virtual network kind '%s'", 
+				   nc->type_settings.virtual_name);
 		return FALSE;
+	}
 
 	details = s->callbacks->get_login_details(s);
 
@@ -805,8 +810,8 @@ static gboolean connect_virtual(struct irc_network *s)
 		s->callbacks->state_set(s);
 	s->connection.state = NETWORK_CONNECTION_STATE_MOTD_RECVD;
 
-	if (nc->type_settings.virtual.ops->init)
-		return nc->type_settings.virtual.ops->init(s);
+	if (s->connection.data.virtual.ops->init)
+		return s->connection.data.virtual.ops->init(s);
 
 	return TRUE;
 }
