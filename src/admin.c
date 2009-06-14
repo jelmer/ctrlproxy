@@ -66,7 +66,10 @@ static void privmsg_admin_out(admin_handle h, const char *data)
 	hostmask = admin_hostmask(n);
 	if (n->external_state != NULL) 
 		nick = n->external_state->me.nick;
-	client_send_args_ex(c, hostmask, "NOTICE", nick, data, NULL);
+	if (c != NULL) 
+		client_send_args_ex(c, hostmask, "NOTICE", nick, data, NULL);
+	else
+		virtual_network_recv_args(n, hostmask, "NOTICE", nick, data, NULL);
 
 	g_free(hostmask);
 }
@@ -79,11 +82,11 @@ static void privmsg_admin_out(admin_handle h, const char *data)
  */
 static void network_admin_out(admin_handle h, const char *data)
 {
-	struct irc_client *c = h->client;
+	struct irc_network *n = h->network;
 	char *hostmask;
 
-	hostmask = admin_hostmask(c->network);
-	virtual_network_recv_args(c->network, hostmask, "PRIVMSG", ADMIN_CHANNEL, 
+	hostmask = admin_hostmask(n);
+	virtual_network_recv_args(n, hostmask, "PRIVMSG", ADMIN_CHANNEL, 
 							  data, NULL);
 
 	g_free(hostmask);
