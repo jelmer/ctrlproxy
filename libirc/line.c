@@ -154,7 +154,7 @@ GIOStatus irc_send_line(GIOChannel *c, GIConv iconv,
 {
 	char *raw, *cvrt = NULL;
 	GIOStatus ret;
-	gsize bytes_written;
+	gsize bytes_written = 0;
  
 	g_assert(c);
 
@@ -429,7 +429,7 @@ static int line_len(const struct irc_line *l)
 	return len;
 }
 
-G_MODULE_EXPORT gboolean line_add_arg(struct irc_line *l, const char *arg)
+gboolean line_add_arg(struct irc_line *l, const char *arg)
 {
 	if (line_len(l) + strlen(arg) + 1 > IRC_MAXLINELEN)
 		return FALSE;
@@ -450,7 +450,7 @@ G_MODULE_EXPORT gboolean line_add_arg(struct irc_line *l, const char *arg)
 	return TRUE;
 }
 
-G_MODULE_EXPORT struct irc_line *line_prefix_time(const struct irc_line *l, time_t t)
+struct irc_line *line_prefix_time(const struct irc_line *l, time_t t)
 {
 	struct irc_line *nl = linedup(l);
 	char stime[512];
