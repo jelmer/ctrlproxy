@@ -300,7 +300,7 @@ static gboolean irc_transport_iochannel_is_connected(void *data)
 {
 	struct irc_transport_data_iochannel *backend_data = (struct irc_transport_data_iochannel *)data;
 
-	return backend_data->incoming != NULL;
+	return (backend_data->incoming != NULL && !backend_data->pending_disconnect);
 }
 
 static const struct irc_transport_ops irc_transport_iochannel_ops = {
