@@ -46,6 +46,8 @@ START_TEST(test_network_first)
 				"USER a a a a\r\n", -1, NULL, NULL) == G_IO_STATUS_NORMAL);
 	fail_unless(g_io_channel_flush(ch2, NULL) == G_IO_STATUS_NORMAL);
 	g_main_iteration(FALSE);
+	g_main_iteration(FALSE);
+	g_main_iteration(FALSE);
 	g_io_channel_read_to_end(ch2, &raw, NULL, NULL);
 	fail_unless(!strcmp(raw, "ERROR :Please select a network first, or specify one in your configuration file\r\n"), "Got: %s", raw);
 END_TEST
@@ -108,6 +110,8 @@ START_TEST(test_disconnect)
 	client = client_init_iochannel(NULL, ch1, "desc");
 	g_io_channel_unref(ch1);
 	client_disconnect(client, "Because");
+	g_main_iteration(FALSE);
+	g_main_iteration(FALSE);
 	g_io_channel_read_to_end(ch2, &raw, &length, &error);
 	fail_unless(!strcmp(raw, "ERROR :Because\r\n"));
 END_TEST

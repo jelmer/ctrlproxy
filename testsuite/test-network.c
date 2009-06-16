@@ -61,6 +61,7 @@ START_TEST(test_login)
 	g_io_channel_set_close_on_unref(ch1, TRUE);
 	g_io_channel_unref(ch1);
 	disconnect_network(n);
+	g_main_iteration(FALSE);
 	g_io_channel_read_to_end(ch2, &raw, NULL, &error);
 	fail_unless(error == NULL);
 	fail_unless(!strcmp(raw, "NICK foo\r\nUSER blah a a :bloeh \r\nQUIT\r\n"), raw);

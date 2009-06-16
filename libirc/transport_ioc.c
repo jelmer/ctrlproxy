@@ -29,6 +29,7 @@
 
 struct irc_transport_data_iochannel {
 	GIOChannel *incoming;
+	gboolean pending_disconnect;
 	gint incoming_id;
 	gint outgoing_id;
 	GIConv incoming_iconv;
@@ -49,7 +50,7 @@ static void irc_transport_iochannel_free_data(void *data)
 {
 	struct irc_transport_data_iochannel *backend_data = (struct irc_transport_data_iochannel *)data;
 
-	g_assert(backend_data->incoming == NULL);
+	g_assert(backend_data->pending_disconnect);
 
 	if (backend_data->outgoing_iconv != (GIConv)-1)
 		g_iconv_close(backend_data->outgoing_iconv);
@@ -126,9 +127,8 @@ static gboolean irc_transport_iochannel_set_charset(struct irc_transport *transp
 	return TRUE;
 }
 
-static void irc_transport_iochannel_disconnect(void *data)
+static void really_disconnect(struct irc_transport_data_iochannel *backend_data)
 {
-	struct irc_transport_data_iochannel *backend_data = (struct irc_transport_data_iochannel *)data;
 	g_io_channel_unref(backend_data->incoming);
 
 	g_source_remove(backend_data->incoming_id);
@@ -136,6 +136,16 @@ static void irc_transport_iochannel_disconnect(void *data)
 		g_source_remove(backend_data->outgoing_id);
 
 	backend_data->incoming = NULL;
+}
+
+static void irc_transport_iochannel_disconnect(void *data)
+{
+	struct irc_transport_data_iochannel *backend_data = (struct irc_transport_data_iochannel *)data;
+
+	backend_data->pending_disconnect = TRUE;
+
+	if (backend_data->outgoing_id == 0) 
+		really_disconnect(backend_data);
 }
 
 static gboolean transport_send_queue(GIOChannel *ioc, GIOCondition cond, 
@@ -389,7 +399,9 @@ static gboolean transport_send_queue(GIOChannel *ioc, GIOCondition cond,
 
 	if (!ret)
 		backend_data->outgoing_id = 0;
+
+	if (!ret && backend_data->pending_disconnect)
+		really_disconnect(backend_data);
+
 	return ret;
 }
-
-

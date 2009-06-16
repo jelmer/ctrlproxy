@@ -258,13 +258,14 @@ START_TEST(test_join_part)
 	g_io_channel_unref(ch1);
 
 	linestack_send(ctx, lm, NULL, cl, FALSE, FALSE, 0);
+	g_main_iteration(FALSE);
 	client_disconnect(cl, "foo");
-
+	g_main_iteration(FALSE);
 	g_io_channel_read_to_end(ch2, &raw, NULL, NULL);
 
 	fail_unless(!strcmp(raw, ":bla!Gebruikersnaam@Computernaam JOIN #bla\r\n"
 						     ":bla!Gebruikersnaam@Computernaam PART #bla :hihi\r\n"
-							 "ERROR :foo\r\n"));
+							 "ERROR :foo\r\n"), "Got %s", raw);
 END_TEST
 
 
