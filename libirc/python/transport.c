@@ -154,7 +154,6 @@ static PyObject *py_transport_new(PyTypeObject *type, PyObject *args, PyObject *
 
     self->parent = NULL;
     self->transport = g_new0(struct irc_transport, 1);
-	self->transport->pending_lines = g_queue_new();
     self->transport->backend_data = self;
     self->transport->backend_ops = &py_transport_ops;
 
@@ -166,7 +165,6 @@ struct irc_transport *wrap_py_transport(PyObject *obj)
     struct irc_transport *transport;
 
     transport = g_new0(struct irc_transport, 1);
-	transport->pending_lines = g_queue_new();
     Py_INCREF(obj);
     transport->backend_data = obj;
     transport->backend_ops = &py_transport_ops;

@@ -52,7 +52,6 @@ struct irc_transport_ops {
 struct irc_transport {
 	const struct irc_transport_ops *backend_ops;
 	void *backend_data;
-	GQueue *pending_lines;
 	char *charset;
 	const struct irc_transport_callbacks *callbacks;
 	void *userdata;

@@ -37,22 +37,12 @@ void irc_transport_disconnect(struct irc_transport *transport)
 	transport->callbacks->disconnect(transport);
 }
 
-static void free_pending_line(void *_line, void *userdata)
-{
-	free_line((struct irc_line *)_line);
-}
-
-
 void free_irc_transport(struct irc_transport *transport)
 {
 	transport->backend_ops->free_data(transport->backend_data);
 	transport->backend_data = NULL;
 
 	g_free(transport->charset);
-
-	g_assert(transport->pending_lines != NULL);
-	g_queue_foreach(transport->pending_lines, free_pending_line, NULL);
-	g_queue_free(transport->pending_lines);
 
 	g_free(transport);
 }

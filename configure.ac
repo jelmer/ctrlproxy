@@ -61,7 +61,7 @@ AC_TYPE_SIGNAL
 
 AC_CHECK_FUNC(gethostbyname, , AC_CHECK_LIB(nsl, gethostbyname))
 AC_CHECK_FUNC(setsockopt, , AC_CHECK_LIB(socket, setsockopt))
-AC_CHECK_FUNCS([gethostname memset strchr strerror strstr uname backtrace_symbols gettimeofday strrchr daemon fork])
+AC_CHECK_FUNCS([gethostname memset strchr strerror strstr uname backtrace_symbols gettimeofday strrchr daemon fork writev])
 AC_CHECK_FUNC(gcry_control, , AC_CHECK_LIB(gcrypt, gcry_control))
 
 PKG_PROG_PKG_CONFIG

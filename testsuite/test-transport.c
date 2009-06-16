@@ -50,8 +50,7 @@ START_TEST(test_send)
 		char *str;
 		char buf[120];
 		g_snprintf(buf, sizeof(buf), "PRIVMSG foo :bar: %d\r\n", i);
-		if (!g_queue_is_empty(t->pending_lines))
-			g_main_iteration(FALSE);
+		g_main_iteration(FALSE);
 		g_io_channel_read_line(ch2, &str, NULL, NULL, NULL);
 		fail_if(strcmp(str, buf));
 	}
