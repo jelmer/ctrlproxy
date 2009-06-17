@@ -65,7 +65,8 @@ static gboolean network_update_isupport(struct irc_network_info *net_info,
 	return TRUE;
 }
 
-static gboolean network_process_ctcp_request(struct irc_network *n, const struct irc_line *l)
+static gboolean network_process_ctcp_request(struct irc_network *n,
+											 const struct irc_line *l)
 {
 	/* If there are no clients connected, answer by ourselve */
 	if (g_list_length(n->clients) == 0) {
@@ -208,10 +209,13 @@ static gboolean process_from_server(struct irc_network *n, const struct irc_line
 		if (linestack_store && n->linestack != NULL) {
 			if (!linestack_insert_line(n->linestack, l, FROM_SERVER, n->external_state)) {
 				if (n->linestack_errors == 0)
-					network_log(LOG_WARNING, n, "Unable to write to linestack. Disabling replication for now.");
+					network_log(LOG_WARNING, n, 
+						"Unable to write to linestack. Disabling replication for now.");
 				n->linestack_errors++;
 			} else if (n->linestack_errors > 0) {
-				network_log(LOG_WARNING, n, "Linestack re-enabled, but inconsistent. %d lines were not written.", n->linestack_errors);
+				network_log(LOG_WARNING, n, 
+					"Linestack re-enabled, but inconsistent. %d lines were not written.", 
+					n->linestack_errors);
 				n->linestack_errors = 0;
 			}
 		}
@@ -318,7 +322,8 @@ struct new_network_notify_data {
  * @param fn Notification function
  * @param userdata Userdata
  */
-void register_new_network_notify(struct global *global, new_network_notify_fn fn, void *userdata)
+void register_new_network_notify(struct global *global, 
+								 new_network_notify_fn fn, void *userdata)
 {
 	struct new_network_notify_data *p = g_new0(struct new_network_notify_data, 1);
 	p->fn = fn;
@@ -395,10 +400,12 @@ static void handle_network_disconnect(struct irc_network *n)
 static void handle_network_state_set(struct irc_network *s)
 {
 	s->linestack = new_linestack(s, s->global->config->linestack_dir);
-	s->queries = new_query_stack((void (*)(void *))client_ref_void, (void (*)(void *))client_unref);
+	s->queries = new_query_stack((void (*)(void *))client_ref_void, 
+								 (void (*)(void *))client_unref);
 }
 
-static gboolean process_to_server(struct irc_network *s, const struct irc_line *l)
+static gboolean process_to_server(struct irc_network *s, 
+								  const struct irc_line *l)
 {
 	struct irc_line *lc;
 	if (!run_server_filter(s, l, TO_SERVER)) {
@@ -574,7 +581,8 @@ gboolean network_forward_line(struct irc_network *s, struct irc_client *c,
 "If you delete it while ctrlproxy is running, you will lose the ability \n" \
 "to use any backlog functionality during the current session.\n"
 
-struct linestack_context *new_linestack(struct irc_network *n, const char *basedir)
+struct linestack_context *new_linestack(struct irc_network *n, 
+										const char *basedir)
 {
 	char *readme_file;
 	char *data_dir;
