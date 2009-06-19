@@ -8,16 +8,21 @@ import os
 from xml.dom import minidom, Node
 
 class UnknownTagError(StandardError):
+
     def __init__(self,tag):
         StandardError.__init__(self, 'Unknown tag: %s' % tag.nodeName)
 
+
 class Channel:
+
     def __init__(self, name=None):
         self.name = name
         self.autojoin = False
         self.key = None
 
+
 class Network:
+
     def __init__(self, name=None):
         self.name = name
         self.nick = None
@@ -27,7 +32,9 @@ class Network:
         self.channels = {}
         self.servers = []
 
+
 class Plugin:
+
     def __init__(self, name=None, autoload=True, config=None):
         if name.startswith('lib'):
             name = name[3:]
@@ -36,7 +43,9 @@ class Plugin:
         self.config = config
         self.autoload = autoload
 
+
 class Config:
+
     def __init__(self):
         self.plugins = {}
         self.networks = {}
@@ -47,7 +56,9 @@ class Config:
     def has_plugin(self, name):
         return self.plugins.has_key(name)
 
+
 class OldConfigFile(Config):
+
     def _parsePlugin(self,node):
         plugin = Plugin(name=node.attributes['file'].value, config=node.childNodes)
         if node.attributes.has_key('autoload') and \
@@ -229,7 +240,9 @@ except IOError, e:
     print "Usage: %s [PATH-TO-CTRLPROXYRC]" % sys.argv[0]
     sys.exit(1)
 
+
 class IniFile(object):
+
     def __init__(self,dict={}):
         self.conf = dict
 
