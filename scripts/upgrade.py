@@ -13,7 +13,7 @@ class UnknownTagError(StandardError):
         StandardError.__init__(self, 'Unknown tag: %s' % tag.nodeName)
 
 
-class Channel:
+class Channel(object):
 
     def __init__(self, name=None):
         self.name = name
@@ -21,7 +21,7 @@ class Channel:
         self.key = None
 
 
-class Network:
+class Network(object):
 
     def __init__(self, name=None):
         self.name = name
@@ -33,7 +33,7 @@ class Network:
         self.servers = []
 
 
-class Plugin:
+class Plugin(object):
 
     def __init__(self, name=None, autoload=True, config=None):
         if name.startswith('lib'):
@@ -44,7 +44,7 @@ class Plugin:
         self.autoload = autoload
 
 
-class Config:
+class Config(object):
 
     def __init__(self):
         self.plugins = {}
