@@ -342,6 +342,7 @@ static void cmd_save_config (admin_handle h, const char * const *args, void *use
 	else
 		adm_dir = args[1]?args[1]:global->config->config_dir; 
 	save_configuration(global->config, adm_dir);
+	nickserv_save(global, adm_dir);
 	admin_out(h, "Configuration saved in %s", adm_dir);
 }
 

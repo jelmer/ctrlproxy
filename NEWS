@@ -26,6 +26,8 @@ Ctrlproxy 3.0.9 UNRELEASED
 
     * Reduce memory usage by storing index for linestacks.
 
+	* Save nickserv passwords as part of 'saveconfig'. (Andreas Schneider)
+
   FEATURES
 
     * Provide Python bindings for the main library code. Mainly used for 
