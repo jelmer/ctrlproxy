@@ -1,6 +1,6 @@
 BZR_CHECKOUT = @BZR_CHECKOUT@
 SHLIBEXT = so
-LIBS = @LIBS@ @COMMON_LIBS@ 
+LIBS = @LIBS@ @GLIB_LIBS@
 CC = @CC@
 LD = @CC@
 prefix = @prefix@
@@ -21,7 +21,7 @@ sysconfdir = @sysconfdir@
 localstatedir = @localstatedir@
 EXEEXT = @EXEEXT@
 OBJEXT = @OBJEXT@
-CFLAGS = @CFLAGS@ @COMMON_CFLAGS@
+CFLAGS = @CFLAGS@ @GLIB_CFLAGS@
 LDFLAGS = @LDFLAGS@
 BINS = @BINS@
 scriptdir = $(cdatadir)/scripts

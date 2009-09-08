@@ -58,8 +58,8 @@ $(libircdir)/python/irc.$(SHLIBEXT): LDFLAGS+=$(PYTHON_LDFLAGS) $(LIBS)
 
 $(libircdir)/tools/linestack-cmd$(EXEEXT): $(libircdir)/tools/linestack-cmd.o \
 	                                       $(LIBIRC)
-	@echo Linking $@
-	@$(LD) $(LIBS) -lreadline -rdynamic -o $@ $^
+	@echo Linking $@: $(LD) $(LDFLAGS) -rdynamic -o $@ $^ $(LIBS)
+	@$(LD) $(LDFLAGS) -rdynamic -o $@ $^ $(LIBS)
 
 clean::
 	@rm -f linestack-cmd$(EXEEXT) 

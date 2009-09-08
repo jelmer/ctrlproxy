@@ -65,7 +65,9 @@ AC_CHECK_FUNCS([gethostname memset strchr strerror strstr uname backtrace_symbol
 AC_CHECK_FUNC(gcry_control, , AC_CHECK_LIB(gcrypt, gcry_control))
 
 PKG_PROG_PKG_CONFIG
-PKG_CHECK_MODULES(COMMON, glib-2.0 >= 2.6.0 gmodule-2.0)
+PKG_CHECK_MODULES(GLIB, glib-2.0 >= 2.6.0 gmodule-2.0 >= 2.6.0)
+AC_SUBST(GLIB_CFLAGS)
+AC_SUBST(GLIB_LIBS)
 PKG_CHECK_MODULES(CHECK, check, [], [ echo -n "" ])
 
 ###############################################################################

@@ -79,7 +79,7 @@ headers = src/admin.h \
 dep_files = $(patsubst %.o, %.d, $(objs))
 
 ctrlproxy$(EXEEXT): src/main.o $(objs) $(LIBIRC)
-	@echo Linking $@
+ 	@echo Linking $@: $(LD) $(LDFLAGS) -rdynamic -o $@ $^ $(LIBS)
 	@$(LD) $(LDFLAGS) -rdynamic -o $@ $^ $(LIBS)
 
 src/settings.o: CFLAGS+=-DSYSCONFDIR=\"${sysconfdir}\"
