@@ -3,8 +3,7 @@
 
 [global]
 ## Replication mechanism to use (some other IRC proxies call this backlog)
-## Possible values: none, simple, highlight, lastdisconnect
-## Meanings:
+## Possible values: 
 ## 	none: No backlog
 ## 	simple: Send backlog since the user last said something
 ## 	lastdisconnect: Send backlog since the users' last disconnect
@@ -52,5 +51,37 @@ autoconnect = admin
 #auto-away-time = 300 # in seconds
 
 ## Irssi-style logging
-#logging = irssi
-#logfile = /home/jelmer/tmp/ctrlproxy
+logging = irssi
+
+## -------------- Networks -------------------
+
+## The Administration network 
+## This is a virtual network that provides a administration 
+## interface to ctrlproxy.
+[admin]
+virtual = admin
+
+## Example configuration for Freenode
+[Freenode]
+servers = irc://irc.freenode.net/
+autojoin = #ctrlproxy
+
+## Somewhat more complex configuration for OFTC
+[OFTC]
+servers = irc://irc.ipv6.oftc.net/;ircs://irc.freenode.net/
+autojoin = #bitlbee
+## Bind to a specific address locally:
+# bind = 2001::dead:beef:cafe
+## Custom nick, different from default configuration
+# nick = somenick
+## Fullname sent to server
+# fullname=Somebody
+## Username sent to server (used in hostmask)
+# username=myuser
+## How many seconds to wait between tries to reconnect
+## to the server.
+# reconnect-interval=60
+
+## Interfacing with a local inetd-style program
+[BitlBee]
+program = /usr/sbin/bitlbee
