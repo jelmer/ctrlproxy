@@ -9,9 +9,7 @@ AC_DEFINE_UNQUOTED(PACKAGE,"$PACKAGE", [ Package name])
 AC_SUBST(BZR_CHECKOUT)
 BZR_CHECKOUT=no
 AC_MSG_CHECKING([whether this is a bzr checkout])
-if ! which bzr >/dev/null 2>/dev/null; then
-	AC_MSG_RESULT(no)
-else 
+if which bzr >/dev/null 2>/dev/null; then
 	BZR_CHECKOUT=yes
 	REVISION="`bzr revno .`"
 	if test -n "$REVISION"; then
@@ -20,6 +18,8 @@ else
 	else
 		AC_MSG_RESULT(no)
 	fi
+else 
+	AC_MSG_RESULT(no)
 fi
 
 AC_DEFINE_UNQUOTED(VERSION,"$VERSION$BZRVERSION", [ Package version])
