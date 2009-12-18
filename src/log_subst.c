@@ -30,7 +30,7 @@ struct subst_context {
 struct log_mapping {
 	char *command;
 	char subst;
-	unsigned int index;
+	size_t index;
 	/* If index is -1 */
 	char *(*callback) (struct subst_context *subst_ctx, 
 					   const struct irc_line *line,
@@ -161,20 +161,20 @@ static char *get_modechanges(struct subst_context *subst_ctx, const struct irc_l
 }
 
 static struct log_mapping mappings[] = {
-	{NULL, '@', -1, get_identifier },
-	{NULL, 'h', -1, get_hours },
-	{NULL, 'M', -1, get_minutes },
-	{NULL, 's', -1, get_seconds },
-	{NULL, 'd', -1, get_day },
-	{NULL, 'B', -1, get_month },
-	{NULL, 'Y', -1, get_year },
-	{NULL, 'e', -1, get_seconds_since_1970 },
-	{NULL, 'b', -1, get_monthname },
-	{NULL, 'n', -1, get_nick },
-	{NULL, 'u', -1, get_user },
-	{NULL, 'N', -1, get_network },
-	{NULL, 'S', -1, get_server },
-	{NULL, '%', -1, get_percent },
+	{NULL, '@', (size_t)-1, get_identifier },
+	{NULL, 'h', (size_t)-1, get_hours },
+	{NULL, 'M', (size_t)-1, get_minutes },
+	{NULL, 's', (size_t)-1, get_seconds },
+	{NULL, 'd', (size_t)-1, get_day },
+	{NULL, 'B', (size_t)-1, get_month },
+	{NULL, 'Y', (size_t)-1, get_year },
+	{NULL, 'e', (size_t)-1, get_seconds_since_1970 },
+	{NULL, 'b', (size_t)-1, get_monthname },
+	{NULL, 'n', (size_t)-1, get_nick },
+	{NULL, 'u', (size_t)-1, get_user },
+	{NULL, 'N', (size_t)-1, get_network },
+	{NULL, 'S', (size_t)-1, get_server },
+	{NULL, '%', (size_t)-1, get_percent },
 	{"JOIN", 'c', 1, NULL },
 	{"PART", 'c', 1, NULL },
 	{"PART", 'm', 2, NULL },
@@ -192,7 +192,7 @@ static struct log_mapping mappings[] = {
 	{"TOPIC", 't', 2, NULL },
 	{"MODE", 't', 1, NULL },
 	{"MODE", 'p', 2, NULL },
-	{"MODE", 'c', -1, get_modechanges },
+	{"MODE", 'c', (size_t)-1, get_modechanges },
 	{"NICK", 'r', 1, NULL },
 	{NULL, '0', 0, NULL },
 	{NULL, '1', 1, NULL },

@@ -31,8 +31,14 @@ AC_CONFIG_HEADER([config.h])
 # Checks for programs.
 AC_PROG_CC
 AC_PROG_INSTALL
-AC_PATH_PROG(LD,ld)
 AC_PATH_PROG(IRCDTORTURE,ircdtorture)
+
+if test "$GCC" = "yes"; then
+	CFLAGS="$CFLAGS -ansi -Wall"
+	DYNAMIC="-rdynamic"
+fi
+AC_SUBST(GCC)
+AC_SUBST(DYNAMIC)
 
 AC_ARG_ENABLE(gcov,
 [ --enable-gcov		Enable GCOV support ],

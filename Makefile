@@ -18,7 +18,7 @@ LIBS += $(GNUTLS_LIBS)
 CFLAGS += $(GNUTLS_CFLAGS)
 
 CFLAGS+=-DHAVE_CONFIG_H -DDEFAULT_CONFIG_DIR=\"$(DEFAULT_CONFIG_DIR)\" -DHELPFILE=\"$(HELPFILE)\"
-CFLAGS+=-ansi -Wall -DMODULESDIR=\"$(modulesdir)\" -DSTRICT_MEMORY_ALLOCS=
+CFLAGS+=-DMODULESDIR=\"$(modulesdir)\" -DSTRICT_MEMORY_ALLOCS=
 
 .PHONY: all clean distclean install install-bin install-dirs install-doc install-data install-pkgconfig
 
@@ -80,7 +80,7 @@ dep_files = $(patsubst %.o, %.d, $(objs))
 
 ctrlproxy$(EXEEXT): src/main.o $(objs) $(LIBIRC)
 	@echo Linking $@: $(LD) $(LDFLAGS) -rdynamic -o $@ $^ $(LIBS)
-	@$(LD) $(LDFLAGS) -rdynamic -o $@ $^ $(LIBS)
+	@$(LD) $(LDFLAGS) $(DYNAMIC) -o $@ $^ $(LIBS)
 
 src/settings.o: CFLAGS+=-DSYSCONFDIR=\"${sysconfdir}\"
 
@@ -92,11 +92,11 @@ daemon_objs += daemon/main.o daemon/user.o daemon/client.o daemon/backend.o
 
 ctrlproxyd$(EXEEXT): $(daemon_objs) $(objs) $(LIBIRC)
 	@echo Linking $@
-	@$(LD) $(LDFLAGS) -rdynamic -o $@ $^ $(LIBS)
+	@$(CC) $(LDFLAGS) $(DYNAMIC) -o $@ $^ $(LIBS)
 
 ctrlproxy-admin$(EXEEXT): src/admin-cmd.o
 	@echo Linking $@
-	@$(LD) $(LDFLAGS) -rdynamic -o $@ $^ $(LIBS)
+	@$(CC) $(LDFLAGS) $(DYNAMIC) -o $@ $^ $(LIBS)
 
 %.o: %.c
 	@echo Compiling $<
@@ -185,7 +185,7 @@ lcov:
 
 %.$(SHLIBEXT):
 	@echo Linking $@
-	@$(LD) -shared $(LDFLAGS) -o $@ $^
+	@$(CC) -shared $(LDFLAGS) -o $@ $^
 
 cscope.out::
 	cscope -b -R
@@ -288,4 +288,6 @@ example/libirc-simple: example/irc_simple.o $(LIBIRC)
 
 example/irc_simple.o: CFLAGS+=-I$(libircdir)
 
+ifeq ($(GCC),yes)
 -include $(dep_files)
+endif
