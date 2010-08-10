@@ -626,6 +626,7 @@ static gboolean close_server(struct irc_network *n)
 		}
 		free_tcp_names(n);
 		free_irc_transport(n->connection.transport);
+		n->connection.transport = NULL;
 		break;
 	case NETWORK_VIRTUAL:
 		if (n->connection.data.virtual.ops && 
