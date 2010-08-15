@@ -32,6 +32,9 @@ Ctrlproxy 3.0.9 UNRELEASED
 
     * Fix transport_send_line crash. (Joe Bormolini, #402503)
 
+    * auto-away: when time limit set to <30, still register the client limit
+      hooks instead of disabling auto away completely. (Joe Bormolini)
+
   FEATURES
 
     * Provide Python bindings for the main library code. Mainly used for 
