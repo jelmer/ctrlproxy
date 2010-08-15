@@ -1,41 +1,46 @@
-Unless otherwise indicated, all changes made by Jelmer Vernooij.
-
 Ctrlproxy 3.0.9 UNRELEASED
 
   BUG FIXES
 
     * Use port numbers rather than service names because not all 
-      systems have ircd and ircs defined. (#209)
+      systems have ircd and ircs defined. (#209, Jelmer Vernooij)
 
-    * Fix compilation on Solaris. (#210)
+    * Fix compilation on Solaris. (#210, Jelmer Vernooij)
 
-    * Provide replacement for daemon() on Solaris. (#213)
+    * Provide replacement for daemon() on Solaris. (#213, Jelmer Vernooij)
 
-    * Return hostmask of client itself rather than hostmask of 
-      server when referring to the user. (#214, #166, #69)
+    * Return hostmask of client itself rather than hostmask of
+      server when referring to the user. (#214, #166, #69, Jelmer Vernooij)
 
-    * Handle 308 and 309 replies.
+    * Handle 308 and 309 replies. (Jelmer Vernooij)
 
-    * Don't send : for last argument in RPL_MYINFO, consistent with IRC servers.
+    * Don't send : for last argument in RPL_MYINFO, consistent with IRC
+      servers. (Jelmer Vernooij)
 
-	* Fix netsplits generated when connection to a network is lost.
+    * Fix netsplits generated when connection to a network is lost.
+      (Jelmer Vernooij)
 
-	* Fix crash in on_transport_log when no error is set. (#219)
+    * Fix crash in on_transport_log when no error is set. (#219,
+      Jelmer Vernooij)
 
-    * Fix crash in log_custom when the network is disconnected. (#212)
+    * Fix crash in log_custom when the network is disconnected. (#212,
+      Jelmer Vernooij)
 
-    * Reduce memory usage by storing index for linestacks.
+    * Reduce memory usage by storing index for linestacks. (Jelmer Vernooij)
 
-	* Save nickserv passwords as part of 'saveconfig'. (Andreas Schneider)
+    * Save nickserv passwords as part of 'saveconfig'. (Andreas Schneider)
 
   FEATURES
 
     * Provide Python bindings for the main library code. Mainly used for 
-	  unit testing at the moment, but will also become available to 
-	  ctrlproxy users at some point.
+      unit testing at the moment, but will also become available to 
+      ctrlproxy users at some point. (Jelmer Vernooij)
 
-	* Processes started by ctrlproxyd are now watched, and their status 
-	  is reported when they exit.
+    * Processes started by ctrlproxyd are now watched, and their status 
+      is reported when they exit. (Jelmer Vernooij)
+
+For 3.0.8 and earlier, unless otherwise indicated, all changes made by Jelmer
+Vernooij.
 
 Ctrlproxy 3.0.8 2008-12-06
 
