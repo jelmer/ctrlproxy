@@ -30,6 +30,8 @@ Ctrlproxy 3.0.9 UNRELEASED
 
     * Save nickserv passwords as part of 'saveconfig'. (Andreas Schneider)
 
+    * Fix transport_send_line crash. (Joe Bormolini, #402503)
+
   FEATURES
 
     * Provide Python bindings for the main library code. Mainly used for 
