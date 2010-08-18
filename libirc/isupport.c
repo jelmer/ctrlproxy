@@ -535,7 +535,7 @@ void handle_005(struct irc_network_state *s, const struct irc_line *l)
 
 	g_assert(l->argc >= 1);
 
-	for (i = 3; i < l->argc-1; i++) 
+	for (i = 2; i < l->argc-1; i++) 
 		network_info_parse(s->info, l->args[i]);
 }
 

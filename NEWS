@@ -35,6 +35,8 @@ Ctrlproxy 3.0.9 UNRELEASED
     * auto-away: when time limit set to <30, still register the client limit
       hooks instead of disabling auto away completely. (Joe Bormolini)
 
+    * Process first argument to 005 responses. (Joe Bormolini)
+
   FEATURES
 
     * Provide Python bindings for the main library code. Mainly used for 
