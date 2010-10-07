@@ -152,7 +152,7 @@ static char *get_modechanges(struct subst_context *subst_ctx, const struct irc_l
 	char buf[512] = "";
 	int i;
 
-	for (i = 3 ; i+1 < line->argc && line->args[i+1] != NULL; i++) {
+	for (i = 3 ; i < line->argc && line->args[i] != NULL; i++) {
 		if (i > 3) strncat(buf, " ", sizeof(buf)-1);
 		strncat(buf, line->args[i], sizeof(buf)-1);
 	}
