@@ -40,7 +40,7 @@ void network_info_log(enum log_level l,
 	log_global(l, "%s", ret);
 
 	g_free(ret);
-}	
+}
 
 void free_network_info(struct irc_network_info *info)
 {
@@ -437,7 +437,7 @@ void network_info_parse(struct irc_network_info *info, const char *parameter)
 			info->chanmodes_a = info->chanmodes[0];
 			info->chanmodes_b = info->chanmodes[1];
 			info->chanmodes_c = info->chanmodes[2];
-			info->chanmodes_d = info->chanmodes[2];
+			info->chanmodes_d = info->chanmodes[3];
 
 			check_chanmodes_inconsistency(info);
 		}
