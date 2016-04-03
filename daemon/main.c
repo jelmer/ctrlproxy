@@ -362,19 +362,19 @@ static gboolean handle_client_line(struct pending_client *pc, const struct irc_l
 		return TRUE;
 	}
 
-	if (!g_strcasecmp(l->args[0], "PASS")) {
+	if (!g_ascii_strcasecmp(l->args[0], "PASS")) {
 		cd->login_details->password = g_strdup(l->args[1]);
-	} else if (!g_strcasecmp(l->args[0], "CONNECT")) {
+	} else if (!g_ascii_strcasecmp(l->args[0], "CONNECT")) {
 		cd->servername = g_strdup(l->args[1]);
 		cd->servicename = g_strdup(l->args[2]);
-	} else if (!g_strcasecmp(l->args[0], "USER") && l->argc > 4) {
+	} else if (!g_ascii_strcasecmp(l->args[0], "USER") && l->argc > 4) {
 		cd->login_details->username = g_strdup(l->args[1]);
 		cd->login_details->mode = g_strdup(l->args[2]);
 		cd->login_details->unused = g_strdup(l->args[3]);
 		cd->login_details->realname = g_strdup(l->args[4]);
-	} else if (!g_strcasecmp(l->args[0], "NICK")) {
+	} else if (!g_ascii_strcasecmp(l->args[0], "NICK")) {
 		cd->login_details->nick = g_strdup(l->args[1]);
-	} else if (!g_strcasecmp(l->args[0], "QUIT")) {
+	} else if (!g_ascii_strcasecmp(l->args[0], "QUIT")) {
 		return FALSE;
 	} else {
 		irc_sendf(pc->connection, pc->listener->iconv, NULL, ":%s %d %s :You are not registered. Did you specify a password?", 
