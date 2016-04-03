@@ -209,7 +209,7 @@ gboolean client_try_cache(struct irc_client *c, struct irc_network_state *net, s
 		return TRUE;
 
 	for (i = 0; cache_commands[i].name; i++) {
-		if (!g_strcasecmp(l->args[0], cache_commands[i].name))
+		if (!g_ascii_strcasecmp(l->args[0], cache_commands[i].name))
 			return cache_commands[i].try_cache(c, net, l, settings);
 	}
 	

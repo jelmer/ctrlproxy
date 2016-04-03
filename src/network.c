@@ -123,12 +123,12 @@ static gboolean process_from_server(struct irc_network *n, const struct irc_line
 
 	response = irc_line_respcode(l);
 
-	if (!g_strcasecmp(l->args[0], "PING")){
+	if (!g_ascii_strcasecmp(l->args[0], "PING")){
 		network_send_args(n, "PONG", l->args[1], NULL);
 		return TRUE;
-	} else if (!g_strcasecmp(l->args[0], "PONG")){
+	} else if (!g_ascii_strcasecmp(l->args[0], "PONG")){
 		return TRUE;
-	} else if (!g_strcasecmp(l->args[0], "ERROR")) {
+	} else if (!g_ascii_strcasecmp(l->args[0], "ERROR")) {
 		network_log(LOG_ERROR, n, "error: %s", l->args[1]);
 	} else if (response == ERR_NICKNAMEINUSE && 
 			  n->connection.state == NETWORK_CONNECTION_STATE_LOGIN_SENT){
@@ -189,11 +189,11 @@ static gboolean process_from_server(struct irc_network *n, const struct irc_line
 			linestack_store &= (!redirect_response(n->queries, n, l));
 		} else {
 			if (n->clients == NULL) {
-				if (!g_strcasecmp(l->args[0], "PRIVMSG") && l->argc > 2 && 
+				if (!g_ascii_strcasecmp(l->args[0], "PRIVMSG") && l->argc > 2 && 
 					l->args[2][0] == '\001' && 
 					g_strncasecmp(l->args[2], "\001ACTION", 7) != 0) {
 					network_process_ctcp_request(n, l);
-				} else if (!g_strcasecmp(l->args[0], "NOTICE") && l->argc > 2 && 
+				} else if (!g_ascii_strcasecmp(l->args[0], "NOTICE") && l->argc > 2 && 
 					l->args[2][0] == '\001') {
 					ctcp_network_redirect_response(n, l);
 				}
@@ -546,8 +546,8 @@ gboolean network_forward_line(struct irc_network *s, struct irc_client *c,
 {
 	/* Also write this message to all other clients currently connected */
 	if (!is_private && 
-	   (!g_strcasecmp(l->args[0], "PRIVMSG") || 
-		!g_strcasecmp(l->args[0], "NOTICE"))) {
+	   (!g_ascii_strcasecmp(l->args[0], "PRIVMSG") || 
+		!g_ascii_strcasecmp(l->args[0], "NOTICE"))) {
 		struct irc_line *nl = linedup(l);
 		g_free(nl->origin); 
 		nl->origin = g_strdup(s->external_state->me.hostmask);
