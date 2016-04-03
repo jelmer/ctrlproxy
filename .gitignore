@@ -1,0 +1,13 @@
+*.d
+*.o
+configure
+config.log
+config.h.in
+config.h
+config.status
+aclocal.m4
+Makefile.settings
+mods/libpython.so
+ctrlproxy-admin
+autom4te.cache
+ctrlproxy.pc
