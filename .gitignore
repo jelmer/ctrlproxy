@@ -16,3 +16,4 @@ ctrlproxy.pc
 libirc.a
 libirc/python/irc.so
 libirc/tools/linestack-cmd
+testsuite/check

@@ -67,7 +67,7 @@ clean::
 python:: $(libircdir)/python/irc.$(SHLIBEXT) 
 
 check-python:: $(libircdir)/python/irc.$(SHLIBEXT)
-	PYTHONPATH=$(libircdir)/python nosetests tests.test_irc
+	PYTHONPATH=$(libircdir)/python $(PYTHON) -m unittest tests.test_irc
 
 clean::
 	@rm -f $(libircdir)/python/tests/*.pyc

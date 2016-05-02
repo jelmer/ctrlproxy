@@ -2,5 +2,5 @@ language: c
 
 before_install:
     - sudo apt-get update -qq
-    - sudo apt-get install -qq python-nose check libgnutls28-dev libkrb5-dev
+    - sudo apt-get install -qq check libgnutls28-dev libkrb5-dev
     - ./autogen.sh
