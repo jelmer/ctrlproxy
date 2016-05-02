@@ -295,7 +295,7 @@ static gboolean on_transport_receive_line(struct irc_transport *transport,
 static gboolean process_from_pending_client(struct irc_client *client, 
 											const struct irc_line *l)
 {
-	if (!g_strcasecmp(l->args[0], "NICK")) {
+	if (!g_ascii_strcasecmp(l->args[0], "NICK")) {
 		if (l->argc < 2) {
 			client_send_response(client, ERR_NEEDMOREPARAMS,
 						 l->args[0], "Not enough parameters", NULL);
@@ -303,7 +303,7 @@ static gboolean process_from_pending_client(struct irc_client *client,
 		}
 
 		client->login_details->nick = g_strdup(l->args[1]);
-	} else if (!g_strcasecmp(l->args[0], "USER")) {
+	} else if (!g_ascii_strcasecmp(l->args[0], "USER")) {
 
 		if (l->argc < 5) {
 			client_send_response(client, ERR_NEEDMOREPARAMS, 
@@ -315,9 +315,9 @@ static gboolean process_from_pending_client(struct irc_client *client,
 		client->login_details->mode = g_strdup(l->args[2]);
 		client->login_details->unused = g_strdup(l->args[3]);
 		client->login_details->realname = g_strdup(l->args[4]);
-	} else if (!g_strcasecmp(l->args[0], "PASS")) {
+	} else if (!g_ascii_strcasecmp(l->args[0], "PASS")) {
 		client->login_details->password = g_strdup(l->args[1]);
-	} else if (!g_strcasecmp(l->args[0], "CONNECT")) {
+	} else if (!g_ascii_strcasecmp(l->args[0], "CONNECT")) {
 		if (l->argc < 2) {
 			client_send_response(client, ERR_NEEDMOREPARAMS,
 							 l->args[0], "Not enough parameters", NULL);
