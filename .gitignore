@@ -5,6 +5,8 @@ config.log
 config.h.in
 config.h
 config.status
+ctrlproxy
+ctrlproxyd
 aclocal.m4
 Makefile.settings
 mods/libpython.so
@@ -12,3 +14,5 @@ ctrlproxy-admin
 autom4te.cache
 ctrlproxy.pc
 libirc.a
+libirc/python/irc.so
+libirc/tools/linestack-cmd
