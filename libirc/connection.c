@@ -31,7 +31,7 @@ static gboolean delayed_connect_server(struct irc_network *s);
 static gboolean connect_server(struct irc_network *s);
 static gboolean close_server(struct irc_network *s);
 static void reconnect(struct irc_network *server);
-static gboolean server_finish_connect(GIOChannel *ioc, GIOCondition cond, 
+static gboolean server_finish_connect(GIOChannel *ioc, GIOCondition cond,
 								  void *data);
 
 static void state_log_helper(enum log_level l, void *userdata, const char *msg)
@@ -39,7 +39,7 @@ static void state_log_helper(enum log_level l, void *userdata, const char *msg)
 	network_log(l, (const struct irc_network *)userdata, "%s", msg);
 }
 
-static void server_send_login (struct irc_network *s) 
+static void server_send_login (struct irc_network *s)
 {
 	struct irc_login_details *login_details = s->callbacks->get_login_details(s);
 	g_assert(s);
@@ -48,7 +48,7 @@ static void server_send_login (struct irc_network *s)
 
 	network_log(LOG_TRACE, s, "Sending login details");
 
-	s->external_state = network_state_init(login_details->nick, login_details->username, 
+	s->external_state = network_state_init(login_details->nick, login_details->username,
 								  get_my_hostname());
 	network_state_set_log_fn(s->external_state, state_log_helper, s);
 	if (s->callbacks->state_set)
@@ -64,7 +64,7 @@ static void server_send_login (struct irc_network *s)
 	g_assert(login_details->mode != NULL && strlen(login_details->mode) > 0);
 	g_assert(login_details->unused != NULL && strlen(login_details->unused) > 0);
 	g_assert(login_details->realname != NULL && strlen(login_details->realname) > 0);
-	network_send_args(s, "USER", login_details->username, login_details->mode, 
+	network_send_args(s, "USER", login_details->username, login_details->mode,
 					  login_details->unused, login_details->realname, NULL);
 
 	free_login_details(login_details);
@@ -117,7 +117,7 @@ static gboolean on_transport_error(struct irc_transport *transport, const char *
 {
 	struct irc_network *network = transport->userdata;
 
-	network_report_disconnect(network, 
+	network_report_disconnect(network,
 								  "Error from server: %s, scheduling reconnect", error_msg);
 	reconnect(network);
 
@@ -129,7 +129,7 @@ static void on_transport_charset_error(struct irc_transport *transport, const ch
 {
 	struct irc_network *network = transport->userdata;
 
-	network_log(LOG_WARNING, network, "Error while sending line with charset: %s", 
+	network_log(LOG_WARNING, network, "Error while sending line with charset: %s",
 				error_msg);
 }
 
@@ -146,10 +146,10 @@ static void on_transport_log(struct irc_transport *transport, const struct irc_l
 	const char *errmsg = (error == NULL)?"UNKNOWN":error->message;
 
 	if (l->argc == 0)
-		network_log(LOG_WARNING, network, "Error while sending empty line: %s", 
+		network_log(LOG_WARNING, network, "Error while sending empty line: %s",
 				 errmsg);
 	else
-		network_log(LOG_WARNING, network, "Error while sending line '%s': %s", 
+		network_log(LOG_WARNING, network, "Error while sending line '%s': %s",
 				l->args[0], errmsg);
 }
 
@@ -973,7 +973,7 @@ struct irc_network *find_network(GList *networks, const char *name)
 	GList *gl;
 	for (gl = networks; gl; gl = gl->next) {
 		struct irc_network *n = gl->data;
-		if (n->name && !g_strcasecmp(n->name, name)) 
+		if (n->name && !g_strcasecmp(n->name, name))
 			return n;
 	}
 
@@ -992,7 +992,7 @@ void irc_network_select_next_server(struct irc_network *n)
 	g_assert(n);
 	g_assert(nc);
 
-	if (nc->type != NETWORK_TCP) 
+	if (nc->type != NETWORK_TCP)
 		return;
 
 	network_log(LOG_INFO, n, "Trying next server");
@@ -1027,11 +1027,11 @@ void irc_network_unref(struct irc_network *n)
 	if (n == NULL)
 		return;
 	n->references--;
-	if (n->references == 0) 
+	if (n->references == 0)
 		free_network(n);
 }
 
-void network_log(enum log_level l, const struct irc_network *s, 
+void network_log(enum log_level l, const struct irc_network *s,
 				 const char *fmt, ...)
 {
 	char *ret;

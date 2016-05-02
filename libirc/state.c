@@ -1166,7 +1166,7 @@ gboolean state_handle_data(struct irc_network_state *s, const struct irc_line *l
 		return FALSE;
 
 	for (i = 0; irc_commands[i].command; i++) {
-		if (!g_ascii_strcasecmp(irc_commands[i].command, l->args[0])) {
+		if (!base_strcmp(irc_commands[i].command, l->args[0])) {
 			for (j = 0; j <= irc_commands[i].min_args; j++) {
 				if (l->args[j] == NULL)
 					return FALSE;

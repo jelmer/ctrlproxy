@@ -325,108 +325,108 @@ void network_info_parse(struct irc_network_info *info, const char *parameter)
 		val = g_strdup(sep+1);
 	}
 	
-	if (!g_ascii_strcasecmp(key, "CASEMAPPING")) {
-		if (!g_ascii_strcasecmp(val, "rfc1459")) {
+	if (!base_strcmp(key, "CASEMAPPING")) {
+		if (!base_strcmp(val, "rfc1459")) {
 			info->casemapping = CASEMAP_RFC1459;
-		} else if (!g_ascii_strcasecmp(val, "strict-rfc1459")) {
+		} else if (!base_strcmp(val, "strict-rfc1459")) {
 			info->casemapping = CASEMAP_STRICT_RFC1459;
-		} else if (!g_ascii_strcasecmp(val, "ascii")) {
+		} else if (!base_strcmp(val, "ascii")) {
 			info->casemapping = CASEMAP_ASCII;
 		} else {
 			info->casemapping = CASEMAP_UNKNOWN;
 			network_info_log(LOG_WARNING, info,
 							 "Unknown CASEMAPPING value '%s'", val);
 		}
-	} else if (!g_ascii_strcasecmp(key, "NETWORK")) {
+	} else if (!base_strcmp(key, "NETWORK")) {
 		g_free(info->name);
 		info->name = g_strdup(val);
-	} else if (!g_ascii_strcasecmp(key, "IRCD")) {
+	} else if (!base_strcmp(key, "IRCD")) {
 		g_free(info->ircd);
 		info->ircd = g_strdup(val);
-	} else if (!g_ascii_strcasecmp(key, "NICKLEN") || !g_ascii_strcasecmp(key, "MAXNICKLEN")) {
+	} else if (!base_strcmp(key, "NICKLEN") || !base_strcmp(key, "MAXNICKLEN")) {
 		info->nicklen = atoi(val);
-	} else if (!g_ascii_strcasecmp(key, "USERLEN")) {
+	} else if (!base_strcmp(key, "USERLEN")) {
 		info->userlen = atoi(val);
-	} else if (!g_ascii_strcasecmp(key, "HOSTLEN")) {
+	} else if (!base_strcmp(key, "HOSTLEN")) {
 		info->hostlen = atoi(val);
-	} else if (!g_ascii_strcasecmp(key, "OVERRIDE")) {
+	} else if (!base_strcmp(key, "OVERRIDE")) {
 		info->operoverride = TRUE;
-	} else if (!g_ascii_strcasecmp(key, "CHANNELLEN") || !g_ascii_strcasecmp(key, "MAXCHANNELLEN")) {
+	} else if (!base_strcmp(key, "CHANNELLEN") || !base_strcmp(key, "MAXCHANNELLEN")) {
 		info->channellen = atoi(val);
-	} else if (!g_ascii_strcasecmp(key, "AWAYLEN")) {
+	} else if (!base_strcmp(key, "AWAYLEN")) {
 		info->awaylen = atoi(val);
-	} else if (!g_ascii_strcasecmp(key, "KICKLEN")) {
+	} else if (!base_strcmp(key, "KICKLEN")) {
 		info->kicklen = atoi(val);
-	} else if (!g_ascii_strcasecmp(key, "TOPICLEN")) {
+	} else if (!base_strcmp(key, "TOPICLEN")) {
 		info->topiclen = atoi(val);
-	} else if (!g_ascii_strcasecmp(key, "WATCH")) {
+	} else if (!base_strcmp(key, "WATCH")) {
 		info->watch = atoi(val);
-	} else if (!g_ascii_strcasecmp(key, "VBANLIST")) {
+	} else if (!base_strcmp(key, "VBANLIST")) {
 		info->vbanlist = TRUE;
-	} else if (!g_ascii_strcasecmp(key, "MAXPARA")) {
+	} else if (!base_strcmp(key, "MAXPARA")) {
 		info->maxpara = atoi(val);
-	} else if (!g_ascii_strcasecmp(key, "MAXCHANNELS")) {
+	} else if (!base_strcmp(key, "MAXCHANNELS")) {
 		info->maxchannels = atoi(val);
-	} else if (!g_ascii_strcasecmp(key, "MAXTARGETS")) {
+	} else if (!base_strcmp(key, "MAXTARGETS")) {
 		info->maxtargets = atoi(val);
-	} else if (!g_ascii_strcasecmp(key, "REMOVE")) {
+	} else if (!base_strcmp(key, "REMOVE")) {
 		info->remove = TRUE;
-	} else if (!g_ascii_strcasecmp(key, "MAXBANS")) {
+	} else if (!base_strcmp(key, "MAXBANS")) {
 		info->maxbans = atoi(val);
-	} else if (!g_ascii_strcasecmp(key, "MODES")) {
+	} else if (!base_strcmp(key, "MODES")) {
 		info->maxmodes = atoi(val);
-	} else if (!g_ascii_strcasecmp(key, "WALLCHOPS")) {
+	} else if (!base_strcmp(key, "WALLCHOPS")) {
 		info->wallchops = TRUE;
-	} else if (!g_ascii_strcasecmp(key, "MAP")) {
+	} else if (!base_strcmp(key, "MAP")) {
 		info->map = TRUE;
-	} else if (!g_ascii_strcasecmp(key, "SSL")) {
+	} else if (!base_strcmp(key, "SSL")) {
 		info->ssl = TRUE;
-	} else if (!g_ascii_strcasecmp(key, "WALLVOICES")) {
+	} else if (!base_strcmp(key, "WALLVOICES")) {
 		info->wallvoices = TRUE;
-	} else if (!g_ascii_strcasecmp(key, "RFC2812")) {
+	} else if (!base_strcmp(key, "RFC2812")) {
 		info->rfc2812 = TRUE;
-	} else if (!g_ascii_strcasecmp(key, "PENALTY")) {
+	} else if (!base_strcmp(key, "PENALTY")) {
 		info->penalty = TRUE;
-	} else if (!g_ascii_strcasecmp(key, "FNC")) {
+	} else if (!base_strcmp(key, "FNC")) {
 		info->forced_nick_changes = TRUE;
-	} else if (!g_ascii_strcasecmp(key, "SAFELIST")) {
+	} else if (!base_strcmp(key, "SAFELIST")) {
 		info->safelist = TRUE;
-	} else if (!g_ascii_strcasecmp(key, "USERIP")) {
+	} else if (!base_strcmp(key, "USERIP")) {
 		info->userip = TRUE;
-	} else if (!g_ascii_strcasecmp(key, "CPRIVMSG")) {
+	} else if (!base_strcmp(key, "CPRIVMSG")) {
 		info->cprivmsg = TRUE;
-	} else if (!g_ascii_strcasecmp(key, "CNOTICE")) {
+	} else if (!base_strcmp(key, "CNOTICE")) {
 		info->cnotice = TRUE;
-	} else if (!g_ascii_strcasecmp(key, "KNOCK")) {
+	} else if (!base_strcmp(key, "KNOCK")) {
 		info->knock = TRUE;
-	} else if (!g_ascii_strcasecmp(key, "CAPAB")) {
+	} else if (!base_strcmp(key, "CAPAB")) {
 		info->capab = TRUE;
-	} else if (!g_ascii_strcasecmp(key, "HCN")) {
+	} else if (!base_strcmp(key, "HCN")) {
 		info->hcn = TRUE;
-	} else if (!g_ascii_strcasecmp(key, "VCHANNELS")) {
+	} else if (!base_strcmp(key, "VCHANNELS")) {
 		info->vchannels = TRUE;
-	} else if (!g_ascii_strcasecmp(key, "WHOX")) {
+	} else if (!base_strcmp(key, "WHOX")) {
 		info->whox = TRUE;
-	} else if (!g_ascii_strcasecmp(key, "CALLERID")) {
+	} else if (!base_strcmp(key, "CALLERID")) {
 		info->callerid = TRUE;
-	} else if (!g_ascii_strcasecmp(key, "ACCEPT")) {
+	} else if (!base_strcmp(key, "ACCEPT")) {
 		info->accept = TRUE;
-	} else if (!g_ascii_strcasecmp(key, "ESILENCE")) {
+	} else if (!base_strcmp(key, "ESILENCE")) {
 		info->esilence = TRUE;
-	} else if (!g_ascii_strcasecmp(key, "UHNAMES")) {
+	} else if (!base_strcmp(key, "UHNAMES")) {
 		info->uhnames = TRUE;
-	} else if (!g_ascii_strcasecmp(key, "KEYLEN")) {
+	} else if (!base_strcmp(key, "KEYLEN")) {
 		info->keylen = atoi(val);
-	} else if (!g_ascii_strcasecmp(key, "SILENCE")) {
+	} else if (!base_strcmp(key, "SILENCE")) {
 		if (val) {
 			info->silence_limit = atoi(val);
 			info->silence = TRUE;
 		} else
 			info->silence = TRUE;
-	} else if (!g_ascii_strcasecmp(key, "CHANTYPES")) {
+	} else if (!base_strcmp(key, "CHANTYPES")) {
 		g_free(info->chantypes);
 		info->chantypes = g_strdup(val);
-	} else if (!g_ascii_strcasecmp(key, "CHANMODES")) {
+	} else if (!base_strcmp(key, "CHANMODES")) {
 		g_strfreev(info->chanmodes);
 		info->chanmodes_a = info->chanmodes_b = 
 			info->chanmodes_c = info->chanmodes_d = NULL;
@@ -441,10 +441,10 @@ void network_info_parse(struct irc_network_info *info, const char *parameter)
 
 			check_chanmodes_inconsistency(info);
 		}
-	} else if (!g_ascii_strcasecmp(key, "CHANLIMIT")) {
+	} else if (!base_strcmp(key, "CHANLIMIT")) {
 		g_free(info->chanlimit);
 		info->chanlimit = g_strdup(val);
-	} else if (!g_ascii_strcasecmp(key, "EXCEPTS")) {
+	} else if (!base_strcmp(key, "EXCEPTS")) {
 		if (val == NULL) 
 			info->excepts_mode = 'e';
 		else if (strlen(val) > 1)
@@ -452,7 +452,7 @@ void network_info_parse(struct irc_network_info *info, const char *parameter)
 							 "Invalid length excepts value: %s", val);
 		else
 			info->excepts_mode = val[0];
-	} else if (!g_ascii_strcasecmp(key, "INVEX")) {
+	} else if (!base_strcmp(key, "INVEX")) {
 		if (val == NULL) 
 			info->invex_mode = 'I';
 		else if (strlen(val) > 1)
@@ -460,7 +460,7 @@ void network_info_parse(struct irc_network_info *info, const char *parameter)
 							 "Invalid length invex value: %s", val);
 		else
 			info->invex_mode = val[0];
-	} else if (!g_ascii_strcasecmp(key, "ELIST")) {
+	} else if (!base_strcmp(key, "ELIST")) {
 		int i;
 		for (i = 0; val[i]; i++) {
 			switch (val[i]) {
@@ -475,7 +475,7 @@ void network_info_parse(struct irc_network_info *info, const char *parameter)
 				  break;
 			}
 		}
-	} else if (!g_ascii_strcasecmp(key, "DEAF")) {
+	} else if (!base_strcmp(key, "DEAF")) {
 		if (val == NULL) 
 			info->deaf_mode = 'D';
 		else if (strlen(val) > 1)
@@ -483,7 +483,7 @@ void network_info_parse(struct irc_network_info *info, const char *parameter)
 							 "Invalid length deaf value: %s", val);
 		else
 			info->deaf_mode = val[0];
-	} else if (!g_ascii_strcasecmp(key, "EXTBAN")) {
+	} else if (!base_strcmp(key, "EXTBAN")) {
 		g_free(info->extban_prefix);
 		g_free(info->extban_supported);
 		if (val == NULL) {
@@ -495,16 +495,16 @@ void network_info_parse(struct irc_network_info *info, const char *parameter)
 			info->extban_supported = parts[1];
 			g_free(parts);
 		}
-	} else if (!g_ascii_strcasecmp(key, "MAXLIST")) {
+	} else if (!base_strcmp(key, "MAXLIST")) {
 		g_free(info->maxlist);
 		info->maxlist = g_strdup(val);
-	} else if (!g_ascii_strcasecmp(key, "IDCHAN")) {
+	} else if (!base_strcmp(key, "IDCHAN")) {
 		g_free(info->idchan);
 		info->idchan = g_strdup(val);
-	} else if (!g_ascii_strcasecmp(key, "STATUSMSG")) {
+	} else if (!base_strcmp(key, "STATUSMSG")) {
 		g_free(info->statusmsg);
 		info->statusmsg = g_strdup(val);
-	} else if (!g_ascii_strcasecmp(key, "PREFIX")) {
+	} else if (!base_strcmp(key, "PREFIX")) {
 		if (strlen(val) > 0 && (val[0] != '(' || !strchr(val, ')'))) {
 			network_info_log(LOG_WARNING, info,
 							 "Malformed PREFIX data `%s'", val);
@@ -512,12 +512,12 @@ void network_info_parse(struct irc_network_info *info, const char *parameter)
 			g_free(info->prefix);
 			info->prefix = g_strdup(val);
 		}
-	} else if (!g_ascii_strcasecmp(key, "CHARSET")) {
+	} else if (!base_strcmp(key, "CHARSET")) {
 		g_free(info->charset);
 		info->charset = g_strdup(val);
-	} else if (!g_ascii_strcasecmp(key, "NAMESX")) {
+	} else if (!base_strcmp(key, "NAMESX")) {
 		info->namesx = TRUE;
-	} else if (!g_ascii_strcasecmp(key, "SECURELIST")) {
+	} else if (!base_strcmp(key, "SECURELIST")) {
 		info->securelist = TRUE;
 	} else {
 		network_info_log(LOG_WARNING, info,

@@ -38,12 +38,12 @@ static gboolean process_to_client(struct irc_client *c, const struct irc_line *l
 
 static void handle_offline_command(struct irc_client *c, const struct irc_line *l, const char *offline_reason)
 {
-	if (!g_ascii_strcasecmp(l->args[0], "PRIVMSG") || !g_ascii_strcasecmp(l->args[0], "NOTICE")) {
+	if (!base_strcmp(l->args[0], "PRIVMSG") || !base_strcmp(l->args[0], "NOTICE")) {
 		client_send_response(c, ERR_NOSUCHNICK, l->args[1], offline_reason, NULL);
-	} else if (!g_ascii_strcasecmp(l->args[0], "JOIN")) {
+	} else if (!base_strcmp(l->args[0], "JOIN")) {
 		/* Make network->internal_state join channel */
 		client_send_response(c, ERR_NOSUCHCHANNEL, l->args[1], offline_reason, NULL);
-	} else if (!g_ascii_strcasecmp(l->args[0], "PART")) {
+	} else if (!base_strcmp(l->args[0], "PART")) {
 		/* Make network->internal_state part channel */
 		client_send_response(c, ERR_NOTONCHANNEL, l->args[1], offline_reason, NULL);
 	} else {
@@ -78,13 +78,13 @@ static gboolean process_from_client(struct irc_client *c, const struct irc_line 
 
 	g_assert(l->args[0] != NULL);
 
-	if (!g_ascii_strcasecmp(l->args[0], "QUIT")) {
+	if (!base_strcmp(l->args[0], "QUIT")) {
 		client_disconnect(c, "Client exiting");
 		g_free(l->origin);
 		return FALSE;
-	} else if (!g_ascii_strcasecmp(l->args[0], "PING")) {
+	} else if (!base_strcmp(l->args[0], "PING")) {
 		client_send_args(c, "PONG", c->network->name, l->args[1], NULL);
-	} else if (!g_ascii_strcasecmp(l->args[0], "PONG")) {
+	} else if (!base_strcmp(l->args[0], "PONG")) {
 		if (l->argc < 2) {
 			client_send_response(c, ERR_NEEDMOREPARAMS, l->args[0], 
 								 "Not enough parameters", NULL);
@@ -92,27 +92,27 @@ static gboolean process_from_client(struct irc_client *c, const struct irc_line 
 			return TRUE;
 		}
 		c->last_pong = time(NULL);
-	} else if (!g_ascii_strcasecmp(l->args[0], "USER") ||
-			  !g_ascii_strcasecmp(l->args[0], "PASS")) {
+	} else if (!base_strcmp(l->args[0], "USER") ||
+			  !base_strcmp(l->args[0], "PASS")) {
 		client_send_response(c, ERR_ALREADYREGISTERED,  
 						 "Please register only once per session", NULL);
-	} else if (!g_ascii_strcasecmp(l->args[0], "CTRLPROXY")) {
+	} else if (!base_strcmp(l->args[0], "CTRLPROXY")) {
 		admin_process_command(c, l, 1);
 	} else if (c->network->global->config->admin_user != NULL && 
-			   !g_ascii_strcasecmp(l->args[0], "PRIVMSG") && 
-			   !g_ascii_strcasecmp(l->args[1], c->network->global->config->admin_user)) {
+			   !base_strcmp(l->args[0], "PRIVMSG") && 
+			   !base_strcmp(l->args[1], c->network->global->config->admin_user)) {
 		admin_process_command(c, l, 2);
-	} else if (!g_ascii_strcasecmp(l->args[0], "PRIVMSG") && l->argc > 2 && 
+	} else if (!base_strcmp(l->args[0], "PRIVMSG") && l->argc > 2 && 
 			l->args[2][0] == '\001' && 
 			g_strncasecmp(l->args[2], "\001ACTION", 7) != 0) {
 		ctcp_client_request_record(c, l);
 
 		/* send off to server */
 		network_forward_line(c->network, c, l, TRUE);
-	} else if (!g_ascii_strcasecmp(l->args[0], "NOTICE") && l->argc > 2 && 
+	} else if (!base_strcmp(l->args[0], "NOTICE") && l->argc > 2 && 
 			l->args[2][0] == '\001') {
 		network_forward_line(c->network, c, l, TRUE);
-	} else if (!g_ascii_strcasecmp(l->args[0], "")) {
+	} else if (!base_strcmp(l->args[0], "")) {
 	} else if (c->network->connection.state == NETWORK_CONNECTION_STATE_MOTD_RECVD) {
 		struct network_config *nc = c->network->private_data;
 

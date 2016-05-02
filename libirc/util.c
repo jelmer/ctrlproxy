@@ -33,6 +33,12 @@
 #include <unistd.h>
 #endif
 
+int base_strcmp(const char *a, const char *b)
+{
+	/* TODO(jelmer): Warn if there are any nonalpha characters in a or b?) */
+	return g_ascii_strcasecmp(a, b);
+}
+
 static inline int str_cmphelper(const char *a, const char *b, char sh, char sl, char eh, char el)
 {
 	int i;

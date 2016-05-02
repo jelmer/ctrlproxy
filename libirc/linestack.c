@@ -514,18 +514,18 @@ gboolean linestack_insert_line(struct linestack_context *nd,
 
 	/* Only need PRIVMSG and NOTICE messages we send ourselves */
 	if (dir == TO_SERVER && 
-		g_ascii_strcasecmp(l->args[0], "PRIVMSG") && 
-		g_ascii_strcasecmp(l->args[0], "NOTICE")) return TRUE;
+		base_strcmp(l->args[0], "PRIVMSG") && 
+		base_strcmp(l->args[0], "NOTICE")) return TRUE;
 
 	/* No CTCP, please */
-	if ((!g_ascii_strcasecmp(l->args[0], "PRIVMSG") ||
-		!g_ascii_strcasecmp(l->args[0], "NOTICE")) && 
+	if ((!base_strcmp(l->args[0], "PRIVMSG") ||
+		!base_strcmp(l->args[0], "NOTICE")) && 
 		l->argc > 2 && l->args[2][0] == '\001' && 
 		g_strncasecmp(l->args[2], "\001ACTION", 7) != 0)
 		return TRUE;
 
 	for (i = 0; linestack_messages[i]; i++) 
-		if (!g_ascii_strcasecmp(linestack_messages[i], l->args[0]))
+		if (!base_strcmp(linestack_messages[i], l->args[0]))
 			needed = TRUE;
 
 	if (!needed) return TRUE;
@@ -574,8 +574,8 @@ static gboolean send_line_timed(struct irc_line *l, time_t t, void *_privdata)
 {
 	struct send_line_privdata *privdata = _privdata;
 
-	if ((!g_ascii_strcasecmp(l->args[0], "PRIVMSG") ||
-		!g_ascii_strcasecmp(l->args[0], "NOTICE")) &&
+	if ((!base_strcmp(l->args[0], "PRIVMSG") ||
+		!base_strcmp(l->args[0], "NOTICE")) &&
 		l->argc > 2) {
 		struct irc_line *nl = line_prefix_time(l, t+privdata->time_offset);
 		gboolean ret;
@@ -593,8 +593,8 @@ static gboolean send_line_timed_dataonly(struct irc_line *l, time_t t, void *_pr
 	gboolean ret;
 	struct irc_line *nl;
 
-	if (g_ascii_strcasecmp(l->args[0], "PRIVMSG") != 0 && 
-		g_ascii_strcasecmp(l->args[0], "NOTICE") != 0)
+	if (base_strcmp(l->args[0], "PRIVMSG") != 0 && 
+		base_strcmp(l->args[0], "NOTICE") != 0)
 		return TRUE;
 
 	if (l->argc <= 2)
@@ -610,8 +610,8 @@ static gboolean send_line_dataonly(struct irc_line *l, time_t t, void *_privdata
 {
 	struct send_line_privdata *privdata = _privdata;
 
-	if (g_ascii_strcasecmp(l->args[0], "PRIVMSG") != 0 && 
-		g_ascii_strcasecmp(l->args[0], "NOTICE") != 0)
+	if (base_strcmp(l->args[0], "PRIVMSG") != 0 && 
+		base_strcmp(l->args[0], "NOTICE") != 0)
 		return TRUE;
 
 	if (l->argc <= 2)

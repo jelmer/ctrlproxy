@@ -20,6 +20,7 @@
 #ifndef __LIBIRC_UTIL_H__
 #define __LIBIRC_UTIL_H__
 
+G_MODULE_EXPORT int base_strcmp(const char *a, const char *b);
 G_MODULE_EXPORT int str_rfc1459cmp(const char *a, const char *b);
 G_MODULE_EXPORT int str_strictrfc1459cmp(const char *a, const char *b);
 G_MODULE_EXPORT int str_asciicmp(const char *a, const char *b);

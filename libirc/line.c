@@ -205,16 +205,16 @@ static gboolean requires_colon(const struct irc_line *l)
 	g_assert(l->args[0]);
 
 	c = atoi(l->args[0]);
-	if (!g_ascii_strcasecmp(l->args[0], "MODE"))
+	if (!base_strcmp(l->args[0], "MODE"))
 		return FALSE;
 
-	if (!g_ascii_strcasecmp(l->args[0], "NICK"))
+	if (!base_strcmp(l->args[0], "NICK"))
 		return FALSE;
 
-	if (!g_ascii_strcasecmp(l->args[0], "JOIN"))
+	if (!base_strcmp(l->args[0], "JOIN"))
 		return FALSE;
 
-	if (!g_ascii_strcasecmp(l->args[0], "PART") || !g_ascii_strcasecmp(l->args[0], "TOPIC")) {
+	if (!base_strcmp(l->args[0], "PART") || !base_strcmp(l->args[0], "TOPIC")) {
 		return (l->argc > 2);
     }
 
