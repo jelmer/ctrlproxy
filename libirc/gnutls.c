@@ -29,7 +29,7 @@ gboolean ssl_supported = TRUE;
 #define DH_BITS 1024
 
 typedef struct {
-	gnutls_certificate_credentials cred;
+	gnutls_certificate_credentials_t cred;
 	gboolean have_ca_file;
 } GNUTLSCred;
 
@@ -37,7 +37,7 @@ typedef struct {
 	GIOChannel channel;
 	int fd;
 	GIOChannel *real_sock;
-	gnutls_session session;
+	gnutls_session_t session;
 	GNUTLSCred *cred;
 	char *hostname;
 	gboolean established;
@@ -45,11 +45,18 @@ typedef struct {
 } GNUTLSChannel;
 
 static gboolean
-verify_certificate (gnutls_session session, const char *hostname, GError **err)
+verify_certificate (gnutls_session_t session, const char *hostname, GError **err)
 {
-	int status;
+	int ret;
+	unsigned int status;
 
-	status = gnutls_certificate_verify_peers (session);
+	ret = gnutls_certificate_verify_peers2 (session, &status);
+
+	if (ret < 0) {
+		g_set_error (err, SSL_ERROR, SSL_ERROR_CERTIFICATE,
+					 "Unable to verify peer certificate");
+		return FALSE;
+	}
 
 	if (status == GNUTLS_E_NO_CERTIFICATE_FOUND) {
 		g_set_error (err, SSL_ERROR,
@@ -85,9 +92,9 @@ verify_certificate (gnutls_session session, const char *hostname, GError **err)
 	}
 
 	if (gnutls_certificate_type_get (session) == GNUTLS_CRT_X509) {
-		const gnutls_datum* cert_list;
+		const gnutls_datum_t* cert_list;
 		guint cert_list_size;
-		gnutls_x509_crt cert;
+		gnutls_x509_crt_t cert;
 
 		if (gnutls_x509_crt_init (&cert) < 0) {
 			g_set_error (err, SSL_ERROR,
@@ -95,7 +102,7 @@ verify_certificate (gnutls_session session, const char *hostname, GError **err)
 				     "Error initializing SSL certificate.");
 			return FALSE;
 		}
-      
+
 		cert_list = gnutls_certificate_get_peers (
 			session, &cert_list_size);
 
@@ -350,7 +357,7 @@ static const GIOFuncs gnutls_channel_funcs = {
 	gnutls_get_flags
 };
 
-static gnutls_dh_params dh_params = NULL;
+static gnutls_dh_params_t dh_params = NULL;
 
 static gboolean
 init_dh_params (void)
@@ -391,7 +398,7 @@ ssl_wrap_iochannel (GIOChannel *sock, SSLType type,
 {
 	GNUTLSChannel *chan = NULL;
 	GIOChannel *gchan = NULL;
-	gnutls_session session = NULL;
+	gnutls_session_t session = NULL;
 	GNUTLSCred *cred = (GNUTLSCred *) credentials;
 	int sockfd;
 	int ret;
