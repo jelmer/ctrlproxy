@@ -11,3 +11,4 @@ mods/libpython.so
 ctrlproxy-admin
 autom4te.cache
 ctrlproxy.pc
+libirc.a
