@@ -1,4 +1,6 @@
 language: c
 
 before_install:
-    ./autogen.sh
+    - sudo apt-get update -qq
+    - sudo apt-get install -qq python-nose
+    - ./autogen.sh
