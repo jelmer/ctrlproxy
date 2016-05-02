@@ -115,7 +115,10 @@ configure:
 	./autogen.sh
 endif
 
-ctrlproxy.pc Makefile.settings config.h: configure Makefile.settings.in ctrlproxy.pc.in
+config.status: configure
+	./configure
+
+ctrlproxy.pc Makefile.settings config.h: config.status Makefile.settings.in ctrlproxy.pc.in
 	./$<
 
 install: all install-dirs install-bin install-header install-data install-pkgconfig $(EXTRA_INSTALL_TARGETS)
