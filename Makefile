@@ -263,6 +263,8 @@ testsuite/check: $(check_objs) $(objs) $(LIBIRC)
 	@echo Linking $@
 	@$(CC) $(LIBS) -o $@ $^ $(CHECK_LIBS)
 
+test: check
+
 check:: testsuite/check
 	@echo Running testsuite
 	@$(DEBUGGER) ./testsuite/check $(CHECK_OPTIONS)
