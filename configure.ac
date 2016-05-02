@@ -110,18 +110,16 @@ fi
 ###############################################################################
 # GSSAPI support
 ###############################################################################
-AC_PATH_PROG(KRB5_CONFIG, krb5-config, no)
-if test $KRB5_CONFIG != no && $KRB5_CONFIG --libs gssapi >/dev/null 2>&1; then
-	LIBS="$LIBS `$KRB5_CONFIG --libs gssapi`"
-	CFLAGS="$CFLAGS `$KRB5_CONFIG --cflags gssapi`"
-fi
-AC_CHECK_FUNC(gss_display_status,
-		AC_DEFINE(HAVE_GSSAPI, 1, [have GSSAPI]),
-		AC_CHECK_LIB(gss, gss_display_status,
-				LIBS="$LIBS -lgss"; AC_DEFINE(HAVE_GSSAPI, 1, [have GSSAPI])))
-AC_CHECK_FUNC(gsskrb5_register_acceptor_identity, 
-		AC_DEFINE(HAVE_GSSKRB5_REGISTER_ACCEPTOR_IDENTITY, 1, [Whether gsskrb5_register_acceptor_identity is provided by the GSSAPI library]))
-AC_CHECK_HEADERS([gssapi.h gssapi/gssapi.h])
+PKG_CHECK_MODULES(KRB5_GSSAPI, krb5-gssapi, [
+		AC_DEFINE(HAVE_GSSAPI, 1, [Whether GSSAPI is available])
+		AC_CHECK_FUNC(gss_display_status,
+			AC_DEFINE(HAVE_GSSAPI, 1, [have GSSAPI]),
+			AC_CHECK_LIB(gss, gss_display_status, LIBS="$LIBS -lgss"; AC_DEFINE(HAVE_GSSAPI, 1, [have GSSAPI])))
+		AC_CHECK_FUNC(gsskrb5_register_acceptor_identity, 
+					  AC_DEFINE(HAVE_GSSKRB5_REGISTER_ACCEPTOR_IDENTITY, 1, [Whether gsskrb5_register_acceptor_identity is provided by the GSSAPI library]))
+		AC_CHECK_HEADERS([gssapi.h gssapi/gssapi.h])
+		], [ ])
+
 
 AC_PATH_PROG(XSLTPROC, xsltproc)
 
