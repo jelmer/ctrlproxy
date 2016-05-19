@@ -45,7 +45,7 @@ END_TEST
 
 START_TEST(test_help_none)
 	help_t *h;
-	h = help_load_file("/dev/null");
+	h = help_load_file("testsuite/test-help.c");
 	fail_if(h == NULL);
 END_TEST
 
@@ -57,7 +57,7 @@ END_TEST
 
 START_TEST(test_help_free)
 	help_t *h;
-	h = help_load_file("/dev/null");
+	h = help_load_file("testsuite/test-help.c");
 	fail_if(h == NULL);
 	help_free(h);
 END_TEST
