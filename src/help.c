@@ -29,11 +29,7 @@
 void help_free(help_t *h)
 {
 	if (h->file != NULL)
-#if GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION >= 8
 		g_mapped_file_free(h->file);
-#else
-		g_free(h->file);
-#endif
 	if (h->entries != NULL)
 		g_hash_table_destroy(h->entries);
 	g_free(h);
@@ -83,7 +79,6 @@ help_t *help_load_file( const char *helpfile )
 	
 	h = g_new0 (help_t, 1);
 	
-#if GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION >= 8
 	h->file = g_mapped_file_new(helpfile, FALSE, &error);
 	if (h->file != NULL) {
 		len = g_mapped_file_get_length(h->file);
@@ -97,16 +92,6 @@ help_t *help_load_file( const char *helpfile )
 		help_free( h );
 		return NULL;
 	}
-#else
-	if (!g_file_get_contents(helpfile, &h->file, &len, &error)) {
-		log_global(LOG_WARNING, "Unable to open help file `%s': %s", helpfile, 
-				  error->message);
-		g_error_free(error);
-		help_free( h );
-		return NULL;
-	} 
-	data = h->file;
-#endif
 
 	h->entries = help_build_hash(data, len);
 

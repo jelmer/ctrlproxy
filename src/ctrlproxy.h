@@ -124,16 +124,6 @@ gboolean    rep_g_file_set_contents             (const gchar *filename,
 int rep_g_mkdir_with_parents (const gchar *pathname, int mode);
 
 
-#if GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION < 8
-#define g_file_get_contents rep_g_file_get_contents
-#define g_file_set_contents rep_g_file_set_contents
-#define g_mkdir_with_parents rep_g_mkdir_with_parents
-#define G_GNUC_NULL_TERMINATED
-#endif
-#if GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION < 10
-#define G_GNUC_WARN_UNUSED_RESULT
-#endif
-
 #ifndef HAVE_DAEMON
 int daemon(int nochdir, int noclose);
 #endif
