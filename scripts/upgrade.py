@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # Upgrade script for CtrlProxy
-# Copyright (C) 2005-2006 Jelmer Vernooij <jelmer@samba.org>
+# Copyright (C) 2005-2006 Jelmer Vernooij <jelmer@jelmer.uk>
 
 import optparse
 import sys

@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
 # Simple irssi-log to raw-irc converter
-# (C) 2004 Jelmer Vernooij <jelmer@samba.org>
+# (C) 2004 Jelmer Vernooij <jelmer@jelmer.uk>
 # Published under the GPLv3 or later
 
 $target = shift or die("No channel/nick name specified");

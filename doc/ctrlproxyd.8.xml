@@ -80,7 +80,7 @@
 
 <para>
 Probably, but none are known at the moment. Please send 
-any you find to jelmer@samba.org
+any you find to jelmer@jelmer.uk
 </para>
 </refsect1>
 
@@ -112,7 +112,7 @@ Foundation, Inc., 59 Temple PLace, Suite 330, Boston, MA  02111-1307  USA
 <refsect1>
 	<title>AUTHORS</title>
 <para>
-<ulink url="mailto:jelmer@samba.org">Jelmer Vernooij</ulink> (original developer)
+<ulink url="mailto:jelmer@jelmer.uk">Jelmer Vernooij</ulink> (original developer)
 </para>
 
 <para>See the file AUTHORS for a full list of contributors.</para>

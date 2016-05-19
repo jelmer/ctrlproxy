@@ -1,6 +1,6 @@
 /* 
 	ctrlproxy: A modular IRC proxy
-	(c) 2005-2006 Jelmer Vernooij <jelmer@nl.linux.org>
+	(c) 2005-2006 Jelmer Vernooij <jelmer@jelmer.uk>
 	
 	Manual listen on ports
 

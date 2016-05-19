@@ -1,6 +1,6 @@
 /* 
 	ctrlproxy: A modular IRC proxy
-	(c) 2002-2008 Jelmer Vernooij <jelmer@nl.linux.org>
+	(c) 2002-2008 Jelmer Vernooij <jelmer@jelmer.uk>
 
 	g_mkdir_with_parents() imported from libglib and 
 	(C) Red Hat.
