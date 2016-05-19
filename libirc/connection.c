@@ -32,7 +32,7 @@ static gboolean connect_server(struct irc_network *s);
 static gboolean close_server(struct irc_network *s);
 static void reconnect(struct irc_network *server);
 static gboolean server_finish_connect(GIOChannel *ioc, GIOCondition cond,
-								  void *data);
+				      void *data);
 
 static void state_log_helper(enum log_level l, void *userdata, const char *msg)
 {
