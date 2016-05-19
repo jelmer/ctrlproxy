@@ -1,3 +1,4 @@
+libircdir ?= .
 LIBIRC_STATIC = libirc.a
 LIBIRC = $(LIBIRC_STATIC)
 
@@ -20,7 +21,7 @@ libirc_objs = \
 	   $(libircdir)/linestack.o \
 	   $(LIBIRC_SSL_OBJS)
 
-libirc_headers = \
+libirc_install_headers = \
 		  $(libircdir)/state.h \
 		  $(libircdir)/client.h \
 		  $(libircdir)/line.h \
@@ -62,12 +63,20 @@ $(libircdir)/tools/linestack-cmd$(EXEEXT): $(libircdir)/tools/linestack-cmd.o \
 	@$(LD) $(LDFLAGS) -rdynamic -o $@ $^ $(LIBS)
 
 clean::
-	@rm -f linestack-cmd$(EXEEXT) 
+	@rm -f linestack-cmd$(EXEEXT)
 
-python:: $(libircdir)/python/irc.$(SHLIBEXT) 
+python:: $(libircdir)/python/irc.$(SHLIBEXT)
 
 check-python:: $(libircdir)/python/irc.$(SHLIBEXT)
 	PYTHONPATH=$(libircdir)/python $(PYTHON) -m unittest tests.test_irc
+
+uninstall-header::
+	-rm -f $(patsubst %,$(DESTDIR)$(destincludedir)/%,$(notdir $(libirc_install_headers)))
+	-rmdir $(DESTDIR)$(destincludedir)
+
+install-header::
+	$(INSTALL) -d $(DESTDIR)$(destincludedir)
+	$(INSTALL) -m 0644 $(libirc_install_headers) $(DESTDIR)$(destincludedir)
 
 clean::
 	@rm -f $(libircdir)/python/tests/*.pyc

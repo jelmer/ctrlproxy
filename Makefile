@@ -29,7 +29,7 @@ check:: check-python
 all:: python
 endif
 
-experimental:: all 
+experimental:: all
 
 doxygen:
 	doxygen
@@ -66,7 +66,7 @@ objs = src/posix.o \
 	   $(CTRLPROXY_SSL_OBJS)
 all_objs += $(objs)
 
-headers = src/admin.h \
+install_headers = src/admin.h \
 		  src/ctcp.h \
 		  src/ctrlproxy.h \
 		  src/hooks.h \
@@ -79,7 +79,7 @@ headers = src/admin.h \
 dep_files = $(patsubst %.o, %.d, $(objs))
 
 ctrlproxy$(EXEEXT): src/main.o $(objs) $(LIBIRC)
-	@echo Linking $@: $(LD) $(LDFLAGS) -rdynamic -o $@ $^ $(LIBS)
+	@echo Linking $@
 	@$(LD) $(LDFLAGS) $(DYNAMIC) -o $@ $^ $(LIBS)
 
 src/settings.o: CFLAGS+=-DSYSCONFDIR=\"${sysconfdir}\"
@@ -105,7 +105,7 @@ ctrlproxy-admin$(EXEEXT): src/admin-cmd.o
 %.d: %.c config.h
 	@$(CC) -I. -I$(libircdir) -Isrc -M -MT $(<:.c=.o) $(CFLAGS) $(PYTHON_CFLAGS) $< -o $@
 
-# This looks a bit weird but is here to ensure that we never try to 
+# This looks a bit weird but is here to ensure that we never try to
 # run ./autogen.sh outside of bzr checkouts
 ifeq ($(BZR_CHECKOUT),yes)
 configure: autogen.sh configure.ac acinclude.m4
@@ -121,12 +121,12 @@ config.status: configure
 ctrlproxy.pc Makefile.settings config.h: config.status Makefile.settings.in ctrlproxy.pc.in
 	./$<
 
-install: all install-dirs install-bin install-header install-data install-pkgconfig $(EXTRA_INSTALL_TARGETS)
-install-dirs:
+install:: all install-dirs install-bin install-header install-data install-pkgconfig $(EXTRA_INSTALL_TARGETS)
+install-dirs::
 	$(INSTALL) -d $(DESTDIR)$(modulesdir)
 
-uninstall: uninstall-bin uninstall-header uninstall-data uninstall-pkgconfig $(patsubst install-%,uninstall-%,$(EXTRA_INSTALL_TARGETS))
-uninstall-bin:
+uninstall:: uninstall-bin uninstall-header uninstall-data uninstall-pkgconfig $(patsubst install-%,uninstall-%,$(EXTRA_INSTALL_TARGETS))
+uninstall-bin::
 	-rm -f $(DESTDIR)$(bindir)/ctrlproxy$(EXEEXT) \
 		   $(DESTDIR)$(bindir)/ctrlproxy-admin$(EXEEXT) \
 		   $(DESTDIR)$(sbindir)/ctrlproxyd$(EXEEXT)
@@ -134,19 +134,19 @@ uninstall-bin:
 	-rmdir $(DESTDIR)$(sbindir)
 	-rmdir $(DESTDIR)$(modulesdir)
 
-install-bin:
+install-bin::
 	$(INSTALL) -d $(DESTDIR)$(bindir)
 	$(INSTALL) -d $(DESTDIR)$(sbindir)
 	$(INSTALL) $(BINS) $(DESTDIR)$(bindir)
 	$(INSTALL) $(SBINS) $(DESTDIR)$(sbindir)
 
-uninstall-header:
-	-rm -f $(patsubst %,$(DESTDIR)$(destincludedir)/%,$(notdir $(headers) $(libirc_headers)))
+uninstall-header::
+	-rm -f $(patsubst %,$(DESTDIR)$(destincludedir)/%,$(notdir $(install_headers)))
 	-rmdir $(DESTDIR)$(destincludedir)
 
 install-header::
 	$(INSTALL) -d $(DESTDIR)$(destincludedir)
-	$(INSTALL) -m 0644 $(libirc_headers) $(headers) $(DESTDIR)$(destincludedir)
+	$(INSTALL) -m 0644 $(install_headers) $(DESTDIR)$(destincludedir)
 
 doc::
 	$(MAKE) -C doc PACKAGE_VERSION=$(PACKAGE_VERSION)
@@ -155,7 +155,7 @@ install-doc:: doc
 	$(INSTALL) -d $(DESTDIR)$(docdir)
 	$(MAKE) -C doc install PACKAGE_VERSION=$(PACKAGE_VERSION)
 
-uninstall-doc: 
+uninstall-doc::
 	$(MAKE) -C doc uninstall
 	-rmdir $(DESTDIR)$(docdir)
 
@@ -165,22 +165,22 @@ uninstall-data::
 	-rmdir $(DESTDIR)$(DEFAULT_CONFIG_DIR)
 	-rmdir $(DESTDIR)$(sysconfdir)
 
-install-data:
+install-data::
 	$(INSTALL) -d $(DESTDIR)$(sysconfdir)
 	$(INSTALL) -d $(DESTDIR)$(DEFAULT_CONFIG_DIR)
 	$(INSTALL) -m 0644 motd $(DESTDIR)$(DEFAULT_CONFIG_DIR)
 	$(INSTALL) -m 0644 config.default $(DESTDIR)$(DEFAULT_CONFIG_DIR)/config
 
-install-pkgconfig:
+install-pkgconfig::
 	$(INSTALL) -d $(DESTDIR)$(libdir)/pkgconfig
 	$(INSTALL) -m 0644 ctrlproxy.pc $(DESTDIR)$(libdir)/pkgconfig
 
-uninstall-pkgconfig:
+uninstall-pkgconfig::
 	-rm -f $(DESTDIR)$(libdir)/pkgconfig/ctrlproxy.pc
 	-rmdir $(DESTDIR)$(libdir)/pkgconfig
 
 gcov: check
-	$(GCOV) -f -p -o src/ src/*.c 
+	$(GCOV) -f -p -o src/ src/*.c
 
 lcov:
 	lcov --base-directory `pwd` --directory . --capture --output-file ctrlproxy.info
@@ -209,7 +209,7 @@ doc-dist:: configure
 
 dist: configure doc-dist distclean
 
-distclean:: clean 
+distclean:: clean
 	rm -f build config.h ctrlproxy.pc *.log
 	rm -rf autom4te.cache/ config.log config.status
 
@@ -272,10 +272,10 @@ check:: testsuite/check
 	@echo Running testsuite
 	@$(DEBUGGER) ./testsuite/check $(CHECK_OPTIONS)
 
-check-nofork:: 
+check-nofork::
 	$(MAKE) check CHECK_OPTIONS=-nsv
 
-check-gdb: 
+check-gdb:
 	$(MAKE) check-nofork DEBUGGER="gdb --args"
 
 clean::
