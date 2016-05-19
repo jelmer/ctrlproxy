@@ -1,7 +1,7 @@
 /*
 	ctrlproxy: A modular IRC proxy
 	(c) 2005-2006 Jelmer Vernooij <jelmer@jelmer.uk>
-	
+
 	Manual listen on ports
 
 	This program is free software; you can redistribute it and/or modify
@@ -144,7 +144,7 @@ gboolean listener_stop(struct irc_listener *l)
 		struct listener_iochannel *lio = l->incoming->data;
 
 		g_source_remove(lio->watch_id);
-		
+
 		if (strcmp(lio->address, "") != 0)
 			listener_log(LOG_INFO, l, "Stopped listening at %s:%s", lio->address,
 						 lio->port);
@@ -277,9 +277,9 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition condition, gpo
 
 	if (condition & G_IO_HUP) {
 		kill_pending_client(pc);
-		return FALSE;	
+		return FALSE;
 	}
-	
+
 	return TRUE;
 }
 
@@ -425,7 +425,7 @@ gboolean listener_start_tcp(struct irc_listener *l, const char *address, const c
 		}
 
 		setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
-	
+
 		if (bind(sock, res->ai_addr, res->ai_addrlen) < 0) {
 			/* Don't warn when binding to the same address using IPv4
 			 * /and/ ipv6. */
@@ -458,7 +458,7 @@ gboolean listener_start_tcp(struct irc_listener *l, const char *address, const c
 	}
 
 	freeaddrinfo(all_res);
-	
+
 	return l->active;
 }
 
@@ -526,7 +526,7 @@ static gboolean on_socks_pass_accepted(struct pending_client *cl, gboolean accep
 	g_io_channel_flush(cl->connection, NULL);
 
 	if (header[1] == 0x0) {
-		cl->socks.state = SOCKS_STATE_NORMAL;		
+		cl->socks.state = SOCKS_STATE_NORMAL;
 		return TRUE;
 	} else {
 		return FALSE;
@@ -547,11 +547,14 @@ static gboolean pass_handle_data(struct pending_client *cl)
 	}
 
 	if (header[0] != SOCKS_VERSION && header[0] != 0x1) {
-		listener_log(LOG_WARNING, cl->listener, "Client suddenly changed socks uname/pwd version to %x", header[0]);
+		listener_log(LOG_WARNING, cl->listener,
+					 "Client suddenly changed socks uname/pwd version to %x",
+					 header[0]);
 	 	return listener_socks_error(cl, REP_GENERAL_FAILURE);
 	}
 
-	status = g_io_channel_read_chars(cl->connection, uname, header[1], &read, NULL);
+	status = g_io_channel_read_chars(cl->connection, uname, header[1], &read,
+									 NULL);
 	if (status != G_IO_STATUS_NORMAL) {
 		return FALSE;
 	}
@@ -570,7 +573,8 @@ static gboolean pass_handle_data(struct pending_client *cl)
 
 	pass[(guint8)header[0]] = '\0';
 
-	accepted = cl->listener->ops->socks_auth_simple(cl, uname, pass, on_socks_pass_accepted);
+	accepted = cl->listener->ops->socks_auth_simple(cl, uname, pass,
+													on_socks_pass_accepted);
 	return TRUE;
 }
 
@@ -603,7 +607,7 @@ static gboolean gssapi_acceptable (struct pending_client *pc)
 						 gai_strerror(error));
 		return FALSE;
 	}
-	
+
 	principal_name = g_strdup_printf("socks@%s", address);
 
 	inbuf.length = strlen(principal_name);
@@ -710,7 +714,7 @@ static gboolean gssapi_handle_data (struct pending_client *pc)
 	);
 
 	g_free(inbuf.value);
-	
+
 	if (GSS_ERROR(major_status)) {
 		log_gssapi(pc->listener, LOG_WARNING, "processing incoming data",
 				   major_status, minor_status);
@@ -722,7 +726,7 @@ static gboolean gssapi_handle_data (struct pending_client *pc)
 	packet[0] = SOCKS_VERSION; /* SOCKS_GSSAPI_VERSION */
 	packet[1] = 1; /* Authorization message */
 	*((uint16_t *)(packet+2)) = htons(outbuf.length);
-	
+
 	memcpy(packet+4, outbuf.value, outbuf.length);
 
 	status = g_io_channel_write_chars(pc->connection, packet, 4+outbuf.length, &read, NULL);
@@ -856,7 +860,7 @@ static gboolean handle_client_socks_data(GIOChannel *ioc, struct pending_client 
 		}
 
 		/* header[2] is reserved */
-	
+
 		switch (header[3]) {
 			case ATYP_IPV4:
 				if (cl->listener->ops->socks_connect_ipv4 == NULL)
@@ -887,6 +891,6 @@ static gboolean handle_client_socks_data(GIOChannel *ioc, struct pending_client 
 				return listener_socks_error(cl, REP_ATYP_NOT_SUPPORTED);
 		}
 	}
-	
+
 	return TRUE;
 }
