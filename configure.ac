@@ -93,6 +93,10 @@ AC_CHECK_LIB(readline, readline, [
 	LIBS="$LIBS -lreadline"
 ])
 
+PKG_CHECK_MODULES(QUASSELC, quasselc, [
+	AC_DEFINE(HAVE_QUASSELC, 1, [Whether quasselc is available])
+])
+
 ###############################################################################
 # Python support
 ###############################################################################
