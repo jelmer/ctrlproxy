@@ -71,25 +71,31 @@ END_TEST
 
 START_TEST(test_prefix_time)
 	struct irc_line *ol, *nl;
+	time_t timestamp = 1209309035;
+	char stime[512];
 
 	ol = irc_parse_line(":me@host PRIVMSG to :hoi\r\n");
 
-	nl = line_prefix_time(ol, 1209309035);
+	nl = line_prefix_time(ol, timestamp);
 
-	fail_unless (!strcmp(nl->args[2], "[17:10:35] hoi"), "Got: %s", nl->args[2]);
+	strftime(stime, sizeof(stime), "[%H:%M:%S] ", localtime(&timestamp));
+
+	fail_unless (!strncmp(nl->args[2], stime, strlen(stime)), "Got %s", nl->args[2]);
+	fail_unless (!strcmp(nl->args[2]+strlen(stime), "hoi"), "Got %s", nl->args[2]);
 
 	ol = irc_parse_line(":me@host PRIVMSG to :\001ACTION bla\001\r\n");
 
-	nl = line_prefix_time(ol, 1209309035);
+	nl = line_prefix_time(ol, timestamp);
 
-	fail_unless (!strcmp(nl->args[2], "\001ACTION [17:10:35] bla\001"), "Got: %s", nl->args[2]);
+	fail_unless (!strncmp(nl->args[2], "\001ACTION ", strlen("\001ACTION ")), "Got: %s", nl->args[2]);
+	fail_unless (!strncmp(nl->args[2]+strlen("\001ACTION "), stime, strlen(stime)), "Got: %s", nl->args[2]);
+	fail_unless (!strcmp(nl->args[2]+strlen("\001ACTION ")+strlen(stime), "bla\001"), "Got: %s", nl->args[2]);
 
 	ol = irc_parse_line(":me@host PRIVMSG to :\001FINGER bla\001\r\n");
 
-	nl = line_prefix_time(ol, 1209309035);
+	nl = line_prefix_time(ol, timestamp);
 
 	fail_unless (!strcmp(nl->args[2], "\001FINGER bla\001"), "Got: %s", nl->args[2]);
-
 END_TEST
 
 START_TEST(test_free_null)
