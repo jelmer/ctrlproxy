@@ -1,4 +1,4 @@
-/* 
+/*
 	ctrlproxy: A modular IRC proxy
 	(c) 2002-2003 Jelmer Vernooij <jelmer@jelmer.uk>
 
@@ -120,10 +120,10 @@ struct irc_line * irc_parse_line(const char *d)
 			*p = '\0';
 			l->argc++;
 			l->args[l->argc] = p+1;
-			if (*(p+1) == ':'){ 
-				l->has_endcolon = WITH_COLON; 
-				dosplit = 0; 
-				l->args[l->argc]++; 
+			if (*(p+1) == ':'){
+				l->has_endcolon = WITH_COLON;
+				dosplit = 0;
+				l->args[l->argc]++;
 			}
 		}
 
@@ -149,13 +149,13 @@ struct irc_line * irc_parse_line(const char *d)
  * @param l Line
  * @param error Error
  */
-GIOStatus irc_send_line(GIOChannel *c, GIConv iconv, 
-						const struct irc_line *l, GError **error) 
+GIOStatus irc_send_line(GIOChannel *c, GIConv iconv,
+						const struct irc_line *l, GError **error)
 {
 	char *raw, *cvrt = NULL;
 	GIOStatus ret;
 	gsize bytes_written = 0;
- 
+
 	g_assert(c);
 
 	raw = irc_line_string_nl(l);
@@ -178,7 +178,7 @@ GIOStatus irc_send_line(GIOChannel *c, GIConv iconv,
 }
 
 
-char *irc_line_string_nl(const struct irc_line *l) 
+char *irc_line_string_nl(const struct irc_line *l)
 {
 	char *raw;
 
@@ -282,7 +282,7 @@ char *irc_line_string(const struct irc_line *l)
 	return ret;
 }
 
-void free_line(struct irc_line *l) 
+void free_line(struct irc_line *l)
 {
 	int i;
 	if (l == NULL)
@@ -309,15 +309,15 @@ char *line_get_nick(const struct irc_line *l)
 
 	nick = g_strdup(l->origin);
 	t = strchr(nick, '!');
-	if (t == NULL) 
+	if (t == NULL)
 		return nick;
 
 	*t = '\0';
 	return nick;
 }
 
-GIOStatus irc_sendf(GIOChannel *c, GIConv iconv, 
-					GError **error, char *fmt, ...) 
+GIOStatus irc_sendf(GIOChannel *c, GIConv iconv,
+					GError **error, char *fmt, ...)
 {
 	va_list ap;
 	char *r = NULL;
@@ -333,13 +333,13 @@ GIOStatus irc_sendf(GIOChannel *c, GIConv iconv,
 	g_free(r);
 	ret = irc_send_line(c, iconv, l, error);
 
-	free_line(l); 
+	free_line(l);
 
 	return ret;
 }
 
-GIOStatus irc_send_args(GIOChannel *c, GIConv iconv, 
-						GError **error, ...) 
+GIOStatus irc_send_args(GIOChannel *c, GIConv iconv,
+						GError **error, ...)
 {
 	struct irc_line *l;
 	GIOStatus ret;
@@ -353,12 +353,12 @@ GIOStatus irc_send_args(GIOChannel *c, GIConv iconv,
 
 	ret = irc_send_line(c, iconv, l, error);
 
-	free_line(l); 
+	free_line(l);
 
 	return ret;
 }
 
-struct irc_line *linedup(const struct irc_line *l) 
+struct irc_line *linedup(const struct irc_line *l)
 {
 	int i;
 	struct irc_line *ret;
@@ -376,7 +376,7 @@ struct irc_line *linedup(const struct irc_line *l)
 	return ret;
 }
 
-GIOStatus irc_recv_line(GIOChannel *c, GIConv iconv, 
+GIOStatus irc_recv_line(GIOChannel *c, GIConv iconv,
 						GError **error, struct irc_line **l)
 {
 	gchar *raw = NULL, *cvrt = NULL;
@@ -420,10 +420,10 @@ static int line_len(const struct irc_line *l)
 	int len = 0;
 	int i;
 
-	len = 4; /* \r\n for end of line, possibly colon before last argument and 
+	len = 4; /* \r\n for end of line, possibly colon before last argument and
 				colon at start of the line */
 
-	for (i = 0; i < l->argc; i++) 
+	for (i = 0; i < l->argc; i++)
 		len += strlen(l->args[i]) + 1;
 
 	return len;

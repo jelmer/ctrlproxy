@@ -47,7 +47,7 @@ static GList *known_keys = NULL;
 static void config_cleanup_networks_dir(struct ctrlproxy_config *cfg);
 static void config_save_log(struct log_file_config *data,
 							struct ctrlproxy_config *config);
-static void config_save_auto_away(struct auto_away_config *d, 
+static void config_save_auto_away(struct auto_away_config *d,
 								  struct ctrlproxy_config *config);
 
 static const char *builtin_known_keys[] = {
@@ -149,7 +149,7 @@ gboolean g_key_file_save_to_file(GKeyFile *kf, const gchar *file, GError **error
 static void config_save_tcp_servers(struct network_config *n, GKeyFile *kf, const char *groupname)
 {
 	GList *gl;
-	int i = 0; 
+	int i = 0;
 	gchar **values = g_new0(gchar *, g_list_length(n->type_settings.tcp.servers)+1);
 	
 	for (gl = n->type_settings.tcp.servers; gl; gl = gl->next) {
@@ -165,7 +165,7 @@ static void config_save_tcp_servers(struct network_config *n, GKeyFile *kf, cons
 
 		if (ts->bind_address) {
 			g_key_file_set_string(kf, name, "bind", ts->bind_address);
-		} else 
+		} else
 			g_key_file_remove_key(kf, name, "bind", NULL);
 
 		i++;
@@ -176,7 +176,7 @@ static void config_save_tcp_servers(struct network_config *n, GKeyFile *kf, cons
 	g_strfreev(values);
 }
 
-static void config_save_network(struct ctrlproxy_config *cfg, 
+static void config_save_network(struct ctrlproxy_config *cfg,
 								const char *dir, struct network_config *n, GList **channel_keys)
 {
 	GList *gl;
@@ -193,11 +193,11 @@ static void config_save_network(struct ctrlproxy_config *cfg,
 
 	if (n->fullname != NULL)
 		g_key_file_set_string(kf, n->groupname, "fullname", n->fullname);
-	else 
+	else
 		g_key_file_remove_key(kf, n->groupname, "fullname", NULL);
 	if (n->nick != NULL)
 		g_key_file_set_string(kf, n->groupname, "nick", n->nick);
-	else 
+	else
 		g_key_file_remove_key(kf, n->groupname, "nick", NULL);
 	if (n->username != NULL)
 		g_key_file_set_string(kf, n->groupname, "username", n->username);
@@ -225,7 +225,7 @@ static void config_save_network(struct ctrlproxy_config *cfg,
 	case NETWORK_TCP:
 		config_save_tcp_servers(n, kf, n->groupname);
 		if (n->type_settings.tcp.default_bind_address != NULL)
-			g_key_file_set_string(kf, n->groupname, "bind", 
+			g_key_file_set_string(kf, n->groupname, "bind",
 								  n->type_settings.tcp.default_bind_address);
 		else
 			g_key_file_remove_key(kf, n->groupname, "bind", NULL);
@@ -260,7 +260,7 @@ static void config_save_network(struct ctrlproxy_config *cfg,
 	if (autojoin_list == NULL)
 		g_key_file_remove_key(kf, n->groupname, "autojoin", NULL);
 	else
-		g_key_file_set_string_list(kf, n->groupname, "autojoin", (const gchar **)autojoin_list, 
+		g_key_file_set_string_list(kf, n->groupname, "autojoin", (const gchar **)autojoin_list,
 							   autojoin_list_count);
 
 	g_free(autojoin_list);
@@ -274,7 +274,7 @@ static void config_save_listeners(struct ctrlproxy_config *cfg, const char *path
 {
 	GList *gl;
 	char *filename;
-	GKeyFile *kf; 
+	GKeyFile *kf;
 	GError *error = NULL;
 	gboolean empty = TRUE;
 
@@ -310,7 +310,7 @@ static void config_save_listeners(struct ctrlproxy_config *cfg, const char *path
 		} else {
 			char *tmp;
 			empty = FALSE;
-			if (!l->address) 
+			if (!l->address)
 				tmp = g_strdup(l->port);
 			else
 				tmp = g_strdup_printf("%s:%s", l->address, l->port);
@@ -340,7 +340,7 @@ static void config_save_listeners(struct ctrlproxy_config *cfg, const char *path
 
 	if (empty) {
 		unlink(filename);
-	} else { 
+	} else {
 		if (!g_key_file_save_to_file(kf, filename, &error)) {
 			log_global(LOG_WARNING, "Unable to save to \"%s\": %s", filename, error->message);
 			g_error_free(error);
@@ -366,14 +366,14 @@ static void config_save_networks(struct ctrlproxy_config *cfg, const char *confi
 		}
 
 
-		if (!n->implicit) 
+		if (!n->implicit)
 			config_save_network(cfg, networksdir, n, &channel_keys);
 	}
 
 	config_cleanup_networks_dir(cfg);
 
 	if (channel_keys != NULL) {
-		char *filename = g_build_filename(cfg->config_dir, "keys", 
+		char *filename = g_build_filename(cfg->config_dir, "keys",
 									  NULL);
 		keyfile_write_file(channel_keys, CHANNEL_KEY_FILE_HEADER, filename);
 		g_free(filename);
@@ -447,26 +447,26 @@ void save_configuration(struct ctrlproxy_config *cfg, const char *configuration_
 
 	switch (cfg->report_time) {
 	case REPORT_TIME_ALWAYS:
-		g_key_file_set_string(cfg->keyfile, "global", "report-time", 
+		g_key_file_set_string(cfg->keyfile, "global", "report-time",
 							  "always");
 		break;
 	case REPORT_TIME_NEVER:
-		g_key_file_set_string(cfg->keyfile, "global", "report-time", 
+		g_key_file_set_string(cfg->keyfile, "global", "report-time",
 							  "never");
 		break;
 	case REPORT_TIME_REPLICATION:
-		g_key_file_set_string(cfg->keyfile, "global", "report-time", 
+		g_key_file_set_string(cfg->keyfile, "global", "report-time",
 							  "replication");
 		break;
 	}
 
 	if (cfg->default_realname != NULL)
 		g_key_file_set_string(cfg->keyfile, "global", "default-fullname", cfg->default_realname);
-	else 
+	else
 		g_key_file_remove_key(cfg->keyfile, "global", "default-fullname", NULL);
 	if (cfg->default_nick != NULL)
 		g_key_file_set_string(cfg->keyfile, "global", "default-nick", cfg->default_nick);
-	else 
+	else
 		g_key_file_remove_key(cfg->keyfile, "global", "default-nick", NULL);
 	if (cfg->default_username != NULL)
 		g_key_file_set_string(cfg->keyfile, "global", "default-username", cfg->default_username);
@@ -496,7 +496,7 @@ void save_configuration(struct ctrlproxy_config *cfg, const char *configuration_
 		}
 	}
 	
-	if (i > 0) 
+	if (i > 0)
 		g_key_file_set_string_list(cfg->keyfile, "global", "autoconnect", (const gchar **)list, i);
 
 	g_free(list);
@@ -511,7 +511,7 @@ static void config_load_channel(struct network_config *n, GKeyFile *kf, const ch
 	struct channel_config *ch = g_new0(struct channel_config, 1);
 
 	ch->name = g_strdup(name);
-	if (g_key_file_has_key(kf, name, "key", NULL)) 
+	if (g_key_file_has_key(kf, name, "key", NULL))
 		ch->key = g_key_file_get_string(kf, name, "key", NULL);
 
 	if (g_key_file_has_key(kf, name, "autojoin", NULL))
@@ -555,9 +555,9 @@ static struct channel_config *config_find_add_channel(struct network_config *nc,
 	GList *gl;
 	struct channel_config *cc;
 
-	for (gl = nc->channels; gl; gl = gl->next) { 
+	for (gl = nc->channels; gl; gl = gl->next) {
 		cc = gl->data;
-		if (!strcasecmp(cc->name, name)) 
+		if (!strcasecmp(cc->name, name))
 			return cc;
 
 	}
@@ -570,9 +570,9 @@ static struct channel_config *config_find_add_channel(struct network_config *nc,
 	return cc;
 }
 
-static struct network_config *config_load_network_keyfile_group(struct ctrlproxy_config *cfg, 
+static struct network_config *config_load_network_keyfile_group(struct ctrlproxy_config *cfg,
 																const char *networkname,
-																GKeyFile *kf, 
+																GKeyFile *kf,
 																const char *groupname, GList *channel_keys)
 {
 	struct network_config *n;
@@ -628,11 +628,11 @@ static struct network_config *config_load_network_keyfile_group(struct ctrlproxy
 
 	n->name = g_strdup(networkname);
 
-	if (g_key_file_has_key(kf, groupname, "program", NULL)) 
+	if (g_key_file_has_key(kf, groupname, "program", NULL))
 		n->type = NETWORK_PROGRAM;
-	else if (g_key_file_has_key(kf, groupname, "virtual", NULL)) 
+	else if (g_key_file_has_key(kf, groupname, "virtual", NULL))
 		n->type = NETWORK_VIRTUAL;
-	else 
+	else
 		n->type = NETWORK_TCP;
 
 	switch (n->type) {
@@ -678,7 +678,7 @@ static struct network_config *config_load_network_keyfile_group(struct ctrlproxy
 	return n;
 }
 
-static struct network_config *config_load_network_file(struct ctrlproxy_config *cfg, const char *dirname, 
+static struct network_config *config_load_network_file(struct ctrlproxy_config *cfg, const char *dirname,
 												  const char *name, GList *channel_keys)
 {
 	GKeyFile *kf;
@@ -728,7 +728,7 @@ static struct network_config *find_create_network_config(struct ctrlproxy_config
 		if (g_strcasecmp(nc->name, name) == 0)
 			return nc;
 
-		if (nc->type != NETWORK_TCP) 
+		if (nc->type != NETWORK_TCP)
 			continue;
 
 		for (gl1 = nc->type_settings.tcp.servers; gl1; gl1 = gl1->next) {
@@ -780,12 +780,12 @@ static void config_load_listeners_socks(struct ctrlproxy_config *cfg)
 
 	l = g_new0(struct listener_config, 1);
 
-	if (g_key_file_has_key(kf, "socks", "port", NULL)) 
+	if (g_key_file_has_key(kf, "socks", "port", NULL))
 		l->port = g_key_file_get_string(kf, "socks", "port", NULL);
-	else 
+	else
 		l->port = g_strdup_printf("%d", DEFAULT_SOCKS_PORT);
 
-	/* We can use the socks listener as default listener, if there was 
+	/* We can use the socks listener as default listener, if there was
 	 * no default listener specified */
 	if (cfg->listeners == NULL ||
 		!((struct listener_config *)cfg->listeners->data)->is_default)
@@ -821,7 +821,7 @@ static void config_load_listeners(struct ctrlproxy_config *cfg)
 	GError *error = NULL;
 
 	if (g_key_file_has_key(cfg->keyfile, "listener", "pasword", NULL)) {
-		g_key_file_set_string(cfg->keyfile, "global", "password", 
+		g_key_file_set_string(cfg->keyfile, "global", "password",
 							  g_key_file_get_string(cfg->keyfile, "listener", "password", NULL));
 		g_key_file_remove_key(cfg->keyfile, "listener", "password", NULL);
 	}
@@ -925,7 +925,7 @@ static void config_load_listeners(struct ctrlproxy_config *cfg)
 }
 
 
-struct network_config *config_find_network(struct ctrlproxy_config *cfg, 
+struct network_config *config_find_network(struct ctrlproxy_config *cfg,
 										   const char *name)
 {
 	GList *gl;
@@ -999,7 +999,7 @@ static void config_load_networks(struct ctrlproxy_config *cfg, GList *channel_ke
 		if (!strcmp(groups[i], "global"))
 			continue;
 
-		if (!strncasecmp(groups[i], "irc://", strlen("irc://")) || 
+		if (!strncasecmp(groups[i], "irc://", strlen("irc://")) ||
 			!strncasecmp(groups[i], "ircs://", strlen("ircs://")))
 			continue;
 
@@ -1098,7 +1098,7 @@ static void config_load_log(struct ctrlproxy_config *config)
 		log_custom_load(data);
 	}
 
-	if (g_key_file_has_group(kf, "log-irssi") || 
+	if (g_key_file_has_group(kf, "log-irssi") ||
 		(logging != NULL && !strcmp(logging, "irssi"))) {
 		data = g_new0(struct log_file_config, 1);
 		data->is_irssi = TRUE;
@@ -1124,7 +1124,7 @@ static void config_load_log(struct ctrlproxy_config *config)
 			data->logbasedir = g_key_file_get_string(kf, "log-irssi", "logfile", NULL);
 			data->logfilename = g_strdup_printf("%s/%%N/%%@", data->logbasedir);
 		} else {
-			data->logbasedir = g_build_filename(config->config_dir, 
+			data->logbasedir = g_build_filename(config->config_dir,
 										  "log_irssi", NULL);
 
 			data->logbasedir_is_default = TRUE;
@@ -1137,8 +1137,8 @@ static void config_load_log(struct ctrlproxy_config *config)
 		log_custom_load(data);
 	}
 
-	if (logging != NULL && 
-			strcmp(logging, "irssi") != 0 && 
+	if (logging != NULL &&
+			strcmp(logging, "irssi") != 0 &&
 			strcmp(logging, "custom") != 0 &&
 			strcmp(logging, "none") != 0) {
 		log_global(LOG_WARNING, "Unknown log type `%s'", logging);
@@ -1215,8 +1215,8 @@ struct ctrlproxy_config *init_configuration(void)
 	return cfg;
 }
 
-struct ctrlproxy_config *load_configuration(const char *dir, 
-											gboolean from_source) 
+struct ctrlproxy_config *load_configuration(const char *dir,
+											gboolean from_source)
 {
 	GKeyFile *kf;
 	GError *error = NULL;
@@ -1273,11 +1273,11 @@ struct ctrlproxy_config *load_configuration(const char *dir,
 
 	if (g_key_file_has_key(kf, "global", "report-time", NULL)) {
 		char *setting = g_key_file_get_string(kf, "global", "report-time", NULL);
-		if (!g_strcasecmp(setting, "never") || !g_strcasecmp(setting, "false")) 
+		if (!g_strcasecmp(setting, "never") || !g_strcasecmp(setting, "false"))
 			cfg->report_time = REPORT_TIME_NEVER;
 		else if (!g_strcasecmp(setting, "always"))
 			cfg->report_time = REPORT_TIME_ALWAYS;
-		else if  (!g_strcasecmp(setting, "replication") || 
+		else if  (!g_strcasecmp(setting, "replication") ||
 				  !g_strcasecmp(setting, "true"))
 			cfg->report_time = REPORT_TIME_REPLICATION;
 		else {
@@ -1312,12 +1312,12 @@ struct ctrlproxy_config *load_configuration(const char *dir,
 
     if (g_key_file_has_key(kf, "global", "learn-nickserv", NULL))
 		cfg->learn_nickserv = g_key_file_get_boolean(kf, "global", "learn-nickserv", NULL);
-    else 
+    else
 	    cfg->learn_nickserv = TRUE;
 
     if (g_key_file_has_key(kf, "global", "learn-network-name", NULL))
 		cfg->learn_network_name = g_key_file_get_boolean(kf, "global", "learn-network-name", NULL);
-    else 
+    else
 	    cfg->learn_network_name = TRUE;
 
 	if (g_key_file_has_key(kf, "global", "create-implicit", NULL))
@@ -1380,7 +1380,7 @@ struct ctrlproxy_config *load_configuration(const char *dir,
 	config_load_log(cfg);
 	config_load_auto_away(&cfg->auto_away, cfg->keyfile);
 
-	keyfile_filename = g_build_filename(cfg->config_dir, "keys", 
+	keyfile_filename = g_build_filename(cfg->config_dir, "keys",
 									  NULL);
 
 	if (g_file_test(keyfile_filename, G_FILE_TEST_EXISTS)) {
@@ -1396,7 +1396,7 @@ struct ctrlproxy_config *load_configuration(const char *dir,
 	/* Check for unknown parameters */
 	keys = g_key_file_get_keys(kf, "global", NULL, NULL);
 	for (i = 0; keys[i] != NULL; i++) {
-		if (!config_known_key(keys[i])) 
+		if (!config_known_key(keys[i]))
 			log_global(LOG_WARNING, "Unknown setting `%s' in configuration file", keys[i]);
 	}
 	g_strfreev(keys);
@@ -1418,7 +1418,7 @@ struct ctrlproxy_config *load_configuration(const char *dir,
 	return cfg;
 }
 
-struct network_config *network_config_init(struct ctrlproxy_config *cfg) 
+struct network_config *network_config_init(struct ctrlproxy_config *cfg)
 {
 	struct network_config *s = g_new0(struct network_config, 1);
 
@@ -1427,7 +1427,7 @@ struct network_config *network_config_init(struct ctrlproxy_config *cfg)
 	s->autoconnect = FALSE;
 	s->reconnect_interval = -1;
 
-	if (cfg) 
+	if (cfg)
 		cfg->networks = g_list_append(cfg->networks, s);
 	return s;
 }
@@ -1450,7 +1450,7 @@ void free_config(struct ctrlproxy_config *cfg)
 			g_free(cc);
 		}
 		switch (nc->type) {
-		case NETWORK_TCP: 
+		case NETWORK_TCP:
 			while (nc->type_settings.tcp.servers) {
 				struct tcp_server_config *tc = nc->type_settings.tcp.servers->data;
 				g_free(tc->host);
@@ -1473,7 +1473,7 @@ void free_config(struct ctrlproxy_config *cfg)
 			break;
 		}
 		cfg->networks = g_list_remove(cfg->networks, nc);
-		if (nc->keyfile != NULL && nc->filename != NULL) 
+		if (nc->keyfile != NULL && nc->filename != NULL)
 			g_key_file_free(nc->keyfile);
 		g_free(nc->filename);
 		g_free(nc->groupname);
@@ -1508,7 +1508,7 @@ gboolean create_configuration(const char *config_dir, gboolean from_source)
 	}
 
 	global = load_global(DEFAULT_CONFIG_DIR, from_source);
-	if (global == NULL) { 
+	if (global == NULL) {
 		fprintf(stderr, "Unable to load default configuration '%s'\n", DEFAULT_CONFIG_DIR);	
 		return FALSE;
 	}
@@ -1525,11 +1525,11 @@ gboolean create_configuration(const char *config_dir, gboolean from_source)
 	if (port[strlen(port)-1] == '\n')
 		port[strlen(port)-1] = '\0';
 
-	if (strlen(port) == 0) 
+	if (strlen(port) == 0)
 		snprintf(port, sizeof(port), "%d", DEFAULT_ADMIN_PORT);
 
 	l = g_new0(struct listener_config, 1);
-	pass = getpass("Please specify a password for the administration interface: "); 
+	pass = getpass("Please specify a password for the administration interface: ");
 	l->port = port;
 	l->is_default = TRUE;
 	if (!strcmp(pass, "")) {

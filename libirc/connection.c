@@ -172,18 +172,18 @@ static struct tcp_server_config *network_get_next_tcp_server(struct irc_network 
 	cur = g_list_find(nc->type_settings.tcp.servers, n->connection.data.tcp.current_server);
 
 	/* Get next available server */
-	if (cur != NULL && cur->next != NULL) 
-		cur = cur->next; 
-	else 
+	if (cur != NULL && cur->next != NULL)
+		cur = cur->next;
+	else
 		cur = nc->type_settings.tcp.servers;
 
-	if (cur != NULL) 
-		return cur->data; 
+	if (cur != NULL)
+		return cur->data;
 
 	return NULL;
 }
 
-static gboolean network_send_line_direct(struct irc_network *s, struct irc_client *c, 
+static gboolean network_send_line_direct(struct irc_network *s, struct irc_client *c,
 										 const struct irc_line *ol, GError **error)
 {
 	struct irc_line nl, *l;
@@ -219,7 +219,7 @@ static gboolean network_send_line_direct(struct irc_network *s, struct irc_clien
  * @param c Client the line was sent by originally.
  * @param ol Line to send to the network
  */
-gboolean network_send_line(struct irc_network *s, struct irc_client *c, 
+gboolean network_send_line(struct irc_network *s, struct irc_client *c,
 						   const struct irc_line *ol)
 {
 	struct irc_line l;
@@ -247,7 +247,7 @@ gboolean network_send_line(struct irc_network *s, struct irc_client *c,
  * @param n Network to receive data
  * @param num Number of the response to receive
  */
-gboolean virtual_network_recv_response(struct irc_network *n, int num, ...) 
+gboolean virtual_network_recv_response(struct irc_network *n, int num, ...)
 {
 	va_list ap;
 	struct irc_line *l;
@@ -269,9 +269,9 @@ gboolean virtual_network_recv_response(struct irc_network *n, int num, ...)
 
 	l->args[0] = g_strdup_printf("%03d", num);
 
-	if (n->external_state != NULL && n->external_state->me.nick != NULL) 
+	if (n->external_state != NULL && n->external_state->me.nick != NULL)
 		l->args[1] = g_strdup(n->external_state->me.nick);
-	else 
+	else
 		l->args[1] = g_strdup("*");
 
 	l->argc+=2;
@@ -295,7 +295,7 @@ gboolean virtual_network_recv_line(struct irc_network *s, struct irc_line *l)
 	g_assert(s != NULL);
 	g_assert(l != NULL);
 
-	if (l->origin == NULL) 
+	if (l->origin == NULL)
 		l->origin = g_strdup(get_my_hostname());
 
 	return s->callbacks->process_from_server(s, l);
@@ -352,7 +352,7 @@ gboolean network_send_args(struct irc_network *s, ...)
 }
 
 static gboolean bindsock(struct irc_network *s,
-						 int sock, struct addrinfo *res, 
+						 int sock, struct addrinfo *res,
 						 const char *address,
 						 const char *service)
 {
@@ -372,18 +372,18 @@ static gboolean bindsock(struct irc_network *s,
 
 	error = getaddrinfo(address, service, &hints_bind, &addrinfo_bind);
 	if (error) {
-		network_log(LOG_ERROR, s, 
-					"Unable to lookup %s:%s %s", address, service, 
+		network_log(LOG_ERROR, s,
+					"Unable to lookup %s:%s %s", address, service,
 					gai_strerror(error));
 		return FALSE;
-	} 
+	}
 
-	for (res_bind = addrinfo_bind; 
+	for (res_bind = addrinfo_bind;
 		 res_bind; res_bind = res_bind->ai_next) {
 		if (bind(sock, res_bind->ai_addr, res_bind->ai_addrlen) < 0) {
-			network_log(LOG_ERROR, s, "Unable to bind to %s:%s %s", 
+			network_log(LOG_ERROR, s, "Unable to bind to %s:%s %s",
 						address, service, strerror(errno));
-		} else 
+		} else
 			break;
 	}
 	freeaddrinfo(addrinfo_bind);
@@ -401,7 +401,7 @@ static void ping_server(struct irc_network *server, gboolean ping_source)
 {
 	gint silent_time = time(NULL) - server->connection.last_line_recvd;
 	if (silent_time > MAX_SILENT_TIME) {
-		network_report_disconnect(server, "Ping timeout (%d seconds)", 
+		network_report_disconnect(server, "Ping timeout (%d seconds)",
 								  silent_time);
 		reconnect(server);
 	} else if (silent_time > MIN_SILENT_TIME) {
@@ -409,7 +409,7 @@ static void ping_server(struct irc_network *server, gboolean ping_source)
 	}
 }
 
-static gboolean connect_current_tcp_server(struct irc_network *s) 
+static gboolean connect_current_tcp_server(struct irc_network *s)
 {
 	struct addrinfo *res;
 	int sock = -1;
@@ -452,7 +452,7 @@ static gboolean connect_current_tcp_server(struct irc_network *s)
 	/* Lookup */
 	error = getaddrinfo(cs->host, cs->port, &hints, &addrinfo);
 	if (error) {
-		network_log(LOG_ERROR, s, "Unable to lookup %s:%s %s", 
+		network_log(LOG_ERROR, s, "Unable to lookup %s:%s %s",
 					cs->host, cs->port, gai_strerror(error));
 		if (addrinfo != NULL)
 			freeaddrinfo(addrinfo);
@@ -487,7 +487,7 @@ static gboolean connect_current_tcp_server(struct irc_network *s)
 			continue;
 		}
 
-		break; 
+		break;
 	}
 
 	size = sizeof(struct sockaddr_storage);
@@ -499,7 +499,7 @@ static gboolean connect_current_tcp_server(struct irc_network *s)
 		return FALSE;
 	}
 
-	s->connection.data.tcp.remote_name = g_memdup(res->ai_addr, 
+	s->connection.data.tcp.remote_name = g_memdup(res->ai_addr,
 												  res->ai_addrlen);
 	s->connection.data.tcp.local_name = g_malloc(size);
 	s->connection.data.tcp.namelen = getsockname(sock, s->connection.data.tcp.local_name, &size);
@@ -514,7 +514,7 @@ static gboolean connect_current_tcp_server(struct irc_network *s)
 		g_io_channel_set_close_on_unref(ioc, TRUE);
 		g_io_channel_set_flags(ioc, G_IO_FLAG_NONBLOCK, NULL);
 
-		ioc = ssl_wrap_iochannel (ioc, SSL_TYPE_CLIENT, 
+		ioc = ssl_wrap_iochannel (ioc, SSL_TYPE_CLIENT,
 								 s->connection.data.tcp.current_server->host,
 								 s->ssl_credentials
 								 );
@@ -531,8 +531,8 @@ static gboolean connect_current_tcp_server(struct irc_network *s)
 	s->connection.state = NETWORK_CONNECTION_STATE_CONNECTING;
 
 	if (!connect_finished) {
-		s->connection.data.tcp.connect_id = g_io_add_watch(ioc, 
-												   G_IO_OUT|G_IO_ERR|G_IO_HUP, 
+		s->connection.data.tcp.connect_id = g_io_add_watch(ioc,
+												   G_IO_OUT|G_IO_ERR|G_IO_HUP,
 												   server_finish_connect, s);
 	} else {
 		server_finish_connect(ioc, G_IO_OUT, s);
@@ -561,10 +561,10 @@ static void reconnect(struct irc_network *server)
 		nc->type == NETWORK_IOCHANNEL ||
 		nc->type == NETWORK_PROGRAM) {
 		server->connection.state = NETWORK_CONNECTION_STATE_RECONNECT_PENDING;
-		network_log(LOG_INFO, server, "Reconnecting in %d seconds", 
+		network_log(LOG_INFO, server, "Reconnecting in %d seconds",
 					server->reconnect_interval);
-		server->reconnect_id = g_timeout_add(1000 * 
-								server->reconnect_interval, 
+		server->reconnect_id = g_timeout_add(1000 *
+								server->reconnect_interval,
 								(GSourceFunc) delayed_connect_server, server);
 	} else {
 		connect_server(server);	
@@ -579,7 +579,7 @@ static void free_tcp_names(struct irc_network *n)
 	n->connection.data.tcp.remote_name = NULL;
 }
 
-static gboolean close_server(struct irc_network *n) 
+static gboolean close_server(struct irc_network *n)
 {
 	struct network_config *nc = n->private_data;
 
@@ -601,7 +601,7 @@ static gboolean close_server(struct irc_network *n)
 
 	if (n->connection.state == NETWORK_CONNECTION_STATE_NOT_CONNECTED) {
 		return FALSE;
-	} 
+	}
 
 	network_send_args(n, "QUIT", NULL);
 
@@ -609,15 +609,15 @@ static gboolean close_server(struct irc_network *n)
 		n->callbacks->disconnect(n);
 
 	if (n->external_state) {
-		free_network_state(n->external_state); 
+		free_network_state(n->external_state);
 		n->external_state = NULL;
 	}
 
 	g_assert(nc);
 
 	switch (nc->type) {
-	case NETWORK_TCP: 
-	case NETWORK_PROGRAM: 
+	case NETWORK_TCP:
+	case NETWORK_PROGRAM:
 	case NETWORK_IOCHANNEL:
 		irc_transport_disconnect(n->connection.transport);
 		if (n->connection.data.tcp.ping_id > 0) {
@@ -629,7 +629,7 @@ static gboolean close_server(struct irc_network *n)
 		n->connection.transport = NULL;
 		break;
 	case NETWORK_VIRTUAL:
-		if (n->connection.data.virtual.ops && 
+		if (n->connection.data.virtual.ops &&
 			n->connection.data.virtual.ops->fini) {
 			n->connection.data.virtual.ops->fini(n);
 		}
@@ -680,13 +680,13 @@ static pid_t piped_child(struct irc_network *s, char* const command[], int *f_in
 	return pid;
 }
 
-static gboolean server_finish_connect(GIOChannel *ioc, GIOCondition cond, 
+static gboolean server_finish_connect(GIOChannel *ioc, GIOCondition cond,
 								  void *data)
 {
 	struct irc_network *s = data;
 
 	if (cond & G_IO_ERR) {
-		network_report_disconnect(s, "Error connecting: %s", 
+		network_report_disconnect(s, "Error connecting: %s",
 								  g_io_channel_unix_get_sock_error(ioc));
 		reconnect(s);
 		return FALSE;
@@ -699,7 +699,7 @@ static gboolean server_finish_connect(GIOChannel *ioc, GIOCondition cond,
 		network_set_iochannel(s, ioc);
 
 		s->connection.last_line_recvd = time(NULL);
-		s->connection.data.tcp.ping_id = g_timeout_add(5000, 
+		s->connection.data.tcp.ping_id = g_timeout_add(5000,
 									   (GSourceFunc) ping_server, s);
 
 		return FALSE;
@@ -725,7 +725,7 @@ gboolean network_set_iochannel(struct irc_network *s, GIOChannel *ioc)
 	struct network_config *nc = s->private_data;
 	g_assert(nc->type != NETWORK_VIRTUAL);
 	if (g_io_channel_set_encoding(ioc, NULL, &error) != G_IO_STATUS_NORMAL) {
-		network_log(LOG_ERROR, s, "Unable to change encoding: %s", 
+		network_log(LOG_ERROR, s, "Unable to change encoding: %s",
 					error?error->message:"unknown");
 		if (error != NULL)
 			g_error_free(error);
@@ -733,7 +733,7 @@ gboolean network_set_iochannel(struct irc_network *s, GIOChannel *ioc)
 	}
 	g_io_channel_set_close_on_unref(ioc, TRUE);
 	if (g_io_channel_set_flags(ioc, G_IO_FLAG_NONBLOCK, &error) != G_IO_STATUS_NORMAL) {
-		network_log(LOG_ERROR, s, "Unable to change flags: %s", 
+		network_log(LOG_ERROR, s, "Unable to change flags: %s",
 					error?error->message:"unknown");
 		if (error != NULL)
 			g_error_free(error);
@@ -742,8 +742,8 @@ gboolean network_set_iochannel(struct irc_network *s, GIOChannel *ioc)
 
 	s->connection.transport = irc_transport_new_iochannel(ioc);
 
-	irc_transport_set_callbacks(s->connection.transport, 
-								&network_callbacks, 
+	irc_transport_set_callbacks(s->connection.transport,
+								&network_callbacks,
 								s);
 
 	server_send_login(s);
@@ -794,14 +794,14 @@ static gboolean connect_virtual(struct irc_network *s)
 
 	s->connection.data.virtual.ops = find_virtual_network(nc->type_settings.virtual_name);
 	if (s->connection.data.virtual.ops == NULL) {
-		log_global(LOG_WARNING, "Unable to find virtual network kind '%s'", 
+		log_global(LOG_WARNING, "Unable to find virtual network kind '%s'",
 				   nc->type_settings.virtual_name);
 		return FALSE;
 	}
 
 	details = s->callbacks->get_login_details(s);
 
-	s->external_state = network_state_init(details->nick, details->username, 
+	s->external_state = network_state_init(details->nick, details->username,
 								  get_my_hostname());
 
 	free_login_details(details);
@@ -868,12 +868,12 @@ struct irc_network *irc_network_new(const struct irc_network_callbacks *callback
 }
 
 /**
- * Connect to a network, returns TRUE if connection was successful 
- * (or startup of connection was successful) 
+ * Connect to a network, returns TRUE if connection was successful
+ * (or startup of connection was successful)
  *
  * @param s Network to connect to
  */
-gboolean connect_network(struct irc_network *s) 
+gboolean connect_network(struct irc_network *s)
 {
 	g_assert(s);
 	g_assert(s->connection.state == NETWORK_CONNECTION_STATE_NOT_CONNECTED ||
@@ -901,8 +901,8 @@ static void free_network(struct irc_network *s)
 }
 
 
-/** 
- * Disconnect from a network. The network will still be kept in memory, 
+/**
+ * Disconnect from a network. The network will still be kept in memory,
  * but all socket connections associated with it will be dropped.
  *
  * @param s Network to disconnect from

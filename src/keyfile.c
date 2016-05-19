@@ -1,4 +1,4 @@
-/* 
+/*
 	ctrlproxy: A modular IRC proxy
 	(c) 2003-2008 Jelmer Vernooij <jelmer@jelmer.uk>
 
@@ -44,7 +44,7 @@ gboolean keyfile_read_file(const char *filename, char commentchar, GList **nicks
 
     while (G_IO_STATUS_NORMAL == g_io_channel_read_line(gio, &ret, &nr, &term, NULL))
     {
-        char **parts; 
+        char **parts;
 		struct keyfile_entry *e;
 		lineno++;
 
@@ -74,7 +74,7 @@ gboolean keyfile_read_file(const char *filename, char commentchar, GList **nicks
 			e->network = parts[2];
 		}
 	
-		*nicks = g_list_append(*nicks, e);   
+		*nicks = g_list_append(*nicks, e);
         g_free(parts);
     }
 
@@ -84,7 +84,7 @@ gboolean keyfile_read_file(const char *filename, char commentchar, GList **nicks
 	return TRUE;
 }
 
-gboolean keyfile_write_file(GList *nicks, const char *header, 
+gboolean keyfile_write_file(GList *nicks, const char *header,
 							const char *filename)
 {
 	GList *gl;
@@ -109,7 +109,7 @@ gboolean keyfile_write_file(GList *nicks, const char *header,
         char *line;
 
 		empty = FALSE;
-        
+ 
         line = g_strdup_printf("%s\t%s\t%s\n", n->nick, n->pass, n->network?n->network:"*");
 		if (write(fd, line, strlen(line)) < 0) {
 			log_global(LOG_WARNING, "error writing line `%s': %s", line, strerror(errno));
@@ -120,7 +120,7 @@ gboolean keyfile_write_file(GList *nicks, const char *header,
 
         g_free(line);
 	}
-    
+
     close(fd);
 
 	return TRUE;

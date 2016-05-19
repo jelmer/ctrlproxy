@@ -31,8 +31,8 @@ struct log_file_info {
 };
 
 /**
- * Common logging data. Contains a cache of log files that have been 
- * written to. Will keep a limited number of file descriptors open, 
+ * Common logging data. Contains a cache of log files that have been
+ * written to. Will keep a limited number of file descriptors open,
  * for performance reasons.
  */
 struct log_support_context {
@@ -41,10 +41,10 @@ struct log_support_context {
 };
 
 G_MODULE_EXPORT G_GNUC_MALLOC struct log_support_context *log_support_init(void);
-G_MODULE_EXPORT gboolean log_support_write(struct log_support_context *ctx, 
+G_MODULE_EXPORT gboolean log_support_write(struct log_support_context *ctx,
 					   	   const char *path,
 						   const char *text);
-G_MODULE_EXPORT G_GNUC_PRINTF(3, 4) void log_support_writef(struct log_support_context *ctx, 
+G_MODULE_EXPORT G_GNUC_PRINTF(3, 4) void log_support_writef(struct log_support_context *ctx,
 					   const char *path,
 					   const char *fmt, ...);
 G_MODULE_EXPORT void free_log_support_context(struct log_support_context *);

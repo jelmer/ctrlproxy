@@ -36,7 +36,7 @@ gboolean plugin_loaded(const char *name)
 	GList *gl;
 	for (gl = plugins; gl; gl = gl->next) {
 		struct plugin *p = (struct plugin *)gl->data;
-		if (p && p->ops && p->ops->name && !strcmp(p->ops->name, name)) 
+		if (p && p->ops && p->ops->name && !strcmp(p->ops->name, name))
 			return TRUE;
 	}
 	return FALSE;
@@ -65,7 +65,7 @@ struct plugin *load_plugin(const char *modulesdir, const char *name)
 		}
 
 		if (!g_module_symbol(m, "plugin", (gpointer)&ops)) {
-			log_global(LOG_ERROR, "%s: No valid plugin information found", 
+			log_global(LOG_ERROR, "%s: No valid plugin information found",
 				strchr(path_name, '/')?(strrchr(path_name, '/')+1):"error"
 					   );
 			g_free(path_name);
@@ -82,7 +82,7 @@ struct plugin *load_plugin(const char *modulesdir, const char *name)
 	}
 
 	if (ops->version != CTRLPROXY_PLUGIN_VERSION) {
-		log_global(LOG_WARNING, "%s: Plugin has incompatible version %d, expected %d", 
+		log_global(LOG_WARNING, "%s: Plugin has incompatible version %d, expected %d",
 				   ops->name, ops->version, CTRLPROXY_PLUGIN_VERSION);
 		g_free(path_name);
 		g_free(p);

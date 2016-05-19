@@ -35,7 +35,7 @@ struct keyfile_entry {
 };
 
 gboolean keyfile_read_file(const char *filename, char commentchar, GList **nicks);
-gboolean keyfile_write_file(GList *entries, const char *header, 
+gboolean keyfile_write_file(GList *entries, const char *header,
 							const char *filename);
 
 #endif /* __CTRLPROXY_KEYFILE_H__ */

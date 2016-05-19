@@ -70,9 +70,9 @@ void network_update_config(struct irc_network_state *ns, struct network_config *
 			cc->name = g_strdup(cs->name);
 			nc->channels = g_list_append(nc->channels, cc);
 		}
-		g_free(cc->key); 
+		g_free(cc->key);
 		cc->key = NULL;
-		if (cs->chanmode_option['k']) 
+		if (cs->chanmode_option['k'])
 			cc->key = g_strdup(cs->chanmode_option['k']);
 		cc->autojoin = TRUE;
 	}
@@ -88,7 +88,7 @@ void global_update_config(struct global *my_global)
 		nc->autoconnect = (n->connection.state != NETWORK_CONNECTION_STATE_NOT_CONNECTED);
 
 		/* Network name */
-		if (n->name != NULL && 
+		if (n->name != NULL &&
 			(nc->name == NULL || strcmp(n->name, nc->name) != 0)) {
 			g_free(nc->name);
 			nc->name = g_strdup(n->name);

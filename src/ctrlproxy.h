@@ -49,7 +49,7 @@
 #endif
 
 #ifndef G_MODULE_EXPORT
-#define G_MODULE_EXPORT 
+#define G_MODULE_EXPORT
 #endif
 
 #include "cache.h"

@@ -28,7 +28,7 @@
 #include <glib.h>
 
 #ifndef G_MODULE_EXPORT
-#define G_MODULE_EXPORT 
+#define G_MODULE_EXPORT
 #endif
 
 #include "state.h"
@@ -43,12 +43,12 @@ struct irc_client;
 struct irc_line;
 struct linestack_context;
 
-enum irc_network_connection_state { 
-		NETWORK_CONNECTION_STATE_NOT_CONNECTED = 0, 
+enum irc_network_connection_state {
+		NETWORK_CONNECTION_STATE_NOT_CONNECTED = 0,
 		NETWORK_CONNECTION_STATE_RECONNECT_PENDING,
 		NETWORK_CONNECTION_STATE_CONNECTING,
 		NETWORK_CONNECTION_STATE_CONNECTED,
-		NETWORK_CONNECTION_STATE_LOGIN_SENT, 
+		NETWORK_CONNECTION_STATE_LOGIN_SENT,
 		NETWORK_CONNECTION_STATE_MOTD_RECVD,
 };
 
@@ -64,7 +64,7 @@ struct irc_network_connection {
 	time_t last_line_recvd;
 
 	struct irc_transport *transport;
-	union { 
+	union {
 		struct {
 			/** Configuration for TCP/IP server currently connected to. */
 			struct tcp_server_config *current_server;
@@ -164,7 +164,7 @@ G_MODULE_EXPORT void register_virtual_network(struct virtual_network_ops *);
 G_MODULE_EXPORT struct virtual_network_ops *find_virtual_network(const char *name);
 G_MODULE_EXPORT struct irc_network *find_network(GList *gl, const char *);
 G_MODULE_EXPORT gboolean virtual_network_recv_line(struct irc_network *l, struct irc_line *);
-G_MODULE_EXPORT gboolean virtual_network_recv_args(struct irc_network *l, const char *origin, ...); 
+G_MODULE_EXPORT gboolean virtual_network_recv_args(struct irc_network *l, const char *origin, ...);
 G_MODULE_EXPORT gboolean virtual_network_recv_response(struct irc_network *n, int num, ...);
 struct ctrlproxy_config;
 G_MODULE_EXPORT G_GNUC_MALLOC struct linestack_context *new_linestack(struct irc_network *network, const char *basedir);

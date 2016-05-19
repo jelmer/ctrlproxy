@@ -1,4 +1,4 @@
-/* 
+/*
 	ctrlproxy: A modular IRC proxy
 	(c) 2002-2003 Jelmer Vernooij <jelmer@jelmer.uk>
 
@@ -25,7 +25,7 @@
 /**
  * Represents a CTCP request
  */
-struct ctcp_handle 
+struct ctcp_handle
 {
 	struct irc_network *network;
 	char *nick;
@@ -50,8 +50,8 @@ static char *toarg(va_list ap)
 	pos = ret+1;
 	strcpy(pos, list->data); pos += strlen(list->data);
 	for (gl = list->next; gl; gl = gl->next) {
-		*pos = ' '; 
-		strcpy(pos+1, gl->data); 
+		*pos = ' ';
+		strcpy(pos+1, gl->data);
 		pos+=strlen(gl->data)+1;
 	}
 
@@ -60,7 +60,7 @@ static char *toarg(va_list ap)
 	return ret;
 }
 
-void ctcp_reply(struct ctcp_handle *h, ...) 
+void ctcp_reply(struct ctcp_handle *h, ...)
 {
 	va_list ap;
 	char *msg;
@@ -145,7 +145,7 @@ static void handle_clientinfo(struct ctcp_handle *h, const char **args)
 	int i;
 	GList *gl;
 
-	for (i = 0; builtins[i].name; i++) 
+	for (i = 0; builtins[i].name; i++)
 		supported[i] = builtins[i].name;
 
 	for (gl = cmds; gl; gl = gl->next) {
@@ -166,7 +166,7 @@ void ctcp_register_handler(const struct ctcp_handler *h)
 	cmds = g_list_append(cmds, g_memdup(h, sizeof(*h)));
 }
 
-gboolean ctcp_process_request (struct irc_network *n, const struct irc_line *l) 
+gboolean ctcp_process_request (struct irc_network *n, const struct irc_line *l)
 {
 	GList *gl;
 	int i;
@@ -181,8 +181,8 @@ gboolean ctcp_process_request (struct irc_network *n, const struct irc_line *l)
 
 	data = g_strdup(l->args[2]+1);
 	t = strchr(data, '\001');
-	if (!t) { 
-		g_free(data); 
+	if (!t) {
+		g_free(data);
 		network_log(LOG_WARNING, n, "Malformed CTCP request from %s!", h.nick);
 		g_free(h.nick);
 		return FALSE;
@@ -203,7 +203,7 @@ gboolean ctcp_process_request (struct irc_network *n, const struct irc_line *l)
 
 	for (i = 0; !ret && builtins[i].name; i++) {
 		if (!g_strcasecmp(builtins[i].name, args[0])) {
-			if (builtins[i].fn != NULL) 
+			if (builtins[i].fn != NULL)
 				builtins[i].fn(&h, (const char **)args);
 			ret = TRUE;
 			break;

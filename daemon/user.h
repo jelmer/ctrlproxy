@@ -39,7 +39,7 @@ gboolean daemon_user_running(struct daemon_user *user);
 void daemon_user_free(struct daemon_user *user);
 struct daemon_user *get_daemon_user(struct ctrlproxyd_config *config, const char *username);
 gboolean daemon_user_start(struct daemon_user *user, const char *ctrlproxy_path, struct irc_listener *l);
-void foreach_daemon_user(struct ctrlproxyd_config *config, struct irc_listener *listener, 
+void foreach_daemon_user(struct ctrlproxyd_config *config, struct irc_listener *listener,
 						 void (*fn) (struct daemon_user *user, const char *ctrlproxy_path, struct irc_listener *l));
 struct daemon_user *domain_user_init(struct ctrlproxyd_config *config, const char *username);
 

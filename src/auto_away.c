@@ -1,4 +1,4 @@
-/* 
+/*
 	ctrlproxy: A modular IRC proxy
 	(c) 2002-2003 Jelmer Vernooij <jelmer@jelmer.uk>
 
@@ -39,7 +39,7 @@ struct auto_away_data {
 	struct global *global;
 };
 
-static gboolean check_time(gpointer user_data) 
+static gboolean check_time(gpointer user_data)
 {
 	struct auto_away_data *d = (struct auto_away_data *)user_data;
 
@@ -48,10 +48,10 @@ static gboolean check_time(gpointer user_data)
 		for (sl = d->global->networks; sl; sl = sl->next) {
 			struct irc_network *s = (struct irc_network *)sl->data;
 			if (s->connection.state == NETWORK_CONNECTION_STATE_MOTD_RECVD &&
-				s->external_state != NULL && !s->external_state->is_away && 
+				s->external_state != NULL && !s->external_state->is_away &&
 			    (d->config->client_limit < 0 || g_list_length(s->clients) <= d->config->client_limit)) {
-				network_send_args(s, "AWAY", 
-								  d->config->message != NULL?d->config->message:"Auto Away", 
+				network_send_args(s, "AWAY",
+								  d->config->message != NULL?d->config->message:"Auto Away",
 								  NULL);
 				if (d->config->nick != NULL) {
 					network_send_args(s, "NICK", d->config->nick, NULL);
@@ -63,8 +63,8 @@ static gboolean check_time(gpointer user_data)
 	return TRUE;
 }
 
-static gboolean log_data(struct irc_network *n, const struct irc_line *l, 
-						 enum data_direction dir, void *userdata) 
+static gboolean log_data(struct irc_network *n, const struct irc_line *l,
+						 enum data_direction dir, void *userdata)
 {
 	struct auto_away_data *d = userdata;
 	GList *sl;
@@ -73,8 +73,8 @@ static gboolean log_data(struct irc_network *n, const struct irc_line *l,
 		d->last_message = time(NULL);
 	}
 
-	if (dir == TO_SERVER &&  
-	   (!g_strcasecmp(l->args[0], "PRIVMSG") || 
+	if (dir == TO_SERVER &&
+	   (!g_strcasecmp(l->args[0], "PRIVMSG") ||
 		!g_strcasecmp(l->args[0], "NOTICE"))) {
 		d->last_message = time(NULL);
 		for (sl = d->global->networks; sl; sl = sl->next) {
@@ -87,7 +87,7 @@ static gboolean log_data(struct irc_network *n, const struct irc_line *l,
 	return TRUE;
 }
 
-static gboolean new_client(struct irc_client *c, void *userdata) 
+static gboolean new_client(struct irc_client *c, void *userdata)
 {
 	struct auto_away_data *d = userdata;
 
@@ -97,13 +97,13 @@ static gboolean new_client(struct irc_client *c, void *userdata)
 	return TRUE;
 }
 
-static void lose_client(struct irc_client *c, void *userdata) 
+static void lose_client(struct irc_client *c, void *userdata)
 {
 	struct auto_away_data *d = userdata;
 
 	if (d->config->client_limit >= 0 && d->config->client_limit >= g_list_length(c->network->clients))
-		network_send_args(c->network, "AWAY", 
-								  d->config->message != NULL?d->config->message:"Auto Away", 
+		network_send_args(c->network, "AWAY",
+								  d->config->message != NULL?d->config->message:"Auto Away",
 								  NULL);
 }
 

@@ -35,24 +35,24 @@
 
 enum log_level;
 
-enum casemapping { 
-		CASEMAP_UNKNOWN = 0, 
-		CASEMAP_RFC1459, 
-		CASEMAP_ASCII, 
-		CASEMAP_STRICT_RFC1459 
+enum casemapping {
+		CASEMAP_UNKNOWN = 0,
+		CASEMAP_RFC1459,
+		CASEMAP_ASCII,
+		CASEMAP_STRICT_RFC1459
 	};
 
 
-enum chanmode_type { 
+enum chanmode_type {
 	CHANMODE_UNKNOWN = 0,
-	CHANMODE_NICKLIST, 
-	CHANMODE_SETTING, 
-	CHANMODE_OPT_SETTING, 
-	CHANMODE_BOOL 
+	CHANMODE_NICKLIST,
+	CHANMODE_SETTING,
+	CHANMODE_OPT_SETTING,
+	CHANMODE_BOOL
 };
 
 /**
- * Information about a network (doesn't change between connects or 
+ * Information about a network (doesn't change between connects or
  * servers).
  */
 struct irc_network_info
@@ -71,7 +71,7 @@ struct irc_network_info
 	/** Case mapping used for nick- and channel name comparing */
 	enum casemapping casemapping;
 
-	/** A list of channel modes a person can get and the respective 
+	/** A list of channel modes a person can get and the respective
 	 * prefix a channel or nickname will get in case the person has it */
 	char *prefix;
 
@@ -102,7 +102,7 @@ struct irc_network_info
 	/* FIXME: Should be a hash table */
 	char *maxlist;
 
-	/** The server supports extensions for the LIST command. 
+	/** The server supports extensions for the LIST command.
 	 * The tokens specify which extention are supported. *
 	 */
 	gboolean elist_mask_search;
@@ -111,32 +111,32 @@ struct irc_network_info
 	gboolean elist_creation_time_search;
 	gboolean elist_topic_search;
 
-	/** Specifies what extbans are supported by the server. 
-	 * The prefix defines which character indicates an extban and the types 
+	/** Specifies what extbans are supported by the server.
+	 * The prefix defines which character indicates an extban and the types
 	 * defines which extbans the server supports.  */
 
 	char *extban_prefix;
 	char *extban_supported;
 
-	/** The ID length for channels with an ID. The prefix says for which 
-	 * channel type it is, and the number how long it is. See RFC 2811 for 
+	/** The ID length for channels with an ID. The prefix says for which
+	 * channel type it is, and the number how long it is. See RFC 2811 for
 	 * more information. */
 	/* FIXME: Should be a hash table */
 	char *idchan;
 
-	/** The server support ban exceptions (e mode). See  
+	/** The server support ban exceptions (e mode). See
 	 * RFC 2811 for more information. */
 	char excepts_mode;
 
-	/** The server support invite exceptions (+I mode). See 
+	/** The server support invite exceptions (+I mode). See
 	 * RFC 2811 for more information. */
 	char invex_mode;
 
 	/** The server supports dead mode (+d). */
 	char deaf_mode;
 
-	/** The server supports messaging channel member who have a 
-	 * certain status or higher. The status is one of the letters from 
+	/** The server supports messaging channel member who have a
+	 * certain status or higher. The status is one of the letters from
 	 * PREFIX. */
 	char *statusmsg;
 
@@ -156,7 +156,7 @@ struct irc_network_info
 	gboolean hcn;
 
 	/**
-	 * The number is the maximum number of allowed entries in the silence 
+	 * The number is the maximum number of allowed entries in the silence
 	 * list. */
 	int silence_limit;
 
@@ -184,13 +184,13 @@ struct irc_network_info
 	/** Maximum number of channels allowed to join */
 	int maxchannels;
 
-	/** Maximum topic length */ 
+	/** Maximum topic length */
 	int topiclen;
 
 	/** Maximum number of bans per channel */
 	int maxbans;
 
-	/** Maximum number of channel modes with parameter allowed per MODE 
+	/** Maximum number of channel modes with parameter allowed per MODE
 	 * command  */
 	int maxmodes;
 
@@ -203,22 +203,22 @@ struct irc_network_info
 	/** Server supports RFC 2812 features */
 	gboolean rfc2812;
 
-	/** Server gives extra penalty to some commands instead of the normal 2 
+	/** Server gives extra penalty to some commands instead of the normal 2
 	 * seconds per message and 1 second for every 120 bytes in a message */
 	gboolean penalty;
 
-	/** Forced nick changes: The server may change the nickname without the 
+	/** Forced nick changes: The server may change the nickname without the
 	 * client sending a NICK message */
 	gboolean forced_nick_changes;
 
-	/** The LIST is sent in multiple iterations so send queue won't fill and 
+	/** The LIST is sent in multiple iterations so send queue won't fill and
 	 * kill the client connection. */
 	gboolean safelist;
 
 	/** The USERIP command exists */
 	gboolean userip;
 
-	/** The CPRIVMSG command exists, used for mass messaging people in specified 
+	/** The CPRIVMSG command exists, used for mass messaging people in specified
 	 * channel (CPRIVMSG channel nick,nick2,... :text) */
 	gboolean cprivmsg;
 
@@ -240,7 +240,7 @@ struct irc_network_info
 	/** [Deprecated] The same as CALLERID */
 	gboolean accept;
 
-	/** Support for CAPAB 
+	/** Support for CAPAB
 	 * http://www3.ietf.org/proceedings/03mar/I-D/draft-baudis-irc-capab-00.txt
 	 */
 	gboolean capab;
@@ -248,12 +248,12 @@ struct irc_network_info
 	/** Maximum number of arguments per command. */
 	int maxpara;
 
-	/** The NAMESX extension is supported by the server. See 
+	/** The NAMESX extension is supported by the server. See
 	 * http://www.inspircd.org/wiki/NAMESX_Module for details */
-	gboolean namesx; 
+	gboolean namesx;
 
-	/** This server uses SECURELIST, meaning that LIST can not be 
-	 * run 60 seconds within connect. See 
+	/** This server uses SECURELIST, meaning that LIST can not be
+	 * run 60 seconds within connect. See
 	 * http://www.inspircd.org/wiki/Secure_LIST_Module for details. */
 	gboolean securelist;
 
@@ -289,7 +289,7 @@ G_MODULE_EXPORT void network_info_parse(struct irc_network_info *info, const cha
 G_MODULE_EXPORT enum chanmode_type network_chanmode_type(char m, struct irc_network_info *n);
 G_MODULE_EXPORT struct irc_network_info *network_info_init(void);
 G_MODULE_EXPORT void free_network_info(struct irc_network_info *info);
-G_MODULE_EXPORT void network_info_log(enum log_level l, 
+G_MODULE_EXPORT void network_info_log(enum log_level l,
 				const struct irc_network_info *info, const char *fmt, ...);
 
 #endif /* __CTRLPROXY_ISUPPORT_H__ */

@@ -39,7 +39,7 @@ struct cmd {
 };
 
 
-static gboolean line_printer (struct irc_line *l, time_t time, void *f) 
+static gboolean line_printer (struct irc_line *l, time_t time, void *f)
 {
 	fprintf((FILE *)f, "[%lu] %s\n", time, irc_line_string(l));
 	return TRUE;
@@ -142,7 +142,7 @@ static void handle_insert(int argc, char **argv)
 		return;
 	}
 
-	if (!g_strcasecmp(argv[1], "client")) 
+	if (!g_strcasecmp(argv[1], "client"))
 		direction = TO_SERVER;
 	else if (!g_strcasecmp(argv[1], "server"))
 		direction = FROM_SERVER;
@@ -196,7 +196,7 @@ int main(int argc, char **argv)
 
 	g_assert(state != NULL);
 
-	markers = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, 
+	markers = g_hash_table_new_full(g_str_hash, g_str_equal, g_free,
 									(GDestroyNotify)linestack_free_marker);
 
 	path = g_build_filename(argv[1], argv[2], NULL);

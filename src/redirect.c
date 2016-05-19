@@ -1,4 +1,4 @@
-/* 
+/*
 	ctrlproxy: A modular IRC proxy
 	Send numerics to the right places
 	(c) 2002-2005 Jelmer Vernooij <jelmer@jelmer.uk>
@@ -53,14 +53,14 @@ static gboolean handle_464(struct irc_network *n, const struct irc_line *l)
 }
 
 /* List of responses that should be sent to all clients */
-static const int response_all[] = { RPL_NOWAWAY, RPL_UNAWAY, 
+static const int response_all[] = { RPL_NOWAWAY, RPL_UNAWAY,
 	ERR_NO_OP_SPLIT, RPL_HIDINGHOST,
 	ERR_NEEDREGGEDNICK, RPL_UMODEIS, RPL_SNOMASK,
 	RPL_LUSERCLIENT, RPL_LUSEROP, RPL_LUSERUNKNOWN, RPL_LUSERCHANNELS,
-	RPL_LUSERME, ERR_NO_OP_SPLIT, RPL_LOCALUSERS, RPL_GLOBALUSERS, 
-	RPL_NAMREPLY, RPL_ENDOFNAMES, RPL_TOPIC, RPL_TOPICWHOTIME, 
+	RPL_LUSERME, ERR_NO_OP_SPLIT, RPL_LOCALUSERS, RPL_GLOBALUSERS,
+	RPL_NAMREPLY, RPL_ENDOFNAMES, RPL_TOPIC, RPL_TOPICWHOTIME,
 	RPL_CHANNEL_HOMEPAGE, RPL_CREATIONTIME, RPL_LOGGEDINAS, 0 };
-static const int response_none[] = { ERR_NOMOTD, RPL_MOTDSTART, RPL_MOTD, 
+static const int response_none[] = { ERR_NOMOTD, RPL_MOTDSTART, RPL_MOTD,
 	RPL_ENDOFMOTD, 0 };
 static const struct {
 	int response;
@@ -77,10 +77,10 @@ static const struct {
 /**
  * Redirect a response received from the server.
  *
- * @return TRUE if the message was redirected to zero or more clients, 
+ * @return TRUE if the message was redirected to zero or more clients,
  *         FALSE if it was sent to all clients.
  */
-gboolean redirect_response(struct query_stack *stack, 
+gboolean redirect_response(struct query_stack *stack,
 						   struct irc_network *network,
 						   const struct irc_line *l)
 {
@@ -119,7 +119,7 @@ gboolean redirect_response(struct query_stack *stack,
 	}
 
 	if (!c) {
-		network_log((g_list_length(network->clients) <= 1)?LOG_TRACE:LOG_WARNING, 
+		network_log((g_list_length(network->clients) <= 1)?LOG_TRACE:LOG_WARNING,
 					network, "Unable to redirect response %s", l->args[0]);
 		clients_send(network->clients, l, NULL);
 	}

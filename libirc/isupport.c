@@ -27,7 +27,7 @@ struct irc_network_info *network_info_init()
 	return info;
 }
 
-void network_info_log(enum log_level l, 
+void network_info_log(enum log_level l,
 					  const struct irc_network_info *info, const char *fmt, ...)
 {
 	va_list ap;
@@ -203,9 +203,9 @@ char *network_info_string(struct irc_network_info *info)
 
 	if (info->silence) {
 		if (info->silence_limit != 0)
-			fs = g_list_append(fs, 
+			fs = g_list_append(fs,
 				 	g_strdup_printf("SILENCE=%d", info->silence_limit));
-		else 
+		else
 			fs = g_list_append(fs, g_strdup("SILENCE"));
 	}
 
@@ -224,7 +224,7 @@ char *network_info_string(struct irc_network_info *info)
 	if (info->chanlimit != NULL)
 		fs = g_list_append(fs, g_strdup_printf("CHANLIMIT=%s", info->chanlimit));
 
-	if (info->namesx) 
+	if (info->namesx)
 		fs = g_list_append(fs, "NAMESX");
 
 	if (info->securelist)
@@ -260,7 +260,7 @@ char *network_info_string(struct irc_network_info *info)
 	}
 
 	if (info->extban_prefix != NULL)
-		fs = g_list_append(fs, g_strdup_printf("EXTBAN=%s,%s", 
+		fs = g_list_append(fs, g_strdup_printf("EXTBAN=%s,%s",
 						   info->extban_prefix, info->extban_supported));
 	
 	if (info->deaf_mode != '\0')
@@ -272,7 +272,7 @@ char *network_info_string(struct irc_network_info *info)
 	if (info->idchan != NULL)
 		fs = g_list_append(fs, g_strdup_printf("IDCHAN=%s", info->idchan));
 
-	if (info->prefix != NULL) 
+	if (info->prefix != NULL)
 		fs = g_list_append(fs, g_strdup_printf("PREFIX=%s", info->prefix));
 
 	ret = list_make_string(fs);
@@ -295,7 +295,7 @@ static void check_chanmodes_inconsistency(struct irc_network_info *info)
 		for (j = 0; info->chanmodes[i][j]; j++) {
 			if (!strchr(info->supported_channel_modes, info->chanmodes[i][j])) {
 				char *new_modes;
-				if (info->name != NULL) 
+				if (info->name != NULL)
 					network_info_log(LOG_WARNING, info,
 						   "Server for %s reported inconsistent supported modes. %c was in CHANMODES but not in 004 line.", info->name, info->chanmodes[i][j]);
 				else
@@ -317,9 +317,9 @@ void network_info_parse(struct irc_network_info *info, const char *parameter)
 
 	sep = strchr(parameter, '=');
 
-	if (!sep) { 
+	if (!sep) {
 		key = g_strdup(parameter);
-		val = NULL; 
+		val = NULL;
 	} else {
 		key = g_strndup(parameter, sep - parameter);
 		val = g_strdup(sep+1);
@@ -428,7 +428,7 @@ void network_info_parse(struct irc_network_info *info, const char *parameter)
 		info->chantypes = g_strdup(val);
 	} else if (!base_strcmp(key, "CHANMODES")) {
 		g_strfreev(info->chanmodes);
-		info->chanmodes_a = info->chanmodes_b = 
+		info->chanmodes_a = info->chanmodes_b =
 			info->chanmodes_c = info->chanmodes_d = NULL;
 		info->chanmodes = g_strsplit(val, ",", 4);
 		if (g_strv_length(info->chanmodes) != 4) {
@@ -445,18 +445,18 @@ void network_info_parse(struct irc_network_info *info, const char *parameter)
 		g_free(info->chanlimit);
 		info->chanlimit = g_strdup(val);
 	} else if (!base_strcmp(key, "EXCEPTS")) {
-		if (val == NULL) 
+		if (val == NULL)
 			info->excepts_mode = 'e';
 		else if (strlen(val) > 1)
-			network_info_log(LOG_WARNING, info, 
+			network_info_log(LOG_WARNING, info,
 							 "Invalid length excepts value: %s", val);
 		else
 			info->excepts_mode = val[0];
 	} else if (!base_strcmp(key, "INVEX")) {
-		if (val == NULL) 
+		if (val == NULL)
 			info->invex_mode = 'I';
 		else if (strlen(val) > 1)
-			network_info_log(LOG_WARNING, info, 
+			network_info_log(LOG_WARNING, info,
 							 "Invalid length invex value: %s", val);
 		else
 			info->invex_mode = val[0];
@@ -470,13 +470,13 @@ void network_info_parse(struct irc_network_info *info, const char *parameter)
 			case 'U': info->elist_usercount_search = TRUE; break;
 			case 'C': info->elist_creation_time_search = TRUE; break;
 			default:
-				  network_info_log(LOG_WARNING, info, 
+				  network_info_log(LOG_WARNING, info,
 								   "Unknown ELIST parameter '%c'", val[i]);
 				  break;
 			}
 		}
 	} else if (!base_strcmp(key, "DEAF")) {
-		if (val == NULL) 
+		if (val == NULL)
 			info->deaf_mode = 'D';
 		else if (strlen(val) > 1)
 			network_info_log(LOG_WARNING, info,
@@ -535,7 +535,7 @@ void handle_005(struct irc_network_state *s, const struct irc_line *l)
 
 	g_assert(l->argc >= 1);
 
-	for (i = 2; i < l->argc-1; i++) 
+	for (i = 2; i < l->argc-1; i++)
 		network_info_parse(s->info, l->args[i]);
 }
 
@@ -562,7 +562,7 @@ gboolean is_channelname(const char *name, const struct irc_network_info *n)
 
 	g_assert(name != NULL);
 	
-	if (strchr(n->chantypes, name[0])) 
+	if (strchr(n->chantypes, name[0]))
 		return TRUE;
 
 	return FALSE;
@@ -596,13 +596,13 @@ const char *get_charset(const struct irc_network_info *n)
 
 gboolean is_channel_mode(struct irc_network_info *info, char mode)
 {
-	return (info->supported_channel_modes != NULL && 
+	return (info->supported_channel_modes != NULL &&
 		    strchr(info->supported_channel_modes, mode) != NULL);
 }
 
 gboolean is_user_mode(struct irc_network_info *info, char mode)
 {
-	return (info->supported_user_modes != NULL && 
+	return (info->supported_user_modes != NULL &&
 		    strchr(info->supported_user_modes, mode) != NULL);
 }
 
@@ -670,7 +670,7 @@ char get_prefix_by_mode(char mode, const struct irc_network_info *n)
 	
 	pref_end = strchr(prefix, ')');
 	if (prefix[0] != '(' || !pref_end) {
-		network_info_log(LOG_WARNING, n, 
+		network_info_log(LOG_WARNING, n,
 						 "Malformed PREFIX data `%s'", prefix);
 		return ' ';
 	}
@@ -683,8 +683,8 @@ char get_prefix_by_mode(char mode, const struct irc_network_info *n)
 	return ' ';
 }
 
-const static char *default_chanmodes[] = { 
-	"beI", "k" , "l" , "imnpsta" 
+const static char *default_chanmodes[] = {
+	"beI", "k" , "l" , "imnpsta"
 };
 
 enum chanmode_type network_chanmode_type(char m, struct irc_network_info *n)

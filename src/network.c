@@ -23,7 +23,7 @@
 #include "ssl.h"
 
 /**
- * Update the isupport settings for a local network based on the 
+ * Update the isupport settings for a local network based on the
  * ISUPPORT info sent by a server.
  *
  * @param net_info Current information
@@ -55,7 +55,7 @@ static gboolean network_update_isupport(struct irc_network_info *net_info,
 	if (remote_info->supported_user_modes != NULL) {
 		g_free(net_info->supported_user_modes);
 		net_info->supported_user_modes = g_strdup(remote_info->supported_user_modes);
-	} 
+	}
 
 	if (remote_info->supported_channel_modes != NULL) {
 		g_free(net_info->supported_channel_modes);
@@ -106,8 +106,8 @@ static gboolean process_from_server(struct irc_network *n, const struct irc_line
 	n->connection.last_line_recvd = time(NULL);
 
 	if (n->external_state == NULL) {
-		network_log(LOG_WARNING, n, 
-					"Dropping message '%s' because network is disconnected.", 
+		network_log(LOG_WARNING, n,
+					"Dropping message '%s' because network is disconnected.",
 					l->args[0]);
 		return FALSE;
 	}
@@ -130,11 +130,11 @@ static gboolean process_from_server(struct irc_network *n, const struct irc_line
 		return TRUE;
 	} else if (!base_strcmp(l->args[0], "ERROR")) {
 		network_log(LOG_ERROR, n, "error: %s", l->args[1]);
-	} else if (response == ERR_NICKNAMEINUSE && 
+	} else if (response == ERR_NICKNAMEINUSE &&
 			  n->connection.state == NETWORK_CONNECTION_STATE_LOGIN_SENT){
 		char *tmp = g_strdup_printf("%s_", l->args[2]);
 		network_send_args(n, "NICK", tmp, NULL);
-		network_log(LOG_WARNING, n, "%s was already in use, trying %s", 
+		network_log(LOG_WARNING, n, "%s was already in use, trying %s",
 					l->args[2], tmp);
 		network_nick_set_nick(&n->external_state->me, tmp);
 		g_free(tmp);
@@ -149,7 +149,7 @@ static gboolean process_from_server(struct irc_network *n, const struct irc_line
 		network_set_charset(n, get_charset(n->info));
 
 		if (error != NULL) {
-			network_log(LOG_WARNING, n, "Error setting charset %s: %s", 
+			network_log(LOG_WARNING, n, "Error setting charset %s: %s",
 				get_charset(n->info), error->message);
 			g_error_free(error);
 			error = NULL;
@@ -179,9 +179,9 @@ static gboolean process_from_server(struct irc_network *n, const struct irc_line
 
 			if (c->autojoin) {
 				network_send_args(n, "JOIN", c->name, c->key, NULL);
-			} 
+			}
 		}
-	} 
+	}
 
 	if (n->connection.state == NETWORK_CONNECTION_STATE_MOTD_RECVD) {
 		gboolean linestack_store = TRUE;
@@ -189,52 +189,52 @@ static gboolean process_from_server(struct irc_network *n, const struct irc_line
 			linestack_store &= (!redirect_response(n->queries, n, l));
 		} else {
 			if (n->clients == NULL) {
-				if (!base_strcmp(l->args[0], "PRIVMSG") && l->argc > 2 && 
-					l->args[2][0] == '\001' && 
+				if (!base_strcmp(l->args[0], "PRIVMSG") && l->argc > 2 &&
+					l->args[2][0] == '\001' &&
 					g_strncasecmp(l->args[2], "\001ACTION", 7) != 0) {
 					network_process_ctcp_request(n, l);
-				} else if (!base_strcmp(l->args[0], "NOTICE") && l->argc > 2 && 
+				} else if (!base_strcmp(l->args[0], "NOTICE") && l->argc > 2 &&
 					l->args[2][0] == '\001') {
 					ctcp_network_redirect_response(n, l);
 				}
 			} else if (run_server_filter(n, l, FROM_SERVER)) {
-				if (!strcmp(l->args[0], "PRIVMSG") && 
+				if (!strcmp(l->args[0], "PRIVMSG") &&
 					n->global->config->report_time == REPORT_TIME_ALWAYS)
 					l = line_prefix_time(l, time(NULL)+n->global->config->report_time_offset);
 
 				clients_send(n->clients, l, NULL);
 			}
-		} 
+		}
 
 		if (linestack_store && n->linestack != NULL) {
 			if (!linestack_insert_line(n->linestack, l, FROM_SERVER, n->external_state)) {
 				if (n->linestack_errors == 0)
-					network_log(LOG_WARNING, n, 
+					network_log(LOG_WARNING, n,
 						"Unable to write to linestack. Disabling replication for now.");
 				n->linestack_errors++;
 			} else if (n->linestack_errors > 0) {
-				network_log(LOG_WARNING, n, 
-					"Linestack re-enabled, but inconsistent. %d lines were not written.", 
+				network_log(LOG_WARNING, n,
+					"Linestack re-enabled, but inconsistent. %d lines were not written.",
 					n->linestack_errors);
 				n->linestack_errors = 0;
 			}
 		}
-	} 
+	}
 
 	return TRUE;
 }
 
 /**
  * Find a network by host name and port or name.
- * 
+ *
  * @param global Context to search in
  * @param hostname Hostname to search for
  * @param port Port to search from.
  * @param create Whether to create the network if it wasn't found.
  * @return the network found or created or NULL
  */
-struct irc_network *find_network_by_hostname(struct global *global, 
-										 const char *hostname, guint16 port, 
+struct irc_network *find_network_by_hostname(struct global *global,
+										 const char *hostname, guint16 port,
 										 gboolean create,
 										 struct irc_login_details *login_details)
 {
@@ -257,7 +257,7 @@ struct irc_network *find_network_by_hostname(struct global *global,
 
 		nc = n->private_data;
 		g_assert(nc);
-		if (nc->type == NETWORK_TCP) 
+		if (nc->type == NETWORK_TCP)
 		{
 			for (sv = nc->type_settings.tcp.servers; sv; sv = sv->next)
 			{
@@ -265,12 +265,12 @@ struct irc_network *find_network_by_hostname(struct global *global,
 				struct servent *sv_serv = getservbyname(server->port, "tcp");
 
 				if (!g_strcasecmp(server->host, hostname) &&
-					(!g_strcasecmp(server->port, portname) 
+					(!g_strcasecmp(server->port, portname)
 					 || (sv_serv && htons(sv_serv->s_port) == port))) {
 					g_free(portname);
 					return n;
 				}
-			} 
+			}
 		}
 
 		if (n->name && !g_strcasecmp(n->name, hostname)) {
@@ -322,7 +322,7 @@ struct new_network_notify_data {
  * @param fn Notification function
  * @param userdata Userdata
  */
-void register_new_network_notify(struct global *global, 
+void register_new_network_notify(struct global *global,
 								 new_network_notify_fn fn, void *userdata)
 {
 	struct new_network_notify_data *p = g_new0(struct new_network_notify_data, 1);
@@ -338,18 +338,18 @@ static struct irc_login_details *get_login_details(struct irc_network *s)
 
 	if (nc->username != NULL)
 		ret->username = g_strdup(nc->username);
-	else if (nc->global->default_username != NULL) 
+	else if (nc->global->default_username != NULL)
 		ret->username = g_strdup(nc->global->default_username);
-	else 
+	else
 		ret->username = g_strdup(g_get_user_name());
 
 	if (nc->fullname != NULL)
 		ret->realname = g_strdup(nc->fullname);
 	else if (nc->global->default_realname != NULL) {
 		ret->realname = g_strdup(nc->global->default_realname);
-	} else { 
+	} else {
 		ret->realname = g_strdup(g_get_real_name());
-		if (ret->realname == NULL || 
+		if (ret->realname == NULL ||
 			strlen(ret->realname) == 0) {
 			g_free(ret->realname);
 			ret->realname = g_strdup(ret->username);
@@ -358,13 +358,13 @@ static struct irc_login_details *get_login_details(struct irc_network *s)
 
 	if (nc->nick != NULL)
 		ret->nick = g_strdup(nc->nick);
-	else if (nc->global->default_nick != NULL) 
+	else if (nc->global->default_nick != NULL)
 		ret->nick = g_strdup(nc->global->default_nick);
 	else
 		ret->nick = g_strdup(g_get_user_name());
 
-	if (nc->type == NETWORK_TCP && 
-	   s->connection.data.tcp.current_server->password) { 
+	if (nc->type == NETWORK_TCP &&
+	   s->connection.data.tcp.current_server->password) {
 		ret->password = g_strdup(s->connection.data.tcp.current_server->password);
 	} else {
 		ret->password = g_strdup(nc->password);
@@ -400,11 +400,11 @@ static void handle_network_disconnect(struct irc_network *n)
 static void handle_network_state_set(struct irc_network *s)
 {
 	s->linestack = new_linestack(s, s->global->config->linestack_dir);
-	s->queries = new_query_stack((void (*)(void *))client_ref_void, 
+	s->queries = new_query_stack((void (*)(void *))client_ref_void,
 								 (void (*)(void *))client_unref);
 }
 
-static gboolean process_to_server(struct irc_network *s, 
+static gboolean process_to_server(struct irc_network *s,
 								  const struct irc_line *l)
 {
 	struct irc_line *lc;
@@ -444,7 +444,7 @@ struct irc_network *load_network(struct global *global, struct network_config *s
 	if (global != NULL) {
 		/* Don't connect to the same network twice */
 		net = find_network(global->networks, sc->name);
-		if (net) 
+		if (net)
 			return net;
 	}
 	
@@ -493,7 +493,7 @@ gboolean load_networks(struct global *global, struct ctrlproxy_config *cfg)
 	return TRUE;
 }
 
-/** 
+/**
  * Unload a network from a global context.
  *
  * @param s Network to unload.
@@ -541,15 +541,15 @@ void fini_networks(struct global *global)
  * @param c Client that originally sent the line
  * @param is_private Whether the line should not be broadcast to other clients
  */
-gboolean network_forward_line(struct irc_network *s, struct irc_client *c, 
+gboolean network_forward_line(struct irc_network *s, struct irc_client *c,
 							  const struct irc_line *l, gboolean is_private)
 {
 	/* Also write this message to all other clients currently connected */
-	if (!is_private && 
-	   (!base_strcmp(l->args[0], "PRIVMSG") || 
+	if (!is_private &&
+	   (!base_strcmp(l->args[0], "PRIVMSG") ||
 		!base_strcmp(l->args[0], "NOTICE"))) {
 		struct irc_line *nl = linedup(l);
-		g_free(nl->origin); 
+		g_free(nl->origin);
 		nl->origin = g_strdup(s->external_state->me.hostmask);
 		if (s->global->config->report_time == REPORT_TIME_ALWAYS)
 			line_prefix_time(nl, time(NULL)+s->global->config->report_time_offset);
@@ -560,10 +560,10 @@ gboolean network_forward_line(struct irc_network *s, struct irc_client *c,
 
 	if (!query_stack_record(s->queries, c, l)) {
 		if (c != NULL) {
-			client_log(LOG_WARNING, c, "Unknown command from client: %s", 
+			client_log(LOG_WARNING, c, "Unknown command from client: %s",
 					   l->args[0]);
 		} else {
-			network_log(LOG_WARNING, s, "Sending unknown command '%s'", 
+			network_log(LOG_WARNING, s, "Sending unknown command '%s'",
 						l->args[0]);
 		}
 	}
@@ -581,7 +581,7 @@ gboolean network_forward_line(struct irc_network *s, struct irc_client *c,
 "If you delete it while ctrlproxy is running, you will lose the ability \n" \
 "to use any backlog functionality during the current session.\n"
 
-struct linestack_context *new_linestack(struct irc_network *n, 
+struct linestack_context *new_linestack(struct irc_network *n,
 										const char *basedir)
 {
 	char *readme_file;

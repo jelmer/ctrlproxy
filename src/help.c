@@ -45,7 +45,7 @@ GHashTable *help_build_hash(char *data, gsize len)
 	i = 0;
 	while (i < len) {
 		if (data[i] != '?') {
-			log_global(LOG_WARNING, "Unknown character '0x%02x' in help file", 
+			log_global(LOG_WARNING, "Unknown character '0x%02x' in help file",
 					   data[i]);
 			g_hash_table_destroy(h);
 			return NULL;
@@ -86,7 +86,7 @@ help_t *help_load_file( const char *helpfile )
 	}
 	
 	if (h->file == NULL) {
-		log_global(LOG_WARNING, "Unable to open help file `%s': %s", helpfile, 
+		log_global(LOG_WARNING, "Unable to open help file `%s': %s", helpfile,
 				  error->message);
 		g_error_free(error);
 		help_free( h );

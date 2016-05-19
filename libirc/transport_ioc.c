@@ -38,7 +38,7 @@ struct irc_transport_data_iochannel {
 };
 
 
-static gboolean handle_transport_receive(GIOChannel *c, GIOCondition cond, 
+static gboolean handle_transport_receive(GIOChannel *c, GIOCondition cond,
 									  void *_transport);
 
 static void free_pending_line(void *_line, void *userdata)
@@ -81,7 +81,7 @@ static char *irc_transport_iochannel_get_peer_name(void *data)
 		if (getnameinfo((struct sockaddr *)&sa, len, hostname, sizeof(hostname),
 						NULL, 0, 0) == 0) {
 			return g_strdup(hostname);
-		} 
+		}
 	} else if (sa.ss_family == AF_UNIX) {
 		return g_strdup("localhost");
 	}
@@ -144,11 +144,11 @@ static void irc_transport_iochannel_disconnect(void *data)
 
 	backend_data->pending_disconnect = TRUE;
 
-	if (backend_data->outgoing_id == 0) 
+	if (backend_data->outgoing_id == 0)
 		really_disconnect(backend_data);
 }
 
-static gboolean transport_send_queue(GIOChannel *ioc, GIOCondition cond, 
+static gboolean transport_send_queue(GIOChannel *ioc, GIOCondition cond,
 									  void *_transport);
 
 static gboolean irc_transport_iochannel_send_line(struct irc_transport *transport, const struct irc_line *l, GError **error)
@@ -171,7 +171,7 @@ static gboolean irc_transport_iochannel_send_line(struct irc_transport *transpor
 
 	switch (status) {
 	case G_IO_STATUS_AGAIN:
-		backend_data->outgoing_id = g_io_add_watch(backend_data->incoming, G_IO_OUT, 
+		backend_data->outgoing_id = g_io_add_watch(backend_data->incoming, G_IO_OUT,
 										transport_send_queue, transport);
 		g_queue_push_tail(backend_data->pending_lines, linedup(l));
 		break;
@@ -196,7 +196,7 @@ static gboolean irc_transport_iochannel_send_line(struct irc_transport *transpor
 	case G_IO_STATUS_NORMAL:
 		break;
 	case G_IO_STATUS_AGAIN:
-		backend_data->outgoing_id = g_io_add_watch(backend_data->incoming, G_IO_OUT, 
+		backend_data->outgoing_id = g_io_add_watch(backend_data->incoming, G_IO_OUT,
 										transport_send_queue, transport);
 		break;
 	case G_IO_STATUS_ERROR:
@@ -214,10 +214,10 @@ static void irc_transport_iochannel_activate(struct irc_transport *transport)
 {
 	struct irc_transport_data_iochannel *backend_data = (struct irc_transport_data_iochannel *)transport->backend_data;
 	backend_data->incoming_id = g_io_add_watch(
-							backend_data->incoming, G_IO_IN | G_IO_HUP, 
+							backend_data->incoming, G_IO_IN | G_IO_HUP,
 							handle_transport_receive, transport);
 
-	handle_transport_receive(backend_data->incoming, 
+	handle_transport_receive(backend_data->incoming,
 			  g_io_channel_get_buffer_condition(backend_data->incoming) & G_IO_IN,
 			  transport);
 }
@@ -234,7 +234,7 @@ static gboolean handle_recv_status(struct irc_transport *transport, GIOStatus st
 	if (status != G_IO_STATUS_AGAIN) {
 		if (error->domain == G_CONVERT_ERROR &&
 			error->code == G_CONVERT_ERROR_ILLEGAL_SEQUENCE) {
-			transport->callbacks->charset_error(transport, 
+			transport->callbacks->charset_error(transport,
 												error->message);
 		} else {
 			return transport->callbacks->error(transport, error?error->message:NULL);
@@ -246,7 +246,7 @@ static gboolean handle_recv_status(struct irc_transport *transport, GIOStatus st
 
 
 
-static gboolean handle_transport_receive(GIOChannel *c, GIOCondition cond, 
+static gboolean handle_transport_receive(GIOChannel *c, GIOCondition cond,
 									  void *_transport)
 {
 	struct irc_transport *transport = _transport;
@@ -256,7 +256,7 @@ static gboolean handle_transport_receive(GIOChannel *c, GIOCondition cond,
 	g_assert(transport);
 
 	if (cond & G_IO_ERR) {
-		char *tmp = g_strdup_printf("Error reading from client: %s", 
+		char *tmp = g_strdup_printf("Error reading from client: %s",
 						  g_io_channel_unix_get_sock_error(c));
 		transport->callbacks->error(transport, tmp);
 		g_free(tmp);
@@ -269,7 +269,7 @@ static gboolean handle_transport_receive(GIOChannel *c, GIOCondition cond,
 		GIOStatus status;
 		gboolean ret = TRUE;
 		
-		while ((status = irc_recv_line(c, backend_data->incoming_iconv, &error, 
+		while ((status = irc_recv_line(c, backend_data->incoming_iconv, &error,
 									   &l)) == G_IO_STATUS_NORMAL) {
 
 			ret &= transport->callbacks->recv(transport, l);
@@ -313,12 +313,12 @@ static const struct irc_transport_ops irc_transport_iochannel_ops = {
 	.set_charset = irc_transport_iochannel_set_charset,
 };
 
-/* GIOChannels passed into this function 
+/* GIOChannels passed into this function
  * should preferably:
  *  - have no encoding set
  *  - work asynchronously
  *
- * @param iochannel Channel to talk over 
+ * @param iochannel Channel to talk over
  */
 struct irc_transport *irc_transport_new_iochannel(GIOChannel *iochannel)
 {
@@ -335,7 +335,7 @@ struct irc_transport *irc_transport_new_iochannel(GIOChannel *iochannel)
 	return ret;
 }
 
-static gboolean transport_send_queue(GIOChannel *ioc, GIOCondition cond, 
+static gboolean transport_send_queue(GIOChannel *ioc, GIOCondition cond,
 									  void *_transport)
 {
 	gboolean ret = FALSE;
@@ -356,7 +356,7 @@ static gboolean transport_send_queue(GIOChannel *ioc, GIOCondition cond,
 		struct irc_line *l = g_queue_pop_head(backend_data->pending_lines);
 
 		g_assert(backend_data->incoming != NULL);
-		status = irc_send_line(backend_data->incoming, 
+		status = irc_send_line(backend_data->incoming,
 							   backend_data->outgoing_iconv, l, &error);
 
 		switch (status) {

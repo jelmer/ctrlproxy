@@ -1,8 +1,8 @@
-/* 
+/*
 	ctrlproxy: A modular IRC proxy
 	(c) 2002-2008 Jelmer Vernooij <jelmer@jelmer.uk>
 
-	g_mkdir_with_parents() imported from libglib and 
+	g_mkdir_with_parents() imported from libglib and
 	(C) Red Hat.
 
 	This program is free software; you can redistribute it and/or modify
@@ -48,7 +48,7 @@ static inline int str_cmphelper(const char *a, const char *b, char sh, char sl, 
 		l = (a[i]>b[i]?b[i]:a[i]);
 		h = (a[i]>b[i]?a[i]:b[i]);
 
-		if (h < sh || h > eh || l < sl || l > el) 
+		if (h < sh || h > eh || l < sl || l > el)
 			break;
 
 		if (h-sh != l-sl)
@@ -90,7 +90,7 @@ char *g_io_channel_ip_get_description(GIOChannel *ch)
 	int fd = g_io_channel_unix_get_fd(ch);
 
 	if (getpeername (fd, (struct sockaddr *)&sa, &len) < 0) {
-		log_global(LOG_WARNING, "Unable to obtain remote IP address: %s", 
+		log_global(LOG_WARNING, "Unable to obtain remote IP address: %s",
 				   strerror(errno));
 		return NULL;
 	}
@@ -101,7 +101,7 @@ char *g_io_channel_ip_get_description(GIOChannel *ch)
 	if (getnameinfo((struct sockaddr *)&sa, len, hostname, sizeof(hostname),
 					service, sizeof(service), NI_NOFQDN | NI_NUMERICSERV) == 0) {
 		description = g_strdup_printf("%s:%s", hostname, service);
-	} 
+	}
 
 	return description;
 }
@@ -118,10 +118,10 @@ char *list_make_string(GList *list)
 	ret = g_new(char,len);
 	ret[0] = '\0';
 
-	for(gl = list; gl; gl = gl->next) 
-	{ 
+	for(gl = list; gl; gl = gl->next)
+	{
 		strncat(ret, gl->data, len);
-		if (gl->next) strncat(ret, " ", len); 
+		if (gl->next) strncat(ret, " ", len);
 	}
 
 	return ret;

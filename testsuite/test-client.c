@@ -58,7 +58,7 @@ START_TEST(test_login)
 	struct irc_client *c;
 	struct global *g = TORTURE_GLOBAL;
 	struct irc_network_info ni = { };
-	struct irc_network n = { 
+	struct irc_network n = {
 		.info = &ni,
 		.name = "test",
 		.global = g,
@@ -81,7 +81,7 @@ START_TEST(test_read_nonutf8)
 	struct irc_client *c;
 	struct global *g = TORTURE_GLOBAL;
 	struct irc_network_info ni = { .name = "test" };
-	struct irc_network n = { 
+	struct irc_network n = {
 		.info = &ni,
 		.global = g,
 	};
@@ -118,16 +118,16 @@ END_TEST
 
 START_TEST(test_replace_hostmask)
 	struct irc_line *nl, *l;
-	struct network_nick old = { 
-		.nick = "foo", 
-		.hostname = "foohost", 
-		.username = "foouser", 
+	struct network_nick old = {
+		.nick = "foo",
+		.hostname = "foohost",
+		.username = "foouser",
 		.hostmask = "foo!foouser@foohost"
 	};
-	struct network_nick new = { 
-		.nick = "foo", 
-		.hostname = "barhost", 
-		.username = "baruser", 
+	struct network_nick new = {
+		.nick = "foo",
+		.hostname = "barhost",
+		.username = "baruser",
 		.hostmask = "foo!baruser@barhost"
 	};
 	l = irc_parse_line(":foo!foouser@foohost JOIN #bar");

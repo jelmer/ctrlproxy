@@ -1,4 +1,4 @@
-/* 
+/*
 	ctrlproxy: A modular IRC proxy
 	(c) 2003-2007 Jelmer Vernooij <jelmer@jelmer.uk>
 
@@ -38,7 +38,7 @@ const char *nickserv_find_nick(struct irc_network *n, const char *nick)
 	for (gl = n->global->nickserv_nicks; gl; gl = gl->next) {
 		struct keyfile_entry *e = gl->data;
 
-		if (g_strcasecmp(e->nick, nick)) 
+		if (g_strcasecmp(e->nick, nick))
 			continue;
 
 		if (!e->network) return e->pass;
@@ -60,7 +60,7 @@ void nickserv_identify_me(struct irc_network *network, char *nick)
 	/* Don't try to identify if we're already identified */
 	/* FIXME: Apparently, +e indicates being registered on Freenode,
 	 * +R is only used on OFTC */
-	if (network->external_state->me.modes['R']) 
+	if (network->external_state->me.modes['R'])
 		return;
 	
 	pass = nickserv_find_nick(network, nick);
@@ -88,7 +88,7 @@ static void cache_nickserv_pass(struct irc_network *n, const char *newpass)
 	for (gl = n->global->nickserv_nicks; gl; gl = gl->next) {
 		e = gl->data;
 
-		if (e->network && !g_strcasecmp(e->network, n->name) && 
+		if (e->network && !g_strcasecmp(e->network, n->name) &&
 			!g_strcasecmp(e->nick, n->external_state->me.nick)) {
 			break;		
 		}
@@ -109,10 +109,10 @@ static void cache_nickserv_pass(struct irc_network *n, const char *newpass)
 	if (e->pass == NULL || strcmp(e->pass, newpass) != 0) {
 		e->pass = g_strdup(newpass);
 		network_log(LOG_INFO, n, "Caching NickServ password for nick %s", e->nick);
-	} 
+	}
 }
 
-static gboolean log_data(struct irc_network *n, const struct irc_line *l, enum data_direction dir, void *userdata) 
+static gboolean log_data(struct irc_network *n, const struct irc_line *l, enum data_direction dir, void *userdata)
 {
 	static char *nickattempt = NULL;
 
@@ -128,13 +128,13 @@ static gboolean log_data(struct irc_network *n, const struct irc_line *l, enum d
 		nickattempt = g_strdup(l->args[1]);
 	}
 
-	if (dir == TO_SERVER && 
+	if (dir == TO_SERVER &&
 		(!g_strcasecmp(l->args[0], "PRIVMSG") || !g_strcasecmp(l->args[0], "NOTICE")) &&
 		(!g_strcasecmp(l->args[1], nickserv_nick(n)) && !g_strncasecmp(l->args[2], "IDENTIFY ", strlen("IDENTIFY ")))) {
 			cache_nickserv_pass(n, l->args[2] + strlen("IDENTIFY "));
 	}
 
-	if (dir == TO_SERVER && 
+	if (dir == TO_SERVER &&
 		!g_strcasecmp(l->args[0], "NS") &&
 		!g_strcasecmp(l->args[1], "IDENTIFY")) {
 		cache_nickserv_pass(n, l->args[2]);
@@ -171,7 +171,7 @@ gboolean nickserv_save(struct global *global, const char *dir)
 			ret = TRUE;
 		else
 			ret = FALSE;
-	} else 
+	} else
 		ret = keyfile_write_file(global->nickserv_nicks, NICKSERV_FILE_HEADER, filename);
 
     g_free(filename);
@@ -184,7 +184,7 @@ gboolean nickserv_load(struct global *global)
 	gboolean ret;
     char *filename;
 	
-	filename = g_build_filename(global->config->config_dir, "nickserv", 
+	filename = g_build_filename(global->config->config_dir, "nickserv",
 									  NULL);
 	ret = keyfile_read_file(filename, '#', &global->nickserv_nicks);
 	g_free(filename);

@@ -120,7 +120,7 @@ static gboolean client_try_cache_who(struct irc_client *c, struct irc_network_st
 	if (max_who_age == 0)
 		return FALSE;
 
-	if (l->argc != 2) 
+	if (l->argc != 2)
 		return FALSE;
 
 	g_assert(net);
@@ -147,8 +147,8 @@ static gboolean client_try_cache_who(struct irc_client *c, struct irc_network_st
 		struct network_nick *nn = cn->global_nick;
 		char *info = g_strdup_printf("%d %s", nn->hops, nn->fullname);
 		
-		client_send_response(c, RPL_WHOREPLY, l->args[1], nn->username, 
-							 nn->hostname, nn->server, nn->nick, 
+		client_send_response(c, RPL_WHOREPLY, l->args[1], nn->username,
+							 nn->hostname, nn->server, nn->nick,
 							 cn->last_flags, info, NULL);
 
 		g_free(info);
@@ -205,7 +205,7 @@ gboolean client_try_cache(struct irc_client *c, struct irc_network_state *net, s
 	g_assert(l);
 	int i;
 
-	if (l->argc == 0) 
+	if (l->argc == 0)
 		return TRUE;
 
 	for (i = 0; cache_commands[i].name; i++) {

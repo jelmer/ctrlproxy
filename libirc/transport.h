@@ -67,7 +67,7 @@ gboolean transport_send_line(struct irc_transport *transport, const struct irc_l
 gboolean transport_send_args(struct irc_transport *transport, GError **error, ...);
 gboolean transport_send_response(struct irc_transport *transport, GError **error, const char *from, const char *to, int response, ...);
 void transport_parse_buffer(struct irc_transport *transport);
-void irc_transport_set_callbacks(struct irc_transport *transport, 
+void irc_transport_set_callbacks(struct irc_transport *transport,
 								 const struct irc_transport_callbacks *callbacks, void *userdata);
 char *transport_get_peer_hostname(struct irc_transport *transport);
 

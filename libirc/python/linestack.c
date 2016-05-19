@@ -40,7 +40,7 @@ static PyObject *py_linestack_new(PyTypeObject *type, PyObject *args, PyObject *
 	int truncate = FALSE;
 	PyObject *py_state;
     struct irc_network_state *state;
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "sO|i", kwnames, 
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "sO|i", kwnames,
                                      &data_dir, &py_state, &truncate))
         return NULL;
 
@@ -150,7 +150,7 @@ static PyObject *py_linestack_send(PyLinestackObject *self, PyObject *args)
         ret = linestack_send_object(self->linestack, object, &from, &to, client,
                                     dataonly, timed, time_offset);
     } else {
-        ret = linestack_send(self->linestack, &from, &to, client, dataonly, 
+        ret = linestack_send(self->linestack, &from, &to, client, dataonly,
                              timed, time_offset);
     }
     if (!ret) {
@@ -186,7 +186,7 @@ static PyObject *py_linestack_iter_next(PyLinestackIterObject *self)
         return NULL;
     }
 
-    ret = linestack_read_entry(self->parent->linestack, self->from, 
+    ret = linestack_read_entry(self->parent->linestack, self->from,
                          &line, &time);
     if (ret == FALSE) {
         PyErr_SetNone(PyExc_RuntimeError);
@@ -232,13 +232,13 @@ static PyObject *py_linestack_traverse(PyLinestackObject *self, PyObject *args)
 }
 
 static PyMethodDef py_linestack_methods[] = {
-    { "insert_line", (PyCFunction)py_linestack_insert_line, 
+    { "insert_line", (PyCFunction)py_linestack_insert_line,
         METH_VARARGS, "Insert line" },
     { "replay", (PyCFunction)py_linestack_replay,
         METH_VARARGS, "Replay" },
     { "get_marker", (PyCFunction)py_linestack_get_marker,
         METH_NOARGS, "Get marker" },
-    { "send", (PyCFunction)py_linestack_send, METH_VARARGS, 
+    { "send", (PyCFunction)py_linestack_send, METH_VARARGS,
         "Send" },
     { "traverse", (PyCFunction)py_linestack_traverse, METH_VARARGS,
         "Traverse" },

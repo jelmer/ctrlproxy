@@ -1,4 +1,4 @@
-/* 
+/*
 	ctrlproxy: A modular IRC proxy
 	(c) 2002-2003 Jelmer Vernooij <jelmer@jelmer.uk>
 
@@ -73,14 +73,14 @@ typedef gboolean (*marshall_fn_t) (struct irc_network_state *, const char *name,
 
 
 
-static gboolean file_insert_state(struct linestack_context *ctx, 
-							  const struct irc_network_state *state, 
+static gboolean file_insert_state(struct linestack_context *ctx,
+							  const struct irc_network_state *state,
 							  guint64 state_id);
 
 
 static char *state_path(struct linestack_context *lf_data, guint64 state_id);
 
-static gboolean marshall_network_state(enum marshall_mode m, GIOChannel *t, 
+static gboolean marshall_network_state(enum marshall_mode m, GIOChannel *t,
 									   struct irc_network_state *n);
 
 
@@ -91,7 +91,7 @@ static gint64 g_io_channel_tell_position(GIOChannel *gio)
 	return lseek(fd, 0, SEEK_CUR);
 }
 
-struct linestack_context *create_linestack(const char *data_dir, 
+struct linestack_context *create_linestack(const char *data_dir,
 										   gboolean truncate,
 										   const struct irc_network_state *state)
 {
@@ -114,7 +114,7 @@ struct linestack_context *create_linestack(const char *data_dir,
 
 	data->line_file = g_io_channel_new_file(data_file, mode, &error);
 	if (data->line_file == NULL) {
-		log_global(LOG_WARNING, "Error opening `%s': %s", 
+		log_global(LOG_WARNING, "Error opening `%s': %s",
 						  data_file, error->message);
 		g_error_free(error);
 		g_free(data);
@@ -130,7 +130,7 @@ struct linestack_context *create_linestack(const char *data_dir,
 
 	data->index_file = g_io_channel_new_file(index_file, mode, &error);
 	if (data->index_file == NULL) {
-		log_global(LOG_WARNING, "Error opening `%s': %s", 
+		log_global(LOG_WARNING, "Error opening `%s': %s",
 						  index_file, error->message);
 		g_error_free(error);
 		g_free(index_file);
@@ -153,7 +153,7 @@ struct linestack_context *create_linestack(const char *data_dir,
 		status = g_io_channel_seek_position(data->index_file, 0, G_SEEK_END,
 											&error);
 		if (status != G_IO_STATUS_NORMAL) {
-			log_global(LOG_WARNING, "Error seeking end of index file: %s", 
+			log_global(LOG_WARNING, "Error seeking end of index file: %s",
 						  error->message);
 			g_error_free(error);
 			g_free(data);
@@ -163,7 +163,7 @@ struct linestack_context *create_linestack(const char *data_dir,
 		status = g_io_channel_seek_position(data->line_file, 0, G_SEEK_END,
 											&error);
 		if (status != G_IO_STATUS_NORMAL) {
-			log_global(LOG_WARNING, "Error seeking end of line file: %s", 
+			log_global(LOG_WARNING, "Error seeking end of line file: %s",
 						  error->message);
 			g_error_free(error);
 			g_free(data);
@@ -172,12 +172,12 @@ struct linestack_context *create_linestack(const char *data_dir,
 
 		data->count = g_io_channel_tell_position(data->index_file) / INDEX_RECORD_SIZE;
 
-		/* FIXME: Write the diff between the previously stored state and 
+		/* FIXME: Write the diff between the previously stored state and
 		 * the state to store now. */
 	} else {
 		dir = g_dir_open(data->state_dir, 0, &error);
 		if (dir == NULL) {
-			log_global(LOG_WARNING, "Error opening directory `%s': %s", 
+			log_global(LOG_WARNING, "Error opening directory `%s': %s",
 							  data->state_dir, error->message);
 			g_error_free(error);
 			g_free(data);
@@ -222,7 +222,7 @@ struct irc_network_state *linestack_get_state(
 
 	g_assert(nd != NULL);
 
-	if (nd == NULL) 
+	if (nd == NULL)
 		return NULL;
 
 	/* Flush channel before reading otherwise data corruption may occur */
@@ -234,11 +234,11 @@ struct irc_network_state *linestack_get_state(
 
 	if (to_index != NULL) {
 		t = (*to_index)-1;
-		status = g_io_channel_seek_position(nd->index_file, 
+		status = g_io_channel_seek_position(nd->index_file,
 			t * INDEX_RECORD_SIZE + sizeof(guint64) + sizeof(time_t),
 			G_SEEK_SET, &error);
 		LF_CHECK_IO_STATUS(status);
-		status = g_io_channel_read_chars(nd->index_file, (void *)&state_index, 
+		status = g_io_channel_read_chars(nd->index_file, (void *)&state_index,
 										 sizeof(guint64), NULL, &error);
 		if (status == G_IO_STATUS_ERROR) {
 			log_global(LOG_ERROR, "Unable to ready entry %"PRIi64" in index: %s",
@@ -262,7 +262,7 @@ struct irc_network_state *linestack_get_state(
 
 	state_file = g_io_channel_new_file(data_file, "r", &error);
 	if (state_file == NULL) {
-		log_global(LOG_WARNING, "Error opening `%s': %s", 
+		log_global(LOG_WARNING, "Error opening `%s': %s",
 						  data_file, error->message);
 		g_error_free(error);
 		g_free(data_file);
@@ -285,7 +285,7 @@ struct irc_network_state *linestack_get_state(
 	return ret;
 }
 
-gboolean linestack_read_entry(struct linestack_context *nd, 
+gboolean linestack_read_entry(struct linestack_context *nd,
 							  guint64 i,
 							  struct irc_line **line,
 							  time_t *time
@@ -296,35 +296,35 @@ gboolean linestack_read_entry(struct linestack_context *nd,
 	gchar *raw = NULL;
 	GIOStatus status;
 
-	status = g_io_channel_seek_position(nd->index_file, 
-										i * INDEX_RECORD_SIZE, 
+	status = g_io_channel_seek_position(nd->index_file,
+										i * INDEX_RECORD_SIZE,
 										G_SEEK_SET, &error);
 	if (status != G_IO_STATUS_NORMAL) {
-		log_global(LOG_WARNING, "seeking line %"PRIi64" in index failed: %s", i, 
+		log_global(LOG_WARNING, "seeking line %"PRIi64" in index failed: %s", i,
 				   error->message);
 		g_error_free(error);
 		return FALSE;
 	}
 
-	status = g_io_channel_read_chars(nd->index_file, (void *)&offset, 
+	status = g_io_channel_read_chars(nd->index_file, (void *)&offset,
 									 sizeof(guint64), NULL, &error);
 	if (status != G_IO_STATUS_NORMAL) {
-		log_global(LOG_WARNING, "reading line %"PRIi64" in index failed: %s", i, 
+		log_global(LOG_WARNING, "reading line %"PRIi64" in index failed: %s", i,
 				   error->message);
 		g_error_free(error);
 		return FALSE;
 	}
 
-	status = g_io_channel_read_chars(nd->index_file, (void *)time, 
+	status = g_io_channel_read_chars(nd->index_file, (void *)time,
 									 sizeof(time_t), NULL, &error);
 	if (status != G_IO_STATUS_NORMAL) {
-		log_global(LOG_WARNING, "reading time %"PRIi64" in index failed: %s", i, 
+		log_global(LOG_WARNING, "reading time %"PRIi64" in index failed: %s", i,
 				   error->message);
 		g_error_free(error);
 		return FALSE;
 	}
 
-	status = g_io_channel_seek_position(nd->line_file, offset, G_SEEK_SET, 
+	status = g_io_channel_seek_position(nd->line_file, offset, G_SEEK_SET,
 										&error);
 	if (status != G_IO_STATUS_NORMAL) {
 		log_global(LOG_WARNING, "seeking line %"PRIi64" (%"PRIi64") in data failed: %s",
@@ -359,7 +359,7 @@ gboolean linestack_traverse(struct linestack_context *nd,
 	time_t time;
 	guint64 i;
 
-	if (nd == NULL) 
+	if (nd == NULL)
 		return FALSE;
 
 	/* Flush channel before reading otherwise data corruption may occur */
@@ -384,7 +384,7 @@ gboolean linestack_traverse(struct linestack_context *nd,
 	for (i = start_index; i < end_index; i++) {
 		l = NULL;
 		ret = linestack_read_entry(nd, i, &l, &time);
-		if (ret) 
+		if (ret)
 			ret &= handler(l, time, userdata);
 		free_line(l);
 		if (!ret) break;
@@ -410,7 +410,7 @@ static gboolean traverse_object_handler(struct irc_line *l, time_t t, void *stat
 	struct traverse_object_data *d = state;
 	gboolean ret = TRUE;
 
-	if (l->argc < 2) 
+	if (l->argc < 2)
 		return TRUE;
 
 	if (strchr(l->args[1], ',') == NULL) {
@@ -434,8 +434,8 @@ static gboolean traverse_object_handler(struct irc_line *l, time_t t, void *stat
 
 gboolean linestack_traverse_object(
 			struct linestack_context *ctx,
-			const char *obj, 
-			linestack_marker lm_from, 
+			const char *obj,
+			linestack_marker lm_from,
 			linestack_marker lm_to, linestack_traverse_fn hl,
 			void *userdata)
 {
@@ -465,9 +465,9 @@ linestack_marker linestack_get_marker(struct linestack_context *nd)
 	return pos;
 }
 
-static const char *linestack_messages[] = { 
-	"NICK", "JOIN", "QUIT", "PART", "PRIVMSG", "NOTICE", "KICK", 
-	"MODE", "TOPIC", 
+static const char *linestack_messages[] = {
+	"NICK", "JOIN", "QUIT", "PART", "PRIVMSG", "NOTICE", "KICK",
+	"MODE", "TOPIC",
 	"353", /* RPL_NAMREPLY */
 	"366", /* RPL_ENDOFNAMES */
 	"331", /* RPL_NOTOPIC */
@@ -483,7 +483,7 @@ gboolean write_index_entry(GIOChannel *ioc, guint64 line_offset, time_t time,
 	GError *error = NULL;
 	GIOStatus status;
 
-	status = g_io_channel_write_chars(ioc, (void *)&line_offset, sizeof(guint64), NULL, 
+	status = g_io_channel_write_chars(ioc, (void *)&line_offset, sizeof(guint64), NULL,
 									  &error);
 	LF_CHECK_IO_STATUS(status);
 
@@ -498,8 +498,8 @@ gboolean write_index_entry(GIOChannel *ioc, guint64 line_offset, time_t time,
 }
 
 
-gboolean linestack_insert_line(struct linestack_context *nd, 
-							   const struct irc_line *l, enum data_direction dir, 
+gboolean linestack_insert_line(struct linestack_context *nd,
+							   const struct irc_line *l, enum data_direction dir,
 							   const struct irc_network_state *state)
 {
 	int i;
@@ -513,18 +513,18 @@ gboolean linestack_insert_line(struct linestack_context *nd,
 	if (l->argc == 0) return TRUE;
 
 	/* Only need PRIVMSG and NOTICE messages we send ourselves */
-	if (dir == TO_SERVER && 
-		base_strcmp(l->args[0], "PRIVMSG") && 
+	if (dir == TO_SERVER &&
+		base_strcmp(l->args[0], "PRIVMSG") &&
 		base_strcmp(l->args[0], "NOTICE")) return TRUE;
 
 	/* No CTCP, please */
 	if ((!base_strcmp(l->args[0], "PRIVMSG") ||
-		!base_strcmp(l->args[0], "NOTICE")) && 
-		l->argc > 2 && l->args[2][0] == '\001' && 
+		!base_strcmp(l->args[0], "NOTICE")) &&
+		l->argc > 2 && l->args[2][0] == '\001' &&
 		g_strncasecmp(l->args[2], "\001ACTION", 7) != 0)
 		return TRUE;
 
-	for (i = 0; linestack_messages[i]; i++) 
+	for (i = 0; linestack_messages[i]; i++)
 		if (!base_strcmp(linestack_messages[i], l->args[0]))
 			needed = TRUE;
 
@@ -541,7 +541,7 @@ gboolean linestack_insert_line(struct linestack_context *nd,
 			return FALSE;
 	}
 
-	if (!write_index_entry(nd->index_file, 
+	if (!write_index_entry(nd->index_file,
 					  g_io_channel_tell_position(nd->line_file),
 					  time(NULL),
 					  nd->last_line_with_state))
@@ -593,7 +593,7 @@ static gboolean send_line_timed_dataonly(struct irc_line *l, time_t t, void *_pr
 	gboolean ret;
 	struct irc_line *nl;
 
-	if (base_strcmp(l->args[0], "PRIVMSG") != 0 && 
+	if (base_strcmp(l->args[0], "PRIVMSG") != 0 &&
 		base_strcmp(l->args[0], "NOTICE") != 0)
 		return TRUE;
 
@@ -610,7 +610,7 @@ static gboolean send_line_dataonly(struct irc_line *l, time_t t, void *_privdata
 {
 	struct send_line_privdata *privdata = _privdata;
 
-	if (base_strcmp(l->args[0], "PRIVMSG") != 0 && 
+	if (base_strcmp(l->args[0], "PRIVMSG") != 0 &&
 		base_strcmp(l->args[0], "NOTICE") != 0)
 		return TRUE;
 
@@ -629,9 +629,9 @@ gboolean linestack_send(struct linestack_context *ctx, linestack_marker mf, line
 	privdata.time_offset = time_offset;
 
 	if (dataonly) {
-		if (timed) 
+		if (timed)
 			trav_fn = send_line_timed_dataonly;
-		else 
+		else
 			trav_fn = send_line_dataonly;
 	} else {
 		if (timed)
@@ -652,9 +652,9 @@ gboolean linestack_send_object(struct linestack_context *ctx, const char *obj, l
 	privdata.time_offset = time_offset;
 
 	if (dataonly) {
-		if (timed) 
+		if (timed)
 			trav_fn = send_line_timed_dataonly;
-		else 
+		else
 			trav_fn = send_line_dataonly;
 	} else {
 		if (timed)
@@ -673,9 +673,9 @@ static gboolean replay_line(struct irc_line *l, time_t t, void *state)
 	return TRUE;
 }
 
-gboolean linestack_replay(struct linestack_context *ctx, 
-						  linestack_marker mf, 
-						  linestack_marker mt, 
+gboolean linestack_replay(struct linestack_context *ctx,
+						  linestack_marker mf,
+						  linestack_marker mt,
 						  struct irc_network_state *st)
 {
 	return linestack_traverse(ctx, mf, mt, replay_line, st);
@@ -684,7 +684,7 @@ gboolean linestack_replay(struct linestack_context *ctx,
 
 #define marshall_new(m,t) if ((m) == MARSHALL_PULL) *(t) = g_malloc(sizeof(**t));
 
-static const char tabs[10] = {'\t', '\t', '\t', '\t', '\t', 
+static const char tabs[10] = {'\t', '\t', '\t', '\t', '\t',
 			       '\t', '\t', '\t', '\t', '\t' };
 
 
@@ -732,7 +732,7 @@ static gboolean marshall_get (GIOChannel *t, int level, const char *name, char *
 	line[term] = '\0';
 
 	g_assert(strncmp(line, tabs, level) == 0);
-	g_assert(strncmp(line+level, name, strlen(name)) == 0); 
+	g_assert(strncmp(line+level, name, strlen(name)) == 0);
 
 	if (line[level+strlen(name)] == ':') {
 		*value = g_strdup(line+level+strlen(name)+2);
@@ -762,8 +762,8 @@ static gboolean marshall_struct(GIOChannel *t, enum marshall_mode m, int level, 
 	}
 }
 
-static gboolean marshall_string (struct irc_network_state *nst, 
-								 const char *name, int level, 
+static gboolean marshall_string (struct irc_network_state *nst,
+								 const char *name, int level,
 								 enum marshall_mode m, GIOChannel *t, char **d)
 {
 	if (m == MARSHALL_PUSH) {
@@ -776,8 +776,8 @@ static gboolean marshall_string (struct irc_network_state *nst,
 	}
 }
 
-static gboolean marshall_bool(struct irc_network_state *nst, const char *name, 
-							  int level, enum marshall_mode m, GIOChannel *t, 
+static gboolean marshall_bool(struct irc_network_state *nst, const char *name,
+							  int level, enum marshall_mode m, GIOChannel *t,
 							  gboolean *n)
 {
 	if (m == MARSHALL_PUSH) {
@@ -909,7 +909,7 @@ static gboolean marshall_network_nick_p (struct irc_network_state *nst, const ch
 	return marshall_network_nick(nst, name, level, m, t, *n);
 }
 
-struct ht_traverse_data 
+struct ht_traverse_data
 {
 	marshall_fn_t key_fn;
 	marshall_fn_t val_fn;
@@ -966,9 +966,9 @@ static gboolean marshall_nicklist_entry (struct irc_network_state *nst, const ch
 	return ret;
 }
 
-static gboolean marshall_channel_state (struct irc_network_state *nst, 
-										const char *name, int level, 
-										enum marshall_mode m, GIOChannel *t, 
+static gboolean marshall_channel_state (struct irc_network_state *nst,
+										const char *name, int level,
+										enum marshall_mode m, GIOChannel *t,
 										struct irc_channel_state **c)
 {
 	int i;
@@ -1052,7 +1052,7 @@ static gboolean marshall_channel_state (struct irc_network_state *nst,
 	return ret;
 }
 
-static gboolean marshall_network_state(enum marshall_mode m, GIOChannel *t, 
+static gboolean marshall_network_state(enum marshall_mode m, GIOChannel *t,
 									   struct irc_network_state *n)
 {
 	gboolean ret = TRUE;
@@ -1082,7 +1082,7 @@ static char *state_path(struct linestack_context *lf_data, guint64 state_id)
 	return ret;
 }
 
-static gboolean file_insert_state(struct linestack_context *nd, 
+static gboolean file_insert_state(struct linestack_context *nd,
 							  const struct irc_network_state *state,
 							  guint64 state_id)
 {
@@ -1097,7 +1097,7 @@ static gboolean file_insert_state(struct linestack_context *nd,
 
 	state_file = g_io_channel_new_file(data_file, "w+", &error);
 	if (state_file == NULL) {
-		log_global(LOG_WARNING, "Error opening `%s': %s", 
+		log_global(LOG_WARNING, "Error opening `%s': %s",
 						  data_file, error->message);
 		g_error_free(error);
 		g_free(data_file);

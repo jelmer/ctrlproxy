@@ -1,4 +1,4 @@
-/* 
+/*
 	ctrlproxy: A modular IRC proxy
 	(c) 2003 Jelmer Vernooij <jelmer@jelmer.uk>
 
@@ -61,7 +61,7 @@ static GList *del_filter_ex(GList *list, const char *name)
 	{
 		struct filter_data *d = (struct filter_data *)gl->data;
 
-		if (!g_strcasecmp(d->name, name)) 
+		if (!g_strcasecmp(d->name, name))
 		{
 			g_free(d->name);
 			g_free(d);
@@ -73,7 +73,7 @@ static GList *del_filter_ex(GList *list, const char *name)
 }
 
 
-static gboolean filter_class_execute(GList *gl, struct irc_network *s, enum data_direction dir, const struct irc_line *l) 
+static gboolean filter_class_execute(GList *gl, struct irc_network *s, enum data_direction dir, const struct irc_line *l)
 {
 	while(gl) {
 		struct filter_data *d = (struct filter_data *)gl->data;
@@ -88,9 +88,9 @@ static gboolean filter_class_execute(GList *gl, struct irc_network *s, enum data
 	return TRUE;
 }
 
-static GList *log_filters = NULL, 
-			 *replication_filters = NULL, 
-			 *client_filters = NULL, 
+static GList *log_filters = NULL,
+			 *replication_filters = NULL,
+			 *client_filters = NULL,
 			 *server_filters = NULL;
 
 #define FILTER_FUNCTIONS(n,list) \
@@ -119,7 +119,7 @@ void add_client_filter(const char *name, client_filter_function f, void *userdat
 
 void del_client_filter(const char *name)
 {
-	client_filters = del_filter_ex(client_filters, name); 
+	client_filters = del_filter_ex(client_filters, name);
 }
 
 gboolean run_client_filter(struct irc_client *c, const struct irc_line *l, enum data_direction dir)
@@ -215,7 +215,7 @@ void add_server_connected_hook(const char *name, server_connected_hook h, void *
 void del_server_connected_hook(const char *name)
 {
 	GList *l;
-	for (l = server_connected_hooks; l; l = l->next) 
+	for (l = server_connected_hooks; l; l = l->next)
 	{
 		struct server_connected_hook_data *d = (struct server_connected_hook_data *)l->data;
 		if (!strcmp(d->name, name)) {
@@ -260,7 +260,7 @@ void add_server_disconnected_hook(const char *name, server_disconnected_hook h, 
 void del_server_disconnected_hook(const char *name)
 {
 	GList *l;
-	for (l = server_disconnected_hooks; l; l = l->next) 
+	for (l = server_disconnected_hooks; l; l = l->next)
 	{
 		struct server_disconnected_hook_data *d = (struct server_disconnected_hook_data *)l->data;
 		if (!strcmp(d->name, name)) {
@@ -275,7 +275,7 @@ void del_server_disconnected_hook(const char *name)
 void server_disconnected_hook_execute(struct irc_network *c)
 {
 	GList *l;
-	for (l = server_disconnected_hooks; l; l = l->next) 
+	for (l = server_disconnected_hooks; l; l = l->next)
 	{
 		struct server_disconnected_hook_data *d = (struct server_disconnected_hook_data *)l->data;
 		d->hook(c, d->userdata);

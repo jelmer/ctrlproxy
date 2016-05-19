@@ -86,8 +86,8 @@ static void user_setup(gpointer user_data)
 {
 	struct spawn_data *data = user_data;
 	if (setuid(data->user->uid) < 0) {
-		listener_log(LOG_WARNING, data->listener, "Unable to change effective user id to %s (%d): %s", 
-					 data->user->username, data->user->uid, 
+		listener_log(LOG_WARNING, data->listener, "Unable to change effective user id to %s (%d): %s",
+					 data->user->username, data->user->uid,
 					 strerror(errno));
 		exit(1);
 	}	
@@ -98,7 +98,7 @@ static void daemon_user_exits(GPid pid, gint status, gpointer data)
 	struct daemon_user *user = (struct daemon_user *)data;
 
 	listener_log((status == 0)?LOG_INFO:LOG_WARNING, user->listener,
-					 "ctrlproxy instance for '%s' exited with status %d", 
+					 "ctrlproxy instance for '%s' exited with status %d",
 					 user->configdir, status);
 
 	user->last_status = status;
@@ -133,24 +133,24 @@ gboolean daemon_user_start(struct daemon_user *user, const char *ctrlproxy_path,
 
 	if (!g_spawn_async_with_pipes(NULL, command, NULL, G_SPAWN_SEARCH_PATH|G_SPAWN_DO_NOT_REAP_CHILD, user_setup, &spawn_data,
 				  &user->pid, &child_stdin, &child_stdout, &child_stderr, &error)) {
-		listener_log(LOG_WARNING, l, "Unable to start ctrlproxy for %s (%s): %s", user->username, 
+		listener_log(LOG_WARNING, l, "Unable to start ctrlproxy for %s (%s): %s", user->username,
 					 user->configdir, error->message);
 		g_error_free(error);
 		return FALSE;
 	}
 	g_strfreev(command);
 
-	listener_log(LOG_INFO, l, "Launched new ctrlproxy instance for %s at %s", 
+	listener_log(LOG_INFO, l, "Launched new ctrlproxy instance for %s at %s",
 				 user->username, user->configdir);
 	user->child_watch = g_child_watch_add(user->pid, daemon_user_exits, user);
 
-	/* FIXME: What if the process hasn't started up completely while we try to 
+	/* FIXME: What if the process hasn't started up completely while we try to
 	 * connect to the socket? */
 
 	return TRUE;
 }
 
-void foreach_daemon_user(struct ctrlproxyd_config *config, struct irc_listener *listener, 
+void foreach_daemon_user(struct ctrlproxyd_config *config, struct irc_listener *listener,
 						 void (*fn) (struct daemon_user *user, const char *ctrlproxy_path, struct irc_listener *l))
 {
 	struct daemon_user *user;

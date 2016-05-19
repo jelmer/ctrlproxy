@@ -27,7 +27,7 @@
 #define G_MODULE_EXPORT
 #endif
 
-#ifndef G_GNUC_MALLOC 
+#ifndef G_GNUC_MALLOC
 #define G_GNUC_MALLOC
 #endif
 
@@ -56,7 +56,7 @@ struct irc_line {
 	enum has_endcolon has_endcolon;
 };
 
-/** 
+/**
  * Copy a line
  */
 G_GNUC_MALLOC G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT struct irc_line *linedup(const struct irc_line *l);
@@ -79,11 +79,11 @@ G_GNUC_NULL_TERMINATED G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT struct irc_line
 													const char *origin, ... );
 
 /**
- * Read a line from an IO Channel. This will return a line _with_ UTF-8 
+ * Read a line from an IO Channel. This will return a line _with_ UTF-8
  * characters only!
  */
 G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT GIOStatus irc_recv_line(GIOChannel *c, GIConv iconv,
-										GError **err, 
+										GError **err,
 										struct irc_line **);
 
 G_MODULE_EXPORT gboolean line_add_arg(struct irc_line *l, const char *arg);

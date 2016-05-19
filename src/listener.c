@@ -1,4 +1,4 @@
-/* 
+/*
 	ctrlproxy: A modular IRC proxy
 	(c) 2005-2006 Jelmer Vernooij <jelmer@jelmer.uk>
 	
@@ -50,7 +50,7 @@ gboolean default_socks_gssapi(struct pending_client *cl, gss_name_t authn_name)
 }
 #endif
 
-static gboolean listener_check_username_password(struct irc_listener *listener, 
+static gboolean listener_check_username_password(struct irc_listener *listener,
 												 const char *username, const char *password)
 {
 	GList *gl;
@@ -60,10 +60,10 @@ static gboolean listener_check_username_password(struct irc_listener *listener,
 		{
 			struct allow_rule *r = gl->data;
 
-			if (r->password == NULL || r->username == NULL) 
+			if (r->password == NULL || r->username == NULL)
 				continue;
 
-			if (strcmp(r->username, username)) 
+			if (strcmp(r->username, username))
 				continue;
 
 			if (strcmp(r->password, password))
@@ -103,15 +103,15 @@ gboolean default_socks_connect_fqdn (struct pending_client *cl, const char *host
 	
 	listener_log(LOG_INFO, cl->listener, "Request to connect to %s:%d", hostname, port);
 
-	result = find_network_by_hostname(cl->listener->global, hostname, port, 
+	result = find_network_by_hostname(cl->listener->global, hostname, port,
 									  cl->listener->global->config->create_implicit, NULL);
 
 	if (result == NULL) {
 		listener_log(LOG_WARNING, cl->listener, "Unable to return network matching %s:%d", hostname, port);
 		return listener_socks_error(cl, REP_NET_UNREACHABLE);
-	} 
+	}
 
-	if (result->connection.state == NETWORK_CONNECTION_STATE_NOT_CONNECTED && 
+	if (result->connection.state == NETWORK_CONNECTION_STATE_NOT_CONNECTED &&
 		!connect_network(result)) {
 		network_log(LOG_ERROR, result, "Unable to connect");
 		return listener_socks_error(cl, REP_NET_UNREACHABLE);
@@ -120,7 +120,7 @@ gboolean default_socks_connect_fqdn (struct pending_client *cl, const char *host
 	nc = result->private_data;
 
 	if (nc->type == NETWORK_TCP) {
-		struct sockaddr *name; 
+		struct sockaddr *name;
 		int atyp, len, port;
 		gchar *data;
 
@@ -143,7 +143,7 @@ gboolean default_socks_connect_fqdn (struct pending_client *cl, const char *host
 			return listener_socks_error(cl, REP_NET_UNREACHABLE);
 		}
 			
-		listener_socks_reply(cl, REP_OK, atyp, len, data, port); 
+		listener_socks_reply(cl, REP_OK, atyp, len, data, port);
 		
 	} else {
 		gchar *data = g_strdup("xlocalhost");
@@ -154,7 +154,7 @@ gboolean default_socks_connect_fqdn (struct pending_client *cl, const char *host
 
 	desc = g_io_channel_ip_get_description(cl->connection);
 	if (desc == NULL) {
-		if (cl->listener == cl->listener->global->unix_domain_socket_listener) 
+		if (cl->listener == cl->listener->global->unix_domain_socket_listener)
 			desc = g_strdup("Unix domain socket socks client");
 		else
 			desc = g_strdup("socks client");
@@ -190,7 +190,7 @@ static gboolean handle_client_line(struct pending_client *pc, const struct irc_l
 {
 	struct irc_listener *listener = pc->listener;
 
-	if (l == NULL || l->args[0] == NULL) { 
+	if (l == NULL || l->args[0] == NULL) {
 		return TRUE;
 	}
 
@@ -217,35 +217,35 @@ static gboolean handle_client_line(struct pending_client *pc, const struct irc_l
 			listener_log(LOG_INFO, listener, "Client successfully authenticated");
 
 			if (networkname != NULL) {
-				n = find_network_by_hostname(listener->global, 
+				n = find_network_by_hostname(listener->global,
 											 networkname, 6667, listener->global->config->create_implicit,
 											 NULL);
 				if (n == NULL) {
-					irc_sendf(pc->connection, listener->iconv, NULL, 
-							  ":%s %d %s :Password error: unable to find network", 
+					irc_sendf(pc->connection, listener->iconv, NULL,
+							  ":%s %d %s :Password error: unable to find network",
 							  get_my_hostname(), ERR_PASSWDMISMATCH, "*");
 					g_io_channel_flush(pc->connection, NULL);
 					return FALSE;
 				}
 
-				if (n->connection.state == NETWORK_CONNECTION_STATE_NOT_CONNECTED && 
+				if (n->connection.state == NETWORK_CONNECTION_STATE_NOT_CONNECTED &&
 					!connect_network(n)) {
-					irc_sendf(pc->connection, listener->iconv, NULL, 
-							  ":%s %d %s :Password error: unable to connect", 
+					irc_sendf(pc->connection, listener->iconv, NULL,
+							  ":%s %d %s :Password error: unable to connect",
 							  get_my_hostname(), ERR_PASSWDMISMATCH, "*");
 					g_io_channel_flush(pc->connection, NULL);
 					return FALSE;
 				}
 			}
 
-			irc_sendf(pc->connection, listener->iconv, NULL, 
+			irc_sendf(pc->connection, listener->iconv, NULL,
 					  "NOTICE AUTH :PASS OK");
 			g_io_channel_flush(pc->connection, NULL);
 
 
 			{
 				char *desc = g_io_channel_ip_get_description(pc->connection);
-				if (pc->listener == pc->listener->global->unix_domain_socket_listener) 
+				if (pc->listener == pc->listener->global->unix_domain_socket_listener)
 					desc = g_strdup("Unix domain socket client");
 				else if (desc == NULL)
 					desc = g_strdup("");
@@ -256,11 +256,11 @@ static gboolean handle_client_line(struct pending_client *pc, const struct irc_l
 			return FALSE;
 		} else {
 			GIOStatus status;
-			listener_log(LOG_WARNING, listener, 
+			listener_log(LOG_WARNING, listener,
 						 "User tried to log in with incorrect password!");
 
-			status = irc_sendf(pc->connection, listener->iconv, NULL, 
-							   ":%s %d %s :Password mismatch", 
+			status = irc_sendf(pc->connection, listener->iconv, NULL,
+							   ":%s %d %s :Password mismatch",
 							   get_my_hostname(), ERR_PASSWDMISMATCH, "*");
 			g_io_channel_flush(pc->connection, NULL);
 
@@ -374,7 +374,7 @@ void fini_listeners(struct global *global)
 	for(gl = global->listeners; gl; gl = gl->next) {
 		struct irc_listener *l = gl->data;
 
-		if (l->active) 
+		if (l->active)
 			listener_stop(l);
 	}
 }

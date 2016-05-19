@@ -41,8 +41,8 @@ static gboolean daemon_backend_recv(struct irc_transport *transport, const struc
 		gboolean ok;
 		if (irc_line_respcode(line) == ERR_PASSWDMISMATCH) {
 			ok = FALSE;
-		} else if (!strcmp(line->args[0], "NOTICE") && 
-				   !strcmp(line->args[1], "AUTH") && 
+		} else if (!strcmp(line->args[0], "NOTICE") &&
+				   !strcmp(line->args[1], "AUTH") &&
 				   !strcmp(line->args[2], "PASS OK")) {
 			ok = TRUE;
 		} else {

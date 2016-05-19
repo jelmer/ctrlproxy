@@ -96,7 +96,7 @@ static PyObject *py_line_get_nick(PyLineObject *self)
 }
 
 static PyMethodDef py_line_methods[] = {
-    { "get_nick", (PyCFunction)py_line_get_nick, METH_NOARGS, 
+    { "get_nick", (PyCFunction)py_line_get_nick, METH_NOARGS,
         "Obtain the nick of the user that sent this line." },
     { NULL }
 };
@@ -161,7 +161,7 @@ struct irc_line *PyObject_AsLine(PyObject *obj)
 
     if (PyObject_TypeCheck(obj, &PyLineType))
         return linedup(((PyLineObject *)obj)->line);
-    
+
     if (PyList_Check(obj)) {
         struct irc_line *l = g_new0(struct irc_line, 1);
         int offset = 0;
@@ -186,7 +186,7 @@ struct irc_line *PyObject_AsLine(PyObject *obj)
         }
         l->args[i] = NULL;
         return l;
-    }   
+    }
 
     PyErr_SetString(PyExc_TypeError, "Expected line");
     return NULL;
@@ -207,7 +207,7 @@ static PyObject *py_g_list_iter_next(PyGListIterObject *self)
         PyErr_SetNone(PyExc_StopIteration);
         return NULL;
     }
-    
+
     ret = self->converter(self->parent, self->iter->data);
 
     self->iter = g_list_next(self->iter);
@@ -238,7 +238,7 @@ PyObject *py_g_list_iter(GList *list, PyObject *parent, PyObject *(*converter) (
     Py_INCREF(parent);
     ret->parent = parent;
     return (PyObject *)ret;
-}   
+}
 
 typedef struct {
     PyObject_HEAD
@@ -304,7 +304,7 @@ static PyObject *py_client_send_state_diff(PyClientObject *self, PyObject *args)
     if (!PyArg_ParseTuple(args, "OO", &state1, &state2))
         return NULL;
 
-    if (!PyObject_TypeCheck(state1, &PyNetworkStateType) || 
+    if (!PyObject_TypeCheck(state1, &PyNetworkStateType) ||
         !PyObject_TypeCheck(state2, &PyNetworkStateType)) {
         PyErr_SetNone(PyExc_TypeError);
         return NULL;
@@ -361,7 +361,7 @@ static PyObject *py_client_send_channel_mode(PyClientObject *self, PyChannelStat
 static PyObject *py_client_send_topic(PyClientObject *self, PyObject *args)
 {
     PyChannelStateObject *py_channel;
-    int explicit = FALSE;  
+    int explicit = FALSE;
 
     if (!PyArg_ParseTuple(args, "O|i", &py_channel, &explicit))
         return NULL;
@@ -407,7 +407,7 @@ static PyObject *py_client_send_channel_state_diff(PyClientObject *self, PyObjec
     if (!PyArg_ParseTuple(args, "OO", &py_channel1, &py_channel2))
         return NULL;
 
-    if (!PyObject_TypeCheck(py_channel1, &PyChannelStateType) || 
+    if (!PyObject_TypeCheck(py_channel1, &PyChannelStateType) ||
         !PyObject_TypeCheck(py_channel2, &PyChannelStateType)) {
         PyErr_SetNone(PyExc_TypeError);
         return NULL;
@@ -486,9 +486,9 @@ static PyObject *py_client_welcome(PyClientObject *self)
 }
 
 static PyMethodDef py_client_methods[] = {
-    { "set_charset", (PyCFunction)py_client_set_charset, 
+    { "set_charset", (PyCFunction)py_client_set_charset,
         METH_VARARGS,
-        "Change the character set."  
+        "Change the character set."
         ":note: None will disable character conversion."
     },
     { "send_line", (PyCFunction)py_client_send_line,
@@ -539,7 +539,7 @@ static PyObject *py_client_get_state(PyClientObject *self, void *closure)
 
     if (self->client->state == NULL)
         Py_RETURN_NONE;
-    
+
     ret = PyObject_New(PyNetworkStateObject, &PyNetworkStateType);
     if (ret == NULL) {
         PyErr_NoMemory();
@@ -644,7 +644,7 @@ static PyObject *py_client_new(PyTypeObject *type, PyObject *args, PyObject *kwa
 
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "Oss", kwnames, &py_transport, &default_origin, &desc))
         return NULL;
-    
+
     ret = (PyClientObject *)type->tp_alloc(type, 0);
     if (ret == NULL) {
         PyErr_NoMemory();
@@ -694,7 +694,7 @@ static PyObject *py_network_disconnect(PyNetworkObject *self)
 
     Py_RETURN_NONE;
 }
-    
+
 static PyObject *py_network_send_line(PyNetworkObject *self, PyObject *args)
 {
     PyObject *py_line, *py_client = Py_None;
@@ -779,7 +779,7 @@ static PyObject *py_network_get_name(PyNetworkObject *self, void *closure)
 static PyObject *py_network_get_reconnect_interval(PyNetworkObject *self, void *closure)
 {
     return PyInt_FromLong(self->network->reconnect_interval);
-}   
+}
 
 static int py_network_set_reconnect_interval(PyNetworkObject *self, PyObject *value, void *closure)
 {
@@ -814,7 +814,7 @@ static PyObject *py_network_get_internal_state(PyNetworkObject *self, void *clos
 
     if (self->network->internal_state == NULL)
         Py_RETURN_NONE;
-    
+
     ret = PyObject_New(PyNetworkStateObject, &PyNetworkStateType);
     if (ret == NULL) {
         PyErr_NoMemory();
@@ -834,7 +834,7 @@ static PyObject *py_network_get_external_state(PyNetworkObject *self, void *clos
 
     if (self->network->external_state == NULL)
         Py_RETURN_NONE;
-    
+
     ret = PyObject_New(PyNetworkStateObject, &PyNetworkStateType);
     if (ret == NULL) {
         PyErr_NoMemory();
@@ -860,7 +860,7 @@ static PyObject *PyClientFromPtr(struct irc_client *c)
         PyErr_NoMemory();
         return NULL;
     }
-    
+
     ret->client = c;
     client_ref(c);
     return (PyObject *)ret;
@@ -874,7 +874,7 @@ static void *PyPtrFromClient(PyObject *obj)
     }
 
     return ((PyClientObject *)obj)->client;
-}   
+}
 
 static PyObject *py_network_get_query_stack(PyNetworkObject *self, void *closure)
 {
@@ -1101,7 +1101,7 @@ PyTypeObject PyQueryStackType = {
 };
 
 
-static PyMethodDef irc_methods[] = { 
+static PyMethodDef irc_methods[] = {
     { NULL }
 };
 
@@ -1157,7 +1157,7 @@ void initirc(void)
     if (PyType_Ready(&PyChannelNickDictType) < 0)
         return;
 
-    m = Py_InitModule3("irc", irc_methods, 
+    m = Py_InitModule3("irc", irc_methods,
                        "Simple IRC protocol module for Python.");
     if (m == NULL)
         return;

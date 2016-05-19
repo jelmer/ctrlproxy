@@ -67,7 +67,7 @@ gboolean transport_set_charset(struct irc_transport *transport, const char *name
 	return TRUE;
 }
 
-gboolean transport_send_line(struct irc_transport *transport, 
+gboolean transport_send_line(struct irc_transport *transport,
 							 const struct irc_line *l, GError **error)
 {
 	if (!transport->backend_ops->is_connected(transport->backend_data)) {
@@ -79,7 +79,7 @@ gboolean transport_send_line(struct irc_transport *transport,
 	return transport->backend_ops->send_line(transport, l, error);
 }
 
-gboolean transport_send_response(struct irc_transport *transport, GError **error, const char *from, const char *to, int response, ...) 
+gboolean transport_send_response(struct irc_transport *transport, GError **error, const char *from, const char *to, int response, ...)
 {
 	struct irc_line *l;
 	gboolean ret;
@@ -93,12 +93,12 @@ gboolean transport_send_response(struct irc_transport *transport, GError **error
 
 	ret = transport_send_line(transport, l, error);
 
-	free_line(l); 
+	free_line(l);
 
 	return ret;
 }
 
-gboolean transport_send_args(struct irc_transport *transport, GError **error, ...) 
+gboolean transport_send_args(struct irc_transport *transport, GError **error, ...)
 {
 	struct irc_line *l;
 	gboolean ret;
@@ -112,7 +112,7 @@ gboolean transport_send_args(struct irc_transport *transport, GError **error, ..
 
 	ret = transport_send_line(transport, l, error);
 
-	free_line(l); 
+	free_line(l);
 
 	return ret;
 }

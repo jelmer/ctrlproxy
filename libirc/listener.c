@@ -1,4 +1,4 @@
-/* 
+/*
 	ctrlproxy: A modular IRC proxy
 	(c) 2005-2006 Jelmer Vernooij <jelmer@jelmer.uk>
 	
@@ -46,9 +46,9 @@ struct listener_iochannel {
 	gint watch_id;
 };
 
-static gboolean handle_client_detect(GIOChannel *ioc, 
+static gboolean handle_client_detect(GIOChannel *ioc,
 									 struct pending_client *cl);
-static gboolean handle_client_socks_data(GIOChannel *ioc, 
+static gboolean handle_client_socks_data(GIOChannel *ioc,
 										 struct pending_client *cl);
 
 static gboolean kill_pending_client(struct pending_client *pc)
@@ -66,7 +66,7 @@ static gboolean kill_pending_client(struct pending_client *pc)
 		major_status = gss_release_name(&minor_status, &pc->authn_name);
 
 		if (GSS_ERROR(major_status)) {
-			log_gssapi(pc->listener, LOG_WARNING, 
+			log_gssapi(pc->listener, LOG_WARNING,
 					   "releasing name", major_status, minor_status);
 			gssapi_fail(pc);
 		}
@@ -77,7 +77,7 @@ static gboolean kill_pending_client(struct pending_client *pc)
 						      &pc->gss_ctx,
 						      GSS_C_NO_BUFFER);
 		if (GSS_ERROR(major_status)) {
-			log_gssapi(pc->listener, LOG_WARNING, 
+			log_gssapi(pc->listener, LOG_WARNING,
 					   "deleting context name", major_status, minor_status);
 			gssapi_fail(pc);
 		}
@@ -86,7 +86,7 @@ static gboolean kill_pending_client(struct pending_client *pc)
 	if (pc->service_cred != GSS_C_NO_CREDENTIAL) {
 		major_status = gss_release_cred(&minor_status, &pc->service_cred);
 		if (GSS_ERROR(major_status)) {
-			log_gssapi(pc->listener, LOG_WARNING, 
+			log_gssapi(pc->listener, LOG_WARNING,
 					   "releasing credentials", major_status, minor_status);
 			return FALSE;
 		}
@@ -97,7 +97,7 @@ static gboolean kill_pending_client(struct pending_client *pc)
 		major_status = gss_release_name(&minor_status, &pc->gss_service);
 
 		if (GSS_ERROR(major_status)) {
-			log_gssapi(pc->listener, LOG_WARNING, 
+			log_gssapi(pc->listener, LOG_WARNING,
 					   "releasing name", major_status, minor_status);
 			return FALSE;
 		}
@@ -116,11 +116,11 @@ void log_gssapi(struct irc_listener *l, enum log_level level, const char *messag
 {
 	guint32 err_major_status, err_minor_status;
 	guint32	msg_ctx = 0;
-	gss_buffer_desc major_status_string = GSS_C_EMPTY_BUFFER, 
+	gss_buffer_desc major_status_string = GSS_C_EMPTY_BUFFER,
 					minor_status_string = GSS_C_EMPTY_BUFFER;
 
-	err_major_status = gss_display_status( &err_minor_status, major_status, 
-										   GSS_C_GSS_CODE, GSS_C_NO_OID, 
+	err_major_status = gss_display_status( &err_minor_status, major_status,
+										   GSS_C_GSS_CODE, GSS_C_NO_OID,
 										   &msg_ctx, &major_status_string );
 
 	if( !GSS_ERROR( err_major_status ) )
@@ -128,8 +128,8 @@ void log_gssapi(struct irc_listener *l, enum log_level level, const char *messag
 											   GSS_C_MECH_CODE, GSS_C_NULL_OID,
 											   &msg_ctx, &minor_status_string );
 
-	listener_log( level, l, "GSSAPI: %s: %s, %s", message, 
-		      (char *)major_status_string.value, 
+	listener_log( level, l, "GSSAPI: %s: %s, %s", message,
+		      (char *)major_status_string.value,
 		      (char *)minor_status_string.value);
 
 	gss_release_buffer( &err_minor_status, &major_status_string );
@@ -146,7 +146,7 @@ gboolean listener_stop(struct irc_listener *l)
 		g_source_remove(lio->watch_id);
 		
 		if (strcmp(lio->address, "") != 0)
-			listener_log(LOG_INFO, l, "Stopped listening at %s:%s", lio->address, 
+			listener_log(LOG_INFO, l, "Stopped listening at %s:%s", lio->address,
 						 lio->port);
 
 		g_free(lio);
@@ -167,7 +167,7 @@ static gboolean handle_client_detect(GIOChannel *ioc, struct pending_client *pc)
 	status = g_io_channel_read_chars(ioc, header, 1, &read, &error);
 
 	if (status != G_IO_STATUS_NORMAL && status != G_IO_STATUS_AGAIN) {
-		if (error != NULL) 
+		if (error != NULL)
 			g_error_free(error);
 		return FALSE;
 	}
@@ -207,7 +207,7 @@ static gboolean handle_client_detect(GIOChannel *ioc, struct pending_client *pc)
 			if (cvrt == NULL) {
 				cvrt = complete;
 				status = G_IO_STATUS_ERROR;
-				if (error != NULL) 
+				if (error != NULL)
 					g_error_free(error);
 			} else {
 				g_free(complete);
@@ -226,7 +226,7 @@ static gboolean handle_client_detect(GIOChannel *ioc, struct pending_client *pc)
 	}
 }
 
-static gboolean handle_client_receive(GIOChannel *c, GIOCondition condition, gpointer data) 
+static gboolean handle_client_receive(GIOChannel *c, GIOCondition condition, gpointer data)
 {
 	struct pending_client *pc = data;
 
@@ -289,7 +289,7 @@ struct pending_client *listener_new_pending_client(struct irc_listener *listener
 
 	if (listener->ssl) {
 #ifdef HAVE_GNUTLS
-		c = ssl_wrap_iochannel(c, SSL_TYPE_SERVER, 
+		c = ssl_wrap_iochannel(c, SSL_TYPE_SERVER,
 							 NULL, listener->ssl_credentials);
 		g_assert(c != NULL);
 #else
@@ -359,11 +359,11 @@ void listener_add_iochannel(struct irc_listener *l, GIOChannel *ioc,
 		strncpy(lio->address, address, NI_MAXHOST);
 	if (port == NULL)
 		strcpy(lio->address, "");
-	else 
+	else
 		strncpy(lio->port, port, NI_MAXSERV);
 
 	if (address != NULL)
-		listener_log(LOG_INFO, l, "Listening on %s:%s", 
+		listener_log(LOG_INFO, l, "Listening on %s:%s",
 					 address, port);
 	l->active = TRUE;
 }
@@ -397,7 +397,7 @@ gboolean listener_start_tcp(struct irc_listener *l, const char *address, const c
 
 	error = getaddrinfo(address, port, &hints, &all_res);
 	if (error) {
-		listener_log(LOG_ERROR, l, "Can't get address for %s:%s: %s", 
+		listener_log(LOG_ERROR, l, "Can't get address for %s:%s: %s",
 					 address?address:"", port, gai_strerror(error));
 		return FALSE;
 	}
@@ -406,11 +406,11 @@ gboolean listener_start_tcp(struct irc_listener *l, const char *address, const c
 		GIOChannel *ioc;
 		char canon_address[NI_MAXHOST], canon_port[NI_MAXSERV];
 
-		error = getnameinfo(res->ai_addr, res->ai_addrlen, 
-							canon_address, NI_MAXHOST, 
+		error = getnameinfo(res->ai_addr, res->ai_addrlen,
+							canon_address, NI_MAXHOST,
 							canon_port, NI_MAXSERV, NI_NUMERICHOST|NI_NUMERICSERV);
 		if (error < 0) {
-			listener_log(LOG_WARNING, l, "error looking up canonical name: %s", 
+			listener_log(LOG_WARNING, l, "error looking up canonical name: %s",
 						 gai_strerror(error));
 			strcpy(canon_address, "");
 			strcpy(canon_port, "");
@@ -418,7 +418,7 @@ gboolean listener_start_tcp(struct irc_listener *l, const char *address, const c
 
 		sock = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
 		if (sock < 0) {
-			listener_log(LOG_ERROR, l, "error creating socket: %s", 
+			listener_log(LOG_ERROR, l, "error creating socket: %s",
 						 strerror(errno));
 			close(sock);
 			continue;
@@ -427,11 +427,11 @@ gboolean listener_start_tcp(struct irc_listener *l, const char *address, const c
 		setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
 	
 		if (bind(sock, res->ai_addr, res->ai_addrlen) < 0) {
-			/* Don't warn when binding to the same address using IPv4 
+			/* Don't warn when binding to the same address using IPv4
 			 * /and/ ipv6. */
 			if (!l->active || errno != EADDRINUSE)  {
-				listener_log(LOG_ERROR, l, "bind to %s:%s failed: %s", 
-						   address?address:"", port, 
+				listener_log(LOG_ERROR, l, "bind to %s:%s failed: %s",
+						   address?address:"", port,
 						   strerror(errno));
 			}
 			close(sock);
@@ -439,7 +439,7 @@ gboolean listener_start_tcp(struct irc_listener *l, const char *address, const c
 		}
 
 		if (listen(sock, 5) < 0) {
-			listener_log(LOG_ERROR, l, "error listening on socket: %s", 
+			listener_log(LOG_ERROR, l, "error listening on socket: %s",
 						strerror(errno));
 			close(sock);
 			continue;
@@ -482,7 +482,7 @@ gboolean listener_socks_reply(struct pending_client *pc, guint8 err, guint8 atyp
 	memcpy(header+4, data, data_len);
 	*((guint16 *)(header+4+data_len)) = htons(port);
 
-	status = g_io_channel_write_chars(pc->connection, header, 
+	status = g_io_channel_write_chars(pc->connection, header,
 									  6 + data_len, &read, NULL);
 
 	g_free(header);
@@ -521,7 +521,7 @@ static gboolean on_socks_pass_accepted(struct pending_client *cl, gboolean accep
 	status = g_io_channel_write_chars(cl->connection, header, 2, &read, NULL);
 	if (status != G_IO_STATUS_NORMAL) {
 		return FALSE;
-	} 
+	}
 
 	g_io_channel_flush(cl->connection, NULL);
 
@@ -590,16 +590,16 @@ static gboolean gssapi_acceptable (struct pending_client *pc)
 
 	error = getsockname(fd, (struct sockaddr *)&sockaddr, &sockaddr_len);
 	if (error < 0) {
-		listener_log(LOG_WARNING, pc->listener, 
+		listener_log(LOG_WARNING, pc->listener,
 					 "Unable to get own socket address");
 		return FALSE;
 	}
 
-	error = getnameinfo((struct sockaddr *)&sockaddr, sockaddr_len, 
-						address, NI_MAXHOST, 
+	error = getnameinfo((struct sockaddr *)&sockaddr, sockaddr_len,
+						address, NI_MAXHOST,
 						NULL, 0, NI_NAMEREQD);
 	if (error < 0) {
-		listener_log(LOG_WARNING, l, "error looking up canonical name: %s", 
+		listener_log(LOG_WARNING, l, "error looking up canonical name: %s",
 						 gai_strerror(error));
 		return FALSE;
 	}
@@ -609,7 +609,7 @@ static gboolean gssapi_acceptable (struct pending_client *pc)
 	inbuf.length = strlen(principal_name);
 	inbuf.value = principal_name;
 
-	major_status = gss_import_name(&minor_status, &inbuf, 
+	major_status = gss_import_name(&minor_status, &inbuf,
 					   GSS_C_NT_HOSTBASED_SERVICE,
 					   &pc->gss_service);
 
@@ -622,7 +622,7 @@ static gboolean gssapi_acceptable (struct pending_client *pc)
 		return FALSE;
 	}
 
-	major_status = gss_acquire_cred(&minor_status, pc->gss_service, 0, 
+	major_status = gss_acquire_cred(&minor_status, pc->gss_service, 0,
 					GSS_C_NULL_OID_SET, GSS_C_ACCEPT,
 					&pc->service_cred, NULL, NULL);
 
@@ -649,7 +649,7 @@ static gboolean gssapi_fail(struct pending_client *pc)
 	status = g_io_channel_write_chars(pc->connection, header, 2, &read, NULL);
 	if (status != G_IO_STATUS_NORMAL) {
 		return FALSE;
-	} 
+	}
 
 	g_io_channel_flush(pc->connection, NULL);
 
@@ -701,7 +701,7 @@ static gboolean gssapi_handle_data (struct pending_client *pc)
 		pc->service_cred,
 		&inbuf,
 		GSS_C_NO_CHANNEL_BINDINGS,
-		&pc->authn_name, 
+		&pc->authn_name,
 		NULL, /* mech_type */
 		&outbuf,
 		NULL, /* ret_flags */
@@ -712,11 +712,11 @@ static gboolean gssapi_handle_data (struct pending_client *pc)
 	g_free(inbuf.value);
 	
 	if (GSS_ERROR(major_status)) {
-		log_gssapi(pc->listener, LOG_WARNING, "processing incoming data", 
+		log_gssapi(pc->listener, LOG_WARNING, "processing incoming data",
 				   major_status, minor_status);
 		gssapi_fail(pc);
 		return FALSE;
-	} 
+	}
 
 	packet = g_malloc(4+outbuf.length);
 	packet[0] = SOCKS_VERSION; /* SOCKS_GSSAPI_VERSION */
@@ -731,15 +731,15 @@ static gboolean gssapi_handle_data (struct pending_client *pc)
 	if (status != G_IO_STATUS_NORMAL) {
 		gssapi_fail(pc);
 		return FALSE;
-	} 
+	}
 
 	major_status = gss_release_buffer(&minor_status, &outbuf);
 	if (GSS_ERROR(major_status)) {
-		log_gssapi(pc->listener, LOG_WARNING, "processing incoming data", 
+		log_gssapi(pc->listener, LOG_WARNING, "processing incoming data",
 				   major_status, minor_status);
 		gssapi_fail(pc);
 		return FALSE;
-	} 
+	}
 
 	g_io_channel_flush(pc->connection, NULL);
 
@@ -803,7 +803,7 @@ static gboolean handle_client_socks_data(GIOChannel *ioc, struct pending_client 
 			int j;
 			for (j = 0; socks_methods[j].id != -1; j++)
 			{
-				if (socks_methods[j].id == methods[i] && 
+				if (socks_methods[j].id == methods[i] &&
 					socks_methods[j].acceptable != NULL &&
 					socks_methods[j].acceptable(cl)) {
 					cl->socks.method = &socks_methods[j];
@@ -818,7 +818,7 @@ static gboolean handle_client_socks_data(GIOChannel *ioc, struct pending_client 
 		status = g_io_channel_write_chars(ioc, header, 2, &read, NULL);
 		if (status != G_IO_STATUS_NORMAL) {
 			return FALSE;
-		} 
+		}
 
 		g_io_channel_flush(ioc, NULL);
 
@@ -858,7 +858,7 @@ static gboolean handle_client_socks_data(GIOChannel *ioc, struct pending_client 
 		/* header[2] is reserved */
 	
 		switch (header[3]) {
-			case ATYP_IPV4: 
+			case ATYP_IPV4:
 				if (cl->listener->ops->socks_connect_ipv4 == NULL)
 					return listener_socks_error(cl, REP_ATYP_NOT_SUPPORTED);
 				return cl->listener->ops->socks_connect_ipv4(cl);

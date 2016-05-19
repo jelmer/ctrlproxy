@@ -86,7 +86,7 @@ static gboolean process_from_client(struct irc_client *c, const struct irc_line 
 		client_send_args(c, "PONG", c->network->name, l->args[1], NULL);
 	} else if (!base_strcmp(l->args[0], "PONG")) {
 		if (l->argc < 2) {
-			client_send_response(c, ERR_NEEDMOREPARAMS, l->args[0], 
+			client_send_response(c, ERR_NEEDMOREPARAMS, l->args[0],
 								 "Not enough parameters", NULL);
 			g_free(l->origin);
 			return TRUE;
@@ -94,22 +94,22 @@ static gboolean process_from_client(struct irc_client *c, const struct irc_line 
 		c->last_pong = time(NULL);
 	} else if (!base_strcmp(l->args[0], "USER") ||
 			  !base_strcmp(l->args[0], "PASS")) {
-		client_send_response(c, ERR_ALREADYREGISTERED,  
+		client_send_response(c, ERR_ALREADYREGISTERED,
 						 "Please register only once per session", NULL);
 	} else if (!base_strcmp(l->args[0], "CTRLPROXY")) {
 		admin_process_command(c, l, 1);
-	} else if (c->network->global->config->admin_user != NULL && 
-			   !base_strcmp(l->args[0], "PRIVMSG") && 
+	} else if (c->network->global->config->admin_user != NULL &&
+			   !base_strcmp(l->args[0], "PRIVMSG") &&
 			   !base_strcmp(l->args[1], c->network->global->config->admin_user)) {
 		admin_process_command(c, l, 2);
-	} else if (!base_strcmp(l->args[0], "PRIVMSG") && l->argc > 2 && 
-			l->args[2][0] == '\001' && 
+	} else if (!base_strcmp(l->args[0], "PRIVMSG") && l->argc > 2 &&
+			l->args[2][0] == '\001' &&
 			g_strncasecmp(l->args[2], "\001ACTION", 7) != 0) {
 		ctcp_client_request_record(c, l);
 
 		/* send off to server */
 		network_forward_line(c->network, c, l, TRUE);
-	} else if (!base_strcmp(l->args[0], "NOTICE") && l->argc > 2 && 
+	} else if (!base_strcmp(l->args[0], "NOTICE") && l->argc > 2 &&
 			l->args[2][0] == '\001') {
 		network_forward_line(c->network, c, l, TRUE);
 	} else if (!base_strcmp(l->args[0], "")) {
@@ -117,7 +117,7 @@ static gboolean process_from_client(struct irc_client *c, const struct irc_line 
 		struct network_config *nc = c->network->private_data;
 
 		if (nc->disable_cache || !client_try_cache(c, c->network->external_state, l, &c->network->global->config->cache)) {
-			/* Perhaps check for validity of input here ? It could save us some bandwidth 
+			/* Perhaps check for validity of input here ? It could save us some bandwidth
 			 * to the server, though unlikely to occur often */
 			network_forward_line(c->network, c, l, FALSE);
 		}
@@ -139,7 +139,7 @@ static gboolean process_from_client(struct irc_client *c, const struct irc_line 
 }
 
 /**
- * Send welcome information to a client, optionally disconnecting 
+ * Send welcome information to a client, optionally disconnecting
  * the client if it isn't welcome.
  *
  * @param client Client to talk to.
@@ -153,7 +153,7 @@ static gboolean welcome_client(struct irc_client *client)
 	g_assert(client);
 
 	if (client->network == NULL) {
-		client_disconnect(client, 
+		client_disconnect(client,
 			  "Please select a network first, or specify one in your configuration file");
 		return FALSE;
 	}
@@ -161,20 +161,20 @@ static gboolean welcome_client(struct irc_client *client)
 	client->network->clients = g_list_append(client->network->clients, client);
 	client_send_response(client, RPL_WELCOME, "Welcome to the ctrlproxy", NULL);
 	tmp = g_strdup_printf("Host %s is running ctrlproxy", client->default_origin);
-	client_send_response(client, RPL_YOURHOST, tmp, NULL); 
+	client_send_response(client, RPL_YOURHOST, tmp, NULL);
 	g_free(tmp);
-	client_send_response(client, RPL_CREATED, 
+	client_send_response(client, RPL_CREATED,
 		"Ctrlproxy (c) 2002-2009 Jelmer Vernooij <jelmer@jelmer.uk>", NULL);
-	client_send_response(client, RPL_MYINFO, 
-		 client->network->name, 
-		 ctrlproxy_version(), 
-		 (client->network->external_state != NULL && client->network->info->supported_user_modes)?client->network->info->supported_user_modes:ALLMODES, 
+	client_send_response(client, RPL_MYINFO,
+		 client->network->name,
+		 ctrlproxy_version(),
+		 (client->network->external_state != NULL && client->network->info->supported_user_modes)?client->network->info->supported_user_modes:ALLMODES,
 		 (client->network->external_state != NULL && client->network->info->supported_channel_modes)?client->network->info->supported_channel_modes:ALLMODES,
 		 NULL);
 
 	features = network_generate_feature_string(client->network);
 
-	client_send_response(client, RPL_BOUNCE, features, 
+	client_send_response(client, RPL_BOUNCE, features,
 						 "are supported on this server", NULL);
 
 	g_free(features);
@@ -203,13 +203,13 @@ static gboolean welcome_client(struct irc_client *client)
 	if (client->network->external_state != NULL) {
 		if (g_strcasecmp(client->state->me.nick, client->network->external_state->me.nick) != 0) {
 			/* Tell the client our his/her real nick */
-			client_send_args_ex(client, client->state->me.hostmask, "NICK", 
-								client->network->external_state->me.nick, NULL); 
+			client_send_args_ex(client, client->state->me.hostmask, "NICK",
+								client->network->external_state->me.nick, NULL);
 
 			/* Try to get the nick the client specified */
 			nc = client->network->private_data;
 			if (!nc->ignore_first_nick) {
-				network_send_args(client->network, "NICK", 
+				network_send_args(client->network, "NICK",
 								  client->login_details->nick, NULL);
 			}
 		}
@@ -284,20 +284,20 @@ static void client_connect_command(struct irc_client *client, const char *hostna
 
 	struct irc_network *network;
 
-	network = irc_network_ref(find_network_by_hostname(my_global, 
-												   hostname, port, my_global->config->create_implicit, 
+	network = irc_network_ref(find_network_by_hostname(my_global,
+												   hostname, port, my_global->config->create_implicit,
 												   client->login_details));
 
 	if (network == NULL) {
-		client_log(LOG_ERROR, client, 
-			"Unable to connect to network with name %s", 
+		client_log(LOG_ERROR, client,
+			"Unable to connect to network with name %s",
 			hostname);
 		client->network = NULL;
 		return;
 	}
 
 	if (network->connection.state == NETWORK_CONNECTION_STATE_NOT_CONNECTED) {
-		client_send_args(client, "NOTICE", 
+		client_send_args(client, "NOTICE",
 							client_get_default_target(client),
 							"Connecting to network", NULL);
 		connect_network(network);
@@ -308,7 +308,7 @@ static void client_connect_command(struct irc_client *client, const char *hostna
 
 void log_client(enum log_level, const struct irc_client *, const char *data);
 static struct irc_client_callbacks default_callbacks = {
-	.process_from_client = process_from_client, 
+	.process_from_client = process_from_client,
 	.process_to_client = process_to_client,
 	.log_fn = log_client,
 	.disconnect = handle_client_disconnect,
@@ -347,7 +347,7 @@ struct irc_client *client_init(struct irc_network *n, struct irc_transport *tran
 	return client;
 }
 
-struct irc_line *irc_line_replace_hostmask(const struct irc_line *l, 
+struct irc_line *irc_line_replace_hostmask(const struct irc_line *l,
 							   const struct irc_network_info *info,
 							   const struct network_nick *old,
 							   const struct network_nick *new)
@@ -375,8 +375,8 @@ struct irc_line *irc_line_replace_hostmask(const struct irc_line *l,
 					/* FIXME: strip *'s from the end of tmp302[0] */
 					if (!irccmp(info, tmp302[0], old->nick)) {
 						g_free(users[i]);
-						users[i] = g_strdup_printf("%s=%c%s@%s", 
-								tmp302[0], tmp302[1][0], 
+						users[i] = g_strdup_printf("%s=%c%s@%s",
+								tmp302[0], tmp302[1][0],
 								new->username, new->hostname);
 					}
 				}
@@ -428,9 +428,9 @@ static gboolean client_forward_from_server(struct irc_client *c, const struct ir
 
 	/* Make sure the client only sees its only hostmask */
 	if (c->network->external_state != NULL) {
-		nl = irc_line_replace_hostmask(l, 
-								  c->network->info, 
-								  &c->network->external_state->me, 
+		nl = irc_line_replace_hostmask(l,
+								  c->network->info,
+								  &c->network->external_state->me,
 								  &c->state->me);
 		if (nl != NULL)
 			l = nl;
@@ -450,8 +450,8 @@ static gboolean client_forward_from_server(struct irc_client *c, const struct ir
  * @param l Line to send
  * @param exception Client to which nothing should be sent. Can be NULL.
  */
-void clients_send(GList *clients, const struct irc_line *l, 
-				  const struct irc_client *exception) 
+void clients_send(GList *clients, const struct irc_line *l,
+				  const struct irc_client *exception)
 {
 	GList *g;
 
@@ -460,7 +460,7 @@ void clients_send(GList *clients, const struct irc_line *l,
 		if (c == exception)
 			continue;
 
-		if (run_client_filter(c, l, FROM_SERVER)) { 
+		if (run_client_filter(c, l, FROM_SERVER)) {
 			client_forward_from_server(c, l);
 		}
 	}

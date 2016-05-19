@@ -1,8 +1,8 @@
-/* 
+/*
 	ctrlproxy: A modular IRC proxy
 	(c) 2002-2003 Jelmer Vernooij <jelmer@jelmer.uk>
 
-	g_mkdir_with_parents() imported from libglib and 
+	g_mkdir_with_parents() imported from libglib and
 	(C) Red Hat.
 
 	This program is free software; you can redistribute it and/or modify
@@ -40,14 +40,14 @@ gboolean    rep_g_file_get_contents         (const gchar *filename,
 
 	fd = open(filename, O_RDONLY);
 	if (fd == -1) {
-		g_set_error(error, G_FILE_ERROR, 
+		g_set_error(error, G_FILE_ERROR,
 				g_file_error_from_errno (errno),
 				"opening file %s", filename);
 		return FALSE;
 	}
 
 	if (fstat(fd, &sbuf) != 0) {
-		g_set_error(error, G_FILE_ERROR, 
+		g_set_error(error, G_FILE_ERROR,
 				g_file_error_from_errno (errno),
 				"statting file %s", filename);
 		return FALSE;
@@ -55,14 +55,14 @@ gboolean    rep_g_file_get_contents         (const gchar *filename,
 
 	p = (char *)g_malloc(sbuf.st_size+1);
 	if (!p) {
-		g_set_error(error, G_FILE_ERROR, 
+		g_set_error(error, G_FILE_ERROR,
 					g_file_error_from_errno (errno),
 					"allocating file %s", filename);
 		return FALSE;
 	}
 
 	if (read(fd, p, sbuf.st_size) != sbuf.st_size) {
-		g_set_error(error, G_FILE_ERROR, 
+		g_set_error(error, G_FILE_ERROR,
 					g_file_error_from_errno (errno),
 					"short read %s", filename);
 		g_free(p);
@@ -70,7 +70,7 @@ gboolean    rep_g_file_get_contents         (const gchar *filename,
 	}
 	p[sbuf.st_size] = 0;
 
-	if (length != NULL) 
+	if (length != NULL)
 		*length = sbuf.st_size;
 	*contents = p;
 
@@ -88,24 +88,24 @@ gboolean    rep_g_file_set_contents         (const gchar *filename,
 
 	fd = open(filename, O_CREAT | O_TRUNC | O_WRONLY, 0644);
 	if (fd < 0) {
-		g_set_error(error, G_FILE_ERROR, 
+		g_set_error(error, G_FILE_ERROR,
 				g_file_error_from_errno (errno),
 				"opening file %s", filename);
 		return FALSE;
 	}
 
-	if (length == -1) 
+	if (length == -1)
 		length = strlen(contents);
 
 	ret = write(fd, contents, length);
 
 	if (ret < 0) {
-		g_set_error(error, G_FILE_ERROR, 
+		g_set_error(error, G_FILE_ERROR,
 				g_file_error_from_errno (errno),
 				"writing file %s", filename);
 		return FALSE;
 	} else if (ret != length) {
-		g_set_error(error, G_FILE_ERROR, 
+		g_set_error(error, G_FILE_ERROR,
 				g_file_error_from_errno (errno),
 				"unexpected number of bytes written: %d", ret);
 		return FALSE;
@@ -152,12 +152,12 @@ rep_g_mkdir_with_parents (const gchar *pathname,
     {
       while (*p && !G_IS_DIR_SEPARATOR (*p))
 	p++;
-      
+
       if (!*p)
 	p = NULL;
       else
 	*p = '\0';
-      
+
       if (!g_file_test (fn, G_FILE_TEST_EXISTS))
 	{
 	  if (g_mkdir (fn, mode) == -1)

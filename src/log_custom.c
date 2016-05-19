@@ -1,4 +1,4 @@
-/* 
+/*
 	ctrlproxy: A modular IRC proxy
 	(c) 2002-2007 Jelmer Vernooij <jelmer@jelmer.uk>
 
@@ -63,15 +63,15 @@ If appropriate:
  -- NICK: %r
  */
 
-static void file_write_line(struct log_custom_data *data, 
-							struct irc_network *network, const char *fmt, 
+static void file_write_line(struct log_custom_data *data,
+							struct irc_network *network, const char *fmt,
 							const struct irc_line *l, const char *identifier)
 {
 	char *s;
 	char *n = NULL;
 	char *line;
 
-	if (data->config->logfilename == NULL) 
+	if (data->config->logfilename == NULL)
 		return;
 
 	s = custom_subst(network, fmt, l, identifier, FALSE, FALSE);
@@ -88,8 +88,8 @@ static void file_write_line(struct log_custom_data *data,
 	g_free(n);
 }
 
-static void file_write_line_target(struct log_custom_data *data, 
-								   struct irc_network *network, const char *fmt, 
+static void file_write_line_target(struct log_custom_data *data,
+								   struct irc_network *network, const char *fmt,
 								   const struct irc_line *l, const char *t)
 {
 	if (strchr(t, ',') != NULL) {
@@ -104,14 +104,14 @@ static void file_write_line_target(struct log_custom_data *data,
 		file_write_line(data, network, fmt, l, t);
 }
 
-static void file_write_target(struct log_custom_data *data, 
-							  struct irc_network *network, const char *fmt, 
-							  const struct irc_line *l) 
+static void file_write_target(struct log_custom_data *data,
+							  struct irc_network *network, const char *fmt,
+							  const struct irc_line *l)
 {
 	char *t;
 	struct irc_network_info *info;
 	
-	if (fmt == NULL) 
+	if (fmt == NULL)
 		return;
 	
 	g_assert(l->args[0] != NULL);
@@ -119,12 +119,12 @@ static void file_write_target(struct log_custom_data *data,
 	info = network_get_info(network);
 	g_assert(network->external_state->me.nick != NULL);
 
-	if (network->external_state != NULL && 
+	if (network->external_state != NULL &&
 		network->external_state->me.nick != NULL &&
 		!irccmp(info, network->external_state->me.nick, l->args[1])) {
 		if (l->origin != NULL)
 			t = line_get_nick(l);
-		else 
+		else
 			t = g_strdup("_messages_");
 		file_write_line(data, network, fmt, l, t);
 		g_free(t);
@@ -132,28 +132,28 @@ static void file_write_target(struct log_custom_data *data,
 		file_write_line_target(data, network, fmt, l, l->args[1]);
 }
 
-static void file_write_channel_only(struct log_custom_data *data, 
-									struct irc_network *network, const char *fmt, 
+static void file_write_channel_only(struct log_custom_data *data,
+									struct irc_network *network, const char *fmt,
 									const struct irc_line *l)
 {
-	if (fmt == NULL) 
+	if (fmt == NULL)
 		return;
 
 	file_write_line_target(data, network, fmt, l, l->args[1]);
 }
 
-static void file_write_channel_query(struct log_custom_data *data, 
-									 struct irc_network *network, const char *fmt, 
+static void file_write_channel_query(struct log_custom_data *data,
+									 struct irc_network *network, const char *fmt,
 									 const struct irc_line *l)
 {
 	char *nick;
 	GList *gl;
 	struct network_nick *nn;
 
-	if (l->origin == NULL) 
+	if (l->origin == NULL)
 		return;
 
-	if (fmt == NULL) 
+	if (fmt == NULL)
 		return;
 
 	if (network->external_state == NULL)
@@ -164,7 +164,7 @@ static void file_write_channel_query(struct log_custom_data *data,
 	
 	nn = find_network_nick(network->external_state, nick);
 	if (nn == NULL) {
-		network_log(LOG_WARNING, network, "Unable to find query with %s", 
+		network_log(LOG_WARNING, network, "Unable to find query with %s",
 					nick);
 		g_free(nick);
 		return;
@@ -182,8 +182,8 @@ static void file_write_channel_query(struct log_custom_data *data,
 	}
 }
 
-static gboolean log_custom_data(struct irc_network *network, 
-								const struct irc_line *l, 
+static gboolean log_custom_data(struct irc_network *network,
+								const struct irc_line *l,
 								enum data_direction dir, void *userdata)
 {
     struct log_custom_data *data = userdata;
@@ -191,27 +191,27 @@ static gboolean log_custom_data(struct irc_network *network,
 	if (l->args == NULL || l->args[0] == NULL)
 		return TRUE;
 
-	if (l->origin != NULL) 
+	if (l->origin != NULL)
 		nick = line_get_nick(l);
 
 	/* Loop thru possible values for %@ */
 
 	/* There are a few possibilities:
-	 * - log to line_get_nick(l) or l->args[1] file depending on which 
+	 * - log to line_get_nick(l) or l->args[1] file depending on which
 	 *   was the current user (PRIVMSG, NOTICE, ACTION, MODE) (target)
-	 * - log to all channels line_get_nick(l) was on, and to query, if 
+	 * - log to all channels line_get_nick(l) was on, and to query, if
 	 *   applicable (NICK, QUIT) (channel_query)
 	 * - log to channel only (KICK, PART, JOIN, TOPIC) (channel_only)
 	 */
 
 	if (dir == FROM_SERVER && !g_strcasecmp(l->args[0], "JOIN")) {
-		file_write_target(data, network, data->config->join, l); 
+		file_write_target(data, network, data->config->join, l);
 	} else if (dir == FROM_SERVER && !g_strcasecmp(l->args[0], "PART")) {
 		file_write_channel_only(data, network, data->config->part, l);
 	} else if (!g_strcasecmp(l->args[0], "PRIVMSG") && l->args[2] != NULL) {
-		if (l->args[2][0] == '\001') { 
+		if (l->args[2][0] == '\001') {
 			l->args[2][strlen(l->args[2])-1] = '\0';
-			if (!g_ascii_strncasecmp(l->args[2], "\001ACTION ", 8)) { 
+			if (!g_ascii_strncasecmp(l->args[2], "\001ACTION ", 8)) {
 				l->args[2]+=8;
 				file_write_target(data, network, data->config->action, l);
 				l->args[2]-=8;
@@ -223,17 +223,17 @@ static gboolean log_custom_data(struct irc_network *network,
 		}
 	} else if (!g_strcasecmp(l->args[0], "NOTICE")) {
 		file_write_target(data, network, data->config->notice, l);
-	} else if (!g_strcasecmp(l->args[0], "MODE") && l->args[1] != NULL && 
-			  is_channelname(l->args[1], network_get_info(network)) && 
+	} else if (!g_strcasecmp(l->args[0], "MODE") && l->args[1] != NULL &&
+			  is_channelname(l->args[1], network_get_info(network)) &&
 			  dir == FROM_SERVER) {
 		file_write_target(data, network, data->config->mode, l);
 	} else if (!g_strcasecmp(l->args[0], "QUIT")) {
 		file_write_channel_query(data, network, data->config->quit, l);
-	} else if (!g_strcasecmp(l->args[0], "KICK") && l->args[1] != NULL && 
+	} else if (!g_strcasecmp(l->args[0], "KICK") && l->args[1] != NULL &&
 			   l->args[2] != NULL && dir == FROM_SERVER) {
 		if (strchr(l->args[1], ',') == NULL) {
 			file_write_channel_only(data, network, data->config->kick, l);
-		} else { 
+		} else {
 			char *channels = g_strdup(l->args[1]);
 			char *nicks = g_strdup(l->args[1]);
 			char *p,*n; gboolean cont = TRUE;
@@ -244,9 +244,9 @@ static gboolean log_custom_data(struct irc_network *network,
 			while (cont) {
 				n = strchr(p, ',');
 
-				if (n == NULL) 
+				if (n == NULL)
 					cont = FALSE;
-				else 
+				else
 					*n = '\0';
 
 				file_write_channel_only(data, network, data->config->kick, l);
@@ -260,13 +260,13 @@ static gboolean log_custom_data(struct irc_network *network,
 			g_free(channels);
 			g_free(nicks);
 		}
-	} else if (!g_strcasecmp(l->args[0], "TOPIC") && dir == FROM_SERVER && 
+	} else if (!g_strcasecmp(l->args[0], "TOPIC") && dir == FROM_SERVER &&
 			   l->args[1] != NULL) {
-		if (l->args[2] != NULL) 
+		if (l->args[2] != NULL)
 			file_write_channel_only(data, network, data->config->topic, l);
-		else 
+		else
 			file_write_channel_only(data, network, data->config->notopic, l);
-	} else if (!g_strcasecmp(l->args[0], "NICK") && dir == FROM_SERVER && 
+	} else if (!g_strcasecmp(l->args[0], "NICK") && dir == FROM_SERVER &&
 			   l->args[1] != NULL) {
 		file_write_channel_query(data, network, data->config->nickchange, l);
 	}

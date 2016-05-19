@@ -1,4 +1,4 @@
-/* 
+/*
 	ctrlproxy: A modular IRC proxy
 	(c) 2002-2005 Jelmer Vernooij <jelmer@jelmer.uk>
 
@@ -33,7 +33,7 @@ struct query {
 	int end_replies[20];
 	/** Possible errors. */
 	int errors[20];
-	/* Should add this query to the stack. return TRUE if this has 
+	/* Should add this query to the stack. return TRUE if this has
 	 * been done successfully, FALSE otherwise */
 	/** Function for handling the responses. */
 	int (*handle) (const struct irc_line *, struct query_stack *, void *userdata, struct query *);

@@ -1,4 +1,4 @@
-/* 
+/*
 	ctrlproxy: A modular IRC proxy
 	(c) 2005-2008 Jelmer Vernooij <jelmer@jelmer.uk>
 
@@ -33,7 +33,7 @@ extern void initctrlproxy(void);
 static void load_config(struct global *global)
 {
 	const char *filename;
-	GDir *dir; 
+	GDir *dir;
 	char *mypath = g_build_filename(global->config->config_dir, "python", NULL);
 	char *oldpath, *newpath;
 

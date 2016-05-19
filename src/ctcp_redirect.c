@@ -1,4 +1,4 @@
-/* 
+/*
 	ctrlproxy: A modular IRC proxy
 	(c) 2002-2003 Jelmer Vernooij <jelmer@jelmer.uk>
 
@@ -79,7 +79,7 @@ gboolean ctcp_client_request_record (struct irc_client *c, struct irc_line *l)
 	return TRUE;
 }
 
-gboolean ctcp_network_redirect_response(struct irc_network *n, const struct irc_line *l) 
+gboolean ctcp_network_redirect_response(struct irc_network *n, const struct irc_line *l)
 {
 	GList *gl;
 	char *nick;

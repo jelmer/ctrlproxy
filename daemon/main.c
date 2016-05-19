@@ -175,7 +175,7 @@ static gboolean daemon_client_recv(struct irc_transport *transport, const struct
 {
 	struct daemon_client *cd = transport->userdata;
 
-	if (cd->backend->authenticated) 
+	if (cd->backend->authenticated)
 		return daemon_backend_send_line(cd->backend, line);
 	else
 		return TRUE;
@@ -218,7 +218,7 @@ static gboolean daemon_socks_gssapi (struct pending_client *pc, gss_name_t usern
 
 	major_status = gss_export_name(&minor_status, username, &namebuf);
 	if (GSS_ERROR(major_status)) {
-		log_gssapi(pc->listener, LOG_WARNING, 
+		log_gssapi(pc->listener, LOG_WARNING,
 				   "releasing name", major_status, minor_status);
 		return FALSE;
 	}
@@ -229,7 +229,7 @@ static gboolean daemon_socks_gssapi (struct pending_client *pc, gss_name_t usern
 
 	/* FIXME: Let the backend know somehow authentication is already done */
 
-	return TRUE; 
+	return TRUE;
 }
 #endif
 
@@ -281,7 +281,7 @@ static gboolean daemon_client_connect_backend(struct daemon_client *cd, struct p
 
 	if (!daemon_user_running(cd->user)) {
 		if (!daemon_user_start(cd->user, cd->config->ctrlproxy_path, cd->listener)) {
-			irc_sendf(cl->connection, cl->listener->iconv, NULL, "ERROR :Unable to start ctrlproxy for %s", 
+			irc_sendf(cl->connection, cl->listener->iconv, NULL, "ERROR :Unable to start ctrlproxy for %s",
 					  cd->user->username);
 			return FALSE;
 		}
@@ -337,7 +337,7 @@ static gboolean daemon_socks_connect_fqdn (struct pending_client *cl, const char
 	data[0] = strlen(hostname);
 	strncpy(data+1, hostname, data[0]);
 
-	listener_socks_reply(cl, REP_OK, ATYP_FQDN, strlen(hostname)+2, data, port); 
+	listener_socks_reply(cl, REP_OK, ATYP_FQDN, strlen(hostname)+2, data, port);
 	return FALSE;
 }
 
@@ -346,7 +346,7 @@ static void plain_handle_auth_finish(struct daemon_backend *backend, gboolean ac
 	struct daemon_client *dc = (struct daemon_client *)backend->userdata;
 
 	if (!accepted) {
-		transport_send_response(dc->client_transport, NULL, get_my_hostname(), "*", 
+		transport_send_response(dc->client_transport, NULL, get_my_hostname(), "*",
 								ERR_PASSWDMISMATCH, "Password invalid", NULL);
 		daemon_client_kill(dc);
 	} else {
@@ -358,7 +358,7 @@ static gboolean handle_client_line(struct pending_client *pc, const struct irc_l
 {
 	struct daemon_client *cd = pc->private_data;
 
-	if (l == NULL || l->args[0] == NULL) { 
+	if (l == NULL || l->args[0] == NULL) {
 		return TRUE;
 	}
 
@@ -377,7 +377,7 @@ static gboolean handle_client_line(struct pending_client *pc, const struct irc_l
 	} else if (!base_strcmp(l->args[0], "QUIT")) {
 		return FALSE;
 	} else {
-		irc_sendf(pc->connection, pc->listener->iconv, NULL, ":%s %d %s :You are not registered. Did you specify a password?", 
+		irc_sendf(pc->connection, pc->listener->iconv, NULL, ":%s %d %s :You are not registered. Did you specify a password?",
 				  get_my_hostname(), ERR_NOTREGISTERED, "*");
 		g_io_channel_flush(pc->connection, NULL);
 	}
@@ -422,7 +422,7 @@ struct irc_listener_ops daemon_ops = {
 	.handle_client_line = handle_client_line,
 };
 
-static void daemon_user_start_if_exists(struct daemon_user *user, const char *ctrlproxy_path, 
+static void daemon_user_start_if_exists(struct daemon_user *user, const char *ctrlproxy_path,
 										struct irc_listener *listener)
 {
 	if (daemon_user_exists(user) && !daemon_user_running(user)) {
@@ -524,9 +524,9 @@ int main(int argc, char **argv)
 	openlog("ctrlproxyd", 0, LOG_DAEMON);
 
 	daemon_listener->iconv = (GIConv)-1;
-	if (foreground) 
+	if (foreground)
 		daemon_listener->log_fn = listener_stderr;
-	else 
+	else
 		daemon_listener->log_fn = listener_syslog;
 	daemon_listener->ops = &daemon_ops;
 	daemon_listener->ssl = config->ssl;
@@ -535,7 +535,7 @@ int main(int argc, char **argv)
 	if (inetd) {
 		GIOChannel *io = g_io_channel_unix_new(0);
 		listener_new_pending_client(daemon_listener, io);
-	} else { 
+	} else {
 		write_pidfile(PIDFILE);
 
 		if (!listener_start_tcp(daemon_listener, config->address, config->port))

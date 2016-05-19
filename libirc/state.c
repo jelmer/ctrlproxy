@@ -29,7 +29,7 @@ enum mode_type { REMOVE = 0, ADD = 1 };
 		return; \
 	}
 
-void network_nick_set_data(struct network_nick *n, const char *nick, 
+void network_nick_set_data(struct network_nick *n, const char *nick,
 						   const char *username, const char *host)
 {
 	gboolean changed = FALSE;
@@ -65,7 +65,7 @@ gboolean network_nick_set_nick(struct network_nick *n, const char *nick)
 	if (n == NULL)
 		return FALSE;
 
-	if (n->nick != NULL && !strcmp(nick, n->nick)) 
+	if (n->nick != NULL && !strcmp(nick, n->nick))
 		return TRUE;
 
 	g_free(n->nick);
@@ -82,7 +82,7 @@ gboolean network_nick_set_username(struct network_nick *n, const char *username)
 	if (n == NULL)
 		return FALSE;
 
-	if (n->username != NULL && !strcmp(username, n->username)) 
+	if (n->username != NULL && !strcmp(username, n->username))
 		return TRUE;
 
 	g_free(n->username);
@@ -99,7 +99,7 @@ gboolean network_nick_set_hostname(struct network_nick *n, const char *hostname)
 	if (n == NULL)
 		return FALSE;
 
-	if (n->hostname != NULL && !strcmp(hostname, n->hostname)) 
+	if (n->hostname != NULL && !strcmp(hostname, n->hostname))
 		return TRUE;
 
 	g_free(n->hostname);
@@ -131,12 +131,12 @@ gboolean network_nick_set_hostmask(struct network_nick *n, const char *hm)
 	n->hostmask = g_strdup(hm);
 
 	t = strchr(hm, '!');
-	if (!t) 
+	if (!t)
 		return FALSE;
 	n->nick = g_strndup(hm, t-hm);
 	
 	u = strchr(t, '@');
-	if (!u) 
+	if (!u)
 		return FALSE;
 	n->username = g_strndup(t+1, u-t-1);
 
@@ -155,7 +155,7 @@ static void free_channel_nick(struct channel_nick *n)
 	n->channel->nicks = g_list_remove(n->channel->nicks, n);
 	n->global_nick->channel_nicks = g_list_remove(n->global_nick->channel_nicks, n);
 
-	if (g_list_length(n->global_nick->channel_nicks) == 0 && n->global_nick->query == 0) 
+	if (g_list_length(n->global_nick->channel_nicks) == 0 && n->global_nick->query == 0)
 		free_network_nick(n->channel->network, n->global_nick);
 
 	g_free(n->last_flags);
@@ -256,7 +256,7 @@ struct irc_channel_state *find_channel(struct irc_network_state *st, const char 
 	for (cl = st->channels; cl; cl = g_list_next(cl)) {
 		struct irc_channel_state *c = (struct irc_channel_state *)cl->data;
 
-		if (!irccmp(st->info, c->name, name)) 
+		if (!irccmp(st->info, c->name, name))
 			return c;
 	}
 	return NULL;
@@ -273,7 +273,7 @@ struct irc_channel_state *irc_channel_state_new(const char *name)
 	return c;
 }
 
-struct irc_channel_state *find_add_channel(struct irc_network_state *st, char *name) 
+struct irc_channel_state *find_add_channel(struct irc_network_state *st, char *name)
 {
 	struct irc_channel_state *c;
 	g_assert(st);
@@ -297,8 +297,8 @@ struct irc_channel_state *find_add_channel(struct irc_network_state *st, char *n
  * @param name Name of the nick to search for
  * @return NULL if not found, channel_nick if found
  */
-struct channel_nick *find_channel_nick(struct irc_channel_state *c, 
-									   const char *name) 
+struct channel_nick *find_channel_nick(struct irc_channel_state *c,
+									   const char *name)
 {
 	GList *l;
 	const char *realname = name;
@@ -330,8 +330,8 @@ struct channel_nick *find_channel_nick(struct irc_channel_state *c,
  * @param hm Hostmask of the nick to search for
  * @return NULL if not found, channel_nick if found
  */
-struct channel_nick *find_channel_nick_hostmask(struct irc_channel_state *c, 
-									   		    const char *hm) 
+struct channel_nick *find_channel_nick_hostmask(struct irc_channel_state *c,
+									   		    const char *hm)
 {
 	GList *l;
 	g_assert(hm);
@@ -349,12 +349,12 @@ struct channel_nick *find_channel_nick_hostmask(struct irc_channel_state *c,
 
 /**
  * Find network nick by name
- * 
+ *
  * @param n Network state to search
  * @param name Name of the nick to search for
  * @return NULL if not found, network_nick otherwise
  */
-struct network_nick *find_network_nick(struct irc_network_state *n, 
+struct network_nick *find_network_nick(struct irc_network_state *n,
 									   const char *name)
 {
 	GList *gl;
@@ -382,7 +382,7 @@ struct network_nick *find_network_nick(struct irc_network_state *n,
  * @param name Name of the nick to search for
  * @return network_nick structure, or NULL if out of memory.
  */
-struct network_nick *find_add_network_nick(struct irc_network_state *n, 
+struct network_nick *find_add_network_nick(struct irc_network_state *n,
 										   const char *name)
 {
 	struct network_nick *nd;
@@ -391,7 +391,7 @@ struct network_nick *find_add_network_nick(struct irc_network_state *n,
 	g_assert(n != NULL);
 
 	nd = find_network_nick(n, name);
-	if (nd != NULL) 
+	if (nd != NULL)
 		return nd;
 
 	/* create one, if it doesn't exist */
@@ -412,8 +412,8 @@ struct network_nick *find_add_network_nick(struct irc_network_state *n,
  * @param name Name of the nick to search for
  * @return channel_nick structure, or NULL if out of memory.
  */
-struct channel_nick *find_add_channel_nick(struct irc_channel_state *c, 
-										   const char *name) 
+struct channel_nick *find_add_channel_nick(struct irc_channel_state *c,
+										   const char *name)
 {
 	struct channel_nick *n;
 	const char *realname = name;
@@ -430,7 +430,7 @@ struct channel_nick *find_add_channel_nick(struct irc_channel_state *c,
 	}
 
 	n = find_channel_nick(c, realname);
-	if (n != NULL) 
+	if (n != NULL)
 		return n;
 
 	n = g_new0(struct channel_nick,1);
@@ -440,7 +440,7 @@ struct channel_nick *find_add_channel_nick(struct irc_channel_state *c,
 	n->global_nick = find_add_network_nick(c->network, realname);
 	if (prefix != 0) {
 		char mode = get_mode_by_prefix(prefix, c->network->info);
-		if (mode) 
+		if (mode)
 			modes_set_mode(n->modes, mode);
     }
 	c->nicks = g_list_append(c->nicks, n);
@@ -478,7 +478,7 @@ static void handle_join(struct irc_network_state *s, const struct irc_line *l)
 		if (!irccmp(s->info, nick, s->me.nick)) {
 			network_state_log(LOG_TRACE, s, "Joining channel %s", c->name);
 		} else {
-			network_state_log(LOG_TRACE, s, "%s joins channel %s", nick, 
+			network_state_log(LOG_TRACE, s, "%s joins channel %s", nick,
 							  c->name);
 		}
 	}
@@ -499,7 +499,7 @@ static void handle_part(struct irc_network_state *s, const struct irc_line *l)
 	
 	nick = line_get_nick(l);
 
-	if (nick == NULL) 
+	if (nick == NULL)
 		return;
 
 	channels = g_strsplit(l->args[1], ",", 0);
@@ -508,8 +508,8 @@ static void handle_part(struct irc_network_state *s, const struct irc_line *l)
 		c = find_channel(s, channels[i]);
 
 		if (c == NULL) {
-			network_state_log(LOG_WARNING, s, 
-					"Can't part or let other nick part %s(unknown channel)", 
+			network_state_log(LOG_WARNING, s,
+					"Can't part or let other nick part %s(unknown channel)",
 					channels[i]);
 			continue;
 		}
@@ -518,8 +518,8 @@ static void handle_part(struct irc_network_state *s, const struct irc_line *l)
 		if (n != NULL) {
 			free_channel_nick(n);
 		} else {
-			network_state_log(LOG_WARNING, s, 
-				"Can't remove nick %s from channel %s: nick not on channel", 
+			network_state_log(LOG_WARNING, s,
+				"Can't remove nick %s from channel %s: nick not on channel",
 				nick, channels[i]);
 		}
 
@@ -534,7 +534,7 @@ static void handle_part(struct irc_network_state *s, const struct irc_line *l)
 	g_strfreev(channels);
 }
 
-static void handle_kick(struct irc_network_state *s, const struct irc_line *l) 
+static void handle_kick(struct irc_network_state *s, const struct irc_line *l)
 {
 	struct irc_channel_state *c;
 	struct channel_nick *n;
@@ -574,7 +574,7 @@ static void handle_kick(struct irc_network_state *s, const struct irc_line *l)
 	}
 
 	if (channels[i] != NULL || nicks[i] != NULL) {
-		network_state_log(LOG_WARNING, s, 
+		network_state_log(LOG_WARNING, s,
 					  "KICK command has unequal number of channels and nicks");
 	}
 
@@ -583,7 +583,7 @@ static void handle_kick(struct irc_network_state *s, const struct irc_line *l)
 	g_strfreev(channels);
 }
 
-static void handle_topic(struct irc_network_state *s, const struct irc_line *l) 
+static void handle_topic(struct irc_network_state *s, const struct irc_line *l)
 {
 	struct irc_channel_state *c = find_channel(s, l->args[1]);
 	
@@ -598,12 +598,12 @@ static void handle_topic(struct irc_network_state *s, const struct irc_line *l)
 	c->topic_set_by = line_get_nick(l);
 }
 
-static void handle_332(struct irc_network_state *s, const struct irc_line *l) 
+static void handle_332(struct irc_network_state *s, const struct irc_line *l)
 {
 	struct irc_channel_state *c = find_channel(s, l->args[2]);
 
 	if (c == NULL) {
-		network_state_log(LOG_WARNING, s, 
+		network_state_log(LOG_WARNING, s,
 					"Can't set topic for unknown channel '%s'!", l->args[2]);
 		return;
 	}
@@ -612,13 +612,13 @@ static void handle_332(struct irc_network_state *s, const struct irc_line *l)
 	c->topic = g_strdup(l->args[3]);
 }
 
-static void handle_333(struct irc_network_state *s, const struct irc_line *l) 
+static void handle_333(struct irc_network_state *s, const struct irc_line *l)
 {
 	struct irc_channel_state *c = find_channel(s, l->args[2]);
 
 	if (!c) {
-		network_state_log(LOG_WARNING, s, 
-				"Can't set topic last set time for unknown channel '%s'!", 
+		network_state_log(LOG_WARNING, s,
+				"Can't set topic last set time for unknown channel '%s'!",
 				l->args[2]);
 		return;
 	}
@@ -627,12 +627,12 @@ static void handle_333(struct irc_network_state *s, const struct irc_line *l)
 	c->topic_set_by = g_strdup(l->args[3]);
 }
 
-static void handle_no_topic(struct irc_network_state *s, const struct irc_line *l) 
+static void handle_no_topic(struct irc_network_state *s, const struct irc_line *l)
 {
 	struct irc_channel_state *c = find_channel(s, l->args[1]);
 
 	if (c == NULL) {
-		network_state_log(LOG_WARNING, s, 
+		network_state_log(LOG_WARNING, s,
 					"Can't unset topic for unknown channel '%s'!", l->args[2]);
 		return;
 	}
@@ -641,14 +641,14 @@ static void handle_no_topic(struct irc_network_state *s, const struct irc_line *
 	c->topic = NULL;
 }
 
-static void handle_namreply(struct irc_network_state *s, const struct irc_line *l) 
+static void handle_namreply(struct irc_network_state *s, const struct irc_line *l)
 {
 	gchar **names;
 	int i;
 	struct irc_channel_state *c = find_channel(s, l->args[3]);
 
 	if (c == NULL) {
-		network_state_log(LOG_WARNING, s, 
+		network_state_log(LOG_WARNING, s,
 					"Can't add names to %s: channel not found", l->args[3]);
 		return;
 	}
@@ -667,25 +667,25 @@ static void handle_namreply(struct irc_network_state *s, const struct irc_line *
 	g_strfreev(names);
 }
 
-static void handle_end_names(struct irc_network_state *s, const struct irc_line *l) 
+static void handle_end_names(struct irc_network_state *s, const struct irc_line *l)
 {
 	struct irc_channel_state *c = find_channel(s, l->args[2]);
 	if (c != NULL)
 		c->namreply_started = FALSE;
-	else 
-		network_state_log(LOG_WARNING, s, 
-				  "Can't end /NAMES command for %s: channel not found", 
+	else
+		network_state_log(LOG_WARNING, s,
+				  "Can't end /NAMES command for %s: channel not found",
 				  l->args[2]);
 }
 
-static void handle_invitelist_entry(struct irc_network_state *s, const struct irc_line *l) 
+static void handle_invitelist_entry(struct irc_network_state *s, const struct irc_line *l)
 {
 	struct irc_channel_state *c = find_channel(s, l->args[2]);
 	GList **list;
 	
 	if (c == NULL) {
-		network_state_log(LOG_WARNING, s, 
-				"Can't add invitelist entries to %s: channel not found", 
+		network_state_log(LOG_WARNING, s,
+				"Can't add invitelist entries to %s: channel not found",
 				l->args[2]);
 		return;
 	}
@@ -700,11 +700,11 @@ static void handle_invitelist_entry(struct irc_network_state *s, const struct ir
 	nicklist_add_entry(list, l->args[3], NULL, 0);
 }
 
-static void handle_end_invitelist(struct irc_network_state *s, const struct irc_line *l) 
+static void handle_end_invitelist(struct irc_network_state *s, const struct irc_line *l)
 {
 	struct irc_channel_state *c = find_channel(s, l->args[2]);
 	if (c == NULL) {
-		network_state_log(LOG_WARNING, s, 
+		network_state_log(LOG_WARNING, s,
 			  "Can't end invitelist for %s: channel not found", l->args[2]);
 		return;
 	}
@@ -713,14 +713,14 @@ static void handle_end_invitelist(struct irc_network_state *s, const struct irc_
 	channel_mode_nicklist_present(c,'I') = TRUE;
 }
 
-static void handle_exceptlist_entry(struct irc_network_state *s, const struct irc_line *l) 
+static void handle_exceptlist_entry(struct irc_network_state *s, const struct irc_line *l)
 {
 	struct irc_channel_state *c = find_channel(s, l->args[2]);
 	GList **list;
 	
 	if (c == NULL) {
-		network_state_log(LOG_WARNING, s, 
-				"Can't add exceptlist entries to %s: channel not found", 
+		network_state_log(LOG_WARNING, s,
+				"Can't add exceptlist entries to %s: channel not found",
 				l->args[2]);
 		return;
 	}
@@ -735,11 +735,11 @@ static void handle_exceptlist_entry(struct irc_network_state *s, const struct ir
 	nicklist_add_entry(list, l->args[3], NULL, 0);
 }
 
-static void handle_end_exceptlist(struct irc_network_state *s, const struct irc_line *l) 
+static void handle_end_exceptlist(struct irc_network_state *s, const struct irc_line *l)
 {
 	struct irc_channel_state *c = find_channel(s, l->args[2]);
 	if (c == NULL) {
-		network_state_log(LOG_WARNING, s, 
+		network_state_log(LOG_WARNING, s,
 			"Can't end exceptlist for %s: channel not found", l->args[2]);
 		return;
 	}
@@ -749,14 +749,14 @@ static void handle_end_exceptlist(struct irc_network_state *s, const struct irc_
 
 
 
-static void handle_banlist_entry(struct irc_network_state *s, const struct irc_line *l) 
+static void handle_banlist_entry(struct irc_network_state *s, const struct irc_line *l)
 {
 	struct irc_channel_state *c = find_channel(s, l->args[2]);
 	GList **list;
 	
 	if (c == NULL) {
-		network_state_log(LOG_WARNING, s, 
-					"Can't add banlist entries to %s: channel not found", 
+		network_state_log(LOG_WARNING, s,
+					"Can't add banlist entries to %s: channel not found",
 					l->args[2]);
 		return;
 	}
@@ -768,16 +768,16 @@ static void handle_banlist_entry(struct irc_network_state *s, const struct irc_l
 		c->banlist_started = TRUE;
 	}
 
-	nicklist_add_entry(list, l->args[3], l->args[4], 
+	nicklist_add_entry(list, l->args[3], l->args[4],
 					   (l->args[4] && l->args[5])?atol(l->args[5]):0);
 }
 
-static void handle_end_banlist(struct irc_network_state *s, const struct irc_line *l) 
+static void handle_end_banlist(struct irc_network_state *s, const struct irc_line *l)
 {
 	struct irc_channel_state *c = find_channel(s, l->args[2]);
 
 	if (c == NULL) {
-		network_state_log(LOG_WARNING, s, 
+		network_state_log(LOG_WARNING, s,
 				"Can't end banlist for %s: channel not found", l->args[2]);
 		return;
 	}
@@ -786,7 +786,7 @@ static void handle_end_banlist(struct irc_network_state *s, const struct irc_lin
 	channel_mode_nicklist_present(c,'b') = TRUE;
 }
 
-static void handle_whoreply(struct irc_network_state *s, const struct irc_line *l) 
+static void handle_whoreply(struct irc_network_state *s, const struct irc_line *l)
 {
 	struct irc_channel_state *cs;
 	struct network_nick *nn;
@@ -813,15 +813,15 @@ static void handle_whoreply(struct irc_network_state *s, const struct irc_line *
 	nn->server = g_strdup(l->args[5]);
 
 	cs = find_channel(s, l->args[2]);
-	if (cs == NULL) 
+	if (cs == NULL)
 		return;
 
 	cn = find_channel_nick(cs, nn->nick);
 	
 	if (cn == NULL) {
-		network_state_log(LOG_WARNING, 
+		network_state_log(LOG_WARNING,
 						  s,
-						  "User %s in WHO reply not in expected channel %s!", 
+						  "User %s in WHO reply not in expected channel %s!",
 						  nn->nick, l->args[2]);
 		return;
 	}
@@ -832,7 +832,7 @@ static void handle_whoreply(struct irc_network_state *s, const struct irc_line *
 	cn->last_update = time(NULL);
 }
 
-static void handle_end_who(struct irc_network_state *s, const struct irc_line *l) 
+static void handle_end_who(struct irc_network_state *s, const struct irc_line *l)
 {
 }
 
@@ -846,7 +846,7 @@ static void handle_unaway(struct irc_network_state *s, const struct irc_line *l)
 	s->is_away = FALSE;
 }
 
-static void handle_quit(struct irc_network_state *s, const struct irc_line *l) 
+static void handle_quit(struct irc_network_state *s, const struct irc_line *l)
 {
 	char *nick;
 	struct network_nick *nn;
@@ -862,7 +862,7 @@ static void handle_quit(struct irc_network_state *s, const struct irc_line *l)
 			struct channel_nick *n = nn->channel_nicks->data;
 			free_channel_nick(n);
 		}
-	} else if (nn != NULL) 
+	} else if (nn != NULL)
 		free_network_nick(s, nn);
 }
 
@@ -890,7 +890,7 @@ static int channel_state_change_mode(struct irc_network_state *s, struct network
 
 		if (channel_mode_nicklist_present(c, mode)) {
 			if (set) {
-				nicklist_add_entry(&channel_mode_nicklist(c, mode), opt_arg, 
+				nicklist_add_entry(&channel_mode_nicklist(c, mode), opt_arg,
 								   by?by->nick:NULL, time(NULL));
 			} else {
 				if (!nicklist_remove_entry(&channel_mode_nicklist(c, mode), opt_arg))  {
@@ -925,7 +925,7 @@ static int channel_state_change_mode(struct irc_network_state *s, struct network
 			return -1;
 		}
 
-		n = find_channel_nick(c, opt_arg); 
+		n = find_channel_nick(c, opt_arg);
 		if (!n) {
 			network_state_log(LOG_WARNING, s, "Can't set mode %c%c on nick %s on channel %s, because nick does not exist!", set?'+':'-', mode, opt_arg, c->name);
 			return -1;
@@ -934,7 +934,7 @@ static int channel_state_change_mode(struct irc_network_state *s, struct network
 			modes_set_mode(n->modes, mode);
 		} else {
 			modes_unset_mode(n->modes, mode);
-		} 
+		}
 		return 1;
 	} else if (cmt == CHANMODE_BOOL) {
 		modes_change_mode(c->modes, set, mode);
@@ -963,7 +963,7 @@ static void handle_mode(struct irc_network_state *s, const struct irc_line *l)
 		char *by_name;
 
 		if (c == NULL) {
-			network_state_log(LOG_WARNING, s, 
+			network_state_log(LOG_WARNING, s,
 				"Unable to change mode for unknown channel '%s'", l->args[1]);
 			return;
 		}
@@ -977,7 +977,7 @@ static void handle_mode(struct irc_network_state *s, const struct irc_line *l)
 				case '+': t = TRUE; break;
 				case '-': t = FALSE; break;
 				default:
-					  ret = channel_state_change_mode(s, by, c, t, 
+					  ret = channel_state_change_mode(s, by, c, t,
 													  l->args[2][i],
 													  l->args[arg]);
 					  if (ret == -1)
@@ -1006,12 +1006,12 @@ static void handle_mode(struct irc_network_state *s, const struct irc_line *l)
 
 	if (arg > l->argc) {
 		network_state_log(LOG_WARNING, s,
-						  "not enough arguments for mode change %s on %s", 
+						  "not enough arguments for mode change %s on %s",
 						  l->args[2], l->args[1]);
 	} else if (l->args[arg] != NULL && strcmp(l->args[arg], "") != 0) {
-		network_state_log(LOG_WARNING, s, 
-						  "mode %s %s argument not consumed: %s", l->args[2], 
-						  l->args[1], 
+		network_state_log(LOG_WARNING, s,
+						  "mode %s %s argument not consumed: %s", l->args[2],
+						  l->args[1],
 						  l->args[arg]);
 	}
 }
@@ -1060,7 +1060,7 @@ static void handle_nick(struct irc_network_state *s, const struct irc_line *l)
 static void handle_umodeis(struct irc_network_state *s, const struct irc_line *l)
 {
 	if (!string2mode(l->args[1], s->me.modes)) {
-		network_state_log(LOG_WARNING, s, 
+		network_state_log(LOG_WARNING, s,
 						  "Invalid MODE change %s for user", l->args[1]);
 	}
 }
@@ -1070,13 +1070,13 @@ static void handle_324(struct irc_network_state *s, const struct irc_line *l)
 	struct irc_channel_state *ch = find_channel(s, l->args[2]);
 
 	if (ch == NULL) {
-		network_state_log(LOG_WARNING, s, 
+		network_state_log(LOG_WARNING, s,
 			"Can't store modes for %s: channel not found", l->args[2]);
 		return;
 	}
 
 	if (!string2mode(l->args[3], ch->modes)) {
-		network_state_log(LOG_WARNING, s, 
+		network_state_log(LOG_WARNING, s,
 						  "Invalid MODE change %s for channel %s", l->args[3], l->args[2]);
 	}
 
@@ -1088,7 +1088,7 @@ static void handle_329(struct irc_network_state *s, const struct irc_line *l)
 	struct irc_channel_state *ch = find_channel(s, l->args[2]);
 
 	if (ch == NULL) {
-		network_state_log(LOG_WARNING, s, 
+		network_state_log(LOG_WARNING, s,
 			"Can't store creationtime for %s: channel not found", l->args[2]);
 		return;
 	}
@@ -1179,8 +1179,8 @@ gboolean state_handle_data(struct irc_network_state *s, const struct irc_line *l
 	return FALSE;
 }
 
-struct irc_network_state *network_state_init(const char *nick, 
-										 const char *username, 
+struct irc_network_state *network_state_init(const char *nick,
+										 const char *username,
 										 const char *hostname)
 {
 	struct irc_network_state *state = g_new0(struct irc_network_state, 1);
@@ -1238,7 +1238,7 @@ void free_network_state(struct irc_network_state *state)
 	g_free(state);
 }
 
-void network_state_log(enum log_level l, 
+void network_state_log(enum log_level l,
 					   const struct irc_network_state *st, const char *fmt, ...)
 {
 	char *ret;
@@ -1259,7 +1259,7 @@ void network_state_log(enum log_level l,
 	g_free(ret);
 }
 
-void network_state_set_log_fn(struct irc_network_state *st, 
+void network_state_set_log_fn(struct irc_network_state *st,
 							  void (*fn) (enum log_level, void *, const char *),
 							  void *userdata)
 {

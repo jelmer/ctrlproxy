@@ -83,13 +83,13 @@ void log_client_line(const struct irc_client *n, const struct irc_line *l, gbool
 	g_free(raw);
 }
 
-void handle_network_log(enum log_level level, const struct irc_network *n, 
+void handle_network_log(enum log_level level, const struct irc_network *n,
 						const char *msg)
 {
 	g_assert(n != NULL);
 	log_entry(level, n, NULL, msg);
 	if (level <= LOG_INFO)
-		clients_send_args_ex(n->clients, NULL, "NOTICE", "*", 
+		clients_send_args_ex(n->clients, NULL, "NOTICE", "*",
 						     msg, NULL);
 }
 
@@ -101,7 +101,7 @@ void log_client(enum log_level level, const struct irc_client *c, const char *da
 void log_global(enum log_level level, const char *fmt, ...)
 {
 	va_list ap;	
-	char *tmp; 
+	char *tmp;
 	va_start(ap, fmt);
 	tmp = g_strdup_vprintf(fmt, ap);
 	va_end(ap);
@@ -109,7 +109,7 @@ void log_global(enum log_level level, const char *fmt, ...)
 	g_free(tmp);
 }
 
-static void log_handler(const gchar *log_domain, GLogLevelFlags flags, const gchar *message, gpointer user_data) 
+static void log_handler(const gchar *log_domain, GLogLevelFlags flags, const gchar *message, gpointer user_data)
 {
 	if (strchr(message, '\n')) {
 		char **lines = g_strsplit(message, "\n", 0);

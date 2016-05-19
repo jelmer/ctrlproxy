@@ -1,4 +1,4 @@
-/* 
+/*
 	ctrlproxy: A modular IRC proxy
 	(c) 2002-2005 Jelmer Vernooij <jelmer@jelmer.uk>
 
@@ -56,7 +56,7 @@ void kill_pending_clients(const char *reason);
 gboolean network_set_iochannel(struct irc_network *s, GIOChannel *ioc);
 
 /* redirect.c */
-gboolean redirect_response(struct query_stack *stack, 
+gboolean redirect_response(struct query_stack *stack,
 						   struct irc_network *network,
 						   const struct irc_line *l);
 
@@ -98,16 +98,16 @@ gboolean run_replication_filter(struct irc_network *s, const struct irc_line *l,
  * @param desc Description of the client.
  */
 G_MODULE_EXPORT G_GNUC_MALLOC struct irc_client *client_init_iochannel(
-										   struct irc_network *net, 
-										   GIOChannel *io, 
+										   struct irc_network *net,
+										   GIOChannel *io,
 										   const char *desc);
 
 G_MODULE_EXPORT G_GNUC_MALLOC struct irc_client *client_init(
-										   struct irc_network *net, 
+										   struct irc_network *net,
 										   struct irc_transport *transport,
 										   const char *desc);
 G_MODULE_EXPORT struct irc_line *irc_line_replace_hostmask(
-										   const struct irc_line *l, 
+										   const struct irc_line *l,
 										   const struct irc_network_info *info,
 										   const struct network_nick *,
 										   const struct network_nick *);
@@ -119,11 +119,11 @@ G_MODULE_EXPORT void clients_send_args_ex(GList *clients, const char *hostmask, 
 gboolean init_log(const char *file);
 void log_network_line(const struct irc_network *n, const struct irc_line *l, gboolean incoming);
 void log_client_line(const struct irc_client *c, const struct irc_line *l, gboolean incoming);
-void handle_network_log(enum log_level level, const struct irc_network *n, 
+void handle_network_log(enum log_level level, const struct irc_network *n,
 						const char *msg);
-char *custom_subst(struct irc_network *network, 
-						 const char *fmt, const struct irc_line *l, 
-						 const char *_identifier, 
+char *custom_subst(struct irc_network *network,
+						 const char *fmt, const struct irc_line *l,
+						 const char *_identifier,
 						 gboolean case_sensitive, gboolean noslash);
 
 /* linestack.c */

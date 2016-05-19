@@ -60,7 +60,7 @@ END_TEST
 
 START_TEST(test_null)
 	char *result = run_cmd(NULL);
-	fail_unless(!strcmp("Please specify a command. Use the 'help' command to get a list of available commands", result), 
+	fail_unless(!strcmp("Please specify a command. Use the 'help' command to get a list of available commands", result),
 				"Expected command error: %s", result);
 END_TEST
 

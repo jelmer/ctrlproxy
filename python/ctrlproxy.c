@@ -1,4 +1,4 @@
-/* 
+/*
 	ctrlproxy: A modular IRC proxy
 	(c) 2002-2007 Jelmer Vernooij <jelmer@jelmer.uk>
 
@@ -111,7 +111,7 @@ void initctrlproxy(void)
 	if (PyType_Ready(&PyNetworkDictType) < 0)
 		return;
 
-	m = Py_InitModule3("ctrlproxy", ctrlproxy_methods, 
+	m = Py_InitModule3("ctrlproxy", ctrlproxy_methods,
 					   "ControlProxy");
 	if (m == NULL)
 		return;

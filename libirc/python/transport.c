@@ -194,7 +194,7 @@ static PyObject *py_transport_inject_line(PyTransportObject *self, PyObject *lin
 }
 
 static PyMethodDef py_transport_methods[] = {
-    { "inject_line", (PyCFunction)py_transport_inject_line, 
+    { "inject_line", (PyCFunction)py_transport_inject_line,
         METH_O, "Inject line" },
     { NULL }
 };

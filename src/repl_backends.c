@@ -1,4 +1,4 @@
-/* 
+/*
 	ctrlproxy: A modular IRC proxy
 	(c) 2002-2007 Jelmer Vernooij <jelmer@jelmer.uk>
 
@@ -31,7 +31,7 @@ static gboolean check_highlight(struct irc_line *l, time_t t, void *userdata)
     int i;
 
 	if (g_strcasecmp(l->args[0], "PRIVMSG") != 0 &&
-		g_strcasecmp(l->args[0], "NOTICE") != 0) 
+		g_strcasecmp(l->args[0], "NOTICE") != 0)
 		return TRUE;
 	
 	for (i = 0; matches && matches[i]; i++) {
@@ -69,8 +69,8 @@ static void lastdisconnect_mark(struct irc_client *c, void *userdata)
 	if (!c->network)
 		return;
 
-	if (c->network->linestack != NULL) 
-		g_hash_table_replace(lastdisconnect_backlog, irc_network_ref(c->network), 
+	if (c->network->linestack != NULL)
+		g_hash_table_replace(lastdisconnect_backlog, irc_network_ref(c->network),
 							 linestack_get_marker(c->network->linestack));
 }
 
@@ -88,20 +88,20 @@ static void lastdisconnect_replicate(struct irc_client *c)
 	}
 	free_network_state(ns);
 
-	linestack_send(c->network->linestack, lm, NULL, c, FALSE, 
+	linestack_send(c->network->linestack, lm, NULL, c, FALSE,
 				   c->network->global->config->report_time != REPORT_TIME_NEVER,
 				   c->network->global->config->report_time_offset);
 }
 
-static gboolean log_data(struct irc_network *n, const struct irc_line *l, enum data_direction dir, void *userdata) 
+static gboolean log_data(struct irc_network *n, const struct irc_line *l, enum data_direction dir, void *userdata)
 {
 	if(dir != TO_SERVER) return TRUE;
 
-	if (g_strcasecmp(l->args[0], "PRIVMSG") && 
+	if (g_strcasecmp(l->args[0], "PRIVMSG") &&
 		g_strcasecmp(l->args[0], "NOTICE")) return TRUE;
 
-	if (n->linestack != NULL) 
-		g_hash_table_replace(simple_backlog, irc_network_ref(n), 
+	if (n->linestack != NULL)
+		g_hash_table_replace(simple_backlog, irc_network_ref(n),
 							 linestack_get_marker(n->linestack));
 
 	return TRUE;
@@ -122,7 +122,7 @@ static void simple_replicate(struct irc_client *c)
 	}
 	free_network_state(ns);
 
-	linestack_send(c->network->linestack, m, NULL, c, FALSE, 
+	linestack_send(c->network->linestack, m, NULL, c, FALSE,
 				   c->network->global->config->report_time != REPORT_TIME_NEVER,
 				   c->network->global->config->report_time_offset);
 }
@@ -139,24 +139,24 @@ static void load_config(struct global *global)
 {
     matches = g_key_file_get_string_list(global->config->keyfile,
                            "global", "match", NULL, NULL);
-	markers = g_hash_table_new_full(NULL, NULL, 
-									(GDestroyNotify)irc_network_unref, 
+	markers = g_hash_table_new_full(NULL, NULL,
+									(GDestroyNotify)irc_network_unref,
 									(GDestroyNotify)linestack_free_marker);
 }
 
 gboolean init_replication(void)
 {
 	int i;
-	for (i = 0; backends[i].name; i++) 
+	for (i = 0; backends[i].name; i++)
 		register_replication_backend(&backends[i]);
 
 	register_load_config_notify(load_config);
 	add_lose_client_hook("repl_lastdisconnect", lastdisconnect_mark, NULL);
-	lastdisconnect_backlog = g_hash_table_new_full(NULL, NULL, 
-		(GDestroyNotify)irc_network_unref, 
+	lastdisconnect_backlog = g_hash_table_new_full(NULL, NULL,
+		(GDestroyNotify)irc_network_unref,
 		(GDestroyNotify)linestack_free_marker);
-	simple_backlog = g_hash_table_new_full(NULL, NULL, 
-		(GDestroyNotify)irc_network_unref, 
+	simple_backlog = g_hash_table_new_full(NULL, NULL,
+		(GDestroyNotify)irc_network_unref,
 		(GDestroyNotify)linestack_free_marker);
 	add_server_filter("repl_simple", log_data, NULL, 200);
 

@@ -113,7 +113,7 @@ struct irc_channel_state {
 /**
  * Describes the (partial) state of a network at a specific time
  */
-struct irc_network_state 
+struct irc_network_state
 {
 	/** Private data to be used by whatever code is using network_state. */
 	void *userdata;
@@ -142,7 +142,7 @@ G_MODULE_EXPORT struct channel_nick *find_channel_nick_hostmask(struct irc_chann
 G_MODULE_EXPORT struct channel_nick *find_add_channel_nick(struct irc_channel_state *c, const char *name);
 G_MODULE_EXPORT struct network_nick *find_network_nick(struct irc_network_state *c, const char *name);
 G_MODULE_EXPORT gboolean network_nick_set_hostmask(struct network_nick *n, const char *hm);
-G_MODULE_EXPORT void network_nick_set_data(struct network_nick *n, const char *nick, 
+G_MODULE_EXPORT void network_nick_set_data(struct network_nick *n, const char *nick,
 						   const char *username, const char *host);
 G_MODULE_EXPORT gboolean client_send_state(struct irc_client *, struct irc_network_state *);
 G_MODULE_EXPORT void network_state_log(enum log_level l, const struct irc_network_state *st, const char *fmt, ...);

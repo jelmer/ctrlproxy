@@ -37,7 +37,7 @@ struct log_support_context *log_support_init(void)
 {
 	struct log_support_context *ret = g_new0(struct log_support_context, 1);
 
-	ret->files = g_hash_table_new_full(g_str_hash, g_str_equal, 
+	ret->files = g_hash_table_new_full(g_str_hash, g_str_equal,
 			g_free, free_file_info);
 
 	return ret;
@@ -70,7 +70,7 @@ void log_support_cleanup(struct log_support_context *ctx)
 	g_hash_table_foreach_remove(ctx->files, eval_remove, ctx);
 }
 
-static gboolean unconditional_remove(gpointer key, gpointer value, 
+static gboolean unconditional_remove(gpointer key, gpointer value,
 									 gpointer user_data)
 {
 	struct log_support_context *ctx = user_data;
@@ -84,7 +84,7 @@ void log_support_reopen(struct log_support_context *ctx)
 	g_hash_table_foreach_remove(ctx->files, unconditional_remove, ctx);
 }
 
-gboolean log_support_write(struct log_support_context *ctx, 
+gboolean log_support_write(struct log_support_context *ctx,
 					   const char *path,
 					   const char *text)
 {
@@ -130,7 +130,7 @@ gboolean log_support_write(struct log_support_context *ctx,
 	return TRUE;
 }
 
-void log_support_writef(struct log_support_context *ctx, 
+void log_support_writef(struct log_support_context *ctx,
 					   const char *path,
 					   const char *fmt, ...)
 {

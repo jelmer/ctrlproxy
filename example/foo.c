@@ -1,7 +1,7 @@
 #include <ctrlproxy.h>
 
 gboolean init_plugin(void)
-{   
+{
 	/* Do something */
 	return TRUE;
 }

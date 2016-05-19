@@ -83,9 +83,9 @@ struct irc_client {
 G_MODULE_EXPORT void client_disconnect(struct irc_client *c, const char *reason);
 
 G_MODULE_EXPORT G_GNUC_NULL_TERMINATED gboolean client_send_args(struct irc_client *c, ...);
-G_MODULE_EXPORT G_GNUC_NULL_TERMINATED gboolean client_send_args_ex(struct irc_client *c, 
+G_MODULE_EXPORT G_GNUC_NULL_TERMINATED gboolean client_send_args_ex(struct irc_client *c,
 											 const char *hm, ...);
-G_MODULE_EXPORT G_GNUC_NULL_TERMINATED gboolean client_send_response(struct irc_client *c, 
+G_MODULE_EXPORT G_GNUC_NULL_TERMINATED gboolean client_send_response(struct irc_client *c,
 											  int response, ...);
 G_MODULE_EXPORT gboolean client_send_line(struct irc_client *c, const struct irc_line *, GError **error);
 G_MODULE_EXPORT gboolean client_set_charset(struct irc_client *c, const char *name);
@@ -95,19 +95,19 @@ G_MODULE_EXPORT struct irc_client *client_ref(struct irc_client *c);
 G_MODULE_EXPORT void client_ref_void(struct irc_client *c);
 G_MODULE_EXPORT void client_unref(struct irc_client *c);
 G_MODULE_EXPORT struct irc_client *irc_client_new(struct irc_transport *transport, const char *default_origin, const char *desc, const struct irc_client_callbacks *callbacks);
-G_MODULE_EXPORT void clients_send_state(GList *clients, 
+G_MODULE_EXPORT void clients_send_state(GList *clients,
 										struct irc_network_state *s);
 
-G_MODULE_EXPORT void client_send_nameslist(struct irc_client *client, 
+G_MODULE_EXPORT void client_send_nameslist(struct irc_client *client,
 										   struct irc_channel_state *ch);
 G_MODULE_EXPORT gboolean client_send_channel_state_diff(
-										struct irc_client *client, 
+										struct irc_client *client,
 										struct irc_channel_state *old_state,
 										struct irc_channel_state *new_state);
 
 G_MODULE_EXPORT gboolean client_send_state_diff(struct irc_client *client, struct irc_network_state *old_state, struct irc_network_state *new_state);
 
-G_MODULE_EXPORT void client_send_channel_state(struct irc_client *c, 
+G_MODULE_EXPORT void client_send_channel_state(struct irc_client *c,
 							   struct irc_channel_state *ch);
 G_MODULE_EXPORT void client_send_topic(struct irc_client *c, struct irc_channel_state *ch, gboolean explicit);
 G_MODULE_EXPORT void client_send_banlist(struct irc_client *client, struct irc_channel_state *channel);

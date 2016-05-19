@@ -59,7 +59,7 @@ struct tcp_server_config {
 /**
  * Network configuration.
  */
-struct network_config 
+struct network_config
 {
 	GKeyFile *keyfile;
 	char *groupname; /* name of the keyfile group in keyfile */
@@ -92,9 +92,9 @@ struct network_config
 	/** Channels that should be joined. */
 	GList *channels;
 
-	enum { 
-		NETWORK_TCP, 
-		NETWORK_PROGRAM, 
+	enum {
+		NETWORK_TCP,
+		NETWORK_PROGRAM,
 		NETWORK_VIRTUAL,
 		NETWORK_IOCHANNEL
 	} type;
@@ -102,11 +102,11 @@ struct network_config
 	union {
 		char *program_location;
 		char *virtual_name;
-		struct { 
+		struct {
 			char *default_bind_address;
 			GList *servers;
 		} tcp;
-	} type_settings; 
+	} type_settings;
 
 	/** Commands to send on connect. */
 	char **autocmd;
@@ -115,8 +115,8 @@ struct network_config
 };
 
 /**
- * Log file configuration. Contains substitution variable for 
- * the path of the log file and for the format used for various events 
+ * Log file configuration. Contains substitution variable for
+ * the path of the log file and for the format used for various events
  * when logging.
  */
 struct log_file_config {
@@ -200,7 +200,7 @@ struct ctrlproxy_config {
 	char *client_charset;
 	gboolean admin_log;
 	char *admin_user;
-	enum { 
+	enum {
 		REPORT_TIME_ALWAYS,
 		REPORT_TIME_NEVER,
 		REPORT_TIME_REPLICATION

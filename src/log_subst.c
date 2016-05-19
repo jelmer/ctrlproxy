@@ -1,4 +1,4 @@
-/* 
+/*
 	ctrlproxy: A modular IRC proxy
 	(c) 2002-2007 Jelmer Vernooij <jelmer@jelmer.uk>
 
@@ -32,84 +32,84 @@ struct log_mapping {
 	char subst;
 	size_t index;
 	/* If index is -1 */
-	char *(*callback) (struct subst_context *subst_ctx, 
+	char *(*callback) (struct subst_context *subst_ctx,
 					   const struct irc_line *line,
 					   gboolean case_sensitive);
 };
 
-static char *get_hours(struct subst_context *subst_ctx, const struct irc_line *line, gboolean case_sensitive) 
-{ 
+static char *get_hours(struct subst_context *subst_ctx, const struct irc_line *line, gboolean case_sensitive)
+{
 	time_t ti = time(NULL);
 	struct tm *t = localtime(&ti);
 	return g_strdup_printf("%02d", t->tm_hour);
 }
 
-static char *get_minutes(struct subst_context *subst_ctx, const struct irc_line *line, gboolean case_sensitive) 
-{ 
+static char *get_minutes(struct subst_context *subst_ctx, const struct irc_line *line, gboolean case_sensitive)
+{
 	time_t ti = time(NULL);
 	struct tm *t = localtime(&ti);
 	return g_strdup_printf("%02d", t->tm_min);
 }
 
-static char *get_seconds(struct subst_context *subst_ctx, const struct irc_line *line, gboolean case_sensitive) 
-{ 
+static char *get_seconds(struct subst_context *subst_ctx, const struct irc_line *line, gboolean case_sensitive)
+{
 	time_t ti = time(NULL);
 	struct tm *t = localtime(&ti);
 	return g_strdup_printf("%02d", t->tm_sec);
 }
 
-static char *get_seconds_since_1970(struct subst_context *subst_ctx, const struct irc_line *line, gboolean case_sensitive) 
+static char *get_seconds_since_1970(struct subst_context *subst_ctx, const struct irc_line *line, gboolean case_sensitive)
 {
 	time_t ti = time(NULL);
 	return g_strdup_printf("%ld", ti);
 }
 
-static char *get_day(struct subst_context *subst_ctx, const struct irc_line *line, gboolean case_sensitive) 
-{ 
+static char *get_day(struct subst_context *subst_ctx, const struct irc_line *line, gboolean case_sensitive)
+{
 	time_t ti = time(NULL);
 	struct tm *t = localtime(&ti);
 	return g_strdup_printf("%02d", t->tm_mday);
 }
 
-static char *get_month(struct subst_context *subst_ctx, const struct irc_line *line, gboolean case_sensitive) 
-{ 
+static char *get_month(struct subst_context *subst_ctx, const struct irc_line *line, gboolean case_sensitive)
+{
 	time_t ti = time(NULL);
 	struct tm *t = localtime(&ti);
 	return g_strdup_printf("%02d", t->tm_mon + 1);
 }
 
-static char *get_year(struct subst_context *subst_ctx, const struct irc_line *line, gboolean case_sensitive) 
-{ 
+static char *get_year(struct subst_context *subst_ctx, const struct irc_line *line, gboolean case_sensitive)
+{
 	time_t ti = time(NULL);
 	struct tm *t = localtime(&ti);
 	return g_strdup_printf("%04d", t->tm_year + 1900);
 }
 
-static char *get_user(struct subst_context *subst_ctx, const struct irc_line *line, gboolean case_sensitive) 
+static char *get_user(struct subst_context *subst_ctx, const struct irc_line *line, gboolean case_sensitive)
 {
 	char *user = NULL;
 
 	if (line->origin != NULL) {
 		user = strchr(line->origin, '!');
 		if (user != NULL)
-			user++; 
+			user++;
 	}
 
-	if (case_sensitive) 
+	if (case_sensitive)
 		return g_ascii_strdown(user, -1);
-	else 
+	else
 		return g_strdup(user);
 }
 
-static char *get_monthname(struct subst_context *subst_ctx, const struct irc_line *line, gboolean case_sensitive) 
-{ 
+static char *get_monthname(struct subst_context *subst_ctx, const struct irc_line *line, gboolean case_sensitive)
+{
 	char stime[512];
 	time_t ti = time(NULL);
 	strftime(stime, sizeof(stime), "%b", localtime(&ti));
 	return g_strdup_printf("%s", stime);
 }
 
-static char *get_nick(struct subst_context *subst_ctx, const struct irc_line *line, gboolean case_sensitive) 
+static char *get_nick(struct subst_context *subst_ctx, const struct irc_line *line, gboolean case_sensitive)
 {
 	if (line->origin != NULL) {
 		char *n = line_get_nick(line);
@@ -124,9 +124,9 @@ static char *get_nick(struct subst_context *subst_ctx, const struct irc_line *li
 	return g_strdup("");
 }
 
-static char *get_network(struct subst_context *subst_ctx, const struct irc_line *line, gboolean case_sensitive) 
+static char *get_network(struct subst_context *subst_ctx, const struct irc_line *line, gboolean case_sensitive)
 {
-	return g_strdup(subst_ctx->network->name); 
+	return g_strdup(subst_ctx->network->name);
 }
 
 static char *get_server(struct subst_context *subst_ctx, const struct irc_line *line, gboolean case_sensitive)
@@ -136,18 +136,18 @@ static char *get_server(struct subst_context *subst_ctx, const struct irc_line *
 	return g_strdup("");
 }
 
-static char *get_percent(struct subst_context *subst_ctx, const struct irc_line *line, gboolean case_sensitive) 
-{ 
-	return g_strdup("%"); 
+static char *get_percent(struct subst_context *subst_ctx, const struct irc_line *line, gboolean case_sensitive)
+{
+	return g_strdup("%");
 }
 
-static char *get_identifier(struct subst_context *subst_ctx, const struct irc_line *line, gboolean case_sensitive) 
-{ 
-	if (case_sensitive) return g_ascii_strdown(subst_ctx->identifier, -1); 
-	else return g_strdup(subst_ctx->identifier); 
+static char *get_identifier(struct subst_context *subst_ctx, const struct irc_line *line, gboolean case_sensitive)
+{
+	if (case_sensitive) return g_ascii_strdown(subst_ctx->identifier, -1);
+	else return g_strdup(subst_ctx->identifier);
 }
 
-static char *get_modechanges(struct subst_context *subst_ctx, const struct irc_line *line, gboolean case_sensitive) 
+static char *get_modechanges(struct subst_context *subst_ctx, const struct irc_line *line, gboolean case_sensitive)
 {
 	char buf[512] = "";
 	int i;
@@ -217,24 +217,24 @@ static struct log_mapping mappings[] = {
  * @return Expanded string or an empty string if there was no expansion possible
  */
 static char *find_mapping(struct subst_context *subst_ctx,
-						  const struct irc_line *l, 
+						  const struct irc_line *l,
 						  char c, gboolean case_sensitive)
 {
 	int i;
 	for (i = 0; mappings[i].subst; i++) {
-		if (mappings[i].command && strcmp(mappings[i].command, l->args[0])) 
+		if (mappings[i].command && strcmp(mappings[i].command, l->args[0]))
 			continue;
 
-		if (mappings[i].subst != c) 
+		if (mappings[i].subst != c)
 			continue;
 
-		if (mappings[i].index == -1) 
+		if (mappings[i].index == -1)
 			return mappings[i].callback(subst_ctx, l, case_sensitive);
 
 		if (mappings[i].index < l->argc) {
-			if (case_sensitive) 
+			if (case_sensitive)
 				return g_ascii_strdown(l->args[mappings[i].index], -1);
-			else 
+			else
 				return g_strdup(l->args[mappings[i].index]);
 		}
 	}
@@ -244,7 +244,7 @@ static char *find_mapping(struct subst_context *subst_ctx,
 void convertslashes(char *a)
 {
 	while (*a) {
-		if (*a == '/') 
+		if (*a == '/')
 			*a = '_';
 		a++;
 	}
@@ -260,9 +260,9 @@ void convertslashes(char *a)
  * @param case_sensitive Whether or not to be case sensitive
  * @param noslash Whether or not to avoid adding slashes from expansions
  */
-char *custom_subst(struct irc_network *network, 
-						 const char *fmt, const struct irc_line *l, 
-						 const char *_identifier, 
+char *custom_subst(struct irc_network *network,
+						 const char *fmt, const struct irc_line *l,
+						 const char *_identifier,
 						 gboolean case_sensitive, gboolean noslash)
 {
 	char **subst;
@@ -279,9 +279,9 @@ char *custom_subst(struct irc_network *network,
 	subst = g_new0(char *, len);
 	for (i = 0; i < len; i++) {
 		if (fmt[i] == '%') {
-			subst[i] = find_mapping(&subst_ctx, l, fmt[i+1], 
+			subst[i] = find_mapping(&subst_ctx, l, fmt[i+1],
 												case_sensitive);	
-			if (subst[i] == NULL) 
+			if (subst[i] == NULL)
 				subst[i] = g_strdup("");
 			if (noslash) convertslashes(subst[i]);
 			exp_len += strlen(subst[i]);
@@ -305,7 +305,7 @@ char *custom_subst(struct irc_network *network,
 	new[curpos] = '\0';
 
 	for (i = 0; i < len; i++)
-		g_free(subst[i]); 
+		g_free(subst[i]);
 	g_free(subst);
 	return new;
 }

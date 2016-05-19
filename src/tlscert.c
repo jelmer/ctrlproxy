@@ -1,19 +1,19 @@
-/* 
+/*
    auto-generate self signed TLS certificates. Imported from Samba.
 
    Copyright (C) Andrew Tridgell 2005
    Copyright (C) Jelmer Vernooij 2006-2007
-   
+
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
    the Free Software Foundation; either version 3 of the License, or
    (at your option) any later version.
-   
+
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.
-   
+
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
@@ -34,7 +34,7 @@
 #define LIFETIME          700*24*60*60
 #define DH_BITS 		  1024
 
-/* 
+/*
    auto-generate a set of self signed certificates
 */
 void ssl_cert_generate(const char *keyfile, const char *certfile,
@@ -50,8 +50,8 @@ void ssl_cert_generate(const char *keyfile, const char *certfile,
 	time_t activation = time(NULL), expiry = activation + LIFETIME;
 	int ret;
 
-	if (g_file_test(keyfile, G_FILE_TEST_EXISTS) || 
-		g_file_test(certfile, G_FILE_TEST_EXISTS) || 
+	if (g_file_test(keyfile, G_FILE_TEST_EXISTS) ||
+		g_file_test(certfile, G_FILE_TEST_EXISTS) ||
 		g_file_test(cafile, G_FILE_TEST_EXISTS)) {
 		log_global(LOG_WARNING, "TLS autogeneration skipped - some TLS files already exist");
 		return;
@@ -67,7 +67,7 @@ void ssl_cert_generate(const char *keyfile, const char *certfile,
 
 	TLSCHECK(gnutls_global_init());
 
-	log_global(LOG_INFO, 
+	log_global(LOG_INFO,
 			   "Attempting to autogenerate TLS self-signed keys");
 	
 	log_global(LOG_TRACE, "Generating private key");
@@ -80,10 +80,10 @@ void ssl_cert_generate(const char *keyfile, const char *certfile,
 
 	log_global(LOG_TRACE, "Generating CA certificate");
 	TLSCHECK(gnutls_x509_crt_init(&cacrt));
-	TLSCHECK(gnutls_x509_crt_set_dn_by_oid(cacrt, 
+	TLSCHECK(gnutls_x509_crt_set_dn_by_oid(cacrt,
 				      GNUTLS_OID_X520_ORGANIZATION_NAME, 0,
 				      ORGANISATION_NAME, strlen(ORGANISATION_NAME)));
-	TLSCHECK(gnutls_x509_crt_set_dn_by_oid(cacrt, 
+	TLSCHECK(gnutls_x509_crt_set_dn_by_oid(cacrt,
 				      GNUTLS_OID_X520_ORGANIZATIONAL_UNIT_NAME, 0,
 				      UNIT_NAME, strlen(UNIT_NAME)));
 	TLSCHECK(gnutls_x509_crt_set_dn_by_oid(cacrt,
@@ -101,10 +101,10 @@ void ssl_cert_generate(const char *keyfile, const char *certfile,
 
 	log_global(LOG_TRACE, "Generating TLS certificaten");
 	TLSCHECK(gnutls_x509_crt_init(&crt));
-	TLSCHECK(gnutls_x509_crt_set_dn_by_oid(crt, 
+	TLSCHECK(gnutls_x509_crt_set_dn_by_oid(crt,
 				      GNUTLS_OID_X520_ORGANIZATION_NAME, 0,
 				      ORGANISATION_NAME, strlen(ORGANISATION_NAME)));
-	TLSCHECK(gnutls_x509_crt_set_dn_by_oid(crt, 
+	TLSCHECK(gnutls_x509_crt_set_dn_by_oid(crt,
 				      GNUTLS_OID_X520_ORGANIZATIONAL_UNIT_NAME, 0,
 				      UNIT_NAME, strlen(UNIT_NAME)));
 	TLSCHECK(gnutls_x509_crt_set_dn_by_oid(crt,
@@ -155,7 +155,7 @@ gpointer ssl_create_server_credentials(const char *config_dir,
 		char *certfile = g_build_filename(config_dir, "cert.pem", NULL);
 		g_key_file_set_string(kf, group, "keyfile", keyfile);
 		g_key_file_set_string(kf, group, "certfile", certfile);
-		if (!g_file_test(keyfile, G_FILE_TEST_EXISTS) && 
+		if (!g_file_test(keyfile, G_FILE_TEST_EXISTS) &&
 			!g_file_test(certfile, G_FILE_TEST_EXISTS)) {
 			char *cafile = g_build_filename(config_dir, "ca.pem", NULL);
 			ssl_cert_generate(keyfile, certfile, cafile);

@@ -1,6 +1,6 @@
 /*
 	ctrlproxy: A modular IRC proxy
-	admin: module for remote administration. 
+	admin: module for remote administration.
 
 	(c) 2003-2007 Jelmer Vernooij <jelmer@jelmer.uk>
 
@@ -64,9 +64,9 @@ static void privmsg_admin_out(admin_handle h, const char *data)
 	char *hostmask;
 
 	hostmask = admin_hostmask(n);
-	if (n->external_state != NULL) 
+	if (n->external_state != NULL)
 		nick = n->external_state->me.nick;
-	if (c != NULL) 
+	if (c != NULL)
 		client_send_args_ex(c, hostmask, "NOTICE", nick, data, NULL);
 	else
 		virtual_network_recv_args(n, hostmask, "NOTICE", nick, data, NULL);
@@ -86,7 +86,7 @@ static void network_admin_out(admin_handle h, const char *data)
 	char *hostmask;
 
 	hostmask = admin_hostmask(n);
-	virtual_network_recv_args(n, hostmask, "PRIVMSG", ADMIN_CHANNEL, 
+	virtual_network_recv_args(n, hostmask, "PRIVMSG", ADMIN_CHANNEL,
 							  data, NULL);
 
 	g_free(hostmask);
@@ -295,9 +295,9 @@ static void cmd_disconnect_network (admin_handle h, const char * const *args, vo
 
 	if (n->connection.state == NETWORK_CONNECTION_STATE_NOT_CONNECTED) {
 		admin_out(h, "Already disconnected from `%s'", n->name);
-	} else if (nc->type == NETWORK_VIRTUAL && 
+	} else if (nc->type == NETWORK_VIRTUAL &&
 		n->connection.data.virtual.ops->not_disconnectable) {
-		admin_out(h, "Built-in network `%s' can't be disconnected", 
+		admin_out(h, "Built-in network `%s' can't be disconnected",
 				  n->name);
 	} else {
 		admin_out(h, "Disconnecting from `%s'", n->name);
@@ -305,7 +305,7 @@ static void cmd_disconnect_network (admin_handle h, const char * const *args, vo
 	}
 }
 
-static void cmd_next_server (admin_handle h, const char * const *args, void *userdata) 
+static void cmd_next_server (admin_handle h, const char * const *args, void *userdata)
 {
 	struct irc_network *n;
 	const char *name;
@@ -333,14 +333,14 @@ static void cmd_next_server (admin_handle h, const char * const *args, void *use
 }
 
 static void cmd_save_config (admin_handle h, const char * const *args, void *userdata)
-{ 
+{
 	const char *adm_dir;
 	struct global *global = admin_get_global(h);
 	global_update_config(global);
 	if (global->restricted)
-		adm_dir = global->config->config_dir; 
+		adm_dir = global->config->config_dir;
 	else
-		adm_dir = args[1]?args[1]:global->config->config_dir; 
+		adm_dir = args[1]?args[1]:global->config->config_dir;
 	save_configuration(global->config, adm_dir);
 	nickserv_save(global, adm_dir);
 	admin_out(h, "Configuration saved in %s", adm_dir);
@@ -363,7 +363,7 @@ static void add_network_helper(admin_handle h, const char *name)
 	admin_out(h, "Network `%s' added. Use ADDSERVER to add a server to this network.", name);
 }
 
-static void rename_network_helper(admin_handle h, const char *oldname, 
+static void rename_network_helper(admin_handle h, const char *oldname,
 								  const char *newname)
 {
 	struct irc_network *n;
@@ -415,7 +415,7 @@ static void info_network_helper(admin_handle h, const char *name)
 		admin_out(h, "Servers:");
 		for (gl = nc->type_settings.tcp.servers; gl; gl = gl->next) {
 			struct tcp_server_config *server = gl->data;
-			admin_out(h, "  %s:%s%s", server->host, server->port, 
+			admin_out(h, "  %s:%s%s", server->host, server->port,
 					  (server == n->connection.data.tcp.current_server?" (Current)":""));
 		}
 	} else if (nc->type == NETWORK_VIRTUAL) {
@@ -452,7 +452,7 @@ static void list_networks_helper(admin_handle h)
 			break;
 		case NETWORK_CONNECTION_STATE_NOT_CONNECTED:
 			if (n->connection.data.tcp.last_disconnect_reason)
-				admin_out(h, "%s: Not connected: %s", n->name, 
+				admin_out(h, "%s: Not connected: %s", n->name,
 						  n->connection.data.tcp.last_disconnect_reason);
 			else
 				admin_out(h, "%s: Not connected", n->name);
@@ -491,7 +491,7 @@ static void cmd_network(admin_handle h, const char * const *args, void *userdata
 			return;
 		}
 		rename_network_helper(h, args[2], args[3]);
-	} else if (!strcasecmp(args[1], "del") || 
+	} else if (!strcasecmp(args[1], "del") ||
 			   !strcasecmp(args[1], "delete") ||
 			   !strcasecmp(args[1], "remove")) {
 		if (args[2] == NULL) {
@@ -611,13 +611,13 @@ static void cmd_backlog(admin_handle h, const char * const *args, void *userdata
 		g_hash_table_replace(markers, n, linestack_get_marker(n->linestack));
 
 		return;
-	} 
+	}
 
 	/* Backlog for specific nick/channel */
 	admin_out(h, "Sending backlog for channel %s", args[1]);
 
-	linestack_send_object(n->linestack, args[1], lm, NULL, 
-						  admin_get_client(h), TRUE, 
+	linestack_send_object(n->linestack, args[1], lm, NULL,
+						  admin_get_client(h), TRUE,
 						  n->global->config->report_time != REPORT_TIME_NEVER,
 						  n->global->config->report_time_offset);
 
@@ -787,7 +787,7 @@ static gboolean admin_net_init(struct irc_network *n)
 	hostmask = admin_hostmask(n);
 	
 	virtual_network_recv_args(n, n->external_state->me.hostmask, "JOIN", ADMIN_CHANNEL, NULL);
-	virtual_network_recv_response(n, RPL_TOPIC, ADMIN_CHANNEL, 
+	virtual_network_recv_response(n, RPL_TOPIC, ADMIN_CHANNEL,
 		"CtrlProxy administration channel | Type `help' for more information",
 							  NULL);
 	nicks = g_strdup_printf("@ctrlproxy %s", n->external_state->me.nick);
@@ -812,7 +812,7 @@ static gboolean admin_to_server (struct irc_network *n, struct irc_client *c, co
 			return TRUE;
 		}
 
-		if (g_strcasecmp(l->args[1], ADMIN_CHANNEL) && 
+		if (g_strcasecmp(l->args[1], ADMIN_CHANNEL) &&
 			g_strcasecmp(l->args[1], "ctrlproxy")) {
 			virtual_network_recv_response(n, ERR_NOSUCHNICK, l->args[1], "No such nick/channel", NULL);
 			return TRUE;
@@ -877,9 +877,9 @@ static gboolean admin_to_server (struct irc_network *n, struct irc_client *c, co
 		/* FIXME: Do something here ? */
 		return TRUE;
 	} else if (!g_strcasecmp(l->args[0], "WHO")) {
-		if (!strcmp(l->args[1], ADMIN_CHANNEL) || 
+		if (!strcmp(l->args[1], ADMIN_CHANNEL) ||
 			!strcmp(l->args[1], "ctrlproxy")) {
-			virtual_network_recv_response(n, RPL_WHOREPLY, ADMIN_CHANNEL, 
+			virtual_network_recv_response(n, RPL_WHOREPLY, ADMIN_CHANNEL,
 									  "ctrlproxy",
 									  get_my_hostname(),
 									  get_my_hostname(),
@@ -891,7 +891,7 @@ static gboolean admin_to_server (struct irc_network *n, struct irc_client *c, co
 		if (!strcmp(l->args[1], ADMIN_CHANNEL) ||
 			!strcmp(l->args[1], n->external_state->me.nick)) {
 			char *fullname = g_strdup_printf("0 %s", n->external_state->me.fullname);
-			virtual_network_recv_response(n, RPL_WHOREPLY, ADMIN_CHANNEL, 
+			virtual_network_recv_response(n, RPL_WHOREPLY, ADMIN_CHANNEL,
 									  n->external_state->me.username,
 									  n->external_state->me.hostname,
 									  get_my_hostname(),
@@ -920,7 +920,7 @@ static gboolean admin_to_server (struct irc_network *n, struct irc_client *c, co
 		return TRUE;
 	} else if (!g_strcasecmp(l->args[0], "WHOIS")) {
 		/* FIXME: Send something sensible */
-		virtual_network_recv_response(n, RPL_ENDOFWHOIS, l->args[1], 
+		virtual_network_recv_response(n, RPL_ENDOFWHOIS, l->args[1],
 									  "End of /WHOIS list.", NULL);
 		return TRUE;
 	} else if (!g_strcasecmp(l->args[0], "AWAY")) {
@@ -932,16 +932,16 @@ static gboolean admin_to_server (struct irc_network *n, struct irc_client *c, co
 		return TRUE;
 	} else {
 		virtual_network_recv_response(n, ERR_UNKNOWNCOMMAND, l->args[0], "Unknown command", NULL);
-		log_global(LOG_TRACE, "Unhandled command `%s' to admin network", 
+		log_global(LOG_TRACE, "Unhandled command `%s' to admin network",
 				   l->args[0]);
 		return TRUE;
 	}
 }
 
 struct virtual_network_ops admin_network = {
-	.name = "admin", 
-	.init = admin_net_init, 
-	.to_server = admin_to_server, 
+	.name = "admin",
+	.init = admin_net_init,
+	.to_server = admin_to_server,
 	.not_disconnectable = TRUE,
 };
 
@@ -954,8 +954,8 @@ void admin_log(enum log_level level, const struct irc_network *n, const struct i
 	GList *gl;
 	static gboolean entered = FALSE;
 
-	if (!my_global || !my_global->config || 
-		!my_global->config->admin_log) 
+	if (!my_global || !my_global->config ||
+		!my_global->config->admin_log)
 		return;
 
 	if (level < LOG_INFO)
@@ -966,10 +966,10 @@ void admin_log(enum log_level level, const struct irc_network *n, const struct i
 
 	entered = TRUE;
 
-	tmp = g_strdup_printf("%s%s%s%s%s%s", 
-						  data, 
+	tmp = g_strdup_printf("%s%s%s%s%s%s",
+						  data,
 						  n?" (":"",
-						  n?n->name:"", 
+						  n?n->name:"",
 						  c?"/":"",
 						  c?c->description:"",
 						  n?")":"");
@@ -981,7 +981,7 @@ void admin_log(enum log_level level, const struct irc_network *n, const struct i
 			continue;
 
 		hostmask = admin_hostmask(network);
-		l = irc_parse_line_args(hostmask, "PRIVMSG", ADMIN_CHANNEL, tmp, NULL); 
+		l = irc_parse_line_args(hostmask, "PRIVMSG", ADMIN_CHANNEL, tmp, NULL);
 		g_free(hostmask);
 		
 		virtual_network_recv_line(network, l);
@@ -1088,8 +1088,8 @@ static void cmd_list_listener(admin_handle h, const char * const *args, void *us
 	for (gl = admin_get_global(h)->listeners; gl; gl = gl->next) {
 		struct irc_listener *l = gl->data;
 
-		admin_out(h, "%s:%s%s%s%s", l->config->address?l->config->address:"", l->config->port, 
-				  l->network?" (":"", l->network?l->network->name:"", 
+		admin_out(h, "%s:%s%s%s%s", l->config->address?l->config->address:"", l->config->port,
+				  l->network?" (":"", l->network?l->network->name:"",
 				  l->network?")":"");
 	}
 }
@@ -1172,11 +1172,11 @@ static gboolean report_time_set(admin_handle h, const char *value)
 {
 	struct global *g = admin_get_global(h);
 	
-	if (!g_strcasecmp(value, "never") || !g_strcasecmp(value, "false")) 
+	if (!g_strcasecmp(value, "never") || !g_strcasecmp(value, "false"))
 		g->config->report_time = REPORT_TIME_NEVER;
 	else if (!g_strcasecmp(value, "always"))
 		g->config->report_time = REPORT_TIME_ALWAYS;
-	else if  (!g_strcasecmp(value, "replication") || 
+	else if  (!g_strcasecmp(value, "replication") ||
 			  !g_strcasecmp(value, "true"))
 		g->config->report_time = REPORT_TIME_REPLICATION;
 	else {
@@ -1704,7 +1704,7 @@ const static struct admin_command builtin_commands[] = {
 	{ NULL }
 };
 
-void init_admin(void) 
+void init_admin(void)
 {
 	int i;
 	for(i = 0; builtin_commands[i].name; i++) {
@@ -1732,7 +1732,7 @@ static void iochannel_admin_out(admin_handle h, const char *data)
 		g_error_free(error);
 }
 
-static gboolean handle_client_data(GIOChannel *channel, 
+static gboolean handle_client_data(GIOChannel *channel,
 								  GIOCondition condition, void *_global)
 {
 	char *raw;
@@ -1752,7 +1752,7 @@ static gboolean handle_client_data(GIOChannel *channel,
 			raw[eol] = '\0';
 			process_cmd(&ah, raw);
 			g_free(raw);
-		} 
+		}
 
 		if (error != NULL)
 			g_error_free(error);
@@ -1770,7 +1770,7 @@ static gboolean handle_client_data(GIOChannel *channel,
 	return TRUE;
 }
 
-static gboolean handle_new_client(GIOChannel *c_server, 
+static gboolean handle_new_client(GIOChannel *c_server,
 								  GIOCondition condition, void *_global)
 {
 	GIOChannel *c;

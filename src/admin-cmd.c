@@ -1,6 +1,6 @@
 /*
 	ctrlproxy: A modular IRC proxy
-	admin: module for remote administration. 
+	admin: module for remote administration.
 
 	(c) 2003-2007 Jelmer Vernooij <jelmer@jelmer.uk>
 
@@ -77,7 +77,7 @@ gboolean admin_socket_prompt(const char *config_dir, gboolean python)
 		/* A bit ugly, but it works.. */
 		g_usleep(G_USEC_PER_SEC / 10);
 
-		while (g_io_channel_read_line(ch, &raw, NULL, NULL, &error) == G_IO_STATUS_NORMAL) 
+		while (g_io_channel_read_line(ch, &raw, NULL, NULL, &error) == G_IO_STATUS_NORMAL)
 		{
 			printf("%s", raw);
 			g_free(raw);
@@ -110,12 +110,12 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
-	if (config_dir == NULL) 
+	if (config_dir == NULL)
 		config_dir = g_build_filename(g_get_home_dir(), ".ctrlproxy", NULL);
 
 	g_option_context_free(pc);
 
-	if (admin_socket_prompt(config_dir, python)) 
+	if (admin_socket_prompt(config_dir, python))
 		return 0;
 
 	return 1;

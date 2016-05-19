@@ -257,7 +257,7 @@ static PyObject *py_channel_mode_dict_get(PyChannelModeDictObject *self, PyObjec
         PyErr_SetNone(PyExc_KeyError);
         return NULL;
     }
-    
+
     if (self->parent->state->chanmode_option[(uint8_t)mode] == NULL) {
         PyErr_SetNone(PyExc_KeyError);
         return NULL;
@@ -285,7 +285,7 @@ static int py_channel_mode_dict_set(PyChannelModeDictObject *self, PyObject *py_
         PyErr_SetNone(PyExc_TypeError);
         return -1;
     }
-    
+
     if (self->parent->state->chanmode_option[(uint8_t)mode] != NULL) {
         g_free(self->parent->state->chanmode_option[(uint8_t)mode]);
     }
@@ -502,19 +502,19 @@ static PyObject *py_channel_state_get_nicks(PyChannelStateObject *self, void *cl
 }
 
 static PyGetSetDef py_channel_state_getset[] = {
-    { "name", (getter)py_channel_state_get_name, NULL, 
+    { "name", (getter)py_channel_state_get_name, NULL,
         "Name of the channel." },
-    { "topic", (getter)py_channel_state_get_topic, 
+    { "topic", (getter)py_channel_state_get_topic,
                (setter)py_channel_state_set_topic,
         "Topic of the channel." },
-    { "topic_set_time", (getter)py_channel_state_get_topic_time, 
+    { "topic_set_time", (getter)py_channel_state_get_topic_time,
         (setter)py_channel_state_set_topic_time,
         "Time the topic was set." },
-    { "creation_time", 
-        (getter)py_channel_state_get_time, 
+    { "creation_time",
+        (getter)py_channel_state_get_time,
         (setter)py_channel_state_set_time,
         "Timestamp when the channel was created" },
-    { "modes", (getter)py_channel_state_get_modes, 
+    { "modes", (getter)py_channel_state_get_modes,
         (setter)py_channel_state_set_modes,
         "Modes" },
     { "mode_option", (getter)py_channel_state_get_mode_option, NULL,
@@ -604,11 +604,11 @@ static PyObject *py_network_nick_new(PyTypeObject *type, PyObject *args, PyObjec
     PyNetworkNickObject *ret;
     struct network_nick *nn;
 
-    int len = ((args == NULL)?0:PyTuple_Size(args)) + 
+    int len = ((args == NULL)?0:PyTuple_Size(args)) +
               ((kwargs == NULL)?0:PyDict_Size(kwargs));
 
     if (len == 1) {
-        if (!PyArg_ParseTupleAndKeywords(args, kwargs, "s", kwnames1, &hostmask)) 
+        if (!PyArg_ParseTupleAndKeywords(args, kwargs, "s", kwnames1, &hostmask))
             return NULL;
         nn = g_new0(struct network_nick, 1);
 
@@ -737,7 +737,7 @@ static PyObject *py_network_nick_channel(PyNetworkNickObject *self, struct chann
 
 static PyObject *py_network_nick_channels(PyNetworkNickObject *self, void *closure)
 {
-    return py_g_list_iter(self->nick->channel_nicks, (PyObject *)self, 
+    return py_g_list_iter(self->nick->channel_nicks, (PyObject *)self,
         (PyObject *(*)(PyObject *, void *))py_network_nick_channel);
 }
 
@@ -776,7 +776,7 @@ static PyGetSetDef py_network_nick_getsetters[] = {
     { "username", (getter)py_network_nick_get_username, (setter)py_network_nick_set_username, "Username" },
     { "hostname", (getter)py_network_nick_get_hostname, (setter)py_network_nick_set_hostname, "Hostname" },
     { "channels", (getter)py_network_nick_channels, NULL, "Channels" },
-    { "modes", (getter)py_network_nick_get_modes, 
+    { "modes", (getter)py_network_nick_get_modes,
         (setter)py_network_nick_set_modes, "Modes" },
     { NULL }
 };
@@ -1006,7 +1006,7 @@ static PyMappingMethods py_network_channel_dict_mapping = {
 
 static PyObject *py_network_channel_dict_iter(PyNetworkChannelDictObject *self)
 {
-    return py_g_list_iter(self->parent->state->channels, (PyObject *)self, 
+    return py_g_list_iter(self->parent->state->channels, (PyObject *)self,
                           (PyObject *(*)(PyObject *, void *))py_channel_state_from_ptr);
 }
 
@@ -1026,7 +1026,7 @@ static PyObject *py_network_channel_dict_keys(PyNetworkChannelDictObject *self)
 }
 
 static PyMethodDef py_network_channel_dict_methods[] = {
-    { "keys", (PyCFunction)py_network_channel_dict_keys, 
+    { "keys", (PyCFunction)py_network_channel_dict_keys,
         METH_NOARGS, "Keys" },
     { NULL }
 };
@@ -1044,7 +1044,7 @@ PyTypeObject PyNetworkChannelDictType = {
 static PyObject *py_network_state_channels(PyNetworkStateObject *self, void *closure)
 {
     PyNetworkChannelDictObject *ret = PyObject_New(PyNetworkChannelDictObject, &PyNetworkChannelDictType);
-    
+
     if (ret == NULL) {
         PyErr_NoMemory();
         return NULL;
