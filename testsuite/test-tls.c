@@ -47,9 +47,7 @@ Suite *tls_suite()
 	TCase *tc_core = tcase_create("core");
 	suite_add_tcase(s, tc_core);
 #ifdef HAVE_GNUTLS
-#if 0
 	tcase_add_test(tc_core, test_tlscert);
-#endif
 #endif
 	return s;
 }
