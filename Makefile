@@ -186,10 +186,6 @@ lcov:
 	lcov --base-directory `pwd` --directory . --capture --output-file ctrlproxy.info
 	genhtml -o coverage ctrlproxy.info
 
-%.$(SHLIBEXT):
-	@echo Linking $@
-	@$(CC) -shared $(LDFLAGS) -o $@ $^
-
 cscope.out::
 	cscope -b -R
 
