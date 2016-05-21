@@ -47,7 +47,7 @@ $(LIBIRC_STATIC): $(libirc_objs)
 
 $(LIBIRC_SHARED): $(libirc_objs)
 	@echo Linking $@
-	@$(LD) -shared $(LDFLAGS) -Wl,-soname,$(LIBIRC_SONAME) -o $@ $^
+	@$(LD) $(LDFLAGS) -shared -Wl,-soname,$(LIBIRC_SONAME) -o $@ $^ $(LIBS)
 
 clean::
 	@rm -f $(libircdir)/*.o
@@ -55,13 +55,13 @@ clean::
 
 $(pyirc_objs): CFLAGS+=$(PYTHON_CFLAGS) -fPIC
 $(libircdir)/python/irc.$(SHLIBEXT): $(pyirc_objs) $(LIBIRC)
-	@echo Linking $@: $(PYTHON_LDFLAGS) $(LDFLAGS) $(LIBS)
-	@$(CC) -shared $(LDFLAGS) $(PYTHON_LDFLAGS) $(LIBS) -o $@ $^
+	@echo Linking $@: $(LDFLAGS) $(LIBS) $(PYTHON_LIBS) 
+	@$(CC) $(LDFLAGS) -shared -o $@ $^ $(PYTHON_LIBS) $(LIBS)
 
 $(libircdir)/tools/linestack-cmd$(EXEEXT): $(libircdir)/tools/linestack-cmd.o \
 	                                       $(LIBIRC)
 	@echo Linking $@: $(LD) $(LDFLAGS) -rdynamic -o $@ $^ $(LIBS)
-	@$(LD) $(LDFLAGS) -rdynamic -o $@ $^ $(LIBS)
+	@$(LD)  $(LDFLAGS) -rdynamic -o $@ $^ $(LIBS)
 
 clean::
 	@rm -f linestack-cmd$(EXEEXT)

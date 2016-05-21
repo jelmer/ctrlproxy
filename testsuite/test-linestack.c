@@ -65,7 +65,7 @@ static gboolean str_equal(const char *a, const char *b)
 {
 	null_equal(a, b);
 
-	return g_str_equal(a, b);
+	return !strcmp(a, b);
 }
 
 static gboolean channel_nick_equal(const struct channel_nick *nick1, const struct channel_nick *nick2)

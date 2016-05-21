@@ -80,7 +80,7 @@ dep_files = $(patsubst %.o, %.d, $(objs))
 
 ctrlproxy$(EXEEXT): src/main.o $(objs) $(LIBIRC)
 	@echo Linking $@
-	@$(LD) $(LDFLAGS) $(DYNAMIC) -o $@ $^ $(LIBS)
+	@$(LD)  $(LDFLAGS)  $(DYNAMIC) -o $@ $^ $(LIBS)
 
 src/settings.o: CFLAGS+=-DSYSCONFDIR=\"${sysconfdir}\"
 
@@ -260,7 +260,7 @@ check_objs = testsuite/test-cmp.o testsuite/test-user.o \
 
 testsuite/check: $(check_objs) $(objs) $(LIBIRC)
 	@echo Linking $@
-	@$(CC) $(LIBS) -o $@ $^ $(CHECK_LIBS)
+	@$(CC) $(LDFLAGS) -o $@ $^ $(CHECK_LIBS) $(LIBS)
 
 test: check
 
