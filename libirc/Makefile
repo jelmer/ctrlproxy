@@ -55,7 +55,8 @@ clean::
 
 $(pyirc_objs): CFLAGS+=$(PYTHON_CFLAGS) -fPIC
 $(libircdir)/python/irc.$(SHLIBEXT): $(pyirc_objs) $(LIBIRC)
-$(libircdir)/python/irc.$(SHLIBEXT): LDFLAGS+=$(PYTHON_LDFLAGS) $(LIBS)
+	@echo Linking $@
+	@$(CC) -shared $(LDFLAGS) $(PYTHON_LDFLAGS) $(LIBS) -o $@ $^
 
 $(libircdir)/tools/linestack-cmd$(EXEEXT): $(libircdir)/tools/linestack-cmd.o \
 	                                       $(LIBIRC)

@@ -288,7 +288,7 @@ example/libfoo.$(SHLIBEXT): example/foo.o
 example/foo.o: CFLAGS+=-I$(libircdir)
 
 example/libirc-simple: example/irc_simple.o $(LIBIRC)
-	@Linking $@
+	@echo Linking $@
 	@$(CC) -o $@ $^
 
 example/irc_simple.o: CFLAGS+=-I$(libircdir)
