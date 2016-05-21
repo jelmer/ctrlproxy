@@ -68,7 +68,8 @@ clean::
 python:: $(libircdir)/python/irc.$(SHLIBEXT)
 
 check-python:: $(libircdir)/python/irc.$(SHLIBEXT)
-	PYTHONPATH=$(libircdir)/python $(PYTHON) -m unittest tests.test_irc
+	PYTHONPATH=$(abspath $(libircdir)/python) $(PYTHON) $(abspath $(libircdir)/python/tests/test_irc.py)
+	PYTHONPATH=$(abspath $(libircdir)/python) $(PYTHON) -m unittest tests.test_irc
 
 uninstall-header::
 	-rm -f $(patsubst %,$(DESTDIR)$(destincludedir)/%,$(notdir $(libirc_install_headers)))
