@@ -53,11 +53,16 @@ struct irc_listener {
 	struct irc_listener_ops *ops;
 };
 
+enum client_type {
+	CLIENT_TYPE_UNKNOWN = 0,
+	CLIENT_TYPE_REGULAR = 1,
+	CLIENT_TYPE_SOCKS = 2,
+	CLIENT_TYPE_QUASSEL = 3,
+};
 
 struct socks_method;
 
 enum socks_state {
-	SOCKS_UNUSED = -1,
 	SOCKS_UNKNOWN = 0,
 	SOCKS_STATE_NEW = 1,
 	SOCKS_STATE_AUTH,
@@ -73,9 +78,12 @@ struct pending_client {
 
 	/** Username the client has sent. */
 	char *user;
-	
+
 	/** Password the client has sent. */
 	char *password;
+
+	/** The type of client. */
+	enum client_type type;
 
 	gint watch_id;
 	struct sockaddr *clientname;

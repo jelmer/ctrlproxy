@@ -173,6 +173,7 @@ static gboolean handle_client_detect(GIOChannel *ioc, struct pending_client *pc)
 	}
 
 	if (header[0] == SOCKS_VERSION) {
+		listener_log(LOG_TRACE, pc->listener, "Detected SOCKS.");
 		pc->socks.state = SOCKS_STATE_NEW;
 		return TRUE;
 	} else {
@@ -183,7 +184,7 @@ static gboolean handle_client_detect(GIOChannel *ioc, struct pending_client *pc)
 		gboolean ret;
 		gsize in_len;
 
-		pc->socks.state = SOCKS_UNUSED;
+		pc->type = CLIENT_TYPE_SOCKS;
 
 		g_assert(ioc != NULL);
 
@@ -233,14 +234,12 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition condition, gpo
 	g_assert(c != NULL);
 
 	if (condition & G_IO_IN) {
-		if (pc->socks.state == SOCKS_UNKNOWN) {
+		if (pc->type == CLIENT_TYPE_UNKNOWN) {
 			if (!handle_client_detect(c, pc)) {
 				kill_pending_client(pc);
 				return FALSE;
 			}
-		}
-
-		if (pc->socks.state == SOCKS_UNUSED) {
+		} else if (pc->type == CLIENT_TYPE_REGULAR) {
 			GIOStatus status;
 			GError *error = NULL;
 			struct irc_line *l;
@@ -267,11 +266,15 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition condition, gpo
 					g_error_free(error);
 				return FALSE;
 			}
-		} else {
+		} else if (pc->type == CLIENT_TYPE_SOCKS) {
 			gboolean ret = handle_client_socks_data(c, pc);
 			if (!ret)
 				kill_pending_client(pc);
 			return ret;
+		} else if (pc->type == CLIENT_TYPE_QUASSEL) {
+			/* TODO: Quassel */
+		} else {
+			g_assert(0);
 		}
 	}
 
