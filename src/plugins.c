@@ -54,7 +54,7 @@ struct plugin *load_plugin(const char *modulesdir, const char *name)
 
 		if (g_file_test(name, G_FILE_TEST_EXISTS))path_name = g_strdup(name);
 		else path_name = g_module_build_path(modulesdir, name);
-	
+
 		m = g_module_open(path_name, 0);
 
 		if (!m) {

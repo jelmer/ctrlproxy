@@ -38,13 +38,18 @@ const char *nickserv_find_nick(struct irc_network *n, const char *nick)
 	for (gl = n->global->nickserv_nicks; gl; gl = gl->next) {
 		struct keyfile_entry *e = gl->data;
 
-		if (g_strcasecmp(e->nick, nick))
+		if (g_strcasecmp(e->nick, nick)) {
 			continue;
+		}
 
-		if (!e->network) return e->pass;
-		if (!g_strcasecmp(e->network, n->name)) return e->pass;
+		if (e->network == NULL) {
+			return e->pass;
+		}
+		if (!g_strcasecmp(e->network, n->name)) {
+			return e->pass;
+		}
 	}
-	
+
 	return NULL;
 }
 
@@ -60,11 +65,12 @@ void nickserv_identify_me(struct irc_network *network, char *nick)
 	/* Don't try to identify if we're already identified */
 	/* FIXME: Apparently, +e indicates being registered on Freenode,
 	 * +R is only used on OFTC */
-	if (network->external_state->me.modes['R'])
+	if (network->external_state->me.modes['R']) {
 		return;
-	
+	}
+
 	pass = nickserv_find_nick(network, nick);
-	
+
 	if (pass) {
 		const char *nickserv_n = nickserv_nick(network);
 		char *raw;
@@ -82,15 +88,16 @@ static void cache_nickserv_pass(struct irc_network *n, const char *newpass)
 	struct keyfile_entry *e = NULL;
 	GList *gl;
 
-	if (!n->global->config->learn_nickserv)
+	if (!n->global->config->learn_nickserv) {
 		return;
+	}
 
 	for (gl = n->global->nickserv_nicks; gl; gl = gl->next) {
 		e = gl->data;
 
 		if (e->network && !g_strcasecmp(e->network, n->name) &&
 			!g_strcasecmp(e->nick, n->external_state->me.nick)) {
-			break;		
+			break;
 		}
 
 		if (!e->network && !g_strcasecmp(e->nick, n->external_state->me.nick) &&
@@ -146,7 +153,7 @@ static gboolean log_data(struct irc_network *n, const struct irc_line *l, enum d
 		if (nickattempt && pass) {
 			const char *nickserv_n = nickserv_nick(n);
 			char *raw;
-			
+
 			network_log(LOG_INFO, n, "Ghosting current user using '%s'", nickattempt);
 
 			raw = g_strdup_printf("GHOST %s %s", nickattempt, pass);
@@ -161,20 +168,22 @@ static gboolean log_data(struct irc_network *n, const struct irc_line *l, enum d
 
 gboolean nickserv_save(struct global *global, const char *dir)
 {
-    char *filename = g_build_filename(dir, "nickserv", NULL);
+	char *filename = g_build_filename(dir, "nickserv", NULL);
 	gboolean ret;
 
 	if (global->nickserv_nicks == NULL) {
-		if (g_unlink(filename) == 0)
+		if (g_unlink(filename) == 0) {
 			ret = TRUE;
-		else if (errno == ENOENT)
+		} else if (errno == ENOENT) {
 			ret = TRUE;
-		else
+		} else {
 			ret = FALSE;
-	} else
+		}
+	} else {
 		ret = keyfile_write_file(global->nickserv_nicks, NICKSERV_FILE_HEADER, filename);
+	}
 
-    g_free(filename);
+	g_free(filename);
 
 	return ret;
 }
@@ -183,7 +192,7 @@ gboolean nickserv_load(struct global *global)
 {
 	gboolean ret;
     char *filename;
-	
+
 	filename = g_build_filename(global->config->config_dir, "nickserv",
 									  NULL);
 	ret = keyfile_read_file(filename, '#', &global->nickserv_nicks);

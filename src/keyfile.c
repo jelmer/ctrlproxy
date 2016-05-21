@@ -31,39 +31,39 @@
 
 gboolean keyfile_read_file(const char *filename, char commentchar, GList **nicks)
 {
-    GIOChannel *gio;
-    char *ret;
-    gsize nr, term;
+	GIOChannel *gio;
+	char *ret;
+	gsize nr, term;
 	gsize lineno = 0;
 
-    gio = g_io_channel_new_file(filename, "r", NULL);
+	gio = g_io_channel_new_file(filename, "r", NULL);
 
-    if (gio == NULL) {
-        return FALSE;
-    }
+	if (gio == NULL) {
+		return FALSE;
+	}
 
-    while (G_IO_STATUS_NORMAL == g_io_channel_read_line(gio, &ret, &nr, &term, NULL))
-    {
-        char **parts;
+	while (G_IO_STATUS_NORMAL == g_io_channel_read_line(gio, &ret, &nr, &term, NULL))
+	{
+		char **parts;
 		struct keyfile_entry *e;
 		lineno++;
 
 		if (ret[0] == commentchar) {
-        	g_free(ret);
+			g_free(ret);
 			continue;
 		}
 
 		ret[term] = '\0';
 
-        parts = g_strsplit(ret, "\t", 3);
-        g_free(ret);
+		parts = g_strsplit(ret, "\t", 3);
+		g_free(ret);
 
 		if (!parts[0] || !parts[1]) {
 			log_global(LOG_WARNING, "%s:%ld: Invalid syntax", filename, (long)lineno);
 			g_strfreev(parts);
 			continue;
 		}
-			
+
 		e = g_new0(struct keyfile_entry, 1);
 		e->nick = parts[0];
 		e->pass = parts[1];
@@ -73,10 +73,10 @@ gboolean keyfile_read_file(const char *filename, char commentchar, GList **nicks
 		} else {
 			e->network = parts[2];
 		}
-	
+
 		*nicks = g_list_append(*nicks, e);
-        g_free(parts);
-    }
+		g_free(parts);
+	}
 
 	g_io_channel_shutdown(gio, TRUE, NULL);
 	g_io_channel_unref(gio);
@@ -93,10 +93,10 @@ gboolean keyfile_write_file(GList *nicks, const char *header,
 
 	fd = open(filename, O_WRONLY | O_CREAT, 0600);
 
-    if (fd == -1) {
+	if (fd == -1) {
 		log_global(LOG_WARNING, "Unable to write nickserv file `%s': %s", filename, strerror(errno));
-        return FALSE;
-    }
+		return FALSE;
+	}
 
 	if (write(fd, header, strlen(header)) < 0) {
 		log_global(LOG_WARNING, "error writing file header: %s", strerror(errno));
@@ -106,11 +106,11 @@ gboolean keyfile_write_file(GList *nicks, const char *header,
 
 	for (gl = nicks; gl; gl = gl->next) {
 		struct keyfile_entry *n = gl->data;
-        char *line;
+		char *line;
 
 		empty = FALSE;
- 
-        line = g_strdup_printf("%s\t%s\t%s\n", n->nick, n->pass, n->network?n->network:"*");
+
+		line = g_strdup_printf("%s\t%s\t%s\n", n->nick, n->pass, n->network?n->network:"*");
 		if (write(fd, line, strlen(line)) < 0) {
 			log_global(LOG_WARNING, "error writing line `%s': %s", line, strerror(errno));
 			g_free(line);
@@ -118,12 +118,10 @@ gboolean keyfile_write_file(GList *nicks, const char *header,
 			return FALSE;
 		}
 
-        g_free(line);
+		g_free(line);
 	}
 
-    close(fd);
+	close(fd);
 
 	return TRUE;
 }
-
-

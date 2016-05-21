@@ -93,8 +93,8 @@ static gboolean process_from_server(struct irc_network *n, const struct irc_line
 	GError *error = NULL;
 	int response;
 
-	g_assert(n);
-	g_assert(l);
+	g_assert(n != NULL);
+	g_assert(l != NULL);
 
 	log_network_line(n, l, TRUE);
 
@@ -243,12 +243,12 @@ struct irc_network *find_network_by_hostname(struct global *global,
 
 	g_assert(portname != NULL);
 	g_assert(hostname != NULL);
-	
+
 	for (gl = global->networks; gl; gl = gl->next) {
 		GList *sv;
 		struct irc_network *n = gl->data;
 		struct network_config *nc;
-		g_assert(n);
+		g_assert(n != NULL);
 
 		if (n->name && !g_strcasecmp(n->name, hostname)) {
 			g_free(portname);
@@ -257,10 +257,8 @@ struct irc_network *find_network_by_hostname(struct global *global,
 
 		nc = n->private_data;
 		g_assert(nc);
-		if (nc->type == NETWORK_TCP)
-		{
-			for (sv = nc->type_settings.tcp.servers; sv; sv = sv->next)
-			{
+		if (nc->type == NETWORK_TCP) {
+			for (sv = nc->type_settings.tcp.servers; sv; sv = sv->next) {
 				struct tcp_server_config *server = sv->data;
 				struct servent *sv_serv = getservbyname(server->port, "tcp");
 
@@ -280,8 +278,7 @@ struct irc_network *find_network_by_hostname(struct global *global,
 	}
 
 	/* Create a new server */
-	if (create)
-	{
+	if (create) {
 		struct tcp_server_config *s = g_new0(struct tcp_server_config, 1);
 		struct network_config *nc;
 		struct irc_network *n;
@@ -447,7 +444,7 @@ struct irc_network *load_network(struct global *global, struct network_config *s
 		if (net)
 			return net;
 	}
-	
+
 	net = irc_network_new(&default_callbacks, sc);
 
 	net->global = global;
@@ -483,8 +480,7 @@ gboolean load_networks(struct global *global, struct ctrlproxy_config *cfg)
 {
 	GList *gl;
 	g_assert(cfg);
-	for (gl = cfg->networks; gl; gl = gl->next)
-	{
+	for (gl = cfg->networks; gl; gl = gl->next) {
 		struct network_config *nc = gl->data;
 		struct irc_network *n;
 		n = load_network(global, nc);
@@ -501,11 +497,11 @@ gboolean load_networks(struct global *global, struct ctrlproxy_config *cfg)
 void unload_network(struct irc_network *s)
 {
 	GList *l;
-	
-	g_assert(s);
+
+	g_assert(s != NULL);
 	l = s->clients;
 
-	while(l) {
+	while (l) {
 		struct irc_client *c = l->data;
 		l = l->next;
 		client_disconnect(c, "Server exiting");
@@ -551,8 +547,9 @@ gboolean network_forward_line(struct irc_network *s, struct irc_client *c,
 		struct irc_line *nl = linedup(l);
 		g_free(nl->origin);
 		nl->origin = g_strdup(s->external_state->me.hostmask);
-		if (s->global->config->report_time == REPORT_TIME_ALWAYS)
+		if (s->global->config->report_time == REPORT_TIME_ALWAYS) {
 			line_prefix_time(nl, time(NULL)+s->global->config->report_time_offset);
+		}
 
 		clients_send(s->clients, nl, c);
 		free_line(nl);

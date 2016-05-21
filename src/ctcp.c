@@ -110,9 +110,11 @@ static void handle_version(struct ctcp_handle *h, const char **args)
 #ifndef _WIN32
 	struct utsname u;
 	uname(&u);
-	msg = g_strdup_printf("ctrlproxy:%s:%s %s", ctrlproxy_version(), u.sysname, u.release);
+	msg = g_strdup_printf("ctrlproxy:%s:%s %s", ctrlproxy_version(), u.sysname,
+						  u.release);
 #else
-	msg = g_strdup_printf("ctrlproxy:%s:Windows %d.%d", ctrlproxy_version(), _winmajor, _winminor);
+	msg = g_strdup_printf("ctrlproxy:%s:Windows %d.%d", ctrlproxy_version(),
+						  _winmajor, _winminor);
 #endif
 	ctcp_reply(h, "VERSION", msg, NULL);
 	g_free(msg);
@@ -140,13 +142,16 @@ static GList *cmds = NULL;
 
 static void handle_clientinfo(struct ctcp_handle *h, const char **args)
 {
-	const char * *supported = g_new0(const char *, sizeof(builtins)/sizeof(builtins[0])+1+g_list_length(cmds));
+	const char * *supported;
 	char *tmp;
 	int i;
 	GList *gl;
 
-	for (i = 0; builtins[i].name; i++)
+	supported = g_new0(const char *, sizeof(builtins)/sizeof(builtins[0])+1+g_list_length(cmds));
+
+	for (i = 0; builtins[i].name; i++) {
 		supported[i] = builtins[i].name;
+	}
 
 	for (gl = cmds; gl; gl = gl->next) {
 		supported[i] = ((struct ctcp_handler *)gl->data)->name;
@@ -194,8 +199,9 @@ gboolean ctcp_process_request (struct irc_network *n, const struct irc_line *l)
 		struct ctcp_handler *hl = gl->data;
 
 		if (!g_strcasecmp(hl->name, args[0])) {
-			if (hl->fn != NULL)
+			if (hl->fn != NULL) {
 				hl->fn(&h, (const char **)args);
+			}
 			ret = TRUE;
 			break;
 		}
@@ -226,16 +232,15 @@ gboolean ctcp_process_request (struct irc_network *n, const struct irc_line *l)
 
 struct irc_network *ctcp_get_network(struct ctcp_handle *h)
 {
-       return h->network;
+	return h->network;
 }
 
 struct network_nick *ctcp_get_network_nick(struct ctcp_handle *h)
 {
-       return find_network_nick(h->network->external_state, h->nick);
+	return find_network_nick(h->network->external_state, h->nick);
 }
 
 const char *ctcp_get_nick(struct ctcp_handle *h)
 {
-       return h->nick;
+	return h->nick;
 }
-
