@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/jelmer/ctrlproxy.png?branch=master)](https://travis-ci.org/jelmer/ctrlproxy)
+
 ctrlproxy
 =========
 
