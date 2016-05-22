@@ -27,24 +27,24 @@ util.c - Random utility functions
 
 Writing Modules
 ---------------
-As has been said in the introduction, ctrlproxy 
-is easily extendible. 
+As has been said in the introduction, ctrlproxy
+is easily extendible.
 
-The simplest possible module can be found in example/foo.c in the source 
+The simplest possible module can be found in example/foo.c in the source
 distribution.
 
-The init_plugin function is called when the module is loaded. 
-In this function, you should register whatever functions the module 
-provides, such as a 'message handler' or a linestack backend. You 
-can use the data member of the plugin struct to store data for your plugin. 
-This function should return a boolean: false when initialisation failed 
+The init_plugin function is called when the module is loaded.
+In this function, you should register whatever functions the module
+provides, such as a 'message handler' or a linestack backend. You
+can use the data member of the plugin struct to store data for your plugin.
+This function should return a boolean: false when initialisation failed
 or true when it succeeded.
 
 Building and installing
 -----------------------
 
-A module is in fact a shared library that's loaded 
-at run-time, when the program is already running. The .so file can 
+A module is in fact a shared library that's loaded
+at run-time, when the program is already running. The .so file can
 compiled with a command like:
 
 $ gcc -shared -o foo.so input1.c input2.o input3.c
@@ -52,19 +52,19 @@ $ gcc -shared -o foo.so input1.c input2.o input3.c
 Message handler functions
 -------------------------
 
-A message handling function is a function that is called 
-whenever ctrlproxy receives an IRC message. The only argument 
-this function should have would be a line struct. 
+A message handling function is a function that is called
+whenever ctrlproxy receives an IRC message. The only argument
+this function should have would be a line struct.
 
 Registering a message handler
 -----------------------------
 
-All IRC lines that ctrlproxy receives and sends are passed thru 
-so-called 'filter functions'. These functions can do things based on 
-the contents of these lines, change the lines or stop further 
-processing of these lines. 
+All IRC lines that ctrlproxy receives and sends are passed thru
+so-called 'filter functions'. These functions can do things based on
+the contents of these lines, change the lines or stop further
+processing of these lines.
 
-To add a filter function, call 'add_filter'. To remove the filter 
+To add a filter function, call 'add_filter'. To remove the filter
 function again (usually when your plugin is being unloaded) call 'del_filter'.
 
 Example:
@@ -73,23 +73,23 @@ Example:
 add_filter("my_module", my_message_handler);
 ...
 
-The prototype for the message handling function in the example 
+The prototype for the message handling function in the example
 above would look something like this:
 
 static gboolean my_message_handler(struct line *l);
 
-Your message handler should return TRUE if the rest of the filter 
-functions should also see the message and FALSE if ctrlproxy should 
+Your message handler should return TRUE if the rest of the filter
+functions should also see the message and FALSE if ctrlproxy should
 stop running filter functions on the given line struct.</para>
 
-These hooks are executed before the data as returned by find_channel() 
+These hooks are executed before the data as returned by find_channel()
 and find_nick() is updated
 
 Registering a new client/server or lose client/server handler
 -------------------------------------------------------------
 
-A module can also register a function that should be called when a new 
-client connects or when a client disconnects and when the server has successfully connected to 
+A module can also register a function that should be called when a new
+client connects or when a client disconnects and when the server has successfully connected to
 the client or when the connection to the client is broken.</para>
 
 typedef gboolean (*new_client_hook) (struct client *);
@@ -106,14 +106,14 @@ void del_server_connected_hook(char *name);
 void add_server_disconnected_hook(char *name, server_disconnected_hook);
 void del_server_disconnected_hook(char *name);
 
-The prototypes of these functions pretty much speak for themselves. 
-If a new_client_hook function returns FALSE, the client will be denied 
+The prototypes of these functions pretty much speak for themselves.
+If a new_client_hook function returns FALSE, the client will be denied
 access.
 
 Registering a initialization function
 -------------------------------------
 
-The initialization hooks are called after ctrlproxy has been initialized - 
+The initialization hooks are called after ctrlproxy has been initialized -
 all plugins are loaded, all networks have been loaded.
 
 typedef void (*initialized_hook) (void);
@@ -122,39 +122,39 @@ void add_initialized_hook(initialized_hook);
 Registering a MOTD function
 ---------------------------
 
-MOTD functions are functions that add one or more lines to 
+MOTD functions are functions that add one or more lines to
 the MOTD that is sent to a client.
 
-A module can register a MOTD function using the add_motd_hook() and 
-del_motd_hook() functions, that work similar to the add_new_client_hook() and 
+A module can register a MOTD function using the add_motd_hook() and
+del_motd_hook() functions, that work similar to the add_new_client_hook() and
 del_new_client_hook() functions documented above.
 
-A motd function should return a dynamically allocated array containing 
+A motd function should return a dynamically allocated array containing
 dynamically allocated nul-terminated strings that should be added to the MOTD.
 
 Log functionality
 -----------------
 
-Ctrlproxy uses GLib's logging functions. Read the related section in the 
+Ctrlproxy uses GLib's logging functions. Read the related section in the
 GLib documentation for details.
 
 Storing data
 ------------
 
-Paths to data should be configurable, but default to the file/directory name 
-returned by ctrlproxy_path(). The argument to this function should be the 
+Paths to data should be configurable, but default to the file/directory name
+returned by ctrlproxy_path(). The argument to this function should be the
 name of the subsystem.
-	
-All top level directories have been created when this function 
-returns. 
+
+All top level directories have been created when this function
+returns.
 
 If NULL was returned, one or more directories could not be created.
 
 Debugging
 ---------
-Two very useful utilities are valgrind and gdb. 
+Two very useful utilities are valgrind and gdb.
 
-If you're running from gdb, make sure you have set the following: 
+If you're running from gdb, make sure you have set the following:
 
 handle SIGPIPE nostop
 handle SIGINT nostop
@@ -165,8 +165,13 @@ The debug module, if compiled adds support for the following two admin commands,
 that might be useful when debugging:
 
 DUMPJOINEDCHANNELS
-	Makes ctrlproxy print a list of the channels it 
+	Makes ctrlproxy print a list of the channels it
 	thinks it has joined on the current network.
 
 CRASH
-	Generates a crash. 
+	Generates a crash.
+
+Coding Style
+------------
+CtrlProxy uses the Linux kernel coding style. Some of the existing code still
+violates this coding style, but new code should be adhere to this coding style.
