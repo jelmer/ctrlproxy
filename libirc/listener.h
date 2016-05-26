@@ -23,12 +23,17 @@ typedef void (*listener_log_fn) (enum log_level, const struct irc_listener *, co
 
 struct pending_client;
 
+/** Callbacks used by listener implementations */
 struct irc_listener_ops {
+	/* Signal a new client has connected. */
 	void (*new_client) (struct pending_client *pc);
+	/* Forward line from unaccepted pending client */
 	gboolean (*handle_client_line) (struct pending_client *pc, const struct irc_line *l);
+	/* Check authentication + authorization of a socks client by pasword */
 	gboolean (*socks_auth_simple) (struct pending_client *pc, const char *username, const char *password,
 								   gboolean (*) (struct pending_client *, gboolean pass_ok));
 #ifdef HAVE_GSSAPI
+	/* Check GSSAPI authorization of a user */
 	gboolean (*socks_gssapi) (struct pending_client *pc, gss_name_t user_name);
 #endif
 	gboolean (*socks_connect_ipv4) (struct pending_client *pc);

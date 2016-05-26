@@ -488,8 +488,11 @@ gboolean listener_socks_reply(struct pending_client *pc, guint8 err, guint8 atyp
 
 	status = g_io_channel_write_chars(pc->connection, header,
 									  6 + data_len, &read, NULL);
-
 	g_free(header);
+
+	if (status != G_IO_STATUS_NORMAL) {
+		return FALSE;
+	}
 
 	g_io_channel_flush(pc->connection, NULL);
 
@@ -512,6 +515,11 @@ static gboolean pass_acceptable(struct pending_client *cl)
 	return TRUE; /* FIXME: Check whether there is a password specified */
 }
 
+/* Called when a socks connection setup is complete.
+ * @arg cl The pending client
+ * @arg accepted Whether the client was accepted (i.e. authentication was successful)
+ * @return Whether the connection setup was successful
+ */
 static gboolean on_socks_pass_accepted(struct pending_client *cl, gboolean accepted)
 {
 	gchar header[2];
