@@ -41,7 +41,7 @@ static gboolean gssapi_fail(struct pending_client *pc);
 
 #define QUASSEL_MAGIC					0x42b33f00
 #define QUASSEL_MAGIC_OPT_SSL			0x1
-#define QUASSEL_MAGIC_OPT_COMRPESSION	0x1
+#define QUASSEL_MAGIC_OPT_COMPRESSION	0x2
 
 struct listener_iochannel {
 	struct irc_listener *listener;
