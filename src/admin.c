@@ -1723,13 +1723,25 @@ static void iochannel_admin_out(admin_handle h, const char *data)
 	GIOStatus status;
 
 	status = g_io_channel_write_chars(h->user_data, data, -1, &bytes_written, &error);
+	if (status != G_IO_STATUS_NORMAL) {
+		if (error != NULL)
+			g_error_free(error);
+		return;
+	}
 
 	status = g_io_channel_write_chars(h->user_data, "\n", -1, &bytes_written, &error);
+	if (status != G_IO_STATUS_NORMAL) {
+		if (error != NULL)
+			g_error_free(error);
+		return;
+	}
 
 	status = g_io_channel_flush(h->user_data, &error);
-	
-	if (error != NULL)
-		g_error_free(error);
+	if (status != G_IO_STATUS_NORMAL) {
+		if (error != NULL)
+			g_error_free(error);
+		return;
+	}
 }
 
 static gboolean handle_client_data(GIOChannel *channel,

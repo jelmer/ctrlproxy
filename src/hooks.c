@@ -56,7 +56,7 @@ static GList *add_filter_ex(GList *class, const char *name, server_filter_functi
 static GList *del_filter_ex(GList *list, const char *name)
 {
 	GList *gl;
-	
+
 	for (gl = list; gl; gl = gl->next)
 	{
 		struct filter_data *d = (struct filter_data *)gl->data;
@@ -77,14 +77,14 @@ static gboolean filter_class_execute(GList *gl, struct irc_network *s, enum data
 {
 	while(gl) {
 		struct filter_data *d = (struct filter_data *)gl->data;
-		
+
 		if (!d->function(s, l, dir, d->userdata)) {
 			return FALSE;
 		}
 
 		gl = gl->next;
 	}
-	
+
 	return TRUE;
 }
 
@@ -125,16 +125,16 @@ void del_client_filter(const char *name)
 gboolean run_client_filter(struct irc_client *c, const struct irc_line *l, enum data_direction dir)
 {
 	GList *gl;
-	
+
 	for (gl = client_filters; gl; gl = gl->next)
 	{
 		struct client_filter_data *d = (struct client_filter_data *)gl->data;
-		
+
 		if (!d->function(c, l, dir, d->userdata)) {
 			return FALSE;
 		}
 	}
-	
+
 	return TRUE;
 }
 
@@ -151,7 +151,7 @@ GList *new_client_hooks = NULL;
 void add_new_client_hook(const char *name, new_client_hook h, void *userdata)
 {
 	struct new_client_hook_data *d;
-	
+
 	d = g_malloc(sizeof(struct new_client_hook_data));
 	d->name = g_strdup(name);
 	d->userdata = userdata;
@@ -162,7 +162,7 @@ void add_new_client_hook(const char *name, new_client_hook h, void *userdata)
 void del_new_client_hook(const char *name)
 {
 	GList *l;
-	
+
 	for (l = new_client_hooks; l; l = l->next)
 	{
 		struct new_client_hook_data *d = (struct new_client_hook_data *)l->data;
@@ -178,11 +178,11 @@ void del_new_client_hook(const char *name)
 gboolean new_client_hook_execute(struct irc_client *c)
 {
 	GList *l;
-	
+
 	for (l = new_client_hooks; l; l = l->next)
 	{
 		struct new_client_hook_data *d = (struct new_client_hook_data *)l->data;
-	
+
 		if (!d->hook(c, d->userdata)) {
 			g_debug(("New client hook '%s' refused new client"), d->name);
 			return FALSE;
@@ -204,7 +204,7 @@ GList *server_connected_hooks = NULL;
 void add_server_connected_hook(const char *name, server_connected_hook h, void *userdata)
 {
 	struct server_connected_hook_data *d;
-	
+
 	d = g_malloc(sizeof(struct server_connected_hook_data));
 	d->name = g_strdup(name);
 	d->hook = h;
@@ -230,7 +230,7 @@ void del_server_connected_hook(const char *name)
 void server_connected_hook_execute(struct irc_network *c)
 {
 	GList *l;
-	
+
 	for (l = server_connected_hooks; l; l = l->next)
 	{
 		struct server_connected_hook_data *d = (struct server_connected_hook_data *)l->data;
@@ -249,7 +249,7 @@ GList *server_disconnected_hooks = NULL;
 void add_server_disconnected_hook(const char *name, server_disconnected_hook h, void *userdata)
 {
 	struct server_disconnected_hook_data *d;
-	
+
 	d = g_malloc(sizeof(struct server_disconnected_hook_data));
 	d->name = g_strdup(name);
 	d->hook = h;

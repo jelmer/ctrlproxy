@@ -281,7 +281,6 @@ struct irc_network *find_network_by_hostname(struct global *global,
 	if (create) {
 		struct tcp_server_config *s = g_new0(struct tcp_server_config, 1);
 		struct network_config *nc;
-		struct irc_network *n;
 		nc = network_config_init(global->config);
 
 		nc->implicit = 1;
@@ -298,8 +297,7 @@ struct irc_network *find_network_by_hostname(struct global *global,
 
 		nc->type_settings.tcp.servers = g_list_append(nc->type_settings.tcp.servers, s);
 
-		n = load_network(global, nc);
-		return n;
+		return load_network(global, nc);
 	}
 
 	g_free(portname);
@@ -482,8 +480,7 @@ gboolean load_networks(struct global *global, struct ctrlproxy_config *cfg)
 	g_assert(cfg);
 	for (gl = cfg->networks; gl; gl = gl->next) {
 		struct network_config *nc = gl->data;
-		struct irc_network *n;
-		n = load_network(global, nc);
+		load_network(global, nc);
 	}
 
 	return TRUE;

@@ -39,6 +39,12 @@ int base_strcmp(const char *a, const char *b)
 	return g_ascii_strcasecmp(a, b);
 }
 
+int base_strncmp(const char *a, const char *b, size_t n)
+{
+	/* TODO(jelmer): Warn if there are any nonalpha characters in a or b?) */
+	return g_ascii_strncasecmp(a, b, n);
+}
+
 static inline int str_cmphelper(const char *a, const char *b, char sh, char sl, char eh, char el)
 {
 	int i;

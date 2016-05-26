@@ -29,6 +29,7 @@ START_TEST(test_create)
 	};
 	struct irc_network *n;
 	n = load_network(NULL, &nc);
+	fail_unless(!strcmp(n->name, "test"));
 END_TEST
 
 START_TEST(test_uncreate)

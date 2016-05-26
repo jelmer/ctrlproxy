@@ -279,7 +279,7 @@ struct irc_network_state *linestack_get_state(
 	linestack_replay(nd, &state_index, to_index, ret);
 
 	g_io_channel_unref(state_file);
-	
+
 	g_assert(ret->me.nick != NULL);
 	g_assert(ret->me.query);
 	return ret;
@@ -342,7 +342,7 @@ gboolean linestack_read_entry(struct linestack_context *nd,
 
 	*line = irc_parse_line(raw);
 	g_free(raw);
-	
+
 	return TRUE;
 }
 
@@ -354,7 +354,6 @@ gboolean linestack_traverse(struct linestack_context *nd,
 	gboolean ret = TRUE;
 	GError *error = NULL;
 	GIOStatus status = G_IO_STATUS_NORMAL;
-	char *raw;
 	struct irc_line *l;
 	time_t time;
 	guint64 i;
@@ -366,20 +365,18 @@ gboolean linestack_traverse(struct linestack_context *nd,
 	g_io_channel_flush(nd->line_file, &error);
 
 	g_io_channel_flush(nd->index_file, &error);
-	
+
 	if (lm_from == NULL) {
 		start_index = 0;
 	} else {
 		start_index = *lm_from;
 	}
-	
+
 	if (lm_to == NULL) {
 		end_index = nd->count;
 	} else {
 		end_index = *((guint64 *)lm_to);
 	}
-
-	raw = NULL;
 
 	for (i = start_index; i < end_index; i++) {
 		l = NULL;
@@ -445,7 +442,7 @@ gboolean linestack_traverse_object(
 	d.object = obj;
 	d.userdata = userdata;
 	d.handler = hl;
-	
+
 	return linestack_traverse(ctx, lm_from, lm_to, traverse_object_handler, &d);
 }
 
@@ -507,7 +504,7 @@ gboolean linestack_insert_line(struct linestack_context *nd,
 	GError *error = NULL;
 	GIOStatus status;
 	gboolean ret;
-	
+
 	if (nd == NULL) return TRUE;
 
 	if (l->argc == 0) return TRUE;
@@ -521,7 +518,7 @@ gboolean linestack_insert_line(struct linestack_context *nd,
 	if ((!base_strcmp(l->args[0], "PRIVMSG") ||
 		!base_strcmp(l->args[0], "NOTICE")) &&
 		l->argc > 2 && l->args[2][0] == '\001' &&
-		g_strncasecmp(l->args[2], "\001ACTION", 7) != 0)
+		base_strncmp(l->args[2], "\001ACTION", 7) != 0)
 		return TRUE;
 
 	for (i = 0; linestack_messages[i]; i++)
@@ -1013,10 +1010,10 @@ static gboolean marshall_channel_state (struct irc_network_state *nst,
 			g_snprintf(tmp, sizeof(tmp), "[%d]", i);
 
 			marshall_struct(t, m, level+2, tmp);
-			
+
 			if (!marshall_string(nst, "nick", level+3, m, t, &nick))
 				return FALSE;
-			
+
 			cn = find_add_channel_nick(*c, nick);
 			g_assert(cn);
 
@@ -1106,7 +1103,7 @@ static gboolean file_insert_state(struct linestack_context *nd,
 	g_free(data_file);
 
 	g_io_channel_set_encoding(state_file, NULL, NULL);
-	
+
 	nd->last_line_with_state = nd->count;
 
 	marshall_network_state(MARSHALL_PUSH, state_file, (struct irc_network_state *)state);

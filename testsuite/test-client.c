@@ -41,6 +41,7 @@ START_TEST(test_network_first)
 	char *raw;
 	g_io_channel_pair(&ch1, &ch2);
 	c = client_init_iochannel(NULL, ch1, "desc");
+	fail_unless(!strcmp(c->description, "desc"));
 	g_io_channel_unref(ch1);
 	fail_unless(g_io_channel_write_chars(ch2, "NICK bla\r\n"
 				"USER a a a a\r\n", -1, NULL, NULL) == G_IO_STATUS_NORMAL);
