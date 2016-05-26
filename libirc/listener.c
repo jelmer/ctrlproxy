@@ -174,6 +174,7 @@ static gboolean handle_client_detect(GIOChannel *ioc, struct pending_client *pc)
 
 	if (header[0] == SOCKS_VERSION) {
 		listener_log(LOG_TRACE, pc->listener, "Detected SOCKS.");
+		pc->type = CLIENT_TYPE_SOCKS;
 		pc->socks.state = SOCKS_STATE_NEW;
 		return TRUE;
 	} else {
@@ -184,7 +185,7 @@ static gboolean handle_client_detect(GIOChannel *ioc, struct pending_client *pc)
 		gboolean ret;
 		gsize in_len;
 
-		pc->type = CLIENT_TYPE_SOCKS;
+		pc->type = CLIENT_TYPE_REGULAR;
 
 		g_assert(ioc != NULL);
 
