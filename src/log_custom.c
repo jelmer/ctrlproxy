@@ -215,11 +215,11 @@ static gboolean log_custom_data(struct irc_network *network,
 	 * - log to channel only (KICK, PART, JOIN, TOPIC) (channel_only)
 	 */
 
-	if (dir == FROM_SERVER && !g_strcasecmp(l->args[0], "JOIN")) {
+	if (dir == FROM_SERVER && !base_strcmp(l->args[0], "JOIN")) {
 		file_write_target(data, network, data->config->join, l);
-	} else if (dir == FROM_SERVER && !g_strcasecmp(l->args[0], "PART")) {
+	} else if (dir == FROM_SERVER && !base_strcmp(l->args[0], "PART")) {
 		file_write_channel_only(data, network, data->config->part, l);
-	} else if (!g_strcasecmp(l->args[0], "PRIVMSG") && l->args[2] != NULL) {
+	} else if (!base_strcmp(l->args[0], "PRIVMSG") && l->args[2] != NULL) {
 		if (l->args[2][0] == '\001') {
 			l->args[2][strlen(l->args[2])-1] = '\0';
 			if (!g_ascii_strncasecmp(l->args[2], "\001ACTION ", 8)) {
@@ -232,15 +232,15 @@ static gboolean log_custom_data(struct irc_network *network,
 		} else {
 			file_write_target(data, network, data->config->msg, l);
 		}
-	} else if (!g_strcasecmp(l->args[0], "NOTICE")) {
+	} else if (!base_strcmp(l->args[0], "NOTICE")) {
 		file_write_target(data, network, data->config->notice, l);
-	} else if (!g_strcasecmp(l->args[0], "MODE") && l->args[1] != NULL &&
+	} else if (!base_strcmp(l->args[0], "MODE") && l->args[1] != NULL &&
 			  is_channelname(l->args[1], network_get_info(network)) &&
 			  dir == FROM_SERVER) {
 		file_write_target(data, network, data->config->mode, l);
-	} else if (!g_strcasecmp(l->args[0], "QUIT")) {
+	} else if (!base_strcmp(l->args[0], "QUIT")) {
 		file_write_channel_query(data, network, data->config->quit, l);
-	} else if (!g_strcasecmp(l->args[0], "KICK") && l->args[1] != NULL &&
+	} else if (!base_strcmp(l->args[0], "KICK") && l->args[1] != NULL &&
 			   l->args[2] != NULL && dir == FROM_SERVER) {
 		if (strchr(l->args[1], ',') == NULL) {
 			file_write_channel_only(data, network, data->config->kick, l);
@@ -271,14 +271,14 @@ static gboolean log_custom_data(struct irc_network *network,
 			g_free(channels);
 			g_free(nicks);
 		}
-	} else if (!g_strcasecmp(l->args[0], "TOPIC") && dir == FROM_SERVER &&
+	} else if (!base_strcmp(l->args[0], "TOPIC") && dir == FROM_SERVER &&
 		l->args[1] != NULL) {
 		if (l->args[2] != NULL) {
 			file_write_channel_only(data, network, data->config->topic, l);
 		} else {
 			file_write_channel_only(data, network, data->config->notopic, l);
 		}
-	} else if (!g_strcasecmp(l->args[0], "NICK") && dir == FROM_SERVER &&
+	} else if (!base_strcmp(l->args[0], "NICK") && dir == FROM_SERVER &&
 			   l->args[1] != NULL) {
 		file_write_channel_query(data, network, data->config->nickchange, l);
 	}

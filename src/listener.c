@@ -194,7 +194,7 @@ static gboolean handle_client_line(struct pending_client *pc, const struct irc_l
 		return TRUE;
 	}
 
-	if (!g_strcasecmp(l->args[0], "PASS")) {
+	if (!base_strcmp(l->args[0], "PASS")) {
 		const char *networkname = NULL;
 		struct irc_network *n = listener->network;
 		gboolean authenticated = FALSE;

@@ -136,7 +136,7 @@ gboolean g_key_file_save_to_file(GKeyFile *kf, const gchar *file, GError **error
 		g_free(data);
 		return FALSE;
 	}
-	
+
 	g_io_channel_write_chars(gio, data, length, &nr, error);
 
 	g_free(data);
@@ -151,7 +151,7 @@ static void config_save_tcp_servers(struct network_config *n, GKeyFile *kf, cons
 	GList *gl;
 	int i = 0;
 	gchar **values = g_new0(gchar *, g_list_length(n->type_settings.tcp.servers)+1);
-	
+
 	for (gl = n->type_settings.tcp.servers; gl; gl = gl->next) {
 		struct tcp_server_config *ts = gl->data;
 		char *name = irc_create_url(ts->host, ts->port, ts->ssl);
@@ -183,7 +183,7 @@ static void config_save_network(struct ctrlproxy_config *cfg,
 	GKeyFile *kf;
 	char **autojoin_list;
 	int autojoin_list_count;
-	
+
 	if (n->keyfile == NULL) {
 		n->keyfile = cfg->keyfile;
 		n->groupname = g_strdup(n->name);
@@ -248,7 +248,7 @@ static void config_save_network(struct ctrlproxy_config *cfg,
 
 			*channel_keys = g_list_append(*channel_keys, key);
 		}
-		
+
 		if (c->autojoin) {
 			autojoin_list[autojoin_list_count] = c->name;
 			autojoin_list_count++;
@@ -333,7 +333,7 @@ static void config_save_listeners(struct ctrlproxy_config *cfg, const char *path
 				}
 			}
 
-		
+
 			g_free(tmp);
 		}
 	}
@@ -346,7 +346,7 @@ static void config_save_listeners(struct ctrlproxy_config *cfg, const char *path
 			g_error_free(error);
 		}
 	}
-	
+
 	g_free(filename);
 }
 
@@ -439,7 +439,7 @@ void save_configuration(struct ctrlproxy_config *cfg, const char *configuration_
 
 	if (cfg->client_charset != NULL)
 		g_key_file_set_string(cfg->keyfile, "global", "default-client-charset", cfg->client_charset);
-	
+
 	if (cfg->replication)
 		g_key_file_set_string(cfg->keyfile, "global", "replication", cfg->replication);
 	if (cfg->motd_file != NULL)
@@ -495,7 +495,7 @@ void save_configuration(struct ctrlproxy_config *cfg, const char *configuration_
 			i++;
 		}
 	}
-	
+
 	if (i > 0)
 		g_key_file_set_string_list(cfg->keyfile, "global", "autoconnect", (const gchar **)list, i);
 
@@ -516,7 +516,7 @@ static void config_load_channel(struct network_config *n, GKeyFile *kf, const ch
 
 	if (g_key_file_has_key(kf, name, "autojoin", NULL))
 		ch->autojoin = g_key_file_get_boolean(kf, name, "autojoin", NULL);
-	
+
 	n->channels = g_list_append(n->channels, ch);
 }
 
@@ -525,7 +525,7 @@ static void config_load_servers(struct network_config *n)
 	gsize size;
 	char **servers;
 	int i;
-	
+
 	servers = g_key_file_get_string_list(n->keyfile, n->groupname, "servers", &size, NULL);
 
 	if (!servers)
@@ -535,7 +535,7 @@ static void config_load_servers(struct network_config *n)
 		struct tcp_server_config *s = g_new0(struct tcp_server_config, 1);
 
 		irc_parse_url(servers[i], &s->host, &s->port, &s->ssl);
-		
+
 		s->password = g_key_file_get_string(n->keyfile, servers[i], "password", NULL);
 		if (g_key_file_has_key(n->keyfile, servers[i], "ssl", NULL))
 			s->ssl = g_key_file_get_boolean(n->keyfile, servers[i], "ssl", NULL);
@@ -693,13 +693,13 @@ static struct network_config *config_load_network_file(struct ctrlproxy_config *
 
 	filename = g_build_filename(dirname, name, NULL);
 
-	if (!g_key_file_load_from_file(kf, filename, G_KEY_FILE_KEEP_COMMENTS, &error)) {	
+	if (!g_key_file_load_from_file(kf, filename, G_KEY_FILE_KEEP_COMMENTS, &error)) {
 		log_global(LOG_ERROR, "Can't parse configuration file '%s': %s", filename, error->message);
 		g_free(filename);
 		g_key_file_free(kf);
 		g_error_free(error);
 		return NULL;
-	}	
+	}
 
 	n = config_load_network_keyfile_group(cfg, name, kf, "global", channel_keys);
 	n->filename = filename;
@@ -725,26 +725,31 @@ static struct network_config *find_create_network_config(struct ctrlproxy_config
 		GList *gl1;
 		nc = gl->data;
 
-		if (g_strcasecmp(nc->name, name) == 0)
+		if (strcasecmp(nc->name, name) == 0) {
 			return nc;
+		}
 
-		if (nc->type != NETWORK_TCP)
+		if (nc->type != NETWORK_TCP) {
 			continue;
+		}
 
 		for (gl1 = nc->type_settings.tcp.servers; gl1; gl1 = gl1->next) {
 			char *tmp;
 			struct tcp_server_config *sc = gl1->data;
 
-			if (g_strcasecmp(sc->host, name) == 0)
+			if (g_strcasecmp(sc->host, name) == 0) {
 				return nc;
+			}
 
-			if (g_strncasecmp(sc->host, name, strlen(sc->host)) != 0)
+			if (g_strncasecmp(sc->host, name, strlen(sc->host)) != 0) {
 				continue;
+			}
 
 			tmp = irc_create_url(sc->host, sc->port, FALSE);
 
-			if (g_strcasecmp(tmp, name) == 0)
+			if (g_strcasecmp(tmp, name) == 0) {
 				return nc;
+			}
 
 			g_free(tmp);
 		}
@@ -773,30 +778,33 @@ static void config_load_listeners_socks(struct ctrlproxy_config *cfg)
 
 	allows = g_key_file_get_string_list(kf, "socks", "allow", &size, NULL);
 
-	if (allows == NULL)
+	if (allows == NULL) {
 		return;
+	}
 
 	g_key_file_remove_key(kf, "socks", "allow", NULL);
 
 	l = g_new0(struct listener_config, 1);
 
-	if (g_key_file_has_key(kf, "socks", "port", NULL))
+	if (g_key_file_has_key(kf, "socks", "port", NULL)) {
 		l->port = g_key_file_get_string(kf, "socks", "port", NULL);
-	else
+	} else {
 		l->port = g_strdup_printf("%d", DEFAULT_SOCKS_PORT);
+	}
 
 	/* We can use the socks listener as default listener, if there was
 	 * no default listener specified */
 	if (cfg->listeners == NULL ||
-		!((struct listener_config *)cfg->listeners->data)->is_default)
+		!((struct listener_config *)cfg->listeners->data)->is_default) {
 		l->is_default = TRUE;
+	}
 
 	g_key_file_remove_key(kf, "socks", "port", NULL);
 
 	for (i = 0; i < size; i++) {
 		struct allow_rule *r = g_new0(struct allow_rule, 1);
 		char **parts = g_strsplit(allows[i], ":", 2);
-					
+
 		r->username = parts[0];
 		r->password = parts[1];
 
@@ -848,7 +856,7 @@ static void config_load_listeners(struct ctrlproxy_config *cfg)
 		l->address = g_key_file_get_string(cfg->keyfile, "global", "bind", NULL);
 		l->ssl = g_key_file_has_key(cfg->keyfile, "global", "ssl", NULL) &&
 				 g_key_file_get_boolean(cfg->keyfile, "global", "ssl", NULL);
-		
+
 #ifdef HAVE_GNUTLS
 		if (l->ssl) {
 			l->ssl_credentials = ssl_create_server_credentials(cfg->config_dir, cfg->keyfile, "global");
@@ -870,20 +878,21 @@ static void config_load_listeners(struct ctrlproxy_config *cfg)
 	kf = g_key_file_new();
 
 	if (!g_key_file_load_from_file(kf, filename, G_KEY_FILE_KEEP_COMMENTS, &error)) {
-		if (error->code != G_FILE_ERROR_NOENT)
+		if (error->code != G_FILE_ERROR_NOENT) {
 			log_global(LOG_ERROR, "Can't parse configuration file '%s': %s", filename, error->message);
+		}
 		g_error_free(error);
 		g_free(filename);
 		return;
 	}
-		
+
 	groups = g_key_file_get_groups(kf, &size);
 
 	for (i = 0; i < size; i++)
 	{
 		struct listener_config *l;
 		char *tmp;
-		
+
 		l = g_new0(struct listener_config, 1);
 
 		tmp = g_strdup(groups[i]);
@@ -914,8 +923,9 @@ static void config_load_listeners(struct ctrlproxy_config *cfg)
 		}
 #endif
 
-		if (g_key_file_has_key(kf, groups[i], "network", NULL))
+		if (g_key_file_has_key(kf, groups[i], "network", NULL)) {
 			l->network = g_key_file_get_string(kf, groups[i], "network", NULL);
+		}
 
 		cfg->listeners = g_list_append(cfg->listeners, l);
 	}
@@ -931,7 +941,7 @@ struct network_config *config_find_network(struct ctrlproxy_config *cfg,
 	GList *gl;
 	for (gl = cfg->networks; gl; gl = gl->next) {
 		struct network_config *nc = gl->data;
-		if (!g_strcasecmp(nc->name, name))
+		if (!strcasecmp(nc->name, name))
 			return nc;
 	}
 	return NULL;
@@ -951,13 +961,15 @@ static void config_cleanup_networks_dir(struct ctrlproxy_config *cfg)
 	const char *name;
 
 	dir = g_dir_open(networksdir, 0, NULL);
-	if (dir == NULL)
+	if (dir == NULL) {
 		return;
+	}
 
 	while ((name = g_dir_read_name(dir))) {
 		char *path;
-		if (IS_SPECIAL_FILE(name) || config_find_network(cfg, name))
+		if (IS_SPECIAL_FILE(name) || config_find_network(cfg, name)) {
 			continue;
+		}
 
 		path = g_build_filename(networksdir, name, NULL);
 		g_unlink(path);
@@ -983,8 +995,9 @@ static void config_load_networks(struct ctrlproxy_config *cfg, GList *channel_ke
 	dir = g_dir_open(networksdir, 0, NULL);
 	if (dir != NULL) {
 		while ((name = g_dir_read_name(dir))) {
-			if (IS_SPECIAL_FILE(name))
+			if (IS_SPECIAL_FILE(name)) {
 				continue;
+			}
 			n = config_load_network_file(cfg, networksdir, name, channel_keys);
 		}
 
@@ -996,15 +1009,18 @@ static void config_load_networks(struct ctrlproxy_config *cfg, GList *channel_ke
 	/* Load other networks in configuration file */
 	groups = g_key_file_get_groups(cfg->keyfile, &size);
 	for (i = 0; i < size; i++) {
-		if (!strcmp(groups[i], "global"))
+		if (!strcmp(groups[i], "global")) {
 			continue;
+		}
 
 		if (!strncasecmp(groups[i], "irc://", strlen("irc://")) ||
-			!strncasecmp(groups[i], "ircs://", strlen("ircs://")))
+			!strncasecmp(groups[i], "ircs://", strlen("ircs://"))) {
 			continue;
+		}
 
-		if (groups[i][0] == '#' || groups[i][0] == '&')
+		if (groups[i][0] == '#' || groups[i][0] == '&') {
 			continue;
+		}
 
 		n = config_load_network_keyfile_group(cfg, groups[i], cfg->keyfile, groups[i], channel_keys);
 	}
@@ -1026,8 +1042,9 @@ static void config_save_log(struct log_file_config *data,
 	if (data->is_irssi) {
 		g_key_file_set_string(config->keyfile, "global", "logging", "irssi");
 		if (data->logbasedir) {
-			if (!data->logbasedir_is_default)
+			if (!data->logbasedir_is_default) {
 				g_key_file_set_string(config->keyfile, "global", "logdir", data->logbasedir);
+			}
 		} else {
 			g_key_file_set_string(config->keyfile, "global", "logfile", data->logfilename);
 		}
@@ -1150,22 +1167,27 @@ static void config_load_log(struct ctrlproxy_config *config)
 static void config_save_auto_away(struct auto_away_config *d, struct ctrlproxy_config *config)
 {
 	GKeyFile *kf = config->keyfile;
-	
+
 	if (g_key_file_has_key(kf, "global", "auto-away-enable", NULL) ||
-		d->enabled)
+		d->enabled) {
 		g_key_file_set_boolean(kf, "global", "auto-away-enable", d->enabled);
+	}
 
-	if (d->message != NULL)
+	if (d->message != NULL) {
 		g_key_file_set_string(kf, "global", "auto-away-message", d->message);
+	}
 
-	if (d->nick != NULL)
+	if (d->nick != NULL) {
 		g_key_file_set_string(kf, "global", "auto-away-nick", d->nick);
+	}
 
-	if (d->client_limit != -1)
+	if (d->client_limit != -1) {
 		g_key_file_set_integer(kf, "global", "auto-away-client-limit", d->client_limit);
+	}
 
-	if (d->max_idle_time != -1)
+	if (d->max_idle_time != -1) {
 		g_key_file_set_integer(kf, "global", "auto-away-time", d->max_idle_time);
+	}
 }
 
 static void config_load_auto_away(struct auto_away_config *d, GKeyFile *kf)
@@ -1251,8 +1273,9 @@ struct ctrlproxy_config *load_configuration(const char *dir,
 
 	cfg->autosave = TRUE;
 	if (g_key_file_has_key(kf, "global", "autosave", NULL) &&
-		!g_key_file_get_boolean(kf, "global", "autosave", NULL))
+		!g_key_file_get_boolean(kf, "global", "autosave", NULL)) {
 		cfg->autosave = FALSE;
+	}
 
 	if (g_key_file_has_key(kf, "global", "keytab", NULL)) {
 		char *keytab;
@@ -1263,24 +1286,25 @@ struct ctrlproxy_config *load_configuration(const char *dir,
 		g_free(keytab);
 	}
 
-	if (g_key_file_has_key(kf, "global", "max_who_age", NULL))
+	if (g_key_file_has_key(kf, "global", "max_who_age", NULL)) {
 		cfg->cache.max_who_age = g_key_file_get_integer(kf, "global", "max_who_age", NULL);
-	else if (g_key_file_has_key(kf, "global", "max-who-age", NULL))
+	} else if (g_key_file_has_key(kf, "global", "max-who-age", NULL)) {
 		cfg->cache.max_who_age = g_key_file_get_integer(kf, "global", "max-who-age", NULL);
+	}
 
 
 	cfg->replication = g_key_file_get_string(kf, "global", "replication", NULL);
 
 	if (g_key_file_has_key(kf, "global", "report-time", NULL)) {
 		char *setting = g_key_file_get_string(kf, "global", "report-time", NULL);
-		if (!g_strcasecmp(setting, "never") || !g_strcasecmp(setting, "false"))
+		if (!strcasecmp(setting, "never") || !strcasecmp(setting, "false")) {
 			cfg->report_time = REPORT_TIME_NEVER;
-		else if (!g_strcasecmp(setting, "always"))
+		} else if (!strcasecmp(setting, "always")) {
 			cfg->report_time = REPORT_TIME_ALWAYS;
-		else if  (!g_strcasecmp(setting, "replication") ||
-				  !g_strcasecmp(setting, "true"))
+		} else if  (!strcasecmp(setting, "replication") ||
+				  !strcasecmp(setting, "true")) {
 			cfg->report_time = REPORT_TIME_REPLICATION;
-		else {
+		} else {
 			log_global(LOG_WARNING, "Unknown value `%s' for report-time in configuration file", setting);
 		}
 		g_free(setting);
@@ -1291,14 +1315,15 @@ struct ctrlproxy_config *load_configuration(const char *dir,
 		cfg->report_time_offset = g_key_file_get_integer(kf, "global", "report-time-offset", NULL);
 	}
 
-    if (g_key_file_has_key(kf, "global", "motd-file", NULL))
+	if (g_key_file_has_key(kf, "global", "motd-file", NULL)) {
 		cfg->motd_file = g_key_file_get_string(kf, "global", "motd-file", NULL);
-	else if (from_source)
+	} else if (from_source) {
 		cfg->motd_file = g_strdup("motd");
-	else
-	    cfg->motd_file = g_build_filename(SYSCONFDIR, "ctrlproxy", "motd", NULL);
+	} else {
+		cfg->motd_file = g_build_filename(SYSCONFDIR, "ctrlproxy", "motd", NULL);
+	}
 
-    if (g_key_file_has_key(kf, "client", "charset", NULL)) {
+	if (g_key_file_has_key(kf, "client", "charset", NULL)) {
 		cfg->client_charset = g_key_file_get_string(kf, "client", "charset", NULL);
 		g_key_file_remove_key(cfg->keyfile, "client", "charset", NULL); /* deprecated */
 	} else if (g_key_file_has_key(kf, "global", "client-charset", NULL)) {
@@ -1307,49 +1332,56 @@ struct ctrlproxy_config *load_configuration(const char *dir,
 	} else if (g_key_file_has_key(kf, "global", "default-client-charset", NULL)) {
 		cfg->client_charset = g_key_file_get_string(kf, "global", "default-client-charset", NULL);
 	} else {
-	    cfg->client_charset = NULL;
+		cfg->client_charset = NULL;
 	}
 
-    if (g_key_file_has_key(kf, "global", "learn-nickserv", NULL))
+	if (g_key_file_has_key(kf, "global", "learn-nickserv", NULL)) {
 		cfg->learn_nickserv = g_key_file_get_boolean(kf, "global", "learn-nickserv", NULL);
-    else
-	    cfg->learn_nickserv = TRUE;
+	} else {
+		cfg->learn_nickserv = TRUE;
+	}
 
-    if (g_key_file_has_key(kf, "global", "learn-network-name", NULL))
+	if (g_key_file_has_key(kf, "global", "learn-network-name", NULL)) {
 		cfg->learn_network_name = g_key_file_get_boolean(kf, "global", "learn-network-name", NULL);
-    else
-	    cfg->learn_network_name = TRUE;
+	} else {
+		cfg->learn_network_name = TRUE;
+	}
 
-	if (g_key_file_has_key(kf, "global", "create-implicit", NULL))
+	if (g_key_file_has_key(kf, "global", "create-implicit", NULL)) {
 		cfg->create_implicit = g_key_file_get_boolean(kf, "global", "create-implicit", NULL);
-	else
+	} else {
 		cfg->create_implicit = TRUE;
+	}
 
 	if (g_key_file_has_key(kf, "global", "default-username", NULL)) {
 		g_free(cfg->default_username);
 		cfg->default_username = g_key_file_get_string(kf, "global", "default-username", NULL);
-		if (!strcmp(cfg->default_username, "") || cfg->default_username[0] == ' ')
+		if (!strcmp(cfg->default_username, "") || cfg->default_username[0] == ' ') {
 			log_global(LOG_WARNING, "Invalid default username `%s' set", cfg->default_username);
+		}
 	}
 
 	if (g_key_file_has_key(kf, "global", "default-fullname", NULL)) {
 		g_free(cfg->default_realname);
 		cfg->default_realname = g_key_file_get_string(kf, "global", "default-fullname", NULL);
-		if (!strcmp(cfg->default_realname, "") || cfg->default_realname[0] == ' ')
+		if (!strcmp(cfg->default_realname, "") || cfg->default_realname[0] == ' ') {
 			log_global(LOG_WARNING, "Invalid default fullname `%s' set", cfg->default_realname);
+		}
 	}
 
 	if (g_key_file_has_key(kf, "global", "default-nick", NULL)) {
 		g_free(cfg->default_nick);
 		cfg->default_nick = g_key_file_get_string(kf, "global", "default-nick", NULL);
-		if (!strcmp(cfg->default_nick, "") || cfg->default_nick[0] == ' ')
+		if (!strcmp(cfg->default_nick, "") || cfg->default_nick[0] == ' ') {
 			log_global(LOG_WARNING, "Invalid nick name `%s' set", cfg->default_nick);
+		}
 	}
 
-	if (!g_file_test(cfg->motd_file, G_FILE_TEST_EXISTS))
+	if (!g_file_test(cfg->motd_file, G_FILE_TEST_EXISTS)) {
 		log_global(LOG_ERROR, "Can't open MOTD file '%s' for reading", cfg->motd_file);
+	}
 
-    if (g_key_file_has_key(kf, "admin", "without_privmsg", NULL)) {
+	if (g_key_file_has_key(kf, "admin", "without_privmsg", NULL)) {
 		if (g_key_file_get_boolean(kf, "admin", "without_privmsg", NULL)) {
 			cfg->admin_user = NULL;
 		} else {
@@ -1363,11 +1395,14 @@ struct ctrlproxy_config *load_configuration(const char *dir,
 	}
 
 	cfg->admin_log = TRUE;
-    if (g_key_file_has_key(kf, "admin", "log", NULL) && !g_key_file_get_boolean(kf, "admin", "log", NULL))
+	if (g_key_file_has_key(kf, "admin", "log", NULL) && !g_key_file_get_boolean(kf, "admin", "log", NULL)) {
         cfg->admin_log = FALSE;
+	}
 	g_key_file_remove_key(kf, "admin", "log", NULL);
-    if (g_key_file_has_key(kf, "global", "admin-log", NULL) && !g_key_file_get_boolean(kf, "global", "admin-log", NULL))
-        cfg->admin_log = FALSE;
+	if (g_key_file_has_key(kf, "global", "admin-log", NULL) &&
+		!g_key_file_get_boolean(kf, "global", "admin-log", NULL)) {
+		cfg->admin_log = FALSE;
+	}
 
 	for (gl = cfg->networks; gl; gl = gl->next) {
 		struct network_config *nc = gl->data;
@@ -1380,8 +1415,7 @@ struct ctrlproxy_config *load_configuration(const char *dir,
 	config_load_log(cfg);
 	config_load_auto_away(&cfg->auto_away, cfg->keyfile);
 
-	keyfile_filename = g_build_filename(cfg->config_dir, "keys",
-									  NULL);
+	keyfile_filename = g_build_filename(cfg->config_dir, "keys", NULL);
 
 	if (g_file_test(keyfile_filename, G_FILE_TEST_EXISTS)) {
 		if (!keyfile_read_file(keyfile_filename, ';', &channel_keys)) {
@@ -1396,14 +1430,15 @@ struct ctrlproxy_config *load_configuration(const char *dir,
 	/* Check for unknown parameters */
 	keys = g_key_file_get_keys(kf, "global", NULL, NULL);
 	for (i = 0; keys[i] != NULL; i++) {
-		if (!config_known_key(keys[i]))
+		if (!config_known_key(keys[i])) {
 			log_global(LOG_WARNING, "Unknown setting `%s' in configuration file", keys[i]);
+		}
 	}
 	g_strfreev(keys);
 
 	size = 0;
 	autoconnect_list = g_key_file_get_string_list(kf, "global", "autoconnect", &size, NULL);
-		
+
 	for (i = 0; i < size; i++) {
 		struct network_config *nc = find_create_network_config(cfg, autoconnect_list[i]);
 
@@ -1427,8 +1462,9 @@ struct network_config *network_config_init(struct ctrlproxy_config *cfg)
 	s->autoconnect = FALSE;
 	s->reconnect_interval = -1;
 
-	if (cfg)
+	if (cfg) {
 		cfg->networks = g_list_append(cfg->networks, s);
+	}
 	return s;
 }
 
@@ -1446,7 +1482,7 @@ void free_config(struct ctrlproxy_config *cfg)
 			struct channel_config *cc = nc->channels->data;
 			g_free(cc->name);
 			g_free(cc->key);
-			nc->channels = g_list_remove(nc->channels, cc);	
+			nc->channels = g_list_remove(nc->channels, cc);
 			g_free(cc);
 		}
 		switch (nc->type) {
@@ -1473,8 +1509,9 @@ void free_config(struct ctrlproxy_config *cfg)
 			break;
 		}
 		cfg->networks = g_list_remove(cfg->networks, nc);
-		if (nc->keyfile != NULL && nc->filename != NULL)
+		if (nc->keyfile != NULL && nc->filename != NULL) {
 			g_key_file_free(nc->keyfile);
+		}
 		g_free(nc->filename);
 		g_free(nc->groupname);
 		g_free(nc);
@@ -1509,7 +1546,7 @@ gboolean create_configuration(const char *config_dir, gboolean from_source)
 
 	global = load_global(DEFAULT_CONFIG_DIR, from_source);
 	if (global == NULL) {
-		fprintf(stderr, "Unable to load default configuration '%s'\n", DEFAULT_CONFIG_DIR);	
+		fprintf(stderr, "Unable to load default configuration '%s'\n", DEFAULT_CONFIG_DIR);
 		return FALSE;
 	}
 	global->config->config_dir = g_strdup(config_dir);

@@ -191,7 +191,7 @@ static gboolean process_from_server(struct irc_network *n, const struct irc_line
 			if (n->clients == NULL) {
 				if (!base_strcmp(l->args[0], "PRIVMSG") && l->argc > 2 &&
 					l->args[2][0] == '\001' &&
-					g_strncasecmp(l->args[2], "\001ACTION", 7) != 0) {
+					base_strncmp(l->args[2], "\001ACTION", 7) != 0) {
 					network_process_ctcp_request(n, l);
 				} else if (!base_strcmp(l->args[0], "NOTICE") && l->argc > 2 &&
 					l->args[2][0] == '\001') {
@@ -250,7 +250,7 @@ struct irc_network *find_network_by_hostname(struct global *global,
 		struct network_config *nc;
 		g_assert(n != NULL);
 
-		if (n->name && !g_strcasecmp(n->name, hostname)) {
+		if (n->name && !strcasecmp(n->name, hostname)) {
 			g_free(portname);
 			return n;
 		}
@@ -262,8 +262,8 @@ struct irc_network *find_network_by_hostname(struct global *global,
 				struct tcp_server_config *server = sv->data;
 				struct servent *sv_serv = getservbyname(server->port, "tcp");
 
-				if (!g_strcasecmp(server->host, hostname) &&
-					(!g_strcasecmp(server->port, portname)
+				if (!strcasecmp(server->host, hostname) &&
+					(!strcasecmp(server->port, portname)
 					 || (sv_serv && htons(sv_serv->s_port) == port))) {
 					g_free(portname);
 					return n;
@@ -271,7 +271,7 @@ struct irc_network *find_network_by_hostname(struct global *global,
 			}
 		}
 
-		if (n->name && !g_strcasecmp(n->name, hostname)) {
+		if (n->name && !strcasecmp(n->name, hostname)) {
 			g_free(portname);
 			return n;
 		}

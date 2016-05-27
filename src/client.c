@@ -104,7 +104,7 @@ static gboolean process_from_client(struct irc_client *c, const struct irc_line 
 		admin_process_command(c, l, 2);
 	} else if (!base_strcmp(l->args[0], "PRIVMSG") && l->argc > 2 &&
 			l->args[2][0] == '\001' &&
-			g_strncasecmp(l->args[2], "\001ACTION", 7) != 0) {
+			base_strncmp(l->args[2], "\001ACTION", 7) != 0) {
 		ctcp_client_request_record(c, l);
 
 		/* send off to server */
@@ -201,7 +201,7 @@ static gboolean welcome_client(struct irc_client *client)
 	g_assert(client->network != NULL);
 
 	if (client->network->external_state != NULL) {
-		if (g_strcasecmp(client->state->me.nick, client->network->external_state->me.nick) != 0) {
+		if (irccmp(client->state->info, client->state->me.nick, client->network->external_state->me.nick) != 0) {
 			/* Tell the client our his/her real nick */
 			client_send_args_ex(client, client->state->me.hostmask, "NICK",
 								client->network->external_state->me.nick, NULL);

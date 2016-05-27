@@ -69,13 +69,13 @@ static gboolean log_data(struct irc_network *n, const struct irc_line *l,
 	struct auto_away_data *d = userdata;
 	GList *sl;
 
-	if (dir == TO_SERVER && !g_strcasecmp(l->args[0], "AWAY")) {
+	if (dir == TO_SERVER && !base_strcmp(l->args[0], "AWAY")) {
 		d->last_message = time(NULL);
 	}
 
 	if (dir == TO_SERVER &&
-	   (!g_strcasecmp(l->args[0], "PRIVMSG") ||
-		!g_strcasecmp(l->args[0], "NOTICE"))) {
+	   (!base_strcmp(l->args[0], "PRIVMSG") ||
+		!base_strcmp(l->args[0], "NOTICE"))) {
 		d->last_message = time(NULL);
 		for (sl = d->global->networks; sl; sl = sl->next) {
 			struct irc_network *s = (struct irc_network *)sl->data;

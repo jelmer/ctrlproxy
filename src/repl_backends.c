@@ -28,12 +28,12 @@ static GHashTable *simple_backlog = NULL;
 static gboolean check_highlight(struct irc_line *l, time_t t, void *userdata)
 {
 	struct irc_client *c = userdata;
-    int i;
+	int i;
 
-	if (g_strcasecmp(l->args[0], "PRIVMSG") != 0 &&
-		g_strcasecmp(l->args[0], "NOTICE") != 0)
+	if (base_strcmp(l->args[0], "PRIVMSG") != 0 &&
+		base_strcmp(l->args[0], "NOTICE") != 0)
 		return TRUE;
-	
+
 	for (i = 0; matches && matches[i]; i++) {
 		if (strstr(l->args[2], matches[i]) != NULL) {
 			return client_send_line(c, l, NULL);
@@ -97,8 +97,8 @@ static gboolean log_data(struct irc_network *n, const struct irc_line *l, enum d
 {
 	if(dir != TO_SERVER) return TRUE;
 
-	if (g_strcasecmp(l->args[0], "PRIVMSG") &&
-		g_strcasecmp(l->args[0], "NOTICE")) return TRUE;
+	if (base_strcmp(l->args[0], "PRIVMSG") &&
+		base_strcmp(l->args[0], "NOTICE")) return TRUE;
 
 	if (n->linestack != NULL)
 		g_hash_table_replace(simple_backlog, irc_network_ref(n),

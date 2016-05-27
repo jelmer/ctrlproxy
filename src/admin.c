@@ -699,7 +699,7 @@ static gint cmp_cmd(gconstpointer a, gconstpointer b)
 {
 	const struct admin_command *cmda = a, *cmdb = b;
 
-	return g_strcasecmp(cmda->name, cmdb->name);
+	return strcasecmp(cmda->name, cmdb->name);
 }
 
 void register_admin_command(const struct admin_command *cmd)
@@ -733,7 +733,7 @@ gboolean process_cmd(admin_handle h, const char *cmd)
 	/* Ok, arguments are processed now. Execute the corresponding command */
 	for (gl = admin_commands; gl; gl = gl->next) {
 		struct admin_command *cmd = (struct admin_command *)gl->data;
-		if (!g_strcasecmp(cmd->name, args[0])) {
+		if (!strcasecmp(cmd->name, args[0])) {
 			cmd->handler(h, (const char * const *)args, cmd->userdata);
 			g_strfreev(args);
 			return TRUE;
@@ -803,8 +803,8 @@ static gboolean admin_net_init(struct irc_network *n)
 
 static gboolean admin_to_server (struct irc_network *n, struct irc_client *c, const struct irc_line *l)
 {
-	if (!g_strcasecmp(l->args[0], "PRIVMSG") ||
-		!g_strcasecmp(l->args[0], "NOTICE")) {
+	if (!base_strcmp(l->args[0], "PRIVMSG") ||
+		!base_strcmp(l->args[0], "NOTICE")) {
 		struct admin_handle ah;
 
 		if (g_strcasecmp(l->args[0], n->external_state->me.nick) == 0) {
@@ -812,7 +812,7 @@ static gboolean admin_to_server (struct irc_network *n, struct irc_client *c, co
 			return TRUE;
 		}
 
-		if (g_strcasecmp(l->args[1], ADMIN_CHANNEL) &&
+		if (irccmp(n->external_state, l->args[1], ADMIN_CHANNEL) &&
 			g_strcasecmp(l->args[1], "ctrlproxy")) {
 			virtual_network_recv_response(n, ERR_NOSUCHNICK, l->args[1], "No such nick/channel", NULL);
 			return TRUE;
@@ -1124,10 +1124,10 @@ static gboolean interpret_boolean(admin_handle h, const char *value,
 		return FALSE;
 	}
 
-	if (!g_strcasecmp(value, "true")) {
+	if (!strcasecmp(value, "true")) {
 		*ret = TRUE;
 		return TRUE;
-	} else if (!g_strcasecmp(value, "false")) {
+	} else if (!strcasecmp(value, "false")) {
 		*ret = FALSE;
 		return TRUE;
 	}
@@ -1172,12 +1172,12 @@ static gboolean report_time_set(admin_handle h, const char *value)
 {
 	struct global *g = admin_get_global(h);
 	
-	if (!g_strcasecmp(value, "never") || !g_strcasecmp(value, "false"))
+	if (!strcasecmp(value, "never") || !strcasecmp(value, "false"))
 		g->config->report_time = REPORT_TIME_NEVER;
-	else if (!g_strcasecmp(value, "always"))
+	else if (!strcasecmp(value, "always"))
 		g->config->report_time = REPORT_TIME_ALWAYS;
-	else if  (!g_strcasecmp(value, "replication") ||
-			  !g_strcasecmp(value, "true"))
+	else if  (!strcasecmp(value, "replication") ||
+			  !strcasecmp(value, "true"))
 		g->config->report_time = REPORT_TIME_REPLICATION;
 	else {
 		return FALSE;

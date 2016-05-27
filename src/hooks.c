@@ -61,7 +61,7 @@ static GList *del_filter_ex(GList *list, const char *name)
 	{
 		struct filter_data *d = (struct filter_data *)gl->data;
 
-		if (!g_strcasecmp(d->name, name))
+		if (!strcmp(d->name, name))
 		{
 			g_free(d->name);
 			g_free(d);

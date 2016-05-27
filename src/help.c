@@ -28,10 +28,12 @@
 
 void help_free(help_t *h)
 {
-	if (h->file != NULL)
-		g_mapped_file_free(h->file);
-	if (h->entries != NULL)
+	if (h->file != NULL) {
+		g_mapped_file_unref(h->file);
+	}
+	if (h->entries != NULL) {
 		g_hash_table_destroy(h->entries);
+	}
 	g_free(h);
 }
 
