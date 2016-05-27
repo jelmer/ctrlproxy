@@ -90,7 +90,7 @@ static gboolean channel_state_equal(const struct irc_channel_state *channel1, co
 {
 	int i;
 	null_equal(channel1, channel2);
-	
+
 	for (i = 0; i < MAXMODES; i++) {
 		if (!str_equal(channel1->chanmode_option[i], channel2->chanmode_option[i]))
 			return FALSE;
@@ -191,7 +191,7 @@ const char *get_linestack_tempdir(const char *base)
 START_TEST(test_empty)
 	struct irc_network_state *ns1, *ns2;
 	struct linestack_context *ctx;
-	
+
 	ns1 = network_state_init("bla", "Gebruikersnaam", "Computernaam");
 	ctx = create_linestack(get_linestack_tempdir("test_empty"), TRUE, ns1);
 
@@ -209,7 +209,7 @@ START_TEST(test_msg)
 
 	GIOChannel *ch1, *ch2;
 	char *raw;
-	
+
 	ns1 = network_state_init("bla", "Gebruikersnaam", "Computernaam");
 	ctx = create_linestack(get_linestack_tempdir("msg"), TRUE, ns1);
 
@@ -242,7 +242,7 @@ START_TEST(test_join_part)
 
 	GIOChannel *ch1, *ch2;
 	char *raw;
-	
+
 	ns1 = network_state_init("bla", "Gebruikersnaam", "Computernaam");
 	ctx = create_linestack(get_linestack_tempdir("join_part"), TRUE, ns1);
 
@@ -278,7 +278,7 @@ START_TEST(test_skip_msg)
 
 	GIOChannel *ch1, *ch2;
 	char *raw;
-	
+
 	ns1 = network_state_init("bla", "Gebruikersnaam", "Computernaam");
 	ctx = create_linestack(get_linestack_tempdir("skip_msg"), TRUE, ns1);
 
@@ -313,7 +313,7 @@ START_TEST(test_object_msg)
 
 	GIOChannel *ch1, *ch2;
 	char *raw;
-	
+
 	ns1 = network_state_init("bla", "Gebruikersnaam", "Computernaam");
 	ctx = create_linestack(get_linestack_tempdir("get_object_msg"), TRUE, ns1);
 
@@ -353,11 +353,12 @@ START_TEST(test_object_open)
 	char *raw;
 
 	int j;
-	
+
 	ns1 = network_state_init("bla", "Gebruikersnaam", "Computernaam");
 	ctx = create_linestack(get_linestack_tempdir("test_object_open"), TRUE, ns1);
 
 	lm = linestack_get_marker(ctx);
+	fail_unless(*lm == 0, "lm: %d", *lm);
 
 	stack_process(ctx, ns1, ":bla!Gebruikersnaam@Computernaam JOIN #foo");
 	stack_process(ctx, ns1, ":bla!Gebruikersnaam@Computernaam JOIN #bla");
@@ -387,7 +388,7 @@ END_TEST
 START_TEST(test_join)
 	struct irc_network_state *ns1, *ns2;
 	struct linestack_context *ctx;
-	
+
 	ns1 = network_state_init("bla", "Gebruikersnaam", "Computernaam");
 	ctx = create_linestack(get_linestack_tempdir("test_join"), TRUE, ns1);
 
@@ -423,7 +424,7 @@ START_TEST(bench_lots_of_lines)
 	for (i = 0; i < 10000; i++)
 		linestack_insert_line(ctx, irc_parse_linef("PRIVMSG :%d", i),
 							  TO_SERVER, ns1);
-	
+
 	linestack_traverse(ctx, marker, NULL, line_track, stderr);
 END_TEST
 

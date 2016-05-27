@@ -973,7 +973,7 @@ struct irc_network *find_network(GList *networks, const char *name)
 	GList *gl;
 	for (gl = networks; gl; gl = gl->next) {
 		struct irc_network *n = gl->data;
-		if (n->name && !g_strcasecmp(n->name, name))
+		if (n->name && !strcasecmp(n->name, name))
 			return n;
 	}
 
