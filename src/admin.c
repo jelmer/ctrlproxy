@@ -64,12 +64,14 @@ static void privmsg_admin_out(admin_handle h, const char *data)
 	char *hostmask;
 
 	hostmask = admin_hostmask(n);
-	if (n->external_state != NULL)
+	if (n->external_state != NULL) {
 		nick = n->external_state->me.nick;
-	if (c != NULL)
+	}
+	if (c != NULL) {
 		client_send_args_ex(c, hostmask, "NOTICE", nick, data, NULL);
-	else
+	} else {
 		virtual_network_recv_args(n, hostmask, "NOTICE", nick, data, NULL);
+	}
 
 	g_free(hostmask);
 }
@@ -105,10 +107,11 @@ static void cmd_help(admin_handle h, const char * const *args, void *userdata)
 	s = help_get(help, args[1] != NULL?args[1]:"index");
 
 	if (s == NULL) {
-		if (args[1] == NULL)
+		if (args[1] == NULL) {
 			admin_out(h, "Sorry, help not available");
-		else
+		} else {
 			admin_out(h, "Sorry, no help for %s available", args[1]);
+		}
 		return;
 	}
 
@@ -116,7 +119,7 @@ static void cmd_help(admin_handle h, const char * const *args, void *userdata)
 		char *tmp;
 		admin_out(h, "%s", tmp = g_strndup(s, strchr(s, '\n')-s));
 		g_free(tmp);
-			
+
 		s = strchr(s, '\n')+1;
 	}
 }
@@ -337,10 +340,11 @@ static void cmd_save_config (admin_handle h, const char * const *args, void *use
 	const char *adm_dir;
 	struct global *global = admin_get_global(h);
 	global_update_config(global);
-	if (global->restricted)
+	if (global->restricted) {
 		adm_dir = global->config->config_dir;
-	else
+	} else {
 		adm_dir = args[1]?args[1]:global->config->config_dir;
+	}
 	save_configuration(global->config, adm_dir);
 	nickserv_save(global, adm_dir);
 	admin_out(h, "Configuration saved in %s", adm_dir);
@@ -379,7 +383,7 @@ static void rename_network_helper(admin_handle h, const char *oldname,
 		admin_out(h, "Network with name `%s' already exists", newname);
 		return;
 	}
-	
+
 	g_free(n->name);
 	n->name = g_strdup(newname);
 }
@@ -474,8 +478,9 @@ static void list_networks_helper(admin_handle h)
 /* NETWORK INFO OFTC */
 static void cmd_network(admin_handle h, const char * const *args, void *userdata)
 {
-	if (args[1] == NULL)
+	if (args[1] == NULL) {
 		goto usage;
+	}
 
 	if (!strcasecmp(args[1], "list")) {
 		list_networks_helper(h);
@@ -586,7 +591,7 @@ static void cmd_backlog(admin_handle h, const char * const *args, void *userdata
 		admin_out(h, "No client to send backlog to");
 		return;
 	}
-	
+
 	n = admin_get_network(h);
 
 	if (n == NULL) {
@@ -628,11 +633,13 @@ static char *logging_get(admin_handle h)
 {
 	struct global *g = admin_get_global(h);
 
-	if (g->config->log_file == NULL)
+	if (g->config->log_file == NULL) {
 		return g_strdup("none");
+	}
 
-	if (g->config->log_file->is_irssi)
+	if (g->config->log_file->is_irssi) {
 		return g_strdup("irssi");
+	}
 
 	return g_strdup("custom");
 }
@@ -656,9 +663,10 @@ static gboolean log_level_set(admin_handle h, const char *value)
 	extern enum log_level current_log_level;
 	int x;
 
-	if (value == NULL)
+	if (value == NULL) {
 		return FALSE;
-	
+	}
+
 	x = atoi(value);
 	if (x < 0 || x > 5) {
 		admin_out(h, "Invalid log level %d", x);
@@ -785,7 +793,7 @@ static gboolean admin_net_init(struct irc_network *n)
 	char *nicks;
 
 	hostmask = admin_hostmask(n);
-	
+
 	virtual_network_recv_args(n, n->external_state->me.hostmask, "JOIN", ADMIN_CHANNEL, NULL);
 	virtual_network_recv_response(n, RPL_TOPIC, ADMIN_CHANNEL,
 		"CtrlProxy administration channel | Type `help' for more information",
@@ -955,14 +963,17 @@ void admin_log(enum log_level level, const struct irc_network *n, const struct i
 	static gboolean entered = FALSE;
 
 	if (!my_global || !my_global->config ||
-		!my_global->config->admin_log)
+		!my_global->config->admin_log) {
 		return;
+	}
 
-	if (level < LOG_INFO)
+	if (level < LOG_INFO) {
 		return;
+	}
 
-	if (entered)
+	if (entered) {
 		return; /* Prevent inifinite recursion.. */
+	}
 
 	entered = TRUE;
 
@@ -977,13 +988,14 @@ void admin_log(enum log_level level, const struct irc_network *n, const struct i
 	for (gl = my_global->networks; gl; gl = gl->next) {
 		struct irc_network *network = gl->data;
 
-		if (network->connection.data.virtual.ops != &admin_network)
+		if (network->connection.data.virtual.ops != &admin_network) {
 			continue;
+		}
 
 		hostmask = admin_hostmask(network);
 		l = irc_parse_line_args(hostmask, "PRIVMSG", ADMIN_CHANNEL, tmp, NULL);
 		g_free(hostmask);
-		
+
 		virtual_network_recv_line(network, l);
 
 		free_line(l);
@@ -1062,14 +1074,17 @@ static void cmd_stop_listener(admin_handle h, const char * const *args, void *us
 	for (gl = admin_get_global(h)->listeners; gl; gl = gl->next) {
 		struct irc_listener *l = gl->data;
 
-		if (b && l->config->address == NULL)
+		if (b && l->config->address == NULL) {
 			continue;
+		}
 
-		if (b && l->config->address != NULL && strcmp(b, l->config->address) != 0)
+		if (b && l->config->address != NULL && strcmp(b, l->config->address) != 0) {
 			continue;
+		}
 
-		if (strcmp(p, l->config->port) != 0)
+		if (strcmp(p, l->config->port) != 0) {
 			continue;
+		}
 
 		listener_stop(l);
 		free_listener(l);
@@ -1171,18 +1186,18 @@ static char *report_time_get(admin_handle h)
 static gboolean report_time_set(admin_handle h, const char *value)
 {
 	struct global *g = admin_get_global(h);
-	
-	if (!strcasecmp(value, "never") || !strcasecmp(value, "false"))
+
+	if (!strcasecmp(value, "never") || !strcasecmp(value, "false")) {
 		g->config->report_time = REPORT_TIME_NEVER;
-	else if (!strcasecmp(value, "always"))
+	} else if (!strcasecmp(value, "always")) {
 		g->config->report_time = REPORT_TIME_ALWAYS;
-	else if  (!strcasecmp(value, "replication") ||
-			  !strcasecmp(value, "true"))
+	} else if  (!strcasecmp(value, "replication") ||
+			  !strcasecmp(value, "true")) {
 		g->config->report_time = REPORT_TIME_REPLICATION;
-	else {
+	} else {
 		return FALSE;
 	}
-	
+
 	return TRUE;
 }
 
@@ -1223,8 +1238,9 @@ static gboolean admin_user_set(admin_handle h, const char *value)
 	if (strlen(value) == 0) {
 		/* FIXME: Check whether value is a somewhat valid IRC nick? */
 		g->config->admin_user = g_strdup(value);
-	} else
+	} else {
 		g->config->admin_user = NULL;
+	}
 
 	return TRUE;
 }
@@ -1235,9 +1251,10 @@ static char *max_who_age_get(admin_handle h)
 {
 	struct global *g = admin_get_global(h);
 
-	if (g->config->cache.max_who_age == 0)
+	if (g->config->cache.max_who_age == 0) {
 		return NULL;
-	
+	}
+
 	return g_strdup_printf("%d", g->config->cache.max_who_age);
 }
 
@@ -1254,9 +1271,10 @@ static char *auto_away_time_get(admin_handle h)
 {
 	struct global *g = admin_get_global(h);
 
-	if (g->config->auto_away.max_idle_time == 0)
+	if (g->config->auto_away.max_idle_time == 0) {
 		return NULL;
-	
+	}
+
 	return g_strdup_printf("%d", g->config->auto_away.max_idle_time);
 }
 
@@ -1274,7 +1292,7 @@ static gboolean auto_away_time_set(admin_handle h, const char *value)
 static char *auto_away_enable_get(admin_handle h)
 {
 	struct global *g = admin_get_global(h);
-	
+
 	return g_strdup(g->config->auto_away.enabled?"true":"false");
 }
 
@@ -1288,7 +1306,7 @@ static gboolean auto_away_enable_set(admin_handle h, const char *value)
 static char *auto_away_message_get(admin_handle h)
 {
 	struct global *g = admin_get_global(h);
-	
+
 	return g_strdup(g->config->auto_away.message);
 }
 
@@ -1306,7 +1324,7 @@ static gboolean auto_away_message_set(admin_handle h, const char *value)
 static char *auto_away_nick_get(admin_handle h)
 {
 	struct global *g = admin_get_global(h);
-	
+
 	return g_strdup(g->config->auto_away.nick);
 }
 
@@ -1324,7 +1342,7 @@ static gboolean auto_away_nick_set(admin_handle h, const char *value)
 static char *auto_away_client_limit_get(admin_handle h)
 {
 	struct global *g = admin_get_global(h);
-	
+
 	return g_strdup_printf("%d", g->config->auto_away.client_limit);
 }
 
@@ -1341,9 +1359,10 @@ static char *report_time_offset_get(admin_handle h)
 {
 	struct global *g = admin_get_global(h);
 
-	if (g->config->report_time_offset == 0)
+	if (g->config->report_time_offset == 0) {
 		return NULL;
-	
+	}
+
 	return g_strdup_printf("%d", g->config->report_time_offset);
 }
 
@@ -1364,8 +1383,9 @@ static char *port_get(admin_handle h)
 	for (gl = g->config->listeners; gl; gl = gl->next) {
 		struct listener_config *l = gl->data;
 
-		if (l->is_default)
-			return g_strdup_printf("%s", l->port);
+		if (l->is_default) {
+			return g_strdup(l->port);
+		}
 	}
 
 	return NULL;
@@ -1399,8 +1419,9 @@ static char *bind_get(admin_handle h)
 	for (gl = g->config->listeners; gl; gl = gl->next) {
 		struct listener_config *l = gl->data;
 
-		if (l->is_default)
+		if (l->is_default) {
 			return g_strdup(l->address);
+		}
 	}
 
 	return NULL;
@@ -1434,8 +1455,9 @@ static char *password_get(admin_handle h)
 	for (gl = g->config->listeners; gl; gl = gl->next) {
 		struct listener_config *l = gl->data;
 
-		if (l->is_default)
-			return g_strdup_printf("%s", l->password);
+		if (l->is_default) {
+			return g_strdup(l->password);
+		}
 	}
 
 	return NULL;
@@ -1469,8 +1491,9 @@ static char *default_network_get(admin_handle h)
 	for (gl = g->config->listeners; gl; gl = gl->next) {
 		struct listener_config *l = gl->data;
 
-		if (l->is_default)
+		if (l->is_default) {
 			return g_strdup(l->network);
+		}
 	}
 
 	return NULL;
@@ -1648,10 +1671,11 @@ static void cmd_set(admin_handle h, const char * const *args, void *userdata)
 	if (args[1] == NULL) {
 		for (i = 0; settings[i].name != NULL; i++) {
 			tmp = settings[i].get(h);
-			if (tmp == NULL)
+			if (tmp == NULL) {
 				admin_out(h, "%s is not set", settings[i]);
-			else
+			} else {
 				admin_out(h, "%s = %s", settings[i].name, tmp);
+			}
 			g_free(tmp);
 		}
 	} else {
@@ -1724,22 +1748,25 @@ static void iochannel_admin_out(admin_handle h, const char *data)
 
 	status = g_io_channel_write_chars(h->user_data, data, -1, &bytes_written, &error);
 	if (status != G_IO_STATUS_NORMAL) {
-		if (error != NULL)
+		if (error != NULL) {
 			g_error_free(error);
+		}
 		return;
 	}
 
 	status = g_io_channel_write_chars(h->user_data, "\n", -1, &bytes_written, &error);
 	if (status != G_IO_STATUS_NORMAL) {
-		if (error != NULL)
+		if (error != NULL) {
 			g_error_free(error);
+		}
 		return;
 	}
 
 	status = g_io_channel_flush(h->user_data, &error);
 	if (status != G_IO_STATUS_NORMAL) {
-		if (error != NULL)
+		if (error != NULL) {
 			g_error_free(error);
+		}
 		return;
 	}
 }
@@ -1766,8 +1793,9 @@ static gboolean handle_client_data(GIOChannel *channel,
 			g_free(raw);
 		}
 
-		if (error != NULL)
+		if (error != NULL) {
 			g_error_free(error);
+		}
 	}
 
 	if (condition & G_IO_HUP) {
@@ -1798,7 +1826,7 @@ static gboolean handle_new_client(GIOChannel *c_server,
 	g_io_channel_set_close_on_unref(c, TRUE);
 	g_io_channel_set_encoding(c, NULL, NULL);
 	g_io_channel_set_flags(c, G_IO_FLAG_NONBLOCK, NULL);
-	
+
 	g_io_add_watch(c, G_IO_IN | G_IO_ERR | G_IO_HUP, handle_client_data, _global);
 
 	g_io_channel_unref(c);
@@ -1816,7 +1844,7 @@ gboolean start_admin_socket(struct global *global)
 		log_global(LOG_ERROR, "error creating unix socket: %s", strerror(errno));
 		return FALSE;
 	}
-	
+
 	un.sun_family = AF_UNIX;
 	strncpy(un.sun_path, global->config->admin_socket, sizeof(un.sun_path));
 	unlink(un.sun_path);
@@ -1825,7 +1853,7 @@ gboolean start_admin_socket(struct global *global)
 		log_global(LOG_ERROR, "unable to bind to %s: %s", un.sun_path, strerror(errno));
 		return FALSE;
 	}
-	
+
 	if (listen(sock, 5) < 0) {
 		log_global(LOG_ERROR, "error listening on socket: %s", strerror(errno));
 		return FALSE;
@@ -1849,8 +1877,9 @@ gboolean start_admin_socket(struct global *global)
 
 gboolean stop_admin_socket(struct global *global)
 {
-	if (global->admin_incoming_id > 0)
+	if (global->admin_incoming_id > 0) {
 		g_source_remove(global->admin_incoming_id);
+	}
 	unlink(global->config->admin_socket);
 	return TRUE;
 }

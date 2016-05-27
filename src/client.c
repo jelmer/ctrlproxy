@@ -118,11 +118,12 @@ static gboolean process_from_client(struct irc_client *c, const struct irc_line 
 		}
 	} else if (c->network->connection.state == NETWORK_CONNECTION_STATE_NOT_CONNECTED) {
 		char *msg;
-		if (c->network->connection.data.tcp.last_disconnect_reason == NULL)
+		if (c->network->connection.data.tcp.last_disconnect_reason == NULL) {
 			msg = g_strdup("Currently not connected to server...");
-		else
+		} else {
 			msg = g_strdup_printf("Currently not connected to server... (%s)",
 					c->network->connection.data.tcp.last_disconnect_reason);
+		}
 
 		handle_offline_command(c, l, msg);
 
@@ -145,7 +146,7 @@ static gboolean welcome_client(struct irc_client *client)
 	char *features, *tmp;
 	struct network_config *nc;
 
-	g_assert(client);
+	g_assert(client != NULL);
 
 	if (client->network == NULL) {
 		client_disconnect(client,
@@ -236,7 +237,7 @@ GList *lose_client_hooks = NULL;
 void add_lose_client_hook(const char *name, lose_client_hook h, void *userdata)
 {
 	struct lose_client_hook_data *d;
-	
+
 	d = g_malloc(sizeof(struct lose_client_hook_data));
 	d->name = g_strdup(name);
 	d->hook = h;
@@ -247,8 +248,7 @@ void add_lose_client_hook(const char *name, lose_client_hook h, void *userdata)
 void del_lose_client_hook(const char *name)
 {
 	GList *l;
-	for (l = lose_client_hooks; l; l = l->next)
-	{
+	for (l = lose_client_hooks; l; l = l->next) {
 		struct lose_client_hook_data *d = (struct lose_client_hook_data *)l->data;
 		if (!strcmp(d->name, name)) {
 			g_free(d->name);
@@ -262,15 +262,15 @@ void del_lose_client_hook(const char *name)
 static void handle_client_disconnect(struct irc_client *c)
 {
 	GList *l;
-	
-	for (l = lose_client_hooks; l; l = l->next)
-	{
+
+	for (l = lose_client_hooks; l; l = l->next) {
 		struct lose_client_hook_data *d = (struct lose_client_hook_data *)l->data;
 		d->hook(c, d->userdata);
 	}
 
-	if (c->network != NULL)
+	if (c->network != NULL) {
 		c->network->clients = g_list_remove(c->network->clients, c);
+	}
 }
 
 static void client_connect_command(struct irc_client *client, const char *hostname, guint16 port)
@@ -334,11 +334,12 @@ struct irc_client *client_init(struct irc_network *n, struct irc_transport *tran
 
 	client->network = irc_network_ref(n);
 
-	if (n != NULL && n->global != NULL)
+	if (n != NULL && n->global != NULL) {
 		client_set_charset(client, n->global->config->client_charset);
+	}
 
 	client->exit_on_close = FALSE;
-	
+
 	return client;
 }
 
@@ -349,8 +350,9 @@ struct irc_line *irc_line_replace_hostmask(const struct irc_line *l,
 {
 	struct irc_line *ret;
 
-	if (irccmp(info, old->hostmask, new->hostmask) == 0)
+	if (irccmp(info, old->hostmask, new->hostmask) == 0) {
 		return NULL; /* No need to replace anything */
+	}
 
 	/* Replace lines "faked" to be from the user itself */
 	if (l->origin != NULL && line_from_nick(info, l, old->nick)) {
@@ -427,8 +429,9 @@ static gboolean client_forward_from_server(struct irc_client *c, const struct ir
 								  c->network->info,
 								  &c->network->external_state->me,
 								  &c->state->me);
-		if (nl != NULL)
+		if (nl != NULL) {
 			l = nl;
+		}
 	} else {
 		nl = NULL;
 	}
@@ -452,8 +455,9 @@ void clients_send(GList *clients, const struct irc_line *l,
 
 	for (g = clients; g; g = g->next) {
 		struct irc_client *c = (struct irc_client *)g->data;
-		if (c == exception)
+		if (c == exception) {
 			continue;
+		}
 
 		client_forward_from_server(c, l);
 	}

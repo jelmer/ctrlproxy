@@ -50,12 +50,10 @@ static GList *del_filter_ex(GList *list, const char *name)
 {
 	GList *gl;
 
-	for (gl = list; gl; gl = gl->next)
-	{
+	for (gl = list; gl; gl = gl->next) {
 		struct filter_data *d = (struct filter_data *)gl->data;
 
-		if (!strcmp(d->name, name))
-		{
+		if (!strcmp(d->name, name)) {
 			g_free(d->name);
 			g_free(d);
 			return g_list_remove(list, d);
@@ -127,8 +125,7 @@ void del_new_client_hook(const char *name)
 {
 	GList *l;
 
-	for (l = new_client_hooks; l; l = l->next)
-	{
+	for (l = new_client_hooks; l; l = l->next) {
 		struct new_client_hook_data *d = (struct new_client_hook_data *)l->data;
 		if (!strcmp(d->name, name)) {
 			g_free(d->name);
@@ -143,8 +140,7 @@ gboolean new_client_hook_execute(struct irc_client *c)
 {
 	GList *l;
 
-	for (l = new_client_hooks; l; l = l->next)
-	{
+	for (l = new_client_hooks; l; l = l->next) {
 		struct new_client_hook_data *d = (struct new_client_hook_data *)l->data;
 
 		if (!d->hook(c, d->userdata)) {
