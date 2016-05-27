@@ -18,3 +18,14 @@ libirc/python/irc.so
 libirc/tools/linestack-cmd
 testsuite/check
 test-*
+doc/ctrlproxy-admin.1
+doc/ctrlproxy-admin.1.html
+doc/ctrlproxy.1
+doc/ctrlproxy.1.html
+doc/ctrlproxy_config.5
+doc/ctrlproxy_config.5.html
+doc/ctrlproxyd.8
+doc/ctrlproxyd.8.html
+doc/help.txt
+doc/user-guide.html
+doc/user-guide/
