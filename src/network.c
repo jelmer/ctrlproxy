@@ -113,7 +113,6 @@ static gboolean process_from_server(struct irc_network *n, const struct irc_line
 	}
 
 	run_log_filter(n, lc = linedup(l), FROM_SERVER); free_line(lc);
-	run_replication_filter(n, lc = linedup(l), FROM_SERVER); free_line(lc);
 
 	g_assert(n->external_state != NULL);
 
@@ -405,7 +404,6 @@ static gboolean process_to_server(struct irc_network *s,
 	}
 
 	run_log_filter(s, lc = linedup(l), TO_SERVER); free_line(lc);
-	run_replication_filter(s, lc = linedup(l), TO_SERVER); free_line(lc);
 	linestack_insert_line(s->linestack, l, TO_SERVER, s->external_state);
 
 	log_network_line(s, l, FALSE);

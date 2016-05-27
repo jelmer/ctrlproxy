@@ -71,11 +71,6 @@ static gboolean process_from_client(struct irc_client *c, const struct irc_line 
 
 	l->origin = g_strdup(c->state->me.hostmask);
 
-	if (!run_client_filter(c, l, TO_SERVER)) {
-		g_free(l->origin);
-		return TRUE;
-	}
-
 	g_assert(l->args[0] != NULL);
 
 	if (!base_strcmp(l->args[0], "QUIT")) {
@@ -460,9 +455,7 @@ void clients_send(GList *clients, const struct irc_line *l,
 		if (c == exception)
 			continue;
 
-		if (run_client_filter(c, l, FROM_SERVER)) {
-			client_forward_from_server(c, l);
-		}
+		client_forward_from_server(c, l);
 	}
 }
 

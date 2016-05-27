@@ -26,13 +26,6 @@ struct filter_data {
 	void *userdata;
 };
 
-struct client_filter_data {
-	char *name;
-	int priority;
-	client_filter_function function;
-	void *userdata;
-};
-
 static gint filter_cmp(gconstpointer _a, gconstpointer _b)
 {
 	struct filter_data *a = (struct filter_data *)_a;
@@ -89,8 +82,6 @@ static gboolean filter_class_execute(GList *gl, struct irc_network *s, enum data
 }
 
 static GList *log_filters = NULL,
-			 *replication_filters = NULL,
-			 *client_filters = NULL,
 			 *server_filters = NULL;
 
 #define FILTER_FUNCTIONS(n,list) \
@@ -109,34 +100,7 @@ gboolean run_##n##_filter(struct irc_network *s, const struct irc_line *l, enum 
 }
 
 FILTER_FUNCTIONS(log,log_filters)
-FILTER_FUNCTIONS(replication,replication_filters)
 FILTER_FUNCTIONS(server,server_filters)
-
-void add_client_filter(const char *name, client_filter_function f, void *userdata, int priority)
-{
-	client_filters = add_filter_ex(client_filters, name, (server_filter_function)f, userdata, priority);
-}
-
-void del_client_filter(const char *name)
-{
-	client_filters = del_filter_ex(client_filters, name);
-}
-
-gboolean run_client_filter(struct irc_client *c, const struct irc_line *l, enum data_direction dir)
-{
-	GList *gl;
-
-	for (gl = client_filters; gl; gl = gl->next)
-	{
-		struct client_filter_data *d = (struct client_filter_data *)gl->data;
-
-		if (!d->function(c, l, dir, d->userdata)) {
-			return FALSE;
-		}
-	}
-
-	return TRUE;
-}
 
 /* Hooks that are called when a client is added or removed. */
 

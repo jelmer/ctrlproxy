@@ -82,10 +82,8 @@ gboolean network_forward_line(struct irc_network *s, struct irc_client *c, const
 /* hooks.c */
 gboolean new_client_hook_execute(struct irc_client *c);
 void lose_client_hook_execute(struct irc_client *c);
-gboolean run_client_filter(struct irc_client *c, const struct irc_line *l, enum data_direction dir);
 gboolean run_server_filter(struct irc_network *s, const struct irc_line *l, enum data_direction dir);
 gboolean run_log_filter(struct irc_network *s, const struct irc_line *l, enum data_direction dir);
-gboolean run_replication_filter(struct irc_network *s, const struct irc_line *l, enum data_direction dir);
 
 /* client.c */
 /**
