@@ -80,8 +80,6 @@ G_MODULE_EXPORT void register_new_network_notify(struct global *, new_network_no
 gboolean network_forward_line(struct irc_network *s, struct irc_client *c, const struct irc_line *l, gboolean is_private);
 
 /* hooks.c */
-void server_disconnected_hook_execute(struct irc_network *);
-void server_connected_hook_execute(struct irc_network *);
 gboolean new_client_hook_execute(struct irc_client *c);
 void lose_client_hook_execute(struct irc_client *c);
 gboolean run_client_filter(struct irc_client *c, const struct irc_line *l, enum data_direction dir);

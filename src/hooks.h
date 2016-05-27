@@ -52,12 +52,4 @@ typedef void (*lose_client_hook) (struct irc_client *, void *userdata);
 G_MODULE_EXPORT void add_lose_client_hook(const char *name, lose_client_hook h, void *userdata);
 G_MODULE_EXPORT void del_lose_client_hook(const char *name);
 
-typedef void (*server_connected_hook) (struct irc_network *, void *userdata);
-G_MODULE_EXPORT void add_server_connected_hook(const char *name, server_connected_hook h, void *userdata);
-G_MODULE_EXPORT void del_server_connected_hook(const char *name);
-
-typedef void (*server_disconnected_hook) (struct irc_network *, void *userdata);
-G_MODULE_EXPORT void add_server_disconnected_hook(const char *name, server_disconnected_hook h, void *userdata);
-G_MODULE_EXPORT void del_server_disconnected_hook(const char *name);
-
 #endif /* __CTRLPROXY_HOOKS_H__ */

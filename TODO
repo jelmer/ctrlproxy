@@ -9,3 +9,4 @@
 
 - drop unnecessary features:
  + 'auto listener' support
+ + add/lose client hooks

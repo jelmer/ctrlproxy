@@ -163,8 +163,6 @@ static gboolean process_from_server(struct irc_network *n, const struct irc_line
 
 		clients_send_state(n->clients, n->external_state);
 
-		server_connected_hook_execute(n);
-
 		network_send_args(n, "USERHOST", n->external_state->me.nick, NULL);
 
 		for (i = 0; nc->autocmd && nc->autocmd[i]; i++) {
@@ -377,7 +375,6 @@ static void handle_network_disconnect(struct irc_network *n)
 	struct network_config *nc = n->private_data;
 
 	if (n->connection.state == NETWORK_CONNECTION_STATE_MOTD_RECVD) {
-		server_disconnected_hook_execute(n);
 		clients_send_netsplit(n->clients, get_my_hostname(), n->external_state->info->server);
 		network_update_config(n->external_state, nc, n->global->config);
 	}

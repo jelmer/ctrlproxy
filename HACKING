@@ -99,13 +99,6 @@ void del_new_client_hook(char *name);
 void add_lose_client_hook(char *name, lose_client_hook h);
 void del_lose_client_hook(char *name);
 
-typedef void (*server_connected_hook) (struct network *);
-typedef void (*server_disconnected_hook) (struct network *);
-void add_server_connected_hook(char *name, server_connected_hook);
-void del_server_connected_hook(char *name);
-void add_server_disconnected_hook(char *name, server_disconnected_hook);
-void del_server_disconnected_hook(char *name);
-
 The prototypes of these functions pretty much speak for themselves.
 If a new_client_hook function returns FALSE, the client will be denied
 access.
