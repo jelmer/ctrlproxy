@@ -18,12 +18,12 @@ manpages: ctrlproxy.1 ctrlproxyd.8 ctrlproxy_config.5 ctrlproxy-admin.1
 %.html: %.tmp.xml
 	$(XSLTPROC) --xinclude http://docbook.sourceforge.net/release/xsl/current/html/docbook.xsl $< > $@
 
-%: %.tmp.xml 
+%: %.tmp.xml
 	$(XSLTPROC) http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $< > $@
 
 help.xml: admin.xml clients.xml
 
-help.txt: help.xml help.xsl 
+help.txt: help.xml help.xsl
 	$(XSLTPROC) --stringparam extraparanewline "$(EXTRAPARANEWLINE)" --xinclude help.xsl $< | perl -0077 -pe 's/\n\n%/\n%/s; s/_b_/\002/g;' > $@
 
 clean::
@@ -47,12 +47,12 @@ install: all
 	$(INSTALL) -m 0644 ctrlproxy_config.5 $(DESTDIR)$(mandir)/man5
 	$(INSTALL) -m 0644 user-guide.html $(DESTDIR)$(docdir)
 
-uninstall: 
-	rm -f $(DESTDIR)$(mandir)/man1/ctrlproxy.1 
-	rm -f $(DESTDIR)$(mandir)/man8/ctrlproxy.8 
-	rm -f $(DESTDIR)$(mandir)/man1/ctrlproxy-admin.1 
+uninstall:
+	rm -f $(DESTDIR)$(mandir)/man1/ctrlproxy.1
+	rm -f $(DESTDIR)$(mandir)/man8/ctrlproxy.8
+	rm -f $(DESTDIR)$(mandir)/man1/ctrlproxy-admin.1
 	rm -f $(DESTDIR)$(HELPFILE)
-	rm -f $(DESTDIR)$(mandir)/man5/ctrlproxy_config.5 
+	rm -f $(DESTDIR)$(mandir)/man5/ctrlproxy_config.5
 	rm -f $(DESTDIR)$(docdir)/user-guide.html
 	-rmdir $(DESTDIR)$(mandir)/man1
 	-rmdir $(DESTDIR)$(mandir)/man5
