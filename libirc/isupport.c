@@ -161,7 +161,7 @@ char *network_info_string(struct irc_network_info *info)
 
 	if (info->safelist)
 		fs = g_list_append(fs, g_strdup("SAFELIST"));
-	
+
 	if (info->userip)
 		fs = g_list_append(fs, g_strdup("USERIP"));
 
@@ -262,7 +262,7 @@ char *network_info_string(struct irc_network_info *info)
 	if (info->extban_prefix != NULL)
 		fs = g_list_append(fs, g_strdup_printf("EXTBAN=%s,%s",
 						   info->extban_prefix, info->extban_supported));
-	
+
 	if (info->deaf_mode != '\0')
 		fs = g_list_append(fs, g_strdup_printf("DEAF=%c", info->deaf_mode));
 
@@ -324,7 +324,7 @@ void network_info_parse(struct irc_network_info *info, const char *parameter)
 		key = g_strndup(parameter, sep - parameter);
 		val = g_strdup(sep+1);
 	}
-	
+
 	if (!base_strcmp(key, "CASEMAPPING")) {
 		if (!base_strcmp(val, "rfc1459")) {
 			info->casemapping = CASEMAP_RFC1459;
@@ -561,7 +561,7 @@ gboolean is_channelname(const char *name, const struct irc_network_info *n)
 	g_assert(n->chantypes != NULL);
 
 	g_assert(name != NULL);
-	
+
 	if (strchr(n->chantypes, name[0]))
 		return TRUE;
 
@@ -575,7 +575,7 @@ gboolean is_prefix(char p, const struct irc_network_info *n)
 
 	if (p == 0)
 		return FALSE;
-	
+
 	if (n == NULL)
 		prefix = DEFAULT_PREFIX;
 	else
@@ -611,11 +611,11 @@ char get_prefix_from_modes(struct irc_network_info *info, irc_modes_t modes)
 	int i;
 	char *pref_end;
 	const char *prefix;
-	
+
 	g_assert(info->prefix != NULL);
 
 	prefix = info->prefix;
-	
+
 	pref_end = strchr(prefix, ')');
 	if (prefix[0] != '(' || !pref_end) {
 		network_info_log(LOG_WARNING, info,
@@ -636,12 +636,12 @@ char get_mode_by_prefix(char prefix, const struct irc_network_info *n)
 	int i;
 	char *pref_end;
 	const char *prefix_mapping;
-	
+
 	g_assert(n != NULL);
 	g_assert(n->prefix != NULL);
 
 	prefix_mapping = n->prefix;
-	
+
 	pref_end = strchr(prefix_mapping, ')');
 	if (prefix_mapping[0] != '(' || !pref_end) {
 		network_info_log(LOG_WARNING, n,
@@ -662,12 +662,12 @@ char get_prefix_by_mode(char mode, const struct irc_network_info *n)
 	int i;
 	char *pref_end;
 	const char *prefix;
-	
+
 	g_assert(n != NULL);
 	g_assert(n->prefix != NULL);
 
 	prefix = n->prefix;
-	
+
 	pref_end = strchr(prefix, ')');
 	if (prefix[0] != '(' || !pref_end) {
 		network_info_log(LOG_WARNING, n,

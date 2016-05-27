@@ -136,8 +136,9 @@ static gboolean log_data(struct irc_network *n, const struct irc_line *l, enum d
 	}
 
 	if (dir == TO_SERVER &&
-		(!g_strcasecmp(l->args[0], "PRIVMSG") || !g_strcasecmp(l->args[0], "NOTICE")) &&
-		(!g_strcasecmp(l->args[1], nickserv_nick(n)) && !g_strncasecmp(l->args[2], "IDENTIFY ", strlen("IDENTIFY ")))) {
+		(!irccmp(n->info, l->args[0], "PRIVMSG") || !irccmp(n->info, l->args[0], "NOTICE")) &&
+		(!irccmp(n->info, l->args[1], nickserv_nick(n)) &&
+		 !g_strncasecmp(l->args[2], "IDENTIFY ", strlen("IDENTIFY ")))) {
 			cache_nickserv_pass(n, l->args[2] + strlen("IDENTIFY "));
 	}
 
@@ -193,8 +194,7 @@ gboolean nickserv_load(struct global *global)
 	gboolean ret;
     char *filename;
 
-	filename = g_build_filename(global->config->config_dir, "nickserv",
-									  NULL);
+	filename = g_build_filename(global->config->config_dir, "nickserv", NULL);
 	ret = keyfile_read_file(filename, '#', &global->nickserv_nicks);
 	g_free(filename);
 
