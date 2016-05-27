@@ -34,9 +34,6 @@ typedef gboolean (*server_filter_function) (struct irc_network *n, const struct 
 G_MODULE_EXPORT void add_log_filter(const char *name, server_filter_function, void *userdata, int priority);
 G_MODULE_EXPORT void del_log_filter(const char *name);
 
-G_MODULE_EXPORT void add_replication_filter(const char *name, server_filter_function, void *userdata, int priority);
-G_MODULE_EXPORT void del_replication_filter(const char *name);
-
 typedef gboolean (*client_filter_function) (struct irc_client *c, const struct irc_line *, enum data_direction, void *userdata);
 G_MODULE_EXPORT void add_client_filter(const char *name, client_filter_function, void *userdata, int priority);
 G_MODULE_EXPORT void del_client_filter(const char *name);
