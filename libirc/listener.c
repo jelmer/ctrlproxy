@@ -39,9 +39,21 @@
 static gboolean gssapi_fail(struct pending_client *pc);
 #endif
 
-#define QUASSEL_MAGIC					0x42b33f00
+#define QUASSEL_MAGIC1					0x42
+#define QUASSEL_MAGIC2					0xb3
+#define QUASSEL_MAGIC3					0x3f
 #define QUASSEL_MAGIC_OPT_SSL			0x1
 #define QUASSEL_MAGIC_OPT_COMPRESSION	0x2
+
+enum quassel_proto {
+	QUASSEL_PROTO_LEGACY = 0x1,
+	QUASSEL_PROTO_INTERNAL = 0x0,
+	QUASSEL_PROTO_DATA_STREAM = 0x2,
+};
+
+#define QUASSEL_PROTO_SENTINEL 0x80000000
+
+#define QUASSEL_MAX_PROTOS 15
 
 struct listener_iochannel {
 	struct irc_listener *listener;
@@ -54,6 +66,9 @@ static gboolean handle_client_detect(GIOChannel *ioc,
 									 struct pending_client *cl);
 static gboolean handle_client_socks_data(GIOChannel *ioc,
 										 struct pending_client *cl);
+static gboolean handle_client_quassel_data(GIOChannel *ioc,
+										 struct pending_client *cl);
+
 
 static gboolean kill_pending_client(struct pending_client *pc)
 {
@@ -165,7 +180,7 @@ static gboolean handle_client_detect(GIOChannel *ioc, struct pending_client *pc)
 {
 	GIOStatus status;
 	gsize read;
-	gchar header[2];
+	gchar header[4];
 	GError *error = NULL;
 
 	status = g_io_channel_read_chars(ioc, header, 1, &read, &error);
@@ -180,6 +195,65 @@ static gboolean handle_client_detect(GIOChannel *ioc, struct pending_client *pc)
 		listener_log(LOG_TRACE, pc->listener, "Detected SOCKS.");
 		pc->type = CLIENT_TYPE_SOCKS;
 		pc->socks.state = SOCKS_STATE_NEW;
+		return TRUE;
+	} else if (header[0] == QUASSEL_MAGIC1) {
+		int i;
+		uint32_t protos[QUASSEL_MAX_PROTOS+1];
+		uint32_t response;
+		uint8_t features;
+		status = g_io_channel_read_chars(ioc, header, 3, &read, &error);
+
+		if (status != G_IO_STATUS_NORMAL && status != G_IO_STATUS_AGAIN) {
+			if (error != NULL)
+				g_error_free(error);
+			return FALSE;
+		}
+
+		if (header[0] != QUASSEL_MAGIC2 && header[1] != QUASSEL_MAGIC3) {
+			listener_log(LOG_TRACE, pc->listener, "Almost detected Quassel Client.");
+			return FALSE;
+		}
+
+		features = header[2];
+
+		listener_log(LOG_TRACE, pc->listener, "Detected Quassel Client. Options: %s%s.",
+					 (features & QUASSEL_MAGIC_OPT_SSL)?"ssl, ":"",
+					 (features & QUASSEL_MAGIC_OPT_COMPRESSION)?"compression":"");
+
+		for (i = 0; i < QUASSEL_MAX_PROTOS; i++) {
+			status = g_io_channel_read_chars(ioc, (char *)&protos[i], 4, &read, &error);
+
+			if (status != G_IO_STATUS_NORMAL && status != G_IO_STATUS_AGAIN) {
+				if (error != NULL)
+					g_error_free(error);
+				return FALSE;
+			}
+
+			protos[i] = ntohl(protos[i]);
+			listener_log(LOG_TRACE, pc->listener, "Supported quassel protocol: %d.",
+						 (protos[i] &~ QUASSEL_PROTO_SENTINEL));
+
+			if (protos[i] & QUASSEL_PROTO_SENTINEL) {
+				protos[i] &= ~QUASSEL_PROTO_SENTINEL;
+				break;
+			}
+		}
+
+		/* FIXME: Support picking something other than this. Actually negotiate. */
+		pc->quassel.options = QUASSEL_PROTO_DATA_STREAM;
+		response = htonl(pc->quassel.options);
+		status = g_io_channel_write_chars(pc->connection, &response, 4, &read, NULL);
+
+		if (status != G_IO_STATUS_NORMAL && status != G_IO_STATUS_AGAIN) {
+			if (error != NULL)
+				g_error_free(error);
+			return FALSE;
+		}
+
+		g_io_channel_flush(pc->connection, NULL);
+
+		pc->type = CLIENT_TYPE_QUASSEL;
+		pc->quassel.state = QUASSEL_STATE_NEW;
 		return TRUE;
 	} else {
 		struct irc_line *l = NULL;
@@ -277,7 +351,10 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition condition, gpo
 				kill_pending_client(pc);
 			return ret;
 		} else if (pc->type == CLIENT_TYPE_QUASSEL) {
-			/* TODO: Quassel */
+			gboolean ret = handle_client_quassel_data(c, pc);
+			if (!ret)
+				kill_pending_client(pc);
+			return ret;
 		} else {
 			g_assert(0);
 		}
@@ -906,6 +983,39 @@ static gboolean handle_client_socks_data(GIOChannel *ioc, struct pending_client 
 			default:
 				return listener_socks_error(cl, REP_ATYP_NOT_SUPPORTED);
 		}
+	}
+
+	return TRUE;
+}
+
+static gboolean handle_client_quassel_data(GIOChannel *ioc, struct pending_client *cl)
+{
+	GIOStatus status;
+
+	if (cl->quassel.state == QUASSEL_STATE_NEW) {
+		uint32_t response;
+		gsize read;
+		uint8_t protocol;
+
+		status = g_io_channel_read_chars(ioc, &response, 4, &read, NULL);
+		if (status != G_IO_STATUS_NORMAL) {
+			return FALSE;
+		}
+
+		response = ntohl(response);
+
+		listener_log(LOG_TRACE, cl->listener, "Quassel client response: %x", response);
+
+		protocol = response & 0xFF;
+		if (protocol != QUASSEL_PROTO_LEGACY) {
+			listener_log(LOG_WARNING, cl->listener, "Client quassel protocol %d unsupported.",
+						 protocol);
+			return FALSE;
+		}
+
+		cl->quassel.options = (response>>24)&0xff;
+
+		/* TODO(jelmer) */
 	}
 
 	return TRUE;

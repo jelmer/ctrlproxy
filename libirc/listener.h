@@ -74,6 +74,11 @@ enum socks_state {
 	SOCKS_STATE_NORMAL
 };
 
+enum quassel_state {
+	QUASSEL_UNKNOWN = 0,
+	QUASSEL_STATE_NEW,
+};
+
 /**
  * Client connection that has not been authenticated yet.
  */
@@ -105,6 +110,12 @@ struct pending_client {
 		enum socks_state state;
 		void *method_data;
 	} socks;
+
+	/** Quassel state. */
+	struct {
+		uint32_t options;
+		enum quassel_state state;
+	} quassel;
 
 	/** Private data. */
 	void *private_data;
