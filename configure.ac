@@ -95,7 +95,7 @@ AC_CHECK_LIB(readline, readline, [
 
 PKG_CHECK_MODULES(QUASSELC, quasselc, [
 	AC_DEFINE(HAVE_QUASSELC, 1, [Whether quasselc is available])
-])
+], [ AC_MSG_WARN([QuasselC library not found, quassel will not be available.]) ])
 
 ###############################################################################
 # Python support
