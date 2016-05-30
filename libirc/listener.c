@@ -34,24 +34,11 @@
 
 #include <netdb.h>
 #include "socks.h"
+#include "quassel.h"
 
 #ifdef HAVE_GSSAPI
 static gboolean gssapi_fail(struct pending_client *pc);
 #endif
-
-#define QUASSEL_MAGIC1					0x42
-#define QUASSEL_MAGIC2					0xb3
-#define QUASSEL_MAGIC3					0x3f
-#define QUASSEL_MAGIC_OPT_SSL			0x1
-#define QUASSEL_MAGIC_OPT_COMPRESSION	0x2
-
-enum quassel_proto {
-	QUASSEL_PROTO_LEGACY = 0x1,
-	QUASSEL_PROTO_INTERNAL = 0x0,
-	QUASSEL_PROTO_DATA_STREAM = 0x2,
-};
-
-#define QUASSEL_PROTO_SENTINEL 0x80000000
 
 #define QUASSEL_MAX_PROTOS 15
 
@@ -242,7 +229,7 @@ static gboolean handle_client_detect(GIOChannel *ioc, struct pending_client *pc)
 		/* FIXME: Support picking something other than this. Actually negotiate. */
 		pc->quassel.options = QUASSEL_PROTO_DATA_STREAM;
 		response = htonl(pc->quassel.options);
-		status = g_io_channel_write_chars(pc->connection, &response, 4, &read, NULL);
+		status = g_io_channel_write_chars(pc->connection, (char *)&response, 4, &read, NULL);
 
 		if (status != G_IO_STATUS_NORMAL && status != G_IO_STATUS_AGAIN) {
 			if (error != NULL)
@@ -988,34 +975,66 @@ static gboolean handle_client_socks_data(GIOChannel *ioc, struct pending_client 
 	return TRUE;
 }
 
+static gboolean read_quassel_response(GIOChannel *ioc, uint32_t *response_len, uint8_t **response) {
+	gsize read;
+	GIOStatus status;
+
+	status = g_io_channel_read_chars(ioc, (char *)response_len, 4, &read, NULL);
+	if (status != G_IO_STATUS_NORMAL) {
+		return FALSE;
+	}
+
+	*response_len = ntohl(*response_len);
+
+	*response = g_malloc(*response_len);
+
+	status = g_io_channel_read_chars(ioc, (char *)*response, *response_len, &read,
+									 NULL);
+	if (status != G_IO_STATUS_NORMAL) {
+		g_free(*response);
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
 static gboolean handle_client_quassel_data(GIOChannel *ioc, struct pending_client *cl)
 {
 	GIOStatus status;
 
 	if (cl->quassel.state == QUASSEL_STATE_NEW) {
-		uint32_t response;
-		gsize read;
-		uint8_t protocol;
-
-		status = g_io_channel_read_chars(ioc, &response, 4, &read, NULL);
-		if (status != G_IO_STATUS_NORMAL) {
+		uint32_t response_len;
+		uint8_t *response;
+		uint32_t type;
+		int offset = 0;
+		if (!read_quassel_response(ioc, &response_len, &response)) {
 			return FALSE;
 		}
-
-		response = ntohl(response);
-
-		listener_log(LOG_TRACE, cl->listener, "Quassel client response: %x", response);
-
-		protocol = response & 0xFF;
-		if (protocol != QUASSEL_PROTO_LEGACY) {
-			listener_log(LOG_WARNING, cl->listener, "Client quassel protocol %d unsupported.",
-						 protocol);
+		type = ntohl(*(uint32_t *)response); offset += 4;
+		if (type == QUASSEL_TYPE_QMAP) {
+			/* TODO(jelmer): Check byte 5: 'valid' field */
+			/* TODO(jelmer): Read QMap */
+		} else if (type == QUASSEL_TYPE_QVARIANT_LIST) {
+			uint32_t num_elements = ntohl(*(uint32_t *)(response+offset)), i;
+			offset += 4;
+			listener_log(LOG_TRACE, cl->listener, "Number of elements in list: %d", num_elements);
+			for (i = 0; i < num_elements; i++) {
+				uint32_t el_type = ntohl(*(uint32_t *)(response+offset));
+				uint8_t el_len;
+				offset += 4;
+				listener_log(LOG_TRACE, cl->listener, "Type[%d]: %d", i, el_type);
+				el_len = response[offset];
+				offset += el_len;
+				/* TODO: Read type */
+			}
+		} else {
+			listener_log(LOG_WARNING, cl->listener, "Unknown type %d received", type);
+			g_free(response);
 			return FALSE;
 		}
-
-		cl->quassel.options = (response>>24)&0xff;
 
 		/* TODO(jelmer) */
+		g_free(response);
 	}
 
 	return TRUE;
