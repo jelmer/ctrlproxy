@@ -24,6 +24,7 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <glib.h>
+#include <strings.h>
 #include "keyfile.h"
 #include "irc.h"
 
@@ -38,14 +39,14 @@ const char *nickserv_find_nick(struct irc_network *n, const char *nick)
 	for (gl = n->global->nickserv_nicks; gl; gl = gl->next) {
 		struct keyfile_entry *e = gl->data;
 
-		if (g_strcasecmp(e->nick, nick)) {
+		if (irccmp(n->info, e->nick, nick)) {
 			continue;
 		}
 
 		if (e->network == NULL) {
 			return e->pass;
 		}
-		if (!g_strcasecmp(e->network, n->name)) {
+		if (!strcasecmp(e->network, n->name)) {
 			return e->pass;
 		}
 	}
@@ -95,13 +96,13 @@ static void cache_nickserv_pass(struct irc_network *n, const char *newpass)
 	for (gl = n->global->nickserv_nicks; gl; gl = gl->next) {
 		e = gl->data;
 
-		if (e->network && !g_strcasecmp(e->network, n->name) &&
-			!g_strcasecmp(e->nick, n->external_state->me.nick)) {
+		if (e->network && !strcasecmp(e->network, n->name) &&
+			!strcasecmp(e->nick, n->external_state->me.nick)) {
 			break;
 		}
 
-		if (!e->network && !g_strcasecmp(e->nick, n->external_state->me.nick) &&
-			!g_strcasecmp(e->pass, newpass)) {
+		if (!e->network && !irccmp(n->external_state->info, e->nick, n->external_state->me.nick) &&
+			!strcmp(e->pass, newpass)) {
 			break;
 		}
 	}
@@ -124,27 +125,29 @@ static gboolean log_data(struct irc_network *n, const struct irc_line *l, enum d
 	static char *nickattempt = NULL;
 
 	/* User has changed his/her nick. Check whether this nick needs to be identified */
-	if (dir == FROM_SERVER && !g_strcasecmp(l->args[0], "NICK") &&
-	   nickattempt && !g_strcasecmp(nickattempt, l->args[1])) {
+	if (dir == FROM_SERVER && !irccmp(n->info, l->args[0], "NICK") &&
+	   nickattempt && !irccmp(n->info, nickattempt, l->args[1])) {
 		nickserv_identify_me(n, l->args[1]);
 	}
 
 	/* Keep track of the last nick that the user tried to take */
-	if (dir == TO_SERVER && !g_strcasecmp(l->args[0], "NICK")) {
-		if (nickattempt) g_free(nickattempt);
+	if (dir == TO_SERVER && !irccmp(n->info, l->args[0], "NICK")) {
+		if (nickattempt) {
+			g_free(nickattempt);
+		}
 		nickattempt = g_strdup(l->args[1]);
 	}
 
 	if (dir == TO_SERVER &&
 		(!irccmp(n->info, l->args[0], "PRIVMSG") || !irccmp(n->info, l->args[0], "NOTICE")) &&
 		(!irccmp(n->info, l->args[1], nickserv_nick(n)) &&
-		 !g_strncasecmp(l->args[2], "IDENTIFY ", strlen("IDENTIFY ")))) {
+		 !ircncmp(n->info, l->args[2], "IDENTIFY ", strlen("IDENTIFY ")))) {
 			cache_nickserv_pass(n, l->args[2] + strlen("IDENTIFY "));
 	}
 
 	if (dir == TO_SERVER &&
-		!g_strcasecmp(l->args[0], "NS") &&
-		!g_strcasecmp(l->args[1], "IDENTIFY")) {
+		!irccmp(n->info, l->args[0], "NS") &&
+		!irccmp(n->info, l->args[1], "IDENTIFY")) {
 		cache_nickserv_pass(n, l->args[2]);
 	}
 
@@ -192,13 +195,13 @@ gboolean nickserv_save(struct global *global, const char *dir)
 gboolean nickserv_load(struct global *global)
 {
 	gboolean ret;
-    char *filename;
+	char *filename;
 
 	filename = g_build_filename(global->config->config_dir, "nickserv", NULL);
 	ret = keyfile_read_file(filename, '#', &global->nickserv_nicks);
 	g_free(filename);
 
-	return TRUE;
+	return ret;
 }
 
 void init_nickserv(void)

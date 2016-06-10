@@ -198,7 +198,7 @@ gboolean ctcp_process_request (struct irc_network *n, const struct irc_line *l)
 	for (gl = cmds; gl; gl = gl->next) {
 		struct ctcp_handler *hl = gl->data;
 
-		if (!g_strcasecmp(hl->name, args[0])) {
+		if (!strcasecmp(hl->name, args[0])) {
 			if (hl->fn != NULL) {
 				hl->fn(&h, (const char **)args);
 			}
@@ -208,7 +208,7 @@ gboolean ctcp_process_request (struct irc_network *n, const struct irc_line *l)
 	}
 
 	for (i = 0; !ret && builtins[i].name; i++) {
-		if (!g_strcasecmp(builtins[i].name, args[0])) {
+		if (!strcasecmp(builtins[i].name, args[0])) {
 			if (builtins[i].fn != NULL)
 				builtins[i].fn(&h, (const char **)args);
 			ret = TRUE;

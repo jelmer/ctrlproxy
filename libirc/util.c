@@ -25,6 +25,7 @@
 #include <ctype.h>
 #include <fcntl.h>
 #include <glib/gstdio.h>
+#include <limits.h>
 
 #ifndef HAVE_DAEMON
 #include <sys/types.h>
@@ -45,12 +46,14 @@ int base_strncmp(const char *a, const char *b, size_t n)
 	return g_ascii_strncasecmp(a, b, n);
 }
 
-static inline int str_cmphelper(const char *a, const char *b, char sh, char sl, char eh, char el)
+static inline int str_cmphelper(const char *a, const char *b, size_t len, char sh, char sl, char eh, char el)
 {
 	int i;
 	char h,l;
-	for (i = 0; a[i] && b[i]; i++) {
-		if (a[i] == b[i]) continue;
+	for (i = 0; a[i] && b[i] && i < len; i++) {
+		if (a[i] == b[i]) {
+			continue;
+		}
 		l = (a[i]>b[i]?b[i]:a[i]);
 		h = (a[i]>b[i]?a[i]:b[i]);
 
@@ -68,14 +71,14 @@ int str_asciicmp(const char *a, const char *b)
 {
 	g_assert(a != NULL);
 	g_assert(b != NULL);
-	return str_cmphelper(a, b, 97, 65, 122, 90);
+	return str_cmphelper(a, b, (size_t)-1, 97, 65, 122, 90);
 }
 
 int str_strictrfc1459cmp(const char *a, const char *b)
 {
 	g_assert(a != NULL);
 	g_assert(b != NULL);
-	return str_cmphelper(a, b, 97, 65, 125, 93);
+	return str_cmphelper(a, b, (size_t)-1, 97, 65, 125, 93);
 }
 
 
@@ -83,7 +86,29 @@ int str_rfc1459cmp(const char *a, const char *b)
 {
 	g_assert(a != NULL);
 	g_assert(b != NULL);
-	return str_cmphelper(a, b, 97, 65, 126, 94);
+	return str_cmphelper(a, b, (size_t)-1, 97, 65, 126, 94);
+}
+
+int str_asciincmp(const char *a, const char *b, size_t n)
+{
+	g_assert(a != NULL);
+	g_assert(b != NULL);
+	return str_cmphelper(a, b, n, 97, 65, 122, 90);
+}
+
+int str_strictrfc1459ncmp(const char *a, const char *b, size_t n)
+{
+	g_assert(a != NULL);
+	g_assert(b != NULL);
+	return str_cmphelper(a, b, n, 97, 65, 125, 93);
+}
+
+
+int str_rfc1459ncmp(const char *a, const char *b, size_t n)
+{
+	g_assert(a != NULL);
+	g_assert(b != NULL);
+	return str_cmphelper(a, b, n, 97, 65, 126, 94);
 }
 
 char *g_io_channel_ip_get_description(GIOChannel *ch)
@@ -101,8 +126,9 @@ char *g_io_channel_ip_get_description(GIOChannel *ch)
 		return NULL;
 	}
 
-	if (sa.ss_family != AF_INET && sa.ss_family != AF_INET6)
+	if (sa.ss_family != AF_INET && sa.ss_family != AF_INET6) {
 		return NULL;
+	}
 
 	if (getnameinfo((struct sockaddr *)&sa, len, hostname, sizeof(hostname),
 					service, sizeof(service), NI_NOFQDN | NI_NUMERICSERV) == 0) {
@@ -119,15 +145,18 @@ char *list_make_string(GList *list)
 	GList *gl;
 
 	/* First, calculate the length */
-	for(gl = list; gl; gl = gl->next) len+=strlen(gl->data)+1;
+	for(gl = list; gl; gl = gl->next) {
+		len+=strlen(gl->data)+1;
+	}
 
 	ret = g_new(char,len);
 	ret[0] = '\0';
 
-	for(gl = list; gl; gl = gl->next)
-	{
+	for(gl = list; gl; gl = gl->next) {
 		strncat(ret, gl->data, len);
-		if (gl->next) strncat(ret, " ", len);
+		if (gl->next) {
+			strncat(ret, " ", len);
+		}
 	}
 
 	return ret;
@@ -164,8 +193,9 @@ gsize i_convert(const char *str, gsize len, GIConv cd, GString *out)
 		g_string_truncate(out, out->len - outbytes_left);
 		done = 1;
 		if (ret == (gsize)-1) {
-			if (errno == E2BIG)
+			if (errno == E2BIG) {
 				done = 0;
+			}
 		}
 	} while (!done);
 	return len - inbytes_left;
@@ -193,7 +223,7 @@ int daemon(int nochdir, int noclose)
 	if (setsid() < 0) {
 		return -1;
 	}
-	
+
 	if (!noclose) {
 		if ((fd = open("/dev/null", O_RDWR)) >= 0) {
 			for (i = 0; i < 3; i++) {

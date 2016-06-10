@@ -737,17 +737,17 @@ static struct network_config *find_create_network_config(struct ctrlproxy_config
 			char *tmp;
 			struct tcp_server_config *sc = gl1->data;
 
-			if (g_strcasecmp(sc->host, name) == 0) {
+			if (strcasecmp(sc->host, name) == 0) {
 				return nc;
 			}
 
-			if (g_strncasecmp(sc->host, name, strlen(sc->host)) != 0) {
+			if (strncasecmp(sc->host, name, strlen(sc->host)) != 0) {
 				continue;
 			}
 
 			tmp = irc_create_url(sc->host, sc->port, FALSE);
 
-			if (g_strcasecmp(tmp, name) == 0) {
+			if (strcasecmp(tmp, name) == 0) {
 				return nc;
 			}
 
@@ -999,6 +999,7 @@ static void config_load_networks(struct ctrlproxy_config *cfg, GList *channel_ke
 				continue;
 			}
 			n = config_load_network_file(cfg, networksdir, name, channel_keys);
+			g_assert(n != NULL);
 		}
 
 		g_dir_close(dir);
@@ -1023,6 +1024,7 @@ static void config_load_networks(struct ctrlproxy_config *cfg, GList *channel_ke
 		}
 
 		n = config_load_network_keyfile_group(cfg, groups[i], cfg->keyfile, groups[i], channel_keys);
+		g_assert(n != NULL);
 	}
 
 	g_strfreev(groups);

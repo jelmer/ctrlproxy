@@ -89,7 +89,6 @@ gboolean keyfile_write_file(GList *nicks, const char *header,
 {
 	GList *gl;
 	int fd;
-	gboolean empty = TRUE;
 
 	fd = open(filename, O_WRONLY | O_CREAT, 0600);
 
@@ -107,8 +106,6 @@ gboolean keyfile_write_file(GList *nicks, const char *header,
 	for (gl = nicks; gl; gl = gl->next) {
 		struct keyfile_entry *n = gl->data;
 		char *line;
-
-		empty = FALSE;
 
 		line = g_strdup_printf("%s\t%s\t%s\n", n->nick, n->pass, n->network?n->network:"*");
 		if (write(fd, line, strlen(line)) < 0) {

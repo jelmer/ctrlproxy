@@ -539,17 +539,33 @@ void handle_005(struct irc_network_state *s, const struct irc_line *l)
 		network_info_parse(s->info, l->args[i]);
 }
 
+int ircncmp(const struct irc_network_info *n, const char *a, const char *b, size_t len)
+{
+	switch(n != NULL?n->casemapping:CASEMAP_UNKNOWN) {
+	default:
+	case CASEMAP_UNKNOWN:
+	case CASEMAP_RFC1459:
+		return str_rfc1459ncmp(a, b, len);
+	case CASEMAP_ASCII:
+		return str_asciincmp(a, b, len);
+	case CASEMAP_STRICT_RFC1459:
+		return str_strictrfc1459ncmp(a, b, len);
+	}
+
+	return 0;
+}
+
 int irccmp(const struct irc_network_info *n, const char *a, const char *b)
 {
 	switch(n != NULL?n->casemapping:CASEMAP_UNKNOWN) {
 	default:
 	case CASEMAP_UNKNOWN:
 	case CASEMAP_RFC1459:
-		return str_rfc1459cmp(a,b);
+		return str_rfc1459cmp(a, b);
 	case CASEMAP_ASCII:
-		return str_asciicmp(a,b);
+		return str_asciicmp(a, b);
 	case CASEMAP_STRICT_RFC1459:
-		return str_strictrfc1459cmp(a,b);
+		return str_strictrfc1459cmp(a, b);
 	}
 
 	return 0;

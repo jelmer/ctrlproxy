@@ -284,6 +284,7 @@ G_MODULE_EXPORT gboolean is_channelname(const char *name, const struct irc_netwo
 G_MODULE_EXPORT gboolean is_prefix(char p, const struct irc_network_info *n);
 G_MODULE_EXPORT char get_prefix_by_mode(char p, const struct irc_network_info *n);
 G_MODULE_EXPORT int irccmp(const struct irc_network_info *n, const char *a, const char *b);
+G_MODULE_EXPORT int ircncmp(const struct irc_network_info *n, const char *a, const char *b, size_t len);
 G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT const char *get_charset(const struct irc_network_info *n);
 G_MODULE_EXPORT void network_info_parse(struct irc_network_info *info, const char *parameter);
 G_MODULE_EXPORT enum chanmode_type network_chanmode_type(char m, struct irc_network_info *n);
