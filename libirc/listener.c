@@ -29,10 +29,7 @@
 #include <sys/socket.h>
 
 #include <netdb.h>
-#include "quassel.h"
 #include "socks.h"
-
-#define QUASSEL_MAX_PROTOS 15
 
 struct listener_iochannel {
 	struct irc_listener *listener;
@@ -43,8 +40,10 @@ struct listener_iochannel {
 
 static gboolean handle_client_detect(GIOChannel *ioc,
 									 struct pending_client *cl);
-static gboolean handle_client_quassel_data(GIOChannel *ioc,
+gboolean handle_client_quassel_data(GIOChannel *ioc,
 										 struct pending_client *cl);
+gboolean listener_probe_socks(gchar *header, size_t length);
+gboolean listener_probe_quassel(gchar *header, size_t length);
 
 /* From listener_socks.c */
 gboolean handle_client_socks_data(GIOChannel *ioc, struct pending_client *cl);
@@ -100,67 +99,13 @@ static gboolean handle_client_detect(GIOChannel *ioc, struct pending_client *pc)
 		return FALSE;
 	}
 
-	if (header[0] == SOCKS_VERSION) {
+	if (listener_probe_socks(header, 1)) {
 		listener_log(LOG_TRACE, pc->listener, "Detected SOCKS.");
 		pc->type = CLIENT_TYPE_SOCKS;
 		pc->socks.state = SOCKS_STATE_NEW;
 		return TRUE;
-	} else if (header[0] == QUASSEL_MAGIC1) {
-		int i;
-		uint32_t protos[QUASSEL_MAX_PROTOS+1];
-		uint32_t response;
-		uint8_t features;
-		status = g_io_channel_read_chars(ioc, header, 3, &read, &error);
-
-		if (status != G_IO_STATUS_NORMAL && status != G_IO_STATUS_AGAIN) {
-			if (error != NULL)
-				g_error_free(error);
-			return FALSE;
-		}
-
-		if (header[0] != QUASSEL_MAGIC2 && header[1] != QUASSEL_MAGIC3) {
-			listener_log(LOG_TRACE, pc->listener, "Almost detected Quassel Client.");
-			return FALSE;
-		}
-
-		features = header[2];
-
-		listener_log(LOG_TRACE, pc->listener, "Detected Quassel Client. Options: %s%s.",
-					 (features & QUASSEL_MAGIC_OPT_SSL)?"ssl, ":"",
-					 (features & QUASSEL_MAGIC_OPT_COMPRESSION)?"compression":"");
-
-		for (i = 0; i < QUASSEL_MAX_PROTOS; i++) {
-			status = g_io_channel_read_chars(ioc, (char *)&protos[i], 4, &read, &error);
-
-			if (status != G_IO_STATUS_NORMAL && status != G_IO_STATUS_AGAIN) {
-				if (error != NULL)
-					g_error_free(error);
-				return FALSE;
-			}
-
-			protos[i] = ntohl(protos[i]);
-			listener_log(LOG_TRACE, pc->listener, "Supported quassel protocol: %d.",
-						 (protos[i] &~ QUASSEL_PROTO_SENTINEL));
-
-			if (protos[i] & QUASSEL_PROTO_SENTINEL) {
-				protos[i] &= ~QUASSEL_PROTO_SENTINEL;
-				break;
-			}
-		}
-
-		/* FIXME: Support picking something other than this. Actually negotiate. */
-		pc->quassel.options = QUASSEL_PROTO_DATA_STREAM;
-		response = htonl(pc->quassel.options);
-		status = g_io_channel_write_chars(pc->connection, (char *)&response, 4, &read, NULL);
-
-		if (status != G_IO_STATUS_NORMAL && status != G_IO_STATUS_AGAIN) {
-			if (error != NULL)
-				g_error_free(error);
-			return FALSE;
-		}
-
-		g_io_channel_flush(pc->connection, NULL);
-
+	} else if (listener_probe_quassel(header, 1)) {
+		listener_log(LOG_TRACE, pc->listener, "Detected Quassel.");
 		pc->type = CLIENT_TYPE_QUASSEL;
 		pc->quassel.state = QUASSEL_STATE_NEW;
 		return TRUE;
@@ -466,55 +411,3 @@ gboolean listener_start_tcp(struct irc_listener *l, const char *address, const c
 }
 
 
-static gboolean read_quassel_response(GIOChannel *ioc, uint32_t *response_len, uint8_t **response) {
-	gsize read;
-	GIOStatus status;
-
-	status = g_io_channel_read_chars(ioc, (char *)response_len, 4, &read, NULL);
-	if (status != G_IO_STATUS_NORMAL) {
-		return FALSE;
-	}
-
-	*response_len = ntohl(*response_len);
-
-	*response = g_malloc(*response_len);
-
-	status = g_io_channel_read_chars(ioc, (char *)*response, *response_len, &read,
-									 NULL);
-	if (status != G_IO_STATUS_NORMAL) {
-		g_free(*response);
-		return FALSE;
-	}
-
-	return TRUE;
-}
-
-static gboolean handle_client_quassel_data(GIOChannel *ioc, struct pending_client *cl)
-{
-	if (cl->quassel.state == QUASSEL_STATE_NEW) {
-		uint32_t response_len;
-		uint8_t *response;
-		int offset = 0;
-		uint32_t num_elements, i;
-		if (!read_quassel_response(ioc, &response_len, &response)) {
-			return FALSE;
-		}
-		num_elements = ntohl(*(uint32_t *)(response));
-		offset += 4;
-		listener_log(LOG_TRACE, cl->listener, "Number of elements in list: %d", num_elements);
-		for (i = 0; i < num_elements; i++) {
-			uint32_t el_type = ntohl(*(uint32_t *)(response+offset));
-			uint32_t el_len;
-			offset += 4;
-			offset += 1; /* Unknown byte */
-			el_len = ntohl(*(uint32_t *)(response+offset));
-			listener_log(LOG_TRACE, cl->listener, "Entry[%d]: type: %d, length: %d", i, el_type, el_len);
-			offset += el_len;
-		}
-
-		/* TODO(jelmer) */
-		g_free(response);
-	}
-
-	return TRUE;
-}

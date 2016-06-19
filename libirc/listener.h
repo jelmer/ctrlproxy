@@ -77,6 +77,7 @@ enum socks_state {
 enum quassel_state {
 	QUASSEL_UNKNOWN = 0,
 	QUASSEL_STATE_NEW,
+	QUASSEL_STATE_NEGOTIATED,
 };
 
 /**

@@ -540,3 +540,12 @@ void free_socks_data(struct pending_client *pc)
 	}
 #endif
 }
+
+gboolean listener_probe_socks(gchar *header, size_t length)
+{
+	if (length < 1) {
+		return FALSE;
+	}
+
+	return (header[0] == SOCKS_VERSION);
+}
