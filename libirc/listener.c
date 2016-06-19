@@ -58,6 +58,7 @@ static gboolean kill_pending_client(struct pending_client *pc)
 
 	free_socks_data(pc);
 
+	g_free(pc->quassel.client_version);
 	g_free(pc->clientname);
 
 	g_free(pc);
@@ -72,9 +73,10 @@ gboolean listener_stop(struct irc_listener *l)
 
 		g_source_remove(lio->watch_id);
 
-		if (strcmp(lio->address, "") != 0)
+		if (strcmp(lio->address, "") != 0) {
 			listener_log(LOG_INFO, l, "Stopped listening at %s:%s", lio->address,
 						 lio->port);
+		}
 
 		g_free(lio);
 

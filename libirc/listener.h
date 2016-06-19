@@ -116,6 +116,7 @@ struct pending_client {
 	struct {
 		uint32_t options;
 		enum quassel_state state;
+		char *client_version;
 	} quassel;
 
 	/** Private data. */
