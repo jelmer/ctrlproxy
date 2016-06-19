@@ -293,6 +293,37 @@ static gboolean handle_client_detect(GIOChannel *ioc, struct pending_client *pc)
 	}
 }
 
+static gboolean handle_client_socks_data(GIOChannel *c, struct pending_client *pc)
+{
+	GIOStatus status;
+	GError *error = NULL;
+	struct irc_line *l;
+
+	while ((status = irc_recv_line(c, pc->listener->iconv, &error, &l)) == G_IO_STATUS_NORMAL) {
+		gboolean ret;
+
+		if (l == NULL) {
+			continue;
+		}
+
+		ret = pc->listener->ops->handle_client_line(pc, l);
+
+		free_line(l);
+
+		if (!ret) {
+			return FALSE;
+		}
+	}
+
+	if (status != G_IO_STATUS_AGAIN) {
+		if (error != NULL)
+			g_error_free(error);
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
 static gboolean handle_client_receive(GIOChannel *c, GIOCondition condition, gpointer data)
 {
 	struct pending_client *pc = data;
@@ -306,32 +337,10 @@ static gboolean handle_client_receive(GIOChannel *c, GIOCondition condition, gpo
 				return FALSE;
 			}
 		} else if (pc->type == CLIENT_TYPE_REGULAR) {
-			GIOStatus status;
-			GError *error = NULL;
-			struct irc_line *l;
-
-			while ((status = irc_recv_line(c, pc->listener->iconv, &error, &l)) == G_IO_STATUS_NORMAL) {
-				gboolean ret;
-
-				if (l == NULL)
-					continue;
-
-				ret = pc->listener->ops->handle_client_line(pc, l);
-
-				free_line(l);
-
-				if (!ret) {
-					kill_pending_client(pc);
-					return FALSE;
-				}
-			}
-
-			if (status != G_IO_STATUS_AGAIN) {
+			gboolean ret = handle_client_regular_data(c, pc);
+			if (!ret)
 				kill_pending_client(pc);
-				if (error != NULL)
-					g_error_free(error);
-				return FALSE;
-			}
+			return ret;
 		} else if (pc->type == CLIENT_TYPE_SOCKS) {
 			gboolean ret = handle_client_socks_data(c, pc);
 			if (!ret)
@@ -1007,30 +1016,21 @@ static gboolean handle_client_quassel_data(GIOChannel *ioc, struct pending_clien
 		uint8_t *response;
 		uint32_t type;
 		int offset = 0;
+		uint32_t num_elements, i;
 		if (!read_quassel_response(ioc, &response_len, &response)) {
 			return FALSE;
 		}
-		type = ntohl(*(uint32_t *)response); offset += 4;
-		if (type == QUASSEL_TYPE_QMAP) {
-			/* TODO(jelmer): Check byte 5: 'valid' field */
-			/* TODO(jelmer): Read QMap */
-		} else if (type == QUASSEL_TYPE_QVARIANT_LIST) {
-			uint32_t num_elements = ntohl(*(uint32_t *)(response+offset)), i;
+		num_elements = ntohl(*(uint32_t *)(response));
+		offset += 4;
+		listener_log(LOG_TRACE, cl->listener, "Number of elements in list: %d", num_elements);
+		for (i = 0; i < num_elements; i++) {
+			uint32_t el_type = ntohl(*(uint32_t *)(response+offset));
+			uint32_t el_len;
 			offset += 4;
-			listener_log(LOG_TRACE, cl->listener, "Number of elements in list: %d", num_elements);
-			for (i = 0; i < num_elements; i++) {
-				uint32_t el_type = ntohl(*(uint32_t *)(response+offset));
-				uint8_t el_len;
-				offset += 4;
-				listener_log(LOG_TRACE, cl->listener, "Type[%d]: %d", i, el_type);
-				el_len = response[offset];
-				offset += el_len;
-				/* TODO: Read type */
-			}
-		} else {
-			listener_log(LOG_WARNING, cl->listener, "Unknown type %d received", type);
-			g_free(response);
-			return FALSE;
+			offset += 1; /* Unknown byte */
+			el_len = ntohl(*(uint32_t *)(response+offset));
+			listener_log(LOG_TRACE, cl->listener, "Entry[%d]: type: %d, length: %d", i, el_type, el_len);
+			offset += el_len;
 		}
 
 		/* TODO(jelmer) */
