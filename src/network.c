@@ -564,10 +564,10 @@ gboolean network_forward_line(struct irc_network *s, struct irc_client *c,
 "This directory contains the history information that ctrlproxy uses\n" \
 "when sending backlogs.\n" \
 "\n" \
-"It is safe to remove this data while ctrlproxy is not running and \n" \
-"will not break your configuration. \n" \
+"It is safe to remove this data while ctrlproxy is not running and\n" \
+"will not break your configuration.\n" \
 "\n" \
-"If you delete it while ctrlproxy is running, you will lose the ability \n" \
+"If you delete it while ctrlproxy is running, you will lose the ability\n" \
 "to use any backlog functionality during the current session.\n"
 
 struct linestack_context *new_linestack(struct irc_network *n,
