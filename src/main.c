@@ -60,7 +60,7 @@ static void signal_hup(int sig)
 	init_log(logfile);
 	for (gl = hup_handlers; gl; gl = gl->next) {
 		struct hup_handler *hh = gl->data;
-		
+
 		hh->fn(hh->userdata);
 	}
 }
@@ -85,7 +85,7 @@ static void signal_crash(int sig)
 	backtrace_strings = backtrace_symbols(backtrace_stack, backtrace_size);
 
 	log_global(LOG_ERROR, "BACKTRACE: %ld stack frames:", (long)backtrace_size);
-	
+
 	if (backtrace_strings) {
 		int i;
 
@@ -148,7 +148,7 @@ static void signal_quit(int sig)
 static void signal_save(int sig)
 {
 	log_global(LOG_INFO, "Received USR1 signal, saving configuration...");
-	
+
 	if (!g_file_test(my_global->config->config_dir, G_FILE_TEST_IS_DIR)) {
 		if (g_mkdir(my_global->config->config_dir, 0700) != 0) {
 			log_global(LOG_ERROR, "Can't create config directory '%s': %s",
@@ -292,7 +292,7 @@ int main(int argc, char **argv)
 		char *rcfile;
 
 		rcfile = g_build_filename(g_get_home_dir(), ".ctrlproxyrc", NULL);
-		
+
 		if (g_file_test(rcfile, G_FILE_TEST_EXISTS)) {
 			log_global(LOG_INFO, "Pre-3.0 style .ctrlproxyrc found");
 			log_global(LOG_INFO,
