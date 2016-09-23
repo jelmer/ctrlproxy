@@ -528,13 +528,17 @@ static void config_load_servers(struct network_config *n)
 
 	servers = g_key_file_get_string_list(n->keyfile, n->groupname, "servers", &size, NULL);
 
-	if (!servers)
+	if (!servers) {
 		return;
+	}
 
 	for (i = 0; i < size; i++) {
 		struct tcp_server_config *s = g_new0(struct tcp_server_config, 1);
 
-		irc_parse_url(servers[i], &s->host, &s->port, &s->ssl);
+		if (!irc_parse_url(servers[i], &s->host, &s->port, &s->ssl)) {
+			log_global(LOG_ERROR, "Error parsing URL %s", servers[i]);
+			continue;
+		}
 
 		s->password = g_key_file_get_string(n->keyfile, servers[i], "password", NULL);
 		if (g_key_file_has_key(n->keyfile, servers[i], "ssl", NULL))
@@ -761,7 +765,12 @@ static struct network_config *find_create_network_config(struct ctrlproxy_config
 	nc->reconnect_interval = -1;
 	nc->type = NETWORK_TCP;
 	tc = g_new0(struct tcp_server_config, 1);
-	irc_parse_url(name, &tc->host, &tc->port, &tc->ssl);
+	if (!irc_parse_url(name, &tc->host, &tc->port, &tc->ssl)) {
+		log_global(LOG_ERROR, "Error parsing server URL %s", name);
+		g_free(tc);
+		free_config(cfg);
+		return NULL;
+	}
 	nc->type_settings.tcp.servers = g_list_append(nc->type_settings.tcp.servers, tc);
 
 	cfg->networks = g_list_append(cfg->networks, nc);

@@ -273,10 +273,16 @@ struct irc_network_state *linestack_get_state(
 	g_io_channel_set_encoding(state_file, NULL, NULL);
 
 	ret = network_state_init("", "", "");
-	if (!marshall_network_state(MARSHALL_PULL, state_file, ret))
+	if (!marshall_network_state(MARSHALL_PULL, state_file, ret)) {
+		g_io_channel_unref(state_file);
 		return NULL;
+	}
 
-	linestack_replay(nd, &state_index, to_index, ret);
+	if (!linestack_replay(nd, &state_index, to_index, ret)) {
+		g_io_channel_unref(state_file);
+		free_network_state(ret);
+		return NULL;
+	}
 
 	g_io_channel_unref(state_file);
 
@@ -574,32 +580,26 @@ static gboolean send_line_timed(struct irc_line *l, time_t t, void *_privdata)
 	if ((!base_strcmp(l->args[0], "PRIVMSG") ||
 		!base_strcmp(l->args[0], "NOTICE")) &&
 		l->argc > 2) {
-		struct irc_line *nl = line_prefix_time(l, t+privdata->time_offset);
-		gboolean ret;
-		ret = client_send_line(privdata->client, nl, NULL);
-		free_line(nl);
-		return ret;
-	} else {
-		return client_send_line(privdata->client, l, NULL);
+		line_prefix_time(l, t+privdata->time_offset);
 	}
+	return client_send_line(privdata->client, l, NULL);
 }
 
 static gboolean send_line_timed_dataonly(struct irc_line *l, time_t t, void *_privdata)
 {
 	struct send_line_privdata *privdata = _privdata;
 	gboolean ret;
-	struct irc_line *nl;
 
 	if (base_strcmp(l->args[0], "PRIVMSG") != 0 &&
 		base_strcmp(l->args[0], "NOTICE") != 0)
 		return TRUE;
 
-	if (l->argc <= 2)
+	if (l->argc <= 2) {
 		return TRUE;
+	}
 
-	nl = line_prefix_time(l, t+privdata->time_offset);
-	ret = client_send_line(privdata->client, nl, NULL);
-	free_line(nl);
+	line_prefix_time(l, t+privdata->time_offset);
+	ret = client_send_line(privdata->client, l, NULL);
 	return ret;
 }
 

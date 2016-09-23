@@ -20,7 +20,7 @@
 #ifndef __LIBIRC_URL_H__
 #define __LIBIRC_URL_H__
 
-char *irc_create_url(const char *server, const char *port, gboolean ssl);
-gboolean irc_parse_url(const char *url, char **server, char **port, gboolean *ssl);
+G_GNUC_WARN_UNUSED_RESULT char *irc_create_url(const char *server, const char *port, gboolean ssl);
+G_GNUC_WARN_UNUSED_RESULT gboolean irc_parse_url(const char *url, char **server, char **port, gboolean *ssl);
 
 #endif /* __LIBIRC_URL_H__ */

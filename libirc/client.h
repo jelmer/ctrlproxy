@@ -98,22 +98,22 @@ G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT struct irc_client *irc_client_new(stru
 G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT gboolean clients_send_state(GList *clients,
 										struct irc_network_state *s);
 
-G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT gboolean client_send_nameslist(struct irc_client *client,
+G_MODULE_EXPORT gboolean client_send_nameslist(struct irc_client *client,
 										   struct irc_channel_state *ch);
-G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT gboolean client_send_channel_state_diff(
+G_MODULE_EXPORT gboolean client_send_channel_state_diff(
 										struct irc_client *client,
 										struct irc_channel_state *old_state,
 										struct irc_channel_state *new_state);
 
-G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT gboolean client_send_state_diff(struct irc_client *client, struct irc_network_state *old_state, struct irc_network_state *new_state);
+G_MODULE_EXPORT gboolean client_send_state_diff(struct irc_client *client, struct irc_network_state *old_state, struct irc_network_state *new_state);
 
-G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT gboolean client_send_channel_state(struct irc_client *c,
+G_MODULE_EXPORT gboolean client_send_channel_state(struct irc_client *c,
 							   struct irc_channel_state *ch);
-G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT gboolean client_send_topic(struct irc_client *c, struct irc_channel_state *ch, gboolean explicit);
-G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT gboolean client_send_banlist(struct irc_client *client, struct irc_channel_state *channel);
-G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT gboolean client_send_channel_mode(struct irc_client *client, struct irc_channel_state *channel);
-G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT gboolean client_send_luserchannels(struct irc_client *c, int num);
-G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT gboolean client_send_motd(struct irc_client *c, char **lines);
+G_MODULE_EXPORT gboolean client_send_topic(struct irc_client *c, struct irc_channel_state *ch, gboolean explicit);
+G_MODULE_EXPORT gboolean client_send_banlist(struct irc_client *client, struct irc_channel_state *channel);
+G_MODULE_EXPORT gboolean client_send_channel_mode(struct irc_client *client, struct irc_channel_state *channel);
+G_MODULE_EXPORT gboolean client_send_luserchannels(struct irc_client *c, int num);
+G_MODULE_EXPORT gboolean client_send_motd(struct irc_client *c, char **lines);
 G_MODULE_EXPORT void client_log(enum log_level, const struct irc_client *c, const char *fmt, ...);
 G_MODULE_EXPORT gboolean client_send_netsplit(struct irc_client *c, const char *my_name, const char *lost_server);
 G_MODULE_EXPORT gboolean clients_send_netsplit(GList *clients, const char *my_name, const char *lost_server);

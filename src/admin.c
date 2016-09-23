@@ -611,9 +611,11 @@ static void cmd_backlog(admin_handle h, const char * const *args, void *userdata
 	if (!args[1] || strlen(args[1]) == 0) {
 		admin_out(h, "Sending backlog for network '%s'", n->name);
 
-		linestack_send(n->linestack, lm, NULL, admin_get_client(h),
+		if (!linestack_send(n->linestack, lm, NULL, admin_get_client(h),
 					   TRUE, n->global->config->report_time != REPORT_TIME_NEVER,
-					   n->global->config->report_time_offset);
+					   n->global->config->report_time_offset)) {
+			admin_out(h, "Some errors sending backlog.");
+		}
 
 		g_hash_table_replace(markers, n, linestack_get_marker(n->linestack));
 
@@ -623,10 +625,13 @@ static void cmd_backlog(admin_handle h, const char * const *args, void *userdata
 	/* Backlog for specific nick/channel */
 	admin_out(h, "Sending backlog for channel %s", args[1]);
 
-	linestack_send_object(n->linestack, args[1], lm, NULL,
+	if (!linestack_send_object(n->linestack, args[1], lm, NULL,
 						  admin_get_client(h), TRUE,
 						  n->global->config->report_time != REPORT_TIME_NEVER,
-						  n->global->config->report_time_offset);
+						  n->global->config->report_time_offset)) {
+		admin_out(h, "Some errors sending backlog.");
+		return;
+	}
 
 	g_hash_table_replace(markers, n, linestack_get_marker(n->linestack));
 }

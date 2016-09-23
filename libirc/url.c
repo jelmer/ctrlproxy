@@ -56,7 +56,7 @@ gboolean irc_parse_url(const char *url, char **server, char **port, gboolean *ss
 		*server = g_strndup(url, p-url);
 		return TRUE;
 	}
-	
+
 	if (*ssl) {
 		*port = g_strdup(IRCS_PORT);
 	} else {

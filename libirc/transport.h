@@ -58,18 +58,18 @@ struct irc_transport {
 	time_t last_line_sent;
 };
 
-struct irc_transport *irc_transport_new_iochannel(GIOChannel *iochannel);
+G_GNUC_WARN_UNUSED_RESULT struct irc_transport *irc_transport_new_iochannel(GIOChannel *iochannel);
 void irc_transport_set_callbacks(struct irc_transport *transport, const struct irc_transport_callbacks *callbacks, void *userdata);
 void irc_transport_disconnect(struct irc_transport *transport);
 void free_irc_transport(struct irc_transport *);
-gboolean transport_set_charset(struct irc_transport *transport, const char *name);
+G_GNUC_WARN_UNUSED_RESULT gboolean transport_set_charset(struct irc_transport *transport, const char *name);
 gboolean transport_send_line(struct irc_transport *transport, const struct irc_line *, GError **error);
 gboolean transport_send_args(struct irc_transport *transport, GError **error, ...);
 gboolean transport_send_response(struct irc_transport *transport, GError **error, const char *from, const char *to, int response, ...);
 void transport_parse_buffer(struct irc_transport *transport);
 void irc_transport_set_callbacks(struct irc_transport *transport,
 								 const struct irc_transport_callbacks *callbacks, void *userdata);
-char *transport_get_peer_hostname(struct irc_transport *transport);
+G_GNUC_WARN_UNUSED_RESULT char *transport_get_peer_hostname(struct irc_transport *transport);
 
 GQuark irc_transport_error_quark(void);
 #define IRC_TRANSPORT_ERROR irc_transport_error_quark()

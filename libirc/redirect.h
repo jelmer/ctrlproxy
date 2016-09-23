@@ -57,7 +57,7 @@ struct query_stack {
 
 void *query_stack_match_response(struct query_stack *stack, const struct irc_line *l);
 gboolean query_stack_record(struct query_stack *stack, void *c, const struct irc_line *l);
-struct query_stack *new_query_stack(void (*ref_userdata) (void *), void (*unref_userdata) (void *));
+G_GNUC_WARN_UNUSED_RESULT struct query_stack *new_query_stack(void (*ref_userdata) (void *), void (*unref_userdata) (void *));
 void query_stack_clear(struct query_stack *n);
 void query_stack_free(struct query_stack *n);
 

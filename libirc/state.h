@@ -132,7 +132,7 @@ struct irc_network_state
 };
 
 /* state.c */
-G_GNUC_MALLOC G_MODULE_EXPORT struct irc_network_state *network_state_init(const char *nick, const char *username, const char *hostname);
+G_GNUC_WARN_UNUSED_RESULT G_GNUC_MALLOC G_MODULE_EXPORT struct irc_network_state *network_state_init(const char *nick, const char *username, const char *hostname);
 G_MODULE_EXPORT void free_network_state(struct irc_network_state *);
 G_MODULE_EXPORT gboolean state_handle_data(struct irc_network_state *s, const struct irc_line *l);
 
@@ -148,7 +148,7 @@ G_MODULE_EXPORT gboolean client_send_state(struct irc_client *, struct irc_netwo
 G_MODULE_EXPORT void network_state_log(enum log_level l, const struct irc_network_state *st, const char *fmt, ...);
 G_MODULE_EXPORT void network_state_set_log_fn(struct irc_network_state *st, void (*fn) (enum log_level, void *, const char *), void *userdata);
 
-G_MODULE_EXPORT G_GNUC_MALLOC char *mode2string(irc_modes_t modes);
+G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT G_GNUC_MALLOC char *mode2string(irc_modes_t modes);
 G_MODULE_EXPORT gboolean string2mode(const char *modestring, irc_modes_t modes);
 G_MODULE_EXPORT gboolean modes_change_mode(irc_modes_t modes, gboolean set, char newmode);
 #define modes_set_mode(modes, newmode) modes_change_mode(modes, TRUE, newmode)
@@ -163,10 +163,10 @@ G_MODULE_EXPORT char get_prefix_by_mode(char mode, const struct irc_network_info
 G_MODULE_EXPORT gboolean is_prefix_mode(const struct irc_network_info *info, char mode);
 
 G_MODULE_EXPORT void free_channel_state(struct irc_channel_state *c);
-G_MODULE_EXPORT struct irc_channel_state *irc_channel_state_new(const char *name);
-G_MODULE_EXPORT gboolean network_nick_set_nick(struct network_nick *n, const char *nick);
-G_MODULE_EXPORT gboolean network_nick_set_hostname(struct network_nick *n, const char *hostname);
-G_MODULE_EXPORT gboolean network_nick_set_username(struct network_nick *n, const char *username);
+G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT struct irc_channel_state *irc_channel_state_new(const char *name);
+G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT gboolean network_nick_set_nick(struct network_nick *n, const char *nick);
+G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT gboolean network_nick_set_hostname(struct network_nick *n, const char *hostname);
+G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT gboolean network_nick_set_username(struct network_nick *n, const char *username);
 G_MODULE_EXPORT gboolean line_from_nick(const struct irc_network_info *info, const struct irc_line *l, const char *nick);
 G_MODULE_EXPORT void free_network_nick(struct irc_network_state *st, struct network_nick *nn);
 

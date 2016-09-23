@@ -53,7 +53,7 @@
 /* server.c */
 void fini_networks(struct global *);
 void kill_pending_clients(const char *reason);
-gboolean network_set_iochannel(struct irc_network *s, GIOChannel *ioc);
+G_GNUC_WARN_UNUSED_RESULT gboolean network_set_iochannel(struct irc_network *s, GIOChannel *ioc);
 
 /* redirect.c */
 gboolean redirect_response(struct query_stack *stack,
@@ -93,16 +93,16 @@ gboolean run_log_filter(struct irc_network *s, const struct irc_line *l, enum da
  * @param io IO Channel to use for communication.
  * @param desc Description of the client.
  */
-G_MODULE_EXPORT G_GNUC_MALLOC struct irc_client *client_init_iochannel(
+G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT G_GNUC_MALLOC struct irc_client *client_init_iochannel(
 										   struct irc_network *net,
 										   GIOChannel *io,
 										   const char *desc);
 
-G_MODULE_EXPORT G_GNUC_MALLOC struct irc_client *client_init(
+G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT G_GNUC_MALLOC struct irc_client *client_init(
 										   struct irc_network *net,
 										   struct irc_transport *transport,
 										   const char *desc);
-G_MODULE_EXPORT struct irc_line *irc_line_replace_hostmask(
+G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT struct irc_line *irc_line_replace_hostmask(
 										   const struct irc_line *l,
 										   const struct irc_network_info *info,
 										   const struct network_nick *,

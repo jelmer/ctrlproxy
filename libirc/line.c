@@ -450,32 +450,33 @@ gboolean line_add_arg(struct irc_line *l, const char *arg)
 	return TRUE;
 }
 
-struct irc_line *line_prefix_time(const struct irc_line *l, time_t t)
+gboolean line_prefix_time(struct irc_line *l, time_t t)
 {
-	struct irc_line *nl = linedup(l);
 	char stime[512];
 	char *tmp;
 	gboolean action = FALSE;
 
-	if (nl->args[2][0] == '\001') { /* CTCP */
+	if (l->args[2][0] == '\001') { /* CTCP */
 		/* Let's not touch any CTCP requests but actions */
-		if (strncmp(nl->args[2]+1, "ACTION", strlen("ACTION")) != 0)
-			return nl;
+		if (strncmp(l->args[2]+1, "ACTION", strlen("ACTION")) != 0) {
+			return FALSE;
+		}
 		action = TRUE;
 	}
 
 	strftime(stime, sizeof(stime), "%H:%M:%S", localtime(&t));
 	if (action) {
-		tmp = g_strdup_printf("\001ACTION [%s]%s", stime, nl->args[2]+strlen(" ACTION"));
+		tmp = g_strdup_printf("\001ACTION [%s]%s", stime, l->args[2]+strlen(" ACTION"));
 	} else {
-		tmp = g_strdup_printf("[%s] %s", stime, nl->args[2]);
+		tmp = g_strdup_printf("[%s] %s", stime, l->args[2]);
 	}
-	if (tmp == NULL)
-		return NULL;
-	g_free(nl->args[2]);
-	nl->args[2] = tmp;
+	if (tmp == NULL) {
+		return FALSE;
+	}
+	g_free(l->args[2]);
+	l->args[2] = tmp;
 
-	return nl;
+	return TRUE;
 }
 
 int irc_line_cmp(const struct irc_line *a, const struct irc_line *b)

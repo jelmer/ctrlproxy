@@ -28,8 +28,8 @@ G_MODULE_EXPORT int str_asciicmp(const char *a, const char *b);
 G_MODULE_EXPORT int str_rfc1459ncmp(const char *a, const char *b, size_t n);
 G_MODULE_EXPORT int str_strictrfc1459ncmp(const char *a, const char *b, size_t n);
 G_MODULE_EXPORT int str_asciincmp(const char *a, const char *b, size_t n);
-G_MODULE_EXPORT char *g_io_channel_ip_get_description(GIOChannel *ch);
-G_MODULE_EXPORT char *list_make_string(GList *);
+G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT char *g_io_channel_ip_get_description(GIOChannel *ch);
+G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT char *list_make_string(GList *);
 G_MODULE_EXPORT const char *g_io_channel_unix_get_sock_error(GIOChannel *ioc);
 G_MODULE_EXPORT gsize i_convert(const char *str, gsize len, GIConv cd, GString *out);
 

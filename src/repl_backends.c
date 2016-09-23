@@ -51,8 +51,9 @@ static void highlight_replicate(struct irc_client *c)
 		client_send_state(c, c->network->external_state);
 	}
 
-	if (c->network->linestack == NULL)
+	if (c->network->linestack == NULL) {
 		return;
+	}
 
 	linestack_traverse(c->network->linestack, lm, NULL, check_highlight, c);
 	g_hash_table_replace(markers, irc_network_ref(c->network), linestack_get_marker(c->network->linestack));

@@ -43,18 +43,18 @@ struct ctrlproxy_config;
 /* linestack.c */
 typedef gboolean (*linestack_traverse_fn) (struct irc_line *, time_t, void *);
 
-G_MODULE_EXPORT struct irc_network_state *linestack_get_state (
+G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT struct irc_network_state *linestack_get_state (
 		struct linestack_context *,
 		linestack_marker );
 
-G_MODULE_EXPORT gboolean linestack_traverse (
+G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT gboolean linestack_traverse (
 		struct linestack_context *,
 		linestack_marker from,
 		linestack_marker to, /* Can be NULL for 'now' */
 		linestack_traverse_fn,
 		void *userdata);
 
-G_MODULE_EXPORT gboolean linestack_traverse_object (
+G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT gboolean linestack_traverse_object (
 		struct linestack_context *,
 		const char *object,
 		linestack_marker from,
@@ -62,7 +62,7 @@ G_MODULE_EXPORT gboolean linestack_traverse_object (
 		linestack_traverse_fn,
 		void *userdata);
 
-G_MODULE_EXPORT gboolean linestack_send (
+G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT gboolean linestack_send (
 		struct linestack_context *,
 		linestack_marker from,
 		linestack_marker to, /* Can be NULL for 'now' */
@@ -71,7 +71,7 @@ G_MODULE_EXPORT gboolean linestack_send (
 		gboolean timed,
 		int time_offset);
 
-G_MODULE_EXPORT gboolean linestack_send_object (
+G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT gboolean linestack_send_object (
 		struct linestack_context *,
 		const char *object,
 		linestack_marker from,
@@ -81,20 +81,20 @@ G_MODULE_EXPORT gboolean linestack_send_object (
 		gboolean timed,
 		int time_offset);
 
-G_MODULE_EXPORT gboolean linestack_replay (
+G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT gboolean linestack_replay (
 		struct linestack_context *,
 		linestack_marker from,
 		linestack_marker to,/* Can be NULL for 'now' */
 		struct irc_network_state *st);
 
-G_MODULE_EXPORT gboolean linestack_insert_line(
+G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT gboolean linestack_insert_line(
 		struct linestack_context *,
 		const struct irc_line *l,
 		enum data_direction dir,
 		const struct irc_network_state *);
 
 G_MODULE_EXPORT void linestack_free_marker(linestack_marker );
-G_MODULE_EXPORT linestack_marker linestack_get_marker(struct linestack_context *);
+G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT linestack_marker linestack_get_marker(struct linestack_context *);
 
 /**
  * Create a new linestack context
@@ -104,10 +104,10 @@ G_MODULE_EXPORT linestack_marker linestack_get_marker(struct linestack_context *
  * @param cfg CtrlProxy configuration
  * @param state Current network state
  */
-G_MODULE_EXPORT struct linestack_context *create_linestack(const char *data_dir, gboolean truncate, const struct irc_network_state *);
+G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT struct linestack_context *create_linestack(const char *data_dir, gboolean truncate, const struct irc_network_state *);
 G_MODULE_EXPORT void free_linestack_context(struct linestack_context *);
 
-G_MODULE_EXPORT gboolean linestack_read_entry(struct linestack_context *nd,
+G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT gboolean linestack_read_entry(struct linestack_context *nd,
 							  guint64 i,
 							  struct irc_line **line,
 							  time_t *time

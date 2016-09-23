@@ -191,10 +191,14 @@ static gboolean process_from_server(struct irc_network *n, const struct irc_line
 				}
 			} else if (run_server_filter(n, l, FROM_SERVER)) {
 				if (!strcmp(l->args[0], "PRIVMSG") &&
-					n->global->config->report_time == REPORT_TIME_ALWAYS)
-					l = line_prefix_time(l, time(NULL)+n->global->config->report_time_offset);
-
-				clients_send(n->clients, l, NULL);
+					n->global->config->report_time == REPORT_TIME_ALWAYS) {
+					struct irc_line *nl = linedup(l);
+					line_prefix_time(nl, time(NULL)+n->global->config->report_time_offset);
+					clients_send(n->clients, nl, NULL);
+					free_line(nl);
+				} else {
+					clients_send(n->clients, l, NULL);
+				}
 			}
 		}
 
@@ -399,7 +403,9 @@ static gboolean process_to_server(struct irc_network *s,
 	}
 
 	run_log_filter(s, lc = linedup(l), TO_SERVER); free_line(lc);
-	linestack_insert_line(s->linestack, l, TO_SERVER, s->external_state);
+	if (!linestack_insert_line(s->linestack, l, TO_SERVER, s->external_state)) {
+		network_log(LOG_ERROR, s, "Error inserting line into linestack.");
+	}
 
 	log_network_line(s, l, FALSE);
 	return TRUE;
