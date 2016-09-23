@@ -148,8 +148,9 @@ static void load_config(struct global *global)
 gboolean init_replication(void)
 {
 	int i;
-	for (i = 0; backends[i].name; i++)
+	for (i = 0; backends[i].name; i++) {
 		register_replication_backend(&backends[i]);
+	}
 
 	register_load_config_notify(load_config);
 	add_lose_client_hook("repl_lastdisconnect", lastdisconnect_mark, NULL);

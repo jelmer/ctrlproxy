@@ -22,9 +22,24 @@
 struct irc_network_info *network_info_init()
 {
 	struct irc_network_info *info = g_new0(struct irc_network_info, 1);
+	if (info == NULL) {
+		goto fail;
+	}
 	info->prefix = g_strdup(DEFAULT_PREFIX);
+	if (info->prefix == NULL) {
+		goto fail;
+	}
 	info->chantypes = g_strdup(DEFAULT_CHANTYPES);
+	if (info->chantypes == NULL) {
+		goto fail;
+	}
 	return info;
+
+fail:
+	g_free(info->chantypes);
+	g_free(info->prefix);
+	g_free(info);
+	return NULL;
 }
 
 void network_info_log(enum log_level l,
@@ -66,154 +81,197 @@ char *network_info_string(struct irc_network_info *info)
 {
 	char *ret = NULL;
 	GList *fs = NULL, *gl;
-	char *casemap = NULL;
+	const char *casemap = NULL;
 
-	if (info->name != NULL)
+	if (info->name != NULL) {
 		fs = g_list_append(fs, g_strdup_printf("NETWORK=%s", info->name));
+	}
 
 	switch (info->casemapping) {
 	default:
 	case CASEMAP_RFC1459:
-		casemap = g_strdup("CASEMAPPING=rfc1459");
+		casemap = "CASEMAPPING=rfc1459";
 		break;
 	case CASEMAP_STRICT_RFC1459:
-		casemap = g_strdup("CASEMAPPING=strict-rfc1459");
+		casemap = "CASEMAPPING=strict-rfc1459";
 		break;
 	case CASEMAP_ASCII:
-		casemap = g_strdup("CASEMAPPING=ascii");
+		casemap = "CASEMAPPING=ascii";
 		break;
 	}
 
-	if (casemap != NULL)
-		fs = g_list_append(fs, casemap);
-
-	if (info->forced_nick_changes)
-		fs = g_list_append(fs, g_strdup("FNC"));
-
-	if (info->map)
-		fs = g_list_append(fs, "MAP");
-
-	if (info->ssl)
-		fs = g_list_append(fs, "SSL");
-
-	if (info->charset != NULL)
-		fs = g_list_append(fs, g_strdup_printf("CHARSET=%s", info->charset));
-
-	if (info->nicklen != 0)
-		fs = g_list_append(fs, g_strdup_printf("NICKLEN=%d", info->nicklen));
-
-	if (info->userlen != 0)
-		fs = g_list_append(fs, g_strdup_printf("USERLEN=%d", info->userlen));
-
-	if (info->watch != 0)
-		fs = g_list_append(fs, g_strdup_printf("WATCH=%d", info->watch));
-
-	if (info->vbanlist)
-		fs = g_list_append(fs, "VBANLIST");
-
-	if (info->operoverride)
-		fs = g_list_append(fs, "OVERRIDE");
-
-	if (info->hostlen != 0)
-		fs = g_list_append(fs, g_strdup_printf("HOSTLEN=%d", info->hostlen));
-
-	if (info->channellen != 0)
-		fs = g_list_append(fs, g_strdup_printf("CHANNELLEN=%d", info->channellen));
-
-	if (info->awaylen != 0)
-		fs = g_list_append(fs, g_strdup_printf("AWAYLEN=%d", info->awaylen));
-
-	if (info->kicklen != 0)
-		fs = g_list_append(fs, g_strdup_printf("KICKLEN=%d", info->kicklen));
-
-	if (info->topiclen != 0)
-		fs = g_list_append(fs, g_strdup_printf("TOPICLEN=%d", info->topiclen));
-
-	if (info->maxchannels != 0)
-		fs = g_list_append(fs, g_strdup_printf("MAXCHANNELS=%d", info->maxchannels));
-
-	if (info->maxtargets != 0)
-		fs = g_list_append(fs, g_strdup_printf("MAXTARGETS=%d", info->maxtargets));
-
-	if (info->maxbans != 0)
-		fs = g_list_append(fs, g_strdup_printf("MAXBANS=%d", info->maxbans));
-
-	if (info->maxmodes != 0)
-		fs = g_list_append(fs, g_strdup_printf("MODES=%d", info->maxmodes));
-
-	if (info->maxpara != 0)
-		fs = g_list_append(fs, g_strdup_printf("MAXPARA=%d", info->maxpara));
-
-	if (info->wallchops)
-		fs = g_list_append(fs, g_strdup("WALLCHOPS"));
-
-	if (info->wallvoices)
-		fs = g_list_append(fs, g_strdup("WALLVOICES"));
-
-	if (info->rfc2812)
-		fs = g_list_append(fs, g_strdup("RFC2812"));
-
-	if (info->penalty)
-		fs = g_list_append(fs, g_strdup("PENALTY"));
-
-	if (info->remove)
-		fs = g_list_append(fs, g_strdup("REMOVE"));
-
-	if (info->safelist)
-		fs = g_list_append(fs, g_strdup("SAFELIST"));
-
-	if (info->userip)
-		fs = g_list_append(fs, g_strdup("USERIP"));
-
-	if (info->capab)
-		fs = g_list_append(fs, g_strdup("CAPAB"));
-
-	if (info->hcn)
-		fs = g_list_append(fs, g_strdup("HCN"));
-
-	if (info->cprivmsg)
-		fs = g_list_append(fs, g_strdup("CPRIVMSG"));
-
-	if (info->cnotice)
-		fs = g_list_append(fs, g_strdup("CNOTICE"));
-
-	if (info->knock)
-		fs = g_list_append(fs, g_strdup("KNOCK"));
-
-	if (info->vchannels)
-		fs = g_list_append(fs, g_strdup("VCHANNELS"));
-
-	if (info->whox)
-		fs = g_list_append(fs, g_strdup("WHOX"));
-
-	if (info->callerid)
-		fs = g_list_append(fs, g_strdup("CALLERID"));
-
-	if (info->accept)
-		fs = g_list_append(fs, g_strdup("ACCEPT"));
-
-	if (info->esilence)
-		fs = g_list_append(fs, g_strdup("ESILENCE"));
-
-	if (info->uhnames)
-		fs = g_list_append(fs, g_strdup("UHNAMES"));
-
-	if (info->keylen != 0)
-		fs = g_list_append(fs, g_strdup_printf("KEYLEN=%d", info->keylen));
-
-	if (info->silence) {
-		if (info->silence_limit != 0)
-			fs = g_list_append(fs,
-				 	g_strdup_printf("SILENCE=%d", info->silence_limit));
-		else
-			fs = g_list_append(fs, g_strdup("SILENCE"));
+	if (casemap != NULL) {
+		fs = g_list_append(fs, g_strdup(casemap));
 	}
 
-	if (info->chantypes != NULL)
-		fs = g_list_append(fs, g_strdup_printf("CHANTYPES=%s", info->chantypes));
+	if (info->forced_nick_changes) {
+		fs = g_list_append(fs, g_strdup("FNC"));
+	}
 
-	if (info->ircd != NULL)
+	if (info->map) {
+		fs = g_list_append(fs, g_strdup("MAP"));
+	}
+
+	if (info->ssl) {
+		fs = g_list_append(fs, g_strdup("SSL"));
+	}
+
+	if (info->charset != NULL) {
+		fs = g_list_append(fs, g_strdup_printf("CHARSET=%s", info->charset));
+	}
+
+	if (info->nicklen != 0) {
+		fs = g_list_append(fs, g_strdup_printf("NICKLEN=%d", info->nicklen));
+	}
+
+	if (info->userlen != 0) {
+		fs = g_list_append(fs, g_strdup_printf("USERLEN=%d", info->userlen));
+	}
+
+	if (info->watch != 0) {
+		fs = g_list_append(fs, g_strdup_printf("WATCH=%d", info->watch));
+	}
+
+	if (info->vbanlist) {
+		fs = g_list_append(fs, g_strdup("VBANLIST"));
+	}
+
+	if (info->operoverride) {
+		fs = g_list_append(fs, g_strdup("OVERRIDE"));
+	}
+
+	if (info->hostlen != 0) {
+		fs = g_list_append(fs, g_strdup_printf("HOSTLEN=%d", info->hostlen));
+	}
+
+	if (info->channellen != 0) {
+		fs = g_list_append(fs, g_strdup_printf("CHANNELLEN=%d", info->channellen));
+	}
+
+	if (info->awaylen != 0) {
+		fs = g_list_append(fs, g_strdup_printf("AWAYLEN=%d", info->awaylen));
+	}
+
+	if (info->kicklen != 0) {
+		fs = g_list_append(fs, g_strdup_printf("KICKLEN=%d", info->kicklen));
+	}
+
+	if (info->topiclen != 0) {
+		fs = g_list_append(fs, g_strdup_printf("TOPICLEN=%d", info->topiclen));
+	}
+
+	if (info->maxchannels != 0) {
+		fs = g_list_append(fs, g_strdup_printf("MAXCHANNELS=%d", info->maxchannels));
+	}
+
+	if (info->maxtargets != 0) {
+		fs = g_list_append(fs, g_strdup_printf("MAXTARGETS=%d", info->maxtargets));
+	}
+
+	if (info->maxbans != 0) {
+		fs = g_list_append(fs, g_strdup_printf("MAXBANS=%d", info->maxbans));
+	}
+
+	if (info->maxmodes != 0) {
+		fs = g_list_append(fs, g_strdup_printf("MODES=%d", info->maxmodes));
+	}
+
+	if (info->maxpara != 0) {
+		fs = g_list_append(fs, g_strdup_printf("MAXPARA=%d", info->maxpara));
+	}
+
+	if (info->wallchops) {
+		fs = g_list_append(fs, g_strdup("WALLCHOPS"));
+	}
+
+	if (info->wallvoices) {
+		fs = g_list_append(fs, g_strdup("WALLVOICES"));
+	}
+
+	if (info->rfc2812) {
+		fs = g_list_append(fs, g_strdup("RFC2812"));
+	}
+
+	if (info->penalty) {
+		fs = g_list_append(fs, g_strdup("PENALTY"));
+	}
+
+	if (info->remove) {
+		fs = g_list_append(fs, g_strdup("REMOVE"));
+	}
+
+	if (info->safelist) {
+		fs = g_list_append(fs, g_strdup("SAFELIST"));
+	}
+
+	if (info->userip) {
+		fs = g_list_append(fs, g_strdup("USERIP"));
+	}
+
+	if (info->capab) {
+		fs = g_list_append(fs, g_strdup("CAPAB"));
+	}
+
+	if (info->hcn) {
+		fs = g_list_append(fs, g_strdup("HCN"));
+	}
+
+	if (info->cprivmsg) {
+		fs = g_list_append(fs, g_strdup("CPRIVMSG"));
+	}
+
+	if (info->cnotice) {
+		fs = g_list_append(fs, g_strdup("CNOTICE"));
+	}
+
+	if (info->knock) {
+		fs = g_list_append(fs, g_strdup("KNOCK"));
+	}
+
+	if (info->vchannels) {
+		fs = g_list_append(fs, g_strdup("VCHANNELS"));
+	}
+
+	if (info->whox) {
+		fs = g_list_append(fs, g_strdup("WHOX"));
+	}
+
+	if (info->callerid) {
+		fs = g_list_append(fs, g_strdup("CALLERID"));
+	}
+
+	if (info->accept) {
+		fs = g_list_append(fs, g_strdup("ACCEPT"));
+	}
+
+	if (info->esilence) {
+		fs = g_list_append(fs, g_strdup("ESILENCE"));
+	}
+
+	if (info->uhnames) {
+		fs = g_list_append(fs, g_strdup("UHNAMES"));
+	}
+
+	if (info->keylen != 0) {
+		fs = g_list_append(fs, g_strdup_printf("KEYLEN=%d", info->keylen));
+	}
+
+	if (info->silence) {
+		if (info->silence_limit != 0) {
+			fs = g_list_append(fs,
+				 	g_strdup_printf("SILENCE=%d", info->silence_limit));
+		} else {
+			fs = g_list_append(fs, g_strdup("SILENCE"));
+		}
+	}
+
+	if (info->chantypes != NULL) {
+		fs = g_list_append(fs, g_strdup_printf("CHANTYPES=%s", info->chantypes));
+	}
+
+	if (info->ircd != NULL) {
 		fs = g_list_append(fs, g_strdup_printf("IRCD=%s", info->ircd));
+	}
 
 	if (info->chanmodes != NULL) {
 		char *tmp = g_strjoinv(",", info->chanmodes);
@@ -221,23 +279,29 @@ char *network_info_string(struct irc_network_info *info)
 		g_free(tmp);
 	}
 
-	if (info->chanlimit != NULL)
+	if (info->chanlimit != NULL) {
 		fs = g_list_append(fs, g_strdup_printf("CHANLIMIT=%s", info->chanlimit));
+	}
 
-	if (info->namesx)
-		fs = g_list_append(fs, "NAMESX");
+	if (info->namesx) {
+		fs = g_list_append(fs, g_strdup("NAMESX"));
+	}
 
-	if (info->securelist)
-		fs = g_list_append(fs, "SECURELIST");
+	if (info->securelist) {
+		fs = g_list_append(fs, g_strdup("SECURELIST"));
+	}
 
-	if (info->excepts_mode != '\0')
+	if (info->excepts_mode != '\0') {
 		fs = g_list_append(fs, g_strdup_printf("EXCEPTS=%c", info->excepts_mode));
+	}
 
-	if (info->statusmsg != NULL)
+	if (info->statusmsg != NULL) {
 		fs = g_list_append(fs, g_strdup_printf("STATUSMSG=%s", info->statusmsg));
+	}
 
-	if (info->invex_mode != '\0')
+	if (info->invex_mode != '\0') {
 		fs = g_list_append(fs, g_strdup_printf("INVEX=%c", info->invex_mode));
+	}
 
 	if (info->elist_mask_search ||
 		info->elist_inverse_mask_search ||
@@ -259,26 +323,32 @@ char *network_info_string(struct irc_network_info *info)
 		fs = g_list_append(fs, g_strdup_printf("ELIST=%s", elist));
 	}
 
-	if (info->extban_prefix != NULL)
+	if (info->extban_prefix != NULL) {
 		fs = g_list_append(fs, g_strdup_printf("EXTBAN=%s,%s",
 						   info->extban_prefix, info->extban_supported));
+	}
 
-	if (info->deaf_mode != '\0')
+	if (info->deaf_mode != '\0') {
 		fs = g_list_append(fs, g_strdup_printf("DEAF=%c", info->deaf_mode));
+	}
 
-	if (info->maxlist != NULL)
+	if (info->maxlist != NULL) {
 		fs = g_list_append(fs, g_strdup_printf("MAXLIST=%s", info->maxlist));
+	}
 
-	if (info->idchan != NULL)
+	if (info->idchan != NULL) {
 		fs = g_list_append(fs, g_strdup_printf("IDCHAN=%s", info->idchan));
+	}
 
-	if (info->prefix != NULL)
+	if (info->prefix != NULL) {
 		fs = g_list_append(fs, g_strdup_printf("PREFIX=%s", info->prefix));
+	}
 
 	ret = list_make_string(fs);
 
-	for (gl = fs; gl; gl = gl->next)
+	for (gl = fs; gl; gl = gl->next) {
 		g_free(gl->data);
+	}
 
 	g_list_free(fs);
 

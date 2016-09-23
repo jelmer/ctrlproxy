@@ -53,7 +53,7 @@ void client_replicate(struct irc_client *client)
 {
 	const char *bn = client->network->global->config->replication;
 	struct replication_backend *backend;
-	
+
 	backend = repl_find_backend(bn);
 
 	if (backend == NULL) {

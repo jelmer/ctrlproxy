@@ -1,7 +1,7 @@
 /*
 	ctrlproxy: A modular IRC proxy
 	(c) 2005-2006 Jelmer Vernooĳ <jelmer@jelmer.uk>
-	
+
 	Manual listen on ports
 
 	This program is free software; you can redistribute it and/or modify
@@ -100,7 +100,7 @@ gboolean default_socks_connect_fqdn (struct pending_client *cl, const char *host
 	char *desc;
 	struct irc_network *result;
 	struct network_config *nc;
-	
+
 	listener_log(LOG_INFO, cl->listener, "Request to connect to %s:%d", hostname, port);
 
 	result = find_network_by_hostname(cl->listener->global, hostname, port,
@@ -142,13 +142,13 @@ gboolean default_socks_connect_fqdn (struct pending_client *cl, const char *host
 			network_log(LOG_ERROR, result, "Unable to obtain local address for connection to server");
 			return listener_socks_error(cl, REP_NET_UNREACHABLE);
 		}
-			
+
 		listener_socks_reply(cl, REP_OK, atyp, len, data, port);
-		
+
 	} else {
 		gchar *data = g_strdup("xlocalhost");
 		data[0] = strlen(data+1);
-		
+
 		listener_socks_reply(cl, REP_OK, ATYP_FQDN, data[0]+1, data, 1025);
 	}
 
@@ -289,7 +289,7 @@ void free_listener(struct irc_listener *l)
 	l->global->listeners = g_list_remove(l->global->listeners, l);
 
 	irc_network_unref(l->network);
-	
+
 	g_free(l);
 }
 
@@ -333,7 +333,7 @@ static void auto_add_listener(struct irc_network *n, void *private_data)
 	struct irc_listener *l;
 	struct listener_config *cfg;
 	struct network_config *nc = n->private_data;
-	
+
 	/* See if there is already a listener for n */
 	for (gl = n->global->listeners; gl; gl = gl->next) {
 		l = gl->data;
@@ -392,7 +392,7 @@ gboolean start_unix_domain_socket_listener(struct global *global)
 		g_free(l);
 		return FALSE;
 	}
-	
+
 	un.sun_family = AF_UNIX;
 	strncpy(un.sun_path, global->config->network_socket, sizeof(un.sun_path));
 	unlink(un.sun_path);
@@ -402,7 +402,7 @@ gboolean start_unix_domain_socket_listener(struct global *global)
 		g_free(l);
 		return FALSE;
 	}
-	
+
 	if (listen(sock, 5) < 0) {
 		log_global(LOG_ERROR, "error listening on socket: %s", strerror(errno));
 		g_free(l);

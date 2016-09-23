@@ -22,7 +22,7 @@
 
 enum mode_type { REMOVE = 0, ADD = 1 };
 
-#define CHECK_ORIGIN(s,l,name) \
+#define CHECK_ORIGIN(s, l, name) \
 	if ((l)->origin == NULL) { \
 		network_state_log(LOG_WARNING, (s), \
 						  "Received "name" line without origin"); \
@@ -456,16 +456,18 @@ static void handle_join(struct irc_network_state *s, const struct irc_line *l)
 	char **channels;
 	char *nick;
 
-	CHECK_ORIGIN(s,l,"NICK");
+	CHECK_ORIGIN(s, l, "NICK");
 
 	nick = line_get_nick(l);
 
 	g_assert(nick != NULL);
 
 	channels = g_strsplit(l->args[1], ",", 0);
-
-	g_assert(channels != NULL);
-
+	if (channels == NULL) {
+		network_state_log(LOG_ERROR, s, "Unable to split channel list (%s)",
+						  l->args[1]);
+		return;
+	}
 
 	for (i = 0; channels[i]; i++) {
 		/* Someone is joining a channel the user is on */
@@ -495,14 +497,20 @@ static void handle_part(struct irc_network_state *s, const struct irc_line *l)
 	int i;
 	char *nick;
 
-	CHECK_ORIGIN(s,l,"PART");
+	CHECK_ORIGIN(s, l, "PART");
 
 	nick = line_get_nick(l);
 
-	if (nick == NULL)
+	if (nick == NULL) {
 		return;
+	}
 
 	channels = g_strsplit(l->args[1], ",", 0);
+	if (channels == NULL) {
+		network_state_log(LOG_ERROR, s, "Unable to split channel list (%s)",
+						  l->args[1]);
+		return;
+	}
 
 	for (i = 0; channels[i]; i++) {
 		c = find_channel(s, channels[i]);
@@ -542,13 +550,27 @@ static void handle_kick(struct irc_network_state *s, const struct irc_line *l)
 	int i;
 	char *nick;
 
-	CHECK_ORIGIN(s,l,"KICK");
+	CHECK_ORIGIN(s, l, "KICK");
 
 	nick = line_get_nick(l);
 
 	channels = g_strsplit(l->args[1], ",", 0);
-	nicks = g_strsplit(l->args[2], ",", 0);
+	if (channels == NULL) {
+		g_free(nick);
+		network_state_log(LOG_ERROR, s, "Unable to split channel list (%s)",
+						  l->args[1]);
+		return;
+	}
 
+	nicks = g_strsplit(l->args[2], ",", 0);
+	if (nicks == NULL) {
+		g_free(nick);
+		g_strfreev(channels);
+		network_state_log(LOG_ERROR, s, "Unable to split nick list (%s)",
+						  l->args[2]);
+		return;
+
+	}
 	for (i = 0; channels[i] && nicks[i]; i++) {
 		c = find_channel(s, channels[i]);
 
@@ -589,10 +611,12 @@ static void handle_topic(struct irc_network_state *s, const struct irc_line *l)
 
 	CHECK_ORIGIN(s, l, "TOPIC");
 
-	if (c->topic != NULL)
+	if (c->topic != NULL) {
 		g_free(c->topic);
-	if (c->topic_set_by != NULL)
+	}
+	if (c->topic_set_by != NULL) {
 		g_free(c->topic_set_by);
+	}
 	c->topic = g_strdup(l->args[2]);
 	c->topic_set_time = time(NULL);
 	c->topic_set_by = line_get_nick(l);
@@ -653,15 +677,23 @@ static void handle_namreply(struct irc_network_state *s, const struct irc_line *
 		return;
 	}
 
+	names = g_strsplit(l->args[4], " ", -1);
+	if (names == NULL) {
+		network_state_log(LOG_ERROR, s, "Unable to split names list (%s)",
+						  l->args[4]);
+		return;
+	}
+
 	c->mode = l->args[2][0];
 	if (!c->namreply_started) {
 		free_names(c);
 		c->namreply_started = TRUE;
 	}
-	names = g_strsplit(l->args[4], " ", -1);
 
 	for (i = 0; names[i]; i++) {
-		if (strlen(names[i]) == 0) continue;
+		if (strlen(names[i]) == 0) {
+			continue;
+		}
 		find_add_channel_nick(c, names[i]);
 	}
 	g_strfreev(names);
@@ -919,7 +951,7 @@ static int channel_state_change_mode(struct irc_network_state *s, struct network
 		}
 	} else if (is_prefix_mode(info, mode)) {
 		struct channel_nick *n;
-	
+
 		if (opt_arg == NULL) {
 			network_state_log(LOG_WARNING, s, "Mode %c requires nick argument, but no argument found", mode);
 			return -1;
@@ -971,7 +1003,7 @@ static void handle_mode(struct irc_network_state *s, const struct irc_line *l)
 		by_name = line_get_nick(l);
 		by = find_network_nick(s, by_name);
 		g_free(by_name);
-	
+
 		for(i = 0; l->args[2][i]; i++) {
 			switch(l->args[2][i]) {
 				case '+': t = TRUE; break;
@@ -1034,14 +1066,19 @@ static void handle_privmsg(struct irc_network_state *s, const struct irc_line *l
 	struct network_nick *nn;
 	char *nick;
 
-	CHECK_ORIGIN(s,l,"PRIVMSG");
+	CHECK_ORIGIN(s, l, "PRIVMSG");
 
-	if (irccmp(s->info, l->args[1], s->me.nick) != 0) return;
+	if (irccmp(s->info, l->args[1], s->me.nick) != 0) {
+		return;
+	}
 
 	nick = line_get_nick(l);
 	nn = find_add_network_nick(s, nick);
-	nn->query = 1;
 	g_free(nick);
+
+	if (nn != NULL) {
+		nn->query = 1;
+	}
 }
 
 static void handle_nick(struct irc_network_state *s, const struct irc_line *l)
@@ -1049,12 +1086,15 @@ static void handle_nick(struct irc_network_state *s, const struct irc_line *l)
 	struct network_nick *nn;
 	char *nick;
 
-	CHECK_ORIGIN(s,l,"NICK");
+	CHECK_ORIGIN(s, l, "NICK");
 
 	nick = line_get_nick(l);
 	nn = find_add_network_nick(s, nick);
 	g_free(nick);
-	network_nick_set_nick(nn, l->args[1]);
+
+	if (nn != NULL) {
+		network_nick_set_nick(nn, l->args[1]);
+	}
 }
 
 static void handle_umodeis(struct irc_network_state *s, const struct irc_line *l)
@@ -1100,6 +1140,12 @@ static void handle_302(struct irc_network_state *s, const struct irc_line *l)
 {
 	int i;
 	gchar **users = g_strsplit(g_strstrip(l->args[2]), " ", 0);
+	if (users == NULL) {
+		network_state_log(LOG_ERROR, s, "Unable to split user list (%s)",
+						  l->args[2]);
+		return;
+	}
+
 	for (i = 0; users[i]; i++) {
 		/* We got a USERHOST response, split it into nick and user@host, and check the nick */
 		gchar** tmp302 = g_strsplit(users[i], "=", 2);
