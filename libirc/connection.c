@@ -166,7 +166,7 @@ static struct tcp_server_config *network_get_next_tcp_server(struct irc_network 
 {
 	struct network_config *nc = n->private_data;
 	GList *cur;
-	
+
 	g_assert(n);
 	g_assert(nc);
 	cur = g_list_find(nc->type_settings.tcp.servers, n->connection.data.tcp.current_server);
@@ -423,7 +423,7 @@ static gboolean connect_current_tcp_server(struct irc_network *s)
 	struct network_config *nc;
 
 	g_assert(s != NULL);
-	
+
 	nc = s->private_data;
 
 	if (!s->connection.data.tcp.current_server) {
@@ -431,7 +431,7 @@ static gboolean connect_current_tcp_server(struct irc_network *s)
 	}
 
 	network_log(LOG_TRACE, s, "connect_current_tcp_server");
-	
+
 	cs = s->connection.data.tcp.current_server;
 	if (cs == NULL) {
 		nc->autoconnect = FALSE;
@@ -567,7 +567,7 @@ static void reconnect(struct irc_network *server)
 								server->reconnect_interval,
 								(GSourceFunc) delayed_connect_server, server);
 	} else {
-		connect_server(server);	
+		connect_server(server);
 	}
 }
 
@@ -758,11 +758,11 @@ static gboolean connect_program(struct irc_network *s)
 	char *cmd[2];
 	pid_t pid;
 	GIOChannel *ioc;
-	
+
 	g_assert(s);
 	g_assert(nc);
 	g_assert(nc->type == NETWORK_PROGRAM);
-	
+
 	cmd[0] = nc->type_settings.program_location;
 	cmd[1] = NULL;
 	pid = piped_child(s, cmd, &sock);

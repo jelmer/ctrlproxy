@@ -81,7 +81,7 @@ struct irc_network_connection {
 			/** Source ID for function that finishes connect. */
 			gint connect_id;
 		} tcp;
-		
+	
 		struct {
 			void *private_data;
 			struct virtual_network_ops {
@@ -139,7 +139,7 @@ struct irc_network {
 	struct irc_network_info *info;
 
 	struct irc_network_connection connection;
-	
+
 	/** Linestack context. */
 	struct linestack_context *linestack;
 
@@ -152,9 +152,9 @@ struct irc_network {
 };
 
 /* server.c */
-G_MODULE_EXPORT gboolean network_set_charset(struct irc_network *n, const char *name);
+G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT gboolean network_set_charset(struct irc_network *n, const char *name);
 G_MODULE_EXPORT gboolean autoconnect_networks(GList *);
-G_MODULE_EXPORT struct irc_network *irc_network_new(const struct irc_network_callbacks *callbacks, void *private_data);
+G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT struct irc_network *irc_network_new(const struct irc_network_callbacks *callbacks, void *private_data);
 G_MODULE_EXPORT gboolean connect_network(struct irc_network *);
 G_MODULE_EXPORT void irc_network_select_next_server(struct irc_network *n);
 G_MODULE_EXPORT gboolean disconnect_network(struct irc_network *s);
@@ -167,9 +167,9 @@ G_MODULE_EXPORT gboolean virtual_network_recv_line(struct irc_network *l, struct
 G_MODULE_EXPORT gboolean virtual_network_recv_args(struct irc_network *l, const char *origin, ...);
 G_MODULE_EXPORT gboolean virtual_network_recv_response(struct irc_network *n, int num, ...);
 struct ctrlproxy_config;
-G_MODULE_EXPORT G_GNUC_MALLOC struct linestack_context *new_linestack(struct irc_network *network, const char *basedir);
-G_MODULE_EXPORT G_GNUC_MALLOC char *network_generate_feature_string(struct irc_network *n);
-G_MODULE_EXPORT struct irc_network *irc_network_ref(struct irc_network *);
+G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT G_GNUC_MALLOC struct linestack_context *new_linestack(struct irc_network *network, const char *basedir);
+G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT G_GNUC_MALLOC char *network_generate_feature_string(struct irc_network *n);
+G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT struct irc_network *irc_network_ref(struct irc_network *);
 G_MODULE_EXPORT void irc_network_unref(struct irc_network *);
 G_MODULE_EXPORT void unregister_virtual_networks(void);
 

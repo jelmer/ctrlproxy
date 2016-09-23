@@ -90,7 +90,6 @@ static gboolean process_from_server(struct irc_network *n, const struct irc_line
 {
 	struct irc_line *lc;
 	struct network_config *nc = n->private_data;
-	GError *error = NULL;
 	int response;
 
 	g_assert(n != NULL);
@@ -145,13 +144,9 @@ static gboolean process_from_server(struct irc_network *n, const struct irc_line
 		/* Always save networks we've successfully connected to. */
 		nc->implicit = 0;
 
-		network_set_charset(n, get_charset(n->info));
-
-		if (error != NULL) {
-			network_log(LOG_WARNING, n, "Error setting charset %s: %s",
-				get_charset(n->info), error->message);
-			g_error_free(error);
-			error = NULL;
+		if (!network_set_charset(n, get_charset(n->info))) {
+			network_log(LOG_WARNING, n, "Error setting charset %s",
+				get_charset(n->info));
 		}
 
 		network_log(LOG_INFO, n, "Successfully logged in");
