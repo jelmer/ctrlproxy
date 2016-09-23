@@ -2,7 +2,7 @@
 	ctrlproxy: A modular IRC proxy
 	help: module for access the help system
 
-	(c) 2006-2007 Jelmer Vernooij <jelmer@jelmer.uk>
+	(c) 2006-2007 Jelmer Vernooĳ <jelmer@jelmer.uk>
 	(c) 2004 Wilmer van der Gaast <wilmer@gaast.net>
 
 	This program is free software; you can redistribute it and/or modify

@@ -6,7 +6,7 @@
  * @brief IRC Constants
  */
 
-/* Written by Jelmer Vernooij, 2003 based on the list of error codes
+/* Written by Jelmer Vernooĳ, 2003 based on the list of error codes
  * and responses listed in RFC 1459 and RFC 2812 */
 
 #define ERR_NOSUCHNICK 401

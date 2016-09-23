@@ -1,7 +1,7 @@
 
 /*
 	ctrlproxy: A modular IRC proxy
-	(c) 2002-2008 Jelmer Vernooij <jelmer@jelmer.uk>
+	(c) 2002-2008 Jelmer Vernooĳ <jelmer@jelmer.uk>
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by

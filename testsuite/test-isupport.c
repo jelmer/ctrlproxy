@@ -1,7 +1,7 @@
 
 /*
     ircdtorture: an IRC RFC compliancy tester
-	(c) 2005 Jelmer Vernooij <jelmer@jelmer.uk>
+	(c) 2005 Jelmer Vernooĳ <jelmer@jelmer.uk>
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by

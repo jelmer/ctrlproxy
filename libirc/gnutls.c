@@ -5,7 +5,7 @@
  * Authors:
  *      Ian Peters <itp@ximian.com>
  *
- * Modified for ctrlproxy by Jelmer Vernooij <jelmer@jelmer.uk>
+ * Modified for ctrlproxy by Jelmer Vernooĳ <jelmer@jelmer.uk>
  *
  * Copyright (C) 2003, Ximian, Inc.
  */

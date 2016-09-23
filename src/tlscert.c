@@ -2,7 +2,7 @@
    auto-generate self signed TLS certificates. Imported from Samba.
 
    Copyright (C) Andrew Tridgell 2005
-   Copyright (C) Jelmer Vernooij 2006-2007
+   Copyright (C) Jelmer Vernooĳ 2006-2007
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by

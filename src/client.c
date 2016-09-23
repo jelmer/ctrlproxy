@@ -1,6 +1,6 @@
 /*
 	ctrlproxy: A modular IRC proxy
-	(c) 2002-2007 Jelmer Vernooij <jelmer@jelmer.uk>
+	(c) 2002-2007 Jelmer Vernooĳ <jelmer@jelmer.uk>
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -160,7 +160,7 @@ static gboolean welcome_client(struct irc_client *client)
 	client_send_response(client, RPL_YOURHOST, tmp, NULL);
 	g_free(tmp);
 	client_send_response(client, RPL_CREATED,
-		"Ctrlproxy (c) 2002-2009 Jelmer Vernooij <jelmer@jelmer.uk>", NULL);
+		"Ctrlproxy (c) 2002-2009 Jelmer Vernooĳ <jelmer@jelmer.uk>", NULL);
 	client_send_response(client, RPL_MYINFO,
 		 client->network->name,
 		 ctrlproxy_version(),
