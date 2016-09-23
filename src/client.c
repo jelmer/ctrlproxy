@@ -337,7 +337,10 @@ struct irc_client *client_init(struct irc_network *n, struct irc_transport *tran
 	client->network = irc_network_ref(n);
 
 	if (n != NULL && n->global != NULL) {
-		client_set_charset(client, n->global->config->client_charset);
+		if (!client_set_charset(client, n->global->config->client_charset)) {
+			client_disconnect(client, "Unable to set character set.");
+			return NULL;
+		}
 	}
 
 	client->exit_on_close = FALSE;

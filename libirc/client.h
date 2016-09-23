@@ -88,35 +88,35 @@ G_MODULE_EXPORT G_GNUC_NULL_TERMINATED gboolean client_send_args_ex(struct irc_c
 G_MODULE_EXPORT G_GNUC_NULL_TERMINATED gboolean client_send_response(struct irc_client *c,
 											  int response, ...);
 G_MODULE_EXPORT gboolean client_send_line(struct irc_client *c, const struct irc_line *, GError **error);
-G_MODULE_EXPORT gboolean client_set_charset(struct irc_client *c, const char *name);
-G_MODULE_EXPORT const char *client_get_default_target(struct irc_client *c);
-G_MODULE_EXPORT const char *client_get_own_hostmask(struct irc_client *c);
-G_MODULE_EXPORT struct irc_client *client_ref(struct irc_client *c);
+G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT gboolean client_set_charset(struct irc_client *c, const char *name);
+G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT const char *client_get_default_target(struct irc_client *c);
+G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT const char *client_get_own_hostmask(struct irc_client *c);
+G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT struct irc_client *client_ref(struct irc_client *c);
 G_MODULE_EXPORT void client_ref_void(struct irc_client *c);
 G_MODULE_EXPORT void client_unref(struct irc_client *c);
-G_MODULE_EXPORT struct irc_client *irc_client_new(struct irc_transport *transport, const char *default_origin, const char *desc, const struct irc_client_callbacks *callbacks);
-G_MODULE_EXPORT void clients_send_state(GList *clients,
+G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT struct irc_client *irc_client_new(struct irc_transport *transport, const char *default_origin, const char *desc, const struct irc_client_callbacks *callbacks);
+G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT gboolean clients_send_state(GList *clients,
 										struct irc_network_state *s);
 
-G_MODULE_EXPORT void client_send_nameslist(struct irc_client *client,
+G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT gboolean client_send_nameslist(struct irc_client *client,
 										   struct irc_channel_state *ch);
-G_MODULE_EXPORT gboolean client_send_channel_state_diff(
+G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT gboolean client_send_channel_state_diff(
 										struct irc_client *client,
 										struct irc_channel_state *old_state,
 										struct irc_channel_state *new_state);
 
-G_MODULE_EXPORT gboolean client_send_state_diff(struct irc_client *client, struct irc_network_state *old_state, struct irc_network_state *new_state);
+G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT gboolean client_send_state_diff(struct irc_client *client, struct irc_network_state *old_state, struct irc_network_state *new_state);
 
-G_MODULE_EXPORT void client_send_channel_state(struct irc_client *c,
+G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT gboolean client_send_channel_state(struct irc_client *c,
 							   struct irc_channel_state *ch);
-G_MODULE_EXPORT void client_send_topic(struct irc_client *c, struct irc_channel_state *ch, gboolean explicit);
-G_MODULE_EXPORT void client_send_banlist(struct irc_client *client, struct irc_channel_state *channel);
-G_MODULE_EXPORT void client_send_channel_mode(struct irc_client *client, struct irc_channel_state *channel);
-G_MODULE_EXPORT void client_send_luserchannels(struct irc_client *c, int num);
-G_MODULE_EXPORT void client_send_motd(struct irc_client *c, char **lines);
+G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT gboolean client_send_topic(struct irc_client *c, struct irc_channel_state *ch, gboolean explicit);
+G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT gboolean client_send_banlist(struct irc_client *client, struct irc_channel_state *channel);
+G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT gboolean client_send_channel_mode(struct irc_client *client, struct irc_channel_state *channel);
+G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT gboolean client_send_luserchannels(struct irc_client *c, int num);
+G_GNUC_WARN_UNUSED_RESULT G_MODULE_EXPORT gboolean client_send_motd(struct irc_client *c, char **lines);
 G_MODULE_EXPORT void client_log(enum log_level, const struct irc_client *c, const char *fmt, ...);
-G_MODULE_EXPORT void client_send_netsplit(struct irc_client *c, const char *my_name, const char *lost_server);
-G_MODULE_EXPORT void clients_send_netsplit(GList *clients, const char *my_name, const char *lost_server);
+G_MODULE_EXPORT gboolean client_send_netsplit(struct irc_client *c, const char *my_name, const char *lost_server);
+G_MODULE_EXPORT gboolean clients_send_netsplit(GList *clients, const char *my_name, const char *lost_server);
 G_MODULE_EXPORT void free_login_details(struct irc_login_details *details);
 
 #define IRC_CLIENT_ERROR irc_client_error_quark()

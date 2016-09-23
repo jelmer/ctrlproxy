@@ -93,7 +93,7 @@ gboolean redirect_response(struct query_stack *stack,
 		client_send_line(c, l, NULL);
 		return TRUE;
 	}
-	
+
 	n = irc_line_respcode(l);
 
 	/* See if this is a response that should be sent to all clients */

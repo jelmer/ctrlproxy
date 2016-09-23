@@ -22,6 +22,12 @@
 #include "redirect.h"
 #include "libirc/python/irc.h"
 
+#define CHECK_BOOL_SEND(fn) \
+    if (!(fn)) { \
+        PyErr_SetString(PyExc_RuntimeError, "unable to send"); \
+        return NULL; \
+    }
+
 void g_error_set_python(GError **error)
 {
     PyObject *exception_type, *exception_value, *exception_tb;
@@ -310,7 +316,7 @@ static PyObject *py_client_send_state_diff(PyClientObject *self, PyObject *args)
         return NULL;
     }
 
-    client_send_state_diff(self->client, state1->state, state2->state);
+    CHECK_BOOL_SEND(client_send_state_diff(self->client, state1->state, state2->state));
 
     Py_RETURN_NONE;
 }
@@ -338,7 +344,7 @@ static PyObject *py_client_send_motd(PyClientObject *self, PyObject *py_motd)
     }
     motd[i] = NULL;
 
-    client_send_motd(self->client, motd);
+    CHECK_BOOL_SEND(client_send_motd(self->client, motd));
 
     g_free(motd);
 
@@ -352,7 +358,7 @@ static PyObject *py_client_send_channel_mode(PyClientObject *self, PyChannelStat
         return NULL;
     }
 
-    client_send_channel_mode(self->client, py_channel->state);
+    CHECK_BOOL_SEND(client_send_channel_mode(self->client, py_channel->state));
 
     Py_RETURN_NONE;
 }
@@ -371,7 +377,7 @@ static PyObject *py_client_send_topic(PyClientObject *self, PyObject *args)
         return NULL;
     }
 
-    client_send_topic(self->client, py_channel->state, explicit);
+    CHECK_BOOL_SEND(client_send_topic(self->client, py_channel->state, explicit));
 
     Py_RETURN_NONE;
 }
@@ -383,7 +389,7 @@ static PyObject *py_client_send_banlist(PyClientObject *self, PyChannelStateObje
         return NULL;
     }
 
-    client_send_banlist(self->client, py_channel->state);
+    CHECK_BOOL_SEND(client_send_banlist(self->client, py_channel->state));
 
     Py_RETURN_NONE;
 }
@@ -395,7 +401,7 @@ static PyObject *py_client_send_channel_state(PyClientObject *self, PyChannelSta
         return NULL;
     }
 
-    client_send_channel_state(self->client, py_channel->state);
+    CHECK_BOOL_SEND(client_send_channel_state(self->client, py_channel->state));
 
     Py_RETURN_NONE;
 }
@@ -413,8 +419,8 @@ static PyObject *py_client_send_channel_state_diff(PyClientObject *self, PyObjec
         return NULL;
     }
 
-    client_send_channel_state_diff(self->client, py_channel1->state,
-                                   py_channel2->state);
+    CHECK_BOOL_SEND(client_send_channel_state_diff(self->client, py_channel1->state,
+                                   py_channel2->state));
 
     Py_RETURN_NONE;
 }
@@ -428,7 +434,7 @@ static PyObject *py_client_send_nameslist(PyClientObject *self, PyChannelStateOb
         return NULL;
     }
 
-    client_send_nameslist(self->client, py_channel->state);
+    CHECK_BOOL_SEND(client_send_nameslist(self->client, py_channel->state));
 
     Py_RETURN_NONE;
 }
@@ -442,7 +448,7 @@ static PyObject *py_client_send_luserchannels(PyClientObject *self, PyObject *ar
         return NULL;
     }
 
-    client_send_luserchannels(self->client, PyInt_AsLong(arg));
+    CHECK_BOOL_SEND(client_send_luserchannels(self->client, PyInt_AsLong(arg)));
 
     Py_RETURN_NONE;
 }
@@ -861,8 +867,7 @@ static PyObject *PyClientFromPtr(struct irc_client *c)
         return NULL;
     }
 
-    ret->client = c;
-    client_ref(c);
+    ret->client = client_ref(c);
     return (PyObject *)ret;
 }
 

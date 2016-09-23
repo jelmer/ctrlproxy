@@ -242,21 +242,24 @@ static void free_client(struct irc_client *c)
  *
  * @param c Client to send to.
  */
-void client_send_motd(struct irc_client *c, char **lines)
+gboolean client_send_motd(struct irc_client *c, char **lines)
 {
 	int i;
 	g_assert(c);
 
 	if (lines == NULL) {
-		client_send_response(c, ERR_NOMOTD, "No MOTD file", NULL);
-		return;
+		return client_send_response(c, ERR_NOMOTD, "No MOTD file", NULL);
 	}
 
-	client_send_response(c, RPL_MOTDSTART, "Start of MOTD", NULL);
-	for(i = 0; lines[i]; i++) {
-		client_send_response(c, RPL_MOTD, lines[i], NULL);
+	if (!client_send_response(c, RPL_MOTDSTART, "Start of MOTD", NULL)) {
+		return FALSE;
 	}
-	client_send_response(c, RPL_ENDOFMOTD, "End of MOTD", NULL);
+	for(i = 0; lines[i]; i++) {
+		if (!client_send_response(c, RPL_MOTD, lines[i], NULL)) {
+			return FALSE;
+		}
+	}
+	return client_send_response(c, RPL_ENDOFMOTD, "End of MOTD", NULL);
 }
 
 static gboolean on_transport_receive_line(struct irc_transport *transport,
@@ -362,9 +365,7 @@ static gboolean client_ping(struct irc_client *client)
 		name = "PinglCtrlproxy";
 	}
 
-	client_send_args_ex(client, NULL, "PING", name, NULL);
-
-	return TRUE;
+	return client_send_args_ex(client, NULL, "PING", name, NULL);
 }
 
 const struct irc_transport_callbacks client_transport_callbacks = {
@@ -421,7 +422,11 @@ struct irc_client *irc_client_new(struct irc_transport *transport,
 	client->description = g_strdup(desc);
 	client->connected = TRUE;
 
-	client_set_charset(client, DEFAULT_CLIENT_CHARSET);
+	if (!client_set_charset(client, DEFAULT_CLIENT_CHARSET)) {
+		free_client(client);
+		return NULL;
+	}
+
 	pending_clients = g_list_append(pending_clients, client);
 	return client;
 }
@@ -501,6 +506,7 @@ gboolean client_send_channel_state_diff(struct irc_client *client,
 					struct irc_channel_state *new_state)
 {
 	GList *gl;
+	gboolean ret;
 
 	/* Send PART for each user that is only in old_state */
 	for (gl = old_state->nicks; gl; gl = gl->next) {
@@ -509,12 +515,16 @@ gboolean client_send_channel_state_diff(struct irc_client *client,
 
 		nn = find_channel_nick_hostmask(new_state, on->global_nick->hostmask);
 		if (nn == NULL) {
-			client_send_args_ex(client, on->global_nick->hostmask,
-					    "PART", new_state->name, NULL);
+			if (!client_send_args_ex(client, on->global_nick->hostmask,
+					    "PART", new_state->name, NULL)) {
+				return FALSE;
+			}
 		} else {
-			client_send_args_ex(client, on->global_nick->hostmask,
+			if (!client_send_args_ex(client, on->global_nick->hostmask,
 					    "NICK", nn->global_nick->nick,
-					    NULL);
+					    NULL)) {
+				return FALSE;
+			}
 		}
 	}
 
@@ -525,8 +535,10 @@ gboolean client_send_channel_state_diff(struct irc_client *client,
 
 		on = find_channel_nick(old_state, nn->global_nick->nick);
 		if (on == NULL) {
-			client_send_args_ex(client, nn->global_nick->hostmask,
-					    "JOIN", nn->channel->name, NULL);
+			if (!client_send_args_ex(client, nn->global_nick->hostmask,
+					    "JOIN", nn->channel->name, NULL)) {
+				return FALSE;
+			}
 		}
 	}
 
@@ -534,8 +546,10 @@ gboolean client_send_channel_state_diff(struct irc_client *client,
 	if (old_state->topic != new_state->topic && (
 		old_state->topic == NULL || new_state->topic == NULL ||
 		strcmp(old_state->topic, new_state->topic) != 0)) {
-		client_send_args_ex(client, new_state->topic_set_by, "TOPIC",
-				    new_state->name, new_state->topic, NULL);
+		if (!client_send_args_ex(client, new_state->topic_set_by, "TOPIC",
+				    new_state->name, new_state->topic, NULL)) {
+			return FALSE;
+		}
 	}
 
 	/* Send MODE if the mode changed */
@@ -543,8 +557,11 @@ gboolean client_send_channel_state_diff(struct irc_client *client,
 		   sizeof(gboolean) * MAXMODES) != 0) {
 		char *mode = mode2string(new_state->modes);
 		/* FIXME: Remove old modes */
-		client_send_args(client, "MODE", new_state->name, mode, NULL);
+		ret = client_send_args(client, "MODE", new_state->name, mode, NULL);
 		g_free(mode);
+		if (!ret) {
+			return FALSE;
+		}
 	}
 
 	return TRUE;
@@ -572,11 +589,15 @@ gboolean client_send_state_diff(struct irc_client *client,
 		ns = find_channel(new_state, os->name);
 
 		if (ns != NULL) {
-			client_send_channel_state_diff(client, os, ns);
+			if (!client_send_channel_state_diff(client, os, ns)) {
+				return FALSE;
+			}
 		} else {
-			client_send_args_ex(client,
+			if (!client_send_args_ex(client,
 					    client_get_own_hostmask(client),
-					    "PART", os->name, NULL);
+					    "PART", os->name, NULL)) {
+				return FALSE;
+			}
 		}
 	}
 
@@ -588,7 +609,9 @@ gboolean client_send_state_diff(struct irc_client *client,
 
 		os = find_channel(old_state, ns->name);
 		if (os == NULL) {
-			client_send_channel_state(client, ns);
+			if (!client_send_channel_state(client, ns)) {
+				return FALSE;
+			}
 		}
 	}
 
@@ -606,10 +629,13 @@ gboolean client_send_state(struct irc_client *c, struct irc_network_state *state
 	GList *cl;
 	struct irc_channel_state *ch;
 	char *mode;
+	gboolean ret = TRUE;
 
 	if (c->state != NULL && strcmp(state->me.nick, c->state->me.nick) != 0) {
-		client_send_args_ex(c, c->state->me.hostmask, "NICK",
-				    state->me.nick, NULL);
+		if (!client_send_args_ex(c, c->state->me.hostmask, "NICK",
+				    state->me.nick, NULL)) {
+			return FALSE;
+		}
 	}
 
 	g_assert(c != NULL);
@@ -621,53 +647,79 @@ gboolean client_send_state(struct irc_client *c, struct irc_network_state *state
 	for (cl = state->channels; cl; cl = cl->next) {
 		ch = (struct irc_channel_state *)cl->data;
 
-		client_send_channel_state(c, ch);
+		if (!client_send_channel_state(c, ch)) {
+			return FALSE;
+		}
 	}
 
 	mode = mode2string(state->me.modes);
 	if (mode != NULL) {
-		client_send_args_ex(c, state->me.nick, "MODE", mode, NULL);
+		ret = client_send_args_ex(c, state->me.nick, "MODE", mode, NULL);
 	}
 	g_free(mode);
+
+	if (!ret) {
+		return FALSE;
+	}
 
 	return TRUE;
 }
 
-void client_send_channel_state(struct irc_client *c,
+gboolean client_send_channel_state(struct irc_client *c,
 			       struct irc_channel_state *ch)
 {
 	g_assert(c != NULL);
 	g_assert(ch != NULL);
 	g_assert(ch->name != NULL);
 
-	client_send_args_ex(c, client_get_own_hostmask(c), "JOIN", ch->name,
-			    NULL);
+	if (!client_send_args_ex(c, client_get_own_hostmask(c), "JOIN", ch->name,
+			    NULL)) {
+		return FALSE;
+	}
 
-	client_send_topic(c, ch, FALSE);
+	if (!client_send_topic(c, ch, FALSE)) {
+		return FALSE;
+	}
 
-	client_send_nameslist(c, ch);
+	if (!client_send_nameslist(c, ch)) {
+		return FALSE;
+	}
+
+	return TRUE;
 }
 
-void client_send_topic(struct irc_client *c, struct irc_channel_state *ch,
+gboolean client_send_topic(struct irc_client *c, struct irc_channel_state *ch,
 					   gboolean explicit)
 {
+	gboolean ret;
 	if (ch->topic) {
-		client_send_response(c, RPL_TOPIC, ch->name, ch->topic, NULL);
+		if (!client_send_response(c, RPL_TOPIC, ch->name, ch->topic, NULL)) {
+			return FALSE;
+		}
 	} else if (explicit) {
-		client_send_response(c, RPL_NOTOPIC, ch->name, "No topic set", NULL);
+		if (!client_send_response(c, RPL_NOTOPIC, ch->name, "No topic set",
+								  NULL)) {
+			return FALSE;
+		}
 	}
 
 	if (ch->topic_set_time != 0 && ch->topic_set_by != NULL) {
 		char *tmp = g_strdup_printf("%ld", ch->topic_set_time);
-		client_send_response(c, RPL_TOPICWHOTIME, ch->name, ch->topic_set_by,
+		ret = client_send_response(c, RPL_TOPICWHOTIME, ch->name, ch->topic_set_by,
 							 tmp, NULL);
 		g_free(tmp);
+		if (!ret) {
+			return FALSE;
+		}
 	}
+
+	return TRUE;
 }
 
-void client_send_nameslist(struct irc_client *c, struct irc_channel_state *ch)
+gboolean client_send_nameslist(struct irc_client *c, struct irc_channel_state *ch)
 {
 	GList *nl;
+	gboolean ret;
 	struct irc_line *l = NULL;
 
 	g_assert(c != NULL);
@@ -692,10 +744,12 @@ void client_send_nameslist(struct irc_client *c, struct irc_channel_state *ch)
 			arg = g_strdup_printf("%c%s", prefix, n->global_nick->nick);
 		}
 
+		ret = TRUE;
+
 		if (l == NULL || !line_add_arg(l, arg)) {
 			char *tmp;
 			if (l != NULL) {
-				client_send_line(c, l, NULL);
+				ret = client_send_line(c, l, NULL);
 				free_line(l);
 			}
 
@@ -709,14 +763,21 @@ void client_send_nameslist(struct irc_client *c, struct irc_channel_state *ch)
 		}
 
 		g_free(arg);
+
+		if (!ret) {
+			return FALSE;
+		}
 	}
 
 	if (l != NULL) {
-		client_send_line(c, l, NULL);
+		ret = client_send_line(c, l, NULL);
 		free_line(l);
+		if (!ret) {
+			return FALSE;
+		}
 	}
 
-	client_send_response(c, RPL_ENDOFNAMES, ch->name, "End of /NAMES list",
+	return client_send_response(c, RPL_ENDOFNAMES, ch->name, "End of /NAMES list",
 			     NULL);
 }
 
@@ -727,17 +788,21 @@ void client_send_nameslist(struct irc_client *c, struct irc_channel_state *ch)
  * @param clients List of clients
  * @param s State to send
  */
-void clients_send_state(GList *clients, struct irc_network_state *s)
+gboolean clients_send_state(GList *clients, struct irc_network_state *s)
 {
 	GList *gl;
 
 	for (gl = clients; gl; gl = gl->next) {
 		struct irc_client *c = gl->data;
-		client_send_state(c, s);
+		if (!client_send_state(c, s)) {
+			return FALSE;
+		}
 	}
+
+	return TRUE;
 }
 
-void client_send_banlist(struct irc_client *client, struct irc_channel_state *channel)
+gboolean client_send_banlist(struct irc_client *client, struct irc_channel_state *channel)
 {
 	GList *gl;
 
@@ -748,18 +813,22 @@ void client_send_banlist(struct irc_client *client, struct irc_channel_state *ch
 	{
 		struct nicklist_entry *be = gl->data;
 		g_assert(be != NULL);
-		client_send_response(client, RPL_BANLIST, channel->name,
-				     be->hostmask, NULL);
+		if (!client_send_response(client, RPL_BANLIST, channel->name,
+				     be->hostmask, NULL)) {
+			return FALSE;
+		}
 	}
 
-	client_send_response(client, RPL_ENDOFBANLIST, channel->name,
+	return client_send_response(client, RPL_ENDOFBANLIST, channel->name,
 			     "End of channel ban list", NULL);
 }
 
-void client_send_channel_mode(struct irc_client *c, struct irc_channel_state *ch)
+gboolean client_send_channel_mode(struct irc_client *c, struct irc_channel_state *ch)
 {
 	char *mode;
 	mode = mode2string(ch->modes);
+	gboolean ret;
+
 	if (mode != NULL) {
 		struct irc_line *l;
 		int i, j = 0;
@@ -779,35 +848,47 @@ void client_send_channel_mode(struct irc_client *c, struct irc_channel_state *ch
 			l->args[4+j] = NULL;
 		}
 		l->argc = 4+j;
-		client_send_line(c, l, NULL);
+		ret = client_send_line(c, l, NULL);
 		free_line(l);
+		if (!ret) {
+			return FALSE;
+		}
 	}
 
 	if (ch->creation_time > 0) {
 		char time[20];
 		snprintf(time, sizeof(time), "%lu", ch->creation_time);
-		client_send_response(c, RPL_CREATIONTIME, ch->name, time, NULL);
+		if (!client_send_response(c, RPL_CREATIONTIME, ch->name, time, NULL)) {
+			return FALSE;
+		}
 	}
+
+	return TRUE;
 }
 
-void client_send_luserchannels(struct irc_client *client, int num)
+gboolean client_send_luserchannels(struct irc_client *client, int num)
 {
 	char *tmp;
+	gboolean ret;
 	tmp = g_strdup_printf("%u", num);
-	client_send_response(client, RPL_LUSERCHANNELS, tmp,
+	ret = client_send_response(client, RPL_LUSERCHANNELS, tmp,
 				     "channels formed", NULL);
 	g_free(tmp);
-
+	return ret;
 }
 
-void clients_send_netsplit(GList *clients, const char *my_name,
+gboolean clients_send_netsplit(GList *clients, const char *my_name,
 			   const char *lost_server)
 {
 	GList *gl;
 	for (gl = clients; gl; gl = gl->next) {
 		struct irc_client *c = gl->data;
-		client_send_netsplit(c, my_name, lost_server);
+		if (!client_send_netsplit(c, my_name, lost_server)) {
+			return FALSE;
+		}
 	}
+
+	return FALSE;
 }
 
 gboolean client_send_nick_quit(struct irc_client *c, struct network_nick *gn,
@@ -830,14 +911,16 @@ gboolean client_send_nick_quit(struct irc_client *c, struct network_nick *gn,
 	return ret;
 }
 
-void client_send_netsplit(struct irc_client *c, const char *my_name,
+gboolean client_send_netsplit(struct irc_client *c, const char *my_name,
 			  const char *lost_server)
 {
 	struct irc_network_state *s = c->state;
 	char *reason;
+	gboolean ret = TRUE;
 
-	if (s == NULL)
-		return;
+	if (s == NULL) {
+		return FALSE;
+	}
 
 	/* Spoof a netsplit */
 	reason = g_strdup_printf("%s %s", my_name, lost_server);
@@ -853,10 +936,15 @@ void client_send_netsplit(struct irc_client *c, const char *my_name,
 				break;
 			gn = gl->data;
 		}
-		client_send_nick_quit(c, gn, reason);
+		ret = client_send_nick_quit(c, gn, reason);
+		if (!ret) {
+			break;
+		}
 	}
 
 	g_free(reason);
+
+	return ret;
 }
 
 GQuark irc_client_error_quark (void)
