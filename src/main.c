@@ -187,7 +187,7 @@ int main(int argc, char **argv)
 			"Only check whether ctrlproxy is running and exit"},
 		{"inetd-client", 'i', 0, G_OPTION_ARG_STRING, &inetd_client,
 			"Communicate with client to NETWORK via stdio", "NETWORK" },
-		{"debug-level", 'd', 'd', G_OPTION_ARG_INT, &current_log_level,
+		{"debug-level", 'd', 0, G_OPTION_ARG_INT, &current_log_level,
 			"Debug level [0-5]", "LEVEL" },
 		{"no-timestamp", 'n', 0, G_OPTION_ARG_NONE, &no_log_timestamp,
 			"No timestamps in logs" },
