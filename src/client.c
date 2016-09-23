@@ -329,7 +329,9 @@ struct irc_client *client_init(struct irc_network *n, struct irc_transport *tran
 {
 	struct irc_client *client;
 
-	client = irc_client_new(transport, n?n->name:get_my_hostname(), desc, &default_callbacks);
+	client = irc_client_new(
+		transport,
+		n != NULL?n->name:get_my_hostname(), desc, &default_callbacks);
 	client->authenticated = FALSE;
 
 	client->network = irc_network_ref(n);

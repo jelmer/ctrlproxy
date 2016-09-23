@@ -388,17 +388,23 @@ int main(int argc, char **argv)
 
 	if (inetd_client) {
 		GIOChannel *io = g_io_channel_unix_new(0);
-		struct irc_network *n = find_network(my_global->networks, inetd_client);
+		struct irc_network *n;
+		struct irc_client *client;
 
-		if (!n) {
-			fprintf(stderr, "Unable to find network named '%s'\n",
-					inetd_client);
-			return 1;
+		if (!strcmp(inetd_client, "")) {
+			n = NULL;
 		} else {
 			/* Find clients network by name */
-			struct irc_client *client = client_init_iochannel(n, io, "Standard I/O");
-			client->exit_on_close = TRUE;
+			n = find_network(my_global->networks, inetd_client);
+			if (n == NULL) {
+				fprintf(stderr, "Unable to find network named '%s'\n",
+						inetd_client);
+				return 1;
+			}
 		}
+
+		client = client_init_iochannel(n, io, "Standard I/O");
+		client->exit_on_close = TRUE;
 	}
 
 	g_main_loop_run(main_loop);
