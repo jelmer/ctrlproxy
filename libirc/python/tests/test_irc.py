@@ -1,5 +1,5 @@
 # Copyright (C) 2005-2008 Jelmer Vernooij <jelmer@jelmer.uk>
- 
+
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License, or
@@ -182,7 +182,7 @@ class NetworkStateTestCase(unittest.TestCase):
 
     def test_channels_empty(self):
         self.assertEquals([], list(self.state.channels))
-        
+
     def test_channels(self):
         self.state.handle_line(":nick!user@host JOIN #foo")
         channels = self.state.channels
@@ -371,8 +371,14 @@ class DummyTransport(object):
     def str_lines(self):
         return [str(l) for l in self._sent_lines]
 
+    def set_charset(self, charset):
+        pass
+
     def send_line(self, line):
         self._sent_lines.append(line)
+
+    def activate(self):
+        pass
 
     def is_connected(self):
         return True
@@ -475,7 +481,7 @@ class ClientTests(unittest.TestCase):
         ch = irc.ChannelState("#ch")
         c.send_channel_state(ch)
         self.assertEquals([
-            'JOIN #ch', 
+            'JOIN #ch',
             ':myorigin 366 * #ch :End of /NAMES list'],
             t.str_lines())
 
@@ -538,8 +544,8 @@ class ClientSendStateTests(unittest.TestCase):
         self.state.add(ch)
         self.client.send_state(self.state)
         self.assertLines([
-            'JOIN #foo', 
-            ':myorigin 332 * #foo :bla la', 
+            'JOIN #foo',
+            ':myorigin 332 * #foo :bla la',
             ':myorigin 366 * #foo :End of /NAMES list'])
 
     def test_empty_diff(self):
@@ -562,7 +568,7 @@ class NetworkStateDiffTests(unittest.TestCase):
     def test_new_channel(self):
         self.state2.add(irc.ChannelState("#foo"))
         self.client.send_state_diff(self.state1, self.state2)
-        self.assertLines(['JOIN #foo', 
+        self.assertLines(['JOIN #foo',
             ':myorigin 366 * #foo :End of /NAMES list'])
 
     def test_leave_channel(self):
@@ -632,7 +638,7 @@ class NetsplitTests(unittest.TestCase):
     def setUp(self):
         super(NetsplitTests, self).setUp()
         self.transport = DummyTransport()
-        self.client = irc.Client(self.transport, "myserverorigin", 
+        self.client = irc.Client(self.transport, "myserverorigin",
                 "description")
         self.client.inject_line("NICK mynick")
         self.client.inject_line("USER a a a a")
@@ -678,7 +684,7 @@ class LinestackTests(unittest.TestCase):
     def test_insert_line(self):
         state = self.get_state()
         ls = irc.Linestack(self.get_path("insert_line"), state, True)
-        ls.insert_line(":somebody!some@host PRIVMSG #bla :BAR!", 
+        ls.insert_line(":somebody!some@host PRIVMSG #bla :BAR!",
                        irc.TO_SERVER, state)
 
     def test_replay_simple(self):
@@ -695,7 +701,7 @@ class LinestackTests(unittest.TestCase):
         ls = irc.Linestack(self.get_path("insert_line"), state, True)
         m1 = ls.get_marker()
         ls.insert_line(":somebody!some@host JOIN #bla", irc.FROM_SERVER, state)
-        ls.insert_line(":somebody!some@host PRIVMSG #bla :BAR!", 
+        ls.insert_line(":somebody!some@host PRIVMSG #bla :BAR!",
                        irc.FROM_SERVER, state)
         m2 = ls.get_marker()
         self.assertEquals([irc.Line(":somebody!some@host JOIN #bla"), irc.Line(":somebody!some@host PRIVMSG #bla :BAR!")], [l for (l, t) in ls.traverse(m1, m2)])

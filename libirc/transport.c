@@ -55,14 +55,16 @@ void free_irc_transport(struct irc_transport *transport)
  */
 gboolean transport_set_charset(struct irc_transport *transport, const char *name)
 {
-	gboolean ret;
-
-	ret = transport->backend_ops->set_charset(transport, name);
-	if (ret == FALSE)
-		return ret;
+	if (!transport->backend_ops->set_charset(transport, name)) {
+		return FALSE;
+	}
 
 	g_free(transport->charset);
-	transport->charset = g_strdup(name);
+	if (name == NULL) {
+		transport->charset = NULL;
+	} else {
+		transport->charset = g_strdup(name);
+	}
 
 	return TRUE;
 }

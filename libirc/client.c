@@ -401,7 +401,9 @@ struct irc_client *irc_client_new(struct irc_transport *transport,
 	g_assert(desc != NULL);
 
 	client = g_new0(struct irc_client, 1);
-	g_assert(client != NULL);
+	if (client == NULL) {
+		return NULL;
+	}
 	client->references = 1;
 
 	client->login_details = g_new0(struct irc_login_details, 1);
@@ -420,13 +422,13 @@ struct irc_client *irc_client_new(struct irc_transport *transport,
 	irc_transport_set_callbacks(client->transport,
 				    &client_transport_callbacks, client);
 	client->description = g_strdup(desc);
-	client->connected = TRUE;
 
 	if (!client_set_charset(client, DEFAULT_CLIENT_CHARSET)) {
 		free_client(client);
 		return NULL;
 	}
 
+	client->connected = TRUE;
 	pending_clients = g_list_append(pending_clients, client);
 	return client;
 }

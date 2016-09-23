@@ -660,6 +660,10 @@ static PyObject *py_client_new(PyTypeObject *type, PyObject *args, PyObject *kwa
     transport = wrap_py_transport(py_transport);
 
     ret->client = irc_client_new(transport, default_origin, desc, &py_client_callbacks);
+    if (ret->client == NULL) {
+        PyErr_SetString(PyExc_RuntimeError, "unable to create client");
+        return NULL;
+    }
     ret->client->private_data = ret;
 
     return (PyObject *)ret;

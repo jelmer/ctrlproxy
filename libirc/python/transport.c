@@ -119,7 +119,7 @@ static gboolean py_transport_set_charset(struct irc_transport *transport, const 
 {
     PyObject *obj = (PyObject *)transport->backend_data, *ret;
 
-    ret = PyObject_CallMethod(obj, "set_charset", "s", charsetname);
+    ret = PyObject_CallMethod(obj, "set_charset", "z", charsetname);
     if (ret == NULL) {
         return FALSE;
     }
