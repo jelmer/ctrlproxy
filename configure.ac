@@ -3,26 +3,18 @@
 AC_PREREQ(2.57)
 AC_INIT(ctrlproxy, 3.0.9, [jelmer@jelmer.uk])
 PACKAGE=$PACKAGE_NAME
-VERSION=$PACKAGE_VERSION
-AC_DEFINE_UNQUOTED(PACKAGE,"$PACKAGE", [ Package name])
+AC_DEFINE_UNQUOTED(PACKAGE,"$PACKAGE", [Package name])
 
-AC_SUBST(BZR_CHECKOUT)
-BZR_CHECKOUT=no
-AC_MSG_CHECKING([whether this is a bzr checkout])
-if which bzr >/dev/null 2>/dev/null; then
-	BZR_CHECKOUT=yes
-	REVISION="`bzr revno .`"
-	if test -n "$REVISION"; then
-		AC_MSG_RESULT($REVISION)
-		BZRVERSION="~bzr$REVISION"
-	else
-		AC_MSG_RESULT(no)
-	fi
-else 
+AC_MSG_CHECKING([whether this is a git repository])
+if [[ -d .git ]]; then
+	VERSION="`git describe`"
+	AC_MSG_RESULT($VERSION)
+else
+	VERSION="$PACKAGE_VERSION"
 	AC_MSG_RESULT(no)
 fi
 
-AC_DEFINE_UNQUOTED(VERSION,"$VERSION$BZRVERSION", [ Package version])
+AC_DEFINE_UNQUOTED(VERSION,"$VERSION", [Package version])
 AC_SUBST(PACKAGE)
 AC_SUBST(VERSION)
 AC_CONFIG_SRCDIR([src/admin-cmd.c])
