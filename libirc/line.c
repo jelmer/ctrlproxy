@@ -49,7 +49,7 @@ struct irc_line *virc_parse_response(const char *from, const char *to, int respo
 {
 	struct irc_line *l;
 	g_assert(response > 0);
-	
+
 	l = virc_parse_line(from, ap);
 
 	l->args = g_realloc(l->args, sizeof(char *) * (l->argc+4));
@@ -74,9 +74,9 @@ struct irc_line *virc_parse_line( const char *hostmask, va_list ap)
 	l->argc = 0;
 	if (hostmask != NULL)
 		l->origin = g_strdup(hostmask);
-	
+
 	l->args = g_new(char *, MAX_LINE_ARGS+2);
-	
+
 	while((arg = va_arg(ap, char *))) {
 		l->args[l->argc] = g_strdup(arg);
 		l->args = g_realloc(l->args, (((++l->argc)+2) * sizeof(char *)));
@@ -132,7 +132,7 @@ struct irc_line * irc_parse_line(const char *d)
 			break;
 		}
 	}
-	
+
 	l->argc++;
 	l->args[l->argc] = NULL;
 	for(i = 0; l->args[i]; i++) l->args[i] = g_strdup(l->args[i]);
@@ -267,7 +267,7 @@ char *irc_line_string(const struct irc_line *l)
 	for(i = 0; l->args[i]; i++) len+=strlen(l->args[i])+2;
 	ret = g_malloc(len+20);
 	strcpy(ret, "");
-	
+
 	if (l->origin != NULL)
 		sprintf(ret, ":%s ", l->origin);
 
@@ -290,7 +290,7 @@ void free_line(struct irc_line *l)
 
 	if (l->origin != NULL)
 		g_free(l->origin);
-	
+
 	if (l->args != NULL) {
 		for(i = 0; l->args[i]; i++)g_free(l->args[i]);
 		g_free(l->args);
