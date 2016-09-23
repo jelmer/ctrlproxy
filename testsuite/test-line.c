@@ -70,32 +70,32 @@ START_TEST(test_parse_args)
 END_TEST
 
 START_TEST(test_prefix_time)
-	struct irc_line *ol, *nl;
+	struct irc_line *l;
 	time_t timestamp = 1209309035;
 	char stime[512];
 
-	ol = irc_parse_line(":me@host PRIVMSG to :hoi\r\n");
+	l = irc_parse_line(":me@host PRIVMSG to :hoi\r\n");
 
-	nl = line_prefix_time(ol, timestamp);
+	line_prefix_time(l, timestamp);
 
 	strftime(stime, sizeof(stime), "[%H:%M:%S] ", localtime(&timestamp));
 
-	fail_unless (!strncmp(nl->args[2], stime, strlen(stime)), "Got %s", nl->args[2]);
-	fail_unless (!strcmp(nl->args[2]+strlen(stime), "hoi"), "Got %s", nl->args[2]);
+	fail_unless (!strncmp(l->args[2], stime, strlen(stime)), "Got %s", l->args[2]);
+	fail_unless (!strcmp(l->args[2]+strlen(stime), "hoi"), "Got %s", l->args[2]);
 
-	ol = irc_parse_line(":me@host PRIVMSG to :\001ACTION bla\001\r\n");
+	l = irc_parse_line(":me@host PRIVMSG to :\001ACTION bla\001\r\n");
 
-	nl = line_prefix_time(ol, timestamp);
+	line_prefix_time(l, timestamp);
 
-	fail_unless (!strncmp(nl->args[2], "\001ACTION ", strlen("\001ACTION ")), "Got: %s", nl->args[2]);
-	fail_unless (!strncmp(nl->args[2]+strlen("\001ACTION "), stime, strlen(stime)), "Got: %s", nl->args[2]);
-	fail_unless (!strcmp(nl->args[2]+strlen("\001ACTION ")+strlen(stime), "bla\001"), "Got: %s", nl->args[2]);
+	fail_unless (!strncmp(l->args[2], "\001ACTION ", strlen("\001ACTION ")), "Got: %s", l->args[2]);
+	fail_unless (!strncmp(l->args[2]+strlen("\001ACTION "), stime, strlen(stime)), "Got: %s", l->args[2]);
+	fail_unless (!strcmp(l->args[2]+strlen("\001ACTION ")+strlen(stime), "bla\001"), "Got: %s", l->args[2]);
 
-	ol = irc_parse_line(":me@host PRIVMSG to :\001FINGER bla\001\r\n");
+	l = irc_parse_line(":me@host PRIVMSG to :\001FINGER bla\001\r\n");
 
-	nl = line_prefix_time(ol, timestamp);
+	line_prefix_time(l, timestamp);
 
-	fail_unless (!strcmp(nl->args[2], "\001FINGER bla\001"), "Got: %s", nl->args[2]);
+	fail_unless (!strcmp(l->args[2], "\001FINGER bla\001"), "Got: %s", l->args[2]);
 END_TEST
 
 START_TEST(test_free_null)
