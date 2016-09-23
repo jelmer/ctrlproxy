@@ -194,9 +194,9 @@ int main(int argc, char **argv)
 		{"daemon", 'D', 0, G_OPTION_ARG_NONE, &isdaemon,
 			"Run in the background (as a daemon)"},
 		{"init", 0, 0, G_OPTION_ARG_NONE, &init, "Create configuration" },
-		{"log", 'l', 0, G_OPTION_ARG_STRING, &logfile,
+		{"log", 'l', 0, G_OPTION_ARG_FILENAME, &logfile,
 			"Log messages to specified file", "FILE"},
-		{"config-dir", 'c', 0, G_OPTION_ARG_STRING, &config_dir,
+		{"config-dir", 'c', 0, G_OPTION_ARG_FILENAME, &config_dir,
 			"Override configuration directory", "DIR"},
 		{"version", 'v', 0, G_OPTION_ARG_NONE, &version,
 			"Show version information"},
@@ -238,8 +238,9 @@ int main(int argc, char **argv)
 		return 0;
 	}
 
-	if (config_dir == NULL)
+	if (config_dir == NULL) {
 		config_dir = g_build_filename(g_get_home_dir(), ".ctrlproxy", NULL);
+	}
 
 	if (isdaemon && !logfile) {
 		logfile = g_build_filename(config_dir, "log", NULL);
