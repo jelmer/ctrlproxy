@@ -103,7 +103,7 @@ struct irc_network_info
 	char *maxlist;
 
 	/** The server supports extensions for the LIST command.
-	 * The tokens specify which extention are supported. *
+	 * The tokens specify which extension are supported. *
 	 */
 	gboolean elist_mask_search;
 	gboolean elist_inverse_mask_search;

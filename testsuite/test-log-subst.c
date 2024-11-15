@@ -1,5 +1,5 @@
 /*
-    ircdtorture: an IRC RFC compliancy tester
+    ircdtorture: an IRC RFC compliance tester
 	(c) 2008 Jelmer Vernooĳ <jelmer@jelmer.uk>
 
 	This program is free software; you can redistribute it and/or modify

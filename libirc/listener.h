@@ -29,7 +29,7 @@ struct irc_listener_ops {
 	void (*new_client) (struct pending_client *pc);
 	/* Forward line from unaccepted pending client */
 	gboolean (*handle_client_line) (struct pending_client *pc, const struct irc_line *l);
-	/* Check authentication + authorization of a socks client by pasword */
+	/* Check authentication + authorization of a socks client by password */
 	gboolean (*socks_auth_simple) (struct pending_client *pc, const char *username, const char *password,
 								   gboolean (*) (struct pending_client *, gboolean pass_ok));
 #ifdef HAVE_GSSAPI

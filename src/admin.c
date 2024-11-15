@@ -979,7 +979,7 @@ void admin_log(enum log_level level, const struct irc_network *n, const struct i
 	}
 
 	if (entered) {
-		return; /* Prevent inifinite recursion.. */
+		return; /* Prevent infinite recursion.. */
 	}
 
 	entered = TRUE;

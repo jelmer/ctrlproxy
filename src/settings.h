@@ -46,7 +46,7 @@ struct tcp_server_config {
 	/** Port number or service name. */
 	char *port;
 
-	/** Adress to bind to (or NULL for default) */
+	/** Address to bind to (or NULL for default) */
 	char *bind_address;
 
 	/** Whether SSL should be used. */
