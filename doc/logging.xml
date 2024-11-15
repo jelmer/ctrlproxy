@@ -13,7 +13,7 @@
 		ctrlproxy will write log files to that directory in the same format 
 		as is default in irssi.</para>
 	
-	<para>Each channel or nick gets it's own seperate log file, 
+	<para>Each channel or nick gets it's own separate log file, 
 	which is located in a directory with the name of the IRC 
 	network.</para>
 

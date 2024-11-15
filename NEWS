@@ -393,7 +393,7 @@ Ctrlproxy 3.0.3 2007-07-22
 
     * Handle 263 response correctly. (#135)
 
-    * Handle 330 response correclty. (#137)
+    * Handle 330 response correctly. (#137)
 
     * Handle 403 response correctly when sent in response to a MODE
       query. (#139)
@@ -531,7 +531,7 @@ Ctrlproxy 3.0.1 2007-01-04
 
     * Fix rejoining parted channels on restart (#78)
 
-    * Fix erroneus toggling of "report-time" setting (#77)
+    * Fix erroneous toggling of "report-time" setting (#77)
 
     * Fix endless loop in logging system when debug level is
       set to 5 (reported by _static_).
@@ -636,7 +636,7 @@ Ctrlproxy 3.0    2006-12-08
 
     * Remove linestack_memory and make linestack_file the default.
 
-    * Admin module can now also work as a seperate ('virtual') network.
+    * Admin module can now also work as a separate ('virtual') network.
 
     * Make reconnect_timeout changeable (Alexander Wild)
 

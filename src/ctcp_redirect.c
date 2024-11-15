@@ -60,7 +60,7 @@ gboolean ctcp_client_request_record (struct irc_client *c, struct irc_line *l)
 	char *command = get_ctcp_command(l->args[2]);
 
 	if (command == NULL) {
-		client_log(LOG_WARNING, c, "Received mailformed CTCP request");
+		client_log(LOG_WARNING, c, "Received malformed CTCP request");
 		return FALSE;
 	}
 
@@ -89,7 +89,7 @@ gboolean ctcp_network_redirect_response(struct irc_network *n, const struct irc_
 	nick = line_get_nick(l);
 
 	if (command == NULL) {
-		network_log(LOG_WARNING, n, "Received mailformed CTCP request from `%s'", nick);
+		network_log(LOG_WARNING, n, "Received malformed CTCP request from `%s'", nick);
 		g_free(nick);
 		return FALSE;
 	}

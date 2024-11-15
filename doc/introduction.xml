@@ -28,7 +28,7 @@
  <listitem><para>Password support</para></listitem>
  <listitem><para>Replication support</para></listitem>
  <listitem><para>Auto-Away support</para></listitem>
- <listitem><para>Keeping track of events occuring </para></listitem>
+ <listitem><para>Keeping track of events occurring </para></listitem>
  <listitem><para>Direct, inetd-style interfacing with local IRC servers (such as bitlbee)</para></listitem>
  <listitem><para>Responses to queries are only sent to the originator of the query</para></listitem>
  <listitem><para>SSL/GNUTLS support</para></listitem>

@@ -17,7 +17,7 @@ report-time = never
 
 ## What words to look for when remembering lines 
 ## (in case "replication = highlight")
-## Seperate using semicolons
+## Separate using semicolons
 # matches=ctrlproxy;foobar
 
 ## Port at which CtrlProxy should listen for new connections
@@ -41,7 +41,7 @@ password=secret
 ## Save state to configuration file on exit
 autosave = true
 
-## Networks to connect to on startup. Seperate by semicolons
+## Networks to connect to on startup. Separate by semicolons
 autoconnect = admin
 # autoconnect = admin;irc.oftc.net;irc.freenode.net;
 #

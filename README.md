@@ -32,7 +32,7 @@ Features
  * Password support
  * Replication support
  * Auto-Away support
- * Keeping track of events occuring
+ * Keeping track of events occurring
  * Direct, inetd-style interfacing with local IRC servers (such as BitlBee)
  * Works transparently
  * SSL support
