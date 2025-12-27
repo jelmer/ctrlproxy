@@ -3,9 +3,8 @@
 GCOV = gcov
 
 ifeq ($(WITH_GCOV),1)
-GCOV_CFLAGS = -ftest-coverage -fprofile-arcs
-GCOV_LIBS = -lgcov
-LIBS += $(GCOV_LIBS) $(GCOV_CFLAGS)
+CFLAGS = --coverage
+LIBS = --coverage
 endif
 
 LIBS += $(GNUTLS_LIBS)
