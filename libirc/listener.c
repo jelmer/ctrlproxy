@@ -357,14 +357,18 @@ void listener_add_iochannel(struct irc_listener *l, GIOChannel *ioc,
 	g_io_channel_unref(ioc);
 	l->incoming = g_list_append(l->incoming, lio);
 
-	if (address == NULL)
-		strcpy(lio->address, "");
-	else
-		strncpy(lio->address, address, NI_MAXHOST);
-	if (port == NULL)
-		strcpy(lio->address, "");
-	else
-		strncpy(lio->port, port, NI_MAXSERV);
+	if (address == NULL) {
+		lio->address[0] = '\0';
+	} else {
+		strncpy(lio->address, address, NI_MAXHOST - 1);
+		lio->address[NI_MAXHOST - 1] = '\0';  /* Ensure null termination */
+	}
+	if (port == NULL) {
+		lio->port[0] = '\0';
+	} else {
+		strncpy(lio->port, port, NI_MAXSERV - 1);
+		lio->port[NI_MAXSERV - 1] = '\0';  /* Ensure null termination */
+	}
 
 	if (address != NULL)
 		listener_log(LOG_INFO, l, "Listening on %s:%s",

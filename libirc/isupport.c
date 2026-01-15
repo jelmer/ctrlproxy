@@ -309,17 +309,19 @@ char *network_info_string(struct irc_network_info *info)
 		info->elist_creation_time_search ||
 		info->elist_topic_search) {
 		char elist[100];
-		strcpy(elist, "");
-		if (info->elist_mask_search)
-			strncat(elist, "M", sizeof(elist));
-		if (info->elist_inverse_mask_search)
-			strncat(elist, "N", sizeof(elist));
-		if (info->elist_usercount_search)
-			strncat(elist, "U", sizeof(elist));
-		if (info->elist_creation_time_search)
-			strncat(elist, "C", sizeof(elist));
-		if (info->elist_topic_search)
-			strncat(elist, "T", sizeof(elist));
+		size_t pos = 0;
+		elist[0] = '\0';
+		if (info->elist_mask_search && pos < sizeof(elist) - 1)
+			elist[pos++] = 'M';
+		if (info->elist_inverse_mask_search && pos < sizeof(elist) - 1)
+			elist[pos++] = 'N';
+		if (info->elist_usercount_search && pos < sizeof(elist) - 1)
+			elist[pos++] = 'U';
+		if (info->elist_creation_time_search && pos < sizeof(elist) - 1)
+			elist[pos++] = 'C';
+		if (info->elist_topic_search && pos < sizeof(elist) - 1)
+			elist[pos++] = 'T';
+		elist[pos] = '\0';
 		fs = g_list_append(fs, g_strdup_printf("ELIST=%s", elist));
 	}
 

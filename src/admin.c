@@ -719,7 +719,7 @@ static gint cmp_cmd(gconstpointer a, gconstpointer b)
 
 void register_admin_command(const struct admin_command *cmd)
 {
-	admin_commands = g_list_insert_sorted(admin_commands, g_memdup(cmd, sizeof(*cmd)), cmp_cmd);
+	admin_commands = g_list_insert_sorted(admin_commands, g_memdup2(cmd, sizeof(*cmd)), cmp_cmd);
 	if (strlen(cmd->name) > longest_command) longest_command = strlen(cmd->name);
 }
 

@@ -22,6 +22,8 @@
 #endif
 #include "internals.h"
 #include <glib/gstdio.h>
+#include <glib-unix.h>
+#include <signal.h>
 
 #define BACKTRACE_STACK_SIZE 64
 
@@ -52,17 +54,20 @@ void register_hup_handler(hup_handler_fn fn, void *userdata)
 	hup_handlers = g_list_append(hup_handlers, hh);
 }
 
-static void signal_hup(int sig)
+static gboolean signal_hup_handler(gpointer user_data)
 {
 	GList *gl;
 	char *logfile;
 	logfile = g_build_filename(my_global->config->config_dir, "log", NULL);
 	init_log(logfile);
+	g_free(logfile);
 	for (gl = hup_handlers; gl; gl = gl->next) {
 		struct hup_handler *hh = gl->data;
 
 		hh->fn(hh->userdata);
 	}
+
+	return G_SOURCE_REMOVE;
 }
 
 char *pid_file(struct global *global)
@@ -131,21 +136,22 @@ static void clean_exit()
 	g_main_loop_unref(main_loop);
 }
 
-static void signal_quit(int sig)
+static gboolean signal_quit_handler(gpointer user_data)
 {
+	int sig = GPOINTER_TO_INT(user_data);
 	static int state = 0;
 	log_global(LOG_WARNING, "Received signal %d, quitting...", sig);
 	if (state == 1) {
-		signal(SIGINT, SIG_IGN);
 		exit(0);
 	}
 
 	state = 1;
+	g_main_loop_quit(main_loop);
 
-	exit(0);
+	return G_SOURCE_REMOVE;
 }
 
-static void signal_save(int sig)
+static gboolean signal_save_handler(gpointer user_data)
 {
 	log_global(LOG_INFO, "Received USR1 signal, saving configuration...");
 
@@ -153,7 +159,7 @@ static void signal_save(int sig)
 		if (g_mkdir(my_global->config->config_dir, 0700) != 0) {
 			log_global(LOG_ERROR, "Can't create config directory '%s': %s",
 					   my_global->config->config_dir, strerror(errno));
-			return;
+			return G_SOURCE_REMOVE;
 		}
 	}
 
@@ -161,6 +167,8 @@ static void signal_save(int sig)
 	global_update_config(my_global);
 	save_configuration(my_global->config, my_global->config->config_dir);
 	nickserv_save(my_global, my_global->config->config_dir);
+
+	return G_SOURCE_REMOVE;
 }
 
 int main(int argc, char **argv)
@@ -206,19 +214,27 @@ int main(int argc, char **argv)
 	};
 	GError *error = NULL;
 
-	signal(SIGINT, signal_quit);
-	signal(SIGTERM, signal_quit);
+	/* Use GLib's Unix signal handling for safe, async signal handling */
+	g_unix_signal_add(SIGINT, signal_quit_handler, GINT_TO_POINTER(SIGINT));
+	g_unix_signal_add(SIGTERM, signal_quit_handler, GINT_TO_POINTER(SIGTERM));
 #ifdef SIGPIPE
 	signal(SIGPIPE, SIG_IGN);
 #endif
 #ifdef SIGHUP
-	signal(SIGHUP, signal_hup);
+	g_unix_signal_add(SIGHUP, signal_hup_handler, NULL);
 #endif
 #ifdef SIGSEGV
-	signal(SIGSEGV, signal_crash);
+	/* SIGSEGV needs immediate handling, use sigaction() */
+	{
+		struct sigaction sa;
+		sa.sa_handler = signal_crash;
+		sigemptyset(&sa.sa_mask);
+		sa.sa_flags = SA_RESTART;
+		sigaction(SIGSEGV, &sa, NULL);
+	}
 #endif
 #ifdef SIGUSR1
-	signal(SIGUSR1, signal_save);
+	g_unix_signal_add(SIGUSR1, signal_save_handler, NULL);
 #endif
 
 	main_loop = g_main_loop_new(NULL, FALSE);

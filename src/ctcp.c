@@ -35,29 +35,25 @@ static char *toarg(va_list ap)
 {
 	char *arg;
 	GList *list = NULL, *gl;
-	int len = 4;
-	char *ret, *pos;
+	GString *ret;
 
 	while((arg = va_arg(ap, char *))) {
 		list = g_list_append(list, arg);
-		len+=strlen(arg) + 2;
 	}
 
 	g_assert(list);
 
-	ret = g_new0(char, len);
-	ret[0] = '\001';
-	pos = ret+1;
-	strcpy(pos, list->data); pos += strlen(list->data);
+	ret = g_string_new("");
+	g_string_append_c(ret, '\001');
+	g_string_append(ret, (char *)list->data);
 	for (gl = list->next; gl; gl = gl->next) {
-		*pos = ' ';
-		strcpy(pos+1, gl->data);
-		pos+=strlen(gl->data)+1;
+		g_string_append_c(ret, ' ');
+		g_string_append(ret, (char *)gl->data);
 	}
+	g_string_append_c(ret, '\001');
 
-	*pos = '\001';
-
-	return ret;
+	g_list_free(list);
+	return g_string_free(ret, FALSE);
 }
 
 void ctcp_reply(struct ctcp_handle *h, ...)
@@ -168,7 +164,7 @@ static void handle_clientinfo(struct ctcp_handle *h, const char **args)
 
 void ctcp_register_handler(const struct ctcp_handler *h)
 {
-	cmds = g_list_append(cmds, g_memdup(h, sizeof(*h)));
+	cmds = g_list_append(cmds, g_memdup2(h, sizeof(*h)));
 }
 
 gboolean ctcp_process_request (struct irc_network *n, const struct irc_line *l)

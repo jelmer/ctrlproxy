@@ -499,7 +499,7 @@ static gboolean connect_current_tcp_server(struct irc_network *s)
 		return FALSE;
 	}
 
-	s->connection.data.tcp.remote_name = g_memdup(res->ai_addr,
+	s->connection.data.tcp.remote_name = g_memdup2(res->ai_addr,
 												  res->ai_addrlen);
 	s->connection.data.tcp.local_name = g_malloc(size);
 	s->connection.data.tcp.namelen = getsockname(sock, s->connection.data.tcp.local_name, &size);
