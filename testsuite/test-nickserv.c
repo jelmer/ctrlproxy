@@ -42,15 +42,18 @@ static void strip_comments(char *str)
 }
 
 START_TEST(test_write_file_empty)
+{
 	char *fn = torture_tempfile(__FUNCTION__);
 	char *contents;
 	fail_unless(keyfile_write_file(NULL, "", fn) == TRUE);
 	fail_unless(g_file_get_contents(fn, &contents, NULL, NULL));
 	strip_comments(contents);
 	fail_unless(!strcmp(contents, ""), "Excepted empty file, got: %s", contents);
+}
 END_TEST
 
 START_TEST(test_write_file_simple_network)
+{
 	char *fn = torture_tempfile(__FUNCTION__);
 	char *contents;
 	struct keyfile_entry n = {
@@ -62,10 +65,12 @@ START_TEST(test_write_file_simple_network)
 	fail_unless(g_file_get_contents(fn, &contents, NULL, NULL));
 	strip_comments(contents);
 	fail_unless(!strcmp(contents, "anick\tsomepw\tbla\n"), "got: %s", contents);
+}
 END_TEST
 
 
 START_TEST(test_write_file_simple_nonetwork)
+{
 	char *fn = torture_tempfile(__FUNCTION__);
 	char *contents;
 	struct keyfile_entry n = {
@@ -77,34 +82,42 @@ START_TEST(test_write_file_simple_nonetwork)
 	fail_unless(g_file_get_contents(fn, &contents, NULL, NULL));
 	strip_comments(contents);
 	fail_unless(!strcmp(contents, "anick\tsomepw\t*\n"), "got: %s", contents);
+}
 END_TEST
 
 START_TEST(test_read_file_empty)
+{
 	char *fn = torture_tempfile(__FUNCTION__);
 	GList *gl = NULL;
 	fail_unless(g_file_set_contents(fn, "", -1, NULL));
 	fail_unless(keyfile_read_file(fn, '#', &gl));
 	fail_unless(gl == NULL);
+}
 END_TEST
 
 START_TEST(test_read_file_empty_lines)
+{
 	char *fn = torture_tempfile(__FUNCTION__);
 	GList *gl = NULL;
 	fail_unless(g_file_set_contents(fn, "\n\n\n", -1, NULL));
 	fail_unless(keyfile_read_file(fn, '#', &gl));
 	fail_unless(gl == NULL);
+}
 END_TEST
 
 START_TEST(test_read_file_almost_empty_lines)
+{
 	char *fn = torture_tempfile(__FUNCTION__);
 	GList *gl = NULL;
 	fail_unless(g_file_set_contents(fn, "foo\nbar\nbla\n", -1, NULL));
 	fail_unless(keyfile_read_file(fn, '#', &gl));
 	fail_unless(gl == NULL);
+}
 END_TEST
 
 
 START_TEST(test_read_file_simple_network)
+{
 	char *fn = torture_tempfile(__FUNCTION__);
 	GList *gl = NULL;
 	struct keyfile_entry *e;
@@ -115,9 +128,11 @@ START_TEST(test_read_file_simple_network)
 	fail_unless(!strcmp(e->pass, "bloe"));
 	fail_unless(!strcmp(e->network, "blie"));
 	fail_unless(gl->next == NULL);
+}
 END_TEST
 
 START_TEST(test_read_file_simple_nonetwork)
+{
 	char *fn = torture_tempfile(__FUNCTION__);
 	GList *gl = NULL;
 	struct keyfile_entry *e;
@@ -128,6 +143,7 @@ START_TEST(test_read_file_simple_nonetwork)
 	fail_unless(!strcmp(e->pass, "bloe"));
 	fail_unless(e->network == NULL);
 	fail_unless(gl->next == NULL);
+}
 END_TEST
 
 Suite *nickserv_suite()

@@ -23,6 +23,7 @@
 #include "ctrlproxy.h"
 
 START_TEST(test_rfccmp)
+{
 	fail_if (str_rfc1459cmp("abcde", "ABCDE") != 0);
 	fail_if (str_rfc1459cmp("abcde~{}", "ABCDE^[]") != 0);
 	fail_if (str_asciicmp("abcde", "ABCDE") != 0);
@@ -33,6 +34,7 @@ START_TEST(test_rfccmp)
 	fail_if (str_strictrfc1459cmp("abcde{}", "abcde{}") != 0);
 	fail_if (str_strictrfc1459cmp("abcde{}^", "abcde{}") == 0);
 	fail_if (str_strictrfc1459cmp("abcde", "abcde{}") == 0);
+}
 END_TEST
 
 Suite *cmp_suite()

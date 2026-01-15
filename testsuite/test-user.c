@@ -23,28 +23,34 @@
 #include <check.h>
 
 START_TEST(test_create)
+{
 	struct global *gl;
-	
+
 	gl = init_global();
 
 	fail_if(gl == NULL, "load_global returned NULL");
 
 	free_global(gl);
+}
 END_TEST
 
 START_TEST(test_create_nonexisting)
+{
 	struct global *gl;
-	
+
 	gl = load_global("/some-non-existing/directory", TRUE);
 
 	fail_if(gl != NULL,
 			"load_global returned non-NULL for incorrect directory");
 
 	free_global(gl);
+}
 END_TEST
 
 START_TEST(test_free_null)
+{
 	free_global(NULL);
+}
 END_TEST
 
 Suite *user_suite()

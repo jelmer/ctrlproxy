@@ -24,6 +24,7 @@
 #include "ctrlproxy.h"
 
 START_TEST(isupport_mode_is_channelmode)
+{
 	struct irc_network_info ni = {
 		.supported_channel_modes = "aob"
 	};
@@ -32,54 +33,66 @@ START_TEST(isupport_mode_is_channelmode)
 	fail_unless (is_channel_mode(&ni, 'b'));
 	ni.supported_channel_modes = NULL;
 	fail_if (is_channel_mode(&ni, 'b'));
+}
 END_TEST
 
 START_TEST(isupport_isprefix)
+{
 	struct irc_network_info ni = {
 		.prefix = "(ov)@+"
 	};
 	fail_if (!is_prefix('@', &ni));
 	fail_if (is_prefix('a', &ni));
 	fail_if (is_prefix(0, &ni));
+}
 END_TEST
 
 START_TEST(isupport_ischannelname)
+{
 	struct irc_network_info ni = {
 		.chantypes = "#&"
 	};
 	fail_if (!is_channelname("#bla", &ni));
 	fail_if (!is_channelname("&bla", &ni));
 	fail_if (is_channelname("bla", &ni));
+}
 END_TEST
 
 START_TEST(isupport_prefixbymode)
+{
 	struct irc_network_info ni = {
 		.prefix = "(ov)@+"
 	};
 	fail_if (get_prefix_by_mode('o', &ni) != '@');
 	fail_if (get_prefix_by_mode('v', &ni) != '+');
 	fail_if (get_prefix_by_mode('x', &ni) != ' ');
+}
 END_TEST
 
 START_TEST(isupport_is_prefix_mode)
+{
 	struct irc_network_info ni = {
 		.prefix = "(ov)@+"
 	};
 	fail_unless (is_prefix_mode(&ni, 'o'));
 	fail_unless (is_prefix_mode(&ni, 'v'));
 	fail_if (is_prefix_mode(&ni, ' '));
+}
 END_TEST
 
 START_TEST(isupport_modebyprefix)
+{
 	struct irc_network_info ni = {
 		.prefix = "(ov)@+"
 	};
 	fail_if (get_mode_by_prefix('@', &ni) != 'o');
 	fail_if (get_mode_by_prefix('+', &ni) != 'v');
 	fail_if (get_mode_by_prefix('%', &ni) != 0);
+}
 END_TEST
 
 START_TEST(isupport_prefixfrommodes)
+{
 	struct irc_network_info ni = {
 		.prefix = "(ov)@+"
 	};
@@ -94,20 +107,25 @@ START_TEST(isupport_prefixfrommodes)
 	fail_unless (get_prefix_from_modes(&ni, modes) == '+');
 	modes_unset_mode(modes, 'v');
 	fail_unless (get_prefix_from_modes(&ni, modes) == 0);
+}
 END_TEST
 
 START_TEST(isupport_info_parse_casemapping)
+{
 	struct irc_network_info *info = g_new0(struct irc_network_info, 1);
 	network_info_parse(info, "CASEMAPPING=ascii");
 	fail_unless (info->casemapping == CASEMAP_ASCII);
 	network_info_parse(info, "CASEMAPPING=strict-rfc1459");
 	fail_unless (info->casemapping == CASEMAP_STRICT_RFC1459);
+}
 END_TEST
 
 START_TEST(isupport_info_parse_name)
+{
 	struct irc_network_info *info = g_new0(struct irc_network_info, 1);
 	network_info_parse(info, "NETWORK=bla");
 	fail_unless (strcmp(info->name, "bla") == 0);
+}
 END_TEST
 
 Suite *isupport_suite(void)

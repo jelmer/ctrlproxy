@@ -189,6 +189,7 @@ const char *get_linestack_tempdir(const char *base)
 }
 
 START_TEST(test_empty)
+{
 	struct irc_network_state *ns1, *ns2;
 	struct linestack_context *ctx;
 
@@ -199,9 +200,11 @@ START_TEST(test_empty)
 
 	fail_unless (network_state_equal(ns1, ns2),
 				 "Network state returned not equal");
+}
 END_TEST
 
 START_TEST(test_msg)
+{
 	struct irc_network_state *ns1;
 	struct linestack_context *ctx;
 	linestack_marker lm;
@@ -232,9 +235,11 @@ START_TEST(test_msg)
 	fail_unless(!strcmp(raw, ":bla!Gebruikersnaam@Computernaam JOIN #bla\r\n"
 						     ":bloe!Gebruikersnaam@Computernaam PRIVMSG #bla :hihi\r\n"
 							 "ERROR :foo\r\n"));
+}
 END_TEST
 
 START_TEST(test_join_part)
+{
 	struct irc_network_state *ns1;
 	struct linestack_context *ctx;
 	linestack_marker lm;
@@ -266,11 +271,13 @@ START_TEST(test_join_part)
 	fail_unless(!strcmp(raw, ":bla!Gebruikersnaam@Computernaam JOIN #bla\r\n"
 						     ":bla!Gebruikersnaam@Computernaam PART #bla :hihi\r\n"
 							 "ERROR :foo\r\n"), "Got %s", raw);
+}
 END_TEST
 
 
 
 START_TEST(test_skip_msg)
+{
 	struct irc_network_state *ns1;
 	struct linestack_context *ctx;
 	linestack_marker lm;
@@ -303,9 +310,11 @@ START_TEST(test_skip_msg)
 	fail_unless(!strcmp(raw, ":bla!Gebruikersnaam@Computernaam JOIN #bla\r\n"
 						     ":bloe!Gebruikersnaam@Computernaam PRIVMSG #bla :hihi\r\n"
 							 "ERROR :foo\r\n"));
+}
 END_TEST
 
 START_TEST(test_object_msg)
+{
 	struct irc_network_state *ns1;
 	struct linestack_context *ctx;
 	linestack_marker lm;
@@ -340,10 +349,12 @@ START_TEST(test_object_msg)
 	fail_unless(!strcmp(raw, ":bla!Gebruikersnaam@Computernaam JOIN #bla\r\n"
 						     ":bloe!Gebruikersnaam@Computernaam PRIVMSG #bla :hihi\r\n"
 							 "ERROR :foo\r\n"));
+}
 END_TEST
 
 
 START_TEST(test_object_open)
+{
 	struct irc_network_state *ns1;
 	struct linestack_context *ctx;
 	linestack_marker lm;
@@ -383,9 +394,11 @@ START_TEST(test_object_open)
 						":bloe!Gebruikersnaam@Computernaam PRIVMSG #bla :hihi\r\n"
 						"ERROR :foo\r\n"));
 	}
+}
 END_TEST
 
 START_TEST(test_join)
+{
 	struct irc_network_state *ns1, *ns2;
 	struct linestack_context *ctx;
 
@@ -397,6 +410,7 @@ START_TEST(test_join)
 	ns2 = linestack_get_state(ctx, linestack_get_marker(ctx));
 
 	fail_unless (network_state_equal(ns1, ns2), "Network state returned not equal");
+}
 END_TEST
 
 int seen = 0;
@@ -410,6 +424,7 @@ static gboolean line_track(struct irc_line *l, time_t t, void *data)
 }
 
 START_TEST(bench_lots_of_lines)
+{
 	struct irc_network_state *ns1;
 	struct linestack_context *ctx;
 	linestack_marker marker;
@@ -426,6 +441,7 @@ START_TEST(bench_lots_of_lines)
 							  TO_SERVER, ns1);
 
 	linestack_traverse(ctx, marker, NULL, line_track, stderr);
+}
 END_TEST
 
 Suite *linestack_suite()
