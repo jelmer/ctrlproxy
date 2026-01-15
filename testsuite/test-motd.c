@@ -30,6 +30,7 @@
 #define EXAMPLE_MOTD "This is my\nmotd\nfile\n"
 
 START_TEST(test_read_motd)
+{
 	char **lines;
 	fail_unless(g_file_set_contents("testmotd", EXAMPLE_MOTD, -1, NULL));
 	lines = get_motd_lines("testmotd");
@@ -38,6 +39,7 @@ START_TEST(test_read_motd)
 	fail_if(strcmp("file", lines[2]));
 	fail_if(NULL, lines[3]);
 	unlink("testmotd");
+}
 END_TEST
 
 Suite *motd_suite(void)

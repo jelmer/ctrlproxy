@@ -45,32 +45,43 @@ static char *run_cmd(const char *cmd)
 }
 
 START_TEST(test_echo)
+{
 	fail_unless(!strcmp("bla", run_cmd("ECHO bla")), "Expected 'bla', got %s", run_cmd("ECHO bla"));
+}
 END_TEST
 
 START_TEST(test_unknown)
+{
 	char *result = run_cmd("UNKNOWN bla");
 	fail_unless(!strcmp("Can't find command 'UNKNOWN'. Type 'help' for a list of available commands. ", result), "Expected unknown command error, got %s", run_cmd("UNKNOWN bla"));
+}
 END_TEST
 
 START_TEST(test_empty)
+{
 	char *result = run_cmd("");
 	fail_unless(!strcmp("Please specify a command. Use the 'help' command to get a list of available commands", result), "Expected unknown command error, got %s", result);
+}
 END_TEST
 
 START_TEST(test_null)
+{
 	char *result = run_cmd(NULL);
 	fail_unless(!strcmp("Please specify a command. Use the 'help' command to get a list of available commands", result),
 				"Expected command error: %s", result);
+}
 END_TEST
 
 START_TEST(test_set)
+{
 	char *result;
 	result = run_cmd("set foo");
 	fail_unless(!strcmp(result, "Unknown setting `foo'"));
+}
 END_TEST
 
 START_TEST(test_log_level)
+{
 	char *result;
 	extern enum log_level current_log_level;
 	int old;
@@ -96,11 +107,14 @@ START_TEST(test_log_level)
 	fail_unless(!strcmp("Invalid log level -20", result));
 
 	current_log_level = old;
+}
 END_TEST
 
 START_TEST(test_stoplistener)
+{
 	char *result = run_cmd("stoplistener");
 	fail_unless(!strcmp("No port specified", result));
+}
 END_TEST
 
 Suite *admin_suite()

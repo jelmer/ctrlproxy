@@ -25,30 +25,36 @@
 #include "internals.h"
 
 START_TEST(test_no_subst)
+{
 	char *s;
 	struct irc_line *l;
 	l = irc_parse_line("PRIVMSG :");
 	s = custom_subst(NULL, "bla", l, "", FALSE, FALSE);
 	fail_if(strcmp(s, "bla"));
 	free_line(l);
+}
 END_TEST
 
 START_TEST(test_percent)
+{
 	char *s;
 	struct irc_line *l;
 	l = irc_parse_line("PRIVMSG :");
 	s = custom_subst(NULL, "bla%%", l, "", FALSE, FALSE);
 	fail_if(strcmp(s, "bla%"));
 	free_line(l);
+}
 END_TEST
 
 START_TEST(test_nick)
+{
 	char *s;
 	struct irc_line *l;
 	l = irc_parse_line(":nick!my@host PRIVMSG :");
 	s = custom_subst(NULL, "bla%n%n", l, "", FALSE, FALSE);
 	fail_if(strcmp(s, "blanicknick"));
 	free_line(l);
+}
 END_TEST
 
 Suite *log_subst_suite()

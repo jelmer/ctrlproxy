@@ -27,15 +27,18 @@ gboolean network_nick_set_hostmask(struct network_nick *, const char *);
 struct network_nick *find_add_network_nick(struct irc_network_state *n, const char *name);
 
 START_TEST(state_modes_set_mode)
+{
     irc_modes_t in;
     modes_clear(in);
     fail_unless (modes_set_mode(in, '@'));
     fail_unless (in[(unsigned char)'@'] == TRUE);
     fail_unless (modes_set_mode(in, '%'));
     fail_unless (in[(unsigned char)'%'] == TRUE);
+}
 END_TEST
 
 START_TEST(state_prefixes_remove_prefix)
+{
     irc_modes_t in;
     memset(in, 0, sizeof(in));
     fail_if (modes_unset_mode(in, '@'));
@@ -43,9 +46,11 @@ START_TEST(state_prefixes_remove_prefix)
     fail_unless (modes_unset_mode(in, '%'));
     fail_unless (in[(unsigned char)'%'] == FALSE);
     fail_if (modes_unset_mode(in, '%'));
+}
 END_TEST
 
 START_TEST(state_init)
+{
     struct irc_network_state *ns = network_state_init("bla", "Gebruikersnaam", "Computernaam");
 
     fail_if(ns == NULL, "network_state_init returned NULL");
@@ -55,6 +60,7 @@ START_TEST(state_init)
     fail_unless (strcmp(ns->me.hostname, "Computernaam") == 0);
 
     fail_unless (g_list_length(ns->channels) == 0);
+}
 END_TEST
 
 void state_process(struct irc_network_state *ns, const char *line)
@@ -67,6 +73,7 @@ void state_process(struct irc_network_state *ns, const char *line)
 }
 
 START_TEST(state_join_me)
+{
     struct irc_network_state *ns = network_state_init("bla", "Gebruikersnaam", "Computernaam");
     struct irc_channel_state *cs;
 
@@ -79,9 +86,11 @@ START_TEST(state_join_me)
     cs = ns->channels->data;
 
     fail_unless (strcmp(cs->name, "#examplechannel") == 0);
+}
 END_TEST
 
 START_TEST(state_join_other)
+{
     struct irc_network_state *ns = network_state_init("bla", "Gebruikersnaam", "Computernaam");
     struct irc_channel_state *cs;
 
@@ -94,10 +103,12 @@ START_TEST(state_join_other)
 
     cs = ns->channels->data;
     fail_unless (g_list_length(cs->nicks) == 2);
+}
 END_TEST
 
 
 START_TEST(state_topic)
+{
     struct irc_network_state *ns = network_state_init("bla", "Gebruikersnaam", "Computernaam");
     struct irc_channel_state *cs;
 
@@ -111,10 +122,12 @@ START_TEST(state_topic)
     fail_unless (strcmp(cs->topic, "This is the topic") == 0);
     fail_unless (abs(cs->topic_set_time - time(NULL)) < 5);
     fail_unless (strcmp(cs->topic_set_by, "bla") == 0);
+}
 END_TEST
 
 
 START_TEST(state_part)
+{
     struct irc_network_state *ns = network_state_init("bla", "Gebruikersnaam", "Computernaam");
     struct irc_channel_state *cs;
 
@@ -131,9 +144,11 @@ START_TEST(state_part)
     state_process(ns, ":bla!user@host PART #examplechannel");
 
     fail_unless (g_list_length(ns->channels) == 0);
+}
 END_TEST
 
 START_TEST(state_cycle)
+{
     struct irc_network_state *ns = network_state_init("bla", "Gebruikersnaam", "Computernaam");
     struct irc_channel_state *cs;
 
@@ -154,9 +169,11 @@ START_TEST(state_cycle)
     state_process(ns, ":bla!user@host JOIN #examplechannel");
 
     fail_unless (g_list_length(ns->channels) == 1);
+}
 END_TEST
 
 START_TEST(state_kick)
+{
     struct irc_network_state *ns = network_state_init("bla", "Gebruikersnaam", "Computernaam");
     struct irc_channel_state *cs;
 
@@ -173,9 +190,11 @@ START_TEST(state_kick)
     state_process(ns, ":bloe!anotheruser@host KICK #examplechannel bla :Doei");
 
     fail_unless (g_list_length(ns->channels) == 0);
+}
 END_TEST
 
 START_TEST(state_nick_change_my)
+{
     struct irc_network_state *ns = network_state_init("bla", "Gebruikersnaam", "Computernaam");
 
     fail_if(ns == NULL);
@@ -183,9 +202,11 @@ START_TEST(state_nick_change_my)
     state_process(ns, ":bla!user@host NICK blie");
 
     fail_unless(strcmp(ns->me.nick, "blie") == 0);
+}
 END_TEST
 
 START_TEST(state_nick_change_other)
+{
     struct irc_network_state *ns = network_state_init("bla", "Gebruikersnaam", "Computernaam");
 
     fail_if(ns == NULL);
@@ -196,9 +217,11 @@ START_TEST(state_nick_change_other)
 
     fail_if (find_network_nick(ns, "foo") != NULL);
     fail_if (find_network_nick(ns, "blie") == NULL);
+}
 END_TEST
 
 START_TEST(state_set_nick)
+{
     struct network_nick nn;
     memset(&nn, 0, sizeof(nn));
 
@@ -208,9 +231,11 @@ START_TEST(state_set_nick)
     fail_if (!network_nick_set_nick(&nn, "mynick"));
     fail_unless (strcmp(nn.nick, "mynick") == 0);
     fail_unless (strcmp(nn.hostmask, "mynick!(null)@(null)") == 0);
+}
 END_TEST
 
 START_TEST(state_set_hostmask)
+{
     struct network_nick nn;
     memset(&nn, 0, sizeof(nn));
 
@@ -224,9 +249,11 @@ START_TEST(state_set_hostmask)
 
     fail_if (network_nick_set_hostmask(&nn, "ikkeongeldig"));
     fail_if (network_nick_set_hostmask(&nn, "ikke!ongeldig"));
+}
 END_TEST
 
 START_TEST(state_find_network_nick)
+{
     struct irc_network_state *ns = network_state_init("bla", "Gebruikersnaam", "Computernaam");
 
     fail_if(ns == NULL);
@@ -235,18 +262,22 @@ START_TEST(state_find_network_nick)
 
     fail_unless(find_network_nick(ns, "foo") != NULL);
     fail_unless(find_network_nick(ns, "foobla") == NULL);
+}
 END_TEST
 
 START_TEST(state_find_add_network_nick)
+{
     struct irc_network_state *ns = network_state_init("bla", "Gebruikersnaam", "Computernaam");
 
     fail_if(ns == NULL);
 
     fail_if (find_add_network_nick(ns, "foo") == NULL);
     fail_if (find_add_network_nick(ns, "foo") == NULL);
+}
 END_TEST
 
 START_TEST(state_handle_state_data)
+{
     struct irc_network_state *ns = network_state_init("bla", "Gebruikersnaam", "Computernaam");
     struct irc_line l;
     char *args1[] = {"JOIN", "#bla", NULL};
@@ -265,9 +296,11 @@ START_TEST(state_handle_state_data)
     l.argc = 2;
     l.args = args2;
     fail_unless (state_handle_data(ns, &l) == FALSE);
+}
 END_TEST
 
 START_TEST(test_string2mode)
+{
     irc_modes_t modes;
     modes_clear(modes);
     string2mode("+", modes);
@@ -281,9 +314,11 @@ START_TEST(test_string2mode)
     string2mode("+o-a", modes);
     fail_unless(modes['a'] == FALSE);
     fail_unless(modes['o'] == TRUE);
+}
 END_TEST
 
 START_TEST(test_nicklist)
+{
     GList *mylist = NULL;
 
     fail_unless(nicklist_add_entry(&mylist, "user@host", "op@otherhost", 0));
@@ -296,9 +331,11 @@ START_TEST(test_nicklist)
     fail_unless(!nicklist_remove_entry(&mylist, "anonymous@host"));
     free_nicklist(&mylist);
     fail_unless(mylist == NULL);
+}
 END_TEST
 
 START_TEST(test_mode2string)
+{
     char *ret;
     irc_modes_t modes;
     modes_clear(modes);
@@ -309,6 +346,7 @@ START_TEST(test_mode2string)
     modes['k'] = TRUE;
     ret = mode2string(modes);
     fail_unless(strcmp(ret, "+ko") == 0);
+}
 END_TEST
 
 Suite *state_suite(void)

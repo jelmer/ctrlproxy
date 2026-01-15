@@ -25,6 +25,7 @@
 #include "irc.h"
 
 START_TEST(test_parse_url)
+{
 	char *server, *port;
 	gboolean ssl;
 	fail_unless(irc_parse_url("irc://foo", &server, &port, &ssl));
@@ -58,15 +59,18 @@ START_TEST(test_parse_url)
 	fail_unless(strcmp(server, "foo") == 0);
 	fail_unless(strcmp(port, IRC_PORT) == 0);
 	fail_unless(ssl == FALSE);
+}
 END_TEST
 
 START_TEST(test_create_url)
+{
 	fail_unless(strcmp(irc_create_url("foo", IRC_PORT, FALSE), "irc://foo") == 0);
 	fail_unless(strcmp(irc_create_url("foo", IRCS_PORT, TRUE), "ircs://foo") == 0);
 	fail_unless(strcmp(irc_create_url("foo", "ircd", TRUE), "ircs://foo:ircd") == 0);
 	fail_unless(strcmp(irc_create_url("foo", "ircd", TRUE), "ircs://foo:ircd") == 0);
 	fail_unless(strcmp(irc_create_url("foo", "ircs", FALSE), "irc://foo:ircs") == 0);
 	fail_unless(strcmp(irc_create_url("foo", "6680", FALSE), "irc://foo:6680") == 0);
+}
 END_TEST
 
 Suite *url_suite()

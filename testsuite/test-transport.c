@@ -26,12 +26,15 @@
 #include "torture.h"
 
 START_TEST(test_create)
+{
 	GIOChannel *ch1, *ch2;
 	g_io_channel_pair(&ch1, &ch2);
 	irc_transport_new_iochannel(ch1);
+}
 END_TEST
 
 START_TEST(test_send)
+{
 	GIOChannel *ch1, *ch2;
 	struct irc_transport *t;
 	int i;
@@ -54,6 +57,7 @@ START_TEST(test_send)
 		g_io_channel_read_line(ch2, &str, NULL, NULL, NULL);
 		fail_if(strcmp(str, buf));
 	}
+}
 END_TEST
 
 Suite *transport_suite()

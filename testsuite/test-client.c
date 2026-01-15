@@ -25,17 +25,22 @@
 #include "internals.h"
 
 START_TEST(test_create_no_network)
+{
 	GIOChannel *ch = g_io_channel_unix_new(0);
 	client_init_iochannel(NULL, ch, "desc");
+}
 END_TEST
 
 START_TEST(test_create_introduction)
+{
 	GIOChannel *ch1, *ch2;
 	g_io_channel_pair(&ch1, &ch2);
 	client_init_iochannel(NULL, ch1, "desc");
+}
 END_TEST
 
 START_TEST(test_network_first)
+{
 	GIOChannel *ch1, *ch2;
 	struct irc_client *c;
 	char *raw;
@@ -51,10 +56,12 @@ START_TEST(test_network_first)
 	g_main_iteration(FALSE);
 	g_io_channel_read_to_end(ch2, &raw, NULL, NULL);
 	fail_unless(!strcmp(raw, "ERROR :Please select a network first, or specify one in your configuration file\r\n"), "Got: %s", raw);
+}
 END_TEST
 
 
 START_TEST(test_login)
+{
 	GIOChannel *ch1, *ch2;
 	struct irc_client *c;
 	struct global *g = TORTURE_GLOBAL;
@@ -75,9 +82,11 @@ START_TEST(test_login)
 	fail_if(c->state == NULL);
 	fail_if(c->state->me.nick == NULL);
 	fail_unless(!strcmp(c->state->me.nick, "bla"));
+}
 END_TEST
 
 START_TEST(test_read_nonutf8)
+{
 	GIOChannel *ch1, *ch2;
 	struct irc_client *c;
 	struct global *g = TORTURE_GLOBAL;
@@ -97,11 +106,13 @@ START_TEST(test_read_nonutf8)
 	fail_if(c->state->me.nick == NULL);
 	fail_unless(!strcmp(c->state->me.nick, "bla"));
 	client_send_args(c, "PRIVMSG", "foo", "\x024:öéé", NULL);
+}
 END_TEST
 
 
 
 START_TEST(test_disconnect)
+{
 	GIOChannel *ch1, *ch2;
 	struct irc_client *client;
 	char *raw;
@@ -115,9 +126,11 @@ START_TEST(test_disconnect)
 	g_main_iteration(FALSE);
 	g_io_channel_read_to_end(ch2, &raw, &length, &error);
 	fail_unless(!strcmp(raw, "ERROR :Because\r\n"));
+}
 END_TEST
 
 START_TEST(test_replace_hostmask)
+{
 	struct irc_line *nl, *l;
 	struct network_nick old = {
 		.nick = "foo",
@@ -149,9 +162,11 @@ START_TEST(test_replace_hostmask)
 	l = irc_parse_line("NOTICE * boe");
 	nl = irc_line_replace_hostmask(l, NULL, &old, &new);
 	fail_unless(nl == NULL);
+}
 END_TEST
 
 START_TEST(test_login_nonetwork)
+{
 	GIOChannel *ch1, *ch2;
 	struct irc_client *c;
 	g_io_channel_pair(&ch1, &ch2);
@@ -162,6 +177,7 @@ START_TEST(test_login_nonetwork)
 	fail_unless(g_io_channel_flush(ch2, NULL) == G_IO_STATUS_NORMAL);
 	g_main_iteration(FALSE);
 	fail_if(c->state->me.nick == NULL);
+}
 END_TEST
 
 

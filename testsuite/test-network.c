@@ -24,24 +24,29 @@
 #include "torture.h"
 
 START_TEST(test_create)
+{
 	struct network_config nc = {
 		.name = "test"
 	};
 	struct irc_network *n;
 	n = load_network(NULL, &nc);
 	fail_unless(!strcmp(n->name, "test"));
+}
 END_TEST
 
 START_TEST(test_uncreate)
+{
 	struct network_config nc = {
 		.name = "test"
 	};
 	struct irc_network *n;
 	n = load_network(NULL, &nc);
 	unload_network(n);
+}
 END_TEST
 
 START_TEST(test_login)
+{
 	GIOChannel *ch1, *ch2;
 	struct network_config nc = {
 		.name = "test",
@@ -66,6 +71,7 @@ START_TEST(test_login)
 	g_io_channel_read_to_end(ch2, &raw, NULL, &error);
 	fail_unless(error == NULL);
 	fail_unless(!strcmp(raw, "NICK foo\r\nUSER blah a a :bloeh \r\nQUIT\r\n"), raw);
+}
 END_TEST
 
 Suite *network_suite()

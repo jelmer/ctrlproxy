@@ -28,6 +28,7 @@
 #include "torture.h"
 
 START_TEST(test_list_make_string)
+{
 	GList *gl = NULL;
 	char *ret;
 
@@ -36,13 +37,15 @@ START_TEST(test_list_make_string)
 
 	gl = g_list_append(gl, "bla");
 	gl = g_list_append(gl, "bloe");
-	
+
 	ret = list_make_string(gl);
 	fail_unless (strcmp(ret, "bla bloe") == 0);
-	
+
+}
 END_TEST
 
 START_TEST(test_get_description)
+{
 	int sock[2];
 	GIOChannel *ch;
 	char *desc;
@@ -67,9 +70,11 @@ START_TEST(test_get_description)
 	fail_if(desc == NULL);
 
 	g_free(desc);
+}
 END_TEST
 
 START_TEST(test_get_set_file_contents)
+{
 	char *cont = NULL;
 	struct stat st;
 	gsize len;
@@ -82,12 +87,15 @@ START_TEST(test_get_set_file_contents)
 	fail_unless(rep_g_file_get_contents(f, &cont, &len, &error) == TRUE, "g_file_get_contents failed: %s", error == NULL?"(null)":error->message);
 	fail_unless(!strcmp(cont, "bla\nbloe\n"));
 	fail_unless(9 == len);
+}
 END_TEST
 
 START_TEST(test_pidfile)
+{
 	fail_unless(write_pidfile("mypidfile"));
 	fail_unless(getpid() == read_pidfile("mypidfile"));
 	unlink("mypidfile");
+}
 END_TEST
 
 Suite *util_suite(void)

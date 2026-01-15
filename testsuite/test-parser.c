@@ -15,6 +15,7 @@ static const char *malformed[] = {
 };
 
 START_TEST(parser_empty)
+{
 	struct irc_line *l;
 	
 	l = irc_parse_line("");
@@ -24,9 +25,11 @@ START_TEST(parser_empty)
 	l = irc_parse_line("\r\n");
 
 	fail_unless(l->argc == 1);
+}
 END_TEST
 
 START_TEST(parser_malformed)
+{
 	struct irc_line *l;
 	char *raw;
 	int j;
@@ -38,11 +41,13 @@ START_TEST(parser_malformed)
 		free(raw);
 		free_line(l);
 	}
+}
 END_TEST
 
 #define NUM_RUNS 200
 
 START_TEST(parser_random)
+{
 	struct irc_line *l;
 	char *raw;
 	char buf[4096];
@@ -62,9 +67,11 @@ START_TEST(parser_random)
 	}
 
 	fclose(f);
+}
 END_TEST
 
 START_TEST(parser_vargs)
+{
 	struct irc_line *l = irc_parse_line_args( "FOO", "x", "y", NULL);
 
 	fail_if (!l);
@@ -72,9 +79,11 @@ START_TEST(parser_vargs)
 	fail_if (l->argc != 2);
 	fail_if (strcmp(l->args[0], "x") != 0);
 	fail_if (strcmp(l->args[1], "y") != 0);
+}
 END_TEST
 
 START_TEST( parser_stringnl)
+{
 	struct irc_line l;
 	char *ret;
 	char *args[] = { "x", "y", "z", NULL };
@@ -86,9 +95,11 @@ START_TEST( parser_stringnl)
 	ret = irc_line_string_nl(&l);
 
 	fail_if (strcmp(ret, ":foobar x y z\r\n") != 0);
+}
 END_TEST
 
 START_TEST(parser_get_nick)
+{
 	struct irc_line l;
 	char *nick;
 
@@ -100,9 +111,11 @@ START_TEST(parser_get_nick)
 	nick = line_get_nick(&l);
 	fail_if (strcmp(nick, "foobar") != 0);
 	g_free(nick);
+}
 END_TEST
 
 START_TEST(parser_recv_line)
+{
 	GIOChannel *ch1, *ch2;
 	struct irc_line *l;
 	GIConv iconv;
@@ -123,9 +136,11 @@ START_TEST(parser_recv_line)
 	fail_unless(irc_recv_line(ch1, iconv, NULL, &l) == G_IO_STATUS_AGAIN);
 
 	g_iconv_close(iconv);
+}
 END_TEST
 
 START_TEST(parser_recv_line_invalid)
+{
 	GIOChannel *ch1, *ch2;
 	struct irc_line *l;
 	GIConv iconv;
@@ -146,11 +161,13 @@ START_TEST(parser_recv_line_invalid)
 	fail_unless(irc_recv_line(ch1, iconv, NULL, &l) == G_IO_STATUS_AGAIN);
 
 	g_iconv_close(iconv);
+}
 END_TEST
 
 
 
 START_TEST(parser_recv_line_iso8859)
+{
 	GIOChannel *ch1, *ch2;
 	struct irc_line *l;
 	GIConv iconv;
@@ -175,11 +192,13 @@ START_TEST(parser_recv_line_iso8859)
 	fail_unless(irc_recv_line(ch1, iconv, NULL, &l) == G_IO_STATUS_AGAIN);
 
 	g_iconv_close(iconv);
+}
 END_TEST
 
 
 
 START_TEST(parser_dup)
+{
 	struct irc_line l, *m;
 	char *args[] = { "x", "y", "z", NULL };
 	l.origin = "bla";
@@ -198,9 +217,11 @@ START_TEST(parser_dup)
 	l.origin = NULL;
 	m = linedup(&l);
 	fail_if (m->origin);
+}
 END_TEST
 
 START_TEST(send_args)
+{
 	GIOChannel *ch1, *ch2;
 	char *str;
 
@@ -216,9 +237,11 @@ START_TEST(send_args)
 	g_io_channel_read_line(ch2, &str, NULL, NULL, NULL);
 
 	fail_unless(!strcmp(str, "PRIVMSG :foo\r\n"));
+}
 END_TEST
 
 START_TEST(send_args_utf8)
+{
 	GIOChannel *ch1, *ch2;
 	char *str;
 	GIConv iconv;
@@ -239,6 +262,7 @@ START_TEST(send_args_utf8)
 	g_io_channel_read_line(ch2, &str, NULL, NULL, NULL);
 
 	fail_unless(!strcmp(str, "PRIVMSG :foo\366\r\n"));
+}
 END_TEST
 
 Suite *parser_suite(void)

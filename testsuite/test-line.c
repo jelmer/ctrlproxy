@@ -23,6 +23,7 @@
 #include "ctrlproxy.h"
 
 START_TEST(test_line_parse_linef)
+{
 	struct irc_line *l = irc_parse_linef("data");
 	fail_if (l->argc != 1, "Invalid parse");
 	fail_if (strcmp(l->args[0], "data") != 0, "Invalid parse");
@@ -39,9 +40,11 @@ START_TEST(test_line_parse_linef)
 	fail_if (strcmp(l->args[0], "data") != 0, "Invalid parse");
 	fail_if (strcmp(l->args[1], "arg1 ") != 0, "Invalid parse");
 	fail_if (l->origin != NULL, "Invalid origin");
+}
 END_TEST
 
 START_TEST(test_parse_args)
+{
 	struct irc_line *l = irc_parse_line_args("myorigin", "data", NULL);
 	fail_if (l->argc != 1, "Invalid parse");
 	fail_if (l->origin == NULL, "Invalid origin");
@@ -67,9 +70,11 @@ START_TEST(test_parse_args)
 	fail_if (l->origin == NULL, "Invalid origin");
 	fail_if (strcmp(l->origin, "myorigin") != 0, "Invalid origin");
 
+}
 END_TEST
 
 START_TEST(test_prefix_time)
+{
 	struct irc_line *l;
 	time_t timestamp = 1209309035;
 	char stime[512];
@@ -96,10 +101,13 @@ START_TEST(test_prefix_time)
 	line_prefix_time(l, timestamp);
 
 	fail_unless (!strcmp(l->args[2], "\001FINGER bla\001"), "Got: %s", l->args[2]);
+}
 END_TEST
 
 START_TEST(test_free_null)
+{
 	free_line(NULL);
+}
 END_TEST
 
 Suite *line_suite(void)

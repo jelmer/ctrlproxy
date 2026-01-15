@@ -27,6 +27,7 @@
 
 #ifdef HAVE_GNUTLS
 START_TEST(test_tlscert)
+{
 	char *keyfile, *cafile, *certfile;
 
 	keyfile = torture_tempfile("keyfile.pm");
@@ -38,6 +39,7 @@ START_TEST(test_tlscert)
 	fail_unless(g_file_test(keyfile, G_FILE_TEST_EXISTS));
 	fail_unless(g_file_test(cafile, G_FILE_TEST_EXISTS));
 	fail_unless(g_file_test(certfile, G_FILE_TEST_EXISTS));
+}
 END_TEST
 #endif
 
