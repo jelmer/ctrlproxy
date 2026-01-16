@@ -104,7 +104,7 @@ START_TEST(test_log_level)
 
 	result = run_cmd("set LOG_LEVEL -20");
 	fail_unless(current_log_level == 4);
-	fail_unless(!strcmp("Invalid log level -20", result));
+	fail_unless(!strcmp("Invalid log level '-20' (must be 0-5)", result));
 
 	current_log_level = old;
 }

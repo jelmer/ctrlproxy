@@ -193,15 +193,23 @@ pid_t read_pidfile(const char *path)
 	char *contents;
 	pid_t pid;
 	GError *error = NULL;
+	gint64 pid_val;
 	if (!g_file_get_contents(path, &contents, NULL, &error)) {
 		if (error != NULL)
 			g_error_free(error);
 		return -1;
 	}
-	pid = atol(contents);
 
-	if (pid == 0)
+	if (!g_ascii_string_to_signed(contents, 10, 1, G_MAXINT64, &pid_val, NULL)) {
+		g_free(contents);
 		return -1;
+	}
+	pid = (pid_t)pid_val;
+
+	if (pid == 0) {
+		g_free(contents);
+		return -1;
+	}
 
 	/* Check if process is still running */
 	if (kill(pid,0) != 0 && errno == ESRCH)

@@ -668,15 +668,14 @@ static char *log_level_get(admin_handle h)
 static gboolean log_level_set(admin_handle h, const char *value)
 {
 	extern enum log_level current_log_level;
-	int x;
+	gint64 x;
 
 	if (value == NULL) {
 		return FALSE;
 	}
 
-	x = atoi(value);
-	if (x < 0 || x > 5) {
-		admin_out(h, "Invalid log level %d", x);
+	if (!g_ascii_string_to_signed(value, 10, 0, 5, &x, NULL)) {
+		admin_out(h, "Invalid log level '%s' (must be 0-5)", value);
 		return FALSE;
 	}
 
@@ -1269,7 +1268,15 @@ static gboolean max_who_age_set(admin_handle h, const char *value)
 {
 	struct global *g = admin_get_global(h);
 
-	g->config->cache.max_who_age = (value == NULL?0:atoi(value));
+	if (value == NULL) {
+		g->config->cache.max_who_age = 0;
+	} else {
+		gint64 val;
+		if (!g_ascii_string_to_signed(value, 10, 0, G_MAXINT, &val, NULL))
+			g->config->cache.max_who_age = 0;
+		else
+			g->config->cache.max_who_age = val;
+	}
 
 	return TRUE;
 }
@@ -1288,8 +1295,13 @@ static char *auto_away_time_get(admin_handle h)
 static gboolean auto_away_time_set(admin_handle h, const char *value)
 {
 	struct global *g = admin_get_global(h);
+	gint64 val;
 
-	g->config->auto_away.max_idle_time = (value == NULL?-1:atoi(value));
+	if (value == NULL || !g_ascii_string_to_signed(value, 10, -1, G_MAXINT, &val, NULL)) {
+		g->config->auto_away.max_idle_time = -1;
+	} else {
+		g->config->auto_away.max_idle_time = val;
+	}
 
 	/* FIXME: Restart auto-away */
 
@@ -1356,8 +1368,13 @@ static char *auto_away_client_limit_get(admin_handle h)
 static gboolean auto_away_client_limit_set(admin_handle h, const char *value)
 {
 	struct global *g = admin_get_global(h);
+	gint64 val;
 
-	g->config->auto_away.client_limit = (value == NULL?-1:atoi(value));
+	if (value == NULL || !g_ascii_string_to_signed(value, 10, -1, G_MAXINT, &val, NULL)) {
+		g->config->auto_away.client_limit = -1;
+	} else {
+		g->config->auto_away.client_limit = val;
+	}
 
 	return TRUE;
 }
@@ -1376,8 +1393,13 @@ static char *report_time_offset_get(admin_handle h)
 static gboolean report_time_offset_set(admin_handle h, const char *value)
 {
 	struct global *g = admin_get_global(h);
+	gint64 val;
 
-	g->config->report_time_offset = (value == NULL?0:atoi(value));
+	if (value == NULL || !g_ascii_string_to_signed(value, 10, 0, G_MAXINT, &val, NULL)) {
+		g->config->report_time_offset = 0;
+	} else {
+		g->config->report_time_offset = val;
+	}
 
 	return TRUE;
 }

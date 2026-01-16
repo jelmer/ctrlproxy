@@ -416,37 +416,37 @@ void network_info_parse(struct irc_network_info *info, const char *parameter)
 		g_free(info->ircd);
 		info->ircd = g_strdup(val);
 	} else if (!base_strcmp(key, "NICKLEN") || !base_strcmp(key, "MAXNICKLEN")) {
-		info->nicklen = atoi(val);
+		gint64 v; if (g_ascii_string_to_signed(val, 10, 0, G_MAXINT, &v, NULL)) info->nicklen = v;
 	} else if (!base_strcmp(key, "USERLEN")) {
-		info->userlen = atoi(val);
+		gint64 v; if (g_ascii_string_to_signed(val, 10, 0, G_MAXINT, &v, NULL)) info->userlen = v;
 	} else if (!base_strcmp(key, "HOSTLEN")) {
-		info->hostlen = atoi(val);
+		gint64 v; if (g_ascii_string_to_signed(val, 10, 0, G_MAXINT, &v, NULL)) info->hostlen = v;
 	} else if (!base_strcmp(key, "OVERRIDE")) {
 		info->operoverride = TRUE;
 	} else if (!base_strcmp(key, "CHANNELLEN") || !base_strcmp(key, "MAXCHANNELLEN")) {
-		info->channellen = atoi(val);
+		gint64 v; if (g_ascii_string_to_signed(val, 10, 0, G_MAXINT, &v, NULL)) info->channellen = v;
 	} else if (!base_strcmp(key, "AWAYLEN")) {
-		info->awaylen = atoi(val);
+		gint64 v; if (g_ascii_string_to_signed(val, 10, 0, G_MAXINT, &v, NULL)) info->awaylen = v;
 	} else if (!base_strcmp(key, "KICKLEN")) {
-		info->kicklen = atoi(val);
+		gint64 v; if (g_ascii_string_to_signed(val, 10, 0, G_MAXINT, &v, NULL)) info->kicklen = v;
 	} else if (!base_strcmp(key, "TOPICLEN")) {
-		info->topiclen = atoi(val);
+		gint64 v; if (g_ascii_string_to_signed(val, 10, 0, G_MAXINT, &v, NULL)) info->topiclen = v;
 	} else if (!base_strcmp(key, "WATCH")) {
-		info->watch = atoi(val);
+		gint64 v; if (g_ascii_string_to_signed(val, 10, 0, G_MAXINT, &v, NULL)) info->watch = v;
 	} else if (!base_strcmp(key, "VBANLIST")) {
 		info->vbanlist = TRUE;
 	} else if (!base_strcmp(key, "MAXPARA")) {
-		info->maxpara = atoi(val);
+		gint64 v; if (g_ascii_string_to_signed(val, 10, 0, G_MAXINT, &v, NULL)) info->maxpara = v;
 	} else if (!base_strcmp(key, "MAXCHANNELS")) {
-		info->maxchannels = atoi(val);
+		gint64 v; if (g_ascii_string_to_signed(val, 10, 0, G_MAXINT, &v, NULL)) info->maxchannels = v;
 	} else if (!base_strcmp(key, "MAXTARGETS")) {
-		info->maxtargets = atoi(val);
+		gint64 v; if (g_ascii_string_to_signed(val, 10, 0, G_MAXINT, &v, NULL)) info->maxtargets = v;
 	} else if (!base_strcmp(key, "REMOVE")) {
 		info->remove = TRUE;
 	} else if (!base_strcmp(key, "MAXBANS")) {
-		info->maxbans = atoi(val);
+		gint64 v; if (g_ascii_string_to_signed(val, 10, 0, G_MAXINT, &v, NULL)) info->maxbans = v;
 	} else if (!base_strcmp(key, "MODES")) {
-		info->maxmodes = atoi(val);
+		gint64 v; if (g_ascii_string_to_signed(val, 10, 0, G_MAXINT, &v, NULL)) info->maxmodes = v;
 	} else if (!base_strcmp(key, "WALLCHOPS")) {
 		info->wallchops = TRUE;
 	} else if (!base_strcmp(key, "MAP")) {
