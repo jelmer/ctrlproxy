@@ -52,8 +52,10 @@ struct plugin *load_plugin(const char *modulesdir, const char *name)
 	/* Try to load from .so file */
 	if (!ops) {
 
-		if (g_file_test(name, G_FILE_TEST_EXISTS))path_name = g_strdup(name);
-		else path_name = g_module_build_path(modulesdir, name);
+		if (g_file_test(name, G_FILE_TEST_EXISTS))
+			path_name = g_strdup(name);
+		else
+			path_name = g_build_filename(modulesdir, name, NULL);
 
 		m = g_module_open(path_name, 0);
 
