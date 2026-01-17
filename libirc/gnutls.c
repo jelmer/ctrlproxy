@@ -26,7 +26,7 @@
 
 gboolean ssl_supported = TRUE;
 
-#define DH_BITS 1024
+#define DH_BITS 2048
 
 typedef struct {
 	gnutls_certificate_credentials_t cred;

@@ -181,13 +181,15 @@ GIOStatus irc_send_line(GIOChannel *c, GIConv iconv,
 char *irc_line_string_nl(const struct irc_line *l)
 {
 	char *raw;
+	size_t len;
 
 	g_assert(l);
 	raw = irc_line_string(l);
 	g_assert(raw);
 
-	raw = g_realloc(raw, strlen(raw)+10);
-	strcat(raw, "\r\n");
+	len = strlen(raw);
+	raw = g_realloc(raw, len + 3);  /* +2 for \r\n, +1 for \0 */
+	g_strlcat(raw, "\r\n", len + 3);
 	return raw;
 }
 
@@ -254,32 +256,28 @@ static gboolean requires_colon(const struct irc_line *l)
 
 char *irc_line_string(const struct irc_line *l)
 {
-	size_t len = 0; unsigned int i;
-	char *ret;
+	unsigned int i;
+	GString *ret;
 
 	g_assert(l);
 
 	/* Silently ignore empty messages */
 	if (l->argc == 0) return g_strdup("");
 
-	if (l->origin != NULL)
-		len+=strlen(l->origin);
-	for(i = 0; l->args[i]; i++) len+=strlen(l->args[i])+2;
-	ret = g_malloc(len+20);
-	strcpy(ret, "");
+	ret = g_string_new("");
 
 	if (l->origin != NULL)
-		sprintf(ret, ":%s ", l->origin);
+		g_string_append_printf(ret, ":%s ", l->origin);
 
 	for(i = 0; i < l->argc; i++) {
 		if (i == l->argc-1 && requires_colon(l) && i != 0)
-			strcat(ret, ":");
-		strcat(ret, l->args[i]);
+			g_string_append_c(ret, ':');
+		g_string_append(ret, l->args[i]);
 		if (i != l->argc-1)
-			strcat(ret, " ");
+			g_string_append_c(ret, ' ');
 	}
 
-	return ret;
+	return g_string_free(ret, FALSE);
 }
 
 void free_line(struct irc_line *l)
@@ -364,7 +362,7 @@ struct irc_line *linedup(const struct irc_line *l)
 	struct irc_line *ret;
 	g_assert(l);
 
-	ret = g_memdup(l, sizeof(struct irc_line));
+	ret = g_memdup2(l, sizeof(struct irc_line));
 
 	if (l->origin != NULL)
 		ret->origin = g_strdup(l->origin);

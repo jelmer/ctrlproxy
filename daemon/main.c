@@ -335,7 +335,7 @@ static gboolean daemon_socks_connect_fqdn (struct pending_client *cl, const char
 	g_assert(strlen(hostname) < 0x100);
 
 	data[0] = strlen(hostname);
-	strncpy(data+1, hostname, data[0]);
+	memcpy(data+1, hostname, data[0]);  /* SOCKS5 protocol - not null-terminated */
 
 	listener_socks_reply(cl, REP_OK, ATYP_FQDN, strlen(hostname)+2, data, port);
 	return FALSE;

@@ -196,7 +196,12 @@ static gboolean handle_client_detect(GIOChannel *ioc, struct pending_client *pc)
 			return status;
 		}
 
-		complete = g_malloc(in_len+2);
+		complete = g_try_malloc(in_len+2);
+		if (complete == NULL) {
+			g_free(raw);
+			listener_log(LOG_ERROR, pc->listener, "Out of memory allocating %zu bytes for IRC line", in_len+2);
+			return G_IO_STATUS_ERROR;
+		}
 		complete[0] = header[0];
 		memcpy(complete+1, raw, in_len);
 		complete[in_len+1] = '\0';
@@ -357,14 +362,18 @@ void listener_add_iochannel(struct irc_listener *l, GIOChannel *ioc,
 	g_io_channel_unref(ioc);
 	l->incoming = g_list_append(l->incoming, lio);
 
-	if (address == NULL)
-		strcpy(lio->address, "");
-	else
-		strncpy(lio->address, address, NI_MAXHOST);
-	if (port == NULL)
-		strcpy(lio->address, "");
-	else
-		strncpy(lio->port, port, NI_MAXSERV);
+	if (address == NULL) {
+		lio->address[0] = '\0';
+	} else {
+		strncpy(lio->address, address, NI_MAXHOST - 1);
+		lio->address[NI_MAXHOST - 1] = '\0';  /* Ensure null termination */
+	}
+	if (port == NULL) {
+		lio->port[0] = '\0';
+	} else {
+		strncpy(lio->port, port, NI_MAXSERV - 1);
+		lio->port[NI_MAXSERV - 1] = '\0';  /* Ensure null termination */
+	}
 
 	if (address != NULL)
 		listener_log(LOG_INFO, l, "Listening on %s:%s",
@@ -549,7 +558,7 @@ static gboolean pass_handle_data(struct pending_client *cl)
 {
 	gchar header[2];
 	gsize read;
-	gboolean accepted;
+	gboolean G_GNUC_UNUSED accepted;  /* Result used by callback, not checked here */
 	GIOStatus status;
 	gchar uname[0x100], pass[0x100];
 
@@ -705,9 +714,14 @@ static gboolean gssapi_handle_data (struct pending_client *pc)
 
 	len = ntohs(*((uint16_t *)(header+2)));
 
-	inbuf.value = g_malloc(len);
+	inbuf.value = g_try_malloc(len);
+	if (inbuf.value == NULL) {
+		listener_log(LOG_ERROR, pc->listener, "Out of memory allocating %d bytes for GSSAPI", len);
+		return FALSE;
+	}
 	status = g_io_channel_read_chars(pc->connection, inbuf.value, len, &inbuf.length, NULL);
 	if (status != G_IO_STATUS_NORMAL) {
+		g_free(inbuf.value);
 		return FALSE;
 	}
 
@@ -734,7 +748,12 @@ static gboolean gssapi_handle_data (struct pending_client *pc)
 		return FALSE;
 	}
 
-	packet = g_malloc(4+outbuf.length);
+	packet = g_try_malloc(4+outbuf.length);
+	if (packet == NULL) {
+		listener_log(LOG_ERROR, pc->listener, "Out of memory allocating %zu bytes for GSSAPI packet", 4+outbuf.length);
+		gssapi_fail(pc);
+		return FALSE;
+	}
 	packet[0] = SOCKS_VERSION; /* SOCKS_GSSAPI_VERSION */
 	packet[1] = 1; /* Authorization message */
 	*((uint16_t *)(packet+2)) = htons(outbuf.length);

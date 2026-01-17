@@ -98,7 +98,6 @@ gboolean log_support_write(struct log_support_context *ctx,
 
 	if (fi == NULL) {
 		fi = g_new0(struct log_file_info, 1);
-		g_assert(fi != NULL);
 		g_hash_table_insert(ctx->files, g_strdup(path), fi);
 	}
 

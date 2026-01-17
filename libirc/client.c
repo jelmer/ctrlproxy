@@ -479,7 +479,8 @@ const char *client_get_default_target(struct irc_client *c)
 
 void client_ref_void(struct irc_client *c)
 {
-	client_ref(c);
+	/* Deliberately ignore return value in void wrapper */
+	struct irc_client *G_GNUC_UNUSED ret = client_ref(c);
 }
 
 struct irc_client *client_ref(struct irc_client *c)
@@ -734,11 +735,7 @@ gboolean client_send_nameslist(struct irc_client *c, struct irc_channel_state *c
 		char prefix;
 
 		g_assert(c->state != NULL && c->state->info != NULL);
-		if (n->modes != NULL) {
-			prefix = get_prefix_from_modes(c->state->info, n->modes);
-		} else {
-			prefix = 0;
-		}
+		prefix = get_prefix_from_modes(c->state->info, n->modes);
 
 		if (prefix == 0) {
 			arg = g_strdup(n->global_nick->nick);

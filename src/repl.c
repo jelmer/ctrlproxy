@@ -25,7 +25,7 @@ static GList *backends = NULL;
 
 void register_replication_backend(const struct replication_backend *backend)
 {
-	backends = g_list_append(backends, g_memdup(backend, sizeof(*backend)));
+	backends = g_list_append(backends, g_memdup2(backend, sizeof(*backend)));
 }
 
 struct replication_backend *repl_find_backend(const char *name)

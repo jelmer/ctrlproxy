@@ -170,7 +170,6 @@ gboolean nicklist_add_entry(GList **nicklist, const char *opt_arg,
 	be->time_set = at;
 	be->hostmask = g_strdup(opt_arg);
 	be->by = (by_nick?g_strdup(by_nick):NULL);
-	g_assert(be != NULL);
 	*nicklist = g_list_append(*nicklist, be);
 
 	return TRUE;
@@ -284,7 +283,6 @@ struct irc_channel_state *find_add_channel(struct irc_network_state *st, char *n
 		return c;
 	c = irc_channel_state_new(name);
 	c->network = st;
-	g_assert(c != NULL);
 	st->channels = g_list_append(st->channels, c);
 
 	return c;
@@ -396,7 +394,6 @@ struct network_nick *find_add_network_nick(struct irc_network_state *n,
 
 	/* create one, if it doesn't exist */
 	nd = g_new0(struct network_nick,1);
-	g_assert(nd != NULL);
 	g_assert(!is_prefix(name[0], n->info));
 	nd->nick = g_strdup(name);
 	nd->hops = -1;
@@ -1093,7 +1090,9 @@ static void handle_nick(struct irc_network_state *s, const struct irc_line *l)
 	g_free(nick);
 
 	if (nn != NULL) {
-		network_nick_set_nick(nn, l->args[1]);
+		if (!network_nick_set_nick(nn, l->args[1])) {
+			network_state_log(LOG_WARNING, s, "Failed to update nick to %s", l->args[1]);
+		}
 	}
 }
 

@@ -159,7 +159,9 @@ gboolean default_socks_connect_fqdn (struct pending_client *cl, const char *host
 		else
 			desc = g_strdup("socks client");
 	}
-	client_init_iochannel(result, cl->connection, desc);
+	if (!client_init_iochannel(result, cl->connection, desc)) {
+		listener_log(LOG_ERROR, cl->listener, "Failed to initialize client IO channel");
+	}
 	g_free(desc);
 
 	return FALSE;
@@ -249,7 +251,9 @@ static gboolean handle_client_line(struct pending_client *pc, const struct irc_l
 					desc = g_strdup("Unix domain socket client");
 				else if (desc == NULL)
 					desc = g_strdup("");
-				client_init_iochannel(n, pc->connection, desc);
+				if (!client_init_iochannel(n, pc->connection, desc)) {
+					listener_log(LOG_ERROR, listener, "Failed to initialize client IO channel");
+				}
 				g_free(desc);
 			}
 
@@ -394,7 +398,8 @@ gboolean start_unix_domain_socket_listener(struct global *global)
 	}
 
 	un.sun_family = AF_UNIX;
-	strncpy(un.sun_path, global->config->network_socket, sizeof(un.sun_path));
+	strncpy(un.sun_path, global->config->network_socket, sizeof(un.sun_path) - 1);
+	un.sun_path[sizeof(un.sun_path) - 1] = '\0';  /* Ensure null termination */
 	unlink(un.sun_path);
 
 	if (bind(sock, (struct sockaddr *)&un, sizeof(un)) < 0) {
