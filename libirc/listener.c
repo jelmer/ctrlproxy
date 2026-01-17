@@ -553,7 +553,7 @@ static gboolean pass_handle_data(struct pending_client *cl)
 {
 	gchar header[2];
 	gsize read;
-	gboolean accepted;
+	gboolean G_GNUC_UNUSED accepted;  /* Result used by callback, not checked here */
 	GIOStatus status;
 	gchar uname[0x100], pass[0x100];
 

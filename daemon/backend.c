@@ -97,7 +97,8 @@ struct daemon_backend *daemon_backend_open(const char *socketpath,
 	sock = socket(PF_UNIX, SOCK_STREAM, 0);
 
 	un.sun_family = AF_UNIX;
-	strncpy(un.sun_path, socketpath, sizeof(un.sun_path));
+	strncpy(un.sun_path, socketpath, sizeof(un.sun_path) - 1);
+	un.sun_path[sizeof(un.sun_path) - 1] = '\0';  /* Ensure null termination */
 
 	if (connect(sock, (struct sockaddr *)&un, sizeof(un)) < 0) {
 		listener_log(LOG_INFO, listener, "unable to connect to %s: %s", un.sun_path, strerror(errno));

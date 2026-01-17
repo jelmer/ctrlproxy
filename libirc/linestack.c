@@ -918,7 +918,7 @@ static gboolean marshall_GList (struct irc_network_state *nst, const char *name,
 {
 	marshall_struct(t, m, level, name);
 	if (m == MARSHALL_PULL) {
-		int count;
+		int count = 0;
 		int i;
 
 		marshall_int(nst, "count", level+1, m, t, &count);
@@ -996,7 +996,7 @@ static gboolean marshall_channel_state (struct irc_network_state *nst,
 
 	/* Nicks  */
 	if (m == MARSHALL_PULL) {
-		int count;
+		int count = 0;
 		int i;
 
 		(*c)->nicks = NULL;

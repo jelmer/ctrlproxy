@@ -1875,7 +1875,8 @@ gboolean start_admin_socket(struct global *global)
 	}
 
 	un.sun_family = AF_UNIX;
-	strncpy(un.sun_path, global->config->admin_socket, sizeof(un.sun_path));
+	strncpy(un.sun_path, global->config->admin_socket, sizeof(un.sun_path) - 1);
+	un.sun_path[sizeof(un.sun_path) - 1] = '\0';  /* Ensure null termination */
 	unlink(un.sun_path);
 
 	if (bind(sock, (struct sockaddr *)&un, sizeof(un)) < 0) {

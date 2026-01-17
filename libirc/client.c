@@ -735,11 +735,7 @@ gboolean client_send_nameslist(struct irc_client *c, struct irc_channel_state *c
 		char prefix;
 
 		g_assert(c->state != NULL && c->state->info != NULL);
-		if (n->modes != NULL) {
-			prefix = get_prefix_from_modes(c->state->info, n->modes);
-		} else {
-			prefix = 0;
-		}
+		prefix = get_prefix_from_modes(c->state->info, n->modes);
 
 		if (prefix == 0) {
 			arg = g_strdup(n->global_nick->nick);
