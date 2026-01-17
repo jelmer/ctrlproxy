@@ -696,7 +696,10 @@ static gboolean server_finish_connect(GIOChannel *ioc, GIOCondition cond,
 		s->connection.state = NETWORK_CONNECTION_STATE_CONNECTED;
 
 		s->connection.data.tcp.connect_id = 0; /* Otherwise data will be queued */
-		network_set_iochannel(s, ioc);
+		if (!network_set_iochannel(s, ioc)) {
+			network_log(LOG_ERROR, s, "Failed to set IO channel after connection");
+			return FALSE;
+		}
 
 		s->connection.last_line_recvd = time(NULL);
 		s->connection.data.tcp.ping_id = g_timeout_add(5000,
@@ -770,7 +773,11 @@ static gboolean connect_program(struct irc_network *s)
 	if (pid == -1) return FALSE;
 
 	ioc = g_io_channel_unix_new(sock);
-	network_set_iochannel(s, ioc);
+	if (!network_set_iochannel(s, ioc)) {
+		network_log(LOG_ERROR, s, "Failed to set IO channel for program connection");
+		g_io_channel_unref(ioc);
+		return FALSE;
+	}
 
 	g_io_channel_unref(ioc);
 

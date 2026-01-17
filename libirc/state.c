@@ -1093,7 +1093,9 @@ static void handle_nick(struct irc_network_state *s, const struct irc_line *l)
 	g_free(nick);
 
 	if (nn != NULL) {
-		network_nick_set_nick(nn, l->args[1]);
+		if (!network_nick_set_nick(nn, l->args[1])) {
+			network_state_log(LOG_WARNING, s, "Failed to update nick to %s", l->args[1]);
+		}
 	}
 }
 

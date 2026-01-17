@@ -55,7 +55,10 @@ static void highlight_replicate(struct irc_client *c)
 		return;
 	}
 
-	linestack_traverse(c->network->linestack, lm, NULL, check_highlight, c);
+	/* Silently ignore linestack traverse failures during replication */
+	{
+		gboolean G_GNUC_UNUSED ret = linestack_traverse(c->network->linestack, lm, NULL, check_highlight, c);
+	}
 	g_hash_table_replace(markers, irc_network_ref(c->network), linestack_get_marker(c->network->linestack));
 }
 
@@ -89,9 +92,12 @@ static void lastdisconnect_replicate(struct irc_client *c)
 	}
 	free_network_state(ns);
 
-	linestack_send(c->network->linestack, lm, NULL, c, FALSE,
+	/* Silently ignore linestack send failures during replication */
+	{
+		gboolean G_GNUC_UNUSED ret = linestack_send(c->network->linestack, lm, NULL, c, FALSE,
 				   c->network->global->config->report_time != REPORT_TIME_NEVER,
 				   c->network->global->config->report_time_offset);
+	}
 }
 
 static gboolean log_data(struct irc_network *n, const struct irc_line *l, enum data_direction dir, void *userdata)
@@ -123,9 +129,12 @@ static void simple_replicate(struct irc_client *c)
 	}
 	free_network_state(ns);
 
-	linestack_send(c->network->linestack, m, NULL, c, FALSE,
+	/* Silently ignore linestack send failures during replication */
+	{
+		gboolean G_GNUC_UNUSED ret = linestack_send(c->network->linestack, m, NULL, c, FALSE,
 				   c->network->global->config->report_time != REPORT_TIME_NEVER,
 				   c->network->global->config->report_time_offset);
+	}
 }
 
 static const struct replication_backend backends[] = {

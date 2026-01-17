@@ -134,7 +134,9 @@ static gboolean process_from_server(struct irc_network *n, const struct irc_line
 		network_send_args(n, "NICK", tmp, NULL);
 		network_log(LOG_WARNING, n, "%s was already in use, trying %s",
 					l->args[2], tmp);
-		network_nick_set_nick(&n->external_state->me, tmp);
+		if (!network_nick_set_nick(&n->external_state->me, tmp)) {
+			network_log(LOG_ERROR, n, "Failed to update nick to %s", tmp);
+		}
 		g_free(tmp);
 	} else if (response == RPL_ENDOFMOTD || response == ERR_NOMOTD) {
 		int i;
@@ -155,7 +157,9 @@ static gboolean process_from_server(struct irc_network *n, const struct irc_line
 
 		nickserv_identify_me(n, n->external_state->me.nick);
 
-		clients_send_state(n->clients, n->external_state);
+		if (!clients_send_state(n->clients, n->external_state)) {
+			network_log(LOG_WARNING, n, "Failed to send state to clients");
+		}
 
 		network_send_args(n, "USERHOST", n->external_state->me.nick, NULL);
 

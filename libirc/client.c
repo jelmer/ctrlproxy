@@ -479,7 +479,8 @@ const char *client_get_default_target(struct irc_client *c)
 
 void client_ref_void(struct irc_client *c)
 {
-	client_ref(c);
+	/* Deliberately ignore return value in void wrapper */
+	struct irc_client *G_GNUC_UNUSED ret = client_ref(c);
 }
 
 struct irc_client *client_ref(struct irc_client *c)
